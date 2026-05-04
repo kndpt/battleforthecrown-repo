@@ -35,6 +35,80 @@
 
 <!-- Les entrées s'ajoutent ici, plus récentes en haut -->
 
+## Phase 7 — Polish, perf, archive legacy (sans suppression) (2026-05-05)
+
+**Statut** : 🟡 Done partiel (suppression du legacy volontairement réservée à la validation user)
+
+**Ce qui a été fait** :
+- **Code-splitting des routes lourdes** (`React.lazy`) : `GameScreen` et `WorldMapScreen` deviennent des chunks séparés. Toute la stack Pixi (WebGL renderer, FilterSystem, FederatedEventTarget, Geometry, pixi-viewport, scenes, sprites) sort du bundle initial.
+- **Bundle prod final** :
+  - **Initial** `index-*.js` : **404 KB / 122 KB gzip** (sous l'objectif 500 KB gzip).
+  - `WorldMapScreen-*.js` : 14.7 KB / 5.3 KB gzip (lazy au montage de `/game/world`).
+  - `GameScreen-*.js` : 18.8 KB / 6.1 KB gzip (lazy au montage de `/game`).
+  - `pixi_viewport-*.js` : 103 KB / 28 KB gzip (lazy avec les scenes).
+  - Pixi WebGL/WebGPU/Canvas renderers, Geometry, FilterSystem, FederatedEventTarget, etc. tous lazy.
+  - Total Pixi stack estimé ~140 KB gzip, **téléchargé uniquement à la première entrée dans `/game`**.
+  - Le HUD auth/landing s'affiche instantanément avec ~122 KB gzip.
+- **`useGameSocketStatus()`** : hook qui s'abonne au FSM `gameSocket.subscribeStatus` via `useEffect`, expose le status courant pour la HUD.
+- **Indicateur WS dans `GameHeader`** : pastille colorée + label (`En ligne` vert, `Connexion` doré pulse, `Hors ligne` rouge, `—` neutre). Tooltip natif avec le status précis.
+- **`DebugOverlay` (dev only)** : panneau flottant en bas à droite, affiche le status WS et les FPS Pixi (lit `globalThis.__pixiApp?.ticker?.FPS` toutes les 500ms). Monté uniquement quand `import.meta.env.DEV` est vrai. `pixi/application.ts` expose l'app sur `globalThis.__pixiApp` en dev.
+- **Branche d'archive legacy** : créée dans `battleforthecrown/.git` :
+  ```bash
+  git -C battleforthecrown branch legacy/nextjs-frontend HEAD
+  ```
+  La branche `legacy/nextjs-frontend` pointe sur `86b96fb3` (HEAD `main` legacy actuel). Le **dossier `battleforthecrown/` reste intact** dans le working tree, conformément au protocole `AUTONOMOUS_RUN.md`.
+- **README racine réécrit** : commandes user finales pour démarrer la stack complète, pointeur vers `docs/migration/` et `battleforthecrown-pixi/README.md`.
+- **`battleforthecrown-pixi/README.md`** : remplace le boilerplate Vite. Documente scripts, arbo `src/`, routes, conventions, bundle.
+
+**Ce qui n'a pas été fait (volontairement, hors scope nocturne)** :
+- **Suppression du dossier `battleforthecrown/`** : laissée à l'utilisateur. Commandes recommandées :
+  ```bash
+  # 1. Vérifier que la branche d'archive est OK
+  git -C battleforthecrown log legacy/nextjs-frontend --oneline | head -5
+  # 2. Supprimer le dossier (la branche reste dans le .git interne)
+  rm -rf battleforthecrown/
+  # 3. Mettre à jour package.json racine pour retirer "battleforthecrown" des workspaces
+  # 4. Renommer le nouveau front (optionnel) :
+  mv battleforthecrown-pixi battleforthecrown
+  # … et adapter package.json racine + battleforthecrown/package.json (`name`).
+  ```
+- **Tests E2E Playwright** : optionnel dans le plan, non fait.
+- **Profilage WorldMap 60fps avec 1000+ entités** : pas accès au navigateur en run autonome, à valider user.
+- **Test mobile (Pixel 6)** : idem, validation user.
+
+**Tests + lint + type-check + build** :
+- 53 tests / 10 fichiers verts (inchangé depuis Phase 6 ; les changements Phase 7 sont des composants UI ou wiring sans logique nouvelle testable simplement).
+- `type-check`, `lint`, `build` propres.
+
+**Recommandations user au matin** :
+1. Lancer `yarn workspace battleforthecrown-pixi dev` et naviguer le golden path : `/auth/register` ou `/auth/login` (`phase1-smoke@bftc.local` / `pixi-pass-123`) → `/my-worlds` → "Entrer" → `/game` (HUD + canvas village top-down) → "Voir la carte du monde →" → `/game/world` (carte + 31 barbares).
+2. Tester un upgrade : ouvrir un bâtiment dans le canvas village → "Améliorer" → vérifier la queue + l'animation construction + le toast à la complétion.
+3. Vérifier la pastille WS du `GameHeader` (vert / rouge si backend tué).
+4. En dev, le `DebugOverlay` en bas à droite affiche FPS + WS status.
+5. Si tout est validé, supprimer `battleforthecrown/` (cf. commandes ci-dessus).
+6. Relire `docs/migration/CHANGELOG.md` Phase 0 → Phase 7 pour valider les écarts par rapport au plan.
+
+**Commits** :
+- (à venir) `feat(pixi-frontend/polish): code-split routes, debug overlay, ws status indicator`
+
+**Vérification (Definition of Done)** :
+- [x] Bundle prod < 500 KB JS gzip (122 KB pour l'initial, ~140 KB additionnels lazy pour Pixi).
+- [ ] **À valider user** : TTI < 2s en 4G simulée (mesurable depuis Chrome DevTools / Lighthouse).
+- [ ] **À valider user** : 60 fps sur WorldMap et VillageScene (à profiler en navigateur).
+- [x] Le repo a un seul frontend "actif" (le legacy est archivé en branche `legacy/nextjs-frontend`, le dossier reste pour validation).
+- [x] README racine + README pixi à jour.
+
+**Vérification UI (à confirmer par le user au matin)** :
+- L'écran `/` charge instantanément (122 KB gzip).
+- À la première navigation vers `/game`, un spinner brève apparaît (lazy chunks Pixi téléchargés), puis le HUD complet s'affiche.
+- Idem pour `/game/world` (chunk WorldMapScreen lazy).
+- Le `DebugOverlay` en dev affiche un FPS qui monte ~ 60-120 selon le device.
+- Couper le backend → la pastille WS du header passe à rouge "Hors ligne" en quelques secondes. Relancer → elle redevient verte.
+
+**Captures** : —
+
+---
+
 ## Phase 6 — Animations expéditions et combats (2026-05-05)
 
 **Statut** : ✅ Done

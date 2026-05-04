@@ -17,5 +17,8 @@ export async function createPixiApp({ container, ...options }: CreatePixiAppOpti
     ...options,
   });
   container.appendChild(app.canvas);
+  if (import.meta.env.DEV) {
+    (globalThis as { __pixiApp?: Application }).__pixiApp = app;
+  }
   return app;
 }

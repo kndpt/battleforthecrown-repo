@@ -1,73 +1,85 @@
-# React + TypeScript + Vite
+# battleforthecrown-pixi
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Nouveau frontend Battle for the Crown : Vite + React 19 + PixiJS v8 + Zustand + TanStack Query.
 
-Currently, two official plugins are available:
+> Le legacy Next.js vit dans `../battleforthecrown/` jusqu'à validation user (suppression Phase 7+). Sa branche `main` est aussi disponible sous `legacy/nextjs-frontend` dans le `.git` du legacy.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Démarrer le dev
 
-## React Compiler
+Backend + DB requis :
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd ../battleforthecrown-backend && docker compose up -d
+yarn workspace battleforthecrown-backend prisma migrate deploy
+PORT=15001 yarn workspace battleforthecrown-backend start:dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Front Pixi :
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+yarn workspace battleforthecrown-pixi dev    # http://localhost:5173
 ```
+
+## Scripts
+
+| Script | Détail |
+|---|---|
+| `yarn workspace battleforthecrown-pixi dev` | Vite dev server (HMR). |
+| `yarn workspace battleforthecrown-pixi build` | Build prod (`dist/`). |
+| `yarn workspace battleforthecrown-pixi test` | Vitest run (53+ tests). |
+| `yarn workspace battleforthecrown-pixi test:watch` | Vitest watch. |
+| `yarn workspace battleforthecrown-pixi type-check` | `tsc --noEmit`. |
+| `yarn workspace battleforthecrown-pixi lint` | ESLint flat config. |
+
+## Structure
+
+```
+src/
+├── api/                # client REST + WS singleton + queries TanStack
+├── features/
+│   ├── auth/           # login, register, ProtectedRoute, landing
+│   ├── worlds/         # WorldSelector, MyWorldsScreen
+│   ├── game/           # GameScreen + GameSession
+│   ├── village/        # HUD bâtiments + VillageCanvas (Pixi top-down)
+│   ├── world/          # WorldMapScreen + WorldMapCanvas (Pixi 2D)
+│   ├── resources/      # ResourceBar interpolée
+│   ├── combat/         # ExpeditionList HUD
+│   └── layout/         # GameHeader, NavRail, ToastStack, DebugOverlay
+├── pixi/
+│   ├── application.ts  # factory new Application().init()
+│   ├── PixiCanvas.tsx  # mount/unmount React-friendly
+│   ├── scenes/         # SceneManager, BootScene, WorldMapScene, VillageScene
+│   └── entities/       # BuildingSprite, ExpeditionVisual
+├── stores/             # Zustand : auth, game, resources, crowns, ui, worldMap, expeditions
+├── lib/                # cn, env, interpolation, useTickingNow, types, helpers
+├── ui/                 # primitives portées du legacy (Button, Card, Modal, …)
+└── App.tsx             # routing + lazy-loaded GameScreen / WorldMapScreen
+```
+
+## Routes
+
+| Path | Description |
+|---|---|
+| `/` | Landing |
+| `/auth/login`, `/auth/register` | Auth |
+| `/worlds` | Liste des mondes (rejoindre) |
+| `/my-worlds` | Mes mondes (sélectionner) |
+| `/game` | Vue village (HUD + canvas Pixi top-down) |
+| `/game/world` | Carte du monde (canvas Pixi 2D + entités) |
+
+Routes protégées par `ProtectedRoute` (token JWT + worldId pour `/game`).
+
+## Bundle
+
+L'index initial fait ~363 KB JS / ~109 KB gzip (sans Pixi). Pixi + viewport + scenes sont lazy-chargés au besoin via `React.lazy`. Voir `dist/` après `yarn build`.
+
+## Conventions
+
+- TypeScript strict (pas de `any` complaisant).
+- Zustand pour le state global ; TanStack Query pour le cache REST ; Socket.IO pour le temps réel.
+- Mutations server-authoritative — optimistic UI uniquement quand le rollback est réversible.
+- Pas de Redux (le legacy l'utilisait).
+
+## Documentation migration
+
+`../docs/migration/CHANGELOG.md` documente chaque phase du run autonome (DB → auth → WS → HUD → WorldMap → VillageScene → expéditions → polish).

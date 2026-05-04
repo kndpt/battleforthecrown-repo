@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
@@ -8,16 +9,35 @@ import { RegisterScreen } from '@/features/auth/RegisterScreen';
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute';
 import { WorldSelector } from '@/features/worlds/WorldSelector';
 import { MyWorldsScreen } from '@/features/worlds/MyWorldsScreen';
-import { GameScreen } from '@/features/game/GameScreen';
-import { WorldMapScreen } from '@/features/world/WorldMapScreen';
+import { Spinner } from '@/ui/spinners';
 import { useGameStore } from '@/stores/game';
+import { DebugOverlay } from '@/features/layout/DebugOverlay';
+
+const GameScreen = lazy(() =>
+  import('@/features/game/GameScreen').then((m) => ({ default: m.GameScreen })),
+);
+const WorldMapScreen = lazy(() =>
+  import('@/features/world/WorldMapScreen').then((m) => ({ default: m.WorldMapScreen })),
+);
+
+function GameLoader() {
+  return (
+    <div className="flex h-full items-center justify-center">
+      <Spinner size="lg" />
+    </div>
+  );
+}
 
 function GameGuard() {
   const worldId = useGameStore((state) => state.worldId);
   if (!worldId) {
     return <Navigate to="/my-worlds" replace />;
   }
-  return <GameScreen />;
+  return (
+    <Suspense fallback={<GameLoader />}>
+      <GameScreen />
+    </Suspense>
+  );
 }
 
 function WorldMapGuard() {
@@ -25,7 +45,11 @@ function WorldMapGuard() {
   if (!worldId) {
     return <Navigate to="/my-worlds" replace />;
   }
-  return <WorldMapScreen />;
+  return (
+    <Suspense fallback={<GameLoader />}>
+      <WorldMapScreen />
+    </Suspense>
+  );
 }
 
 export default function App() {
@@ -47,7 +71,12 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
-      {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+      {import.meta.env.DEV && (
+        <>
+          <DebugOverlay />
+          <ReactQueryDevtools initialIsOpen={false} />
+        </>
+      )}
     </QueryClientProvider>
   );
 }
