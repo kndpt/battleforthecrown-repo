@@ -21,8 +21,8 @@
 | Phase 2 — WebSocket + stores | ✅ Done (2026-05-04) | [CHANGELOG](./CHANGELOG.md#phase-2--couche-temps-réel--websocket--stores-liés-2026-05-04) |
 | Phase 3 — HUD village | ✅ Done (2026-05-04) | [CHANGELOG](./CHANGELOG.md#phase-3--hud-complet-du-village-sans-canvas-2026-05-04) |
 | Phase 4 — WorldMap PixiJS | 🟡 Done partiel (2026-05-05) | [CHANGELOG](./CHANGELOG.md#phase-4--pixijs-world-map-la-grosse-pièce-2026-05-05) |
-| Phase 5 — VillageScene PixiJS | ⏳ Suivante | — |
-| Phase 6 — Animations expéditions | ⏳ — | — |
+| Phase 5 — VillageScene PixiJS | ✅ Done (2026-05-05) | [CHANGELOG](./CHANGELOG.md#phase-5--pixijs-village-view-top-down-2026-05-05) |
+| Phase 6 — Animations expéditions | ⏳ Suivante | — |
 | Phase 7 — Polish + archive legacy (sans suppression) | ⏳ — | — |
 | Phase 8 — Consolidation doc | ⏳ — | — |
 

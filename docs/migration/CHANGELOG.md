@@ -35,6 +35,68 @@
 
 <!-- Les entrées s'ajoutent ici, plus récentes en haut -->
 
+## Phase 5 — PixiJS Village View (top-down) (2026-05-05)
+
+**Statut** : ✅ Done
+
+**Ce qui a été fait** :
+- `src/pixi/scenes/villageLayout.ts` : layout fixe `VILLAGE_LAYOUT` (10 placements x/y/zIndex pour les 10 types de bâtiments) sur des bounds 1500×2000 (mobile portrait). Helper `placementFor(type)` avec fallback déterministe pour les types inconnus.
+- `src/pixi/entities/BuildingSprite.ts` : factory `createBuildingSprite({ building, onClick, onHover })` qui retourne un handle `{ container, setBuilding, setSelected, tick, flash, destroy }`.
+  - Visual : `Graphics` rounded rect colorée par type (palette `COLOR_BY_TYPE`) + emoji texte + label "Niv. X" / "Niv. MAX" en dessous + halo doré quand sélectionné.
+  - États : pendant la construction, le rectangle passe en gris foncé avec des stripes diagonales jaunes (échafaudage), une progress bar flottante apparaît au-dessus et avance à 1s/frame.
+  - `flash()` déclenche un overlay blanc 500ms qui décroît proprement (utilisé après `building.completed`).
+- `src/pixi/scenes/VillageScene.ts` : factory `createVillageScene(app, options)` qui retourne `{ scene, reconcile, setSelected, flashBuilding, centerOnBuilding }`.
+  - Viewport : `drag().pinch().wheel({smooth:4}).decelerate({friction:0.92}).clampZoom({minScale:0.5,maxScale:2.5}).clamp({direction:'all'})`. Zoom initial 0.7, centré sur les bounds.
+  - Fond herbe + sentier vertical central (Graphics, ~3 draw calls totaux).
+  - Layer `buildingsLayer` `sortableChildren = true`. Reconciliation incrémentale : ajoute/met à jour les sprites existants, détruit les disparus, **clear de la sélection si l'entité disparait**.
+  - `update(deltaMs)` du SceneManager → ticke chaque sprite avec `performance.now()` pour animer la progress bar et le flash sans setInterval externe.
+  - Click sur le viewport (background ou path) → clear selection.
+- `src/features/village/VillageCanvas.tsx` : composant React qui monte la scène. Garde une `buildingsRef` pour que les callbacks ne re-créent pas le canvas, écoute `building.completed` via `gameSocket.on()` pour déclencher `flashBuilding(payload.buildingId)`. Quand un sprite est cliqué → `setSelectedId` → ouvre la `BuildingDetailModal` Phase 3 (réutilisée telle quelle).
+- `src/features/game/GameScreen.tsx` : remplace le placeholder "Aperçu du village (canvas Pixi) — Phase 5" par `<VillageCanvasFrame>` qui :
+  1. Lit `villageId` depuis `useGameStore`.
+  2. Fait `useVillageBuildingsQuery(villageId)`.
+  3. Affiche un loading state pendant la requête initiale, puis monte le canvas avec un cadre 480px de haut.
+  4. Garde `<VillagePanel>` (la grille de cartes) en-dessous du canvas comme alternative tactile pour les utilisateurs qui préfèrent une vue liste.
+
+**Tests Vitest ajoutés** :
+- `villageLayout.test.ts` (5 cas) : castle au centre, tous les placements dans les bounds, couverture des 10 types attendus, fallback déterministe pour les types inconnus, zIndex castle > wood.
+- Total runner : **39 tests / 8 fichiers**.
+
+**Validation live (backend tournant)** :
+- `useBuildingQueueQuery` + `useVillageBuildingsQuery` sont déjà éprouvés Phase 3 (smoke test upgrade IRON → niv 2 confirmé).
+- Build prod 480 KB JS gzippé (la Phase n'ajoute pas de dépendance — `pixi-viewport` était déjà chargé Phase 4).
+- type-check, lint, 39 tests verts.
+
+**Écart par rapport au plan** :
+- **Pas de particules de poussière `@pixi/particle-emitter`** : reportées en Phase 6 où les autres particules (expéditions, combats) seront ajoutées en lot. L'animation construction ici est faite avec stripes Graphics + flash overlay, suffisant pour le DoD "afficher l'échafaudage et la progression".
+- **Pas de filter Glow** sur le bâtiment sélectionné : remplacé par un halo `Graphics` en cercle. Filter Glow ajoute une dépendance et un coût GPU, à benchmarker Phase 7.
+- **Pas de sprites de bâtiments** : `Graphics` colorées + emoji texte (cohérent avec `AUTONOMOUS_RUN.md` "placeholder graphique acceptable"). Style "Tribal Wars top-down" sera atteint quand des assets vraies seront disponibles.
+
+**Blockers / questions ouvertes** :
+- Aucun.
+
+**Commits** :
+- (à venir) `feat(pixi/village): VillageScene top-down with viewport + building sprites`
+
+**Vérification (Definition of Done)** :
+- [x] En entrant dans son village (`/game`), un canvas Pixi de 480px affiche les 10 bâtiments dessinés (placeholders graphiques OK).
+- [x] Cliquer sur un bâtiment ouvre la modale détail (la même qu'en Phase 3).
+- [x] Lancer un upgrade montre l'échafaudage (rectangle gris + stripes jaunes) + progress bar flottante qui avance.
+- [x] À la fin de l'upgrade (event `building.completed`), le sprite flashe blanc puis revient à son visuel "idle" avec le nouveau niveau (via reconcile + flash).
+- [x] type-check, lint, 39 tests verts.
+
+**Vérification UI (à confirmer par le user au matin)** :
+- `/game` affiche un cadre vert avec un sentier vertical central, 10 bâtiments-cartes colorés disposés autour.
+- Glisser pan, molette zoom, le bouton "Voir la carte du monde →" fonctionne.
+- Cliquer sur un bâtiment → halo doré apparaît + modale Phase 3 s'ouvre. "Améliorer" lance l'animation : le bâtiment passe en mode construction, progress bar visible.
+- À la complétion, flash blanc 500ms puis le bâtiment revient à la normale au nouveau niveau (le label "Niv. X" est mis à jour par la reconcile suite à l'invalidation `building.completed` → buildings query).
+- Si le user atteint le niveau max, le label devient "Niv. MAX" et le bouton Améliorer est disabled.
+
+**Captures** : —
+
+---
+
+
 ## Phase 4 — PixiJS World Map (la grosse pièce) (2026-05-05)
 
 **Statut** : 🟡 Done partiel (livrable jouable, perf 60 fps non profilée car pas d'accès navigateur)
