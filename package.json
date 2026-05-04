@@ -4,6 +4,7 @@
   "workspaces": [
     "battleforthecrown",
     "battleforthecrown-backend",
+    "battleforthecrown-pixi",
     "packages/*"
   ],
   "scripts": {

@@ -16,7 +16,15 @@
 | Contrat API figé (REST + WS) | ✅ Rédigé | [06-api-contract-snapshot.md](./06-api-contract-snapshot.md) |
 | Consolidation documentaire (Phase 8) | ✅ Rédigé | [07-doc-consolidation.md](./07-doc-consolidation.md) |
 | **Validation user** | ✅ Validée le 2026-05-04 | Vite + Zustand+TanStack + nouveau dossier |
-| Implémentation Phase 0 (skill + scaffold) | ⏳ En attente d'instructions complémentaires | — |
+| Phase 0 — DB + backend + scaffold Vite | ✅ Done (2026-05-04) | [CHANGELOG](./CHANGELOG.md#phase-0--skill-scaffold-plomberie-2026-05-04) |
+| Phase 1 — Auth + sélection monde | ⏳ Suivante | — |
+| Phase 2 — WebSocket + stores | ⏳ — | — |
+| Phase 3 — HUD village | ⏳ — | — |
+| Phase 4 — WorldMap PixiJS | ⏳ — | — |
+| Phase 5 — VillageScene PixiJS | ⏳ — | — |
+| Phase 6 — Animations expéditions | ⏳ — | — |
+| Phase 7 — Polish + archive legacy (sans suppression) | ⏳ — | — |
+| Phase 8 — Consolidation doc | ⏳ — | — |
 
 ## Comment lire cette doc
 
