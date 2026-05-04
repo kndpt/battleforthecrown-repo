@@ -35,6 +35,47 @@
 
 <!-- Les entrées s'ajoutent ici, plus récentes en haut -->
 
+## Phase 8 — Consolidation documentaire (CLAUDE.md hiérarchique) (2026-05-05)
+
+**Statut** : 🟡 Done partiel (workspaces actifs documentés ; legacy + backend laissés intacts par contrat)
+
+**Ce qui a été fait** :
+- **`/CLAUDE.md` racine réécrit** (~50 lignes) : présentation des 4 workspaces, pointeurs vers les rules transversales et vers les CLAUDE.md des workspaces. La section "Run autonome 2026-05-04" obsolète a été supprimée.
+- **`/battleforthecrown-pixi/CLAUDE.md` créé** : briefing du nouveau frontend — stack, conventions Pixi, conventions React HUD, path alias `@/`, recap des 53 tests.
+- **`/.claude/rules/` racine créé** :
+  - `conventions.md` — TypeScript strict, yarn, server-authoritative, Outbox pattern, optimistic UI.
+  - `git.md` — commits EN au format `<type>(<scope>): <subject>`, garde-fous (pas de `--force`, pas de `--no-verify`, sub-repos respectés).
+  - `docs.md` — hiérarchie CLAUDE.md / rules path-scoped / docs/migration / docs/gameplay, et liste de la doc legacy à supprimer post-migration.
+- **`/battleforthecrown-pixi/.claude/rules/` créé** :
+  - `pixi-conventions.md` — initialisation `Application`, pattern `PixiScene` + `SceneManager`, reconciliation entités sans recréation, subscribe Zustand sans React re-render, viewport (pixi-viewport), perf, interactivité.
+  - `react-hud.md` — stack imposée (React 19, Tailwind, Zustand, TanStack Query, socket.io-client, zod), data flow REST↔WS convergent, optimistic UI pattern, lazy loading routes.
+- Tests + type-check toujours verts (53 tests / 10 fichiers, inchangé — la phase 8 ne modifie aucun TS).
+
+**Ce qui n'a pas été fait** (laissé à l'utilisateur, conformément au protocole `AUTONOMOUS_RUN.md` qui interdit les modifications au backend et au legacy) :
+- **Splitter `battleforthecrown-backend/AGENTS.md`** (16.8 KB) en `CLAUDE.md` court + `.claude/rules/*.md` (`nest-conventions.md`, `prisma.md`, `workers.md`) + `docs/architecture/` — l'utilisateur le fera au matin une fois la migration validée.
+- **Suppression doc legacy** : `WARP.md` (déjà gitignored), `.trae/` (idem), `docs-v2/index.md`, `*-technical.md` obsolètes, `IMPLEMENTATION_SUMMARY.md`, `PHASE2_*.md`, `schema.prsima.md` dans le backend → à supprimer une fois la migration scellée.
+- **Migrer la doc gameplay** : `docs/meta/gameplay/` est tracké au baseline ; à fusionner dans `docs/gameplay/` (5-6 fichiers consolidés) post-migration.
+- **Suppression du `battleforthecrown/`** et son `CLAUDE.md` : déjà couvert dans la note Phase 7 — c'est le user qui supprime le dossier.
+- **Mise à jour `.gitignore`** : `.claude/scheduled_tasks.lock` et `.claude/settings.local.json` déjà ajoutés Phase 1.
+
+**Tests** : 53 / 10 (inchangé).
+
+**Commits** :
+- (à venir) `docs(migration): consolidate CLAUDE.md hierarchy and rules`
+
+**Vérification (Definition of Done)** :
+- [x] `/CLAUDE.md` racine est court, hiérarchique, à jour.
+- [x] `battleforthecrown-pixi` a un `CLAUDE.md` + `.claude/rules/` complets.
+- [x] `.claude/rules/` racine documente les conventions, git et docs.
+- [ ] **À faire user** : splitter `battleforthecrown-backend/AGENTS.md` selon `07-doc-consolidation.md`.
+- [ ] **À faire user** : retirer `battleforthecrown/` après suppression du dossier.
+- [x] La doc Claude est centralisée, courte, hiérarchique pour la partie *active* du repo.
+
+**Captures** : —
+
+---
+
+
 ## Phase 7 — Polish, perf, archive legacy (sans suppression) (2026-05-05)
 
 **Statut** : 🟡 Done partiel (suppression du legacy volontairement réservée à la validation user)

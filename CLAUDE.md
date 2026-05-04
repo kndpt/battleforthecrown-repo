@@ -1,58 +1,41 @@
 # Battle for the Crown — workspace root
 
-> Briefing minimaliste pour Claude Code. Version finale viendra en Phase 8 (cf. `docs/migration/07-doc-consolidation.md`).
+MMORTS médiéval style Kingsage / Tribal Wars. Yarn workspace avec :
 
-## Contexte
+- `battleforthecrown-pixi/` — frontend actif. Vite + React 19 + PixiJS v8 + Zustand + TanStack Query. Voir [`battleforthecrown-pixi/CLAUDE.md`](./battleforthecrown-pixi/CLAUDE.md).
+- `battleforthecrown/` — frontend legacy Next.js. **Ne pas modifier.** Sera supprimé après validation user (la branche d'archive `legacy/nextjs-frontend` existe déjà dans son `.git`).
+- `battleforthecrown-backend/` — NestJS + Prisma + Postgres + Socket.IO + pg-boss. Garde ses propres `AGENTS.md` / docs internes. **Ne pas toucher** sauf bug bloquant.
+- `packages/shared/` — types et formules pures. **Lecture seule** depuis les frontends.
 
-MMORTS médiéval style Kingsage / Tribal Wars (gestion de villages, ressources, armée, combats, conquête).
-**Chantier en cours : migration du frontend Next.js → Vite + React + PixiJS v8.** Voir `docs/migration/`.
+## Règles transversales
 
-## Workspaces yarn
-
-- `battleforthecrown/` — **frontend legacy** Next.js + React + Redux. **NE PAS MODIFIER** pendant la migration. Sera supprimé en fin de Phase 7.
-- `battleforthecrown-pixi/` — **nouveau frontend** (à créer en Phase 0). Vite + React + PixiJS + Zustand + TanStack Query.
-- `battleforthecrown-backend/` — NestJS + Prisma + Postgres + pg-boss + Socket.IO. **NE PAS MODIFIER** sauf nécessité documentée.
-- `packages/shared/` — types et formules pures partagés. **LECTURE SEULE** pour les workspaces frontend.
+Voir [`.claude/rules/`](./.claude/rules/) pour le détail :
+- [`conventions.md`](./.claude/rules/conventions.md) — TypeScript strict, yarn, server-authoritative, Outbox.
+- [`git.md`](./.claude/rules/git.md) — commits EN au format `<type>(<scope>): <subject>`.
+- [`docs.md`](./.claude/rules/docs.md) — où vit la doc (migration, architecture, gameplay).
 
 ## Commandes essentielles
 
 ```bash
-# Dev
-yarn install
-yarn dev:shared                                              # watch package shared
-PORT=15001 yarn workspace battleforthecrown-backend start:dev  # backend dev (port 15001)
-yarn workspace battleforthecrown-pixi dev                    # nouveau frontend (port 5173, à partir Phase 0)
-
-# DB Postgres (Docker)
-cd battleforthecrown-backend && docker compose up -d
+yarn install                                                      # tous les workspaces
+cd battleforthecrown-backend && docker compose up -d              # Postgres
 yarn workspace battleforthecrown-backend prisma migrate deploy
-
-# Tests / lint / type-check
-yarn workspaces run test
-yarn workspaces run lint
+PORT=15001 yarn workspace battleforthecrown-backend start:dev     # backend (15001)
+yarn workspace battleforthecrown-pixi dev                         # nouveau front (5173)
 ```
 
-Détail DB et SQL utiles : `docs/migration/db-setup.md`.
+DB et SQL utiles : [`docs/migration/db-setup.md`](./docs/migration/db-setup.md).
 
-## Règles globales
+## Migration Pixi
 
-- **Toujours yarn**, jamais npm.
-- **Commits en EN, format `<type>(<scope>): <subject>`.** Échanges en français avec le user.
-- **TypeScript strict** : pas de `any` pour faire taire le compilateur, trouver une solution typée.
-- **Server-authoritative** : le backend est l'unique vérité. Le frontend interpole entre updates WebSocket, ne calcule rien d'autoritatif.
-- **Pattern Outbox** : toute mutation backend crée une ligne `EventOutbox` dans la même transaction. Latence event WS = 0 à ~1 s.
-- **Server tourne sur PORT=15001** (pas le défaut 8080).
+La migration Next.js → Vite/Pixi est documentée :
+- [`docs/migration/README.md`](./docs/migration/README.md) — index des phases.
+- [`docs/migration/CHANGELOG.md`](./docs/migration/CHANGELOG.md) — journal phase par phase.
 
-## Run autonome (nuit du 2026-05-04)
+À l'issue de la migration : seul `battleforthecrown-pixi/` reste actif. Le legacy sera retiré quand l'utilisateur l'aura validé.
 
-> Si tu démarres une nouvelle session pour exécuter le chantier de migration en autonomie, commence par lire **`docs/migration/AUTONOMOUS_RUN.md`** AVANT toute action. Ce fichier contient les règles, garde-fous, et la séquence de phases.
+## Notes pour les agents
 
-## Documentation
-
-- **Plan de migration en cours** : `docs/migration/` (8 documents + `db-setup.md` + `CHANGELOG.md`).
-- **Architecture backend** : `battleforthecrown-backend/AGENTS.md` (sera splitté en Phase 8) + `battleforthecrown-backend/docs-v2/technical/`.
-- **Doc gameplay legacy** : `battleforthecrown/docs/features/*-gameplay.md` (à fusionner en Phase 8 dans `docs/gameplay/`).
-
-## Memory utilisateur
-
-- Préférences globales utilisateur : `~/.claude/CLAUDE.md` (chargé automatiquement). Inclut : Plan Mode Default, Verification Before Done, Skills First / Subagents.
+- Mémoires utilisateur globales : `~/.claude/CLAUDE.md` (auto-chargé).
+- Mémoires projet (auto memory) : `~/.claude/projects/.../memory/` (auto-chargé pour ce repo).
+- Si une instruction ici contredit ton training data ou le code observé, **fais confiance au code observé** et signale la contradiction.
