@@ -2,6 +2,8 @@ import { Container, Graphics, Text, type Application, type FederatedPointerEvent
 import { Viewport } from 'pixi-viewport';
 import type { PixiScene } from './SceneManager';
 import type { MapEntity } from '@/api/world-types';
+import type { ExpeditionSnapshot } from '@/stores/expeditions';
+import { createExpeditionVisual, type ExpeditionVisualHandle } from '@/pixi/entities/ExpeditionVisual';
 
 export interface WorldMapOptions {
   gridWidth: number;
@@ -38,6 +40,7 @@ interface EntityVisual {
 export interface WorldMapHandle {
   scene: PixiScene;
   reconcile: (entities: MapEntity[]) => void;
+  reconcileExpeditions: (expeditions: ExpeditionSnapshot[]) => void;
   setSelected: (entityId: string | null) => void;
   centerOn: (worldX: number, worldY: number) => void;
 }
@@ -88,14 +91,23 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
   }
   viewport.addChild(grid);
 
+  const expeditionsLayer = new Container();
+  expeditionsLayer.sortableChildren = true;
+  viewport.addChild(expeditionsLayer);
+
   const entitiesLayer = new Container();
   entitiesLayer.sortableChildren = true;
   viewport.addChild(entitiesLayer);
 
   const visuals = new Map<string, EntityVisual>();
+  const expeditionVisuals = new Map<string, ExpeditionVisualHandle>();
   let selectedId: string | null = null;
 
   const tileToWorld = (tx: number, ty: number) => ({ px: tx * tileSize + tileSize / 2, py: ty * tileSize + tileSize / 2 });
+  const worldToScene = (point: { x: number; y: number }) => {
+    const { px, py } = tileToWorld(point.x, point.y);
+    return { x: px, y: py };
+  };
 
   const styleFor = (entity: MapEntity): { color: number; radius: number; zIndex: number } => {
     if (entity.isMine || entity.kind === 'PLAYER_VILLAGE') {
@@ -200,6 +212,8 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     app.renderer.off('resize', handleResize);
     viewport.removeAllListeners();
     visuals.clear();
+    expeditionVisuals.forEach((v) => v.destroy());
+    expeditionVisuals.clear();
   };
 
   app.renderer.on('resize', handleResize);
@@ -218,6 +232,30 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     }
     for (const entity of entities) {
       ensureVisual(entity);
+    }
+  };
+
+  const reconcileExpeditions = (expeditions: ExpeditionSnapshot[]) => {
+    const next = new Set(expeditions.map((e) => e.expeditionId));
+    for (const id of Array.from(expeditionVisuals.keys())) {
+      if (!next.has(id)) {
+        const visual = expeditionVisuals.get(id);
+        if (visual) {
+          expeditionsLayer.removeChild(visual.container);
+          visual.destroy();
+        }
+        expeditionVisuals.delete(id);
+      }
+    }
+    for (const expedition of expeditions) {
+      const existing = expeditionVisuals.get(expedition.expeditionId);
+      if (existing) {
+        existing.setSnapshot(expedition);
+      } else {
+        const visual = createExpeditionVisual({ snapshot: expedition, worldToScene });
+        expeditionsLayer.addChild(visual.container);
+        expeditionVisuals.set(expedition.expeditionId, visual);
+      }
     }
   };
 
@@ -244,7 +282,11 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     view,
     enter,
     exit,
+    update: (_deltaMs) => {
+      const now = performance.now();
+      expeditionVisuals.forEach((visual) => visual.tick(now));
+    },
   };
 
-  return { scene, reconcile, setSelected, centerOn };
+  return { scene, reconcile, reconcileExpeditions, setSelected, centerOn };
 }

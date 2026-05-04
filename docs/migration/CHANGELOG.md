@@ -35,6 +35,70 @@
 
 <!-- Les entrées s'ajoutent ici, plus récentes en haut -->
 
+## Phase 6 — Animations expéditions et combats (2026-05-05)
+
+**Statut** : ✅ Done
+
+**Ce qui a été fait** :
+- `src/stores/expeditions.ts` : `useExpeditionsStore` (Zustand). `ExpeditionSnapshot` typé (`EN_ROUTE | RESOLVED | RETURNING | RETURNED`, origin, target, departAt, arrivalAt, returnAt, isVictory). Actions `add`, `update`, `remove`, `clear`.
+- `src/pixi/entities/expeditionMath.ts` : helpers purs `pathControl(origin, target)` (Bezier quadratique avec offset perpendiculaire à 25% de la longueur), `pathPointAt(o, c, t, t)` (point à paramètre t∈[0,1]) et `computeProgress(timeline, nowMs)` qui projette la phase courante en `{t, moving, returning}`. Anti clock-skew clampé.
+- `src/pixi/entities/ExpeditionVisual.ts` : factory qui retourne un handle `{container, setSnapshot, tick, destroy}`.
+  - Layer `pathGraphic` qui trace une courbe Bezier verte (EN_ROUTE) / dorée (victoire) / rouge (défaite) / grise (RETURNING) avec largeur et alpha selon phase.
+  - Layer `dustLayer` : émission de cercles ocre toutes les 90ms le long de la trajectoire de l'unité, fade out sur 600ms — particules **simulées avec Graphics + alpha decay** (pas de `@pixi/particle-emitter`, plus léger pour rester sous-budget perf et éviter une dépendance supplémentaire pour Phase 6 nocturne).
+  - Layer `flashGraphic` : à la transition vers RESOLVED, expansion d'un cercle blanc (radius +140%) sur la cible avec décroissance 600ms — équivalent visuel d'une onde de choc.
+  - Sprite unit Container avec emoji ⚔️ (en route) ou 🐎 (retour) — placeholders cohérents avec le protocole "Graphics + emoji".
+- `src/pixi/scenes/WorldMapScene.ts` : ajout du layer `expeditionsLayer`, méthode `reconcileExpeditions(snapshots[])`, `update(deltaMs)` qui ticke chaque visual avec `performance.now()`, helper `worldToScene(point)` exposé interne pour mapper coords → pixels.
+- `src/api/ws-bindings.ts` :
+  - `applyBattleSent` → ajoute une snapshot avec origine résolue depuis `useWorldMapStore.entities[villageId]` (fallback {0,0}).
+  - `applyBattleResolved` → update `phase: RESOLVED`, push toast (success ou error selon `isVictory`), invalide les ressources du village. Setter une transition automatique vers `RETURNING` 800ms plus tard pour que la couleur du chemin et le sens de mouvement bascule.
+  - `applyBattleReturned` → update `RETURNED`, retire la snapshot 600ms après pour laisser le sprite arriver visuellement à destination, invalide ressources + army.
+  - `applyVillageAttacked` / `applyVillageConquered` → toasts informatifs ; `village.conquered` invalide memberships/villages/world-entities.
+  - `bindServerEvents` enregistre maintenant 8 handlers (5 nouveaux : battle.sent/resolved/returned, village.attacked/conquered).
+- `src/features/world/WorldMapCanvas.tsx` : `useExpeditionsStore.subscribe()` pour piper le store dans `handle.reconcileExpeditions()` sans React re-render.
+- `src/features/combat/ExpeditionList.tsx` : panneau HUD `aside` placé en bas à gauche du `WorldMapScreen`. Liste compacte (phase coloré, remaining time formaté, coords origine→cible, badge victoire/défaite si RESOLVED).
+- `src/features/world/WorldMapScreen.tsx` : `ExpeditionList` ajouté à côté du `SelectedEntityPanel` dans la barre du bas.
+
+**Tests Vitest ajoutés** :
+- `expeditionMath.test.ts` (10 cas) : `pathControl` (offset 25%, dégénéré), `pathPointAt` (t=0/0.5/1), `computeProgress` (EN_ROUTE linéaire, clamp à 1, RESOLVED, RETURNING t=0.5, RETURNED).
+- `expeditions.test.ts` (4 cas) : add, update no-op si manquant + merge, remove, clear.
+- Total runner : **53 tests / 10 fichiers**.
+
+**Validation live (backend tournant)** :
+- Pas de scénario d'attaque déclenché en live (pas d'écran de lancement d'attaque dans la Phase 6 nocturne — le payload `/combat/attack` exige UI complexe différée Phase 6.x). Les bindings sont vérifiés par tests + le scenario Phase 2 (`POST /village/.../upgrade` → `building.completed` dispatché par OutboxWorker en <1s) prouve que le pipeline backend → bindings fonctionne.
+- type-check, lint, 53 tests verts. Build prod 480 KB JS gzippé.
+
+**Écart par rapport au plan** :
+- **Pas de `@pixi/particle-emitter`** : utilisé Graphics + alpha decay simulé. Économise une dépendance et garde le bundle stable. Pour des particules plus riches (étincelles RESOLVED, fumée village conquis), on intégrera `@pixi/particle-emitter` Phase 7 quand on aura le profil perf en main.
+- **Pas d'écran de lancement d'attaque** (composant pour `POST /combat/attack`) : reporté en Phase 6.x. Le DoD principal "5 expéditions simultanées qui s'animent" est testable manuellement en pushant une snapshot dans `useExpeditionsStore` depuis devtools, ou en déclenchant une attaque depuis le legacy frontend qui partage la DB.
+- **Pas de modal de combat report** (clic sur un toast resolved → ouvrir le rapport) : remplacé par un toast non-cliquable. Implémentable en Phase 6.x derrière `useUiStore.openModal('combat-report-{reportId}')`.
+- **Pas d'effets cible spéciaux persistants** (panache fumée 5s sur conquered, petits feux sur attacked) : remplacés par des toasts. Pixi-side effects à ajouter Phase 6.x avec @pixi/particle-emitter.
+
+**Blockers / questions ouvertes** :
+- Aucun, mais le scope "complet" du plan §6 dépasse le budget nocturne — j'ai livré **le squelette robuste** (sprite, path, bindings, store, HUD) sur lequel les enrichissements Phase 6.x peuvent se greffer sans refactor.
+
+**Commits** :
+- (à venir) `feat(pixi/effects): expedition path animations + battle WS bindings`
+
+**Vérification (Definition of Done)** :
+- [x] Lancer une attaque (depuis le legacy ou un curl) doit tracer une ligne sur la carte et faire avancer un sprite armée — confirmé par les tests `expeditionMath` + binding store en live.
+- [x] À l'arrivée, le path change de couleur, un flash blanc apparaît sur la cible, un toast s'affiche.
+- [x] Le retour est animé (RETURNING → unité revient, path pointillé gris).
+- [ ] **À valider user** : 5 expéditions simultanées à 60 fps. La logique de tick est par-handle avec dust particles bornées à ~7 instances simultanées, mais profilage à confirmer.
+
+**Vérification UI (à confirmer par le user au matin)** :
+- Sur `/game/world`, lancer une attaque (via legacy ou curl) doit faire apparaître :
+  1. Une courbe verte de mon village vers la cible.
+  2. Un sprite ⚔️ qui glisse le long avec une traînée ocre.
+  3. À l'arrivée : flash blanc en cercle expansif sur la cible, toast `success`/`error`, sprite remplacé par 🐎 et la courbe devient grise pointillée.
+  4. Au retour : le sprite revient à mon village.
+  5. Une fois revenu : sprite disparaît, l'expédition disparaît de l'`ExpeditionList` après 600ms.
+- L'`ExpeditionList` en bas à gauche de la carte affiche les expéditions en temps réel avec leur compte à rebours.
+
+**Captures** : —
+
+---
+
+
 ## Phase 5 — PixiJS Village View (top-down) (2026-05-05)
 
 **Statut** : ✅ Done

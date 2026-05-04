@@ -7,6 +7,7 @@ import { Spinner } from '@/ui/spinners';
 import { WorldMapCanvas } from './WorldMapCanvas';
 import { SelectedEntityPanel } from './SelectedEntityPanel';
 import { buildMapEntities } from './buildMapEntities';
+import { ExpeditionList } from '@/features/combat/ExpeditionList';
 import {
   useMyVillagesQuery,
   useWorldDetailsQuery,
@@ -87,7 +88,8 @@ export function WorldMapScreen() {
               </div>
             </div>
 
-            <div className="mt-auto flex justify-end p-3">
+            <div className="mt-auto flex flex-wrap items-end justify-between gap-3 p-3">
+              <ExpeditionList />
               <SelectedEntityPanel entity={selectedEntity} onClose={() => setSelectedEntity(null)} />
             </div>
           </div>

@@ -22,8 +22,8 @@
 | Phase 3 — HUD village | ✅ Done (2026-05-04) | [CHANGELOG](./CHANGELOG.md#phase-3--hud-complet-du-village-sans-canvas-2026-05-04) |
 | Phase 4 — WorldMap PixiJS | 🟡 Done partiel (2026-05-05) | [CHANGELOG](./CHANGELOG.md#phase-4--pixijs-world-map-la-grosse-pièce-2026-05-05) |
 | Phase 5 — VillageScene PixiJS | ✅ Done (2026-05-05) | [CHANGELOG](./CHANGELOG.md#phase-5--pixijs-village-view-top-down-2026-05-05) |
-| Phase 6 — Animations expéditions | ⏳ Suivante | — |
-| Phase 7 — Polish + archive legacy (sans suppression) | ⏳ — | — |
+| Phase 6 — Animations expéditions | ✅ Done (2026-05-05) | [CHANGELOG](./CHANGELOG.md#phase-6--animations-expéditions-et-combats-2026-05-05) |
+| Phase 7 — Polish + archive legacy (sans suppression) | ⏳ Suivante | — |
 | Phase 8 — Consolidation doc | ⏳ — | — |
 
 ## Comment lire cette doc

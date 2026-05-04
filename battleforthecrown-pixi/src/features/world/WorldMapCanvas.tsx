@@ -4,6 +4,7 @@ import { PixiCanvas } from '@/pixi/PixiCanvas';
 import { SceneManager } from '@/pixi/scenes/SceneManager';
 import { createWorldMapScene, type WorldMapHandle } from '@/pixi/scenes/WorldMapScene';
 import { useWorldMapStore } from '@/stores/worldMap';
+import { useExpeditionsStore } from '@/stores/expeditions';
 import type { MapEntity } from '@/api/world-types';
 
 interface WorldMapCanvasProps {
@@ -36,9 +37,9 @@ export function WorldMapCanvas({ gridWidth, gridHeight, myVillage }: WorldMapCan
       manager.register('world-map', () => handle.scene);
       manager.switchTo('world-map');
 
-      // Initial reconcile from store (might already have data).
-      const initialEntities = Object.values(useWorldMapStore.getState().entities);
-      handle.reconcile(initialEntities);
+      // Initial reconcile from stores (might already have data).
+      handle.reconcile(Object.values(useWorldMapStore.getState().entities));
+      handle.reconcileExpeditions(Object.values(useExpeditionsStore.getState().byId));
       handle.setSelected(useWorldMapStore.getState().selectedEntityId);
 
       // Subscribe to store updates without triggering React re-renders.
@@ -50,9 +51,15 @@ export function WorldMapCanvas({ gridWidth, gridHeight, myVillage }: WorldMapCan
           handle.setSelected(state.selectedEntityId);
         }
       });
+      const unsubExpeditions = useExpeditionsStore.subscribe((state, prev) => {
+        if (state.byId !== prev.byId) {
+          handle.reconcileExpeditions(Object.values(state.byId));
+        }
+      });
 
       return () => {
         unsubEntities();
+        unsubExpeditions();
         handleRef.current = null;
         manager.destroy();
       };
