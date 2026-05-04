@@ -19,8 +19,8 @@
 | Phase 0 — DB + backend + scaffold Vite | ✅ Done (2026-05-04) | [CHANGELOG](./CHANGELOG.md#phase-0--skill-scaffold-plomberie-2026-05-04) |
 | Phase 1 — Auth + sélection monde | ✅ Done (2026-05-04) | [CHANGELOG](./CHANGELOG.md#phase-1--auth--sélection-de-monde-hud-pur-pas-de-canvas-2026-05-04) |
 | Phase 2 — WebSocket + stores | ✅ Done (2026-05-04) | [CHANGELOG](./CHANGELOG.md#phase-2--couche-temps-réel--websocket--stores-liés-2026-05-04) |
-| Phase 3 — HUD village | ⏳ Suivante | — |
-| Phase 4 — WorldMap PixiJS | ⏳ — | — |
+| Phase 3 — HUD village | ✅ Done (2026-05-04) | [CHANGELOG](./CHANGELOG.md#phase-3--hud-complet-du-village-sans-canvas-2026-05-04) |
+| Phase 4 — WorldMap PixiJS | ⏳ Suivante | — |
 | Phase 5 — VillageScene PixiJS | ⏳ — | — |
 | Phase 6 — Animations expéditions | ⏳ — | — |
 | Phase 7 — Polish + archive legacy (sans suppression) | ⏳ — | — |

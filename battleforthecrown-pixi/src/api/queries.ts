@@ -4,8 +4,12 @@ import {
   toAuthSession,
   type AuthSession,
   type AuthSessionResponse,
+  type BuildingDto,
   type JoinedVillage,
   type JoinWorldResult,
+  type PopulationDto,
+  type QueueEntryDto,
+  type UpgradeResponseDto,
   type World,
   type WorldMembership,
 } from './types';
@@ -16,6 +20,10 @@ export const queryKeys = {
   worlds: () => ['worlds'] as const,
   myMemberships: (userId: string | null) => ['memberships', userId] as const,
   myVillages: (userId: string | null, worldId: string | null) => ['villages', userId, worldId] as const,
+  buildings: (villageId: string | null) => ['buildings', villageId] as const,
+  queue: (villageId: string | null) => ['queue', villageId] as const,
+  population: (villageId: string | null) => ['population', villageId] as const,
+  resources: (villageId: string | null) => ['resources', villageId] as const,
 };
 
 interface LoginInput {
@@ -122,7 +130,7 @@ export interface ResourcesPayload {
 
 export function useResourcesQuery(villageId: string | null) {
   return useQuery<ResourcesPayload>({
-    queryKey: ['resources', villageId],
+    queryKey: queryKeys.resources(villageId),
     queryFn: () => {
       if (!villageId) {
         return Promise.reject(new Error('No village selected'));
@@ -132,6 +140,137 @@ export function useResourcesQuery(villageId: string | null) {
     enabled: Boolean(villageId),
     staleTime: 0,
     refetchOnMount: 'always',
+  });
+}
+
+export function useVillageBuildingsQuery(villageId: string | null) {
+  return useQuery<BuildingDto[]>({
+    queryKey: queryKeys.buildings(villageId),
+    queryFn: () => {
+      if (!villageId) return Promise.resolve([] as BuildingDto[]);
+      return apiClient.get<BuildingDto[]>('/village/buildings', { query: { villageId } });
+    },
+    enabled: Boolean(villageId),
+    staleTime: 5_000,
+  });
+}
+
+export function useBuildingQueueQuery(villageId: string | null) {
+  return useQuery<QueueEntryDto[]>({
+    queryKey: queryKeys.queue(villageId),
+    queryFn: () => {
+      if (!villageId) return Promise.resolve([] as QueueEntryDto[]);
+      return apiClient.get<QueueEntryDto[]>('/village/queue', { query: { villageId } });
+    },
+    enabled: Boolean(villageId),
+    staleTime: 5_000,
+  });
+}
+
+export function usePopulationQuery(villageId: string | null) {
+  return useQuery<PopulationDto>({
+    queryKey: queryKeys.population(villageId),
+    queryFn: () => {
+      if (!villageId) {
+        return Promise.reject(new Error('No village selected'));
+      }
+      return apiClient.get<PopulationDto>('/population', { query: { villageId } });
+    },
+    enabled: Boolean(villageId),
+    staleTime: 5_000,
+  });
+}
+
+interface UpgradeBuildingInput {
+  villageId: string;
+  buildingType: string;
+}
+
+interface UpgradeContext {
+  previousQueue?: QueueEntryDto[];
+  previousResources?: ResourcesPayload;
+  optimisticEntryId?: string;
+}
+
+export function useUpgradeBuildingMutation() {
+  const queryClient = useQueryClient();
+  return useMutation<UpgradeResponseDto, Error, UpgradeBuildingInput, UpgradeContext>({
+    mutationFn: ({ villageId, buildingType }) =>
+      apiClient.post<UpgradeResponseDto>(`/village/${villageId}/upgrade`, { buildingType }),
+    onMutate: async ({ villageId, buildingType }) => {
+      const queueKey = queryKeys.queue(villageId);
+      const resourcesKey = queryKeys.resources(villageId);
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: queueKey }),
+        queryClient.cancelQueries({ queryKey: resourcesKey }),
+      ]);
+      const previousQueue = queryClient.getQueryData<QueueEntryDto[]>(queueKey);
+      const previousResources = queryClient.getQueryData<ResourcesPayload>(resourcesKey);
+
+      const optimisticEntryId = `optimistic-${buildingType}-${Date.now()}`;
+      const now = new Date();
+      const optimisticEntry: QueueEntryDto = {
+        id: optimisticEntryId,
+        type: buildingType,
+        level: 0,
+        startTime: now.toISOString(),
+        endTime: new Date(now.getTime() + 60_000).toISOString(),
+      };
+
+      queryClient.setQueryData<QueueEntryDto[]>(queueKey, (current = []) => [...current, optimisticEntry]);
+
+      return { previousQueue, previousResources, optimisticEntryId };
+    },
+    onError: (_err, { villageId }, context) => {
+      if (!context) return;
+      if (context.previousQueue !== undefined) {
+        queryClient.setQueryData(queryKeys.queue(villageId), context.previousQueue);
+      }
+      if (context.previousResources !== undefined) {
+        queryClient.setQueryData(queryKeys.resources(villageId), context.previousResources);
+      }
+    },
+    onSettled: (_data, _err, { villageId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.queue(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.buildings(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.resources(villageId) });
+    },
+  });
+}
+
+interface CancelConstructionInput {
+  villageId: string;
+  buildingId: string;
+}
+
+interface CancelContext {
+  previousQueue?: QueueEntryDto[];
+}
+
+export function useCancelConstructionMutation() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, CancelConstructionInput, CancelContext>({
+    mutationFn: ({ villageId, buildingId }) =>
+      apiClient.delete<void>(`/village/${villageId}/buildings/${buildingId}/cancel`),
+    onMutate: async ({ villageId, buildingId }) => {
+      const queueKey = queryKeys.queue(villageId);
+      await queryClient.cancelQueries({ queryKey: queueKey });
+      const previousQueue = queryClient.getQueryData<QueueEntryDto[]>(queueKey);
+      queryClient.setQueryData<QueueEntryDto[]>(queueKey, (current = []) =>
+        current.filter((entry) => entry.id !== buildingId),
+      );
+      return { previousQueue };
+    },
+    onError: (_err, { villageId }, context) => {
+      if (!context?.previousQueue) return;
+      queryClient.setQueryData(queryKeys.queue(villageId), context.previousQueue);
+    },
+    onSettled: (_data, _err, { villageId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.queue(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.buildings(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.resources(villageId) });
+    },
   });
 }
 

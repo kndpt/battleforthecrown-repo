@@ -8,9 +8,7 @@ import { RegisterScreen } from '@/features/auth/RegisterScreen';
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute';
 import { WorldSelector } from '@/features/worlds/WorldSelector';
 import { MyWorldsScreen } from '@/features/worlds/MyWorldsScreen';
-import { HelloPixiScene } from '@/features/HelloPixiScene';
-import { GameSession } from '@/features/game/GameSession';
-import { ResourceBar } from '@/features/resources/ResourceBar';
+import { GameScreen } from '@/features/game/GameScreen';
 import { useGameStore } from '@/stores/game';
 
 function GameGuard() {
@@ -18,16 +16,7 @@ function GameGuard() {
   if (!worldId) {
     return <Navigate to="/my-worlds" replace />;
   }
-  return (
-    <GameSession>
-      <div className="relative h-full w-full">
-        <HelloPixiScene />
-        <div className="pointer-events-none absolute left-4 right-4 top-4 z-10">
-          <ResourceBar />
-        </div>
-      </div>
-    </GameSession>
-  );
+  return <GameScreen />;
 }
 
 export default function App() {

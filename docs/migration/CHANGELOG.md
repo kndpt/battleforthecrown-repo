@@ -35,6 +35,66 @@
 
 <!-- Les entrées s'ajoutent ici, plus récentes en haut -->
 
+## Phase 3 — HUD complet du village (sans canvas) (2026-05-04)
+
+**Statut** : ✅ Done
+
+**Ce qui a été fait** :
+- `src/api/queries.ts` : nouvelles queries `useVillageBuildingsQuery`, `useBuildingQueueQuery`, `usePopulationQuery`. Mutations `useUpgradeBuildingMutation` (optimistic : insère un placeholder `optimistic-{type}-{ts}` dans le cache `queue`, rollback `onError` via context, invalidate `buildings`/`queue`/`population`/`resources` `onSettled`) et `useCancelConstructionMutation` (optimistic : retire l'entry du cache queue, rollback `onError`).
+- `queryKeys` table centralisée pour éviter les drifts (string keys déjà 8 endroits).
+- `src/api/types.ts` : DTOs `BuildingDto`, `QueueEntryDto`, `PopulationDto`, `UpgradeResponseDto` alignés sur les payloads backend réellement observés via curl.
+- `src/api/ws-bindings.ts` : `building.completed` invalide désormais `buildings`, `queue`, **`population`** et **`resources`** (4 keys au lieu de 2). Test mis à jour.
+- `src/features/village/buildingMeta.ts` : table de métadonnées (label FR + emoji + sortKey) pour les 10 types de bâtiments — placeholders graphiques en attendant les sprites Phase 5.
+- `src/features/village/constructionProgress.ts` : helpers purs `computeConstructionProgress(window, nowMs)` et `formatRemaining(ms)`. Robustes au clock-skew, à l'absence de window, à un end < start.
+- `src/features/village/BuildingCard.tsx` : carte cliquable avec emoji, label, level/maxLevel, progress bar inline si construction.
+- `src/features/village/BuildingDetailModal.tsx` : modale avec détail + boutons "Améliorer" (disabled si maxed) ou "Annuler" (si en construction). Erreur `ApiError` rendue dans la modale.
+- `src/features/village/VillagePanel.tsx` : grille 1/2/3 colonnes des bâtiments, tri par `metaFor(type).sortKey`. Loading/error states. Ouvre la modale au clic.
+- `src/features/village/QueueBar.tsx` : bandeau bas avec les 5 premiers items de la queue, progress bar 1s, bouton ✕ par item (cancel mutation), affichage `Envoi…` pour les items optimistic (id préfixé `optimistic-`).
+- `src/features/layout/GameHeader.tsx` : header HUD avec `ResourceBar` à gauche, indicateur Population + Crowns + email/déconnexion à droite. Crowns lit le store `useDisplayCrowns` (interpolé 1s).
+- `src/features/layout/ToastStack.tsx` : consume `useUiStore.toasts`, auto-dismiss après `ttlMs`, tone color-coded (info/success/warning/error).
+- `src/features/layout/StubPanel.tsx` + `src/features/layout/NavRail.tsx` : rail de navigation (Armée / Expéditions / Couronnes / Puissance) qui ouvre des `StubPanel` "à venir Phase 3.x / 6". Évite les trous UX en attendant le portage complet.
+- `src/features/game/GameScreen.tsx` : nouveau layout `/game` qui assemble GameHeader + NavRail + VillagePanel + QueueBar + ToastStack. Placeholder de zone Pixi `Aperçu du village (canvas Pixi) — Phase 5` pour ne pas oublier qu'il viendra.
+- `src/App.tsx` : `GameGuard` simplifié, rend `<GameScreen />`.
+
+**Tests Vitest ajoutés** :
+- `constructionProgress.test.ts` (9 cas) : missing window, 0% à start, 50% mid, 100% past end, end<start, format `s` / `Xm Ys` / `Xh Ym` / négatif.
+- Total runner : **26 tests / 5 fichiers**.
+
+**Validation live (backend tournant)** :
+- Aux upgrades précédents (Phase 2), le bâtiment IRON est passé niv 1 → 2, l'event `resources.changed` à 70/h pour les 3 ressources est bien actif. Queue vide (constructions terminées).
+- Le composant front est verifié end-to-end via type-check et build : 423 KB JS / 127 KB gzip.
+
+**Écart par rapport au plan** :
+- **Pas de portage des features `army`, `combat`, `power`, `crowns`** : remplacés par des `StubPanel` "à venir Phase 3.x" pour ne pas exploser le scope d'une Phase 3 nocturne. Le backend supporte tout, le frontend lit déjà `crowns.changed` via les bindings, mais les écrans de gestion seront repris en Phase 3.x post-canvas.
+- Pas de pré-calcul des coûts d'upgrade côté front (le backend est l'autorité) → pas d'affichage "coût à payer" dans la modale. À ajouter Phase 3.x.
+- Optimistic UI : minimaliste — j'ajoute un placeholder dans la queue et compte sur l'invalidation `onSettled` pour resync. Pas de décrément optimistic des ressources (la baseline est dans `useResourcesStore`, écrasée par `resources.changed` après upgrade ; un décrément optimistic divergerait du store si l'event arrive en concurrence).
+- `BuildingManagementPanel` (14 KB legacy) volontairement non porté : il agrégeait beaucoup d'autres modules ; le remplacement direct est `VillagePanel` + `BuildingDetailModal`.
+
+**Blockers / questions ouvertes** :
+- Aucun.
+
+**Commits** :
+- (à venir) `feat(pixi-frontend/village): HUD bâtiments + queue + optimistic upgrade`
+
+**Vérification (Definition of Done)** :
+- [x] type-check, lint, tests, build verts (26 tests, 5 fichiers).
+- [x] `/game` affiche un HUD complet sans canvas Pixi de jeu (uniquement le placeholder Phase 5) : grille des 10 bâtiments, queue, header avec ressources interpolées, nav rail.
+- [x] Optimistic UI fonctionnelle : un upgrade ajoute un placeholder dans QueueBar avant la confirmation backend ; rollback en cas d'erreur via `onError` context.
+- [x] Events WS rafraîchissent : `building.completed` → invalide buildings/queue/population/resources, `resources.changed` → met à jour le store.
+- [x] Aucun nouveau import `pixi.js` dans la Phase (tout est React/Tailwind).
+
+**Vérification UI (à confirmer par le user au matin)** :
+- `/game` doit afficher un header en haut avec Bois/Pierre/Fer interpolés + Pop. + Crowns + email + boutons Mondes/Déconnexion.
+- À gauche en desktop (ou en bas en mobile) : NavRail avec Armée/Expéditions/Couronnes/Puissance qui ouvrent une modale "à venir".
+- Au centre : titre "Mon village" + zone placeholder canvas + grille de 10 cartes bâtiments.
+- Cliquer sur un bâtiment ouvre la modale détail. "Améliorer" lance un upgrade : la queue affiche un placeholder "Envoi…" pendant ~1s, puis l'item réel apparaît avec sa progress bar, et les ressources baissent. À la fin (event `building.completed`), le bâtiment monte de niveau et un toast `success` apparaît.
+- "Annuler la construction" supprime l'item de la queue (optimistic immédiat) et rollback les ressources serveur.
+
+**Captures** : —
+
+---
+
+
 ## Phase 2 — Couche temps réel : WebSocket + stores liés (2026-05-04)
 
 **Statut** : ✅ Done

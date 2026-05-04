@@ -20,4 +20,15 @@ export const apiClient = new ApiClient({
 });
 
 export { ApiClient, ApiError } from './client';
-export type { AuthSession, AuthTokens, AuthUser, World, WorldMembership } from './types';
+export type {
+  AuthSession,
+  AuthTokens,
+  AuthUser,
+  BuildingDto,
+  JoinedVillage,
+  PopulationDto,
+  QueueEntryDto,
+  UpgradeResponseDto,
+  World,
+  WorldMembership,
+} from './types';

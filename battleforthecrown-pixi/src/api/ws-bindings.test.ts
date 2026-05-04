@@ -96,7 +96,7 @@ describe('applyBuildingCompleted', () => {
       { queryClient },
     );
 
-    expect(invalidationCount).toBe(2);
+    expect(invalidationCount).toBe(4);
     const toasts = useUiStore.getState().toasts;
     expect(toasts).toHaveLength(1);
     expect(toasts[0].tone).toBe('success');

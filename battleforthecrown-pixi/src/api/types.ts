@@ -63,6 +63,42 @@ export interface JoinedVillage {
   conqueredAt?: string | null;
 }
 
+export interface BuildingDto {
+  id: string;
+  type: string;
+  level: number;
+  maxLevel: number;
+  populationCost: number;
+  isUnderConstruction: boolean;
+  startTime: string | null;
+  endTime: string | null;
+}
+
+export interface QueueEntryDto {
+  id: string;
+  type: string;
+  level: number;
+  startTime: string;
+  endTime: string;
+}
+
+export interface PopulationDto {
+  used: number;
+  max: number;
+  available: number;
+}
+
+export interface UpgradeResponseDto {
+  id: string;
+  type: string;
+  currentLevel: number;
+  nextLevel: number;
+  startTime: string;
+  endTime: string;
+  cost: { wood: number; stone: number; iron: number; population: number; time: number };
+  populationCost: number;
+}
+
 export interface JoinWorldResult {
   membership: {
     userId: string;
