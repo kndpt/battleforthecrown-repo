@@ -13,6 +13,7 @@ import {
   type World,
   type WorldMembership,
 } from './types';
+import type { WorldEntityDto } from './world-types';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
 
@@ -24,6 +25,8 @@ export const queryKeys = {
   queue: (villageId: string | null) => ['queue', villageId] as const,
   population: (villageId: string | null) => ['population', villageId] as const,
   resources: (villageId: string | null) => ['resources', villageId] as const,
+  worldEntities: (worldId: string | null) => ['world-entities', worldId] as const,
+  worldConfig: (worldId: string | null) => ['world-config', worldId] as const,
 };
 
 interface LoginInput {
@@ -246,6 +249,31 @@ interface CancelConstructionInput {
 
 interface CancelContext {
   previousQueue?: QueueEntryDto[];
+}
+
+export function useWorldEntitiesQuery(worldId: string | null) {
+  return useQuery<WorldEntityDto[]>({
+    queryKey: queryKeys.worldEntities(worldId),
+    queryFn: () => {
+      if (!worldId) return Promise.resolve([] as WorldEntityDto[]);
+      return apiClient.get<WorldEntityDto[]>(`/world/${worldId}/entities`);
+    },
+    enabled: Boolean(worldId),
+    staleTime: 30_000,
+    refetchInterval: 30_000,
+  });
+}
+
+export function useWorldDetailsQuery(worldId: string | null) {
+  return useQuery<World>({
+    queryKey: queryKeys.worldConfig(worldId),
+    queryFn: () => {
+      if (!worldId) return Promise.reject(new Error('No world selected'));
+      return apiClient.get<World>(`/world/${worldId}/details`);
+    },
+    enabled: Boolean(worldId),
+    staleTime: 5 * 60_000,
+  });
 }
 
 export function useCancelConstructionMutation() {

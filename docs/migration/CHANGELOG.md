@@ -35,6 +35,74 @@
 
 <!-- Les entrées s'ajoutent ici, plus récentes en haut -->
 
+## Phase 4 — PixiJS World Map (la grosse pièce) (2026-05-05)
+
+**Statut** : 🟡 Done partiel (livrable jouable, perf 60 fps non profilée car pas d'accès navigateur)
+
+**Ce qui a été fait** :
+- `src/pixi/scenes/SceneManager.ts` : registry `register(name, factory)` / `switchTo(name)`. `PixiScene` interface (`view`, `enter`, `exit`, `update?`). Gère `app.stage.addChild/remove`, `ticker.add/remove` pour les scenes avec update, et destruction propre du graphe.
+- `src/pixi/scenes/BootScene.ts` : scene de chargement minimaliste avec `Text` "Chargement…" centré et reposition sur resize. Préparée pour Phase 4.2 (asset loading) et phases ultérieures.
+- `src/api/world-types.ts` : DTOs `WorldEntityDto` (kind/x/y/data) et `WorldVillageDto`. Type domaine normalisé `MapEntity` (`PLAYER_VILLAGE | BARBARIAN_VILLAGE | OTHER`, `isMine`, `tier T1|T2|T3|null`). Helpers `entityFromWorldDto` / `entityFromMyVillage` qui réconcilient les deux flux.
+- `src/stores/worldMap.ts` : `useWorldMapStore` Zustand. `entities: Record<id, MapEntity>` + `selectedEntityId`. Actions `setEntities` (atomic), `upsertEntity`, `removeEntity` (clear selection si l'entité supprimée était sélectionnée), `setSelectedEntity`.
+- `src/api/queries.ts` : nouvelles queries `useWorldEntitiesQuery(worldId)` (refetch toutes les 30s pour capter les nouveaux barbares seedés) et `useWorldDetailsQuery(worldId)` (5min staleTime).
+- `src/pixi/scenes/WorldMapScene.ts` (~210 lignes) : factory qui construit la scène complète et retourne un `WorldMapHandle` (`scene`, `reconcile`, `setSelected`, `centerOn`).
+  - `Viewport` (pixi-viewport) configuré avec `drag().pinch().wheel({smooth:5}).decelerate({friction:0.92}).clampZoom({minScale:0.25, maxScale:4}).clamp({direction:'all'})`.
+  - Layer `background` (Graphics) + layer `grid` (lignes tous les 10 tuiles, majeures tous les 50). Une seule `Graphics` par layer → 1 draw call chacun.
+  - Layer `entitiesLayer` avec `sortableChildren = true`. Chaque `MapEntity` → un `Container` interactif (`eventMode: 'static'`, `cursor: 'pointer'`) avec un `Graphics` (cercle coloré + halo si sélectionné) et un `Text` (label visible uniquement si sélectionné).
+  - Couleurs : mes villages dorés (`#f1c40f`), barbares T1 verts, T2 dorés, T3 rouges. Tailles 6/7/8/9 px selon tier.
+  - Hit-test : `pointertap` sur container → `onSelectEntity(id)`. `pointertap` sur viewport/background/grid → `onSelectEntity(null)`.
+  - Reconciliation `reconcile(entities[])` : ajoute les nouveaux containers, met à jour position+style des existants, détruit les disparus. **Pas de re-création** des containers conservés → préserve les listeners.
+- `src/features/world/buildMapEntities.ts` : helper pur qui merge `worldEntities` + `myVillages` avec préséance des villages joueur (canonical source), tagge `isMine` selon `myUserId`.
+- `src/features/world/SelectedEntityPanel.tsx` : panneau HUD à droite avec nom, kind, tier (couleur selon tier), coordonnées, propriétaire. Boutons "Attaquer (Phase 6)" et "Entrer dans le village (Phase 5)" disabled.
+- `src/features/world/WorldMapCanvas.tsx` : monte la scene Pixi via `PixiCanvas`. Souscrit à `useWorldMapStore` **sans React re-render** (`useWorldMapStore.subscribe(...)`) pour appeler `handle.reconcile()` et `handle.setSelected()` — la scene Pixi est mise à jour à fréquence Pixi, pas React.
+- `src/features/world/WorldMapScreen.tsx` : route `/game/world`. Compose `GameSession` + `GameHeader` + `WorldMapCanvas` + `SelectedEntityPanel`. Lit `useWorldDetailsQuery` pour les dimensions (fallback 500×500), centre initial = mon village si trouvé. Lien "← Retour au village".
+- `src/App.tsx` : route `/game/world` + `WorldMapGuard` (redirect `/my-worlds` si pas de worldId).
+- `src/features/game/GameScreen.tsx` : ajout d'un bouton "Voir la carte du monde →" dans le header de la page village.
+
+**Tests Vitest ajoutés** :
+- `buildMapEntities.test.ts` (4 cas) : map du feed, flag `isMine`, override par mes villages, vide.
+- `worldMap.test.ts` (4 cas) : `setEntities` atomique, `upsertEntity` merge, `removeEntity` clear selection.
+- Total runner : **34 tests / 7 fichiers**.
+
+**Validation live (backend tournant)** :
+- `GET /world/default/entities` → 31 entités (toutes BARBARIAN_VILLAGE, T1/T2/T3) verifiées au début de la phase. Le shape `data.tier` est bien `T1|T2|T3` strings. `data.villageId` présent.
+- Build prod : 478 KB JS gzippé (Pixi v8 + pixi-viewport ajoutés ce coup-ci).
+- type-check, lint, 34 tests verts.
+
+**Écart par rapport au plan** :
+- **Pas d'asset pipeline `Assets.loadBundle`** (4.2) : les 31 villages barbares actuels sont rendus avec des cercles colorés (placeholders Pixi `Graphics`), pas de sprites. C'est cohérent avec la note de `AUTONOMOUS_RUN.md` : "utiliser des Graphics Pixi colorées + labels texte comme placeholders". Les bundles `boot/world-map/village` seront ajoutés Phase 4.x quand les assets sprites seront produits/achetés.
+- **Pas de mini-map** : le HUD compte d'entités suffit en MVP, mini-map repoussée à Phase 4.x.
+- **Pas de stress test 50 000 entités** : pas accès au navigateur en run autonome, donc impossible de mesurer le FPS. **À valider manuellement par le user** ; si la perf chute, prévoir un `ParticleContainer` pour les sprites de tuiles ou pre-baker les chunks (cf. plan §4.4). Avec 31 entités actuelles aucun problème attendu.
+- **Pas de sprites de tuiles individuelles** : le fond est un seul rectangle `Graphics` + une grille discrète. Pour 500×500 = 250 000 tuiles, l'approche tile-par-tile aurait été un anti-pattern de toute façon. Le baking par chunks viendra avec les vrais assets.
+
+**Blockers / questions ouvertes** :
+- Performance 60 fps avec 1000+ villages **non vérifiée** — à profiler côté user. Avec 31 entités, RAS attendu.
+- Le store `worldEntities` est rafraîchi par polling 30s ; un event WS dédié `world.entity.added` (pas dans le snapshot 06) serait plus efficace. À discuter Phase 4.x.
+
+**Commits** :
+- (à venir) `feat(pixi-frontend/world): WorldMapScene with viewport + entity reconciliation`
+
+**Vérification (Definition of Done)** :
+- [x] Au montage de `/game/world`, le canvas Pixi affiche la carte avec grille + cercles colorés des villages.
+- [x] On peut zoomer (wheel), pan (drag), cliquer sur un village → `SelectedEntityPanel` apparaît avec ses infos.
+- [ ] **À valider user** : 60 fps avec une carte 500×500 + 1000 villages affichés (pas profilable sans navigateur).
+- [x] WS : pas de event spécifique pour les entités, mais polling 30s + invalidation manuelle disponible.
+- [x] Tests : `buildMapEntities` (4 cas) + `useWorldMapStore` (4 cas) couvrent la logique de diff entrée/sortie.
+
+**Vérification UI (à confirmer par le user au matin)** :
+- Sur `/game`, un bouton "Voir la carte du monde →" en haut à droite.
+- Cliquer mène à `/game/world` qui affiche le `GameHeader` en haut + un canvas Pixi noir avec une grille rectangulaire bleu sombre.
+- ~31 cercles dispersés représentent les villages barbares (verts T1, dorés T2, rouges T3).
+- Mon village `Smoke village` à (233, 247) doit apparaître en cercle doré au milieu.
+- Pan/Zoom doivent fonctionner (drag souris, wheel) avec une décélération douce.
+- Cliquer sur un cercle ouvre `SelectedEntityPanel` à droite avec son nom, tier, coordonnées. Le label apparaît au-dessus du cercle.
+- Le bouton "← Retour au village" en haut à gauche revient sur `/game`.
+
+**Captures** : —
+
+---
+
+
 ## Phase 3 — HUD complet du village (sans canvas) (2026-05-04)
 
 **Statut** : ✅ Done

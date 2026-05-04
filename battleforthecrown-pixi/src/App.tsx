@@ -9,6 +9,7 @@ import { ProtectedRoute } from '@/features/auth/ProtectedRoute';
 import { WorldSelector } from '@/features/worlds/WorldSelector';
 import { MyWorldsScreen } from '@/features/worlds/MyWorldsScreen';
 import { GameScreen } from '@/features/game/GameScreen';
+import { WorldMapScreen } from '@/features/world/WorldMapScreen';
 import { useGameStore } from '@/stores/game';
 
 function GameGuard() {
@@ -17,6 +18,14 @@ function GameGuard() {
     return <Navigate to="/my-worlds" replace />;
   }
   return <GameScreen />;
+}
+
+function WorldMapGuard() {
+  const worldId = useGameStore((state) => state.worldId);
+  if (!worldId) {
+    return <Navigate to="/my-worlds" replace />;
+  }
+  return <WorldMapScreen />;
 }
 
 export default function App() {
@@ -32,6 +41,7 @@ export default function App() {
             <Route path="/worlds" element={<WorldSelector />} />
             <Route path="/my-worlds" element={<MyWorldsScreen />} />
             <Route path="/game" element={<GameGuard />} />
+            <Route path="/game/world" element={<WorldMapGuard />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
