@@ -35,6 +35,66 @@
 
 <!-- Les entrées s'ajoutent ici, plus récentes en haut -->
 
+## Phase 2 — Couche temps réel : WebSocket + stores liés (2026-05-04)
+
+**Statut** : ✅ Done
+
+**Ce qui a été fait** :
+- `src/api/ws-types.ts` : typage strict des 10 events serveur listés dans `06-api-contract-snapshot.md` (`resources.changed`, `crowns.changed`, `building.completed`, `unit.training.{started,completed}`, `battle.{sent,resolved,returned}`, `village.{attacked,conquered}`) + table `ServerEvents` indexée par nom d'event pour `gameSocket.on<E>(event, handler)`.
+- `src/api/ws.ts` : singleton `gameSocket` (~80 lignes vs 465 du legacy) qui s'appuie sur la **reconnection native socket.io** (`reconnection: true`, attempts 10, delay 500ms→5s) au lieu de la logique custom du legacy. Status FSM `idle | connecting | connected | disconnected` + `subscribeStatus()` pour brancher la HUD. Pas de logique de refresh token : si le token expire, le ProtectedRoute redirigera vers `/auth/login` au prochain render.
+- `src/stores/resources.ts` : `useResourcesStore.byVillageId[villageId] = ResourcesSnapshot { wood, stone, iron, maxPerType, productionRates, lastUpdateTs (ms numeric) }`. `lastUpdateTs` converti d'ISO en ms à l'écriture pour de la math rapide en interpolation.
+- `src/stores/crowns.ts` : `useCrownsStore.byKey[`{userId}:{worldId}`] = CrownsSnapshot { balance, productionRate, lastUpdateTs }`.
+- `src/stores/ui.ts` : `useUiStore` (toasts file FIFO + `openModalId` + `openPanelId` pour Phase 3).
+- `src/api/ws-bindings.ts` : trois reducers purs `applyResourcesChanged`, `applyCrownsChanged`, `applyBuildingCompleted` testables sans socket. `bindServerEvents({ queryClient })` retourne un cleanup combiné qui désinscrit les 3 handlers en une fois.
+- `src/api/queries.ts` : nouveau hook `useResourcesQuery(villageId)` (`staleTime: 0`, `refetchOnMount: 'always'`) pour fetch baseline REST quand on entre dans `/game`.
+- `src/lib/interpolation.ts` : fonctions pures `projectResources(snapshot, nowMs)` et `projectCrowns(snapshot, nowMs)`. Formule `value = base + rate * elapsedHours`, capped à `maxPerType`, clamp anti clock-skew (jamais en arrière).
+- `src/lib/useTickingNow.ts` : hook `useTickingNow(intervalMs)` qui re-render à fréquence fixe — un seul `setInterval` par consumer, pas de duplicat tick par feature.
+- `src/features/resources/useDisplayResources.ts` : `useDisplayResources(villageId)` et `useDisplayCrowns(userId, worldId)` qui combinent store + tick → valeurs interpolées pour le rendu.
+- `src/features/resources/ResourceBar.tsx` : HUD bois / pierre / fer en haut du canvas, valeurs interpolées 1s, badges +N/h, plafond visible. Loading state quand pas de snapshot.
+- `src/features/game/GameSession.tsx` : composant qui orchestre le wiring temps réel d'un sejour `/game` :
+  1. `gameSocket.connect(accessToken)` au mount, `gameSocket.disconnect()` au unmount.
+  2. `gameSocket.joinWorld(worldId)` dès que le statut passe à `connected` (subscribe au status FSM).
+  3. `bindServerEvents({ queryClient })` une fois pour la session.
+  4. Quand `useResourcesQuery` retourne, push baseline dans `useResourcesStore`.
+- `src/App.tsx` : `GameGuard` envelopé de `<GameSession>` + overlay `<ResourceBar>` au-dessus du canvas Pixi (z-10, pointer-events-none pour le wrapper).
+
+**Tests Vitest** :
+- `interpolation.test.ts` (7 cas) : identité à `lastUpdateTs`, +1h, fractional 0.5h, clamp `maxPerType`, anti clock-skew, crowns identité + croissance linéaire.
+- `ws-bindings.test.ts` (4 cas) : write store sur `resources.changed`, écrasement keyed, `crowns.changed`, `building.completed` invalide 2 query keys + push toast `success`.
+- Total : **17 tests passants** (4 fichiers).
+
+**Validation live (backend tournant)** :
+- `POST /village/{id}/upgrade` `{"buildingType":"STONE"}` → 201 (le payload de mutation attend `buildingType`, pas `buildingId` — divergence avec le snapshot, à clarifier Phase 8).
+- Outbox : ligne `resources.changed` créée et `dispatched_at` non-null en <1s. Worker outbox confirmé fonctionnel.
+- Smoke WS via socket.io-client (script Node ad hoc) : connexion établie, event `resources.changed` reçu **1904ms** après le `POST upgrade`. Payload contient bien `villageId`, `wood/stone/iron`, `maxPerType`, `lastUpdateTs`, `productionRates` — exactement ce que mon binding consomme.
+
+**Écart par rapport au plan** :
+- Pas de logique custom de reconnexion : socket.io-client gère déjà attempts + backoff exponentiel, ré-attacher des listeners n'est plus nécessaire (socket.io re-utilise le même socket logique). Le legacy avait 250 lignes de logique custom inutile.
+- Pas de re-fetch automatique du refresh token côté WS : si l'accessToken expire pendant la session, l'utilisateur sera renvoyé sur `/auth/login` par le `ProtectedRoute` au prochain navigate. Acceptable pour le scope migration ; à raffiner Phase 7 si besoin.
+- L'événement `crowns.changed` est consommé par les bindings mais l'UI Crowns elle-même n'est pas affichée Phase 2 (le HUD complet vient Phase 3).
+- `GET /resources/:villageId` ne renvoie pas de champ `villageId` (contrairement au snapshot). On le passe nous-mêmes depuis `useGameStore`. Pas bloquant.
+
+**Blockers / questions ouvertes** :
+- Le payload de `POST /village/{id}/upgrade` attend `{ buildingType: "WOOD" | ... }` côté backend. Le snapshot disait `UpgradeBuildingDto` sans détailler. Phase 8 : aligner snapshot.
+
+**Commits** :
+- (à venir) `feat(pixi-frontend/ws): real-time WebSocket layer + resource HUD`
+
+**Vérification (Definition of Done)** :
+- [x] type-check, lint, tests, build verts (17 tests, 4 fichiers).
+- [x] Backend live : événement `resources.changed` créé et dispatché à chaque `upgrade`, vu via socket.io-client smoke ~1.9s après la mutation.
+- [x] Aucun `pixi.js` import nouveau (le HUD est React/Tailwind).
+
+**Vérification UI (à confirmer par le user au matin)** :
+- Entrer dans `/game` (worldId+villageId set) doit afficher la `ResourceBar` en haut avec Bois / Pierre / Fer + leur taux `+50/h`. Les valeurs doivent **s'incrémenter chaque seconde** (interpolation locale) jusqu'à `1000`.
+- Lancer un upgrade côté backend (curl ou autre frontend) doit faire **resync** la barre instantanément (~1-2s) avec les nouvelles valeurs (déduites du coût).
+- Couper le réseau 5s puis le rétablir : les valeurs continuent d'avancer en local pendant la coupure (interpolation), et au retour on reçoit le prochain `resources.changed` qui resync.
+
+**Captures** : —
+
+---
+
+
 ## Phase 1 — Auth + sélection de monde (HUD pur, pas de canvas) (2026-05-04)
 
 **Statut** : ✅ Done

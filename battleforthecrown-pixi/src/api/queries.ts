@@ -111,6 +111,30 @@ export function useMyVillagesQuery(worldId: string | null) {
   });
 }
 
+export interface ResourcesPayload {
+  wood: number;
+  stone: number;
+  iron: number;
+  maxPerType: number;
+  lastUpdateTs: string;
+  productionRates: { wood: number; stone: number; iron: number };
+}
+
+export function useResourcesQuery(villageId: string | null) {
+  return useQuery<ResourcesPayload>({
+    queryKey: ['resources', villageId],
+    queryFn: () => {
+      if (!villageId) {
+        return Promise.reject(new Error('No village selected'));
+      }
+      return apiClient.get<ResourcesPayload>(`/resources/${villageId}`);
+    },
+    enabled: Boolean(villageId),
+    staleTime: 0,
+    refetchOnMount: 'always',
+  });
+}
+
 export function useLogout() {
   const queryClient = useQueryClient();
   const clearSession = useAuthStore((state) => state.clearSession);
