@@ -1,0 +1,19 @@
+{
+  "name": "battleforthecrown-workspace",
+  "private": true,
+  "workspaces": [
+    "battleforthecrown",
+    "battleforthecrown-backend",
+    "packages/*"
+  ],
+  "scripts": {
+    "postinstall": "yarn workspace @battleforthecrown/shared build",
+    "build": "yarn workspaces run build",
+    "lint": "yarn workspaces run lint",
+    "test": "yarn workspaces run test",
+    "dev:shared": "yarn workspace @battleforthecrown/shared dev"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

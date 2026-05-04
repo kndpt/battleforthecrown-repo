@@ -1,0 +1,57 @@
+{
+  "name": "@battleforthecrown/shared",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./village": {
+      "types": "./dist/village/index.d.ts",
+      "default": "./dist/village/index.js"
+    },
+    "./village/buildings": {
+      "types": "./dist/village/buildings.d.ts",
+      "default": "./dist/village/buildings.js"
+    },
+    "./army": {
+      "types": "./dist/army/index.d.ts",
+      "default": "./dist/army/index.js"
+    },
+    "./combat": {
+      "types": "./dist/combat/index.d.ts",
+      "default": "./dist/combat/index.js"
+    },
+    "./crowns": {
+      "types": "./dist/crowns/index.d.ts",
+      "default": "./dist/crowns/index.js"
+    },
+    "./power": {
+      "types": "./dist/power/index.d.ts",
+      "default": "./dist/power/index.js"
+    },
+    "./world": {
+      "types": "./dist/world/index.d.ts",
+      "default": "./dist/world/index.js"
+    },
+    "./resources": {
+      "types": "./dist/resources/index.d.ts",
+      "default": "./dist/resources/index.js"
+    },
+    "./logic": {
+      "types": "./dist/logic/index.d.ts",
+      "default": "./dist/logic/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "prepare": "tsc -p tsconfig.json"
+  }
+}
