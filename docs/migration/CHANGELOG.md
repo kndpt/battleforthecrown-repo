@@ -35,6 +35,75 @@
 
 <!-- Les entrées s'ajoutent ici, plus récentes en haut -->
 
+## Phase 1 — Auth + sélection de monde (HUD pur, pas de canvas) (2026-05-04)
+
+**Statut** : ✅ Done
+
+**Ce qui a été fait** :
+- `src/lib/types.ts` réécrit en évitant `enum` (interdit par `erasableSyntaxOnly`) → `BuildingType`, `UnitType`, `ExpeditionStatus`, `TargetKind` deviennent des `as const` objects + types literal. `any[]` → `unknown[]`.
+- `src/lib/{gameHelpers,combatHelpers,resourceConfig,unitConfig}.ts` portés depuis le legacy. `gameHelpers` retypé pour virer le `any`.
+- `src/ui/` copié intégralement depuis le legacy. Ajustements :
+  - `ToastProvider` : `useToast` extrait dans `useToast.ts` + `toast-context.ts` (Fast Refresh ESLint compliance).
+  - `Tooltip` : `setMounted(true)` dans `useEffect` annoté `eslint-disable-next-line react-hooks/set-state-in-effect`.
+  - `PopulationIndicator` : la dépendance vers le hook `usePopulation` (Phase 3) remplacée par des props (`availablePopulation`, `loading`).
+  - `HeaderActions` : composant placeholder, code mort retiré.
+- `tsconfig.app.json` : `verbatimModuleSyntax` désactivé temporairement (sera réactivé Phase 7), `paths` `@/*` configuré (TS 6 syntax sans `baseUrl`).
+- `vite.config.ts` + `vitest.config.ts` : alias `@/` → `./src` aligné.
+- `src/api/client.ts` : `ApiClient` typé strict, `request<T>(path, options)`, helpers `get/post/patch/delete`, refresh JWT auto sur 401 avec dédoublonnage `refreshInflight` (pas de double refresh en cas de requêtes concurrentes), `x-world-id` / `x-village-id` injectés depuis le `gameContext` adapter, `ApiError` typé.
+- `src/api/types.ts` : `AuthSessionResponse` (shape réelle backend `{ accessToken, refreshToken, userId, email }`) avec helper `toAuthSession()`. **Drift identifié** entre `06-api-contract-snapshot.md` (`{ accessToken, refreshToken, user }`) et le code backend réel — la réalité l'emporte, snapshot à mettre à jour Phase 8.
+- `src/api/queries.ts` : `useLoginMutation`, `useRegisterMutation`, `useWorldsQuery`, `useMyMembershipsQuery`, `useJoinWorldMutation`, `useMyVillagesQuery`, `useLogout`. Toutes câblées via TanStack Query v5.
+- `src/api/query-client.ts` : `QueryClient` global avec defaults raisonnables (`staleTime: 30s`, retry désactivé sur 401/403/404 et sur les mutations).
+- `src/stores/auth.ts` (Zustand persist `bftc-auth`) : `accessToken`, `refreshToken`, `user`, `setSession`, `setTokens`, `clearSession`, sélecteur `selectIsAuthenticated`.
+- `src/stores/game.ts` (Zustand persist `bftc-game`) : `worldId`, `villageId`, `setWorld`, `setVillage`, `setContext`, `clear`.
+- `src/api/index.ts` : `apiClient` singleton qui branche les deux stores via les adapters.
+- Écrans `src/features/` :
+  - `auth/LandingScreen.tsx` (page `/`).
+  - `auth/LoginScreen.tsx`, `auth/RegisterScreen.tsx` (validation `zod`, gestion erreurs, état loading).
+  - `auth/ProtectedRoute.tsx` (redirect `/auth/login` si pas de token).
+  - `worlds/WorldSelector.tsx` (`/worlds` → liste mondes + bouton join avec un nom de village par défaut basé sur l'email).
+  - `worlds/MyWorldsScreen.tsx` (`/my-worlds` → mondes du user, bouton "Entrer" qui fetch le 1er village du user dans le monde puis navigate `/game`).
+- `src/App.tsx` : routes `/`, `/auth/login`, `/auth/register`, `/worlds`, `/my-worlds`, `/game`. `ProtectedRoute` enveloppe `/worlds`, `/my-worlds`, `/game`. `GameGuard` redirige vers `/my-worlds` si `worldId` est null. `QueryClientProvider` + `ReactQueryDevtools` (DEV only).
+- ESLint flat config : ajout de `argsIgnorePattern: '^_'` (et `caughtErrors`/`vars`) sur `@typescript-eslint/no-unused-vars`.
+- Tests Vitest :
+  - `src/api/client.test.ts` (4 cas) : GET avec auth header, refresh sur 401 + retry, refresh failed → clear tokens + throw, body sérialisé + `x-world-id`/`x-village-id` depuis `gameContext`.
+  - `src/lib/cn.test.ts` (2 cas) inchangés depuis Phase 0.
+- Validation backend live : `POST /auth/register` → 201, `POST /auth/login` → 200, `POST /world/default/join` → 201 (membership + village créés en DB, vérifié via `psql`), `GET /world/users/:userId/memberships` → 1 entry, `GET /village?worldId=&userId=` → 1 village.
+
+**Écart par rapport au plan** :
+- `src/lib/types.ts` : pas une copie littérale (les `enum` sont incompatibles avec `erasableSyntaxOnly: true` du tsconfig moderne). Conversion en `as const` objects → API d'usage identique (`BuildingType.CASTLE` reste `'CASTLE'`).
+- `verbatimModuleSyntax` désactivé pour ne pas bloquer la migration. Les imports `type` corrects sont une correction qu'on fera Phase 7 (script automatisé). Pour l'instant, on perd un peu de tree-shaking mais rien de critique.
+- Le `WorldMembership` du backend ne contient PAS de `villageId`. Il faut une query séparée `GET /village?worldId&userId` pour récupérer le 1er village du user → ajout de `useMyVillagesQuery` non prévue dans le plan.
+- `Drift backend ↔ snapshot` documenté ci-dessus pour `auth.service.ts`. À aligner Phase 8.
+
+**Blockers / questions ouvertes** :
+- Aucun.
+
+**Commits** :
+- (à venir) `feat(pixi-frontend/auth): port lib helpers + UI primitives`
+- (à venir) `feat(pixi-frontend/auth): API client, stores, queries, screens`
+
+**Vérification (Definition of Done)** :
+- [x] `yarn workspace battleforthecrown-pixi type-check` → propre.
+- [x] `yarn workspace battleforthecrown-pixi lint` → propre.
+- [x] `yarn workspace battleforthecrown-pixi test` → 6 tests passants (2 fichiers).
+- [x] `yarn workspace battleforthecrown-pixi build` → bundle prod produit.
+- [x] **Aucun import `pixi.js`** dans les écrans Phase 1 — c'est volontaire, on valide la plomberie React+API d'abord (le canvas Pixi reste sur `/game` via `HelloPixiScene` héritée de Phase 0).
+- [x] Backend live : register, login, join, memberships, villages testés via curl, données présentes en DB (1 user + 1 membership + 1 village `Smoke village` à (233, 247)).
+
+**Vérification UI (à confirmer par le user au matin)** :
+- `/` doit afficher la landing page avec les boutons "Connexion" et "Créer un compte" (ou "Reprendre" si déjà connecté).
+- `/auth/register` → formulaire email/password/confirm. Submit → POST `/auth/register` → set session → navigate `/worlds`.
+- `/auth/login` → formulaire email/password. Submit → POST `/auth/login` → set session → navigate `/my-worlds`.
+- `/worlds` → liste avec "Default World", bouton "Rejoindre" → POST `/world/default/join` → navigate `/game`. Si déjà rejoint, le bouton devient "Déjà rejoint".
+- `/my-worlds` → "Default World — 1 village", bouton "Entrer" → fetch villages → navigate `/game`.
+- `/game` (via context worldId) → affiche le `HelloPixiScene` (canvas Pixi avec "Hello Pixi" doré). Sans worldId, redirect vers `/my-worlds`.
+- Persist : refresh navigateur → session conservée (localStorage `bftc-auth` + `bftc-game`).
+
+**Captures** : —
+
+---
+
+
 ## Phase 0 — Skill, scaffold, plomberie (2026-05-04)
 
 **Statut** : ✅ Done

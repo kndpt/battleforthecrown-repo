@@ -1,56 +1,43 @@
-import { BrowserRouter, Link, Navigate, Route, Routes } from 'react-router';
-import { HelloPixiScene } from './features/HelloPixiScene';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
+import { queryClient } from '@/api/query-client';
+import { LandingScreen } from '@/features/auth/LandingScreen';
+import { LoginScreen } from '@/features/auth/LoginScreen';
+import { RegisterScreen } from '@/features/auth/RegisterScreen';
+import { ProtectedRoute } from '@/features/auth/ProtectedRoute';
+import { WorldSelector } from '@/features/worlds/WorldSelector';
+import { MyWorldsScreen } from '@/features/worlds/MyWorldsScreen';
+import { HelloPixiScene } from '@/features/HelloPixiScene';
+import { useGameStore } from '@/stores/game';
 
-function HomeScreen() {
-  return (
-    <main className="flex h-full flex-col items-center justify-center gap-6 px-6 text-center">
-      <h1 className="font-game text-5xl text-game-gold-light text-shadow-game">Battle for the Crown</h1>
-      <p className="max-w-md text-base text-parchment/80">
-        Migration vers Vite + React + PixiJS v8 en cours. Phase 0 — scaffold.
-      </p>
-      <div className="flex gap-4">
-        <Link
-          to="/auth/login"
-          className="rounded border border-game-gold-border bg-game-gold-dark px-6 py-2 text-sm uppercase tracking-widest text-white shadow-game-inset hover:bg-game-gold-light"
-        >
-          Login (placeholder)
-        </Link>
-        <Link
-          to="/game"
-          className="rounded border border-game-green-border bg-game-green-dark px-6 py-2 text-sm uppercase tracking-widest text-white shadow-game-inset hover:bg-game-green-light"
-        >
-          Open Pixi canvas
-        </Link>
-      </div>
-    </main>
-  );
-}
-
-function LoginPlaceholderScreen() {
-  return (
-    <main className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
-      <h2 className="font-game text-3xl text-game-gold-light">Login</h2>
-      <p className="text-parchment/80">Implémenté en Phase 1.</p>
-      <Link to="/" className="text-sm uppercase tracking-widest text-game-blue-light underline">
-        ← Retour
-      </Link>
-    </main>
-  );
-}
-
-function GameScreen() {
+function GameGuard() {
+  const worldId = useGameStore((state) => state.worldId);
+  if (!worldId) {
+    return <Navigate to="/my-worlds" replace />;
+  }
   return <HelloPixiScene />;
 }
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomeScreen />} />
-        <Route path="/auth/login" element={<LoginPlaceholderScreen />} />
-        <Route path="/game" element={<GameScreen />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<LandingScreen />} />
+          <Route path="/auth/login" element={<LoginScreen />} />
+          <Route path="/auth/register" element={<RegisterScreen />} />
+
+          <Route element={<ProtectedRoute />}>
+            <Route path="/worlds" element={<WorldSelector />} />
+            <Route path="/my-worlds" element={<MyWorldsScreen />} />
+            <Route path="/game" element={<GameGuard />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+      {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+    </QueryClientProvider>
   );
 }

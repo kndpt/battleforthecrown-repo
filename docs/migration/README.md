@@ -17,8 +17,8 @@
 | Consolidation documentaire (Phase 8) | ✅ Rédigé | [07-doc-consolidation.md](./07-doc-consolidation.md) |
 | **Validation user** | ✅ Validée le 2026-05-04 | Vite + Zustand+TanStack + nouveau dossier |
 | Phase 0 — DB + backend + scaffold Vite | ✅ Done (2026-05-04) | [CHANGELOG](./CHANGELOG.md#phase-0--skill-scaffold-plomberie-2026-05-04) |
-| Phase 1 — Auth + sélection monde | ⏳ Suivante | — |
-| Phase 2 — WebSocket + stores | ⏳ — | — |
+| Phase 1 — Auth + sélection monde | ✅ Done (2026-05-04) | [CHANGELOG](./CHANGELOG.md#phase-1--auth--sélection-de-monde-hud-pur-pas-de-canvas-2026-05-04) |
+| Phase 2 — WebSocket + stores | ⏳ Suivante | — |
 | Phase 3 — HUD village | ⏳ — | — |
 | Phase 4 — WorldMap PixiJS | ⏳ — | — |
 | Phase 5 — VillageScene PixiJS | ⏳ — | — |

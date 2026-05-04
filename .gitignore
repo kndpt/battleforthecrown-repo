@@ -26,6 +26,10 @@ packages/shared/dist/
 .idea/
 .trae/
 
+# Claude Code per-session state
+.claude/scheduled_tasks.lock
+.claude/settings.local.json
+
 # Legacy doc — replaced by docs/migration/ + Phase 8 consolidation
 WARP.md
 
