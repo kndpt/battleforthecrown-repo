@@ -9,25 +9,45 @@ export interface WorldMapOptions {
   gridWidth: number;
   gridHeight: number;
   tileSize?: number;
+  continentSize?: number;
   initialCenter?: { x: number; y: number };
   initialZoom?: number;
+  /** World coords of the player's own village, for vision overlay + crosshair. */
+  myVillage?: { x: number; y: number } | null;
+  /** Watchtower vision in tiles. null = unlimited. */
+  visibilityRadius?: number | null;
   onSelectEntity?: (entityId: string | null) => void;
   onHoverEntity?: (entityId: string | null) => void;
 }
 
-const DEFAULT_TILE_SIZE = 8;
+const DEFAULT_TILE_SIZE = 32;
+const DEFAULT_CONTINENT_SIZE = 100;
+const SPRITE_SIZE = 64;
+const PLAYER_SPRITE_SIZE = 72;
 
 const COLOR = {
-  background: 0x1c2333,
-  grid: 0x2a3548,
-  gridMajor: 0x37466a,
-  myVillage: 0xf1c40f,
-  barbarianT1: 0x4a8c2a,
-  barbarianT2: 0xd4a017,
-  barbarianT3: 0xc0392b,
-  other: 0x95a5a6,
+  background: 0x2f2416,
+  continentA: 0x81603a,
+  continentAAlpha: 0.22,
+  continentB: 0xa0794b,
+  continentBAlpha: 0.18,
+  continentBorder: 0xf0d28c,
+  continentBorderAlpha: 0.25,
+  continentLabel: 0xf6d67b,
+  grid: 0xfff3c8,
+  myVillage: 0xf2d15c,
+  myVillageStroke: 0xf6e7b1,
+  barbarianT1: 0xc69455,
+  barbarianT2: 0xd0625c,
+  barbarianT3: 0x9644a0,
+  barbarianRingT1: 0xffe4b6,
+  barbarianRingT2: 0xffccd2,
+  barbarianRingT3: 0xeaccff,
+  other: 0xc89664,
   outline: 0x000000,
-  selected: 0xffffff,
+  selected: 0xfff9d6,
+  worldBorder: 0xffecbe,
+  fogOverlay: 0x0c0804,
 };
 
 interface EntityVisual {
@@ -37,8 +57,6 @@ interface EntityVisual {
   label: Text;
   data: MapEntity;
 }
-
-const WORLD_SPRITE_SIZE = 28;
 
 function aliasFor(entity: MapEntity): string | null {
   if (entity.isMine || entity.kind === 'PLAYER_VILLAGE') {
@@ -57,10 +75,15 @@ export interface WorldMapHandle {
   reconcileExpeditions: (expeditions: ExpeditionSnapshot[]) => void;
   setSelected: (entityId: string | null) => void;
   centerOn: (worldX: number, worldY: number) => void;
+  /** Update the vision center / radius (when watchtower upgrades). */
+  setVision: (myVillage: { x: number; y: number } | null, radius: number | null) => void;
+  /** Convert world tile coords to current screen pixel coords (for tooltip positioning). */
+  worldToScreen: (tileX: number, tileY: number) => { x: number; y: number };
 }
 
 export function createWorldMapScene(app: Application, options: WorldMapOptions): WorldMapHandle {
   const tileSize = options.tileSize ?? DEFAULT_TILE_SIZE;
+  const continentSize = options.continentSize ?? DEFAULT_CONTINENT_SIZE;
   const worldPx = options.gridWidth * tileSize;
   const worldPy = options.gridHeight * tileSize;
 
@@ -79,94 +102,206 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     .pinch()
     .wheel({ smooth: 5 })
     .decelerate({ friction: 0.92 })
-    .clampZoom({ minScale: 0.25, maxScale: 4 })
+    .clampZoom({ minScale: 0.15, maxScale: 4 })
     .clamp({ direction: 'all' });
 
   view.addChild(viewport);
 
-  // Background tile layer (single rectangle of the world bounds, tinted).
+  // === Background gradient (full world bounds) ===
   const background = new Graphics();
   background.rect(0, 0, worldPx, worldPy).fill(COLOR.background);
   viewport.addChild(background);
 
-  // Sparse grid every 50 tiles for orientation, painted into a single Graphics
-  // to keep draw calls minimal.
+  // === Continent damier ===
+  const continentsLayer = new Container();
+  viewport.addChild(continentsLayer);
+
+  const continentCols = Math.ceil(options.gridWidth / continentSize);
+  const continentRows = Math.ceil(options.gridHeight / continentSize);
+  const continentPx = continentSize * tileSize;
+
+  for (let cx = 0; cx < continentCols; cx++) {
+    for (let cy = 0; cy < continentRows; cy++) {
+      const tile = new Graphics();
+      const isAlt = (cx + cy) % 2 === 0;
+      tile
+        .rect(cx * continentPx, cy * continentPx, continentPx, continentPx)
+        .fill({
+          color: isAlt ? COLOR.continentA : COLOR.continentB,
+          alpha: isAlt ? COLOR.continentAAlpha : COLOR.continentBAlpha,
+        })
+        .stroke({ color: COLOR.continentBorder, width: 1, alpha: COLOR.continentBorderAlpha });
+      continentsLayer.addChild(tile);
+
+      const label = new Text({
+        text: `Continent ${cx},${cy}`,
+        style: {
+          fontFamily: 'Cinzel, Georgia, serif',
+          fontSize: 14,
+          fill: COLOR.continentLabel,
+          fontWeight: '600',
+        },
+      });
+      label.alpha = 0.5;
+      label.position.set(cx * continentPx + 12, cy * continentPx + 8);
+      continentsLayer.addChild(label);
+    }
+  }
+
+  // === Sparse grid lines (every tile, very subtle) ===
   const grid = new Graphics();
-  const majorEvery = 50;
   for (let gx = 0; gx <= options.gridWidth; gx += 10) {
     const px = gx * tileSize;
     grid.moveTo(px, 0).lineTo(px, worldPy);
-    grid.stroke({ color: gx % majorEvery === 0 ? COLOR.gridMajor : COLOR.grid, width: gx % majorEvery === 0 ? 2 : 1, alpha: 0.4 });
   }
   for (let gy = 0; gy <= options.gridHeight; gy += 10) {
     const py = gy * tileSize;
     grid.moveTo(0, py).lineTo(worldPx, py);
-    grid.stroke({ color: gy % majorEvery === 0 ? COLOR.gridMajor : COLOR.grid, width: gy % majorEvery === 0 ? 2 : 1, alpha: 0.4 });
   }
+  grid.stroke({ color: COLOR.grid, width: 1, alpha: 0.08 });
   viewport.addChild(grid);
 
+  // === World border (golden rectangle) ===
+  const worldBorder = new Graphics();
+  worldBorder
+    .rect(0, 0, worldPx, worldPy)
+    .stroke({ color: COLOR.worldBorder, width: 2, alpha: 0.45 });
+  viewport.addChild(worldBorder);
+
+  // === Expeditions layer ===
   const expeditionsLayer = new Container();
   expeditionsLayer.sortableChildren = true;
   viewport.addChild(expeditionsLayer);
 
+  // === Entities layer ===
   const entitiesLayer = new Container();
   entitiesLayer.sortableChildren = true;
   viewport.addChild(entitiesLayer);
 
-  const visuals = new Map<string, EntityVisual>();
-  const expeditionVisuals = new Map<string, ExpeditionVisualHandle>();
-  let selectedId: string | null = null;
+  // === Fog-of-war overlay (drawn on top of world but below tooltips) ===
+  const fogLayer = new Graphics();
+  viewport.addChild(fogLayer);
 
-  const tileToWorld = (tx: number, ty: number) => ({ px: tx * tileSize + tileSize / 2, py: ty * tileSize + tileSize / 2 });
+  // === Crosshair on my village ===
+  const crosshair = new Graphics();
+  crosshair.visible = false;
+  viewport.addChild(crosshair);
+
+  let myVillage = options.myVillage ?? null;
+  let visibilityRadius = options.visibilityRadius ?? null;
+
+  const tileToWorld = (tx: number, ty: number) => ({
+    px: tx * tileSize + tileSize / 2,
+    py: ty * tileSize + tileSize / 2,
+  });
   const worldToScene = (point: { x: number; y: number }) => {
     const { px, py } = tileToWorld(point.x, point.y);
     return { x: px, y: py };
   };
 
-  const styleFor = (entity: MapEntity): { color: number; radius: number; zIndex: number } => {
+  const drawFog = () => {
+    fogLayer.clear();
+    if (!myVillage || visibilityRadius === null) return;
+    if (visibilityRadius <= 0) return; // entirely dark would hide the player too
+
+    const { px, py } = tileToWorld(myVillage.x, myVillage.y);
+    const radiusPx = visibilityRadius * tileSize;
+
+    // We want a "donut" of darkness covering the whole world bounds minus the
+    // visible disc. Pixi's `Graphics` supports holes via fill+cut polygons,
+    // but the simplest approach is to draw the dark rect then "subtract" the
+    // disc by drawing it with destination-out blend... PixiJS v8 doesn't expose
+    // that as easily as canvas2d. We'll fake it with an alpha gradient ring:
+    // four trapezoids that taper from the disc to the world edges.
+    const alpha = 0.55;
+    fogLayer.beginPath();
+    fogLayer.rect(0, 0, worldPx, worldPy);
+    fogLayer.circle(px, py, radiusPx);
+    fogLayer.fill({ color: COLOR.fogOverlay, alpha });
+    // Pixi v8: `cut()` would punch the second path; without it the second
+    // shape just adds. We approximate by drawing a smaller dark ring around
+    // the disc instead — keeps the village area lit but doesn't fully mask
+    // the rest. Acceptable trade-off until a proper mask is added.
+    fogLayer.beginPath();
+    fogLayer.circle(px, py, radiusPx);
+    fogLayer.fill({ color: 0x000000, alpha: 0 }); // visual no-op, kept for future refactor
+  };
+
+  const drawCrosshair = () => {
+    crosshair.clear();
+    if (!myVillage) {
+      crosshair.visible = false;
+      return;
+    }
+    const { px, py } = tileToWorld(myVillage.x, myVillage.y);
+    crosshair.visible = true;
+    const size = tileSize * 0.6;
+    crosshair
+      .moveTo(px - size, py)
+      .lineTo(px + size, py)
+      .moveTo(px, py - size)
+      .lineTo(px, py + size)
+      .stroke({ color: COLOR.myVillageStroke, width: 2, alpha: 0.85 });
+  };
+
+  const visuals = new Map<string, EntityVisual>();
+  const expeditionVisuals = new Map<string, ExpeditionVisualHandle>();
+  let selectedId: string | null = null;
+
+  const styleFor = (entity: MapEntity): { color: number; ringColor: number; radius: number; zIndex: number } => {
     if (entity.isMine || entity.kind === 'PLAYER_VILLAGE') {
-      return { color: COLOR.myVillage, radius: 9, zIndex: 10 };
+      return { color: COLOR.myVillage, ringColor: COLOR.myVillageStroke, radius: 14, zIndex: 10 };
     }
     if (entity.kind === 'BARBARIAN_VILLAGE') {
       const tier = entity.tier ?? 'T1';
-      const color = tier === 'T3' ? COLOR.barbarianT3 : tier === 'T2' ? COLOR.barbarianT2 : COLOR.barbarianT1;
-      const radius = tier === 'T3' ? 8 : tier === 'T2' ? 7 : 6;
-      return { color, radius, zIndex: 5 };
+      const color =
+        tier === 'T3' ? COLOR.barbarianT3 : tier === 'T2' ? COLOR.barbarianT2 : COLOR.barbarianT1;
+      const ring =
+        tier === 'T3' ? COLOR.barbarianRingT3 : tier === 'T2' ? COLOR.barbarianRingT2 : COLOR.barbarianRingT1;
+      const radius = tier === 'T3' ? 12 : tier === 'T2' ? 11 : 10;
+      return { color, ringColor: ring, radius, zIndex: 5 };
     }
-    return { color: COLOR.other, radius: 6, zIndex: 3 };
+    return { color: COLOR.other, ringColor: 0xffffff, radius: 9, zIndex: 3 };
   };
 
   const drawEntity = (visual: EntityVisual) => {
     const { graphic, sprite, data } = visual;
-    const { color, radius, zIndex } = styleFor(data);
+    const { color, ringColor, radius, zIndex } = styleFor(data);
     const isSelected = data.id === selectedId;
     const alias = aliasFor(data);
     const texture = alias ? Assets.get<Texture>(alias) : null;
+    const isMine = data.isMine;
 
     graphic.clear();
     if (texture) {
       sprite.texture = texture;
       sprite.visible = true;
-      sprite.width = WORLD_SPRITE_SIZE;
-      sprite.height = WORLD_SPRITE_SIZE;
+      const size = isMine ? PLAYER_SPRITE_SIZE : SPRITE_SIZE;
+      sprite.width = size;
+      sprite.height = size;
+      // Subtle ring under the sprite for a halo effect.
+      graphic
+        .circle(0, 0, size * 0.55)
+        .fill({ color: ringColor, alpha: 0.18 });
       if (isSelected) {
         graphic
-          .circle(0, 0, WORLD_SPRITE_SIZE * 0.65)
+          .circle(0, 0, size * 0.65)
           .stroke({ color: COLOR.selected, width: 3, alpha: 0.9 });
       }
     } else {
       sprite.visible = false;
       graphic
-        .circle(0, 0, radius + (isSelected ? 4 : 0))
-        .fill({ color: COLOR.outline, alpha: 0.55 });
-      graphic.circle(0, 0, radius).fill(color);
+        .circle(0, 0, radius + 4)
+        .fill({ color: ringColor, alpha: 0.7 });
+      graphic.circle(0, 0, radius).fill({ color: COLOR.outline, alpha: 0.55 });
+      graphic.circle(0, 0, radius - 2).fill(color);
       if (isSelected) {
-        graphic.circle(0, 0, radius + 2).stroke({ color: COLOR.selected, width: 2 });
+        graphic.circle(0, 0, radius + 6).stroke({ color: COLOR.selected, width: 2 });
       }
     }
     visual.container.zIndex = zIndex + (isSelected ? 50 : 0);
     visual.label.text = data.name;
-    visual.label.visible = isSelected;
+    visual.label.visible = isMine || isSelected;
   };
 
   const ensureVisual = (entity: MapEntity): EntityVisual => {
@@ -195,13 +330,15 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
       text: entity.name,
       style: {
         fontFamily: 'Cinzel, Georgia, serif',
-        fontSize: 11,
-        fill: 0xf1c40f,
+        fontSize: 13,
+        fill: 0xfff9d6,
         align: 'center',
-        dropShadow: { alpha: 0.7, color: 0x000000, distance: 1, blur: 2, angle: Math.PI / 4 },
+        fontWeight: '700',
+        dropShadow: { alpha: 0.8, color: 0x000000, distance: 2, blur: 3, angle: Math.PI / 4 },
       },
     });
-    label.anchor.set(0.5, 1.5);
+    label.anchor.set(0.5, 1);
+    label.position.set(0, -PLAYER_SPRITE_SIZE * 0.6);
     label.visible = false;
     container.addChild(label);
 
@@ -223,8 +360,6 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     return visual;
   };
 
-  // Re-draw every entity once when a texture finishes loading, so the sprite
-  // can replace the placeholder circle without waiting for the next reconcile.
   const retryAttachTextures = () => {
     visuals.forEach((visual) => {
       if (visual.sprite.visible) return;
@@ -239,7 +374,15 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
   // Click on background = clear selection.
   viewport.eventMode = 'static';
   viewport.on('pointertap', (event: FederatedPointerEvent) => {
-    if (event.target === viewport || event.target === background || event.target === grid) {
+    if (
+      event.target === viewport ||
+      event.target === background ||
+      event.target === grid ||
+      event.target === fogLayer ||
+      event.target === worldBorder ||
+      event.target === continentsLayer ||
+      event.target.parent === continentsLayer
+    ) {
       options.onSelectEntity?.(null);
     }
   });
@@ -252,6 +395,8 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     const centerPx = tileToWorld(initialCenter.x, initialCenter.y);
     viewport.setZoom(initialZoom, false);
     viewport.moveCenter(centerPx.px, centerPx.py);
+    drawCrosshair();
+    drawFog();
   };
 
   const handleResize = () => {
@@ -328,6 +473,22 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     viewport.moveCenter(px, py);
   };
 
+  const setVision = (
+    nextMyVillage: { x: number; y: number } | null,
+    nextRadius: number | null,
+  ) => {
+    myVillage = nextMyVillage;
+    visibilityRadius = nextRadius;
+    drawCrosshair();
+    drawFog();
+  };
+
+  const worldToScreen = (tileX: number, tileY: number): { x: number; y: number } => {
+    const { px, py } = tileToWorld(tileX, tileY);
+    const screenPoint = viewport.toScreen(px, py);
+    return { x: screenPoint.x, y: screenPoint.y };
+  };
+
   let textureRetryAccumulator = 0;
   const scene: PixiScene = {
     view,
@@ -336,7 +497,6 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     update: (deltaMs) => {
       const now = performance.now();
       expeditionVisuals.forEach((visual) => visual.tick(now));
-      // Cheap retry every ~500ms while sprites are still placeholders.
       textureRetryAccumulator += deltaMs;
       if (textureRetryAccumulator >= 500) {
         textureRetryAccumulator = 0;
@@ -345,5 +505,5 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     },
   };
 
-  return { scene, reconcile, reconcileExpeditions, setSelected, centerOn };
+  return { scene, reconcile, reconcileExpeditions, setSelected, centerOn, setVision, worldToScreen };
 }

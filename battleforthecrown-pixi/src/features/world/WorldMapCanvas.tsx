@@ -10,12 +10,14 @@ import type { MapEntity } from '@/api/world-types';
 
 export interface WorldMapCanvasController {
   centerOn: (worldX: number, worldY: number) => void;
+  worldToScreen: (tileX: number, tileY: number) => { x: number; y: number };
 }
 
 interface WorldMapCanvasProps {
   gridWidth: number;
   gridHeight: number;
   myVillage?: MapEntity | null;
+  visibilityRadius?: number | null;
   controllerRef?: MutableRefObject<WorldMapCanvasController | null>;
 }
 
@@ -23,6 +25,7 @@ export function WorldMapCanvas({
   gridWidth,
   gridHeight,
   myVillage,
+  visibilityRadius = null,
   controllerRef,
 }: WorldMapCanvasProps) {
   const setSelectedEntity = useWorldMapStore((state) => state.setSelectedEntity);
@@ -38,14 +41,18 @@ export function WorldMapCanvas({
       const handle = createWorldMapScene(app, {
         gridWidth,
         gridHeight,
-        tileSize: 8,
         initialCenter: { x: initialCenter.x, y: initialCenter.y },
         initialZoom: 1,
+        myVillage: myVillage ? { x: myVillage.x, y: myVillage.y } : null,
+        visibilityRadius,
         onSelectEntity: (id) => setSelectedEntity(id),
       });
       handleRef.current = handle;
       if (controllerRef) {
-        controllerRef.current = { centerOn: handle.centerOn };
+        controllerRef.current = {
+          centerOn: handle.centerOn,
+          worldToScreen: handle.worldToScreen,
+        };
       }
 
       manager.register('world-map', () => handle.scene);
@@ -79,8 +86,25 @@ export function WorldMapCanvas({
         manager.destroy();
       };
     },
-    [gridWidth, gridHeight, initialCenter.x, initialCenter.y, setSelectedEntity, controllerRef],
+    [
+      gridWidth,
+      gridHeight,
+      initialCenter.x,
+      initialCenter.y,
+      myVillage,
+      visibilityRadius,
+      setSelectedEntity,
+      controllerRef,
+    ],
   );
+
+  // Update vision overlay when watchtower upgrades without remounting the scene.
+  useEffect(() => {
+    handleRef.current?.setVision(
+      myVillage ? { x: myVillage.x, y: myVillage.y } : null,
+      visibilityRadius,
+    );
+  }, [myVillage, visibilityRadius]);
 
   useEffect(() => {
     return () => {
