@@ -19,6 +19,12 @@ const GameScreen = lazy(() =>
 const WorldMapScreen = lazy(() =>
   import('@/features/world/WorldMapScreen').then((m) => ({ default: m.WorldMapScreen })),
 );
+const ArmyScreen = lazy(() =>
+  import('@/features/army/ArmyScreen').then((m) => ({ default: m.ArmyScreen })),
+);
+const MessagesScreen = lazy(() =>
+  import('@/features/combat/MessagesScreen').then((m) => ({ default: m.MessagesScreen })),
+);
 const UiTestScreen = lazy(() =>
   import('@/features/ui-test/UiTestScreen').then((m) => ({ default: m.UiTestScreen })),
 );
@@ -55,6 +61,30 @@ function WorldMapGuard() {
   );
 }
 
+function ArmyGuard() {
+  const worldId = useGameStore((state) => state.worldId);
+  if (!worldId) {
+    return <Navigate to="/my-worlds" replace />;
+  }
+  return (
+    <Suspense fallback={<GameLoader />}>
+      <ArmyScreen />
+    </Suspense>
+  );
+}
+
+function MessagesGuard() {
+  const worldId = useGameStore((state) => state.worldId);
+  if (!worldId) {
+    return <Navigate to="/my-worlds" replace />;
+  }
+  return (
+    <Suspense fallback={<GameLoader />}>
+      <MessagesScreen />
+    </Suspense>
+  );
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -77,6 +107,8 @@ export default function App() {
             <Route path="/my-worlds" element={<MyWorldsScreen />} />
             <Route path="/game" element={<GameGuard />} />
             <Route path="/game/world" element={<WorldMapGuard />} />
+            <Route path="/game/army" element={<ArmyGuard />} />
+            <Route path="/game/messages" element={<MessagesGuard />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
