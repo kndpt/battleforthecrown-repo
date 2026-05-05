@@ -1,82 +1,105 @@
+export type BuildingCardVariant = 'parchment' | 'wood' | 'stone';
+
 export interface BuildingMeta {
+  /** French label as used in the legacy. */
   label: string;
-  emoji: string;
+  /** Full description shown in the BuildingDetailModal. */
+  description: string;
   /** PNG asset under /public, or null when no sprite is available yet. */
   iconPath: string | null;
-  description: string;
-  /** Order shown in the grid. */
+  /** Emoji fallback when iconPath is null. */
+  emoji: string;
+  /** Card variant matching the legacy BUILDING_CARD_VARIANTS table. */
+  cardVariant: BuildingCardVariant;
+  /** Order shown in the grid (Castle first). */
   sortKey: number;
 }
 
 export const BUILDING_META: Record<string, BuildingMeta> = {
   CASTLE: {
     label: 'Château',
-    emoji: '🏰',
+    description:
+      'Le cœur de votre royaume. Son niveau augmente la vitesse de construction de tous les bâtiments.',
     iconPath: '/assets/castle.png',
-    description: 'Le cœur du village',
+    emoji: '🏰',
+    cardVariant: 'parchment',
     sortKey: 0,
   },
   WOOD: {
     label: 'Camp de bûcherons',
+    description: 'Produit du bois en continu. Essentiel pour toute construction.',
+    iconPath: '/assets/wood.png',
     emoji: '🪓',
-    iconPath: '/assets/resources/wood.png',
-    description: 'Produit du bois',
+    cardVariant: 'wood',
     sortKey: 1,
   },
   STONE: {
-    label: 'Carrière',
-    emoji: '⛏️',
+    label: 'Carrière de pierre',
+    description:
+      'Extrait de la pierre pour vos fortifications et bâtiments avancés.',
     iconPath: '/assets/stone.png',
-    description: 'Produit de la pierre',
+    emoji: '⛏️',
+    cardVariant: 'stone',
     sortKey: 2,
   },
   IRON: {
     label: 'Mine de fer',
-    emoji: '⚒️',
+    description:
+      'Mine du fer précieux pour forger armes et équipements militaires.',
     iconPath: '/assets/iron.png',
-    description: 'Produit du fer',
+    emoji: '⚒️',
+    cardVariant: 'stone',
     sortKey: 3,
   },
   WAREHOUSE: {
     label: 'Entrepôt',
-    emoji: '📦',
+    description: 'Augmente la capacité de stockage de toutes vos ressources.',
     iconPath: '/assets/warehouse.png',
-    description: 'Augmente le plafond de stock',
+    emoji: '📦',
+    cardVariant: 'wood',
     sortKey: 4,
   },
   FARM: {
     label: 'Moulin',
-    emoji: '🌾',
+    description:
+      'Augmente la population de villageois disponibles pour vos constructions et armées.',
     iconPath: '/assets/farm.png',
-    description: 'Augmente la population disponible',
+    emoji: '🌾',
+    cardVariant: 'parchment',
     sortKey: 5,
   },
   BARRACKS: {
     label: 'Caserne',
-    emoji: '🏛️',
+    description: "Permet d'entraîner des unités militaires.",
     iconPath: '/assets/barracks.png',
-    description: 'Permet de recruter des unités',
+    emoji: '🏛️',
+    cardVariant: 'stone',
     sortKey: 6,
   },
   WATCHTOWER: {
     label: 'Tour de guet',
-    emoji: '🗼',
+    description:
+      'Débloque la carte du monde et étend votre vision sur les territoires voisins.',
     iconPath: '/assets/watchtower.png',
-    description: 'Améliore la défense',
+    emoji: '🗼',
+    cardVariant: 'stone',
     sortKey: 7,
   },
   WALL: {
     label: 'Rempart',
-    emoji: '🧱',
+    description: 'Renforce les défenses de votre village contre les attaques.',
     iconPath: null,
-    description: 'Protège le village',
+    emoji: '🧱',
+    cardVariant: 'stone',
     sortKey: 8,
   },
   HIDEOUT: {
     label: 'Cachette',
-    emoji: '🕳️',
+    description:
+      'Protège une partie de vos ressources contre les pillages ennemis.',
     iconPath: null,
-    description: 'Cache une partie du loot',
+    emoji: '🕳️',
+    cardVariant: 'stone',
     sortKey: 9,
   },
 };
@@ -85,9 +108,10 @@ export function metaFor(type: string): BuildingMeta {
   return (
     BUILDING_META[type] ?? {
       label: type,
-      emoji: '🏗️',
-      iconPath: null,
       description: '',
+      iconPath: null,
+      emoji: '🏗️',
+      cardVariant: 'stone',
       sortKey: 99,
     }
   );

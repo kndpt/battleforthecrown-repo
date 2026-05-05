@@ -54,8 +54,7 @@ export function VillagePanel() {
           <BuildingCard
             key={building.id}
             building={building}
-            selected={selectedId === building.id}
-            onClick={() => setSelectedId(building.id)}
+            onClick={(b) => setSelectedId(b.id)}
           />
         ))}
       </div>
