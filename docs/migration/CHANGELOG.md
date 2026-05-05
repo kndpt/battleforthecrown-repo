@@ -248,7 +248,34 @@ Le `BUILDING_META` n'a pas non plus de PNG pour `WALL` ni `HIDEOUT` — fallback
 - `/game/messages` : panel "RAPPORTS RÉCENTS" avec empty state 📜 (aucun rapport pour le compte de test).
 - `/game/world` : sélection d'un village barbare → bouton "Attaquer" actif → modal "Préparer une attaque" avec Lost Stronghold + distance 63.1 + slider Milice 0/1 + footer puissance/capacité/temps.
 
+### Patch — `BuildingDetailModal` enrichi (2026-05-05)
 
+**Statut** : ✅ Done. Issue remontée par le user après le smoke test 9.D : la modal détail bâtiment paraissait vide par rapport au legacy.
+
+**Diagnostic** : en L7 j'avais skippé `CostSection`, `BonusSection` et `BuildingUnlockPreview` au prétexte que `upgradeCost` n'était pas dans le `BuildingDto` et que `useConfig` n'existait pas côté pixi. Mauvaise excuse — `@battleforthecrown/shared/village/buildings` expose déjà `BUILDING_DEFINITIONS[type].levels[level]` (wood, stone, iron, population, timeSeconds) et tous les helpers de bonus (`getBuildingProduction`, `getWarehouseStorageLimit`, `getFarmPopulationLimit`, `WATCHTOWER_VISION_LEVELS`, `CASTLE_CONSTRUCTION_SPEED_BONUS`). Le DTO API n'était pas nécessaire.
+
+**Ce qui a été fait** (commit unique) :
+- `BuildingDetailModal/CostSection.tsx` créé : grille 4 colonnes Bois/Pierre/Fer/Pop, chaque cellule colorée vert/rouge selon la solvabilité, ProgressBar locale + Badge ✓ ou `-N` manquant. Lit les ressources via `useDisplayResources` (interpolation locale) + population via `usePopulationQuery`.
+- `BuildingDetailModal/BonusSection.tsx` créé : section "actuel → prochain niveau" avec icône typée selon le bâtiment :
+  - **CASTLE** → vitesse de construction (`×1.09 → ×1.14`, dérivé via `1/CASTLE_CONSTRUCTION_SPEED_BONUS[level]`).
+  - **WOOD/STONE/IRON** → production/h via `getBuildingProduction`.
+  - **WAREHOUSE** → capacité de stockage via `getWarehouseStorageLimit`.
+  - **FARM** → population maximale via `getFarmPopulationLimit`.
+  - **WATCHTOWER** → rayon de vision via `WATCHTOWER_VISION_LEVELS[level].visibilityRadius`.
+  - BARRACKS / WALL / HIDEOUT → pas de bonus simple à afficher, section omise (le bonus défense de WALL est complexe et dépend de combat config — à porter quand `useConfig` Redux sera migré).
+- `BuildingDetailModal/BuildingUnlockPreview.tsx` créé : pour `CASTLE` uniquement, affiche les bâtiments débloqués au prochain niveau via `BUILDING_UNLOCK_REQUIREMENTS`. Card avec icône PNG + nom cinzel.
+- `BuildingDetailModal.tsx` modifié : remplace le `<dl>` 4-cells placeholder par `<CostSection>` + `<BonusSection>` + `<BuildingUnlockPreview>` (CASTLE seulement). Ligne "⏱ Temps de construction" sous le coût.
+- `vite.config.ts` : ajout de `@battleforthecrown/shared/village` et `/resources` à `optimizeDeps.include` — sans ça, Vite refusait d'extraire les named exports CJS et la modale crashait à l'import (page blanche). Même classe de bug que le commit `68ce245`.
+
+**Commit** : `feat(pixi-frontend/village): enrich BuildingDetailModal with Cost/Bonus/Unlock sections`
+
+**Écarts assumés** :
+- Le "Temps de construction" affiché côté front est le temps **de base** (`BUILDING_DEFINITIONS[type].levels[level].timeSeconds`), pas le temps réel après application de `multipliers.construction × CASTLE_CONSTRUCTION_SPEED_BONUS`. Le backend l'applique au moment du `POST /upgrade`, donc `ConstructionProgress` montre le bon temps une fois lancé. Identique au legacy. Si on veut afficher le temps "réel" pré-clic, il faudra lire `useWorldConfigQuery().multipliers.construction` et faire le calcul côté front.
+- Pas de `BonusSection` pour BARRACKS/WALL/HIDEOUT (cf. ci-dessus).
+
+**Vérification UI** : `/game` → clic Château ouvre la modal avec `Amélioration → Niveau 4`, grille `100/928 200/843 100/928 0/212` toutes vertes, "Temps 24m 0s", BonusSection "Vitesse de construction ×1.09 → ×1.14", PROCHAIN DÉBLOCAGE avec WATCHTOWER. Type-check + lint + tests verts.
+
+---
 
 
 ## Phase 8 — Consolidation documentaire (CLAUDE.md hiérarchique) (2026-05-05)
