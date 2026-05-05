@@ -205,7 +205,50 @@ Le `BUILDING_META` n'a pas non plus de PNG pour `WALL` ni `HIDEOUT` — fallback
 - Naviguer vers `/game/army` ou `/game/messages` doit afficher les stubs ; `/game/world` la carte du monde.
 - Le clic sur un bâtiment dans le canvas Pixi ouvre la même modal que via le panel.
 
----
+### 9.D — Army / Combat / Crowns / Power (2026-05-05)
+
+**Statut** : ✅ Done — les 4 features stub sont remplacées par leur version fonctionnelle. Le HUD est maintenant complet, plus aucun écran ne renvoie sur un placeholder.
+
+**Diagnostic** : à l'issue de L1-L8, le HUD in-game était fidèle au legacy mais 4 features critiques restaient en stub (`ArmyScreen`, `MessagesScreen`, `PowerBottomSheet` placeholder, `CrownDisplay`/`PowerBadge` mockés à 0). 9.D câble enfin tout ce qui restait.
+
+**Ce qui a été fait** (un commit par sous-étape) :
+
+- **9.D.1 — Crowns réel** (commit [`73f7c90`](https://github.com/anthropics/apps)). Ajout de `useCrownsQuery(userId, worldId)` dans `queries.ts`. Branchement dans `GameSession` pour pousser `{balance, productionRate}` dans `useCrownsStore`. Le `CrownDisplay` existant (qui lisait déjà `useDisplayCrowns`) affiche désormais la vraie valeur (18 crowns vérifiés sur le compte de test). WS event `crowns.changed` continue d'alimenter le store en temps réel.
+- **9.D.2 — Power réel** (commit [`0a0715f`](https://github.com/anthropics/apps)). Ajout de `useVillagePowerQuery` + `useKingdomPowerQuery` (skip leaderboard, pas utilisé dans le HUD pour l'instant). `PowerBadge` du `GameHeader` reçoit maintenant `villagePower.data?.total` (220 vérifié). Refonte complète de `PowerBottomSheet` (auparavant stub) avec affichage royaume + breakdown bâtiments/armée + section "Village actuel" via nouveau composant `PowerBreakdown` (port 1:1 du legacy avec `ProgressBar` info/danger).
+- **9.D.3 — Army screen** (commit [`0a166c8`](https://github.com/anthropics/apps)). Remplace le stub `ArmyScreen.tsx` par un port fonctionnel : `useArmyInventoryQuery`, `useArmyTrainingQuery` (avec `refetchInterval: 5_000` quand training actif), `useTrainUnitsMutation`, `useCancelTrainingMutation`. Composants créés côté pixi : `unitConfig.ts` (UNIT_META avec assets PNG + emoji fallback pour CAVALRY/CATAPULT/SPY/NOBLE), `UnitCard` (Card parchment, badge quantité, coûts unitaires + temps, progress training inline + bouton annuler), `UnitDetailModal` (Modal lg, header bleu avec image, stats de combat 6×, slider quantité dans la modal, bouton "Entraîner N"), `UnitList` (sections "En formation"/"Entraînement"/"À débloquer" avec `BUILDING_UNLOCK_REQUIREMENTS` du shared). Garde-fou "Caserne non construite" si `barracksLevel === 0` (reproduit le legacy avec écran spécifique). Stats et coûts lus depuis `@battleforthecrown/shared/army` (UNIT_COSTS / UNIT_STATS), pas de `useConfig` Redux nécessaire.
+- **9.D.4 — Combat read-only** (commit [`fb579e4`](https://github.com/anthropics/apps)). Ajout de `useActiveExpeditionsQuery(villageId, userId)` qui amorce le store Zustand `expeditions` au mount (pattern identique à crowns/resources). Les WS bindings existants (`battle.sent`, `battle.resolved`, `battle.returned`) continuent à maintenir le store à jour. Le composant `ExpeditionList` (déjà présent) bénéficie automatiquement de l'amorçage REST.
+- **9.D.5 — Reports + Messages** (commit [`a7f1b45`](https://github.com/anthropics/apps)). Ajout de `useCombatReportsQuery(userId)`, `useCombatReportQuery(reportId, userId)`, `useMarkReportReadMutation`. Composants créés : `ReportCard` (port 1:1 du legacy avec badges victoire/défaite/butin/pertes), `ReportsList` (panel parchment avec empty state 📜), `ReportDetailModal` (header bleu attaque/défense, blocs unités attaquant/défenseur avec losses, section butin, mark-as-read automatique au mount). Refonte complète de `MessagesScreen.tsx` (auparavant stub). Hook `useUnreadReportsCount` exposé pour le `BottomNavigationBar` — câblé dans `VillageView`, `ArmyScreen`, `MessagesScreen`. WS event `battle.resolved` invalide désormais `['combat', 'reports']` pour refetch immédiat (le badge unread se met à jour sans attendre le staleTime de 10s).
+- **9.D.6 — AttackDetailModal** (commit [`3f85f7e`](https://github.com/anthropics/apps)). Ajout de `useWorldConfigQuery(worldId)` (lit `combat.travelSpeed`) et `useInitiateAttackMutation()` (POST `/combat/attack?userId=`). Création de `AttackDetailModal` (Modal lg, header rouge ⚔️, distance euclidienne, sliders par unité disponible, calcul travelTime via `combatHelpers` existants + `findSlowestUnitSpeed` de `UNIT_STATS` shared, footer avec puissance estimée + capacité de transport + temps de trajet, bouton danger Attaquer). Modification de `SelectedEntityPanel` : nouvelle prop `onAttack?: (entity) => void` — le bouton "Attaquer" qui était `disabled title="Phase 6"` est maintenant fonctionnel. `WorldMapScreen` héberge la modal au-dessus du canvas Pixi et la branche sur la sélection.
+
+**Écarts par rapport au plan** :
+- L'`AttackDetailModal` ne porte pas le composant complet `ArmyPowerDisplay` (calcul fin de power score avec soft-cap legacy). Affiché : somme `attack × qty` simple. La logique soft-cap dépend de `useConfig` Redux que personne n'a encore migré côté pixi — soit on porte `useConfig`, soit on simplifie. J'ai choisi de simplifier pour cette session ; la formule légère est cohérente avec le calcul backend (server-authoritative validera la vraie attaque de toute façon).
+- Skip de `useGetLeaderboardQuery` dans 9.D.2 — le `PowerBottomSheet` legacy ne l'utilise pas dans la vue de base. À ajouter quand un écran dédié sera créé.
+- Le `UnitCard` est une version simplifiée du legacy 300-lignes — pas de slider +/- dans la card (saisie de la quantité via `<input type="number">` dans la modal). La logique fine `useUnitCardLogic` du legacy (calcul max trainable selon ressources, animation `visualCompletedQty`) n'est pas portée. Le port couvre le cas d'usage MVP (lancer un entraînement, voir le progress, annuler) sans la polish UX intégrale.
+- L'invalidation WS sur `battle.resolved` cible la query `['combat', 'reports']` sans userId spécifique — TanStack invalide alors toutes les queries `combat/reports/*`, ce qui est plus simple que de retrouver le userId du joueur dans le binding. Pas de surcoût notable car un seul user actif côté front.
+
+**Commits** (6) :
+- [`73f7c90`](https://github.com/anthropics/apps) `feat(pixi-frontend/crowns): wire useCrownsQuery to seed crowns store from REST`
+- [`0a0715f`](https://github.com/anthropics/apps) `feat(pixi-frontend/power): wire village + kingdom power queries with PowerBreakdown`
+- [`0a166c8`](https://github.com/anthropics/apps) `feat(pixi-frontend/army): port Army screen with UnitList/UnitCard/UnitDetailModal`
+- [`fb579e4`](https://github.com/anthropics/apps) `feat(pixi-frontend/combat): seed active expeditions store from REST`
+- [`a7f1b45`](https://github.com/anthropics/apps) `feat(pixi-frontend/combat): port Reports + ReportCard + detail modal with unread badge`
+- [`3f85f7e`](https://github.com/anthropics/apps) `feat(pixi-frontend/combat): port AttackDetailModal wired to WorldMap selection`
+
+**Vérification (Definition of Done)** :
+- [x] `yarn workspace battleforthecrown-pixi type-check` propre.
+- [x] `yarn workspace battleforthecrown-pixi lint` propre.
+- [x] `yarn workspace battleforthecrown-pixi test` → 57 tests passants.
+- [x] `yarn workspace battleforthecrown-pixi build` → bundle initial **134.44 KB gzip** (sous le cap 500 KB), nouveau chunk `buildings-*.js` 28.92 KB gz pour le shared army/buildings preoptimisés.
+- [x] Plus aucun route /game/army, /game/messages ne tombe sur un stub. Le `PowerBottomSheet` n'est plus un placeholder. `CrownDisplay` et `PowerBadge` affichent leurs vraies valeurs.
+- [x] Tous les endpoints listés dans l'inventaire 9.D ont une query/mutation correspondante côté pixi.
+
+**Vérification UI (validée par smoke test browser)** :
+- `/game` : header montre `⚜️ 220` (Power réel) et `18` (Crowns réel). PowerBadge cliquable ouvre PowerBottomSheet avec breakdown royaume/village.
+- `/game/army` : section "Vos troupes" si quantité > 0, section "Entraînement" avec MILICE entraînable (50/30/10 ressources, 0:30s), section "À débloquer" avec ÉCUYER Niv. 2, ARCHER Niv. 3, etc. Modal d'unité montre stats de combat + slider quantité.
+- `/game/messages` : panel "RAPPORTS RÉCENTS" avec empty state 📜 (aucun rapport pour le compte de test).
+- `/game/world` : sélection d'un village barbare → bouton "Attaquer" actif → modal "Préparer une attaque" avec Lost Stronghold + distance 63.1 + slider Milice 0/1 + footer puissance/capacité/temps.
+
+
 
 
 ## Phase 8 — Consolidation documentaire (CLAUDE.md hiérarchique) (2026-05-05)
