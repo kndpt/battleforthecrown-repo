@@ -41,7 +41,4 @@ docs/
 
 ## Doc legacy à supprimer post-migration
 
-- `WARP.md` (déjà dans le `.gitignore` racine).
-- `.trae/` racine (déjà ignoré).
-- Dans `battleforthecrown-backend/` : `.trae/rules/project_rules.md` (Trae IDE, on est sur Claude Code) — à supprimer par l'utilisateur dans le sous-repo.
-- Dans `battleforthecrown/` : tout sera supprimé avec le dossier.
+- Dans `battleforthecrown/` : tout sera supprimé avec le dossier (legacy Next.js, branche d'archive `legacy/nextjs-frontend` déjà créée dans son `.git`).
