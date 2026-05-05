@@ -4,9 +4,10 @@ import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
 import { useResourcesStore } from '@/stores/resources';
 import { useCrownsStore } from '@/stores/crowns';
+import { useExpeditionsStore } from '@/stores/expeditions';
 import { gameSocket } from '@/api/ws';
 import { bindServerEvents } from '@/api/ws-bindings';
-import { useCrownsQuery, useResourcesQuery } from '@/api/queries';
+import { useActiveExpeditionsQuery, useCrownsQuery, useResourcesQuery } from '@/api/queries';
 
 export function GameSession({ children }: { children: ReactNode }) {
   const accessToken = useAuthStore((state) => state.accessToken);
@@ -70,6 +71,27 @@ export function GameSession({ children }: { children: ReactNode }) {
       lastUpdateTs: Date.now(),
     });
   }, [userId, worldId, crownsQuery.data, setCrowns]);
+
+  // Initial active expeditions baseline. WS events keep it fresh afterwards.
+  const activeExpeditionsQuery = useActiveExpeditionsQuery(villageId, userId);
+  const addExpedition = useExpeditionsStore((state) => state.add);
+  useEffect(() => {
+    if (!activeExpeditionsQuery.data) return;
+    activeExpeditionsQuery.data.forEach((exp) => {
+      addExpedition({
+        expeditionId: exp.id,
+        reportId: exp.reportId ?? undefined,
+        villageId: exp.attackerVillageId,
+        origin: { x: 0, y: 0 },
+        target: { x: exp.targetX, y: exp.targetY },
+        targetKind: exp.targetKind,
+        phase: exp.status as 'EN_ROUTE' | 'RESOLVED' | 'RETURNING' | 'RETURNED',
+        departAt: Date.parse(exp.departAt),
+        arrivalAt: Date.parse(exp.arrivalAt),
+        returnAt: exp.returnAt ? Date.parse(exp.returnAt) : undefined,
+      });
+    });
+  }, [activeExpeditionsQuery.data, addExpedition]);
 
   return <>{children}</>;
 }

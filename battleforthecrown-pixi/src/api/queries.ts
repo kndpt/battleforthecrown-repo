@@ -30,6 +30,7 @@ export const queryKeys = {
   kingdomPower: (userId: string | null) => ['power', 'kingdom', userId] as const,
   armyInventory: (villageId: string | null) => ['army', 'inventory', villageId] as const,
   armyTraining: (villageId: string | null) => ['army', 'training', villageId] as const,
+  activeExpeditions: (villageId: string | null) => ['combat', 'active', villageId] as const,
   worldEntities: (worldId: string | null) => ['world-entities', worldId] as const,
   worldConfig: (worldId: string | null) => ['world-config', worldId] as const,
 };
@@ -334,6 +335,37 @@ export function useCancelTrainingMutation() {
       queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.resources(villageId) });
     },
+  });
+}
+
+export interface ActiveExpeditionDto {
+  id: string;
+  attackerVillageId: string;
+  attackerUserId: string;
+  defenderVillageId?: string | null;
+  defenderUserId?: string | null;
+  targetX: number;
+  targetY: number;
+  targetKind: string;
+  departAt: string;
+  arrivalAt: string;
+  returnAt?: string | null;
+  status: string;
+  units: Record<string, number>;
+  reportId?: string | null;
+}
+
+export function useActiveExpeditionsQuery(villageId: string | null, userId: string | null) {
+  return useQuery<ActiveExpeditionDto[]>({
+    queryKey: queryKeys.activeExpeditions(villageId),
+    queryFn: () => {
+      if (!villageId || !userId) return Promise.resolve([] as ActiveExpeditionDto[]);
+      return apiClient.get<ActiveExpeditionDto[]>(`/combat/${villageId}/active`, {
+        query: { userId },
+      });
+    },
+    enabled: Boolean(villageId && userId),
+    staleTime: 5_000,
   });
 }
 
