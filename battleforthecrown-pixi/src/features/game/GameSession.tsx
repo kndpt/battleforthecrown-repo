@@ -3,9 +3,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
 import { useResourcesStore } from '@/stores/resources';
+import { useCrownsStore } from '@/stores/crowns';
 import { gameSocket } from '@/api/ws';
 import { bindServerEvents } from '@/api/ws-bindings';
-import { useResourcesQuery } from '@/api/queries';
+import { useCrownsQuery, useResourcesQuery } from '@/api/queries';
 
 export function GameSession({ children }: { children: ReactNode }) {
   const accessToken = useAuthStore((state) => state.accessToken);
@@ -54,6 +55,21 @@ export function GameSession({ children }: { children: ReactNode }) {
       lastUpdateTs: Date.parse(resourcesQuery.data.lastUpdateTs),
     });
   }, [villageId, resourcesQuery.data, setResources]);
+
+  // Initial crowns baseline. WS event `crowns.changed` keeps it fresh afterwards.
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const crownsQuery = useCrownsQuery(userId, worldId);
+  const setCrowns = useCrownsStore((state) => state.setCrowns);
+  useEffect(() => {
+    if (!userId || !worldId || !crownsQuery.data) return;
+    setCrowns({
+      userId,
+      worldId,
+      balance: crownsQuery.data.balance,
+      productionRate: crownsQuery.data.productionRate,
+      lastUpdateTs: Date.now(),
+    });
+  }, [userId, worldId, crownsQuery.data, setCrowns]);
 
   return <>{children}</>;
 }

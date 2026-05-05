@@ -25,6 +25,7 @@ export const queryKeys = {
   queue: (villageId: string | null) => ['queue', villageId] as const,
   population: (villageId: string | null) => ['population', villageId] as const,
   resources: (villageId: string | null) => ['resources', villageId] as const,
+  crowns: (userId: string | null, worldId: string | null) => ['crowns', userId, worldId] as const,
   worldEntities: (worldId: string | null) => ['world-entities', worldId] as const,
   worldConfig: (worldId: string | null) => ['world-config', worldId] as const,
 };
@@ -167,6 +168,25 @@ export function useBuildingQueueQuery(villageId: string | null) {
     },
     enabled: Boolean(villageId),
     staleTime: 5_000,
+  });
+}
+
+export interface CrownsBalanceDto {
+  balance: number;
+  productionRate: number;
+}
+
+export function useCrownsQuery(userId: string | null, worldId: string | null) {
+  return useQuery<CrownsBalanceDto>({
+    queryKey: queryKeys.crowns(userId, worldId),
+    queryFn: () => {
+      if (!userId || !worldId) {
+        return Promise.reject(new Error('No user or world selected'));
+      }
+      return apiClient.get<CrownsBalanceDto>(`/crowns/${userId}/${worldId}`);
+    },
+    enabled: Boolean(userId && worldId),
+    staleTime: 30_000,
   });
 }
 
