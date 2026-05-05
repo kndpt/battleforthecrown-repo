@@ -25,7 +25,7 @@
 | Phase 6 — Animations expéditions | ✅ Done (2026-05-05) | [CHANGELOG](./CHANGELOG.md#phase-6--animations-expéditions-et-combats-2026-05-05) |
 | Phase 7 — Polish + archive legacy (sans suppression) | 🟡 Done partiel (2026-05-05) | [CHANGELOG](./CHANGELOG.md#phase-7--polish-perf-archive-legacy-sans-suppression-2026-05-05) |
 | Phase 8 — Consolidation doc | 🟡 Done partiel (2026-05-05) | [CHANGELOG](./CHANGELOG.md#phase-8--consolidation-documentaire-claudemd-hiérarchique-2026-05-05) |
-| Phase 9 — Fidélité design (assets + ui-test + composants) | ⏳ À faire (post-run, ajoutée 2026-05-05) | [03-migration-plan.md § Phase 9](./03-migration-plan.md#phase-9) |
+| Phase 9 — Fidélité design (assets + ui-test + composants) | 🟡 Done partiel (2026-05-05) — 9.A/B/C/E livrés, 9.D reporté | [CHANGELOG](./CHANGELOG.md#phase-9--fidélité-design-assets--ui-test--composants-2026-05-05) |
 
 ## Comment lire cette doc
 

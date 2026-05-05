@@ -35,6 +35,134 @@
 
 <!-- Les entrées s'ajoutent ici, plus récentes en haut -->
 
+## Phase 9 — Fidélité design (assets + ui-test + composants) (2026-05-05)
+
+**Statut** : 🟡 Done partiel — 4 sous-étapes sur 5 livrées (9.A, 9.B, 9.C, 9.E). 9.D reporté à 9.D.x faute de budget pour porter ~30 composants legacy (Army/Combat/Reports/Crowns/Power) fortement couplés à Redux.
+
+**Ce qui a été fait** :
+
+### 9.A — Import des assets PNG (commit `2c6cc31`)
+
+- Copie complète de `battleforthecrown/public/assets/` → `battleforthecrown-pixi/public/assets/` :
+  - 16 PNG racine (`castle.png` 973 KB, `barracks.png` 1 MB, `farm.png` 954 KB, `iron.png` ~985 KB, `stone.png` ~985 KB, `warehouse.png`, `watchtower.png`, `wood.png`, `army-power.png`, `crown.png`, `clock.png`, `lock.png`, `position.png`, `hand-{gold,red,silver}.png`).
+  - `army/` 5 PNG d'unités (`archer`, `militia`, `savage`, `squire`, `templar`).
+  - `bg/plain.png` + `ui/banner.png` + 5 icônes ressources dans `resources/`.
+  - **`world/entity/`** : 9 sprites villages (`barbarian-village-tier{1,2,3}.png` + `village-tier{1..6}.png`) — pas listés dans le plan mais présents dans le legacy, réutilisables tels quels en Phase 9.E.
+- Spritesheet TexturePacker `StrategyGameIcons/` : `spritesheet.{png,json}` copié dans `public/assets/strategy-icons/` (1.1 MB + 24.5 KB JSON Hash, 86 icônes 128×128).
+- Pack Casual Game 300 : 4 PNG sélectionnés copiés dans `public/assets/casual-icons/` et renommés en lowercase : `crown.png`, `coin.png`, `card-gold.png`, `bell-gold.png`.
+- Total : 44 fichiers ajoutés, 1824 insertions.
+
+### 9.B — Portage de `/ui-test` (commit `c873362`)
+
+- `cp -R battleforthecrown/src/app/ui-test → battleforthecrown-pixi/src/features/ui-test`.
+- Remplacé l'ancien `page.tsx` (Next + Providers Redux) par un nouveau `UiTestScreen.tsx` qui wrap localement un `<ToastProvider position="top-right">` (la `ToastsSection` utilise `useToast()` du context — indépendant du `useUiStore` Zustand utilisé ailleurs dans l'app).
+- Retiré tous les `'use client'` (page + `FloatingButtonsSection`).
+- `next/link` → `react-router Link` ; pas d'autres imports `next/*` à corriger.
+- Route lazy `/ui-test` ajoutée dans `App.tsx` (non protégée). Initial bundle non impacté ; chunk `UiTestScreen-*.js` à 32 KB gzip avant 9.C, ramené à 13 KB gzip après 9.C (les icônes lucide partagées migrent vers le bundle main).
+- Les **17 sections** rendent : `Buttons`, `FloatingButtons`, `Avatars`, `Modals`, `Cards`, `Inputs`, `CheckboxesRadios`, `Selects`, `Tooltips`, `Badges`, `Toasts`, `Spinners`, `Sliders`, `Panels`, `Textareas`, `HeaderBar`, `ProgressBars`.
+
+### 9.C — Refactor des écrans avec `src/ui/` + palette parchemin (commit `3fcf4df`)
+
+Tous les écrans listés dans le plan sont passés des wrappers `div + Tailwind brut` à des compositions de `Panel/Card/HeaderBar/Modal/Badge/IconButton/ProgressBar` :
+
+| Écran | Composition | Palette |
+|---|---|---|
+| `LandingScreen` | lucide icons (Crown/Shield/Swords) + `Button` | parchemin clair `from-[#e8d5b7] via-[#f5e6d3] to-[#d4c094]` |
+| `LoginScreen` | `Panel variant="parchment"` + `PanelHeader` + `Input variant="parchment"` + `InputHelperText` | parchemin clair |
+| `RegisterScreen` | `Card variant="parchment"` + `CardBanner variant="warning"` + `CardBody` + `CardFooter` | parchemin clair |
+| `WorldSelector` | `Panel variant="stone"` par monde + `Badge` pour status | gradient parchment → kingdom |
+| `MyWorldsScreen` | `Panel variant="stone"` + `Badge` villageCount + `Button danger` logout | gradient parchment → kingdom |
+| `GameHeader` | `HeaderBar` + `PlayerProfile` + `PopulationIndicator` + `HeaderActions`. Crown icon = `/assets/casual-icons/crown.png`. Buttons Mondes/Sortie via lucide `Map`/`LogOut`. | sombre HUD (HeaderBar) |
+| `ResourceBar` | thin adapter `useDisplayResources()` → `ResourceDisplay` + PNG via `ResourceIcon` | aligné HeaderBar |
+| `BuildingCard` | sprite PNG via `meta.iconPath` + `ProgressBar variant="success"` | sombre |
+| `BuildingDetailModal` | `Modal` + `ModalBody` + `ModalFooter` + `ProgressBar` + sprite PNG dans le header | parchment Modal |
+| `QueueBar` | `Panel variant="stone"` + `ProgressBar` + `IconButton` cancel + sprite PNG | sombre |
+| `SelectedEntityPanel` | `Panel variant="stone"` + `PanelHeader` + `Badge` tier + `IconButton` close | sombre |
+| `ExpeditionList` | `Panel variant="stone"` + `Badge` par phase | sombre |
+| `NavRail` | lucide icons (Swords/Mail/Crown/Shield) au lieu d'emojis | sombre |
+
+- **Plus aucune emoji dans `src/features/`** sauf le fallback `BUILDING_META.emoji` qui sert quand un PNG manque (WALL, HIDEOUT) — l'emoji n'est jamais affiché si le PNG est dispo.
+- `buildingMeta.ts` étendu avec un champ `iconPath: string | null` qui pointe vers le PNG `/assets/{castle,barracks,farm,iron,stone,warehouse,watchtower,wood}.png`.
+
+**Bug avéré corrigé dans `src/ui/` (drift documenté)** :
+- `CardBanner.tsx`, `ResourceDisplay.tsx`, `ResourceIcon.tsx` importaient `next/image` — l'import résolvait silencieusement parce que `next` est hoisté dans le `node_modules` racine via le workspace legacy, mais `<Image>` plantait au runtime sous Vite. Remplacé par `<img>` natif (l'API DOM est identique pour nos `src` statiques `/assets/*`). Sans ce correctif, `<HeaderBar>` ne pouvait pas afficher les icônes ressources et la `CardBanner` du RegisterScreen se cassait.
+
+### 9.E — Sprites Pixi réels (commit `5ff0a51`)
+
+- **Nouveau `src/pixi/assets/`** :
+  - `manifest.ts` : déclare 3 bundles `Assets` v8 typés (`AssetsBundle[]`) :
+    - `boot` (1 asset : la banner UI).
+    - `village` (8 aliases : `castle`, `wood`, `stone`, `iron`, `warehouse`, `farm`, `barracks`, `watchtower`).
+    - `world-map` (9 aliases : `world.barbarian.t{1,2,3}` + `world.village.t{1..6}`).
+  - `loader.ts` : wrapper `loadBundle(name, onProgress?)` idempotent qui appelle `Assets.init({ manifest })` la première fois puis `Assets.loadBundle()`. Retourne `Record<string, Texture>`.
+  - `manifest.test.ts` : 4 invariants (présence des 3 bundles, aliases canoniques, tiers couverts, chaque `src` commence par `/assets/`).
+
+- **`BuildingSprite`** : ajout d'un `Sprite` au container, attaché paresseusement quand `Assets.get<Texture>(alias)` retourne une texture cachée. Le `tick(nowMs)` retente à chaque frame tant que le sprite n'est pas visible. Fallback `Graphics + emoji` reste en place pour `WALL` et `HIDEOUT` (pas de PNG dans le legacy). Le scaffolding de construction est désormais un overlay semi-transparent (`alpha: 0.45`) au-dessus du sprite, pas un remplacement — donc le bâtiment reste visible pendant l'upgrade.
+
+- **`WorldMapScene`** : chaque entité a maintenant un `Sprite` à côté du `Graphics` placeholder. `drawEntity()` choisit le sprite si la texture est en cache, sinon le cercle coloré (compatibilité descendante). Un retry périodique dans `update(deltaMs)` toutes les 500 ms promeut les cercles en sprites une fois le bundle chargé.
+
+- **`VillageCanvas` + `WorldMapCanvas`** : un `useEffect(() => { void loadBundle(name); }, [])` au montage déclenche le chargement du bundle en parallèle au boot Pixi. Aucune attente synchrone, aucun loading state — les sprites apparaissent dès qu'ils sont prêts.
+
+**Tests** : 57 / 11 fichiers (4 nouveaux : `manifest.test.ts`).
+
+**Build** :
+- Initial : **133 KB gzip** (était 122 KB Phase 7 ; +11 KB pour les icônes lucide ajoutées au HUD principal).
+- Nouveaux chunks lazy : `loader-*.js` (30 KB gzip), `Cache-*.js`, `BitmapFont-*.js`, `GraphicsContext-*.js` — c'est le système Assets Pixi v8 qui se code-split automatiquement.
+- `UiTestScreen-*.js` lazy : 13 KB gzip.
+
+### Sous-étapes reportées (à faire en 9.D.x)
+
+**9.D non livré** — porter Army, Combat (incl. AttackDetailModal, ExpeditionsBottomSheet, ReportsList), Crowns, Power représentait ~30 composants legacy fortement couplés à Redux/RTK Query + 4 nouveaux endpoints REST à câbler dans `src/api/queries.ts`. Le scope dépassait le budget restant de la session. Les stubs `NavRail` ouvrent toujours un `StubPanel` "Phase 9.D" — à remplacer quand l'utilisateur reprendra. Les commits granulaires recommandés sont (par ordre suggéré) :
+1. `feat(pixi-frontend/army): port army inventory + training screens`
+2. `feat(pixi-frontend/combat): port attack flow + reports`
+3. `feat(pixi-frontend/crowns): port crowns manager`
+4. `feat(pixi-frontend/power): port power leaderboard`
+
+Le `BUILDING_META` n'a pas non plus de PNG pour `WALL` ni `HIDEOUT` — fallback emoji conservé. À ajouter en 9.D.x.
+
+### Assets manquants (à produire / acheter post-migration)
+
+- `/assets/resources/gold.png`, `/assets/resources/food.png` : référencés par `RESOURCE_CONFIG` mais pas dans le legacy. Les sections du `/ui-test` qui passent `type: "gold"` ou `"food"` cassent silencieusement (404, fallback emoji du `ResourceIcon`).
+- Sprites bâtiments WALL et HIDEOUT.
+- Sprite "armée en mouvement" pour `ExpeditionVisual` (le `Text` ⚔️/🐎 reste en place — pas critique).
+
+### Drifts identifiés
+
+- `next/image` dans 3 composants `src/ui/` (corrigé en 9.C). Pas d'autre `next/*` à signaler dans le pixi-frontend.
+- `ui/layout/HeaderActions` du legacy était un placeholder sans bouton (juste un wrapper div). On compose manuellement les boutons dedans côté `GameHeader`. À enrichir si on veut centraliser bell/settings.
+
+**Commits** :
+- `2c6cc31` `chore(pixi-frontend/assets): import legacy + external pack PNGs and spritesheets`
+- `c873362` `feat(pixi-frontend/ui-test): port the legacy UI demo route`
+- `3fcf4df` `refactor(pixi-frontend/screens): use ui/ library + parchment palette + PNG assets`
+- `5ff0a51` `feat(pixi/assets): load real building + map sprites via Assets.loadBundle`
+- (à venir) `docs(migration): document Phase 9 (partial) and update README index`
+
+**Vérification (Definition of Done)** :
+- [x] La route `/ui-test` est accessible et toutes les 17 sections rendent (vérifiable au build, pas profilé visuellement sans navigateur).
+- [x] Aucun `'use client'`, aucune emoji UI dans `src/features/` (sauf `BUILDING_META.emoji` qui sert exclusivement de fallback PNG-manquant pour WALL/HIDEOUT et le `fallbackText` Pixi caché par défaut).
+- [x] Tous les écrans listés en 9.C utilisent au moins un composant de `src/ui/` (Panel/Card/HeaderBar/Modal/Badge/IconButton/ProgressBar/InputHelperText).
+- [ ] **Reporté** : Aucune route ne tombe sur un `StubPanel`. Les stubs Army/Combat/Crowns/Power restent en place (9.D non livré).
+- [x] Le `BuildingSprite` Pixi affiche un sprite PNG via `Assets.get` (avec fallback Graphics+emoji jusqu'à ce que la texture lande). Idem `WorldMapScene` pour les villages joueur (`world.village.t1`) et barbares (`world.barbarian.t{1,2,3}`).
+- [x] `yarn workspace battleforthecrown-pixi build` réussit, type-check et lint propres.
+- [x] Bundle prod sous 500 KB JS gzip (initial 133 KB gzip, sous l'objectif). Les assets sont en `public/` (hors bundle JS, téléchargés à la demande).
+- [x] CHANGELOG entrée Phase 9 ajoutée. README index mis à jour.
+
+**Vérification UI (à confirmer par le user au matin dans le navigateur)** :
+- `/` (Landing) : fond parchemin clair, titre cinzel sombre, deux gros boutons Connexion/Créer un compte (ou Reprendre).
+- `/auth/login` et `/auth/register` : Panel/Card parchemin sur fond gradient. La barrière `border-[#8b7355]` du PanelHeader est visible.
+- `/worlds` et `/my-worlds` : grille 2 colonnes de cartes Panel stone sombres sur fond parchemin clair, badges status colorés.
+- `/game` : HeaderBar marron avec PlayerProfile à gauche, ResourceDisplay au milieu (3 ressources avec PNG icons + barres de remplissage), Population/Crowns/WS/Mondes/Sortie à droite. La grille de bâtiments dans la VillagePanel utilise les sprites PNG (~40px) pour Castle/Wood/Stone/Iron/Farm/Barracks/Warehouse/Watchtower. WALL et HIDEOUT restent en emoji (placeholder).
+- Cliquer sur un bâtiment ouvre un Modal avec gros sprite (64px) + ProgressBar success.
+- Le canvas Pixi du village affiche les bâtiments avec les vrais PNG (220px pour castle, 130-160px pour les autres) une fraction de seconde après le mount du canvas (le bundle `village` se charge en async).
+- `/game/world` : la carte Pixi affiche les barbares avec les sprites `barbarian-village-tier{1,2,3}.png` (28×28 par défaut) et le village joueur avec `village-tier1.png`. Les cercles colorés disparaissent quand les textures landent (~500ms après mount).
+- `/ui-test` : la page legacy démo est accessible et toutes les sections rendent — utile pour vérifier les variants Tailwind.
+
+**Captures** : —
+
+---
+
+
 ## Phase 8 — Consolidation documentaire (CLAUDE.md hiérarchique) (2026-05-05)
 
 **Statut** : 🟡 Done partiel (workspaces actifs documentés ; legacy + backend laissés intacts par contrat)
