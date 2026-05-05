@@ -314,6 +314,200 @@ Chaque phase doit produire :
 
 ---
 
+## Phase 9 — Fidélité design (assets + ui-test + composants existants) {#phase-9}
+
+**Durée : 2-3 jours.** Ajoutée après le run nocturne du 2026-05-04/05 quand l'utilisateur a constaté que le design ne respecte pas l'existant : la library `src/ui/` est portée mais sous-exploitée, les assets PNG et spritesheets ne sont pas branchés, et la page de démo `/ui-test` (17 sections) n'a pas été portée.
+
+> **Pour l'agent qui exécute cette phase** : tout est déjà fait côté design dans le legacy. Ton job est **branchage**, pas création. Avant de coder une couleur ou un layout, ouvre la page de référence dans le legacy et copie. Pas de tailwind brut sur les écrans HUD, pas d'emoji `Text` dans le canvas Pixi pour des bâtiments — il y a des sprites.
+
+### Pourquoi cette phase existe
+
+Le run autonome a livré le **pipeline complet** (auth → WS → HUD → WorldMap → VillageScene → expéditions) en une nuit, mais pour tenir les délais il a pris quatre raccourcis graphiques majeurs :
+
+1. **Composants `src/ui/` copiés mais non utilisés** — les écrans (`LoginScreen`, `RegisterScreen`, `MyWorldsScreen`, `WorldSelector`, `GameHeader`, `BuildingDetailModal`, `SelectedEntityPanel`, `ExpeditionList`, `QueueBar`, `NavRail`) sont écrits avec du Tailwind brut au lieu de composer `Panel`, `Card`, `HeaderBar`, `Modal`, `Toast`, `ResourceIcon`.
+2. **Palette inversée** — le legacy utilise un fond clair parchemin (`from-[#e8d5b7] via-[#f5e6d3] to-[#d4c094]`), le run a mis du sombre (`#2a1f12`) partout.
+3. **Assets PNG du legacy ignorés** — `battleforthecrown/public/assets/` contient déjà `castle.png`, `barracks.png`, `farm.png`, `iron.png`, `stone.png`, `warehouse.png`, `watchtower.png`, `crown.png`, `clock.png`, `army-power.png`, `position.png`, `lock.png`, `hand-{gold,red,silver}.png` et plus, **non copiés** dans `battleforthecrown-pixi/public/`.
+4. **Spritesheets externes ignorés** — `AUTONOMOUS_RUN.md` lignes 101-128 listait explicitement `StrategyGameIcons/Spritesheets/spritesheet.{png,json}` et `Icon Pack - Casual Game 300/256x256/` à copier. **Pas fait.** Les bâtiments Pixi sont rendus en `Graphics` colorés + emoji.
+
+Cette phase corrige les quatre.
+
+### Inventaire des ressources existantes (à connaître AVANT de coder)
+
+#### Composants UI déjà portés (à exploiter, pas à recréer)
+
+`battleforthecrown-pixi/src/ui/` (déjà commité Phase 1) contient :
+
+| Sous-dossier | Composants | Usage type |
+|---|---|---|
+| `buttons/` | `Button` (variants `success`/`info`/`danger`/`warning`/`neutral` × tailles `xs`/`sm`/`md`/`lg`/`xl`), `IconButton` | CTA principaux et secondaires |
+| `inputs/` | `Input` (variants `default`/`parchment`/`success`/`error`), `InputLabel`, `InputHelperText`, `Checkbox`, `Radio`, `Textarea` | Formulaires |
+| `cards/` | `Card`, `CardBanner`, `CardBody`, `CardFooter`, `CardImage`, `CardTitle`, `CardStats`, `StatsContent` | Grilles d'éléments |
+| `panels/` | `Panel` (variants), `PanelHeader`, `PanelBody`, `PanelFooter`, `BottomSheet` | Conteneurs de section |
+| `modals/` | `Modal`, `ModalBody`, `ModalFooter` | Dialogues |
+| `layout/` | `HeaderBar`, `PopulationIndicator`, `PlayerProfile`, `ResourceDisplay`, `HeaderActions` | Top bar du jeu |
+| `toasts/` | `Toast`, `ToastProvider`, `useToast` | Notifications transitoires |
+| `tooltips/`, `badges/`, `avatars/`, `selects/`, `sliders/`, `spinners/`, `feedback/` (`ProgressBar`), `floating-buttons/`, `common/` (`ResourceIcon`) | Primitives | — |
+
+Chaque sous-dossier a un `README.md` documentant les variants. La page de démo qui les met tous en scène vit dans `battleforthecrown/src/app/ui-test/` (à porter, voir 9.B ci-dessous).
+
+#### Assets PNG du legacy (à copier)
+
+```
+battleforthecrown/public/assets/
+├── army/                       # PNG d'unités
+├── bg/                         # backgrounds
+├── resources/                  # icônes ressources (wood/stone/iron/gold/food)
+├── ui/                         # éléments UI (boutons, cadres, parchemin)
+├── world/                      # sprites du monde (villages, châteaux barbares)
+├── castle.png                  # 973 KB — sprite château joueur
+├── barracks.png                # 1 MB
+├── farm.png                    # 954 KB
+├── iron.png, stone.png         # ~985 KB chacun
+├── warehouse.png, watchtower.png
+├── army-power.png              # icône puissance
+├── crown.png                   # couronne premium
+├── clock.png                   # icône temps
+├── lock.png                    # bâtiment verrouillé
+├── position.png                # marqueur de position
+└── hand-gold.png, hand-red.png, hand-silver.png  # boutons type Clash
+```
+
+#### Spritesheets externes (hors repo)
+
+| Pack | Chemin | Contenu | Cible |
+|---|---|---|---|
+| StrategyGameIcons | `/Users/kelvindupont/Documents/Kelvin/games/StrategyGameIcons/Spritesheets/spritesheet.{png,json}` | 86 icônes 128×128, format TexturePacker JSON Hash compatible Pixi `Assets.load` (WoodLogs, Stone, Bricks, GoldCoin, Wheat, Cow, Sheep, HorseHead, Barrel, Cloth…) | Icônes ressources HUD, icônes commerce (futur), animaux (décoration village) |
+| Icon Pack - Casual Game 300 | `/Users/kelvindupont/Documents/Kelvin/games/Icon Pack - Casual Game 300/256x256/` | PNG individuels 256×256 | `ICON_Crown.png`, `ICON_Coin.png`, `ICON_Card_Gold.png`, `ICON_Bell_Gold.png` pour boutons et notifications |
+
+#### Pages legacy non encore portées
+
+```
+battleforthecrown/src/features/army/components/       # ArmyInterface, UnitCard, UnitDetailModal, UnitList
+battleforthecrown/src/features/combat/components/     # AttackDetailModal, ExpeditionCard, ExpeditionList,
+                                                       # ExpeditionsBottomSheet, ExpeditionsFloatingButton,
+                                                       # LootDisplay, ReportCard, ReportsList,
+                                                       # RemainingResourcesDisplay, ResourceLootSummary,
+                                                       # UnitLosses, ArmyPowerDisplay
+battleforthecrown/src/app/game/army/page.tsx
+battleforthecrown/src/app/game/messages/page.tsx
+battleforthecrown/src/app/game/combat-report/[id]/page.tsx
+```
+
+### Tâches
+
+#### 9.A — Copier les assets dans le nouveau frontend
+
+- [ ] `cp -R battleforthecrown/public/assets battleforthecrown-pixi/public/assets` — duplique tout l'arbre PNG du legacy.
+- [ ] `mkdir -p battleforthecrown-pixi/public/assets/strategy-icons && cp "/Users/kelvindupont/Documents/Kelvin/games/StrategyGameIcons/Spritesheets/spritesheet."{png,json} battleforthecrown-pixi/public/assets/strategy-icons/` — spritesheet TexturePacker.
+- [ ] `mkdir -p battleforthecrown-pixi/public/assets/casual-icons && cp "/Users/kelvindupont/Documents/Kelvin/games/Icon Pack - Casual Game 300/256x256/ICON_Crown.png" battleforthecrown-pixi/public/assets/casual-icons/crown.png` (et les 3-4 autres : `ICON_Coin.png` → `coin.png`, `ICON_Card_Gold.png` → `card-gold.png`, `ICON_Bell_Gold.png` → `bell-gold.png`).
+- [ ] Vérifier que le `.gitignore` racine ne filtre pas `*.png` (il n'est pas censé, mais double-check).
+- [ ] Commit : `chore(pixi-frontend/assets): import legacy + external pack PNGs and spritesheets`.
+
+#### 9.B — Porter la page `/ui-test` (référence visuelle pour la suite)
+
+- [ ] `cp -R battleforthecrown/src/app/ui-test battleforthecrown-pixi/src/features/ui-test` (nouveau emplacement, c'est plus une *feature* qu'une *route Next*).
+- [ ] Adapter les imports : `@/ui` reste valable (l'alias est branché), retirer les `'use client'` (pas de Next), retirer `Providers` import si inutilisé, ajuster les `Link` next → `react-router`.
+- [ ] Ajouter une route `/ui-test` dans `src/App.tsx` (pas protégée, accessible librement). Lazy ou eager au choix.
+- [ ] Vérifier que les 17 sections (`Buttons`, `FloatingButtons`, `Avatars`, `Modals`, `Cards`, `Inputs`, `CheckboxesRadios`, `Selects`, `Tooltips`, `Badges`, `Toasts`, `Spinners`, `Sliders`, `Panels`, `Textareas`, `HeaderBar`, `ProgressBars`) s'affichent correctement.
+- [ ] Si une section casse (faute d'asset, faute d'icône), corriger plutôt que la commenter — c'est précisément ce que cette phase doit débusquer.
+- [ ] Commit : `feat(pixi-frontend/ui-test): port the legacy UI demo route`.
+
+#### 9.C — Refactor des écrans non-Pixi avec les composants existants
+
+Pour chaque écran ci-dessous, **ouvrir d'abord la version legacy correspondante** puis composer avec `Panel/Card/HeaderBar/Modal/Toast/ResourceIcon/PlayerProfile` au lieu de Tailwind brut. Conserver les hooks TanStack Query et Zustand existants — la plomberie data ne change pas, seul le rendu change.
+
+| Écran à refactorer | Référence legacy | Composants à utiliser | Fond |
+|---|---|---|---|
+| `LandingScreen.tsx` | `src/app/page.tsx` + `app/layout.tsx` | `Card` ou layout direct selon legacy | parchemin clair |
+| `LoginScreen.tsx` | `features/auth/components/LoginScreen.tsx` | `Panel variant="parchment"`, `PanelHeader`, `PanelBody`, `Input`, `Button` | parchemin clair (`from-[#e8d5b7] via-[#f5e6d3] to-[#d4c094]`) |
+| `RegisterScreen.tsx` | `features/auth/components/RegisterScreen.tsx` | `Card`, `CardBanner`, `CardBody`, `CardFooter` | parchemin clair |
+| `WorldSelector.tsx` | `features/worlds/components/WorldSelector.tsx` | `Card`, `Panel`, `Button` | aligner sur legacy |
+| `MyWorldsScreen.tsx` | (pas d'équivalent direct, s'inspirer de `WorldSelector` legacy) | `Card`, `Button`, `Spinner` | aligner sur legacy |
+| `GameHeader.tsx` (`features/layout/`) | `features/layout/GamePageHeader` (legacy) + `ui/layout/HeaderBar` | **`HeaderBar` directement** au lieu de div Tailwind, `PlayerProfile`, `ResourceDisplay`, `PopulationIndicator`, `HeaderActions` | sombre top bar OK (cf legacy) |
+| `BuildingDetailModal.tsx` (`features/village/`) | `features/village/components/BuildingDetailModal.tsx` | `Modal`, `ModalBody`, `ModalFooter`, `ProgressBar`, `Button` | `Modal` standard |
+| `SelectedEntityPanel.tsx` (`features/world/`) | (pas exact ; s'inspirer de `WorldSelectedEntityPanel` du plan) | `Panel`, `Badge`, `Button` | sombre OK (overlay carte) |
+| `ResourceBar.tsx` (`features/resources/`) | `ui/layout/ResourceDisplay` | **`ResourceDisplay` directement** + `ResourceIcon` (PNG, pas emoji) | aligné HeaderBar |
+| `ExpeditionList.tsx` (`features/combat/`) | `features/combat/components/ExpeditionList.tsx` | `Card` ou `Panel`, `Badge` pour la phase | sombre OK |
+| `QueueBar.tsx` (`features/village/`) | `features/village/components/QueueBottomSheet.tsx` | `BottomSheet` + `ProgressBar` | aligné legacy |
+| `NavRail.tsx` (`features/layout/`) | `features/village/components/BottomNavigationBar.tsx` | `IconButton` avec icônes lucide-react ou PNG | sombre OK |
+| `StubPanel.tsx` (`features/layout/`) | — | À supprimer en 9.D, remplacé par les vrais panels Army/Combat | — |
+
+- [ ] Tailwind config : vérifier que la palette `parchment`, `kingdom`, `game.*` est bien dispo (elle l'est, copiée Phase 0). Si un token spécifique manque (ex `[#8b7355]` utilisé en bordure), l'ajouter à `tailwind.config.ts` plutôt qu'en littéral.
+- [ ] Remplacer **toutes** les emoji UI (🏰⛏️🪓🌾🏛️🗼🧱🕳️) par soit des PNG via `ResourceIcon` ou `<img>`, soit des icônes lucide-react. Aucune emoji `Text` ne doit subsister dans `src/features/`.
+- [ ] Tester dans `/ui-test` que les composants composent correctement. Tester chaque écran réécrit dans le navigateur.
+- [ ] Commit : `refactor(pixi-frontend/screens): use ui/ library + parchment palette + PNG assets`.
+
+#### 9.D — Porter les features manquantes (Army, Combat, Reports)
+
+- [ ] **Army** (`features/army/`) :
+  - Porter `ArmyInterface`, `UnitCard`, `UnitDetailModal`, `UnitList` depuis `battleforthecrown/src/features/army/components/`.
+  - Wirer aux endpoints `GET /army/{id}/inventory`, `GET /army/{id}/training`, `POST /army/{id}/train`, `DELETE /army/{id}/training/{trainingId}/cancel`.
+  - Ajouter les queries dans `src/api/queries.ts` : `useArmyInventoryQuery`, `useArmyTrainingQuery`, `useTrainUnitsMutation`, `useCancelTrainingMutation`.
+  - Stub Phase 3.F (`features/layout/StubPanel.tsx` "Armée à venir Phase 3.x") → écran réel.
+- [ ] **Combat / Expeditions** (`features/combat/`) :
+  - Porter `AttackDetailModal`, `ExpeditionsBottomSheet`, `ExpeditionsFloatingButton`, `LootDisplay`, `ResourceLootSummary`, `UnitLosses`, `RemainingResourcesDisplay`, `ArmyPowerDisplay`.
+  - L'`ExpeditionList` Phase 6 minimaliste devient un wrapper du composant legacy (ou est remplacé).
+  - Wirer `POST /combat/attack` (qui était déjà côté backend, jamais branché côté front).
+- [ ] **Combat reports** :
+  - Porter `ReportCard`, `ReportsList` + page `app/game/combat-report/[id]/page.tsx`.
+  - Nouvelle route `/game/reports` et `/game/reports/:reportId` dans `src/App.tsx`.
+  - Wirer endpoints `GET /combat/reports`, `GET /combat/report/{id}`, `PATCH /combat/report/{id}/read`, `DELETE /combat/report/{id}`.
+  - Le toast `battle.resolved` Phase 6 devient cliquable et ouvre `/game/reports/:reportId`.
+- [ ] **Crowns** (`features/crowns/`) :
+  - Porter `CrownsManager` legacy.
+  - Stub Phase 3.F → écran réel avec balance interpolée + transactions.
+- [ ] **Power** (`features/power/`) :
+  - Porter `PowerBottomSheet` + leaderboard.
+  - Wirer `GET /power`, `GET /power/leaderboard`, `GET /power/kingdom/{userId}`.
+- [ ] Supprimer `features/layout/StubPanel.tsx` et `features/layout/NavRail.tsx` stubs → remplacer par la vraie nav (`BottomNavigationBar` legacy).
+- [ ] Commits granulaires : `feat(pixi-frontend/army): port army screens`, `feat(pixi-frontend/combat): port attack + reports`, `feat(pixi-frontend/crowns): port crowns manager`, `feat(pixi-frontend/power): port power leaderboard`.
+
+#### 9.E — Refactor Pixi avec sprites réels
+
+- [ ] `pixi/assets/manifest.ts` : déclarer 3 bundles Pixi `Assets.addBundle(...)` :
+  - `boot` : favicon, fond du loader.
+  - `village` : tous les PNG de bâtiments (`/assets/castle.png`, etc.) + `/assets/strategy-icons/spritesheet.json` pour les ressources.
+  - `world-map` : icônes barbares, château joueur, marqueurs (à créer ou extraire d'un pack si pas déjà au legacy).
+- [ ] `pixi/assets/loader.ts` : wrapper `Assets.loadBundle(name, onProgress)` qui retourne une `Promise<Record<string, Texture>>`.
+- [ ] `BootScene` : afficher la barre de progression en utilisant le loader (la scène existe déjà, lui ajouter un `onProgress`).
+- [ ] `BuildingSprite.ts` :
+  - Remplacer le `Graphics + emoji Text` actuel par `Sprite` chargé depuis `Texture.from('/assets/castle.png')` (etc.).
+  - Garder le système flash + halo + progress bar (qui sont au-dessus du sprite, pas à la place).
+  - Le label `Niv. X` peut rester en `Text` Pixi.
+- [ ] `WorldMapScene.ts` : remplacer les cercles colorés par des petits sprites tirés du spritesheet ou d'icônes dédiées (à choisir : couronne pour mes villages, picto barbare teinté par tier).
+- [ ] `ExpeditionVisual.ts` : le sprite `⚔️/🐎` en `Text` peut rester (ou utiliser `HorseHead.png` du spritesheet) ; les particules de poussière OK en `Graphics` (légères) ou bascule sur `@pixi/particle-emitter` si la perf le justifie.
+- [ ] Commit : `feat(pixi/assets): load real building + map sprites via Assets.loadBundle`.
+
+### Tests à ajouter / mettre à jour
+
+- [ ] Tests des nouvelles queries Army / Combat / Reports / Crowns / Power (mocked fetch comme `client.test.ts`).
+- [ ] Test du loader d'assets (mock `Assets.loadBundle` ou simple test de la signature `manifest`).
+- [ ] Snapshot test de la palette Tailwind (présence des couleurs `parchment`, `kingdom-100`, etc.) — facultatif mais utile pour éviter les régressions.
+- [ ] Pas de tests visuels obligatoires (vérification user dans le navigateur).
+
+### Definition of Done
+
+- ✅ La route `/ui-test` est accessible et toutes les 17 sections rendent correctement.
+- ✅ Aucun `'use client'`, aucune emoji UI dans `src/features/` (les emojis du `buildingMeta` sont remplacés par des PNG).
+- ✅ Tous les écrans listés en 9.C utilisent au moins un composant de `src/ui/` (pas de Tailwind brut sur des conteneurs qui devraient être un `Panel` ou `Card`).
+- ✅ Aucune route ne tombe sur un `StubPanel`. Army, Combat, Reports, Crowns, Power ont leurs vrais écrans portés.
+- ✅ Le `BuildingSprite` Pixi affiche un sprite PNG (pas un `Graphics + emoji`) ; idem `WorldMapScene` pour les villages.
+- ✅ `yarn workspace battleforthecrown-pixi build` réussit, type-check et lint propres.
+- ✅ Bundle prod reste sous 500 KB JS gzip pour l'initial. Les assets sont en `public/` (donc hors bundle JS, téléchargés à la demande).
+- ✅ CHANGELOG entrée Phase 9 ajoutée. README index mis à jour.
+
+### Garde-fous spécifiques (à lire avant de coder)
+
+- Ne **pas re-créer** un composant qui existe dans `src/ui/`. Si tu hésites, va dans `/ui-test` voir ce qui existe.
+- Ne **pas modifier** les composants `src/ui/` à moins d'un bug avéré — ils sont copiés du legacy et leur API doit rester stable pour comparaison côté à côté.
+- Respecter le **palette legacy** : parchemin clair pour les écrans hors-jeu (login/worlds), sombre pour le HUD in-game (header, panels overlay sur canvas).
+- Les **assets PNG sont gros** (1 MB chacun pour les bâtiments). Lazy-loader via `Assets.loadBundle` côté Pixi pour éviter de plomber le TTI. Côté React, `<img loading="lazy">`.
+- Le legacy utilise `next/image` et `next/link`. Remplacer par `<img>` et `react-router Link` à chaque port.
+- **Pas de `git push`**, **pas de modification du backend**, **pas de modification du dossier `battleforthecrown/`** (legacy intact). Le user supprimera le legacy quand il aura validé Phase 9.
+- Si un sprite manque (ex: pas de `barbarian-village.png`), l'**identifier explicitement dans le CHANGELOG Phase 9** sous "Assets manquants à produire" plutôt que de retomber sur un `Graphics`.
+
+---
+
 ## Critères pour reporter une phase
 
 Avant de passer à la phase suivante :
@@ -338,4 +532,5 @@ Si une Definition of Done n'est pas atteinte → **STOP et re-plan**, on ne fait
 | 6 | 2-3j | 4, 5 | Animations expéditions/combats + particules |
 | 7 | 2j | 6 | Polish, perf, suppression legacy |
 | 8 | 1-2j | 7 | Consolidation documentaire (CLAUDE.md hiérarchique) |
-| **Total** | **~14-20j** | — | — |
+| 9 | 2-3j | 0..6 livrables existants | Fidélité design : assets PNG + spritesheets, page `/ui-test` portée, écrans HUD refactorés sur `src/ui/`, sprites Pixi réels, features Army/Combat/Reports/Crowns/Power portées |
+| **Total** | **~16-23j** | — | — |

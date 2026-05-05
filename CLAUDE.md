@@ -31,8 +31,11 @@ DB et SQL utiles : [`docs/migration/db-setup.md`](./docs/migration/db-setup.md).
 La migration Next.js → Vite/Pixi est documentée :
 - [`docs/migration/README.md`](./docs/migration/README.md) — index des phases.
 - [`docs/migration/CHANGELOG.md`](./docs/migration/CHANGELOG.md) — journal phase par phase.
+- [`docs/migration/03-migration-plan.md`](./docs/migration/03-migration-plan.md) — plan détaillé des 9 phases.
 
 À l'issue de la migration : seul `battleforthecrown-pixi/` reste actif. Le legacy sera retiré quand l'utilisateur l'aura validé.
+
+**Phase 9 (post-run nocturne) — fidélité design** : reste à faire. Le run autonome a livré le pipeline complet mais a pris des raccourcis graphiques (composants `src/ui/` sous-exploités, palette inversée, assets PNG ignorés, sprites Pixi en `Graphics + emoji`). Détail complet dans [`docs/migration/03-migration-plan.md` § Phase 9](./docs/migration/03-migration-plan.md#phase-9).
 
 ## Notes pour les agents
 
