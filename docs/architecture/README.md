@@ -4,15 +4,18 @@ Documentation technique de référence (humaine) pour les agents et les contribu
 
 ## Index
 
+- [`decisions.md`](./decisions.md) — ADR consolidé : décisions structurantes (stack, Outbox, reconciliation Pixi, etc.) et leur **pourquoi**.
 - [`backend-modules.md`](./backend-modules.md) — arborescence NestJS, modules métiers, sous-services notables (combat, world, event).
 - [`data-model.md`](./data-model.md) — entités Prisma, relations, conventions de schéma, pièges connus.
 - [`realtime.md`](./realtime.md) — pattern Outbox, gateway WebSocket, catalogue d'événements, latence, reconnection.
+- [`db-setup.md`](./db-setup.md) — bootstrap Postgres + Prisma, snippets SQL de debug, reset.
 
 ## À lire avant tout travail backend
 
 1. **`backend-modules.md`** pour situer le module concerné dans la hiérarchie.
 2. **`data-model.md`** pour valider la forme de la donnée que tu vas lire/écrire.
 3. **`realtime.md`** si la mutation doit notifier le frontend (presque toujours).
+4. **`decisions.md`** pour comprendre le pourquoi d'une convention avant de la remettre en cause.
 
 ## Conventions transversales
 
@@ -31,5 +34,3 @@ Documentation technique de référence (humaine) pour les agents et les contribu
 ## Liens connexes
 
 - Gameplay : [`docs/gameplay/`](../gameplay/README.md)
-- Migration en cours : [`docs/migration/`](../migration/README.md)
-- Setup DB local : [`docs/migration/db-setup.md`](../migration/db-setup.md)

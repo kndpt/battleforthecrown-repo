@@ -8,10 +8,6 @@ export interface AuthTokens {
   refreshToken: string;
 }
 
-/**
- * Backend `auth.service.ts` returns the user inline (not nested under `user`).
- * Snapshot in `docs/migration/06-api-contract-snapshot.md` is out of date.
- */
 export interface AuthSessionResponse {
   accessToken: string;
   refreshToken: string;

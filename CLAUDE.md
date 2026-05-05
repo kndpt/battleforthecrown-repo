@@ -12,7 +12,7 @@ MMORTS médiéval style Kingsage / Tribal Wars. Yarn workspace avec :
 Voir [`.claude/rules/`](./.claude/rules/) pour le détail :
 - [`conventions.md`](./.claude/rules/conventions.md) — TypeScript strict, yarn, server-authoritative, Outbox.
 - [`git.md`](./.claude/rules/git.md) — commits EN au format `<type>(<scope>): <subject>`.
-- [`docs.md`](./.claude/rules/docs.md) — où vit la doc (migration, architecture, gameplay).
+- [`docs.md`](./.claude/rules/docs.md) — où vit la doc (architecture, gameplay).
 
 ## Commandes essentielles
 
@@ -21,21 +21,14 @@ yarn install                                                      # tous les wor
 cd battleforthecrown-backend && docker compose up -d              # Postgres
 yarn workspace battleforthecrown-backend prisma migrate deploy
 PORT=15001 yarn workspace battleforthecrown-backend start:dev     # backend (15001)
-yarn workspace battleforthecrown-pixi dev                         # nouveau front (5173)
+yarn workspace battleforthecrown-pixi dev                         # frontend (5173)
 ```
 
-DB et SQL utiles : [`docs/migration/db-setup.md`](./docs/migration/db-setup.md).
+DB et SQL utiles : [`docs/architecture/db-setup.md`](./docs/architecture/db-setup.md).
 
-## Migration Pixi
+## Décisions d'architecture
 
-La migration Next.js → Vite/Pixi est documentée :
-- [`docs/migration/README.md`](./docs/migration/README.md) — index des phases.
-- [`docs/migration/CHANGELOG.md`](./docs/migration/CHANGELOG.md) — journal phase par phase.
-- [`docs/migration/03-migration-plan.md`](./docs/migration/03-migration-plan.md) — plan détaillé des 9 phases.
-
-À l'issue de la migration : seul `battleforthecrown-pixi/` reste actif. Le legacy sera retiré quand l'utilisateur l'aura validé.
-
-**Phase 9 — fidélité design** : ✅ done (2026-05-05). 9.A/B/C/D/E + L1-L8 livrés. Le HUD in-game est fidèle au legacy (header 2-rangs, bottom nav, building/army cards + modals, expeditions + reports + attack flow) ; les 4 features 9.D (Army training, Combat reports, AttackDetailModal, Power breakdown, Crowns réel) sont portées et fonctionnelles. Détail complet dans [`docs/migration/CHANGELOG.md` § Phase 9](./docs/migration/CHANGELOG.md#phase-9--fidélité-design-assets--ui-test--composants-2026-05-05).
+Les choix structurants (stack, Outbox, reconciliation Pixi, optimistic UI, etc.) sont consignés dans [`docs/architecture/decisions.md`](./docs/architecture/decisions.md). À lire avant de remettre en cause une convention.
 
 ## Notes pour les agents
 

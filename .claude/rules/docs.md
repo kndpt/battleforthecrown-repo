@@ -4,14 +4,14 @@
 
 ```
 docs/
-├── architecture/   # doc humain de référence (cross-workspace) — backend modules, data model, realtime
-├── gameplay/       # mécaniques de jeu (vision, économie, bâtiments, combat, événements)
-└── migration/      # plan + CHANGELOG de la migration Next.js → Pixi
-    ├── README.md           # index des phases
-    ├── 00-overview.md → 07-doc-consolidation.md
-    ├── CHANGELOG.md        # journal phase par phase
-    ├── db-setup.md
-    └── AUTONOMOUS_RUN.md   # protocole run nocturne
+├── architecture/   # doc humain de référence (cross-workspace)
+│   ├── README.md
+│   ├── decisions.md          # ADR consolidé (pourquoi des choix structurants)
+│   ├── backend-modules.md    # arborescence NestJS, modules, services
+│   ├── data-model.md         # entités Prisma, relations
+│   ├── realtime.md           # pattern Outbox, gateway WS, événements
+│   └── db-setup.md           # bootstrap Postgres + Prisma, snippets SQL
+└── gameplay/       # mécaniques de jeu (économie, bâtiments, combat, événements)
 ```
 
 ## CLAUDE.md hiérarchique
@@ -19,7 +19,7 @@ docs/
 - `/CLAUDE.md` — racine, court, pointe vers les rules + workspaces.
 - `/battleforthecrown-pixi/CLAUDE.md` — briefing du frontend Pixi.
 - `/battleforthecrown-backend/CLAUDE.md` — briefing du backend NestJS (sous-repo avec son propre `.git`).
-- `/battleforthecrown/CLAUDE.md` — n'existera plus après suppression du legacy.
+- `/battleforthecrown/CLAUDE.md` — legacy Next.js, dossier conservé temporairement (à supprimer plus tard).
 
 ## Rules path-scoped
 
@@ -31,14 +31,11 @@ docs/
 
 | Type d'info | Fichier |
 |---|---|
-| Décision d'architecture (humain) | `docs/architecture/`. Pendant la migration, les choix de stack sont aussi documentés dans `docs/migration/`. |
+| Décision d'architecture structurante (le **pourquoi**) | `docs/architecture/decisions.md` (ADR consolidé). |
+| Doc technique de référence (modules, data model, realtime, DB) | `docs/architecture/<domaine>.md`. |
 | Mécanique gameplay | `docs/gameplay/`. |
-| Convention projet | `.claude/rules/conventions.md`. |
+| Convention projet (transversale) | `.claude/rules/conventions.md`. |
 | Convention workspace | `<workspace>/.claude/rules/<scope>.md`. |
 | Briefing AI agent | `<workspace>/CLAUDE.md`. |
 | Onboarding humain | `README.md` de chaque workspace. |
-| Journal des changements | `docs/migration/CHANGELOG.md` (pendant la migration), puis convention à choisir post-migration. |
-
-## Doc legacy à supprimer post-migration
-
-- Dans `battleforthecrown/` : tout sera supprimé avec le dossier (legacy Next.js, branche d'archive `legacy/nextjs-frontend` déjà créée dans son `.git`).
+| Historique des changements | `git log` (les commits suivent `<type>(<scope>): <subject>`). |

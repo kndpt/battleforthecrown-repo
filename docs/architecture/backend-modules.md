@@ -128,4 +128,4 @@ modules/<bounded-context>/
 
 ## Endpoints — vue rapide
 
-Le contrat figé pour la migration Pixi est dans [`docs/migration/06-api-contract-snapshot.md`](../migration/06-api-contract-snapshot.md). À mettre à jour si l'API évolue post-migration.
+Le catalogue REST/WS canonique est dérivé du code (controllers NestJS + `EventOutbox.kind`). Voir aussi [`realtime.md`](./realtime.md) pour les events WebSocket.

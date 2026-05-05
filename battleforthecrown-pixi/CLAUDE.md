@@ -2,7 +2,7 @@
 
 Frontend Battle for the Crown : Vite + React 19 + PixiJS v8 + Zustand + TanStack Query.
 
-> Briefing court. Le détail vit dans [`./README.md`](./README.md), les conventions techniques dans [`./.claude/rules/`](./.claude/rules/), la doc projet dans [`../docs/migration/`](../docs/migration/).
+> Briefing court. Le détail vit dans [`./README.md`](./README.md), les conventions techniques dans [`./.claude/rules/`](./.claude/rules/), les décisions structurantes dans [`../docs/architecture/decisions.md`](../docs/architecture/decisions.md).
 
 ## Règles transversales
 

@@ -2,16 +2,17 @@
 
 MMORTS médiéval (Kingsage / Tribal Wars). Workspace yarn avec :
 
-- `battleforthecrown-pixi/` — **nouveau frontend** (Vite + React 19 + PixiJS v8 + Zustand + TanStack Query). Voir [son README](./battleforthecrown-pixi/README.md).
-- `battleforthecrown/` — **legacy Next.js** (intact pendant la migration, sera supprimé après validation user). Branche d'archive : `legacy/nextjs-frontend` dans `battleforthecrown/.git`.
-- `battleforthecrown-backend/` — NestJS + Prisma + Postgres + Socket.IO + pg-boss. Inchangé.
+- `battleforthecrown-pixi/` — **frontend actif** (Vite + React 19 + PixiJS v8 + Zustand + TanStack Query). Voir [son README](./battleforthecrown-pixi/README.md).
+- `battleforthecrown/` — legacy Next.js, conservé temporairement pour référence. Branche d'archive : `legacy/nextjs-frontend` dans `battleforthecrown/.git`.
+- `battleforthecrown-backend/` — NestJS + Prisma + Postgres + Socket.IO + pg-boss.
 - `packages/shared/` — types et formules partagés (lecture seule pour les frontends).
 
-## Migration en cours
+## Documentation
 
-La migration Next.js → Vite/Pixi est documentée dans `docs/migration/`. Voir :
-- [`docs/migration/README.md`](./docs/migration/README.md) — index des phases.
-- [`docs/migration/CHANGELOG.md`](./docs/migration/CHANGELOG.md) — journal détaillé phase par phase.
+- Décisions structurantes : [`docs/architecture/decisions.md`](./docs/architecture/decisions.md).
+- Doc technique de référence : [`docs/architecture/`](./docs/architecture/README.md).
+- Mécaniques de jeu : [`docs/gameplay/`](./docs/gameplay/README.md).
+- Briefings AI agents : `CLAUDE.md` à la racine et dans chaque workspace.
 
 ## Démarrage rapide
 

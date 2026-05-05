@@ -80,6 +80,7 @@ L'index initial fait ~363 KB JS / ~109 KB gzip (sans Pixi). Pixi + viewport + sc
 - Mutations server-authoritative — optimistic UI uniquement quand le rollback est réversible.
 - Pas de Redux (le legacy l'utilisait).
 
-## Documentation migration
+## Documentation
 
-`../docs/migration/CHANGELOG.md` documente chaque phase du run autonome (DB → auth → WS → HUD → WorldMap → VillageScene → expéditions → polish).
+- Décisions structurantes (stack, Outbox, reconciliation Pixi…) : [`../docs/architecture/decisions.md`](../docs/architecture/decisions.md).
+- Doc technique de référence : [`../docs/architecture/`](../docs/architecture/README.md).

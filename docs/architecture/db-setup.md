@@ -1,7 +1,6 @@
 # DB setup — Postgres + Prisma
 
 > Commandes pour bootstrap, debug et reset de la base Postgres du backend.
-> Référencé depuis la Phase 0 ([03-migration-plan.md § 0.A](./03-migration-plan.md#phase-0)).
 
 ## Stack
 
@@ -223,9 +222,3 @@ Pour DBeaver / TablePlus / DataGrip :
 | Backend crashe avec `Schema "pgboss" does not exist` | Premier démarrage, pg-boss pas encore initialisé | Attendre 2-3s, le backend crée le schéma au boot |
 | Aucun event WS reçu après upgrade | OutboxWorker bloqué, ou EventOutbox.dispatchedAt resté null | `SELECT count(*) FROM "EventOutbox" WHERE "dispatchedAt" IS NULL` — si > 0 et croissant, restart le backend |
 | Port 5432 déjà utilisé | Une autre instance Postgres tourne en local | `lsof -i :5432`, kill l'autre, ou changer le port dans `docker-compose.yml` ET dans `.env` |
-
-## Note pour le run autonome
-
-- Le bootstrap DB est dans la **Phase 0.A**, à faire AVANT le scaffold Vite.
-- Les commandes SQL ci-dessus sont à utiliser pour vérifier les Definitions of Done de chaque phase (ex: « après login en Phase 1, vérifier qu'un user a bien été créé en DB »).
-- Si la DB tombe en cours de run, le backend va spammer des erreurs P1001 dans ses logs — surveiller, et `docker compose up -d` pour relancer.
