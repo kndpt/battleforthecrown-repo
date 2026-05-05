@@ -24,7 +24,7 @@ export function BottomNavigationBar({
   density = 'compact',
   unreadCount = 0,
 }: BottomNavigationBarProps) {
-  const { isBarracksBuilt } = useBuildingsForLockCheck();
+  const { isBarracksBuilt, isWatchtowerBuilt } = useBuildingsForLockCheck();
 
   const isCompact = density === 'compact';
 
@@ -166,26 +166,51 @@ export function BottomNavigationBar({
         </button>
 
         {/* World */}
-        <button
-          onClick={onWorldClick}
-          className={`${btnBase} ${
-            activeTab === 'world' ? 'scale-105' : 'hover:scale-[1.02] active:scale-95'
-          }`}
-          title="Explorer la carte du monde"
+        <Tooltip
+          content={!isWatchtowerBuilt ? 'Construisez la tour de guet pour débloquer' : undefined}
+          position="top"
+          variant="dark"
         >
-          <div
-            className={`${iconWrapBase} ${activeTab === 'world' ? iconActive : iconInactive}`}
-          >
-            <Globe size={iconSize} className="text-white drop-shadow-md" />
-          </div>
-          <span
-            className={`${labelBase} ${
-              activeTab === 'world' ? labelActive : labelInactive
+          <button
+            onClick={isWatchtowerBuilt ? onWorldClick : undefined}
+            disabled={!isWatchtowerBuilt}
+            title={
+              !isWatchtowerBuilt
+                ? 'Construisez la tour de guet pour débloquer'
+                : 'Explorer la carte du monde'
+            }
+            className={`${btnBase} ${
+              !isWatchtowerBuilt
+                ? 'opacity-40 cursor-not-allowed'
+                : activeTab === 'world'
+                  ? 'scale-105'
+                  : 'hover:scale-[1.02] active:scale-95'
             }`}
           >
-            Monde
-          </span>
-        </button>
+            <div
+              className={`${iconWrapBase} ${
+                !isWatchtowerBuilt
+                  ? 'bg-gradient-to-b from-[#a5a29a] to-[#6f6c63] border-[#59554b]'
+                  : activeTab === 'world'
+                    ? iconActive
+                    : iconInactive
+              }`}
+            >
+              {!isWatchtowerBuilt ? (
+                <Lock size={iconSize} className="text-white" />
+              ) : (
+                <Globe size={iconSize} className="text-white drop-shadow-md" />
+              )}
+            </div>
+            <span
+              className={`${labelBase} ${
+                activeTab === 'world' ? labelActive : labelInactive
+              }`}
+            >
+              Monde
+            </span>
+          </button>
+        </Tooltip>
       </div>
     </div>
   );

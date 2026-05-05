@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import { type Application } from 'pixi.js';
 import { PixiCanvas } from '@/pixi/PixiCanvas';
 import { SceneManager } from '@/pixi/scenes/SceneManager';
@@ -8,13 +8,23 @@ import { useWorldMapStore } from '@/stores/worldMap';
 import { useExpeditionsStore } from '@/stores/expeditions';
 import type { MapEntity } from '@/api/world-types';
 
+export interface WorldMapCanvasController {
+  centerOn: (worldX: number, worldY: number) => void;
+}
+
 interface WorldMapCanvasProps {
   gridWidth: number;
   gridHeight: number;
   myVillage?: MapEntity | null;
+  controllerRef?: MutableRefObject<WorldMapCanvasController | null>;
 }
 
-export function WorldMapCanvas({ gridWidth, gridHeight, myVillage }: WorldMapCanvasProps) {
+export function WorldMapCanvas({
+  gridWidth,
+  gridHeight,
+  myVillage,
+  controllerRef,
+}: WorldMapCanvasProps) {
   const setSelectedEntity = useWorldMapStore((state) => state.setSelectedEntity);
   const handleRef = useRef<WorldMapHandle | null>(null);
   const initialCenter = useMemo(
@@ -34,6 +44,9 @@ export function WorldMapCanvas({ gridWidth, gridHeight, myVillage }: WorldMapCan
         onSelectEntity: (id) => setSelectedEntity(id),
       });
       handleRef.current = handle;
+      if (controllerRef) {
+        controllerRef.current = { centerOn: handle.centerOn };
+      }
 
       manager.register('world-map', () => handle.scene);
       manager.switchTo('world-map');
@@ -61,11 +74,12 @@ export function WorldMapCanvas({ gridWidth, gridHeight, myVillage }: WorldMapCan
       return () => {
         unsubEntities();
         unsubExpeditions();
+        if (controllerRef) controllerRef.current = null;
         handleRef.current = null;
         manager.destroy();
       };
     },
-    [gridWidth, gridHeight, initialCenter.x, initialCenter.y, setSelectedEntity],
+    [gridWidth, gridHeight, initialCenter.x, initialCenter.y, setSelectedEntity, controllerRef],
   );
 
   useEffect(() => {
