@@ -35,7 +35,7 @@ La migration Next.js → Vite/Pixi est documentée :
 
 À l'issue de la migration : seul `battleforthecrown-pixi/` reste actif. Le legacy sera retiré quand l'utilisateur l'aura validé.
 
-**Phase 9 (post-run nocturne) — fidélité design** : reste à faire. Le run autonome a livré le pipeline complet mais a pris des raccourcis graphiques (composants `src/ui/` sous-exploités, palette inversée, assets PNG ignorés, sprites Pixi en `Graphics + emoji`). Détail complet dans [`docs/migration/03-migration-plan.md` § Phase 9](./docs/migration/03-migration-plan.md#phase-9).
+**Phase 9 (post-run nocturne) — fidélité design** : 9.A/B/C/E + L1-L8 (HUD in-game fidèle au legacy : `GameHeader` 2-rangs, `BottomNavigationBar`, `BuildingCard`, `QueueFloatingButton` + `QueueBottomSheet`, `BuildingManagementPanel`, `BuildingDetailModal`, `VillageView`) livrés le 2026-05-05. **9.D reporté** — Army/Combat (rapports complets)/Crowns/Power restent sur des stubs. Détail complet dans [`docs/migration/CHANGELOG.md` § Phase 9](./docs/migration/CHANGELOG.md#phase-9--fidélité-design-assets--ui-test--composants-2026-05-05) et plan dans [`docs/migration/03-migration-plan.md` § Phase 9](./docs/migration/03-migration-plan.md#phase-9).
 
 ## Notes pour les agents
 
