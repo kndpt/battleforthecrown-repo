@@ -8,6 +8,7 @@ import { ToastStack } from '@/features/layout/ToastStack';
 import { BottomNavigationBar } from '@/features/village/BottomNavigationBar';
 import { PowerBottomSheet } from '@/features/power/PowerBottomSheet';
 import { ExpeditionList } from '@/features/combat/ExpeditionList';
+import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
 import {
   useArmyInventoryQuery,
   useArmyTrainingQuery,
@@ -53,6 +54,7 @@ export function ArmyScreen() {
   const [selectedUnit, setSelectedUnit] = useState<ArmyUnitDto | null>(null);
   const [isPowerSheetOpen, setIsPowerSheetOpen] = useState(false);
   const [isExpeditionsOpen, setIsExpeditionsOpen] = useState(false);
+  const unreadCount = useUnreadReportsCount();
 
   const barracks = buildings.data?.find((b) => b.type === 'BARRACKS');
   const barracksLevel = barracks?.level ?? 0;
@@ -180,6 +182,7 @@ export function ArmyScreen() {
           onArmyClick={() => undefined}
           onWorldClick={() => navigate('/game/world')}
           onMessagesClick={() => navigate('/game/messages')}
+          unreadCount={unreadCount}
         />
 
         {selectedUnit && (

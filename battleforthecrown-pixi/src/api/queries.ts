@@ -31,6 +31,8 @@ export const queryKeys = {
   armyInventory: (villageId: string | null) => ['army', 'inventory', villageId] as const,
   armyTraining: (villageId: string | null) => ['army', 'training', villageId] as const,
   activeExpeditions: (villageId: string | null) => ['combat', 'active', villageId] as const,
+  combatReports: (userId: string | null) => ['combat', 'reports', userId] as const,
+  combatReport: (reportId: string | null) => ['combat', 'report', reportId] as const,
   worldEntities: (worldId: string | null) => ['world-entities', worldId] as const,
   worldConfig: (worldId: string | null) => ['world-config', worldId] as const,
 };
@@ -366,6 +368,79 @@ export function useActiveExpeditionsQuery(villageId: string | null, userId: stri
     },
     enabled: Boolean(villageId && userId),
     staleTime: 5_000,
+  });
+}
+
+export interface CombatLootDto {
+  resources?: { wood?: number; stone?: number; iron?: number };
+  remainingResources?: { wood?: number; stone?: number; iron?: number };
+  artifacts?: unknown[];
+  honor?: number;
+  items?: unknown[];
+}
+
+export interface CombatReportDto {
+  id: string;
+  worldId: string;
+  attackerVillageId: string;
+  attackerUserId: string;
+  defenderVillageId?: string | null;
+  defenderUserId?: string | null;
+  targetKind: string;
+  targetX: number;
+  targetY: number;
+  loot: CombatLootDto;
+  totalUnitsAttacker: Record<string, number>;
+  totalUnitsDefender: Record<string, number>;
+  lossesAttacker: Record<string, number>;
+  lossesDefender: Record<string, number>;
+  isRead: boolean;
+  isAttacker: boolean;
+  timestamp: string;
+  createdAt: string;
+}
+
+export function useCombatReportsQuery(userId: string | null) {
+  return useQuery<CombatReportDto[]>({
+    queryKey: queryKeys.combatReports(userId),
+    queryFn: () => {
+      if (!userId) return Promise.resolve([] as CombatReportDto[]);
+      return apiClient.get<CombatReportDto[]>('/combat/reports', { query: { userId } });
+    },
+    enabled: Boolean(userId),
+    staleTime: 10_000,
+  });
+}
+
+export function useCombatReportQuery(reportId: string | null, userId: string | null) {
+  return useQuery<CombatReportDto>({
+    queryKey: queryKeys.combatReport(reportId),
+    queryFn: () => {
+      if (!reportId || !userId) return Promise.reject(new Error('Missing report or user'));
+      return apiClient.get<CombatReportDto>(`/combat/report/${reportId}`, {
+        query: { userId },
+      });
+    },
+    enabled: Boolean(reportId && userId),
+    staleTime: 60_000,
+  });
+}
+
+interface MarkReportReadInput {
+  reportId: string;
+  userId: string;
+}
+
+export function useMarkReportReadMutation() {
+  const queryClient = useQueryClient();
+  return useMutation<CombatReportDto, Error, MarkReportReadInput>({
+    mutationFn: ({ reportId, userId }) =>
+      apiClient.patch<CombatReportDto>(`/combat/report/${reportId}/read`, undefined, {
+        query: { userId },
+      }),
+    onSettled: (_data, _err, { userId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.combatReports(userId) });
+    },
   });
 }
 

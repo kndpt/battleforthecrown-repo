@@ -93,6 +93,10 @@ export function applyBattleResolved(payload: BattleResolvedPayload, ctx: Binding
   }, 800);
 
   ctx.queryClient.invalidateQueries({ queryKey: ['resources', payload.villageId] });
+  // A new combat report just landed on the server. Tell TanStack to refetch the
+  // reports list so the unread bubble in the bottom nav updates without waiting
+  // on the 10s staleTime.
+  ctx.queryClient.invalidateQueries({ queryKey: ['combat', 'reports'] });
   useUiStore.getState().pushToast({
     tone: payload.isVictory ? 'success' : 'error',
     title: payload.isVictory ? 'Victoire' : 'Défaite',

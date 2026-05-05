@@ -13,6 +13,7 @@ import { QueueFloatingButton } from '@/features/village/QueueFloatingButton';
 import { QueueBottomSheet } from '@/features/village/QueueBottomSheet';
 import { metaFor } from '@/features/village/buildingMeta';
 import { ExpeditionList } from '@/features/combat/ExpeditionList';
+import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
 import { PowerBottomSheet } from '@/features/power/PowerBottomSheet';
 import { useVillageBuildingsQuery } from '@/api/queries';
 import { useGameStore } from '@/stores/game';
@@ -48,6 +49,7 @@ export function VillageView() {
   const [isQueueOpen, setIsQueueOpen] = useState(false);
   const [isPowerSheetOpen, setIsPowerSheetOpen] = useState(false);
   const [isExpeditionsOpen, setIsExpeditionsOpen] = useState(false);
+  const unreadCount = useUnreadReportsCount();
 
   const buildings = useMemo(() => {
     return [...(buildingsQuery.data ?? [])].sort(
@@ -98,7 +100,7 @@ export function VillageView() {
           onArmyClick={() => navigate('/game/army')}
           onWorldClick={() => navigate('/game/world')}
           onMessagesClick={() => navigate('/game/messages')}
-          unreadCount={0}
+          unreadCount={unreadCount}
         />
 
         <BuildingManagementPanel

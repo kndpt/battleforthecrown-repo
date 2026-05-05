@@ -1,35 +1,37 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Panel } from '@/ui';
-import { GameHeader } from '@/features/layout/GameHeader';
-import { BottomNavigationBar } from '@/features/village/BottomNavigationBar';
 import { GameSession } from '@/features/game/GameSession';
+import { GameHeader } from '@/features/layout/GameHeader';
+import { ToastStack } from '@/features/layout/ToastStack';
+import { BottomNavigationBar } from '@/features/village/BottomNavigationBar';
+import { PowerBottomSheet } from '@/features/power/PowerBottomSheet';
+import { ReportsList } from './ReportsList';
+import { ReportDetailModal } from './ReportDetailModal';
+import { useUnreadReportsCount } from './useUnreadReportsCount';
 
-/**
- * Stub temporaire — sera remplacé en Phase 9.D par le portage de
- * battleforthecrown/src/features/combat/components/ReportsList.tsx.
- */
 export function MessagesScreen() {
   const navigate = useNavigate();
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [isPowerSheetOpen, setIsPowerSheetOpen] = useState(false);
+  const unreadCount = useUnreadReportsCount();
 
   return (
     <GameSession>
       <div className="h-screen flex flex-col mx-auto overflow-hidden bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
         <div className="flex-shrink">
-          <GameHeader />
+          <GameHeader onPowerClick={() => setIsPowerSheetOpen(true)} />
         </div>
 
-        <div className="flex-1 overflow-y-auto pb-24 p-4">
-          <Panel variant="parchment" padding="lg" className="max-w-2xl mx-auto mt-8">
-            <h2 className="font-cinzel text-xl font-bold text-kingdom-900 mb-3">
-              Messages
-            </h2>
-            <p className="text-sm text-kingdom-700 font-game">
-              Les rapports de combat (ReportsList, ReportCard, AttackDetailModal)
-              seront portés en Phase 9.D depuis le legacy. Les events WS{' '}
-              <code>battle.resolved</code> sont déjà reçus, mais l&apos;UI de
-              consultation des rapports est encore à faire.
-            </p>
-          </Panel>
+        <div
+          className="flex-1 overflow-y-auto pb-24 overscroll-contain"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
+          <main className="container mx-auto px-3 py-4 max-w-2xl">
+            <h1 className="font-cinzel text-xl font-bold text-kingdom-900 mb-4 px-1">
+              Rapports de combat
+            </h1>
+            <ReportsList onReportClick={(id) => setSelectedReportId(id)} />
+          </main>
         </div>
 
         <BottomNavigationBar
@@ -37,8 +39,23 @@ export function MessagesScreen() {
           onBuildingsClick={() => navigate('/game')}
           onArmyClick={() => navigate('/game/army')}
           onWorldClick={() => navigate('/game/world')}
-          onMessagesClick={() => navigate('/game/messages')}
+          onMessagesClick={() => undefined}
+          unreadCount={unreadCount}
         />
+
+        {selectedReportId && (
+          <ReportDetailModal
+            reportId={selectedReportId}
+            onClose={() => setSelectedReportId(null)}
+          />
+        )}
+
+        <PowerBottomSheet
+          isOpen={isPowerSheetOpen}
+          onClose={() => setIsPowerSheetOpen(false)}
+        />
+
+        <ToastStack />
       </div>
     </GameSession>
   );
