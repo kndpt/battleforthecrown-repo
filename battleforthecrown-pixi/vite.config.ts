@@ -12,4 +12,15 @@ export default defineConfig({
       '@': path.resolve(here, 'src'),
     },
   },
+  optimizeDeps: {
+    // The shared workspace package is published as CommonJS. Vite skips workspace
+    // packages by default, so named-export imports from it fail at runtime
+    // ("does not provide an export named …"). Forcing pre-bundling converts the
+    // CJS module into a Vite-friendly ESM proxy.
+    include: [
+      '@battleforthecrown/shared',
+      '@battleforthecrown/shared/logic',
+      '@battleforthecrown/shared/village/buildings',
+    ],
+  },
 });

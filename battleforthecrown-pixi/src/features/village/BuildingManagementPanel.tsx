@@ -4,7 +4,7 @@ import {
   BUILDING_UNLOCK_REQUIREMENTS,
   MAX_CONSTRUCTION_QUEUE,
   type BuildingType,
-} from '@battleforthecrown/shared';
+} from '@battleforthecrown/shared/village/buildings';
 import { useBuildingQueueQuery } from '@/api/queries';
 import { useGameStore } from '@/stores/game';
 import type { BuildingDto } from '@/api';
