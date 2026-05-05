@@ -28,6 +28,8 @@ export const queryKeys = {
   crowns: (userId: string | null, worldId: string | null) => ['crowns', userId, worldId] as const,
   villagePower: (villageId: string | null) => ['power', 'village', villageId] as const,
   kingdomPower: (userId: string | null) => ['power', 'kingdom', userId] as const,
+  armyInventory: (villageId: string | null) => ['army', 'inventory', villageId] as const,
+  armyTraining: (villageId: string | null) => ['army', 'training', villageId] as const,
   worldEntities: (worldId: string | null) => ['world-entities', worldId] as const,
   worldConfig: (worldId: string | null) => ['world-config', worldId] as const,
 };
@@ -251,6 +253,87 @@ export function useKingdomPowerQuery(userId: string | null) {
     },
     enabled: Boolean(userId),
     staleTime: 30_000,
+  });
+}
+
+export interface ArmyUnitDto {
+  id: string;
+  type: string;
+  quantity: number;
+  populationCost: number;
+}
+
+export interface ArmyTrainingDto {
+  id: string;
+  villageId: string;
+  unitType: string;
+  totalQty: number;
+  completedQty: number;
+  startTime: string;
+  endTime: string;
+  perUnitMs: number;
+}
+
+export function useArmyInventoryQuery(villageId: string | null) {
+  return useQuery<ArmyUnitDto[]>({
+    queryKey: queryKeys.armyInventory(villageId),
+    queryFn: () => {
+      if (!villageId) return Promise.resolve([] as ArmyUnitDto[]);
+      return apiClient.get<ArmyUnitDto[]>(`/army/${villageId}/inventory`);
+    },
+    enabled: Boolean(villageId),
+    staleTime: 5_000,
+  });
+}
+
+export function useArmyTrainingQuery(villageId: string | null) {
+  return useQuery<ArmyTrainingDto[]>({
+    queryKey: queryKeys.armyTraining(villageId),
+    queryFn: () => {
+      if (!villageId) return Promise.resolve([] as ArmyTrainingDto[]);
+      return apiClient.get<ArmyTrainingDto[]>(`/army/${villageId}/training`);
+    },
+    enabled: Boolean(villageId),
+    refetchInterval: (query) => (query.state.data && query.state.data.length > 0 ? 5_000 : false),
+    staleTime: 2_000,
+  });
+}
+
+interface TrainUnitsInput {
+  villageId: string;
+  unitType: string;
+  quantity: number;
+}
+
+export function useTrainUnitsMutation() {
+  const queryClient = useQueryClient();
+  return useMutation<ArmyTrainingDto, Error, TrainUnitsInput>({
+    mutationFn: ({ villageId, unitType, quantity }) =>
+      apiClient.post<ArmyTrainingDto>(`/army/${villageId}/train`, { unitType, quantity }),
+    onSettled: (_data, _err, { villageId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.armyTraining(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.resources(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
+    },
+  });
+}
+
+interface CancelTrainingInput {
+  villageId: string;
+  trainingId: string;
+}
+
+export function useCancelTrainingMutation() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, CancelTrainingInput>({
+    mutationFn: ({ villageId, trainingId }) =>
+      apiClient.delete<void>(`/army/${villageId}/training/${trainingId}/cancel`),
+    onSettled: (_data, _err, { villageId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.armyTraining(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.resources(villageId) });
+    },
   });
 }
 

@@ -21,6 +21,7 @@ export default defineConfig({
       '@battleforthecrown/shared',
       '@battleforthecrown/shared/logic',
       '@battleforthecrown/shared/village/buildings',
+      '@battleforthecrown/shared/army',
     ],
   },
 });
