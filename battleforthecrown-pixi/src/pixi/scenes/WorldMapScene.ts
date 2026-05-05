@@ -1,4 +1,4 @@
-import { Container, Graphics, Text, type Application, type FederatedPointerEvent } from 'pixi.js';
+import { Assets, Container, Graphics, Sprite, Text, Texture, type Application, type FederatedPointerEvent } from 'pixi.js';
 import { Viewport } from 'pixi-viewport';
 import type { PixiScene } from './SceneManager';
 import type { MapEntity } from '@/api/world-types';
@@ -33,8 +33,22 @@ const COLOR = {
 interface EntityVisual {
   container: Container;
   graphic: Graphics;
+  sprite: Sprite;
   label: Text;
   data: MapEntity;
+}
+
+const WORLD_SPRITE_SIZE = 28;
+
+function aliasFor(entity: MapEntity): string | null {
+  if (entity.isMine || entity.kind === 'PLAYER_VILLAGE') {
+    return 'world.village.t1';
+  }
+  if (entity.kind === 'BARBARIAN_VILLAGE') {
+    const tier = entity.tier ?? 'T1';
+    return `world.barbarian.${tier.toLowerCase()}`;
+  }
+  return null;
 }
 
 export interface WorldMapHandle {
@@ -123,14 +137,32 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
   };
 
   const drawEntity = (visual: EntityVisual) => {
-    const { graphic, data } = visual;
+    const { graphic, sprite, data } = visual;
     const { color, radius, zIndex } = styleFor(data);
     const isSelected = data.id === selectedId;
+    const alias = aliasFor(data);
+    const texture = alias ? Assets.get<Texture>(alias) : null;
+
     graphic.clear();
-    graphic.circle(0, 0, radius + (isSelected ? 4 : 0)).fill({ color: COLOR.outline, alpha: 0.55 });
-    graphic.circle(0, 0, radius).fill(color);
-    if (isSelected) {
-      graphic.circle(0, 0, radius + 2).stroke({ color: COLOR.selected, width: 2 });
+    if (texture) {
+      sprite.texture = texture;
+      sprite.visible = true;
+      sprite.width = WORLD_SPRITE_SIZE;
+      sprite.height = WORLD_SPRITE_SIZE;
+      if (isSelected) {
+        graphic
+          .circle(0, 0, WORLD_SPRITE_SIZE * 0.65)
+          .stroke({ color: COLOR.selected, width: 3, alpha: 0.9 });
+      }
+    } else {
+      sprite.visible = false;
+      graphic
+        .circle(0, 0, radius + (isSelected ? 4 : 0))
+        .fill({ color: COLOR.outline, alpha: 0.55 });
+      graphic.circle(0, 0, radius).fill(color);
+      if (isSelected) {
+        graphic.circle(0, 0, radius + 2).stroke({ color: COLOR.selected, width: 2 });
+      }
     }
     visual.container.zIndex = zIndex + (isSelected ? 50 : 0);
     visual.label.text = data.name;
@@ -153,6 +185,11 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
 
     const graphic = new Graphics();
     container.addChild(graphic);
+
+    const sprite = new Sprite();
+    sprite.anchor.set(0.5);
+    sprite.visible = false;
+    container.addChild(sprite);
 
     const label = new Text({
       text: entity.name,
@@ -180,10 +217,23 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
 
     entitiesLayer.addChild(container);
 
-    visual = { container, graphic, label, data: entity };
+    visual = { container, graphic, sprite, label, data: entity };
     visuals.set(entity.id, visual);
     drawEntity(visual);
     return visual;
+  };
+
+  // Re-draw every entity once when a texture finishes loading, so the sprite
+  // can replace the placeholder circle without waiting for the next reconcile.
+  const retryAttachTextures = () => {
+    visuals.forEach((visual) => {
+      if (visual.sprite.visible) return;
+      const alias = aliasFor(visual.data);
+      if (!alias) return;
+      if (Assets.get<Texture>(alias)) {
+        drawEntity(visual);
+      }
+    });
   };
 
   // Click on background = clear selection.
@@ -278,13 +328,20 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     viewport.moveCenter(px, py);
   };
 
+  let textureRetryAccumulator = 0;
   const scene: PixiScene = {
     view,
     enter,
     exit,
-    update: (_deltaMs) => {
+    update: (deltaMs) => {
       const now = performance.now();
       expeditionVisuals.forEach((visual) => visual.tick(now));
+      // Cheap retry every ~500ms while sprites are still placeholders.
+      textureRetryAccumulator += deltaMs;
+      if (textureRetryAccumulator >= 500) {
+        textureRetryAccumulator = 0;
+        retryAttachTextures();
+      }
     },
   };
 

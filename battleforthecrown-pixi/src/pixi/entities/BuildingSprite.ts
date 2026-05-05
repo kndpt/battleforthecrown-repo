@@ -1,4 +1,4 @@
-import { Container, Graphics, Text } from 'pixi.js';
+import { Assets, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 import type { BuildingDto } from '@/api';
 import { metaFor } from '@/features/village/buildingMeta';
 import { computeConstructionProgress } from '@/features/village/constructionProgress';
@@ -42,6 +42,26 @@ const SIZE_BY_TYPE: Record<string, number> = {
   HIDEOUT: 120,
 };
 
+const ALIAS_BY_TYPE: Record<string, string> = {
+  CASTLE: 'castle',
+  WOOD: 'wood',
+  STONE: 'stone',
+  IRON: 'iron',
+  WAREHOUSE: 'warehouse',
+  FARM: 'farm',
+  BARRACKS: 'barracks',
+  WATCHTOWER: 'watchtower',
+};
+
+function resolveTexture(type: string): Texture | null {
+  const alias = ALIAS_BY_TYPE[type];
+  if (!alias) return null;
+  // Assets.get() returns the cached texture if loaded, undefined otherwise.
+  const fromBundle = Assets.get<Texture>(alias);
+  if (fromBundle) return fromBundle;
+  return null;
+}
+
 export interface BuildingSpriteHandle {
   container: Container;
   setBuilding: (building: BuildingDto) => void;
@@ -69,15 +89,20 @@ export function createBuildingSprite(options: BuildingSpriteOptions): BuildingSp
   haloGraphic.alpha = 0;
   container.addChild(haloGraphic);
 
+  const fallbackGraphic = new Graphics();
+  container.addChild(fallbackGraphic);
+
+  const sprite = new Sprite();
+  sprite.anchor.set(0.5);
+  sprite.visible = false;
+  container.addChild(sprite);
+
   const flashGraphic = new Graphics();
   flashGraphic.alpha = 0;
   container.addChild(flashGraphic);
 
-  const buildingGraphic = new Graphics();
-  container.addChild(buildingGraphic);
-
   const meta = metaFor(options.building.type);
-  const emojiText = new Text({
+  const fallbackText = new Text({
     text: meta.emoji,
     style: {
       fontFamily: 'Apple Color Emoji, Segoe UI Emoji, Cinzel, serif',
@@ -85,8 +110,9 @@ export function createBuildingSprite(options: BuildingSpriteOptions): BuildingSp
       align: 'center',
     },
   });
-  emojiText.anchor.set(0.5);
-  container.addChild(emojiText);
+  fallbackText.anchor.set(0.5);
+  fallbackText.visible = false;
+  container.addChild(fallbackText);
 
   const levelText = new Text({
     text: `Niv. ${options.building.level}`,
@@ -107,6 +133,10 @@ export function createBuildingSprite(options: BuildingSpriteOptions): BuildingSp
   levelText.anchor.set(0.5, 0);
   container.addChild(levelText);
 
+  const scaffoldGraphic = new Graphics();
+  scaffoldGraphic.visible = false;
+  container.addChild(scaffoldGraphic);
+
   const progressContainer = new Container();
   progressContainer.visible = false;
   container.addChild(progressContainer);
@@ -120,29 +150,56 @@ export function createBuildingSprite(options: BuildingSpriteOptions): BuildingSp
   let selected = false;
   let flashUntil = 0;
 
+  const tryAttachTexture = () => {
+    const texture = resolveTexture(current.type);
+    if (texture) {
+      sprite.texture = texture;
+      sprite.visible = true;
+      fallbackGraphic.clear();
+      fallbackText.visible = false;
+      const size = SIZE_BY_TYPE[current.type] ?? 130;
+      sprite.width = size;
+      sprite.height = size;
+    } else {
+      sprite.visible = false;
+      fallbackText.visible = true;
+    }
+  };
+
   const draw = () => {
     const size = SIZE_BY_TYPE[current.type] ?? 130;
     const half = size / 2;
     const baseColor = COLOR_BY_TYPE[current.type] ?? COLOR.idle;
     const inConstruction = Boolean(current.startTime && current.endTime);
 
-    buildingGraphic.clear();
-    buildingGraphic
-      .roundRect(-half, -half, size, size, 14)
-      .fill(inConstruction ? COLOR.construction : baseColor)
-      .stroke({ color: COLOR.border, width: 6, alpha: 0.9 });
-    if (!inConstruction) {
-      buildingGraphic
+    tryAttachTexture();
+
+    // Fallback graphic only paints when no sprite texture is available.
+    fallbackGraphic.clear();
+    if (!sprite.visible) {
+      fallbackGraphic
+        .roundRect(-half, -half, size, size, 14)
+        .fill(baseColor)
+        .stroke({ color: COLOR.border, width: 6, alpha: 0.9 });
+      fallbackGraphic
         .roundRect(-half + 8, -half + 8, size - 16, size / 4, 8)
         .fill({ color: COLOR.idleAccent, alpha: 0.7 });
-    } else {
-      // diagonal scaffolding stripes
+    }
+
+    // Scaffolding stripes overlay (semi-transparent so the underlying
+    // sprite/graphic still shows through during construction).
+    scaffoldGraphic.clear();
+    scaffoldGraphic.visible = inConstruction;
+    if (inConstruction) {
+      scaffoldGraphic
+        .roundRect(-half, -half, size, size, 14)
+        .fill({ color: COLOR.construction, alpha: 0.45 });
       const step = 18;
       for (let i = -half; i < half; i += step) {
-        buildingGraphic
+        scaffoldGraphic
           .moveTo(i, -half)
           .lineTo(i + size, half)
-          .stroke({ color: COLOR.constructionStripes, width: 2, alpha: 0.6 });
+          .stroke({ color: COLOR.constructionStripes, width: 2, alpha: 0.8 });
       }
     }
 
@@ -171,8 +228,6 @@ export function createBuildingSprite(options: BuildingSpriteOptions): BuildingSp
         .roundRect(-half, -half - 24, size, 10, 4)
         .fill({ color: COLOR.progressBg, alpha: 0.85 })
         .stroke({ color: COLOR.border, width: 2, alpha: 0.8 });
-
-      progressContainer.position.set(0, 0);
     }
   };
 
@@ -199,6 +254,11 @@ export function createBuildingSprite(options: BuildingSpriteOptions): BuildingSp
         flashGraphic.alpha = Math.max(0, remaining / 500);
       }
     }
+    // Texture might not have been ready when the sprite was created; retry
+    // every tick until it lands. Cheap (just a Map lookup).
+    if (!sprite.visible && ALIAS_BY_TYPE[current.type]) {
+      tryAttachTexture();
+    }
   };
 
   container.on('pointertap', (event) => {
@@ -214,7 +274,7 @@ export function createBuildingSprite(options: BuildingSpriteOptions): BuildingSp
     container,
     setBuilding(building) {
       current = building;
-      emojiText.text = metaFor(building.type).emoji;
+      fallbackText.text = metaFor(building.type).emoji;
       draw();
     },
     setSelected(value) {

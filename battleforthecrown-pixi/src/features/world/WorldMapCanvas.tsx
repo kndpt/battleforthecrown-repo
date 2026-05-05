@@ -3,6 +3,7 @@ import { type Application } from 'pixi.js';
 import { PixiCanvas } from '@/pixi/PixiCanvas';
 import { SceneManager } from '@/pixi/scenes/SceneManager';
 import { createWorldMapScene, type WorldMapHandle } from '@/pixi/scenes/WorldMapScene';
+import { loadBundle } from '@/pixi/assets/loader';
 import { useWorldMapStore } from '@/stores/worldMap';
 import { useExpeditionsStore } from '@/stores/expeditions';
 import type { MapEntity } from '@/api/world-types';
@@ -72,6 +73,12 @@ export function WorldMapCanvas({ gridWidth, gridHeight, myVillage }: WorldMapCan
       // ensure no stale selection survives navigation
       useWorldMapStore.getState().setSelectedEntity(null);
     };
+  }, []);
+
+  // Kick off the world map asset bundle on mount; the scene's update tick
+  // promotes circles to sprites once the textures land.
+  useEffect(() => {
+    void loadBundle('world-map');
   }, []);
 
   return <PixiCanvas className="absolute inset-0" onReady={onReady} />;

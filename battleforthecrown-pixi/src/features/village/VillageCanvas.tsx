@@ -3,6 +3,7 @@ import { type Application } from 'pixi.js';
 import { PixiCanvas } from '@/pixi/PixiCanvas';
 import { SceneManager } from '@/pixi/scenes/SceneManager';
 import { createVillageScene, type VillageSceneHandle } from '@/pixi/scenes/VillageScene';
+import { loadBundle } from '@/pixi/assets/loader';
 import { gameSocket } from '@/api/ws';
 import type { BuildingDto } from '@/api';
 import { BuildingDetailModal } from './BuildingDetailModal';
@@ -22,6 +23,12 @@ export function VillageCanvas({ villageId, buildings }: VillageCanvasProps) {
   useEffect(() => {
     buildingsRef.current = buildings;
   }, [buildings]);
+
+  // Kick off the village asset bundle on mount; sprites attach themselves
+  // when the textures land (BuildingSprite.tick re-checks every frame).
+  useEffect(() => {
+    void loadBundle('village');
+  }, []);
 
   const onReady = useCallback(
     (app: Application) => {
