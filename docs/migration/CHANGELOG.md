@@ -314,6 +314,64 @@ Le `BUILDING_META` n'a pas non plus de PNG pour `WALL` ni `HIDEOUT` — fallback
 
 ---
 
+### Patch — Consolidation doc backend + gameplay (2026-05-05)
+
+**Statut** : ✅ Done. Achève la Phase 8 sur le périmètre backend et gameplay (laissé en suspens par le run nocturne au prétexte de ne pas toucher au backend ; ici exécuté à la demande explicite du user).
+
+**Diagnostic** : `battleforthecrown-backend/AGENTS.md` (16.8 KB) mélangeait briefing AI agent, conventions par couche et catalogue de modules. `docs-v2/` pointait vers des dossiers inexistants. `IMPLEMENTATION_SUMMARY.md` + `PHASE2_COMBAT_INTEGRATION_SUMMARY.md` étaient des résumés de chantiers terminés. `prisma/schema.prsima.md` était une copie obsolète du schéma (typo dans le nom). Côté racine, `docs/meta/gameplay/` contenait 21 fichiers à consolider.
+
+**Ce qui a été fait** :
+
+#### Backend — split de `AGENTS.md`
+- **`battleforthecrown-backend/CLAUDE.md`** créé (~75 lignes) : briefing concis (stack, commandes, architecture en bref, pattern Outbox, env, notes agents). Pointe vers les `.claude/rules/` et `docs/architecture/`.
+- **`battleforthecrown-backend/.claude/rules/nest-conventions.md`** : architecture en couches (Controllers/Services/Prisma), DTOs Zod préférés à class-validator, Guards, modules (10 bounded contexts), tests, logger, gestion d'erreurs.
+- **`battleforthecrown-backend/.claude/rules/prisma.md`** : règles d'accès DB, `$transaction` (callback préféré), N+1, migrations, seed, types, schéma critique, pièges connus (JSON `world.config`, `Decimal`, cascade).
+- **`battleforthecrown-backend/.claude/rules/workers.md`** : pg-boss, 8 workers actifs (Production / Construction / Training / CrownProduction / Outbox / Combat / Return / BarbarianBackfill), pattern Outbox détaillé (pourquoi, comment, garanties, latence, idempotence), tick production, pièges.
+- **`docs/architecture/backend-modules.md`** créé à la racine du monorepo : arborescence `src/`, table des 10 modules métiers avec endpoints + workers, sous-services notables (Combat, World, Event), conventions de fichiers.
+- **`docs/architecture/realtime.md`** créé : flux Outbox → WS, latence (~1s), auth WebSocket (JWT au handshake), routing par scope (`worldId` / `userId` rooms), catalogue d'événements, patterns frontend, idempotence, reconnection.
+- **`docs/architecture/data-model.md`** créé : entités Prisma par domaine (auth, mondes, villages joueur/barbare, armée, combat, crowns, population, power, outbox), relations, conventions schéma, pièges Decimal/JSON.
+- **`docs/architecture/README.md`** : index avec lecture conseillée.
+- **`AGENTS.md` supprimé**. La référence cassée dans `docs/AUTH_MODULE.md` est mise à jour vers `CLAUDE.md` + `docs/architecture/`.
+
+#### Backend — nettoyage doc legacy
+- Supprimés (5 fichiers + 1 dossier) :
+  - `battleforthecrown-backend/AGENTS.md` (split ci-dessus).
+  - `battleforthecrown-backend/docs-v2/` entier (index pointant vers des dossiers fantômes + `technical/` redondant avec `docs/`).
+  - `battleforthecrown-backend/docs/IMPLEMENTATION_SUMMARY.md` (résumé de chantier terminé).
+  - `battleforthecrown-backend/docs/PHASE2_COMBAT_INTEGRATION_SUMMARY.md` (idem).
+  - `battleforthecrown-backend/prisma/schema.prsima.md` (typo, copie obsolète du `schema.prisma`).
+- Reste dans `battleforthecrown-backend/docs/` (10 fichiers techniques par module) : `ARMY_TRAINING.md`, `AUTH_MODULE.md`, `BARBARIAN_SEEDING_IMPLEMENTATION.md`, `BARBARIAN_VILLAGE_REDESIGN.md`, `COMBAT_MODULE.md`, `COMBAT_REMAINING_RESOURCES.md`, `PLAYER_VILLAGE_PLACEMENT.md`, `PRODUCTION_WORKER.md`, `README.md`, `WORLD_CONFIG_SYSTEM.md` — gardés tels quels (référence détaillée par module, pas dans le scope de cette consolidation).
+
+#### Gameplay — `docs/meta/gameplay/` → `docs/gameplay/`
+21 fichiers source consolidés en **6 fichiers** :
+- **`README.md`** : index.
+- **`01-overview.md`** : vision, boucles de gameplay (économique / militaire / conquête / rétention), monde persistant, classements, philosophie mobile, extensions post-MVP.
+- **`02-economy-and-progression.md`** : ressources, population, couronnes, phases (early/mid/late), équilibrage production vs pillage, formules (production exponentielle, coûts par catégorie, distribution par bâtiment, temps), paliers de déblocage Château, validation économique.
+- **`03-buildings.md`** : table d'overview + détail des 10 bâtiments (Castle / Wood / Stone / Iron / Warehouse / Farm / Barracks / Watchtower / Wall / Hideout) avec coûts, temps, bonus passifs par niveau. Mécaniques de construction et progression.
+- **`04-combat-and-army.md`** : catalogue des 10 unités, mécanique d'entraînement, stratégies, système de puissance (calcul, visibilité, table des poids), combat (mécanique générale, conquête, raids), 4 styles stratégiques de village.
+- **`05-events-and-retention.md`** : raids barbares globaux, événements Oyez (Almanax), bénédictions quotidiennes (3 tirages, choix d'1, durée 4h), quêtes quotidiennes (4 tiers, exemples concrets), classements.
+- **`docs/meta/`** entier supprimé.
+
+#### Mises à jour de doc transversale
+- **`/CLAUDE.md` racine** : pointeur backend `AGENTS.md` → `CLAUDE.md` + `.claude/rules/{nest-conventions,prisma,workers}.md`.
+- **`/.claude/rules/docs.md`** : hiérarchie `docs/` mise à jour (architecture/ + gameplay/ + migration/), CLAUDE.md backend listé comme existant, section "doc legacy à supprimer" ne mentionne plus les fichiers déjà nettoyés.
+
+**Écarts assumés** :
+- `battleforthecrown-backend/.trae/rules/project_rules.md` (Trae IDE, obsolète) **non supprimé** — le user n'a pas explicitement listé `.trae/` dans la demande de cleanup. À nettoyer dans le sous-repo en même temps que le `WARP.md`/`.trae/` racine si désiré.
+- Les 8 fichiers `battleforthecrown/docs/features/*-technical.md` (legacy frontend) **non supprimés individuellement** — ils disparaîtront avec le dossier `battleforthecrown/` lors de la suppression Phase 7.
+- `battleforthecrown-backend/docs/README.md` et autres `docs/*.md` techniques par module **gardés tels quels** (référence détaillée API/comportement). Pas de migration vers `docs/architecture/` car ils sont module-specific et le `backend-modules.md` synthétise l'essentiel pour la navigation.
+
+**Commits** :
+- Racine : `docs: consolidate gameplay docs and add backend architecture docs`
+- Sous-repo backend : à committer dans `battleforthecrown-backend/.git` séparément (CLAUDE.md + .claude/rules/ + suppressions). Le user le fera ou je le ferai sur demande explicite — le sous-repo a son propre historique (cf. `.gitignore`).
+
+**Vérification** :
+- [x] Plus aucune ref cassée vers `AGENTS.md`, `docs-v2/`, `IMPLEMENTATION_SUMMARY.md`, `PHASE2_*.md`, `schema.prsima.md`, `docs/meta/` dans la doc Claude active (CLAUDE.md / .claude/rules/ / docs/).
+- [x] Hiérarchie `docs/` finale : `architecture/` + `gameplay/` + `migration/` (3 sous-dossiers) — le 4e `meta/` a disparu.
+- [x] `battleforthecrown-backend/CLAUDE.md` + 3 rules + 4 docs/architecture/ tous accessibles depuis le `CLAUDE.md` racine en au plus 2 sauts.
+
+---
+
 ### Patch — `BuildingDetailModal` enrichi (2026-05-05)
 
 **Statut** : ✅ Done. Issue remontée par le user après le smoke test 9.D : la modal détail bâtiment paraissait vide par rapport au legacy.

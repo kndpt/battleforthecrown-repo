@@ -1,0 +1,416 @@
+# Bâtiments
+
+Catalogue détaillé des 10 bâtiments du village (coûts, temps, bonus passifs par niveau). Niveau max = **10** pour tous. Déblocages liés au niveau du Château (cf. [`02-economy-and-progression.md` § Paliers](./02-economy-and-progression.md#paliers-de-déblocage-château)).
+
+## Vue d'ensemble
+
+| Bâtiment | Rôle principal | Effet passif par niveau | Poids | Statut MVP |
+| --- | --- | --- | --- | --- |
+| 🏰 [**Château**](#château-castle) | Cœur du village | +vitesse construction, débloque autres bâtiments | 40 | ✅ Actif |
+| 🪓 [**Camp de bûcherons**](#camp-de-bûcherons-wood) | Produit du bois | +production bois | 15 | ✅ Actif |
+| ⛏️ [**Carrière**](#carrière-stone) | Produit de la pierre | +production pierre | 15 | ✅ Actif |
+| ⚒️ [**Mine de fer**](#mine-de-fer-iron) | Produit du fer | +production fer | 15 | ✅ Actif |
+| 🏣 [**Entrepôt**](#entrepôt-warehouse) | Stockage | +capacité max ressources | 20 | ✅ Actif |
+| 🌾 [**Moulin**](#moulin-farm) | Population | +population max | 25 | ✅ Actif |
+| ⚔️ [**Caserne**](#caserne-barracks) | Entraînement unités | +vitesse entraînement, débloque unités | 35 | ✅ Actif |
+| 🔭 [**Tour de guet**](#tour-de-guet-watchtower) | Vision carte | +rayon visibilité monde | 30 | ✅ Actif |
+| 🧱 [**Rempart**](#rempart-wall) | Défense passive | +défense globale village | 38 | ⏸️ Désactivé MVP |
+| 🕵️ [**Cachette**](#cachette-hideout) | Espionnage | (prévu : capacité espion) | 28 | ⏸️ Désactivé MVP |
+
+## Mécanique de construction
+
+- **File d'attente** : 2 upgrades simultanés par défaut (peut évoluer avec d'autres bâtiments).
+- **Consommation de population** : chaque upgrade occupe de la population (récupérée si annulé ou détruit).
+- **Annulation** : remboursement complet des ressources et de la population.
+- **Bonus Château** : à partir du niveau 2, le Château réduit le temps de construction global. Le facteur s'applique à toutes les nouvelles constructions du village.
+
+## Mécanique de progression
+
+| Niveaux | Type de progression | Description |
+| --- | --- | --- |
+| 1–5 | Découverte rapide | Augmentation linéaire, feedback immédiat |
+| 6–10 | Investissement | Temps ×1.5, coût ×2 par niveau |
+| >10 (post-MVP) | Prestige | Rendement décroissant, bonus visuel ou symbolique |
+
+Exemples de bonus par niveau :
+- **Château** : +5 % vitesse construction par niveau (cumulatif).
+- **Caserne** : −3 % temps d'entraînement / niveau.
+- **Tour de guet** : +5 cases vision / niveau (paliers).
+- **Moulin** : croissance non-linéaire (cf. tableau Farm).
+- **Entrepôt** : +15 % capacité / niveau.
+- **Rempart** : +5 % défense globale / niveau.
+
+---
+
+## Château (Castle)
+
+**Cœur du village.** Détermine l'accès aux autres bâtiments et accélère la construction.
+
+### Coûts de construction
+
+| Niveau | Bois | Pierre | Fer | Population | Temps (s) |
+| ------ | ---- | ------ | --- | ---------- | --------- |
+| 1 | 0 | 0 | 0 | 2 | 0 |
+| 2 | 75 | 145 | 75 | 0 | 360 |
+| 3 | 85 | 170 | 85 | 1 | 720 |
+| 4 | 100 | 200 | 100 | 0 | 1 440 |
+| 5 | 120 | 235 | 120 | 1 | 2 880 |
+| 6 | 140 | 275 | 140 | 0 | 5 760 |
+| 7 | 160 | 320 | 160 | 1 | 11 520 |
+| 8 | 190 | 375 | 190 | 0 | 23 040 |
+| 9 | 220 | 440 | 220 | 1 | 46 080 |
+| 10 | 260 | 515 | 260 | 0 | 92 160 |
+
+### Bonus de vitesse de construction
+
+| Niveau | Multiplicateur | Bonus (-% temps) |
+| --- | --- | --- |
+| 1 | ×1.00 | −0 % |
+| 2 | ×0.96 | −4 % |
+| 3 | ×0.92 | −8 % |
+| 4 | ×0.88 | −12 % |
+| 5 | ×0.84 | −16 % |
+| 6 | ×0.80 | −20 % |
+| 7 | ×0.76 | −24 % |
+| 8 | ×0.72 | −28 % |
+| 9 | ×0.68 | −32 % |
+| 10 | ×0.64 | −36 % |
+
+### Déblocages
+
+| Niveau Château | Bâtiments déverrouillés |
+| --- | --- |
+| 1 | Mines (Bois, Pierre, Fer), Entrepôt, Farm |
+| 2 | +Caserne |
+| 3 | +Tour de guet |
+| 4 | +Hideout (Cachette) |
+| 5 | +Wall (Rempart) |
+| 6 | +Salle du Conseil |
+| 7 | +Salle du Trône |
+
+> 💡 Le Château est le **bâtiment le plus influent pour la puissance** (poids 40 constant).
+
+---
+
+## Camp de bûcherons (Wood)
+
+**Production passive de bois.**
+
+### Coûts de construction
+
+| Niveau | Bois | Pierre | Fer | Population | Temps (s) |
+| ------ | ---- | ------ | --- | ---------- | --------- |
+| 1 | 75 | 45 | 30 | 5 | 120 |
+| 2 | 90 | 55 | 35 | 0 | 220 |
+| 3 | 110 | 65 | 45 | 1 | 390 |
+| 4 | 130 | 80 | 50 | 0 | 710 |
+| 5 | 155 | 95 | 60 | 1 | 1 280 |
+| 6 | 185 | 110 | 75 | 0 | 2 300 |
+| 7 | 220 | 135 | 90 | 1 | 4 140 |
+| 8 | 265 | 160 | 105 | 0 | 7 450 |
+| 9 | 320 | 190 | 125 | 1 | 13 410 |
+| 10 | 385 | 230 | 150 | 0 | 24 140 |
+
+### Production / heure
+
+| Niveau | Production / h | Multiplicateur cumulatif |
+| --- | --- | --- |
+| 1 | 50 | ×1.0 |
+| 2 | 70 | ×1.4 |
+| 3 | 100 | ×2.0 |
+| 4 | 135 | ×2.7 |
+| 5 | 190 | ×3.8 |
+| 6 | 265 | ×5.3 |
+| 7 | 375 | ×7.5 |
+| 8 | 525 | ×10.5 |
+| 9 | 735 | ×14.7 |
+| 10 | 1 030 | ×20.6 |
+
+> 💡 Production accumulée en arrière-plan, **plafonnée par la capacité de l'Entrepôt**.
+
+---
+
+## Carrière (Stone)
+
+**Production passive de pierre.** Mêmes mécaniques que Wood, ressources principales inversées.
+
+### Coûts de construction
+
+| Niveau | Bois | Pierre | Fer | Population | Temps (s) |
+| ------ | ---- | ------ | --- | ---------- | --------- |
+| 1 | 45 | 75 | 30 | 5 | 120 |
+| 2 | 55 | 90 | 35 | 0 | 220 |
+| 3 | 65 | 110 | 45 | 1 | 390 |
+| 4 | 80 | 130 | 50 | 0 | 710 |
+| 5 | 95 | 155 | 60 | 1 | 1 280 |
+| 6 | 110 | 185 | 75 | 0 | 2 300 |
+| 7 | 135 | 220 | 90 | 1 | 4 140 |
+| 8 | 160 | 265 | 105 | 0 | 7 450 |
+| 9 | 190 | 320 | 125 | 1 | 13 410 |
+| 10 | 230 | 385 | 150 | 0 | 24 140 |
+
+### Production / heure
+
+Identique au Wood (cf. tableau ci-dessus) : 50 → 1 030 par heure du niveau 1 au 10.
+
+---
+
+## Mine de fer (Iron)
+
+**Production passive de fer.** Mêmes mécaniques, coût principal en fer.
+
+### Coûts de construction
+
+| Niveau | Bois | Pierre | Fer | Population | Temps (s) |
+| ------ | ---- | ------ | --- | ---------- | --------- |
+| 1 | 40 | 40 | 75 | 5 | 120 |
+| 2 | 45 | 45 | 90 | 0 | 220 |
+| 3 | 55 | 55 | 110 | 1 | 390 |
+| 4 | 65 | 65 | 130 | 0 | 710 |
+| 5 | 80 | 80 | 155 | 1 | 1 280 |
+| 6 | 95 | 95 | 185 | 0 | 2 300 |
+| 7 | 115 | 115 | 220 | 1 | 4 140 |
+| 8 | 135 | 135 | 265 | 0 | 7 450 |
+| 9 | 160 | 160 | 320 | 1 | 13 410 |
+| 10 | 190 | 190 | 385 | 0 | 24 140 |
+
+### Production / heure
+
+Identique au Wood : 50 → 1 030 par heure.
+
+---
+
+## Entrepôt (Warehouse)
+
+**Capacité de stockage** des trois ressources (bois/pierre/fer). Plafond commun par ressource.
+
+### Coûts de construction
+
+| Niveau | Bois | Pierre | Fer | Population | Temps (s) |
+| ------ | ---- | ------ | --- | ---------- | --------- |
+| 1 | 60 | 55 | 40 | 0 | 300 |
+| 2 | 70 | 60 | 45 | 1 | 480 |
+| 3 | 80 | 70 | 50 | 0 | 770 |
+| 4 | 90 | 80 | 60 | 1 | 1 230 |
+| 5 | 105 | 90 | 70 | 0 | 1 970 |
+| 6 | 120 | 105 | 75 | 1 | 3 150 |
+| 7 | 140 | 120 | 85 | 0 | 5 040 |
+| 8 | 160 | 140 | 100 | 1 | 8 070 |
+| 9 | 185 | 160 | 115 | 0 | 12 910 |
+| 10 | 210 | 185 | 130 | 1 | 20 660 |
+
+### Capacité par niveau
+
+| Niveau | Capacité / ressource | Total (B+P+F) |
+| --- | --- | --- |
+| 1 | 3 000 | 9 000 |
+| 2 | 3 450 | 10 350 |
+| 3 | 3 970 | 11 910 |
+| 4 | 4 565 | 13 695 |
+| 5 | 5 250 | 15 750 |
+| 6 | 6 040 | 18 120 |
+| 7 | 6 945 | 20 835 |
+| 8 | 7 990 | 23 970 |
+| 9 | 9 190 | 27 570 |
+| 10 | 10 570 | 31 710 |
+
+> 💡 Le stockage **plafonne la production** : si l'entrepôt est plein, les mines arrêtent de produire.
+
+---
+
+## Moulin (Farm)
+
+**Limite de population** du village (workforce pour bâtiments et armée).
+
+### Coûts de construction
+
+| Niveau | Bois | Pierre | Fer | Population | Temps (s) |
+| ------ | ---- | ------ | --- | ---------- | --------- |
+| 1 | 70 | 65 | 45 | 5 | 400 |
+| 2 | 85 | 75 | 55 | 0 | 680 |
+| 3 | 100 | 90 | 65 | 1 | 1 160 |
+| 4 | 120 | 105 | 75 | 0 | 1 970 |
+| 5 | 140 | 125 | 90 | 1 | 3 350 |
+| 6 | 165 | 145 | 105 | 0 | 5 695 |
+| 7 | 195 | 170 | 125 | 1 | 9 680 |
+| 8 | 230 | 200 | 145 | 0 | 16 455 |
+| 9 | 270 | 235 | 170 | 1 | 27 975 |
+| 10 | 320 | 280 | 200 | 0 | 47 560 |
+
+### Population par niveau
+
+| Niveau | Bonus pop | Population cumulée |
+| --- | --- | --- |
+| 1 | +50 | 50 |
+| 2 | +60 | 110 |
+| 3 | +70 | 180 |
+| 4 | +80 | 260 |
+| 5 | +95 | 355 |
+| 6 | +110 | 465 |
+| 7 | +125 | 590 |
+| 8 | +145 | 735 |
+| 9 | +170 | 905 |
+| 10 | +195 | 1 100 |
+
+> 💡 Pop partagée entre bâtiments (occupation permanente) et unités (consommation à l'entraînement, libérée à la mort).
+
+---
+
+## Caserne (Barracks)
+
+**Entraînement militaire.** Niveau requis : Château 2.
+
+### Coûts de construction
+
+| Niveau | Bois | Pierre | Fer | Population | Temps (s) |
+| ------ | ---- | ------ | --- | ---------- | --------- |
+| 1 | 120 | 120 | 160 | 8 | 600 |
+| 2 | 140 | 140 | 190 | 0 | 1 020 |
+| 3 | 170 | 170 | 225 | 1 | 1 735 |
+| 4 | 200 | 200 | 265 | 0 | 2 950 |
+| 5 | 235 | 235 | 315 | 1 | 5 015 |
+| 6 | 280 | 280 | 370 | 0 | 8 525 |
+| 7 | 330 | 330 | 440 | 1 | 14 490 |
+| 8 | 390 | 390 | 520 | 0 | 24 635 |
+| 9 | 460 | 460 | 615 | 1 | 41 880 |
+| 10 | 545 | 545 | 725 | 0 | 71 195 |
+
+### Unités déverrouillées
+
+| Niveau | Unités déverrouillées |
+| --- | --- |
+| 1 | MILITIA (infanterie de base) |
+| 2 | SQUIRE (infanterie avancée) |
+| 3 | WARRIOR + ARCHER |
+| 4 | TEMPLAR (chevalier lourd) |
+| 5 | SPY + CAVALIER |
+| 7 | BÉLIER (siège) |
+| 8 | CATAPULTE (siège) |
+| 10 | SEIGNEUR (conquête) |
+
+### Réduction temps d'entraînement
+
+| Niveau | Réduction | Multiplicateur effectif |
+| --- | --- | --- |
+| 1 | 0 % | ×1.00 |
+| 2 | −3 % | ×0.97 |
+| 3 | −6 % | ×0.94 |
+| 4 | −9 % | ×0.91 |
+| 5 | −12 % | ×0.88 |
+| 6 | −15 % | ×0.85 |
+| 7 | −18 % | ×0.82 |
+| 8 | −21 % | ×0.79 |
+| 9 | −24 % | ×0.76 |
+| 10 | −27 % | ×0.73 |
+
+---
+
+## Tour de guet (Watchtower)
+
+**Rayon de visibilité** sur la carte du monde. Niveau requis : Château 3.
+
+### Coûts de construction
+
+| Niveau | Bois | Pierre | Fer | Population | Temps (s) |
+| ------ | ---- | ------ | --- | ---------- | --------- |
+| 1 | 90 | 175 | 90 | 6 | 500 |
+| 2 | 105 | 210 | 105 | 0 | 875 |
+| 3 | 130 | 250 | 130 | 1 | 1 530 |
+| 4 | 150 | 300 | 150 | 0 | 2 680 |
+| 5 | 180 | 355 | 180 | 1 | 4 690 |
+| 6 | 215 | 425 | 215 | 0 | 8 205 |
+| 7 | 255 | 505 | 255 | 1 | 14 360 |
+| 8 | 305 | 605 | 305 | 0 | 25 130 |
+| 9 | 360 | 720 | 360 | 1 | 43 975 |
+| 10 | 430 | 860 | 430 | 0 | 76 960 |
+
+### Rayon de visibilité
+
+| Niveau | Rayon | Monde déverrouillé |
+| --- | --- | --- |
+| 0 | 0 cases | ❌ Non |
+| 1 | 5 cases | ✅ Oui |
+| 2 | 10 cases | ✅ Oui |
+| 3 | 15 cases | ✅ Oui |
+| 4 | 20 cases | ✅ Oui |
+| 5 | 25 cases | ✅ Oui |
+| 6 | 30 cases | ✅ Oui |
+| 7 | 35 cases | ✅ Oui |
+| 8 | 40 cases | ✅ Oui |
+| 9 | 45 cases | ✅ Oui |
+| 10 | Infini | ✅ Oui |
+
+> 💡 Vision **offensive/exploratoire uniquement** — n'augmente pas la défense (voir Rempart).
+
+---
+
+## Rempart (Wall)
+
+**Défense passive** du village. ⏸️ **Désactivé au MVP** (`requiredBarracksLevel: 99`). Réactivation post-équilibrage.
+
+### Coûts de construction (prévu)
+
+| Niveau | Bois | Pierre | Fer | Population | Temps (s) |
+| ------ | ---- | ------ | --- | ---------- | --------- |
+| 1 | 500 | 1 000 | 500 | 8 | 900 |
+| 2 | 625 | 1 250 | 625 | 0 | 1 620 |
+| 3 | 780 | 1 560 | 780 | 1 | 2 915 |
+| 4 | 975 | 1 950 | 975 | 0 | 5 250 |
+| 5 | 1 220 | 2 440 | 1 220 | 1 | 9 445 |
+| 6 | 1 525 | 3 050 | 1 525 | 0 | 17 000 |
+| 7 | 1 905 | 3 810 | 1 905 | 1 | 30 605 |
+| 8 | 2 380 | 4 760 | 2 380 | 0 | 55 090 |
+| 9 | 2 975 | 5 950 | 2 975 | 1 | 99 160 |
+| 10 | 3 720 | 7 440 | 3 720 | 0 | 178 485 |
+
+### Bonus de défense (prévu)
+
+| Niveau | Défense globale | Profil |
+| --- | --- | --- |
+| 1 | +5 % | Défense basique |
+| 2 | +10 % | Protection légère |
+| 3 | +15 % | Renforcement modéré |
+| 4 | +20 % | Forteresse émergente |
+| 5 | +25 % | Défense solide |
+| 6 | +30 % | Fortification avancée |
+| 7 | +35 % | Forteresse majeure |
+| 8 | +40 % | Défense élite |
+| 9 | +45 % | Bastion |
+| 10 | +50 % | Forteresse impénétrable |
+
+> 💡 Synergie : Wall + Watchtower + Caserne = **village forteresse**. Désactivé au MVP car impact méta trop fort sans équilibrage spécifique.
+
+---
+
+## Cachette (Hideout)
+
+**Centre d'espionnage** (prévisionnel). ⏸️ **Désactivé au MVP** — réactivé après implémentation du système d'espionnage.
+
+### Coûts de construction (prévu)
+
+| Niveau | Bois | Pierre | Fer | Population | Temps (s) |
+| ------ | ---- | ------ | --- | ---------- | --------- |
+| 1 | 105 | 105 | 90 | 6 | 360 |
+| 2 | 135 | 135 | 115 | 0 | 595 |
+| 3 | 175 | 175 | 150 | 1 | 980 |
+| 4 | 230 | 230 | 195 | 0 | 1 620 |
+| 5 | 300 | 300 | 255 | 1 | 2 670 |
+| 6 | 390 | 390 | 330 | 0 | 4 405 |
+| 7 | 505 | 505 | 430 | 1 | 7 270 |
+| 8 | 655 | 655 | 560 | 0 | 11 995 |
+| 9 | 850 | 850 | 725 | 1 | 19 795 |
+| 10 | 1 105 | 1 105 | 945 | 0 | 32 660 |
+
+### Rôle stratégique (prévu)
+
+- **Exploration de menaces** : connaître les forces armées cachées d'une cible.
+- **Stratégie de raid** : évaluer la richesse avant attaque.
+- **Diplomatie** : comparer puissance avec alliés potentiels.
+- **Défense anticipée** : détecter les attaques entrantes (futur).
+
+## Bâtiments futurs (post-MVP)
+
+| Bâtiment | Rôle | Statut |
+| --- | --- | --- |
+| 🕯️ **Salle du Conseil** | Choix de stratégie de village (cf. [`04-combat-and-army.md` § Styles](./04-combat-and-army.md#styles-stratégiques-de-village)) | Roadmap |
+| 👑 **Salle du Trône** | Nommage de Seigneurs (conquête), +vitesse entraînement, +vitesse de noblage | Roadmap |

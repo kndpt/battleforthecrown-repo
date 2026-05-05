@@ -1,0 +1,125 @@
+# Temps réel — Outbox + WebSocket
+
+## Vue d'ensemble
+
+Le backend est **server-authoritative** : ressources, files, expéditions, soldes, tout est calculé côté serveur. Le frontend Pixi observe via deux canaux :
+
+1. **REST** (TanStack Query) — fetch initial + invalidations sur événement.
+2. **Socket.IO** — événements temps réel poussés par le backend via le pattern Outbox.
+
+```
+[Service métier]  ──tx──▶  [DB: row + EventOutbox]
+                                    │
+                                    │ poll ~1s
+                                    ▼
+                           [OutboxWorker]
+                                    │
+                                    ▼
+                          [GameGateway WS]
+                                    │
+                                    ▼
+                          Frontend Pixi
+                          (ws-bindings.ts)
+                                    │
+                                    ▼
+                  TanStack Query invalidate + Zustand update
+```
+
+Détail du pattern et garanties dans [`battleforthecrown-backend/.claude/rules/workers.md`](../../battleforthecrown-backend/.claude/rules/workers.md).
+
+## Latence typique
+
+- Mutation commit → event dans `EventOutbox` : 0 ms (même transaction).
+- Event dans Outbox → diffusion WS : **0 à ~1 s** (poll worker).
+- Diffusion WS → handler frontend : ~10 ms réseau local, ~50–200 ms réseau réel.
+
+**Total : ~1 s en moyenne** entre l'action serveur et la mise à jour visible côté joueur. Pour les valeurs continues (ressources/heure), le frontend interpole entre deux events pour un rendu fluide à 60 fps.
+
+## Authentification WebSocket
+
+JWT passé via `socket.handshake.auth.token` :
+
+```typescript
+// frontend
+const socket = io(WS_URL, { auth: { token: jwtToken } });
+```
+
+```typescript
+// backend — game.gateway.ts
+@SubscribeMessage(...)
+handleConnection(client: Socket) {
+  const payload = this.jwtService.verify(client.handshake.auth.token);
+  client.data.userId = payload.sub;
+  // ...
+}
+```
+
+Sur 401 (token expiré), le frontend rafraîchit via REST puis se reconnecte avec le nouveau JWT.
+
+## Routing par scope
+
+Chaque event a un scope :
+
+- **`worldId`** — broadcast à tous les joueurs du monde (ex : `village.conquered` qui change la carte du monde pour tout le monde).
+- **`userId`** — push au seul joueur concerné (ex : `crowns.changed`, `building.completed`).
+
+Côté gateway, ça se traduit par des rooms Socket.IO :
+
+```typescript
+client.join(`world:${worldId}`);
+client.join(`user:${userId}`);
+
+// puis
+this.server.to(`user:${userId}`).emit('crowns.changed', payload);
+```
+
+## Catalogue d'événements
+
+Source de vérité : [`event/event-types.ts`](../../battleforthecrown-backend/src/modules/event/event-types.ts) côté backend, et le binding correspondant côté frontend dans `battleforthecrown-pixi/src/api/ws-bindings.ts`.
+
+| Event | Scope | Payload | Déclencheur backend |
+|-------|-------|---------|---------------------|
+| `resources.changed` | `userId` | `{ villageId, wood, stone, iron }` | `ProductionWorker` tick |
+| `building.completed` | `userId` | `{ villageId, buildingId, type, level }` | `ConstructionWorker` |
+| `training.completed` | `userId` | `{ villageId, unitType, quantity }` | `TrainingWorker` |
+| `crowns.changed` | `userId` | `{ balance, productionRate }` | `CrownProductionWorker` + transactions |
+| `battle.sent` | `userId` (attaquant) | `{ combatId, origin, target, arrivalAt }` | `CombatService.initiateAttack` |
+| `battle.resolved` | `userId` (les 2 camps) | `{ combatId, isVictory, reportId, ... }` | `CombatWorker` |
+| `battle.returned` | `userId` (attaquant) | `{ combatId, loot, units }` | `ReturnWorker` |
+| `village.attacked` | `userId` (défenseur) | `{ villageId, attackerName }` | `CombatWorker` (notification) |
+| `village.conquered` | `worldId` | `{ villageId, oldOwnerId, newOwnerId }` | `ConquestService` |
+| `player.died` | `userId` | `{ reason }` | `CombatService` (élimination totale) |
+
+## Patterns côté frontend
+
+Pour chaque event, deux opérations typiques :
+
+```typescript
+// ws-bindings.ts (extrait conceptuel)
+socket.on('crowns.changed', (payload) => {
+  // 1. Mise à jour immédiate du store Zustand pour le rendu
+  useCrownsStore.getState().setBalance(payload.balance);
+
+  // 2. Invalidation TanStack pour que les composants qui lisent par REST
+  //    refetch quand ils réapparaîtront
+  queryClient.invalidateQueries({ queryKey: ['crowns', userId] });
+});
+```
+
+⚠️ Ne **jamais** calculer une valeur "autoritative" côté front. Sur action user → mutation REST → invalidate → laisser REST + WS resynchroniser.
+
+## Idempotence et rejouabilité
+
+L'`OutboxWorker` peut rejouer un event si le marquage `processedAt` échoue après l'émission (très rare mais possible). Côté frontend :
+
+- Update de store : write idempotent (par ID).
+- Toast / notification : potentiellement duppliqué — accepté pour l'instant. Si critique, dédupliquer par event ID côté front.
+
+## Reconnection
+
+`socket.io` gère la reconnection automatique. Au reconnect :
+
+1. Le frontend refetch les queries critiques (`village/buildings`, `army/inventory`, `crowns`, `expeditions`) via TanStack `refetchOnReconnect: true`.
+2. Les events manqués ne sont pas rejoués — la resync REST couvre le delta.
+
+Le store `gameSocket` (FSM) expose `subscribeStatus()` consommé par `useGameSocketStatus()` côté HUD pour la pastille de connexion.

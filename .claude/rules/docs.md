@@ -4,35 +4,35 @@
 
 ```
 docs/
-├── migration/      # plan + CHANGELOG de la migration Next.js → Pixi
-│   ├── README.md           # index des phases
-│   ├── 00-overview.md → 07-doc-consolidation.md
-│   ├── CHANGELOG.md        # journal phase par phase
-│   ├── db-setup.md
-│   └── AUTONOMOUS_RUN.md   # protocole run nocturne
-└── meta/           # doc gameplay legacy (à fusionner Phase 8.x)
-    └── gameplay/
+├── architecture/   # doc humain de référence (cross-workspace) — backend modules, data model, realtime
+├── gameplay/       # mécaniques de jeu (vision, économie, bâtiments, combat, événements)
+└── migration/      # plan + CHANGELOG de la migration Next.js → Pixi
+    ├── README.md           # index des phases
+    ├── 00-overview.md → 07-doc-consolidation.md
+    ├── CHANGELOG.md        # journal phase par phase
+    ├── db-setup.md
+    └── AUTONOMOUS_RUN.md   # protocole run nocturne
 ```
 
 ## CLAUDE.md hiérarchique
 
 - `/CLAUDE.md` — racine, court, pointe vers les rules + workspaces.
-- `/battleforthecrown-pixi/CLAUDE.md` — briefing du nouveau frontend.
-- `/battleforthecrown-backend/CLAUDE.md` — **à créer** par l'utilisateur (le run nocturne ne doit pas modifier le backend).
+- `/battleforthecrown-pixi/CLAUDE.md` — briefing du frontend Pixi.
+- `/battleforthecrown-backend/CLAUDE.md` — briefing du backend NestJS (sous-repo avec son propre `.git`).
 - `/battleforthecrown/CLAUDE.md` — n'existera plus après suppression du legacy.
 
 ## Rules path-scoped
 
 - `.claude/rules/` racine : `conventions.md`, `git.md`, `docs.md` (transversales).
 - `battleforthecrown-pixi/.claude/rules/` : `pixi-conventions.md`, `react-hud.md`.
-- `battleforthecrown-backend/.claude/rules/` : à créer par l'utilisateur (Nest + Prisma + workers).
+- `battleforthecrown-backend/.claude/rules/` : `nest-conventions.md`, `prisma.md`, `workers.md`.
 
 ## Où écrire quoi
 
 | Type d'info | Fichier |
 |---|---|
-| Décision d'architecture | `docs/migration/` (pendant la migration), puis `docs/architecture/` après. |
-| Mécanique gameplay | `docs/gameplay/` (consolidation à finir Phase 8.x). |
+| Décision d'architecture (humain) | `docs/architecture/`. Pendant la migration, les choix de stack sont aussi documentés dans `docs/migration/`. |
+| Mécanique gameplay | `docs/gameplay/`. |
 | Convention projet | `.claude/rules/conventions.md`. |
 | Convention workspace | `<workspace>/.claude/rules/<scope>.md`. |
 | Briefing AI agent | `<workspace>/CLAUDE.md`. |
@@ -42,6 +42,6 @@ docs/
 ## Doc legacy à supprimer post-migration
 
 - `WARP.md` (déjà dans le `.gitignore` racine).
-- `.trae/` (déjà ignoré).
-- Dans `battleforthecrown-backend/` : `docs-v2/index.md`, fichiers `*-technical.md` obsolètes, `IMPLEMENTATION_SUMMARY.md`, `PHASE2_*.md`, `schema.prsima.md` — **à nettoyer par l'utilisateur** (le run nocturne ne touche pas au backend).
+- `.trae/` racine (déjà ignoré).
+- Dans `battleforthecrown-backend/` : `.trae/rules/project_rules.md` (Trae IDE, on est sur Claude Code) — à supprimer par l'utilisateur dans le sous-repo.
 - Dans `battleforthecrown/` : tout sera supprimé avec le dossier.
