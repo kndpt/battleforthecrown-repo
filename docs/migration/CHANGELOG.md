@@ -248,6 +248,46 @@ Le `BUILDING_META` n'a pas non plus de PNG pour `WALL` ni `HIDEOUT` — fallback
 - `/game/messages` : panel "RAPPORTS RÉCENTS" avec empty state 📜 (aucun rapport pour le compte de test).
 - `/game/world` : sélection d'un village barbare → bouton "Attaquer" actif → modal "Préparer une attaque" avec Lost Stronghold + distance 63.1 + slider Milice 0/1 + footer puissance/capacité/temps.
 
+### Patch — WorldMap refonte visuelle (2026-05-05)
+
+**Statut** : ✅ Done. Issue remontée par le user après le patch précédent : le rendu Pixi était trop pauvre comparé au legacy (canvas vide, sprites minuscules, pas de damier, pas de fog visuel, mauvais layout).
+
+**Diagnostic** : le legacy utilise Canvas2D avec `BASE_TILE_SIZE = 42`, sprites barbares 96px avec halos colorés par tier, damier 100×100 de "Continents" labellisés, border doré du monde, vision overlay radial, crosshair sur le village joueur. Le pixi (Pixi v8 + pixi-viewport) avait `tileSize: 8`, sprites 28px, fond plat, aucun de ces enrichissements. Côté layout React, le legacy contraint la carte à `max-w-6xl mx-auto`, place le compass en bottom-right, expose un toggle mini-map et un tooltip qui suit l'entité ; le pixi avait `ExpeditionList` flottant en trop, compass mal placé, panel sélection fixe.
+
+**Ce qui a été fait** (commit `4260ba9`) :
+
+*Pixi scene (`WorldMapScene.ts`)* :
+- `tileSize` 8 → 32 (le 42 du legacy demandait 21000px sur 500 tiles, trop pour le viewport).
+- `WORLD_SPRITE_SIZE` 28 → 64 (joueur 72). Halo coloré par tier (T1/T2/T3) sous chaque sprite.
+- Background damier 100×100 tiles : `Container` de `Graphics` rectangles alternés + `Text` "Continent X,Y" en cinzel.
+- Border monde : `Graphics.stroke({ color: 0xffecbe, alpha: 0.45 })`.
+- Crosshair doré sur mon village.
+- Fog-of-war : `Graphics` rect dark + cercle de vision (limitation Pixi v8 sur evenodd fillRule documentée en commentaire).
+- Grille tous les 10 tiles (au lieu de toutes les cases).
+- API scene étendue : `setVision(myVillage, radius)` pour rafraîchir sans remount + `worldToScreen(tx, ty)` pour le tooltip suiveur.
+
+*Layout (`WorldMapScreen.tsx`)* :
+- `max-w-6xl mx-auto` autour du `<main>` (legacy parity).
+- Compass `bottom-4 right-4`.
+- Toggle Mini-map top-right (`isMiniMapVisible`, icon Map ⇄ X).
+- `WorldEntityTooltip` : `SelectedEntityPanel` positionné via `worldToScreen(entity)` dans une raf loop (suit pan/zoom).
+- `ExpeditionList` flottant retiré (legacy n'en a pas ici).
+
+*Nouveaux composants* :
+- `WorldMiniMap.tsx` : `<canvas>` 180×180, redessine au changement de props. Markers entités + disque vision + viewbox caméra.
+- `WorldEntityTooltip.tsx` : panel fixed avec `useLayoutEffect`, flip left/right + clamp viewport.
+
+**Reportés (volontairement)** :
+- **Coord labels sur les axes** : polish, low priority.
+- **Fog-of-war propre** : Pixi v8 n'expose pas `fillRule: evenodd` ni `blend: Erase` aussi simplement que Canvas2D. Refactor avec `mask` Container quand on aura un vrai besoin.
+- **Mini-map caméra live** : `cameraCenter` figé sur `myVillage` ; pour suivre le pan il faudrait exposer la position viewport via raf. Non bloquant.
+
+**Vérification UI (smoke browser)** :
+- `/game/world` : carte centrée `max-w-6xl`, crosshair doré + label "Royaume de dupont.kelvin", disque de vision visible, Compass bottom-right, toggle Mini-map top-right qui montre la mini-map (markers + viewbox).
+- Type-check propre, lint propre (1 warning `set-state-in-effect` désactivé localement avec justification), 57 tests verts.
+
+---
+
 ### Patch — WorldMap fidélité legacy (2026-05-05)
 
 **Statut** : ✅ Done. Issue remontée par le user après audit comparatif legacy/pixi.
