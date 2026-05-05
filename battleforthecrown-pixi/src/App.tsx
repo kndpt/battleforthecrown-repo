@@ -19,6 +19,9 @@ const GameScreen = lazy(() =>
 const WorldMapScreen = lazy(() =>
   import('@/features/world/WorldMapScreen').then((m) => ({ default: m.WorldMapScreen })),
 );
+const UiTestScreen = lazy(() =>
+  import('@/features/ui-test/UiTestScreen').then((m) => ({ default: m.UiTestScreen })),
+);
 
 function GameLoader() {
   return (
@@ -60,6 +63,14 @@ export default function App() {
           <Route path="/" element={<LandingScreen />} />
           <Route path="/auth/login" element={<LoginScreen />} />
           <Route path="/auth/register" element={<RegisterScreen />} />
+          <Route
+            path="/ui-test"
+            element={
+              <Suspense fallback={<GameLoader />}>
+                <UiTestScreen />
+              </Suspense>
+            }
+          />
 
           <Route element={<ProtectedRoute />}>
             <Route path="/worlds" element={<WorldSelector />} />
