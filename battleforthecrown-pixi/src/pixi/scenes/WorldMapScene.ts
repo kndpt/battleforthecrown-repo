@@ -202,29 +202,16 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
   const drawFog = () => {
     fogLayer.clear();
     if (!myVillage || visibilityRadius === null) return;
-    if (visibilityRadius <= 0) return; // entirely dark would hide the player too
+    if (visibilityRadius <= 0) return;
 
+    // Simple golden ring at the vision border — gives the player a visual cue
+    // for "what I can see" without the broken donut overlay (Pixi v8 doesn't
+    // expose evenodd fillRule cleanly enough for a real fog-of-war mask).
     const { px, py } = tileToWorld(myVillage.x, myVillage.y);
     const radiusPx = visibilityRadius * tileSize;
-
-    // We want a "donut" of darkness covering the whole world bounds minus the
-    // visible disc. Pixi's `Graphics` supports holes via fill+cut polygons,
-    // but the simplest approach is to draw the dark rect then "subtract" the
-    // disc by drawing it with destination-out blend... PixiJS v8 doesn't expose
-    // that as easily as canvas2d. We'll fake it with an alpha gradient ring:
-    // four trapezoids that taper from the disc to the world edges.
-    const alpha = 0.55;
-    fogLayer.beginPath();
-    fogLayer.rect(0, 0, worldPx, worldPy);
-    fogLayer.circle(px, py, radiusPx);
-    fogLayer.fill({ color: COLOR.fogOverlay, alpha });
-    // Pixi v8: `cut()` would punch the second path; without it the second
-    // shape just adds. We approximate by drawing a smaller dark ring around
-    // the disc instead — keeps the village area lit but doesn't fully mask
-    // the rest. Acceptable trade-off until a proper mask is added.
-    fogLayer.beginPath();
-    fogLayer.circle(px, py, radiusPx);
-    fogLayer.fill({ color: 0x000000, alpha: 0 }); // visual no-op, kept for future refactor
+    fogLayer
+      .circle(px, py, radiusPx)
+      .stroke({ color: COLOR.worldBorder, width: 2, alpha: 0.4 });
   };
 
   const drawCrosshair = () => {
@@ -235,13 +222,20 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     }
     const { px, py } = tileToWorld(myVillage.x, myVillage.y);
     crosshair.visible = true;
-    const size = tileSize * 0.6;
+    // Small dotted-ish crosshair behind the sprite. Sits below the sprite
+    // (lower zIndex) so it doesn't paint over the player village.
+    const arm = 14;
+    const gap = 8;
     crosshair
-      .moveTo(px - size, py)
-      .lineTo(px + size, py)
-      .moveTo(px, py - size)
-      .lineTo(px, py + size)
-      .stroke({ color: COLOR.myVillageStroke, width: 2, alpha: 0.85 });
+      .moveTo(px - arm, py)
+      .lineTo(px - gap, py)
+      .moveTo(px + gap, py)
+      .lineTo(px + arm, py)
+      .moveTo(px, py - arm)
+      .lineTo(px, py - gap)
+      .moveTo(px, py + gap)
+      .lineTo(px, py + arm)
+      .stroke({ color: COLOR.myVillageStroke, width: 1.5, alpha: 0.6 });
   };
 
   const visuals = new Map<string, EntityVisual>();
