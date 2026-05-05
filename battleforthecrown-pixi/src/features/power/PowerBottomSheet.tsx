@@ -1,5 +1,9 @@
-import { Shield, X } from 'lucide-react';
-import { BottomSheet, Panel, PanelBody, PanelHeader } from '@/ui';
+import { X } from 'lucide-react';
+import { BottomSheet, Panel, PanelBody, PanelHeader, Spinner } from '@/ui';
+import { useKingdomPowerQuery, useVillagePowerQuery } from '@/api/queries';
+import { useAuthStore } from '@/stores/auth';
+import { useGameStore } from '@/stores/game';
+import { PowerBreakdown } from './PowerBreakdown';
 
 interface PowerBottomSheetProps {
   isOpen: boolean;
@@ -7,17 +11,19 @@ interface PowerBottomSheetProps {
 }
 
 export function PowerBottomSheet({ isOpen, onClose }: PowerBottomSheetProps) {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const villageId = useGameStore((state) => state.villageId);
+  const kingdom = useKingdomPowerQuery(userId);
+  const village = useVillagePowerQuery(villageId);
+
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} maxHeight="50vh" zIndex={50}>
+    <BottomSheet isOpen={isOpen} onClose={onClose} maxHeight="60vh" zIndex={50}>
       <Panel variant="parchment" padding="none" className="rounded-t-2xl shadow-2xl">
         <PanelHeader
           variant="wood"
           className="flex items-center justify-between sticky top-0 z-10 rounded-t-2xl"
         >
-          <div className="flex items-center gap-2">
-            <Shield size={18} className="text-white" />
-            <span className="font-bold">Puissance</span>
-          </div>
+          <span className="font-bold text-white">⚜️ Puissance Totale</span>
           <button
             type="button"
             onClick={onClose}
@@ -27,15 +33,65 @@ export function PowerBottomSheet({ isOpen, onClose }: PowerBottomSheetProps) {
             <X size={24} className="text-white" />
           </button>
         </PanelHeader>
-        <PanelBody className="p-6 text-center">
-          <p className="font-cinzel text-lg font-bold text-kingdom-900 mb-2">
-            Bientôt disponible
-          </p>
-          <p className="text-sm text-kingdom-600 leading-relaxed">
-            Le panneau de puissance (leaderboard, score militaire, classements) sera
-            porté en Phase 9.D. En attendant, l&apos;indicateur dans l&apos;en-tête est un
-            placeholder.
-          </p>
+        <PanelBody className="p-4">
+          <div className="text-center mb-6">
+            <p className="text-xs text-kingdom-600 font-game mb-1">Puissance du royaume</p>
+            <p className="text-4xl font-bold text-game-gold-dark font-cinzel text-shadow">
+              ⚜️{' '}
+              {kingdom.isLoading ? (
+                <Spinner size="sm" />
+              ) : (
+                (kingdom.data?.kingdomPower ?? 0).toLocaleString()
+              )}
+            </p>
+            {kingdom.data && (
+              <p className="text-xs text-kingdom-600 font-game mt-1">
+                {kingdom.data.villageCount} village{kingdom.data.villageCount > 1 ? 's' : ''}
+              </p>
+            )}
+          </div>
+
+          {kingdom.data && (
+            <div className="mb-6 px-2">
+              <div className="flex justify-between mb-2">
+                <span className="text-sm font-medium font-game text-kingdom-800">
+                  🏰 Bâtiments
+                </span>
+                <span className="text-sm font-bold font-game text-kingdom-900">
+                  {kingdom.data.totalBuildings.toLocaleString()}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-sm font-medium font-game text-kingdom-800">⚔️ Armée</span>
+                <span className="text-sm font-bold font-game text-kingdom-900">
+                  {kingdom.data.totalArmy.toLocaleString()}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <div className="border-t-2 border-kingdom-200 pt-4">
+            <p className="text-xs text-kingdom-600 font-game mb-3 text-center">
+              Village actuel
+            </p>
+            {village.isLoading ? (
+              <div className="flex justify-center py-4">
+                <Spinner size="sm" />
+              </div>
+            ) : (
+              <PowerBreakdown
+                buildings={village.data?.buildings ?? 0}
+                army={village.data?.army ?? 0}
+                className="opacity-90"
+              />
+            )}
+          </div>
+
+          <div className="mt-6 p-3 bg-game-blue-light/10 border-2 border-game-blue-border/30 rounded-lg">
+            <p className="text-xs text-kingdom-600 font-game text-center leading-relaxed">
+              La puissance du royaume représente la force cumulée de tous vos villages.
+            </p>
+          </div>
         </PanelBody>
       </Panel>
     </BottomSheet>

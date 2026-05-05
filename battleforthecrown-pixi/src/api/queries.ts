@@ -26,6 +26,8 @@ export const queryKeys = {
   population: (villageId: string | null) => ['population', villageId] as const,
   resources: (villageId: string | null) => ['resources', villageId] as const,
   crowns: (userId: string | null, worldId: string | null) => ['crowns', userId, worldId] as const,
+  villagePower: (villageId: string | null) => ['power', 'village', villageId] as const,
+  kingdomPower: (userId: string | null) => ['power', 'kingdom', userId] as const,
   worldEntities: (worldId: string | null) => ['world-entities', worldId] as const,
   worldConfig: (worldId: string | null) => ['world-config', worldId] as const,
 };
@@ -201,6 +203,54 @@ export function usePopulationQuery(villageId: string | null) {
     },
     enabled: Boolean(villageId),
     staleTime: 5_000,
+  });
+}
+
+export interface VillagePowerDto {
+  total: number;
+  buildings: number;
+  army: number;
+  breakdown?: Record<string, unknown>;
+}
+
+export interface KingdomPowerVillageDto {
+  villageId: string;
+  villageName: string;
+  total: number;
+  buildings: number;
+  army: number;
+}
+
+export interface KingdomPowerDto {
+  userId: string;
+  kingdomPower: number;
+  villageCount: number;
+  villages: KingdomPowerVillageDto[];
+  totalBuildings: number;
+  totalArmy: number;
+}
+
+export function useVillagePowerQuery(villageId: string | null) {
+  return useQuery<VillagePowerDto>({
+    queryKey: queryKeys.villagePower(villageId),
+    queryFn: () => {
+      if (!villageId) return Promise.reject(new Error('No village selected'));
+      return apiClient.get<VillagePowerDto>('/power', { query: { villageId } });
+    },
+    enabled: Boolean(villageId),
+    staleTime: 30_000,
+  });
+}
+
+export function useKingdomPowerQuery(userId: string | null) {
+  return useQuery<KingdomPowerDto>({
+    queryKey: queryKeys.kingdomPower(userId),
+    queryFn: () => {
+      if (!userId) return Promise.reject(new Error('No user'));
+      return apiClient.get<KingdomPowerDto>(`/power/kingdom/${userId}`);
+    },
+    enabled: Boolean(userId),
+    staleTime: 30_000,
   });
 }
 

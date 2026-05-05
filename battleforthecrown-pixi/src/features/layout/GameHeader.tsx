@@ -12,7 +12,7 @@ import { CrownDisplay } from '@/features/crowns/CrownDisplay';
 import { PowerBadge } from '@/features/power/PowerBadge';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
-import { usePopulationQuery } from '@/api/queries';
+import { usePopulationQuery, useVillagePowerQuery } from '@/api/queries';
 
 interface GameHeaderProps {
   onPowerClick?: () => void;
@@ -36,6 +36,7 @@ export function GameHeader({
   const villageId = useGameStore((state) => state.villageId);
   const user = useAuthStore((state) => state.user);
   const population = usePopulationQuery(villageId);
+  const villagePower = useVillagePowerQuery(villageId);
   const { display, productionRates, hasSnapshot } = useDisplayResources(villageId);
 
   const headerResources: ResourceDisplayItem[] = useMemo(() => {
@@ -66,8 +67,7 @@ export function GameHeader({
     ? Math.max(0, population.data.max - population.data.used)
     : undefined;
 
-  // Power non câblé côté backend Phase 9 — placeholder à 0, ouvrir un sheet stub.
-  const powerValue = 0;
+  const powerValue = villagePower.data?.total ?? 0;
 
   return (
     <HeaderBar>
