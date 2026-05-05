@@ -5,6 +5,7 @@ import type { MapEntity } from '@/api/world-types';
 interface SelectedEntityPanelProps {
   entity: MapEntity | null;
   onClose: () => void;
+  onAttack?: (entity: MapEntity) => void;
 }
 
 const KIND_LABEL: Record<MapEntity['kind'], string> = {
@@ -19,7 +20,7 @@ const TIER_BADGE: Record<NonNullable<MapEntity['tier']>, { label: string; varian
   T3: { label: 'Tier 3', variant: 'error' },
 };
 
-export function SelectedEntityPanel({ entity, onClose }: SelectedEntityPanelProps) {
+export function SelectedEntityPanel({ entity, onClose, onAttack }: SelectedEntityPanelProps) {
   if (!entity) return null;
 
   const tierInfo = entity.tier ? TIER_BADGE[entity.tier] : null;
@@ -74,9 +75,9 @@ export function SelectedEntityPanel({ entity, onClose }: SelectedEntityPanelProp
           </dl>
 
           <div className="flex flex-col gap-2">
-            {!entity.isMine && entity.kind !== 'OTHER' && (
-              <Button variant="danger" size="sm" disabled title="Disponible en Phase 6">
-                Attaquer (Phase 6)
+            {!entity.isMine && entity.kind !== 'OTHER' && onAttack && (
+              <Button variant="danger" size="sm" onClick={() => onAttack(entity)}>
+                Attaquer
               </Button>
             )}
             {entity.isMine && (

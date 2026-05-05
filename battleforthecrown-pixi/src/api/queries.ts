@@ -33,6 +33,7 @@ export const queryKeys = {
   activeExpeditions: (villageId: string | null) => ['combat', 'active', villageId] as const,
   combatReports: (userId: string | null) => ['combat', 'reports', userId] as const,
   combatReport: (reportId: string | null) => ['combat', 'report', reportId] as const,
+  worldConfigFull: (worldId: string | null) => ['world-config-full', worldId] as const,
   worldEntities: (worldId: string | null) => ['world-entities', worldId] as const,
   worldConfig: (worldId: string | null) => ['world-config', worldId] as const,
 };
@@ -440,6 +441,51 @@ export function useMarkReportReadMutation() {
       }),
     onSettled: (_data, _err, { userId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.combatReports(userId) });
+    },
+  });
+}
+
+export interface WorldConfigDto {
+  multipliers?: { construction: number; production: number; training: number };
+  combat?: { travelSpeed: number; [key: string]: unknown };
+  [key: string]: unknown;
+}
+
+export function useWorldConfigQuery(worldId: string | null) {
+  return useQuery<WorldConfigDto>({
+    queryKey: queryKeys.worldConfigFull(worldId),
+    queryFn: () => {
+      if (!worldId) return Promise.reject(new Error('No world selected'));
+      return apiClient.get<WorldConfigDto>(`/world/${worldId}/config`);
+    },
+    enabled: Boolean(worldId),
+    staleTime: 5 * 60_000,
+  });
+}
+
+interface AttackInput {
+  villageId: string;
+  userId: string;
+  targetX: number;
+  targetY: number;
+  targetKind: 'PLAYER_VILLAGE' | 'BARBARIAN_VILLAGE';
+  targetRefId: string;
+  units: Record<string, number>;
+}
+
+export function useInitiateAttackMutation() {
+  const queryClient = useQueryClient();
+  return useMutation<unknown, Error, AttackInput>({
+    mutationFn: ({ userId, villageId, targetX, targetY, targetKind, targetRefId, units }) =>
+      apiClient.post<unknown>(
+        '/combat/attack',
+        { villageId, targetX, targetY, targetKind, targetRefId, units },
+        { query: { userId } },
+      ),
+    onSettled: (_data, _err, { villageId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
     },
   });
 }

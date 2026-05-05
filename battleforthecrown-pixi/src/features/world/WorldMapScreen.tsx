@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { GameSession } from '@/features/game/GameSession';
 import { GameHeader } from '@/features/layout/GameHeader';
@@ -8,6 +8,7 @@ import { WorldMapCanvas } from './WorldMapCanvas';
 import { SelectedEntityPanel } from './SelectedEntityPanel';
 import { buildMapEntities } from './buildMapEntities';
 import { ExpeditionList } from '@/features/combat/ExpeditionList';
+import { AttackDetailModal } from '@/features/combat/AttackDetailModal';
 import {
   useMyVillagesQuery,
   useWorldDetailsQuery,
@@ -30,6 +31,7 @@ export function WorldMapScreen() {
   const setEntities = useWorldMapStore((state) => state.setEntities);
   const selectedEntityId = useWorldMapStore((state) => state.selectedEntityId);
   const setSelectedEntity = useWorldMapStore((state) => state.setSelectedEntity);
+  const [attackTarget, setAttackTarget] = useState<MapEntity | null>(null);
 
   const entities: MapEntity[] = useMemo(
     () => buildMapEntities(worldEntities.data ?? [], myVillages.data ?? [], userId),
@@ -90,10 +92,22 @@ export function WorldMapScreen() {
 
             <div className="mt-auto flex flex-wrap items-end justify-between gap-3 p-3">
               <ExpeditionList />
-              <SelectedEntityPanel entity={selectedEntity} onClose={() => setSelectedEntity(null)} />
+              <SelectedEntityPanel
+                entity={selectedEntity}
+                onClose={() => setSelectedEntity(null)}
+                onAttack={(target) => setAttackTarget(target)}
+              />
             </div>
           </div>
         </main>
+
+        {attackTarget && myVillage && (
+          <AttackDetailModal
+            target={attackTarget}
+            origin={{ x: myVillage.x, y: myVillage.y }}
+            onClose={() => setAttackTarget(null)}
+          />
+        )}
 
         <ToastStack />
       </div>
