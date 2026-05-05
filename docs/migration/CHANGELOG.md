@@ -248,6 +248,32 @@ Le `BUILDING_META` n'a pas non plus de PNG pour `WALL` ni `HIDEOUT` — fallback
 - `/game/messages` : panel "RAPPORTS RÉCENTS" avec empty state 📜 (aucun rapport pour le compte de test).
 - `/game/world` : sélection d'un village barbare → bouton "Attaquer" actif → modal "Préparer une attaque" avec Lost Stronghold + distance 63.1 + slider Milice 0/1 + footer puissance/capacité/temps.
 
+### Patch — WorldMap fidélité legacy (2026-05-05)
+
+**Statut** : ✅ Done. Issue remontée par le user après audit comparatif legacy/pixi.
+
+**Diagnostic** : `/game/world` divergeait du legacy sur 4 points : pas de `BottomNavigationBar` (juste un lien texte "← Retour au village"), pas de gating "Tour de guet niv. 0", pas de fog-of-war (toutes les entités du monde visibles peu importe le niveau de la tour de guet), pas de bouton "recentrer". Un agent d'audit avait listé 80h de gap mais une bonne partie était soit déjà couverte (`pixi-viewport` gère drag/pinch/wheel/decelerate, header `GameHeader` déjà présent) soit non émise par le backend (events `world.entities.*` n'existent pas).
+
+**Ce qui a été fait** (commit unique) :
+- `useBuildingsForLockCheck` expose maintenant `isWatchtowerBuilt` + `watchtowerLevel` en plus de `isBarracksBuilt`. La logique de lock est partagée entre les onglets Armée et Monde.
+- `BottomNavigationBar` : onglet "Monde" reproduit le pattern du lock Armée — disabled + icône `Lock` + tooltip "Construisez la tour de guet pour débloquer" quand `watchtowerLevel === 0`.
+- `WorldLockedScreen.tsx` créé : Panel stone "Carte du monde verrouillée" + CTA "Retour au village", monté avec le `GameHeader` et la `BottomNavigationBar` (l'onglet Monde reste actif visuellement, ce qui est cohérent UX). `WorldMapScreen` early-returns ce composant si `!isWatchtowerBuilt`.
+- `buildMapEntities.ts` enrichi avec `filterEntitiesByVision(entities, watchtowerLevel)` : cache les entités hors du `visibilityRadius` de `WATCHTOWER_VISION_LEVELS[level]` (sauf `isMine` qu'on garde toujours). Niveau 10 = `null` = vision illimitée. Niveau 0 = ne montre que les villages du joueur. Distance euclidienne au carré pour éviter le `Math.sqrt`.
+- `WorldMapCanvas` expose une nouvelle prop `controllerRef: MutableRefObject<WorldMapCanvasController>` qui surface `centerOn(worldX, worldY)` depuis le scene handle Pixi (déjà présent, on le brancha juste).
+- `WorldMapScreen` mount `BottomNavigationBar` bottom + `IconButton Compass` top-right (avec `Tooltip "Recentrer sur mon village"`). Le lien texte legacy est supprimé puisque la nav le remplace.
+
+**Commit** : `feat(pixi-frontend/world): add bottom nav, watchtower gate, vision filter, recenter`
+
+**Vérification UI** : `/game/world` avec watchtower niv. 1 → 2 entités visibles (rayon 5 cases), compass top-right, nav avec onglet "Monde" actif. Type-check + lint + tests verts.
+
+**Reportés (volontairement)** :
+- **Mini-map** legacy (`WorldMiniMap.tsx` du legacy avec toggle top-right) — utile mais hors scope critique.
+- **Admin panel** legacy (`WorldAdminPanel.tsx`, debug coords/zoom) — debug-only.
+- **WS bindings `world.entities.changed/added`** — le backend ne les émet pas aujourd'hui ; `village.conquered` (déjà branché) invalide la query world-entities, ce qui couvre le cas pratique. À ré-évaluer si le gameplay évolue (nouveaux types d'événements monde).
+- **Auto-center initial** + **momentum physics** legacy — `pixi-viewport` (`drag().pinch().wheel().decelerate()`) couvre déjà tout cela, et `WorldMapCanvas` passe `initialCenter = myVillage` au scene handle. Pas un gap réel.
+
+---
+
 ### Patch — `BuildingDetailModal` enrichi (2026-05-05)
 
 **Statut** : ✅ Done. Issue remontée par le user après le smoke test 9.D : la modal détail bâtiment paraissait vide par rapport au legacy.
