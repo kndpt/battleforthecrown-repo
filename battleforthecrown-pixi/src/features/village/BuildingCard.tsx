@@ -1,3 +1,4 @@
+import { ProgressBar } from '@/ui';
 import { metaFor } from './buildingMeta';
 import { computeConstructionProgress, formatRemaining } from './constructionProgress';
 import { useTickingNow } from '@/lib/useTickingNow';
@@ -25,15 +26,30 @@ export function BuildingCard({ building, onClick, selected }: BuildingCardProps)
       onClick={onClick}
       className={[
         'group flex w-full flex-col items-stretch gap-2 rounded-md border-2 px-3 py-3 text-left transition',
-        selected ? 'border-game-gold-light bg-[#3a2a18]' : 'border-game-gold-border bg-[#2a1f12]/80 hover:border-game-gold-light',
+        selected
+          ? 'border-game-gold-light bg-[#3a2a18]'
+          : 'border-game-gold-border bg-[#2a1f12]/80 hover:border-game-gold-light',
       ].join(' ')}
     >
       <div className="flex items-center gap-3">
-        <span aria-hidden className="text-2xl leading-none">
-          {meta.emoji}
-        </span>
+        {meta.iconPath ? (
+          <img
+            src={meta.iconPath}
+            alt=""
+            width={40}
+            height={40}
+            loading="lazy"
+            className="h-10 w-10 object-contain drop-shadow"
+          />
+        ) : (
+          <span aria-hidden className="text-3xl leading-none">
+            {meta.emoji}
+          </span>
+        )}
         <div className="flex-1">
-          <p className="font-game text-sm uppercase tracking-widest text-game-gold-light">{meta.label}</p>
+          <p className="font-game text-sm uppercase tracking-widest text-game-gold-light">
+            {meta.label}
+          </p>
           <p className="text-xs text-parchment/70">{meta.description}</p>
         </div>
         <div className="text-right">
@@ -43,19 +59,19 @@ export function BuildingCard({ building, onClick, selected }: BuildingCardProps)
       </div>
       {progress.inProgress && (
         <div>
-          <div className="h-1.5 w-full rounded bg-black/40">
-            <div
-              className="h-1.5 rounded bg-game-green-light"
-              style={{ width: `${progress.percent.toFixed(1)}%` }}
-            />
-          </div>
-          <p className="mt-1 text-[10px] uppercase tracking-widest text-parchment/70">
-            En construction · {formatRemaining(progress.remainingMs)}
-          </p>
+          <ProgressBar
+            value={progress.percent}
+            variant="success"
+            size="sm"
+            animated
+            label={`${Math.round(progress.percent)}% · ${formatRemaining(progress.remainingMs)}`}
+          />
         </div>
       )}
       {!progress.inProgress && isMaxed && (
-        <p className="text-[10px] uppercase tracking-widest text-game-gold-light/80">Niveau maximal</p>
+        <p className="text-[10px] uppercase tracking-widest text-game-gold-light/80">
+          Niveau maximal
+        </p>
       )}
     </button>
   );

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Button } from '@/ui/buttons';
-import { Spinner } from '@/ui/spinners';
+import { Badge, Button, Panel, Spinner } from '@/ui';
 import { useJoinWorldMutation, useMyMembershipsQuery, useWorldsQuery } from '@/api/queries';
 import { ApiError } from '@/api';
 import type { World } from '@/api';
@@ -11,6 +10,19 @@ function defaultVillageName(email?: string): string {
   if (!email) return 'Royaume du joueur';
   const handle = email.split('@')[0] ?? 'joueur';
   return `Royaume de ${handle}`;
+}
+
+function badgeVariantForStatus(status: string | undefined): 'success' | 'warning' | 'info' | 'error' {
+  switch (status) {
+    case 'OPEN':
+      return 'success';
+    case 'LOCKED':
+      return 'warning';
+    case 'ENDED':
+      return 'error';
+    default:
+      return 'info';
+  }
 }
 
 export function WorldSelector() {
@@ -23,7 +35,7 @@ export function WorldSelector() {
 
   if (worlds.isLoading || memberships.isLoading) {
     return (
-      <div className="flex min-h-full items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100 flex items-center justify-center">
         <Spinner size="lg" />
       </div>
     );
@@ -31,8 +43,8 @@ export function WorldSelector() {
 
   if (worlds.isError) {
     return (
-      <div className="flex min-h-full items-center justify-center px-6 text-center">
-        <p className="text-parchment/80">Impossible de charger la liste des mondes.</p>
+      <div className="min-h-screen bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100 flex items-center justify-center px-6 text-center">
+        <p className="text-gray-700 font-game">Impossible de charger la liste des mondes.</p>
       </div>
     );
   }
@@ -54,56 +66,71 @@ export function WorldSelector() {
   };
 
   return (
-    <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col gap-6 px-6 py-8">
-      <header className="flex items-center justify-between">
-        <h1 className="font-game text-2xl text-game-gold-light text-shadow-game">Choisis un monde</h1>
-        <Link to="/my-worlds" className="text-sm uppercase tracking-widest text-game-blue-light underline">
-          Mes mondes
-        </Link>
-      </header>
+    <div className="min-h-screen bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100 p-4">
+      <div className="container mx-auto max-w-4xl py-8 space-y-6">
+        <header className="flex items-center justify-between">
+          <h1 className="font-cinzel text-3xl font-bold text-kingdom-800">Sélectionnez un monde</h1>
+          <Link
+            to="/my-worlds"
+            className="text-sm font-game uppercase tracking-widest text-kingdom-700 underline hover:text-kingdom-900"
+          >
+            Mes mondes
+          </Link>
+        </header>
 
-      {error && (
-        <p role="alert" className="rounded border border-game-red-border bg-game-red-dark/30 px-3 py-2 text-sm text-white">
-          {error}
-        </p>
-      )}
+        {error && (
+          <div role="alert">
+            <Panel variant="danger" padding="md">
+              <p className="text-sm text-white">{error}</p>
+            </Panel>
+          </div>
+        )}
 
-      <ul className="space-y-3">
-        {list.map((world) => {
-          const alreadyIn = joinedIds.has(world.id);
-          return (
-            <li
-              key={world.id}
-              className="flex flex-col gap-3 rounded-md border-2 border-game-gold-border bg-[#2a1f12]/80 p-4 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div>
-                <p className="font-game text-lg text-game-gold-light">{world.name}</p>
-                <p className="text-sm text-parchment/80">
-                  {world.gridWidth ? `${world.gridWidth}×${world.gridHeight}` : 'Grille inconnue'} ·{' '}
-                  {world.status ?? 'status inconnu'}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                {alreadyIn ? (
-                  <Button variant="info" size="sm" onClick={() => navigate('/my-worlds')}>
-                    Déjà rejoint
-                  </Button>
-                ) : (
-                  <Button
-                    variant="success"
-                    size="sm"
-                    onClick={() => onJoin(world)}
-                    disabled={join.isPending}
-                  >
-                    {join.isPending ? <Spinner size="sm" /> : 'Rejoindre'}
-                  </Button>
-                )}
-              </div>
-            </li>
-          );
-        })}
-        {list.length === 0 && <p className="text-parchment/80">Aucun monde disponible pour l'instant.</p>}
-      </ul>
+        {list.length === 0 ? (
+          <Panel variant="parchment" padding="lg" className="text-center">
+            <p className="text-gray-700 font-game">Aucun monde disponible pour l&apos;instant.</p>
+          </Panel>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {list.map((world) => {
+              const alreadyIn = joinedIds.has(world.id);
+              return (
+                <Panel key={world.id} variant="stone" padding="lg">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <h2 className="font-cinzel text-xl font-bold text-white">{world.name}</h2>
+                    <Badge variant={badgeVariantForStatus(world.status)} size="sm">
+                      {world.status ?? 'STATUT'}
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-1 text-sm text-white/80 mb-4">
+                    <p>
+                      Taille : {world.gridWidth ?? '?'}×{world.gridHeight ?? '?'}
+                    </p>
+                    {alreadyIn && <p className="text-kingdom-300 font-semibold">Tu as déjà rejoint ce monde</p>}
+                  </div>
+
+                  {alreadyIn ? (
+                    <Button variant="info" size="md" className="w-full" onClick={() => navigate('/my-worlds')}>
+                      Voir mes mondes
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="success"
+                      size="md"
+                      className="w-full"
+                      onClick={() => onJoin(world)}
+                      disabled={join.isPending}
+                    >
+                      {join.isPending ? <Spinner size="sm" /> : 'Rejoindre'}
+                    </Button>
+                  )}
+                </Panel>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

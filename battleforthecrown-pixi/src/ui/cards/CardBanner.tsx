@@ -1,6 +1,5 @@
 import { ReactNode } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import Image from "next/image";
 
 const bannerVariants = cva(
   ["absolute left-1/2 -translate-x-1/2 mt-2 top-[-40px]", "z-10"],
@@ -59,13 +58,12 @@ export const CardBanner = ({ variant, children }: CardBannerProps) => {
     <div className={bannerVariants({ variant })}>
       <div className="relative inline-block" style={{ width: "max-content" }}>
         {/* Image de fond */}
-        <Image
+        <img
           src="/assets/ui/banner.png"
           alt=""
           width={350}
           height={120}
           className="object-contain drop-shadow-[0_6px_8px_rgba(0,0,0,0.3)]"
-          priority
         />
 
         {/* Texte par-dessus */}

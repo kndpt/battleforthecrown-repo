@@ -4,7 +4,6 @@ import {
   ResourceType,
   formatResourceAmount,
 } from "@/lib/resourceConfig";
-import Image from "next/image";
 import { Tooltip } from "../tooltips";
 
 export interface ResourceDisplayItem {
@@ -102,7 +101,7 @@ export const ResourceDisplay = forwardRef<HTMLDivElement, ResourceDisplayProps>(
 
                 {/* Icône en dehors du clip (plus coupée) */}
                 <div className="absolute left-[-8px] top-1/2 -translate-y-1/2 z-20 pointer-events-none">
-                  <Image
+                  <img
                     src={config.assetPath}
                     alt={config.name}
                     width={21}

@@ -1,4 +1,11 @@
 import { useNavigate } from 'react-router';
+import { LogOut, Map } from 'lucide-react';
+import {
+  HeaderActions,
+  HeaderBar,
+  PlayerProfile,
+  PopulationIndicator,
+} from '@/ui';
 import { ResourceBar } from '@/features/resources/ResourceBar';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
@@ -8,12 +15,30 @@ import { useGameSocketStatus } from '@/lib/useGameSocketStatus';
 
 const formatter = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 
-const WS_STATUS_LABEL: Record<string, { dot: string; label: string }> = {
-  idle: { dot: 'bg-parchment/40', label: '—' },
-  connecting: { dot: 'bg-game-gold-light animate-pulse', label: 'Connexion' },
-  connected: { dot: 'bg-game-green-light', label: 'En ligne' },
-  disconnected: { dot: 'bg-game-red-light', label: 'Hors ligne' },
+const WS_STATUS_LABEL: Record<string, { dot: string; label: string; title: string }> = {
+  idle: { dot: 'bg-white/40', label: '—', title: 'WebSocket : initialisation' },
+  connecting: {
+    dot: 'bg-game-gold-light animate-pulse',
+    label: 'Connexion',
+    title: 'WebSocket : connexion en cours',
+  },
+  connected: {
+    dot: 'bg-game-green-light',
+    label: 'En ligne',
+    title: 'WebSocket : connecté',
+  },
+  disconnected: {
+    dot: 'bg-game-red-light',
+    label: 'Hors ligne',
+    title: 'WebSocket : déconnecté',
+  },
 };
+
+function shortName(email?: string): string {
+  if (!email) return 'Anonyme';
+  const handle = email.split('@')[0] ?? email;
+  return handle.charAt(0).toUpperCase() + handle.slice(1);
+}
 
 export function GameHeader() {
   const navigate = useNavigate();
@@ -26,58 +51,75 @@ export function GameHeader() {
   const wsStatus = useGameSocketStatus();
   const wsView = WS_STATUS_LABEL[wsStatus] ?? WS_STATUS_LABEL.idle;
 
+  const populationAvailable = population.data
+    ? Math.max(0, population.data.max - population.data.used)
+    : undefined;
+
   return (
-    <header className="pointer-events-auto flex flex-wrap items-center gap-3 rounded-md border-2 border-game-gold-border bg-[#1a120b]/95 px-3 py-2 text-white shadow-game-inset">
-      <div className="flex-1 min-w-[260px]">
-        <ResourceBar />
+    <HeaderBar className="pointer-events-auto rounded-md">
+      <PlayerProfile playerName={shortName(user?.email)} level={1} />
+
+      <div className="flex items-center gap-4 flex-1 justify-center">
+        <ResourceBar compact />
       </div>
 
-      <div className="flex items-center gap-2 rounded border border-game-gold-border/70 bg-black/40 px-3 py-1 text-xs">
-        <span className="text-[10px] uppercase tracking-widest text-game-gold-light">Pop.</span>
-        <span className="font-bold tabular-nums">
-          {population.data ? `${population.data.used}/${population.data.max}` : '—'}
-        </span>
-      </div>
+      <HeaderActions>
+        <PopulationIndicator
+          availablePopulation={populationAvailable}
+          loading={population.isLoading}
+        />
 
-      <div className="flex items-center gap-2 rounded border border-game-gold-border/70 bg-black/40 px-3 py-1 text-xs">
-        <span aria-hidden>👑</span>
-        <span className="font-bold tabular-nums">
-          {crowns.balance != null ? formatter.format(crowns.balance) : '—'}
-        </span>
-        {crowns.productionRate != null && (
-          <span className="text-[10px] text-parchment/70">+{crowns.productionRate}/h</span>
-        )}
-      </div>
+        <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-black/30 border border-[#3d2f1f]">
+          <img
+            src="/assets/casual-icons/crown.png"
+            alt=""
+            width={18}
+            height={18}
+            className="drop-shadow-sm"
+          />
+          <span className="font-cinzel font-bold text-sm text-white tabular-nums">
+            {crowns.balance != null ? formatter.format(crowns.balance) : '—'}
+          </span>
+          {crowns.productionRate != null && (
+            <span className="text-[10px] text-[#f5e6d3]/70 leading-none">
+              +{crowns.productionRate}/h
+            </span>
+          )}
+        </div>
 
-      <div className="flex items-center gap-2 rounded border border-game-gold-border/70 bg-black/40 px-3 py-1 text-xs">
-        <span className={`inline-block h-2 w-2 rounded-full ${wsView.dot}`} aria-hidden />
-        <span className="text-[10px] uppercase tracking-widest text-parchment/80" title={`WebSocket : ${wsStatus}`}>
-          {wsView.label}
-        </span>
-      </div>
+        <div
+          className="flex items-center gap-1.5 px-2 py-1 rounded bg-black/30 border border-[#3d2f1f]"
+          title={wsView.title}
+        >
+          <span className={`inline-block h-2 w-2 rounded-full ${wsView.dot}`} aria-hidden />
+          <span className="font-cinzel text-[10px] uppercase tracking-widest text-[#f5e6d3]/80">
+            {wsView.label}
+          </span>
+        </div>
 
-      <div className="flex items-center gap-2 rounded border border-game-gold-border/70 bg-black/40 px-3 py-1 text-xs">
-        <span className="font-game text-[11px] uppercase tracking-widest text-game-gold-light">
-          {user?.email ?? 'Anonyme'}
-        </span>
         <button
           type="button"
           onClick={() => navigate('/my-worlds')}
-          className="text-[10px] uppercase tracking-widest text-game-blue-light hover:text-white"
+          className="flex items-center gap-1 px-2 py-1 rounded bg-black/30 border border-[#3d2f1f] text-[#f5e6d3] hover:text-white"
+          title="Mes mondes"
         >
-          Mondes
+          <Map size={14} />
+          <span className="font-cinzel text-[10px] uppercase tracking-widest">Mondes</span>
         </button>
+
         <button
           type="button"
           onClick={() => {
             logout();
             navigate('/auth/login');
           }}
-          className="text-[10px] uppercase tracking-widest text-game-red-light hover:text-white"
+          className="flex items-center gap-1 px-2 py-1 rounded bg-game-red-dark/40 border border-game-red-border text-white hover:bg-game-red-dark/60"
+          title="Déconnexion"
         >
-          Déconnexion
+          <LogOut size={14} />
+          <span className="font-cinzel text-[10px] uppercase tracking-widest">Sortie</span>
         </button>
-      </div>
-    </header>
+      </HeaderActions>
+    </HeaderBar>
   );
 }

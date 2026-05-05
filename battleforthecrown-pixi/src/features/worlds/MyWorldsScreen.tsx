@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Button } from '@/ui/buttons';
-import { Spinner } from '@/ui/spinners';
+import { LogOut } from 'lucide-react';
+import { Badge, Button, Panel, Spinner } from '@/ui';
 import { apiClient } from '@/api';
 import { useMyMembershipsQuery, useLogout } from '@/api/queries';
 import type { JoinedVillage } from '@/api/types';
@@ -19,7 +19,7 @@ export function MyWorldsScreen() {
 
   if (memberships.isLoading) {
     return (
-      <div className="flex min-h-full items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100 flex items-center justify-center">
         <Spinner size="lg" />
       </div>
     );
@@ -44,67 +44,82 @@ export function MyWorldsScreen() {
   };
 
   return (
-    <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col gap-6 px-6 py-8">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="font-game text-2xl text-game-gold-light text-shadow-game">Mes royaumes</h1>
-          {user && <p className="text-sm text-parchment/80">{user.email}</p>}
-        </div>
-        <div className="flex gap-3">
-          <Link to="/worlds" className="text-sm uppercase tracking-widest text-game-blue-light underline">
-            Découvrir
-          </Link>
-          <button
-            onClick={() => {
-              logout();
-              navigate('/auth/login');
-            }}
-            className="text-sm uppercase tracking-widest text-game-red-light underline"
-          >
-            Déconnexion
-          </button>
-        </div>
-      </header>
-
-      {error && (
-        <p role="alert" className="rounded border border-game-red-border bg-game-red-dark/30 px-3 py-2 text-sm text-white">
-          {error}
-        </p>
-      )}
-
-      {list.length === 0 ? (
-        <div className="rounded-md border-2 border-dashed border-game-gold-border bg-black/30 p-6 text-center">
-          <p className="text-parchment/80">Tu n'as encore rejoint aucun monde.</p>
-          <Link to="/worlds" className="mt-2 inline-block font-bold text-game-gold-light underline">
-            Rejoindre un monde
-          </Link>
-        </div>
-      ) : (
-        <ul className="space-y-3">
-          {list.map((membership) => (
-            <li
-              key={membership.worldId}
-              className="flex items-center justify-between rounded-md border-2 border-game-gold-border bg-[#2a1f12]/80 p-4"
+    <div className="min-h-screen bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100 p-4">
+      <div className="container mx-auto max-w-4xl py-8 space-y-6">
+        <header className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="font-cinzel text-3xl font-bold text-kingdom-800">Mes royaumes</h1>
+            {user && <p className="text-sm text-gray-700 font-game">{user.email}</p>}
+          </div>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/worlds"
+              className="text-sm font-game uppercase tracking-widest text-kingdom-700 underline hover:text-kingdom-900"
             >
-              <div>
-                <p className="font-game text-lg text-game-gold-light">{membership.worldName}</p>
-                <p className="text-sm text-parchment/80">
-                  {membership.villageCount} village{membership.villageCount > 1 ? 's' : ''} · rejoint le{' '}
-                  {new Date(membership.joinedAt).toLocaleDateString('fr-FR')}
-                </p>
-              </div>
-              <Button
-                variant="success"
-                size="sm"
-                disabled={busyWorldId === membership.worldId}
-                onClick={() => enter(membership.worldId)}
-              >
-                {busyWorldId === membership.worldId ? <Spinner size="sm" /> : 'Entrer'}
+              Découvrir d&apos;autres mondes
+            </Link>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => {
+                logout();
+                navigate('/auth/login');
+              }}
+            >
+              <span className="flex items-center gap-2">
+                <LogOut size={14} />
+                Déconnexion
+              </span>
+            </Button>
+          </div>
+        </header>
+
+        {error && (
+          <div role="alert">
+            <Panel variant="danger" padding="md">
+              <p className="text-sm text-white">{error}</p>
+            </Panel>
+          </div>
+        )}
+
+        {list.length === 0 ? (
+          <Panel variant="parchment" padding="lg" className="text-center space-y-3">
+            <p className="text-gray-700 font-game">Tu n&apos;as encore rejoint aucun monde.</p>
+            <Link to="/worlds" className="inline-block">
+              <Button variant="success" size="md">
+                Rejoindre un monde
               </Button>
-            </li>
-          ))}
-        </ul>
-      )}
+            </Link>
+          </Panel>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {list.map((membership) => (
+              <Panel key={membership.worldId} variant="stone" padding="lg">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <h2 className="font-cinzel text-xl font-bold text-white">{membership.worldName}</h2>
+                  <Badge variant="success" size="sm">
+                    {membership.villageCount} village{membership.villageCount > 1 ? 's' : ''}
+                  </Badge>
+                </div>
+
+                <p className="text-sm text-white/80 mb-4">
+                  Rejoint le {new Date(membership.joinedAt).toLocaleDateString('fr-FR')}
+                </p>
+
+                <Button
+                  variant="success"
+                  size="md"
+                  className="w-full"
+                  disabled={busyWorldId === membership.worldId}
+                  onClick={() => enter(membership.worldId)}
+                >
+                  {busyWorldId === membership.worldId ? <Spinner size="sm" /> : 'Entrer'}
+                </Button>
+              </Panel>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

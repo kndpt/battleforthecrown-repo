@@ -1,5 +1,4 @@
 import { forwardRef, HTMLAttributes } from 'react';
-import Image from 'next/image';
 import { getResourceConfig, ResourceType, isValidResourceType } from '@/lib/resourceConfig';
 
 export interface ResourceIconProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
@@ -42,7 +41,7 @@ export const ResourceIcon = forwardRef<HTMLDivElement, ResourceIconProps>(
         title={showTooltip ? config.nameCapitalized : undefined}
         {...props}
       >
-        <Image
+        <img
           src={config.assetPath}
           alt={config.nameCapitalized}
           width={size}
@@ -50,7 +49,6 @@ export const ResourceIcon = forwardRef<HTMLDivElement, ResourceIconProps>(
           className="object-contain"
           onError={(e) => {
             if (fallbackToEmoji) {
-              // Remplacer l'image par l'emoji en cas d'erreur
               const target = e.currentTarget;
               target.style.display = 'none';
               const fallback = target.nextElementSibling as HTMLElement;

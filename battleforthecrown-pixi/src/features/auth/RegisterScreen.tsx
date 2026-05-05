@@ -1,9 +1,18 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
+import { Crown, Scroll, Shield } from 'lucide-react';
 import { z } from 'zod';
-import { Button } from '@/ui/buttons';
-import { Input, InputLabel } from '@/ui/inputs';
-import { Spinner } from '@/ui/spinners';
+import {
+  Button,
+  Card,
+  CardBanner,
+  CardBody,
+  CardFooter,
+  Input,
+  InputHelperText,
+  InputLabel,
+  Spinner,
+} from '@/ui';
 import { useRegisterMutation } from '@/api/queries';
 import { ApiError } from '@/api';
 
@@ -53,72 +62,109 @@ export function RegisterScreen() {
   };
 
   return (
-    <div className="flex min-h-full items-center justify-center px-6 py-12">
-      <form
-        onSubmit={onSubmit}
-        className="w-full max-w-md space-y-6 rounded-lg border-4 border-game-gold-border bg-[#2a1f12]/90 p-8 shadow-xl"
-      >
-        <header className="text-center">
-          <h1 className="font-game text-3xl text-game-gold-light text-shadow-game">Nouveau royaume</h1>
-          <p className="mt-1 text-sm text-parchment/80">Forge ton compte de seigneur</p>
-        </header>
+    <div className="min-h-screen bg-gradient-to-br from-[#e8d5b7] via-[#f5e6d3] to-[#d4c094] flex items-center justify-center p-4">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <Shield className="absolute top-20 left-10 text-[#8b7355]/10" size={120} />
+        <Crown className="absolute bottom-20 right-10 text-[#8b7355]/10" size={140} />
+      </div>
 
-        <div className="space-y-2">
-          <InputLabel htmlFor="email">Email</InputLabel>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={register.isPending}
-            required
-          />
-        </div>
+      <div className="relative w-full max-w-md">
+        <Card variant="parchment" size="fluid" className="shadow-2xl">
+          <CardBanner variant="warning">Serment au Royaume</CardBanner>
 
-        <div className="space-y-2">
-          <InputLabel htmlFor="password">Mot de passe</InputLabel>
-          <Input
-            id="password"
-            type="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={register.isPending}
-            required
-          />
-        </div>
+          <CardBody className="pt-24 px-6 pb-6 space-y-4">
+            <div className="flex items-center justify-center gap-3 text-center">
+              <Crown size={24} className="text-game-gold-dark" />
+              <p className="text-sm text-gray-600 font-game">
+                Deviens citoyen du royaume et entame ton épopée
+              </p>
+              <Crown size={24} className="text-game-gold-dark" />
+            </div>
 
-        <div className="space-y-2">
-          <InputLabel htmlFor="confirm-password">Confirmation</InputLabel>
-          <Input
-            id="confirm-password"
-            type="password"
-            autoComplete="new-password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            disabled={register.isPending}
-            required
-          />
-        </div>
+            <div className="flex items-center gap-3">
+              <div className="h-[2px] flex-1 bg-gradient-to-r from-transparent via-game-gold-border to-transparent" />
+              <Scroll size={16} className="text-game-gold-dark" />
+              <div className="h-[2px] flex-1 bg-gradient-to-r from-transparent via-game-gold-border to-transparent" />
+            </div>
 
-        {error && (
-          <p role="alert" className="rounded border border-game-red-border bg-game-red-dark/30 px-3 py-2 text-sm text-white">
-            {error}
-          </p>
-        )}
+            <form onSubmit={onSubmit} className="space-y-4" noValidate>
+              <div className="space-y-1">
+                <InputLabel htmlFor="register-email">Email</InputLabel>
+                <Input
+                  id="register-email"
+                  type="email"
+                  variant="parchment"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={register.isPending}
+                  required
+                />
+              </div>
 
-        <Button type="submit" variant="warning" size="lg" disabled={register.isPending} className="w-full">
-          {register.isPending ? <Spinner size="sm" /> : 'Créer le compte'}
-        </Button>
+              <div className="space-y-1">
+                <InputLabel htmlFor="register-password">Mot de passe</InputLabel>
+                <Input
+                  id="register-password"
+                  type="password"
+                  variant="parchment"
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={register.isPending}
+                  required
+                />
+              </div>
 
-        <p className="text-center text-sm text-parchment/80">
-          Déjà un compte ?{' '}
-          <Link to="/auth/login" className="font-bold text-game-gold-light underline">
-            Connecte-toi
-          </Link>
+              <div className="space-y-1">
+                <InputLabel htmlFor="register-confirm">Confirmation</InputLabel>
+                <Input
+                  id="register-confirm"
+                  type="password"
+                  variant="parchment"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={register.isPending}
+                  required
+                />
+              </div>
+
+              {error && (
+                <div role="alert">
+                  <InputHelperText variant="error">{error}</InputHelperText>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                variant="warning"
+                size="lg"
+                disabled={register.isPending}
+                className="w-full"
+              >
+                {register.isPending ? <Spinner size="sm" /> : 'Créer le compte'}
+              </Button>
+            </form>
+          </CardBody>
+
+          <CardFooter className="border-t-2 !py-2 border-[#d4c094] bg-[#e8d5b7]">
+            <p className="text-sm text-gray-700 font-game text-center w-full">
+              Déjà citoyen du royaume ?{' '}
+              <Link
+                to="/auth/login"
+                className="font-semibold text-game-gold-dark hover:text-game-gold-border transition-colors underline"
+              >
+                Entrer au château
+              </Link>
+            </p>
+          </CardFooter>
+        </Card>
+
+        <p className="mt-6 text-center text-sm text-gray-700 font-cinzel italic">
+          « À ceux qui osent, le royaume offre gloire et richesses. »
         </p>
-      </form>
+      </div>
     </div>
   );
 }
