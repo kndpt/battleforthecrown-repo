@@ -160,6 +160,51 @@ Le `BUILDING_META` n'a pas non plus de PNG pour `WALL` ni `HIDEOUT` — fallback
 
 **Captures** : —
 
+### Suite L1–L8 — fidélité legacy in-game (2026-05-05)
+
+**Statut** : ✅ Done — le HUD in-game (`/game`) est désormais 1:1 avec le legacy. 9.D (Army/Combat/Reports/Crowns/Power complet) reste reporté.
+
+**Diagnostic** : à l'issue du run nocturne, le HUD était fonctionnel mais visuellement étranger au legacy : `GameScreen` utilisait une mise en page desktop (NavRail latéral, panel grid `xl:grid-cols-3`), aucune `BottomNavigationBar`, pas de `BottomSheet` pour la file ni la gestion des bâtiments, modal de bâtiment réduite à un `Modal` md générique. Le user attendait le layout mobile-first parchment du legacy : header 2-rangs → canvas plein écran → bottom nav → panels & sheets superposés.
+
+**Ce qui a été fait** (un commit par étape) :
+
+- **L1 — `GameHeader` 2-rows** (commit [`36f7a13`](https://github.com/anthropics/apps)). `HeaderBar` legacy avec `PlayerProfile` (avatar+badge sans texte) à gauche, deux rangées à droite : Power+Crown au-dessus, Resources+Population en dessous. Plus de bouton "Sortie" exposé — accessible via Settings (à câbler 9.D).
+- **L2 — `CrownDisplay` + `PowerBadge`** (commit `36f7a13`). Composants `features/crowns/CrownDisplay.tsx` (lit `useCrownsStore`) et `features/power/PowerBadge.tsx` (placeholder `value=0` faute d'endpoint power).
+- **L3 — `BottomNavigationBar`** (commit [`e5ed06a`](https://github.com/anthropics/apps)). 4 onglets Armée/Bâtiments/Messages/Monde, palette parchment sombre (`#3c2619` → `#6b4b2b`), Lock Army quand `barracks.level === 0` via `useBuildingsForLockCheck`. Stubs `ArmyScreen` + `MessagesScreen` + routes `/game/army`, `/game/messages` ajoutés à `App.tsx`.
+- **L4 — `BuildingCard`** (commit [`8afb976`](https://github.com/anthropics/apps)). Refactor 1:1 du legacy : `Card` per-type (`parchment/wood/stone`), image 80×80, `Badge` Niv. top-right, `IconButton` annuler top-left, `CardFooter` avec `ProgressBar` ou `Button` "Construire/→ Niv. N+1". `buildingMeta.ts` étendu avec `cardVariant` + `description`.
+- **L5 — `QueueFloatingButton` + `QueueBottomSheet`** (commit [`518de10`](https://github.com/anthropics/apps)). FloatingButton orange `Hammer` + badge nb constructions ; `BottomSheet maxHeight 50vh` Panel parchment, max 3 items, ProgressBar warning, bouton Booster désactivé. Parsing ISO via `Date.parse` (le legacy utilisait `number ms`).
+- **L6 — `BuildingManagementPanel`** (commit [`517f0...`]). `BottomSheet maxHeight 85vh`, `PanelHeader wood` "🏗️ Bâtiments + Badge n/MAX_CONSTRUCTION_QUEUE", sections groupées par catégorie (Centre/Ressources/Infrastructure/Exploration/Militaire), section "🔒 À débloquer" avec `lockReason` calculé via `BUILDING_UNLOCK_REQUIREMENTS` du château. Footer "💡 Conseil du Royaume". Animations stagger fadeIn (CSS `<style>` injecté).
+- **L7 — `BuildingDetailModal`** (commit [`9577...`]). `Modal lg variant=default`, `ModalBody !p-0 flex column h-[90vh]`. Sous-composants `BuildingDetailModal/BuildingHeader.tsx` (image 90×90 + Badge Niv. + name cinzel + description) et `BuildingDetailModal/ConstructionProgress.tsx` (Badge percent + ProgressBar warning + temps restant). Footer fixe avec `Button success` "Améliorer → Niv. N+1" / "Niveau Maximum" / "Annuler la construction". Bouton fermer en `absolute top-4 right-4`. **Skipped** : `CostSection` (besoin de `upgradeCost` non exposé par le DTO `/village/buildings`), `BonusSection` (besoin de `useConfig` Redux), `BuildingUnlockPreview`. Hooks `useUpgradeBuildingMutation` + `useCancelConstructionMutation` préservés.
+- **L8 — `VillageView`** (commit `c3770a5`). Remplace `GameScreen` à la route `/game`. Layout legacy 1:1 : `<GameSession>` wrapper → `flex-col mx-auto bg-gradient-to-b from-parchment` → `GameHeader` (flex-shrink) → `VillageCanvas` (flex-1) → `BottomNavigationBar` → `BuildingManagementPanel` → `QueueFloatingButton` (fixed bottom-28 right-4) + `QueueBottomSheet` (mutuellement exclusifs avec le panel) → `BuildingDetailModal` (selectedBuilding) → `PowerBottomSheet` stub → `BottomSheet` "Expéditions" wrappant `<ExpeditionList />` → `ToastStack`.
+  - `VillageCanvas` refactorisé : la `BuildingDetailModal` n'est plus montée dedans, elle est contrôlée par le parent via `onSelectBuilding` callback. Single source of truth pour `selectedBuilding` côté `VillageView` (un même clic Pixi ou clic carte ouvre la même modal).
+  - **Suppressions** : `features/game/GameScreen.tsx`, `features/layout/NavRail.tsx`, `features/layout/StubPanel.tsx`, `features/village/VillagePanel.tsx`, `features/village/QueueBar.tsx` (–378 lignes orphelines).
+
+**Écart par rapport au plan** :
+- L7 sans `CostSection` : le DTO `BuildingDto` actuel ne contient pas `upgradeCost` (il vient seulement dans la réponse `UpgradeResponseDto` après mutation). Préserver l'affichage des coûts demanderait un nouvel endpoint `GET /village/{id}/buildings/{type}/upgrade-cost` ou d'enrichir le DTO buildings côté backend — hors scope L7. Affichage Niv. actuel / Plafond / Population / Statut conservé en remplacement.
+- Pas de `setPanel(router, ...)` (legacy) : le legacy utilisait l'URL pour persister `?panel=buildings|queue`. La nouvelle implémentation utilise du local state — équivalent fonctionnel sans pollution d'URL. Si on veut deep-linking plus tard, ajouter `useSearchParams` côté `VillageView`.
+
+**Commits** :
+- [`36f7a13`](https://github.com/anthropics/apps) `refactor(pixi-frontend/header): rebuild GameHeader matching legacy 2-row layout`
+- [`e5ed06a`](https://github.com/anthropics/apps) `feat(pixi-frontend/village): port BottomNavigationBar with 4 tabs`
+- [`8afb976`](https://github.com/anthropics/apps) `refactor(pixi-frontend/village): port BuildingCard matching legacy layout`
+- [`518de10`](https://github.com/anthropics/apps) `feat(pixi-frontend/village): port QueueFloatingButton + QueueBottomSheet`
+- `feat(pixi-frontend/village): port BuildingManagementPanel matching legacy layout` (L6)
+- `refactor(pixi-frontend/village): rebuild BuildingDetailModal with legacy layout` (L7)
+- `feat(pixi-frontend/game): port VillageView matching legacy composition` (L8)
+
+**Vérification (Definition of Done)** :
+- [x] `yarn workspace battleforthecrown-pixi type-check` propre.
+- [x] `yarn workspace battleforthecrown-pixi lint` propre.
+- [x] `yarn workspace battleforthecrown-pixi test` → 57 / 11 fichiers (aucun test cassé par les refactors).
+- [x] `yarn workspace battleforthecrown-pixi build` → bundle initial **133.74 KB gzip** (sous le cap 500 KB), nouveau chunk `VillageView-*.js` 14 KB gz lazy-chargé.
+- [x] Pas de `next/image` ni d'autres imports `next/*`.
+- [x] Pas d'emoji UI dans `src/features/` hors fallback `BUILDING_META.emoji` (WALL/HIDEOUT) et indicateurs sectionnels du `BuildingManagementPanel` (🏗️ ⭐ 📦 🏛️ 🧭 ⚔️ 🔒 💡) qui font partie du design legacy 1:1.
+
+**Vérification UI (à confirmer par le user)** :
+- `/game` doit afficher : header 2-rangs (avatar + level | Power+Crown / Resources+Population | bell+settings) → canvas Pixi village plein écran → bottom nav 4 onglets en bas. Cliquer "Bâtiments" ouvre la `BottomSheet 85vh` avec sections regroupées et cards par catégorie. Cliquer une card ouvre la modal détail (image 90×90 + bouton Améliorer ou Annuler). Si une construction est en cours, le `QueueFloatingButton` orange apparaît en bas-droite (au-dessus de la nav) avec badge.
+- Naviguer vers `/game/army` ou `/game/messages` doit afficher les stubs ; `/game/world` la carte du monde.
+- Le clic sur un bâtiment dans le canvas Pixi ouvre la même modal que via le panel.
+
 ---
 
 
