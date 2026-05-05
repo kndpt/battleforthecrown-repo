@@ -4,11 +4,23 @@ import { Button, InputHelperText, Modal, ModalBody, Spinner } from '@/ui';
 import { metaFor } from './buildingMeta';
 import { computeConstructionProgress, formatRemaining } from './constructionProgress';
 import { useTickingNow } from '@/lib/useTickingNow';
-import { useUpgradeBuildingMutation, useCancelConstructionMutation } from '@/api/queries';
+import {
+  useUpgradeBuildingMutation,
+  useCancelConstructionMutation,
+  usePopulationQuery,
+} from '@/api/queries';
 import { ApiError } from '@/api';
 import type { BuildingDto } from '@/api';
+import { useDisplayResources } from '@/features/resources/useDisplayResources';
+import {
+  BUILDING_DEFINITIONS,
+  type BuildingType,
+} from '@battleforthecrown/shared/village/buildings';
 import { BuildingHeader } from './BuildingDetailModal/BuildingHeader';
 import { ConstructionProgress } from './BuildingDetailModal/ConstructionProgress';
+import { CostSection } from './BuildingDetailModal/CostSection';
+import { BonusSection } from './BuildingDetailModal/BonusSection';
+import { BuildingUnlockPreview } from './BuildingDetailModal/BuildingUnlockPreview';
 
 interface BuildingDetailModalProps {
   villageId: string;
@@ -29,6 +41,14 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
 
   const isMaxLevel = building.level >= building.maxLevel;
   const isUnderConstruction = progress.inProgress;
+  const nextLevel = building.level + 1;
+  const nextCost = BUILDING_DEFINITIONS[building.type as BuildingType]?.levels[nextLevel] ?? null;
+
+  const { display: displayResources } = useDisplayResources(villageId);
+  const populationQuery = usePopulationQuery(villageId);
+  const availablePopulation = populationQuery.data
+    ? Math.max(0, populationQuery.data.max - populationQuery.data.used)
+    : 0;
 
   const handleUpgrade = () => {
     setError(null);
@@ -85,39 +105,25 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
             />
           )}
 
-          {!isUnderConstruction && !isMaxLevel && (
-            <div className="rounded-lg border-2 border-kingdom-200 bg-kingdom-50/50 p-4">
-              <dl className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <dt className="text-[10px] uppercase tracking-widest text-kingdom-600">
-                    Niveau actuel
-                  </dt>
-                  <dd className="font-bold text-kingdom-900 font-cinzel text-lg">
-                    {building.level}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-[10px] uppercase tracking-widest text-kingdom-600">
-                    Plafond
-                  </dt>
-                  <dd className="font-bold text-kingdom-900 font-cinzel text-lg">
-                    {building.maxLevel}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-[10px] uppercase tracking-widest text-kingdom-600">
-                    Population
-                  </dt>
-                  <dd className="font-bold text-kingdom-900">{building.populationCost}</dd>
-                </div>
-                <div>
-                  <dt className="text-[10px] uppercase tracking-widest text-kingdom-600">
-                    Statut
-                  </dt>
-                  <dd className="font-bold text-kingdom-900">Disponible</dd>
-                </div>
-              </dl>
-            </div>
+          {!isUnderConstruction && !isMaxLevel && nextCost && (
+            <CostSection
+              cost={nextCost}
+              resources={{
+                wood: displayResources?.wood ?? 0,
+                stone: displayResources?.stone ?? 0,
+                iron: displayResources?.iron ?? 0,
+              }}
+              availablePopulation={availablePopulation}
+              nextLevel={nextLevel}
+            />
+          )}
+
+          {!isMaxLevel && (
+            <BonusSection buildingType={building.type} currentLevel={building.level} />
+          )}
+
+          {building.type === 'CASTLE' && !isMaxLevel && (
+            <BuildingUnlockPreview nextCastleLevel={nextLevel} />
           )}
 
           {isMaxLevel && (

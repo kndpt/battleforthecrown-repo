@@ -20,8 +20,10 @@ export default defineConfig({
     include: [
       '@battleforthecrown/shared',
       '@battleforthecrown/shared/logic',
+      '@battleforthecrown/shared/village',
       '@battleforthecrown/shared/village/buildings',
       '@battleforthecrown/shared/army',
+      '@battleforthecrown/shared/resources',
     ],
   },
 });
