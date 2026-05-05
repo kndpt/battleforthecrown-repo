@@ -13,8 +13,8 @@ import { Spinner } from '@/ui/spinners';
 import { useGameStore } from '@/stores/game';
 import { DebugOverlay } from '@/features/layout/DebugOverlay';
 
-const GameScreen = lazy(() =>
-  import('@/features/game/GameScreen').then((m) => ({ default: m.GameScreen })),
+const VillageView = lazy(() =>
+  import('@/features/game/VillageView').then((m) => ({ default: m.VillageView })),
 );
 const WorldMapScreen = lazy(() =>
   import('@/features/world/WorldMapScreen').then((m) => ({ default: m.WorldMapScreen })),
@@ -44,7 +44,7 @@ function GameGuard() {
   }
   return (
     <Suspense fallback={<GameLoader />}>
-      <GameScreen />
+      <VillageView />
     </Suspense>
   );
 }

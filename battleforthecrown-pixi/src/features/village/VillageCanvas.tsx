@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { type Application } from 'pixi.js';
 import { PixiCanvas } from '@/pixi/PixiCanvas';
 import { SceneManager } from '@/pixi/scenes/SceneManager';
@@ -6,26 +6,26 @@ import { createVillageScene, type VillageSceneHandle } from '@/pixi/scenes/Villa
 import { loadBundle } from '@/pixi/assets/loader';
 import { gameSocket } from '@/api/ws';
 import type { BuildingDto } from '@/api';
-import { BuildingDetailModal } from './BuildingDetailModal';
 
 interface VillageCanvasProps {
   villageId: string;
   buildings: BuildingDto[];
+  onSelectBuilding?: (building: BuildingDto) => void;
 }
 
-export function VillageCanvas({ villageId, buildings }: VillageCanvasProps) {
+export function VillageCanvas({ villageId, buildings, onSelectBuilding }: VillageCanvasProps) {
   const handleRef = useRef<VillageSceneHandle | null>(null);
   const buildingsRef = useRef<BuildingDto[]>(buildings);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const onSelectRef = useRef<typeof onSelectBuilding>(onSelectBuilding);
 
-  // Keep an up-to-date ref so the scene callbacks see the latest data without
-  // forcing the canvas to remount.
   useEffect(() => {
     buildingsRef.current = buildings;
   }, [buildings]);
 
-  // Kick off the village asset bundle on mount; sprites attach themselves
-  // when the textures land (BuildingSprite.tick re-checks every frame).
+  useEffect(() => {
+    onSelectRef.current = onSelectBuilding;
+  }, [onSelectBuilding]);
+
   useEffect(() => {
     void loadBundle('village');
   }, []);
@@ -34,7 +34,10 @@ export function VillageCanvas({ villageId, buildings }: VillageCanvasProps) {
     (app: Application) => {
       const manager = new SceneManager(app);
       const handle = createVillageScene(app, {
-        onSelectBuilding: (id) => setSelectedId(id),
+        onSelectBuilding: (id) => {
+          const building = buildingsRef.current.find((b) => b.id === id);
+          if (building) onSelectRef.current?.(building);
+        },
       });
       handleRef.current = handle;
       manager.register('village', () => handle.scene);
@@ -56,23 +59,9 @@ export function VillageCanvas({ villageId, buildings }: VillageCanvasProps) {
     [villageId],
   );
 
-  // Reconcile when the buildings list changes after the scene is mounted.
   useEffect(() => {
     handleRef.current?.reconcile(buildings);
   }, [buildings]);
 
-  const selectedBuilding = selectedId ? buildings.find((b) => b.id === selectedId) ?? null : null;
-
-  return (
-    <div className="relative h-full w-full">
-      <PixiCanvas className="absolute inset-0" onReady={onReady} />
-      {selectedBuilding && (
-        <BuildingDetailModal
-          villageId={villageId}
-          building={selectedBuilding}
-          onClose={() => setSelectedId(null)}
-        />
-      )}
-    </div>
-  );
+  return <PixiCanvas className="absolute inset-0" onReady={onReady} />;
 }
