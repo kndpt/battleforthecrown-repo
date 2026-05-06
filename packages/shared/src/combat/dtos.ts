@@ -1,3 +1,5 @@
+import type { LootResources } from './loot';
+
 export type TargetKind = 'PLAYER_VILLAGE' | 'BARBARIAN_VILLAGE';
 
 export const TARGET_KINDS = {
@@ -22,15 +24,9 @@ export interface AttackCommand {
   units: Record<string, number>;
 }
 
-export interface CombatLootResources {
-  wood: number;
-  stone: number;
-  iron: number;
-}
-
 export interface CombatLoot {
-  resources?: CombatLootResources;
-  remainingResources?: CombatLootResources;
+  resources?: LootResources;
+  remainingResources?: LootResources;
 }
 
 export interface CombatReportResponse {

@@ -1,3 +1,5 @@
+import type { LootResources } from '../combat/loot';
+
 export interface BuildingCompletedPayload {
   buildingId: string;
   villageId: string;
@@ -22,12 +24,6 @@ export interface BattleSentPayload {
   arrivalAt: string;
 }
 
-export interface BattleLootResources {
-  wood: number;
-  stone: number;
-  iron: number;
-}
-
 export interface BattleResolvedPayload {
   expeditionId: string;
   reportId: string;
@@ -38,7 +34,7 @@ export interface BattleResolvedPayload {
   targetX: number;
   targetY: number;
   isVictory: boolean;
-  loot: { resources: BattleLootResources };
+  loot: { resources: LootResources };
   lossesAttacker: Record<string, number>;
   casualtyRate: number;
   survivingUnits: Record<string, number>;
@@ -50,7 +46,7 @@ export interface BattleReturnedPayload {
   reportId: string;
   villageId: string;
   survivingUnits: Record<string, number>;
-  loot: { resources: BattleLootResources };
+  loot: { resources: LootResources };
 }
 
 export interface VillageAttackedPayload {
@@ -63,7 +59,7 @@ export interface VillageAttackedPayload {
   isDefenseSuccessful: boolean;
   losses: Record<string, number>;
   casualtyRate: number;
-  resourcesLost: BattleLootResources;
+  resourcesLost: LootResources;
   timestamp: string;
 }
 

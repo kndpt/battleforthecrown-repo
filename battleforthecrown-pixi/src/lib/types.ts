@@ -10,6 +10,7 @@ import {
   EXPEDITION_STATUSES,
   TARGET_KINDS,
   type ExpeditionStatus as SharedExpeditionStatus,
+  type LootResources,
   type TargetKind as SharedTargetKind,
 } from '@battleforthecrown/shared/combat';
 
@@ -147,11 +148,7 @@ export interface Expedition {
   createdAt: Date | string;
 }
 
-export interface LootResources {
-  wood: number;
-  stone: number;
-  iron: number;
-}
+export type { LootResources } from '@battleforthecrown/shared/combat';
 
 export interface CombatLoot {
   resources?: LootResources;

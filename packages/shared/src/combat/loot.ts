@@ -1,14 +1,12 @@
+export interface LootResources {
+  wood: number;
+  stone: number;
+  iron: number;
+}
+
 export interface LootResult {
-  resources?: {
-    wood: number;
-    stone: number;
-    iron: number;
-  };
-  remainingResources?: {
-    wood: number;
-    stone: number;
-    iron: number;
-  };
+  resources?: LootResources;
+  remainingResources?: LootResources;
   artifacts?: unknown[];
   honor?: number;
   items?: unknown[];

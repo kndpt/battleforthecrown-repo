@@ -17,4 +17,4 @@ export type CombatConfig = CombatRules;
 
 export * from './dtos';
 export * from './utils';
-export * from './resolution';
+export * from './loot';

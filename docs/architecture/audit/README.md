@@ -18,7 +18,7 @@ Chaque ticket décrit **un problème observé**, factuel, avec références `pat
 - ✅ [03 — Dual path `resources.changed`](./03-resources-changed-dual-path.md) 🔴 — **résolu le 2026-05-06**
 - ✅ [04 — Typage permissif `WorldConfigDto`](./04-world-config-permissive-typing.md) 🔴 — **résolu le 2026-05-06**
 - ✅ [07 — Templates barbares avec types fantômes](./07-shared-dead-barbarian-templates.md) 🟡 — **résolu le 2026-05-06**
-- [08 — Doublon types loot dans shared](./08-loot-types-duplication.md) 🟡
+- ✅ [08 — Doublon types loot dans shared](./08-loot-types-duplication.md) 🟡 — **résolu le 2026-05-06**
 - [18 — `combat.travelSpeed` hors de `multipliers`](./18-world-config-travel-speed-asymmetry.md) 🟠
 
 ### Backend NestJS

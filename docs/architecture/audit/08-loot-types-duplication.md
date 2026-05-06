@@ -49,9 +49,39 @@ Très probablement issu d'une convergence : `events/types.ts` a été écrit pou
 - **Maintenir la séparation** : si la décision est qu'ils peuvent diverger un jour, alors documenter explicitement (commentaire dans les deux fichiers expliquant pourquoi ils sont distincts).
 - **Audit plus large** : chercher d'autres types identiques dans shared (ex : `Record<UnitType, number>` répété, `{ x: number; y: number }` répété).
 
+## Résolution effective (2026-05-06)
+
+**Option retenue** : type unique partagé `LootResources` dans `packages/shared/src/combat/loot.ts`, suppression des deux interfaces dupliquées.
+
+### Périmètre
+
+- Création de `combat/loot.ts` consolidant `LootResources` (nouveau), `LootResult` et `CombatResolution`.
+- Renommage `combat/resolution.ts` → `combat/loot.ts` (sémantique élargie : module "résultats post-combat").
+- Suppression de `CombatLootResources` (`combat/dtos.ts`) — `CombatLoot.resources?` et `.remainingResources?` pointent désormais vers `LootResources`.
+- Suppression de `BattleLootResources` (`events/types.ts`) — `BattleResolvedPayload.loot.resources`, `BattleReturnedPayload.loot.resources` et `VillageAttackedPayload.resourcesLost` pointent désormais vers `LootResources`.
+- Réécriture de `LootResult.resources` / `.remainingResources` (auparavant inline `{wood, stone, iron}`) en `LootResources`.
+- Frontend pixi aligné : `battleforthecrown-pixi/src/lib/types.ts` re-exporte `LootResources` du shared au lieu de le redéclarer.
+
+### Périmètre explicitement non traité (autres tickets)
+
+- Inline `{ wood: number; stone: number; iron: number }` côté backend pour le snapshot du défenseur (`combat/interfaces/combat-context.interface.ts:22`, `combat/combat.worker.ts:404,412`) — sémantique distincte ("ressources détenues" ≠ "butin pris"), à garder local au backend.
+- `CombatLootDto` permissif (champs optionnels) dans `pixi/api/queries.ts:378` — relève du [ticket 04](./04-world-config-permissive-typing.md).
+- Drift entre `CombatLoot` (shared) / `LootResult` (shared) / `CombatLoot` (pixi) — `CombatReportResponseDto` n'est pas appliqué au runtime (`combat.worker.ts:233` sérialise `loot` comme `Prisma.InputJsonValue` brut). Sujet plus large à isoler.
+- `StorageLimits` (`resources/types.ts`) — même forme `{wood, stone, iron}` mais sémantique distincte (capacité, pas butin).
+
+### Vérifications de sortie
+
+- ✅ Plus aucune occurrence de `CombatLootResources` ni `BattleLootResources` dans le repo (hors legacy `battleforthecrown/` intouchable).
+- ✅ `yarn workspace @battleforthecrown/shared build` OK.
+- ✅ `cd battleforthecrown-backend && yarn build` OK.
+- ✅ `yarn workspace battleforthecrown-pixi test --run` : 57/57 verts.
+- ⚠️ Tests backend : 7 échecs (`loot.manager.spec.ts`, `production.worker.spec.ts`) **préexistants** — vérifié en re-jouant les tests sur `main` vierge. Hors scope.
+- ⚠️ Erreur tsc dans `pixi/PixiCanvas.tsx:32` **préexistante** — vérifiée à l'identique sur `main` vierge.
+
 ## Tickets liés
 
 - [02 — Events WS non bindés](./02-ws-events-not-bound.md) — autres signes de tension contractuelle dans les events.
+- [04 — Typage permissif `WorldConfigDto`](./04-world-config-permissive-typing.md) — `CombatLootDto` permissif relève de ce ticket.
 
 ## Dimensions à valider en sortie
 
