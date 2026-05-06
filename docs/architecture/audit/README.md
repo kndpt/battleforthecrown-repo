@@ -24,7 +24,7 @@ Chaque ticket décrit **un problème observé**, factuel, avec références `pat
 
 - ✅ [01 — `userId` en `@Query` (fuite auth)](./01-backend-auth-userid-via-query.md) 🔴 — **résolu le 2026-05-06**
 - ✅ [05 — Dépendances circulaires `forwardRef`](./05-backend-circular-deps.md) 🟡 — **résolu le 2026-05-06** (cf. ADR-12)
-- [06 — God services (`world-config`, `world`, `barbarian-seeding`)](./06-backend-god-services.md) 🟡
+- ✅ [06 — God services (`world-config`, `world`, `barbarian-seeding`)](./06-backend-god-services.md) 🟡 — **résolu le 2026-05-06**
 - [09 — Typage relâché (`as any`, `Record<string, number>`)](./09-backend-relaxed-typing.md) 🟡
 - [10 — Logging incohérent (Pino + console.log)](./10-backend-logging-inconsistent.md) 🟡
 

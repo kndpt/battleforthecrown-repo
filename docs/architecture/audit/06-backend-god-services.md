@@ -3,6 +3,56 @@
 **Sévérité** : 🟡 Majeure
 **Workspace(s)** : `battleforthecrown-backend`
 **Tags** : architecture, srp, refactor
+**Statut** : ✅ Résolu — 2026-05-06
+
+## Résolution (2026-05-06)
+
+Refactor en 3 étapes commitées séparément :
+
+1. **`WorldConfigService` slim** (commit `c326fb0`) — 188 → 120 LOC.
+   Suppression de 4 méthodes parasites qui ne lisaient pas `world.config` :
+   `calculateDistance`, `getStrategyBonus`, `getCrownsConfig` (0 caller),
+   `getVillageStrategyConfig` (0 caller). Les 12 callers backend importent
+   maintenant `calculateDistance` / `getStrategyBonusValue` directement depuis
+   `@battleforthecrown/shared`. Bug latent corrigé en passant : la constante
+   shared `BASE_VILLAGE_STRATEGY_BONUS` était mutée en place dans
+   `VillageStrategyService.getStrategyBonus`. Dead injections supprimées
+   (`CrownsService → WorldConfigService`, re-provider dans `CrownsModule`).
+
+2. **`WorldService` éclaté** (commit `dd376ef`) — 581 → 95 LOC.
+   - `WorldEntitiesQueryService` (~120 LOC) — lectures spatiales
+     (`getEntitiesInRadius`, `getAllEntities`, `getVillagesInRadius`,
+     `getAllVillages`).
+   - `JoinWorldUseCase` (~165 LOC) — onboarding (membership upsert, village
+     initial, 8 buildings, resourceStock, population, crownBalance, seeding
+     barbares async). Suit le pattern `gameplay/*-use-case.ts`.
+   - Endpoint legacy `POST /world/seed-if-needed` supprimé (uniquement
+     consommé par le frontend Next.js legacy en voie de suppression — le
+     frontend Pixi actif ne l'appelait pas, le seeding barbares passe par
+     `BarbarianSeedingService` lors du `joinWorld`).
+   - Au passage, N+1 sur `getWorlds` et `getUserMemberships` remplacés par
+     `groupBy`.
+
+3. **`BarbarianSeedingService` éclaté** (commits `9560365` backend +
+   `9f1673b` shared) — 522 → 200 LOC.
+   - `packages/shared/world/barbarian-geometry.ts` (~150 LOC) — fonctions
+     pures `getChunksInRings`, `getChunkBounds`, `samplePositions`,
+     `determineTier`, `generateBarbarianName` (random source injectable).
+   - `BarbarianVillageFactory` (~85 LOC) — DB writes pour une village
+     barbare complète.
+   - Le service garde l'orchestration : `seedAroundVillage` + `seedChunk`
+     (transactions, idempotence via `chunkSpawnState` + P2002).
+
+**Note hors-périmètre** : `VillageService` n'était plus un god service à
+l'analyse (déjà 72 LOC, méthode `upgradeBuilding` extraite vers
+`gameplay/upgrade-building.use-case.ts` lors d'un refactor antérieur). Le
+ticket original (LOC = 343) reflétait un état pré-refactor.
+
+**QA** : `POST /world/default/join` testé sur instance backend port 15002.
+Vérifié en DB : 8 buildings + 1 resourceStock + 1 population + 1 crownBalance
++ 1 worldMembership créés atomiquement, seeding barbares déclenché async.
+
+## Symptôme
 
 ## Symptôme
 
