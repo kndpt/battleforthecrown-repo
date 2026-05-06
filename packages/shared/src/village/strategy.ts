@@ -145,16 +145,19 @@ export const getStrategyBonuses = (
   return mergeBonus(definition.bonuses ?? {});
 };
 
-export const getStrategyBonusValue = (
+export function getStrategyBonusValue<K extends keyof StrategyBonus>(
   strategy: VillageStrategyType,
-  bonus: keyof StrategyBonus
-): number | Record<ResourceType, number> => {
+  bonus: K
+): NonNullable<StrategyBonus[K]> {
   const bonuses = getStrategyBonuses(strategy);
   if (bonus === "productionBonus") {
-    return (
-      bonuses.productionBonus ?? BASE_VILLAGE_STRATEGY_BONUS.productionBonus
-    );
+    return (bonuses.productionBonus ??
+      BASE_VILLAGE_STRATEGY_BONUS.productionBonus) as unknown as NonNullable<
+      StrategyBonus[K]
+    >;
   }
   const value = bonuses[bonus];
-  return typeof value === "number" ? value : 1;
-};
+  return (typeof value === "number" ? value : 1) as unknown as NonNullable<
+    StrategyBonus[K]
+  >;
+}

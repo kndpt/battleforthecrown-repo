@@ -15,13 +15,11 @@ export function calculateProductionRate(
   let rate = baseRatePerMinute * speedMultiplier;
 
   if (strategy) {
-    const productionBonus = getStrategyBonusValue(
-      strategy,
-      'productionBonus'
-    ) as Record<string, number>;
-    
-    if (productionBonus && productionBonus[buildingType]) {
-      rate *= productionBonus[buildingType];
+    const productionBonus = getStrategyBonusValue(strategy, 'productionBonus');
+
+    const factor = productionBonus[buildingType as keyof typeof productionBonus];
+    if (factor) {
+      rate *= factor;
     }
   }
 
