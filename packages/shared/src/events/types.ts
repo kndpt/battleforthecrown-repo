@@ -1,4 +1,5 @@
 import type { LootResources } from '../combat/loot';
+import type { UnitMap } from '../army/unit-map';
 
 export interface BuildingCompletedPayload {
   buildingId: string;
@@ -35,9 +36,9 @@ export interface BattleResolvedPayload {
   targetY: number;
   isVictory: boolean;
   loot: { resources: LootResources };
-  lossesAttacker: Record<string, number>;
+  lossesAttacker: UnitMap;
   casualtyRate: number;
-  survivingUnits: Record<string, number>;
+  survivingUnits: UnitMap;
   returnAt: string;
 }
 
@@ -45,7 +46,7 @@ export interface BattleReturnedPayload {
   expeditionId: string;
   reportId: string;
   villageId: string;
-  survivingUnits: Record<string, number>;
+  survivingUnits: UnitMap;
   loot: { resources: LootResources };
 }
 
@@ -57,7 +58,7 @@ export interface VillageAttackedPayload {
   attackerY: number;
   defenderVillageName: string;
   isDefenseSuccessful: boolean;
-  losses: Record<string, number>;
+  losses: UnitMap;
   casualtyRate: number;
   resourcesLost: LootResources;
   timestamp: string;

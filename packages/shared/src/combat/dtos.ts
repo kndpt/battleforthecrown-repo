@@ -1,4 +1,5 @@
 import type { LootResources } from './loot';
+import type { UnitMap } from '../army/unit-map';
 
 export type TargetKind = 'PLAYER_VILLAGE' | 'BARBARIAN_VILLAGE';
 
@@ -21,7 +22,7 @@ export interface AttackCommand {
   targetY: number;
   targetKind: TargetKind;
   targetRefId: string;
-  units: Record<string, number>;
+  units: UnitMap;
 }
 
 export interface CombatLoot {
@@ -37,8 +38,8 @@ export interface CombatReportResponse {
   targetX: number;
   targetY: number;
   loot: CombatLoot;
-  lossesAttacker: Record<string, number>;
-  lossesDefender?: Record<string, number>;
+  lossesAttacker: UnitMap;
+  lossesDefender?: UnitMap;
   timestamp: string;
 }
 
@@ -52,5 +53,5 @@ export interface ExpeditionResponse {
   departAt: string;
   arrivalAt: string;
   returnAt?: string;
-  units: Record<string, number>;
+  units: UnitMap;
 }

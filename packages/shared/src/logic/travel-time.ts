@@ -1,4 +1,5 @@
 import { getStrategyBonusValue, VillageStrategyType } from '../village/strategy';
+import type { UnitMap } from '../army/unit-map';
 
 export function calculateTravelTime(
   distance: number,
@@ -35,12 +36,12 @@ export function calculateDistance(
  * Returns 0 when no positive-quantity unit is found.
  */
 export function findSlowestUnitSpeed(
-  selectedUnits: Record<string, number>,
+  selectedUnits: UnitMap,
   unitStatsMap: Record<string, { speed: number }>,
 ): number {
   let slowestSpeed = 0;
   for (const [unitType, qty] of Object.entries(selectedUnits)) {
-    if (qty > 0) {
+    if (qty && qty > 0) {
       const unitSpeed = unitStatsMap[unitType]?.speed ?? 0;
       if (unitSpeed > slowestSpeed) slowestSpeed = unitSpeed;
     }

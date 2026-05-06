@@ -1,3 +1,5 @@
+import type { UnitMap } from '../army/unit-map';
+
 export interface LootResources {
   wood: number;
   stone: number;
@@ -19,7 +21,7 @@ export interface LootResult {
 
 export interface CombatResolution {
   loot: LootResult;
-  lossesAttacker: Record<string, number>;
-  lossesDefender: Record<string, number> | null;
-  survivingUnits: Record<string, number>;
+  lossesAttacker: UnitMap;
+  lossesDefender: UnitMap | null;
+  survivingUnits: UnitMap;
 }
