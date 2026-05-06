@@ -13,6 +13,7 @@ Voir [`.claude/rules/`](./.claude/rules/) pour le détail :
 - [`conventions.md`](./.claude/rules/conventions.md) — TypeScript strict, yarn, server-authoritative, Outbox.
 - [`git.md`](./.claude/rules/git.md) — commits EN au format `<type>(<scope>): <subject>`.
 - [`docs.md`](./.claude/rules/docs.md) — où vit la doc (architecture, gameplay).
+- [`qa.md`](./.claude/rules/qa.md) — QA obligatoire en fin de tâche : checklist user pour ce qui est observable en jeu, vérif backend faite par l'agent (curl/SQL/logs) sinon.
 
 ## Commandes essentielles
 
