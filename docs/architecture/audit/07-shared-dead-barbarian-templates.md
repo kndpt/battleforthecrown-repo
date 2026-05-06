@@ -88,6 +88,45 @@ Une fois fait :
 
 L'agent suivant doit **planifier l'implémentation** : finaliser le mapping, lister les fichiers impactés (templates + tests + éventuels ajustements de difficulté).
 
+## Résolution effective (2026-05-06)
+
+L'investigation post-décision a montré que le code path effectif diverge du diagnostic initial :
+
+- `BarbarianSeedingService` a été refactoré (factory pattern) — les références `path:line` du ticket sont obsolètes ; c'est désormais `BarbarianVillageFactory.create()` qui consomme les templates.
+- `combat.worker.ts:486` (`buildBarbarianDefender`) met `units: {}` explicitement, et `BarbarianVillageStrategy.resolve` confirme `// Barbarians have no troops`. ⇒ Les `UnitInventory` des BV ne sont **jamais lus** en combat.
+- Les types fantômes côté bâtiments (`HQ/STABLE/WORKSHOP`) étaient silencieusement ignorés en aval (production de ressources, power score → fallback `?? 5`).
+- **Bug latent supplémentaire identifié** : `conquest.service.ts:115` ("Buildings stay intact") laissait les bâtiments fantômes dans le village conquis. Conséquences : pas de `CASTLE` (donc bonus de vitesse de construction cassé via `upgrade-building.use-case.ts:72,97`), power score faussé.
+
+### Divergence assumée vs option B (validée le matin)
+
+L'option B "remapper SPEAR → MILITIA, etc." spéculait sur une feature future. Étant donné que les unités barbares sont **pure dette** (dead writes), l'option retenue à l'implémentation est :
+
+- **Bâtiments** : remappés strictement (`HQ → CASTLE`, suppression de `STABLE/WORKSHOP` — pas d'analogue chez le joueur ; BARRACKS lvl 4-7 couvre déjà CAVALRY/TEMPLAR/CATAPULT).
+- **Unités** : **suppression complète** (`UnitTemplate`, `getUnitTemplate`, `tx.unitInventory.createMany` dans la factory). Si v2 ajoute des troupes barbares, elles seront ajoutées à ce moment-là avec les types maîtres directement.
+- **Typage** : `BuildingTemplate.type: BuildingType` ⇒ garde compile-time qui interdit la régression.
+
+### Migration des données existantes
+
+DB locale, exécutée en transaction atomique :
+
+```sql
+UPDATE building SET type='CASTLE'
+  WHERE type='HQ' AND village_id IN (SELECT id FROM village WHERE is_barbarian=true);
+DELETE FROM building
+  WHERE type IN ('STABLE','WORKSHOP') AND village_id IN (SELECT id FROM village WHERE is_barbarian=true);
+DELETE FROM unit_inventory
+  WHERE village_id IN (SELECT id FROM village WHERE is_barbarian=true);
+```
+
+État avant : 32 HQ + 27 STABLE + 21 WORKSHOP + 160 unit_inventory rows (SPEAR/SWORD/AXEMAN/LIGHT_CAVALRY/HEAVY_CAVALRY/RAM) — tous sur BV, **aucun village joueur conquis avant fix** ⇒ pas de data orpheline côté joueurs. État après : 0 type fantôme, 0 unit_inventory pour BV.
+
+### Vérifications de sortie
+
+- ✅ Tous les types référencés dans `shared` existent dans les enums maîtres (`BUILDING_TYPES`).
+- ✅ Templates typés strict (`BuildingTemplate.type: BuildingType`).
+- ✅ Garde compile-time effective : `tsc -p packages/shared` rejetterait toute réintroduction d'un type hors `BUILDING_TYPES`.
+- ✅ Tests `barbarian-tier-templates.spec.ts` mis à jour, incluant un test paramétré qui assert que **tous** les types des 3 tiers appartiennent à `BUILDING_TYPES`.
+
 ## Tickets liés
 
 - [09 — Typage relâché backend](./09-backend-relaxed-typing.md) — `Record<string, number>` permet ce drift.

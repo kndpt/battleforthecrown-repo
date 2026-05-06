@@ -17,6 +17,7 @@ Chaque ticket décrit **un problème observé**, factuel, avec références `pat
 - ✅ [02 — Events WS définis mais non bindés frontend](./02-ws-events-not-bound.md) 🔴 — **résolu le 2026-05-06**
 - ✅ [03 — Dual path `resources.changed`](./03-resources-changed-dual-path.md) 🔴 — **résolu le 2026-05-06**
 - ✅ [04 — Typage permissif `WorldConfigDto`](./04-world-config-permissive-typing.md) 🔴 — **résolu le 2026-05-06**
+- ✅ [07 — Templates barbares avec types fantômes](./07-shared-dead-barbarian-templates.md) 🟡 — **résolu le 2026-05-06**
 - [08 — Doublon types loot dans shared](./08-loot-types-duplication.md) 🟡
 - [18 — `combat.travelSpeed` hors de `multipliers`](./18-world-config-travel-speed-asymmetry.md) 🟠
 
@@ -27,10 +28,6 @@ Chaque ticket décrit **un problème observé**, factuel, avec références `pat
 - ✅ [06 — God services (`world-config`, `world`, `barbarian-seeding`)](./06-backend-god-services.md) 🟡 — **résolu le 2026-05-06**
 - [09 — Typage relâché (`as any`, `Record<string, number>`)](./09-backend-relaxed-typing.md) 🟡
 - [10 — Logging incohérent (Pino + console.log)](./10-backend-logging-inconsistent.md) 🟡
-
-### Shared (`packages/shared`)
-
-- [07 — Templates barbares avec types fantômes](./07-shared-dead-barbarian-templates.md) 🟡
 
 ### Frontend Pixi
 
