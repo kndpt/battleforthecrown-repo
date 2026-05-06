@@ -1,3 +1,5 @@
+> ✅ **Résolu le 2026-05-06.** Voir section [Résolution](#résolution) en fin de ticket.
+
 # 09 — Typage relâché backend (`as any`, `Record<string, number>`, `Promise<any>`)
 
 **Sévérité** : 🟡 Majeure
@@ -77,3 +79,43 @@ Mélange normal d'un projet TS strict mais jeune : les cas frontière JSON/Prism
 - `Record<string, number>` n'apparaît plus que dans les DTOs réseau (jamais dans les services internes).
 - Toute lecture de colonne `Json` Prisma passe par un parser typé.
 - Build TypeScript en mode strict (`--noImplicitAny`) sans warning.
+
+## Résolution
+
+Résolu le 2026-05-06 par une refonte structurelle du typage interne du combat. Approche : créer un type fort partagé (`UnitMap`) puis durcir tous les flux qui passent par les frontières JSON Prisma.
+
+### Changements appliqués
+
+**Shared** (`packages/shared/src/`) :
+- `army/unit-map.ts` : `UnitMap = Partial<Record<UnitType, number>>` + `UnitMapSchema = z.partialRecord(UnitTypeSchema, z.number().int().nonnegative())`. Source de vérité unique pour les collections d'unités.
+- `combat/schemas.ts` : `LootResultSchema`, `CombatLootSchema` (schemas Zod réutilisés par les codecs backend).
+- `events/schemas.ts` : registre `EVENT_PAYLOAD_SCHEMAS` (1 schema Zod par `EventKind`).
+- `combat/dtos.ts`, `combat/loot.ts`, `events/types.ts` : remplacement systématique de `Record<string, number>` par `UnitMap` dans les DTOs réseau et payloads d'events.
+- `village/strategy.ts` : `getStrategyBonusValue` devient générique sur la clé du bonus (retourne `NonNullable<StrategyBonus[K]>`), supprime les `as number` / `as Record<ResourceType, number>` côté callers.
+
+**Backend** (`battleforthecrown-backend/src/`) :
+- `modules/combat/codecs/` (nouveau) : parsers/encoders colocalisés pour `expedition.units`, `combatReport.{loot, lossesAttacker/Defender, totalUnits*}`. Toute lecture/écriture des colonnes JSON Prisma passe par ces helpers ; les casts `as unknown as Prisma.InputJsonValue` sont isolés à 2 endroits dans les codecs.
+- `modules/event/codecs/payload.codec.ts` (nouveau) : `parseEventPayload<K>` (validation Zod par `kind`), `encodeEventPayload<K>` (cast frontière unique).
+- `modules/event/event.utils.ts` : `createOutboxEvent` utilise l'encoder typé (plus de `payload as any`).
+- `modules/event/event-outbox.service.ts:dispatchEvent` : remplace les 9 casts `event.payload as XxxPayload` par `parseEventPayload(event.kind, event.payload)`. Le payload est désormais validé runtime au moment du dispatch (un payload mal formé en DB est détecté au lieu d'être propagé silencieusement).
+- `modules/combat/dto/attack-command.schema.ts` (nouveau, remplace `attack-command.dto.ts` class-validator) : Zod schema réutilisant `UnitMapSchema`. Le DTO d'entrée combat est désormais typé `UnitMap` du controller jusqu'au service.
+- `modules/combat/{combat.worker, return.worker, combat.service, strategies/, loot/, interfaces/}.ts` : propagation `UnitMap` dans toute la chaîne combat. Plus aucun `as Record<string, number>` ni `as unknown as Prisma.InputJsonValue` hors des codecs.
+- `modules/world/world-config.service.ts:getTravelTimeForArmy` : signature `UnitMap`.
+- `modules/power/power.controller.ts` : `@Query('type')` validé via Zod enum, supprime `type as any`.
+- `common/prisma.types.ts` : `PrismaClientOrTx` étendu pour unir `Prisma.TransactionClient | PrismaClient`, supprime les `as unknown as PrismaClientOrTx` dans `OutboxPublisher` (3 sites).
+- `modules/world/world-entities-query.service.ts` : type `BarbarianVillageData` dérivé d'un schema Zod (parité avec les autres colonnes JSON).
+- `eslint.config.mjs` : `@typescript-eslint/no-explicit-any` activé en `error` (avec `off` pour `*.spec.ts` car les mocks utilisent `as any` légitimement).
+
+### Vérification
+
+- Build : `yarn workspace @battleforthecrown/shared build`, `yarn workspace battleforthecrown-backend build`, `yarn workspace battleforthecrown-pixi build` → tous verts.
+- Tests : 88 / 88 tests combat passent (3 échecs pré-existants dans `loot.manager.spec.ts` + 4 dans `production.worker.spec.ts` : fixtures obsolètes, **pas** liées au ticket — `UNIT_CATALOG.MILITIA.carryCapacity` a été changé 50→25 et `updateProduction` a perdu un paramètre, à traiter séparément).
+- 15 / 15 tests `event-outbox.service.spec.ts` passent. La rigidification a détecté une typo dans les fixtures (`SWORDSMAN`, qui n'est pas un `UnitType` valide) — corrigée vers `MILITIA`. Exactement le bug que le ticket visait à empêcher.
+- Lint `no-explicit-any` : zéro violation dans le code prod.
+- QA backend (port 15002) : POST `/combat/attack` rejette désormais les typos (`{units: { CALAVRY: 1 }}` → 400 avec message Zod détaillant l'enum attendu) et les shapes invalides (`units: "oops"` → 400). Les payloads valides traversent jusqu'au service.
+
+### Volontairement non fait
+
+- **Migration de l'enum Prisma `VillageStrategy` vers le type shared `VillageStrategyType`** : les casts `strategy as VillageStrategyType` restent (4 sites) car ces deux enums ont les mêmes valeurs mais sont nominalement distincts. Trade-off avec un risque marginal (les valeurs sont alignées par convention).
+- **`tsconfig.json` `noImplicitAny: true`** : non activé (configuration backend reste à `strictNullChecks: true` seulement). Le filet ESLint `no-explicit-any: error` couvre l'essentiel pour ce ticket ; passer à full strict est un chantier transversal séparé.
+- **Tests pré-cassés** (`loot.manager.spec.ts`, `production.worker.spec.ts`) : non corrigés ici car indépendants du ticket 09 (carryCapacity de MILITIA / signature `updateProduction`). À traiter dans un ticket dédié à la maintenance des fixtures de test.
