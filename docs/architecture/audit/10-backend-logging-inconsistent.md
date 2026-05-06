@@ -1,5 +1,7 @@
 # 10 — Logging incohérent backend (Pino + `console.log`)
 
+> ✅ **Résolu le 2026-05-06.** Voir section [Résolution](#résolution) en fin de ticket.
+
 **Sévérité** : 🟡 Majeure
 **Workspace(s)** : `battleforthecrown-backend`
 **Tags** : observability, logging, ops
@@ -61,3 +63,24 @@ Pattern classique de projet jeune : Pino installé mais utilisation pas encore s
 - Une règle ESLint `no-console` active.
 - Audit confirmant qu'aucun token / mot de passe n'est loggé.
 - Logs de prod cohérents (tous structurés JSON avec contexte requête).
+
+## Résolution
+
+Résolu le 2026-05-06 par une intervention minimale (le ticket original surévaluait la gravité — pas de prod, pas d'agrégateur de logs, et l'audit a confirmé qu'aucun token n'était fuité).
+
+### État au moment de la résolution
+
+- Pino était déjà câblé (`LoggerModule.forRoot()` dans `app.module.ts`, `app.useLogger(app.get(Logger))` dans `main.ts`) — les ~23 services utilisant `new Logger(X.name)` sont automatiquement routés vers Pino.
+- Restaient 9 `console.*` dans `src/`, dans 2 fichiers (le 3ᵉ fichier mentionné par l'audit, `village.service.ts`, avait déjà été nettoyé entre-temps).
+- Audit sécurité : aucun token / hash / refresh token n'était effectivement loggé — uniquement userId, sessionId et booléens. Faux positif sur ce point.
+
+### Changements appliqués
+
+- **`src/modules/auth/auth.service.ts`** : suppression des 6 `console.*` dans `refresh()` (debug-prints d'investigation jamais nettoyés). Pas remplacés par `logger.debug` — n'avaient plus de valeur.
+- **`src/infra/pg-boss/pg-boss.module.ts`** : remplacement des 3 `console.*` par `new Logger('PgBoss')` dans la factory + retrait des emojis (`🚀 ✅ ❌`).
+- **`eslint.config.mjs`** : ajout de `'no-console': 'error'` avec exception pour `scripts/**`, `test/**` et `**/*.spec.ts` (debug en test ou CLI = OK).
+
+### Volontairement non fait
+
+- **Redaction Pino** (`redact: ['*.refreshToken', ...]`) : filet pour un risque qui ne s'est pas matérialisé. À ressortir si/quand le projet déploie en prod avec un agrégateur de logs.
+- **Migration `new Logger()` → `@InjectPinoLogger()`** : refacto de 23 fichiers pour bénéfice marginal — `new Logger()` est déjà routé vers Pino par Nest.
