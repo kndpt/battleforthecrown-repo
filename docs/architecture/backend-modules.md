@@ -78,6 +78,8 @@ combat/
 ├── loot/                         # LootManager + providers (resources / building / etc.)
 ├── strategies/                   # BarbarianVillageStrategy, PlayerVillageStrategy
 ├── interfaces/                   # Types domaine combat
+├── codecs/                       # parseUnitMap / parseLootResult / encode* (Zod, frontière JSON Prisma)
+├── dto/                          # attack-command.schema.ts (Zod)
 └── combat.utils.ts               # Helpers calcul (pertes, butin, distance, durée trajet)
 ```
 
@@ -108,7 +110,9 @@ event/
 ├── event-outbox.service.ts          # Dispatcher : poll EventOutbox → Socket.IO
 ├── outbox-publisher.service.ts      # Writer : single domicile pour créer un event Outbox
 ├── event-types.ts                   # Union de tous les payloads d'events WS
-└── event.utils.ts                   # Helper bas niveau `createOutboxEvent(tx, kind, ...)`
+├── event.utils.ts                   # Helper bas niveau `createOutboxEvent(tx, kind, ...)`
+└── codecs/
+    └── payload.codec.ts             # parseEventPayload<K> / encodeEventPayload<K> (Zod)
 ```
 
 `OutboxPublisher` expose des méthodes nommées (`resourcesChanged`, `buildingCompleted`, `unitTrainingCompleted`) consommées par les use cases `gameplay/` et les workers (`ConstructionWorker`, `TrainingWorker`). Les services métier ne font plus jamais `tx.eventOutbox.create(...)` inline. Pour les events combat/crowns qui restent dans leurs propres bounded contexts, on utilise encore `createOutboxEvent` directement (l'extension à `OutboxPublisher` est possible mais pas urgente — cf. ADR-12).

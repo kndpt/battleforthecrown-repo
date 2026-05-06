@@ -75,20 +75,21 @@ this.server.to(`user:${userId}`).emit('crowns.changed', payload);
 
 ## Catalogue d'événements
 
-Source de vérité : [`event/event-types.ts`](../../battleforthecrown-backend/src/modules/event/event-types.ts) côté backend, et le binding correspondant côté frontend dans `battleforthecrown-pixi/src/api/ws-bindings.ts`.
+Source de vérité runtime : `EVENT_PAYLOAD_SCHEMAS` dans [`packages/shared/src/events/schemas.ts`](../../packages/shared/src/events/schemas.ts) (Zod, 1 schema par `kind`). Types TypeScript : [`packages/shared/src/events/types.ts`](../../packages/shared/src/events/types.ts). Bindings frontend : `battleforthecrown-pixi/src/api/ws-bindings.ts`.
 
-| Event | Scope | Payload | Déclencheur backend |
-|-------|-------|---------|---------------------|
-| `resources.changed` | `userId` | `{ villageId, wood, stone, iron }` | `ProductionWorker` tick |
-| `building.completed` | `userId` | `{ villageId, buildingId, type, level }` | `ConstructionWorker` |
-| `training.completed` | `userId` | `{ villageId, unitType, quantity }` | `TrainingWorker` |
-| `crowns.changed` | `userId` | `{ balance, productionRate }` | `CrownProductionWorker` + transactions |
-| `battle.sent` | `userId` (attaquant) | `{ combatId, origin, target, arrivalAt }` | `CombatService.initiateAttack` |
-| `battle.resolved` | `userId` (les 2 camps) | `{ combatId, isVictory, reportId, ... }` | `CombatWorker` |
-| `battle.returned` | `userId` (attaquant) | `{ combatId, loot, units }` | `ReturnWorker` |
-| `village.attacked` | `userId` (défenseur) | `{ villageId, attackerName }` | `CombatWorker` (notification) |
-| `village.conquered` | `worldId` | `{ villageId, oldOwnerId, newOwnerId }` | `ConquestService` |
-| `player.died` | `userId` | `{ reason }` | `CombatService` (élimination totale) |
+Chaque payload est validé runtime par `parseEventPayload(kind, raw)` (backend `event/codecs/payload.codec.ts`) au moment du dispatch — un payload mal formé en DB est détecté et loggé au lieu d'être propagé silencieusement.
+
+| Event | Scope | Champs principaux du payload | Déclencheur backend |
+|-------|-------|------------------------------|---------------------|
+| `resources.changed` | `userId` | `villageId, wood, stone, iron, maxPerType, lastUpdateTs, productionRates` | `ProductionWorker` tick + `OutboxPublisher.resourcesChanged` |
+| `building.completed` | `userId` | `buildingId, villageId, buildingType, level` | `ConstructionWorker` |
+| `unit.training.completed` | `userId` | `trainingId, villageId, unitType, completedQty, totalQty` | `TrainingWorker` |
+| `crowns.changed` | `userId` | `userId, worldId, balance, productionRate, lastUpdateTs` | `CrownProductionWorker` + transactions |
+| `battle.sent` | `userId` (attaquant) | `expeditionId, villageId, targetX, targetY, targetKind, arrivalAt` | `CombatService.initiateAttack` |
+| `battle.resolved` | `userId` (les 2 camps) | `expeditionId, reportId, villageId, isVictory, loot, lossesAttacker (UnitMap), survivingUnits (UnitMap), casualtyRate, returnAt, …` | `CombatWorker` |
+| `battle.returned` | `userId` (attaquant) | `expeditionId, reportId, villageId, survivingUnits (UnitMap), loot` | `ReturnWorker` |
+| `village.attacked` | `userId` (défenseur) | `defenderVillageId, attackerVillageId, attackerVillageName, isDefenseSuccessful, losses (UnitMap), casualtyRate, resourcesLost, …` | `CombatWorker` (notification) |
+| `village.conquered` | `worldId` | `villageId, newOwnerId, previousTier, x, y, buildingsKept` | `ConquestService` |
 
 ## Patterns côté frontend
 

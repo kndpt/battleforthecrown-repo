@@ -114,7 +114,13 @@ User ──< WorldMembership >── World
 - **`Decimal`** Prisma pour les ressources (wood/stone/iron) — précision sur la production fractionnée. Convertir en `Number` côté Node pour les calculs simples, garder `Decimal` pour les agrégats critiques.
 - **Coordonnées** : `x` / `y` en entiers, plage typique `0..500` (taille monde par défaut).
 - **Timestamps** : tous en `DateTime` UTC. Aucune ambiguïté de fuseau côté DB.
-- **JSON** : `World.config`, `EventOutbox.payload`, `CombatReport.snapshot` — schémas TypeScript décrits dans le shared ou les `dto/` du module concerné.
+- **JSON** : 8 colonnes typées via Zod, source de vérité dans `packages/shared/src/`.
+  - `World.config` → `WorldConfigSchema` (shared `world/schemas.ts`), parsé dans `WorldConfigService`.
+  - `EventOutbox.payload` → registre `EVENT_PAYLOAD_SCHEMAS` par `EventKind` (shared `events/schemas.ts`), parsé runtime par `parseEventPayload` côté backend (`event/codecs/payload.codec.ts`) au moment du dispatch.
+  - `Expedition.units`, `CombatReport.{lossesAttacker, lossesDefender, totalUnitsAttacker, totalUnitsDefender}` → `UnitMapSchema` (shared `army/unit-map.ts`), parsés via `parseUnitMap` (backend `combat/codecs/unit-map.codec.ts`).
+  - `CombatReport.loot` → `LootResultSchema` / `CombatLootSchema` (shared `combat/schemas.ts`), parsé via `parseLootResult` ou `parseCombatLoot` (backend `combat/codecs/loot.codec.ts`).
+  - `WorldEntity.data` → schema discriminé par `kind` (actuellement BarbarianVillage), typé localement dans `world/world-entities-query.service.ts`.
+  - **Règle** : toute lecture/écriture d'une colonne JSON Prisma passe par un codec ; le seul cast frontière `as unknown as Prisma.InputJsonValue` est isolé dans les codecs eux-mêmes.
 
 ## Migrations
 
