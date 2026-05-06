@@ -10,6 +10,7 @@ import {
   Tooltip,
 } from '@/ui';
 import { metaFor } from './buildingMeta';
+import { BuildingIcon } from './BuildingIcon';
 import { computeConstructionProgress, formatRemaining } from './constructionProgress';
 import { useTickingNow } from '@/lib/useTickingNow';
 import { useCancelConstructionMutation } from '@/api/queries';
@@ -102,22 +103,17 @@ export function BuildingCard({ building, onClick }: BuildingCardProps) {
 
         {/* Image (hauteur fixe) */}
         <div className="h-24 flex items-center justify-center bg-gradient-to-br from-white/10 to-black/10 border-b-2 border-black/20 relative overflow-hidden">
-          {meta.iconPath ? (
-            <img
-              src={meta.iconPath}
-              alt={meta.label}
-              width={80}
-              height={80}
-              loading="lazy"
-              className={`object-contain drop-shadow-lg ${
-                isUnbuilt || isLockedByCastle ? 'grayscale opacity-80' : ''
-              }`}
-            />
-          ) : (
-            <span aria-hidden className="text-6xl">
-              {meta.emoji}
-            </span>
-          )}
+          <BuildingIcon
+            iconPath={meta.iconPath}
+            label={meta.label}
+            emoji={meta.emoji}
+            width={80}
+            height={80}
+            imageClassName={`object-contain drop-shadow-lg ${
+              isUnbuilt || isLockedByCastle ? 'grayscale opacity-80' : ''
+            }`}
+            fallbackClassName="text-6xl"
+          />
         </div>
 
         {/* Titre */}

@@ -1,3 +1,5 @@
+import { publicAsset } from '@/lib/publicAsset';
+
 export type BuildingCardVariant = 'parchment' | 'wood' | 'stone';
 
 export interface BuildingMeta {
@@ -20,7 +22,7 @@ export const BUILDING_META: Record<string, BuildingMeta> = {
     label: 'Château',
     description:
       'Le cœur de votre royaume. Son niveau augmente la vitesse de construction de tous les bâtiments.',
-    iconPath: '/assets/castle.png',
+    iconPath: publicAsset('/assets/castle.png'),
     emoji: '🏰',
     cardVariant: 'parchment',
     sortKey: 0,
@@ -28,7 +30,7 @@ export const BUILDING_META: Record<string, BuildingMeta> = {
   WOOD: {
     label: 'Camp de bûcherons',
     description: 'Produit du bois en continu. Essentiel pour toute construction.',
-    iconPath: '/assets/wood.png',
+    iconPath: publicAsset('/assets/wood.png'),
     emoji: '🪓',
     cardVariant: 'wood',
     sortKey: 1,
@@ -37,7 +39,7 @@ export const BUILDING_META: Record<string, BuildingMeta> = {
     label: 'Carrière de pierre',
     description:
       'Extrait de la pierre pour vos fortifications et bâtiments avancés.',
-    iconPath: '/assets/stone.png',
+    iconPath: publicAsset('/assets/stone.png'),
     emoji: '⛏️',
     cardVariant: 'stone',
     sortKey: 2,
@@ -46,7 +48,7 @@ export const BUILDING_META: Record<string, BuildingMeta> = {
     label: 'Mine de fer',
     description:
       'Mine du fer précieux pour forger armes et équipements militaires.',
-    iconPath: '/assets/iron.png',
+    iconPath: publicAsset('/assets/iron.png'),
     emoji: '⚒️',
     cardVariant: 'stone',
     sortKey: 3,
@@ -54,7 +56,7 @@ export const BUILDING_META: Record<string, BuildingMeta> = {
   WAREHOUSE: {
     label: 'Entrepôt',
     description: 'Augmente la capacité de stockage de toutes vos ressources.',
-    iconPath: '/assets/warehouse.png',
+    iconPath: publicAsset('/assets/warehouse.png'),
     emoji: '📦',
     cardVariant: 'wood',
     sortKey: 4,
@@ -63,7 +65,7 @@ export const BUILDING_META: Record<string, BuildingMeta> = {
     label: 'Moulin',
     description:
       'Augmente la population de villageois disponibles pour vos constructions et armées.',
-    iconPath: '/assets/farm.png',
+    iconPath: publicAsset('/assets/farm.png'),
     emoji: '🌾',
     cardVariant: 'parchment',
     sortKey: 5,
@@ -71,7 +73,7 @@ export const BUILDING_META: Record<string, BuildingMeta> = {
   BARRACKS: {
     label: 'Caserne',
     description: "Permet d'entraîner des unités militaires.",
-    iconPath: '/assets/barracks.png',
+    iconPath: publicAsset('/assets/barracks.png'),
     emoji: '🏛️',
     cardVariant: 'stone',
     sortKey: 6,
@@ -80,7 +82,7 @@ export const BUILDING_META: Record<string, BuildingMeta> = {
     label: 'Tour de guet',
     description:
       'Débloque la carte du monde et étend votre vision sur les territoires voisins.',
-    iconPath: '/assets/watchtower.png',
+    iconPath: publicAsset('/assets/watchtower.png'),
     emoji: '🗼',
     cardVariant: 'stone',
     sortKey: 7,

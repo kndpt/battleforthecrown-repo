@@ -31,7 +31,7 @@ describe('Pixi asset manifest', () => {
   it('every asset src references the public /assets/ tree', () => {
     for (const bundle of PIXI_BUNDLES) {
       for (const asset of bundle.assets as Array<{ src: string }>) {
-        expect(asset.src.startsWith('/assets/')).toBe(true);
+        expect(asset.src).toContain('/assets/');
       }
     }
   });

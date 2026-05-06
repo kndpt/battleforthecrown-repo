@@ -19,6 +19,7 @@ import {
 import { useGameStore } from '@/stores/game';
 import { useTickingNow } from '@/lib/useTickingNow';
 import { metaFor } from './buildingMeta';
+import { BuildingIcon } from './BuildingIcon';
 
 interface QueueBottomSheetProps {
   isOpen: boolean;
@@ -106,19 +107,17 @@ export function QueueBottomSheet({ isOpen, onClose }: QueueBottomSheetProps) {
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    {meta.iconPath ? (
-                      <div className="relative h-8 w-8 flex-shrink-0 rounded overflow-hidden">
-                        <img
-                          src={meta.iconPath}
-                          alt={meta.label}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <span aria-hidden className="text-2xl">
-                        {meta.emoji}
-                      </span>
-                    )}
+                    <div className="relative h-8 w-8 flex-shrink-0 rounded overflow-hidden flex items-center justify-center">
+                      <BuildingIcon
+                        iconPath={meta.iconPath}
+                        label={meta.label}
+                        emoji={meta.emoji}
+                        width={32}
+                        height={32}
+                        imageClassName="w-full h-full object-cover"
+                        fallbackClassName="text-2xl"
+                      />
+                    </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-sm text-kingdom-800">

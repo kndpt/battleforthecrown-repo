@@ -1,4 +1,5 @@
 import { Badge } from '@/ui';
+import { BuildingIcon } from '../BuildingIcon';
 
 interface BuildingHeaderProps {
   iconPath: string | null;
@@ -20,19 +21,16 @@ export function BuildingHeader({
   return (
     <div className="relative h-32 bg-gradient-to-br from-kingdom-100 via-kingdom-200 to-kingdom-300 border-b-4 border-game-gold-border flex-shrink-0 grid grid-cols-3 items-center">
       <div className="relative flex items-center justify-center">
-        {iconPath ? (
-          <img
-            src={iconPath}
-            alt={buildingName}
-            width={90}
-            height={90}
-            className="object-contain drop-shadow-2xl"
-          />
-        ) : (
-          <span aria-hidden className="text-6xl drop-shadow-2xl">
-            {emoji}
-          </span>
-        )}
+        <BuildingIcon
+          iconPath={iconPath}
+          label={buildingName}
+          emoji={emoji}
+          width={90}
+          height={90}
+          imageClassName="object-contain drop-shadow-2xl"
+          fallbackClassName="text-6xl drop-shadow-2xl"
+          loading="eager"
+        />
 
         <div className="absolute top-2 left-2">
           <Badge

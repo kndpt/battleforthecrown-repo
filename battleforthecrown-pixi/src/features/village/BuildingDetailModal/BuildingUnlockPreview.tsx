@@ -4,6 +4,7 @@ import {
   type BuildingType,
 } from '@battleforthecrown/shared/village/buildings';
 import { metaFor } from '../buildingMeta';
+import { BuildingIcon } from '../BuildingIcon';
 
 interface BuildingUnlockPreviewProps {
   /** Castle level the player will reach after the upgrade. */
@@ -33,19 +34,15 @@ export function BuildingUnlockPreview({ nextCastleLevel }: BuildingUnlockPreview
               key={type}
               className="flex items-center gap-2 rounded-lg border border-game-blue-border/30 bg-white/50 p-2"
             >
-              {meta.iconPath ? (
-                <img
-                  src={meta.iconPath}
-                  alt={meta.label}
-                  width={32}
-                  height={32}
-                  className="object-contain"
-                />
-              ) : (
-                <span aria-hidden className="text-2xl">
-                  {meta.emoji}
-                </span>
-              )}
+              <BuildingIcon
+                iconPath={meta.iconPath}
+                label={meta.label}
+                emoji={meta.emoji}
+                width={32}
+                height={32}
+                imageClassName="object-contain"
+                fallbackClassName="text-2xl"
+              />
               <span className="font-cinzel text-sm text-kingdom-900">{meta.label}</span>
             </div>
           );
