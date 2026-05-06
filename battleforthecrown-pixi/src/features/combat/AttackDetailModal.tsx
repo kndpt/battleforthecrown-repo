@@ -33,8 +33,6 @@ interface AttackDetailModalProps {
   onClose: () => void;
 }
 
-const FALLBACK_TRAVEL_SPEED = 99;
-
 export function AttackDetailModal({ target, origin, onClose }: AttackDetailModalProps) {
   const villageId = useGameStore((state) => state.villageId);
   const worldId = useGameStore((state) => state.worldId);
@@ -56,7 +54,8 @@ export function AttackDetailModal({ target, origin, onClose }: AttackDetailModal
 
   const travelMs = useMemo(() => {
     if (totalSelected === 0) return 0;
-    const travelSpeed = worldConfig.data?.combat?.travelSpeed ?? FALLBACK_TRAVEL_SPEED;
+    const travelSpeed = worldConfig.data?.combat.travelSpeed;
+    if (travelSpeed === undefined) return 0;
     const slowest = findSlowestUnitSpeed(selectedUnits, UNIT_STATS);
     if (slowest === 0) return 0;
     return calculateTravelTime(distance, slowest, travelSpeed);

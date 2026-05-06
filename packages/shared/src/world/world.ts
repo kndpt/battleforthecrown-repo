@@ -1,7 +1,7 @@
 import type {
   BarbarianSeedingConfig,
   PlayerVillagePlacementConfig,
-} from './types';
+} from './schemas';
 
 export const DEFAULT_BARBARIAN_SEEDING_PLAN: BarbarianSeedingConfig = {
   enabled: true,

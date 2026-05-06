@@ -1,4 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  WorldConfigSchema,
+  type WorldConfig,
+} from '@battleforthecrown/shared/world';
 import { apiClient } from './index';
 import {
   toAuthSession,
@@ -459,18 +463,13 @@ export function useDeleteReportMutation() {
   });
 }
 
-export interface WorldConfigDto {
-  multipliers?: { construction: number; production: number; training: number };
-  combat?: { travelSpeed: number; [key: string]: unknown };
-  [key: string]: unknown;
-}
-
 export function useWorldConfigQuery(worldId: string | null) {
-  return useQuery<WorldConfigDto>({
+  return useQuery<WorldConfig>({
     queryKey: queryKeys.worldConfigFull(worldId),
-    queryFn: () => {
-      if (!worldId) return Promise.reject(new Error('No world selected'));
-      return apiClient.get<WorldConfigDto>(`/world/${worldId}/config`);
+    queryFn: async () => {
+      if (!worldId) throw new Error('No world selected');
+      const raw = await apiClient.get<unknown>(`/world/${worldId}/config`);
+      return WorldConfigSchema.parse(raw);
     },
     enabled: Boolean(worldId),
     staleTime: 5 * 60_000,
