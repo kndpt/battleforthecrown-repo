@@ -3,7 +3,7 @@ import { UNIT_TYPES, type UnitType } from './types';
 
 export const UnitTypeSchema = z.enum(UNIT_TYPES);
 
-export const UnitMapSchema = z.record(
+export const UnitMapSchema = z.partialRecord(
   UnitTypeSchema,
   z.number().int().nonnegative(),
 );

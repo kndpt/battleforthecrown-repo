@@ -18,3 +18,4 @@ export type CombatConfig = CombatRules;
 export * from './dtos';
 export * from './utils';
 export * from './loot';
+export * from './schemas';
