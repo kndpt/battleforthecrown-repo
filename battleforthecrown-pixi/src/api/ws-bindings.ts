@@ -7,6 +7,9 @@ import type {
   BuildingCompletedPayload,
   CrownsChangedPayload,
   ResourcesChangedPayload,
+  ServerEventName,
+  ServerEvents,
+  UnitTrainingCompletedPayload,
   VillageAttackedPayload,
   VillageConqueredPayload,
 } from './ws-types';
@@ -20,7 +23,19 @@ export interface BindingsContext {
   queryClient: QueryClient;
 }
 
-export function applyResourcesChanged(payload: ResourcesChangedPayload): void {
+type ServerEventListener<K extends ServerEventName> = (
+  payload: ServerEvents[K],
+  ctx: BindingsContext,
+) => void;
+
+type ServerEventBindings = {
+  [K in ServerEventName]: ServerEventListener<K>;
+};
+
+export function applyResourcesChanged(
+  payload: ResourcesChangedPayload,
+  _ctx?: BindingsContext,
+): void {
   useResourcesStore.getState().setResources({
     villageId: payload.villageId,
     wood: payload.wood,
@@ -32,7 +47,10 @@ export function applyResourcesChanged(payload: ResourcesChangedPayload): void {
   });
 }
 
-export function applyCrownsChanged(payload: CrownsChangedPayload): void {
+export function applyCrownsChanged(
+  payload: CrownsChangedPayload,
+  _ctx?: BindingsContext,
+): void {
   useCrownsStore.getState().setCrowns({
     userId: payload.userId,
     worldId: payload.worldId,
@@ -58,7 +76,25 @@ export function applyBuildingCompleted(
   });
 }
 
-export function applyBattleSent(payload: BattleSentPayload): void {
+export function applyUnitTrainingCompleted(
+  payload: UnitTrainingCompletedPayload,
+  ctx: BindingsContext,
+): void {
+  ctx.queryClient.invalidateQueries({ queryKey: ['armyTraining', payload.villageId] });
+  ctx.queryClient.invalidateQueries({ queryKey: ['armyInventory', payload.villageId] });
+  ctx.queryClient.invalidateQueries({ queryKey: ['population', payload.villageId] });
+  useUiStore.getState().pushToast({
+    tone: 'success',
+    title: 'Entraînement terminé',
+    description: `${payload.completedQty} ${payload.unitType}`,
+    ttlMs: 4000,
+  });
+}
+
+export function applyBattleSent(
+  payload: BattleSentPayload,
+  _ctx?: BindingsContext,
+): void {
   const origin = resolveOrigin(payload.villageId);
   const snapshot: ExpeditionSnapshot = {
     expeditionId: payload.expeditionId,
@@ -116,7 +152,10 @@ export function applyBattleReturned(payload: BattleReturnedPayload, ctx: Binding
   ctx.queryClient.invalidateQueries({ queryKey: ['army', payload.villageId] });
 }
 
-export function applyVillageAttacked(payload: VillageAttackedPayload): void {
+export function applyVillageAttacked(
+  payload: VillageAttackedPayload,
+  _ctx?: BindingsContext,
+): void {
   useUiStore.getState().pushToast({
     tone: payload.isDefenseSuccessful ? 'success' : 'error',
     title: payload.isDefenseSuccessful ? 'Attaque repoussée' : 'Village attaqué',
@@ -146,17 +185,30 @@ function resolveOrigin(villageId: string): { x: number; y: number } {
   return { x: 0, y: 0 };
 }
 
+// Exhaustive map: TypeScript enforces a binding for every key of ServerEvents.
+// Adding a new event in shared without registering it here breaks the build.
+const bindings: ServerEventBindings = {
+  'resources.changed': applyResourcesChanged,
+  'crowns.changed': applyCrownsChanged,
+  'building.completed': applyBuildingCompleted,
+  'unit.training.completed': applyUnitTrainingCompleted,
+  'battle.sent': applyBattleSent,
+  'battle.resolved': applyBattleResolved,
+  'battle.returned': applyBattleReturned,
+  'village.attacked': applyVillageAttacked,
+  'village.conquered': applyVillageConquered,
+};
+
 export function bindServerEvents(ctx: BindingsContext): () => void {
-  const offs: Array<() => void> = [
-    gameSocket.on('resources.changed', applyResourcesChanged),
-    gameSocket.on('crowns.changed', applyCrownsChanged),
-    gameSocket.on('building.completed', (payload) => applyBuildingCompleted(payload, ctx)),
-    gameSocket.on('battle.sent', applyBattleSent),
-    gameSocket.on('battle.resolved', (payload) => applyBattleResolved(payload, ctx)),
-    gameSocket.on('battle.returned', (payload) => applyBattleReturned(payload, ctx)),
-    gameSocket.on('village.attacked', applyVillageAttacked),
-    gameSocket.on('village.conquered', (payload) => applyVillageConquered(payload, ctx)),
-  ];
+  const offs: Array<() => void> = [];
+  for (const eventName of Object.keys(bindings) as ServerEventName[]) {
+    const handler = bindings[eventName] as ServerEventListener<typeof eventName>;
+    offs.push(
+      gameSocket.on(eventName, (payload) => {
+        handler(payload, ctx);
+      }),
+    );
+  }
   return () => {
     for (const off of offs) {
       off();

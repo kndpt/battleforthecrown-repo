@@ -296,7 +296,6 @@ export function useArmyTrainingQuery(villageId: string | null) {
       return apiClient.get<ArmyTrainingDto[]>(`/army/${villageId}/training`);
     },
     enabled: Boolean(villageId),
-    refetchInterval: (query) => (query.state.data && query.state.data.length > 0 ? 5_000 : false),
     staleTime: 2_000,
   });
 }

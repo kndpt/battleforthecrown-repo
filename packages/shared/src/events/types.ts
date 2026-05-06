@@ -5,17 +5,6 @@ export interface BuildingCompletedPayload {
   level: number;
 }
 
-export interface UnitTrainingStartedPayload {
-  trainingId: string;
-  villageId: string;
-  unitType: string;
-  totalQty: number;
-  completedQty: number;
-  timePerUnitMs: number;
-  nextUnitEta: string;
-  createdAt: string;
-}
-
 export interface UnitTrainingCompletedPayload {
   trainingId: string;
   villageId: string;
@@ -109,18 +98,8 @@ export interface CrownsChangedPayload {
   lastUpdateTs: string;
 }
 
-export interface VillageStrategyChangedPayload {
-  villageId: string;
-  userId: string;
-  oldStrategy: string;
-  newStrategy: string;
-  crownsCost: number;
-  worldId: string;
-}
-
 export type OutboxEventPayload =
   | { kind: 'building.completed'; payload: BuildingCompletedPayload }
-  | { kind: 'unit.training.started'; payload: UnitTrainingStartedPayload }
   | { kind: 'unit.training.completed'; payload: UnitTrainingCompletedPayload }
   | { kind: 'battle.sent'; payload: BattleSentPayload }
   | { kind: 'battle.resolved'; payload: BattleResolvedPayload }
@@ -128,11 +107,7 @@ export type OutboxEventPayload =
   | { kind: 'village.attacked'; payload: VillageAttackedPayload }
   | { kind: 'village.conquered'; payload: VillageConqueredPayload }
   | { kind: 'resources.changed'; payload: ResourcesChangedPayload }
-  | { kind: 'crowns.changed'; payload: CrownsChangedPayload }
-  | {
-      kind: 'village.strategy.changed';
-      payload: VillageStrategyChangedPayload;
-    };
+  | { kind: 'crowns.changed'; payload: CrownsChangedPayload };
 
 export type EventKind = OutboxEventPayload['kind'];
 
@@ -143,7 +118,6 @@ export type PayloadForKind<K extends EventKind> = Extract<
 
 export type AnyEventPayload =
   | BuildingCompletedPayload
-  | UnitTrainingStartedPayload
   | UnitTrainingCompletedPayload
   | BattleSentPayload
   | BattleResolvedPayload
@@ -151,21 +125,18 @@ export type AnyEventPayload =
   | VillageAttackedPayload
   | VillageConqueredPayload
   | ResourcesChangedPayload
-  | CrownsChangedPayload
-  | VillageStrategyChangedPayload;
+  | CrownsChangedPayload;
 
 export interface ServerEvents {
   'resources.changed': ResourcesChangedPayload;
   'crowns.changed': CrownsChangedPayload;
   'building.completed': BuildingCompletedPayload;
-  'unit.training.started': UnitTrainingStartedPayload;
   'unit.training.completed': UnitTrainingCompletedPayload;
   'battle.sent': BattleSentPayload;
   'battle.resolved': BattleResolvedPayload;
   'battle.returned': BattleReturnedPayload;
   'village.attacked': VillageAttackedPayload;
   'village.conquered': VillageConqueredPayload;
-  'village.strategy.changed': VillageStrategyChangedPayload;
 }
 
 export type ServerEventName = keyof ServerEvents;
