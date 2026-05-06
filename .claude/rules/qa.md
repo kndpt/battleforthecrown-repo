@@ -29,6 +29,18 @@ Si une vérif passe par un de ces moyens interdits, **c'est l'agent qui la fait 
 | Hybride (backend + impact UI) | **Les deux** | L'agent fait la partie backend lui-même + checklist triviale pour la partie in-game. |
 | Aucun effet observable (refacto interne, doc) | Personne | `QA — pas de test nécessaire (raison : …)`. |
 
+### Piège « refacto interne »
+
+`Aucun effet observable` ≠ `j'ai changé que du code backend`. Un refactor qui ne touche pas l'API publique mais qui modifie un **code path consommé par le frontend** (controller, endpoint REST, gateway WS, événement Outbox, worker qui émet des events) est **hybride par défaut** — il faut les deux sections QA.
+
+Avant de classer en `refacto interne`, se poser la question :
+
+> Le code que je viens de toucher est-il appelé par un controller, un gateway WS, un worker qui émet des events, ou un script consommé par le front ?
+
+Si oui → **hybride**. Une régression silencieuse (ordre d'opérations changé, gestion d'erreur différente, side-effect manquant) est invisible côté backend mais visible IG.
+
+`refacto interne` ne s'applique qu'aux **helpers privés**, **modules totalement isolés du frontend**, ou aux changements de **doc / commentaires / typage interne** sans impact runtime.
+
 ## Format — QA user (in-game)
 
 ```markdown
@@ -61,32 +73,65 @@ L'agent lance sa **propre instance backend** en background (port libre, ex `PORT
 
 **DB locale en QA backend = lecture seule.** Pour valider une garantie qui dépendrait d'un état DB invalide ou rare (drift de schéma, edge case), écrire un test unitaire avec fixture mockée — ne jamais `UPDATE` la DB du user pour reproduire le cas. Et ne jamais réappliquer un seed pour "restaurer" : un seed écrase la config dev (multipliers, etc.).
 
-## Format — QA user (in-game)
+## Recettes QA backend (à utiliser, pas à réinventer)
 
-```markdown
-## QA
+Snippets prêts à coller pour l'agent qui exécute la QA backend. Évite de re-tâtonner sur le boot, l'auth, les noms d'endpoints.
 
-**Résultat attendu** : <une phrase qui décrit ce que le user doit observer en jeu>
+### Boot d'une instance dédiée sur port libre
 
-- [ ] Action 1 — dans l'ordre exact où le user doit la faire
-- [ ] Action 2
-- [ ] Vérifier que <observation finale concrète>
+```bash
+# Démarrer en background sur 15002 (jamais 15001 = instance du user)
+cd battleforthecrown-backend && PORT=15002 yarn start:dev > /tmp/bftc-qa.log 2>&1 &
+
+# Attendre que Nest soit prêt (un seul event de notification)
+until grep -q "Nest application successfully started" /tmp/bftc-qa.log; do sleep 1; done
+
+# À la fin de la QA — TOUJOURS arrêter l'instance
+pkill -f "PORT=15002"
 ```
 
-## Format — QA backend (vérifiée par l'agent)
+Si le boot échoue avec une compile error, c'est probablement un caller obsolète (ex : un script dans `scripts/` qui appelle une méthode renommée). Lire `/tmp/bftc-qa.log` et corriger avant de continuer.
 
-```markdown
-## QA backend (vérifié par l'agent)
+### Auth express
 
-**Résultat attendu** : <ce qui devait se produire côté backend>
-
-- [x] Démarré le backend sur le port 15001
-- [x] `curl -X POST …` → 201 Created, payload `{ … }`
-- [x] Vérifié en DB : `SELECT … FROM …` retourne la ligne attendue
-- [x] Logs : event `xxx.created` émis par OutboxWorker à T+~1s
+```bash
+# Création de compte → renvoie accessToken + refreshToken + userId + email
+EMAIL="qa-$(date +%s)@example.com"
+curl -s -X POST http://localhost:15002/auth/register \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"$EMAIL\",\"password\":\"secret123\"}"
+# → { "accessToken": "...", "refreshToken": "...", "userId": "...", "email": "..." }
 ```
 
-L'agent **exécute réellement** ces étapes (Bash tool) avant de cocher. Pas de cases cochées par anticipation.
+⚠️ L'endpoint est `/auth/register` (pas `/auth/signup`). Le champ JSON est `accessToken` (pas `access_token`).
+
+### Endpoints fréquents
+
+| Action | Endpoint |
+|---|---|
+| Créer compte | `POST /auth/register` |
+| Login | `POST /auth/login` |
+| Lister mondes | `GET /world` |
+| Joindre un monde + créer 1er village | `POST /world/:worldId/join` `{villageName}` |
+| Upgrade un building | `POST /villages/:id/buildings/:type/upgrade` |
+| Annuler un chantier | `POST /villages/:id/buildings/:type/cancel` |
+| Recruter des troupes | `POST /army/villages/:id/train` |
+| Lancer une attaque | `POST /combat/attack` |
+
+Pour le reste, grep `@Controller` / `@Post` / `@Get` dans `battleforthecrown-backend/src/modules/*/controller.ts`.
+
+### Vérification DB
+
+Toujours via le skill `bftc-db` (lecture seule, tables en `lower_snake_case`). Ne jamais `UPDATE` la DB du user pour reproduire un état — passer par un test unitaire avec fixture si besoin.
+
+### Cleanup des fixtures de QA
+
+L'agent peut nettoyer **uniquement** les données qu'il a créées lui-même pendant la QA (ex : compte de test) :
+
+```bash
+# DELETE limité aux comptes "qa-..." créés par l'agent — ne jamais toucher aux comptes du user
+# (à exécuter via bftc-db / postgresql-cli, pas en SQL direct sans review)
+```
 
 ## Règles de rédaction
 
