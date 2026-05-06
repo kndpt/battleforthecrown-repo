@@ -1,8 +1,29 @@
 # 03 — Deux chemins pour créer l'event `resources.changed` avec des payloads divergents
 
-**Sévérité** : 🔴 Critique
+**Statut** : ✅ Résolu le 2026-05-06
+**Sévérité** : 🔴 Critique (revue à 🟡 dette structurelle après investigation — voir Résolution)
 **Workspace(s)** : `battleforthecrown-backend`
 **Tags** : outbox, contract-drift, ws
+
+## Résolution
+
+Option A retenue après analyse de 3 stratégies (suppression dead code + helper typé / renforcement du chemin rapide / validation Zod runtime).
+
+**Découverte clé en investigation** : le « chemin rapide » dans `resources.service.updateProduction(villageId, createEvent = false)` (lignes 161-176 avant fix) qui produisait un payload **sans** `productionRates` était en fait du **code mort**. Aucun caller ne passait `createEvent=true` (`production.worker.ts:75` → `false`, catch-up interne `resources.service.ts:47` → `false`, `resources.controller.ts:30` → défaut `false`). La sévérité runtime réelle était nulle ; il s'agissait d'une dette structurelle prête à devenir un bug dès qu'un futur appelant aurait passé `true`.
+
+Le contrat shared (`packages/shared/src/events/types.ts:79-91`) déclarait déjà `productionRates` comme **requis** — le ticket se trompait sur ce point.
+
+**Changements** (sous-repo `battleforthecrown-backend`) :
+
+- **Suppression du chemin rapide mort** : retrait du paramètre `createEvent` de `ResourcesService.updateProduction` et du bloc `tx.eventOutbox.create({ kind: 'resources.changed', ... })` qui produisait un payload incomplet. Plus d'un seul producteur en place : le helper `createResourcesChangedEvent`.
+- **Caller worker mis à jour** : `production.worker.ts:75` appelle `updateProduction(village.id)` sans le 2e argument. Commentaire reformulé pour expliquer pourquoi le tick ne broadcaste pas (le frontend interpole entre les events mutation-driven).
+- **Migration vers le helper typé** : `createResourcesChangedEvent` utilise désormais `createOutboxEvent(prisma, 'resources.changed', villageId, payload)` (`event/event.utils.ts`) au lieu de `prisma.eventOutbox.create({ data: { kind, payload } })`. Le typage discriminé `PayloadForKind<'resources.changed'>` impose `productionRates` à la compilation : tout futur écart de payload est bloqué par TS, sans coût runtime.
+
+**Vérification** : `nest build` backend OK. Aucune nouvelle erreur lint sur les fichiers touchés (les 2 alertes préexistantes `await-thenable` sur `resources.service.ts:82,249` étaient déjà là, héritées du pattern `WorldConfigService` non-async). `grep "createEvent" src/modules/resources src/workers/production.worker.ts` → vide.
+
+**Hors scope traité séparément** :
+- Module `crowns` : pattern symétrique mais **pas de dual-path divergent**. `crowns.service.ts:147` délègue au helper unique `createCrownsChangedEvent`. Le boolean `createEvent` y est un vrai flag fonctionnel (ne pas spammer un event quand `production === 0`), pas un code-mort.
+- `payload as any` dans `event.utils.ts:18` : ticket [09 — typage relâché backend](./09-backend-relaxed-typing.md). Cast nécessaire à cause du `Json` Prisma — analyse hors scope ici.
 
 ## Symptôme
 
