@@ -57,6 +57,10 @@ Max 5 cases. Si la feature a vraiment plusieurs comportements, choisir **le scé
 
 Cases déjà cochées car **réellement exécutées** par l'agent (Bash tool). Pas par anticipation.
 
+L'agent lance sa **propre instance backend** en background (port libre, ex `PORT=15002`) pour avoir les logs et stack traces. Pas l'instance du user.
+
+**DB locale en QA backend = lecture seule.** Pour valider une garantie qui dépendrait d'un état DB invalide ou rare (drift de schéma, edge case), écrire un test unitaire avec fixture mockée — ne jamais `UPDATE` la DB du user pour reproduire le cas. Et ne jamais réappliquer un seed pour "restaurer" : un seed écrase la config dev (multipliers, etc.).
+
 ## Format — QA user (in-game)
 
 ```markdown
