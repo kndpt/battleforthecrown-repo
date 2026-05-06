@@ -27,14 +27,16 @@ src/
 ├── modules/                 # Bounded contexts métiers (cf. tableau ci-dessous)
 │   ├── auth/
 │   ├── world/
-│   ├── village/
-│   ├── resources/
-│   ├── army/
+│   ├── village/             # Lecture village + bâtiments (sans logique de mutation transverse)
+│   ├── resources/           # Production passive + lectures stock
+│   ├── army/                # Lecture inventaire + entraînements en cours
 │   ├── combat/
 │   ├── crowns/
 │   ├── population/
 │   ├── power/
-│   └── event/               # Gateway WebSocket + EventOutbox
+│   ├── strategy/            # VillageStrategyService partagé (cf. ADR-12)
+│   ├── gameplay/            # Use cases métier transverses (cf. ADR-12)
+│   └── event/               # Gateway WebSocket + EventOutbox + OutboxPublisher
 │
 └── workers/                 # Jobs asynchrones pg-boss
     ├── workers.module.ts
@@ -51,14 +53,16 @@ src/
 |--------|----------------|---------|-------|
 | **auth** | `POST /auth/login`, `/register`, `/refresh` | — | JWT + refresh tokens, sessions DB |
 | **world** | `GET /world/:slug/details`, `/entities` | `BarbarianBackfillWorker` | Seeding procédural des villages barbares + placement joueur |
-| **village** | `GET /village/:id/buildings`, `POST /upgrade`, `/cancel` | `ConstructionWorker` | File de construction, transactions DB pour upgrade |
-| **resources** | `GET /resources/:villageId` | `ProductionWorker` | Production passive bois/pierre/fer, capé par warehouse |
-| **army** | `GET /army/:villageId/inventory`, `/training`, `POST /train`, `/cancel` | `TrainingWorker` | Entraînement de troupes (MILITIA / ARCHER / CAVALRY / etc.) |
+| **village** | `GET /village/:id/buildings`, `/queue` | — | Lectures village + bâtiments. Les mutations (upgrade/cancel) délégées à `gameplay/` |
+| **resources** | `GET /resources/:villageId` | `ProductionWorker` | Production passive bois/pierre/fer, capé par warehouse. Pas de publication d'event (déléguée à `OutboxPublisher`) |
+| **army** | `GET /army/:villageId/inventory`, `/training` | — | Lectures inventaire + entraînements. Mutations (train/cancel) délégées à `gameplay/` |
+| **gameplay** | `POST /village/:id/upgrade`, `DELETE /village/:id/buildings/:bid/cancel`, `POST /army/:id/train`, `DELETE /army/:id/training/:tid/cancel` | `ConstructionWorker`, `TrainingWorker` | Use cases orchestrant les mutations multi-domaine (cf. ADR-12) |
+| **strategy** | (interne) | — | `VillageStrategyService` exposé à Population/Resources/Army/Gameplay sans couplage |
 | **combat** | `POST /combat/attack`, `GET /combat/reports` | `CombatWorker`, `ReturnWorker` | Attaque, conquête, butin, retour. Stratégies `Barbarian` / `Player` |
 | **crowns** | `GET /crowns/:userId` | `CrownProductionWorker` | Monnaie premium, production passive, transactions sécurisées |
 | **population** | `GET /population/:villageId` | — | Population courante / max via `getFarmPopulationLimit` |
 | **power** | `GET /power/village/:id`, `/kingdom/:userId` | — | Calcul puissance bâtiments + armée |
-| **event** | WS `socket.io` | (consommé par `OutboxWorker`) | Gateway temps réel, JWT au handshake |
+| **event** | WS `socket.io` | (consommé par `OutboxWorker`) | Gateway temps réel + `OutboxPublisher` (point unique de création d'events Outbox côté gameplay) |
 
 ## Sous-services notables
 
@@ -101,10 +105,26 @@ world/
 ```
 event/
 ├── game.gateway.ts                  # @WebSocketGateway, vérif JWT au handshake
-├── event-outbox.service.ts          # Helper pour créer un event dans une transaction
+├── event-outbox.service.ts          # Dispatcher : poll EventOutbox → Socket.IO
+├── outbox-publisher.service.ts      # Writer : single domicile pour créer un event Outbox
 ├── event-types.ts                   # Union de tous les payloads d'events WS
-└── event.utils.ts                   # Routing par worldId / userId, sérialisation
+└── event.utils.ts                   # Helper bas niveau `createOutboxEvent(tx, kind, ...)`
 ```
+
+`OutboxPublisher` expose des méthodes nommées (`resourcesChanged`, `buildingCompleted`, `unitTrainingCompleted`) consommées par les use cases `gameplay/` et les workers (`ConstructionWorker`, `TrainingWorker`). Les services métier ne font plus jamais `tx.eventOutbox.create(...)` inline. Pour les events combat/crowns qui restent dans leurs propres bounded contexts, on utilise encore `createOutboxEvent` directement (l'extension à `OutboxPublisher` est possible mais pas urgente — cf. ADR-12).
+
+### Gameplay
+
+```
+gameplay/
+├── gameplay.module.ts
+├── upgrade-building.use-case.ts     # POST /village/:id/upgrade
+├── cancel-construction.use-case.ts  # DELETE /village/:id/buildings/:bid/cancel
+├── recruit-troops.use-case.ts       # POST /army/:id/train
+└── cancel-recruitment.use-case.ts   # DELETE /army/:id/training/:tid/cancel
+```
+
+Chaque use case = une transaction Prisma qui orchestre plusieurs domaines (Village + Resources + Population + Outbox), expose une seule méthode `execute(...)`, et est appelé directement depuis les controllers correspondants. Cela résout les `forwardRef` historiques entre `Village ↔ Resources` et `Army ↔ Resources` (cf. ADR-12 et l'audit ticket 05).
 
 ## Modules globaux
 

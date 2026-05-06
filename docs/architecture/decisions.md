@@ -181,6 +181,30 @@ Implémentation :
 
 ---
 
+## ADR-12 — Use cases gameplay et `OutboxPublisher` (suppression des `forwardRef`)
+
+**Contexte.** Les modules backend `Village`, `Resources`, `Army` et `Population` étaient liés par des `forwardRef()` au niveau NestJS. En lecture du code, ce n'était pas une vraie circularité métier : `VillageService.upgradeBuilding` appelait simplement `ResourcesService.createResourcesChangedEvent` pour publier un event Outbox, et `PopulationService` n'utilisait que `VillageStrategyService` (placé dans `VillageModule`). Mais en empilant les `imports` cycliques au niveau modules, on avait : init NestJS fragile, tests unitaires impossibles à écrire sans mocker chaînes profondes, et la logique métier transverse (upgrade = stock + population + building + outbox) résidait dans le service du domaine principal — embryon naturel de god service. Audit : `docs/architecture/audit/05-backend-circular-deps.md`.
+
+**Décision.**
+1. Extraire `VillageStrategyService` dans un module dédié `modules/strategy/`. Population, Resources, Army et les use cases l'importent désormais sans dépendre de `VillageModule`.
+2. Créer un `OutboxPublisher` (dans `EventModule`) qui devient l'unique domicile pour la création d'events Outbox côté gameplay (`resourcesChanged`, `buildingCompleted`, `unitTrainingCompleted`). Plus aucun service ni worker ne fait `tx.eventOutbox.create({...})` inline (sauf l'helper bas niveau `event.utils.ts`). Combat et Crowns gardent `createOutboxEvent` direct — leur extension à `OutboxPublisher` est possible mais n'apporte rien tant qu'aucune circularité ne les concerne.
+3. Introduire un module `modules/gameplay/` qui contient des **Application Services** (use cases), un par mutation transverse :
+   - `UpgradeBuildingUseCase`, `CancelConstructionUseCase`, `RecruitTroopsUseCase`, `CancelRecruitmentUseCase`.
+   - Chacun expose une seule méthode `execute(...)` qui ouvre une transaction Prisma et orchestre les writes multi-domaines + l'event Outbox.
+   - Les controllers `Village` et `Army` appellent ces use cases ; `VillageService` et `ArmyService` ne contiennent plus que des lectures.
+
+**Conséquences.**
+- Plus aucun `forwardRef` dans `src/modules/` — vérifié par `grep -r forwardRef src/`.
+- Tests unitaires triviaux pour les use cases : on mocke Prisma + `OutboxPublisher` + `WorldConfigService`, sans cascade de mocks. Voir `gameplay/upgrade-building.use-case.spec.ts`.
+- Effet de bord positif : `CancelConstructionUseCase` et `CancelRecruitmentUseCase` publient maintenant un `resources.changed` (le code historique l'oubliait — le frontend ne se synchronisait que via TanStack invalidation post-mutation).
+- Le pattern Outbox reste intact : la transaction Prisma est passée à `OutboxPublisher` via le paramètre `tx?`, atomicité préservée.
+- Tickets connexes 03 (dual-path `resources.changed`) et 06 (god services) en partie purgés : `ResourcesService` ne sait plus rien des mutations, `VillageService` est devenu pur read-model, et les workers (`ConstructionWorker`, `TrainingWorker`) consomment `OutboxPublisher` plutôt que de manipuler `tx.eventOutbox` à la main.
+- Convention pour le futur : **toute nouvelle mutation transverse doit vivre dans `gameplay/` en tant que use case**. Les services de domaine restent des read-models + helpers de calcul.
+
+**Vérifié en QA backend (2026-05-06).** Upgrade WOOD, cancel-construction FARM, recruit + cancel-recruitment MILITIA, validés via curl + DB read-only : stock débité/refundé, population corrigée, events `resources.changed` créés dans la même transaction que la mutation, dispatch via Socket.IO confirmé (`event_outbox.dispatched_at` non NULL).
+
+---
+
 ## Maintenance de ce document
 
 - Une décision **structurante** (qui change la façon dont on pense le projet) → nouvelle entrée ADR.

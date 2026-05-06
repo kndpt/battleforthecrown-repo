@@ -18,11 +18,12 @@ Chaque ticket décrit **un problème observé**, factuel, avec références `pat
 - ✅ [03 — Dual path `resources.changed`](./03-resources-changed-dual-path.md) 🔴 — **résolu le 2026-05-06**
 - ✅ [04 — Typage permissif `WorldConfigDto`](./04-world-config-permissive-typing.md) 🔴 — **résolu le 2026-05-06**
 - [08 — Doublon types loot dans shared](./08-loot-types-duplication.md) 🟡
+- [18 — `combat.travelSpeed` hors de `multipliers`](./18-world-config-travel-speed-asymmetry.md) 🟠
 
 ### Backend NestJS
 
 - ✅ [01 — `userId` en `@Query` (fuite auth)](./01-backend-auth-userid-via-query.md) 🔴 — **résolu le 2026-05-06**
-- [05 — Dépendances circulaires `forwardRef`](./05-backend-circular-deps.md) 🟡
+- ✅ [05 — Dépendances circulaires `forwardRef`](./05-backend-circular-deps.md) 🟡 — **résolu le 2026-05-06** (cf. ADR-12)
 - [06 — God services (`world-config`, `world`, `barbarian-seeding`)](./06-backend-god-services.md) 🟡
 - [09 — Typage relâché (`as any`, `Record<string, number>`)](./09-backend-relaxed-typing.md) 🟡
 - [10 — Logging incohérent (Pino + console.log)](./10-backend-logging-inconsistent.md) 🟡

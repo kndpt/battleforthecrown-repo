@@ -58,3 +58,21 @@ Ce pattern apparaît typiquement dans un projet jeune où les bounded contexts o
 - Plus aucun `forwardRef()` dans le code backend (ou justification documentée case par case).
 - Chaque mutation métier (upgrade, train, attack) a un domicile clair (un seul service orchestrateur).
 - Les tests unitaires d'un module n'exigent pas de mocker plus de 2 services tiers.
+
+---
+
+## Résolution — 2026-05-06
+
+Voir [`docs/architecture/decisions.md` §ADR-12](../decisions.md). Trois axes de fix :
+
+1. `VillageStrategyService` extrait dans `modules/strategy/` (Population n'a plus besoin de `forwardRef(() => VillageModule)`).
+2. `OutboxPublisher` créé dans `EventModule` — toute publication `resources.changed` / `building.completed` / `unit.training.completed` y passe. Plus de `tx.eventOutbox.create(...)` inline dans Village/Army/workers.
+3. `modules/gameplay/` introduit avec 4 use cases : `UpgradeBuildingUseCase`, `CancelConstructionUseCase`, `RecruitTroopsUseCase`, `CancelRecruitmentUseCase`. Toute la logique transverse (upgrade = stock + population + building + outbox) y vit.
+
+Vérifications :
+- `grep -rn forwardRef src/modules` → 0 résultat.
+- Test unitaire filet `gameplay/upgrade-building.use-case.spec.ts` (6 cas, vert).
+- `construction.worker.spec.ts` et `training.worker.spec.ts` mis à jour pour mocker `OutboxPublisher` (vert).
+- QA backend : upgrade WOOD, cancel-construction FARM, recruit + cancel-recruitment MILITIA — stock/population/Outbox cohérents en DB.
+
+Effet de bord positif : `cancel-construction` et `cancel-recruitment` publient désormais `resources.changed` (le code historique l'oubliait).
