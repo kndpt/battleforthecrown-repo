@@ -33,7 +33,7 @@ docs/
 - `/CLAUDE.md` — racine, court, pointe vers les rules + workspaces.
 - `/battleforthecrown-pixi/CLAUDE.md` — briefing du frontend Pixi.
 - `/battleforthecrown-backend/CLAUDE.md` — briefing du backend NestJS (sous-repo avec son propre `.git`).
-- `/battleforthecrown/CLAUDE.md` — legacy Next.js, dossier conservé temporairement (à supprimer plus tard).
+- `/battleforthecrown/CLAUDE.md` — legacy Next.js, dossier conservé temporairement comme modèle GUI (à supprimer plus tard).
 
 ## Rules path-scoped
 
