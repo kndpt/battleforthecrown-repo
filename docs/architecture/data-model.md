@@ -33,11 +33,11 @@ Un user peut avoir plusieurs villages (conquête), un seul `mainVillage` (par co
 
 ### Villages barbares
 
-| Table | Rôle |
-|-------|------|
-| `BarbarianVillage` | village neutre, `tier` (T1/T2/T3) avec `defense`, `loot` calculés à partir du tier + config monde |
+Pas de table dédiée — les villages barbares sont des `Village` avec `isBarbarian=true` et `userId=null`, plus un `tier` (T1/T2/T3). Ils partagent les tables associées (`Building`, `ResourceStock`, `Population`) et les **mêmes enums** (`BUILDING_TYPES`) que les villages joueurs : la différence est purement compositionnelle (composition de bâtiments par tier dans `packages/shared/src/world/barbarian-templates.ts`).
 
-Seedés procéduralement par `BarbarianSeedingService` au démarrage du monde et reseedés par `BarbarianBackfillWorker` après destruction/conquête.
+Spécificités runtime :
+- Pas de `UnitInventory` côté BV — `combat.worker.ts` (`buildBarbarianDefender`) injecte `units: {}` et `BarbarianVillageStrategy` confirme `// Barbarians have no troops`.
+- Seedés procéduralement par `BarbarianSeedingService` (qui délègue à `BarbarianVillageFactory`) au join d'un joueur dans le monde ; reseedés par `BarbarianBackfillWorker` après destruction/conquête.
 
 ### Armée
 

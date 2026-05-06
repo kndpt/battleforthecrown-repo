@@ -17,7 +17,9 @@ Les attaques contre les villages barbares sont actuellement résolues comme du p
 
 ## Détail
 
-Le code backend traite le village barbare comme une source de ressources défendue par aucune armée. Les templates barbares existent côté shared, mais leur usage effectif ne se retrouve pas dans la stratégie de résolution barbare actuelle. Le résultat est que la difficulté d'un raid barbare dépend surtout du trajet, du stock de la cible et de la capacité de transport, pas d'une évaluation combat.
+Le code backend traite le village barbare comme une source de ressources défendue par aucune armée. Le résultat est que la difficulté d'un raid barbare dépend surtout du trajet, du stock de la cible et de la capacité de transport, pas d'une évaluation combat.
+
+> **Update 2026-05-06** (cf. [audit archi 07](../../architecture/audit/07-shared-dead-barbarian-templates.md)) — les templates barbares ne déclarent **plus** d'unités du tout (`UnitTemplate` / `getUnitTemplate` supprimés ; `tx.unitInventory.createMany` retiré de la factory). L'absence de défenseurs est désormais explicite : si l'on veut redonner des troupes aux barbares pour ce ticket gameplay, il faudra les ajouter aux templates avec les types maîtres (`UNIT_TYPES`) et adapter `BarbarianVillageStrategy` pour qu'elle lise `village.unitInventory` (au lieu d'injecter `units: {}`).
 
 ## Impact gameplay
 
@@ -32,7 +34,6 @@ Le code backend traite le village barbare comme une source de ressources défend
 - Les villages barbares sont-ils censés avoir des troupes dès le MVP ou seulement plus tard ?
 - Le tier barbare affiché sur la carte correspond-il aujourd'hui à une difficulté réelle ?
 - Le joueur peut-il spammer les villages barbares proches sans coût durable autre que le temps de trajet ?
-- Les templates barbares actuels reflètent-ils encore le catalogue d'unités réel ?
 
 ## Tickets liés
 
