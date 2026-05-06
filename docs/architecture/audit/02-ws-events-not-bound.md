@@ -1,8 +1,24 @@
 # 02 — Events WebSocket définis dans shared mais non écoutés côté frontend
 
+**Statut** : ✅ Résolu le 2026-05-06
 **Sévérité** : 🔴 Critique
 **Workspace(s)** : cross-workspace (`packages/shared` ↔ `battleforthecrown-pixi`)
 **Tags** : ws, contract-drift, dead-feature
+
+## Résolution
+
+Option B retenue (linéaire + garde compile-time exhaustive après analyse de 3 stratégies) :
+
+- **Garde structurelle côté frontend** : `bindServerEvents` réécrit autour d'un `Record<ServerEventName, ServerEventListener<K>>` exhaustif. Ajouter un event dans `shared/events/types.ts` sans déclarer son binding casse désormais la compilation Pixi — le drift décrit dans le ticket ne peut plus réapparaître silencieusement.
+- **Signatures uniformisées** : tous les binders adoptent `(payload, ctx) => void` (les binders qui n'ont pas besoin de `ctx` reçoivent `_ctx?` non utilisé). `bindServerEvents` itère sur les clés de la map, supprimant le tableau ad hoc.
+- **`unit.training.completed` bindé** : `applyUnitTrainingCompleted` invalide `armyTraining` / `armyInventory` / `population` et pousse un toast « Entraînement terminé ». Le `refetchInterval: 5_000` de `useArmyTrainingQuery` est retiré → latence ressentie ~1 s (Outbox) au lieu de jusqu'à 5 s, et plus de poll inutile pendant qu'un training est actif.
+- **`unit.training.started` supprimé côté backend** : retrait de l'`eventOutbox.create` dans `army.service.trainUnits` (la mutation REST renvoie déjà la ligne `UnitTraining` et le frontend invalide ses queries au `onSettled`). Type `UnitTrainingStartedPayload` supprimé de `packages/shared/src/events/types.ts`, plus le case dispatch + méthode `notifyUnitTrainingStarted` dans `event-outbox.service.ts`.
+- **`village.strategy.changed` supprimé côté backend** : retrait de l'`eventOutbox.create` dans `village-strategy.service.changeStrategy` (post-mutation invalidation TanStack suffit en mono-session — et le frontend Pixi n'avait même pas câblé la feature). `EventOutboxService` retiré du constructeur. Type `VillageStrategyChangedPayload` supprimé de shared, case + méthode `notifyVillageStrategyChanged` retirés.
+- **Specs nettoyées** : `event-outbox.service.spec.ts` (cas dispatch obsolètes), `game.gateway.spec.ts` (test « multi-user » rebrancher sur `building.completed`), `training-system.integration-spec.ts` (assertion outbox retirée), `village-strategy.integration-spec.ts` (titre + assertion outbox retirés, import du type mort supprimé).
+
+Vérification : `tsc` shared OK, `type-check` Pixi OK, `nest build` backend OK ; 57/57 tests Pixi PASS, 318/324 tests backend PASS (les 6 KO sont pré-existants sur main, sans rapport — `loot.manager.spec.ts` et `world-config.service.spec.ts`). Migration SQL Outbox non nécessaire : 0 row pending pour les kinds supprimés au moment du déploiement.
+
+Voir les commits `refactor(pixi-frontend/ws,shared): exhaustive ServerEvents bindings + bind training.completed` (repo racine) et `refactor(backend/event): drop dead unit.training.started + village.strategy.changed outbox events` (sous-repo backend).
 
 ## Symptôme
 
