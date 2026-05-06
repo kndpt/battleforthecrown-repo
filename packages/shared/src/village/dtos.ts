@@ -49,9 +49,4 @@ export interface PopulationResponse {
 
 export interface ChangeStrategyRequest {
   strategy: VillageStrategyType;
-  userId: string;
-}
-
-export interface GetStrategyRequest {
-  userId: string;
 }

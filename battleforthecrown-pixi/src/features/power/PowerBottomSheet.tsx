@@ -1,7 +1,6 @@
 import { X } from 'lucide-react';
 import { BottomSheet, Panel, PanelBody, PanelHeader, Spinner } from '@/ui';
 import { useKingdomPowerQuery, useVillagePowerQuery } from '@/api/queries';
-import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
 import { PowerBreakdown } from './PowerBreakdown';
 
@@ -11,9 +10,8 @@ interface PowerBottomSheetProps {
 }
 
 export function PowerBottomSheet({ isOpen, onClose }: PowerBottomSheetProps) {
-  const userId = useAuthStore((state) => state.user?.id ?? null);
   const villageId = useGameStore((state) => state.villageId);
-  const kingdom = useKingdomPowerQuery(userId);
+  const kingdom = useKingdomPowerQuery();
   const village = useVillagePowerQuery(villageId);
 
   return (

@@ -112,7 +112,6 @@ export function AttackDetailModal({ target, origin, onClose }: AttackDetailModal
     attack.mutate(
       {
         villageId,
-        userId,
         targetX: target.x,
         targetY: target.y,
         targetKind,

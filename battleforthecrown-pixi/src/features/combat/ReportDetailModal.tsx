@@ -16,7 +16,6 @@ import {
   useMarkReportReadMutation,
   type CombatReportDto,
 } from '@/api/queries';
-import { useAuthStore } from '@/stores/auth';
 import { unitMetaFor } from '@/features/army/unitConfig';
 import { formatResourceAmount } from '@/lib/resourceConfig';
 
@@ -134,22 +133,20 @@ function UnitsTable({ report }: { report: CombatReportDto }) {
 }
 
 export function ReportDetailModal({ reportId, onClose }: ReportDetailModalProps) {
-  const userId = useAuthStore((state) => state.user?.id ?? null);
-  const report = useCombatReportQuery(reportId, userId);
+  const report = useCombatReportQuery(reportId);
   const { mutate: markRead } = useMarkReportReadMutation();
   const { mutateAsync: deleteReport } = useDeleteReportMutation();
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    if (!userId || !report.data || report.data.isRead) return;
-    markRead({ reportId, userId });
-  }, [userId, report.data, reportId, markRead]);
+    if (!report.data || report.data.isRead) return;
+    markRead({ reportId });
+  }, [report.data, reportId, markRead]);
 
   const handleDelete = async () => {
-    if (!userId) return;
     setIsDeleting(true);
     try {
-      await deleteReport({ reportId, userId });
+      await deleteReport({ reportId });
       onClose();
     } catch (err) {
       console.error('Erreur lors de la suppression:', err);

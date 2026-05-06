@@ -66,7 +66,7 @@ export function GameSession({ children }: { children: ReactNode }) {
 
   // Initial crowns baseline. WS event `crowns.changed` keeps it fresh afterwards.
   const userId = useAuthStore((state) => state.user?.id ?? null);
-  const crownsQuery = useCrownsQuery(userId, worldId);
+  const crownsQuery = useCrownsQuery(worldId);
   const setCrowns = useCrownsStore((state) => state.setCrowns);
   useEffect(() => {
     if (!userId || !worldId || !crownsQuery.data) return;
@@ -102,7 +102,7 @@ export function GameSession({ children }: { children: ReactNode }) {
   // Active expeditions sync. The query polls the backend; we reconcile the
   // store on every tick so phase transitions (EN_ROUTE → RETURNING → RETURNED)
   // and removals stay correct even if a WS event was missed.
-  const activeExpeditionsQuery = useActiveExpeditionsQuery(villageId, userId);
+  const activeExpeditionsQuery = useActiveExpeditionsQuery(villageId);
   useEffect(() => {
     if (!activeExpeditionsQuery.data) return;
     const list = activeExpeditionsQuery.data;

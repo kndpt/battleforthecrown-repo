@@ -1,6 +1,5 @@
 import { Panel, PanelBody, PanelHeader, Spinner } from '@/ui';
 import { useCombatReportsQuery } from '@/api/queries';
-import { useAuthStore } from '@/stores/auth';
 import { ReportCard } from './ReportCard';
 
 interface ReportsListProps {
@@ -8,8 +7,7 @@ interface ReportsListProps {
 }
 
 export function ReportsList({ onReportClick }: ReportsListProps) {
-  const userId = useAuthStore((state) => state.user?.id ?? null);
-  const reports = useCombatReportsQuery(userId);
+  const reports = useCombatReportsQuery();
 
   if (reports.isLoading) {
     return (

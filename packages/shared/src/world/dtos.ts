@@ -1,5 +1,4 @@
 export interface JoinWorldRequest {
-  userId: string;
   villageName?: string;
 }
 

@@ -86,7 +86,7 @@ export function useMyMembershipsQuery() {
       if (!userId) {
         return Promise.resolve([] as WorldMembership[]);
       }
-      return apiClient.get<WorldMembership[]>(`/world/users/${userId}/memberships`);
+      return apiClient.get<WorldMembership[]>('/world/me/memberships');
     },
     enabled: Boolean(userId),
   });
@@ -100,13 +100,9 @@ interface JoinWorldInput {
 export function useJoinWorldMutation() {
   const queryClient = useQueryClient();
   const setContext = useGameStore((state) => state.setContext);
-  const userId = useAuthStore((state) => state.user?.id);
   return useMutation<JoinWorldResult, Error, JoinWorldInput>({
     mutationFn: ({ worldId, villageName }) => {
-      if (!userId) {
-        return Promise.reject(new Error('Not authenticated'));
-      }
-      const body = { userId, ...(villageName ? { villageName } : {}) };
+      const body = villageName ? { villageName } : {};
       return apiClient.post<JoinWorldResult>(`/world/${worldId}/join`, body);
     },
     onSuccess: (result) => {
@@ -125,7 +121,7 @@ export function useMyVillagesQuery(worldId: string | null) {
       if (!userId || !worldId) {
         return Promise.resolve([] as JoinedVillage[]);
       }
-      return apiClient.get<JoinedVillage[]>('/village', { query: { worldId, userId } });
+      return apiClient.get<JoinedVillage[]>('/village', { query: { worldId } });
     },
     enabled: Boolean(userId && worldId),
   });
@@ -184,14 +180,15 @@ export interface CrownsBalanceDto {
   productionRate: number;
 }
 
-export function useCrownsQuery(userId: string | null, worldId: string | null) {
+export function useCrownsQuery(worldId: string | null) {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
   return useQuery<CrownsBalanceDto>({
     queryKey: queryKeys.crowns(userId, worldId),
     queryFn: () => {
-      if (!userId || !worldId) {
-        return Promise.reject(new Error('No user or world selected'));
+      if (!worldId) {
+        return Promise.reject(new Error('No world selected'));
       }
-      return apiClient.get<CrownsBalanceDto>(`/crowns/${userId}/${worldId}`);
+      return apiClient.get<CrownsBalanceDto>(`/crowns/${worldId}`);
     },
     enabled: Boolean(userId && worldId),
     staleTime: 30_000,
@@ -248,12 +245,13 @@ export function useVillagePowerQuery(villageId: string | null) {
   });
 }
 
-export function useKingdomPowerQuery(userId: string | null) {
+export function useKingdomPowerQuery() {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
   return useQuery<KingdomPowerDto>({
     queryKey: queryKeys.kingdomPower(userId),
     queryFn: () => {
       if (!userId) return Promise.reject(new Error('No user'));
-      return apiClient.get<KingdomPowerDto>(`/power/kingdom/${userId}`);
+      return apiClient.get<KingdomPowerDto>('/power/kingdom');
     },
     enabled: Boolean(userId),
     staleTime: 30_000,
@@ -358,16 +356,14 @@ export interface ActiveExpeditionDto {
   reportId?: string | null;
 }
 
-export function useActiveExpeditionsQuery(villageId: string | null, userId: string | null) {
+export function useActiveExpeditionsQuery(villageId: string | null) {
   return useQuery<ActiveExpeditionDto[]>({
     queryKey: queryKeys.activeExpeditions(villageId),
     queryFn: () => {
-      if (!villageId || !userId) return Promise.resolve([] as ActiveExpeditionDto[]);
-      return apiClient.get<ActiveExpeditionDto[]>(`/combat/${villageId}/active`, {
-        query: { userId },
-      });
+      if (!villageId) return Promise.resolve([] as ActiveExpeditionDto[]);
+      return apiClient.get<ActiveExpeditionDto[]>(`/combat/${villageId}/active`);
     },
-    enabled: Boolean(villageId && userId),
+    enabled: Boolean(villageId),
     // Poll while there are active expeditions so phase transitions stay in
     // sync even when a WS event is missed (the socket can drop briefly).
     refetchInterval: (query) =>
@@ -405,26 +401,26 @@ export interface CombatReportDto {
   createdAt: string;
 }
 
-export function useCombatReportsQuery(userId: string | null) {
+export function useCombatReportsQuery() {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
   return useQuery<CombatReportDto[]>({
     queryKey: queryKeys.combatReports(userId),
     queryFn: () => {
       if (!userId) return Promise.resolve([] as CombatReportDto[]);
-      return apiClient.get<CombatReportDto[]>('/combat/reports', { query: { userId } });
+      return apiClient.get<CombatReportDto[]>('/combat/reports');
     },
     enabled: Boolean(userId),
     staleTime: 10_000,
   });
 }
 
-export function useCombatReportQuery(reportId: string | null, userId: string | null) {
+export function useCombatReportQuery(reportId: string | null) {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
   return useQuery<CombatReportDto>({
     queryKey: queryKeys.combatReport(reportId),
     queryFn: () => {
-      if (!reportId || !userId) return Promise.reject(new Error('Missing report or user'));
-      return apiClient.get<CombatReportDto>(`/combat/report/${reportId}`, {
-        query: { userId },
-      });
+      if (!reportId) return Promise.reject(new Error('Missing report'));
+      return apiClient.get<CombatReportDto>(`/combat/report/${reportId}`);
     },
     enabled: Boolean(reportId && userId),
     staleTime: 60_000,
@@ -433,17 +429,15 @@ export function useCombatReportQuery(reportId: string | null, userId: string | n
 
 interface MarkReportReadInput {
   reportId: string;
-  userId: string;
 }
 
 export function useMarkReportReadMutation() {
   const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
   return useMutation<CombatReportDto, Error, MarkReportReadInput>({
-    mutationFn: ({ reportId, userId }) =>
-      apiClient.patch<CombatReportDto>(`/combat/report/${reportId}/read`, undefined, {
-        query: { userId },
-      }),
-    onSettled: (_data, _err, { reportId, userId }) => {
+    mutationFn: ({ reportId }) =>
+      apiClient.patch<CombatReportDto>(`/combat/report/${reportId}/read`),
+    onSettled: (_data, _err, { reportId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.combatReports(userId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.combatReport(reportId) });
     },
@@ -452,17 +446,15 @@ export function useMarkReportReadMutation() {
 
 interface DeleteReportInput {
   reportId: string;
-  userId: string;
 }
 
 export function useDeleteReportMutation() {
   const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
   return useMutation<unknown, Error, DeleteReportInput>({
-    mutationFn: ({ reportId, userId }) =>
-      apiClient.delete<unknown>(`/combat/report/${reportId}`, {
-        query: { userId },
-      }),
-    onSettled: (_data, _err, { userId }) => {
+    mutationFn: ({ reportId }) =>
+      apiClient.delete<unknown>(`/combat/report/${reportId}`),
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.combatReports(userId) });
     },
   });
@@ -488,7 +480,6 @@ export function useWorldConfigQuery(worldId: string | null) {
 
 interface AttackInput {
   villageId: string;
-  userId: string;
   targetX: number;
   targetY: number;
   targetKind: 'PLAYER_VILLAGE' | 'BARBARIAN_VILLAGE';
@@ -499,12 +490,15 @@ interface AttackInput {
 export function useInitiateAttackMutation() {
   const queryClient = useQueryClient();
   return useMutation<unknown, Error, AttackInput>({
-    mutationFn: ({ userId, villageId, targetX, targetY, targetKind, targetRefId, units }) =>
-      apiClient.post<unknown>(
-        '/combat/attack',
-        { villageId, targetX, targetY, targetKind, targetRefId, units },
-        { query: { userId } },
-      ),
+    mutationFn: ({ villageId, targetX, targetY, targetKind, targetRefId, units }) =>
+      apiClient.post<unknown>('/combat/attack', {
+        villageId,
+        targetX,
+        targetY,
+        targetKind,
+        targetRefId,
+        units,
+      }),
     onSettled: (_data, _err, { villageId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(villageId) });
