@@ -342,6 +342,14 @@ Identique au Wood : 50 → 1 030 par heure.
 
 > 💡 Vision **offensive/exploratoire uniquement** — n'augmente pas la défense (voir Rempart).
 
+### Effet sur le brouillard de guerre
+
+Hors du rayon, les villages voisins (joueurs + barbares) apparaissent comme un **blip anonyme** — un point gris non-cliquable, sans owner, niveau ou nom. Le joueur sait qu'une entité existe mais pas ce que c'est. Au lvl 10, plus de brouillard du tout.
+
+Les **expéditions** sont visibles uniquement dans le rayon ; hors vision, elles sont invisibles (pas de blip pour elles, par simplification volontaire).
+
+Vue d'ensemble du système d'exploration : [`01-overview.md`](./01-overview.md#exploration--brouillard-de-guerre).
+
 ---
 
 ## Rempart (Wall)

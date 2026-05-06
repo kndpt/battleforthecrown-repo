@@ -69,11 +69,16 @@ export interface PlayerVillagePlacementPlan {
 
 export type PlayerVillagePlacementConfig = PlayerVillagePlacementPlan;
 
+export interface FogOfWarSettings {
+  enabled: boolean;
+}
+
 export interface WorldSettings {
   multipliers: SpeedMultipliers;
   barbarianSeeding?: BarbarianSeedingPlan;
   playerVillagePlacement?: PlayerVillagePlacementPlan;
   combat: CombatRules;
+  fogOfWar?: FogOfWarSettings;
 }
 
 export type WorldConfig = WorldSettings;

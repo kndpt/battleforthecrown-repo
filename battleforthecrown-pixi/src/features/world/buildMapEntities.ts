@@ -2,18 +2,20 @@ import {
   entityFromMyVillage,
   entityFromWorldDto,
   type MapEntity,
-  type WorldEntityDto,
+  type WorldEntityResponse,
   type WorldVillageDto,
 } from '@/api/world-types';
 import { WATCHTOWER_VISION_LEVELS } from '@battleforthecrown/shared/village/buildings';
+import { isPointInAnyVisionDisk, type VisionDisk } from '@battleforthecrown/shared/world';
 
 /**
- * Merge the worldEntities feed (barbarians + foreign players) with the user's
- * own villages list. Player villages from `/village?worldId&userId` always win
- * over their `WorldEntity` counterpart so we mark them as `isMine: true`.
+ * Merge the worldEntities feed (barbarians + foreign players, possibly fogged)
+ * with the user's own villages list. Player villages from
+ * `/village?worldId&userId` always win over their `WorldEntity` counterpart so
+ * we mark them as `isMine: true`.
  */
 export function buildMapEntities(
-  worldEntities: WorldEntityDto[],
+  worldEntities: WorldEntityResponse[],
   myVillages: WorldVillageDto[],
   myUserId: string | null,
 ): MapEntity[] {
@@ -52,13 +54,13 @@ export function filterEntitiesByVision(
   const ownVillages = entities.filter((e) => e.isMine);
   if (ownVillages.length === 0) return entities;
 
-  const radius = vision.visibilityRadius;
-  return entities.filter((e) => {
-    if (e.isMine) return true;
-    return ownVillages.some((mine) => {
-      const dx = mine.x - e.x;
-      const dy = mine.y - e.y;
-      return dx * dx + dy * dy <= radius * radius;
-    });
-  });
+  const disks: VisionDisk[] = ownVillages.map((mine) => ({
+    x: mine.x,
+    y: mine.y,
+    radius: vision.visibilityRadius,
+  }));
+  // Fogged entities come pre-filtered by the server — never drop them here.
+  return entities.filter(
+    (e) => e.isMine || e.kind === 'fogged' || isPointInAnyVisionDisk(e, disks),
+  );
 }

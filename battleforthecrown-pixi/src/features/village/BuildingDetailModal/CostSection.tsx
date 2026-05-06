@@ -52,16 +52,6 @@ function CostCell({ label, required, current, icon }: CellProps) {
   );
 }
 
-function formatTime(seconds: number): string {
-  const safe = Math.max(0, Math.floor(seconds));
-  const hours = Math.floor(safe / 3600);
-  const minutes = Math.floor((safe % 3600) / 60);
-  const secs = safe % 60;
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  if (minutes > 0) return `${minutes}m ${secs}s`;
-  return `${secs}s`;
-}
-
 export function CostSection({
   cost,
   resources,
@@ -100,10 +90,6 @@ export function CostSection({
           icon={<span className="text-2xl leading-none">👥</span>}
         />
       </div>
-
-      <p className="text-center text-xs text-kingdom-600 font-game">
-        ⏱ Temps de construction : <span className="font-bold">{formatTime(cost.timeSeconds)}</span>
-      </p>
     </div>
   );
 }

@@ -1,19 +1,19 @@
+import {
+  canAffordCost as sharedCanAffordCost,
+  type AffordabilityCheck as SharedAffordabilityCheck,
+  type Cost,
+  type PlayerResources,
+} from '@battleforthecrown/shared/resources';
 import type { Resource } from './types';
 
-export interface PlayerResources {
-  wood: number;
-  stone: number;
-  iron: number;
-  population: number;
-  gold?: number;
-  food?: number;
-}
+export type { Cost, PlayerResources } from '@battleforthecrown/shared/resources';
+export {
+  costIncludesPopulation,
+  getResourceCostsOnly,
+  getPopulationCostOnly,
+} from '@battleforthecrown/shared/resources';
 
-export type Cost = Partial<PlayerResources>;
-
-export interface AffordabilityCheck {
-  canAfford: boolean;
-  missingResources: Partial<PlayerResources>;
+export interface AffordabilityCheck extends SharedAffordabilityCheck {
   reason?: string;
 }
 
@@ -54,23 +54,10 @@ export function getAllPlayerResources(
 }
 
 export function canAffordCost(cost: Cost, playerResources: PlayerResources): AffordabilityCheck {
-  const missingResources: Partial<PlayerResources> = {};
-  let canAfford = true;
-
-  for (const [resourceKey, requiredAmount] of Object.entries(cost)) {
-    const key = resourceKey as keyof PlayerResources;
-    const available = playerResources[key] ?? 0;
-    const required = requiredAmount ?? 0;
-
-    if (available < required) {
-      canAfford = false;
-      missingResources[key] = required - available;
-    }
-  }
-
+  const result = sharedCanAffordCost(cost, playerResources);
   let reason: string | undefined;
-  if (!canAfford) {
-    const missingKeys = Object.keys(missingResources);
+  if (!result.canAfford) {
+    const missingKeys = Object.keys(result.missingResources);
     if (missingKeys.length === 1 && missingKeys[0] === 'population') {
       reason = 'Population insuffisante';
     } else if (missingKeys.includes('population')) {
@@ -79,12 +66,7 @@ export function canAffordCost(cost: Cost, playerResources: PlayerResources): Aff
       reason = 'Ressources insuffisantes';
     }
   }
-
-  return {
-    canAfford,
-    missingResources,
-    reason,
-  };
+  return { ...result, reason };
 }
 
 export function formatMissingResources(missing: Partial<PlayerResources>): string {
@@ -100,18 +82,4 @@ export function formatMissingResources(missing: Partial<PlayerResources>): strin
   return Object.entries(missing)
     .map(([key, amount]) => `${labels[key as keyof PlayerResources]}: ${amount}`)
     .join(', ');
-}
-
-export function costIncludesPopulation(cost: Cost): boolean {
-  return cost.population !== undefined && cost.population > 0;
-}
-
-export function getResourceCostsOnly(cost: Cost): Omit<Cost, 'population'> {
-  return Object.fromEntries(
-    Object.entries(cost).filter(([key]) => key !== 'population'),
-  ) as Omit<Cost, 'population'>;
-}
-
-export function getPopulationCostOnly(cost: Cost): number {
-  return cost.population ?? 0;
 }

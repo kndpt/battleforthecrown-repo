@@ -71,6 +71,32 @@ Les détails sur les ressources, la population et les couronnes sont dans [`02-e
 
 Détail dans [`05-events-and-retention.md`](./05-events-and-retention.md).
 
+## Exploration & brouillard de guerre
+
+La carte du monde n'est pas révélée d'un coup. Le joueur **construit sa vision** via la **tour de guet** (voir [`03-buildings.md`](./03-buildings.md#tour-de-guet-watchtower)), et trois états cohabitent :
+
+| État | Ce qui s'affiche | Quand |
+| --- | --- | --- |
+| **Visible** | Entité complète : type, owner, niveau, nom | Dans le rayon d'au moins une de mes tours de guet |
+| **Blip** | Un point gris anonyme — "il y a quelque chose" | Hors rayon, **uniquement pour les villages** (joueurs + barbares) |
+| **Hors monde** | Rien | Au-delà des bornes du monde |
+
+### Règles
+
+- **Rayon** = `WATCHTOWER_VISION_LEVELS[level].visibilityRadius`. Lvl 1 = 5 cases, +5 / niveau, **lvl 10 = monde entier**.
+- **Vision = union** des disques de toutes mes tours de guet (un joueur avec 3 villages voit l'union de 3 cercles).
+- **Pas de mémoire** : une entité qui sort de mon rayon redevient un blip. Pas de "déjà découvert".
+- **Expéditions** : visibles **uniquement** dans la vision. Hors vision, rien — pas même un blip. C'est la simplification volontaire qui évite de transformer la carte en radar.
+- **Blip non-cliquable** : impossible de sélectionner, attaquer ou tooltip un blip. Il faut le révéler en étendant sa vision.
+
+### Pourquoi un blip plutôt que rien
+
+Un brouillard noir total = carte vide = peu engageant. Le blip apporte la tension narrative — _« il y a quelque chose là, mais quoi ? »_ — sans révéler d'info exploitable. Il pousse le joueur à investir dans sa tour de guet pour dissiper ses zones d'ombre les plus suspectes.
+
+### Côté technique
+
+C'est une vraie règle de jeu **server-authoritative**, pas un effet visuel : le backend filtre les payloads avant de les envoyer. Détail dans [`../architecture/decisions.md`](../architecture/decisions.md) (ADR-11).
+
 ## Monde persistant et raids
 
 ### Raids barbares

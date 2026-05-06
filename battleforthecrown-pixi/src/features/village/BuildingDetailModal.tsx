@@ -8,14 +8,18 @@ import {
   useUpgradeBuildingMutation,
   useCancelConstructionMutation,
   usePopulationQuery,
+  useVillageBuildingsQuery,
+  useWorldConfigQuery,
 } from '@/api/queries';
 import { ApiError } from '@/api';
 import type { BuildingDto } from '@/api';
 import { useDisplayResources } from '@/features/resources/useDisplayResources';
+import { useGameStore } from '@/stores/game';
 import {
   BUILDING_DEFINITIONS,
   type BuildingType,
 } from '@battleforthecrown/shared/village/buildings';
+import { calculateBuildingCost } from '@battleforthecrown/shared/logic';
 import { BuildingHeader } from './BuildingDetailModal/BuildingHeader';
 import { ConstructionProgress } from './BuildingDetailModal/ConstructionProgress';
 import { CostSection } from './BuildingDetailModal/CostSection';
@@ -49,6 +53,26 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
   const availablePopulation = populationQuery.data
     ? Math.max(0, populationQuery.data.max - populationQuery.data.used)
     : 0;
+
+  const worldId = useGameStore((state) => state.worldId);
+  const buildingsQuery = useVillageBuildingsQuery(villageId);
+  const worldConfigQuery = useWorldConfigQuery(worldId);
+
+  const castleLevel =
+    building.type === 'CASTLE'
+      ? building.level
+      : (buildingsQuery.data?.find((b) => b.type === 'CASTLE')?.level ?? 1);
+  const constructionMultiplier =
+    worldConfigQuery.data?.multipliers?.construction ?? 1;
+
+  const effectiveTimeMs = nextCost
+    ? calculateBuildingCost(
+        building.type,
+        nextLevel,
+        castleLevel,
+        constructionMultiplier,
+      ).time
+    : null;
 
   const handleUpgrade = () => {
     setError(null);
@@ -172,29 +196,39 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
               Niveau Maximum
             </Button>
           ) : (
-            <Button
-              variant="success"
-              size="lg"
-              className="w-full font-bold shadow-clay-lg !py-1"
-              disabled={upgrade.isPending}
-              onClick={handleUpgrade}
-            >
-              {upgrade.isPending ? (
-                <div className="flex items-center justify-center gap-2">
-                  <Hammer size={20} className="animate-bounce" />
-                  <span>Amélioration en cours...</span>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center leading-tight">
-                  <div className="flex items-center justify-center gap-1">
-                    <Hammer size={20} />
-                    <span className="text-lg font-semibold">
-                      Améliorer → Niv. {building.level + 1}
-                    </span>
+            <>
+              <Button
+                variant="success"
+                size="lg"
+                className="w-full font-bold shadow-clay-lg !py-1"
+                disabled={upgrade.isPending}
+                onClick={handleUpgrade}
+              >
+                {upgrade.isPending ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Hammer size={20} className="animate-bounce" />
+                    <span>Amélioration en cours...</span>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center leading-tight">
+                    <div className="flex items-center justify-center gap-1">
+                      <Hammer size={20} />
+                      <span className="text-lg font-semibold">
+                        Améliorer → Niv. {building.level + 1}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </Button>
+              {effectiveTimeMs !== null && (
+                <p className="text-center text-xs text-kingdom-600 font-game mt-2">
+                  ⏱ Temps de construction :{' '}
+                  <span className="font-bold">
+                    {formatRemaining(effectiveTimeMs)}
+                  </span>
+                </p>
               )}
-            </Button>
+            </>
           )}
         </div>
       </ModalBody>

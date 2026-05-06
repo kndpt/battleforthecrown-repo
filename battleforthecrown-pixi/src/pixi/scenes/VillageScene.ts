@@ -102,7 +102,7 @@ export function createVillageScene(app: Application, options: VillageSceneOption
   };
 
   const update = (deltaMs: number) => {
-    const now = performance.now();
+    const now = Date.now();
     void deltaMs;
     sprites.forEach((sprite) => sprite.tick(now));
   };

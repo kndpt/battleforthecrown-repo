@@ -17,36 +17,39 @@ export function PowerBottomSheet({ isOpen, onClose }: PowerBottomSheetProps) {
   const village = useVillagePowerQuery(villageId);
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} maxHeight="60vh" zIndex={50}>
+    <BottomSheet isOpen={isOpen} onClose={onClose} maxHeight="80vh" zIndex={50}>
       <Panel variant="parchment" padding="none" className="rounded-t-2xl shadow-2xl">
         <PanelHeader
-          variant="wood"
+          variant="parchment"
           className="flex items-center justify-between sticky top-0 z-10 rounded-t-2xl"
         >
-          <span className="font-bold text-white">⚜️ Puissance Totale</span>
+          <span className="font-bold">⚜️ Puissance Totale</span>
           <button
             type="button"
             onClick={onClose}
             className="p-2 hover:bg-black/10 rounded-full transition-colors"
             aria-label="Fermer"
           >
-            <X size={24} className="text-white" />
+            <X size={24} className="text-gray-800" />
           </button>
         </PanelHeader>
         <PanelBody className="p-4">
           <div className="text-center mb-6">
-            <p className="text-xs text-kingdom-600 font-game mb-1">Puissance du royaume</p>
-            <p className="text-4xl font-bold text-game-gold-dark font-cinzel text-shadow">
-              ⚜️{' '}
+            <p className="text-xs text-kingdom-700 font-game mb-1">
+              Puissance du royaume
+            </p>
+            <div className="text-4xl font-bold text-game-gold-light font-cinzel text-shadow flex items-center justify-center gap-2">
+              <span aria-hidden>⚜️</span>
               {kingdom.isLoading ? (
                 <Spinner size="sm" />
               ) : (
-                (kingdom.data?.kingdomPower ?? 0).toLocaleString()
+                <span>{(kingdom.data?.kingdomPower ?? 0).toLocaleString()}</span>
               )}
-            </p>
+            </div>
             {kingdom.data && (
-              <p className="text-xs text-kingdom-600 font-game mt-1">
-                {kingdom.data.villageCount} village{kingdom.data.villageCount > 1 ? 's' : ''}
+              <p className="text-xs text-kingdom-700 font-game mt-1">
+                {kingdom.data.villageCount} village
+                {kingdom.data.villageCount > 1 ? 's' : ''}
               </p>
             )}
           </div>
@@ -54,7 +57,7 @@ export function PowerBottomSheet({ isOpen, onClose }: PowerBottomSheetProps) {
           {kingdom.data && (
             <div className="mb-6 px-2">
               <div className="flex justify-between mb-2">
-                <span className="text-sm font-medium font-game text-kingdom-800">
+                <span className="text-sm font-medium font-game text-kingdom-900">
                   🏰 Bâtiments
                 </span>
                 <span className="text-sm font-bold font-game text-kingdom-900">
@@ -62,7 +65,9 @@ export function PowerBottomSheet({ isOpen, onClose }: PowerBottomSheetProps) {
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm font-medium font-game text-kingdom-800">⚔️ Armée</span>
+                <span className="text-sm font-medium font-game text-kingdom-900">
+                  ⚔️ Armée
+                </span>
                 <span className="text-sm font-bold font-game text-kingdom-900">
                   {kingdom.data.totalArmy.toLocaleString()}
                 </span>
@@ -70,8 +75,8 @@ export function PowerBottomSheet({ isOpen, onClose }: PowerBottomSheetProps) {
             </div>
           )}
 
-          <div className="border-t-2 border-kingdom-200 pt-4">
-            <p className="text-xs text-kingdom-600 font-game mb-3 text-center">
+          <div className="border-t border-game-stone-border pt-4">
+            <p className="text-xs text-kingdom-700 font-game mb-3 text-center">
               Village actuel
             </p>
             {village.isLoading ? (
@@ -82,13 +87,13 @@ export function PowerBottomSheet({ isOpen, onClose }: PowerBottomSheetProps) {
               <PowerBreakdown
                 buildings={village.data?.buildings ?? 0}
                 army={village.data?.army ?? 0}
-                className="opacity-90"
+                className="opacity-75"
               />
             )}
           </div>
 
-          <div className="mt-6 p-3 bg-game-blue-light/10 border-2 border-game-blue-border/30 rounded-lg">
-            <p className="text-xs text-kingdom-600 font-game text-center leading-relaxed">
+          <div className="mt-6 p-3 bg-game-stone-dark/20 rounded-lg border border-game-stone-border">
+            <p className="text-xs text-kingdom-700 font-game text-center leading-relaxed">
               La puissance du royaume représente la force cumulée de tous vos villages.
             </p>
           </div>

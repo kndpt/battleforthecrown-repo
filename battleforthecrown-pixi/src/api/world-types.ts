@@ -1,55 +1,52 @@
-export type WorldEntityKind =
-  | 'BARBARIAN_VILLAGE'
-  | 'PLAYER_VILLAGE'
-  | 'BARBARIAN_CASTLE'
-  | string;
+import {
+  normalizeTier,
+  type WorldEntityFogged,
+  type WorldEntityResponse,
+  type WorldVillageDto,
+} from "@battleforthecrown/shared/world";
 
-export interface WorldEntityDto {
-  id: string;
-  worldId: string;
-  kind: WorldEntityKind;
-  x: number;
-  y: number;
-  data: Record<string, unknown> & {
-    tier?: 'T1' | 'T2' | 'T3' | string;
-    name?: string;
-    villageId?: string;
-    userId?: string;
-  };
-}
+export type {
+  WorldEntityKind,
+  WorldEntityDto,
+  WorldEntityFogged,
+  WorldEntityResponse,
+  WorldVillageDto,
+} from "@battleforthecrown/shared/world";
 
-export interface WorldVillageDto {
-  id: string;
-  name: string;
-  worldId: string;
-  userId?: string;
-  x: number;
-  y: number;
-  isBarbarian?: boolean;
-  tier?: string | null;
-  createdAt?: string;
+export function isFoggedEntity(
+  entity: WorldEntityResponse,
+): entity is WorldEntityFogged {
+  return entity.kind === "fogged";
 }
 
 /** Domain entity used by the WorldMap scene. Already normalized between
- *  the entities feed (barbarians, etc.) and the player villages feed. */
+ *  the entities feed (barbarians, etc.) and the player villages feed.
+ *  `'fogged'` represents an entity outside the player's vision — only
+ *  position is known, no owner / kind / name. */
 export interface MapEntity {
   id: string;
-  kind: 'PLAYER_VILLAGE' | 'BARBARIAN_VILLAGE' | 'OTHER';
+  kind: "PLAYER_VILLAGE" | "BARBARIAN_VILLAGE" | "OTHER" | "fogged";
   ownerId?: string;
   isMine: boolean;
   x: number;
   y: number;
   name: string;
-  tier: 'T1' | 'T2' | 'T3' | null;
+  tier: "T1" | "T2" | "T3" | null;
 }
 
-export function entityFromWorldDto(dto: WorldEntityDto, myUserId: string | null): MapEntity {
-  const kind: MapEntity['kind'] = dto.kind === 'PLAYER_VILLAGE'
-    ? 'PLAYER_VILLAGE'
-    : dto.kind === 'BARBARIAN_VILLAGE'
-      ? 'BARBARIAN_VILLAGE'
-      : 'OTHER';
-  const ownerId = typeof dto.data.userId === 'string' ? dto.data.userId : undefined;
+export function entityFromWorldDto(
+  dto: WorldEntityResponse,
+  myUserId: string | null,
+): MapEntity {
+  if (isFoggedEntity(dto)) return entityFromFoggedDto(dto);
+  const kind: MapEntity["kind"] =
+    dto.kind === "PLAYER_VILLAGE"
+      ? "PLAYER_VILLAGE"
+      : dto.kind === "BARBARIAN_VILLAGE"
+        ? "BARBARIAN_VILLAGE"
+        : "OTHER";
+  const ownerId =
+    typeof dto.data.userId === "string" ? dto.data.userId : undefined;
   return {
     id: dto.id,
     kind,
@@ -57,15 +54,31 @@ export function entityFromWorldDto(dto: WorldEntityDto, myUserId: string | null)
     isMine: !!myUserId && ownerId === myUserId,
     x: dto.x,
     y: dto.y,
-    name: typeof dto.data.name === 'string' ? dto.data.name : dto.id.slice(0, 6),
+    name:
+      typeof dto.data.name === "string" ? dto.data.name : dto.id.slice(0, 6),
     tier: normalizeTier(dto.data.tier),
   };
 }
 
-export function entityFromMyVillage(dto: WorldVillageDto, myUserId: string | null): MapEntity {
+export function entityFromFoggedDto(dto: WorldEntityFogged): MapEntity {
   return {
     id: dto.id,
-    kind: 'PLAYER_VILLAGE',
+    kind: "fogged",
+    isMine: false,
+    x: dto.x,
+    y: dto.y,
+    name: "",
+    tier: null,
+  };
+}
+
+export function entityFromMyVillage(
+  dto: WorldVillageDto,
+  myUserId: string | null,
+): MapEntity {
+  return {
+    id: dto.id,
+    kind: "PLAYER_VILLAGE",
     ownerId: dto.userId ?? myUserId ?? undefined,
     isMine: true,
     x: dto.x,
@@ -73,14 +86,4 @@ export function entityFromMyVillage(dto: WorldVillageDto, myUserId: string | nul
     name: dto.name,
     tier: null,
   };
-}
-
-function normalizeTier(value: unknown): MapEntity['tier'] {
-  if (value === 'T1' || value === 'T2' || value === 'T3') return value;
-  if (typeof value === 'string') {
-    if (value.toLowerCase().includes('1')) return 'T1';
-    if (value.toLowerCase().includes('2')) return 'T2';
-    if (value.toLowerCase().includes('3')) return 'T3';
-  }
-  return null;
 }

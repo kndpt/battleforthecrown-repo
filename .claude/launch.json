@@ -1,0 +1,26 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "backend",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": ["workspace", "battleforthecrown-backend", "start:dev"],
+      "port": 15001,
+      "env": {
+        "PORT": "15001"
+      }
+    },
+    {
+      "name": "pixi-frontend",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": ["workspace", "battleforthecrown-pixi", "dev"],
+      "port": 5173
+    },
+    {
+      "name": "shared-watch",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": ["dev:shared"],
+      "port": 0
+    }
+  ]
+}

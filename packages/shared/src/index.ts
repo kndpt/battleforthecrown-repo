@@ -6,3 +6,5 @@ export * from './combat';
 export * from './crowns';
 export * from './power';
 export * from './logic';
+export * from './events';
+export * from './auth';

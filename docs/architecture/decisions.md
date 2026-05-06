@@ -154,6 +154,33 @@ Le bundle pertinent est chargé via `loadBundle(name)` au mount du canvas corres
 
 ---
 
+## ADR-11 — Brouillard de guerre server-authoritative
+
+**Contexte.** La tour de guet définit un rayon de visibilité gameplay (5 cases au lvl 1, +5 par niveau, infini au lvl 10). Avant cette décision, l'API `GET /world/:slug/entities` renvoyait toutes les entités du monde et le frontend Pixi se contentait de dessiner un anneau doré au rayon de la tour — purement cosmétique. Un client modifié pouvait lire toutes les positions, owners et niveaux. Le rayon n'était pas une règle de jeu, juste un effet visuel.
+
+**Décision.** Le filtrage devient **server-side**. Trois états :
+- **Visible** (dans le rayon d'au moins une tour de guet du joueur) : payload complet (id, kind, owner, level, name, data).
+- **Blip** (hors rayon) : payload réduit `{kind: 'fogged', id, x, y}`. Le joueur sait qu'une entité est là mais pas ce que c'est.
+- **Hors monde** : non concerné.
+
+Implémentation :
+- Un `VisionService` (NestJS) calcule les disques de vision du joueur (un par tour de guet, lvl 10 ⇒ disque illimité).
+- `applyFogOfWar(entities, disks)` mappe chaque entité vers le payload visible ou un blip.
+- Appliqué dans `GET /world/:slug/entities` (le seul endpoint consommé par la WorldMap).
+- Le controller utilise `@UseGuards(JwtAuthGuard)` + `@CurrentUser()` pour récupérer l'utilisateur authentifié — aucune fuite possible côté client (pas de query param userId).
+- Les expéditions sont **filtrées en amont** (omises si hors vision) : pas de blip pour elles, simplification volontaire.
+- Feature flag par monde : `world.config.fogOfWar.enabled` (suit le pattern `barbarianSeeding.enabled`). Default `true` dans `mergeWithDefaults` + seed.
+- Côté Pixi : un `BlipSprite` non-interactif (cercle gris ~10 px, sans listener) rend les payloads `kind: 'fogged'`.
+
+**Conséquences.**
+- Vraie règle de jeu : un client modifié ne peut **plus** révéler la carte.
+- Les events WS (`village.attacked`, `village.conquered`, etc.) sont déjà routés par `userId` et invalident `['world-entities']` côté front — la cache se rafraîchit avec les nouveaux payloads filtrés. Pas de WS dédié au brouillard.
+- Pas de mémoire RTS-like : une entité qui sort du rayon redevient blip immédiatement. Modèle ternaire pur, on accepte le tradeoff de simplicité contre richesse.
+- Coût en perf : pour chaque requête `entities`, distance euclidienne O(N×M) où N=entités du monde et M=tours du joueur (généralement <10). Linéaire. À reconsidérer >100k entités (chunk_x/chunk_y).
+- Hors scope : pas de blip pour les expéditions (visibles dans la vision, invisibles hors). Pas de bâtiment "radar" séparé. Extensions futures possibles.
+
+---
+
 ## Maintenance de ce document
 
 - Une décision **structurante** (qui change la façon dont on pense le projet) → nouvelle entrée ADR.

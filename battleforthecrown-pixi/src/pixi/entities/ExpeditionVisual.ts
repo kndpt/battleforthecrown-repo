@@ -94,12 +94,17 @@ export function createExpeditionVisual(options: ExpeditionVisualOptions): Expedi
           : COLOR.enRoute;
 
     pathGraphic.clear();
+    if (snapshot.phase === 'RETURNED') {
+      // Troops are home. Don't render a stale trail; the snapshot will be
+      // dropped from the store on the next tick.
+      return { origin, control, target };
+    }
     pathGraphic.moveTo(origin.x, origin.y);
     pathGraphic.quadraticCurveTo(control.x, control.y, target.x, target.y);
     pathGraphic.stroke({
       color,
       width: snapshot.phase === 'EN_ROUTE' ? 3 : 2,
-      alpha: snapshot.phase === 'RETURNED' ? 0.2 : snapshot.phase === 'RETURNING' ? 0.55 : 0.85,
+      alpha: snapshot.phase === 'RETURNING' ? 0.55 : 0.85,
     });
 
     return { origin, control, target };
@@ -108,7 +113,9 @@ export function createExpeditionVisual(options: ExpeditionVisualOptions): Expedi
   let geometry = drawPath();
 
   const triggerFlash = () => {
-    flashUntil = performance.now() + 600;
+    // Same epoch-ms time base as `tick(nowMs)` to keep `flashUntil - now`
+    // meaningful.
+    flashUntil = Date.now() + 600;
     flashGraphic.alpha = 1;
   };
 

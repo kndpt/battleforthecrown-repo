@@ -1,14 +1,17 @@
-export type BuildingType =
-  | "CASTLE"
-  | "WOOD"
-  | "STONE"
-  | "IRON"
-  | "WAREHOUSE"
-  | "HIDEOUT"
-  | "FARM"
-  | "BARRACKS"
-  | "WATCHTOWER"
-  | "WALL";
+export const BUILDING_TYPES = {
+  CASTLE: "CASTLE",
+  WOOD: "WOOD",
+  STONE: "STONE",
+  IRON: "IRON",
+  WAREHOUSE: "WAREHOUSE",
+  HIDEOUT: "HIDEOUT",
+  FARM: "FARM",
+  BARRACKS: "BARRACKS",
+  WATCHTOWER: "WATCHTOWER",
+  WALL: "WALL",
+} as const;
+
+export type BuildingType = (typeof BUILDING_TYPES)[keyof typeof BUILDING_TYPES];
 
 export interface BuildingLevelDefinition {
   wood: number;

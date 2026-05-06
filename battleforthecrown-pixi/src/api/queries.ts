@@ -13,7 +13,7 @@ import {
   type World,
   type WorldMembership,
 } from './types';
-import type { WorldEntityDto } from './world-types';
+import type { WorldEntityResponse } from './world-types';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
 
@@ -273,9 +273,9 @@ export interface ArmyTrainingDto {
   unitType: string;
   totalQty: number;
   completedQty: number;
-  startTime: string;
-  endTime: string;
-  perUnitMs: number;
+  timePerUnitMs: number;
+  nextUnitEta: string;
+  createdAt: string;
 }
 
 export function useArmyInventoryQuery(villageId: string | null) {
@@ -368,7 +368,11 @@ export function useActiveExpeditionsQuery(villageId: string | null, userId: stri
       });
     },
     enabled: Boolean(villageId && userId),
-    staleTime: 5_000,
+    // Poll while there are active expeditions so phase transitions stay in
+    // sync even when a WS event is missed (the socket can drop briefly).
+    refetchInterval: (query) =>
+      query.state.data && query.state.data.length > 0 ? 5_000 : false,
+    staleTime: 2_000,
   });
 }
 
@@ -437,6 +441,25 @@ export function useMarkReportReadMutation() {
   return useMutation<CombatReportDto, Error, MarkReportReadInput>({
     mutationFn: ({ reportId, userId }) =>
       apiClient.patch<CombatReportDto>(`/combat/report/${reportId}/read`, undefined, {
+        query: { userId },
+      }),
+    onSettled: (_data, _err, { reportId, userId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.combatReports(userId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.combatReport(reportId) });
+    },
+  });
+}
+
+interface DeleteReportInput {
+  reportId: string;
+  userId: string;
+}
+
+export function useDeleteReportMutation() {
+  const queryClient = useQueryClient();
+  return useMutation<unknown, Error, DeleteReportInput>({
+    mutationFn: ({ reportId, userId }) =>
+      apiClient.delete<unknown>(`/combat/report/${reportId}`, {
         query: { userId },
       }),
     onSettled: (_data, _err, { userId }) => {
@@ -558,11 +581,11 @@ interface CancelContext {
 }
 
 export function useWorldEntitiesQuery(worldId: string | null) {
-  return useQuery<WorldEntityDto[]>({
+  return useQuery<WorldEntityResponse[]>({
     queryKey: queryKeys.worldEntities(worldId),
     queryFn: () => {
-      if (!worldId) return Promise.resolve([] as WorldEntityDto[]);
-      return apiClient.get<WorldEntityDto[]>(`/world/${worldId}/entities`);
+      if (!worldId) return Promise.resolve([] as WorldEntityResponse[]);
+      return apiClient.get<WorldEntityResponse[]>(`/world/${worldId}/entities`);
     },
     enabled: Boolean(worldId),
     staleTime: 30_000,

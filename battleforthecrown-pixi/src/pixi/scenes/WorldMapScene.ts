@@ -4,6 +4,7 @@ import type { PixiScene } from './SceneManager';
 import type { MapEntity } from '@/api/world-types';
 import type { ExpeditionSnapshot } from '@/stores/expeditions';
 import { createExpeditionVisual, type ExpeditionVisualHandle } from '@/pixi/entities/ExpeditionVisual';
+import { createBlipSprite, type BlipSpriteHandle } from '@/pixi/entities/BlipSprite';
 
 export interface WorldMapOptions {
   gridWidth: number;
@@ -26,15 +27,18 @@ const SPRITE_SIZE = 64;
 const PLAYER_SPRITE_SIZE = 72;
 
 const COLOR = {
-  background: 0x2f2416,
-  continentA: 0x81603a,
+  background: 0x6b8c3a,
+  continentA: 0x7a9d44,
   continentAAlpha: 0.22,
-  continentB: 0xa0794b,
-  continentBAlpha: 0.18,
+  continentB: 0x5e7c30,
+  continentBAlpha: 0.22,
   continentBorder: 0xf0d28c,
-  continentBorderAlpha: 0.25,
+  continentBorderAlpha: 0.18,
   continentLabel: 0xf6d67b,
   grid: 0xfff3c8,
+  grassBlade: 0x4a6322,
+  treeCanopy: 0x3d5520,
+  treeShadow: 0x29371a,
   myVillage: 0xf2d15c,
   myVillageStroke: 0xf6e7b1,
   barbarianT1: 0xc69455,
@@ -49,6 +53,16 @@ const COLOR = {
   worldBorder: 0xffecbe,
   fogOverlay: 0x0c0804,
 };
+
+function mulberry32(seed: number): () => number {
+  let t = seed >>> 0;
+  return () => {
+    t = (t + 0x6d2b79f5) >>> 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
 interface EntityVisual {
   container: Container;
@@ -148,6 +162,47 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     }
   }
 
+  // === Decorations (grass tufts + small forests) baked into one Graphics ===
+  // Deterministic so the layout is stable across reloads of the same world.
+  const decorations = new Graphics();
+  {
+    const rand = mulberry32(options.gridWidth * 73856093 ^ options.gridHeight * 19349663);
+    // Density tuned by eye: ~1 decoration per 6 tiles² → readable but not noisy.
+    const cellPx = tileSize * 6;
+    for (let x = 0; x < worldPx; x += cellPx) {
+      for (let y = 0; y < worldPy; y += cellPx) {
+        const jitterX = rand() * cellPx;
+        const jitterY = rand() * cellPx;
+        const cx = x + jitterX;
+        const cy = y + jitterY;
+        const isTree = rand() < 0.32;
+        if (isTree) {
+          // Two-tone disc + shadow to suggest a tree clump.
+          decorations
+            .ellipse(cx + 4.5, cy + 6, 18, 9)
+            .fill({ color: COLOR.treeShadow, alpha: 0.35 });
+          decorations
+            .circle(cx, cy, 15)
+            .fill({ color: COLOR.treeCanopy, alpha: 0.85 });
+          decorations
+            .circle(cx - 4.5, cy - 4.5, 6)
+            .fill({ color: 0x5d7d2e, alpha: 0.6 });
+        } else {
+          // Grass tuft = 3 blades fanning out.
+          decorations
+            .moveTo(cx - 6, cy + 3)
+            .lineTo(cx - 7.5, cy - 9)
+            .moveTo(cx, cy + 3)
+            .lineTo(cx, cy - 12)
+            .moveTo(cx + 6, cy + 3)
+            .lineTo(cx + 7.5, cy - 9)
+            .stroke({ color: COLOR.grassBlade, width: 3.6, alpha: 0.55 });
+        }
+      }
+    }
+  }
+  viewport.addChild(decorations);
+
   // === Sparse grid lines (every tile, very subtle) ===
   const grid = new Graphics();
   for (let gx = 0; gx <= options.gridWidth; gx += 10) {
@@ -168,19 +223,36 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     .stroke({ color: COLOR.worldBorder, width: 2, alpha: 0.45 });
   viewport.addChild(worldBorder);
 
-  // === Expeditions layer ===
-  const expeditionsLayer = new Container();
-  expeditionsLayer.sortableChildren = true;
-  viewport.addChild(expeditionsLayer);
+  // === Fog-of-war overlay (sits between the ground and the entities so the
+  //     ground is darkened outside vision but the blips/villages stay legible).
+  //     Uses cacheAsTexture so the 'erase' blendMode of the hole composes
+  //     against the dark layer in an isolated render pass. ===
+  const fogContainer = new Container();
+  fogContainer.eventMode = 'none';
+  const fogDark = new Graphics();
+  const fogHole = new Graphics();
+  fogHole.blendMode = 'erase';
+  fogContainer.addChild(fogDark);
+  fogContainer.addChild(fogHole);
+  fogContainer.cacheAsTexture({ resolution: 0.5, antialias: true });
+  viewport.addChild(fogContainer);
 
   // === Entities layer ===
   const entitiesLayer = new Container();
   entitiesLayer.sortableChildren = true;
   viewport.addChild(entitiesLayer);
 
-  // === Fog-of-war overlay (drawn on top of world but below tooltips) ===
-  const fogLayer = new Graphics();
-  viewport.addChild(fogLayer);
+  // === Expeditions layer ===
+  // Must sit above entities so the moving troop sprite is never hidden behind
+  // the village it's heading to / coming back from.
+  const expeditionsLayer = new Container();
+  expeditionsLayer.sortableChildren = true;
+  viewport.addChild(expeditionsLayer);
+
+  // === Vision border ring (drawn above entities for a crisp gold edge). ===
+  const visionRing = new Graphics();
+  visionRing.eventMode = 'none';
+  viewport.addChild(visionRing);
 
   // === Crosshair on my village ===
   const crosshair = new Graphics();
@@ -200,18 +272,32 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
   };
 
   const drawFog = () => {
-    fogLayer.clear();
-    if (!myVillage || visibilityRadius === null) return;
-    if (visibilityRadius <= 0) return;
+    fogDark.clear();
+    fogHole.clear();
+    visionRing.clear();
 
-    // Simple golden ring at the vision border — gives the player a visual cue
-    // for "what I can see" without the broken donut overlay (Pixi v8 doesn't
-    // expose evenodd fillRule cleanly enough for a real fog-of-war mask).
-    const { px, py } = tileToWorld(myVillage.x, myVillage.y);
-    const radiusPx = visibilityRadius * tileSize;
-    fogLayer
-      .circle(px, py, radiusPx)
-      .stroke({ color: COLOR.worldBorder, width: 2, alpha: 0.4 });
+    // Lvl 10 (unlimited) → no fog at all.
+    if (visibilityRadius === null) {
+      fogContainer.visible = false;
+      return;
+    }
+    fogContainer.visible = true;
+
+    // Dark veil over the entire world. The hole graphics below punches a
+    // transparent disk via blendMode 'erase' (works because the parent is
+    // cached as a texture).
+    fogDark.rect(0, 0, worldPx, worldPy).fill({ color: COLOR.fogOverlay, alpha: 0.6 });
+
+    if (myVillage && visibilityRadius > 0) {
+      const { px, py } = tileToWorld(myVillage.x, myVillage.y);
+      const radiusPx = visibilityRadius * tileSize;
+      fogHole.circle(px, py, radiusPx).fill({ color: 0xffffff, alpha: 1 });
+      visionRing
+        .circle(px, py, radiusPx)
+        .stroke({ color: COLOR.worldBorder, width: 2, alpha: 0.55 });
+    }
+
+    fogContainer.updateCacheTexture();
   };
 
   const drawCrosshair = () => {
@@ -239,6 +325,7 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
   };
 
   const visuals = new Map<string, EntityVisual>();
+  const blipVisuals = new Map<string, BlipSpriteHandle>();
   const expeditionVisuals = new Map<string, ExpeditionVisualHandle>();
   let selectedId: string | null = null;
 
@@ -371,8 +458,12 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     if (
       event.target === viewport ||
       event.target === background ||
+      event.target === decorations ||
       event.target === grid ||
-      event.target === fogLayer ||
+      event.target === fogContainer ||
+      event.target === fogDark ||
+      event.target === fogHole ||
+      event.target === visionRing ||
       event.target === worldBorder ||
       event.target === continentsLayer ||
       event.target.parent === continentsLayer
@@ -407,20 +498,51 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
 
   app.renderer.on('resize', handleResize);
 
+  const destroyVisual = (id: string) => {
+    const visual = visuals.get(id);
+    if (visual) {
+      entitiesLayer.removeChild(visual.container);
+      visual.container.destroy({ children: true });
+    }
+    visuals.delete(id);
+  };
+
+  const destroyBlip = (id: string) => {
+    const blip = blipVisuals.get(id);
+    if (blip) {
+      entitiesLayer.removeChild(blip.container);
+      blip.destroy();
+    }
+    blipVisuals.delete(id);
+  };
+
+  const ensureBlipVisual = (entity: MapEntity) => {
+    let blip = blipVisuals.get(entity.id);
+    if (!blip) {
+      blip = createBlipSprite();
+      entitiesLayer.addChild(blip.container);
+      blipVisuals.set(entity.id, blip);
+    }
+    const { px, py } = tileToWorld(entity.x, entity.y);
+    blip.container.position.set(px, py);
+  };
+
   const reconcile = (entities: MapEntity[]) => {
     const nextIds = new Set(entities.map((e) => e.id));
     for (const id of Array.from(visuals.keys())) {
-      if (!nextIds.has(id)) {
-        const visual = visuals.get(id);
-        if (visual) {
-          entitiesLayer.removeChild(visual.container);
-          visual.container.destroy({ children: true });
-        }
-        visuals.delete(id);
-      }
+      if (!nextIds.has(id)) destroyVisual(id);
+    }
+    for (const id of Array.from(blipVisuals.keys())) {
+      if (!nextIds.has(id)) destroyBlip(id);
     }
     for (const entity of entities) {
-      ensureVisual(entity);
+      if (entity.kind === 'fogged') {
+        if (visuals.has(entity.id)) destroyVisual(entity.id);
+        ensureBlipVisual(entity);
+      } else {
+        if (blipVisuals.has(entity.id)) destroyBlip(entity.id);
+        ensureVisual(entity);
+      }
     }
   };
 
@@ -489,7 +611,11 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     enter,
     exit,
     update: (deltaMs) => {
-      const now = performance.now();
+      // Use epoch ms here: expedition timestamps (departAt / arrivalAt) come
+      // from the server as Date.parse(...). performance.now() is time since
+      // page load, which would make `nowMs - departAt` deeply negative and
+      // freeze the unit at t = 0.
+      const now = Date.now();
       expeditionVisuals.forEach((visual) => visual.tick(now));
       textureRetryAccumulator += deltaMs;
       if (textureRetryAccumulator >= 500) {

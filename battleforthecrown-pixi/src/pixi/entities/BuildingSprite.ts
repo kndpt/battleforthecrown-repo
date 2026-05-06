@@ -7,7 +7,6 @@ const COLOR = {
   idle: 0x6b4d2c,
   idleAccent: 0xa37b46,
   construction: 0x5c4a30,
-  constructionStripes: 0xf1c40f,
   border: 0x2a1a0a,
   selected: 0xf1c40f,
   flash: 0xfff9d8,
@@ -186,21 +185,14 @@ export function createBuildingSprite(options: BuildingSpriteOptions): BuildingSp
         .fill({ color: COLOR.idleAccent, alpha: 0.7 });
     }
 
-    // Scaffolding stripes overlay (semi-transparent so the underlying
-    // sprite/graphic still shows through during construction).
+    // Construction overlay: dim the building to signal it's under construction.
+    // The progress bar above is the precise indicator; this is just the visual cue.
     scaffoldGraphic.clear();
     scaffoldGraphic.visible = inConstruction;
     if (inConstruction) {
       scaffoldGraphic
         .roundRect(-half, -half, size, size, 14)
         .fill({ color: COLOR.construction, alpha: 0.45 });
-      const step = 18;
-      for (let i = -half; i < half; i += step) {
-        scaffoldGraphic
-          .moveTo(i, -half)
-          .lineTo(i + size, half)
-          .stroke({ color: COLOR.constructionStripes, width: 2, alpha: 0.8 });
-      }
     }
 
     haloGraphic.clear();
@@ -284,7 +276,7 @@ export function createBuildingSprite(options: BuildingSpriteOptions): BuildingSp
     },
     tick,
     flash() {
-      flashUntil = performance.now() + 500;
+      flashUntil = Date.now() + 500;
       flashGraphic.alpha = 1;
     },
     destroy() {

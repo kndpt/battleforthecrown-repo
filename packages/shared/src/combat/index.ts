@@ -14,3 +14,7 @@ export const DEFAULT_COMBAT_RULES: CombatRules = {
 
 // Legacy alias
 export type CombatConfig = CombatRules;
+
+export * from './dtos';
+export * from './utils';
+export * from './resolution';

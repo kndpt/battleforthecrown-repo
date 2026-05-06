@@ -1,13 +1,20 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useMemo, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
 import { useResourcesStore } from '@/stores/resources';
 import { useCrownsStore } from '@/stores/crowns';
 import { useExpeditionsStore } from '@/stores/expeditions';
+import { useWorldMapStore } from '@/stores/worldMap';
 import { gameSocket } from '@/api/ws';
 import { bindServerEvents } from '@/api/ws-bindings';
-import { useActiveExpeditionsQuery, useCrownsQuery, useResourcesQuery } from '@/api/queries';
+import {
+  useActiveExpeditionsQuery,
+  useCrownsQuery,
+  useMyVillagesQuery,
+  useResourcesQuery,
+} from '@/api/queries';
+import { entityFromMyVillage } from '@/api/world-types';
 
 export function GameSession({ children }: { children: ReactNode }) {
   const accessToken = useAuthStore((state) => state.accessToken);
@@ -72,17 +79,43 @@ export function GameSession({ children }: { children: ReactNode }) {
     });
   }, [userId, worldId, crownsQuery.data, setCrowns]);
 
-  // Initial active expeditions baseline. WS events keep it fresh afterwards.
+  // Keep worldMap store seeded with the user's villages so that expedition
+  // origins resolve correctly even when the player isn't on the WorldMap screen
+  // (otherwise `resolveOrigin` falls back to (0, 0) and paths start from the
+  // top-left corner of the map).
+  const myVillagesQuery = useMyVillagesQuery(worldId);
+  const upsertEntity = useWorldMapStore((state) => state.upsertEntity);
+  const villageOrigins = useMemo(() => {
+    const map = new Map<string, { x: number; y: number }>();
+    (myVillagesQuery.data ?? []).forEach((v) => {
+      map.set(v.id, { x: v.x, y: v.y });
+    });
+    return map;
+  }, [myVillagesQuery.data]);
+  useEffect(() => {
+    if (!myVillagesQuery.data) return;
+    myVillagesQuery.data.forEach((village) => {
+      upsertEntity(entityFromMyVillage(village, userId));
+    });
+  }, [myVillagesQuery.data, userId, upsertEntity]);
+
+  // Active expeditions sync. The query polls the backend; we reconcile the
+  // store on every tick so phase transitions (EN_ROUTE → RETURNING → RETURNED)
+  // and removals stay correct even if a WS event was missed.
   const activeExpeditionsQuery = useActiveExpeditionsQuery(villageId, userId);
-  const addExpedition = useExpeditionsStore((state) => state.add);
   useEffect(() => {
     if (!activeExpeditionsQuery.data) return;
-    activeExpeditionsQuery.data.forEach((exp) => {
-      addExpedition({
+    const list = activeExpeditionsQuery.data;
+    const store = useExpeditionsStore.getState();
+    const liveIds = new Set(list.map((exp) => exp.id));
+
+    list.forEach((exp) => {
+      const origin = villageOrigins.get(exp.attackerVillageId) ?? { x: 0, y: 0 };
+      store.add({
         expeditionId: exp.id,
         reportId: exp.reportId ?? undefined,
         villageId: exp.attackerVillageId,
-        origin: { x: 0, y: 0 },
+        origin,
         target: { x: exp.targetX, y: exp.targetY },
         targetKind: exp.targetKind,
         phase: exp.status as 'EN_ROUTE' | 'RESOLVED' | 'RETURNING' | 'RETURNED',
@@ -91,7 +124,13 @@ export function GameSession({ children }: { children: ReactNode }) {
         returnAt: exp.returnAt ? Date.parse(exp.returnAt) : undefined,
       });
     });
-  }, [activeExpeditionsQuery.data, addExpedition]);
+
+    // Drop expeditions that the server no longer considers active (returned,
+    // cancelled, etc.) so the path / sprite vanish from the map.
+    Object.keys(store.byId).forEach((id) => {
+      if (!liveIds.has(id)) store.remove(id);
+    });
+  }, [activeExpeditionsQuery.data, villageOrigins]);
 
   return <>{children}</>;
 }

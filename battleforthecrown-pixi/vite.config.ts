@@ -19,11 +19,15 @@ export default defineConfig({
     // CJS module into a Vite-friendly ESM proxy.
     include: [
       '@battleforthecrown/shared',
+      '@battleforthecrown/shared/army',
+      '@battleforthecrown/shared/auth',
+      '@battleforthecrown/shared/combat',
+      '@battleforthecrown/shared/events',
       '@battleforthecrown/shared/logic',
+      '@battleforthecrown/shared/resources',
       '@battleforthecrown/shared/village',
       '@battleforthecrown/shared/village/buildings',
-      '@battleforthecrown/shared/army',
-      '@battleforthecrown/shared/resources',
+      '@battleforthecrown/shared/world',
     ],
   },
 });

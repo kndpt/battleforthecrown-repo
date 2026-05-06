@@ -17,7 +17,7 @@ export function MessagesScreen() {
 
   return (
     <GameSession>
-      <div className="h-screen flex flex-col mx-auto overflow-hidden bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
+      <div className="h-screen w-full flex flex-col overflow-hidden bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
         <div className="flex-shrink">
           <GameHeader onPowerClick={() => setIsPowerSheetOpen(true)} />
         </div>

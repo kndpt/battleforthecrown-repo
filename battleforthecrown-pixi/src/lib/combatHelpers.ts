@@ -24,6 +24,7 @@
 import {
   calculateDistance as sharedCalculateDistance,
   calculateTravelTime as sharedCalculateTravelTime,
+  findSlowestUnitSpeed as sharedFindSlowestUnitSpeed,
 } from '@battleforthecrown/shared/logic';
 
 /**
@@ -82,16 +83,7 @@ export function findSlowestUnitSpeed(
   selectedUnits: Record<string, number>,
   unitStatsMap: Record<string, { speed: number }>
 ): number {
-  let slowestSpeed = 0;
-
-  Object.entries(selectedUnits).forEach(([unitType, qty]) => {
-    if (qty > 0) {
-      const unitSpeed = unitStatsMap?.[unitType]?.speed || 0;
-      slowestSpeed = Math.max(slowestSpeed, unitSpeed);
-    }
-  });
-
-  return slowestSpeed;
+  return sharedFindSlowestUnitSpeed(selectedUnits, unitStatsMap);
 }
 
 /**

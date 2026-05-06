@@ -10,3 +10,11 @@ export const DEFAULT_CROWNS: CrownsSettings = {
 
 // Legacy alias
 export type CrownsConfig = CrownsSettings;
+
+export interface CrownBalanceResponse {
+  userId: string;
+  worldId: string;
+  balance: number;
+  productionRate: number;
+  lastUpdateTs: string;
+}

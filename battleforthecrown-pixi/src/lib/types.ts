@@ -1,3 +1,18 @@
+import {
+  BUILDING_TYPES,
+  type BuildingType as SharedBuildingType,
+} from '@battleforthecrown/shared/village';
+import {
+  UNIT_TYPES,
+  type UnitType as SharedUnitType,
+} from '@battleforthecrown/shared/army';
+import {
+  EXPEDITION_STATUSES,
+  TARGET_KINDS,
+  type ExpeditionStatus as SharedExpeditionStatus,
+  type TargetKind as SharedTargetKind,
+} from '@battleforthecrown/shared/combat';
+
 export interface Resource {
   id: string;
   name: string;
@@ -32,19 +47,8 @@ export type FullCost = ResourceCost & {
 
 export type BuildingLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
-export const BuildingType = {
-  CASTLE: 'CASTLE',
-  WOOD: 'WOOD',
-  STONE: 'STONE',
-  IRON: 'IRON',
-  WAREHOUSE: 'WAREHOUSE',
-  HIDEOUT: 'HIDEOUT',
-  FARM: 'FARM',
-  BARRACKS: 'BARRACKS',
-  WATCHTOWER: 'WATCHTOWER',
-  WALL: 'WALL',
-} as const;
-export type BuildingType = (typeof BuildingType)[keyof typeof BuildingType];
+export const BuildingType = BUILDING_TYPES;
+export type BuildingType = SharedBuildingType;
 
 export interface Building {
   id: string;
@@ -59,17 +63,8 @@ export interface Building {
   constructionEndTime?: number;
 }
 
-export const UnitType = {
-  MILITIA: 'MILITIA',
-  SQUIRE: 'SQUIRE',
-  ARCHER: 'ARCHER',
-  CAVALRY: 'CAVALRY',
-  TEMPLAR: 'TEMPLAR',
-  CATAPULT: 'CATAPULT',
-  SPY: 'SPY',
-  NOBLE: 'NOBLE',
-} as const;
-export type UnitType = (typeof UnitType)[keyof typeof UnitType];
+export const UnitType = UNIT_TYPES;
+export type UnitType = SharedUnitType;
 
 export interface Unit {
   id: string;
@@ -129,18 +124,11 @@ export interface GameState {
   lastUpdate: number;
 }
 
-export const ExpeditionStatus = {
-  EN_ROUTE: 'EN_ROUTE',
-  RESOLVED: 'RESOLVED',
-  RETURNING: 'RETURNING',
-} as const;
-export type ExpeditionStatus = (typeof ExpeditionStatus)[keyof typeof ExpeditionStatus];
+export const ExpeditionStatus = EXPEDITION_STATUSES;
+export type ExpeditionStatus = SharedExpeditionStatus;
 
-export const TargetKind = {
-  PLAYER_VILLAGE: 'PLAYER_VILLAGE',
-  BARBARIAN_VILLAGE: 'BARBARIAN_VILLAGE',
-} as const;
-export type TargetKind = (typeof TargetKind)[keyof typeof TargetKind];
+export const TargetKind = TARGET_KINDS;
+export type TargetKind = SharedTargetKind;
 
 export interface Expedition {
   id: string;

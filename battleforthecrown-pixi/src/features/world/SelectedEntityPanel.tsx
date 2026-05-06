@@ -1,5 +1,5 @@
-import { X } from 'lucide-react';
-import { Badge, Button, IconButton, Panel, PanelBody, PanelHeader } from '@/ui';
+import { Swords, X } from 'lucide-react';
+import { Button, Panel } from '@/ui';
 import type { MapEntity } from '@/api/world-types';
 
 interface SelectedEntityPanelProps {
@@ -8,86 +8,66 @@ interface SelectedEntityPanelProps {
   onAttack?: (entity: MapEntity) => void;
 }
 
-const KIND_LABEL: Record<MapEntity['kind'], string> = {
-  PLAYER_VILLAGE: 'Village joueur',
-  BARBARIAN_VILLAGE: 'Village barbare',
-  OTHER: 'Entité',
+const TIER_LABEL: Record<NonNullable<MapEntity['tier']>, string> = {
+  T1: 'Tier 1',
+  T2: 'Tier 2',
+  T3: 'Tier 3',
 };
 
-const TIER_BADGE: Record<NonNullable<MapEntity['tier']>, { label: string; variant: 'success' | 'warning' | 'error' }> = {
-  T1: { label: 'Tier 1', variant: 'success' },
-  T2: { label: 'Tier 2', variant: 'warning' },
-  T3: { label: 'Tier 3', variant: 'error' },
-};
+function typeLabel(entity: MapEntity): string {
+  if (entity.kind === 'BARBARIAN_VILLAGE') {
+    return entity.tier ? TIER_LABEL[entity.tier] : 'Village barbare';
+  }
+  if (entity.kind === 'PLAYER_VILLAGE') {
+    return entity.isMine ? 'Mon village' : 'Village joueur';
+  }
+  return 'Entité';
+}
 
 export function SelectedEntityPanel({ entity, onClose, onAttack }: SelectedEntityPanelProps) {
   if (!entity) return null;
 
-  const tierInfo = entity.tier ? TIER_BADGE[entity.tier] : null;
+  const isPlayerVillage = entity.kind === 'PLAYER_VILLAGE' && !entity.isMine;
+  const isBarbarian = entity.kind === 'BARBARIAN_VILLAGE';
+  const showAttack = (isBarbarian || isPlayerVillage) && Boolean(onAttack);
 
   return (
-    <div className="pointer-events-auto w-full max-w-xs">
-      <Panel variant="stone" padding="none" className="shadow-lg">
-        <PanelHeader variant="default" className="!py-2">
-          <div className="flex items-start justify-between gap-2 w-full">
-            <div className="flex-1">
-              <p className="text-[10px] font-cinzel uppercase tracking-widest text-game-gold-light">
-                {KIND_LABEL[entity.kind]}
-              </p>
-              <h2 className="font-cinzel text-base text-white text-shadow-game">{entity.name}</h2>
-            </div>
-            <IconButton
-              size="sm"
-              variant="danger"
-              icon={X}
-              label="Fermer"
-              onClick={onClose}
-            />
-          </div>
-        </PanelHeader>
+    <Panel
+      variant="parchment"
+      padding="sm"
+      className="relative flex flex-col gap-2 text-sm text-kingdom-800 shadow-lg w-full max-w-xs"
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Fermer"
+        className="absolute top-1 right-1 p-1 rounded-full text-kingdom-700 hover:bg-black/10 transition-colors"
+      >
+        <X size={16} />
+      </button>
 
-        <PanelBody className="p-3 space-y-3 text-sm text-white">
-          {tierInfo && (
-            <Badge variant={tierInfo.variant} size="sm">
-              {tierInfo.label}
-            </Badge>
-          )}
+      <div className="flex flex-col leading-tight pr-6">
+        <span className="font-cinzel text-[11px] uppercase tracking-wide text-kingdom-600">
+          {typeLabel(entity)}
+        </span>
+        <span className="font-cinzel text-base font-bold text-kingdom-900">
+          {entity.name}
+        </span>
+      </div>
 
-          <dl className="grid grid-cols-2 gap-2 text-xs">
-            <div>
-              <dt className="text-[10px] uppercase tracking-widest text-white/60">Coord. X</dt>
-              <dd className="font-bold tabular-nums">{entity.x}</dd>
-            </div>
-            <div>
-              <dt className="text-[10px] uppercase tracking-widest text-white/60">Coord. Y</dt>
-              <dd className="font-bold tabular-nums">{entity.y}</dd>
-            </div>
-            <div className="col-span-2">
-              <dt className="text-[10px] uppercase tracking-widest text-white/60">Propriétaire</dt>
-              <dd>
-                {entity.isMine
-                  ? 'Toi'
-                  : entity.kind === 'BARBARIAN_VILLAGE'
-                    ? 'Barbare'
-                    : 'Inconnu'}
-              </dd>
-            </div>
-          </dl>
-
-          <div className="flex flex-col gap-2">
-            {!entity.isMine && entity.kind !== 'OTHER' && onAttack && (
-              <Button variant="danger" size="sm" onClick={() => onAttack(entity)}>
-                Attaquer
-              </Button>
-            )}
-            {entity.isMine && (
-              <Button variant="info" size="sm" disabled title="Disponible en Phase 5">
-                Entrer dans le village (Phase 5)
-              </Button>
-            )}
-          </div>
-        </PanelBody>
-      </Panel>
-    </div>
+      {showAttack && (
+        <Button
+          variant="danger"
+          size="sm"
+          onClick={() => onAttack?.(entity)}
+          className="w-full font-bold"
+        >
+          <span className="inline-flex items-center justify-center gap-2">
+            <Swords size={16} />
+            <span>Attaquer</span>
+          </span>
+        </Button>
+      )}
+    </Panel>
   );
 }

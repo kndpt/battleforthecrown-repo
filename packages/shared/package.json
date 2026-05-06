@@ -43,6 +43,14 @@
     "./logic": {
       "types": "./dist/logic/index.d.ts",
       "default": "./dist/logic/index.js"
+    },
+    "./events": {
+      "types": "./dist/events/index.d.ts",
+      "default": "./dist/events/index.js"
+    },
+    "./auth": {
+      "types": "./dist/auth/index.d.ts",
+      "default": "./dist/auth/index.js"
     }
   },
   "files": [
