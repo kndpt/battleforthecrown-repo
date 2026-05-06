@@ -1,4 +1,18 @@
-# Documentation — où ça vit
+# Documentation — où ça vit et quand la mettre à jour
+
+## Vérification obligatoire en fin de tâche
+
+À la fin de **toute tâche** qui modifie du code, du gameplay, une API, un modèle de données, une convention, un workflow dev, ou une décision d'architecture, l'agent doit vérifier l'impact documentation.
+
+La vérification couvre :
+- **Créer** une doc si une nouvelle mécanique, API, convention ou décision n'a pas de référence durable.
+- **Mettre à jour** la doc existante si elle devient inexacte, incomplète ou ambiguë.
+- **Supprimer ou déplacer** une doc devenue obsolète.
+- **Ne rien modifier** uniquement si la tâche n'a pas d'impact documentaire réel.
+
+Dans le compte-rendu final, l'agent doit mentionner :
+- `Docs : mises à jour ...`
+- ou `Docs : aucun changement nécessaire, raison : ...`
 
 ## Hiérarchie
 
