@@ -7,19 +7,47 @@ import {
   CardTitle,
   IconButton,
   ProgressBar,
+  ResourceIcon,
   Tooltip,
 } from '@/ui';
 import { metaFor } from './buildingMeta';
 import { BuildingIcon } from './BuildingIcon';
 import { computeConstructionProgress, formatRemaining } from './constructionProgress';
 import { useTickingNow } from '@/lib/useTickingNow';
-import { useCancelConstructionMutation } from '@/api/queries';
+import { useCancelConstructionMutation, usePopulationQuery } from '@/api/queries';
 import { useGameStore } from '@/stores/game';
+import { useDisplayResources } from '@/features/resources/useDisplayResources';
+import {
+  BUILDING_DEFINITIONS,
+  type BuildingType,
+} from '@battleforthecrown/shared/village/buildings';
 import type { BuildingDto } from '@/api';
 
 export interface BuildingCardProps {
   building: BuildingDto & { lockReason?: string };
   onClick?: (building: BuildingDto) => void;
+}
+
+function CostMini({
+  resource,
+  required,
+  current,
+}: {
+  resource: 'wood' | 'stone' | 'iron' | 'population';
+  required: number;
+  current: number;
+}) {
+  const ok = current >= required;
+  return (
+    <div
+      className={`flex items-center justify-center gap-0.5 text-[10px] font-bold tabular-nums leading-none ${
+        ok ? 'text-white' : 'text-game-red-dark'
+      }`}
+    >
+      <ResourceIcon resource={resource} size={12} fallbackToEmoji />
+      <span>{required}</span>
+    </div>
+  );
 }
 
 export function BuildingCard({ building, onClick }: BuildingCardProps) {
@@ -36,6 +64,21 @@ export function BuildingCard({ building, onClick }: BuildingCardProps) {
   const isUnderConstruction = progress.inProgress;
   const isUnbuilt = building.level === 0;
   const isLockedByCastle = isUnbuilt && Boolean(building.lockReason);
+
+  const { display: displayResources } = useDisplayResources(villageId);
+  const populationQuery = usePopulationQuery(villageId);
+  const availablePopulation = populationQuery.data
+    ? Math.max(0, populationQuery.data.max - populationQuery.data.used)
+    : 0;
+  const nextLevel = building.level + 1;
+  const nextCost =
+    BUILDING_DEFINITIONS[building.type as BuildingType]?.levels[nextLevel] ?? null;
+  const canAfford =
+    nextCost !== null &&
+    (displayResources?.wood ?? 0) >= nextCost.wood &&
+    (displayResources?.stone ?? 0) >= nextCost.stone &&
+    (displayResources?.iron ?? 0) >= nextCost.iron &&
+    availablePopulation >= nextCost.population;
 
   const handleCardClick = () => {
     onClick?.(building);
@@ -151,19 +194,45 @@ export function BuildingCard({ building, onClick }: BuildingCardProps) {
                 </span>
               </Button>
             ) : (
-              <Button
-                variant="success"
-                size="sm"
-                className="w-full font-bold"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClick?.(building);
-                }}
-              >
-                <span className="flex items-center justify-center gap-1 text-xs w-full">
-                  {upgradeButton()}
-                </span>
-              </Button>
+              <div className="flex flex-col gap-1.5 w-full">
+                {nextCost && (
+                  <div className="grid grid-cols-4 gap-0.5 px-0.5">
+                    <CostMini
+                      resource="wood"
+                      required={nextCost.wood}
+                      current={displayResources?.wood ?? 0}
+                    />
+                    <CostMini
+                      resource="stone"
+                      required={nextCost.stone}
+                      current={displayResources?.stone ?? 0}
+                    />
+                    <CostMini
+                      resource="iron"
+                      required={nextCost.iron}
+                      current={displayResources?.iron ?? 0}
+                    />
+                    <CostMini
+                      resource="population"
+                      required={nextCost.population}
+                      current={availablePopulation}
+                    />
+                  </div>
+                )}
+                <Button
+                  variant={canAfford ? 'success' : 'neutral'}
+                  size="sm"
+                  className="w-full font-bold"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onClick?.(building);
+                  }}
+                >
+                  <span className="flex items-center justify-center gap-1 text-xs w-full">
+                    {upgradeButton()}
+                  </span>
+                </Button>
+              </div>
             )}
           </div>
         </CardFooter>

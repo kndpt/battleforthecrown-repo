@@ -75,6 +75,13 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
         ).time
       : null;
 
+  const canAfford =
+    nextCost !== null &&
+    (displayResources?.wood ?? 0) >= nextCost.wood &&
+    (displayResources?.stone ?? 0) >= nextCost.stone &&
+    (displayResources?.iron ?? 0) >= nextCost.iron &&
+    availablePopulation >= nextCost.population;
+
   const handleUpgrade = () => {
     setError(null);
     upgrade.mutate(
@@ -202,7 +209,7 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
                 variant="success"
                 size="lg"
                 className="w-full font-bold shadow-clay-lg !py-1"
-                disabled={upgrade.isPending}
+                disabled={upgrade.isPending || !canAfford}
                 onClick={handleUpgrade}
               >
                 {upgrade.isPending ? (
