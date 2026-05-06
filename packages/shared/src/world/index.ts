@@ -3,6 +3,7 @@ export * from './schemas';
 export * from './world';
 export * from './dtos';
 export * from './barbarian-templates';
+export * from './barbarian-geometry';
 
 export {
   isFoggedEntity,
