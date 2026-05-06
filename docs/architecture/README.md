@@ -8,6 +8,7 @@ Documentation technique de référence (humaine) pour les agents et les contribu
 - [`backend-modules.md`](./backend-modules.md) — arborescence NestJS, modules métiers, sous-services notables (combat, world, event).
 - [`data-model.md`](./data-model.md) — entités Prisma, relations, conventions de schéma, pièges connus.
 - [`realtime.md`](./realtime.md) — pattern Outbox, gateway WebSocket, catalogue d'événements, latence, reconnection.
+- [`auth.md`](./auth.md) — JWT global, `@Public()` opt-out, `OwnershipService`, handshake WS, modèle de menace.
 - [`db-setup.md`](./db-setup.md) — bootstrap Postgres + Prisma, snippets SQL de debug, reset.
 
 ## À lire avant tout travail backend

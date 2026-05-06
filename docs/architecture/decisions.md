@@ -167,7 +167,7 @@ Implémentation :
 - Un `VisionService` (NestJS) calcule les disques de vision du joueur (un par tour de guet, lvl 10 ⇒ disque illimité).
 - `applyFogOfWar(entities, disks)` mappe chaque entité vers le payload visible ou un blip.
 - Appliqué dans `GET /world/:slug/entities` (le seul endpoint consommé par la WorldMap).
-- Le controller utilise `@UseGuards(JwtAuthGuard)` + `@CurrentUser()` pour récupérer l'utilisateur authentifié — aucune fuite possible côté client (pas de query param userId).
+- Le controller récupère l'utilisateur via `@CurrentUser()` (auth globale, voir [`auth.md`](./auth.md)) — aucune fuite possible côté client (pas de query param userId).
 - Les expéditions sont **filtrées en amont** (omises si hors vision) : pas de blip pour elles, simplification volontaire.
 - Feature flag par monde : `world.config.fogOfWar.enabled` (suit le pattern `barbarianSeeding.enabled`). Default `true` dans `mergeWithDefaults` + seed.
 - Côté Pixi : un `BlipSprite` non-interactif (cercle gris ~10 px, sans listener) rend les payloads `kind: 'fogged'`.
