@@ -33,6 +33,12 @@ class GameSocket {
     this.socket.on('connect_error', () => this.setStatus('disconnected'));
   }
 
+  updateToken(accessToken: string): void {
+    if (this.socket) {
+      this.socket.auth = { token: accessToken };
+    }
+  }
+
   disconnect(): void {
     if (this.socket) {
       this.socket.removeAllListeners();

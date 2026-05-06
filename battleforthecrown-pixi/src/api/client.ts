@@ -159,6 +159,7 @@ export class ApiClient {
     }
     const { refreshToken } = this.auth.getTokens();
     if (!refreshToken) {
+      this.auth.clearTokens();
       return null;
     }
 

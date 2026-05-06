@@ -2,6 +2,7 @@ import { env } from '@/lib/env';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
 import { ApiClient } from './client';
+import { gameSocket } from './ws';
 
 export const apiClient = new ApiClient({
   baseUrl: env.apiBaseUrl,
@@ -10,7 +11,10 @@ export const apiClient = new ApiClient({
       const { accessToken, refreshToken } = useAuthStore.getState();
       return { accessToken, refreshToken };
     },
-    setTokens: (tokens) => useAuthStore.getState().setTokens(tokens),
+    setTokens: (tokens) => {
+      useAuthStore.getState().setTokens(tokens);
+      gameSocket.updateToken(tokens.accessToken);
+    },
     clearTokens: () => useAuthStore.getState().clearSession(),
   },
   gameContext: {
