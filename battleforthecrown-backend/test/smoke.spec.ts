@@ -9,6 +9,9 @@ import {
   waitFor,
   type SmokeContext,
 } from './helpers';
+import { SMOKE_WORLD_CONFIG } from './fixtures/smoke-world-config';
+import { ConquestService } from '../src/modules/combat/conquest.service';
+import { BarbarianBackfillWorker } from '../src/modules/world/barbarian-backfill.worker';
 
 describe('smoke', () => {
   let ctx: SmokeContext;
@@ -160,5 +163,94 @@ describe('smoke', () => {
       { timeoutMs: 15_000 },
     );
     expect(returned?.dispatchedAt).toBeTruthy();
+  });
+
+  it('conquest: ConquestService → village.userId reassigned + village.conquered dispatched', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const user = await registerUser(ctx.server);
+    const join = await joinWorld(ctx.server, user.accessToken, world.id, 'conqueror');
+    const attackerId = join.village.id;
+
+    const barbarian = await ctx.prisma.village.create({
+      data: {
+        worldId: world.id,
+        isBarbarian: true,
+        name: 'barb-conquer-target',
+        x: join.village.x + 1,
+        y: join.village.y,
+        tier: 'T1',
+        resourceStock: { create: { wood: 0, stone: 0, iron: 0, maxPerType: 100_000 } },
+      },
+    });
+
+    const conquest = ctx.app.get(ConquestService);
+    const result = await conquest.conquerVillage({
+      attackerVillageId: attackerId,
+      targetVillageId: barbarian.id,
+      attackerUserId: user.userId,
+    });
+    expect(result.success).toBe(true);
+
+    const conquered = await ctx.prisma.village.findUniqueOrThrow({ where: { id: barbarian.id } });
+    expect(conquered.userId).toBe(user.userId);
+
+    const event = await outboxDispatched(
+      ctx.prisma,
+      { kind: 'village.conquered', aggregateId: barbarian.id },
+      { timeoutMs: 5_000 },
+    );
+    expect(event?.dispatchedAt).toBeTruthy();
+  });
+
+  it('crown production: tick → crowns.changed dispatched for active membership', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const user = await registerUser(ctx.server);
+    await joinWorld(ctx.server, user.accessToken, world.id, 'crown-village');
+
+    // Backdate so the tick computes a non-zero production (event is gated on production > 0)
+    await ctx.prisma.crownBalance.update({
+      where: { userId_worldId: { userId: user.userId, worldId: world.id } },
+      data: { lastUpdateTs: new Date(Date.now() - 86_400_000) },
+    });
+
+    await ctx.boss.send('crowns:production', {});
+
+    const event = await outboxDispatched(
+      ctx.prisma,
+      { kind: 'crowns.changed', aggregateId: user.userId },
+      { timeoutMs: 10_000 },
+    );
+    expect(event?.dispatchedAt).toBeTruthy();
+  });
+
+  it('barbarian backfill: enabled world → handleBackfill seeds new BVs around recent villages', async () => {
+    const worldId = `smoke-bf-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    await ctx.prisma.world.create({
+      data: {
+        id: worldId,
+        name: worldId,
+        status: 'OPEN',
+        config: {
+          ...SMOKE_WORLD_CONFIG,
+          barbarianSeeding: {
+            ...SMOKE_WORLD_CONFIG.barbarianSeeding,
+            enabled: true,
+            targetMin: 1,
+            targetMax: 2,
+          },
+        } as object,
+      },
+    });
+
+    const user = await registerUser(ctx.server);
+    await ctx.prisma.village.create({
+      data: { worldId, userId: user.userId, name: 'recent-anchor', x: 50, y: 50 },
+    });
+
+    const before = await ctx.prisma.village.count({ where: { worldId, isBarbarian: true } });
+    await ctx.app.get(BarbarianBackfillWorker).handleBackfill();
+    const after = await ctx.prisma.village.count({ where: { worldId, isBarbarian: true } });
+
+    expect(after).toBeGreaterThan(before);
   });
 });
