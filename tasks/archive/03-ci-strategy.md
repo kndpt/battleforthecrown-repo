@@ -18,6 +18,8 @@ Décision : **husky + hook `pre-push`** qui lance `yarn test` (unit backend + un
 
 Effort réel : ~25 min. Filet vert au moment du merge (88 unit + 65 vitest + 10 smokes = 28 s total).
 
+**Note honnête ajoutée après coup** : faire tourner les smokes en `pre-push` est généralement reconnu comme un anti-pattern (les hooks doivent être < 10 s, les smokes appartiennent à un CI cloud). Le choix se justifie ici par le contexte solo + pas de joueurs + pas de CI déjà en place, mais c'est un compromis assumé, pas une recommandation générale. La cible long terme (pre-push allégé + GitHub Actions avec service container Postgres) et ses triggers de migration sont consignés dans [`docs/architecture/local-ci.md`](../../docs/architecture/local-ci.md) — y compris les étapes concrètes d'implémentation pour qu'un futur dev/agent puisse y migrer sans replonger dans la décision.
+
 ---
 
 ## Contexte
