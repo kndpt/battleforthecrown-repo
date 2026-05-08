@@ -39,14 +39,40 @@ Tests présents (12 fichiers, 65 tests) mais **tous unitaires**. Aucun test :
 
 ### Couverture des flows critiques aujourd'hui
 
-| Flow | Couverture unit | Couverture E2E |
+État **post-résolution ticket 01** (2026-05-08) : la colonne unit a été nettoyée. Les specs orchestration ont été supprimées (cf. ticket 01) ; ne restent que la logique pure. **Les ❌ E2E ci-dessous sont la dette que ce ticket doit combler.**
+
+| Flow | Couverture unit (logique pure) | Couverture E2E / smoke |
 |---|---|---|
-| Login + refresh JWT | `client.test.ts` | ❌ |
-| Upgrade bâtiment | `world-config.service.spec`, `gameplay/upgrade-building.use-case.spec` | ❌ (E2E mort) |
-| Recruter unité | `army.service.spec` | ❌ (E2E mort) |
-| Lancer attaque + retour | `combat.service.spec`, `combat.worker.spec` (partiel) | ❌ (E2E mort) |
-| Conquête | — | ❌ (E2E mort) |
-| Production tick | `production.worker.spec` (cassé, cf. ticket 01) | ❌ |
+| Login + refresh JWT | côté pixi : `client.test.ts` (refresh) | ❌ — à couvrir |
+| Upgrade bâtiment | `world-config.service.spec` (formules cost/time) | ❌ (E2E mort, à recoder) |
+| Recruter unité | — | ❌ — à couvrir |
+| Lancer attaque + retour | `combat-strategies.spec` (formules combat), `combat.utils.spec` (casualty math), `loot.manager.spec` (capacity/loot factor) | ❌ (E2E mort, à recoder) |
+| Conquête | — | ❌ (E2E mort, à recoder) |
+| Production tick | `world-config.service.spec` (production rate formula) | ❌ — à couvrir |
+| Fog of war | `vision.service.spec` (géométrie pure) | ❌ — à couvrir |
+
+## Lien avec ticket 01 (résolu)
+
+Le ticket [`01-unit-tests-audit.md`](./01-unit-tests-audit.md) a été résolu en parallèle de ce ticket avec une politique stricte *"logique pure uniquement"* côté unit. **Conséquence directe : les smokes deviennent le filet de sécurité unique pour l'orchestration / I/O.**
+
+**Contrat implicite à respecter quand on écrit les smokes** :
+
+Les flows ci-dessous étaient (mal) couverts par des `*.worker.spec.ts` / `*.service.spec.ts` qui mockaient Prisma + pg-boss. Ces tests ont été supprimés. Chaque flow doit avoir un smoke équivalent qui hit la vraie DB et observe l'event Outbox :
+
+- **Production tick** (était `production.worker.spec.ts`) → smoke : créer un village, attendre 1 tick, vérifier `ResourceStock` mis à jour + event `resources.changed` émis.
+- **Construction** (était `construction.worker.spec.ts` + `upgrade-building.use-case.spec.ts`) → smoke : `POST /villages/:id/buildings/:type/upgrade`, attendre `endTime`, vérifier `Building.level` incrémenté + event `building.completed`.
+- **Training** (était `training.worker.spec.ts`) → smoke : `POST /army/villages/:id/train`, attendre par tranches, vérifier `UnitInventory` + event `unit.training.completed`.
+- **Combat resolution + return** (était `combat.service.spec.ts` + `combat.worker.spec.ts` + `return.worker.spec.ts`) → smoke : `POST /combat/attack`, attendre `arrivalAt`, vérifier `CombatReport` créé + event `battle.resolved` ; attendre `returnAt`, vérifier troupes/butin retournés + event `battle.returned`.
+- **Conquête** (était `conquest.service.spec.ts`) → smoke : conquérir un village barbare, vérifier `Village.userId` réassigné + event `village.conquered`.
+- **Outbox dispatch** (était `outbox.worker.spec.ts` + `event-outbox.service.spec.ts`) → smoke transversal : tout smoke ci-dessus qui assert l'arrivée de l'event WS valide implicitement le worker outbox.
+- **Crown production** (était `crown-production.worker.spec.ts`) → smoke : avancer le temps de la fenêtre de production, vérifier crowns incrémentés.
+- **Barbarian backfill** (était `barbarian-backfill.worker.spec.ts`) → smoke : conquérir un barbare, attendre le job de backfill, vérifier qu'un nouveau barbare a été semé.
+- **JWT auth + refresh** (était `auth.service.spec.ts` + `game.gateway.spec.ts`) → smoke : register → login → access endpoint → laisser le token expirer → refresh → access OK.
+- **Fog of war wiring** (était `world.controller.spec.ts`) → smoke : `GET /world/:id/entities` avec/sans watchtower, vérifier les entités fogged dans le payload.
+
+**Critère de couverture** : un flow est "couvert smoke" quand le test passe une mutation REST réelle, attend les workers, et asserte sur l'état DB **et** sur l'event WS reçu. Mocker Prisma ou pg-boss dans un smoke = anti-pattern (cf. politique ticket 01).
+
+**Si la stratégie smoke retenue ne peut pas couvrir un de ces flows** (ex : on choisit option C Playwright qui ne voit pas les workers backend), il faut soit ajouter des smokes backend dédiés, soit ré-introduire un test unit ciblé pour le flow orphelin — mais en respectant la politique pure-logic-only (mocker Prisma reste interdit).
 
 ## Question à trancher
 

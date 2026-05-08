@@ -1,8 +1,31 @@
 # 01 — Audit des tests unitaires (garder, fixer, supprimer)
 
+**Statut** : ✅ Résolu le 2026-05-08
 **Sévérité** : 🟠 Moyenne
 **Workspace(s)** : `battleforthecrown-backend`, `battleforthecrown-pixi`
 **Tags** : tests, dette, signal/bruit
+
+## Résolution
+
+Approche **hybride asymétrique** retenue, puis durcie après lecture du ticket 02 (smoke tests). Politique cible : **logique pure uniquement** côté unit, l'orchestration / I/O passe par les smokes.
+
+**Phase 1** — `loot.manager.spec.ts` réparé (3 tests : fixtures alignées sur `UNIT_STATS` shared, `config.units.stats` était dead code que `calculateLoot` ne lit pas — il appelle `getUnitStats()`). `production.worker.spec.ts` supprimé entier (27 tests de mock-théâtre).
+
+**Phase 2** — 18 fichiers supplémentaires supprimés selon le critère *"si je supprime ce test, est-ce que la couverture smoke (réelle DB + WS) le remplace ?"* :
+
+- **7 workers** (`combat.worker`, `return.worker`, `barbarian-backfill.worker`, `construction.worker`, `training.worker`, `outbox.worker`, `crown-production.worker`) — orchestration Prisma + pg-boss, smokes les couvriront end-to-end.
+- **2 controllers** (`app.controller`, `world.controller`) — Nest scaffolding / fog wiring (la vraie logique fog est dans `vision.service.spec`).
+- **9 services** (`auth`, `combat.service`, `conquest`, `event-outbox`, `game.gateway`, `barbarian-seeding`, `village-placement`, `world.service`, `upgrade-building.use-case`) — Prisma orchestration via `$transaction` mocks. Smokes hit la vraie DB.
+
+**Conservés (7 fichiers)** — formules / strategies / Zod, edge-cases que les smokes ne couvrent pas :
+
+- `combat.utils` (casualty math), `combat-strategies` (formules combat), `combat.dto` (Zod), `loot.manager` (capacity / loot factor), `barbarian-tier-templates` (tier lookup), `world-config.service` (cost / production / travel formulas), `vision.service` (fog of war geometry).
+
+**Phase 3** — politique formalisée dans [`battleforthecrown-backend/.claude/rules/nest-conventions.md`](../battleforthecrown-backend/.claude/rules/nest-conventions.md) : interdiction explicite des patterns `*.worker.spec.ts` / `*.controller.spec.ts` / specs services qui mockent Prisma. Critère de tranchage documenté.
+
+**Métriques** : 26 → 7 fichiers spec, 302 → 89 tests, 7 cassés → 0. Build vert.
+
+**Contrat avec ticket 02** : les smokes futurs **doivent** couvrir les flows des fichiers supprimés (production tick, construction, training, combat resolution, return, outbox dispatch, conquest, JWT auth, fog of war wiring, upgrade building). Cf. [`02-smoke-tests-strategy.md`](./02-smoke-tests-strategy.md) pour le détail du contrat.
 
 ## Contexte
 
