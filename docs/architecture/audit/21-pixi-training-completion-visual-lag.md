@@ -1,9 +1,29 @@
 # 21 — Décalage visuel entre fin extrapolée et disparition de la file d'entraînement
 
+**Statut** : ✅ Résolu le 2026-05-08
 **Sévérité** : 🟠 Moyenne
-**Workspace(s)** : `battleforthecrown-pixi`, `battleforthecrown-backend`
+**Workspace(s)** : `battleforthecrown-pixi`
 **Tags** : ux, realtime, outbox, training
 **Origine** : observé en QA pendant la résolution du [ticket 11 (optimistic UI)](./11-pixi-optimistic-ui-asymmetric.md).
+
+## Résolution
+
+**Piste A (polling actif côté frontend)** retenue. Pas touché à l'archi Outbox — refuser la piste B ("émettre l'event direct dans `TrainingWorker`") qui aurait cassé l'atomicité du pattern Outbox (`workers.md` : *"si la mutation échoue, l'event n'est pas créé"*).
+
+`UnitCard.tsx` : un `useEffect` dépendant du `now` du `useTickingNow(1_000)` détecte la condition "fin extrapolée mais file pas encore retirée" :
+
+```ts
+const overdue = now - Date.parse(training.createdAt) >= totalDurationMs;
+if (overdue && training.completedQty < training.totalQty) {
+  queryClient.invalidateQueries({ queryKey: queryKeys.armyTraining(villageId) });
+}
+```
+
+Effet : tant que la condition tient, on déclenche une `invalidateQueries` toutes les ~1 s (cadence du tick). Le refetch ramène l'état serveur à jour ; dès que la `TrainingQueue` est supprimée côté DB, `training` devient `undefined`, l'effet n'a plus de matière, le polling s'arrête naturellement.
+
+**Bornes du décalage résiduel** : ~1 s pg-boss + ~0–1 s outbox poll + ~100 ms refetch ≈ **0–2 s** au lieu de **1–4 s** (la borne haute coupée car le frontend force le refetch avant qu'il arrive par WS). UX acceptable même sur mondes rapides (multiplier × 100).
+
+Pas de clamp visuel à 99 % — la barre conserve l'animation à 100 % comme post-ticket 11, le polling masque le délai. Pas de modification backend.
 
 ## Symptôme
 

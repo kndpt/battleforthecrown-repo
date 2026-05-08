@@ -37,9 +37,9 @@ Chaque ticket décrit **un problème observé**, factuel, avec références `pat
 - ✅ [12 — Composants transverses dans `features/`](./12-pixi-transverse-components-misplaced.md) 🟠 — **résolu le 2026-05-08**
 - ✅ [13 — `GameSession` wrapper aux responsabilités dispersées](./13-pixi-game-session-fragile-wrapper.md) 🟠 — **résolu le 2026-05-08** (cf. ADR-13)
 - ✅ [14 — Convention zod non appliquée](./14-pixi-zod-not-applied.md) 🟠 — **résolu le 2026-05-08**
-- [15 — `setTimeout` magiques dans ws-bindings](./15-pixi-magic-timeouts-ws-bindings.md) 🟠
+- ✅ [15 — `setTimeout` magiques dans ws-bindings](./15-pixi-magic-timeouts-ws-bindings.md) 🟠 — **résolu le 2026-05-08**
 - ✅ [17 — Statut de `src/pixi/manifest.ts`](./17-pixi-manifest-ts-usage.md) 🟠 — **fermé le 2026-05-08** (obsolète : fichier déplacé en `src/pixi/assets/manifest.ts`, activement utilisé via `registerPixiBundles` → `loader.loadBundle`, tests en place)
-- [21 — Décalage visuel fin d'entraînement](./21-pixi-training-completion-visual-lag.md) 🟠 — _follow-up de 11_
+- ✅ [21 — Décalage visuel fin d'entraînement](./21-pixi-training-completion-visual-lag.md) 🟠 — **résolu le 2026-05-08** _(follow-up de 11)_
 
 ### Transverse
 

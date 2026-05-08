@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Clock, Lock, Minus, Plus, Swords, XCircle } from 'lucide-react';
 import {
   Badge,
@@ -16,6 +17,7 @@ import { UNIT_COSTS } from '@battleforthecrown/shared/army';
 import { ApiError } from '@/api';
 import type { ArmyTrainingDto, ArmyUnitDto } from '@/api/queries';
 import {
+  queryKeys,
   useCancelTrainingMutation,
   usePopulationQuery,
   useTrainUnitsMutation,
@@ -61,6 +63,23 @@ export function UnitCard({ unit, barracksLevel, training, onClick }: UnitCardPro
   const pushToast = useUiStore((state) => state.pushToast);
   const now = useTickingNow(1_000);
   const trainingMultiplier = useWorldConfigQuery(worldId).data?.multipliers.training;
+  const queryClient = useQueryClient();
+
+  // Bridge the gap between extrapolated visual completion and the WS event:
+  // pg-boss + Outbox poll add 1-4s after the bar fills. Once the local clock
+  // says we're past `createdAt + totalDurationMs` but the queue is still here,
+  // refetch on every tick until the server catches up and removes it.
+  useEffect(() => {
+    if (!training || !villageId) return;
+    const totalDurationMs =
+      training.totalQty * Math.max(1, training.timePerUnitMs);
+    const overdue = now - Date.parse(training.createdAt) >= totalDurationMs;
+    if (overdue && training.completedQty < training.totalQty) {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.armyTraining(villageId),
+      });
+    }
+  }, [now, training, villageId, queryClient]);
 
   const meta = unitMetaFor(unit.type);
   const cost = UNIT_COSTS[unit.type as keyof typeof UNIT_COSTS];

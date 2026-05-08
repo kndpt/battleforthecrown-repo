@@ -33,6 +33,17 @@ type ServerEventListener<K extends ServerEventName> = (
   ctx: BindingsContext,
 ) => void;
 
+// Phase-transition timers in flight. Cleared on bindServerEvents teardown so
+// pending store updates don't fire after the gateway is gone (e.g. on logout).
+const pendingTimeouts = new Set<ReturnType<typeof setTimeout>>();
+const scheduleTimeout = (fn: () => void, ms: number): void => {
+  const id = setTimeout(() => {
+    pendingTimeouts.delete(id);
+    fn();
+  }, ms);
+  pendingTimeouts.add(id);
+};
+
 type ServerEventBindings = {
   [K in ServerEventName]: ServerEventListener<K>;
 };
@@ -127,7 +138,7 @@ export function applyBattleResolved(payload: BattleResolvedPayload, ctx: Binding
   });
   // Wait for the FX flash to finish before troops turn back. Source of truth
   // for the delay lives in `lib/expeditionTiming` alongside the flash duration.
-  setTimeout(() => {
+  scheduleTimeout(() => {
     useExpeditionsStore.getState().update(payload.expeditionId, { phase: 'RETURNING' });
   }, RESOLVED_TO_RETURNING_DELAY_MS);
 
@@ -146,7 +157,7 @@ export function applyBattleResolved(payload: BattleResolvedPayload, ctx: Binding
 
 export function applyBattleReturned(payload: BattleReturnedPayload, ctx: BindingsContext): void {
   useExpeditionsStore.getState().update(payload.expeditionId, { phase: 'RETURNED' });
-  setTimeout(() => {
+  scheduleTimeout(() => {
     useExpeditionsStore.getState().remove(payload.expeditionId);
   }, RETURNED_TO_CLEANUP_DELAY_MS);
   ctx.queryClient.invalidateQueries({ queryKey: ['resources', payload.villageId] });
@@ -214,5 +225,7 @@ export function bindServerEvents(ctx: BindingsContext): () => void {
     for (const off of offs) {
       off();
     }
+    for (const id of pendingTimeouts) clearTimeout(id);
+    pendingTimeouts.clear();
   };
 }

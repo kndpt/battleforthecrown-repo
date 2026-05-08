@@ -1,8 +1,23 @@
 # 15 — `setTimeout` magiques dans `ws-bindings.ts` pour les transitions de phase d'expédition
 
+**Statut** : ✅ Résolu le 2026-05-08
 **Sévérité** : 🟠 Moyenne
 **Workspace(s)** : `battleforthecrown-pixi`
 **Tags** : magic-numbers, timing, animations, ws
+
+## Résolution
+
+Résolu en deux temps :
+
+**Phase 1 — commit `fcd84a5` (2026-05-08)** :
+- Constantes nommées extraites dans `src/lib/expeditionTiming.ts` : `BATTLE_FLASH_DURATION_MS`, `RESOLVED_TO_RETURNING_DELAY_MS`, `RETURNED_TO_CLEANUP_DELAY_MS`. Le commentaire en tête documente le contrat (le delay doit excéder le flash).
+- Source unique partagée par `ws-bindings.ts` (déclencheur du store) et `pixi/entities/ExpeditionVisual.ts` (FX).
+- Tests fake-timer (`vi.useFakeTimers()`) sur la séquence `applyBattleResolved` et `applyBattleReturned`.
+
+**Phase 2 (cette résolution)** :
+- **Cleanup au démontage** : `ws-bindings.ts` track les timer IDs en vol dans un `Set<ReturnType<typeof setTimeout>>` module-level via un helper `scheduleTimeout`. La fonction de cleanup retournée par `bindServerEvents` les `clearTimeout` tous + reset le set, en plus de désabonner les sockets. Plus de mise à jour de store qui fire après le logout.
+
+**Race conditions** (deux events `battle.resolved` rapides pour la même expedition) : non gérées explicitement. Cas pathologique mineur — le 2e timeout se contenterait de réécrire la même phase `RETURNING`. Si ça devenait un vrai problème en prod, tracker les timers par `expeditionId` dans une `Map`.
 
 ## Symptôme
 
