@@ -8,7 +8,17 @@ export interface HeaderActionsProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export const HeaderActions = forwardRef<HTMLDivElement, HeaderActionsProps>(
-  ({ className = '', ...props }, ref) => {
+  (
+    {
+      className = '',
+      notificationCount: _notificationCount,
+      onSettingsClick: _onSettingsClick,
+      onNotificationsClick: _onNotificationsClick,
+      onMenuClick: _onMenuClick,
+      ...props
+    },
+    ref,
+  ) => {
     return <div ref={ref} className={`flex items-center gap-2 ${className}`} {...props} />;
   },
 );
