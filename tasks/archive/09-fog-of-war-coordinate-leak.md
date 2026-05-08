@@ -3,8 +3,34 @@
 **Sévérité** : 🟡 Majeure
 **Workspace(s)** : `battleforthecrown-backend`, `packages/shared`
 **Tags** : security, fog-of-war, data-leak, design-intent
+**Statut** : ✅ Résolu 2026-05-08
 
-## Contexte
+## Résolution
+
+Stratégie retenue : **option A** (intent design TW/KingsAge confirmé) **+ patch backend** sur la règle UI "blip non-attaquable" qui n'était pas server-authoritative.
+
+L'analyse a confirmé que le payload `{ kind: 'fogged', id, x, y }` est **volontaire** :
+- L'intent est documenté depuis longtemps dans [`docs/gameplay/01-overview.md`](../docs/gameplay/01-overview.md) (section "Exploration & brouillard de guerre", encadré "Pourquoi un blip plutôt que rien") et dans [`docs/architecture/decisions.md`](../docs/architecture/decisions.md) ADR-11.
+- `x, y` exposés = cœur du design (« il y a quelque chose ici »). `id` exposé = stable key opaque pour la reconciliation Pixi des sprites blip entre fetchs.
+- `tier`, `name`, `villageId`, `userId` et tout le reste sont strippés — c'est ça la vraie fog.
+
+**Trou trouvé en cours de route** : la doc disait "Blip non-cliquable : impossible de sélectionner, attaquer ou tooltip un blip", mais c'était implémenté **uniquement côté UI** (BlipSprite non-interactif). Un client modifié pouvait POSTer `/combat/attack` avec l'`id` d'un blip et déclencher une vraie attaque sans avoir construit de tour de guet. → fixé.
+
+### Changements
+
+- **`battleforthecrown-backend/src/modules/combat/combat.service.ts`** : `initiateAttack` rejette en `403 ForbiddenException` toute cible (`x, y`) hors des disques de vision du joueur, gated par `world.config.fogOfWar.enabled`. `VisionService` injecté via `WorldModule` (déjà exporté).
+- **`battleforthecrown-backend/src/modules/world/vision.service.ts`** : JSDoc sur `applyFogOfWar` qui explicite le contrat (champs volontaires, pointeur ADR-11/overview.md, règle d'attaque server-side).
+- **`docs/architecture/decisions.md`** : ADR-11 enrichi du détail par champ et de la règle d'attaque server-side.
+- **`docs/gameplay/01-overview.md`** : ajout d'une ligne "Blip non-attaquable côté serveur" pour expliciter que la règle est server-authoritative.
+- **`battleforthecrown-backend/test/smoke.spec.ts`** : smoke combat existant adapté (forçage watchtower lvl 1 sur le joiner pour rester dans la vision) + nouveau smoke `combat: cannot attack a target outside vision (blip non-attaquable)`.
+
+### Pas couvert ici (autre ticket)
+
+- [`docs/gameplay/audit/08-fog-of-war-frontend-filtering-risk.md`](../docs/gameplay/audit/08-fog-of-war-frontend-filtering-risk.md) — filtrage redondant côté frontend dans `WorldMapScreen.tsx`. Différent problème (front), à traiter séparément.
+
+---
+
+## Contexte (historique)
 
 Trouvé en écrivant le smoke fog of war (ticket 02). Quand une entité (village barbare, futur autre joueur) est en dehors de tous les vision disks du joueur, `VisionService.applyFogOfWar` la **garde dans le payload** mais remplace le data utile par `{ kind: 'fogged', id, x, y }`. L'`id` et les coordonnées `x, y` sortent en clair. Selon l'intent design, ça peut être :
 

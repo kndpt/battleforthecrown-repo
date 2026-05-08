@@ -59,6 +59,26 @@ export class VisionService {
     return isPointInAnyVisionDisk(point, disks);
   }
 
+  /**
+   * Maps each entity to its visibility-aware payload. Out-of-vision entities
+   * are returned as anonymous blips: `{ kind: 'fogged', id, x, y }`.
+   *
+   * **Contract — intentional, do not "fix" by hiding x/y/id**:
+   * - `x, y` are exposed by design. The blip is meant to convey "something
+   *   is here" (TW/KingsAge style). Cf. ADR-11 and
+   *   `docs/gameplay/01-overview.md` (section "Exploration & brouillard de
+   *   guerre").
+   * - `id` is exposed as a stable key for frontend reconciliation (Pixi
+   *   sprite tracking across fetches). It is an opaque cuid; it does not
+   *   reveal type, owner, level or name.
+   * - `tier`, `name`, `villageId`, `userId` and any other gameplay payload
+   *   are stripped — that is the actual fog.
+   * - A fogged target **cannot be attacked**: enforced server-side in
+   *   `CombatService.initiateAttack` (gated by `world.config.fogOfWar.enabled`).
+   *
+   * Master vision shortcut: if any disk has `radius === null` (watchtower
+   * lvl 10), every entity is returned unmasked.
+   */
   applyFogOfWar<T extends PositionedEntity>(
     entities: readonly T[],
     disks: readonly VisionDisk[],

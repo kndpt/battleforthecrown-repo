@@ -163,6 +163,12 @@ Le bundle pertinent est chargé via `loadBundle(name)` au mount du canvas corres
 - **Blip** (hors rayon) : payload réduit `{kind: 'fogged', id, x, y}`. Le joueur sait qu'une entité est là mais pas ce que c'est.
 - **Hors monde** : non concerné.
 
+Détail du payload blip — **chaque champ est volontaire**, ne pas "corriger" en l'enlevant :
+- `x, y` : cœur de l'intent design (« il y a quelque chose ici ») — sans la position, pas de tension narrative ni de cible à explorer.
+- `id` : **stable key technique** pour la reconciliation Pixi (le sprite blip persiste entre deux fetchs et le frontend doit le tracker). C'est un cuid opaque ; il ne révèle rien sur l'entité (type, owner, niveau, nom).
+- `kind: 'fogged'` : discriminant TS de l'union `FogResult<T>` côté shared.
+- Tout le reste (`tier`, `name`, `villageId`, `userId`, etc.) est strippé — c'est ça la vraie fog.
+
 Implémentation :
 - Un `VisionService` (NestJS) calcule les disques de vision du joueur (un par tour de guet, lvl 10 ⇒ disque illimité).
 - `applyFogOfWar(entities, disks)` mappe chaque entité vers le payload visible ou un blip.
@@ -171,6 +177,7 @@ Implémentation :
 - Les expéditions sont **filtrées en amont** (omises si hors vision) : pas de blip pour elles, simplification volontaire.
 - Feature flag par monde : `world.config.fogOfWar.enabled` (suit le pattern `barbarianSeeding.enabled`). Default `true` dans `mergeWithDefaults` + seed.
 - Côté Pixi : un `BlipSprite` non-interactif (cercle gris ~10 px, sans listener) rend les payloads `kind: 'fogged'`.
+- **Blip non-attaquable côté serveur** : `CombatService.initiateAttack` rejette en `403 ForbiddenException` toute attaque dont la cible (`x, y`) est hors des disques de vision du joueur (gated par `fogOfWar.enabled`). La règle UI "BlipSprite non-cliquable" était insuffisante seule — un client modifié pouvait POSTer `/combat/attack` avec l'`id` du blip. Couvert par smoke `combat: cannot attack a target outside vision`.
 
 **Conséquences.**
 - Vraie règle de jeu : un client modifié ne peut **plus** révéler la carte.

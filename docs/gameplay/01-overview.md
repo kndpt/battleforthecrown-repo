@@ -88,6 +88,7 @@ La carte du monde n'est pas révélée d'un coup. Le joueur **construit sa visio
 - **Pas de mémoire** : une entité qui sort de mon rayon redevient un blip. Pas de "déjà découvert".
 - **Expéditions** : visibles **uniquement** dans la vision. Hors vision, rien — pas même un blip. C'est la simplification volontaire qui évite de transformer la carte en radar.
 - **Blip non-cliquable** : impossible de sélectionner, attaquer ou tooltip un blip. Il faut le révéler en étendant sa vision.
+- **Blip non-attaquable côté serveur** : un POST `/combat/attack` avec une cible hors vision est rejeté en 403, même si le client triche en réutilisant l'`id` du blip. La règle est server-authoritative, pas seulement UI.
 
 ### Pourquoi un blip plutôt que rien
 
