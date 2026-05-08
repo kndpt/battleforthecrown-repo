@@ -46,6 +46,7 @@ docs/
 |---|---|
 | Décision d'architecture structurante (le **pourquoi**) | `docs/architecture/decisions.md` (ADR consolidé). |
 | Doc technique de référence (modules, data model, realtime, DB) | `docs/architecture/<domaine>.md`. |
+| Doc UI frontend (catalogue composants, design system, writing style) | `battleforthecrown-pixi/docs/ui-{library,design-system,writing-style}.md`. |
 | Mécanique gameplay | `docs/gameplay/`. |
 | Convention projet (transversale) | `.claude/rules/conventions.md`. |
 | Convention workspace | `<workspace>/.claude/rules/<scope>.md`. |

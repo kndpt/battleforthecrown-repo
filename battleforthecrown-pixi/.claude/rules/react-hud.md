@@ -92,7 +92,13 @@ Ne jamais decrement les ressources en optimistic — laisser l'event WS `resourc
 
 ## UI primitives
 
-`src/ui/` (portées du legacy) : `Button`, `IconButton`, `Input`, `InputLabel`, `Card`, `Modal`, `Toast`, `Tooltip`, `Spinner`, `Slider`, `Panel`, `Badge`, `Avatar`, `Select`, `ResourceIcon`, `HeaderBar`, `ProgressBar`. Toutes typées strict.
+`src/ui/` (Clash-like médiéval, CVA + Tailwind). **Sources canoniques** :
+
+- Catalogue (composants existants, props, variants) → [`../../docs/ui-library.md`](../../docs/ui-library.md).
+- Design system (palette, typo, espacements, template CVA, checklist) → [`../../docs/ui-design-system.md`](../../docs/ui-design-system.md).
+- Tone & writing (micro-copies, erreurs, tooltips) → [`../../docs/ui-writing-style.md`](../../docs/ui-writing-style.md).
+
+Règle dure : **UI idiote**. Zéro import de `@/stores`, `@/api`, `@/features` dans `src/ui/`. La logique vit chez le caller (hook, feature, shell).
 
 Trois cas selon couplage et portée :
 
