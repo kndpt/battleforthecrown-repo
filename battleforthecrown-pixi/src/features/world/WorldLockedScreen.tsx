@@ -4,7 +4,7 @@ import { Button, Panel } from '@/ui';
 import { GameSession } from '@/features/game/GameSession';
 import { GameHeader } from '@/features/layout/GameHeader';
 import { ToastStack } from '@/features/layout/ToastStack';
-import { BottomNavigationBar } from '@/features/village/BottomNavigationBar';
+import { BottomNavigationBar } from '@/features/layout/BottomNavigationBar';
 import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
 
 /**

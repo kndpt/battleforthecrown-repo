@@ -6,7 +6,7 @@ import { GameSession } from './GameSession';
 import { GameHeader } from '@/features/layout/GameHeader';
 import { ToastStack } from '@/features/layout/ToastStack';
 import { VillageCanvas } from '@/features/village/VillageCanvas';
-import { BottomNavigationBar } from '@/features/village/BottomNavigationBar';
+import { BottomNavigationBar } from '@/features/layout/BottomNavigationBar';
 import { BuildingManagementPanel } from '@/features/village/BuildingManagementPanel';
 import { BuildingDetailModal } from '@/features/village/BuildingDetailModal';
 import { QueueFloatingButton } from '@/features/village/QueueFloatingButton';

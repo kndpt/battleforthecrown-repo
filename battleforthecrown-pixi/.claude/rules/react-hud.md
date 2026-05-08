@@ -68,7 +68,11 @@ Ne jamais decrement les ressources en optimistic — laisser l'event WS `resourc
 
 `src/ui/` (portées du legacy) : `Button`, `IconButton`, `Input`, `InputLabel`, `Card`, `Modal`, `Toast`, `Tooltip`, `Spinner`, `Slider`, `Panel`, `Badge`, `Avatar`, `Select`, `ResourceIcon`, `HeaderBar`, `ProgressBar`. Toutes typées strict.
 
-Pour un nouveau composant transverse → l'ajouter à `src/ui/`. Pour un composant feature-specific → `src/features/<feature>/`.
+Trois cas selon couplage et portée :
+
+- **Stateless transverse** (pas de store/api, primitive design system) → `src/ui/<category>/`. Ex : `Button`, `HeaderBar`, `PlayerProfile`.
+- **Stateful transverse** (lit store/api, partagé par plusieurs écrans) → `src/features/layout/`. Shell de l'app : header, navigation, toasts, overlays. Ex : `GameHeader`, `BottomNavigationBar`, `ToastStack`.
+- **Stateful feature-specific** (un seul domaine consomme) → `src/features/<domaine>/`. Ex : `BuildingManagementPanel`, `UnitCard`.
 
 ## Path alias
 

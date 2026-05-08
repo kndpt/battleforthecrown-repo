@@ -34,7 +34,7 @@ Chaque ticket décrit **un problème observé**, factuel, avec références `pat
 ### Frontend Pixi
 
 - ✅ [11 — Optimistic UI asymétrique](./11-pixi-optimistic-ui-asymmetric.md) 🟠 — **résolu le 2026-05-08**
-- [12 — Composants transverses dans `features/`](./12-pixi-transverse-components-misplaced.md) 🟠
+- ✅ [12 — Composants transverses dans `features/`](./12-pixi-transverse-components-misplaced.md) 🟠 — **résolu le 2026-05-08**
 - [13 — `GameSession` wrapper aux responsabilités dispersées](./13-pixi-game-session-fragile-wrapper.md) 🟠
 - [14 — Convention zod non appliquée](./14-pixi-zod-not-applied.md) 🟠
 - [15 — `setTimeout` magiques dans ws-bindings](./15-pixi-magic-timeouts-ws-bindings.md) 🟠

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { GameSession } from '@/features/game/GameSession';
 import { GameHeader } from '@/features/layout/GameHeader';
 import { ToastStack } from '@/features/layout/ToastStack';
-import { BottomNavigationBar } from '@/features/village/BottomNavigationBar';
+import { BottomNavigationBar } from '@/features/layout/BottomNavigationBar';
 import { PowerBottomSheet } from '@/features/power/PowerBottomSheet';
 import { ReportsList } from './ReportsList';
 import { ReportDetailModal } from './ReportDetailModal';

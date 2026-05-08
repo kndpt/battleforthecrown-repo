@@ -5,7 +5,7 @@ import { Badge, BottomSheet, Button, Panel, Spinner } from '@/ui';
 import { GameSession } from '@/features/game/GameSession';
 import { GameHeader } from '@/features/layout/GameHeader';
 import { ToastStack } from '@/features/layout/ToastStack';
-import { BottomNavigationBar } from '@/features/village/BottomNavigationBar';
+import { BottomNavigationBar } from '@/features/layout/BottomNavigationBar';
 import { PowerBottomSheet } from '@/features/power/PowerBottomSheet';
 import { ExpeditionList } from '@/features/combat/ExpeditionList';
 import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';

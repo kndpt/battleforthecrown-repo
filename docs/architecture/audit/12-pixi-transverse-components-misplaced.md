@@ -63,3 +63,48 @@ Probablement issu de l'organisation initiale "par feature" avant que les besoins
 - Convention claire écrite pour : où placer un composant selon son couplage à store/api et son nombre de consommateurs.
 - Tous les composants existants suivent la convention (déplacement effectué OU justification écrite).
 - `.claude/rules/` mis à jour si la règle évolue.
+
+## Résolution (2026-05-08)
+
+### Drift constaté avec le ticket d'origine
+
+Lecture du code à J-2 du ticket :
+
+- `GameHeader.tsx` cité à **213 lignes** : en réalité **105 lignes** (`features/layout/GameHeader.tsx:1-105`). Déjà refactorisé en assemblage des primitives stateless `ui/layout/` (`HeaderBar`, `PlayerProfile`, `ResourceDisplay`, `PopulationIndicator`, `HeaderActions`) + widgets feature (`CrownDisplay`, `PowerBadge`). Aucun déplacement requis.
+- `BuildingManagementPanel`, `QueueBottomSheet` cités « à auditer pour potentiel transverse » : importés **uniquement** par `VillageView` → faux positifs, bien placés sous `features/village/`.
+- `GameHeader` annoncé « réutilisé dans 4 écrans » : en réalité **5** (avec `WorldLockedScreen`).
+- `ToastStack.tsx` (51 lignes, `features/layout/`) — transverse aux 5 écrans, **oublié** par le ticket.
+- `src/ui/layout/` annoncé absent : **existait déjà** avec les primitives stateless ci-dessus.
+
+### Vrai problème restant
+
+Un seul vrai misplacement : `BottomNavigationBar.tsx` (217 lignes) sous `features/village/` alors qu'il est consommé par 5 écrans (Village/World/Army/Messages/WorldLocked). Son hook compagnon `useBuildingsForLockCheck.ts` n'a aucun consommateur village-spécifique non plus (utilisé par `BottomNavigationBar` et `WorldMapScreen`).
+
+### Décision et patch
+
+Option **D — formaliser l'existant** plutôt que les A/B/C du ticket :
+
+L'archi implicite déjà en place est **3 couches** :
+
+```
+src/ui/<category>/         primitives stateless (Button, HeaderBar, PlayerProfile…)
+src/features/layout/       assemblies stateful transverses (GameHeader, ToastStack)
+src/features/<domain>/     spécifique à un domaine
+```
+
+`features/layout/` joue déjà le rôle de "shell layer" que l'option B suggérait via un nouveau top-level `src/shell/`. Pas la peine d'en créer un.
+
+Patch :
+
+- `git mv features/village/BottomNavigationBar.tsx → features/layout/BottomNavigationBar.tsx`
+- `git mv features/village/useBuildingsForLockCheck.ts → features/layout/useBuildingsForLockCheck.ts`
+- 5 imports mis à jour (`VillageView`, `ArmyScreen`, `MessagesScreen`, `WorldLockedScreen`, `WorldMapScreen`)
+- `.claude/rules/react-hud.md` : règle clarifiée en 3 cas (stateless transverse → `ui/`, stateful transverse → `features/layout/`, feature-specific → `features/<domaine>/`)
+
+Diff total : 2 renames + 6 lignes d'imports + 6 lignes de doc. Zéro changement runtime. `tsc --noEmit` vert, 57/57 tests verts.
+
+### Hors scope (volontaire)
+
+- `GameHeader`, `ToastStack`, `DebugOverlay` restent en `features/layout/` (déjà conformes à la règle).
+- Pas de création de `src/shell/` (ne ferait que doubler `features/layout/`).
+- Pas de tentative de rendre `BottomNavigationBar` stateless en sortant le `useBuildingsForLockCheck` (le couplage hook→composant est bénéfique : la logique de gating est encapsulée dans le composant qui l'expose).

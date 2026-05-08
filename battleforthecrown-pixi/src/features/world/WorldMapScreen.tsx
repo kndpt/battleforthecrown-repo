@@ -13,8 +13,8 @@ import { WorldEntityTooltip } from './WorldEntityTooltip';
 import { buildMapEntities, filterEntitiesByVision } from './buildMapEntities';
 import { AttackDetailModal } from '@/features/combat/AttackDetailModal';
 import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
-import { BottomNavigationBar } from '@/features/village/BottomNavigationBar';
-import { useBuildingsForLockCheck } from '@/features/village/useBuildingsForLockCheck';
+import { BottomNavigationBar } from '@/features/layout/BottomNavigationBar';
+import { useBuildingsForLockCheck } from '@/features/layout/useBuildingsForLockCheck';
 import {
   useMyVillagesQuery,
   useWorldDetailsQuery,
