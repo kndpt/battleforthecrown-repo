@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { io as ioClient, type Socket as ClientSocket } from 'socket.io-client';
 import {
   bootSmokeApp,
   joinWorld,
@@ -16,9 +17,13 @@ import { BarbarianBackfillWorker } from '../src/modules/world/barbarian-backfill
 describe('smoke', () => {
   let ctx: SmokeContext;
 
+  let port: number;
+
   beforeAll(async () => {
     ctx = await bootSmokeApp();
     await truncateAll(ctx.prisma);
+    await ctx.app.listen(0);
+    port = (ctx.server.address() as { port: number }).port;
   });
 
   afterAll(async () => {
@@ -252,5 +257,92 @@ describe('smoke', () => {
     const after = await ctx.prisma.village.count({ where: { worldId, isBarbarian: true } });
 
     expect(after).toBeGreaterThan(before);
+  });
+
+  it('jwt auth: register → access protected → refresh → access with new token', async () => {
+    const { email, accessToken: t1, refreshToken } = await registerUser(ctx.server);
+
+    const r1 = await request(ctx.server)
+      .get('/world/me/memberships')
+      .set('Authorization', `Bearer ${t1}`);
+    expect(r1.status).toBe(200);
+
+    const refreshed = await request(ctx.server).post('/auth/refresh').send({ refreshToken });
+    expect(refreshed.status).toBeLessThan(300);
+    const t2 = refreshed.body.accessToken as string;
+    expect(t2).toBeTruthy();
+
+    const r2 = await request(ctx.server)
+      .get('/world/me/memberships')
+      .set('Authorization', `Bearer ${t2}`);
+    expect(r2.status).toBe(200);
+
+    const login = await request(ctx.server)
+      .post('/auth/login')
+      .send({ email, password: 'smoke-password-123' });
+    expect(login.status).toBeLessThan(300);
+    expect(login.body.accessToken).toBeTruthy();
+  });
+
+  it('fog of war: GET /world/:id/entities masks barbarians outside vision disks', async () => {
+    // Player has no WATCHTOWER → 0 vision disks → every world entity comes back as 'fogged'
+    const world = await seedSmokeWorld(ctx.prisma);
+    const user = await registerUser(ctx.server);
+    await joinWorld(ctx.server, user.accessToken, world.id, 'fog-watcher');
+
+    await ctx.prisma.village.create({
+      data: { worldId: world.id, isBarbarian: true, name: 'fogged-barb', x: 250, y: 250, tier: 'T1' },
+    });
+
+    const res = await request(ctx.server)
+      .get(`/world/${world.id}/entities`)
+      .set('Authorization', `Bearer ${user.accessToken}`);
+    expect(res.status).toBe(200);
+
+    const entities = res.body as Array<{ id: string; kind: string; x: number; y: number }>;
+    const found = entities.find((e) => e.x === 250 && e.y === 250);
+    expect(found).toBeTruthy();
+    expect(found?.kind).toBe('fogged');
+  });
+
+  it('outbox dispatch: real Socket.IO client receives building.completed', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const user = await registerUser(ctx.server);
+    const join = await joinWorld(ctx.server, user.accessToken, world.id, 'ws-village');
+    const villageId = join.village.id;
+
+    await ctx.prisma.resourceStock.update({
+      where: { villageId },
+      data: { wood: 1_000_000, stone: 1_000_000, iron: 1_000_000, maxPerType: 10_000_000 },
+    });
+
+    const client: ClientSocket = ioClient(`http://localhost:${port}`, {
+      auth: { token: user.accessToken },
+      transports: ['websocket'],
+      forceNew: true,
+    });
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        client.once('connect', () => resolve());
+        client.once('connect_error', (err) => reject(err));
+        setTimeout(() => reject(new Error('socket connect timeout')), 5_000);
+      });
+
+      const received = new Promise<unknown>((resolve, reject) => {
+        client.once('building.completed', (data) => resolve(data));
+        setTimeout(() => reject(new Error('building.completed not received within 15s')), 15_000);
+      });
+
+      await request(ctx.server)
+        .post(`/village/${villageId}/upgrade`)
+        .set('Authorization', `Bearer ${user.accessToken}`)
+        .send({ buildingType: 'WOOD' });
+
+      const payload = await received;
+      expect(payload).toBeTruthy();
+    } finally {
+      client.disconnect();
+    }
   });
 });
