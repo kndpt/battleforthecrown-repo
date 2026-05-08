@@ -4,30 +4,18 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
+const sharedSrc = path.resolve(here, '../packages/shared/src');
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: {
-      '@': path.resolve(here, 'src'),
-    },
-  },
-  optimizeDeps: {
-    // The shared workspace package is published as CommonJS. Vite skips workspace
-    // packages by default, so named-export imports from it fail at runtime
-    // ("does not provide an export named …"). Forcing pre-bundling converts the
-    // CJS module into a Vite-friendly ESM proxy.
-    include: [
-      '@battleforthecrown/shared',
-      '@battleforthecrown/shared/army',
-      '@battleforthecrown/shared/auth',
-      '@battleforthecrown/shared/combat',
-      '@battleforthecrown/shared/events',
-      '@battleforthecrown/shared/logic',
-      '@battleforthecrown/shared/resources',
-      '@battleforthecrown/shared/village',
-      '@battleforthecrown/shared/village/buildings',
-      '@battleforthecrown/shared/world',
+    // On résout le workspace shared vers ses sources TS plutôt que vers le bundle
+    // CJS de dist/. Vite/esbuild compile à la volée, et tout ajout d'export y est
+    // visible immédiatement — sans cache .vite/deps à invalider.
+    alias: [
+      { find: '@', replacement: path.resolve(here, 'src') },
+      { find: /^@battleforthecrown\/shared\/(.*)$/, replacement: `${sharedSrc}/$1` },
+      { find: /^@battleforthecrown\/shared$/, replacement: `${sharedSrc}/index.ts` },
     ],
   },
 });
