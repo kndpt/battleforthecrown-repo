@@ -71,7 +71,7 @@ Ne jamais decrement les ressources en optimistic — laisser l'event WS `resourc
 Trois cas selon couplage et portée :
 
 - **Stateless transverse** (pas de store/api, primitive design system) → `src/ui/<category>/`. Ex : `Button`, `HeaderBar`, `PlayerProfile`.
-- **Stateful transverse** (lit store/api, partagé par plusieurs écrans) → `src/features/layout/`. Shell de l'app : header, navigation, toasts, overlays. Ex : `GameHeader`, `BottomNavigationBar`, `ToastStack`.
+- **Stateful transverse** (lit store/api, partagé par plusieurs écrans) → `src/features/layout/`. Shell de l'app : header, navigation, toasts, overlays, et le shell auth lui-même (`AuthenticatedShell` — branché une fois au-dessus des routes protégées via `<Outlet />`, owner de la WS et du seeding initial). Ex : `AuthenticatedShell`, `GameHeader`, `BottomNavigationBar`, `ToastStack`.
 - **Stateful feature-specific** (un seul domaine consomme) → `src/features/<domaine>/`. Ex : `BuildingManagementPanel`, `UnitCard`.
 
 ## Path alias
