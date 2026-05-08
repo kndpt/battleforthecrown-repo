@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { BottomSheet } from '@/ui';
 import { Spinner } from '@/ui/spinners';
-import { GameSession } from './GameSession';
 import { GameHeader } from '@/features/layout/GameHeader';
 import { ToastStack } from '@/features/layout/ToastStack';
 import { VillageCanvas } from '@/features/village/VillageCanvas';
@@ -67,86 +66,84 @@ export function VillageView() {
   };
 
   return (
-    <GameSession>
-      <div className="h-screen w-full flex flex-col overflow-hidden bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
-        <div className="flex-shrink">
-          <GameHeader
-            onPowerClick={() => setIsPowerSheetOpen(true)}
-            onNotificationsClick={() => setIsExpeditionsOpen(true)}
-          />
-        </div>
+    <div className="h-screen w-full flex flex-col overflow-hidden bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
+    <div className="flex-shrink">
+      <GameHeader
+        onPowerClick={() => setIsPowerSheetOpen(true)}
+        onNotificationsClick={() => setIsExpeditionsOpen(true)}
+      />
+    </div>
 
-        <div className="flex-1 overflow-hidden pb-20">
-          {!villageId ? (
-            <div className="h-full flex items-center justify-center text-kingdom-700 font-game text-sm">
-              Pas de village actif.
-            </div>
-          ) : buildingsQuery.isLoading ? (
-            <div className="h-full flex items-center justify-center">
-              <Spinner size="lg" />
-            </div>
-          ) : (
-            <VillageCanvasFrame
-              villageId={villageId}
-              buildings={buildings}
-              onSelectBuilding={handleSelectBuilding}
-            />
-          )}
-        </div>
-
-        <BottomNavigationBar
-          activeTab="buildings"
-          onBuildingsClick={() => setIsBuildingPanelOpen(true)}
-          onArmyClick={() => navigate('/game/army')}
-          onWorldClick={() => navigate('/game/world')}
-          onMessagesClick={() => navigate('/game/messages')}
-          unreadCount={unreadCount}
-        />
-
-        <BuildingManagementPanel
-          isOpen={isBuildingPanelOpen}
-          onClose={() => setIsBuildingPanelOpen(false)}
-          buildings={buildings}
-          onBuildingClick={handleSelectBuilding}
-        />
-
-        <div className="fixed bottom-28 right-4 z-30">
-          <QueueFloatingButton
-            isOpen={isQueueOpen}
-            onToggle={() => setIsQueueOpen((prev) => !prev)}
-          />
-        </div>
-
-        <QueueBottomSheet
-          isOpen={isQueueOpen && !isBuildingPanelOpen}
-          onClose={() => setIsQueueOpen(false)}
-        />
-
-        {selectedBuilding && villageId && (
-          <BuildingDetailModal
+    <div className="flex-1 overflow-hidden pb-20">
+        {!villageId ? (
+          <div className="h-full flex items-center justify-center text-kingdom-700 font-game text-sm">
+            Pas de village actif.
+          </div>
+        ) : buildingsQuery.isLoading ? (
+          <div className="h-full flex items-center justify-center">
+            <Spinner size="lg" />
+          </div>
+        ) : (
+          <VillageCanvasFrame
             villageId={villageId}
-            building={selectedBuilding}
-            onClose={handleCloseDetail}
+            buildings={buildings}
+            onSelectBuilding={handleSelectBuilding}
           />
         )}
-
-        <PowerBottomSheet
-          isOpen={isPowerSheetOpen}
-          onClose={() => setIsPowerSheetOpen(false)}
-        />
-
-        <BottomSheet
-          isOpen={isExpeditionsOpen}
-          onClose={() => setIsExpeditionsOpen(false)}
-          title="Expéditions en cours"
-        >
-          <div className="p-4">
-            <ExpeditionList />
-          </div>
-        </BottomSheet>
-
-        <ToastStack />
       </div>
-    </GameSession>
+
+      <BottomNavigationBar
+        activeTab="buildings"
+        onBuildingsClick={() => setIsBuildingPanelOpen(true)}
+        onArmyClick={() => navigate('/game/army')}
+        onWorldClick={() => navigate('/game/world')}
+        onMessagesClick={() => navigate('/game/messages')}
+        unreadCount={unreadCount}
+      />
+
+      <BuildingManagementPanel
+        isOpen={isBuildingPanelOpen}
+        onClose={() => setIsBuildingPanelOpen(false)}
+        buildings={buildings}
+        onBuildingClick={handleSelectBuilding}
+      />
+
+      <div className="fixed bottom-28 right-4 z-30">
+        <QueueFloatingButton
+          isOpen={isQueueOpen}
+          onToggle={() => setIsQueueOpen((prev) => !prev)}
+        />
+      </div>
+
+      <QueueBottomSheet
+        isOpen={isQueueOpen && !isBuildingPanelOpen}
+        onClose={() => setIsQueueOpen(false)}
+      />
+
+      {selectedBuilding && villageId && (
+        <BuildingDetailModal
+          villageId={villageId}
+          building={selectedBuilding}
+          onClose={handleCloseDetail}
+        />
+      )}
+
+      <PowerBottomSheet
+        isOpen={isPowerSheetOpen}
+        onClose={() => setIsPowerSheetOpen(false)}
+      />
+
+      <BottomSheet
+        isOpen={isExpeditionsOpen}
+        onClose={() => setIsExpeditionsOpen(false)}
+        title="Expéditions en cours"
+      >
+        <div className="p-4">
+          <ExpeditionList />
+        </div>
+      </BottomSheet>
+
+      <ToastStack />
+    </div>
   );
 }

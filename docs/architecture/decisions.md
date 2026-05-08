@@ -205,6 +205,38 @@ Implémentation :
 
 ---
 
+## ADR-13 — `AuthenticatedShell` au niveau Router (vs wrap par écran)
+
+**Contexte.** L'ancien `GameSession.tsx` (`features/game/`) cumulait connexion WebSocket, bindings d'events, seeding des stores Zustand depuis les queries REST et sync expéditions. Chaque écran protégé (VillageView, WorldMapScreen, ArmyScreen, MessagesScreen, WorldLockedScreen) devait s'auto-wrapper avec `<GameSession>`. Conséquence non documentée : à chaque navigation entre écrans protégés, le wrapper se démontait → `gameSocket.disconnect()` puis reconnect dans le nouvel écran. La WebSocket cyclait à chaque navigation, le `join:world` était redéclenché, et tout event arrivant pendant la transition était perdu (masqué par le polling REST). `ArmyScreen` cumulait jusqu'à 3 wrappers via ses early-returns. Audit : `docs/architecture/audit/13-pixi-game-session-fragile-wrapper.md`.
+
+**Décision.**
+1. Renommer + déplacer `GameSession` en `AuthenticatedShell` (`src/features/layout/`) — convention `features/layout/` pour le stateful transverse, héritée d'ADR-12 et du ticket 12.
+2. Le shell rend `<Outlet />` au lieu de `{children}`, et est branché **une seule fois** dans `App.tsx` :
+   ```tsx
+   <Route element={<ProtectedRoute />}>
+     <Route element={<AuthenticatedShell />}>
+       <Route path="/worlds" .../>
+       <Route path="/my-worlds" .../>
+       <Route path="/game" .../>
+       <Route path="/game/world" .../>
+       <Route path="/game/army" .../>
+       <Route path="/game/messages" .../>
+     </Route>
+   </Route>
+   ```
+3. Tous les écrans protégés sont nettoyés du wrap explicite.
+
+**Conséquences.**
+- La WebSocket est connectée une fois pour toute la session authentifiée et survit aux navigations. `gameSocket.disconnect()` n'est appelé qu'au logout (quand `accessToken` redevient falsy) ou au démontage de l'app.
+- `bindServerEvents` est appelé une seule fois par session — plus de listeners dupliqués.
+- Les seeds de stores (`useResourcesQuery`, `useCrownsQuery`, `useMyVillagesQuery`, expeditions sync) ne re-déclenchent plus à chaque navigation.
+- Pattern explicite : impossible d'oublier le shell — il est ancré dans le router. Tout nouvel écran ajouté sous `<ProtectedRoute>` hérite automatiquement de la session live.
+- Pas de découpage prématuré en `WebSocketProvider` + `Seeder` + `Sync` : tant que le shell tient en ~115 lignes, la cohésion locale gagne sur la séparation. À reconsidérer s'il dépasse ~250 lignes ou si une feature exige un cycle de vie distinct.
+
+**Vérifié (2026-05-08).** Type-check + 57 tests Vitest passent. Commit du refacto : voir `git log` (`refactor(pixi/layout): promote AuthenticatedShell to router level`).
+
+---
+
 ## Maintenance de ce document
 
 - Une décision **structurante** (qui change la façon dont on pense le projet) → nouvelle entrée ADR.

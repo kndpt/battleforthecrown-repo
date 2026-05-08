@@ -1,8 +1,36 @@
 # 13 — `GameSession` wrapper aux responsabilités dispersées
 
-**Sévérité** : 🟠 Moyenne
+**Statut** : ✅ Résolu le 2026-05-08 (cf. ADR-13).
+**Sévérité** : 🟠 Moyenne (réévaluée 🟡 à l'analyse — la WS cyclait à chaque navigation).
 **Workspace(s)** : `battleforthecrown-pixi`
 **Tags** : architecture, lifecycle, app-shell
+
+## Résolution
+
+Le wrapper `GameSession` a été renommé `AuthenticatedShell` et déplacé dans `src/features/layout/`. Il est désormais branché une seule fois au niveau du Router via `<Outlet />` :
+
+```tsx
+<Route element={<ProtectedRoute />}>
+  <Route element={<AuthenticatedShell />}>
+    <Route path="/worlds" .../>
+    <Route path="/my-worlds" .../>
+    <Route path="/game" .../>
+    <Route path="/game/world" .../>
+    <Route path="/game/army" .../>
+    <Route path="/game/messages" .../>
+  </Route>
+</Route>
+```
+
+Effets :
+- WS connectée une seule fois par session (au lieu d'un cycle complet à chaque navigation).
+- `bindServerEvents` appelé une seule fois — plus de listeners dupliqués.
+- Plus aucun écran ne wrappe — pattern explicite, ancré dans le routeur.
+- ArmyScreen débarrassé de ses 3 wrappers (un par early-return).
+
+Pas de découpage en `WebSocketProvider` + `Seeder` + `Sync` retenu : ~115 lignes, la cohésion locale prime tant qu'aucune feature n'exige un cycle de vie distinct.
+
+---
 
 ## Symptôme
 

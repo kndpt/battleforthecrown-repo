@@ -11,6 +11,7 @@ import { WorldSelector } from '@/features/worlds/WorldSelector';
 import { MyWorldsScreen } from '@/features/worlds/MyWorldsScreen';
 import { Spinner } from '@/ui/spinners';
 import { useGameStore } from '@/stores/game';
+import { AuthenticatedShell } from '@/features/layout/AuthenticatedShell';
 import { DebugOverlay } from '@/features/layout/DebugOverlay';
 
 const VillageView = lazy(() =>
@@ -103,12 +104,14 @@ export default function App() {
           />
 
           <Route element={<ProtectedRoute />}>
-            <Route path="/worlds" element={<WorldSelector />} />
-            <Route path="/my-worlds" element={<MyWorldsScreen />} />
-            <Route path="/game" element={<GameGuard />} />
-            <Route path="/game/world" element={<WorldMapGuard />} />
-            <Route path="/game/army" element={<ArmyGuard />} />
-            <Route path="/game/messages" element={<MessagesGuard />} />
+            <Route element={<AuthenticatedShell />}>
+              <Route path="/worlds" element={<WorldSelector />} />
+              <Route path="/my-worlds" element={<MyWorldsScreen />} />
+              <Route path="/game" element={<GameGuard />} />
+              <Route path="/game/world" element={<WorldMapGuard />} />
+              <Route path="/game/army" element={<ArmyGuard />} />
+              <Route path="/game/messages" element={<MessagesGuard />} />
+            </Route>
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

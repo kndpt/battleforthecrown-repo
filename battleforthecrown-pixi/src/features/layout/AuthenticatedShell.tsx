@@ -1,4 +1,5 @@
-import { useEffect, useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo } from 'react';
+import { Outlet } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
@@ -16,39 +17,34 @@ import {
 } from '@/api/queries';
 import { entityFromMyVillage } from '@/api/world-types';
 
-export function GameSession({ children }: { children: ReactNode }) {
+/**
+ * Mounted once at the top of the protected route tree (via <Outlet />).
+ * Owns the WebSocket lifecycle, server-event bindings and initial REST → store
+ * seeding so navigating between protected screens never tears down the live
+ * session.
+ */
+export function AuthenticatedShell() {
   const accessToken = useAuthStore((state) => state.accessToken);
   const worldId = useGameStore((state) => state.worldId);
   const villageId = useGameStore((state) => state.villageId);
+  const userId = useAuthStore((state) => state.user?.id ?? null);
   const queryClient = useQueryClient();
 
-  // Connect WS once we have an access token. socket.io's built-in reconnection
-  // handles transient drops; we just (dis)connect on mount/unmount.
   useEffect(() => {
     if (!accessToken) return;
     gameSocket.connect(accessToken);
-    return () => {
-      gameSocket.disconnect();
-    };
+    return () => gameSocket.disconnect();
   }, [accessToken]);
 
-  // Join the world room when both the socket and the world id are known.
   useEffect(() => {
     if (!worldId) return;
-    const off = gameSocket.subscribeStatus((status) => {
-      if (status === 'connected') {
-        gameSocket.joinWorld(worldId);
-      }
+    return gameSocket.subscribeStatus((status) => {
+      if (status === 'connected') gameSocket.joinWorld(worldId);
     });
-    return off;
   }, [worldId]);
 
-  // Wire server events → stores / query invalidations once per session.
-  useEffect(() => {
-    return bindServerEvents({ queryClient });
-  }, [queryClient]);
+  useEffect(() => bindServerEvents({ queryClient }), [queryClient]);
 
-  // Initial resources baseline: REST snapshot pushed into the Zustand store.
   const resourcesQuery = useResourcesQuery(villageId);
   const setResources = useResourcesStore((state) => state.setResources);
   useEffect(() => {
@@ -64,8 +60,6 @@ export function GameSession({ children }: { children: ReactNode }) {
     });
   }, [villageId, resourcesQuery.data, setResources]);
 
-  // Initial crowns baseline. WS event `crowns.changed` keeps it fresh afterwards.
-  const userId = useAuthStore((state) => state.user?.id ?? null);
   const crownsQuery = useCrownsQuery(worldId);
   const setCrowns = useCrownsStore((state) => state.setCrowns);
   useEffect(() => {
@@ -79,36 +73,29 @@ export function GameSession({ children }: { children: ReactNode }) {
     });
   }, [userId, worldId, crownsQuery.data, setCrowns]);
 
-  // Keep worldMap store seeded with the user's villages so that expedition
-  // origins resolve correctly even when the player isn't on the WorldMap screen
-  // (otherwise `resolveOrigin` falls back to (0, 0) and paths start from the
-  // top-left corner of the map).
+  // Seed worldMap store with the player's villages so expedition origins
+  // resolve correctly even when not on the WorldMap screen — otherwise
+  // `resolveOrigin` falls back to (0, 0) and paths start top-left.
   const myVillagesQuery = useMyVillagesQuery(worldId);
   const upsertEntity = useWorldMapStore((state) => state.upsertEntity);
   const villageOrigins = useMemo(() => {
     const map = new Map<string, { x: number; y: number }>();
-    (myVillagesQuery.data ?? []).forEach((v) => {
-      map.set(v.id, { x: v.x, y: v.y });
-    });
+    (myVillagesQuery.data ?? []).forEach((v) => map.set(v.id, { x: v.x, y: v.y }));
     return map;
   }, [myVillagesQuery.data]);
   useEffect(() => {
     if (!myVillagesQuery.data) return;
-    myVillagesQuery.data.forEach((village) => {
-      upsertEntity(entityFromMyVillage(village, userId));
-    });
+    myVillagesQuery.data.forEach((village) => upsertEntity(entityFromMyVillage(village, userId)));
   }, [myVillagesQuery.data, userId, upsertEntity]);
 
-  // Active expeditions sync. The query polls the backend; we reconcile the
-  // store on every tick so phase transitions (EN_ROUTE → RETURNING → RETURNED)
-  // and removals stay correct even if a WS event was missed.
+  // Reconcile expeditions on every poll tick so phase transitions and
+  // server-side removals stay correct even if a WS event was missed.
   const activeExpeditionsQuery = useActiveExpeditionsQuery(villageId);
   useEffect(() => {
     if (!activeExpeditionsQuery.data) return;
     const list = activeExpeditionsQuery.data;
     const store = useExpeditionsStore.getState();
     const liveIds = new Set(list.map((exp) => exp.id));
-
     list.forEach((exp) => {
       const origin = villageOrigins.get(exp.attackerVillageId) ?? { x: 0, y: 0 };
       store.add({
@@ -124,13 +111,10 @@ export function GameSession({ children }: { children: ReactNode }) {
         returnAt: exp.returnAt ? Date.parse(exp.returnAt) : undefined,
       });
     });
-
-    // Drop expeditions that the server no longer considers active (returned,
-    // cancelled, etc.) so the path / sprite vanish from the map.
     Object.keys(store.byId).forEach((id) => {
       if (!liveIds.has(id)) store.remove(id);
     });
   }, [activeExpeditionsQuery.data, villageOrigins]);
 
-  return <>{children}</>;
+  return <Outlet />;
 }
