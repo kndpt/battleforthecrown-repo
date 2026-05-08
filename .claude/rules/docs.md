@@ -36,7 +36,7 @@ docs/
 
 ## Rules path-scoped
 
-- `.claude/rules/` racine : `conventions.md`, `git.md`, `docs.md` (transversales).
+- `.claude/rules/` racine : `conventions.md`, `git.md`, `docs.md`, `qa.md`, `tests.md` (transversales).
 - `battleforthecrown-pixi/.claude/rules/` : `pixi-conventions.md`, `react-hud.md`.
 - `battleforthecrown-backend/.claude/rules/` : `nest-conventions.md`, `prisma.md`, `workers.md`.
 

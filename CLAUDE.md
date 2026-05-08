@@ -13,6 +13,7 @@ Voir [`.claude/rules/`](./.claude/rules/) pour le détail :
 - [`git.md`](./.claude/rules/git.md) — commits EN au format `<type>(<scope>): <subject>`.
 - [`docs.md`](./.claude/rules/docs.md) — vérifier à chaque tâche s'il faut créer, mettre à jour ou supprimer de la doc.
 - [`qa.md`](./.claude/rules/qa.md) — QA obligatoire en fin de tâche : checklist user pour ce qui est observable en jeu, vérif backend faite par l'agent (curl/SQL/logs) sinon.
+- [`tests.md`](./.claude/rules/tests.md) — **politique tests transversale (source unique)** : arbre de décision, types autorisés (unit pure-logic, smoke), anti-patterns. Lire avant d'écrire ou demander un test.
 
 ## Commandes essentielles
 

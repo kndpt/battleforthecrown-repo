@@ -106,8 +106,7 @@ Trois cas selon couplage et portée :
 
 ## Tests
 
-- Helpers purs : tests systématiques (cn, interpolation, construction progress, expeditionMath, layout).
-- Composants : tester ceux qui ont une logique non triviale (formulaires zod, optimistic). Skipper les composants 100% présentation.
+Politique : [`../../.claude/rules/tests.md`](../../.claude/rules/tests.md). En résumé pour le HUD : helpers purs systématiques, composants seulement si logique non triviale (formulaires Zod, optimistic UI). Skipper la présentation pure.
 
 ## Lazy loading
 

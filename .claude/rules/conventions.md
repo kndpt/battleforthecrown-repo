@@ -26,8 +26,7 @@ Pattern : `onMutate` (snapshot + mutate cache) → `onError` (rollback via conte
 
 ## Tests
 
-- **Vitest** dans chaque workspace front. Couvrir la logique métier non triviale (calcul, formatting, parsing) et la plomberie sensible (refresh JWT, reconciliation Pixi).
-- Pas de tests pour les composants triviaux ou pour le simple câblage.
+Source unique : [`tests.md`](./tests.md). **À lire avant d'écrire ou demander un test.** Décide entre unit pure-logic, smoke, ou pas de test du tout.
 
 ## Lint / formatage
 

@@ -40,7 +40,9 @@ Frontend Battle for the Crown : Vite + React 19 + PixiJS v8 + Zustand + TanStack
 
 ## Tests
 
-53+ tests Vitest (jsdom). Couvrent :
+**Politique** : [`../.claude/rules/tests.md`](../.claude/rules/tests.md) (source unique transversale — quand écrire un test, quel type, anti-patterns).
+
+Couverture actuelle Vitest (jsdom) :
 - `lib/` helpers purs (cn, interpolation, construction progress).
 - `api/` client (refresh JWT 401), WS bindings.
 - `stores/` (worldMap, expeditions).

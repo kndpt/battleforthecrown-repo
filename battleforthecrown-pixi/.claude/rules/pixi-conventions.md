@@ -100,5 +100,4 @@ Toujours appeler `viewport.resize(...)` dans le handler `resize` de `app.rendere
 
 ## Tests
 
-- Les helpers purs (`expeditionMath`, `constructionProgress`, `villageLayout`) sont testés sans Pixi (vitest jsdom).
-- Les scenes elles-mêmes ne sont pas testées unitaire — le coût/valeur n'est pas là. À la place, écrire des invariants sur les helpers et data shapes.
+Politique : [`../../.claude/rules/tests.md`](../../.claude/rules/tests.md). En résumé pour Pixi : helpers purs OK (vitest jsdom), scènes Pixi non — tester les invariants des helpers/data shapes consommés.

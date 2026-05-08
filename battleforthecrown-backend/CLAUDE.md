@@ -49,6 +49,10 @@ Détail dans [`.claude/rules/workers.md`](./.claude/rules/workers.md) (Outbox se
 - [`.claude/rules/prisma.md`](./.claude/rules/prisma.md) — accès données, transactions, N+1, migrations.
 - [`.claude/rules/workers.md`](./.claude/rules/workers.md) — pg-boss, Outbox, isolation des erreurs.
 
+## Tests
+
+**Politique** : [`../.claude/rules/tests.md`](../.claude/rules/tests.md) (source unique transversale). Côté backend : pure-logic-only en unit (formules combat/monde, Zod, strategies, géométrie) ; orchestration (workers/controllers/services Prisma) → smoke (cf. [`../tasks/02-smoke-tests-strategy.md`](../tasks/02-smoke-tests-strategy.md)).
+
 ## Variables d'environnement
 
 ```env
