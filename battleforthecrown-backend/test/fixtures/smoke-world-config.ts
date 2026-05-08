@@ -1,11 +1,12 @@
 import type { WorldConfig } from '@battleforthecrown/shared/world';
 
 // Mirrors prisma/seed-default-world-config.sql, with three changes for smokes:
-// - multipliers.{construction,training,travel} = 0.01 to keep flows under ~1s
+// - multipliers.{construction,training,travel} = 100 → time = baseTime / multiplier,
+//   so durations collapse to the hard 1s minimum (see calculateBuildingCost l.64)
 // - barbarianSeeding.enabled = false (each smoke seeds its own barbarians)
-// - production multiplier stays at 1 (rate is what we observe — not the trigger)
+// - production multiplier stays at 1 (rate is observed — not the trigger speed)
 export const SMOKE_WORLD_CONFIG: WorldConfig = {
-  multipliers: { construction: 0.01, production: 1, training: 0.01, travel: 0.01 },
+  multipliers: { construction: 100, production: 1, training: 100, travel: 100 },
   combat: { attackBonus: 1, defenseBonus: 1, lootFactor: 0.5 },
   barbarianSeeding: {
     enabled: false,
