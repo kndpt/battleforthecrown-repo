@@ -24,10 +24,13 @@ Tu vas modifier ou écrire du code → as-tu besoin d'un test ?
 │    placement) qu'on peut tester sans toucher à Prisma / réseau / WS ?
 │    └─→ OUI : test unit pure-logic.
 │
-├─ C'est de l'orchestration (worker pg-boss, controller HTTP, service Prisma,
-│    gateway WS, mutation TanStack Query) ?
-│    └─→ NON, JAMAIS de test unit. Couvert par smoke (cf. tasks/02). En attendant
-│        que les smokes soient en place : QA in-game + inspection backend manuelle.
+├─ C'est de l'orchestration backend (worker pg-boss, controller HTTP, service
+│    Prisma, gateway WS, dispatch Outbox) ?
+│    └─→ NON, JAMAIS de test unit. Couvert par smoke — voir
+│        [`docs/architecture/smoke-tests.md`](../../docs/architecture/smoke-tests.md).
+│
+├─ C'est de l'orchestration côté front (mutation TanStack Query, câblage WS) ?
+│    └─→ NON. Vérification = QA in-game (cf. qa.md).
 │
 ├─ C'est un composant React / une scène Pixi de présentation pure ?
 │    └─→ NON.
@@ -79,11 +82,13 @@ Commande : `yarn workspace battleforthecrown-pixi test`.
 
 Pas de runner propre (pure typing + formules). Si du code shared mérite un test, **le tester depuis le workspace consommateur**. Le typing est garanti par `tsc`.
 
-### 2. Smoke (backend, à venir)
+### 2. Smoke (backend)
 
-Stratégie en cours — voir [`02-smoke-tests-strategy.md`](../../tasks/02-smoke-tests-strategy.md). Quand les smokes seront en place, ils respecteront ce contrat : mutation REST réelle → vraie DB → attendre worker → asserter event Outbox via WS. **Jamais** de mock de Prisma ou pg-boss dans un smoke.
+Couvre l'orchestration : workers pg-boss, controllers HTTP, services Prisma, gateways WS, dispatch Outbox. Contrat : mutation REST réelle → vraie DB → attendre worker → asserter sur l'effet (DB row, event Outbox via WS réel). **Jamais** de mock de Prisma ou pg-boss dans un smoke. **Jamais** de DB dev (`battleforthecrown`) — toujours `battleforthecrown_smoke`.
 
-**En attendant** : ne réintroduis **pas** de test unit avec mocks pour combler le vide. Le filet temporaire = QA in-game + inspection backend manuelle (curl + SQL + logs).
+Implémentation, flows couverts, et procédure pour en ajouter un : [`docs/architecture/smoke-tests.md`](../../docs/architecture/smoke-tests.md).
+
+Commande : `yarn workspace battleforthecrown-backend test:smoke`.
 
 ## Anti-patterns (interdits, sans exception)
 
@@ -114,6 +119,7 @@ Pousse-back avant d'écrire : *"Ce pattern est interdit cf. `.claude/rules/tests
 
 ## Références
 
-- [`01-unit-tests-audit.md`](../../tasks/archive/01-unit-tests-audit.md) — historique du tri 26 → 7 fichiers spec backend (résolu 2026-05-08), source de la politique pure-logic-only.
-- [`02-smoke-tests-strategy.md`](../../tasks/02-smoke-tests-strategy.md) — stratégie smoke pour l'orchestration (en cours), liste des flows à couvrir.
+- [`docs/architecture/smoke-tests.md`](../../docs/architecture/smoke-tests.md) — implémentation des smokes : où ils vivent, comment les lancer, flows couverts, comment en ajouter.
 - [`qa.md`](./qa.md) — vérification fin de tâche, distinct des tests automatisés.
+- [`tasks/archive/01-unit-tests-audit.md`](../../tasks/archive/01-unit-tests-audit.md) — historique du tri 26 → 7 fichiers spec backend (résolu 2026-05-08), source de la politique pure-logic-only.
+- [`tasks/archive/02-smoke-tests-strategy.md`](../../tasks/archive/02-smoke-tests-strategy.md) — historique de la stratégie smoke (résolu 2026-05-08).

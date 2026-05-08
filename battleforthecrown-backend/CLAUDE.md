@@ -51,7 +51,7 @@ Détail dans [`.claude/rules/workers.md`](./.claude/rules/workers.md) (Outbox se
 
 ## Tests
 
-**Politique** : [`../.claude/rules/tests.md`](../.claude/rules/tests.md) (source unique transversale). Côté backend : pure-logic-only en unit (formules combat/monde, Zod, strategies, géométrie) ; orchestration (workers/controllers/services Prisma) → smoke (cf. [`../tasks/02-smoke-tests-strategy.md`](../tasks/02-smoke-tests-strategy.md)).
+**Politique** : [`../.claude/rules/tests.md`](../.claude/rules/tests.md) (source unique transversale). Côté backend : pure-logic-only en unit (formules combat/monde, Zod, strategies, géométrie) ; orchestration (workers/controllers/services Prisma) → smoke (cf. [`../docs/architecture/smoke-tests.md`](../docs/architecture/smoke-tests.md)).
 
 ## Variables d'environnement
 

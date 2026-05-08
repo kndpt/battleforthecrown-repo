@@ -16,7 +16,7 @@ Question : on automatise quoi, et où (local pre-commit vs CI cloud) ?
 - Pas de `.husky/`
 - Pas de `lint-staged`
 - Aucun bot, aucune protection de branche
-- `yarn build`, `yarn lint`, `yarn test` existent et fonctionnent au niveau racine (sauf 7 tests cassés cf. ticket 01 et tous les E2E cf. ticket 02).
+- `yarn build`, `yarn lint`, `yarn test` (unit pure-logic) et `yarn workspace battleforthecrown-backend test:smoke` (smokes orchestration) existent et passent en local.
 
 Conséquence concrète :
 - Un commit qui ne build pas peut être push sur `main` sans aucun signal.
@@ -47,8 +47,8 @@ Selon le contexte du projet (solo, collaboratif futur, deploy continu, etc.) :
   - `yarn install --frozen-lockfile`
   - `yarn build`
   - `yarn lint`
-  - `yarn test` (unit)
-  - `yarn test:smoke` (intégration backend, après ticket 02)
+  - `yarn test` (unit pure-logic)
+  - `yarn workspace battleforthecrown-backend test:smoke` (smokes orchestration backend, vraie DB — cf. [`docs/architecture/smoke-tests.md`](../docs/architecture/smoke-tests.md))
 - Protection de branche `main` : merge bloqué si rouge.
 - Avantage : signal partagé, impossible à bypasser.
 - Risque : minutes CI consommées (gratuit jusqu'à 2000 min/mois sur repo public/perso). Setup plus long si DB requis (Postgres en service container).
@@ -69,10 +69,10 @@ Selon le contexte du projet (solo, collaboratif futur, deploy continu, etc.) :
 
 ## Question annexe : Postgres en CI
 
-Les tests d'intégration backend (ticket 02) ont besoin d'une DB Postgres. Options en CI :
+Les smokes backend (cf. [`docs/architecture/smoke-tests.md`](../docs/architecture/smoke-tests.md)) ont besoin d'une vraie DB Postgres (`battleforthecrown_smoke`, isolée de la dev). Options en CI :
 
-- **Service container GitHub Actions** : `services: postgres:16-alpine` dans le job, `prisma migrate deploy` au boot.
-- **Mock DB** (jamais conseillé pour ce projet — toute la philosophie est server-authoritative).
+- **Service container GitHub Actions** : `services: postgres:16-alpine` dans le job, `prisma migrate deploy` au boot sur `battleforthecrown_smoke`.
+- **Mock DB** (jamais conseillé pour ce projet — toute la philosophie est server-authoritative ; un smoke qui mocke Prisma est interdit cf. `tests.md`).
 - **DB éphémère par test** via Testcontainers (lourd, mais isolation parfaite).
 
 ## Dimensions à valider en sortie
@@ -85,6 +85,6 @@ Les tests d'intégration backend (ticket 02) ont besoin d'une DB Postgres. Optio
 
 ## Tickets liés
 
-- [01 — Tests unitaires](./archive/01-unit-tests-audit.md) — un test cassé bloque la CI.
-- [02 — Smoke tests](./02-smoke-tests-strategy.md) — la CI a besoin que les smokes existent et passent pour les inclure.
+- [01 — Tests unitaires](./archive/01-unit-tests-audit.md) ✅ — politique pure-logic-only formalisée, fixtures réparées.
+- [02 — Smoke tests](./archive/02-smoke-tests-strategy.md) ✅ — 10 flows backend couverts ; doc d'implémentation : [`docs/architecture/smoke-tests.md`](../docs/architecture/smoke-tests.md).
 - [04 — Monorepo git](./04-monorepo-git-strategy.md) ✅ — désormais 1 repo unifié, donc 1 seul workflow CI à concevoir (pas de synchronisation cross-repos).

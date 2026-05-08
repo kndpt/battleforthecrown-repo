@@ -109,12 +109,12 @@ Spécificités backend (résumé — le détail vit dans tests.md) :
 
 - **Vérification préférée pour les changements applicatifs** : lancer le serveur (`PORT=15001 yarn start:dev`), exercer les endpoints concernés, **inspecter la BDD** via le skill `bftc-db`. Nettoyer les fixtures à la fin.
 - **Spec autorisé** = pure-logic only (formules combat/monde, Zod, strategies, géométrie, templates).
-- **Spec interdit** = `*.worker.spec.ts` / `*.controller.spec.ts` / specs services qui mockent `PrismaService` ou `pg-boss`. → smoke (cf. [`tasks/02-smoke-tests-strategy.md`](../../../tasks/02-smoke-tests-strategy.md)).
+- **Spec interdit** = `*.worker.spec.ts` / `*.controller.spec.ts` / specs services qui mockent `PrismaService` ou `pg-boss`. → smoke (cf. [`docs/architecture/smoke-tests.md`](../../../docs/architecture/smoke-tests.md)).
 
 Commandes :
 ```bash
 yarn test           # unit (logique pure)
-yarn test:smoke     # smoke (orchestration, vraie DB + Outbox — cf. ticket 02)
+yarn test:smoke     # smoke (orchestration, vraie DB + Outbox — cf. docs/architecture/smoke-tests.md)
 yarn test:cov       # couverture
 ```
 

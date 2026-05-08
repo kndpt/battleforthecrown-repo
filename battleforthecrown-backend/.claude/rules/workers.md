@@ -40,7 +40,7 @@ async onModuleInit() {
 ```
 
 - ✅ **Erreurs isolées** : un job qui échoue ne doit jamais tuer le worker, encore moins le process. Try/catch ou laisser pg-boss retry selon la config du job.
-- ✅ Tests unitaires (`*.worker.spec.ts`) : mocker pg-boss et Prisma, valider le handler isolé.
+- ✅ **Tests** : un worker = orchestration, **jamais** de `*.worker.spec.ts` qui mocke pg-boss / Prisma (anti-pattern, cf. [`../../../.claude/rules/tests.md`](../../../.claude/rules/tests.md)). Couvert par smoke avec vraie DB — voir [`docs/architecture/smoke-tests.md`](../../../docs/architecture/smoke-tests.md).
 
 ## Pattern Outbox (critique)
 

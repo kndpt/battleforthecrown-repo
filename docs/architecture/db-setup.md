@@ -50,7 +50,7 @@ Sanity HTTP : `curl http://localhost:15001/health` → 200.
 
 ## DB smoke (`battleforthecrown_smoke`)
 
-Base **isolée** pour `yarn test:smoke` (cf. [`tasks/02-smoke-tests-strategy.md`](../../tasks/02-smoke-tests-strategy.md)). Elle vit dans le même container Postgres que la DB dev mais sur une base distincte — la DB dev n'est jamais touchée par les tests.
+Base **isolée** pour `yarn test:smoke` (cf. [`smoke-tests.md`](./smoke-tests.md)). Elle vit dans le même container Postgres que la DB dev mais sur une base distincte — la DB dev n'est jamais touchée par les tests.
 
 ```bash
 # Créer la base (une fois)

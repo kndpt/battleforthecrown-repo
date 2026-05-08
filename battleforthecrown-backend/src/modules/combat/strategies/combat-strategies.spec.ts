@@ -103,68 +103,6 @@ describe('Combat Strategies', () => {
       expect(result.survivingUnits).toEqual({ MILITIA: 50 });
       expect(result.loot.resources).toEqual({ wood: 50, stone: 25, iron: 15 });
     });
-
-    it('should call loot manager', async () => {
-      // Arrange
-      const context: CombatContext = {
-        worldId: 'world-1',
-        expedition: {
-          id: 'exp-1',
-          attackerVillageId: 'v1',
-          targetKind: 'BARBARIAN_VILLAGE',
-          targetRefId: 'barb-1',
-          targetX: 10,
-          targetY: 20,
-          units: { MILITIA: 30 },
-          status: 'EN_ROUTE',
-          departAt: new Date(),
-          arrivalAt: new Date(),
-          returnAt: null,
-          reportId: null,
-          worldId: 'world-1',
-        } as any,
-        attacker: {
-          village: {
-            id: 'v1',
-            name: 'Village',
-            x: 0,
-            y: 0,
-            userId: 'u1',
-            isBarbarian: false,
-          },
-          units: { MILITIA: 30 },
-        },
-        defender: {
-          kind: 'BARBARIAN_VILLAGE',
-          village: {
-            id: 'barb-1',
-            name: 'Barb',
-            x: 10,
-            y: 20,
-            userId: null,
-            isBarbarian: true,
-          },
-          units: {},
-          resources: { wood: 200, stone: 100, iron: 50 },
-        },
-        config: {
-          combat: { attackBonus: 1.0, defenseBonus: 1.0, lootFactor: 0.5 },
-          units: { stats: {} },
-          _distance: 14,
-          _travelTime: 14000,
-        } as any,
-      };
-
-      mockLootManager.calculateLoot.mockResolvedValue({
-        resources: { wood: 100, stone: 50, iron: 25 },
-      });
-
-      // Act
-      await barbarianStrategy.resolve(context);
-
-      // Assert
-      expect(mockLootManager.calculateLoot).toHaveBeenCalledWith(context);
-    });
   });
 
   describe('PlayerVillageStrategy', () => {
