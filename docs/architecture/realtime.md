@@ -56,6 +56,17 @@ handleConnection(client: Socket) {
 
 Sur 401 (token expiré), le frontend rafraîchit via REST puis se reconnecte avec le nouveau JWT.
 
+## Cycle de vie côté frontend — `AuthenticatedShell`
+
+La WebSocket vit dans `battleforthecrown-pixi/src/features/layout/AuthenticatedShell.tsx`, monté **une seule fois** au-dessus de toutes les routes protégées via `<Outlet />` (cf. `App.tsx`, ADR-13). Le shell est l'unique owner de :
+
+- `gameSocket.connect(accessToken)` / `disconnect()` (lifecycle WS).
+- `gameSocket.joinWorld(worldId)` au passage `connecting → connected`.
+- `bindServerEvents({ queryClient })` — wire des events serveur vers stores + invalidations TanStack.
+- Seeding initial des stores Zustand (`resources`, `crowns`, `worldMap`, `expeditions`) depuis les queries REST.
+
+**Règle pour ajouter un écran protégé** : le placer sous `<Route element={<AuthenticatedShell />}>` dans `App.tsx`. Ne **jamais** re-wrapper l'écran lui-même avec un composant qui (re)connecte la WS — cela démonterait le shell à chaque navigation et ferait cycler la connexion (régression historique du défunt `GameSession`, cf. ticket d'audit 13).
+
 ## Routing par scope
 
 Chaque event a un scope :
