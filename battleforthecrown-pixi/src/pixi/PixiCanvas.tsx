@@ -4,7 +4,7 @@ import { createPixiApp } from './application';
 
 export type PixiCanvasProps = {
   className?: string;
-  onReady?: (app: Application) => void | (() => void);
+  onReady?: (app: Application) => undefined | (() => void);
 };
 
 export function PixiCanvas({ className, onReady }: PixiCanvasProps) {
@@ -16,7 +16,7 @@ export function PixiCanvas({ className, onReady }: PixiCanvasProps) {
 
     let cancelled = false;
     let app: Application | null = null;
-    let cleanupOnReady: (() => void) | void;
+    let cleanupOnReady: (() => void) | undefined;
 
     void createPixiApp({ container }).then((created) => {
       if (cancelled) {
