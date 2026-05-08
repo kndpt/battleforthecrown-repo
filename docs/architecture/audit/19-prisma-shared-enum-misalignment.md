@@ -1,9 +1,29 @@
 # 19 — Enums Prisma vs unions shared : casts récurrents aux frontières
 
+**Statut** : ✅ Résolu le 2026-05-08
 **Sévérité** : 🟠 Moyenne
 **Workspace(s)** : `battleforthecrown-backend`, `packages/shared`
 **Tags** : typing, enum, prisma, drift
 **Origine** : découvert pendant la résolution du [ticket 09 (typage relâché)](./09-backend-relaxed-typing.md), volontairement laissé hors scope.
+
+## Résolution
+
+Audit complet réalisé : sur les 5 enums Prisma (`WorldStatus`, `WorldRole`, `ExpeditionStatus`, `TargetKind`, `VillageStrategy`), seuls les 3 derniers ont un duplicat shared. Sur les 3 dupliqués, **seul `VillageStrategy` avait des casts** (6 sites identifiés, les "à confirmer" du ticket sont confirmés OK : aucun cast pour `TargetKind` ni `ExpeditionStatus`).
+
+**Constat clé** : depuis Prisma 6, les enums sont générés comme **unions de literals** identiques aux unions shared (ex : `'FORTRESS' | 'RAIDERS' | 'ECONOMIC' | 'BALANCED'`). Les casts `as VillageStrategyType` étaient donc **structurellement superflus** — TypeScript considère déjà les deux types comme assignables.
+
+Approche retenue (variante de l'option D du ticket) :
+
+- **Suppression des 6 casts** `as VillageStrategyType` dans `combat.worker.ts`, `combat.service.ts`, `resources.service.ts`, `village-strategy.service.ts`. Imports `VillageStrategyType` retirés là où plus nécessaire.
+- **Compile-time alignment test** dans `battleforthecrown-backend/src/common/prisma-shared-enums.ts` : pour chaque enum dupliqué, deux `Record` bidirectionnels (`Record<PrismaEnum, SharedUnion>` ET `Record<SharedUnion, PrismaEnum>`) avec valeurs concrètes. Si l'une ou l'autre liste évolue, l'un des Records cesse de type-checker — le build casse avant runtime.
+- **Aucun cast nouveau introduit aux call-sites.** Les helpers shared (`getUnitStats`, `getBuildingPowerWeight`, etc.) encapsulent les éventuels narrowings restants.
+
+Effets de bord :
+
+- `getStrategyBonusValue(strategy, ...)` accepte directement `attackerStrategyConfig?.strategy` (Prisma) sans cast — même type structurellement.
+- Si Prisma ajoute `MIGRATION` à `VillageStrategy` sans MAJ de la `VillageStrategyType` shared, `Record<VillageStrategy, VillageStrategyType>` exige une nouvelle clé → erreur build immédiate. Sens inverse : `Record<VillageStrategyType, VillageStrategy>` lèvera si shared introduit une variante absente de Prisma.
+
+Backend build vert (strict full, cf. ticket 20). Tests modules touchés : 118/121 (3 failed pré-existants dans `loot.manager.spec`, indépendants).
 
 ## Symptôme
 

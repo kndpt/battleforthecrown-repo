@@ -1,9 +1,33 @@
 # 20 — `tsconfig` backend partiellement strict
 
+**Statut** : ✅ Résolu le 2026-05-08
 **Sévérité** : 🟠 Moyenne
-**Workspace(s)** : `battleforthecrown-backend`
+**Workspace(s)** : `battleforthecrown-backend`, `battleforthecrown-pixi`
 **Tags** : tooling, typing, qualité
 **Origine** : découvert pendant la résolution du [ticket 09 (typage relâché)](./09-backend-relaxed-typing.md), volontairement laissé hors scope.
+
+## Résolution
+
+Option A retenue (full strict en une fois). Activation de `strict: true` dans :
+
+- `battleforthecrown-backend/tsconfig.json` : remplace `strictNullChecks: true` + `noImplicitAny: false` + `strictBindCallApply: false`. Active aussi `noFallthroughCasesInSwitch: true`.
+- `battleforthecrown-pixi/tsconfig.app.json` : ajout de `strict: true` (la convention `.claude/rules/conventions.md` l'imposait depuis le début, le tsconfig hérité du template Vite ne l'avait jamais activé).
+
+**Backend** : 23 erreurs surfacées, fixées sans introduire de cast inline `as keyof typeof X` ni de `as any`. Trois patterns :
+
+- **TS2564** (Property has no initializer) — DTOs et `@WebSocketServer() server: Server` : ajout de `!` (pattern Nest standard, le DI/décorateur initialise au runtime).
+- **TS7053** (Element implicitly any when indexing typed Record by string) — résolus via **helpers shared** plutôt que casts dispersés :
+  - `getBuildingPowerWeight` / `getUnitPowerWeight` (`packages/shared/src/power/weights.ts`) — utilisés par `power.service` et `crowns.service`.
+  - `getUnitStats` (`packages/shared/src/army/unit.ts`) — utilisé par `combat/strategies/player-village.strategy` et `combat/loot/loot.manager`.
+  - `getBuildingUnlockRequirement` (`packages/shared/src/village/buildings.ts`) — utilisé par `gameplay/upgrade-building.use-case`.
+  - `typedEntries` / `typedKeys` (`packages/shared/src/utils/typed-record.ts`) — utility générique qui recouvre le narrowing perdu par `Object.entries` sur `Record<K, V>`. Encapsule le `as` une fois pour toutes.
+- **TS18046** (`error` is `unknown` dans catch) — narrow via `error instanceof Error ? error.message : String(error)` dans les scripts admin.
+
+Au passage, `combat.worker.ts:191` (pattern bizarre `Object.values().some((_, i) => Object.keys()[i]...)`) remplacé par `typedEntries().some(([k, v]) => ...)` — la modif était imposée par strict (`unitType: string | undefined`), j'ai pris la version propre plutôt qu'un cast.
+
+**Pixi** : `yarn type-check` (tsc strict) passe directement sans aucune modif de code — le code était déjà clean. Tests pixi 65/65 verts.
+
+ESLint `no-explicit-any: error` reste actif (ticket 09).
 
 ## Symptôme
 
