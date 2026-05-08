@@ -3,6 +3,32 @@
 **Sévérité** : 🟡 Majeure
 **Workspace(s)** : `battleforthecrown-backend`, `battleforthecrown-pixi`
 **Tags** : tests, e2e, smoke, regression
+**Statut** : ✅ Résolu 2026-05-08
+
+## Résolution
+
+Stratégie retenue : **option B** (supprimer les 4 `*.integration-spec.ts`, écrire des smokes propres from scratch). 7 commits :
+
+1. `chore(backend/tests)` : remove broken integration specs (8 fichiers, -2284 lignes)
+2. `chore(backend/tests)` : scaffold smoke harness (DB `battleforthecrown_smoke`, helpers, jest config)
+3. `test(backend/smoke)` : production tick + construction
+4. `test(backend/smoke)` : training + combat resolve+return
+5. `test(backend/smoke)` : conquest + crown production + barbarian backfill
+6. `test(backend/smoke)` : JWT auth + fog of war + Socket.IO outbox dispatch
+7. `docs(architecture)` : smoke-tests.md + clôture du ticket
+
+**Suite finale** : 10 flows, ~23s sur runInBand, 1 seul boot AppModule. Validation côté DB + Outbox.dispatchedAt + un smoke transversal Socket.IO réel pour valider le pipeline complet.
+
+**Décisions clés actées** :
+- Time control via `WorldConfig` test (multipliers élevés → durations clampées au minimum 1s)
+- Pas de mock Prisma/pg-boss dans les smokes
+- DB dédiée `battleforthecrown_smoke` (jamais la DB dev)
+- 1 seul fichier `smoke.spec.ts`, 1 boot, 1 it() par flow
+- 2 exceptions DB-only (production tick, barbarian backfill) — by design, pas d'Outbox sur ces flows
+
+Doc opérationnelle : [`docs/architecture/smoke-tests.md`](../docs/architecture/smoke-tests.md). Politique transversale : [`.claude/rules/tests.md`](../.claude/rules/tests.md).
+
+---
 
 ## Contexte
 

@@ -4,12 +4,12 @@ Quatre chantiers identifiés après la résolution complète de l'audit (`docs/a
 
 ## Tickets actifs
 
-- [02 — Tests smokes / E2E : repartir d'une base saine](./02-smoke-tests-strategy.md) 🟡
 - [03 — CI : automatiser ou pas](./03-ci-strategy.md) 🟠
 
 ## Archivés
 
 - [01 — Audit des tests unitaires](./archive/01-unit-tests-audit.md) ✅ Résolu 2026-05-08
+- [02 — Tests smokes / E2E](./archive/02-smoke-tests-strategy.md) ✅ Résolu 2026-05-08
 - [04 — Monorepo : structure git](./04-monorepo-git-strategy.md) ✅ Résolu 2026-05-08
 
 ## Légende
