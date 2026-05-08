@@ -25,7 +25,7 @@ Approche **hybride asymétrique** retenue, puis durcie après lecture du ticket 
 
 **Métriques** : 26 → 7 fichiers spec, 302 → 89 tests, 7 cassés → 0. Build vert.
 
-**Contrat avec ticket 02** : les smokes futurs **doivent** couvrir les flows des fichiers supprimés (production tick, construction, training, combat resolution, return, outbox dispatch, conquest, JWT auth, fog of war wiring, upgrade building). Cf. [`02-smoke-tests-strategy.md`](./02-smoke-tests-strategy.md) pour le détail du contrat.
+**Contrat avec ticket 02** : les smokes futurs **doivent** couvrir les flows des fichiers supprimés (production tick, construction, training, combat resolution, return, outbox dispatch, conquest, JWT auth, fog of war wiring, upgrade building). Cf. [`02-smoke-tests-strategy.md`](../02-smoke-tests-strategy.md) pour le détail du contrat.
 
 ## Contexte
 
@@ -108,5 +108,5 @@ Si on les supprime :
 
 ## Tickets liés
 
-- [02 — Smoke tests strategy](./02-smoke-tests-strategy.md) — la décision dépend de ce qu'on prévoit de faire en couverture E2E/smoke.
-- [03 — CI strategy](./03-ci-strategy.md) — un test cassé est tolérable localement, bloquant en CI.
+- [02 — Smoke tests strategy](../02-smoke-tests-strategy.md) — la décision dépend de ce qu'on prévoit de faire en couverture E2E/smoke.
+- [03 — CI strategy](../03-ci-strategy.md) — un test cassé est tolérable localement, bloquant en CI.
