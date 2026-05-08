@@ -64,6 +64,51 @@ L'agent suivant doit **planifier l'implémentation** :
 4. Application sur `LoginScreen` et `RegisterScreen` en premier.
 5. Mise à jour de `.claude/rules/conventions.md` pour refléter le pattern réel.
 
+## Résolution (2026-05-08)
+
+### Drift constaté avec le ticket d'origine
+
+Lecture du code à J-2 du ticket :
+
+- Faux : « validation manuelle avec `useState` + checks ad-hoc » côté `LoginScreen` / `RegisterScreen`. Les deux écrans utilisaient **déjà Zod** localement avec `safeParse` (le ticket avait été écrit avant cette migration partielle, ou la migration s'est faite entre-temps).
+- Vrai et **plus grave** que décrit : la **divergence end-to-end** mentionnée dans la section "Impact" était un bug **actif** :
+  - Backend `register.dto.ts` exigeait `password.min(8)`.
+  - Frontend `RegisterScreen.tsx` exigeait `password.min(6)`.
+  - Conséquence : un user qui saisit 6-7 caractères passait la validation front, mutation envoyée, backend renvoyait 400 avec un message Zod brut EN. UX cassée — le scénario exact du ticket.
+- Audit des autres écrans : seuls `LoginScreen` et `RegisterScreen` sont des formulaires Zod-pertinents. `WorldSelector` n'a pas de saisie utilisateur (`villageName` calculé). `AttackDetailModal` fait de la validation contextuelle (sliders, état session) — pas un cas Zod.
+
+### Implémentation
+
+Décision validée 2026-05-06 appliquée telle quelle, choix tranchés avec l'utilisateur :
+- `password.min(8)` partout (alignement sur la règle backend stricte).
+- Messages d'erreur **FR dans le schema partagé** — affichés directement, pas de mapping i18n côté front.
+- Scope **auth uniquement** — pas de chasse aux autres formulaires (le seul écran avec formulaire texte était auth).
+
+Changements :
+
+- `packages/shared/src/auth/schemas.ts` (nouveau) : `loginSchema`, `registerSchema`, `refreshSchema`. Types inférés via `z.infer`. `types.ts` réduit aux types de réponse non validées (`AuthUser`, `AuthTokens`, `AuthSessionResponse`).
+- `battleforthecrown-backend/src/modules/auth/dto/{login,register,refresh}.dto.ts` : re-exports depuis `@battleforthecrown/shared/auth`. Controllers inchangés (mêmes imports). Backend compile, comportement identique sauf que les messages d'erreur 400 sont désormais en FR.
+- `battleforthecrown-pixi/src/lib/useZodForm.ts` (nouveau, ~25 lignes) : hook custom `{ errors, validate, clearErrors }` avec **erreurs par champ** (pour rendu sous l'input concerné). Duck typing sur `safeParse` pour contourner la variance stricte de Zod v4 sur `<TSchema extends ZodSchema>`.
+- `useZodForm.test.ts` (nouveau) : 6 tests Vitest couvrant succès, échec par champ, refine path, clearErrors. Suite globale 63/63 verts.
+- `LoginScreen.tsx` / `RegisterScreen.tsx` : import `loginSchema` / `registerSchema` depuis shared, hook `useZodForm`, erreurs affichées par champ (`errors.email`, `errors.password`, `errors.confirmPassword`). `confirmPassword` étendu localement avec `.extend({...}).refine(...)` — n'existe pas backend, donc reste front-only (commenté inline).
+- `battleforthecrown-pixi/.claude/rules/react-hud.md` : nouvelle section **Formulaires** documentant le pattern (schema shared + `useZodForm`, erreurs par champ vs `submitError` global, cible de bascule RHF).
+
+### Vérification
+
+- `yarn workspace @battleforthecrown/shared build` : OK.
+- `yarn workspace battleforthecrown-backend build` : OK.
+- `yarn workspace battleforthecrown-pixi type-check` : OK.
+- `yarn workspace battleforthecrown-pixi test` : 63/63 verts (6 nouveaux + 57 existants).
+- QA backend (`PORT=15002`) — fixtures `qa-zod-*` créées puis nettoyées :
+  - `POST /auth/register` avec `password: '1234567'` → 400, message FR `"Mot de passe : 8 caractères minimum"` remontée du schema shared.
+  - `POST /auth/register` avec `password: '12345678'` → 201, tokens.
+  - `POST /auth/register` avec `email: 'not-an-email'` → 400, `"Email invalide"`.
+
+### Follow-up éventuel (hors scope)
+
+- `ZodValidationPipe` (`backend/src/common/pipes/zod-validation.pipe.ts`) renvoie `{message: 'Validation failed', errors: format()}`. Le frontend `ApiError.message` extrait `payload.message` → affiche `"Validation failed"` au lieu du message FR détaillé. En pratique invisible (le frontend valide d'abord avec le même schema, donc une mutation ne part jamais avec un payload invalide), mais améliorable : le pipe pourrait extraire le premier `issue.message` pour le `BadRequestException`. Petit fix backend, ~5 lignes. À traiter séparément si gênant.
+- Migration Zod-in-shared pour les autres DTOs backend (combat `attack-command`, village `upgrade-building`, `strategy`, army `train-units`, world `join-world`) — déjà des schemas Zod locaux côté back, à mutualiser quand un usage front nécessite la validation. Pas de besoin actuel.
+
 ## Tickets liés
 
 - [11 — Optimistic UI asymétrique](./11-pixi-optimistic-ui-asymmetric.md) — autre exemple de convention non systématique.

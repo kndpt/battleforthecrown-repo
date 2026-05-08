@@ -36,7 +36,7 @@ Chaque ticket décrit **un problème observé**, factuel, avec références `pat
 - ✅ [11 — Optimistic UI asymétrique](./11-pixi-optimistic-ui-asymmetric.md) 🟠 — **résolu le 2026-05-08**
 - ✅ [12 — Composants transverses dans `features/`](./12-pixi-transverse-components-misplaced.md) 🟠 — **résolu le 2026-05-08**
 - ✅ [13 — `GameSession` wrapper aux responsabilités dispersées](./13-pixi-game-session-fragile-wrapper.md) 🟠 — **résolu le 2026-05-08** (cf. ADR-13)
-- [14 — Convention zod non appliquée](./14-pixi-zod-not-applied.md) 🟠
+- ✅ [14 — Convention zod non appliquée](./14-pixi-zod-not-applied.md) 🟠 — **résolu le 2026-05-08**
 - [15 — `setTimeout` magiques dans ws-bindings](./15-pixi-magic-timeouts-ws-bindings.md) 🟠
 - [17 — Statut de `src/pixi/manifest.ts`](./17-pixi-manifest-ts-usage.md) 🟠
 - [21 — Décalage visuel fin d'entraînement](./21-pixi-training-completion-visual-lag.md) 🟠 — _follow-up de 11_

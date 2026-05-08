@@ -9,7 +9,7 @@ Le HUD est tout ce qui n'est pas le canvas Pixi : login, sélection monde, heade
 - **Zustand** pour le state global persistant (auth, game, resources, crowns, ui, worldMap, expeditions).
 - **TanStack Query v5** pour le cache REST + mutations.
 - **socket.io-client** pour le temps réel via `gameSocket` singleton.
-- **`zod`** pour la validation des formulaires côté front.
+- **`zod`** pour la validation des formulaires côté front (cf section « Formulaires »).
 - **Pas de Redux**, pas de Recoil, pas de Jotai. Pas de `next/*` (ce n'est plus du Next).
 
 ## State
@@ -35,6 +35,32 @@ Component → useMutation()
 ```
 
 Les deux paths convergent : la même donnée arrive du REST (refetch) et du WS (binding). C'est volontaire — c'est ce qui rend l'UI tolérante à des reconnexions WS partielles.
+
+## Formulaires
+
+Pattern unique : **schema Zod partagé** (`@battleforthecrown/shared/<domaine>`) + hook `useZodForm` (`@/lib/useZodForm`). Pas de React Hook Form tant que les formulaires restent simples (< 10 forms, pas de multi-step, pas de validation croisée complexe).
+
+**Source unique** : le même schema Zod sert backend (DTO via `ZodValidationPipe`) et frontend (`safeParse` au submit). Les **messages d'erreur sont en FR dans le schema partagé** — affichés directement à l'utilisateur, sans mapping i18n côté front.
+
+Chaque champ a son `Input` + un `InputHelperText variant="error">{errors.<field>}` rendu conditionnellement. L'erreur API (réponse 400/500) reste un état local séparé (`submitError`) affiché en bandeau global.
+
+```tsx
+import { loginSchema } from '@battleforthecrown/shared/auth';
+import { useZodForm } from '@/lib/useZodForm';
+
+const { errors, validate, clearErrors } = useZodForm(loginSchema);
+
+const onSubmit = (e: FormEvent) => {
+  e.preventDefault();
+  const data = validate({ email, password });
+  if (!data) return;
+  login.mutate(data, { onError: (err) => setSubmitError(err.message) });
+};
+```
+
+**Confirmations purement client** (ex : `confirmPassword`) → étendre le schema partagé localement avec `.extend({...}).refine(...)`. Ne pas polluer `packages/shared` avec des champs jamais envoyés à l'API.
+
+**Quand basculer sur React Hook Form** : un formulaire devient multi-step, exige `touched`/`dirty` par champ, ou nécessite une re-validation à chaque keystroke avec affichage live → bascule sur `react-hook-form` + `@hookform/resolvers/zod`. Garder le schema partagé.
 
 ## Optimistic UI
 

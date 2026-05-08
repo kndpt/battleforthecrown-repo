@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { LogIn } from 'lucide-react';
-import { z } from 'zod';
+import { loginSchema } from '@battleforthecrown/shared/auth';
 import {
   Button,
   Input,
@@ -14,37 +14,31 @@ import {
 } from '@/ui';
 import { useLoginMutation } from '@/api/queries';
 import { ApiError } from '@/api';
-
-const loginSchema = z.object({
-  email: z.string().email('Email invalide'),
-  password: z.string().min(6, 'Mot de passe : 6 caractères minimum'),
-});
+import { useZodForm } from '@/lib/useZodForm';
 
 export function LoginScreen() {
   const navigate = useNavigate();
   const login = useLoginMutation();
+  const { errors, validate, clearErrors } = useZodForm(loginSchema);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError(null);
+    setSubmitError(null);
 
-    const parsed = loginSchema.safeParse({ email, password });
-    if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Formulaire invalide');
-      return;
-    }
+    const data = validate({ email, password });
+    if (!data) return;
 
-    login.mutate(parsed.data, {
+    login.mutate(data, {
       onSuccess: () => navigate('/my-worlds'),
       onError: (err) => {
         if (err instanceof ApiError) {
-          setError(err.message || 'Identifiants invalides');
+          setSubmitError(err.message || 'Identifiants invalides');
         } else {
-          setError('Connexion impossible. Réessayer.');
+          setSubmitError('Connexion impossible. Réessayer.');
         }
       },
     });
@@ -69,7 +63,15 @@ export function LoginScreen() {
           </PanelHeader>
 
           <PanelBody className="p-6">
-            <form onSubmit={onSubmit} className="space-y-4" noValidate>
+            <form
+              onSubmit={onSubmit}
+              className="space-y-4"
+              noValidate
+              onChange={() => {
+                if (submitError) setSubmitError(null);
+                clearErrors();
+              }}
+            >
               <div className="space-y-1">
                 <InputLabel htmlFor="email">Email</InputLabel>
                 <Input
@@ -82,6 +84,9 @@ export function LoginScreen() {
                   disabled={login.isPending}
                   required
                 />
+                {errors.email && (
+                  <InputHelperText variant="error">{errors.email}</InputHelperText>
+                )}
               </div>
 
               <div className="space-y-1">
@@ -96,11 +101,14 @@ export function LoginScreen() {
                   disabled={login.isPending}
                   required
                 />
+                {errors.password && (
+                  <InputHelperText variant="error">{errors.password}</InputHelperText>
+                )}
               </div>
 
-              {error && (
+              {submitError && (
                 <div role="alert">
-                  <InputHelperText variant="error">{error}</InputHelperText>
+                  <InputHelperText variant="error">{submitError}</InputHelperText>
                 </div>
               )}
 

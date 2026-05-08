@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Crown, Scroll, Shield } from 'lucide-react';
 import { z } from 'zod';
+import { registerSchema } from '@battleforthecrown/shared/auth';
 import {
   Button,
   Card,
@@ -15,13 +16,11 @@ import {
 } from '@/ui';
 import { useRegisterMutation } from '@/api/queries';
 import { ApiError } from '@/api';
+import { useZodForm } from '@/lib/useZodForm';
 
-const registerSchema = z
-  .object({
-    email: z.string().email('Email invalide'),
-    password: z.string().min(6, 'Mot de passe : 6 caractères minimum'),
-    confirmPassword: z.string(),
-  })
+// confirmPassword est purement front (pas envoyé au backend) → on étend le schema partagé localement.
+const registerFormSchema = registerSchema
+  .extend({ confirmPassword: z.string() })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Les mots de passe ne correspondent pas',
     path: ['confirmPassword'],
@@ -30,31 +29,29 @@ const registerSchema = z
 export function RegisterScreen() {
   const navigate = useNavigate();
   const register = useRegisterMutation();
+  const { errors, validate, clearErrors } = useZodForm(registerFormSchema);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError(null);
+    setSubmitError(null);
 
-    const parsed = registerSchema.safeParse({ email, password, confirmPassword });
-    if (!parsed.success) {
-      setError(parsed.error.issues[0]?.message ?? 'Formulaire invalide');
-      return;
-    }
+    const data = validate({ email, password, confirmPassword });
+    if (!data) return;
 
     register.mutate(
-      { email: parsed.data.email, password: parsed.data.password },
+      { email: data.email, password: data.password },
       {
         onSuccess: () => navigate('/worlds'),
         onError: (err) => {
           if (err instanceof ApiError) {
-            setError(err.message || "Échec de l'inscription");
+            setSubmitError(err.message || "Échec de l'inscription");
           } else {
-            setError('Inscription impossible. Réessayer.');
+            setSubmitError('Inscription impossible. Réessayer.');
           }
         },
       },
@@ -87,7 +84,15 @@ export function RegisterScreen() {
               <div className="h-[2px] flex-1 bg-gradient-to-r from-transparent via-game-gold-border to-transparent" />
             </div>
 
-            <form onSubmit={onSubmit} className="space-y-4" noValidate>
+            <form
+              onSubmit={onSubmit}
+              className="space-y-4"
+              noValidate
+              onChange={() => {
+                if (submitError) setSubmitError(null);
+                clearErrors();
+              }}
+            >
               <div className="space-y-1">
                 <InputLabel htmlFor="register-email">Email</InputLabel>
                 <Input
@@ -100,6 +105,9 @@ export function RegisterScreen() {
                   disabled={register.isPending}
                   required
                 />
+                {errors.email && (
+                  <InputHelperText variant="error">{errors.email}</InputHelperText>
+                )}
               </div>
 
               <div className="space-y-1">
@@ -114,6 +122,9 @@ export function RegisterScreen() {
                   disabled={register.isPending}
                   required
                 />
+                {errors.password && (
+                  <InputHelperText variant="error">{errors.password}</InputHelperText>
+                )}
               </div>
 
               <div className="space-y-1">
@@ -128,11 +139,14 @@ export function RegisterScreen() {
                   disabled={register.isPending}
                   required
                 />
+                {errors.confirmPassword && (
+                  <InputHelperText variant="error">{errors.confirmPassword}</InputHelperText>
+                )}
               </div>
 
-              {error && (
+              {submitError && (
                 <div role="alert">
-                  <InputHelperText variant="error">{error}</InputHelperText>
+                  <InputHelperText variant="error">{submitError}</InputHelperText>
                 </div>
               )}
 
