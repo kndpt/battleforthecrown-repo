@@ -1,8 +1,21 @@
-# 04 — Monorepo : structure git (parent vs sub-repos)
+# 04 — Monorepo : structure git (parent vs sub-repos) ✅ RÉSOLU
 
 **Sévérité** : 🟡 Majeure
 **Workspace(s)** : tous
 **Tags** : git, monorepo, dx, archi-projet
+**Résolu le** : 2026-05-08 — commit `e941727` (option B.1 + B.2.a + nouveau remote racine)
+
+## Résolution
+
+- `battleforthecrown/` (legacy Next.js, 717 MB) supprimé. Historique préservé sur `github.com/kndpt/battleforthecrown` (branche d'archive `legacy/nextjs-frontend` poussée avant suppression).
+- `battleforthecrown-backend/.git` supprimé, backend fusionné à plat dans le repo racine. Historique préservé sur `github.com/kndpt/battleforthecrown-backend` (12 commits ahead poussés avant fusion).
+- Repo racine désormais sur `github.com/kndpt/battleforthecrown-repo` (privé).
+- `battleforthecrown` retiré des yarn workspaces (résout aussi F031 de l'audit).
+- `.gitignore`, `CLAUDE.md`, `README.md`, `.claude/rules/{git,docs}.md` nettoyés des références sub-repos.
+
+Effort réel : ~25 min. Une seule commande `git push` suffit désormais pour tout pousser.
+
+---
 
 ## Contexte
 
