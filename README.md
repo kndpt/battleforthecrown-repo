@@ -3,7 +3,6 @@
 MMORTS médiéval (Kingsage / Tribal Wars). Workspace yarn avec :
 
 - `battleforthecrown-pixi/` — **frontend actif** (Vite + React 19 + PixiJS v8 + Zustand + TanStack Query). Voir [son README](./battleforthecrown-pixi/README.md).
-- `battleforthecrown/` — legacy Next.js, conservé temporairement pour référence. Branche d'archive : `legacy/nextjs-frontend` dans `battleforthecrown/.git`.
 - `battleforthecrown-backend/` — NestJS + Prisma + Postgres + Socket.IO + pg-boss.
 - `packages/shared/` — types et formules partagés (lecture seule pour les frontends).
 
@@ -30,9 +29,6 @@ PORT=15001 yarn workspace battleforthecrown-backend start:dev
 
 # Nouveau frontend Pixi (port 5173)
 yarn workspace battleforthecrown-pixi dev
-
-# Legacy Next.js (port 3000) — optionnel, pour comparaison
-yarn workspace battleforthecrown dev
 ```
 
 ## Conventions globales

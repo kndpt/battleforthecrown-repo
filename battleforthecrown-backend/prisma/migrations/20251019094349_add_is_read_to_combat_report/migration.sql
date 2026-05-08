@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "combat_report" ADD COLUMN     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN     "is_read" BOOLEAN NOT NULL DEFAULT false;

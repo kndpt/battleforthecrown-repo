@@ -1,0 +1,375 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum WorldStatus {
+  PLANNED
+  OPEN
+  LOCKED
+  ENDED
+}
+
+enum WorldRole {
+  PLAYER
+  MOD
+}
+
+enum ExpeditionStatus {
+  EN_ROUTE
+  RESOLVED
+  RETURNING
+}
+
+enum TargetKind {
+  PLAYER_VILLAGE
+  BARBARIAN_VILLAGE
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  sessions          Session[]
+  villages          Village[]
+  worldSeeds        WorldSeedState[]
+  worldMemberships  WorldMembership[]
+  crownBalances     CrownBalance[]
+
+  @@map("user")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  refreshToken String   @map("refresh_token_hash")
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model World {
+  id               String      @id
+  name             String
+  status           WorldStatus @default(PLANNED)
+  config           Json        @default("{}")
+  gridWidth        Int         @default(500)
+  gridHeight       Int         @default(500)
+  continentWidth   Int         @default(100) @map("continent_width")
+  continentHeight  Int         @default(100) @map("continent_height")
+  startedAt        DateTime?   @map("started_at")
+  endsAt           DateTime?   @map("ends_at")
+  createdAt        DateTime    @default(now()) @map("created_at")
+
+  villages      Village[]
+  worldEntities WorldEntity[]
+  memberships   WorldMembership[]
+  seedStates    WorldSeedState[]
+  chunkStates   ChunkSpawnState[]
+  zoneCapacities ZoneCapacity[]
+
+  @@map("world")
+}
+
+model Village {
+  id          String    @id @default(cuid())
+  worldId     String    @map("world_id")
+  userId      String?   @map("user_id")
+  name        String
+  x           Int
+  y           Int
+  isBarbarian Boolean   @default(false) @map("is_barbarian")
+  tier        String?
+  conqueredAt DateTime? @map("conquered_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  world         World            @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  user          User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  buildings     Building[]
+  resourceStock ResourceStock?
+  population    Population?
+  unitInventory UnitInventory[]
+  unitTraining  UnitTraining[]
+  powerSnapshot      PowerSnapshot[]
+  strategyConfig     VillageStrategyConfig?
+
+  @@unique([worldId, x, y])
+  @@index([userId])
+  @@index([worldId])
+  @@index([worldId, userId])
+  @@index([worldId, isBarbarian])
+  @@index([worldId, tier])
+  @@map("village")
+}
+
+model Building {
+  id        String    @id @default(cuid())
+  villageId String    @map("village_id")
+  type      String
+  level     Int       @default(1)
+  startTime DateTime? @map("start_time")
+  endTime   DateTime? @map("end_time")
+  version   Int       @default(0)
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  village Village @relation(fields: [villageId], references: [id], onDelete: Cascade)
+
+  @@index([villageId, type])
+  @@map("building")
+}
+
+model ResourceStock {
+  villageId     String   @id @map("village_id")
+  wood          Int      @default(0)
+  stone         Int      @default(0)
+  iron          Int      @default(0)
+  maxPerType    Int      @default(1000) @map("max_per_type")
+  lastUpdateTs  DateTime @default(now()) @map("last_update_ts")
+
+  village Village @relation(fields: [villageId], references: [id], onDelete: Cascade)
+
+  @@map("resource_stock")
+}
+
+model Population {
+  villageId String @id @map("village_id")
+  used      Int    @default(0)
+  max       Int    @default(10)
+
+  village Village @relation(fields: [villageId], references: [id], onDelete: Cascade)
+
+  @@map("population")
+}
+
+model UnitInventory {
+  villageId String @map("village_id")
+  unitType  String @map("unit_type")
+  quantity  Int    @default(0)
+
+  village Village @relation(fields: [villageId], references: [id], onDelete: Cascade)
+
+  @@id([villageId, unitType])
+  @@map("unit_inventory")
+}
+
+model UnitTraining {
+  id            String   @id @default(cuid())
+  villageId     String   @map("village_id")
+  unitType      String   @map("unit_type")
+  totalQty      Int      @map("total_qty")
+  completedQty  Int      @default(0) @map("completed_qty")
+  timePerUnitMs Int      @map("time_per_unit_ms")
+  nextUnitEta   DateTime @map("next_unit_eta_ts")
+  version       Int      @default(0)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  village Village @relation(fields: [villageId], references: [id], onDelete: Cascade)
+
+  @@index([villageId])
+  @@map("unit_training")
+}
+
+model WorldEntity {
+  id      String @id @default(cuid())
+  worldId String @map("world_id")
+  kind    String
+  x       Int
+  y       Int
+  data    Json
+
+  world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  @@unique([worldId, x, y])
+  @@index([worldId, kind])
+  @@map("world_entity")
+}
+
+model WorldSeedState {
+  userId   String    @map("user_id")
+  worldId  String    @map("world_id")
+  seeded   Boolean   @default(false)
+  seededAt DateTime? @map("seeded_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  @@id([userId, worldId])
+  @@map("world_seed_state")
+}
+
+model ChunkSpawnState {
+  worldId       String    @map("world_id")
+  cx            Int
+  cy            Int
+  lastSeededAt  DateTime? @map("last_seeded_at")
+  seedVersion   Int       @default(1) @map("seed_version")
+  existingCount Int       @default(0) @map("existing_count")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  @@id([worldId, cx, cy])
+  @@index([worldId])
+  @@map("chunk_spawn_state")
+}
+
+model EventOutbox {
+  id           String    @id @default(cuid())
+  kind         String
+  aggregateId  String    @map("aggregate_id")
+  payload      Json
+  createdAt    DateTime  @default(now()) @map("created_at")
+  dispatchedAt DateTime? @map("dispatched_at")
+
+  @@index([dispatchedAt])
+  @@map("event_outbox")
+}
+
+model PowerSnapshot {
+  villageId String   @map("village_id")
+  total     Int
+  kingdom   Int
+  army      Int
+  createdAt DateTime @default(now()) @map("created_at")
+
+  village Village @relation(fields: [villageId], references: [id], onDelete: Cascade)
+
+  @@id([villageId, createdAt])
+  @@map("power_snapshot")
+}
+
+model WorldMembership {
+  userId      String    @map("user_id")
+  worldId     String    @map("world_id")
+  role        WorldRole @default(PLAYER)
+  joinedAt    DateTime  @default(now()) @map("joined_at")
+  lastLoginAt DateTime? @map("last_login_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  @@id([userId, worldId])
+  @@index([worldId])
+  @@map("world_membership")
+}
+
+model ZoneCapacity {
+  worldId      String @map("world_id")
+  zoneIndex    Int    @map("zone_index")
+  villageCount Int    @default(0) @map("village_count")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  @@id([worldId, zoneIndex])
+  @@index([worldId])
+  @@map("zone_capacity")
+}
+
+model CrownBalance {
+  userId       String   @map("user_id")
+  worldId      String   @map("world_id")
+  balance      Int      @default(0)
+  lastUpdateTs DateTime @default(now()) @map("last_update_ts")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, worldId])
+  @@index([userId])
+  @@index([worldId])
+  @@map("crown_balance")
+}
+
+model Expedition {
+  id                String           @id @default(cuid())
+  worldId           String           @map("world_id")
+  attackerVillageId String           @map("attacker_village_id")
+  targetKind        TargetKind       @map("target_kind")
+  targetRefId       String           @map("target_ref_id")
+  targetX           Int              @map("target_x")
+  targetY           Int              @map("target_y")
+  units             Json
+  status            ExpeditionStatus @default(EN_ROUTE)
+  departAt          DateTime         @map("depart_at")
+  arrivalAt         DateTime         @map("arrival_at")
+  returnAt          DateTime?        @map("return_at")
+  reportId          String?          @unique @map("report_id")
+  createdAt         DateTime         @default(now()) @map("created_at")
+
+  report CombatReport? @relation(fields: [reportId], references: [id])
+
+  @@index([attackerVillageId])
+  @@index([status])
+  @@index([arrivalAt])
+  @@index([returnAt])
+  @@map("expedition")
+}
+
+model CombatReport {
+  id                String    @id @default(cuid())
+  worldId           String    @map("world_id")
+  attackerVillageId String    @map("attacker_village_id")
+  attackerUserId    String    @map("attacker_user_id")
+  defenderVillageId String?   @map("defender_village_id")
+  defenderUserId    String?   @map("defender_user_id")
+  targetKind        TargetKind @map("target_kind")
+  targetX           Int       @map("target_x")
+  targetY           Int       @map("target_y")
+  
+  loot              Json
+  
+  totalUnitsAttacker Json     @default("{}") @map("total_units_attacker")
+  totalUnitsDefender Json?    @map("total_units_defender")
+  
+  lossesAttacker    Json      @map("losses_attacker")
+  lossesDefender    Json?     @map("losses_defender")
+  
+  isRead            Boolean   @default(false) @map("is_read")
+  
+  timestamp         DateTime  @default(now())
+  createdAt         DateTime  @default(now()) @map("created_at")
+  details           Json
+  
+  expedition        Expedition?
+
+  @@index([attackerUserId])
+  @@index([defenderUserId])
+  @@index([worldId])
+  @@index([timestamp])
+  @@map("combat_report")
+}
+
+enum VillageStrategy {
+  FORTRESS
+  RAIDERS
+  ECONOMIC
+  BALANCED
+}
+
+model VillageStrategyConfig {
+  id                  String         @id @default(cuid())
+  villageId           String         @unique @map("village_id")
+  strategy            VillageStrategy
+  lastChangedAt       DateTime       @default(now()) @map("last_changed_at")
+  changeCost          Int            @default(0) @map("change_cost")
+  cooldownEndsAt      DateTime?      @map("cooldown_ends_at")
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+
+  village Village @relation(fields: [villageId], references: [id], onDelete: Cascade)
+
+  @@index([villageId])
+  @@index([strategy])
+  @@map("village_strategy_config")
+}

@@ -1,0 +1,45 @@
+import { Module } from '@nestjs/common';
+import { CombatController } from './combat.controller';
+import { CombatService } from './combat.service';
+import { CombatWorker } from './combat.worker';
+import { ReturnWorker } from './return.worker';
+import { ConquestService } from './conquest.service';
+import { LootManager } from './loot/loot.manager';
+import { ResourceLootProvider } from './loot/providers/resource-loot.provider';
+import { BarbarianVillageStrategy } from './strategies/barbarian-village.strategy';
+import { PlayerVillageStrategy } from './strategies/player-village.strategy';
+import { PrismaModule } from '../../infra/prisma/prisma.module';
+import { WorldModule } from '../world/world.module';
+import { ArmyModule } from '../army/army.module';
+import { ResourcesModule } from '../resources/resources.module';
+import { PowerModule } from '../power/power.module';
+import { PgBossModule } from '../../infra/pg-boss/pg-boss.module';
+
+@Module({
+  imports: [
+    PrismaModule,
+    WorldModule,
+    ArmyModule,
+    ResourcesModule,
+    PowerModule,
+    PgBossModule,
+  ],
+  controllers: [CombatController],
+  providers: [
+    CombatService,
+    CombatWorker,
+    ReturnWorker,
+    ConquestService,
+    LootManager,
+    ResourceLootProvider,
+    BarbarianVillageStrategy,
+    PlayerVillageStrategy,
+  ],
+  exports: [
+    CombatService,
+    ConquestService,
+    LootManager,
+    BarbarianVillageStrategy,
+  ],
+})
+export class CombatModule {}

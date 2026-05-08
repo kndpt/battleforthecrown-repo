@@ -1,11 +1,4 @@
 # Workspace root .gitignore
-# Sub-workspaces battleforthecrown/ and battleforthecrown-backend/ have their own
-# .git repos and are intentionally tracked elsewhere — ignore them at this level
-# until Phase 7 (legacy archive) and Phase 8 (consolidation).
-
-# Sub-repos with their own git history
-battleforthecrown/
-battleforthecrown-backend/
 
 # Workspace artifacts
 node_modules/

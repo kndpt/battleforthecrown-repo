@@ -3,8 +3,7 @@
 MMORTS médiéval style Kingsage / Tribal Wars. Yarn workspace avec :
 
 - `battleforthecrown-pixi/` — frontend actif. Vite + React 19 + PixiJS v8 + Zustand + TanStack Query. Voir [`battleforthecrown-pixi/CLAUDE.md`](./battleforthecrown-pixi/CLAUDE.md).
-- `battleforthecrown/` — frontend legacy Next.js. **Ne pas modifier.** Sera supprimé après validation user (la branche d'archive `legacy/nextjs-frontend` existe déjà dans son `.git`).
-- `battleforthecrown-backend/` — NestJS + Prisma + Postgres + Socket.IO + pg-boss. Voir [`battleforthecrown-backend/CLAUDE.md`](./battleforthecrown-backend/CLAUDE.md) + `.claude/rules/{nest-conventions,prisma,workers}.md`. Sous-repo avec son propre `.git`. **Ne pas toucher** sauf bug bloquant ou demande explicite.
+- `battleforthecrown-backend/` — NestJS + Prisma + Postgres + Socket.IO + pg-boss. Voir [`battleforthecrown-backend/CLAUDE.md`](./battleforthecrown-backend/CLAUDE.md) + `.claude/rules/{nest-conventions,prisma,workers}.md`.
 - `packages/shared/` — types et formules pures. **Lecture seule** depuis les frontends.
 
 ## Règles transversales

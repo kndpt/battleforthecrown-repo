@@ -27,5 +27,5 @@ fix(pixi-frontend/ws): clear refresh token on auth failure
 - **Pas de `--no-verify`** sauf cas exceptionnel discuté avec le user.
 - **Jamais** de `git reset --hard`, `git checkout -- .`, `git rebase -i` interactif sans confirmation explicite.
 - **Pas de modification de la config git** (user.email, signing, etc.) sans demande.
-- Sub-repos : `battleforthecrown/.git` et `battleforthecrown-backend/.git` ont leur propre histoire — ne pas les inclure dans les commits du repo racine (déjà ignored dans `.gitignore`).
-- Branches d'archive (ex `legacy/nextjs-frontend`) : créer dans le `.git` du workspace concerné, pas dans le racine.
+- Le repo racine track tout le code actif (pixi + backend + shared + docs + tasks). Plus de sub-repos.
+- L'historique pré-consolidation est archivé sur les anciens remotes : `kndpt/battleforthecrown` (legacy Next.js) et `kndpt/battleforthecrown-backend` (backend pré-fusion).

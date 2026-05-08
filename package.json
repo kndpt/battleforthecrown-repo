@@ -2,7 +2,6 @@
   "name": "battleforthecrown-workspace",
   "private": true,
   "workspaces": [
-    "battleforthecrown",
     "battleforthecrown-backend",
     "battleforthecrown-pixi",
     "packages/*"
