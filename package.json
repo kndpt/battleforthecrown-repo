@@ -7,10 +7,14 @@
     "packages/*"
   ],
   "scripts": {
+    "prepare": "husky",
     "postinstall": "yarn workspace @battleforthecrown/shared build",
     "build": "yarn workspaces run build",
     "lint": "yarn workspaces run lint",
-    "test": "yarn workspaces run test",
+    "test": "yarn test:backend && yarn test:pixi && yarn test:smoke",
+    "test:backend": "yarn workspace battleforthecrown-backend test",
+    "test:pixi": "yarn workspace battleforthecrown-pixi test",
+    "test:smoke": "yarn workspace battleforthecrown-backend test:smoke",
     "dev:shared": "yarn workspace @battleforthecrown/shared dev",
     "dev:backend": "PORT=15001 yarn workspace battleforthecrown-backend start:dev",
     "dev:frontend": "yarn workspace battleforthecrown-pixi dev --port 5173 --strictPort",
@@ -18,6 +22,7 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
+    "husky": "^9.1.7",
     "typescript": "^5.7.2"
   }
 }

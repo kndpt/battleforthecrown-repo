@@ -148,5 +148,5 @@ Les flows ci-dessous étaient (mal) couverts par des `*.worker.spec.ts` / `*.ser
 
 ## Tickets liés
 
-- [01 — Tests unitaires](./archive/01-unit-tests-audit.md) — la décision dépend en partie de ce qu'on garde côté unit.
-- [03 — CI strategy](./03-ci-strategy.md) — la cadence d'exécution des smokes dépend de la CI.
+- [01 — Tests unitaires](./01-unit-tests-audit.md) ✅ — la décision dépend en partie de ce qu'on garde côté unit.
+- [03 — CI strategy](./03-ci-strategy.md) ✅ — la cadence d'exécution des smokes dépend de la CI.

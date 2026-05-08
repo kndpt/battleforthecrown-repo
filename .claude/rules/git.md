@@ -29,3 +29,7 @@ fix(pixi-frontend/ws): clear refresh token on auth failure
 - **Pas de modification de la config git** (user.email, signing, etc.) sans demande.
 - Le repo racine track tout le code actif (pixi + backend + shared + docs + tasks). Plus de sub-repos.
 - L'historique pré-consolidation est archivé sur les anciens remotes : `kndpt/battleforthecrown` (legacy Next.js) et `kndpt/battleforthecrown-backend` (backend pré-fusion).
+
+## Pre-push hook
+
+`git push` déclenche `.husky/pre-push` qui lance `yarn test` (unit + smokes, ~30-45 s). Pré-requis : Docker `battleforthecrown-postgres` healthy + base `battleforthecrown_smoke` à jour. Détail : [`docs/architecture/local-ci.md`](../../docs/architecture/local-ci.md). Bypass `--no-verify` réservé aux cas exceptionnels (branche d'archive, env DB cassé en hot-fix).

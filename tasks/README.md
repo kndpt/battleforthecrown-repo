@@ -4,7 +4,6 @@ Quatre chantiers identifiés après la résolution complète de l'audit (`docs/a
 
 ## Tickets actifs
 
-- [03 — CI : automatiser ou pas](./03-ci-strategy.md) 🟠
 - [05 — WorldConfig multipliers : sémantique inversée](./05-world-config-multipliers-semantics.md) 🟡
 - [06 — Production tick + backfill : pas d'event Outbox](./06-production-tick-and-backfill-no-outbox.md) 🟢
 - [07 — Crown production : event Outbox conditionné sur `production > 0`](./07-crown-production-event-gate.md) 🟡
@@ -15,6 +14,7 @@ Quatre chantiers identifiés après la résolution complète de l'audit (`docs/a
 
 - [01 — Audit des tests unitaires](./archive/01-unit-tests-audit.md) ✅ Résolu 2026-05-08
 - [02 — Tests smokes / E2E](./archive/02-smoke-tests-strategy.md) ✅ Résolu 2026-05-08
+- [03 — CI : automatiser ou pas](./archive/03-ci-strategy.md) ✅ Résolu 2026-05-08
 - [04 — Monorepo : structure git](./archive/04-monorepo-git-strategy.md) ✅ Résolu 2026-05-08
 
 ## Légende

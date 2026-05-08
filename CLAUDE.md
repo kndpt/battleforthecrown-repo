@@ -31,6 +31,10 @@ DB et SQL utiles : [`docs/architecture/db-setup.md`](./docs/architecture/db-setu
 
 Les choix structurants (stack, Outbox, reconciliation Pixi, optimistic UI, etc.) sont consignés dans [`docs/architecture/decisions.md`](./docs/architecture/decisions.md). À lire avant de remettre en cause une convention.
 
+## Filet automatisé
+
+Hook `pre-push` (husky) qui lance `yarn test` (~30-45 s : unit backend + unit pixi + smokes orchestration). Tout ce qui est push est vérifié vert. Détail et bypass : [`docs/architecture/local-ci.md`](./docs/architecture/local-ci.md).
+
 ## Notes pour les agents
 
 - Mémoires utilisateur globales : `~/.claude/CLAUDE.md` (auto-chargé).

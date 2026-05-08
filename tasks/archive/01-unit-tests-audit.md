@@ -108,5 +108,5 @@ Si on les supprime :
 
 ## Tickets liés
 
-- [02 — Smoke tests strategy](../02-smoke-tests-strategy.md) — la décision dépend de ce qu'on prévoit de faire en couverture E2E/smoke.
-- [03 — CI strategy](../03-ci-strategy.md) — un test cassé est tolérable localement, bloquant en CI.
+- [02 — Smoke tests strategy](./02-smoke-tests-strategy.md) ✅ — la décision dépend de ce qu'on prévoit de faire en couverture E2E/smoke.
+- [03 — CI strategy](./03-ci-strategy.md) ✅ — un test cassé est tolérable localement, bloquant en CI.

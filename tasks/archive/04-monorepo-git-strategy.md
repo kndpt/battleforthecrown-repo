@@ -137,5 +137,5 @@ Trois sous-options pour préserver (ou pas) l'historique :
 
 ## Tickets liés
 
-- [03 — CI strategy](../03-ci-strategy.md) — la structure git détermine si on a 1 ou 2 workflows CI.
+- [03 — CI strategy](./03-ci-strategy.md) ✅ — la structure git détermine si on a 1 ou 2 workflows CI.
 - L'audit `docs/architecture/audit/16-magic-numbers-hardcoded.md` (résolu) a été commit en 2 endroits — exemple concret de la friction.
