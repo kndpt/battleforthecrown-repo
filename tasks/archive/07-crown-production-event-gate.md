@@ -3,6 +3,37 @@
 **Sévérité** : 🟡 Majeure
 **Workspace(s)** : `battleforthecrown-backend`
 **Tags** : crowns, outbox, ux, edge-case
+**Statut** : ✅ Résolu 2026-05-08
+
+## Résolution
+
+Stratégie retenue : **option C+** (statu quo + clarification + smoke renforcé + bouchage d'un trou orthogonal).
+
+L'analyse a montré que le « bug user-visible » suggéré (HUD stale quand `production = 0`) n'existe pas vraiment :
+- Le HUD pixi interpole en continu via `projectCrowns` (`battleforthecrown-pixi/src/lib/interpolation.ts`) tant qu'un snapshot est présent.
+- Le seed REST initial est garanti par `useCrownsQuery` au montage de `AuthenticatedShell`. L'interpolation reprend de « maintenant » (le code force `lastUpdateTs: Date.now()` dans `setCrowns`).
+- L'asymétrie entre `updateProduction` (gardé sur `production > 0`) et `recalculateOnBuildingChange` (toujours émis) est un **design choisi**, pas un bug : tick opportuniste vs event métier.
+
+L'analyse a en revanche déterré **un vrai trou orthogonal** : `VillageStrategyService.changeStrategy` (`src/modules/strategy/village-strategy.service.ts`) déduit le coût de changement directement sur `crownBalance.balance` sans émettre `crowns.changed`. Cas réel où le HUD pouvait rester stale — fixé.
+
+## Changements
+
+- **`battleforthecrown-backend/src/modules/crowns/crowns.service.ts`** : JSDoc sur `updateProduction` qui documente la garde, l'asymétrie volontaire avec `recalculateOnBuildingChange`, et l'invariant à respecter ailleurs (toute autre source qui mute `CrownBalance.balance` doit émettre son propre event).
+- **`battleforthecrown-backend/src/modules/strategy/village-strategy.service.ts`** : injection de `CrownsService`, appel `createCrownsChangedEvent` dans la même transaction que la déduction du coût de changement de stratégie.
+- **`battleforthecrown-backend/src/modules/strategy/strategy.module.ts`** : import de `CrownsModule`.
+- **`battleforthecrown-backend/test/smoke.spec.ts`** : 2 nouveaux smokes — `tick → no crowns.changed when production rounds to 0` (verrouille l'invariant inverse) et `strategy change: deducting crowns dispatches crowns.changed` (verrouille le bouchage du trou).
+- **`docs/architecture/realtime.md`** § « Asymétrie volontaire avec `CrownProductionWorker` » : précision sur la garde `production > 0` + invariant explicite pour les autres sources de mutation.
+
+## Vérif
+
+```bash
+yarn workspace battleforthecrown-backend test:smoke
+# → 12/12 ✓ (dont les 2 nouveaux)
+```
+
+---
+
+(Ticket original conservé ci-dessous pour contexte historique.)
 
 ## Contexte
 

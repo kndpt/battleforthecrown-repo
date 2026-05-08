@@ -100,7 +100,26 @@ export class CrownsService {
   }
 
   /**
-   * Update production and accumulate crowns
+   * Update production and accumulate crowns.
+   *
+   * Quand `createEvent=true`, l'event `crowns.changed` n'est émis que si
+   * `production > 0`. C'est volontaire : ce helper est utilisé par le tick
+   * périodique `CrownProductionWorker` (toutes les 5 min) où aucun changement
+   * de rate ne peut survenir entre deux ticks. Tant que rate et balance ne
+   * bougent pas, l'interpolation côté front (`projectCrowns`) suffit à
+   * maintenir le HUD à jour — émettre N×N events « identiques » serait du
+   * bruit WS.
+   *
+   * Asymétrie avec `recalculateOnBuildingChange` (qui émet toujours) :
+   * ce dernier est un *event métier* — un building a changé, donc la rate
+   * peut avoir bougé, le HUD doit refresh sa rate. Voir
+   * `docs/architecture/realtime.md` § « Asymétrie volontaire avec
+   * CrownProductionWorker ».
+   *
+   * Invariant à respecter ailleurs : toute autre source qui mute
+   * `CrownBalance.balance` (dépenses, achats, récompenses) doit émettre son
+   * propre `crowns.changed` — sinon le HUD restera stale jusqu'au prochain
+   * tick avec `production > 0`.
    */
   async updateProduction(userId: string, worldId: string, createEvent = false) {
     return this.prisma.$transaction(async (tx) => {

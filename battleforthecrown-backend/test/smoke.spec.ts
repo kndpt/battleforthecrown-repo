@@ -282,6 +282,64 @@ describe('smoke', () => {
     expect(event?.dispatchedAt).toBeTruthy();
   });
 
+  it('crown production: tick → no crowns.changed when production rounds to 0', async () => {
+    // Lock the inverse invariant of the previous test: when no crown was actually
+    // produced (rate × elapsedHours < 1 → floor = 0), the worker must NOT emit
+    // a crowns.changed event. The HUD is kept in sync by the REST seed +
+    // client-side interpolation. cf. crowns.service.ts JSDoc.
+    const world = await seedSmokeWorld(ctx.prisma);
+    const user = await registerUser(ctx.server);
+    await joinWorld(ctx.server, user.accessToken, world.id, 'crown-village-zero');
+
+    // No backdate — joinWorld sets lastUpdateTs to now, so elapsedHours ≈ 0.
+
+    await ctx.boss.send('crowns:production', {});
+
+    // Wait long enough for the worker to have processed the job (well past
+    // the OutboxWorker poll interval) without seeing any crowns.changed for
+    // this user.
+    await new Promise((r) => setTimeout(r, 3_000));
+    const event = await ctx.prisma.eventOutbox.findFirst({
+      where: { kind: 'crowns.changed', aggregateId: user.userId },
+    });
+    expect(event).toBeNull();
+  });
+
+  it('strategy change: deducting crowns dispatches crowns.changed', async () => {
+    // Locks the cross-module invariant documented in crowns.service.ts JSDoc:
+    // any user-triggered mutation of CrownBalance.balance must emit its own
+    // crowns.changed event — otherwise the HUD stays stale until the next
+    // tick with production > 0.
+    const world = await seedSmokeWorld(ctx.prisma);
+    const user = await registerUser(ctx.server);
+    const join = await joinWorld(
+      ctx.server,
+      user.accessToken,
+      world.id,
+      'strategy-village',
+    );
+    const villageId = join.village.id;
+
+    // Give the user enough crowns to afford a strategy change.
+    await ctx.prisma.crownBalance.update({
+      where: { userId_worldId: { userId: user.userId, worldId: world.id } },
+      data: { balance: 10_000 },
+    });
+
+    const res = await request(ctx.server)
+      .post(`/village/${villageId}/strategy`)
+      .set('Authorization', `Bearer ${user.accessToken}`)
+      .send({ strategy: 'FORTRESS' });
+    expect(res.status).toBeLessThan(300);
+
+    const event = await outboxDispatched(
+      ctx.prisma,
+      { kind: 'crowns.changed', aggregateId: user.userId },
+      { timeoutMs: 10_000 },
+    );
+    expect(event?.dispatchedAt).toBeTruthy();
+  });
+
   it('barbarian backfill: enabled world → handleBackfill seeds new BVs around recent villages', async () => {
     const worldId = `smoke-bf-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     await ctx.prisma.world.create({

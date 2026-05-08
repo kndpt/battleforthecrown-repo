@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
+import { CrownsService } from '../crowns/crowns.service';
 import {
   VillageStrategy,
   VillageStrategyConfig as PrismaVillageStrategyConfig,
@@ -49,6 +50,7 @@ export class VillageStrategyService {
   constructor(
     private prisma: PrismaService,
     private ownership: OwnershipService,
+    private crowns: CrownsService,
   ) {}
 
   async getStrategyInfo(
@@ -167,6 +169,10 @@ export class VillageStrategyService {
           lastUpdateTs: now,
         },
       });
+
+      // Notifier le HUD de la dépense — sinon stale jusqu'au prochain tick
+      // crown-production avec production > 0 (cf. crowns.service.ts JSDoc).
+      await this.crowns.createCrownsChangedEvent(userId, village.worldId, tx);
 
       // Mettre à jour ou créer la configuration de stratégie
       await tx.villageStrategyConfig.upsert({

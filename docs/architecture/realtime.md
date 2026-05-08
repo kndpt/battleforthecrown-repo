@@ -124,9 +124,12 @@ Cron quotidien (minuit UTC) qui `seedAroundVillage()` autour des villages joueur
 
 ### Asymétrie volontaire avec `CrownProductionWorker`
 
-Contrairement aux deux exceptions ci-dessus, `CrownProductionWorker` **émet** `crowns.changed` à chaque tick. Justification :
+Contrairement aux deux exceptions ci-dessus, `CrownProductionWorker` **émet** `crowns.changed` à chaque tick — mais **uniquement quand `production > 0`** (cf. `crowns.service.ts` § `updateProduction`). Justification :
 - Granularité 5 min vs 60 min → besoin de feedback plus précis pour le solde affiché en HUD.
 - Scope par membership active (≪ #villages totaux) → noise WS borné par #joueurs connectés récemment, pas par la taille du monde.
+- Skip quand `production = 0` (rate = 0, ou `Math.floor(rate × elapsedHours)` = 0) → pas de noise WS quand rien n'a changé. L'interpolation `projectCrowns` côté front (`battleforthecrown-pixi/src/lib/interpolation.ts`) suffit à maintenir le HUD à jour entre deux events.
+
+**Invariant à respecter ailleurs** : `recalculateOnBuildingChange` et **toute autre source qui mute `CrownBalance.balance`** (changement de stratégie, achats, récompenses futures) doivent émettre leur propre `crowns.changed` — sinon le HUD reste stale jusqu'au prochain tick avec `production > 0`. Aujourd'hui : `recalculateOnBuildingChange` (toujours) et `VillageStrategyService.changeStrategy` (déduction du coût). Toute nouvelle source de mutation doit ajouter son `createCrownsChangedEvent` dans la même transaction Prisma.
 
 Si un jour le `ProductionWorker` doit émettre (parce que l'interpolation devient insuffisante, ex : variation de rate côté serveur sans mutation client), revoir cette section et le commentaire dans `production.worker.ts`.
 
