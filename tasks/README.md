@@ -15,7 +15,7 @@ Quatre chantiers identifiés après la résolution complète de l'audit (`docs/a
 
 - [01 — Audit des tests unitaires](./archive/01-unit-tests-audit.md) ✅ Résolu 2026-05-08
 - [02 — Tests smokes / E2E](./archive/02-smoke-tests-strategy.md) ✅ Résolu 2026-05-08
-- [04 — Monorepo : structure git](./04-monorepo-git-strategy.md) ✅ Résolu 2026-05-08
+- [04 — Monorepo : structure git](./archive/04-monorepo-git-strategy.md) ✅ Résolu 2026-05-08
 
 ## Légende
 
