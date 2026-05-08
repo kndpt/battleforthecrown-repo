@@ -187,6 +187,12 @@ describe('smoke', () => {
       data: { villageId: attackerId, unitType: 'MILITIA', quantity: 100 },
     });
 
+    // Fog of war: target must be in vision. Bump watchtower to lvl 1 (radius 5).
+    await ctx.prisma.building.updateMany({
+      where: { villageId: attackerId, type: 'WATCHTOWER' },
+      data: { level: 1 },
+    });
+
     const res = await request(ctx.server)
       .post('/combat/attack')
       .set('Authorization', `Bearer ${user.accessToken}`)
@@ -213,6 +219,50 @@ describe('smoke', () => {
       { timeoutMs: 15_000 },
     );
     expect(returned?.dispatchedAt).toBeTruthy();
+  });
+
+  it('combat: cannot attack a target outside vision (blip non-attaquable)', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const user = await registerUser(ctx.server);
+    const join = await joinWorld(
+      ctx.server,
+      user.accessToken,
+      world.id,
+      'fog-attacker',
+    );
+    const attackerId = join.village.id;
+
+    // Barbarian placed far enough to be a blip (joiner has watchtower lvl 0 → radius 0).
+    const barbarian = await ctx.prisma.village.create({
+      data: {
+        worldId: world.id,
+        isBarbarian: true,
+        name: 'fogged-target',
+        x: join.village.x + 50,
+        y: join.village.y + 50,
+        tier: 'T1',
+        resourceStock: {
+          create: { wood: 0, stone: 0, iron: 0, maxPerType: 100_000 },
+        },
+      },
+    });
+
+    await ctx.prisma.unitInventory.create({
+      data: { villageId: attackerId, unitType: 'MILITIA', quantity: 100 },
+    });
+
+    const res = await request(ctx.server)
+      .post('/combat/attack')
+      .set('Authorization', `Bearer ${user.accessToken}`)
+      .send({
+        villageId: attackerId,
+        targetX: barbarian.x,
+        targetY: barbarian.y,
+        targetKind: 'BARBARIAN_VILLAGE',
+        targetRefId: barbarian.id,
+        units: { MILITIA: 100 },
+      });
+    expect(res.status).toBe(403);
   });
 
   it('conquest: ConquestService → village.userId reassigned + village.conquered dispatched', async () => {

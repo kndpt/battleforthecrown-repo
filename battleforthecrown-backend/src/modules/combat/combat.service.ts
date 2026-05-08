@@ -2,11 +2,13 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
   Inject,
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WorldConfigService } from '../world/world-config.service';
+import { VisionService } from '../world/vision.service';
 import { calculateDistance } from '@battleforthecrown/shared/logic';
 import type { AttackCommandDto } from './dto/attack-command.schema';
 import { encodeUnitMap } from './codecs';
@@ -20,6 +22,7 @@ export class CombatService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly worldConfig: WorldConfigService,
+    private readonly visionService: VisionService,
     @Inject('PG_BOSS') private readonly boss: PgBoss,
   ) {}
 
@@ -66,7 +69,21 @@ export class CombatService {
         targetY = targetVillage.y;
       }
 
-      // 3. Verify units availability
+      // 3. Enforce fog of war: a target seen as a blip cannot be attacked.
+      // Cf. ADR-11 + docs/gameplay/01-overview.md ("Blip non-cliquable").
+      const config = await this.worldConfig.getConfig(worldId);
+      if (config.fogOfWar?.enabled) {
+        const disks = await this.visionService.getVisionDisks(userId, worldId);
+        if (
+          !this.visionService.isInVision({ x: targetX, y: targetY }, disks)
+        ) {
+          throw new ForbiddenException(
+            'Target is outside your vision — extend your watchtower to attack.',
+          );
+        }
+      }
+
+      // 4. Verify units availability
       const unitInventories = await tx.unitInventory.findMany({
         where: { villageId: dto.villageId },
       });
@@ -84,7 +101,7 @@ export class CombatService {
         }
       }
 
-      // 4. Calculate distance and travel time
+      // 5. Calculate distance and travel time
       const distance = calculateDistance(
         village.x,
         village.y,
@@ -106,7 +123,7 @@ export class CombatService {
       const now = new Date();
       const arrivalAt = new Date(now.getTime() + travelTimeMs);
 
-      // 5. Deduct units from inventory
+      // 6. Deduct units from inventory
       for (const [unitType, quantity] of Object.entries(dto.units)) {
         if (quantity === undefined) continue;
         await tx.unitInventory.update({
@@ -122,7 +139,7 @@ export class CombatService {
         });
       }
 
-      // 6. Create expedition
+      // 7. Create expedition
       const expedition = await tx.expedition.create({
         data: {
           worldId,
@@ -138,7 +155,7 @@ export class CombatService {
         },
       });
 
-      // 7. Create event
+      // 8. Create event
       await createOutboxEvent(tx, 'battle.sent', dto.villageId, {
         expeditionId: expedition.id,
         villageId: dto.villageId,
@@ -148,7 +165,7 @@ export class CombatService {
         arrivalAt: arrivalAt.toISOString(),
       });
 
-      // 8. Schedule combat resolution worker
+      // 9. Schedule combat resolution worker
       await this.boss.send(
         'combat:resolve',
         { expeditionId: expedition.id },
