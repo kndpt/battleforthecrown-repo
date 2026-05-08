@@ -36,16 +36,25 @@ describe('smoke', () => {
     // We assert on the DB side-effect (lastUpdateTs progression) instead.
     const world = await seedSmokeWorld(ctx.prisma);
     const user = await registerUser(ctx.server);
-    const join = await joinWorld(ctx.server, user.accessToken, world.id, 'tick-village');
+    const join = await joinWorld(
+      ctx.server,
+      user.accessToken,
+      world.id,
+      'tick-village',
+    );
     const villageId = join.village.id;
 
-    const before = await ctx.prisma.resourceStock.findUniqueOrThrow({ where: { villageId } });
+    const before = await ctx.prisma.resourceStock.findUniqueOrThrow({
+      where: { villageId },
+    });
     await new Promise((r) => setTimeout(r, 1100));
     await ctx.boss.send('production:tick', {});
 
     await waitFor(
       async () => {
-        const after = await ctx.prisma.resourceStock.findUniqueOrThrow({ where: { villageId } });
+        const after = await ctx.prisma.resourceStock.findUniqueOrThrow({
+          where: { villageId },
+        });
         return after.lastUpdateTs > before.lastUpdateTs ? after : null;
       },
       { timeoutMs: 10_000 },
@@ -55,12 +64,22 @@ describe('smoke', () => {
   it('construction: upgrade WOOD → Building.level=2 + building.completed dispatched', async () => {
     const world = await seedSmokeWorld(ctx.prisma);
     const user = await registerUser(ctx.server);
-    const join = await joinWorld(ctx.server, user.accessToken, world.id, 'build-village');
+    const join = await joinWorld(
+      ctx.server,
+      user.accessToken,
+      world.id,
+      'build-village',
+    );
     const villageId = join.village.id;
 
     await ctx.prisma.resourceStock.update({
       where: { villageId },
-      data: { wood: 1_000_000, stone: 1_000_000, iron: 1_000_000, maxPerType: 10_000_000 },
+      data: {
+        wood: 1_000_000,
+        stone: 1_000_000,
+        iron: 1_000_000,
+        maxPerType: 10_000_000,
+      },
     });
 
     const res = await request(ctx.server)
@@ -70,7 +89,10 @@ describe('smoke', () => {
     expect(res.status).toBeLessThan(300);
 
     const upgradedBuilding = await waitFor(
-      () => ctx.prisma.building.findFirst({ where: { villageId, type: 'WOOD', level: 2 } }),
+      () =>
+        ctx.prisma.building.findFirst({
+          where: { villageId, type: 'WOOD', level: 2 },
+        }),
       { timeoutMs: 10_000 },
     );
 
@@ -85,16 +107,34 @@ describe('smoke', () => {
   it('training: train 1 MILITIA → UnitInventory + unit.training.completed dispatched', async () => {
     const world = await seedSmokeWorld(ctx.prisma);
     const user = await registerUser(ctx.server);
-    const join = await joinWorld(ctx.server, user.accessToken, world.id, 'train-village');
+    const join = await joinWorld(
+      ctx.server,
+      user.accessToken,
+      world.id,
+      'train-village',
+    );
     const villageId = join.village.id;
 
-    const barracks = await ctx.prisma.building.findFirstOrThrow({ where: { villageId, type: 'BARRACKS' } });
-    await ctx.prisma.building.update({ where: { id: barracks.id }, data: { level: 1 } });
+    const barracks = await ctx.prisma.building.findFirstOrThrow({
+      where: { villageId, type: 'BARRACKS' },
+    });
+    await ctx.prisma.building.update({
+      where: { id: barracks.id },
+      data: { level: 1 },
+    });
     await ctx.prisma.resourceStock.update({
       where: { villageId },
-      data: { wood: 100_000, stone: 100_000, iron: 100_000, maxPerType: 1_000_000 },
+      data: {
+        wood: 100_000,
+        stone: 100_000,
+        iron: 100_000,
+        maxPerType: 1_000_000,
+      },
     });
-    await ctx.prisma.population.update({ where: { villageId }, data: { used: 0, max: 1000 } });
+    await ctx.prisma.population.update({
+      where: { villageId },
+      data: { used: 0, max: 1000 },
+    });
 
     const res = await request(ctx.server)
       .post(`/army/${villageId}/train`)
@@ -121,7 +161,12 @@ describe('smoke', () => {
   it('combat: attack a barbarian → battle.resolved + battle.returned dispatched', async () => {
     const world = await seedSmokeWorld(ctx.prisma);
     const user = await registerUser(ctx.server);
-    const join = await joinWorld(ctx.server, user.accessToken, world.id, 'attacker');
+    const join = await joinWorld(
+      ctx.server,
+      user.accessToken,
+      world.id,
+      'attacker',
+    );
     const attackerId = join.village.id;
 
     const barbarian = await ctx.prisma.village.create({
@@ -173,7 +218,12 @@ describe('smoke', () => {
   it('conquest: ConquestService → village.userId reassigned + village.conquered dispatched', async () => {
     const world = await seedSmokeWorld(ctx.prisma);
     const user = await registerUser(ctx.server);
-    const join = await joinWorld(ctx.server, user.accessToken, world.id, 'conqueror');
+    const join = await joinWorld(
+      ctx.server,
+      user.accessToken,
+      world.id,
+      'conqueror',
+    );
     const attackerId = join.village.id;
 
     const barbarian = await ctx.prisma.village.create({
@@ -184,7 +234,9 @@ describe('smoke', () => {
         x: join.village.x + 1,
         y: join.village.y,
         tier: 'T1',
-        resourceStock: { create: { wood: 0, stone: 0, iron: 0, maxPerType: 100_000 } },
+        resourceStock: {
+          create: { wood: 0, stone: 0, iron: 0, maxPerType: 100_000 },
+        },
       },
     });
 
@@ -196,7 +248,9 @@ describe('smoke', () => {
     });
     expect(result.success).toBe(true);
 
-    const conquered = await ctx.prisma.village.findUniqueOrThrow({ where: { id: barbarian.id } });
+    const conquered = await ctx.prisma.village.findUniqueOrThrow({
+      where: { id: barbarian.id },
+    });
     expect(conquered.userId).toBe(user.userId);
 
     const event = await outboxDispatched(
@@ -249,25 +303,41 @@ describe('smoke', () => {
 
     const user = await registerUser(ctx.server);
     await ctx.prisma.village.create({
-      data: { worldId, userId: user.userId, name: 'recent-anchor', x: 50, y: 50 },
+      data: {
+        worldId,
+        userId: user.userId,
+        name: 'recent-anchor',
+        x: 50,
+        y: 50,
+      },
     });
 
-    const before = await ctx.prisma.village.count({ where: { worldId, isBarbarian: true } });
+    const before = await ctx.prisma.village.count({
+      where: { worldId, isBarbarian: true },
+    });
     await ctx.app.get(BarbarianBackfillWorker).handleBackfill();
-    const after = await ctx.prisma.village.count({ where: { worldId, isBarbarian: true } });
+    const after = await ctx.prisma.village.count({
+      where: { worldId, isBarbarian: true },
+    });
 
     expect(after).toBeGreaterThan(before);
   });
 
   it('jwt auth: register → access protected → refresh → access with new token', async () => {
-    const { email, accessToken: t1, refreshToken } = await registerUser(ctx.server);
+    const {
+      email,
+      accessToken: t1,
+      refreshToken,
+    } = await registerUser(ctx.server);
 
     const r1 = await request(ctx.server)
       .get('/world/me/memberships')
       .set('Authorization', `Bearer ${t1}`);
     expect(r1.status).toBe(200);
 
-    const refreshed = await request(ctx.server).post('/auth/refresh').send({ refreshToken });
+    const refreshed = await request(ctx.server)
+      .post('/auth/refresh')
+      .send({ refreshToken });
     expect(refreshed.status).toBeLessThan(300);
     const t2 = refreshed.body.accessToken as string;
     expect(t2).toBeTruthy();
@@ -291,7 +361,14 @@ describe('smoke', () => {
     await joinWorld(ctx.server, user.accessToken, world.id, 'fog-watcher');
 
     await ctx.prisma.village.create({
-      data: { worldId: world.id, isBarbarian: true, name: 'fogged-barb', x: 250, y: 250, tier: 'T1' },
+      data: {
+        worldId: world.id,
+        isBarbarian: true,
+        name: 'fogged-barb',
+        x: 250,
+        y: 250,
+        tier: 'T1',
+      },
     });
 
     const res = await request(ctx.server)
@@ -299,7 +376,12 @@ describe('smoke', () => {
       .set('Authorization', `Bearer ${user.accessToken}`);
     expect(res.status).toBe(200);
 
-    const entities = res.body as Array<{ id: string; kind: string; x: number; y: number }>;
+    const entities = res.body as Array<{
+      id: string;
+      kind: string;
+      x: number;
+      y: number;
+    }>;
     const found = entities.find((e) => e.x === 250 && e.y === 250);
     expect(found).toBeTruthy();
     expect(found?.kind).toBe('fogged');
@@ -308,12 +390,22 @@ describe('smoke', () => {
   it('outbox dispatch: real Socket.IO client receives building.completed', async () => {
     const world = await seedSmokeWorld(ctx.prisma);
     const user = await registerUser(ctx.server);
-    const join = await joinWorld(ctx.server, user.accessToken, world.id, 'ws-village');
+    const join = await joinWorld(
+      ctx.server,
+      user.accessToken,
+      world.id,
+      'ws-village',
+    );
     const villageId = join.village.id;
 
     await ctx.prisma.resourceStock.update({
       where: { villageId },
-      data: { wood: 1_000_000, stone: 1_000_000, iron: 1_000_000, maxPerType: 10_000_000 },
+      data: {
+        wood: 1_000_000,
+        stone: 1_000_000,
+        iron: 1_000_000,
+        maxPerType: 10_000_000,
+      },
     });
 
     const client: ClientSocket = ioClient(`http://localhost:${port}`, {
@@ -331,7 +423,10 @@ describe('smoke', () => {
 
       const received = new Promise<unknown>((resolve, reject) => {
         client.once('building.completed', (data) => resolve(data));
-        setTimeout(() => reject(new Error('building.completed not received within 15s')), 15_000);
+        setTimeout(
+          () => reject(new Error('building.completed not received within 15s')),
+          15_000,
+        );
       });
 
       await request(ctx.server)

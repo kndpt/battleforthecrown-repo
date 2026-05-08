@@ -7,7 +7,12 @@ import type { WorldConfig } from '@battleforthecrown/shared/world';
 // - barbarianSeeding.enabled = false (each smoke seeds its own barbarians)
 // - production multiplier stays at 1 (rate is observed — not the trigger speed)
 export const SMOKE_WORLD_CONFIG: WorldConfig = {
-  multipliers: { construction: 100, production: 1, training: 100, travel: 1000 },
+  multipliers: {
+    construction: 100,
+    production: 1,
+    training: 100,
+    travel: 1000,
+  },
   combat: { attackBonus: 1, defenseBonus: 1, lootFactor: 0.5 },
   barbarianSeeding: {
     enabled: false,
@@ -20,9 +25,39 @@ export const SMOKE_WORLD_CONFIG: WorldConfig = {
     playerExclusion: 2,
     seedVersion: 1,
     tiers: {
-      T1: { minPoints: 550, maxPoints: 750, buildingRatio: 0.7, loot: { wood: { min: 200, max: 400 }, stone: { min: 200, max: 400 }, iron: { min: 100, max: 250 } }, visibleIndexNoise: 0.08 },
-      T2: { minPoints: 1200, maxPoints: 1600, buildingRatio: 0.6, loot: { wood: { min: 600, max: 1000 }, stone: { min: 600, max: 1000 }, iron: { min: 400, max: 700 } }, visibleIndexNoise: 0.1 },
-      T3: { minPoints: 2500, maxPoints: 3200, buildingRatio: 0.5, loot: { wood: { min: 1500, max: 2500 }, stone: { min: 1500, max: 2500 }, iron: { min: 1000, max: 1800 } }, visibleIndexNoise: 0.12 },
+      T1: {
+        minPoints: 550,
+        maxPoints: 750,
+        buildingRatio: 0.7,
+        loot: {
+          wood: { min: 200, max: 400 },
+          stone: { min: 200, max: 400 },
+          iron: { min: 100, max: 250 },
+        },
+        visibleIndexNoise: 0.08,
+      },
+      T2: {
+        minPoints: 1200,
+        maxPoints: 1600,
+        buildingRatio: 0.6,
+        loot: {
+          wood: { min: 600, max: 1000 },
+          stone: { min: 600, max: 1000 },
+          iron: { min: 400, max: 700 },
+        },
+        visibleIndexNoise: 0.1,
+      },
+      T3: {
+        minPoints: 2500,
+        maxPoints: 3200,
+        buildingRatio: 0.5,
+        loot: {
+          wood: { min: 1500, max: 2500 },
+          stone: { min: 1500, max: 2500 },
+          iron: { min: 1000, max: 1800 },
+        },
+        visibleIndexNoise: 0.12,
+      },
     },
     tierRanges: [
       { minDistance: 8, maxDistance: 20, tier: 'T1' },

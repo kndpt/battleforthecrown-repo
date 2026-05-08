@@ -14,7 +14,9 @@ export interface SmokeContext {
 }
 
 export async function bootSmokeApp(): Promise<SmokeContext> {
-  const moduleFixture = await Test.createTestingModule({ imports: [AppModule] }).compile();
+  const moduleFixture = await Test.createTestingModule({
+    imports: [AppModule],
+  }).compile();
   const app = moduleFixture.createNestApplication();
   await app.init();
   return {
@@ -26,15 +28,32 @@ export async function bootSmokeApp(): Promise<SmokeContext> {
 }
 
 const TABLES = [
-  'expedition', 'combat_report', 'unit_training', 'unit_inventory',
-  'building', 'population', 'resource_stock', 'village', 'village_strategy_config',
-  'event_outbox', 'power_snapshot', 'zone_capacity', 'chunk_spawn_state',
-  'world_seed_state', 'world_entity', 'crown_balance', 'world_membership',
-  'world', 'session', '"user"',
+  'expedition',
+  'combat_report',
+  'unit_training',
+  'unit_inventory',
+  'building',
+  'population',
+  'resource_stock',
+  'village',
+  'village_strategy_config',
+  'event_outbox',
+  'power_snapshot',
+  'zone_capacity',
+  'chunk_spawn_state',
+  'world_seed_state',
+  'world_entity',
+  'crown_balance',
+  'world_membership',
+  'world',
+  'session',
+  '"user"',
 ];
 
 export async function truncateAll(prisma: PrismaService): Promise<void> {
-  await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${TABLES.join(', ')} RESTART IDENTITY CASCADE`);
+  await prisma.$executeRawUnsafe(
+    `TRUNCATE TABLE ${TABLES.join(', ')} RESTART IDENTITY CASCADE`,
+  );
 }
 
 export async function seedSmokeWorld(
@@ -42,19 +61,35 @@ export async function seedSmokeWorld(
   id = `smoke-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
 ) {
   return prisma.world.create({
-    data: { id, name: id, status: 'OPEN', config: SMOKE_WORLD_CONFIG as object },
+    data: {
+      id,
+      name: id,
+      status: 'OPEN',
+      config: SMOKE_WORLD_CONFIG as object,
+    },
   });
 }
 
 type Server = SmokeContext['server'];
 
 export async function registerUser(server: Server, suffix?: string) {
-  const tag = suffix ?? `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  const tag =
+    suffix ?? `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
   const email = `smoke-${tag}@test.local`;
   const password = 'smoke-password-123';
-  const res = await request(server).post('/auth/register').send({ email, password });
-  if (res.status >= 300) throw new Error(`register failed: ${res.status} ${JSON.stringify(res.body)}`);
-  return res.body as { accessToken: string; refreshToken: string; userId: string; email: string };
+  const res = await request(server)
+    .post('/auth/register')
+    .send({ email, password });
+  if (res.status >= 300)
+    throw new Error(
+      `register failed: ${res.status} ${JSON.stringify(res.body)}`,
+    );
+  return res.body as {
+    accessToken: string;
+    refreshToken: string;
+    userId: string;
+    email: string;
+  };
 }
 
 export async function joinWorld(
@@ -67,11 +102,15 @@ export async function joinWorld(
     .post(`/world/${worldId}/join`)
     .set('Authorization', `Bearer ${accessToken}`)
     .send({ villageName });
-  if (res.status >= 300) throw new Error(`join failed: ${res.status} ${JSON.stringify(res.body)}`);
+  if (res.status >= 300)
+    throw new Error(`join failed: ${res.status} ${JSON.stringify(res.body)}`);
   return res.body;
 }
 
-export interface WaitOpts { timeoutMs?: number; intervalMs?: number }
+export interface WaitOpts {
+  timeoutMs?: number;
+  intervalMs?: number;
+}
 
 export async function waitFor<T>(
   predicate: () => Promise<T | null | undefined | false>,
@@ -90,7 +129,9 @@ export async function waitFor<T>(
     }
     await new Promise((r) => setTimeout(r, interval));
   }
-  throw new Error(`waitFor timed out after ${timeout}ms${lastError ? ` (last error: ${String(lastError)})` : ''}`);
+  throw new Error(
+    `waitFor timed out after ${timeout}ms${lastError ? ` (last error: ${String(lastError)})` : ''}`,
+  );
 }
 
 export async function outboxDispatched(
@@ -99,7 +140,10 @@ export async function outboxDispatched(
   opts?: WaitOpts,
 ) {
   return waitFor(
-    () => prisma.eventOutbox.findFirst({ where: { ...where, dispatchedAt: { not: null } } }),
+    () =>
+      prisma.eventOutbox.findFirst({
+        where: { ...where, dispatchedAt: { not: null } },
+      }),
     opts,
   );
 }
