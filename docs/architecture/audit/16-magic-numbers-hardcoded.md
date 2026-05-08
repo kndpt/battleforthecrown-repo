@@ -1,8 +1,22 @@
 # 16 — Magic numbers hardcodés sans constantes nommées (transverse)
 
+**Statut** : ✅ Résolu le 2026-05-08
 **Sévérité** : 🟠 Moyenne
 **Workspace(s)** : `battleforthecrown-backend`, `packages/shared`, `battleforthecrown-pixi`
 **Tags** : magic-numbers, configurability, maintainability
+
+## Résolution
+
+Approche pragmatique — nommer ce qui a une sémantique métier ou un doublon, pas tout. Pas d'ESLint `no-magic-numbers` (ratio signal/bruit défavorable).
+
+- **Primitives temporelles** centralisées dans `packages/shared/src/time/index.ts` : `MS_PER_SECOND`, `MS_PER_MINUTE`, `MS_PER_HOUR`, `MS_PER_DAY`. Sous-path export `@battleforthecrown/shared/time`.
+- **Doublon `30000` resources/crowns** tué : nouvelle constante `PRODUCTION_CATCHUP_THRESHOLD_MS = 30 * MS_PER_SECOND` dans `battleforthecrown-backend/src/modules/resources/resources.constants.ts`, importée par `resources.service.ts` ET `crowns.service.ts`. Un changement de seuil se fait désormais en un point unique.
+- **Conversions ms → unités** : `/ 60000` → `/ MS_PER_MINUTE` (resources), `/ 3600000` → `/ MS_PER_HOUR` (crowns), `* 60 * 60 * 1000` → `* MS_PER_HOUR` (strategy cooldown), `* 60 * 60 * 1000` (1h backfill) → `MS_PER_HOUR`.
+- **Refresh JWT 7j** : `auth.service.ts` expose `REFRESH_TOKEN_TTL_MS = 7 * MS_PER_DAY` (constante module), `crown-production.worker.ts` utilise `7 * MS_PER_DAY` inline pour `sevenDaysAgo`.
+- **Plancher build time** : `building-cost.ts` shared utilise `MS_PER_SECOND` (à la fois pour le minimum 1 s et la conversion sec → ms).
+- **Audit obsolète** sur 2 points : `barbarian-seeding maxSyncChunks = 4` était déjà factorisé en `MAX_SYNC_CHUNKS`, et `combat.service.ts:155 (.take(100))` n'existe plus.
+
+Aucun changement de comportement, refacto pur. Backend build OK, 36 tests passent.
 
 ## Symptôme
 

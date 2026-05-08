@@ -1,6 +1,7 @@
 import { getBuildingLevelValues } from '../village/buildings';
 import { getStrategyBonusValue, VillageStrategyType } from '../village/strategy';
 import { CASTLE_CONSTRUCTION_SPEED_BONUS } from '../village/buildings';
+import { MS_PER_SECOND } from '../time';
 
 export interface BuildingCostResult {
   wood: number;
@@ -60,7 +61,10 @@ export function calculateBuildingCost(
     CASTLE_CONSTRUCTION_SPEED_BONUS[1];
 
   const actualTimeSeconds = (baseTimeSeconds * castleBonus) / speedMultiplier;
-  const actualTimeMs = Math.max(1000, Math.round(actualTimeSeconds * 1000));
+  const actualTimeMs = Math.max(
+    MS_PER_SECOND,
+    Math.round(actualTimeSeconds * MS_PER_SECOND),
+  );
 
   return {
     wood: cost.wood,

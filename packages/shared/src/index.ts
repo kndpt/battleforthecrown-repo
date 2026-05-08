@@ -8,3 +8,4 @@ export * from './power';
 export * from './logic';
 export * from './events';
 export * from './auth';
+export * from './time';

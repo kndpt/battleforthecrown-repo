@@ -1,8 +1,20 @@
 # 17 — Statut de `src/pixi/manifest.ts` à confirmer (utilisé ou dead code)
 
+**Statut** : ✅ Fermé le 2026-05-08 (audit obsolète)
 **Sévérité** : 🟠 Moyenne
 **Workspace(s)** : `battleforthecrown-pixi`
 **Tags** : dead-code-suspect, pixi, assets, investigation
+
+## Résolution
+
+Verdict après investigation : **A. Activement utilisé** (cas 1 du ticket).
+
+- Le fichier a été déplacé en `battleforthecrown-pixi/src/pixi/assets/manifest.ts` (l'audit pointait l'ancien chemin `src/pixi/manifest.ts`).
+- Il exporte `BUILDING_TEXTURE_KEYS`, `VILLAGE_BUNDLE`, `WORLD_MAP_BUNDLE`, `BOOT_BUNDLE`, `PIXI_BUNDLES` et la fonction idempotente `registerPixiBundles()` qui appelle `Assets.init({ manifest: { bundles: PIXI_BUNDLES } })`.
+- Chaîne de chargement active : `manifest.ts` → `loader.ts:loadBundle` (appelle `registerPixiBundles()` puis `Assets.loadBundle`) → consommé par `VillageCanvas.tsx:30` (bundle `village`) et `WorldMapCanvas.tsx:119` (bundle `world-map`).
+- `manifest.test.ts` valide la structure des bundles.
+
+Aucune action de code requise. Ticket fermé sans modification.
 
 ## Symptôme
 
