@@ -104,14 +104,17 @@ Tout nouveau type d'event WS = ajout dans `event-types.ts` + type côté fronten
 
 ## Tick de production
 
-`ProductionWorker` tourne en boucle (job récurrent pg-boss). Chaque tick :
+`ProductionWorker` tourne en boucle (job récurrent pg-boss, par défaut toutes les 60 min). Chaque tick :
 
-1. Lit tous les `Village` actifs.
-2. Pour chaque : calcule `produced = productionRate × deltaSeconds × worldMultiplier` capé à `warehouseCapacity`.
-3. Update atomique des ressources + écrit `resources.changed` dans Outbox.
-4. **Toutes les mutations passent par une seule `$transaction` par tranche de villages** (batching).
+1. Lit tous les `Village`.
+2. Pour chaque : `resourcesService.updateProduction(villageId)` calcule `wood/stone/iron + rate × elapsedMinutes` capé à `currentStorageLimit` et update `ResourceStock` (transaction Prisma par village).
+3. **Aucun `resources.changed` émis** — voir ci-dessous.
 
-⚠️ Le tick ne calcule **pas** la valeur affichée au joueur en temps réel — le frontend interpole entre deux ticks. La valeur DB est rafraîchie périodiquement (~1 min de plage typique).
+⚠️ Le tick ne calcule **pas** la valeur affichée au joueur en temps réel — le frontend interpole via `projectResources` entre les events mutation-driven. Le tick sert de catchup DB pour que `lastUpdateTs` reste à jour pour le combat (`calculateCurrentResources`) et le fetch REST (`getResources` + `PRODUCTION_CATCHUP_THRESHOLD_MS`).
+
+### Exception au pattern Outbox
+
+`ProductionWorker` et `BarbarianBackfillWorker` mutent la DB **sans** écrire dans `EventOutbox`. C'est délibéré, doc canonique : [`docs/architecture/realtime.md`](../../../docs/architecture/realtime.md) § "Exceptions au pattern Outbox". Avant de "corriger" un de ces workers en y ajoutant un event, lire la section.
 
 ## Pièges connus
 

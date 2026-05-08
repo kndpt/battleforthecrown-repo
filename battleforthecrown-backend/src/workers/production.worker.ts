@@ -70,7 +70,8 @@ export class ProductionWorker implements OnModuleInit {
 
       // Update production for each village.
       // No WebSocket broadcast on tick — the frontend interpolates locally
-      // between mutation-driven `resources.changed` events.
+      // between mutation-driven `resources.changed` events. Documented under
+      // "Exceptions au pattern Outbox" in `docs/architecture/realtime.md`.
       for (const village of villages) {
         try {
           await this.resourcesService.updateProduction(village.id);

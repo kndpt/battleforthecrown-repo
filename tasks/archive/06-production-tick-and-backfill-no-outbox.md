@@ -3,6 +3,26 @@
 **Sévérité** : 🟢 Mineure
 **Workspace(s)** : `battleforthecrown-backend`
 **Tags** : outbox, workers, design-decision, doc-debt
+**Statut** : ✅ Résolu 2026-05-08
+
+## Résolution
+
+Stratégie retenue : **option A étendue**. Le statu quo (pas d'event Outbox sur les deux workers) est validé comme choix archi conscient — l'analyse a montré :
+
+- L'interpolation côté pixi (`projectResources`) est mathématiquement identique au backend tant que `productionRates` et `maxPerType` ne changent pas. Tout changement de rate déclenche déjà un event (`building.completed`, ou émission directe par `construction.worker.ts` quand un producer/WAREHOUSE complète). Le tick horaire n'apporte aucune valeur user-visible — il sert uniquement de catchup DB et de backstop pour le combat.
+- Pour le backfill, `useWorldEntitiesQuery` a `refetchInterval: 30_000` → max 30 s de latence pour voir une nouvelle BV apparaître, et le worker tourne 1×/jour à minuit UTC. Le ticket original sur-vendait l'invisibilité ("jusqu'au prochain pan/zoom").
+
+L'analyse a aussi déterré **deux bugs doc** sur le déclencheur de `resources.changed` :
+- `docs/architecture/realtime.md` (catalogue d'événements) listait à tort `ProductionWorker tick` comme déclencheur.
+- `battleforthecrown-backend/.claude/rules/workers.md` (§ Tick de production) affirmait que le tick "écrit `resources.changed` dans Outbox".
+
+**Travaux livrés** :
+1. `realtime.md` — déclencheur de `resources.changed` corrigé (5 vrais callers d'`OutboxPublisher.resourcesChanged` listés) ; nouvelle section "Exceptions au pattern Outbox" qui documente production tick + barbarian backfill + l'asymétrie volontaire avec `CrownProductionWorker`.
+2. `workers.md` (§ Tick de production) — formulation corrigée + renvoi vers la section canonique de `realtime.md`.
+3. Commentaire dans `barbarian-backfill.worker.ts` au-dessus de `handleBackfill`.
+4. Commentaire existant dans `production.worker.ts` enrichi avec un pointer vers la doc canonique.
+
+Aucun changement de comportement runtime, aucun smoke ajouté (les smokes existants — `smoke.spec.ts:33` pour le tick et `:285` pour le backfill — assertaient déjà l'effet DB seul, ce qui est cohérent avec le choix archi).
 
 ## Contexte
 

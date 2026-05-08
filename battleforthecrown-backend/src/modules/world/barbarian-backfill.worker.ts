@@ -17,8 +17,11 @@ export class BarbarianBackfillWorker {
   ) {}
 
   /**
-   * Run backfill every day at midnight to maintain density
-   * Can be adjusted via cron expression
+   * Run backfill every day at midnight to maintain density.
+   *
+   * No EventOutbox write on purpose — frontends pick up new BVs via
+   * `useWorldEntitiesQuery`'s 30s refetch interval. Documented under
+   * "Exceptions au pattern Outbox" in `docs/architecture/realtime.md`.
    */
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handleBackfill() {

@@ -92,15 +92,43 @@ Chaque payload est validé runtime par `parseEventPayload(kind, raw)` (backend `
 
 | Event | Scope | Champs principaux du payload | Déclencheur backend |
 |-------|-------|------------------------------|---------------------|
-| `resources.changed` | `userId` | `villageId, wood, stone, iron, maxPerType, lastUpdateTs, productionRates` | `ProductionWorker` tick + `OutboxPublisher.resourcesChanged` |
+| `resources.changed` | `userId` | `villageId, wood, stone, iron, maxPerType, lastUpdateTs, productionRates` | `OutboxPublisher.resourcesChanged` (upgrade-building, recruit-troops, cancel-construction, cancel-recruitment, construction worker quand un producer/warehouse complète). **Pas le `ProductionWorker` tick** — cf. § Exceptions au pattern Outbox. |
 | `building.completed` | `userId` | `buildingId, villageId, buildingType, level` | `ConstructionWorker` |
 | `unit.training.completed` | `userId` | `trainingId, villageId, unitType, completedQty, totalQty` | `TrainingWorker` |
-| `crowns.changed` | `userId` | `userId, worldId, balance, productionRate, lastUpdateTs` | `CrownProductionWorker` + transactions |
+| `crowns.changed` | `userId` | `userId, worldId, balance, productionRate, lastUpdateTs` | `CrownProductionWorker` (chaque tick, par membership active) + `CrownsService.updateProduction` quand transaction crowns |
 | `battle.sent` | `userId` (attaquant) | `expeditionId, villageId, targetX, targetY, targetKind, arrivalAt` | `CombatService.initiateAttack` |
 | `battle.resolved` | `userId` (les 2 camps) | `expeditionId, reportId, villageId, isVictory, loot, lossesAttacker (UnitMap), survivingUnits (UnitMap), casualtyRate, returnAt, …` | `CombatWorker` |
 | `battle.returned` | `userId` (attaquant) | `expeditionId, reportId, villageId, survivingUnits (UnitMap), loot` | `ReturnWorker` |
 | `village.attacked` | `userId` (défenseur) | `defenderVillageId, attackerVillageId, attackerVillageName, isDefenseSuccessful, losses (UnitMap), casualtyRate, resourcesLost, …` | `CombatWorker` (notification) |
 | `village.conquered` | `worldId` | `villageId, newOwnerId, previousTier, x, y, buildingsKept` | `ConquestService` |
+
+## Exceptions au pattern Outbox
+
+Deux workers font des mutations DB **sans** écrire dans `EventOutbox`. C'est intentionnel — les documenter ici évite que le prochain dev les prenne pour des oublis et "corrige" au mauvais endroit.
+
+### `ProductionWorker` (`src/workers/production.worker.ts`)
+
+Tick horaire qui appelle `resourcesService.updateProduction(villageId)` pour chaque village. Cette méthode rafraîchit `ResourceStock` (wood/stone/iron/`lastUpdateTs`) **sans émettre `resources.changed`**.
+
+**Pourquoi** : le frontend interpole les ressources entre deux events via `projectResources` (`battleforthecrown-pixi/src/lib/interpolation.ts`). Tant que `productionRates` et `maxPerType` ne changent pas, l'interpolation est mathématiquement identique au calcul backend. Tout changement de rate déclenche déjà un event (`building.completed` invalide la query, `construction.worker.ts` émet `resources.changed` quand un producer ou un WAREHOUSE complète). Émettre N events × N villages × 1 tick/h ajouterait du noise WS sans valeur user-visible.
+
+Le tick joue donc deux rôles découplés du WS :
+1. **Catchup DB périodique** pour que `lastUpdateTs` ne dérive pas trop quand un joueur reste connecté sans muter.
+2. **Backstop** pour le combat : `calculateCurrentResources` lit `lastUpdateTs` et calcule le pull à partir de là — la valeur est correcte même sans tick récent (cf. aussi le catchup automatique de `getResources` quand `elapsedMs > PRODUCTION_CATCHUP_THRESHOLD_MS`).
+
+### `BarbarianBackfillWorker` (`src/modules/world/barbarian-backfill.worker.ts`)
+
+Cron quotidien (minuit UTC) qui `seedAroundVillage()` autour des villages joueurs récents. Crée des `Village { isBarbarian: true }` + buildings/stocks via la factory, **sans event Outbox**.
+
+**Pourquoi** : le frontend fait `useWorldEntitiesQuery` avec `refetchInterval: 30_000` + `staleTime: 30_000` (`battleforthecrown-pixi/src/api/queries.ts`). Donc une nouvelle BV apparaît dans la map en ≤ 30 s sans qu'on ait besoin d'event. Ajouter un event `world.barbarians.seeded` coûterait un nouveau `kind`, un binding pixi et un handler — pour économiser 0 à 30 s d'attente sur un event qui se déclenche 1×/jour à minuit UTC quand la quasi-totalité des joueurs ne regardent pas la map. Pas le bon ratio.
+
+### Asymétrie volontaire avec `CrownProductionWorker`
+
+Contrairement aux deux exceptions ci-dessus, `CrownProductionWorker` **émet** `crowns.changed` à chaque tick. Justification :
+- Granularité 5 min vs 60 min → besoin de feedback plus précis pour le solde affiché en HUD.
+- Scope par membership active (≪ #villages totaux) → noise WS borné par #joueurs connectés récemment, pas par la taille du monde.
+
+Si un jour le `ProductionWorker` doit émettre (parce que l'interpolation devient insuffisante, ex : variation de rate côté serveur sans mutation client), revoir cette section et le commentaire dans `production.worker.ts`.
 
 ## Patterns côté frontend
 

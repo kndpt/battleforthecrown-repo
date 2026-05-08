@@ -83,4 +83,4 @@ A (toujours émettre), B (diff-only), ou C (statu quo + doc) ?
 ## Tickets liés
 
 - [02 — Smoke tests](./archive/02-smoke-tests-strategy.md) ✅ — le smoke crown backdate `lastUpdateTs` d'1 jour pour forcer `production > 0`. Si A est retenu, ce backdate devient inutile.
-- [06 — Production tick + barbarian backfill : pas d'event Outbox](./06-production-tick-and-backfill-no-outbox.md) — même thème (politique d'émission Outbox).
+- [06 — Production tick + barbarian backfill : pas d'event Outbox](./archive/06-production-tick-and-backfill-no-outbox.md) ✅ — même thème (politique d'émission Outbox). La nouvelle section "Exceptions au pattern Outbox" de [`docs/architecture/realtime.md`](../docs/architecture/realtime.md) explique aussi pourquoi `CrownProductionWorker` est traité différemment.

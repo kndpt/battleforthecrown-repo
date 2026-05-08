@@ -4,8 +4,6 @@ Quatre chantiers identifiés après la résolution complète de l'audit (`docs/a
 
 ## Tickets actifs
 
-- [05 — WorldConfig multipliers : sémantique inversée](./05-world-config-multipliers-semantics.md) 🟡
-- [06 — Production tick + backfill : pas d'event Outbox](./06-production-tick-and-backfill-no-outbox.md) 🟢
 - [07 — Crown production : event Outbox conditionné sur `production > 0`](./07-crown-production-event-gate.md) 🟡
 - [08 — Combat : crash P2025 si défenseur sans ResourceStock](./08-combat-defender-resource-stock-guard.md) 🟡
 - [09 — Fog of war : positions cachées exposées au client](./09-fog-of-war-coordinate-leak.md) 🟡
@@ -16,6 +14,8 @@ Quatre chantiers identifiés après la résolution complète de l'audit (`docs/a
 - [02 — Tests smokes / E2E](./archive/02-smoke-tests-strategy.md) ✅ Résolu 2026-05-08
 - [03 — CI : automatiser ou pas](./archive/03-ci-strategy.md) ✅ Résolu 2026-05-08
 - [04 — Monorepo : structure git](./archive/04-monorepo-git-strategy.md) ✅ Résolu 2026-05-08
+- [05 — WorldConfig multipliers : sémantique inversée](./archive/05-world-config-multipliers-semantics.md) ✅ Résolu 2026-05-08
+- [06 — Production tick + backfill : pas d'event Outbox](./archive/06-production-tick-and-backfill-no-outbox.md) ✅ Résolu 2026-05-08
 
 ## Légende
 
