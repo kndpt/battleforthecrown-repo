@@ -36,7 +36,7 @@ Tu vas modifier ou écrire du code → as-tu besoin d'un test ?
    backend par l'agent (curl + SQL + logs).
 ```
 
-**Règle d'or** : pas de test spontané. Le coût d'écriture/maintenance ne se justifie que sur de la logique pure non triviale. Ajouter un test "au cas où" est un anti-pattern (cf. ticket [`01-unit-tests-audit.md`](../../tasks/01-unit-tests-audit.md), 26 → 7 fichiers spec backend pour cette raison).
+**Règle d'or** : pas de test spontané. Le coût d'écriture/maintenance ne se justifie que sur de la logique pure non triviale. Ajouter un test "au cas où" est un anti-pattern (cf. ticket [`01-unit-tests-audit.md`](../../tasks/archive/01-unit-tests-audit.md), 26 → 7 fichiers spec backend pour cette raison).
 
 ## Types de tests autorisés
 
@@ -114,6 +114,6 @@ Pousse-back avant d'écrire : *"Ce pattern est interdit cf. `.claude/rules/tests
 
 ## Références
 
-- [`01-unit-tests-audit.md`](../../tasks/01-unit-tests-audit.md) — historique du tri 26 → 7 fichiers spec backend (résolu 2026-05-08), source de la politique pure-logic-only.
+- [`01-unit-tests-audit.md`](../../tasks/archive/01-unit-tests-audit.md) — historique du tri 26 → 7 fichiers spec backend (résolu 2026-05-08), source de la politique pure-logic-only.
 - [`02-smoke-tests-strategy.md`](../../tasks/02-smoke-tests-strategy.md) — stratégie smoke pour l'orchestration (en cours), liste des flows à couvrir.
 - [`qa.md`](./qa.md) — vérification fin de tâche, distinct des tests automatisés.

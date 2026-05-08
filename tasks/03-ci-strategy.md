@@ -85,6 +85,6 @@ Les tests d'intégration backend (ticket 02) ont besoin d'une DB Postgres. Optio
 
 ## Tickets liés
 
-- [01 — Tests unitaires](./01-unit-tests-audit.md) — un test cassé bloque la CI.
+- [01 — Tests unitaires](./archive/01-unit-tests-audit.md) — un test cassé bloque la CI.
 - [02 — Smoke tests](./02-smoke-tests-strategy.md) — la CI a besoin que les smokes existent et passent pour les inclure.
 - [04 — Monorepo git](./04-monorepo-git-strategy.md) ✅ — désormais 1 repo unifié, donc 1 seul workflow CI à concevoir (pas de synchronisation cross-repos).

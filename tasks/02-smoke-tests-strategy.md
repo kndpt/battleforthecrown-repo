@@ -53,7 +53,7 @@ Tests présents (12 fichiers, 65 tests) mais **tous unitaires**. Aucun test :
 
 ## Lien avec ticket 01 (résolu)
 
-Le ticket [`01-unit-tests-audit.md`](./01-unit-tests-audit.md) a été résolu en parallèle de ce ticket avec une politique stricte *"logique pure uniquement"* côté unit. **Conséquence directe : les smokes deviennent le filet de sécurité unique pour l'orchestration / I/O.**
+Le ticket [`01-unit-tests-audit.md`](./archive/01-unit-tests-audit.md) a été résolu en parallèle de ce ticket avec une politique stricte *"logique pure uniquement"* côté unit. **Conséquence directe : les smokes deviennent le filet de sécurité unique pour l'orchestration / I/O.**
 
 **Contrat implicite à respecter quand on écrit les smokes** :
 
@@ -122,5 +122,5 @@ Les flows ci-dessous étaient (mal) couverts par des `*.worker.spec.ts` / `*.ser
 
 ## Tickets liés
 
-- [01 — Tests unitaires](./01-unit-tests-audit.md) — la décision dépend en partie de ce qu'on garde côté unit.
+- [01 — Tests unitaires](./archive/01-unit-tests-audit.md) — la décision dépend en partie de ce qu'on garde côté unit.
 - [03 — CI strategy](./03-ci-strategy.md) — la cadence d'exécution des smokes dépend de la CI.
