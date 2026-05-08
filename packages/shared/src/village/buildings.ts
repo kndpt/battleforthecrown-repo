@@ -452,6 +452,9 @@ export const BUILDING_UNLOCK_REQUIREMENTS: Partial<
   WALL: 5,
 };
 
+export const getBuildingUnlockRequirement = (type: string): number | null =>
+  BUILDING_UNLOCK_REQUIREMENTS[type as BuildingType] ?? null;
+
 export const getBuildingDefinition = (
   buildingType: string
 ): BuildingDefinition => {

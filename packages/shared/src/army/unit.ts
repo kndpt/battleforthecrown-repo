@@ -130,3 +130,6 @@ export const UNIT_CATALOG: UnitsConfig = {
   costs: UNIT_COSTS,
   stats: UNIT_STATS,
 };
+
+export const getUnitStats = (type: string): UnitStats | undefined =>
+  UNIT_STATS[type as UnitType];

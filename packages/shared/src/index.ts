@@ -9,3 +9,4 @@ export * from './logic';
 export * from './events';
 export * from './auth';
 export * from './time';
+export * from './utils';

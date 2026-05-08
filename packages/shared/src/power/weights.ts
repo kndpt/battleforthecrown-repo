@@ -26,6 +26,17 @@ export const UNIT_POWER_WEIGHTS = Object.freeze({
   NOBLE: 50,
 });
 
+const DEFAULT_BUILDING_POWER_WEIGHT = 5;
+const DEFAULT_UNIT_POWER_WEIGHT = 1;
+
+export const getBuildingPowerWeight = (type: string): number =>
+  BUILDING_POWER_WEIGHTS[type as keyof typeof BUILDING_POWER_WEIGHTS] ??
+  DEFAULT_BUILDING_POWER_WEIGHT;
+
+export const getUnitPowerWeight = (type: string): number =>
+  UNIT_POWER_WEIGHTS[type as keyof typeof UNIT_POWER_WEIGHTS] ??
+  DEFAULT_UNIT_POWER_WEIGHT;
+
 export const POWER_PROFILE: PowerConfig = {
   buildingWeights: BUILDING_POWER_WEIGHTS,
   unitSoftCapThreshold: 100,

@@ -28,8 +28,8 @@ Chaque ticket décrit **un problème observé**, factuel, avec références `pat
 - ✅ [06 — God services (`world-config`, `world`, `barbarian-seeding`)](./06-backend-god-services.md) 🟡 — **résolu le 2026-05-06**
 - ✅ [09 — Typage relâché (`as any`, `Record<string, number>`)](./09-backend-relaxed-typing.md) 🟡 — **résolu le 2026-05-06**
 - ✅ [10 — Logging incohérent (Pino + console.log)](./10-backend-logging-inconsistent.md) 🟡 — **résolu le 2026-05-06**
-- [19 — Enums Prisma vs unions shared (casts récurrents)](./19-prisma-shared-enum-misalignment.md) 🟠 — _follow-up de 09_
-- [20 — `tsconfig` backend partiellement strict](./20-backend-tsconfig-strict-full.md) 🟠 — _follow-up de 09_
+- ✅ [19 — Enums Prisma vs unions shared (casts récurrents)](./19-prisma-shared-enum-misalignment.md) 🟠 — **résolu le 2026-05-08** _(follow-up de 09)_
+- ✅ [20 — `tsconfig` backend partiellement strict](./20-backend-tsconfig-strict-full.md) 🟠 — **résolu le 2026-05-08** _(follow-up de 09)_
 
 ### Frontend Pixi
 
