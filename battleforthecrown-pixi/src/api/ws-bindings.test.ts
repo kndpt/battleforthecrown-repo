@@ -1,6 +1,8 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import { QueryClient } from '@tanstack/react-query';
 import {
+  applyBattleResolved,
+  applyBattleReturned,
   applyBuildingCompleted,
   applyCrownsChanged,
   applyResourcesChanged,
@@ -8,11 +10,17 @@ import {
 import { useResourcesStore } from '@/stores/resources';
 import { useCrownsStore } from '@/stores/crowns';
 import { useUiStore } from '@/stores/ui';
+import { useExpeditionsStore } from '@/stores/expeditions';
+import {
+  RESOLVED_TO_RETURNING_DELAY_MS,
+  RETURNED_TO_CLEANUP_DELAY_MS,
+} from '@/lib/expeditionTiming';
 
 beforeEach(() => {
   useResourcesStore.getState().clear();
   useCrownsStore.getState().clear();
   useUiStore.getState().clearToasts();
+  useExpeditionsStore.getState().clear();
 });
 
 describe('applyResourcesChanged', () => {
@@ -101,5 +109,79 @@ describe('applyBuildingCompleted', () => {
     expect(toasts).toHaveLength(1);
     expect(toasts[0].tone).toBe('success');
     expect(toasts[0].title).toContain('Construction');
+  });
+});
+
+describe('applyBattleResolved', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('flips phase to RETURNING after the configured delay', () => {
+    useExpeditionsStore.getState().add({
+      expeditionId: 'e1',
+      villageId: 'v1',
+      origin: { x: 0, y: 0 },
+      target: { x: 1, y: 1 },
+      phase: 'EN_ROUTE',
+      departAt: 0,
+      arrivalAt: 1000,
+    });
+
+    applyBattleResolved(
+      {
+        expeditionId: 'e1',
+        reportId: 'r1',
+        villageId: 'v1',
+        villageName: 'Capital',
+        targetKind: 'BARBARIAN',
+        targetName: 'Camp',
+        targetX: 1,
+        targetY: 1,
+        isVictory: true,
+        loot: { resources: { wood: 0, stone: 0, iron: 0 } },
+        lossesAttacker: {},
+        casualtyRate: 0,
+        survivingUnits: {},
+        returnAt: '2026-05-04T22:00:01.000Z',
+      },
+      { queryClient: new QueryClient() },
+    );
+
+    expect(useExpeditionsStore.getState().byId['e1'].phase).toBe('RESOLVED');
+    vi.advanceTimersByTime(RESOLVED_TO_RETURNING_DELAY_MS);
+    expect(useExpeditionsStore.getState().byId['e1'].phase).toBe('RETURNING');
+  });
+});
+
+describe('applyBattleReturned', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('removes the snapshot after the configured delay', () => {
+    useExpeditionsStore.getState().add({
+      expeditionId: 'e2',
+      villageId: 'v1',
+      origin: { x: 0, y: 0 },
+      target: { x: 1, y: 1 },
+      phase: 'RETURNING',
+      departAt: 0,
+      arrivalAt: 1000,
+      returnAt: 2000,
+    });
+
+    applyBattleReturned(
+      {
+        expeditionId: 'e2',
+        reportId: 'r1',
+        villageId: 'v1',
+        survivingUnits: {},
+        loot: { resources: { wood: 0, stone: 0, iron: 0 } },
+      },
+      { queryClient: new QueryClient() },
+    );
+
+    expect(useExpeditionsStore.getState().byId['e2'].phase).toBe('RETURNED');
+    vi.advanceTimersByTime(RETURNED_TO_CLEANUP_DELAY_MS);
+    expect(useExpeditionsStore.getState().byId['e2']).toBeUndefined();
   });
 });

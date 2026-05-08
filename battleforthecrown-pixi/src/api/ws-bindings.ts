@@ -19,6 +19,10 @@ import { useCrownsStore } from '@/stores/crowns';
 import { useUiStore } from '@/stores/ui';
 import { useExpeditionsStore, type ExpeditionSnapshot } from '@/stores/expeditions';
 import { useWorldMapStore } from '@/stores/worldMap';
+import {
+  RESOLVED_TO_RETURNING_DELAY_MS,
+  RETURNED_TO_CLEANUP_DELAY_MS,
+} from '@/lib/expeditionTiming';
 
 export interface BindingsContext {
   queryClient: QueryClient;
@@ -121,13 +125,11 @@ export function applyBattleResolved(payload: BattleResolvedPayload, ctx: Binding
     arrivalAt: Date.now(),
     returnAt: Date.parse(payload.returnAt),
   });
-  // After a brief pause the visual transitions to RETURNING. We swap the phase
-  // immediately on the same frame so the path color updates and the unit
-  // sprite starts moving back; the FX flash on the target is driven by the
-  // visual itself when phase becomes RESOLVED.
+  // Wait for the FX flash to finish before troops turn back. Source of truth
+  // for the delay lives in `lib/expeditionTiming` alongside the flash duration.
   setTimeout(() => {
     useExpeditionsStore.getState().update(payload.expeditionId, { phase: 'RETURNING' });
-  }, 800);
+  }, RESOLVED_TO_RETURNING_DELAY_MS);
 
   ctx.queryClient.invalidateQueries({ queryKey: ['resources', payload.villageId] });
   // A new combat report just landed on the server. Tell TanStack to refetch the
@@ -144,11 +146,9 @@ export function applyBattleResolved(payload: BattleResolvedPayload, ctx: Binding
 
 export function applyBattleReturned(payload: BattleReturnedPayload, ctx: BindingsContext): void {
   useExpeditionsStore.getState().update(payload.expeditionId, { phase: 'RETURNED' });
-  // Drop the visual a short moment later so the user sees the unit reach the
-  // origin before it disappears.
   setTimeout(() => {
     useExpeditionsStore.getState().remove(payload.expeditionId);
-  }, 600);
+  }, RETURNED_TO_CLEANUP_DELAY_MS);
   ctx.queryClient.invalidateQueries({ queryKey: ['resources', payload.villageId] });
   ctx.queryClient.invalidateQueries({ queryKey: ['army', payload.villageId] });
 }

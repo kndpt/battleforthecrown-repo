@@ -1,5 +1,6 @@
 import { Container, Graphics, Text } from 'pixi.js';
 import type { ExpeditionSnapshot } from '@/stores/expeditions';
+import { BATTLE_FLASH_DURATION_MS } from '@/lib/expeditionTiming';
 import {
   computeProgress,
   pathControl,
@@ -115,7 +116,7 @@ export function createExpeditionVisual(options: ExpeditionVisualOptions): Expedi
   const triggerFlash = () => {
     // Same epoch-ms time base as `tick(nowMs)` to keep `flashUntil - now`
     // meaningful.
-    flashUntil = Date.now() + 600;
+    flashUntil = Date.now() + BATTLE_FLASH_DURATION_MS;
     flashGraphic.alpha = 1;
   };
 
@@ -131,7 +132,7 @@ export function createExpeditionVisual(options: ExpeditionVisualOptions): Expedi
       flashGraphic.clear();
       return;
     }
-    const ratio = remaining / 600;
+    const ratio = remaining / BATTLE_FLASH_DURATION_MS;
     const radius = 36 * (1 + (1 - ratio) * 1.4);
     const target = options.worldToScene(snapshot.target);
     flashGraphic.clear();
