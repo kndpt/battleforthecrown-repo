@@ -114,7 +114,7 @@ Spécificités backend (résumé — le détail vit dans tests.md) :
 Commandes :
 ```bash
 yarn test           # unit (logique pure)
-yarn test:e2e       # smoke (à brancher selon ticket 02)
+yarn test:smoke     # smoke (orchestration, vraie DB + Outbox — cf. ticket 02)
 yarn test:cov       # couverture
 ```
 

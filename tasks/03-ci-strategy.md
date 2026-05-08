@@ -48,7 +48,7 @@ Selon le contexte du projet (solo, collaboratif futur, deploy continu, etc.) :
   - `yarn build`
   - `yarn lint`
   - `yarn test` (unit)
-  - `yarn test:e2e` (intégration backend, après ticket 02)
+  - `yarn test:smoke` (intégration backend, après ticket 02)
 - Protection de branche `main` : merge bloqué si rouge.
 - Avantage : signal partagé, impossible à bypasser.
 - Risque : minutes CI consommées (gratuit jusqu'à 2000 min/mois sur repo public/perso). Setup plus long si DB requis (Postgres en service container).
@@ -57,7 +57,7 @@ Selon le contexte du projet (solo, collaboratif futur, deploy continu, etc.) :
 ### C. Hybride (recommandé par défaut sur la plupart des projets)
 
 - Pre-commit léger : `lint` + `type-check` (rapide, < 10 s).
-- CI complète : `build` + `test` + `test:e2e`.
+- CI complète : `build` + `test` + `test:smoke`.
 - Avantage : feedback rapide local, vrai filet en CI, charge CI optimisée (le pre-commit a déjà filtré le bruit).
 - Coût : ~2 h setup.
 
