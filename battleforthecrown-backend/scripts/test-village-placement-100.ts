@@ -77,7 +77,8 @@ async function main() {
             unitSoftCapDecay: 0.5,
             defaultWeights: { kingdom: 1, army: 1 },
           },
-          multipliers: { construction: 1, production: 1, training: 1 },
+          gameSpeed: { construction: 1, training: 1, travel: 1 },
+          economy: { productionRate: 1 },
           // Enable centralized placement
           playerVillagePlacement: {
             enabled: true,

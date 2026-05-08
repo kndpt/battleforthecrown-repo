@@ -5,13 +5,15 @@ import type { WorldConfig } from '@battleforthecrown/shared/world';
 //   hard 1s minimum (see calculateBuildingCost l.64). Travel = 1000 because
 //   travel-time has no minimum clamp and we need short hops between villages.
 // - barbarianSeeding.enabled = false (each smoke seeds its own barbarians)
-// - production multiplier stays at 1 (rate is observed — not the trigger speed)
+// - economy.productionRate stays at 1 (rate is observed — not the trigger speed)
 export const SMOKE_WORLD_CONFIG: WorldConfig = {
-  multipliers: {
+  gameSpeed: {
     construction: 100,
-    production: 1,
     training: 100,
     travel: 1000,
+  },
+  economy: {
+    productionRate: 1,
   },
   combat: { attackBonus: 1, defenseBonus: 1, lootFactor: 0.5 },
   barbarianSeeding: {

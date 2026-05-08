@@ -47,7 +47,7 @@ export function calculateDistance(
  *
  * @param distance - Distance en cases
  * @param slowestUnitSpeed - Vitesse de l'unité la plus lente (valeur la plus élevée = plus lent)
- * @param worldTravelSpeed - Multiplicateur global de vitesse du monde (config.multipliers.travel)
+ * @param worldTravelSpeed - Multiplicateur global de vitesse du monde (config.gameSpeed.travel)
  * @returns Temps de trajet en millisecondes
  *
  * @example

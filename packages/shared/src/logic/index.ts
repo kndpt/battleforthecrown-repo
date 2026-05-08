@@ -1,3 +1,4 @@
 export * from './building-cost';
 export * from './travel-time';
 export * from './production';
+export * from './training-time';

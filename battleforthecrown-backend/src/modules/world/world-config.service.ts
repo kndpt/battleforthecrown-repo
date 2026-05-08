@@ -55,7 +55,7 @@ export class WorldConfigService {
       buildingType,
       level,
       castleLevel,
-      config.multipliers.construction,
+      config.gameSpeed.construction,
       strategy,
     );
   }
@@ -71,7 +71,7 @@ export class WorldConfigService {
     return calculateProductionRate(
       type,
       level,
-      config.multipliers.production,
+      config.economy.productionRate,
       strategy,
     );
   }
@@ -113,7 +113,7 @@ export class WorldConfigService {
 
     return calculateTravelTime(
       distance,
-      config.multipliers.travel,
+      config.gameSpeed.travel,
       defaultSpeed,
       attackerStrategy,
     );
@@ -140,7 +140,7 @@ export class WorldConfigService {
 
     return calculateTravelTime(
       distance,
-      config.multipliers.travel,
+      config.gameSpeed.travel,
       slowestSpeed,
       attackerStrategy,
     );

@@ -15,11 +15,11 @@
 
 | Table | Rôle |
 |-------|------|
-| `World` | un monde = un serveur de jeu indépendant. `slug` unique, `config` JSON (multipliers, costs, rates) |
+| `World` | un monde = un serveur de jeu indépendant. `slug` unique, `config` JSON (gameSpeed, economy, combat, etc.) |
 | `WorldMembership` | join `User × World` avec `role` (PLAYER / ADMIN), `eliminatedAt` |
 | `WorldConfig` *(legacy)* | en cours de fusion dans `World.config` |
 
-`World.config` (JSON) contient notamment : `multipliers.production`, `multipliers.construction`, `combat.travelSpeed`, plages de coûts, paramètres de seeding barbares.
+`World.config` (JSON) contient notamment : `gameSpeed.{construction,training,travel}` (diviseurs de temps — valeur > 1 ⇒ plus rapide), `economy.productionRate` (amplificateur du taux — valeur > 1 ⇒ plus de ressources/min), `combat.{attackBonus,defenseBonus,lootFactor}`, paramètres de seeding barbares.
 
 ### Villages joueurs
 

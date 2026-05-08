@@ -1,10 +1,17 @@
 import { z } from 'zod';
 
-const SpeedMultipliersSchema = z.strictObject({
+// Speed multipliers: a value > 1 means "faster" (time is divided by it).
+// Production is split off because its semantic is inverted — see EconomySchema.
+const GameSpeedSchema = z.strictObject({
   construction: z.number().positive(),
-  production: z.number().positive(),
   training: z.number().positive(),
   travel: z.number().positive(),
+});
+
+// productionRate amplifies the resource yield (rate × productionRate).
+// A value > 1 means "more resources per minute" — opposite of GameSpeed dividers.
+const EconomySchema = z.strictObject({
+  productionRate: z.number().positive(),
 });
 
 const CombatRulesSchema = z.strictObject({
@@ -67,7 +74,8 @@ const FogOfWarSettingsSchema = z.strictObject({
 });
 
 export const WorldConfigSchema = z.strictObject({
-  multipliers: SpeedMultipliersSchema,
+  gameSpeed: GameSpeedSchema,
+  economy: EconomySchema,
   combat: CombatRulesSchema,
   barbarianSeeding: BarbarianSeedingPlanSchema,
   playerVillagePlacement: PlayerVillagePlacementPlanSchema,
@@ -75,7 +83,6 @@ export const WorldConfigSchema = z.strictObject({
 });
 
 export type WorldConfig = z.infer<typeof WorldConfigSchema>;
-export type SpeedMultipliers = z.infer<typeof SpeedMultipliersSchema>;
 export type BarbarianSeedingPlan = z.infer<typeof BarbarianSeedingPlanSchema>;
 export type BarbarianSeedingConfig = BarbarianSeedingPlan;
 export type TierWindow = z.infer<typeof TierWindowSchema>;

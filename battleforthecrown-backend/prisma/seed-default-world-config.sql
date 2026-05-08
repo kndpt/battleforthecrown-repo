@@ -2,11 +2,13 @@
 -- @battleforthecrown/shared/world (strict — extra keys are rejected).
 UPDATE world
 SET config = '{
-  "multipliers": {
+  "gameSpeed": {
     "construction": 1,
-    "production": 1,
     "training": 1,
     "travel": 1
+  },
+  "economy": {
+    "productionRate": 1
   },
   "combat": {
     "attackBonus": 1.0,

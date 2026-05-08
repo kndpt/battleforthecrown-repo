@@ -16,6 +16,7 @@ import {
   UnitCost,
   UNIT_TYPES,
 } from '@battleforthecrown/shared/army';
+import { calculateTrainingTime } from '@battleforthecrown/shared/logic';
 
 @Injectable()
 export class RecruitTroopsUseCase {
@@ -124,17 +125,14 @@ export class RecruitTroopsUseCase {
         data: { used: { increment: totalPopulation } },
       });
 
-      let trainSpeedMultiplier = config.multipliers.training;
-      if (
-        strategyBonus &&
-        typeof strategyBonus.trainingSpeedBonus === 'number'
-      ) {
-        trainSpeedMultiplier *= strategyBonus.trainingSpeedBonus;
-      }
-
-      const timePerUnitMs = Math.max(
-        1000,
-        Math.round((unitCost.time / trainSpeedMultiplier) * 1000),
+      const trainingSpeedBonus =
+        typeof strategyBonus?.trainingSpeedBonus === 'number'
+          ? strategyBonus.trainingSpeedBonus
+          : 1;
+      const timePerUnitMs = calculateTrainingTime(
+        unitCost.time,
+        config.gameSpeed.training,
+        trainingSpeedBonus,
       );
       const nextUnitEta = new Date(Date.now() + timePerUnitMs);
 

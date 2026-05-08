@@ -3,6 +3,22 @@
 **Sévérité** : 🟡 Majeure
 **Workspace(s)** : `packages/shared`, `battleforthecrown-backend`, `battleforthecrown-pixi`
 **Tags** : world-config, dx, footgun
+**Statut** : ✅ Résolu 2026-05-08
+
+## Résolution
+
+Stratégie retenue : **option A + finir C**. `multipliers` éclaté en deux sous-objets dont les noms portent la sémantique :
+
+- `gameSpeed: { construction, training, travel }` — diviseurs de temps. Valeur > 1 ⇒ plus rapide.
+- `economy: { productionRate }` — amplificateur du taux. Valeur > 1 ⇒ plus de ressources/min.
+
+Migration JSON Prisma idempotente (`config - 'multipliers' || jsonb_build_object(...)`) appliquée aux mondes existants. Seed default + smoke fixture mis à jour.
+
+Math inline du training (`recruit-troops.use-case.ts:135`) extrait dans `packages/shared/src/logic/training-time.ts` (`calculateTrainingTime`) — plus aucun callsite ne fait `time / speedMultiplier` à la main.
+
+Pas de test pure-logic dédié supplémentaire : les invariants `multiplier=2 ⇒ time/2` et `productionRate=2 ⇒ rate*2` sont déjà couverts par `world-config.service.spec.ts` (`getCost` ligne 131, `getProductionRate` ligne 180, `getTravelTime` ligne 241), et la formule training vit maintenant dans un helper trivial de 8 lignes.
+
+Touchés : 13 fichiers (3 shared, 5 backend, 4 pixi, 1 doc data-model, 1 doc smoke-tests + 1 nouvelle migration Prisma). Builds et 88 unit + 65 unit pixi + 10 smokes verts.
 
 ## Contexte
 

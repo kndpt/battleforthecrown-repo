@@ -54,7 +54,7 @@ export function AttackDetailModal({ target, origin, onClose }: AttackDetailModal
 
   const travelMs = useMemo(() => {
     if (totalSelected === 0) return 0;
-    const travelSpeed = worldConfig.data?.multipliers.travel;
+    const travelSpeed = worldConfig.data?.gameSpeed.travel;
     if (travelSpeed === undefined) return 0;
     const slowest = findSlowestUnitSpeed(selectedUnits, UNIT_STATS);
     if (slowest === 0) return 0;

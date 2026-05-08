@@ -63,7 +63,7 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
       ? building.level
       : (buildingsQuery.data?.find((b) => b.type === 'CASTLE')?.level ?? 1);
   const constructionMultiplier =
-    worldConfigQuery.data?.multipliers.construction;
+    worldConfigQuery.data?.gameSpeed.construction;
 
   const effectiveTimeMs =
     nextCost && constructionMultiplier !== undefined

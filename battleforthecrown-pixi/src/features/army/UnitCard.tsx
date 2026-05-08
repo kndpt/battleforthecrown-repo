@@ -62,7 +62,7 @@ export function UnitCard({ unit, barracksLevel, training, onClick }: UnitCardPro
   const train = useTrainUnitsMutation();
   const pushToast = useUiStore((state) => state.pushToast);
   const now = useTickingNow(1_000);
-  const trainingMultiplier = useWorldConfigQuery(worldId).data?.multipliers.training;
+  const trainingMultiplier = useWorldConfigQuery(worldId).data?.gameSpeed.training;
   const queryClient = useQueryClient();
 
   // Bridge the gap between extrapolated visual completion and the WS event:

@@ -16,11 +16,13 @@ describe('WorldConfigService', () => {
   };
 
   const mockWorldConfig: WorldConfig = {
-    multipliers: {
+    gameSpeed: {
       construction: 2,
-      production: 1.5,
       training: 3,
       travel: 1,
+    },
+    economy: {
+      productionRate: 1.5,
     },
     combat: {
       attackBonus: 1.0,
@@ -63,13 +65,12 @@ describe('WorldConfigService', () => {
 
       const result = await service.getConfig('world-1');
 
-      expect(result.multipliers).toEqual({
+      expect(result.gameSpeed).toEqual({
         construction: 2,
-        production: 1.5,
         training: 3,
         travel: 1,
       });
-      expect(result.multipliers.travel).toBe(1);
+      expect(result.economy).toEqual({ productionRate: 1.5 });
       expect(result.fogOfWar.enabled).toBe(true);
     });
 
@@ -140,7 +141,7 @@ describe('WorldConfigService', () => {
 
     it('enforces a minimum time of 1000ms', async () => {
       mockWorld({
-        multipliers: { construction: 1000000, production: 1, training: 1, travel: 1 },
+        gameSpeed: { construction: 1000000, training: 1, travel: 1 },
       });
 
       const result = await service.getCost('world-1', 'WOOD', 1, 1);
@@ -172,7 +173,7 @@ describe('WorldConfigService', () => {
 
     it('respects a custom production multiplier', async () => {
       mockWorld({
-        multipliers: { construction: 2, production: 2, training: 3, travel: 1 },
+        economy: { productionRate: 2 },
       });
 
       const result = await service.getProductionRate('world-1', 'WOOD', 1);
@@ -227,9 +228,8 @@ describe('WorldConfigService', () => {
 
     it('applies the world travel speed multiplier', async () => {
       mockWorld({
-        multipliers: {
+        gameSpeed: {
           construction: 2,
-          production: 1.5,
           training: 3,
           travel: 2,
         },
