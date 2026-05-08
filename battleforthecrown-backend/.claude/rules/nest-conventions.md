@@ -109,18 +109,35 @@ Détail complet : [`docs/architecture/auth.md`](../../../docs/architecture/auth.
 - ✅ **Vérification préférée** : lancer le serveur (`PORT=15001 yarn start:dev`), exercer les endpoints concernés, et **inspecter la BDD** via le MCP `battleforthecrown_db` pour valider l'état post-mutation. Nettoyer les données de test une fois la vérification terminée.
 - ✅ Les tests **existants** (`*.spec.ts`) doivent rester verts — les lancer après un changement qui les touche.
 
+### Politique stricte : logique pure uniquement
+
+L'audit du ticket [`tasks/01-unit-tests-audit.md`](../../../tasks/01-unit-tests-audit.md) (résolu 2026-05) a supprimé 19 fichiers de "mock-théâtre" (worker/controller/service mockant Prisma + pg-boss et asserant sur des appels de mocks). Ces tests ne signalaient aucune régression et perpétuaient de la dette de fixture à chaque évolution de schéma.
+
+**✅ Autorisé** — tests de logique pure, sans mock structurel :
+
+- **Formules numériques** : production, butin, capacité, distance, temps de trajet (`combat.utils`, `loot.manager`, `world-config.service` côté formules).
+- **Strategies / algorithmes purs** : résolution combat (`combat-strategies`), géométrie fog of war (`vision.service`), templates statiques (`barbarian-tier-templates`).
+- **Validation Zod** : DTOs (`combat.dto`, etc.).
+
+**❌ Interdit** — patterns générant du mock-théâtre :
+
+- `*.worker.spec.ts` qui mocke `pg-boss` + `PrismaService` pour vérifier que `mockBoss.work` / `mockPrisma.update` ont été appelés. → couvert par smoke (cf. ticket [`tasks/02-smoke-tests-strategy.md`](../../../tasks/02-smoke-tests-strategy.md)).
+- `*.controller.spec.ts` qui mocke un `Service` injecté pour vérifier que la route délègue. → couvert par smoke REST.
+- `*.service.spec.ts` qui mocke `PrismaService.$transaction` et asserte sur les appels de `tx.<table>.update`. La logique métier est noyée dans des fixtures qui ne reflètent pas le schéma réel — à la première migration, le test ment.
+
+**Critère de tranchage** quand on hésite : *"Si je supprime ce test, est-ce que la couverture smoke (réelle DB + WS) le remplace ?"* Si oui → suppression. Si non (formule pure, edge-case numérique non smoke-testable) → on garde.
+
 ### Quand l'utilisateur demande des tests
 
-Trois niveaux disponibles :
+Niveaux autorisés :
 
-1. **Unit** (`*.service.spec.ts`) — Prisma mocké via `jest.mock`. Logique métier isolée.
-2. **Intégration** (`*.controller.spec.ts`) — `Test.createTestingModule()` avec providers réels, base éphémère.
-3. **E2E** (`test/`) — routes HTTP complètes via `supertest`.
+1. **Unit logique pure** (`*.spec.ts` sans mock Prisma) — formules, validations, strategies. Pas de `Test.createTestingModule` lourd, pas de `jest.mock` sur Prisma.
+2. **Smoke** (`test/smoke/*.spec.ts`, à venir cf. ticket 02) — boot du module, JWT, mutation REST, vérif DB + Outbox.
 
 Commandes :
 ```bash
-yarn test           # unit
-yarn test:e2e       # E2E
+yarn test           # unit (logique pure)
+yarn test:e2e       # smoke (à brancher selon ticket 02)
 yarn test:cov       # couverture
 ```
 
