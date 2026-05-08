@@ -14,6 +14,7 @@ import { ArmyModule } from '../army/army.module';
 import { ResourcesModule } from '../resources/resources.module';
 import { PowerModule } from '../power/power.module';
 import { PgBossModule } from '../../infra/pg-boss/pg-boss.module';
+import { EventModule } from '../event/event.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { PgBossModule } from '../../infra/pg-boss/pg-boss.module';
     ResourcesModule,
     PowerModule,
     PgBossModule,
+    EventModule,
   ],
   controllers: [CombatController],
   providers: [

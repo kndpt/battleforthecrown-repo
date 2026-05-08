@@ -2,6 +2,7 @@ import { Injectable, Logger, Inject, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import PgBoss from 'pg-boss';
 import { createOutboxEvent } from '../event/event.utils';
+import { OutboxPublisher } from '../event/outbox-publisher.service';
 import { parseUnitMap, parseCombatLoot } from './codecs';
 import type { UnitMap } from '@battleforthecrown/shared/army';
 
@@ -16,6 +17,7 @@ export class ReturnWorker implements OnModuleInit {
   constructor(
     @Inject('PG_BOSS') private readonly boss: PgBoss,
     private readonly prisma: PrismaService,
+    private readonly outbox: OutboxPublisher,
   ) {}
 
   async onModuleInit() {
@@ -121,6 +123,8 @@ export class ReturnWorker implements OnModuleInit {
             iron: { increment: lootedResources.iron },
           },
         });
+
+        await this.outbox.resourcesChanged(expedition.attackerVillageId, tx);
 
         // 6. Delete expedition (cleanup)
         await tx.expedition.delete({

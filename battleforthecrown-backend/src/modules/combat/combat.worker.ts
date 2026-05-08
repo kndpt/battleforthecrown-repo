@@ -1,5 +1,5 @@
 import { Injectable, Logger, Inject, OnModuleInit } from '@nestjs/common';
-import { Expedition } from '@prisma/client';
+import { Expedition, Prisma } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WorldConfigService } from '../world/world-config.service';
 import { ResourcesService } from '../resources/resources.service';
@@ -9,6 +9,7 @@ import PgBoss from 'pg-boss';
 import { CombatContext } from './interfaces/combat-context.interface';
 import { PrismaClientOrTx } from '../../common/prisma.types';
 import { createOutboxEvent } from '../event/event.utils';
+import { OutboxPublisher } from '../event/outbox-publisher.service';
 import { calculateCasualtyStats, isVictoryForAttacker } from './combat.utils';
 import { parseUnitMap, encodeUnitMap, encodeLootResult } from './codecs';
 import { getStrategyBonusValue } from '@battleforthecrown/shared/village';
@@ -31,6 +32,7 @@ export class CombatWorker implements OnModuleInit {
     private readonly resourcesService: ResourcesService,
     private readonly barbarianStrategy: BarbarianVillageStrategy,
     private readonly playerStrategy: PlayerVillageStrategy,
+    private readonly outbox: OutboxPublisher,
   ) {}
 
   async onModuleInit() {
@@ -89,19 +91,18 @@ export class CombatWorker implements OnModuleInit {
         const resolution = await strategy.resolve(context);
 
         // 5. Apply loot to defender (deduct resources)
-        let defenderVillage: {
-          id: string;
-          name: string;
-          userId: string | null;
-        } | null = null;
+        let defenderVillage: Prisma.VillageGetPayload<{
+          include: { resourceStock: true };
+        }> | null = null;
 
         if (expedition.targetKind === 'BARBARIAN_VILLAGE') {
           // For barbarians: deduct from Village.resourceStock (same as player villages)
           defenderVillage = await tx.village.findUnique({
             where: { id: expedition.targetRefId },
+            include: { resourceStock: true },
           });
 
-          if (defenderVillage) {
+          if (defenderVillage?.resourceStock) {
             const lootedResources = resolution.loot.resources || {
               wood: 0,
               stone: 0,
@@ -118,12 +119,15 @@ export class CombatWorker implements OnModuleInit {
                 lastUpdateTs: new Date(), // Reset production timestamp
               },
             });
+
+            await this.outbox.resourcesChanged(defenderVillage.id, tx);
           }
         } else {
           // For player villages: deduct from ResourceStock
 
           defenderVillage = await tx.village.findUnique({
             where: { id: expedition.targetRefId },
+            include: { resourceStock: true },
           });
 
           if (defenderVillage) {
@@ -133,15 +137,19 @@ export class CombatWorker implements OnModuleInit {
               iron: 0,
             };
 
-            // Deduct looted resources from defender
-            await tx.resourceStock.update({
-              where: { villageId: defenderVillage.id },
-              data: {
-                wood: { decrement: lootedResources.wood },
-                stone: { decrement: lootedResources.stone },
-                iron: { decrement: lootedResources.iron },
-              },
-            });
+            if (defenderVillage.resourceStock) {
+              // Deduct looted resources from defender
+              await tx.resourceStock.update({
+                where: { villageId: defenderVillage.id },
+                data: {
+                  wood: { decrement: lootedResources.wood },
+                  stone: { decrement: lootedResources.stone },
+                  iron: { decrement: lootedResources.iron },
+                },
+              });
+
+              await this.outbox.resourcesChanged(defenderVillage.id, tx);
+            }
 
             // Update defender unit inventory (apply losses)
             const lossesDefender = resolution.lossesDefender || {};

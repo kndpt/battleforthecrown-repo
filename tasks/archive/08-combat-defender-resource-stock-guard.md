@@ -1,8 +1,24 @@
 # 08 — Combat worker : crash P2025 si défenseur n'a pas de `ResourceStock`
 
+**Statut** : ✅ Résolu 2026-05-08
 **Sévérité** : 🟡 Majeure
 **Workspace(s)** : `battleforthecrown-backend`
 **Tags** : combat, defensive-coding, prisma, latent-bug
+
+## Résolution
+
+Stratégie retenue : **piste A (guard local)** sur les deux chemins du `combat.worker.ts`. C bypass écarté : les 2 callsites de prod (`join-world.use-case.ts`, `barbarian-village.factory.ts`) respectent déjà l'invariant Village ⇔ ResourceStock dans la même transaction, un helper aurait été un re-wrap sans valeur ajoutée. B (`upsert`) écarté : `decrement` sur un record fraîchement créé à 0 produit des valeurs négatives (le schéma ne contraint pas `>= 0`).
+
+Implémentation (`battleforthecrown-backend/src/modules/combat/combat.worker.ts`) :
+- Type de `defenderVillage` étendu via `Prisma.VillageGetPayload<{ include: { resourceStock: true } }>`.
+- Chemin BARBARIAN : `findUnique({ include: { resourceStock: true } })` + guard fusionné `if (defenderVillage?.resourceStock)`.
+- Chemin PLAYER : guard imbriqué `if (defenderVillage.resourceStock)` autour du seul decrement (l'`unitInventory` continue de tourner sans stock).
+
+Bug latent collatéral découvert et fixé en QA : `combat.worker.ts` (defender decrement) et `return.worker.ts` (attacker increment au retour) mutaient le `ResourceStock` **sans** émettre `resources.changed` — symptôme : ressources non rafraîchies live côté HUD au retour de combat. Le fix wire `EventModule` dans `CombatModule` et appelle `OutboxPublisher.resourcesChanged(villageId, tx)` dans la même transaction Prisma que la mutation, alignant le pattern avec construction/training/recruit/cancel-*/upgrade.
+
+Doc mise à jour : `docs/architecture/realtime.md` (catalogue d'événements `resources.changed` complété avec les deux nouveaux callers combat).
+
+Hardening laissé en suspens (pas dans le scope) : `return.worker.ts` throw `Combat report not found` si `expedition.report` est null (cas qui survient si un user supprime manuellement une ligne `combat_report` — la FK optionnelle `Expedition.reportId` passe à NULL via `onDelete: SetNull`). Pourrait fallback sur `expedition.units` pour restituer les troupes au lieu de retry en boucle. À ouvrir comme ticket dédié si on tape sur ce cas en prod.
 
 ## Contexte
 
