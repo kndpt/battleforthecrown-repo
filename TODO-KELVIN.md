@@ -1,0 +1,2 @@
+- Faire skill pour tests et smoke-tests
+-
