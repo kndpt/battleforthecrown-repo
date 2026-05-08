@@ -20,6 +20,7 @@ src/ui/
 ├── feedback/          ProgressBar
 ├── floating-buttons/  FloatingButton
 ├── inputs/            Input, InputLabel, InputHelperText, Checkbox, Radio, Textarea
+├── keypads/           NumericKeypad, NumericKeypadSheet
 ├── layout/            HeaderBar, HeaderActions, PlayerProfile, PopulationIndicator, ResourceDisplay
 ├── modals/            Modal, ModalBody, ModalFooter
 ├── panels/            Panel, PanelHeader, PanelBody, PanelFooter, BottomSheet
@@ -54,6 +55,7 @@ Chaque dossier contient un `README.md` détaillé (variants, tailles, props, exe
 | **Badge**       | `badges/`             | `default`, `success`, `error`, `warning`, `info`, `neutral` | 3 tailles ; circulaire                         |
 | **Spinner**     | `spinners/`           | 6 variants                                                 | 4 tailles ; CSS-only                             |
 | **Slider**      | `sliders/`            | 5 variants                                                 | 3 tailles ; min/max/step                         |
+| **NumericKeypad** | `keypads/`          | `info`, `success`, `warning`, `danger`, `neutral`         | Pavé tactile 4×3, display + max ; sheet wrapper `NumericKeypadSheet` |
 | **ProgressBar** | `feedback/`           | `default`, `success`, `info`, `warning`, `danger`         | Animation `shimmer`                              |
 | **Modal**       | `modals/`             | `default`, `warning`, `danger`, `info`                    | + `ModalBody`, `ModalFooter`                     |
 | **Panel**       | `panels/`             | 8 variants matériaux                                       | + `Header`, `Body`, `Footer`                     |

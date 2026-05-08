@@ -11,6 +11,7 @@ export { BadgesSection } from './BadgesSection';
 export { ToastsSection } from './ToastsSection';
 export { SpinnersSection } from './SpinnersSection';
 export { SlidersSection } from './SlidersSection';
+export { KeypadsSection } from './KeypadsSection';
 export { PanelsSection } from './PanelsSection';
 export { TextareasSection } from './TextareasSection';
 export { HeaderBarSection } from './HeaderBarSection';

@@ -10,6 +10,7 @@ import {
   FloatingButtonsSection,
   HeaderBarSection,
   InputsSection,
+  KeypadsSection,
   ModalsSection,
   PanelsSection,
   ProgressBarsSection,
@@ -61,6 +62,7 @@ function UiTestSections() {
       <ToastsSection addToast={addToast} />
       <SpinnersSection isLoading={isLoading} setIsLoading={setIsLoading} />
       <SlidersSection />
+      <KeypadsSection />
       <PanelsSection />
       <TextareasSection />
       <HeaderBarSection />

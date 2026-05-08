@@ -10,6 +10,7 @@ export { Badge, type BadgeProps } from './badges';
 export { Toast, type ToastProps, ToastProvider, useToast } from './toasts';
 export { Spinner, type SpinnerProps } from './spinners';
 export { Slider, type SliderProps } from './sliders';
+export { NumericKeypad, type NumericKeypadProps, NumericKeypadSheet, type NumericKeypadSheetProps } from './keypads';
 export { Panel, type PanelProps, PanelHeader, type PanelHeaderProps, PanelBody, type PanelBodyProps, PanelFooter, type PanelFooterProps, BottomSheet, type BottomSheetProps } from './panels';
 export { HeaderBar, type HeaderBarProps, PopulationIndicator, PlayerProfile, type PlayerProfileProps, ResourceDisplay, type ResourceDisplayProps, type ResourceDisplayItem, HeaderActions, type HeaderActionsProps } from './layout';
 export { ResourceIcon, type ResourceIconProps } from './common/ResourceIcon';
