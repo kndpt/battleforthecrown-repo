@@ -18,18 +18,18 @@ export function useZodForm<T>(schema: ParsableSchema<T>) {
 
   const validate = (input: unknown): T | null => {
     const parsed = schema.safeParse(input);
-    if (parsed.success) {
-      setErrors({});
-      return parsed.data;
+    if ('error' in parsed) {
+      const next: FormErrors = {};
+      for (const issue of parsed.error.issues) {
+        const key = issue.path[0];
+        const field = typeof key === 'string' ? key : '_form';
+        if (!next[field]) next[field] = issue.message;
+      }
+      setErrors(next);
+      return null;
     }
-    const next: FormErrors = {};
-    for (const issue of parsed.error.issues) {
-      const key = issue.path[0];
-      const field = typeof key === 'string' ? key : '_form';
-      if (!next[field]) next[field] = issue.message;
-    }
-    setErrors(next);
-    return null;
+    setErrors({});
+    return parsed.data;
   };
 
   const clearErrors = () => setErrors({});
