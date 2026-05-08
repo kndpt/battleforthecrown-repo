@@ -14,7 +14,7 @@
 ### Mondes
 
 | Table | Rôle |
-|-------|------|
+|-------|------| 
 | `World` | un monde = un serveur de jeu indépendant. `slug` unique, `config` JSON (multipliers, costs, rates) |
 | `WorldMembership` | join `User × World` avec `role` (PLAYER / ADMIN), `eliminatedAt` |
 | `WorldConfig` *(legacy)* | en cours de fusion dans `World.config` |
