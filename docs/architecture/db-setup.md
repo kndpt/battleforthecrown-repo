@@ -48,6 +48,27 @@ PORT=15001 yarn workspace battleforthecrown-backend start:dev
 
 Sanity HTTP : `curl http://localhost:15001/health` → 200.
 
+## DB smoke (`battleforthecrown_smoke`)
+
+Base **isolée** pour `yarn test:smoke` (cf. [`tasks/02-smoke-tests-strategy.md`](../../tasks/02-smoke-tests-strategy.md)). Elle vit dans le même container Postgres que la DB dev mais sur une base distincte — la DB dev n'est jamais touchée par les tests.
+
+```bash
+# Créer la base (une fois)
+docker exec battleforthecrown-postgres \
+  psql -U postgres -c 'CREATE DATABASE battleforthecrown_smoke;'
+
+# Appliquer les migrations Prisma
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/battleforthecrown_smoke" \
+  yarn workspace battleforthecrown-backend prisma migrate deploy
+
+# Lancer le suite smoke
+yarn workspace battleforthecrown-backend test:smoke
+```
+
+À chaque évolution du schéma Prisma, rejouer `prisma migrate deploy` sur cette base. Pas de seed manuel : chaque smoke insère son propre `World` test (config aux durations courtes — cf. `test/fixtures/smoke-world-config.ts`).
+
+URL surchargeable via `SMOKE_DATABASE_URL` si la base vit ailleurs.
+
 ## Snippets SQL utiles (debug)
 
 > Préfixe à utiliser dans toutes les commandes :
