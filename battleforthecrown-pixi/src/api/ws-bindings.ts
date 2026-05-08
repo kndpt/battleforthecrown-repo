@@ -1,5 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { gameSocket } from './ws';
+import { queryKeys } from './queries';
 import type {
   BattleResolvedPayload,
   BattleReturnedPayload,
@@ -80,9 +81,9 @@ export function applyUnitTrainingCompleted(
   payload: UnitTrainingCompletedPayload,
   ctx: BindingsContext,
 ): void {
-  ctx.queryClient.invalidateQueries({ queryKey: ['armyTraining', payload.villageId] });
-  ctx.queryClient.invalidateQueries({ queryKey: ['armyInventory', payload.villageId] });
-  ctx.queryClient.invalidateQueries({ queryKey: ['population', payload.villageId] });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyTraining(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
   useUiStore.getState().pushToast({
     tone: 'success',
     title: 'Entraînement terminé',

@@ -19,6 +19,7 @@ import {
   useCancelTrainingMutation,
   usePopulationQuery,
   useTrainUnitsMutation,
+  useWorldConfigQuery,
 } from '@/api/queries';
 import { useDisplayResources } from '@/features/resources/useDisplayResources';
 import { useGameStore } from '@/stores/game';
@@ -54,10 +55,12 @@ const HARD_MAX = 500;
 
 export function UnitCard({ unit, barracksLevel, training, onClick }: UnitCardProps) {
   const villageId = useGameStore((state) => state.villageId);
+  const worldId = useGameStore((state) => state.worldId);
   const cancel = useCancelTrainingMutation();
   const train = useTrainUnitsMutation();
   const pushToast = useUiStore((state) => state.pushToast);
   const now = useTickingNow(1_000);
+  const trainingMultiplier = useWorldConfigQuery(worldId).data?.multipliers.training;
 
   const meta = unitMetaFor(unit.type);
   const cost = UNIT_COSTS[unit.type as keyof typeof UNIT_COSTS];
@@ -86,14 +89,15 @@ export function UnitCard({ unit, barracksLevel, training, onClick }: UnitCardPro
 
   const totalCost = useMemo(() => {
     if (!cost) return null;
+    const perUnitSeconds = trainingMultiplier ? cost.time / trainingMultiplier : cost.time;
     return {
       wood: cost.wood * quantity,
       stone: cost.stone * quantity,
       iron: cost.iron * quantity,
       population: cost.population * quantity,
-      timeSeconds: cost.time * quantity,
+      timeSeconds: perUnitSeconds * quantity,
     };
-  }, [cost, quantity]);
+  }, [cost, quantity, trainingMultiplier]);
 
   const canAfford = useMemo(() => {
     if (!totalCost || !display) return false;
@@ -108,19 +112,15 @@ export function UnitCard({ unit, barracksLevel, training, onClick }: UnitCardPro
   let progress = 0;
   let totalRemainingMs = 0;
   let perUnitRemainingMs = 0;
+  let displayedCompletedQty = training?.completedQty ?? 0;
   if (training) {
     const perUnitMs = Math.max(1, training.timePerUnitMs);
-    const nextEtaMs = Date.parse(training.nextUnitEta);
-    const remainingUnits = Math.max(0, training.totalQty - training.completedQty);
-    perUnitRemainingMs = Number.isFinite(nextEtaMs)
-      ? Math.max(0, nextEtaMs - now)
-      : perUnitMs;
-    totalRemainingMs = perUnitRemainingMs + Math.max(0, remainingUnits - 1) * perUnitMs;
-    const currentUnitProgress = Math.min(1, Math.max(0, 1 - perUnitRemainingMs / perUnitMs));
-    progress = Math.min(
-      100,
-      ((training.completedQty + currentUnitProgress) / Math.max(1, training.totalQty)) * 100,
-    );
+    const totalDurationMs = training.totalQty * perUnitMs;
+    const elapsedMs = Math.min(totalDurationMs, Math.max(0, now - Date.parse(training.createdAt)));
+    totalRemainingMs = totalDurationMs - elapsedMs;
+    perUnitRemainingMs = perUnitMs - (elapsedMs % perUnitMs);
+    progress = Math.min(100, (elapsedMs / Math.max(1, totalDurationMs)) * 100);
+    displayedCompletedQty = Math.max(training.completedQty, Math.floor(elapsedMs / perUnitMs));
   }
 
   const stop = (event: React.MouseEvent) => event.stopPropagation();
@@ -244,7 +244,7 @@ export function UnitCard({ unit, barracksLevel, training, onClick }: UnitCardPro
               <div className="flex items-center gap-1 font-semibold text-game-gold-dark">
                 <Clock size={12} />
                 <span>
-                  {training.completedQty}/{training.totalQty}
+                  {displayedCompletedQty}/{training.totalQty}
                 </span>
               </div>
               <span className="text-game-gold-dark font-medium">

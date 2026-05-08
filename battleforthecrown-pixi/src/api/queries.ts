@@ -312,9 +312,32 @@ interface TrainUnitsInput {
 
 export function useTrainUnitsMutation() {
   const queryClient = useQueryClient();
-  return useMutation<ArmyTrainingDto, Error, TrainUnitsInput>({
+  return useMutation<ArmyTrainingDto, Error, TrainUnitsInput, { previousTraining?: ArmyTrainingDto[] }>({
     mutationFn: ({ villageId, unitType, quantity }) =>
       apiClient.post<ArmyTrainingDto>(`/army/${villageId}/train`, { unitType, quantity }),
+    onMutate: async ({ villageId, unitType, quantity }) => {
+      const key = queryKeys.armyTraining(villageId);
+      await queryClient.cancelQueries({ queryKey: key });
+      const previousTraining = queryClient.getQueryData<ArmyTrainingDto[]>(key);
+      const now = Date.now();
+      const optimistic: ArmyTrainingDto = {
+        id: `optimistic-train-${unitType}-${now}`,
+        villageId,
+        unitType,
+        totalQty: quantity,
+        completedQty: 0,
+        timePerUnitMs: 60_000,
+        nextUnitEta: new Date(now + 60_000).toISOString(),
+        createdAt: new Date(now).toISOString(),
+      };
+      queryClient.setQueryData<ArmyTrainingDto[]>(key, (current = []) => [...current, optimistic]);
+      return { previousTraining };
+    },
+    onError: (_err, { villageId }, context) => {
+      if (context?.previousTraining !== undefined) {
+        queryClient.setQueryData(queryKeys.armyTraining(villageId), context.previousTraining);
+      }
+    },
     onSettled: (_data, _err, { villageId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.armyTraining(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });

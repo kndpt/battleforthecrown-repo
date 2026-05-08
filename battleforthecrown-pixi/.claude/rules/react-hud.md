@@ -38,6 +38,8 @@ Les deux paths convergent : la même donnée arrive du REST (refetch) et du WS (
 
 ## Optimistic UI
 
+**Règle** : optimistic **obligatoire** pour toute mutation rapide (< 1s typique) avec feedback visuel direct (apparition d'une entry, badge, file). Pas optimistic pour les mutations rares ou à risque d'erreur élevé (rollback fréquent = clignotement UI).
+
 Pour les mutations dont la latence est ressentie (upgrade bâtiment, train unité) :
 
 ```ts

@@ -75,6 +75,49 @@ Reportée pour plus tard (hors scope de ce ticket) : harmonisation du feedback e
 
 L'agent suivant doit **planifier l'implémentation** (contenu de `onMutate`, structure du context de rollback, gestion de l'`optimisticEntryId` côté file d'entraînement), pas re-explorer.
 
+## Résolution (2026-05-08)
+
+`useTrainUnitsMutation` (`battleforthecrown-pixi/src/api/queries.ts:313`) passe en optimistic, calé sur le pattern de `useUpgradeBuildingMutation` :
+
+- `onMutate` : `cancelQueries` sur `armyTraining(villageId)`, snapshot de la file existante, push d'une `ArmyTrainingDto` optimistic (`id: optimistic-train-<unitType>-<ts>`, `timePerUnitMs: 60_000` placeholder remplacé à l'invalidate).
+- `onError` : restore du snapshot.
+- `onSettled` : invalidations existantes inchangées.
+
+Pas de décrément ressources optimistic (cohérent avec la règle `react-hud.md` et avec `useUpgradeBuildingMutation`). Pas de helper / abstraction (contrainte du ticket). Patch ~22 lignes ajoutées dans `queries.ts`.
+
+`battleforthecrown-pixi/.claude/rules/react-hud.md` : règle ajoutée — *optimistic obligatoire pour mutation rapide à feedback visuel direct ; pas optimistic pour mutations rares ou à risque élevé*.
+
+### Drift constaté avec le ticket d'origine
+
+Lecture du code à J-2 du ticket :
+
+- `useChangeStrategyMutation` cité comme « à auditer » : **n'existe pas** dans `pixi/src/`. À retirer du scope.
+- `useCancelBuildingMutation` cité comme « à auditer » : s'appelle en réalité `useCancelConstructionMutation` (queries.ts:600) et **est déjà optimistic** (snapshot + filter + rollback).
+- `useMarkReportReadMutation` (437) et `useInitiateAttackMutation` (488) : toujours non-optimistic. Décision optimistic ou non à prendre au cas par cas — hors scope ici.
+
+### Bug pré-existant trouvé en QA (corrigé dans le même commit)
+
+`battleforthecrown-pixi/src/api/ws-bindings.ts:83-84` — le binding `unit.training.completed` invalidait les query keys `['armyTraining', villageId]` et `['armyInventory', villageId]`, mais les vraies clés produites par `queryKeys` sont `['army', 'training', villageId]` et `['army', 'inventory', villageId]`. Résultat : le toast "Entraînement terminé" se déclenchait, mais la file de training et l'inventaire **n'étaient pas rafraîchis** (la file restait à `0/3` malgré le toast). Bug masqué auparavant par le `staleTime: 2_000` de `useArmyTrainingQuery`, devenu visible avec l'optimistic UI.
+
+Fix : passer par la factory `queryKeys.armyTraining(villageId)` / `queryKeys.armyInventory(villageId)` pour bloquer les drifts futurs (les autres bindings continuent d'utiliser des array literals partiels qui marchent par prefix-matching TanStack Query — non concernés).
+
+### Bugs connexes corrigés en QA (UnitCard.tsx)
+
+Trouvés en testant le ticket 11 IG, fixés dans le même commit :
+
+- **Coût temps n'incluait pas le multiplier monde** : `totalCost.timeSeconds = cost.time * quantity` à partir de `UNIT_COSTS` brut. Affichait "1m 30s" pour 3 milices sur un monde rapide (multiplier × 30) alors que le serveur entraînait en ~3s. Fix : récupérer `multipliers.training` via `useWorldConfigQuery(worldId)` et calculer `(cost.time / trainingMultiplier) * quantity` (même pattern que `BuildingDetailModal.tsx:65-76`).
+- **Progress bar figée à ~33 %** pendant l'entraînement : le serveur n'émet pas d'event WS intermédiaire (seulement `unit.training.completed` à la toute fin), donc `training.completedQty` reste à `0` jusqu'à la disparition de la file. Le calcul de progression dépendait de cette valeur. Fix : extrapoler localement via `elapsedMs = now - Date.parse(training.createdAt)` et `progress = elapsedMs / (totalQty * timePerUnitMs)`. La barre avance maintenant en continu (paliers 1 s via le `useTickingNow(1_000)` existant). Le `displayedCompletedQty` affiché reste majoré par la valeur DB (jamais d'incohérence visuelle quand l'event WS final arrive).
+
+### Follow-up éventuel (hors scope)
+
+`useUpgradeBuildingMutation` snapshot `previousResources` (queries.ts:532) mais ne modifie jamais le cache resources → snapshot mort, vestige d'avant la résolution du [ticket 03](./03-resources-changed-dual-path.md). Nettoyage 4 lignes possible.
+
+### Vérification
+
+- `yarn workspace battleforthecrown-pixi tsc --noEmit` : OK.
+- `yarn workspace battleforthecrown-pixi test --run` : 57/57 tests verts.
+- QA user IG : entrer dans une caserne, lancer un entraînement, vérifier que l'entry "En cours…" apparaît instantanément (pas d'attente avant que la barre de progression apparaisse).
+
 ## Tickets liés
 
 - [13 — GameSession wrapper fragile](./13-pixi-game-session-fragile-wrapper.md) — autre exemple de pattern frontend non systématisé.
