@@ -5,6 +5,11 @@ Quatre chantiers identifiés après la résolution complète de l'audit (`docs/a
 ## Tickets actifs
 
 - [03 — CI : automatiser ou pas](./03-ci-strategy.md) 🟠
+- [05 — WorldConfig multipliers : sémantique inversée](./05-world-config-multipliers-semantics.md) 🟡
+- [06 — Production tick + backfill : pas d'event Outbox](./06-production-tick-and-backfill-no-outbox.md) 🟢
+- [07 — Crown production : event Outbox conditionné sur `production > 0`](./07-crown-production-event-gate.md) 🟡
+- [08 — Combat : crash P2025 si défenseur sans ResourceStock](./08-combat-defender-resource-stock-guard.md) 🟡
+- [09 — Fog of war : positions cachées exposées au client](./09-fog-of-war-coordinate-leak.md) 🟡
 
 ## Archivés
 
@@ -14,8 +19,9 @@ Quatre chantiers identifiés après la résolution complète de l'audit (`docs/a
 
 ## Légende
 
-- 🟡 **Majeur** — touche la structure ou le filet de qualité.
+- 🟡 **Majeur** — touche la structure, le filet de qualité, ou un bug runtime latent.
 - 🟠 **Moyen** — qualité de vie, dette à éclaircir.
+- 🟢 **Mineur** — cosmétique, doc, ou choix archi à confirmer sans urgence.
 
 ## Process
 
