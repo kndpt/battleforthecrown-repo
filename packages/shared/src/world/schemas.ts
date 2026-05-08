@@ -4,10 +4,10 @@ const SpeedMultipliersSchema = z.strictObject({
   construction: z.number().positive(),
   production: z.number().positive(),
   training: z.number().positive(),
+  travel: z.number().positive(),
 });
 
 const CombatRulesSchema = z.strictObject({
-  travelSpeed: z.number().positive(),
   attackBonus: z.number().nonnegative(),
   defenseBonus: z.number().nonnegative(),
   lootFactor: z.number().min(0).max(1),
