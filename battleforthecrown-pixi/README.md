@@ -44,7 +44,7 @@ src/
 │   ├── world/          # WorldMapScreen + WorldMapCanvas (Pixi 2D)
 │   ├── resources/      # ResourceBar interpolée
 │   ├── combat/         # ExpeditionList HUD
-│   └── layout/         # GameHeader, NavRail, ToastStack, DebugOverlay
+│   └── layout/         # shell stateful transverse : GameHeader, BottomNavigationBar, ToastStack, DebugOverlay
 ├── pixi/
 │   ├── application.ts  # factory new Application().init()
 │   ├── PixiCanvas.tsx  # mount/unmount React-friendly
