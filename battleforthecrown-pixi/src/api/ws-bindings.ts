@@ -143,6 +143,8 @@ export function applyBattleResolved(payload: BattleResolvedPayload, ctx: Binding
   }, RESOLVED_TO_RETURNING_DELAY_MS);
 
   ctx.queryClient.invalidateQueries({ queryKey: ['resources', payload.villageId] });
+  // Population freed for dead attacker units — see backend combat.worker:sumPopulationCost.
+  ctx.queryClient.invalidateQueries({ queryKey: ['population', payload.villageId] });
   // A new combat report just landed on the server. Tell TanStack to refetch the
   // reports list so the unread bubble in the bottom nav updates without waiting
   // on the 10s staleTime.
@@ -166,8 +168,11 @@ export function applyBattleReturned(payload: BattleReturnedPayload, ctx: Binding
 
 export function applyVillageAttacked(
   payload: VillageAttackedPayload,
-  _ctx?: BindingsContext,
+  ctx: BindingsContext,
 ): void {
+  // Defender lost units → population was released server-side. Refresh the HUD.
+  ctx.queryClient.invalidateQueries({ queryKey: ['population', payload.defenderVillageId] });
+  ctx.queryClient.invalidateQueries({ queryKey: ['army', payload.defenderVillageId] });
   useUiStore.getState().pushToast({
     tone: payload.isDefenseSuccessful ? 'success' : 'error',
     title: payload.isDefenseSuccessful ? 'Attaque repoussée' : 'Village attaqué',

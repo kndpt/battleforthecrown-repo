@@ -14,8 +14,21 @@ import { calculateCasualtyStats, isVictoryForAttacker } from './combat.utils';
 import { parseUnitMap, encodeUnitMap, encodeLootResult } from './codecs';
 import { getStrategyBonusValue } from '@battleforthecrown/shared/village';
 import { calculateDistance } from '@battleforthecrown/shared/logic';
-import type { UnitMap } from '@battleforthecrown/shared/army';
+import { UNIT_COSTS, type UnitMap, type UnitType } from '@battleforthecrown/shared/army';
 import { typedEntries } from '@battleforthecrown/shared/utils';
+
+/**
+ * Total population freed by a set of unit losses. The pop of a dead unit is
+ * released back to the village's pool — see `docs/gameplay/02-economy-and-progression.md` § Population.
+ */
+function sumPopulationCost(losses: UnitMap): number {
+  let total = 0;
+  for (const [unitType, lossCount] of Object.entries(losses)) {
+    const popCost = UNIT_COSTS[unitType as UnitType]?.population;
+    if (popCost && lossCount) total += popCost * lossCount;
+  }
+  return total;
+}
 
 interface CombatJob {
   expeditionId: string;
@@ -168,7 +181,27 @@ export class CombatWorker implements OnModuleInit {
                 });
               }
             }
+
+            // Release defender population for dead units (PvP only — barbarians have no Population row).
+            const popReleasedDefender = sumPopulationCost(lossesDefender);
+            if (popReleasedDefender > 0) {
+              await tx.population.update({
+                where: { villageId: defenderVillage.id },
+                data: { used: { decrement: popReleasedDefender } },
+              });
+            }
           }
+        }
+
+        // Release attacker population for dead units (always — PvP and barbarian raids).
+        // Pop is freed at combat resolution, not at return — the units are dead now,
+        // even if survivors are still on the road back. See docs/gameplay/02-economy-and-progression.md § Population.
+        const popReleasedAttacker = sumPopulationCost(resolution.lossesAttacker);
+        if (popReleasedAttacker > 0) {
+          await tx.population.update({
+            where: { villageId: expedition.attackerVillageId },
+            data: { used: { decrement: popReleasedAttacker } },
+          });
         }
 
         // 6. Get attacker village for userId
