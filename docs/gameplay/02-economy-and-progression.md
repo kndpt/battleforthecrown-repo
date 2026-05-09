@@ -26,7 +26,7 @@ Quand un village est **conquis**, ses ressources stockées et sa population sont
 - Chaque village est un **nœud de ressources indépendant** — pas de pool global.
 - La production stoppe si l'entrepôt est plein.
 - **Pas de transfert direct** entre villages joueur (marché prévu post-MVP).
-- Les villages barbares **régénèrent** leurs ressources avec le temps (équilibrage).
+- Les villages barbares **régénèrent** leurs ressources et leurs troupes avec le temps. Spec complète dans [`06-barbarians.md`](./06-barbarians.md).
 - Le revenu en couronnes dépend de la **puissance cumulée** de tous les villages possédés.
 
 ## Population
@@ -53,7 +53,9 @@ Population disponible = Population max − Σ(Pop bâtiments) − Σ(Pop unités
 - **Construction** → `−X population` (permanent jusqu'à destruction).
 - **Entraînement** → `−Y population` (permanent jusqu'à mort de l'unité).
 - **Destruction** → `+X population` (libérée).
-- **Mort d'une unité** → `+Y population` (libérée).
+- **Mort d'une unité** → `+Y population` libérée **immédiatement à la résolution du combat** (pas au retour de l'expédition). Côté attaquant, la pop des morts est rendue dès l'event `battle.resolved` ; les survivants gardent leur pop consommée jusqu'à la mort ou la dissolution.
+
+> 💡 Friction offensive : envoyer une armée en suicide ne coûte que les ressources et le temps de re-recrutement — la pop revient. C'est un choix design assumé (modèle Tribal Wars / Kingsage), aligné avec l'idée que la population représente le **stock instantané** de citoyens disponibles, pas un coût permanent par bataille.
 
 ### Limites et contraintes
 
@@ -65,25 +67,39 @@ Population disponible = Population max − Σ(Pop bâtiments) − Σ(Pop unités
 
 ### Stratégies de gestion
 
-| Stratégie | Approche | Population utilisée |
-| --- | --- | --- |
-| **Économique** | Priorité bâtiments de production | Moulin, Fermes, Mines → armée minimale |
-| **Militaire** | Priorité armée (attaque/défense) | Caserne remplie → bâtiments basiques seulement |
-| **Forteresse** | Armée défensive + bâtiments défense | Rempart, Tour de guet + défenseurs |
-| **Raider** | Armée offensive légère + production min | Caserne + unités rapides mobiles |
-| **Équilibré** | Mélange selon contexte | Flexible |
+Le joueur choisit comment répartir sa population entre bâtiments et armée. Cette décision macro est formalisée par les **styles stratégiques de village** (Forteresse / Raiders / Économique / Équilibré) — voir [`12-village-styles.md`](./12-village-styles.md) pour la spec complète, mécanique de choix, et bonus/malus.
 
 ## Couronnes
 
-Monnaie stratégique principale. La puissance des villages du joueur (uniquement le poids des bâtiments) détermine le **taux de rendement de couronnes par heure**.
+Monnaie stratégique principale. La [puissance](./09-power-and-rankings.md) des villages du joueur (uniquement le poids des bâtiments) détermine le **taux de rendement de couronnes par heure**.
 
-### Gains
+### Formule de revenu
+
+```
+couronnes/h = puissance_bâtiments_cumulée × 0.05
+```
+
+Sommée sur **tous les villages possédés** par le joueur. Implémenté dans `packages/shared/src/crowns/index.ts` (`DEFAULT_CROWNS.conversionRate`) + `crowns.service.ts:calculateProductionRate`.
+
+### Gains de référence par phase
+
+Calibrage cible : un Seigneur (5 000 couronnes, cf. [`10-conquest.md` § Coût de recrutement](./10-conquest.md#coût-de-recrutement-du-seigneur)) doit représenter ~3 jours de revenu pour un joueur **mid-game** qui vient de construire sa Salle du Trône.
+
+| Phase | Puissance bât. typique | Revenu | Temps pour 5 000 cour. (Seigneur) |
+| --- | ---: | ---: | --- |
+| Early game (Château 2-3) | ~360 | ~18 / h | ~12 jours (Seigneur inaccessible — Château 6 requis) |
+| **Mid game (Château 6, Trône frais)** | **~1 400** | **~70 / h** | **~3 jours** ← **cible de calage** |
+| Late game (Château 10, 1 village max) | ~2 600 | ~130 / h | ~1.5 jour |
+| Late game (3 villages max) | ~7 900 | ~395 / h | ~13 h |
+
+> 💡 La rapidité en late-game est volontaire : un joueur multi-village doit pouvoir alimenter l'expansion en Seigneurs successifs.
+
+### Autres sources
 
 | Source | Gain |
 | --- | --- |
-| Villages possédés | +X / h (proportionnel à la puissance bâtiments) |
-| Raids barbares repoussés | +Y instantané |
-| Classement hebdo | +Z bonus |
+| Raids barbares repoussés | +Y instantané (à chiffrer) |
+| Classement Pillards (hebdo, top 3) | +1 500 / +1 000 / +500 couronnes — détail [`09-power-and-rankings.md` § Classements](./09-power-and-rankings.md#classements) |
 | Événements Almanax | multiplicateurs |
 
 ### Dépenses
@@ -91,7 +107,7 @@ Monnaie stratégique principale. La puissance des villages du joueur (uniquement
 | Action | Coût (couronnes) |
 | --- | --- |
 | Changer stratégie de village | 50–100 |
-| Nommer un Seigneur | 3 000+ |
+| Nommer un Seigneur | élevé — voir [`10-conquest.md` § Coût de recrutement](./10-conquest.md#coût-de-recrutement-du-seigneur) |
 | Activer un bonus temporaire (bénédiction) | 150 |
 | Déplacer un village / resettlement | 200 |
 
@@ -160,7 +176,7 @@ Production_niveau_n = 50 × (1.4 ^ (n-1))
 | 3 | 100 | 2 400 |
 | 5 | 190 | 4 560 |
 | 7 | 375 | 9 000 |
-| 10 | 1 035 | 24 840 |
+| 10 | 1 030 | 24 720 |
 
 ### Coûts d'upgrade des bâtiments
 
@@ -217,10 +233,10 @@ Le niveau du Château détermine l'accès aux autres bâtiments, créant des obj
 | **1** | Mines (Bois, Pierre, Fer), Entrepôt, Farm |
 | **2** | **Caserne** (militaire de base) |
 | **3** | **Tour de guet** (exploration carte) |
-| **4** | **Hideout** |
-| **5** | **Wall** (défense avancée) |
-| **6** | **Salle du Conseil** (stratégie de village) |
-| **7** | **Salle du Trône** (conquête, seigneurs) |
+| **4** | **Salle du Conseil** (choix de [style stratégique](./12-village-styles.md)) — _Hideout prévu post-MVP_ |
+| **5** | _(Wall prévu post-MVP — palier libre au MVP)_ |
+| **6** | **Salle du Trône** (entrée end-game — recrutement [Seigneur](./10-conquest.md#le-seigneur--recrutement-et-règles)) |
+| **7** | _(palier libre au MVP)_ |
 
 ## Validation économique : exemple de progression
 

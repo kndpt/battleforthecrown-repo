@@ -2,7 +2,7 @@
 
 ## Vision globale
 
-> _« Un jeu de stratégie médiévale lisible mais profond : des choix clairs, des décisions lourdes de conséquences, et un monde vivant où chaque village a une identité. »_
+> _« Un jeu de stratégie de conquête médiévale lisible mais profond : des choix clairs, des décisions lourdes de conséquences, et un monde vivant où chaque village a une identité. »_
 
 ### Objectif
 
@@ -21,14 +21,14 @@ Créer une expérience de **stratégie simplifiée mais tactique**, pensée pour
 
 ## Structure du jeu
 
-Chaque joueur commence avec **un village**. Il peut ensuite **conquérir** d'autres villages (barbares ou joueurs).
+Chaque joueur commence avec **un village**. Il peut ensuite **conquérir** d'autres villages — joueurs ou barbares. Spec dédiée : [`10-conquest.md`](./10-conquest.md) (hub) + [`13-barbarian-conquest.md`](./13-barbarian-conquest.md) (barbare) + [`14-pvp-conquest.md`](./14-pvp-conquest.md) (PvP, en chantier).
 
 | Type de village | Description |
 | --- | --- |
 | **Village joueur** | Entité appartenant à un joueur, attaquable, pillable, conquérable |
-| **Village barbare** | PNJ neutres, attaquables, pillables, conquérables |
+| **Village barbare** | Mini-joueurs IA, attaquables, pillables — détail dans [`06-barbarians.md`](./06-barbarians.md) |
 
-Les détails sur les ressources, la population et les couronnes sont dans [`02-economy-and-progression.md`](./02-economy-and-progression.md). Les bâtiments dans [`03-buildings.md`](./03-buildings.md). Les troupes et le combat dans [`04-combat-and-army.md`](./04-combat-and-army.md).
+Les détails sur les ressources, la population et les couronnes sont dans [`02-economy-and-progression.md`](./02-economy-and-progression.md). Les bâtiments dans [`03-buildings.md`](./03-buildings.md). Le combat dans [`04-combat.md`](./04-combat.md), les unités dans [`08-units.md`](./08-units.md). Les villages barbares dans [`06-barbarians.md`](./06-barbarians.md).
 
 ## Boucles de gameplay
 
@@ -44,7 +44,7 @@ Les détails sur les ressources, la population et les couronnes sont dans [`02-e
 ### Boucle militaire
 
 1. Le joueur entraîne des unités dans la Caserne (vitesse dépend du niveau).
-2. Il attaque des villages barbares pour piller ressources et expérience.
+2. Il attaque des villages barbares pour piller ressources et apprendre le combat (cf. [`06-barbarians.md`](./06-barbarians.md)).
 3. Plus tard, il attaque ou défend contre d'autres joueurs.
 4. Les troupes vaincues ou en formation consomment de la population.
 
@@ -55,7 +55,7 @@ Les détails sur les ressources, la population et les couronnes sont dans [`02-e
 1. Le joueur nomme un **Seigneur**.
 2. Il attaque un village ennemi.
 3. Si toutes les troupes ennemies sont vaincues et le Seigneur survit :
-   - le Seigneur s'installe pendant **6h** (capture en cours).
+   - le Seigneur s'installe pendant une **fenêtre de capture variable** (selon le tier barbare ou le niveau de Château cible).
    - Si non-attaqué durant ce temps → conquête réussie.
 4. Le village appartient maintenant au joueur.
 
@@ -109,29 +109,19 @@ C'est une vraie règle de jeu **server-authoritative**, pas un effet visuel : le
 - Après plusieurs défaites consécutives (ex : 3), le village **passe en ruines** :
   - Niveau bâtiments −50 %.
   - Peut être reconquis gratuitement par le joueur en se reconnectant.
-- **Protection post-perte** : si un joueur perd un village, bouclier 12 h sur les autres villages (évite le snowball nocturne).
 
 > 🔹 Pas de destruction complète = pas de frustration irréversible.
 
 ### Monde persistant
 
-- Les barbares peuvent **reprendre un village abandonné** (retour à la barbarie).
-- Villages trop éloignés du centre → plus de barbares / plus de loot.
-- Système de **zones d'influence** :
-  - Bonus déplacement si plusieurs villages proches.
-  - Bonus dégressif (+15 % → +10 % → +5 % → max 30 %).
-  - Perdu si un village barbare ou joueur ennemi s'intercale.
+- Les barbares peuvent **reprendre un village abandonné** (retour à la barbarie). Voir aussi l'algorithme de génération des villages barbares à l'arrivée d'un joueur : [`07-barbarian-spawning.md`](./07-barbarian-spawning.md).
+- Villages trop éloignés du centre → plus de barbares / plus de loot. Distribution des tiers détaillée dans [`06-barbarians.md` § Distribution sur la carte](./06-barbarians.md#distribution-sur-la-carte).
+
+> 🔮 **Post-MVP** : un système de **zones d'influence** (bonus déplacement entre villages proches du même joueur, perdu si un ennemi s'intercale) a été envisagé mais reporté. Il sera spécifié quand le PvP émergent sera observé sur le playtest. Pas de promesse fantôme dans le MVP.
 
 ## Classements
 
-| Type | Critère | Récompense |
-| --- | --- | --- |
-| **Pillards de la semaine** | Ressources pillées | Bonus Couronnes |
-| **Boucliers d'acier** | Attaques défensives gagnées | Cosmétiques |
-| **Architectes** | Bâtiments construits / upgradés | Production +5 % temporaire |
-| **Chevaliers du peuple** | Population totale | Prestige visuel |
-
-Réinitialisation **hebdomadaire + mensuelle** (douce, pas de wipe complet).
+Quatre classements (Pillards, Boucliers, Architectes, Chevaliers du peuple) avec réinitialisation hebdo + mensuelle. Détail et récompenses : [`09-power-and-rankings.md` § Classements](./09-power-and-rankings.md#classements).
 
 ## Philosophie mobile
 

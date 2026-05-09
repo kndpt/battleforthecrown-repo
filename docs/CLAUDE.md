@@ -1,0 +1,1 @@
+- Toujours vérifier à ne pas dupliquer des données dans la doc. Préférer des références sur la source de vérité.

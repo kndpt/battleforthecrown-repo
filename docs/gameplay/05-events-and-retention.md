@@ -4,6 +4,8 @@ Mécaniques de rétention : raids barbares globaux, événements serveur _Oyez_,
 
 ## Raids barbares globaux
 
+> ⚠️ À ne pas confondre avec les **villages barbares** (entités neutres sur la carte que le joueur attaque) — leur spec est dans [`06-barbarians.md`](./06-barbarians.md). Le raid barbare **global** ci-dessous est un événement serveur que le joueur **subit**, pas qu'il déclenche.
+
 Voir aussi [`01-overview.md` § Monde persistant](./01-overview.md#monde-persistant-et-raids).
 
 - Se déclenchent globalement toutes les **3 à 5 jours**.
@@ -11,7 +13,6 @@ Voir aussi [`01-overview.md` § Monde persistant](./01-overview.md#monde-persist
 - **Victoire** : gain de couronnes + loot.
 - **Défaite** : perte de quelques ressources / troupes + perte de niveau de bâtiment.
 - Après plusieurs défaites consécutives (ex : 3), le village **passe en ruines** (niveau bâtiments −50 %), reconquérable gratuitement.
-- **Protection post-perte** : si un joueur perd un village, **bouclier 12 h** sur ses autres villages (évite snowball nocturne).
 
 > 🔹 Pas de destruction complète = pas de frustration irréversible.
 
@@ -32,7 +33,7 @@ Voir aussi [`01-overview.md` § Monde persistant](./01-overview.md#monde-persist
 | **Semaine du Fer** | +25 % production fer | 7 jours |
 | **Lune de guerre** | +15 % vitesse entraînement | 2 jours |
 | **Jour des barbares** | +loot barbares, raids plus fréquents | 24 h |
-| **Bénédiction royale** | +gain couronnes | 5 jours |
+| **Bénédiction royale** | +25 % production de couronnes | 5 jours |
 | **Jour des bâtisseurs** | Temps de construction −10 % | 24 h |
 | **Marche forcée** | +15 % vitesse de déplacement | 24 h |
 | **Œil du Guet** | +2 cases de vision | 24 h |
@@ -46,6 +47,8 @@ Voir aussi [`01-overview.md` § Monde persistant](./01-overview.md#monde-persist
 - Icône : parchemin + sceau (rouge), animation d'ouverture.
 
 ## Bénédictions quotidiennes
+
+> 🔮 **Hors scope MVP** — système conservé en spec mais l'implémentation est reportée en post-MVP. Les questions ouvertes (notamment l'application temporelle des bonus, cf. ticket archivé `tasks/archive/17-blessings-temporal-effects.md`) seront tranchées au moment de la mise en chantier réelle.
 
 Mini-plan tactique quotidien incitant à la connexion régulière.
 
@@ -62,10 +65,9 @@ Mini-plan tactique quotidien incitant à la connexion régulière.
 | --- | --- |
 | **Reset** | Tous les jours à 04:00 (heure du monde) |
 | **Durée** | 4 h par bénédiction sélectionnée |
-| **Reroll** | — |
 | **Effet** | Non cumulable (même catégorie) |
-| **Tirage** | Individuel par joueur, aléatoire équilibré |
-| **Rareté** | 3 tiers — Commun 70 %, Rare 25 %, Épique 5 % |
+| **Tirage** | Individuel par joueur. Chaque slot des 3 bénédictions proposées est tiré selon la table de rareté ci-dessous, puis une bénédiction est piochée dans le pool de la rareté obtenue. |
+| **Rareté (probabilité par slot)** | Commun 70 %, Rare 25 %, Épique 5 %. Ces % décrivent le **tirage**, pas la composition du catalogue : un joueur peut très bien recevoir 3 communs, ou 1 épique + 2 communs. |
 
 ### Liste des bénédictions
 
@@ -85,8 +87,6 @@ Mini-plan tactique quotidien incitant à la connexion régulière.
 | **Architecte** | +1 slot de construction | Épique |
 | **Maître d'armes** | +1 slot d'entraînement | Épique |
 | **Fermier** | Population disponible +5 % | Épique |
-
-> ⚠️ TODO : compléter pour respecter la distribution 70 % / 25 % / 5 %.
 
 > 🎯 Crée une habitude quotidienne simple et gratifiante, sans impacter l'équilibrage global ni créer d'injustice PvP.
 
@@ -139,7 +139,7 @@ Récompense lourde quotidienne incitant à la connexion régulière et à l'enga
 | **Expansion stratégique** | Améliorer le Château d'1 niveau | 1 500 bois + 1 800 pierre + 1 200 fer |
 | **Raid du jour** | Piller 5 villages barbares (min 2 000 loot) | 2 000 bois + 1 500 pierre + 1 500 fer + 100 couronnes |
 | **Armée du peuple** | Entraîner 40 unités population | 1 800 bois + 1 800 pierre + 2 000 fer |
-| **Forteresse imprenable** | Améliorer Wall ou Watchtower de 2 niveaux | 1 400 bois + 2 000 pierre + 1 100 fer |
+| **Forteresse imprenable** | Améliorer Watchtower de 2 niveaux | 1 400 bois + 2 000 pierre + 1 100 fer |
 
 #### Tier 3 — Late Game (niveaux 8–10)
 
@@ -170,11 +170,4 @@ Récompense lourde quotidienne incitant à la connexion régulière et à l'enga
 
 ## Classements
 
-| Type | Critère | Récompense |
-| --- | --- | --- |
-| **Pillards de la semaine** | Ressources pillées | Bonus couronnes |
-| **Boucliers d'acier** | Attaques défensives gagnées | Cosmétiques |
-| **Architectes** | Bâtiments construits / upgradés | Production +5 % temporaire |
-| **Chevaliers du peuple** | Population totale | Prestige visuel |
-
-Réinitialisation **hebdomadaire + mensuelle** (douce, pas de wipe).
+Levier de rétention périodique (hebdo + mensuel). Catalogue complet et récompenses : [`09-power-and-rankings.md` § Classements](./09-power-and-rankings.md#classements).

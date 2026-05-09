@@ -14,6 +14,8 @@ Catalogue détaillé des 10 bâtiments du village (coûts, temps, bonus passifs 
 | 🌾 [**Moulin**](#moulin-farm) | Population | +population max | 25 | ✅ Actif |
 | ⚔️ [**Caserne**](#caserne-barracks) | Entraînement unités | +vitesse entraînement, débloque unités | 35 | ✅ Actif |
 | 🔭 [**Tour de guet**](#tour-de-guet-watchtower) | Vision carte | +rayon visibilité monde | 30 | ✅ Actif |
+| 🕯️ [**Salle du Conseil**](#salle-du-conseil) | Choix de [style stratégique de village](./12-village-styles.md) | (1 niveau, débloque le choix) | 25 | ✅ Actif |
+| 👑 [**Salle du Trône**](#salle-du-trône) | Recrutement du [Seigneur](./10-conquest.md#le-seigneur--recrutement-et-règles) (conquête) | (1 niveau MVP, débloque le recrutement) | 35 | ✅ Actif |
 | 🧱 [**Rempart**](#rempart-wall) | Défense passive | +défense globale village | 38 | ⏸️ Désactivé MVP |
 | 🕵️ [**Cachette**](#cachette-hideout) | Espionnage | (prévu : capacité espion) | 28 | ⏸️ Désactivé MVP |
 
@@ -83,12 +85,12 @@ Exemples de bonus par niveau :
 | 1 | Mines (Bois, Pierre, Fer), Entrepôt, Farm |
 | 2 | +Caserne |
 | 3 | +Tour de guet |
-| 4 | +Hideout (Cachette) |
-| 5 | +Wall (Rempart) |
-| 6 | +Salle du Conseil |
-| 7 | +Salle du Trône |
+| 4 | +Salle du Conseil _(Hideout prévu post-MVP)_ |
+| 5 | _(Wall prévu post-MVP — palier libre au MVP)_ |
+| 6 | +Salle du Trône _(entrée end-game — débloque la conquête)_ |
+| 7 | _(palier libre au MVP)_ |
 
-> 💡 Le Château est le **bâtiment le plus influent pour la puissance** (poids 40 constant).
+> 💡 Le Château est le **bâtiment le plus influent pour la [puissance](./09-power-and-rankings.md)** (poids 40 constant).
 
 ---
 
@@ -281,12 +283,11 @@ Identique au Wood : 50 → 1 030 par heure.
 | --- | --- |
 | 1 | MILITIA (infanterie de base) |
 | 2 | SQUIRE (infanterie avancée) |
-| 3 | WARRIOR + ARCHER |
+| 3 | WARRIOR + ARCHER + SPY |
 | 4 | TEMPLAR (chevalier lourd) |
-| 5 | SPY + CAVALIER |
+| 5 | CAVALIER |
 | 7 | BÉLIER (siège) |
 | 8 | CATAPULTE (siège) |
-| 10 | SEIGNEUR (conquête) |
 
 ### Réduction temps d'entraînement
 
@@ -354,7 +355,7 @@ Vue d'ensemble du système d'exploration : [`01-overview.md`](./01-overview.md#e
 
 ## Rempart (Wall)
 
-**Défense passive** du village. ⏸️ **Désactivé au MVP** (`requiredBarracksLevel: 99`). Réactivation post-équilibrage.
+**Défense passive** du village. ⏸️ **Désactivé au MVP** (`enabled: DISABLED` dans la config). Réactivation post-équilibrage.
 
 ### Coûts de construction (prévu)
 
@@ -416,9 +417,52 @@ Vue d'ensemble du système d'exploration : [`01-overview.md`](./01-overview.md#e
 - **Diplomatie** : comparer puissance avec alliés potentiels.
 - **Défense anticipée** : détecter les attaques entrantes (futur).
 
+## Salle du Conseil
+
+**Bâtiment administratif** qui débloque le choix de [style stratégique de village](./12-village-styles.md). Niveau requis : Château 4.
+
+Particularité : **bâtiment simple à 1 seul niveau** — pas d'upgrade infini, un coût unique pour débloquer la mécanique de choix de style. Le coût des **changements de style** ultérieurs est défini dans [`12-village-styles.md` § Coûts de changement](./12-village-styles.md#coûts-de-changement-de-style).
+
+### Coût de construction
+
+| Niveau | Bois | Pierre | Fer | Population | Temps (s) |
+| ------ | ---- | ------ | --- | ---------- | --------- |
+| 1 | 150 | 200 | 100 | 4 | 1 000 |
+
+> 💡 Coût comparable à la Tour de guet niveau 1 (palier précédent), un cran au-dessus. Pop faible (4) car bâtiment administratif et non militaire. Pierre dominante (salle officielle, fondations).
+
+### Effet
+
+- Permet au joueur de **choisir le style stratégique** du village depuis l'UI.
+- Aucun bonus passif intrinsèque (le bâtiment est l'**outil**, pas l'effet).
+- L'effet réel vient du style choisi (Forteresse / Raiders / Économique / Équilibré).
+
+---
+
+## Salle du Trône
+
+**Bâtiment de recrutement du [Seigneur](./10-conquest.md#le-seigneur--recrutement-et-règles)** — entrée du end-game, débloque la conquête de villages. Niveau requis : Château 6.
+
+Particularité : **bâtiment simple à 1 seul niveau au MVP** — comme la Salle du Conseil. Un coût unique pour débloquer la mécanique de recrutement du Seigneur dans ce village. Les bonus passifs annoncés à terme (vitesse d'entraînement, vitesse de noblage) arriveront avec les niveaux 2+ post-MVP.
+
+### Coût de construction
+
+| Niveau | Bois | Pierre | Fer | Population | Temps (s) |
+| ------ | ---- | ------ | --- | ---------- | --------- |
+| 1 | 1 600 | 2 400 | 1 200 | 6 | 21 600 |
+
+> 💡 Coût ~3,5× la Salle du Conseil. Pierre dominante (salle officielle, fondations royales). Pop modeste (administratif, pas militaire). Temps long (6 h) cohérent avec le rang « entrée end-game » : on n'improvise pas une Salle du Trône.
+
+### Effet
+
+- Permet de **recruter le Seigneur** dans ce village (1 Seigneur en garnison maximum à la fois).
+- Aucun bonus passif au MVP (le bâtiment est l'**outil**, pas l'effet).
+- Toutes les règles de recrutement, coût Seigneur, cap par village, devenir post-conquête sont consolidées dans [`10-conquest.md` § Le Seigneur](./10-conquest.md#le-seigneur--recrutement-et-règles).
+
+---
+
 ## Bâtiments futurs (post-MVP)
 
 | Bâtiment | Rôle | Statut |
 | --- | --- | --- |
-| 🕯️ **Salle du Conseil** | Choix de stratégie de village (cf. [`04-combat-and-army.md` § Styles](./04-combat-and-army.md#styles-stratégiques-de-village)) | Roadmap |
-| 👑 **Salle du Trône** | Nommage de Seigneurs (conquête), +vitesse entraînement, +vitesse de noblage | Roadmap |
+| 👑 **Salle du Trône (niveaux 2+)** | Niveaux supplémentaires apportant +vitesse d'entraînement et +vitesse de noblage | Roadmap |
