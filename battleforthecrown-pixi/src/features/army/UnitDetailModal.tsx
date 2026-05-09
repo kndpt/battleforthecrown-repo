@@ -79,7 +79,7 @@ export function UnitDetailModal({ unit, onClose }: UnitDetailModalProps) {
                 </div>
                 <div className="flex items-center justify-between p-2 bg-white/40 rounded">
                   <span className="text-xs text-kingdom-700">⚡ Vitesse</span>
-                  <Badge variant="warning" size="sm">{stats.speed} min</Badge>
+                  <Badge variant="warning" size="sm">{stats.speed}</Badge>
                 </div>
                 <div className="flex items-center justify-between p-2 bg-white/40 rounded">
                   <span className="text-xs text-kingdom-700">📦 Capacité</span>

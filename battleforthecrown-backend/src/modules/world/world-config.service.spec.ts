@@ -222,7 +222,7 @@ describe('WorldConfigService', () => {
 
       const result = await service.getTravelTime('world-1', 10);
 
-      // 10 tiles * 1 min/tile / 1 speed = 10 minutes
+      // 10 tiles × REFERENCE_SPEED / (REFERENCE_SPEED × 1) = 10 minutes
       expect(result).toBe(600000);
     });
 
@@ -237,7 +237,7 @@ describe('WorldConfigService', () => {
 
       const result = await service.getTravelTime('world-1', 10);
 
-      // 10 tiles * 1 min/tile / 2 speed = 5 minutes
+      // 10 × 100 / (100 × 2) = 5 minutes
       expect(result).toBe(300000);
     });
 
@@ -246,7 +246,7 @@ describe('WorldConfigService', () => {
 
       const ms = await service.getTravelTime('world-1', 10, 'RAIDERS');
 
-      // (10 * 1) / 1.15 minutes -> ms rounded
+      // 10 × 100 / (100 × 1.15) ≈ 8.696 minutes
       expect(ms).toBe(521739);
     });
   });
@@ -255,11 +255,12 @@ describe('WorldConfigService', () => {
     beforeEach(() => mockWorld());
 
     it('uses the slowest unit speed', async () => {
+      // MILITIA speed=10, CAVALRY speed=35 → slowest = MILITIA (10)
       const units = { MILITIA: 10, CAVALRY: 5 };
 
       const result = await service.getTravelTimeForArmy('world-1', 10, units);
 
-      // 10 tiles * 10 min/tile = 100 minutes
+      // 10 × 100 / (10 × 1) = 100 minutes
       expect(result).toBe(6000000);
     });
 
@@ -295,7 +296,7 @@ describe('WorldConfigService', () => {
         'FORTRESS',
       );
 
-      // (10 * 10) / 0.8 minutes
+      // 10 × 100 / (10 × 0.8) = 125 minutes
       expect(ms).toBe(7500000);
     });
   });

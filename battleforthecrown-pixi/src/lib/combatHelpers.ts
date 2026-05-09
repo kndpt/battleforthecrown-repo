@@ -41,43 +41,30 @@ export function calculateDistance(
 }
 
 /**
- * Calcule le temps de trajet en millisecondes en fonction de la distance et de la vitesse
- * Formule backend (serveur-autoritatif) :
- * travelMs = (distance × slowestUnitSpeed / worldTravelSpeed) × 60 × 1000
+ * Calcule le temps de trajet en millisecondes en fonction de la distance et de la vitesse.
+ * Formule serveur-autoritative (échelle directe : speed plus haut = plus rapide) :
+ *   travelMs = (distance × REFERENCE_SPEED / (armySpeed × worldTravelSpeed)) × 60 × 1000
  *
  * @param distance - Distance en cases
- * @param slowestUnitSpeed - Vitesse de l'unité la plus lente (valeur la plus élevée = plus lent)
+ * @param armySpeed - Vitesse de l'armée (= speed de l'unité la plus lente du groupe)
  * @param worldTravelSpeed - Multiplicateur global de vitesse du monde (config.gameSpeed.travel)
  * @returns Temps de trajet en millisecondes
- *
- * @example
- * // Exemple: distance 18.44, MILITIA speed 20, TEMPLAR speed 22, worldTravelSpeed 99
- * const travelMs = calculateTravelTime(18.44, 22, 99);
- * console.log(travelMs); // ~245855 ms (~4.1 minutes)
  */
 export function calculateTravelTime(
   distance: number,
-  slowestUnitSpeed: number,
+  armySpeed: number,
   worldTravelSpeed: number
 ): number {
-  // Shared function expects: distance, speedMultiplier, slowestUnitSpeed, strategy
-  return sharedCalculateTravelTime(distance, worldTravelSpeed, slowestUnitSpeed);
+  return sharedCalculateTravelTime(distance, worldTravelSpeed, armySpeed);
 }
 
 /**
- * Trouve la vitesse de l'unité la plus lente parmi une sélection d'unités
- * La "plus lente" = vitesse la plus élevée (convention du jeu)
+ * Trouve la vitesse de l'unité la plus lente parmi une sélection d'unités.
+ * Convention : speed plus haut = unité plus rapide. Donc la "plus lente" = min(speed).
  *
  * @param selectedUnits - Record de types d'unités et quantités sélectionnées
  * @param unitStatsMap - Map de types d'unités vers leurs stats (avec vitesse)
  * @returns Vitesse de l'unité la plus lente, ou 0 si aucune unité sélectionnée
- *
- * @example
- * const slowestSpeed = findSlowestUnitSpeed(
- *   { MILITIA: 10, ARCHER: 5 },
- *   { MILITIA: { speed: 20 }, ARCHER: { speed: 18 } }
- * );
- * console.log(slowestSpeed); // 20
  */
 export function findSlowestUnitSpeed(
   selectedUnits: Record<string, number>,

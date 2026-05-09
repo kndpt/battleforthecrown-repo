@@ -16,6 +16,7 @@ import {
   calculateProductionRate,
   calculateTravelTime,
   findSlowestUnitSpeed,
+  REFERENCE_SPEED,
 } from '@battleforthecrown/shared/logic';
 
 @Injectable()
@@ -106,15 +107,12 @@ export class WorldConfigService {
   ): Promise<number> {
     const config = await this.getConfig(worldId);
 
-    // Base speed is 1 minute per tile (inverse of speed)
-    // But calculateTravelTime expects unit speed (minutes per tile)
-    // Default "army" speed if no unit specified could be considered 1
-    const defaultSpeed = 1;
-
+    // Pas d'armée : on utilise la vitesse de référence (1 minute / tuile au
+    // multiplicateur monde près).
     return calculateTravelTime(
       distance,
       config.gameSpeed.travel,
-      defaultSpeed,
+      REFERENCE_SPEED,
       attackerStrategy,
     );
   }
@@ -134,9 +132,9 @@ export class WorldConfigService {
   ): Promise<number> {
     const config = await this.getConfig(worldId);
 
-    // Find the slowest unit (highest speed value = takes longest time)
+    // Slowest = unité avec le `speed` le plus bas (échelle directe : haut = rapide).
     let slowestSpeed = findSlowestUnitSpeed(units, UNIT_CATALOG.stats);
-    if (slowestSpeed === 0) slowestSpeed = 1;
+    if (slowestSpeed === 0) slowestSpeed = REFERENCE_SPEED;
 
     return calculateTravelTime(
       distance,

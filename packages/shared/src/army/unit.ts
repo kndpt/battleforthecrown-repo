@@ -103,7 +103,7 @@ export const UNIT_STATS: Record<UnitType, UnitStats> = {
   [UNIT_TYPES.CAVALRY]: {
     attack: 15,
     ...defense(8),
-    speed: 8,
+    speed: 35,
     carryCapacity: 100,
   },
   [UNIT_TYPES.SPY]: {

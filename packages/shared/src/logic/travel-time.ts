@@ -1,10 +1,17 @@
 import { getStrategyBonusValue, VillageStrategyType } from '../village/strategy';
 import type { UnitMap } from '../army/unit-map';
 
+/**
+ * Référence de vitesse : à `speed = REFERENCE_SPEED` (= 100, valeur du SPY),
+ * une unité parcourt 1 tuile en 1 minute (au multiplicateur monde près).
+ * Échelle directe : `speed` plus haut = unité plus rapide.
+ */
+export const REFERENCE_SPEED = 100;
+
 export function calculateTravelTime(
   distance: number,
   speedMultiplier: number,
-  slowestUnitSpeed: number,
+  armySpeed: number,
   strategy?: VillageStrategyType
 ): number {
   const strategyMultiplier = strategy
@@ -12,12 +19,13 @@ export function calculateTravelTime(
     : 1.0;
 
   const finalSpeedMultiplier = speedMultiplier * strategyMultiplier;
-  
-  if (slowestUnitSpeed === 0 || finalSpeedMultiplier === 0) return 0;
 
-  // Formula: (distance * minutesPerTile) / speedMultiplier
-  // Result in milliseconds
-  const totalMinutes = (distance * slowestUnitSpeed) / finalSpeedMultiplier;
+  if (armySpeed === 0 || finalSpeedMultiplier === 0) return 0;
+
+  // Échelle directe : higher speed = faster unit.
+  // minutes = distance × REFERENCE_SPEED / (armySpeed × multiplier)
+  const totalMinutes =
+    (distance * REFERENCE_SPEED) / (armySpeed * finalSpeedMultiplier);
   return Math.round(totalMinutes * 60 * 1000);
 }
 
@@ -31,20 +39,22 @@ export function calculateDistance(
 }
 
 /**
- * Find the slowest unit speed among a selection.
- * Convention: higher speed value = slower unit (so we take the max).
- * Returns 0 when no positive-quantity unit is found.
+ * Find the slowest unit's speed among a selection.
+ * Convention: higher speed value = faster unit, so the slowest is the min
+ * speed across positive-quantity units. Returns 0 when no such unit exists.
  */
 export function findSlowestUnitSpeed(
   selectedUnits: UnitMap,
   unitStatsMap: Record<string, { speed: number }>,
 ): number {
-  let slowestSpeed = 0;
+  let slowestSpeed = Infinity;
   for (const [unitType, qty] of Object.entries(selectedUnits)) {
     if (qty && qty > 0) {
-      const unitSpeed = unitStatsMap[unitType]?.speed ?? 0;
-      if (unitSpeed > slowestSpeed) slowestSpeed = unitSpeed;
+      const unitSpeed = unitStatsMap[unitType]?.speed;
+      if (typeof unitSpeed === 'number' && unitSpeed < slowestSpeed) {
+        slowestSpeed = unitSpeed;
+      }
     }
   }
-  return slowestSpeed;
+  return slowestSpeed === Infinity ? 0 : slowestSpeed;
 }
