@@ -4,7 +4,9 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-_Aucun ticket actif post-audit._
+- [29 — Puissance publique (village + royaume) non exposée](./29-power-public-visibility-missing.md) 🟡 Majeur — issue du [run 000](./runs/000-pilote-audit-power.md) (INV-5/INV-7).
+- [30 — Salle du Conseil : poids défini en spec, bâtiment absent du modèle](./30-power-council-hall-missing.md) 🟡 Majeur — issue du run 000 (INV-8).
+- [31 — `PowerSnapshot.kingdom` : champ DB sémantiquement faux](./31-power-snapshot-kingdom-field-misnamed.md) 🟡 Majeur — issue du run 000.
 
 ## Roadmap stratégique
 
@@ -14,7 +16,7 @@ _Aucun ticket actif post-audit._
 
 Fiches d'exécution déléguées à une équipe Claude (lead + teammates). Convention détaillée dans [`runs/README.md`](./runs/README.md).
 
-- [000 — Pilote : audit du module `power`](./runs/000-pilote-audit-power.md) — `PLANNED`. Run de validation du système d'équipe avant généralisation.
+- [000 — Pilote : audit du module `power`](./runs/000-pilote-audit-power.md) — ✅ `DONE` (2026-05-10). Run de validation du système d'équipe avant généralisation. Rapport final dans la fiche.
 
 ## Archivés
 

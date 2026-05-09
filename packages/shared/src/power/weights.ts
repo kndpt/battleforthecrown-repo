@@ -7,12 +7,10 @@ export const BUILDING_POWER_WEIGHTS = Object.freeze({
   IRON: 15,
   WAREHOUSE: 20,
   FARM: 25,
-  MILL: 25,
   BARRACKS: 35,
   WALL: 38,
   WATCHTOWER: 30,
   HIDEOUT: 28,
-  CACHE: 28,
 });
 
 export const UNIT_POWER_WEIGHTS = Object.freeze({

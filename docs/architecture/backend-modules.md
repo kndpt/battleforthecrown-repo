@@ -61,7 +61,7 @@ src/
 | **combat** | `POST /combat/attack`, `GET /combat/reports` | `CombatWorker`, `ReturnWorker` | Attaque, conquête, butin, retour. Stratégies `Barbarian` / `Player` |
 | **crowns** | `GET /crowns/:userId` | `CrownProductionWorker` | Monnaie premium, production passive, transactions sécurisées |
 | **population** | `GET /population/:villageId` | — | Population courante / max via `getFarmPopulationLimit` |
-| **power** | `GET /power/village/:id`, `/kingdom/:userId` | — | Calcul puissance bâtiments + armée |
+| **power** | `GET /power?villageId=…`, `GET /power/kingdom`, `GET /power/leaderboard` | — | Calcul puissance bâtiments + armée d'un village (propriétaire), puissance royaume du joueur authentifié, leaderboard public (post-MVP) |
 | **event** | WS `socket.io` | (consommé par `OutboxWorker`) | Gateway temps réel + `OutboxPublisher` (point unique de création d'events Outbox côté gameplay) |
 
 ## Sous-services notables
