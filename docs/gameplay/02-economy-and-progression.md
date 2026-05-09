@@ -19,7 +19,12 @@
 
 ### Conquête et reset
 
-Quand un village est **conquis**, ses ressources stockées et sa population sont **reset** selon des paramètres configurables par monde (`WorldConfig`).
+Quand un village est **conquis** :
+
+- **Ressources stockées** : reset complet (0 bois / 0 pierre / 0 fer). Spec barbare : [`13-barbarian-conquest.md` § Stock ressources et population](./13-barbarian-conquest.md#stock-ressources-et-population). Spec PvP : [`14-pvp-conquest.md` § Stock ressources](./14-pvp-conquest.md#stock-ressources).
+- **Population** : **pas de reset** — la pop max du village conquis est **recalculée à partir du Moulin hérité**, la pop occupée reste celle des bâtiments hérités. Conquérir un village avec Moulin lvl 4 (~260 pop max) **ajoute un nouveau pool de pop au royaume** du conquérant — propre à ce village, **non transférable** vers ses autres villages (cohérent avec le principe « pop par village » ci-dessous).
+
+🎯 **Effet snowball maîtrisé** : oui, posséder plus de villages = plus de pop totale (somme des pops max de chaque village). Mais cette pop reste **localisée** par village : elle n'aide pas le village d'origine à recruter plus, et chaque village reste limité par son propre Moulin. La snowball est le reward attendu de la conquête, pas un bug d'économie.
 
 ### Contraintes
 
@@ -37,17 +42,19 @@ La **population** est une **ressource finie et permanente** qui représente les 
 
 | Élément | Description |
 | --- | --- |
-| **Population max** | Identique pour tous les joueurs et tous leurs villages (somme cumulée des bonus du Moulin) |
-| **Source** | **Moulin** : chaque niveau ajouté augmente la population totale disponible |
-| **Coût** | Chaque bâtiment et chaque unité consomme de la population (définitivement) |
-| **Libération** | Seulement si un bâtiment est détruit ou une unité meurt |
+| **Population max** | **Par village** : déterminée par le niveau du Moulin **de ce village**. Pas de pool global mutualisé entre les villages d'un joueur. |
+| **Source** | **Moulin** : chaque niveau ajouté augmente la population disponible **du village qui l'héberge** (cf. [`03-buildings.md` § Moulin](./03-buildings.md#moulin-farm)). |
+| **Coût** | Chaque bâtiment et chaque unité **du village** consomme la population **de ce village** (définitivement). |
+| **Libération** | Seulement si un bâtiment est détruit ou une unité meurt (la pop libérée retourne au pool **du village d'origine** — y compris pour des troupes mortes en renfort dans un autre village, cf. [`04-combat.md` § Renforts](./04-combat.md#renforts-entre-ses-propres-villages)). |
 
-> 💡 Population max cumulée = somme de tous les bonus du Moulin (ex : Moulin niveau 3 = pop lvl 1 + lvl 2 + lvl 3).
+> 💡 Population max d'un village = somme des bonus du Moulin de ce village (ex : Moulin niveau 3 = pop lvl 1 + lvl 2 + lvl 3). Implémentation côté Prisma : table `Population` indexée par `villageId` (1 ligne par village).
 
 ### Mécanique de consommation
 
 ```
-Population disponible = Population max − Σ(Pop bâtiments) − Σ(Pop unités)
+Population disponible (village V) = Population max (Moulin de V)
+                                  − Σ(Pop bâtiments de V)
+                                  − Σ(Pop unités recrutées par V)
 ```
 
 - **Construction** → `−X population` (permanent jusqu'à destruction).
@@ -99,7 +106,7 @@ Calibrage cible : un Seigneur (5 000 couronnes, cf. [`10-conquest.md` § Coût d
 | Source | Gain |
 | --- | --- |
 | Raids barbares repoussés | +Y instantané (à chiffrer) |
-| Classement Pillards (hebdo, top 3) | +1 500 / +1 000 / +500 couronnes — détail [`09-power-and-rankings.md` § Classements](./09-power-and-rankings.md#classements) |
+| Classement Pillards (hebdo, top 3) | _Post-MVP — esquisse à retravailler, cf. [`09-power-and-rankings.md` § Classements](./09-power-and-rankings.md#classements). Pas de gain couronnes via classement au MVP._ |
 | Événements Almanax | multiplicateurs |
 
 ### Dépenses

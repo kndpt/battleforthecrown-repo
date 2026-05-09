@@ -94,7 +94,7 @@ Sujets transversaux à toute conquête :
 
 - **Limite de villages par joueur** : ❌ **Pas de limite dure**. Brider arbitrairement le nombre de villages frustre les top-players qui atteignent le cap et finissent par se lasser. La régulation est **naturelle** : plus on a de villages, plus c'est difficile de tout défendre simultanément (armée diluée, distances plus longues, coûts de coordination). Modèle aligné sur Kingsage. Si la régulation naturelle s'avère insuffisante en playtest, on pourra introduire post-MVP des **malus scalants** au-delà d'un certain seuil (ex. baisse de production globale, malus de vitesse Seigneur) plutôt qu'un cap dur.
 - **Conquête multi-tier barbare** : un joueur low-level peut-il conquérir un T5 s'il en a les moyens militaires ? Pas de seuil prévu — la difficulté militaire fait office de filtre naturel. Voir [`13-barbarian-conquest.md`](./13-barbarian-conquest.md).
-- **Conquête PvP asymétrique** : protection des nouveaux joueurs face aux gros via la **règle puissance ÷ 3** (toute attaque d'un joueur dont la puissance défensive est < 1/3 de l'attaquant est interdite — détail dans [`14-pvp-conquest.md` § Garde-fous anti-snowball](./14-pvp-conquest.md#garde-fous-anti-snowball)).
+- **Conquête PvP asymétrique** : double protection des nouveaux joueurs face aux gros — **bouclier débutant 48 h** à l'arrivée sur le monde (couvre la fenêtre où la puissance est encore à ~0) puis **règle puissance ÷ 3** en continu (toute attaque d'un joueur dont la puissance défensive est < 1/3 de l'attaquant est interdite). Détail dans [`14-pvp-conquest.md` § Garde-fous anti-snowball](./14-pvp-conquest.md#garde-fous-anti-snowball).
 
 ## Liens
 

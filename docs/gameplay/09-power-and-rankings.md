@@ -59,6 +59,35 @@ Poids = (Coût_cumulé_level_10 / 500) × Multiplicateur_stratégique
 
 ## Classements
 
+> 🚧 **Feature post-MVP — à retravailler entièrement.** L'esquisse ci-dessous est conservée pour mémoire mais **sort du scope MVP**. Les motivations et points à reprendre sont listés juste en dessous.
+
+### Pourquoi sortir les classements du MVP
+
+L'esquisse actuelle crée un **snowball mécanique** non maîtrisé :
+
+- **Pillards** : 1 500 couronnes/semaine au top 1 = ~6 000 couronnes/mois. Le top-player **s'auto-finance ses Seigneurs en boucle** (un Seigneur = 5 000 couronnes, cf. [`10-conquest.md` § Coût de recrutement](./10-conquest.md#coût-de-recrutement-du-seigneur)). Plus il pille, plus il reçoit, plus il conquiert, plus il pille — la régulation `puissance ÷ 3` ([`14-pvp-conquest.md`](./14-pvp-conquest.md#garde-fous-anti-snowball)) ne suffit pas à compenser.
+- **Architectes** : +5 % production sur 7 j est cumulable cycle après cycle pour le même top-player, et avantage les comptes déjà à niveau de bâtiments élevé (qui en font le plus, donc gagnent le plus, donc en font encore plus).
+- **Boucliers / Chevaliers** : cosmétique uniquement — pas de snowball, mais aussi peu d'incitation à pousser le sujet en MVP.
+
+→ La conséquence est qu'au lieu de servir de **rétention** (mon objectif initial), les classements deviennent un **multiplicateur d'inégalité** entre les top-players et le reste du serveur.
+
+### Points à retravailler (post-MVP)
+
+| Sujet | Pistes |
+| --- | --- |
+| **Dégressivité ou cap** | Plafond de couronnes Pillards par compte/mois (ex : 5 000 couronnes max cumul mois). Ou récompense décroissante si remporté plusieurs cycles consécutifs. |
+| **Récompenses structurellement non-snowballantes** | Cosmétique uniquement ? Récompenses one-shot non cumulables ? Bonus défensifs uniquement (ex : Bouclier d'or = +X % défense pendant 7 j, qui ne booste pas l'offensif) ? |
+| **Cycles** | Garder l'hebdo, ou passer en mensuel ? Ou saisonnier aligné sur le [cycle de vie d'un monde](./19-world-lifecycle.md) (point structurant à trancher en parallèle) ? |
+| **Qui peut concourir** | Tous les joueurs ? Top % uniquement ? Filtrer par tranche de puissance pour éviter que les nouveaux soient écrasés par les top-players ? |
+| **Lien avec les alliances** | Quand les [alliances post-MVP](./21-alliances-and-tribes.md) arriveront, faut-il un classement collectif distinct des classements individuels ? |
+| **Anti-farming** | Comment éviter qu'un top-player exploite le compte d'un alt pour cumuler les podiums ? |
+
+→ Le rework devra repartir d'**objectifs design clairs** (rétention ? rivalité saine ? récompense d'effort ?) avant de chiffrer les rewards. L'erreur de l'esquisse actuelle a été de chiffrer avant de cadrer.
+
+### Esquisse historique (à archiver lors du rework)
+
+> Le texte qui suit décrit l'esquisse actuelle, conservée pour traçabilité. **Ne pas l'utiliser comme spec implémentable** — voir « Points à retravailler » ci-dessus.
+
 4 classements thématiques publiés par monde, **reset hebdomadaire** (chaque lundi 00:00 UTC). Récompenses sur **podium top 3** (Or / Argent / Bronze). Le 4ᵉ et au-delà ne reçoivent rien — la fréquence hebdo garantit qu'un nouveau cycle s'ouvre vite et qu'un comeback est toujours à portée.
 
 ### Critères et récompenses

@@ -164,7 +164,29 @@ Mécanique principale anti-snowball. Une attaque (raid **ou** conquête) est int
 
 > ⚠️ **Tradeoff assumé — fuite de la puissance défensive par escalade** : un attaquant peut sonder plusieurs cibles à puissance croissante (×1, ×2, ×3…) pour borner la **puissance totale par joueur** d'un défenseur, et par soustraction de la puissance bâtiments publique, **borner sa puissance armée** (officiellement cachée — cf. [`09-power-and-rankings.md` § Visibilité](./09-power-and-rankings.md#visibilité)). On accepte ce leak : le scout ESPION reste indispensable pour la **compo précise** (qui pèse au combat), pas juste l'estimation grossière. Masquer le motif UX (« attaque interdite » sans raison) serait pire pour le joueur honnête, et ne supprimerait pas la fuite côté API.
 
-#### 3. Cooldown de re-conquête
+#### 3. Bouclier débutant — 48 h à l'arrivée sur le monde
+
+Mécanique d'onboarding pour combler l'angle mort du `puissance ÷ 3` : deux nouveaux joueurs spawnés dans la même fenêtre temporelle ont chacun une puissance proche de 0, donc le ratio ne joue pas — le first-mover peut écraser ses voisins dès H+1. Sans filet, on perd les retardataires d'une zone de spawn en une session.
+
+**Décidé (MVP)** : tout joueur reçoit un **bouclier d'inattaquabilité de 48 h temps réel** au moment de rejoindre un monde (création du `WorldMembership` + premier village).
+
+| Détail | Décision |
+| --- | --- |
+| Durée | **48 h temps réel absolu** depuis l'arrivée sur le monde. Pas de pause hors ligne (sinon un joueur peut s'auto-bunkériser indéfiniment en se déconnectant). |
+| Périmètre défensif | **Toute attaque PvP entrante** : raid classique **et** conquête PvP. La conquête barbare et le raid barbare global ([`05-events-and-retention.md`](./05-events-and-retention.md#raids-barbares-globaux)) **ne sont pas bloqués** (mécaniques d'apprentissage). Le scout PvP entrant n'est pas bloqué non plus (non-agressif, lecture seule — cf. [`11-scouting.md`](./11-scouting.md)). |
+| Brisé prématurément si… | Le joueur protégé **lance une attaque PvP** (raid ou conquête vers un autre joueur). Le scout PvP sortant et toute action contre un barbare **ne brisent pas** le bouclier. |
+| Évaluation temporelle | Check effectué **au lancement de l'attaque** (clic « envoyer »), comme la règle `puissance ÷ 3`. Une attaque déjà partie s'arrive normalement même si le bouclier expire pendant le trajet — symétrique avec le `puissance ÷ 3`. |
+| UX joueur | Sur le panneau d'info de la cible : bouton attaque grisé + message *« Joueur protégé — bouclier débutant ({hh:mm} restantes) »*. Icône bouclier + timer restant sur la fiche publique du joueur, sur le panneau d'info du village et dans le rapport de scout (aligné sur le pattern de visibilité de la § Période de capture). |
+
+🎯 **Lecture design** : le `puissance ÷ 3` reste le filet long terme et continu. Le bouclier débutant couvre **uniquement** la fenêtre où la puissance n'est pas encore un signal exploitable — les 48 premières heures, où tous les nouveaux sont à puissance ~0. Passé 48 h, la régulation puissance prend le relais sans cliff arbitraire pour la majorité des cas (un joueur qui a joué 48 h a typiquement déjà dépassé le seuil de protection naturelle vis-à-vis des comptes plus anciens).
+
+**Pourquoi 48 h** : « deux soirs d'onboarding ». 24 h trop court (un joueur qui se connecte le soir n'a qu'une vraie session avant exposition) ; 72 h trop long (cible qui se développe à l'abri trop longtemps, et accumule un avantage économique injuste sur un voisin spawné le même jour mais hors fenêtre). 48 h est la valeur retenue par Tribal Wars et Kingsage sur leurs serveurs classiques.
+
+**Pourquoi briser sur attaque PvP sortante** : sans cette règle, le bouclier devient un pacte de non-agression unilatéral exploitable — le joueur peut farmer ses voisins sans aucun risque de riposte pendant 48 h. La rupture sur première attaque PvP est l'arbitrage standard (Tribal Wars/Kingsage) : *« tu veux entrer dans le PvP ? Tu joues à armes égales »*. Pas de timer de cooldown post-rupture, pas de réactivation possible — la sortie du bouclier est définitive sur le monde concerné.
+
+**Effet conjoint avec `puissance ÷ 3`** : un joueur sortant du bouclier à H+48 reste protégé par `puissance ÷ 3` contre les comptes très anciens. Les deux garde-fous se relayent — le bouclier couvre la fenêtre de découverte, le ratio prend le relais en continu.
+
+#### 4. Cooldown de re-conquête
 
 ❌ **Pas de cooldown au MVP**. Un village juste conquis est immédiatement re-conquérable.
 
@@ -189,9 +211,11 @@ Post-MVP probablement, mais à noter :
 
 Idée : si un joueur perd un village, ses autres villages deviennent inattaquables pendant 12 h (« évite le snowball nocturne »). 
 
-**Non retenue** : un bouclier de protection brut est anti-jeu — il interrompt le PvP en cours alors que la dynamique d'engagement vient justement d'être amorcée. La garde-fou par puissance ÷ 3 (§ 2 ci-dessus) couvre déjà la situation des « petits écrasés » de manière plus continue et plus fine.
+**Non retenue** : un bouclier de protection brut **en plein milieu de partie** est anti-jeu — il interrompt le PvP en cours alors que la dynamique d'engagement vient justement d'être amorcée. La garde-fou par puissance ÷ 3 (§ 2 ci-dessus) couvre déjà la situation des « petits écrasés » de manière plus continue et plus fine.
 
 Modèle aligné sur Kingsage / Tribal Wars qui n'utilise pas non plus de bouclier post-perte. Décision stable, pas une hypothèse à valider en playtest.
+
+> 📌 **À ne pas confondre** avec le **bouclier débutant** (§ 3 ci-dessus), qui est retenu. Le bouclier débutant couvre **uniquement la fenêtre d'arrivée** sur le monde (48 h après le `WorldMembership`), période où le `puissance ÷ 3` est inopérant (toutes les nouvelles puissances sont à ~0). Le bouclier post-perte rejeté ici couvrirait au contraire **toute la durée de vie du compte**, ce qui interrompt le PvP en cours.
 
 ## Liens
 

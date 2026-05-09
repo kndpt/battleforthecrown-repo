@@ -66,7 +66,7 @@ Les détails sur les ressources, la population et les couronnes sont dans [`02-e
 
 1. **Raid barbare global** toutes les 3–5 jours.
 2. **Événements temporaires ("Oyez")** : bonus production, entraînement, vision, etc.
-3. **Classements hebdo/mensuels** : Offensive, Défensive, Économique, Architecte.
+3. **Classements hebdo/mensuels** : Offensive, Défensive, Économique, Architecte. _(Esquisse post-MVP — cf. [`09-power-and-rankings.md` § Classements](./09-power-and-rankings.md#classements).)_
 4. **Calendrier saisonnier léger** : récompenses cosmétique / ressource en fin de semaine.
 
 Détail dans [`05-events-and-retention.md`](./05-events-and-retention.md).
@@ -121,7 +121,7 @@ C'est une vraie règle de jeu **server-authoritative**, pas un effet visuel : le
 
 ## Classements
 
-Quatre classements (Pillards, Boucliers, Architectes, Chevaliers du peuple) avec réinitialisation hebdo + mensuelle. Détail et récompenses : [`09-power-and-rankings.md` § Classements](./09-power-and-rankings.md#classements).
+> 🚧 **Post-MVP — à retravailler.** L'esquisse de 4 classements (Pillards, Boucliers, Architectes, Chevaliers du peuple) reste documentée pour traçabilité mais sort du scope MVP : les récompenses chiffrées créent un snowball mécanique non maîtrisé. Détail et points à reprendre : [`09-power-and-rankings.md` § Classements](./09-power-and-rankings.md#classements).
 
 ## Philosophie mobile
 
@@ -153,7 +153,7 @@ Quatre classements (Pillards, Boucliers, Architectes, Chevaliers du peuple) avec
 | Conquête | Capture simple, tension maîtrisée | ✅ |
 | Pas de moral ni buffs lourds | Fluidité mobile | ✅ |
 | Passifs bâtiments | Profondeur structurelle | ✅ |
-| Classements / Almanax | Rétention positive | ✅ |
+| Classements / Almanax | Rétention positive | Almanax ✅ — Classements 🚧 post-MVP |
 
 > _« Chaque joueur dirige un royaume vivant.
 > Ses choix façonnent l'histoire de ses villages,

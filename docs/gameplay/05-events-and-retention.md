@@ -170,4 +170,4 @@ Récompense lourde quotidienne incitant à la connexion régulière et à l'enga
 
 ## Classements
 
-Levier de rétention périodique (hebdo + mensuel). Catalogue complet et récompenses : [`09-power-and-rankings.md` § Classements](./09-power-and-rankings.md#classements).
+> 🚧 **Post-MVP — à retravailler.** L'esquisse de classements hebdo (Pillards / Architectes / Boucliers / Chevaliers) reste documentée pour traçabilité mais sort du scope MVP : les récompenses chiffrées créent un snowball mécanique non maîtrisé. Catalogue et points à reprendre : [`09-power-and-rankings.md` § Classements](./09-power-and-rankings.md#classements).
