@@ -100,6 +100,13 @@ export class ConquestService {
         where: { villageId: targetVillageId },
       });
 
+      // Watchtower is never materialized on barbarian conquest — the player must build it.
+      // Cf. docs/gameplay/13-barbarian-conquest.md § Vision propre. Aligns the higher tiers
+      // (T3+) whose templates include a Watchtower with the spec.
+      await tx.building.deleteMany({
+        where: { villageId: targetVillageId, type: 'WATCHTOWER' },
+      });
+
       // Keep 50% of resources (game design choice)
       if (target.resourceStock) {
         await tx.resourceStock.update({
