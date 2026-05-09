@@ -1,0 +1,130 @@
+# Roadmap MVP — ordre d'implémentation des features
+
+> 📌 **Vue stratégique, pas un découpage de tâches.** Document directeur qui pose **dans quel ordre** on attaque les chantiers gameplay non encore codés. Les tâches détaillées (tickets actionables) seront dérivées phase par phase, au moment d'attaquer chaque phase.
+>
+> Hypothèse de travail : tout doit être codé avant la sortie — l'ordre n'optimise donc pas un time-to-market mais le **confort de développement** : chaque feature livrée se teste IG immédiatement, on évite le retravail (coder X puis devoir y revenir parce que Y l'impacte), on voit le jeu prendre forme plutôt que d'accumuler de la plomberie invisible.
+
+## Principes directeurs
+
+1. **Transverses d'abord** : les fondations consommées par plusieurs features (inbox) avant les features qui en dépendent.
+2. **Producteur avant consommateur** : si A produit une donnée que B affiche, coder A en premier (ex : style avant scout).
+3. **UX-prérequis avant feature** : si la jouabilité d'une feature dépend d'une autre, coder la dépendance avant (ex : notifications avant conquête PvP).
+4. **Plomberie de cycle à la fin** : onboarding et world lifecycle se construisent **par-dessus** un jeu déjà jouable, pas avant.
+5. **Pas d'audit code dans ce document** — il sera fait **dans** la phase 1.
+
+## Phases
+
+### Phase 1 — Consolidation de l'existant
+
+Objectif : auditer le code actuel contre les specs **déjà tranchées**, combler les écarts, fiabiliser ce qui sert de base aux phases suivantes.
+
+Specs concernées : [`02`](../docs/gameplay/02-economy-and-progression.md), [`03`](../docs/gameplay/03-buildings.md), [`04`](../docs/gameplay/04-combat.md), [`06`](../docs/gameplay/06-barbarians.md), [`08`](../docs/gameplay/08-units.md), [`10`](../docs/gameplay/10-conquest.md).
+
+Cas particulier : [`07-barbarian-spawning.md`](../docs/gameplay/07-barbarian-spawning.md) est en chantier. À finaliser **pendant** cette phase si on veut un seeding conforme à la cible, sinon acter explicitement le report.
+
+Critère de fin : pour chaque spec ci-dessus, soit le code est conforme, soit l'écart est ticketé pour exécution **dans** cette phase. Aucune feature nouvelle ne démarre tant que la phase 1 n'est pas close.
+
+### Phase 2 — Inbox & rapports
+
+Spec : [`17-inbox-and-reports.md`](../docs/gameplay/17-inbox-and-reports.md) (en chantier — esquisse à compléter en début de phase).
+
+Pourquoi ici : fondation transverse. Combat, scout, retour d'armée, conquête écriront tous dans l'inbox. Si on la code après ces features, on rouvre chacune pour y injecter le rapport.
+
+Livrable : structure persistante (table `Report` ou recyclage `EventOutbox` — à trancher), API REST + WS, écran inbox côté Pixi/HUD, rapport de combat câblé dessus (déjà existant côté contenu, juste à brancher).
+
+Critère de fin : un combat qui s'achève laisse un rapport persistant lisible dans l'inbox côté joueur, marquage lu/non-lu fonctionnel.
+
+### Phase 3 — Styles de village
+
+Spec : [`12-village-styles.md`](../docs/gameplay/12-village-styles.md).
+
+Pourquoi ici : couche tactique sur le combat (déjà codé), prérequis pour que le scout (phase suivante) ait quelque chose à révéler. Débloqué via la Salle du Conseil (déjà au catalogue bâtiments [`03`](../docs/gameplay/03-buildings.md)).
+
+Livrable : choix de style par village, application des bonus dans la résolution combat, persistance, exposition côté API/WS.
+
+Critère de fin : un village avec style « Forteresse » subit moins de pertes en défense qu'un village « Équilibré » de même compo, vérifié IG par un combat scripté.
+
+### Phase 4 — Scouting
+
+Spec : [`11-scouting.md`](../docs/gameplay/11-scouting.md).
+
+Pourquoi ici : feature transverse autonome qui consomme l'inbox (phase 2) et le style (phase 3). Sans ces deux, le scout est codé incomplet.
+
+Livrable : unité ESPION recrutable, mission scout, snapshot à l'arrivée, retour, rapport scout dans l'inbox révélant compo + stock + style.
+
+Critère de fin : un joueur peut envoyer un ESPION sur un village barbare ou joueur, recevoir un rapport scout dans l'inbox.
+
+### Phase 5 — Conquête barbare
+
+Spec : [`13-barbarian-conquest.md`](../docs/gameplay/13-barbarian-conquest.md) (+ règles communes [`10-conquest.md`](../docs/gameplay/10-conquest.md)).
+
+Pourquoi ici : première vraie boucle long terme **PvE**, spec complète. Permet de tester la mécanique Seigneur + période de capture **avant** d'affronter le PvP (qui ajoutera la complexité défenseur humain + fenêtres asymétriques).
+
+Livrable : recrutement Seigneur, lancement conquête, combat de pré-conquête, période de capture variable, transfert village si tient la fenêtre, ressources reset, bâtiments hérités.
+
+Critère de fin : un joueur peut conquérir un village barbare T2 et le voir basculer dans son royaume, vérifié IG.
+
+### Phase 6 — Notifications push
+
+Spec : [`16-notifications.md`](../docs/gameplay/16-notifications.md) (en chantier — catalogue à compléter en début de phase).
+
+Pourquoi ici : prérequis UX pour la conquête PvP (phase suivante). Sans push, les fenêtres de capture (4-18 h) ne sont pas jouables — l'attaquant ne sait pas quand sa conquête a tenu, le défenseur ne sait pas qu'il doit lever une armée pendant la nuit.
+
+Compromis acceptable : 3 catégories minimales (attaque entrante, fin de fenêtre de capture, fin de construction/entraînement), intégration FCM/APNs, fallback in-app si push refusé par l'OS.
+
+Critère de fin : une attaque entrante déclenche un push sur l'appareil cible avec ETA correcte, vérifié IG.
+
+### Phase 7 — Conquête PvP
+
+Spec : [`14-pvp-conquest.md`](../docs/gameplay/14-pvp-conquest.md) (en chantier — finaliser les questions ouvertes en début de phase).
+
+Pourquoi ici : cœur du end-game, mais s'appuie sur **toutes** les phases précédentes (combat, conquête barbare comme base, inbox, scout, notifications). Avant cette phase, le seul retravail serait absurde ; ici on récolte.
+
+Livrable : conquête de villages joueurs, fenêtre de capture variable selon Château ennemi, garde-fous (puissance ÷ 3, bouclier débutant 48 h, anti-snowball cooldowns).
+
+Critère de fin : deux comptes test peuvent simuler un cycle de conquête PvP complet (préparation → attaque → fenêtre → succès ou échec) avec les bonnes notifications et rapports.
+
+### Phase 8 — Onboarding
+
+Spec : [`15-onboarding.md`](../docs/gameplay/15-onboarding.md) (en chantier — esquisse à transformer en spec complète en début de phase).
+
+Pourquoi ici : le tuto script **les 4 boucles** (économique, militaire, exploration, conquête). Coder le tuto avant que ces boucles soient stables = réécriture du script à chaque évolution gameplay. Tard à dessein.
+
+Livrable : 5 étapes scriptées chaînées dès la création du premier village (1ᵉʳ upgrade éco → 1ᵉʳ raid barbare → 1ʳᵉ Watchtower → 1ᵉʳ scout → 5ᵉ étape TBD).
+
+Critère de fin : un compte fraîchement créé est guidé étape par étape, sans pouvoir se perdre, jusqu'à compléter les 5 étapes en ≤ 10 min.
+
+### Phase 9 — World lifecycle
+
+Spec : [`19-world-lifecycle.md`](../docs/gameplay/19-world-lifecycle.md) (spec MVP tranchée).
+
+Pourquoi ici : c'est la cerise. À ce stade le jeu tient 120 j de session. On branche le cron de transition `PLANNED → OPEN → LOCKED → ENDED` + sous-phase retardataires + snapshot leaderboard à `ENDED` + wipe + récompenses cosmétiques permanentes.
+
+Coût attendu : faible (1-2 jours), schéma DB et garde-fou `JoinWorldUseCase` déjà en place.
+
+Critère de fin : un monde test fait son cycle complet (avec durées raccourcies via `WorldConfig`) et on observe les transitions, le wipe et les récompenses cosmétiques attribuées sur le compte global.
+
+### Phase 10 — Ajouts mineurs MVP
+
+Specs : [`20-defensive-friends.md`](../docs/gameplay/20-defensive-friends.md), [`18-inactivity-and-abandonment.md`](../docs/gameplay/18-inactivity-and-abandonment.md) (post-MVP selon la doc, mais cap des comptes-zombies utile avant lancement public — à arbitrer).
+
+Pourquoi ici : ajouts isolés sans impact sur les boucles principales. On les case en dernier pour ne pas charger le scope MVP plus tôt.
+
+## Post-MVP (hors roadmap)
+
+Ne pas prioriser dans cette roadmap, mais ne pas perdre de vue :
+
+- [`21-alliances-and-tribes.md`](../docs/gameplay/21-alliances-and-tribes.md) — alliances/tribus complètes.
+- [`09-power-and-rankings.md`](../docs/gameplay/09-power-and-rankings.md) § Classements hebdo/mensuels — récompenses périodiques.
+- Bénédictions quotidiennes ([`05`](../docs/gameplay/05-events-and-retention.md)) — application temporelle.
+- Marché royal, zones d'influence, Cachette (bâtiment), unités destructrices de bâtiments.
+
+## Mise à jour de ce document
+
+À mettre à jour dès qu'une phase est démarrée, terminée, ou réordonnée suite à un blocker. La justification du changement va dans le commit message (cf. `.claude/rules/git.md`).
+
+## Liens
+
+- [`docs/gameplay/00-game-flow.md`](../docs/gameplay/00-game-flow.md) — vue narrative end-to-end pour comprendre **ce qu'on construit**.
+- [`docs/gameplay/README.md`](../docs/gameplay/README.md) — index des specs gameplay (statut MVP/post-MVP/en chantier par doc).
+- [`tasks/README.md`](./README.md) — convention des tickets actionables dérivés de cette roadmap.

@@ -4,7 +4,17 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-_Aucun ticket actif. La pile post-audit est vide._
+_Aucun ticket actif post-audit._
+
+## Roadmap stratégique
+
+- [00 — Roadmap MVP](./00-mvp-roadmap.md) — ordre d'implémentation des phases gameplay non encore codées. Document directeur dont seront dérivés les tickets actionables phase par phase.
+
+## Runs (exécutions semi-autonomes)
+
+Fiches d'exécution déléguées à une équipe Claude (lead + teammates). Convention détaillée dans [`runs/README.md`](./runs/README.md).
+
+- [000 — Pilote : audit du module `power`](./runs/000-pilote-audit-power.md) — `PLANNED`. Run de validation du système d'équipe avant généralisation.
 
 ## Archivés
 
