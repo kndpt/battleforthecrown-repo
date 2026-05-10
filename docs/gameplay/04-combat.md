@@ -8,6 +8,7 @@ Mécanique de résolution des combats, conquête, styles stratégiques de villag
 - L'armée envoyée parcourt la distance euclidienne à la mobilité de l'unité **la plus lente** du groupe (`findSlowestUnitSpeed`).
 - À l'arrivée, résolution instantanée : pertes calculées des deux côtés, butin (loot) déterminé selon la victoire.
 - L'armée survivante revient avec le loot, à la même vitesse qu'à l'aller.
+- Le retour des survivants et du loot dépend de l'expédition résolue, pas du rapport de combat persistant : supprimer le rapport pendant le trajet retour n'empêche pas le `ReturnWorker` de restituer les troupes et ressources.
 - **Pas d'interception en voyage** : aucune attaque ne peut être interceptée en chemin. Les combats sont résolus exclusivement à l'arrivée. Règle globale, sans exception — s'applique aux raids, conquêtes (Seigneur compris), scouts, et trajets retour.
 - **Rappel pendant l'aller** : le joueur peut rappeler son armée à tout moment **avant l'arrivée**. Le demi-tour se fait à la position actuelle : le temps de retour est égal au temps déjà parcouru depuis le départ. Aucune perte, aucun loot (pas de combat). S'applique à tous les trajets sortants : raids, conquêtes (Seigneur compris), scouts. Pas de rappel sur le retour — l'armée est déjà en chemin vers le village d'origine.
 

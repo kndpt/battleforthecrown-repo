@@ -55,7 +55,7 @@ Spécificités runtime :
 
 | Table | Rôle |
 |-------|------|
-| `Expedition` | un trajet d'armée (ou `Combat` dans la doc gameplay). Champs : `attackerVillageId`, `targetRefId`, `arrivalAt`, `returnAt`, `status`. |
+| `Expedition` | un trajet d'armée (ou `Combat` dans la doc gameplay). Champs : `attackerVillageId`, `targetRefId`, `arrivalAt`, `returnAt`, `status`, plus snapshot de retour `survivingUnits`/`loot` après résolution. |
 | `Expedition.kind` | `ATTACK` ou `REINFORCE`. Détermine le comportement à l'arrivée. |
 | `Expedition.recalled` | boolean — vrai si l'armée a fait demi-tour pendant l'aller (Recall). |
 | `Expedition.reinforcementOriginVillageId` | utilisé pour identifier le village d'origine lors d'un rappel (Recall) de renforts. |
@@ -119,8 +119,8 @@ User ──< WorldMembership >── World
 - **JSON** : 8 colonnes typées via Zod, source de vérité dans `packages/shared/src/`.
   - `World.config` → `WorldConfigSchema` (shared `world/schemas.ts`), parsé dans `WorldConfigService`.
   - `EventOutbox.payload` → registre `EVENT_PAYLOAD_SCHEMAS` par `EventKind` (shared `events/schemas.ts`), parsé runtime par `parseEventPayload` côté backend (`event/codecs/payload.codec.ts`) au moment du dispatch.
-  - `Expedition.units`, `CombatReport.{lossesAttacker, lossesDefender, totalUnitsAttacker, totalUnitsDefender}` → `UnitMapSchema` (shared `army/unit-map.ts`), parsés via `parseUnitMap` (backend `combat/codecs/unit-map.codec.ts`).
-  - `CombatReport.loot` → `LootResultSchema` / `CombatLootSchema` (shared `combat/schemas.ts`), parsé via `parseLootResult` ou `parseCombatLoot` (backend `combat/codecs/loot.codec.ts`).
+  - `Expedition.units`, `Expedition.survivingUnits`, `CombatReport.{lossesAttacker, lossesDefender, totalUnitsAttacker, totalUnitsDefender}` → `UnitMapSchema` (shared `army/unit-map.ts`), parsés via `parseUnitMap` (backend `combat/codecs/unit-map.codec.ts`).
+  - `Expedition.loot`, `CombatReport.loot` → `LootResultSchema` / `CombatLootSchema` (shared `combat/schemas.ts`), parsés via `parseLootResult` ou `parseCombatLoot` (backend `combat/codecs/loot.codec.ts`).
   - `WorldEntity.data` → schema discriminé par `kind` (actuellement BarbarianVillage), typé localement dans `world/world-entities-query.service.ts`.
   - **Règle** : toute lecture/écriture d'une colonne JSON Prisma passe par un codec ; le seul cast frontière `as unknown as Prisma.InputJsonValue` est isolé dans les codecs eux-mêmes.
 

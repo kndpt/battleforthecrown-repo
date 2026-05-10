@@ -43,7 +43,6 @@ export class ReturnWorker implements OnModuleInit {
         // 1. Get expedition
         const expedition = await tx.expedition.findUnique({
           where: { id: data.expeditionId },
-          include: { report: true },
         });
 
         if (!expedition) {
@@ -58,10 +57,20 @@ export class ReturnWorker implements OnModuleInit {
           return;
         }
 
+        if (
+          !expedition.recalled &&
+          (!expedition.survivingUnits || !expedition.loot)
+        ) {
+          this.logger.warn(
+            `Expedition ${expedition.id} has no return snapshot, skipping return.`,
+          );
+          return;
+        }
+
         // 2. Determine surviving units and loot
         let survivingUnits: UnitMap = {};
         let lootedResources = { wood: 0, stone: 0, iron: 0 };
-        let reportId: string | null = null;
+        const reportId: string | null = expedition.reportId;
 
         if (expedition.recalled) {
           this.logger.log(
@@ -69,34 +78,12 @@ export class ReturnWorker implements OnModuleInit {
           );
           survivingUnits = parseUnitMap(expedition.units, 'expedition.units');
         } else {
-          const report = expedition.report;
-          if (!report) {
-            throw new Error(
-              `Combat report not found for expedition ${data.expeditionId}`,
-            );
-          }
-          reportId = report.id;
-
-          const lossesAttacker = parseUnitMap(
-            report.lossesAttacker,
-            'combatReport.lossesAttacker',
+          survivingUnits = parseUnitMap(
+            expedition.survivingUnits,
+            'expedition.survivingUnits',
           );
-          const loot = parseCombatLoot(report.loot);
+          const loot = parseCombatLoot(expedition.loot);
           lootedResources = loot.resources || lootedResources;
-
-          // 3. Calculate surviving units
-          const originalUnits = parseUnitMap(
-            expedition.units,
-            'expedition.units',
-          );
-
-          for (const [unitType, originalQty] of Object.entries(originalUnits)) {
-            const losses = lossesAttacker[unitType as keyof UnitMap] ?? 0;
-            const survived = (originalQty ?? 0) - losses;
-            if (survived > 0) {
-              survivingUnits[unitType as keyof UnitMap] = survived;
-            }
-          }
         }
 
         // 4. Return surviving units to inventory

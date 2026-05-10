@@ -23,10 +23,11 @@ Fiches d'exécution déléguées aux harnesses Claude Code, Codex ou Gemini CLI 
 
 ### Runs actifs
 
-- [011 — Découpler le return worker du CombatReport](./runs/011-fix-return-worker-decouple-report.md) — 📋 `PLANNED`. Fix : supprimer le rapport pendant le voyage retour fige l'expédition en `RETURNING` — dénormaliser `survivingUnits` + `loot` sur `Expedition` + smoke de régression.
+_(Aucun run actif.)_
 
 ### Runs archivés
 
+- [011 — Découpler le return worker du CombatReport](./runs/archive/011-fix-return-worker-decouple-report.md) — ✅ `DONE` (2026-05-10). Fix report supprimé pendant retour : snapshot `survivingUnits`/`loot` sur `Expedition`, `battle.returned.reportId` nullable, smoke de régression vert.
 - [010 — Implémentation frontend renforts](./runs/archive/010-implementation-frontend-reinforcements.md) — ✅ `DONE` (2026-05-10). Frontend renforts finalisé : action `Renforcer`, garnison `INCOMING`/`OUTGOING`, `Rappeler`/`Renvoyer`, rendu `REINFORCE` liste/carte/mini-carte, WS + docs + smokes verts.
 - [009 — Fix UI bâtiments verrouillés / non construits](./runs/archive/009-fix-ui-locked-unbuilt.md) — ✅ `DONE` (2026-05-10). Frontend village lock-aware : helper pur `getBuildingLockState`, modale sans upgrade verrouillé, scène Pixi sans bâtiments level 0, libellé `Non construit`, test Vitest + build Pixi verts.
 - [000 — Pilote : audit du module `power`](./runs/archive/000-pilote-audit-power.md) — ✅ `DONE` (2026-05-10). Run de validation du système avant généralisation. **Système refondé après ce run** suite au rapport méta — sub-agents fourre-tout `team-*` supprimés, remplacés par sub-agents à scope chirurgical (`code-mapper`, `implementer`, `test-writer`, `test-runner`, `doc-writer`).

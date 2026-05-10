@@ -1,8 +1,8 @@
 # Run #011 — fix-return-worker-decouple-report
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 10 mai 2026
+> **Terminé** : 10 mai 2026
 
 ## Cible
 
@@ -61,12 +61,60 @@ Les 4 expéditions actuellement bloquées en DB (`cmp0768ps0000vdxlh3zv0zj3`, `c
 
 ## Progress (rempli pendant le run)
 
-_(Vide au démarrage. Mis à jour à chaque transition d'étape ou de tâche.)_
+- 2026-05-10 — Reprise locale Codex : diff existant inspecté (`schema.prisma`, `combat.worker.ts`, `return.worker.ts`, smoke, migration).
+- 2026-05-10 — T3 renforcée : le return worker ne lit plus `expedition.report` et skippe sans throw les anciennes expéditions sans snapshot `survivingUnits`/`loot`.
+- 2026-05-10 — T4 renforcée : smoke report supprimé pendant le retour, avec assertions sur expédition supprimée, inventaire, ressources et payload `battle.returned.reportId = null`.
+- 2026-05-10 — T5 effectuée : docs gameplay/data-model/realtime/smoke-tests mises à jour pour documenter le découplage report/retour, le `reportId` nullable et le nouveau smoke.
+- 2026-05-10 — Correction contrat event partagé : `battle.returned.reportId` devient nullable dans `packages/shared`, aligné avec le payload backend et le frontend.
 
 ## Décisions prises
 
-_(Vide au démarrage. Décisions archi non triviales, dérogations lead, findings de review, refus de sub-agents.)_
+- 2026-05-10 — Reprise malgré worktree dirty : la fiche était déjà `RUNNING` avec les fichiers du run modifiés ; traitement comme reprise locale demandée par le user, pas abort préflight.
+- 2026-05-10 — Compat legacy : si une expédition non rappelée n'a pas le snapshot de retour (`survivingUnits` ou `loot` NULL), le worker loggue et sort sans throw pour éviter un retry pg-boss infini. Les 4 expéditions historiques restent hors-scope cleanup.
+- 2026-05-10 — Vérification main du smoke non relancée : le scénario cible lit maintenant le report supprimé via API et exige `battle.returned.reportId = null`, comportement qui dépend du découplage ajouté dans ce run.
+- 2026-05-10 — Finding test smoke : l'Outbox rejetait `battle.returned.reportId = null` via le schéma partagé. Fix appliqué dans `packages/shared/src/events`.
 
 ## Rapport final
 
-_(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tickets ouverts, QA résiduelle qui revient à toi, méta-évaluation si applicable.)_
+### Synthèse
+
+- Migration Prisma `decouple_expedition_from_report` : ajoute `Expedition.survivingUnits` et `Expedition.loot` en JSONB nullable.
+- `CombatWorker` persiste le snapshot de retour (`survivingUnits`, `loot`) dans la même transaction que le rapport et le passage en `RETURNING`.
+- `ReturnWorker` ne charge plus `expedition.report`, lit le snapshot depuis `Expedition`, conserve `expedition.recalled` inchangé et émet `battle.returned` avec `reportId` nullable.
+- Contrat partagé `battle.returned.reportId` aligné en `string | null`.
+- Smoke de régression ajouté : attaque, résolution, suppression du report, retour des troupes/loot, event dispatché.
+
+### Review findings
+
+- Correctness : aucun finding bloquant restant. Le premier smoke ciblé a révélé le schéma event non nullable ; corrigé dans `packages/shared/src/events`.
+- Readability : changement volontairement localisé, pas d'abstraction ajoutée.
+- Architecture : pattern Outbox respecté, mutation de retour et event restent transactionnels.
+- Security : endpoint de suppression de report inchangé, pas de nouvelle surface.
+- Performance : pas de requête report au retour, deux champs JSON lus depuis la ligne `Expedition` existante.
+
+### Vérifications
+
+- `yarn workspace @battleforthecrown/shared build` — PASS.
+- `yarn workspace battleforthecrown-backend prisma:generate` — PASS.
+- `yarn workspace battleforthecrown-backend prisma migrate status` — PASS, DB locale à jour.
+- `yarn workspace battleforthecrown-backend test` — PASS, 12 suites / 165 tests.
+- `yarn workspace battleforthecrown-backend test:smoke --runTestsByPath test/smoke.spec.ts -t "report deleted"` — PASS.
+- `yarn workspace battleforthecrown-backend test:smoke` — PASS, 3 suites / 17 tests.
+- `yarn static-check` — PASS. Warnings lint préexistants sur `no-unsafe-argument` dans smokes/gateway, 0 erreur.
+
+### QA backend (vérifié par l'agent)
+
+- [x] Smoke réel DB/pg-boss : suppression du `CombatReport` pendant le retour → expédition supprimée, `UnitInventory` restauré, `ResourceStock` incrémenté, `battle.returned` dispatché avec `reportId: null`.
+
+### QA
+
+**Résultat attendu** : après suppression du rapport pendant le retour, les troupes et ressources reviennent quand même au village.
+
+- [ ] Lancer une attaque contre un village barbare.
+- [ ] Dès que le rapport apparaît, le supprimer depuis l'inbox.
+- [ ] Attendre le retour de l'armée.
+- [ ] Vérifier que les troupes survivantes et le butin sont revenus au village.
+
+### Docs
+
+Docs : mises à jour dans `docs/gameplay/04-combat.md`, `docs/architecture/data-model.md`, `docs/architecture/realtime.md` et `docs/architecture/smoke-tests.md`.

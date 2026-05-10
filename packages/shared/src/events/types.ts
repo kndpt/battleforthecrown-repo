@@ -44,7 +44,7 @@ export interface BattleResolvedPayload {
 
 export interface BattleReturnedPayload {
   expeditionId: string;
-  reportId: string;
+  reportId: string | null;
   villageId: string;
   survivingUnits: UnitMap;
   loot: { resources: LootResources };

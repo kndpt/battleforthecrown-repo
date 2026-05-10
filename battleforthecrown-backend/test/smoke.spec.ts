@@ -222,6 +222,108 @@ describe('smoke', () => {
     expect(returned?.dispatchedAt).toBeTruthy();
   });
 
+  it('combat: report deleted in-flight -> troops still return', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const user = await registerUser(ctx.server);
+    const join = await joinWorld(
+      ctx.server,
+      user.accessToken,
+      world.id,
+      'attacker-del-report',
+    );
+    const attackerId = join.village.id;
+
+    const barbarian = await ctx.prisma.village.create({
+      data: {
+        worldId: world.id,
+        isBarbarian: true,
+        name: 'barb-target-2',
+        x: join.village.x + 1,
+        y: join.village.y,
+        tier: 'T1',
+        resourceStock: {
+          create: { wood: 500, stone: 500, iron: 500, maxPerType: 100_000 },
+        },
+      },
+    });
+
+    await ctx.prisma.unitInventory.create({
+      data: { villageId: attackerId, unitType: 'MILITIA', quantity: 100 },
+    });
+
+    await ctx.prisma.building.updateMany({
+      where: { villageId: attackerId, type: 'WATCHTOWER' },
+      data: { level: 1 },
+    });
+
+    const stockBefore = await ctx.prisma.resourceStock.findUniqueOrThrow({
+      where: { villageId: attackerId },
+    });
+
+    const res = await request(ctx.server)
+      .post('/combat/attack')
+      .set('Authorization', `Bearer ${user.accessToken}`)
+      .send({
+        villageId: attackerId,
+        targetX: barbarian.x,
+        targetY: barbarian.y,
+        targetKind: 'BARBARIAN_VILLAGE',
+        targetRefId: barbarian.id,
+        units: { MILITIA: 100 },
+      });
+    expect(res.status).toBeLessThan(300);
+
+    const resolved = await outboxDispatched(
+      ctx.prisma,
+      { kind: 'battle.resolved', aggregateId: attackerId },
+      { timeoutMs: 15_000 },
+    );
+    expect(resolved?.dispatchedAt).toBeTruthy();
+
+    const report = await ctx.prisma.combatReport.findFirstOrThrow({
+      where: { worldId: world.id, attackerVillageId: attackerId },
+    });
+
+    const deleteRes = await request(ctx.server)
+      .delete(`/combat/report/${report.id}`)
+      .set('Authorization', `Bearer ${user.accessToken}`);
+    expect(deleteRes.status).toBeLessThan(300);
+
+    const returned = await outboxDispatched(
+      ctx.prisma,
+      { kind: 'battle.returned', aggregateId: attackerId },
+      { timeoutMs: 15_000 },
+    );
+    expect(returned?.dispatchedAt).toBeTruthy();
+    const returnedPayload = returned.payload as {
+      reportId: string | null;
+      loot: { resources: { wood: number; stone: number; iron: number } };
+    };
+    expect(returnedPayload.reportId).toBeNull();
+    expect(returnedPayload.loot.resources.wood).toBeGreaterThan(0);
+    expect(returnedPayload.loot.resources.stone).toBeGreaterThan(0);
+    expect(returnedPayload.loot.resources.iron).toBeGreaterThan(0);
+
+    const exp = await ctx.prisma.expedition.count({
+      where: { attackerVillageId: attackerId },
+    });
+    expect(exp).toBe(0);
+
+    const inv = await ctx.prisma.unitInventory.findUniqueOrThrow({
+      where: {
+        villageId_unitType: { villageId: attackerId, unitType: 'MILITIA' },
+      },
+    });
+    expect(inv.quantity).toBe(100);
+
+    const stockAfter = await ctx.prisma.resourceStock.findUniqueOrThrow({
+      where: { villageId: attackerId },
+    });
+    expect(Number(stockAfter.wood)).toBeGreaterThan(Number(stockBefore.wood));
+    expect(Number(stockAfter.stone)).toBeGreaterThan(Number(stockBefore.stone));
+    expect(Number(stockAfter.iron)).toBeGreaterThan(Number(stockBefore.iron));
+  });
+
   it('combat: cannot attack a target outside vision (blip non-attaquable)', async () => {
     const world = await seedSmokeWorld(ctx.prisma);
     const user = await registerUser(ctx.server);

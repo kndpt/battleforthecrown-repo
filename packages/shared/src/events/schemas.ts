@@ -46,7 +46,7 @@ const BattleResolvedPayloadSchema = z.object({
 
 const BattleReturnedPayloadSchema = z.object({
   expeditionId: z.string(),
-  reportId: z.string(),
+  reportId: z.string().nullable(),
   villageId: z.string(),
   survivingUnits: UnitMapSchema,
   loot: z.object({ resources: LootResourcesSchema }),

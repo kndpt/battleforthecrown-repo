@@ -301,9 +301,11 @@ model Expedition {
   returnAt          DateTime?        @map("return_at")
   recalled          Boolean          @default(false)
   reportId          String?          @unique @map("report_id")
+  survivingUnits    Json?            @map("surviving_units")
+  loot              Json?            @map("loot")
   createdAt         DateTime         @default(now()) @map("created_at")
 
-  report CombatReport? @relation(fields: [reportId], references: [id])
+  report CombatReport? @relation(fields: [reportId], references: [id], onDelete: SetNull)
 
   @@index([attackerVillageId])
   @@index([status])

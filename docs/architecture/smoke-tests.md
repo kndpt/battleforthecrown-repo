@@ -30,12 +30,13 @@ Pré-requis : la base `battleforthecrown_smoke` doit exister + migrations appliq
 | 2 | construction | `POST /village/:id/upgrade` | `Building.level=2` + `building.completed` dispatched |
 | 3 | training | `POST /army/:id/train` | `UnitInventory.quantity≥1` + `unit.training.completed` dispatched |
 | 4 | combat resolve+return | `POST /combat/attack` | `battle.resolved` + `battle.returned` dispatched |
-| 5 | conquest | `ConquestService.conquerVillage()` | `Village.userId` reassigned + `village.conquered` dispatched |
-| 6 | crown production | `boss.send('crowns:production')` | `crowns.changed` dispatched |
-| 7 | barbarian seeding catchup | `BarbarianSeedingCatchupWorker.handleCatchup()` | new BVs seeded in DB for players created < 1h (no Outbox by design) |
-| 8 | JWT auth + refresh | REST register/login/refresh | tokens valides, route protégée 200 |
-| 9 | fog of war | `GET /world/:id/entities` | barbares hors vision portent `kind: 'fogged'` |
-| 10 | outbox dispatch (transversal) | upgrade WOOD + Socket.IO client | client reçoit `building.completed` via WS réel |
+| 5 | combat report supprimé pendant retour | `POST /combat/attack` puis `DELETE /combat/report/:id` | expédition supprimée, troupes/loot revenus, `battle.returned.reportId = null` dispatched |
+| 6 | conquest | `ConquestService.conquerVillage()` | `Village.userId` reassigned + `village.conquered` dispatched |
+| 7 | crown production | `boss.send('crowns:production')` | `crowns.changed` dispatched |
+| 8 | barbarian seeding catchup | `BarbarianSeedingCatchupWorker.handleCatchup()` | new BVs seeded in DB for players created < 1h (no Outbox by design) |
+| 9 | JWT auth + refresh | REST register/login/refresh | tokens valides, route protégée 200 |
+| 10 | fog of war | `GET /world/:id/entities` | barbares hors vision portent `kind: 'fogged'` |
+| 11 | outbox dispatch (transversal) | upgrade WOOD + Socket.IO client | client reçoit `building.completed` via WS réel |
 
 ## Quand ajouter un smoke
 

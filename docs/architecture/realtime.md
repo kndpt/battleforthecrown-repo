@@ -98,7 +98,7 @@ Chaque payload est validé runtime par `parseEventPayload(kind, raw)` (backend `
 | `crowns.changed` | `userId` | `userId, worldId, balance, productionRate, lastUpdateTs` | `CrownProductionWorker` (chaque tick, par membership active) + `CrownsService.updateProduction` quand transaction crowns |
 | `battle.sent` | `userId` (attaquant) | `expeditionId, villageId, targetX, targetY, targetKind, arrivalAt` | `CombatService.initiateAttack` |
 | `battle.resolved` | `userId` (les 2 camps) | `expeditionId, reportId, villageId, isVictory, loot, lossesAttacker (UnitMap), survivingUnits (UnitMap), casualtyRate, returnAt, …` | `CombatWorker` |
-| `battle.returned` | `userId` (attaquant) | `expeditionId, reportId, villageId, survivingUnits (UnitMap), loot` | `ReturnWorker` |
+| `battle.returned` | `userId` (attaquant) | `expeditionId, reportId` (nullable si le rapport a été supprimé), `villageId, survivingUnits (UnitMap), loot` | `ReturnWorker` |
 | `reinforcement.sent` | `userId` (village d'origine) | `expeditionId, villageId, targetVillageId, arrivalAt` | `CombatService.initiateReinforce` |
 | `reinforcement.recalled` | `userId` (village hôte ou d'origine) | `expeditionId, villageId, originVillageId, arrivalAt` | `CombatService.initiateRecall` |
 | `reinforcement.returned` | `userId` (village hôte ou d'origine) | `expeditionId, villageId, originVillageId, units` | `CombatWorker` quand un renfort repart vers son village d'origine |

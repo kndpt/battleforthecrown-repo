@@ -367,6 +367,8 @@ export class CombatWorker implements OnModuleInit {
             status: 'RETURNING',
             reportId: report.id,
             returnAt,
+            survivingUnits: encodeUnitMap(resolution.survivingUnits),
+            loot: encodeLootResult(resolution.loot),
           },
         });
 
