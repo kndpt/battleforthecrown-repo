@@ -90,6 +90,7 @@ const ReinforcementRecalledPayloadSchema = z.object({
 });
 
 const ReinforcementReturnedPayloadSchema = z.object({
+  expeditionId: z.string(),
   villageId: z.string(),
   originVillageId: z.string(),
   units: UnitMapSchema,

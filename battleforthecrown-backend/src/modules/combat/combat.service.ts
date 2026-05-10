@@ -18,6 +18,16 @@ import { encodeUnitMap } from './codecs';
 import PgBoss from 'pg-boss';
 import { createOutboxEvent } from '../event/event.utils';
 
+export interface GarrisonLineDto {
+  villageId: string;
+  hostVillageName: string | null;
+  originVillageId: string;
+  originVillageName: string | null;
+  direction: 'INCOMING' | 'OUTGOING';
+  unitType: string;
+  quantity: number;
+}
+
 @Injectable()
 export class CombatService {
   private readonly logger = new Logger(CombatService.name);
@@ -442,6 +452,69 @@ export class CombatService {
       },
       orderBy: { departAt: 'desc' },
     });
+  }
+
+  async getGarrison(
+    userId: string,
+    villageId: string,
+  ): Promise<GarrisonLineDto[]> {
+    const village = await this.prisma.village.findFirst({
+      where: { id: villageId, userId },
+      select: { id: true },
+    });
+
+    if (!village) {
+      throw new NotFoundException('Village not found');
+    }
+
+    const garrisons = await this.prisma.garrison.findMany({
+      where: {
+        quantity: { gt: 0 },
+        OR: [
+          { villageId },
+          { originVillageId: villageId, villageId: { not: villageId } },
+        ],
+      },
+      select: {
+        villageId: true,
+        originVillageId: true,
+        unitType: true,
+        quantity: true,
+      },
+      orderBy: [
+        { villageId: 'asc' },
+        { originVillageId: 'asc' },
+        { unitType: 'asc' },
+      ],
+    });
+
+    const villageIds = [
+      ...new Set(
+        garrisons.flatMap((garrison) => [
+          garrison.villageId,
+          garrison.originVillageId,
+        ]),
+      ),
+    ];
+    const villages = villageIds.length
+      ? await this.prisma.village.findMany({
+          where: { id: { in: villageIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const villageNames = new Map(
+      villages.map((village) => [village.id, village.name]),
+    );
+
+    return garrisons.map((garrison) => ({
+      villageId: garrison.villageId,
+      hostVillageName: villageNames.get(garrison.villageId) ?? null,
+      originVillageId: garrison.originVillageId,
+      originVillageName: villageNames.get(garrison.originVillageId) ?? null,
+      direction: garrison.villageId === villageId ? 'INCOMING' : 'OUTGOING',
+      unitType: garrison.unitType,
+      quantity: garrison.quantity,
+    }));
   }
 
   async getAllReports(userId: string) {

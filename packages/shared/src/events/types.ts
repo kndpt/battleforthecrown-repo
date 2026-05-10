@@ -88,6 +88,7 @@ export interface ReinforcementRecalledPayload {
 }
 
 export interface ReinforcementReturnedPayload {
+  expeditionId: string;
   villageId: string;
   originVillageId: string;
   units: UnitMap;

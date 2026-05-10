@@ -3,6 +3,7 @@ import { BarbarianVillageStrategy } from './barbarian-village.strategy';
 import { PlayerVillageStrategy } from './player-village.strategy';
 import { LootManager } from '../loot/loot.manager';
 import { CombatContext } from '../interfaces/combat-context.interface';
+import type { UnitType } from '@battleforthecrown/shared/army';
 
 describe('Combat Strategies', () => {
   let barbarianStrategy: BarbarianVillageStrategy;
@@ -404,8 +405,9 @@ describe('Combat Strategies', () => {
       // Assert
       expect(result.survivingUnits).toBeDefined();
       Object.entries(result.survivingUnits).forEach(([unitType, survivors]) => {
-        const original = context.attacker.units[unitType];
-        const losses = result.lossesAttacker[unitType] || 0;
+        const typedUnit = unitType as UnitType;
+        const original = context.attacker.units[typedUnit] ?? 0;
+        const losses = result.lossesAttacker[typedUnit] || 0;
         expect(survivors).toBe(original - losses);
       });
     });

@@ -99,8 +99,14 @@ Chaque payload est validé runtime par `parseEventPayload(kind, raw)` (backend `
 | `battle.sent` | `userId` (attaquant) | `expeditionId, villageId, targetX, targetY, targetKind, arrivalAt` | `CombatService.initiateAttack` |
 | `battle.resolved` | `userId` (les 2 camps) | `expeditionId, reportId, villageId, isVictory, loot, lossesAttacker (UnitMap), survivingUnits (UnitMap), casualtyRate, returnAt, …` | `CombatWorker` |
 | `battle.returned` | `userId` (attaquant) | `expeditionId, reportId, villageId, survivingUnits (UnitMap), loot` | `ReturnWorker` |
+| `reinforcement.sent` | `userId` (village d'origine) | `expeditionId, villageId, targetVillageId, arrivalAt` | `CombatService.initiateReinforce` |
+| `reinforcement.recalled` | `userId` (village hôte ou d'origine) | `expeditionId, villageId, originVillageId, arrivalAt` | `CombatService.initiateRecall` |
+| `reinforcement.returned` | `userId` (village hôte ou d'origine) | `expeditionId, villageId, originVillageId, units` | `CombatWorker` quand un renfort repart vers son village d'origine |
+| `garrison.added` | `userId` (village hôte) | `villageId, originVillageId, units` | `CombatWorker` quand un renfort arrive et se stationne en garnison |
 | `village.attacked` | `userId` (défenseur) | `defenderVillageId, attackerVillageId, attackerVillageName, isDefenseSuccessful, losses (UnitMap), casualtyRate, resourcesLost, …` | `CombatWorker` (notification) |
 | `village.conquered` | `worldId` | `villageId, newOwnerId, previousTier, x, y, buildingsKept` | `ConquestService` |
+
+Pour les renforts, la forme exacte des payloads reste dérivée des schémas partagés (`packages/shared/src/events/{schemas,types}.ts`). Cette table ne liste que les champs discriminants utiles pour lire le flux fonctionnel.
 
 ## Exceptions au pattern Outbox
 

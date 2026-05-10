@@ -148,6 +148,28 @@ export interface Expedition {
   createdAt: Date | string;
 }
 
+export interface GarrisonLine {
+  villageId: string;
+  hostVillageName: string | null;
+  originVillageId: string;
+  originVillageName: string | null;
+  direction: 'INCOMING' | 'OUTGOING';
+  unitType: UnitType;
+  quantity: number;
+}
+
+export interface ReinforcePayload {
+  villageId: string;
+  targetVillageId: string;
+  units: Partial<Record<UnitType, number>>;
+}
+
+export interface RecallReinforcementPayload {
+  villageId: string;
+  originVillageId: string;
+  units: Partial<Record<UnitType, number>>;
+}
+
 export type { LootResources } from '@battleforthecrown/shared/combat';
 
 export interface CombatLoot {

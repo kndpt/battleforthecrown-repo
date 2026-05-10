@@ -11,6 +11,8 @@ import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
 import {
   useArmyInventoryQuery,
   useArmyTrainingQuery,
+  useGarrisonQuery,
+  useRecallReinforcementMutation,
   useVillageBuildingsQuery,
 } from '@/api/queries';
 import { useGameStore } from '@/stores/game';
@@ -49,6 +51,8 @@ export function ArmyScreen() {
   const buildings = useVillageBuildingsQuery(villageId);
   const inventory = useArmyInventoryQuery(villageId);
   const training = useArmyTrainingQuery(villageId);
+  const garrison = useGarrisonQuery(villageId);
+  const recallReinforcement = useRecallReinforcementMutation();
 
   const [selectedUnit, setSelectedUnit] = useState<ArmyUnitDto | null>(null);
   const [isPowerSheetOpen, setIsPowerSheetOpen] = useState(false);
@@ -74,6 +78,13 @@ export function ArmyScreen() {
   const trainings = training.data ?? [];
   const heldUnits = units.filter((u) => u.quantity > 0);
   const totalQuantity = heldUnits.reduce((sum, u) => sum + u.quantity, 0);
+  const garrisonLines = garrison.data ?? [];
+  const incomingGarrison = garrisonLines.filter((line) => line.direction === 'INCOMING');
+  const outgoingGarrison = garrisonLines.filter((line) => line.direction === 'OUTGOING');
+  const hasGarrison = garrisonLines.length > 0;
+  const pendingRecallKey = recallReinforcement.variables
+    ? `${recallReinforcement.variables.villageId}:${recallReinforcement.variables.originVillageId}:${Object.keys(recallReinforcement.variables.units)[0]}`
+    : null;
 
   return (
     <div className="h-screen w-full flex flex-col overflow-hidden bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
@@ -149,6 +160,162 @@ export function ArmyScreen() {
               onUnitClick={(u) => setSelectedUnit(u)}
             />
           )}
+
+          <Panel variant="stone" padding="md" className="mt-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-cinzel text-base font-bold text-white">
+                Garnison
+              </h2>
+              <Badge variant="info" size="sm">
+                {garrisonLines.length}
+              </Badge>
+            </div>
+
+            {garrison.isLoading ? (
+              <div className="flex items-center gap-3 py-4">
+                <Spinner variant="warning" size="sm" />
+                <p className="text-sm text-white/85">Chargement de la garnison...</p>
+              </div>
+            ) : !hasGarrison ? (
+              <p className="rounded-md border border-white/15 bg-white/10 px-3 py-4 text-sm text-white/85">
+                Aucun renfort stationné ou envoyé.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {incomingGarrison.length > 0 && (
+                  <div>
+                    <h3 className="font-cinzel text-sm font-semibold text-white/90 mb-2">
+                      Stationnées ici
+                    </h3>
+                    <div className="space-y-2">
+                      {incomingGarrison.map((line) => {
+                        const meta = unitMetaFor(line.unitType);
+                        const recallKey = `${line.villageId}:${line.originVillageId}:${line.unitType}`;
+                        const isPending = recallReinforcement.isPending && pendingRecallKey === recallKey;
+
+                        return (
+                          <div
+                            key={`incoming-${recallKey}`}
+                            className="flex items-center justify-between gap-3 rounded-md border border-white/15 bg-white/10 p-3"
+                          >
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                {meta.iconPath ? (
+                                  <img
+                                    src={meta.iconPath}
+                                    alt={meta.name}
+                                    width={24}
+                                    height={24}
+                                    className="object-contain"
+                                  />
+                                ) : (
+                                  <span aria-hidden className="text-lg">
+                                    {meta.emoji}
+                                  </span>
+                                )}
+                                <p className="truncate text-sm font-semibold text-white">
+                                  {meta.name}
+                                </p>
+                                <Badge variant="success" size="sm">
+                                  {line.quantity}
+                                </Badge>
+                              </div>
+                              <p className="mt-1 text-xs text-white/70">
+                                Origine : village {line.originVillageId}
+                              </p>
+                            </div>
+                            <Button
+                              variant="danger"
+                              size="sm"
+                              disabled={isPending}
+                              onClick={() =>
+                                recallReinforcement.mutate({
+                                  villageId: line.villageId,
+                                  originVillageId: line.originVillageId,
+                                  units: { [line.unitType]: line.quantity },
+                                })
+                              }
+                            >
+                              {isPending ? 'Renvoi...' : 'Renvoyer'}
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {outgoingGarrison.length > 0 && (
+                  <div>
+                    <h3 className="font-cinzel text-sm font-semibold text-white/90 mb-2">
+                      En soutien ailleurs
+                    </h3>
+                    <div className="space-y-2">
+                      {outgoingGarrison.map((line) => {
+                        const meta = unitMetaFor(line.unitType);
+                        const recallKey = `${line.villageId}:${line.originVillageId}:${line.unitType}`;
+                        const isPending = recallReinforcement.isPending && pendingRecallKey === recallKey;
+
+                        return (
+                          <div
+                            key={`outgoing-${recallKey}`}
+                            className="flex items-center justify-between gap-3 rounded-md border border-white/15 bg-white/10 p-3"
+                          >
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                {meta.iconPath ? (
+                                  <img
+                                    src={meta.iconPath}
+                                    alt={meta.name}
+                                    width={24}
+                                    height={24}
+                                    className="object-contain"
+                                  />
+                                ) : (
+                                  <span aria-hidden className="text-lg">
+                                    {meta.emoji}
+                                  </span>
+                                )}
+                                <p className="truncate text-sm font-semibold text-white">
+                                  {meta.name}
+                                </p>
+                                <Badge variant="success" size="sm">
+                                  {line.quantity}
+                                </Badge>
+                              </div>
+                              <p className="mt-1 text-xs text-white/70">
+                                Hôte : village {line.villageId}
+                              </p>
+                            </div>
+                            <Button
+                              variant="warning"
+                              size="sm"
+                              disabled={isPending}
+                              onClick={() =>
+                                recallReinforcement.mutate({
+                                  villageId: line.villageId,
+                                  originVillageId: line.originVillageId,
+                                  units: { [line.unitType]: line.quantity },
+                                })
+                              }
+                            >
+                              {isPending ? 'Rappel...' : 'Rappeler'}
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {recallReinforcement.isError && (
+              <p className="mt-3 rounded-md border border-red-200/40 bg-red-900/30 px-3 py-2 text-sm text-red-100">
+                Impossible de rappeler ce renfort pour le moment.
+              </p>
+            )}
+          </Panel>
 
           <Panel variant="info" padding="md" className="flex items-start gap-3 mt-6">
             <span className="text-2xl" aria-hidden>

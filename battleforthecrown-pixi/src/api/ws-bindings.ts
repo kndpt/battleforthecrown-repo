@@ -114,7 +114,10 @@ export function applyBattleSent(
   const origin = resolveOrigin(payload.villageId);
   const snapshot: ExpeditionSnapshot = {
     expeditionId: payload.expeditionId,
+    kind: 'ATTACK',
     villageId: payload.villageId,
+    originVillageId: payload.villageId,
+    targetVillageId: getString(payload, 'targetRefId'),
     origin,
     target: { x: payload.targetX, y: payload.targetY },
     targetKind: payload.targetKind,
@@ -166,6 +169,92 @@ export function applyBattleReturned(payload: BattleReturnedPayload, ctx: Binding
   ctx.queryClient.invalidateQueries({ queryKey: ['army', payload.villageId] });
 }
 
+export function applyReinforcementSent(
+  payload: ServerEvents['reinforcement.sent'],
+  ctx: BindingsContext,
+): void {
+  const expeditionId = resolveExpeditionId(payload, [
+    'reinforcement',
+    'sent',
+    payload.villageId,
+    payload.targetVillageId,
+    getString(payload, 'arrivalAt') ?? `${Date.now()}`,
+  ]);
+  const snapshot: ExpeditionSnapshot = {
+    expeditionId,
+    kind: 'REINFORCE',
+    villageId: payload.villageId,
+    originVillageId: payload.villageId,
+    targetVillageId: payload.targetVillageId,
+    origin: resolveOrigin(payload.villageId),
+    target: resolveOrigin(payload.targetVillageId),
+    targetKind: 'PLAYER_VILLAGE',
+    phase: 'EN_ROUTE',
+    departAt: parseEventDate(payload, 'departAt') ?? Date.now(),
+    arrivalAt: parseEventDate(payload, 'arrivalAt') ?? Date.now(),
+  };
+  useExpeditionsStore.getState().add(snapshot);
+  invalidateReinforcementQueries(ctx, payload.villageId, payload.targetVillageId);
+}
+
+export function applyReinforcementRecalled(
+  payload: ServerEvents['reinforcement.recalled'],
+  ctx: BindingsContext,
+): void {
+  const expeditionId = resolveExpeditionId(payload, [
+    'reinforcement',
+    'recalled',
+    payload.villageId,
+    payload.originVillageId,
+    getString(payload, 'arrivalAt') ?? `${Date.now()}`,
+  ]);
+  const snapshot: ExpeditionSnapshot = {
+    expeditionId,
+    kind: 'REINFORCE',
+    villageId: payload.villageId,
+    originVillageId: payload.originVillageId,
+    targetVillageId: payload.originVillageId,
+    origin: resolveOrigin(payload.villageId),
+    target: resolveOrigin(payload.originVillageId),
+    targetKind: 'PLAYER_VILLAGE',
+    phase: 'EN_ROUTE',
+    departAt: parseEventDate(payload, 'departAt') ?? Date.now(),
+    arrivalAt: parseEventDate(payload, 'arrivalAt') ?? Date.now(),
+  };
+  useExpeditionsStore.getState().add(snapshot);
+  invalidateReinforcementQueries(ctx, payload.villageId, payload.originVillageId);
+}
+
+export function applyReinforcementReturned(
+  payload: ServerEvents['reinforcement.returned'],
+  ctx: BindingsContext,
+): void {
+  const expeditionId = getString(payload, 'expeditionId');
+  if (expeditionId) {
+    markExpeditionReturned(expeditionId);
+  } else {
+    markReturnedReinforcementSnapshots(payload.villageId, getString(payload, 'originVillageId'));
+  }
+  invalidateReinforcementQueries(
+    ctx,
+    payload.villageId,
+    getString(payload, 'originVillageId'),
+    getString(payload, 'targetVillageId'),
+  );
+}
+
+export function applyGarrisonAdded(
+  payload: ServerEvents['garrison.added'],
+  ctx: BindingsContext,
+): void {
+  invalidateReinforcementQueries(
+    ctx,
+    payload.villageId,
+    getString(payload, 'originVillageId'),
+    getString(payload, 'targetVillageId'),
+  );
+}
+
 export function applyVillageAttacked(
   payload: VillageAttackedPayload,
   ctx: BindingsContext,
@@ -204,6 +293,64 @@ function resolveOrigin(villageId: string): { x: number; y: number } {
 
 // Exhaustive map: TypeScript enforces a binding for every key of ServerEvents.
 // Adding a new event in shared without registering it here breaks the build.
+function getString(payload: unknown, key: string): string | undefined {
+  if (!payload || typeof payload !== 'object') return undefined;
+  const value = (payload as Record<string, unknown>)[key];
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function parseEventDate(payload: unknown, key: string): number | undefined {
+  const value = getString(payload, key);
+  if (!value) return undefined;
+  const timestamp = Date.parse(value);
+  return Number.isNaN(timestamp) ? undefined : timestamp;
+}
+
+function resolveExpeditionId(payload: unknown, fallbackParts: string[]): string {
+  return getString(payload, 'expeditionId') ?? fallbackParts.join(':');
+}
+
+function markExpeditionReturned(expeditionId: string): void {
+  useExpeditionsStore.getState().update(expeditionId, { phase: 'RETURNED' });
+  scheduleTimeout(() => {
+    useExpeditionsStore.getState().remove(expeditionId);
+  }, RETURNED_TO_CLEANUP_DELAY_MS);
+}
+
+function markReturnedReinforcementSnapshots(villageId: string, originVillageId?: string): void {
+  const store = useExpeditionsStore.getState();
+  const expeditionIds = Object.values(store.byId)
+    .filter((snapshot) => {
+      if (snapshot.kind !== 'REINFORCE') return false;
+      if (!originVillageId) {
+        return snapshot.villageId === villageId || snapshot.targetVillageId === villageId;
+      }
+      return (
+        snapshot.villageId === villageId ||
+        snapshot.targetVillageId === villageId ||
+        snapshot.originVillageId === originVillageId ||
+        snapshot.targetVillageId === originVillageId
+      );
+    })
+    .map((snapshot) => snapshot.expeditionId);
+
+  for (const expeditionId of expeditionIds) {
+    markExpeditionReturned(expeditionId);
+  }
+}
+
+function invalidateReinforcementQueries(
+  ctx: BindingsContext,
+  ...villageIds: Array<string | undefined>
+): void {
+  const uniqueVillageIds = new Set(villageIds.filter((villageId): villageId is string => Boolean(villageId)));
+  for (const villageId of uniqueVillageIds) {
+    ctx.queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(villageId) });
+    ctx.queryClient.invalidateQueries({ queryKey: queryKeys.garrison(villageId) });
+    ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
+  }
+}
+
 const bindings: ServerEventBindings = {
   'resources.changed': applyResourcesChanged,
   'crowns.changed': applyCrownsChanged,
@@ -212,6 +359,10 @@ const bindings: ServerEventBindings = {
   'battle.sent': applyBattleSent,
   'battle.resolved': applyBattleResolved,
   'battle.returned': applyBattleReturned,
+  'reinforcement.sent': applyReinforcementSent,
+  'reinforcement.recalled': applyReinforcementRecalled,
+  'reinforcement.returned': applyReinforcementReturned,
+  'garrison.added': applyGarrisonAdded,
   'village.attacked': applyVillageAttacked,
   'village.conquered': applyVillageConquered,
 };

@@ -21,6 +21,7 @@ import {
 } from '@/api/queries';
 import { useGameStore } from '@/stores/game';
 import { useAuthStore } from '@/stores/auth';
+import { useExpeditionsStore } from '@/stores/expeditions';
 import { useWorldMapStore } from '@/stores/worldMap';
 import { WATCHTOWER_VISION_LEVELS } from '@battleforthecrown/shared/village/buildings';
 import type { MapEntity } from '@/api/world-types';
@@ -30,12 +31,14 @@ const FALLBACK_GRID = { gridWidth: 500, gridHeight: 500 };
 export function WorldMapScreen() {
   const navigate = useNavigate();
   const worldId = useGameStore((state) => state.worldId);
+  const currentVillageId = useGameStore((state) => state.villageId);
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const worldEntities = useWorldEntitiesQuery(worldId);
   const myVillages = useMyVillagesQuery(worldId);
   const worldDetails = useWorldDetailsQuery(worldId);
   const { isWatchtowerBuilt, watchtowerLevel } = useBuildingsForLockCheck();
   const unreadCount = useUnreadReportsCount();
+  const expeditions = useExpeditionsStore((state) => state.byId);
 
   const setEntities = useWorldMapStore((state) => state.setEntities);
   const selectedEntityId = useWorldMapStore((state) => state.selectedEntityId);
@@ -54,6 +57,7 @@ export function WorldMapScreen() {
     () => filterEntitiesByVision(allEntities, watchtowerLevel),
     [allEntities, watchtowerLevel],
   );
+  const expeditionSnapshots = useMemo(() => Object.values(expeditions), [expeditions]);
 
   useEffect(() => {
     setEntities(visibleEntities);
@@ -66,7 +70,9 @@ export function WorldMapScreen() {
     };
   }, []);
 
-  const myVillage = visibleEntities.find((e) => e.isMine) ?? null;
+  const myVillage = visibleEntities.find((e) => e.id === currentVillageId && e.isMine)
+    ?? visibleEntities.find((e) => e.isMine)
+    ?? null;
   const selectedEntity = selectedEntityId
     ? visibleEntities.find((e) => e.id === selectedEntityId) ?? null
     : null;
@@ -143,6 +149,7 @@ export function WorldMapScreen() {
                     gridWidth={dims.gridWidth}
                     gridHeight={dims.gridHeight}
                     entities={visibleEntities}
+                    expeditions={expeditionSnapshots}
                     myVillage={myVillage}
                     visibilityRadius={visibilityRadius}
                     cameraCenter={myVillage ?? { x: dims.gridWidth / 2, y: dims.gridHeight / 2 }}
@@ -182,6 +189,7 @@ export function WorldMapScreen() {
               <WorldEntityTooltip screenPosition={tooltipPosition}>
                 <SelectedEntityPanel
                   entity={selectedEntity}
+                  currentVillageId={currentVillageId}
                   onClose={() => setSelectedEntity(null)}
                   onAttack={(target) => {
                     setAttackTarget(target);

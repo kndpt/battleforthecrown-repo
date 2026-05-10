@@ -13,6 +13,11 @@ const PHASE_LABEL: Record<
   RETURNED: { label: 'Terminée', variant: 'neutral' },
 };
 
+const KIND_LABEL: Record<string, { label: string; variant: 'warning' | 'info' }> = {
+  ATTACK: { label: 'Attaque', variant: 'warning' },
+  REINFORCE: { label: 'Renfort', variant: 'info' },
+};
+
 export function ExpeditionList() {
   const expeditions = useExpeditionsStore((state) => state.byId);
   const now = useTickingNow(1_000);
@@ -42,6 +47,7 @@ export function ExpeditionList() {
           <ul className="space-y-2 max-h-64 overflow-y-auto">
             {list.map((exp) => {
               const phase = PHASE_LABEL[exp.phase] ?? PHASE_LABEL.EN_ROUTE;
+              const kind = exp.kind === 'REINFORCE' ? KIND_LABEL.REINFORCE : KIND_LABEL.ATTACK;
               const remainingMs =
                 exp.phase === 'EN_ROUTE'
                   ? exp.arrivalAt - now
@@ -54,9 +60,14 @@ export function ExpeditionList() {
                   className="rounded border border-[#3d2f1f] bg-black/30 p-2 text-xs text-white"
                 >
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <Badge variant={phase.variant} size="sm">
-                      {phase.label}
-                    </Badge>
+                    <div className="flex items-center gap-1">
+                      <Badge variant={kind.variant} size="sm">
+                        {kind.label}
+                      </Badge>
+                      <Badge variant={phase.variant} size="sm">
+                        {phase.label}
+                      </Badge>
+                    </div>
                     <span className="tabular-nums text-[10px] text-white/70">
                       {remainingMs > 0 ? formatRemaining(remainingMs) : '—'}
                     </span>

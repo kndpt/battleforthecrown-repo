@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react';
 import type { MapEntity } from '@/api/world-types';
+import type { ExpeditionSnapshot } from '@/stores/expeditions';
 
 interface WorldMiniMapProps {
   gridWidth: number;
   gridHeight: number;
   entities: MapEntity[];
+  expeditions: ExpeditionSnapshot[];
   myVillage: MapEntity | null;
   visibilityRadius: number | null;
   /** Tile coords currently centred in the main viewport (for the camera box). */
@@ -21,6 +23,11 @@ const KIND_COLOR: Record<string, string> = {
   OTHER: 'rgba(150, 150, 150, 0.7)',
 };
 
+const EXPEDITION_COLOR: Record<string, string> = {
+  ATTACK: 'rgba(74, 140, 42, 0.8)',
+  REINFORCE: 'rgba(79, 179, 216, 0.85)',
+};
+
 /**
  * Lightweight Canvas2D mini-map. Re-rendered on every prop change. Doesn't
  * warrant a second Pixi instance — markers are tiny dots.
@@ -29,6 +36,7 @@ export function WorldMiniMap({
   gridWidth,
   gridHeight,
   entities,
+  expeditions,
   myVillage,
   visibilityRadius,
   cameraCenter,
@@ -70,6 +78,17 @@ export function WorldMiniMap({
     }
 
     // Entities
+    for (const expedition of expeditions) {
+      if (expedition.phase === 'RETURNED') continue;
+      ctx.strokeStyle =
+        expedition.kind === 'REINFORCE' ? EXPEDITION_COLOR.REINFORCE : EXPEDITION_COLOR.ATTACK;
+      ctx.lineWidth = expedition.kind === 'REINFORCE' ? 1.4 : 1.2;
+      ctx.beginPath();
+      ctx.moveTo(expedition.origin.x * sx, expedition.origin.y * sy);
+      ctx.lineTo(expedition.target.x * sx, expedition.target.y * sy);
+      ctx.stroke();
+    }
+
     for (const e of entities) {
       if (e.isMine) continue;
       ctx.fillStyle = KIND_COLOR[e.kind] ?? KIND_COLOR.OTHER;
@@ -104,7 +123,16 @@ export function WorldMiniMap({
     ctx.strokeRect(0.5, 0.5, SIZE - 1, SIZE - 1);
 
     ctx.restore();
-  }, [gridWidth, gridHeight, entities, myVillage, visibilityRadius, cameraCenter, viewportTiles]);
+  }, [
+    gridWidth,
+    gridHeight,
+    entities,
+    expeditions,
+    myVillage,
+    visibilityRadius,
+    cameraCenter,
+    viewportTiles,
+  ]);
 
   return <canvas ref={canvasRef} className="rounded-md shadow-lg" />;
 }

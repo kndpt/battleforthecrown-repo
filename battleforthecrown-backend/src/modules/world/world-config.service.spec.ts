@@ -4,6 +4,7 @@ import {
   DEFAULT_PLAYER_VILLAGE_PLACEMENT_PLAN,
   type WorldConfig,
 } from '@battleforthecrown/shared/world';
+import type { UnitType } from '@battleforthecrown/shared/army';
 import { WorldConfigService } from './world-config.service';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 
@@ -273,7 +274,9 @@ describe('WorldConfigService', () => {
     });
 
     it('falls back to the default speed when no valid unit is given', async () => {
-      const units = { INVALID_UNIT: 10 };
+      const units = { INVALID_UNIT: 10 } as unknown as Partial<
+        Record<UnitType, number>
+      >;
 
       const result = await service.getTravelTimeForArmy('world-1', 10, units);
 

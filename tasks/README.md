@@ -22,10 +22,9 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 Fiches d'exécution déléguées aux harnesses Claude Code, Codex ou Gemini CLI (lead + sub-agents à scope chirurgical). Slash commands : `/plan-run <description>` pour créer une fiche depuis la roadmap, `/run <path>` pour exécuter (fiche de run **ou** ticket actif — path obligatoire, `@` optionnel ; le mode est détecté via le path). Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
-- [010 — Implémentation frontend renforts](./runs/010-implementation-frontend-reinforcements.md) — 📋 `PLANNED`. Complétion de la feature renforts côté Pixi/React.
-
 ### Runs archivés
 
+- [010 — Implémentation frontend renforts](./runs/archive/010-implementation-frontend-reinforcements.md) — ✅ `DONE` (2026-05-10). Frontend renforts finalisé : action `Renforcer`, garnison `INCOMING`/`OUTGOING`, `Rappeler`/`Renvoyer`, rendu `REINFORCE` liste/carte/mini-carte, WS + docs + smokes verts.
 - [009 — Fix UI bâtiments verrouillés / non construits](./runs/archive/009-fix-ui-locked-unbuilt.md) — ✅ `DONE` (2026-05-10). Frontend village lock-aware : helper pur `getBuildingLockState`, modale sans upgrade verrouillé, scène Pixi sans bâtiments level 0, libellé `Non construit`, test Vitest + build Pixi verts.
 - [000 — Pilote : audit du module `power`](./runs/archive/000-pilote-audit-power.md) — ✅ `DONE` (2026-05-10). Run de validation du système avant généralisation. **Système refondé après ce run** suite au rapport méta — sub-agents fourre-tout `team-*` supprimés, remplacés par sub-agents à scope chirurgical (`code-mapper`, `implementer`, `test-writer`, `test-runner`, `doc-writer`).
 - [001 — Audit spec 02 : économie & progression](./runs/archive/001-audit-economy-progression.md) — ✅ `DONE` (2026-05-10). Phase 1, 1ᵉʳ des 7 sous-runs de consolidation. 12 invariants confrontés, 2 écarts fixés : reset 0/0/0 ressources sur conquête barbare (`conquest.service.ts`) + correction formulation bonus Château −36 % à niveau 10 (`spec 02 § Formules`).

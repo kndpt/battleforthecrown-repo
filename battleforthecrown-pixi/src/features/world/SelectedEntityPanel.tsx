@@ -1,9 +1,10 @@
-import { Swords, X } from 'lucide-react';
+import { Shield, Swords, X } from 'lucide-react';
 import { Button, Panel } from '@/ui';
 import type { MapEntity } from '@/api/world-types';
 
 interface SelectedEntityPanelProps {
   entity: MapEntity | null;
+  currentVillageId?: string | null;
   onClose: () => void;
   onAttack?: (entity: MapEntity) => void;
 }
@@ -24,12 +25,25 @@ function typeLabel(entity: MapEntity): string {
   return 'Entité';
 }
 
-export function SelectedEntityPanel({ entity, onClose, onAttack }: SelectedEntityPanelProps) {
+export function SelectedEntityPanel({
+  entity,
+  currentVillageId,
+  onClose,
+  onAttack,
+}: SelectedEntityPanelProps) {
   if (!entity) return null;
 
   const isPlayerVillage = entity.kind === 'PLAYER_VILLAGE' && !entity.isMine;
+  const isOwnedPlayerVillage = entity.kind === 'PLAYER_VILLAGE' && entity.isMine;
   const isBarbarian = entity.kind === 'BARBARIAN_VILLAGE';
   const showAttack = (isBarbarian || isPlayerVillage) && Boolean(onAttack);
+  const showReinforce = isOwnedPlayerVillage
+    && entity.id !== currentVillageId
+    && Boolean(onAttack);
+  const actionLabel = showReinforce ? 'Renforcer' : 'Attaquer';
+  const ActionIcon = showReinforce ? Shield : Swords;
+
+  const showAction = showAttack || showReinforce;
 
   return (
     <Panel
@@ -55,16 +69,16 @@ export function SelectedEntityPanel({ entity, onClose, onAttack }: SelectedEntit
         </span>
       </div>
 
-      {showAttack && (
+      {showAction && (
         <Button
-          variant="danger"
+          variant={showReinforce ? 'neutral' : 'danger'}
           size="sm"
           onClick={() => onAttack?.(entity)}
           className="w-full font-bold"
         >
           <span className="inline-flex items-center justify-center gap-2">
-            <Swords size={16} />
-            <span>Attaquer</span>
+            <ActionIcon size={16} />
+            <span>{actionLabel}</span>
           </span>
         </Button>
       )}

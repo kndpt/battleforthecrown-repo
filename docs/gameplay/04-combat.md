@@ -35,11 +35,17 @@ Un joueur peut envoyer des troupes d'un de ses villages **A** vers un autre vill
 | **Population** | Reste consommée par le **village d'origine A** (la pop appartient au village qui a recruté les unités, pas au village qui les héberge). |
 | **Pertes en défense** | Si B est attaqué et que les renforts de A meurent, la pop de A est libérée (cf. [`02-economy-and-progression.md` § Population](./02-economy-and-progression.md#population)). |
 | **Bonus de style** | Le bonus de style **suit la troupe** (cf. [`12-village-styles.md` § À qui s'appliquent les bonus/malus](./12-village-styles.md#à-qui-sappliquent-les-bonusmalus)) — un Cavalier d'un village Raiders garde son bonus offensif/vitesse même stationné dans une capitale Forteresse. |
-| **Retrait (B → A)** | Re-déclencher un « Renforcer » depuis B avec les troupes en garnison comme retour. Mêmes règles (durée, rappel, pas de combat en chemin). |
+| **Retrait (B → A)** | Depuis la **Garnison**, action dédiée : `Rappeler` pour des renforts envoyés ailleurs, `Renvoyer` pour des renforts stationnés chez soi. Les deux déclenchent un trajet retour vers le village d'origine, avec les mêmes règles de durée et sans combat en chemin. |
 
 **Exception conquête** : pendant la **fenêtre de capture d'un village conquis** par l'attaquant, aucun renfort ni retrait n'est possible vers la garnison d'occupation. Cf. [`14-pvp-conquest.md` § Garnison d'occupation](./14-pvp-conquest.md#garnison-doccupation--ce-qui-reste-de-lescorte). Pour les renforts du **défenseur** vers son propre village pendant la fenêtre PvP, c'est autorisé et géré au § *Qui peut intervenir pendant la fenêtre PvP* (`14-pvp-conquest.md`).
 
-> ✅ **Statut implémentation** : implémenté côté backend.
+La **Garnison** expose deux vues complémentaires :
+- **Stationnées ici** : renforts hébergés dans le village courant, qui participent à sa défense et peuvent être `Renvoyés` vers leur village d'origine.
+- **En soutien ailleurs** : troupes du village courant stationnées dans un autre village du même joueur, pouvant être `Rappelées`.
+
+Sur la carte et dans les listes d'expéditions, un renfort est rendu comme un flux **distinct d'une attaque** (`REINFORCE`) pour éviter toute ambiguïté sur son intention.
+
+> ✅ **Statut implémentation** : UI frontend + endpoint de garnison + cycle d'events backend alignés.
 
 ## Conquête
 

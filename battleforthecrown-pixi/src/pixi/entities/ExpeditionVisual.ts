@@ -9,6 +9,7 @@ import {
 } from './expeditionMath';
 
 const COLOR = {
+  reinforce: 0x4fb3d8,
   enRoute: 0x4a8c2a,
   resolvedVictory: 0xf1c40f,
   resolvedDefeat: 0xc0392b,
@@ -41,6 +42,9 @@ interface DustParticle {
 
 const DUST_TTL_MS = 600;
 const DUST_INTERVAL_MS = 90;
+const ATTACK_GLYPH = '⚔️';
+const REINFORCE_GLYPH = '🛡️';
+const RETURNING_GLYPH = '🐎';
 
 export function createExpeditionVisual(options: ExpeditionVisualOptions): ExpeditionVisualHandle {
   const container = new Container();
@@ -64,7 +68,7 @@ export function createExpeditionVisual(options: ExpeditionVisualOptions): Expedi
   container.addChild(unit);
 
   const unitGlyph = new Text({
-    text: '⚔️',
+    text: options.snapshot.kind === 'REINFORCE' ? REINFORCE_GLYPH : ATTACK_GLYPH,
     style: {
       fontFamily: 'Apple Color Emoji, Segoe UI Emoji, Cinzel, serif',
       fontSize: 28,
@@ -84,6 +88,7 @@ export function createExpeditionVisual(options: ExpeditionVisualOptions): Expedi
     const origin = options.worldToScene(snapshot.origin);
     const target = options.worldToScene(snapshot.target);
     const control = pathControl(origin, target);
+    const isReinforce = snapshot.kind === 'REINFORCE';
 
     const color =
       snapshot.phase === 'RETURNING' || snapshot.phase === 'RETURNED'
@@ -92,7 +97,9 @@ export function createExpeditionVisual(options: ExpeditionVisualOptions): Expedi
           ? snapshot.isVictory
             ? COLOR.resolvedVictory
             : COLOR.resolvedDefeat
-          : COLOR.enRoute;
+          : isReinforce
+            ? COLOR.reinforce
+            : COLOR.enRoute;
 
     pathGraphic.clear();
     if (snapshot.phase === 'RETURNED') {
@@ -186,7 +193,11 @@ export function createExpeditionVisual(options: ExpeditionVisualOptions): Expedi
       const point = pathPointAt(geometry.origin, geometry.control, geometry.target, progress.t);
       unit.position.set(point.x, point.y);
       unit.visible = true;
-      unitGlyph.text = progress.returning ? '🐎' : '⚔️';
+      unitGlyph.text = progress.returning
+        ? RETURNING_GLYPH
+        : snapshot.kind === 'REINFORCE'
+          ? REINFORCE_GLYPH
+          : ATTACK_GLYPH;
       emitDust(nowMs, point.x, point.y);
     } else if (snapshot.phase === 'EN_ROUTE' || snapshot.phase === 'RESOLVED') {
       const point = pathPointAt(geometry.origin, geometry.control, geometry.target, 1);

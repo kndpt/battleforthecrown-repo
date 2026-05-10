@@ -20,6 +20,12 @@ import {
 import type { WorldEntityResponse } from './world-types';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
+import type {
+  Expedition,
+  GarrisonLine,
+  RecallReinforcementPayload,
+  ReinforcePayload,
+} from '@/lib/types';
 
 export const queryKeys = {
   worlds: () => ['worlds'] as const,
@@ -35,6 +41,7 @@ export const queryKeys = {
   armyInventory: (villageId: string | null) => ['army', 'inventory', villageId] as const,
   armyTraining: (villageId: string | null) => ['army', 'training', villageId] as const,
   activeExpeditions: (villageId: string | null) => ['combat', 'active', villageId] as const,
+  garrison: (villageId: string | null) => ['combat', 'garrison', villageId] as const,
   combatReports: (userId: string | null) => ['combat', 'reports', userId] as const,
   combatReport: (reportId: string | null) => ['combat', 'report', reportId] as const,
   worldConfigFull: (worldId: string | null) => ['world-config-full', worldId] as const,
@@ -391,10 +398,13 @@ export function useCancelTrainingMutation() {
 
 export interface ActiveExpeditionDto {
   id: string;
+  kind?: 'ATTACK' | 'REINFORCE';
   attackerVillageId: string;
   attackerUserId: string;
   defenderVillageId?: string | null;
   defenderUserId?: string | null;
+  targetRefId?: string | null;
+  reinforcementOriginVillageId?: string | null;
   targetX: number;
   targetY: number;
   targetKind: string;
@@ -418,6 +428,18 @@ export function useActiveExpeditionsQuery(villageId: string | null) {
     // sync even when a WS event is missed (the socket can drop briefly).
     refetchInterval: (query) =>
       query.state.data && query.state.data.length > 0 ? 5_000 : false,
+    staleTime: 2_000,
+  });
+}
+
+export function useGarrisonQuery(villageId: string | null) {
+  return useQuery<GarrisonLine[]>({
+    queryKey: queryKeys.garrison(villageId),
+    queryFn: () => {
+      if (!villageId) return Promise.resolve([] as GarrisonLine[]);
+      return apiClient.get<GarrisonLine[]>(`/combat/${villageId}/garrison`);
+    },
+    enabled: Boolean(villageId),
     staleTime: 2_000,
   });
 }
@@ -548,6 +570,46 @@ export function useInitiateAttackMutation() {
       queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
+    },
+  });
+}
+
+export function useInitiateReinforceMutation() {
+  const queryClient = useQueryClient();
+  return useMutation<Expedition, Error, ReinforcePayload>({
+    mutationFn: ({ villageId, targetVillageId, units }) =>
+      apiClient.post<Expedition>('/combat/reinforce', {
+        villageId,
+        targetVillageId,
+        units,
+      }),
+    onSettled: (_data, _err, { villageId, targetVillageId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(targetVillageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(targetVillageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.garrison(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.garrison(targetVillageId) });
+    },
+  });
+}
+
+export function useRecallReinforcementMutation() {
+  const queryClient = useQueryClient();
+  return useMutation<Expedition, Error, RecallReinforcementPayload>({
+    mutationFn: ({ villageId, originVillageId, units }) =>
+      apiClient.post<Expedition>('/combat/recall', {
+        villageId,
+        originVillageId,
+        units,
+      }),
+    onSettled: (_data, _err, { villageId, originVillageId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(originVillageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(originVillageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.garrison(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.garrison(originVillageId) });
     },
   });
 }

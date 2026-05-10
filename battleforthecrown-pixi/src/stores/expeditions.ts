@@ -1,11 +1,15 @@
 import { create } from 'zustand';
 
 export type ExpeditionPhase = 'EN_ROUTE' | 'RESOLVED' | 'RETURNING' | 'RETURNED';
+export type ExpeditionKind = 'ATTACK' | 'REINFORCE';
 
 export interface ExpeditionSnapshot {
   expeditionId: string;
+  kind?: ExpeditionKind;
   reportId?: string;
   villageId: string;
+  originVillageId?: string;
+  targetVillageId?: string;
   villageName?: string;
   origin: { x: number; y: number };
   target: { x: number; y: number };

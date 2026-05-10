@@ -710,14 +710,25 @@ export class CombatWorker implements OnModuleInit {
     });
 
     // 3. Create event
-    const eventKind = isReturningHome
-      ? 'reinforcement.returned'
-      : 'garrison.added';
-    await createOutboxEvent(tx, eventKind, expedition.targetRefId, {
-      villageId: expedition.targetRefId,
-      originVillageId: originVillageId,
-      units,
-    });
+    if (isReturningHome) {
+      await createOutboxEvent(
+        tx,
+        'reinforcement.returned',
+        expedition.targetRefId,
+        {
+          expeditionId: expedition.id,
+          villageId: expedition.targetRefId,
+          originVillageId: originVillageId,
+          units,
+        },
+      );
+    } else {
+      await createOutboxEvent(tx, 'garrison.added', expedition.targetRefId, {
+        villageId: expedition.targetRefId,
+        originVillageId: originVillageId,
+        units,
+      });
+    }
 
     this.logger.log(
       `Reinforcement ${isReturningHome ? 'returned' : 'stationed'}: ${expedition.id}`,

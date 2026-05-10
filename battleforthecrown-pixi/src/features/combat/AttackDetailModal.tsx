@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Swords, X } from 'lucide-react';
+import { Shield, Swords, X } from 'lucide-react';
 import {
   Badge,
   Button,
@@ -19,6 +19,7 @@ import {
 import {
   useArmyInventoryQuery,
   useInitiateAttackMutation,
+  useInitiateReinforceMutation,
   useWorldConfigQuery,
 } from '@/api/queries';
 import { ApiError } from '@/api';
@@ -40,6 +41,7 @@ export function AttackDetailModal({ target, origin, onClose }: AttackDetailModal
   const inventory = useArmyInventoryQuery(villageId);
   const worldConfig = useWorldConfigQuery(worldId);
   const attack = useInitiateAttackMutation();
+  const reinforce = useInitiateReinforceMutation();
   const [selectedUnits, setSelectedUnits] = useState<Record<string, number>>({});
   const [error, setError] = useState<string | null>(null);
 
@@ -88,13 +90,15 @@ export function AttackDetailModal({ target, origin, onClose }: AttackDetailModal
     : target.kind === 'PLAYER_VILLAGE'
       ? 'PLAYER_VILLAGE'
       : null;
+  const isReinforcement = target.kind === 'PLAYER_VILLAGE' && target.isMine;
+  const isPending = isReinforcement ? reinforce.isPending : attack.isPending;
 
-  const handleAttack = () => {
+  const handleSubmit = () => {
     if (!villageId || !userId) {
       setError('Session invalide');
       return;
     }
-    if (!targetKind) {
+    if ((!isReinforcement && !targetKind) || (isReinforcement && target.id === villageId)) {
       setError('Cible invalide');
       return;
     }
@@ -107,6 +111,28 @@ export function AttackDetailModal({ target, origin, onClose }: AttackDetailModal
     const filteredUnits = Object.fromEntries(
       Object.entries(selectedUnits).filter(([, qty]) => qty > 0),
     );
+
+    if (isReinforcement) {
+      reinforce.mutate(
+        {
+          villageId,
+          targetVillageId: target.id,
+          units: filteredUnits,
+        },
+        {
+          onSuccess: () => onClose(),
+          onError: (err) => {
+            setError(err instanceof ApiError ? err.message : 'Échec du renfort');
+          },
+        },
+      );
+      return;
+    }
+
+    if (!targetKind) {
+      setError('Cible invalide');
+      return;
+    }
 
     attack.mutate(
       {
@@ -140,13 +166,19 @@ export function AttackDetailModal({ target, origin, onClose }: AttackDetailModal
           <X size={20} className="text-white" />
         </button>
 
-        <div className="relative h-32 bg-gradient-to-br from-game-red-light to-game-red-dark border-b-4 border-game-red-border flex-shrink-0 flex items-center justify-center">
+        <div
+          className={`relative h-32 bg-gradient-to-br border-b-4 flex-shrink-0 flex items-center justify-center ${
+            isReinforcement
+              ? 'from-game-blue-light to-game-blue-border border-game-blue-border'
+              : 'from-game-red-light to-game-red-dark border-game-red-border'
+          }`}
+        >
           <div className="text-center">
             <div className="text-3xl mb-1" aria-hidden>
-              ⚔️
+              {isReinforcement ? '🛡️' : '⚔️'}
             </div>
             <h2 className="font-cinzel text-xl font-bold text-white text-shadow">
-              Préparer une attaque
+              {isReinforcement ? 'Préparer un renfort' : 'Préparer une attaque'}
             </h2>
             <p className="text-xs text-white/90 mt-1">
               {target.name} ({target.x}, {target.y}) — distance {distance.toFixed(1)}
@@ -248,26 +280,26 @@ export function AttackDetailModal({ target, origin, onClose }: AttackDetailModal
               size="md"
               className="flex-1 font-bold"
               onClick={onClose}
-              disabled={attack.isPending}
+              disabled={isPending}
             >
               Annuler
             </Button>
             <Button
-              variant="danger"
+              variant={isReinforcement ? 'neutral' : 'danger'}
               size="md"
               className="flex-1 font-bold shadow-clay-lg"
-              onClick={handleAttack}
-              disabled={attack.isPending || totalSelected === 0}
+              onClick={handleSubmit}
+              disabled={isPending || totalSelected === 0}
             >
-              {attack.isPending ? (
+              {isPending ? (
                 <div className="flex items-center justify-center gap-2">
                   <Spinner size="sm" />
                   <span>Envoi…</span>
                 </div>
               ) : (
                 <div className="flex items-center justify-center gap-1.5">
-                  <Swords size={16} />
-                  <span>Attaquer</span>
+                  {isReinforcement ? <Shield size={16} /> : <Swords size={16} />}
+                  <span>{isReinforcement ? 'Renforcer' : 'Attaquer'}</span>
                 </div>
               )}
             </Button>

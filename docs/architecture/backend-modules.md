@@ -58,7 +58,7 @@ src/
 | **army** | `GET /army/:villageId/inventory`, `/training` | — | Lectures inventaire + entraînements. Mutations (train/cancel) délégées à `gameplay/` |
 | **gameplay** | `POST /village/:id/upgrade`, `DELETE /village/:id/buildings/:bid/cancel`, `POST /army/:id/train`, `DELETE /army/:id/training/:tid/cancel` | `ConstructionWorker`, `TrainingWorker` | Use cases orchestrant les mutations multi-domaine (cf. ADR-12) |
 | **strategy** | (interne) | — | `VillageStrategyService` exposé à Population/Resources/Army/Gameplay sans couplage |
-| **combat** | `POST /combat/attack`, `GET /combat/reports` | `CombatWorker`, `ReturnWorker` | Attaque, conquête, butin, retour. Stratégies `Barbarian` / `Player` |
+| **combat** | `POST /combat/attack`, `POST /combat/reinforce`, `POST /combat/recall`, `GET /combat/:villageId/active`, `GET /combat/:villageId/garrison`, `GET /combat/reports` | `CombatWorker`, `ReturnWorker` | Attaque, renforts, garnison, conquête, butin, retour. Stratégies `Barbarian` / `Player` |
 | **crowns** | `GET /crowns/:userId` | `CrownProductionWorker` | Monnaie premium, production passive, transactions sécurisées |
 | **population** | `GET /population/:villageId` | — | Population courante / max via `getFarmPopulationLimit` |
 | **power** | `GET /power?villageId=…`, `GET /power/village/:id/public`, `GET /power/kingdom`, `GET /power/kingdom/:userId/public`, `GET /power/leaderboard` | — | Calcul puissance bâtiments + armée d'un village (propriétaire), puissance bâtiments publique d'un village, puissance royaume du joueur authentifié ou publique, leaderboard public (post-MVP) |
@@ -86,7 +86,13 @@ combat/
 Flow expédition (Attaque/Renfort) :
 1. `POST /combat/attack` ou `/combat/reinforce` → `CombatService.initiate*` valide + crée `Expedition` + déclenche job pg-boss à `arrivalAt`.
 2. `CombatWorker.handle` → résout selon le `kind` (ATTACK: combat via stratégie ; REINFORCE: stationnement en `Garrison`), génère `CombatReport` (si combat), crée events `battle.resolved` + `village.attacked`/`conquered`.
-3. `ReturnWorker.handle` → ramène l'armée + butin (si raid) ou troupes rappelées (si renfort) à `returnAt`, event `battle.returned`.
+3. `ReturnWorker.handle` → ramène l'armée + butin après un combat/raid à `returnAt`, event `battle.returned`.
+4. `POST /combat/recall` crée aussi une `Expedition` de type `REINFORCE`, mais en sens retour ; son arrivée est traitée par `CombatWorker.handle`, qui réinjecte les unités au village d'origine et émet `reinforcement.returned`.
+
+Lectures et contrôle de garnison :
+- `GET /combat/:villageId/active` liste les expéditions sortantes `EN_ROUTE` ou `RETURNING` du village.
+- `GET /combat/:villageId/garrison` retourne les lignes de garnison visibles par le propriétaire du village, avec `direction: INCOMING | OUTGOING` et les noms `hostVillageName` / `originVillageName` pour distinguer ce qui est stationné sur place de ce qui soutient un autre village.
+- `POST /combat/recall` couvre les deux cas UI actuels : `Rappeler` un renfort envoyé ailleurs et `Renvoyer` un renfort stationné chez soi vers son village d'origine.
 
 ### World
 
