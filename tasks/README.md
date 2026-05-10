@@ -4,9 +4,9 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-- [29 — Puissance publique (village + royaume) non exposée](./29-power-public-visibility-missing.md) 🟡 Majeur — issue du [run 000](./runs/000-pilote-audit-power.md) (INV-5/INV-7).
-- [30 — Salle du Conseil : poids défini en spec, bâtiment absent du modèle](./30-power-council-hall-missing.md) 🟡 Majeur — issue du run 000 (INV-8).
+- [29 — Puissance publique (village + royaume) non exposée](./29-power-public-visibility-missing.md) 🟡 Majeur — issue du [run 000](./runs/archive/000-pilote-audit-power.md) (INV-5/INV-7).
 - [31 — `PowerSnapshot.kingdom` : champ DB sémantiquement faux](./31-power-snapshot-kingdom-field-misnamed.md) 🟡 Majeur — issue du run 000.
+- [32 — Drift potentiel `unlockCastleLevel` ↔ `BUILDING_UNLOCK_REQUIREMENTS`](./32-buildings-unlock-duplication.md) 🟢 Mineur — issue du [run 002](./runs/archive/002-audit-buildings.md).
 
 ## Roadmap stratégique
 
@@ -16,7 +16,6 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 Fiches d'exécution déléguées au système d'équipe Claude (lead + sub-agents à scope chirurgical). Slash commands : `/plan-run <description>` pour créer une fiche depuis la roadmap, `/run <id>` pour exécuter. Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
-- [002 — Audit spec 03 : bâtiments](./runs/002-audit-buildings.md) — 📋 `PLANNED`. Phase 1, 2ᵉ sous-run. Catalogue 12 bâtiments + résolution ticket 30 (Salle du Conseil) + enveloppe Salle du Trône.
 - [003 — Audit spec 08 : unités](./runs/003-audit-units.md) — 📋 `PLANNED`. Phase 1, 3ᵉ sous-run. Catalogue 10 unités (ajout WARRIOR + RAM, alignement NOBLE, fix TEMPLIER/SPY).
 - [004 — Audit spec 04 : combat](./runs/004-audit-combat.md) — 📋 `PLANNED`. Phase 1, 4ᵉ sous-run. Résolution PvE/PvP, loot, trajets, libération pop, bonus style. Renforts + rappel ticketés.
 - [005 — Audit spec 06 : barbares](./runs/005-audit-barbarians.md) — 📋 `PLANNED`. Phase 1, 5ᵉ sous-run. Templates T1-T5 (ajout T4/T5), blueprint troupes, défense barbare, régénération.
@@ -27,9 +26,11 @@ Fiches d'exécution déléguées au système d'équipe Claude (lead + sub-agents
 
 - [000 — Pilote : audit du module `power`](./runs/archive/000-pilote-audit-power.md) — ✅ `DONE` (2026-05-10). Run de validation du système avant généralisation. **Système refondé après ce run** suite au rapport méta — sub-agents fourre-tout `team-*` supprimés, remplacés par sub-agents à scope chirurgical (`code-mapper`, `implementer`, `test-writer`, `test-runner`, `doc-writer`).
 - [001 — Audit spec 02 : économie & progression](./runs/archive/001-audit-economy-progression.md) — ✅ `DONE` (2026-05-10). Phase 1, 1ᵉʳ des 7 sous-runs de consolidation. 12 invariants confrontés, 2 écarts fixés : reset 0/0/0 ressources sur conquête barbare (`conquest.service.ts`) + correction formulation bonus Château −36 % à niveau 10 (`spec 02 § Formules`).
+- [002 — Audit spec 03 : bâtiments](./runs/archive/002-audit-buildings.md) — ✅ `DONE` (2026-05-10). Phase 1, 2ᵉ sous-run. 12 bâtiments confrontés, 4 écarts fixés : Council Hall + Throne Hall ajoutés (catalogue + poids + unlock), warehouse storage 5 niveaux → 10 niveaux spec, queue construction alignée (spec 2 → 3). Résout ticket 30. Ouvre ticket 32 (refacto unlockCastleLevel).
 
 ## Archivés
 
+- [30 — Salle du Conseil : poids défini en spec, bâtiment absent du modèle](./archive/30-power-council-hall-missing.md) ✅ Résolu 2026-05-10 par run 002 (Piste A : implémentée comme bâtiment 1 niveau).
 - [01 — Audit des tests unitaires](./archive/01-unit-tests-audit.md) ✅ Résolu 2026-05-08
 - [02 — Tests smokes / E2E](./archive/02-smoke-tests-strategy.md) ✅ Résolu 2026-05-08
 - [03 — CI : automatiser ou pas](./archive/03-ci-strategy.md) ✅ Résolu 2026-05-08

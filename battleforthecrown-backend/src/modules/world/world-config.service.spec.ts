@@ -184,11 +184,11 @@ describe('WorldConfigService', () => {
 
   describe('getStorageLimit', () => {
     it('returns the storage limit for a warehouse level', () => {
-      expect(service.getStorageLimit('world-1', 5)).toBe(1750);
+      expect(service.getStorageLimit('world-1', 5)).toBe(5250);
     });
 
     it('falls back to level 1 when the level is not found', () => {
-      expect(service.getStorageLimit('world-1', 99)).toBe(1000);
+      expect(service.getStorageLimit('world-1', 99)).toBe(3000);
     });
   });
 

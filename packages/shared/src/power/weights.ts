@@ -11,6 +11,8 @@ export const BUILDING_POWER_WEIGHTS = Object.freeze({
   WALL: 38,
   WATCHTOWER: 30,
   HIDEOUT: 28,
+  COUNCIL_HALL: 25,
+  THRONE_HALL: 35,
 });
 
 export const UNIT_POWER_WEIGHTS = Object.freeze({

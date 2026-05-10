@@ -8,6 +8,8 @@ export const BUILDING_TYPES = {
   FARM: "FARM",
   BARRACKS: "BARRACKS",
   WATCHTOWER: "WATCHTOWER",
+  COUNCIL_HALL: "COUNCIL_HALL",
+  THRONE_HALL: "THRONE_HALL",
   WALL: "WALL",
 } as const;
 
@@ -332,6 +334,20 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
       },
     },
   },
+  COUNCIL_HALL: {
+    enabled: ENABLED,
+    unlockCastleLevel: 4,
+    levels: {
+      1: { wood: 150, stone: 200, iron: 100, population: 4, timeSeconds: 1000 },
+    },
+  },
+  THRONE_HALL: {
+    enabled: ENABLED,
+    unlockCastleLevel: 6,
+    levels: {
+      1: { wood: 1600, stone: 2400, iron: 1200, population: 6, timeSeconds: 21600 },
+    },
+  },
   WALL: {
     enabled: DISABLED,
     unlockCastleLevel: 5,
@@ -448,6 +464,8 @@ export const BUILDING_UNLOCK_REQUIREMENTS: Partial<
   FARM: 1,
   BARRACKS: 2,
   WATCHTOWER: 3,
+  COUNCIL_HALL: 4,
+  THRONE_HALL: 6,
   HIDEOUT: 4,
   WALL: 5,
 };

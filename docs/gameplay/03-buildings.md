@@ -21,7 +21,7 @@ Catalogue détaillé des 10 bâtiments du village (coûts, temps, bonus passifs 
 
 ## Mécanique de construction
 
-- **File d'attente** : 2 upgrades simultanés par défaut (peut évoluer avec d'autres bâtiments).
+- **File d'attente** : 3 upgrades simultanés par défaut (peut évoluer avec d'autres bâtiments).
 - **Consommation de population** : chaque upgrade occupe de la population (récupérée si annulé ou détruit).
 - **Annulation** : remboursement complet des ressources et de la population.
 - **Bonus Château** : à partir du niveau 2, le Château réduit le temps de construction global. Le facteur s'applique à toutes les nouvelles constructions du village.
