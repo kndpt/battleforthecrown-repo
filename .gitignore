@@ -26,6 +26,8 @@ packages/shared/dist/
 # Claude Code per-session state
 .claude/scheduled_tasks.lock
 .claude/settings.local.json
+.claude/agent-memory/
+.claude/projects/
 
 # Legacy doc — replaced by docs/migration/ + Phase 8 consolidation
 WARP.md

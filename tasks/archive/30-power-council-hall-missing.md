@@ -1,7 +1,7 @@
 # 30 — Salle du Conseil : poids défini en spec, bâtiment absent du modèle
 
 **Sévérité** : 🟡 Majeure
-**Statut** : 🆕 Ouvert 2026-05-10 (issue de [run 000](./runs/000-pilote-audit-power.md))
+**Statut** : ✅ Résolu 2026-05-10 par [run 002 audit-buildings](../runs/archive/002-audit-buildings.md) — Piste A appliquée (Council Hall implémentée comme bâtiment 1 niveau, poids 25, unlock Château 4).
 
 ## Symptôme
 
