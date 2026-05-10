@@ -39,6 +39,22 @@ export class PowerService {
     return { villageId, total, buildings, army };
   }
 
+  async getPublicVillagePower(villageId: string) {
+    const village = await this.prisma.village.findUnique({
+      where: { id: villageId },
+      include: { buildings: true },
+    });
+
+    if (!village) throw new NotFoundException('Village not found');
+
+    const buildings = village.buildings.reduce((sum, building) => {
+      const base = getBuildingPowerWeight(building.type);
+      return sum + base * building.level;
+    }, 0);
+
+    return { villageId, buildings };
+  }
+
   async getLeaderboard(type: LeaderboardType, limit = 20) {
     const villages = await this.prisma.village.findMany({
       include: { buildings: true, unitInventory: true, user: true },
@@ -165,6 +181,14 @@ export class PowerService {
       villages: villagePowers,
       totalBuildings,
       totalArmy,
+    };
+  }
+
+  async getPublicKingdomPower(userId: string) {
+    const kingdom = await this.getKingdomPower(userId);
+    return {
+      userId: kingdom.userId,
+      kingdomPower: kingdom.kingdomPower,
     };
   }
 }

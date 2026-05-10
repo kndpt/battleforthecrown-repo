@@ -4,7 +4,6 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-- [29 — Puissance publique (village + royaume) non exposée](./29-power-public-visibility-missing.md) 🟡 Majeur — issue du [run 000](./runs/archive/000-pilote-audit-power.md) (INV-5/INV-7).
 - [40 — Recrutement Seigneur à la Salle du Trône](./40-recruit-noble-throne-hall.md) 🟠 Majeur — issue du [run 006](./runs/archive/006-audit-conquest.md). Use-case + endpoint dédié + déduction couronnes + file Trône.
 - [41 — Période de capture : `PendingConquest` + worker](./41-capture-window-data-model.md) 🔴 Bloquant conquête — issue du run 006. Data model Prisma + `conquest-finalize.worker` + 3 events Outbox. Bloqué par #40.
 - [42 — Hook combat post-résolution conquête](./42-combat-conquest-hook.md) 🟠 Majeur — issue du run 006. Seigneur survivant → ouvre #41 ; mort → loot ramené. Bloqué par #40 + #41.
@@ -42,6 +41,7 @@ Fiches d'exécution déléguées au système d'équipe Claude (lead + sub-agents
 
 ## Archivés
 
+- [29 — Puissance publique (village + royaume) non exposée](./archive/29-power-public-visibility-missing.md) ✅ Résolu 2026-05-10 par $run @tasks/29-power-public-visibility-missing.md (endpoints publics dédiés village/royaume).
 - [30 — Salle du Conseil : poids défini en spec, bâtiment absent du modèle](./archive/30-power-council-hall-missing.md) ✅ Résolu 2026-05-10 par run 002 (Piste A : implémentée comme bâtiment 1 niveau).
 - [01 — Audit des tests unitaires](./archive/01-unit-tests-audit.md) ✅ Résolu 2026-05-08
 - [02 — Tests smokes / E2E](./archive/02-smoke-tests-strategy.md) ✅ Résolu 2026-05-08

@@ -1,11 +1,11 @@
 # 29 — Puissance publique (village + royaume) non exposée
 
 **Sévérité** : 🟡 Majeure
-**Statut** : 🆕 Ouvert 2026-05-10 (issue de [run 000](./runs/000-pilote-audit-power.md))
+**Statut** : ✅ Résolu 2026-05-10 par `$run @tasks/29-power-public-visibility-missing.md` (issue de [run 000](../runs/archive/000-pilote-audit-power.md))
 
 ## Symptôme
 
-La spec [`09-power-and-rankings.md` § Visibilité](../docs/gameplay/09-power-and-rankings.md#visibilité) déclare deux informations comme **publiques** :
+La spec [`09-power-and-rankings.md` § Visibilité](../../docs/gameplay/09-power-and-rankings.md#visibilité) déclare deux informations comme **publiques** :
 
 - Puissance Village (bâtiments) — *« Visible pour tous (information publique) »*
 - Puissance Royaume — *« Visible pour tous »*
@@ -15,7 +15,7 @@ Le code actuel n'expose **aucune** de ces deux valeurs publiquement :
 - `battleforthecrown-backend/src/modules/power/power.controller.ts:13-22` — `GET /power?villageId=…` est protégé par `assertVillageOwnedBy` (`power.service.ts:20`). Un joueur ne peut donc consulter que la puissance de **ses propres** villages.
 - `battleforthecrown-backend/src/modules/power/power.controller.ts:38-41` — `GET /power/kingdom` consomme `@CurrentUser()` et appelle `getKingdomPower(user.id)` ; pas de paramètre pour cibler un autre joueur, donc inaccessible aux tiers.
 
-Conséquence gameplay : un attaquant ne peut pas estimer la difficulté d'une cible avant attaque comme la spec le prévoit (cf. [§ Utilisation stratégique](../docs/gameplay/09-power-and-rankings.md#utilisation-stratégique) : *« la puissance bâtiments est publique, ce qui permet d'estimer la difficulté d'une attaque sans espion »*).
+Conséquence gameplay : un attaquant ne peut pas estimer la difficulté d'une cible avant attaque comme la spec le prévoit (cf. [§ Utilisation stratégique](../../docs/gameplay/09-power-and-rankings.md#utilisation-stratégique) : *« la puissance bâtiments est publique, ce qui permet d'estimer la difficulté d'une attaque sans espion »*).
 
 ## État actuel
 
@@ -63,3 +63,11 @@ Endpoints existants restent "vue propriétaire" (auth requise, sortie complète)
 ## Référence audit
 
 Run pilote 000 — `## Décisions prises § T3` (écarts MAJ1 et MAJ2).
+
+## Résolution
+
+- Piste B retenue : endpoints publics dédiés, sans modifier les routes propriétaire existantes.
+- `GET /power/village/:villageId/public` retourne `{ villageId, buildings }` pour villages joueurs et barbares, sans `army` ni `total`.
+- `GET /power/kingdom/:userId/public` retourne `{ userId, kingdomPower }`.
+- Fuite indirecte de puissance armée agrégée via `kingdomPower` acceptée par arbitrage produit.
+- Rate-limit hors scope.

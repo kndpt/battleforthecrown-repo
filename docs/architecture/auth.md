@@ -26,6 +26,8 @@ JWT au handshake via `socket.handshake.auth.token`, vérifié dans `src/modules/
 | `/health` | sondes infra |
 | `/world` (liste), `/world/:id/details`, `/world/:id/config` | lobby pré-login |
 | `/world/seed-if-needed` | dev/admin (TODO : guard admin) |
+| `/power/village/:id/public` | puissance bâtiments publique d'un village |
+| `/power/kingdom/:userId/public` | puissance royaume publique d'un joueur |
 | `/power/leaderboard` | classement public |
 
 Dans un controller protégé :

@@ -1,4 +1,10 @@
-import { BadRequestException, Controller, Get, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { z } from 'zod';
 import { PowerService } from './power.service';
 import { CurrentUser, Public, type AuthenticatedUser } from '../../common/auth';
@@ -22,6 +28,12 @@ export class PowerController {
   }
 
   @Public()
+  @Get('village/:villageId/public')
+  getPublicVillagePower(@Param('villageId') villageId: string) {
+    return this.powerService.getPublicVillagePower(villageId);
+  }
+
+  @Public()
   @Get('leaderboard')
   getLeaderboard(@Query('type') type = 'total', @Query('limit') limit = '20') {
     const parsed = leaderboardTypeSchema.safeParse(type);
@@ -38,5 +50,11 @@ export class PowerController {
   @Get('kingdom')
   getKingdomPower(@CurrentUser() user: AuthenticatedUser) {
     return this.powerService.getKingdomPower(user.id);
+  }
+
+  @Public()
+  @Get('kingdom/:userId/public')
+  getPublicKingdomPower(@Param('userId') userId: string) {
+    return this.powerService.getPublicKingdomPower(userId);
   }
 }
