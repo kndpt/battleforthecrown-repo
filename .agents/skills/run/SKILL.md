@@ -184,11 +184,12 @@ Décide quelles docs sont impactées (cf. `.agents/rules/docs.md`).
 
 ## Étape 10 — Archive + commit final
 
-1. `git status` + `git diff` global. Vérifie le périmètre.
-2. **Mode run** : statut fiche → `DONE`, `Terminé` → date du jour, `## Rapport final` rempli. Archive : `git mv tasks/runs/<id>-<slug>.md tasks/runs/archive/<id>-<slug>.md`. Maj `tasks/README.md`.
-3. **Mode ticket** : archive : `git mv tasks/<id>-<slug>.md tasks/archive/<id>-<slug>.md`. Maj `tasks/README.md` (déplace la ligne du ticket actif vers « Archivés », ajoute `✅ Résolu <date> par $run @<path>`).
-4. **Commit unique** au format `<type>(<scope>): <subject>` (cf. `.agents/rules/git.md`). Body : résumé écarts + fixes + tickets ouverts + QA. **Pas de `--no-verify`. Pas de `git push`.**
-5. Récap final ≤ 10 lignes au user.
+1. Lancer **`yarn static-check`** à la racine pour valider l'intégrité globale (types + lint). Fixer les éventuels écarts avant de continuer.
+2. `git status` + `git diff` global. Vérifie le périmètre.
+3. **Mode run** : statut fiche → `DONE`, `Terminé` → date du jour, `## Rapport final` rempli. Archive : `git mv tasks/runs/<id>-<slug>.md tasks/runs/archive/<id>-<slug>.md`. Maj `tasks/README.md`.
+4. **Mode ticket** : archive : `git mv tasks/<id>-<slug>.md tasks/archive/<id>-<slug>.md`. Maj `tasks/README.md` (déplace la ligne du ticket actif vers « Archivés », ajoute `✅ Résolu <date> par $run @<path>`).
+5. **Commit unique** au format `<type>(<scope>): <subject>` (cf. `.agents/rules/git.md`). Body : résumé écarts + fixes + tickets ouverts + QA. **Pas de `--no-verify`. Pas de `git push`.**
+6. Récap final ≤ 10 lignes au user.
 
 ## Mode rapide — overrides en bloc
 
@@ -202,6 +203,7 @@ Activation : auto en mode ticket, ou en mode run si étape 3 livre une décompos
 | 6 | **Conservée** — sauf skip explicite (cf. § étape 6). |
 | 8 | `yarn test` direct via shell (skip `test_runner`). |
 | 9 | Lead édite directement les changements docs triviaux. |
+| 10 | **`yarn static-check` obligatoire** avant le commit. |
 
 **Non-négociables** (s'appliquent dans les deux modes) :
 - Hard gate `git diff` après toute action qui écrit, lead ou sub-agent.
