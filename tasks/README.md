@@ -10,6 +10,10 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 - [33 — Renforts inter-villages non implémenté](./33-reinforcements-inter-villages-missing.md) 🟠 Majeur — issue du [run 004](./runs/archive/004-audit-combat.md). Spec amont : ticket 13 résolu.
 - [34 — Rappel d'armée pendant l'aller non implémenté](./34-army-recall-missing.md) 🟠 Majeur — issue du run 004.
 - [35 — Drift durée retour vs spec « même vitesse qu'à l'aller »](./35-return-travel-time-recomputed-vs-spec.md) 🟢 Mineur — issue du run 004.
+- [36 — Persistance runtime des troupes barbares + roll initial 60-100 %](./36-barbarian-troops-runtime-persistence.md) 🟠 Majeur — issue du [run 005](./runs/archive/005-audit-barbarians.md).
+- [37 — Régénération barbare (troupes + ressources) absente](./37-barbarian-regeneration-missing.md) 🟠 Majeur — issue du run 005. Bloqué par #36.
+- [38 — `BarbarianVillageStrategy` : résolution combat réelle](./38-barbarian-combat-real-resolution.md) 🟠 Majeur — issue conjointe runs 004 + 005. Bloqué par #36.
+- [39 — Rapport de combat asymétrique victoire/défaite](./39-combat-report-asymmetric-defeat.md) 🟢 Mineur (Phase 2) — issue du run 005.
 
 ## Roadmap stratégique
 
@@ -19,7 +23,6 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 Fiches d'exécution déléguées au système d'équipe Claude (lead + sub-agents à scope chirurgical). Slash commands : `/plan-run <description>` pour créer une fiche depuis la roadmap, `/run <id>` pour exécuter. Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
-- [005 — Audit spec 06 : barbares](./runs/005-audit-barbarians.md) — 📋 `PLANNED`. Phase 1, 5ᵉ sous-run. Templates T1-T5 (ajout T4/T5), blueprint troupes, défense barbare, régénération. **Hérite des écarts #1-2 du run 004** (`lossesAttacker = {}` + `defender.units = {}` côté barbares).
 - [006 — Audit spec 10 : conquête](./runs/006-audit-conquest.md) — 📋 `PLANNED`. Phase 1, 6ᵉ sous-run. Alignement coûts NOBLE + retrait Caserne + cap 1/village. 3 tickets externes ouverts (recruit-noble, capture window, hook combat) — débloque Phase 5.
 - [007 — Audit spec 07 : seeding barbares](./runs/007-audit-barbarian-spawning.md) — 📋 `PLANNED`. Phase 1, 7ᵉ et dernier sous-run. Cas particulier : spec en chantier, arbitrage A/B (finaliser vs reporter) en T1.
 - [009 — Fix UI bâtiments verrouillés / non construits](./runs/009-fix-ui-locked-unbuilt.md) — 📋 `PLANNED`. Phase 1, dette frontend post-run 002. Modale lock-aware, helper pur partagé, scène Pixi sans level 0, libellé `Niv. 0` → `Non construit`.
@@ -31,6 +34,7 @@ Fiches d'exécution déléguées au système d'équipe Claude (lead + sub-agents
 - [002 — Audit spec 03 : bâtiments](./runs/archive/002-audit-buildings.md) — ✅ `DONE` (2026-05-10). Phase 1, 2ᵉ sous-run. 12 bâtiments confrontés, 4 écarts fixés : Council Hall + Throne Hall ajoutés (catalogue + poids + unlock), warehouse storage 5 niveaux → 10 niveaux spec, queue construction alignée (spec 2 → 3). Résout ticket 30. Ouvre ticket 32 (refacto unlockCastleLevel).
 - [003 — Audit spec 08 : unités](./runs/archive/003-audit-units.md) — ✅ `DONE` (2026-05-10). Phase 1, 3ᵉ sous-run. 10 unités confrontées, 6 écarts fixés : ajout WARRIOR + RAM, NOBLE aligné spec (5000×3 / 15 pop / 8h) + nouveau champ `requiredThroneHallLevel`, TEMPLAR fix (wood/atk/def/cap), SPY fix (Caserne lvl/poids), CATAPULT désactivé MVP (poids), MILITIA + ARCHER poids alignés. Passifs déclarés data-only via `UnitPassive` discriminated union (consommation = run 004).
 - [004 — Audit spec 04 : combat](./runs/archive/004-audit-combat.md) — ✅ `DONE` (2026-05-10). Phase 1, 4ᵉ sous-run. **Audit pur, 0 fix code**. 21 axes confrontés ; conformité élevée sur PvP, loot, trajet, libération pop, bonus style, return.worker. 3 écarts ticketés (33 renforts, 34 rappel, 35 drift durée retour). Garnison barbare (`defender.units = {}` + `lossesAttacker = {}`) déléguée run 005 ; conquête déléguée run 006.
+- [005 — Audit spec 06 : barbares](./runs/archive/005-audit-barbarians.md) — ✅ `DONE` (2026-05-10). Phase 1, 5ᵉ sous-run. Catalogue templates étendu T1→T5 (ajout T4/T5), Warehouse levels alignés spec (1/1/2/3/4), blueprint troupes data-only par tier (15/35/70/110/150 selon proportions 60/25/10/5), fourchette roll ressources spec (30-100 %). 4 tickets follow-up (#36 persistance troupes, #37 régen, #38 strategy combat barbare, #39 rapport asymétrique).
 - [008 — Self-reset world](./runs/archive/008-self-reset-world.md) — ✅ `DONE` (2026-05-10). Hors phase. Endpoint `DELETE /world/:worldId/me` + bouton/modale garde-fou frontend pour réinitialiser un joueur sur un monde (full wipe puis re-join propre). Anonymisation `CombatReport` côté défenseur. 0 event Outbox.
 
 ## Archivés

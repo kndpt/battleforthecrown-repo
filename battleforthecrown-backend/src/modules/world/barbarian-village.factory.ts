@@ -72,8 +72,11 @@ export class BarbarianVillageFactory {
       warehouseLevel,
     );
 
-    // Spawn with 30-60% of warehouse capacity, iron at 70% of that ratio.
-    const fillRatio = 0.3 + Math.random() * 0.3;
+    // Spawn with 30-100% of warehouse capacity for wood/stone (cf. spec 06-barbarians § Génération).
+    // Iron is intentionally skewed at 70% of that ratio (so 21-70% of cap, dipping below the
+    // spec's 30% floor for iron only): iron is the bottleneck resource (cf. run 001
+    // audit-economy-progression) and the spec leaves per-resource ratios unconstrained.
+    const fillRatio = 0.3 + Math.random() * 0.7;
 
     return {
       wood: Math.floor(maxPerType * fillRatio),
