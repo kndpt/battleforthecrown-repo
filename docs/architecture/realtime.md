@@ -116,9 +116,9 @@ Le tick joue donc deux rôles découplés du WS :
 1. **Catchup DB périodique** pour que `lastUpdateTs` ne dérive pas trop quand un joueur reste connecté sans muter.
 2. **Backstop** pour le combat : `calculateCurrentResources` lit `lastUpdateTs` et calcule le pull à partir de là — la valeur est correcte même sans tick récent (cf. aussi le catchup automatique de `getResources` quand `elapsedMs > PRODUCTION_CATCHUP_THRESHOLD_MS`).
 
-### `BarbarianBackfillWorker` (`src/modules/world/barbarian-backfill.worker.ts`)
+### `BarbarianSeedingCatchupWorker` (`src/modules/world/barbarian-seeding-catchup.worker.ts`)
 
-Cron quotidien (minuit UTC) qui `seedAroundVillage()` autour des villages joueurs récents. Crée des `Village { isBarbarian: true }` + buildings/stocks via la factory, **sans event Outbox**.
+Cron quotidien (minuit UTC) — catchup d'arrivée différée. Quand un joueur rejoint un monde, `/world/:worldId/join` seed les 4 chunks les plus proches en sync (MAX_SYNC_CHUNKS=4). Ce worker rattrape les chunks restants en appelant `seedAroundVillage()` autour des villages joueurs créés dans la dernière heure. Crée des `Village { isBarbarian: true }` + buildings/stocks via la factory, **sans event Outbox**.
 
 **Pourquoi** : le frontend fait `useWorldEntitiesQuery` avec `refetchInterval: 30_000` + `staleTime: 30_000` (`battleforthecrown-pixi/src/api/queries.ts`). Donc une nouvelle BV apparaît dans la map en ≤ 30 s sans qu'on ait besoin d'event. Ajouter un event `world.barbarians.seeded` coûterait un nouveau `kind`, un binding pixi et un handler — pour économiser 0 à 30 s d'attente sur un event qui se déclenche 1×/jour à minuit UTC quand la quasi-totalité des joueurs ne regardent pas la map. Pas le bon ratio.
 

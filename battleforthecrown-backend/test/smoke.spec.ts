@@ -12,7 +12,7 @@ import {
 } from './helpers';
 import { SMOKE_WORLD_CONFIG } from './fixtures/smoke-world-config';
 import { ConquestService } from '../src/modules/combat/conquest.service';
-import { BarbarianBackfillWorker } from '../src/modules/world/barbarian-backfill.worker';
+import { BarbarianSeedingCatchupWorker } from '../src/modules/world/barbarian-seeding-catchup.worker';
 
 describe('smoke', () => {
   let ctx: SmokeContext;
@@ -390,7 +390,7 @@ describe('smoke', () => {
     expect(event?.dispatchedAt).toBeTruthy();
   });
 
-  it('barbarian backfill: enabled world → handleBackfill seeds new BVs around recent villages', async () => {
+  it('barbarian seeding catchup: enabled world → handleSeedingCatchup seeds new BVs around recent villages', async () => {
     const worldId = `smoke-bf-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     await ctx.prisma.world.create({
       data: {
@@ -423,7 +423,7 @@ describe('smoke', () => {
     const before = await ctx.prisma.village.count({
       where: { worldId, isBarbarian: true },
     });
-    await ctx.app.get(BarbarianBackfillWorker).handleBackfill();
+    await ctx.app.get(BarbarianSeedingCatchupWorker).handleSeedingCatchup();
     const after = await ctx.prisma.village.count({
       where: { worldId, isBarbarian: true },
     });

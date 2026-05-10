@@ -11,7 +11,7 @@ Documentation gameplay consolidée. Vision design, mécaniques, formules d'équi
 4. [`04-combat.md`](./04-combat.md) — résolution combat, conquête, styles stratégiques de village.
 5. [`05-events-and-retention.md`](./05-events-and-retention.md) — raid barbare global, événements Oyez, bénédictions quotidiennes, quêtes.
 6. [`06-barbarians.md`](./06-barbarians.md) — villages barbares : tiers, génération, régénération, distribution carte, lisibilité joueur, questions ouvertes.
-7. [`07-barbarian-spawning.md`](./07-barbarian-spawning.md) — algorithme de génération adaptatif des villages barbares à l'arrivée d'un joueur (doc en chantier).
+7. [`07-barbarian-spawning.md`](./07-barbarian-spawning.md) — algorithme de génération des villages barbares à l'arrivée d'un joueur : déclencheur, anneau et chunking, distribution T1-T5 par distance, anti-submersion par présence joueur, catchup d'arrivée différée.
 8. [`08-units.md`](./08-units.md) — catalogue des troupes : stats, coûts, passifs, archétypes, contre-relations.
 9. [`09-power-and-rankings.md`](./09-power-and-rankings.md) — système de puissance (calcul, poids bâtiments/unités, visibilité, usage stratégique) et classements hebdo/mensuels.
 10. [`10-conquest.md`](./10-conquest.md) — hub conquête : règles communes (Seigneur, période de capture variable, garde-fous globaux). Spécificités dans 13 et 14.

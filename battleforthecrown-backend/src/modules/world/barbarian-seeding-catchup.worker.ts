@@ -6,8 +6,8 @@ import { BarbarianSeedingService } from './barbarian-seeding.service';
 import { MS_PER_HOUR } from '@battleforthecrown/shared/time';
 
 @Injectable()
-export class BarbarianBackfillWorker {
-  private readonly logger = new Logger(BarbarianBackfillWorker.name);
+export class BarbarianSeedingCatchupWorker {
+  private readonly logger = new Logger(BarbarianSeedingCatchupWorker.name);
   private isRunning = false;
 
   constructor(
@@ -17,16 +17,22 @@ export class BarbarianBackfillWorker {
   ) {}
 
   /**
-   * Run backfill every day at midnight to maintain density.
+   * Catchup worker — runs every day at midnight UTC.
+   *
+   * When a player joins a world, `/world/:worldId/join` seeds the 4 nearest
+   * chunks synchronously (MAX_SYNC_CHUNKS=4). This cron catches up the chunks
+   * that the sync pass did not cover: it looks for player villages created in
+   * the last hour and calls `BarbarianSeedingService.seedAroundVillage` (which
+   * is idempotent via `ChunkSpawnState`) on up to 3 villages per world.
    *
    * No EventOutbox write on purpose — frontends pick up new BVs via
    * `useWorldEntitiesQuery`'s 30s refetch interval. Documented under
    * "Exceptions au pattern Outbox" in `docs/architecture/realtime.md`.
    */
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-  async handleBackfill() {
+  async handleSeedingCatchup() {
     if (this.isRunning) {
-      this.logger.debug('Backfill already running, skipping');
+      this.logger.debug('Seeding catchup already running, skipping');
       return;
     }
 
@@ -34,7 +40,7 @@ export class BarbarianBackfillWorker {
     const startTime = Date.now();
 
     try {
-      this.logger.log('Starting barbarian backfill cycle');
+      this.logger.log('Starting barbarian seeding catchup cycle');
 
       // Get all open worlds
       const worlds = await this.prisma.world.findMany({
@@ -45,27 +51,32 @@ export class BarbarianBackfillWorker {
 
       for (const world of worlds) {
         try {
-          await this.backfillWorld(world.id);
+          await this.catchupSeedingForWorld(world.id);
         } catch (err) {
-          this.logger.error(`Backfill failed for world ${world.id}`, err);
+          this.logger.error(
+            `Seeding catchup failed for world ${world.id}`,
+            err,
+          );
         }
       }
 
       const duration = Date.now() - startTime;
       this.logger.log(
-        `Backfill cycle completed in ${duration}ms for ${worlds.length} worlds`,
+        `Seeding catchup cycle completed in ${duration}ms for ${worlds.length} worlds`,
       );
     } catch (err) {
-      this.logger.error('Backfill cycle failed', err);
+      this.logger.error('Seeding catchup cycle failed', err);
     } finally {
       this.isRunning = false;
     }
   }
 
   /**
-   * Backfill a single world
+   * Catchup seeding for a single world: finds player villages created in the
+   * last hour and seeds the surrounding chunks that the sync pass may have
+   * missed (idempotent via ChunkSpawnState).
    */
-  private async backfillWorld(worldId: string) {
+  private async catchupSeedingForWorld(worldId: string) {
     const config = await this.worldConfig.getConfig(worldId);
     const seedingConfig = config.barbarianSeeding;
 
@@ -73,7 +84,7 @@ export class BarbarianBackfillWorker {
       return;
     }
 
-    // Find recently active villages (within last hour)
+    // Find recently created player villages (within last hour)
     const recentVillages = await this.prisma.village.findMany({
       where: {
         worldId,
@@ -110,7 +121,7 @@ export class BarbarianBackfillWorker {
         totalCreated += result.created;
       } catch (err) {
         this.logger.error(
-          `Backfill failed for village at (${village.x}, ${village.y})`,
+          `Seeding catchup failed for village at (${village.x}, ${village.y})`,
           err,
         );
       }
@@ -118,7 +129,7 @@ export class BarbarianBackfillWorker {
 
     if (totalCreated > 0) {
       this.logger.log(
-        `Backfilled ${totalCreated} BVs in world ${worldId} around ${Math.min(maxVillagesToProcess, recentVillages.length)} villages`,
+        `Seeding catchup created ${totalCreated} BVs in world ${worldId} around ${Math.min(maxVillagesToProcess, recentVillages.length)} villages`,
       );
     }
   }

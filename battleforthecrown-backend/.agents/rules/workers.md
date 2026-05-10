@@ -4,7 +4,7 @@
 
 - **pg-boss** : queue de jobs PostgreSQL-backed, branchée sur la même DB que Prisma.
 - Module global : `infra/pg-boss/pg-boss.module.ts` expose `'PG_BOSS'` injectable.
-- Workers dans `src/workers/` + workers spécifiques aux modules (ex : `combat.worker.ts`, `return.worker.ts`, `barbarian-backfill.worker.ts`).
+- Workers dans `src/workers/` + workers spécifiques aux modules (ex : `combat.worker.ts`, `return.worker.ts`, `barbarian-seeding-catchup.worker.ts`).
 
 ## Workers actifs
 
@@ -17,7 +17,7 @@
 | `OutboxWorker` | `workers/` | Lit `EventOutbox` non traités → diffuse via `event/game.gateway.ts` |
 | `CombatWorker` | `combat/` | Résout un combat après le temps de trajet, calcule butin |
 | `ReturnWorker` | `combat/` | Retourne l'armée au village d'origine après combat |
-| `BarbarianBackfillWorker` | `world/` | Reseed les villages barbares détruits/conquis |
+| `BarbarianSeedingCatchupWorker` | `world/` | Catchup d'arrivée différée : rattrape les chunks que le seeding sync n'a pas couverts (`/world/:worldId/join` traite les 4 chunks les plus proches en sync, le worker fait le reste) |
 
 ## Convention worker
 
@@ -114,7 +114,7 @@ Tout nouveau type d'event WS = ajout dans `event-types.ts` + type côté fronten
 
 ### Exception au pattern Outbox
 
-`ProductionWorker` et `BarbarianBackfillWorker` mutent la DB **sans** écrire dans `EventOutbox`. C'est délibéré, doc canonique : [`docs/architecture/realtime.md`](../../../docs/architecture/realtime.md) § "Exceptions au pattern Outbox". Avant de "corriger" un de ces workers en y ajoutant un event, lire la section.
+`ProductionWorker` et `BarbarianSeedingCatchupWorker` mutent la DB **sans** écrire dans `EventOutbox`. C'est délibéré, doc canonique : [`docs/architecture/realtime.md`](../../../docs/architecture/realtime.md) § "Exceptions au pattern Outbox". Avant de "corriger" un de ces workers en y ajoutant un event, lire la section.
 
 ## Pièges connus
 

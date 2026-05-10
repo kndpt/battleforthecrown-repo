@@ -10,7 +10,7 @@ import { JoinWorldUseCase } from './join-world.use-case';
 import { ResetWorldUseCase } from './reset-world.use-case';
 import { BarbarianSeedingService } from './barbarian-seeding.service';
 import { BarbarianVillageFactory } from './barbarian-village.factory';
-import { BarbarianBackfillWorker } from './barbarian-backfill.worker';
+import { BarbarianSeedingCatchupWorker } from './barbarian-seeding-catchup.worker';
 import { VillagePlacementService } from './village-placement.service';
 import { VisionService } from './vision.service';
 
@@ -25,7 +25,7 @@ import { VisionService } from './vision.service';
     ResetWorldUseCase,
     BarbarianSeedingService,
     BarbarianVillageFactory,
-    BarbarianBackfillWorker,
+    BarbarianSeedingCatchupWorker,
     VillagePlacementService,
     VisionService,
   ],

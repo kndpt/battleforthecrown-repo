@@ -26,7 +26,6 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 Fiches d'exécution déléguées au système d'équipe Claude (lead + sub-agents à scope chirurgical). Slash commands : `/plan-run <description>` pour créer une fiche depuis la roadmap, `/run <id>` pour exécuter. Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
-- [007 — Audit spec 07 : seeding barbares](./runs/007-audit-barbarian-spawning.md) — 📋 `PLANNED`. Phase 1, 7ᵉ et dernier sous-run. Cas particulier : spec en chantier, arbitrage A/B (finaliser vs reporter) en T1.
 - [009 — Fix UI bâtiments verrouillés / non construits](./runs/009-fix-ui-locked-unbuilt.md) — 📋 `PLANNED`. Phase 1, dette frontend post-run 002. Modale lock-aware, helper pur partagé, scène Pixi sans level 0, libellé `Niv. 0` → `Non construit`.
 
 ### Runs archivés
@@ -38,6 +37,7 @@ Fiches d'exécution déléguées au système d'équipe Claude (lead + sub-agents
 - [004 — Audit spec 04 : combat](./runs/archive/004-audit-combat.md) — ✅ `DONE` (2026-05-10). Phase 1, 4ᵉ sous-run. **Audit pur, 0 fix code**. 21 axes confrontés ; conformité élevée sur PvP, loot, trajet, libération pop, bonus style, return.worker. 3 écarts ticketés (33 renforts, 34 rappel, 35 drift durée retour). Garnison barbare (`defender.units = {}` + `lossesAttacker = {}`) déléguée run 005 ; conquête déléguée run 006.
 - [005 — Audit spec 06 : barbares](./runs/archive/005-audit-barbarians.md) — ✅ `DONE` (2026-05-10). Phase 1, 5ᵉ sous-run. Catalogue templates étendu T1→T5 (ajout T4/T5), Warehouse levels alignés spec (1/1/2/3/4), blueprint troupes data-only par tier (15/35/70/110/150 selon proportions 60/25/10/5), fourchette roll ressources spec (30-100 %). 4 tickets follow-up (#36 persistance troupes, #37 régen, #38 strategy combat barbare, #39 rapport asymétrique).
 - [006 — Audit spec 10 : conquête](./runs/archive/006-audit-conquest.md) — ✅ `DONE` (2026-05-10). Phase 1, 6ᵉ sous-run. Stratégie ticketage agressif. Livré : `UnitCost.crowns?: number`, `UNIT_COSTS[NOBLE].crowns = 5000`, `requiredThroneHallLevel: 6 → 1`, NOBLE retiré du DTO Caserne, helper pur `canRecruitNoble` (cap 1/village). 3 tickets ouverts (#40 recrutement Throne Hall, #41 PendingConquest + worker, #42 hook combat). Débloque Phase 5.
+- [007 — Audit spec 07 : seeding barbares](./runs/archive/007-audit-barbarian-spawning.md) — ✅ `DONE` (2026-05-10). Phase 1, 7ᵉ et **dernier sous-run** (Phase 1 close). Branche A retenue : spec finalisée (T1-T5 sur anneau `[8, 60]`, anti-submersion par présence joueur, catchup d'arrivée différée). Renaming `BarbarianBackfillWorker` → `BarbarianSeedingCatchupWorker` + correction sémantique data-model.md. Helper pur `adjustCapacityForPlayerPresence`. Migration `jsonb_set` mondes existants. 19 tests pure-logic geometry. Ticket 26 finalisé MVP.
 - [008 — Self-reset world](./runs/archive/008-self-reset-world.md) — ✅ `DONE` (2026-05-10). Hors phase. Endpoint `DELETE /world/:worldId/me` + bouton/modale garde-fou frontend pour réinitialiser un joueur sur un monde (full wipe puis re-join propre). Anonymisation `CombatReport` côté défenseur. 0 event Outbox.
 
 ## Archivés
@@ -68,7 +68,7 @@ Fiches d'exécution déléguées au système d'équipe Claude (lead + sub-agents
 - [14 — Initiative barbare non spécifiée](./archive/14-barbarian-initiative-undefined.md) ✅ Résolu 2026-05-09
 - [15 — Zones d'influence : système annoncé non spécifié](./archive/15-influence-zones-floating-system.md) ✅ Résolu 2026-05-09
 - [18 — Cycle de vie d'un village barbare totalement vidé](./archive/18-emptied-barbarian-village-lifecycle.md) ✅ Résolu 2026-05-09
-- [26 — Recyclage barbares vs spawn neuf](./archive/26-barbarian-recycling-vs-spawn.md) 🟡 Décision provisoire 2026-05-09 (à reprendre en pré-launch)
+- [26 — Recyclage barbares vs spawn neuf](./archive/26-barbarian-recycling-vs-spawn.md) ✅ Spec MVP finalisée 2026-05-10 par run 007 (recyclage / cron de régulation reportés post-MVP)
 - [27 — Sprites barbares à refaire : 5 tiers, 3 sprites](./archive/27-barbarian-tier-sprites-redesign.md) ✅ Résolu (spec) 2026-05-09
 - [17 — Bénédictions : application temporelle non spécifiée](./archive/17-blessings-temporal-effects.md) ✅ Résolu (post-MVP) 2026-05-09
 

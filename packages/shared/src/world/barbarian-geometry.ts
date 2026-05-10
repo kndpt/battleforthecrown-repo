@@ -182,6 +182,24 @@ const BARBARIAN_NAME_SUFFIXES = [
 ];
 
 /**
+ * Anti-submersion: when other players already have villages in the chunk halo,
+ * the per-chunk barbarian capacity is throttled. Spec: docs/gameplay/07-barbarian-spawning.md
+ * § Anti-submersion (par présence joueur).
+ *
+ * - 0 other players → capacity unchanged
+ * - 1 other player  → capacity halved (floor)
+ * - 2+ other players → capacity = 0 (chunk skipped)
+ */
+export function adjustCapacityForPlayerPresence(
+  baseCapacity: number,
+  distinctOtherPlayerCount: number,
+): number {
+  if (distinctOtherPlayerCount <= 0) return baseCapacity;
+  if (distinctOtherPlayerCount === 1) return Math.floor(baseCapacity / 2);
+  return 0;
+}
+
+/**
  * Deterministic name from (x, y) and tier. Same inputs always yield the same
  * name — useful for idempotent seeding.
  */

@@ -39,7 +39,7 @@ Pas de table dédiée — les villages barbares sont des `Village` avec `isBarba
 
 Spécificités runtime :
 - Pas de `UnitInventory` côté BV — `combat.worker.ts` (`buildBarbarianDefender`) injecte `units: {}` et `BarbarianVillageStrategy` confirme `// Barbarians have no troops`.
-- Seedés procéduralement par `BarbarianSeedingService` (qui délègue à `BarbarianVillageFactory`) au join d'un joueur dans le monde ; reseedés par `BarbarianBackfillWorker` après destruction/conquête.
+- Seedés procéduralement par `BarbarianSeedingService` (qui délègue à `BarbarianVillageFactory`) au join d'un joueur dans le monde ; le `BarbarianSeedingCatchupWorker` (cron quotidien) rattrape les chunks que le seeding sync n'a pas eu le temps de couvrir pour les joueurs créés < 1 h (cf. [`docs/gameplay/07-barbarian-spawning.md` § Catchup d'arrivée différée](../gameplay/07-barbarian-spawning.md)).
 
 ### Armée
 

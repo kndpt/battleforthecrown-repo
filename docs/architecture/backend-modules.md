@@ -52,7 +52,7 @@ src/
 | Module | Endpoints clés | Workers | Notes |
 |--------|----------------|---------|-------|
 | **auth** | `POST /auth/login`, `/register`, `/refresh` | — | JWT + refresh tokens, sessions DB |
-| **world** | `GET /world/:slug/details`, `/entities` | `BarbarianBackfillWorker` | Seeding procédural des villages barbares + placement joueur |
+| **world** | `GET /world/:slug/details`, `/entities` | `BarbarianSeedingCatchupWorker` | Seeding procédural des villages barbares + placement joueur ; catchup d'arrivée différée (cron quotidien) |
 | **village** | `GET /village/:id/buildings`, `/queue` | — | Lectures village + bâtiments. Les mutations (upgrade/cancel) délégées à `gameplay/` |
 | **resources** | `GET /resources/:villageId` | `ProductionWorker` | Production passive bois/pierre/fer, capé par warehouse. Pas de publication d'event (déléguée à `OutboxPublisher`) |
 | **army** | `GET /army/:villageId/inventory`, `/training` | — | Lectures inventaire + entraînements. Mutations (train/cancel) délégées à `gameplay/` |
@@ -97,7 +97,7 @@ world/
 ├── world-config.service.ts          # Lecture/merge de world.config (JSON)
 ├── barbarian-seeding.service.ts     # Génération procédurale (Voronoi-like, density par zone)
 ├── village-placement.service.ts     # Placement villages joueur dans des zones libres
-└── barbarian-backfill.worker.ts     # Reseed quand un village barbare disparait
+└── barbarian-seeding-catchup.worker.ts  # Catchup d'arrivée différée (chunks non couverts par le seeding sync)
 ```
 
 `WorldConfigService` est central : la migration d'`common/constants.ts` vers la config par-monde est en cours (objectif : permettre des serveurs à vitesses différentes sans redéploiement).

@@ -20,7 +20,7 @@ Objectif : auditer le code actuel contre les specs **déjà tranchées**, comble
 
 Specs concernées : [`02`](../docs/gameplay/02-economy-and-progression.md), [`03`](../docs/gameplay/03-buildings.md), [`04`](../docs/gameplay/04-combat.md), [`06`](../docs/gameplay/06-barbarians.md), [`08`](../docs/gameplay/08-units.md), [`10`](../docs/gameplay/10-conquest.md).
 
-Cas particulier : [`07-barbarian-spawning.md`](../docs/gameplay/07-barbarian-spawning.md) est en chantier. À finaliser **pendant** cette phase si on veut un seeding conforme à la cible, sinon acter explicitement le report.
+Cas particulier : [`07-barbarian-spawning.md`](../docs/gameplay/07-barbarian-spawning.md) finalisée par le run [`007`](./runs/archive/007-audit-barbarian-spawning.md) (Branche A, 2026-05-10) — distribution T1-T5, anti-submersion, catchup d'arrivée. Bandeau « doc en chantier » levé.
 
 Critère de fin : pour chaque spec ci-dessus, soit le code est conforme, soit l'écart est ticketé pour exécution **dans** cette phase. Aucune feature nouvelle ne démarre tant que la phase 1 n'est pas close.
 

@@ -4,6 +4,7 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WorldConfigService } from './world-config.service';
 import { BarbarianVillageFactory } from './barbarian-village.factory';
 import {
+  adjustCapacityForPlayerPresence,
   determineTier,
   getChunkBounds,
   getChunksInRings,
@@ -128,10 +129,6 @@ export class BarbarianSeedingService {
         },
       });
 
-      const capacity = randomInt(config.targetMin, config.targetMax);
-      const need = Math.max(0, capacity - existingCount);
-      if (need === 0) return 0;
-
       const halo = config.minSpacing;
       const haloVillages = await tx.village.findMany({
         where: {
@@ -139,8 +136,26 @@ export class BarbarianSeedingService {
           x: { gte: bounds.minX - halo, lte: bounds.maxX + halo },
           y: { gte: bounds.minY - halo, lte: bounds.maxY + halo },
         },
-        select: { x: true, y: true, isBarbarian: true },
+        select: { x: true, y: true, isBarbarian: true, userId: true },
       });
+
+      const distinctOtherPlayerCount = new Set(
+        haloVillages
+          .filter((v) => !v.isBarbarian && v.userId)
+          .map((v) => v.userId as string),
+      ).size;
+
+      const rawCapacity = randomInt(config.targetMin, config.targetMax);
+      const capacity = adjustCapacityForPlayerPresence(rawCapacity, distinctOtherPlayerCount);
+
+      if (capacity === 0 && distinctOtherPlayerCount >= 2) {
+        this.logger.debug(
+          `Skipping chunk (cx=${chunk.cx}, cy=${chunk.cy}): ${distinctOtherPlayerCount} other players in halo`,
+        );
+      }
+
+      const need = Math.max(0, capacity - existingCount);
+      if (need === 0) return 0;
 
       const positions = samplePositions({
         need,

@@ -32,7 +32,7 @@ Pré-requis : la base `battleforthecrown_smoke` doit exister + migrations appliq
 | 4 | combat resolve+return | `POST /combat/attack` | `battle.resolved` + `battle.returned` dispatched |
 | 5 | conquest | `ConquestService.conquerVillage()` | `Village.userId` reassigned + `village.conquered` dispatched |
 | 6 | crown production | `boss.send('crowns:production')` | `crowns.changed` dispatched |
-| 7 | barbarian backfill | `BarbarianBackfillWorker.handleBackfill()` | new BVs seeded in DB (no Outbox by design) |
+| 7 | barbarian seeding catchup | `BarbarianSeedingCatchupWorker.handleCatchup()` | new BVs seeded in DB for players created < 1h (no Outbox by design) |
 | 8 | JWT auth + refresh | REST register/login/refresh | tokens valides, route protégée 200 |
 | 9 | fog of war | `GET /world/:id/entities` | barbares hors vision portent `kind: 'fogged'` |
 | 10 | outbox dispatch (transversal) | upgrade WOOD + Socket.IO client | client reçoit `building.completed` via WS réel |
@@ -63,6 +63,6 @@ Cf. [`.claude/rules/tests.md`](../../.claude/rules/tests.md). Rappel critique :
 
 ## Points connus
 
-- **Production tick et barbarian backfill n'écrivent pas dans l'Outbox** : choix archi (frontend interpole pour les ressources ; le backfill est invisible côté UI). Le smoke valide l'effet DB seul.
+- **Production tick et barbarian seeding catchup n'écrivent pas dans l'Outbox** : choix archi (frontend interpole pour les ressources ; le catchup est invisible côté UI). Le smoke valide l'effet DB seul.
 - **Crown production** gate l'event sur `production > 0`. Le smoke backdate `lastUpdateTs` d'1 jour pour forcer une production mesurable.
 - **Le flow combat → conquête** demande un NOBLE (BARRACKS lvl 10). Le smoke `conquest` court-circuite via `ConquestService.conquerVillage()` direct — c'est le service métier, pas le combat.

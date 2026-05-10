@@ -54,7 +54,7 @@ Déclenchement : manuel (admin) ou planifié via cron.
 - `world.startedAt = now()`
 - `world.endsAt = startedAt + 120 j` (default 🔧)
 - Le monde apparaît dans la liste des mondes joignables côté frontend
-- Job `BarbarianBackfillWorker` actif : seed des barbares se déclenche à chaque `JoinWorldUseCase` (cf. [`07-barbarian-spawning.md`](./07-barbarian-spawning.md))
+- Job `BarbarianSeedingCatchupWorker` actif : le seeding initial des barbares se déclenche à chaque `JoinWorldUseCase` (sync), le worker complète les chunks lointains en catchup quotidien (cf. [`07-barbarian-spawning.md`](./07-barbarian-spawning.md))
 
 ### Bascule cohorte principale → retardataires
 

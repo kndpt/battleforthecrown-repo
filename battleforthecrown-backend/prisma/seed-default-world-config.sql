@@ -19,7 +19,7 @@ SET config = '{
     "enabled": true,
     "chunkSize": 50,
     "rMin": 8,
-    "rMax": 40,
+    "rMax": 60,
     "targetMin": 3,
     "targetMax": 6,
     "minSpacing": 6,
@@ -58,12 +58,36 @@ SET config = '{
           "iron": {"min": 1000, "max": 1800}
         },
         "visibleIndexNoise": 0.12
+      },
+      "T4": {
+        "minPoints": 4500,
+        "maxPoints": 5800,
+        "buildingRatio": 0.4,
+        "loot": {
+          "wood": {"min": 2200, "max": 3300},
+          "stone": {"min": 2200, "max": 3300},
+          "iron": {"min": 1500, "max": 2500}
+        },
+        "visibleIndexNoise": 0.14
+      },
+      "T5": {
+        "minPoints": 7000,
+        "maxPoints": 9000,
+        "buildingRatio": 0.35,
+        "loot": {
+          "wood": {"min": 3300, "max": 4500},
+          "stone": {"min": 3300, "max": 4500},
+          "iron": {"min": 2200, "max": 3300}
+        },
+        "visibleIndexNoise": 0.16
       }
     },
     "tierRanges": [
       {"minDistance": 8, "maxDistance": 20, "tier": "T1"},
       {"minDistance": 20, "maxDistance": 30, "tier": "T2"},
-      {"minDistance": 30, "maxDistance": 40, "tier": "T3"}
+      {"minDistance": 30, "maxDistance": 40, "tier": "T3"},
+      {"minDistance": 40, "maxDistance": 50, "tier": "T4"},
+      {"minDistance": 50, "maxDistance": 60, "tier": "T5"}
     ]
   },
   "playerVillagePlacement": {

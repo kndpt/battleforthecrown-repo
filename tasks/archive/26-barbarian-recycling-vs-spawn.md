@@ -1,7 +1,7 @@
 # 26 — Recyclage barbares vs spawn neuf
 
 **Sévérité** : 🟡 Majeure
-**Statut** : 🟡 Décision provisoire 2026-05-09 (analyse approfondie à reprendre en pré-launch)
+**Statut** : 🟢 Spec MVP finalisée 2026-05-10 par run [`007`](../runs/archive/007-audit-barbarian-spawning.md) — Branche A. Spawn à l'arrivée + anti-submersion par présence joueur retenus. Recyclage / cron de régulation densité / cap global monde restent **post-MVP** (à reprendre sur signal playtest).
 
 ## Résolution provisoire
 
