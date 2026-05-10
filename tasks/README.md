@@ -26,10 +26,10 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 Fiches d'exécution déléguées au système d'équipe Claude (lead + sub-agents à scope chirurgical). Slash commands : `/plan-run <description>` pour créer une fiche depuis la roadmap, `/run <id>` pour exécuter. Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
-- [009 — Fix UI bâtiments verrouillés / non construits](./runs/009-fix-ui-locked-unbuilt.md) — 📋 `PLANNED`. Phase 1, dette frontend post-run 002. Modale lock-aware, helper pur partagé, scène Pixi sans level 0, libellé `Niv. 0` → `Non construit`.
 
 ### Runs archivés
 
+- [009 — Fix UI bâtiments verrouillés / non construits](./runs/archive/009-fix-ui-locked-unbuilt.md) — ✅ `DONE` (2026-05-10). Frontend village lock-aware : helper pur `getBuildingLockState`, modale sans upgrade verrouillé, scène Pixi sans bâtiments level 0, libellé `Non construit`, test Vitest + build Pixi verts.
 - [000 — Pilote : audit du module `power`](./runs/archive/000-pilote-audit-power.md) — ✅ `DONE` (2026-05-10). Run de validation du système avant généralisation. **Système refondé après ce run** suite au rapport méta — sub-agents fourre-tout `team-*` supprimés, remplacés par sub-agents à scope chirurgical (`code-mapper`, `implementer`, `test-writer`, `test-runner`, `doc-writer`).
 - [001 — Audit spec 02 : économie & progression](./runs/archive/001-audit-economy-progression.md) — ✅ `DONE` (2026-05-10). Phase 1, 1ᵉʳ des 7 sous-runs de consolidation. 12 invariants confrontés, 2 écarts fixés : reset 0/0/0 ressources sur conquête barbare (`conquest.service.ts`) + correction formulation bonus Château −36 % à niveau 10 (`spec 02 § Formules`).
 - [002 — Audit spec 03 : bâtiments](./runs/archive/002-audit-buildings.md) — ✅ `DONE` (2026-05-10). Phase 1, 2ᵉ sous-run. 12 bâtiments confrontés, 4 écarts fixés : Council Hall + Throne Hall ajoutés (catalogue + poids + unlock), warehouse storage 5 niveaux → 10 niveaux spec, queue construction alignée (spec 2 → 3). Résout ticket 30. Ouvre ticket 32 (refacto unlockCastleLevel).

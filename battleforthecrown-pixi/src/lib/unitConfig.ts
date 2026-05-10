@@ -23,6 +23,11 @@ export const UNIT_CONFIG: Record<UnitType, UnitConfig> = {
     name: "Écuyer",
     assetPath: "/assets/army/squire.png",
   },
+  [UnitType.WARRIOR]: {
+    id: UnitType.WARRIOR,
+    name: "Guerrier",
+    assetPath: "/assets/army/warrior.png",
+  },
   [UnitType.ARCHER]: {
     id: UnitType.ARCHER,
     name: "Archer",
@@ -47,6 +52,11 @@ export const UNIT_CONFIG: Record<UnitType, UnitConfig> = {
     id: UnitType.SPY,
     name: "Espion",
     assetPath: "/assets/army/spy.png",
+  },
+  [UnitType.RAM]: {
+    id: UnitType.RAM,
+    name: "Bélier",
+    assetPath: "/assets/army/ram.png",
   },
   [UnitType.NOBLE]: {
     id: UnitType.NOBLE,

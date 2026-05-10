@@ -23,6 +23,12 @@ export const UNIT_META: Record<UnitType, UnitMeta> = {
     iconPath: '/assets/army/squire.png',
     emoji: '🛡️',
   },
+  WARRIOR: {
+    name: 'Guerrier',
+    description: 'Infanterie offensive aguerrie, efficace contre les troupes légères.',
+    iconPath: null,
+    emoji: '⚔️',
+  },
   ARCHER: {
     name: 'Archer',
     description: "Attaque à distance efficace. Parfait pour affaiblir l'ennemi de loin.",
@@ -52,6 +58,12 @@ export const UNIT_META: Record<UnitType, UnitMeta> = {
     description: "Agent furtif spécialisé dans l'espionnage et la reconnaissance ennemie.",
     iconPath: null,
     emoji: '🕵️',
+  },
+  RAM: {
+    name: 'Bélier',
+    description: 'Unité de siège lourde, prévue pour briser les défenses fortifiées.',
+    iconPath: null,
+    emoji: '🪵',
   },
   NOBLE: {
     name: 'Noble',

@@ -22,9 +22,11 @@ import {
   type BuildingType,
 } from '@battleforthecrown/shared/village/buildings';
 import type { BuildingDto } from '@/api';
+import type { BuildingLockState } from './buildingLockState';
 
 export interface BuildingCardProps {
-  building: BuildingDto & { lockReason?: string };
+  building: BuildingDto;
+  lockState: BuildingLockState;
   onClick?: (building: BuildingDto) => void;
 }
 
@@ -50,7 +52,7 @@ function CostMini({
   );
 }
 
-export function BuildingCard({ building, onClick }: BuildingCardProps) {
+export function BuildingCard({ building, lockState, onClick }: BuildingCardProps) {
   const villageId = useGameStore((state) => state.villageId);
   const meta = metaFor(building.type);
   const now = useTickingNow(1_000);
@@ -60,10 +62,10 @@ export function BuildingCard({ building, onClick }: BuildingCardProps) {
   );
   const cancel = useCancelConstructionMutation();
 
-  const isMaxLevel = building.level >= building.maxLevel;
+  const isMaxLevel = lockState.state === 'max';
   const isUnderConstruction = progress.inProgress;
-  const isUnbuilt = building.level === 0;
-  const isLockedByCastle = isUnbuilt && Boolean(building.lockReason);
+  const isUnbuilt = lockState.state === 'unbuilt-locked' || lockState.state === 'unbuilt-available';
+  const isLockedByCastle = lockState.state === 'unbuilt-locked';
 
   const { display: displayResources } = useDisplayResources(villageId);
   const populationQuery = usePopulationQuery(villageId);
@@ -140,7 +142,7 @@ export function BuildingCard({ building, onClick }: BuildingCardProps) {
             size="md"
             className="font-bold shadow-lg"
           >
-            Niv. {building.level}
+            {isUnbuilt ? 'Non construit' : `Niv. ${building.level}`}
           </Badge>
         </div>
 
@@ -190,7 +192,7 @@ export function BuildingCard({ building, onClick }: BuildingCardProps) {
                 disabled
               >
                 <span className="flex items-center justify-center gap-1 text-xs w-full">
-                  {building.lockReason}
+                  Château niv. {lockState.requiredCastleLevel} requis
                 </span>
               </Button>
             ) : (

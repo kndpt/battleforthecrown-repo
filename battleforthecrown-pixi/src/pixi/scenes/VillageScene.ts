@@ -4,6 +4,7 @@ import type { PixiScene } from './SceneManager';
 import type { BuildingDto } from '@/api';
 import { createBuildingSprite, type BuildingSpriteHandle } from '@/pixi/entities/BuildingSprite';
 import { VILLAGE_BOUNDS, placementFor } from './villageLayout';
+import { getBuildingLockState } from '@/features/village/buildingLockState';
 
 const COLOR = {
   grass: 0x3c5a2c,
@@ -127,7 +128,12 @@ export function createVillageScene(app: Application, options: VillageSceneOption
   };
 
   const reconcile = (buildings: BuildingDto[]) => {
-    const next = new Set(buildings.map((b) => b.id));
+    const castleLevel = buildings.find((building) => building.type === 'CASTLE')?.level ?? 0;
+    const visibleBuildings = buildings.filter((building) => {
+      const state = getBuildingLockState(building, castleLevel).state;
+      return state !== 'unbuilt-locked' && state !== 'unbuilt-available';
+    });
+    const next = new Set(visibleBuildings.map((b) => b.id));
     for (const id of Array.from(sprites.keys())) {
       if (!next.has(id)) {
         const sprite = sprites.get(id);
@@ -138,7 +144,7 @@ export function createVillageScene(app: Application, options: VillageSceneOption
         sprites.delete(id);
       }
     }
-    for (const building of buildings) {
+    for (const building of visibleBuildings) {
       ensureSprite(building);
     }
     if (selectedId && !next.has(selectedId)) {

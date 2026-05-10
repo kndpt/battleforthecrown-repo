@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Hammer, X } from 'lucide-react';
+import { Hammer, Lock, X } from 'lucide-react';
 import { Button, InputHelperText, Modal, ModalBody, Spinner } from '@/ui';
 import { metaFor } from './buildingMeta';
 import { computeConstructionProgress, formatRemaining } from './constructionProgress';
@@ -27,6 +27,7 @@ import { ConstructionProgress } from './BuildingDetailModal/ConstructionProgress
 import { CostSection } from './BuildingDetailModal/CostSection';
 import { BonusSection } from './BuildingDetailModal/BonusSection';
 import { BuildingUnlockPreview } from './BuildingDetailModal/BuildingUnlockPreview';
+import { getBuildingLockState } from './buildingLockState';
 
 interface BuildingDetailModalProps {
   villageId: string;
@@ -45,7 +46,6 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
   const cancel = useCancelConstructionMutation();
   const [error, setError] = useState<string | null>(null);
 
-  const isMaxLevel = building.level >= building.maxLevel;
   const isUnderConstruction = progress.inProgress;
   const nextLevel = building.level + 1;
   const nextCost = BUILDING_DEFINITIONS[building.type as BuildingType]?.levels[nextLevel] ?? null;
@@ -66,6 +66,9 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
     building.type === 'CASTLE'
       ? building.level
       : (buildingsQuery.data?.find((b) => b.type === 'CASTLE')?.level ?? 1);
+  const lockState = getBuildingLockState(building, castleLevel);
+  const isMaxLevel = lockState.state === 'max';
+  const isUnbuiltLocked = lockState.state === 'unbuilt-locked';
   const constructionMultiplier =
     worldConfigQuery.data?.gameSpeed.construction;
 
@@ -87,6 +90,7 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
     availablePopulation >= nextCost.population;
 
   const handleUpgrade = () => {
+    if (isUnbuiltLocked) return;
     setError(null);
     upgrade.mutate(
       { villageId, buildingType: building.type },
@@ -131,6 +135,7 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
           buildingDescription={meta.description}
           level={building.level}
           isMaxLevel={isMaxLevel}
+          isUnbuilt={building.level === 0}
         />
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -141,7 +146,23 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
             />
           )}
 
-          {!isUnderConstruction && !isMaxLevel && nextCost && (
+          {isUnbuiltLocked && lockState.requiredCastleLevel !== null && (
+            <div className="p-4 bg-stone-200/70 border-2 border-stone-400 rounded-lg">
+              <div className="flex items-start gap-3">
+                <Lock size={22} className="mt-0.5 text-stone-700" />
+                <div>
+                  <p className="font-cinzel font-bold text-stone-900">
+                    Château niv. {lockState.requiredCastleLevel} requis
+                  </p>
+                  <p className="text-sm text-stone-700">
+                    Niveau actuel du Château : {lockState.castleLevel}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!isUnderConstruction && !isMaxLevel && !isUnbuiltLocked && nextCost && (
             <CostSection
               cost={nextCost}
               resources={{
@@ -206,6 +227,18 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
               disabled
             >
               Niveau Maximum
+            </Button>
+          ) : isUnbuiltLocked && lockState.requiredCastleLevel !== null ? (
+            <Button
+              variant="neutral"
+              size="lg"
+              className="w-full font-bold shadow-clay-lg !py-1"
+              disabled
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Lock size={20} />
+                <span>Château niv. {lockState.requiredCastleLevel} requis</span>
+              </div>
             </Button>
           ) : (
             <>

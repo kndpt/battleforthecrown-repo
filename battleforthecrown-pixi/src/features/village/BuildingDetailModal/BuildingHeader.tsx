@@ -8,6 +8,7 @@ interface BuildingHeaderProps {
   buildingDescription: string;
   level: number;
   isMaxLevel: boolean;
+  isUnbuilt: boolean;
 }
 
 export function BuildingHeader({
@@ -17,6 +18,7 @@ export function BuildingHeader({
   buildingDescription,
   level,
   isMaxLevel,
+  isUnbuilt,
 }: BuildingHeaderProps) {
   return (
     <div className="relative h-32 bg-gradient-to-br from-kingdom-100 via-kingdom-200 to-kingdom-300 border-b-4 border-game-gold-border flex-shrink-0 grid grid-cols-3 items-center">
@@ -34,11 +36,11 @@ export function BuildingHeader({
 
         <div className="absolute top-2 left-2">
           <Badge
-            variant={isMaxLevel ? 'success' : 'warning'}
+            variant={isMaxLevel ? 'success' : isUnbuilt ? 'neutral' : 'warning'}
             size="md"
             className="font-bold shadow-lg"
           >
-            Niv. {level}
+            {isUnbuilt ? 'Non construit' : `Niv. ${level}`}
           </Badge>
         </div>
       </div>

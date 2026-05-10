@@ -1,25 +1,16 @@
-# Revue modèles agents Codex
+# Run 009 — fix UI bâtiments verrouillés / non construits
 
 ## Plan
 
-- [x] Lire les TOML existants dans `.codex/agents/`.
-- [x] Définir une matrice de modèles adaptée aux rôles avec `gpt-5.5`.
-- [x] Mettre à jour les champs `model` / `model_reasoning_effort` nécessaires.
-- [x] Vérifier le diff et la validité TOML.
-- [x] Documenter le résultat de review.
-
-## Décision modèle
-
-- `code_mapper` : garder `gpt-5.4-mini`, lecture seule, cartographie compacte et rapide.
-- `test_runner` : garder `gpt-5.4-mini`, exécution/parsing de tests à faible besoin de raisonnement.
-- `run_planner` : passer à `gpt-5.5`, rôle de synthèse et arbitrage élevé.
-- `doc_writer` : passer à `gpt-5.4`, cohérence documentaire bornée, pas besoin systématique de `5.5`.
-- `implementer` : passer à `gpt-5.5`, agent de modification code avec jugement senior.
-- `test_writer` : passer à `gpt-5.5`, choix de tests et refus d'anti-patterns plus sensibles.
+- [x] Préflight : repo clean, fiche `PLANNED`, spec et rules relues.
+- [x] Cartographier les fichiers frontend ciblés.
+- [x] Ajouter le helper pur `getBuildingLockState` et ses tests Vitest.
+- [x] Brancher le helper dans le panel, la modale et la scène Pixi.
+- [x] Supprimer les labels production `Niv. 0`.
+- [x] Vérifier review, tests, build, docs, archive et commit.
 
 ## Review
 
-- Matrice finale vérifiée par `rtk grep "model =" .codex/agents`.
-- Efforts finaux vérifiés par `rtk grep "model_reasoning_effort" .codex/agents`.
-- Parse TOML formel non exécuté : Python local est en 3.9 sans `tomllib`, `tomli` absent, et aucun `taplo`/`yq`/`tomlq` disponible.
-- Risque syntaxique évalué faible : seules des valeurs de chaînes TOML existantes ont été remplacées, sans toucher aux blocs multi-lignes.
+- Review correctness/readability/architecture/security/performance : aucun finding bloquant ou majeur.
+- Vérifications : `yarn workspace battleforthecrown-pixi test` vert, `yarn workspace battleforthecrown-pixi build` vert.
+- Docs : aucun changement nécessaire, la spec gameplay existante était déjà la source de vérité ; le changement aligne seulement le frontend.

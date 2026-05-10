@@ -1,14 +1,13 @@
 import { Hammer, Lock, X } from 'lucide-react';
 import { Badge, BottomSheet, Panel, PanelBody, PanelHeader } from '@/ui';
 import {
-  BUILDING_UNLOCK_REQUIREMENTS,
   MAX_CONSTRUCTION_QUEUE,
-  type BuildingType,
 } from '@battleforthecrown/shared/village/buildings';
 import { useBuildingQueueQuery } from '@/api/queries';
 import { useGameStore } from '@/stores/game';
 import type { BuildingDto } from '@/api';
 import { BuildingCard } from './BuildingCard';
+import { getBuildingLockState, type BuildingLockState } from './buildingLockState';
 
 interface BuildingManagementPanelProps {
   isOpen: boolean;
@@ -17,8 +16,9 @@ interface BuildingManagementPanelProps {
   onBuildingClick: (building: BuildingDto) => void;
 }
 
-interface ManagedBuilding extends BuildingDto {
-  lockReason?: string;
+interface BuildingStatus {
+  building: BuildingDto;
+  lockState: BuildingLockState;
 }
 
 const SECTION_GRID_STYLE = { animation: 'staggerFadeIn 0.6s ease-out' } as const;
@@ -42,39 +42,37 @@ export function BuildingManagementPanel({
   const castle = buildings.find((b) => b.type === 'CASTLE');
   const castleLevel = castle?.level ?? 0;
 
-  const buildingStatuses = buildings.map((building) => {
-    const requiredCastleLevel =
-      BUILDING_UNLOCK_REQUIREMENTS[building.type as BuildingType];
-    const isLockedByCastle =
-      building.level === 0 &&
-      requiredCastleLevel !== undefined &&
-      castleLevel < requiredCastleLevel;
-    return { building, isLockedByCastle, requiredCastleLevel };
-  });
+  const buildingStatuses: BuildingStatus[] = buildings.map((building) => ({
+    building,
+    lockState: getBuildingLockState(building, castleLevel),
+  }));
 
-  const availableBuildings: BuildingDto[] = buildingStatuses
-    .filter(({ building, isLockedByCastle }) => building.level > 0 || !isLockedByCastle)
-    .map(({ building }) => building);
+  const availableBuildings = buildingStatuses.filter(
+    ({ lockState }) => lockState.state !== 'unbuilt-locked',
+  );
 
-  const lockedBuildings: ManagedBuilding[] = buildingStatuses
-    .filter(({ building, isLockedByCastle }) => building.level === 0 && isLockedByCastle)
-    .map(({ building, requiredCastleLevel }) => ({
-      ...building,
-      lockReason: requiredCastleLevel
-        ? `Château niv. ${requiredCastleLevel} requis`
-        : 'Verrouillé',
-    }));
+  const lockedBuildings = buildingStatuses.filter(
+    ({ lockState }) => lockState.state === 'unbuilt-locked',
+  );
 
-  const castleBuilding = availableBuildings.find((b) => b.type === 'CASTLE');
-  const resourceBuildings = availableBuildings.filter(
-    (b) => b.type === 'WOOD' || b.type === 'STONE' || b.type === 'IRON',
+  const castleBuilding = availableBuildings.find(({ building }) => building.type === 'CASTLE');
+  const resourceBuildings = availableBuildings.filter(({ building }) =>
+    building.type === 'WOOD' || building.type === 'STONE' || building.type === 'IRON',
   );
   const infrastructureBuildings = availableBuildings.filter(
-    (b) => b.type === 'WAREHOUSE' || b.type === 'FARM',
+    ({ building }) =>
+      building.type === 'WAREHOUSE' ||
+      building.type === 'FARM' ||
+      building.type === 'COUNCIL_HALL',
   );
-  const explorationBuildings = availableBuildings.filter((b) => b.type === 'WATCHTOWER');
+  const explorationBuildings = availableBuildings.filter(
+    ({ building }) => building.type === 'WATCHTOWER',
+  );
   const militaryBuildings = availableBuildings.filter(
-    (b) => b.type === 'BARRACKS' || b.type === 'WALL',
+    ({ building }) =>
+      building.type === 'BARRACKS' ||
+      building.type === 'WALL' ||
+      building.type === 'THRONE_HALL',
   );
 
   return (
@@ -143,7 +141,11 @@ export function BuildingManagementPanel({
                   style={SECTION_GRID_STYLE}
                 >
                   <div className="mb-4 animate-fadeIn">
-                    <BuildingCard building={castleBuilding} onClick={onBuildingClick} />
+                    <BuildingCard
+                      building={castleBuilding.building}
+                      lockState={castleBuilding.lockState}
+                      onClick={onBuildingClick}
+                    />
                   </div>
                 </div>
               </>
@@ -160,13 +162,17 @@ export function BuildingManagementPanel({
                   className="grid grid-cols-2 gap-4 items-stretch"
                   style={SECTION_GRID_STYLE}
                 >
-                  {resourceBuildings.map((building, index) => (
+                  {resourceBuildings.map(({ building, lockState }, index) => (
                     <div
                       key={building.id}
                       className="animate-fadeIn"
                       style={makeAnimationStyle(index)}
                     >
-                      <BuildingCard building={building} onClick={onBuildingClick} />
+                      <BuildingCard
+                        building={building}
+                        lockState={lockState}
+                        onClick={onBuildingClick}
+                      />
                     </div>
                   ))}
                 </div>
@@ -184,13 +190,17 @@ export function BuildingManagementPanel({
                   className="grid grid-cols-2 gap-4 items-stretch"
                   style={SECTION_GRID_STYLE}
                 >
-                  {infrastructureBuildings.map((building, index) => (
+                  {infrastructureBuildings.map(({ building, lockState }, index) => (
                     <div
                       key={building.id}
                       className="animate-fadeIn"
                       style={makeAnimationStyle(index)}
                     >
-                      <BuildingCard building={building} onClick={onBuildingClick} />
+                      <BuildingCard
+                        building={building}
+                        lockState={lockState}
+                        onClick={onBuildingClick}
+                      />
                     </div>
                   ))}
                 </div>
@@ -208,13 +218,17 @@ export function BuildingManagementPanel({
                   className="grid grid-cols-2 gap-4 items-stretch"
                   style={SECTION_GRID_STYLE}
                 >
-                  {explorationBuildings.map((building, index) => (
+                  {explorationBuildings.map(({ building, lockState }, index) => (
                     <div
                       key={building.id}
                       className="animate-fadeIn"
                       style={makeAnimationStyle(index)}
                     >
-                      <BuildingCard building={building} onClick={onBuildingClick} />
+                      <BuildingCard
+                        building={building}
+                        lockState={lockState}
+                        onClick={onBuildingClick}
+                      />
                     </div>
                   ))}
                 </div>
@@ -232,13 +246,17 @@ export function BuildingManagementPanel({
                   className="grid grid-cols-2 gap-4 items-stretch"
                   style={SECTION_GRID_STYLE}
                 >
-                  {militaryBuildings.map((building, index) => (
+                  {militaryBuildings.map(({ building, lockState }, index) => (
                     <div
                       key={building.id}
                       className="animate-fadeIn"
                       style={makeAnimationStyle(index)}
                     >
-                      <BuildingCard building={building} onClick={onBuildingClick} />
+                      <BuildingCard
+                        building={building}
+                        lockState={lockState}
+                        onClick={onBuildingClick}
+                      />
                     </div>
                   ))}
                 </div>
@@ -267,13 +285,17 @@ export function BuildingManagementPanel({
                   className="grid grid-cols-2 gap-4 items-stretch"
                   style={SECTION_GRID_STYLE}
                 >
-                  {lockedBuildings.map((building, index) => (
+                  {lockedBuildings.map(({ building, lockState }, index) => (
                     <div
                       key={building.id}
                       className="animate-fadeIn"
                       style={makeAnimationStyle(index)}
                     >
-                      <BuildingCard building={building} onClick={onBuildingClick} />
+                      <BuildingCard
+                        building={building}
+                        lockState={lockState}
+                        onClick={onBuildingClick}
+                      />
                     </div>
                   ))}
                 </div>
