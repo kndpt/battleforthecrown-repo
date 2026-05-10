@@ -7,7 +7,7 @@ tools:
   - read_file
   - grep_search
   - list_directory
-model: gemini-3.1-flash
+model: gemini-3.1-flash-preview
 ---
 
 # Mission
