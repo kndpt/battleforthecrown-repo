@@ -117,6 +117,30 @@ export function useJoinWorldMutation() {
   });
 }
 
+interface ResetWorldInput {
+  worldId: string;
+}
+
+export function useResetWorldMutation() {
+  const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const contextWorldId = useGameStore((state) => state.worldId);
+  const clearContext = useGameStore((state) => state.clear);
+  return useMutation<void, Error, ResetWorldInput>({
+    mutationFn: async ({ worldId }) => {
+      await apiClient.delete<void>(`/world/${worldId}/me`);
+    },
+    onSuccess: (_data, { worldId }) => {
+      if (contextWorldId === worldId) {
+        clearContext();
+      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.myMemberships(userId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.myVillages(userId, worldId) });
+      queryClient.invalidateQueries({ queryKey: ['villages'] });
+    },
+  });
+}
+
 export function useMyVillagesQuery(worldId: string | null) {
   const userId = useAuthStore((state) => state.user?.id ?? null);
   return useQuery<JoinedVillage[]>({

@@ -1,10 +1,19 @@
-import { Controller, Get, Post, Body, Query, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Body,
+  Query,
+  Param,
+} from '@nestjs/common';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { CurrentUser, Public, type AuthenticatedUser } from '../../common/auth';
 import { WorldService } from './world.service';
 import { WorldConfigService } from './world-config.service';
 import { WorldEntitiesQueryService } from './world-entities-query.service';
 import { JoinWorldUseCase } from './join-world.use-case';
+import { ResetWorldUseCase } from './reset-world.use-case';
 import { VisionService } from './vision.service';
 import { joinWorldSchema, type JoinWorldDto } from './dto/join-world.dto';
 
@@ -21,6 +30,7 @@ export class WorldController {
     private readonly worldConfigService: WorldConfigService,
     private readonly worldEntities: WorldEntitiesQueryService,
     private readonly joinWorldUseCase: JoinWorldUseCase,
+    private readonly resetWorldUseCase: ResetWorldUseCase,
     private readonly visionService: VisionService,
   ) {}
 
@@ -81,6 +91,14 @@ export class WorldController {
       userId: user.id,
       villageName: dto.villageName,
     });
+  }
+
+  @Delete(':worldId/me')
+  async resetMe(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('worldId') worldId: string,
+  ): Promise<void> {
+    await this.resetWorldUseCase.execute({ userId: user.id, worldId });
   }
 
   @Get('me/memberships')

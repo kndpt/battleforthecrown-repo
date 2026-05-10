@@ -1,10 +1,23 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { LogOut } from 'lucide-react';
-import { Badge, Button, Panel, Spinner } from '@/ui';
+import {
+  Badge,
+  Button,
+  Input,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  Panel,
+  Spinner,
+} from '@/ui';
 import { apiClient } from '@/api';
-import { useMyMembershipsQuery, useLogout } from '@/api/queries';
-import type { JoinedVillage } from '@/api/types';
+import {
+  useMyMembershipsQuery,
+  useLogout,
+  useResetWorldMutation,
+} from '@/api/queries';
+import type { JoinedVillage, WorldMembership } from '@/api/types';
 import { useGameStore } from '@/stores/game';
 import { useAuthStore } from '@/stores/auth';
 
@@ -14,8 +27,38 @@ export function MyWorldsScreen() {
   const setContext = useGameStore((state) => state.setContext);
   const user = useAuthStore((state) => state.user);
   const logout = useLogout();
+  const resetWorld = useResetWorldMutation();
   const [busyWorldId, setBusyWorldId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [resetTarget, setResetTarget] = useState<WorldMembership | null>(null);
+  const [confirmText, setConfirmText] = useState('');
+  const [resetError, setResetError] = useState<string | null>(null);
+
+  const closeResetModal = () => {
+    if (resetWorld.isPending) return;
+    setResetTarget(null);
+    setConfirmText('');
+    setResetError(null);
+  };
+
+  const confirmReset = () => {
+    if (!resetTarget) return;
+    if (confirmText !== resetTarget.worldName) return;
+    setResetError(null);
+    const worldId = resetTarget.worldId;
+    resetWorld.mutate(
+      { worldId },
+      {
+        onSuccess: () => {
+          setResetTarget(null);
+          setConfirmText('');
+        },
+        onError: () => {
+          setResetError('Échec de la réinitialisation. Réessaie.');
+        },
+      },
+    );
+  };
 
   if (memberships.isLoading) {
     return (
@@ -106,20 +149,91 @@ export function MyWorldsScreen() {
                   Rejoint le {new Date(membership.joinedAt).toLocaleDateString('fr-FR')}
                 </p>
 
-                <Button
-                  variant="success"
-                  size="md"
-                  className="w-full"
-                  disabled={busyWorldId === membership.worldId}
-                  onClick={() => enter(membership.worldId)}
-                >
-                  {busyWorldId === membership.worldId ? <Spinner size="sm" /> : 'Entrer'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="success"
+                    size="md"
+                    className="flex-1"
+                    disabled={busyWorldId === membership.worldId}
+                    onClick={() => enter(membership.worldId)}
+                  >
+                    {busyWorldId === membership.worldId ? <Spinner size="sm" /> : 'Entrer'}
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => {
+                      setResetTarget(membership);
+                      setConfirmText('');
+                      setResetError(null);
+                    }}
+                  >
+                    Réinitialiser
+                  </Button>
+                </div>
               </Panel>
             ))}
           </div>
         )}
       </div>
+
+      <Modal
+        isOpen={resetTarget !== null}
+        onClose={closeResetModal}
+        title={resetTarget ? `Réinitialiser ${resetTarget.worldName} ?` : ''}
+        variant="danger"
+        size="sm"
+        closeOnOverlayClick={!resetWorld.isPending}
+        closeOnEscape={!resetWorld.isPending}
+      >
+        {resetTarget && (
+          <>
+            <ModalBody>
+              <p className="text-sm mb-3">
+                Cette opération est <strong>définitive</strong>. Tu pourras rejoindre ce monde à nouveau, mais en repartant de zéro.
+              </p>
+              <ul className="text-sm list-disc pl-5 space-y-1 mb-4">
+                <li>Tous tes villages seront supprimés</li>
+                <li>Tes couronnes du monde seront perdues</li>
+                <li>Tes expéditions en cours seront annulées</li>
+              </ul>
+              <label className="block text-sm font-game mb-1">
+                Tape <strong>{resetTarget.worldName}</strong> pour confirmer :
+              </label>
+              <Input
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder={resetTarget.worldName}
+                disabled={resetWorld.isPending}
+                autoFocus
+              />
+              {resetError && (
+                <p className="text-sm text-game-red-dark mt-2" role="alert">
+                  {resetError}
+                </p>
+              )}
+            </ModalBody>
+            <ModalFooter>
+              <Button
+                variant="neutral"
+                size="md"
+                onClick={closeResetModal}
+                disabled={resetWorld.isPending}
+              >
+                Annuler
+              </Button>
+              <Button
+                variant="danger"
+                size="md"
+                onClick={confirmReset}
+                disabled={confirmText !== resetTarget.worldName || resetWorld.isPending}
+              >
+                {resetWorld.isPending ? <Spinner size="sm" /> : 'Réinitialiser définitivement'}
+              </Button>
+            </ModalFooter>
+          </>
+        )}
+      </Modal>
     </div>
   );
 }
