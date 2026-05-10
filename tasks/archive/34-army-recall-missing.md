@@ -1,7 +1,7 @@
 # 34 — Rappel d'armée pendant l'aller : non implémenté
 
 **Sévérité** : 🟠 Majeur (feature spec MVP manquante — règle globale du combat)
-**Statut** : 🆕 Ouvert 2026-05-10 (issue de [run 004](./runs/archive/004-audit-combat.md) — confirmation grep zéro hit)
+**Statut** : ✅ Terminé 2026-05-10 (par $run @tasks/34-army-recall-missing.md)
 
 ## Symptôme
 
@@ -82,3 +82,13 @@ Feature autonome ~ 0,5-1 jour dev. À implémenter **avant** la conquête PvP (P
 
 - Cancel pg-boss : utiliser `boss.cancel(singletonKey)` (nécessite que le `singletonKey` ait été passé au dispatch initial — vérifier `combat.service.ts:159`). Si non, fallback : laisser le job `combat:resolve` se déclencher mais court-circuiter en lisant `expedition.status === 'RETURNING'` au début du handler.
 - Est-ce qu'un raid déjà arrivé (job en cours d'exécution) est rappelable ? **Non** — la spec dit « avant l'arrivée ». Refuser si `Date.now() >= expedition.arrivalAt`.
+
+## Rapport final
+
+L'armée peut désormais être rappelée pendant le trajet aller.
+- Ajout du champ `recalled` dans Prisma.
+- Implémentation de `recallEnRoute` dans `CombatService` avec calcul du temps de retour proportionnel.
+- Sécurisation du job de retour en le planifiant hors transaction (prévention race condition).
+- Mise à jour de `ReturnWorker` pour restituer les troupes sans combat si `recalled=true`.
+- Exposition de l'événement Outbox et WS `expedition.recalled` et `expedition.returned`.
+- Smoke test validé.

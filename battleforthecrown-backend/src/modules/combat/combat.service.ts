@@ -372,7 +372,7 @@ export class CombatService {
       `Recall en-route requested for expedition ${expeditionId} by user ${userId}`,
     );
 
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       // 1. Get expedition
       const expedition = await tx.expedition.findUnique({
         where: { id: expeditionId },
@@ -428,17 +428,7 @@ export class CombatService {
       // PgBoss.cancel requires a jobId, which we don't store.
       // We rely on the status guard in the worker.
 
-      // 8. Schedule return job
-      await this.boss.send(
-        'combat:return',
-        { expeditionId: expeditionId },
-        {
-          startAfter: returnAt,
-          singletonKey: `return:${expeditionId}`,
-        },
-      );
-
-      // 9. Create event
+      // 8. Create event
       await createOutboxEvent(
         tx,
         'expedition.recalled',
@@ -456,6 +446,20 @@ export class CombatService {
 
       return updated;
     });
+
+    // 9. Schedule return job (OUTSIDE transaction to avoid race condition with worker)
+    if (result.returnAt) {
+      await this.boss.send(
+        'combat:return',
+        { expeditionId: expeditionId },
+        {
+          startAfter: result.returnAt,
+          singletonKey: `return:${expeditionId}`,
+        },
+      );
+    }
+
+    return result;
   }
 
   private async verifyAndDeductUnits(
