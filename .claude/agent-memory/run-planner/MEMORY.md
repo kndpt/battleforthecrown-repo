@@ -1,3 +1,4 @@
 - [Pattern audit Phase 1](pattern_audit_phase1.md) — un run = une spec ; ordre fondationnel d'abord (02 → 03 → 08 → 04 → 06 → 10 → 07)
 - [Pilote 000 leçons](project_pilote_000_lessons.md) — power audit déjà fait, 3 tickets ouverts (29, 30, 31) ; éviter de re-couvrir
 - [Pattern audit-catalogue](pattern_audit_buildings.md) — squelette récurrent pour audit catalogue (bâtiments/unités) : tableau 1 ligne/item + lots éco/militaire/spécial + fix shared
+- [Pattern dette frontend post-audit](pattern_frontend_debt_post_audit.md) — runs UI dédiés après audit catalogue ; type=fix, helper pur partagé Panel+Modal+Pixi, choix UX en POINTS_D_ATTENTION
