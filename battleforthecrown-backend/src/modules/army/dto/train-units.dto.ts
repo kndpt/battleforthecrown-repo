@@ -5,6 +5,8 @@ import {
 } from '@battleforthecrown/shared/army';
 
 export const trainUnitsSchema = z.object({
+  // NOBLE volontairement absent : recrutement à la Salle du Trône, pas à la Caserne
+  // (spec docs/gameplay/10-conquest.md § Bâtiment requis). Endpoint dédié — voir Ticket #40.
   unitType: z.enum([
     UNIT_TYPES.MILITIA,
     UNIT_TYPES.SQUIRE,
@@ -13,7 +15,6 @@ export const trainUnitsSchema = z.object({
     UNIT_TYPES.TEMPLAR,
     UNIT_TYPES.CATAPULT,
     UNIT_TYPES.SPY,
-    UNIT_TYPES.NOBLE,
   ]),
   quantity: z.number().int().min(1).max(1000),
 }) satisfies z.ZodType<TrainUnitsRequest>;

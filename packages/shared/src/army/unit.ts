@@ -79,10 +79,11 @@ export const UNIT_COSTS: Record<UnitType, UnitCost> = {
     wood: 5000,
     stone: 5000,
     iron: 5000,
+    crowns: 5000,
     population: 15,
     time: seconds(28800), // 8h
     requiredBarracksLevel: 99, // sentinel — NOBLE est gated par requiredThroneHallLevel (run 006)
-    requiredThroneHallLevel: 6,
+    requiredThroneHallLevel: 1, // Salle du Trône mono-niveau (spec 10) — le déblocage Château 6 vit dans BUILDING_UNLOCK_REQUIREMENTS
   },
 };
 

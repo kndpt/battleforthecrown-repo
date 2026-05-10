@@ -21,6 +21,7 @@ export interface UnitCost {
   time: number; // seconds
   requiredBarracksLevel: number;
   requiredThroneHallLevel?: number;
+  crowns?: number;
 }
 
 export type UnitPassive =

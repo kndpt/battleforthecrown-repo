@@ -46,6 +46,11 @@ export class RecruitTroopsUseCase {
     if (!isValidUnitType(unitType)) {
       throw new BadRequestException('Invalid unit type');
     }
+    if (unitType === UNIT_TYPES.NOBLE) {
+      throw new BadRequestException(
+        'NOBLE is recruited at the Throne Hall, not the Barracks (see Ticket #40)',
+      );
+    }
     const unitCost: UnitCost = UNIT_CATALOG.costs[unitType];
 
     return this.prisma.$transaction(async (tx) => {

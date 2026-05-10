@@ -54,6 +54,18 @@ describe('units catalog — pure logic (run 003 regression)', () => {
     expect(cost.requiredBarracksLevel).toBe(99);
   });
 
+  it('UNIT_COSTS[NOBLE] aligne spec 10 (5000×3 + 5000 crowns + 15 pop + 8h + Throne Hall L1)', () => {
+    const cost = UNIT_COSTS[UNIT_TYPES.NOBLE];
+    expect(cost.wood).toBe(5000);
+    expect(cost.stone).toBe(5000);
+    expect(cost.iron).toBe(5000);
+    expect(cost.crowns).toBe(5000);
+    expect(cost.population).toBe(15);
+    expect(cost.time).toBe(28800);
+    expect(cost.requiredThroneHallLevel).toBe(1);
+    expect(cost.requiredBarracksLevel).toBe(99); // sentinel — gating réel via Throne Hall
+  });
+
   it('UNIT_STATS[WARRIOR] et UNIT_STATS[RAM] alignent la spec avec leurs passifs respectifs', () => {
     expect(UNIT_STATS[UNIT_TYPES.WARRIOR]).toMatchObject({
       attack: 20,
