@@ -366,6 +366,98 @@ export class CombatService {
     });
   }
 
+  async recallEnRoute(userId: string, expeditionId: string) {
+    this.logger.log(
+      `Recall en-route requested for expedition ${expeditionId} by user ${userId}`,
+    );
+
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Get expedition
+      const expedition = await tx.expedition.findUnique({
+        where: { id: expeditionId },
+      });
+
+      if (!expedition) {
+        throw new NotFoundException('Expedition not found');
+      }
+
+      // 2. Verify ownership (attacker village must be owned by user)
+      const village = await tx.village.findFirst({
+        where: { id: expedition.attackerVillageId, userId },
+      });
+
+      if (!village) {
+        throw new ForbiddenException(
+          'You do not own the origin village of this expedition',
+        );
+      }
+
+      // 3. Verify status
+      if (expedition.status !== 'EN_ROUTE') {
+        throw new BadRequestException(
+          `Expedition cannot be recalled (status: ${expedition.status})`,
+        );
+      }
+
+      // 4. Verify timing (cannot recall if already arrived, even if worker hasn't run yet)
+      const now = new Date();
+      if (now >= expedition.arrivalAt) {
+        throw new BadRequestException('Expedition has already arrived at target');
+      }
+
+      // 5. Calculate return time (time elapsed since departure)
+      const elapsedMs = now.getTime() - expedition.departAt.getTime();
+      const returnAt = new Date(now.getTime() + elapsedMs);
+
+      // 6. Update expedition
+      const updated = await tx.expedition.update({
+        where: { id: expeditionId },
+        data: {
+          status: 'RETURNING',
+          recalled: true,
+          returnAt,
+        },
+      });
+
+      // 7. Attempt to cancel combat resolution job
+      // Note: singletonKey used at dispatch is `combat:${expedition.id}`
+      // Falling back to status check in CombatWorker if cancel is not by singleton.
+      try {
+        await this.boss.cancel(`combat:${expeditionId}`);
+      } catch (err) {
+        this.logger.warn(`Failed to cancel combat job ${expeditionId}: ${err.message}`);
+      }
+
+      // 8. Schedule return job
+      await this.boss.send(
+        'combat:return',
+        { expeditionId: expeditionId },
+        {
+          startAfter: returnAt,
+          singletonKey: `return:${expeditionId}`,
+        },
+      );
+
+      // 9. Create event
+      await createOutboxEvent(
+        tx,
+        'expedition.recalled',
+        expedition.attackerVillageId,
+        {
+          expeditionId: expedition.id,
+          villageId: expedition.attackerVillageId,
+          returnAt: returnAt.toISOString(),
+        },
+      );
+
+      this.logger.log(
+        `Expedition ${expeditionId} recalled, returns at ${returnAt.toISOString()}`,
+      );
+
+      return updated;
+    });
+  }
+
   private async verifyAndDeductUnits(
     tx: any,
     villageId: string,

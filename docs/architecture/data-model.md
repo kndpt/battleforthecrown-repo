@@ -57,6 +57,7 @@ Spécificités runtime :
 |-------|------|
 | `Expedition` | un trajet d'armée (ou `Combat` dans la doc gameplay). Champs : `attackerVillageId`, `targetRefId`, `arrivalAt`, `returnAt`, `status`. |
 | `Expedition.kind` | `ATTACK` ou `REINFORCE`. Détermine le comportement à l'arrivée. |
+| `Expedition.recalled` | boolean — vrai si l'armée a fait demi-tour pendant l'aller (Recall). |
 | `Expedition.reinforcementOriginVillageId` | utilisé pour identifier le village d'origine lors d'un rappel (Recall) de renforts. |
 | `CombatReport` | rapport persistant lu par les joueurs (`reader`/`opponent`). |
 

@@ -299,6 +299,7 @@ model Expedition {
   departAt          DateTime         @map("depart_at")
   arrivalAt         DateTime         @map("arrival_at")
   returnAt          DateTime?        @map("return_at")
+  recalled          Boolean          @default(false)
   reportId          String?          @unique @map("report_id")
   createdAt         DateTime         @default(now()) @map("created_at")
 

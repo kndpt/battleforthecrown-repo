@@ -58,32 +58,42 @@ export class ReturnWorker implements OnModuleInit {
           return;
         }
 
-        // 2. Get combat report to determine surviving units and loot
-        const report = expedition.report;
-        if (!report) {
-          throw new Error(
-            `Combat report not found for expedition ${data.expeditionId}`,
+        // 2. Determine surviving units and loot
+        let survivingUnits: UnitMap = {};
+        let lootedResources = { wood: 0, stone: 0, iron: 0 };
+        let reportId: string | null = null;
+
+        if (expedition.recalled) {
+          this.logger.log(`Expedition ${data.expeditionId} was recalled, skipping report check`);
+          survivingUnits = parseUnitMap(expedition.units, 'expedition.units');
+        } else {
+          const report = expedition.report;
+          if (!report) {
+            throw new Error(
+              `Combat report not found for expedition ${data.expeditionId}`,
+            );
+          }
+          reportId = report.id;
+
+          const lossesAttacker = parseUnitMap(
+            report.lossesAttacker,
+            'combatReport.lossesAttacker',
           );
-        }
+          const loot = parseCombatLoot(report.loot);
+          lootedResources = loot.resources || lootedResources;
 
-        const lossesAttacker = parseUnitMap(
-          report.lossesAttacker,
-          'combatReport.lossesAttacker',
-        );
-        const loot = parseCombatLoot(report.loot);
+          // 3. Calculate surviving units
+          const originalUnits = parseUnitMap(
+            expedition.units,
+            'expedition.units',
+          );
 
-        // 3. Calculate surviving units
-        const originalUnits = parseUnitMap(
-          expedition.units,
-          'expedition.units',
-        );
-        const survivingUnits: UnitMap = {};
-
-        for (const [unitType, originalQty] of Object.entries(originalUnits)) {
-          const losses = lossesAttacker[unitType as keyof UnitMap] ?? 0;
-          const survived = (originalQty ?? 0) - losses;
-          if (survived > 0) {
-            survivingUnits[unitType as keyof UnitMap] = survived;
+          for (const [unitType, originalQty] of Object.entries(originalUnits)) {
+            const losses = lossesAttacker[unitType as keyof UnitMap] ?? 0;
+            const survived = (originalQty ?? 0) - losses;
+            if (survived > 0) {
+              survivingUnits[unitType as keyof UnitMap] = survived;
+            }
           }
         }
 
@@ -109,22 +119,18 @@ export class ReturnWorker implements OnModuleInit {
         }
 
         // 5. Add looted resources to attacker's stock
-        const lootedResources = loot.resources || {
-          wood: 0,
-          stone: 0,
-          iron: 0,
-        };
+        if (lootedResources.wood > 0 || lootedResources.stone > 0 || lootedResources.iron > 0) {
+          await tx.resourceStock.update({
+            where: { villageId: expedition.attackerVillageId },
+            data: {
+              wood: { increment: lootedResources.wood },
+              stone: { increment: lootedResources.stone },
+              iron: { increment: lootedResources.iron },
+            },
+          });
 
-        await tx.resourceStock.update({
-          where: { villageId: expedition.attackerVillageId },
-          data: {
-            wood: { increment: lootedResources.wood },
-            stone: { increment: lootedResources.stone },
-            iron: { increment: lootedResources.iron },
-          },
-        });
-
-        await this.outbox.resourcesChanged(expedition.attackerVillageId, tx);
+          await this.outbox.resourcesChanged(expedition.attackerVillageId, tx);
+        }
 
         // 6. Delete expedition (cleanup)
         await tx.expedition.delete({
@@ -134,11 +140,11 @@ export class ReturnWorker implements OnModuleInit {
         // 7. Create event
         await createOutboxEvent(
           tx,
-          'battle.returned',
+          expedition.recalled ? 'expedition.returned' : 'battle.returned',
           expedition.attackerVillageId,
           {
             expeditionId: expedition.id,
-            reportId: report.id,
+            reportId,
             villageId: expedition.attackerVillageId,
             survivingUnits,
             loot: { resources: lootedResources },

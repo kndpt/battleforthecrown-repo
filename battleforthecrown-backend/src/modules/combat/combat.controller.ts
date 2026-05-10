@@ -52,6 +52,14 @@ export class CombatController {
     return this.combatService.initiateRecall(user.id, dto);
   }
 
+  @Post('recall/:expeditionId')
+  recallEnRoute(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('expeditionId') expeditionId: string,
+  ) {
+    return this.combatService.recallEnRoute(user.id, expeditionId);
+  }
+
   @Get(':villageId/active')
   async getActiveExpeditions(
     @CurrentUser() user: AuthenticatedUser,
