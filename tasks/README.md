@@ -16,7 +16,13 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 Fiches d'exécution déléguées au système d'équipe Claude (lead + sub-agents à scope chirurgical). Slash commands : `/plan-run <description>` pour créer une fiche depuis la roadmap, `/run <id>` pour exécuter. Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
-_Aucun run actif._
+- [001 — Audit spec 02 : économie & progression](./runs/001-audit-economy-progression.md) — 📋 `PLANNED`. Phase 1, 1ᵉʳ des 7 sous-runs de consolidation (ressources, population, couronnes, paliers Château, formules).
+- [002 — Audit spec 03 : bâtiments](./runs/002-audit-buildings.md) — 📋 `PLANNED`. Phase 1, 2ᵉ sous-run. Catalogue 12 bâtiments + résolution ticket 30 (Salle du Conseil) + enveloppe Salle du Trône.
+- [003 — Audit spec 08 : unités](./runs/003-audit-units.md) — 📋 `PLANNED`. Phase 1, 3ᵉ sous-run. Catalogue 10 unités (ajout WARRIOR + RAM, alignement NOBLE, fix TEMPLIER/SPY).
+- [004 — Audit spec 04 : combat](./runs/004-audit-combat.md) — 📋 `PLANNED`. Phase 1, 4ᵉ sous-run. Résolution PvE/PvP, loot, trajets, libération pop, bonus style. Renforts + rappel ticketés.
+- [005 — Audit spec 06 : barbares](./runs/005-audit-barbarians.md) — 📋 `PLANNED`. Phase 1, 5ᵉ sous-run. Templates T1-T5 (ajout T4/T5), blueprint troupes, défense barbare, régénération.
+- [006 — Audit spec 10 : conquête](./runs/006-audit-conquest.md) — 📋 `PLANNED`. Phase 1, 6ᵉ sous-run. Alignement coûts NOBLE + retrait Caserne + cap 1/village. 3 tickets externes ouverts (recruit-noble, capture window, hook combat) — débloque Phase 5.
+- [007 — Audit spec 07 : seeding barbares](./runs/007-audit-barbarian-spawning.md) — 📋 `PLANNED`. Phase 1, 7ᵉ et dernier sous-run. Cas particulier : spec en chantier, arbitrage A/B (finaliser vs reporter) en T1.
 
 ### Runs archivés
 
