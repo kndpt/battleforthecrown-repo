@@ -1,10 +1,10 @@
 ---
-description: Exécute un run semi-autonome (audit/feature/fix) ou résout un ticket selon une cible mentionnée explicitement. Usage obligatoire avec mention de fichier `@<path>` — ex `/run @tasks/runs/006-audit-conquest.md` ou `/run @tasks/35-return-travel-time-recomputed-vs-spec.md`.
+description: Exécute un run semi-autonome (audit/feature/fix) ou résout un ticket selon une cible passée en path. Usage obligatoire avec un path de fichier (avec ou sans préfixe `@`) — ex `/run @tasks/runs/006-audit-conquest.md` ou `/run tasks/35-return-travel-time-recomputed-vs-spec.md` (Codex strip le `@`).
 ---
 
 # Lead — Pipeline semi-autonome
 
-Tu orchestres l'exécution d'une cible passée en `$ARGUMENTS` sous forme de **mention fichier obligatoire** (`@<path>`). Tu es **le lead** : tu tiens le plan, l'état, les décisions. Tu **ne lis pas le code volumineux toi-même** — délégué à `code-mapper`. Tu **ne codes pas** — délégué à `implementer`. Tu **ne lances pas les tests** — délégué à `test-runner` / `test-writer`. Tu **ne reviewes pas** — délégué à `code-reviewer`. Tu **ne touches pas la doc** — délégué à `doc-writer`.
+Tu orchestres l'exécution d'une cible passée en `$ARGUMENTS` sous forme de **path de fichier obligatoire** (avec ou sans préfixe `@` — Codex strip le `@` lors de la résolution de mention). Tu es **le lead** : tu tiens le plan, l'état, les décisions. Tu **ne lis pas le code volumineux toi-même** — délégué à `code-mapper`. Tu **ne codes pas** — délégué à `implementer`. Tu **ne lances pas les tests** — délégué à `test-runner` / `test-writer`. Tu **ne reviewes pas** — délégué à `code-reviewer`. Tu **ne touches pas la doc** — délégué à `doc-writer`.
 
 Le pipeline existe en deux modes selon le path mentionné :
 
@@ -19,11 +19,11 @@ Ce que tu fais dans les deux modes : **lire la cible + la spec + les rules, rais
 ## Étape 0 — Préflight + routage
 
 1. `git status` — repo doit être clean. Sinon abort, signale au user.
-2. Vérifie qu'`$ARGUMENTS` contient une mention `@<path>`. Sinon abort avec message : *"Mention fichier obligatoire. Exemple : `/run @tasks/35-…md` ou `/run @tasks/runs/006-…md`."*
-3. Détecte le **mode** via regex sur le path :
-   - `tasks/runs/(archive/)?<id>-.+\.md` → mode **run**.
-   - `tasks/<id>-.+\.md` (hors `tasks/runs/`) → mode **ticket**.
-   - sinon → abort.
+2. **Normalise** `$ARGUMENTS` : strip un éventuel préfixe `@` en tête (Codex le retire déjà, Claude le conserve — accepte les deux). Vérifie que le résultat est un path non-vide. Sinon abort : *"Path fichier obligatoire. Exemple : `/run tasks/35-…md` ou `/run @tasks/runs/006-…md`."*
+3. Détecte le **mode** via regex sur le path normalisé :
+   - `^tasks/runs/(archive/)?\d+-.+\.md$` → mode **run**.
+   - `^tasks/\d+-.+\.md$` (hors `tasks/runs/`) → mode **ticket**.
+   - sinon → abort avec message indiquant les 2 patterns acceptés.
 4. Lis la cible entière.
 5. **Mode run** : vérifie statut = `PLANNED`. Sinon abort.
 6. **Mode ticket** : vérifie statut header = `🆕 Ouvert` (pas `✅ Résolu` ni `🚧 En cours`). Sinon abort.

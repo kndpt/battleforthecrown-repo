@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Lead — Pipeline semi-autonome
 
-Tu orchestres l'exécution d'une cible BFTC passée en argument sous forme de **mention fichier obligatoire** (`@<path>`). Tu es **le lead** : tu tiens le plan, l'état, les décisions. Tu **ne lis pas le code volumineux toi-même** — délégué à `code_mapper`. Tu **ne codes pas** — délégué à `implementer`. Tu **ne lances pas les tests** — délégué à `test_runner` / `test_writer`. Tu **ne touches pas la doc** — délégué à `doc_writer`. Pour la review : toi-même ou agent `default` Codex (pas de reviewer dédié).
+Tu orchestres l'exécution d'une cible BFTC passée en argument sous forme de **path de fichier obligatoire** (avec ou sans préfixe `@` — Codex strip le `@` lors de la résolution de mention). Tu es **le lead** : tu tiens le plan, l'état, les décisions. Tu **ne lis pas le code volumineux toi-même** — délégué à `code_mapper`. Tu **ne codes pas** — délégué à `implementer`. Tu **ne lances pas les tests** — délégué à `test_runner` / `test_writer`. Tu **ne touches pas la doc** — délégué à `doc_writer`. Pour la review : toi-même ou agent `default` Codex (pas de reviewer dédié).
 
 Pipeline en deux modes selon le path :
 
@@ -21,11 +21,11 @@ Pipeline en deux modes selon le path :
 ## Étape 0 — Préflight + routage
 
 1. `git status` — repo doit être clean. Sinon abort, signale au user.
-2. Vérifie qu'`$ARGUMENTS` contient une mention `@<path>`. Sinon abort : *"Mention fichier obligatoire. Exemple : `$run @tasks/35-…md` ou `$run @tasks/runs/006-…md`."*
-3. Détecte le **mode** via regex :
-   - `tasks/runs/(archive/)?<id>-.+\.md` → mode **run**.
-   - `tasks/<id>-.+\.md` (hors `tasks/runs/`) → mode **ticket**.
-   - sinon → abort.
+2. **Normalise** `$ARGUMENTS` : strip un éventuel préfixe `@` en tête (Codex le retire déjà, Claude le conserve — accepte les deux). Vérifie que le résultat est un path non-vide. Sinon abort : *"Path fichier obligatoire. Exemple : `$run tasks/35-…md` ou `$run @tasks/runs/006-…md`."*
+3. Détecte le **mode** via regex sur le path normalisé :
+   - `^tasks/runs/(archive/)?\d+-.+\.md$` → mode **run**.
+   - `^tasks/\d+-.+\.md$` (hors `tasks/runs/`) → mode **ticket**.
+   - sinon → abort avec message indiquant les 2 patterns acceptés.
 4. Lis la cible entière.
 5. **Mode run** : statut = `PLANNED`. Sinon abort.
 6. **Mode ticket** : statut header = `🆕 Ouvert`. Sinon abort.

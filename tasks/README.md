@@ -24,7 +24,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Runs (exécutions semi-autonomes)
 
-Fiches d'exécution déléguées au système d'équipe Claude (lead + sub-agents à scope chirurgical). Slash commands : `/plan-run <description>` pour créer une fiche depuis la roadmap, `/run @<path>` pour exécuter (fiche de run **ou** ticket actif — mention fichier obligatoire, le mode est détecté via le path). Pipeline et conventions : [`runs/README.md`](./runs/README.md).
+Fiches d'exécution déléguées au système d'équipe Claude (lead + sub-agents à scope chirurgical). Slash commands : `/plan-run <description>` pour créer une fiche depuis la roadmap, `/run <path>` pour exécuter (fiche de run **ou** ticket actif — path obligatoire, `@` optionnel ; le mode est détecté via le path). Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 
 ### Runs archivés
@@ -80,4 +80,4 @@ Fiches d'exécution déléguées au système d'équipe Claude (lead + sub-agents
 
 ## Process
 
-Pour résoudre un ticket actif : `/run @tasks/<id>-<slug>.md` (mode ticket auto). Le pipeline lit le ticket, demande à l'utilisateur de trancher la piste si plusieurs proposées, exécute en mode rapide, archive le ticket et commit. Détail : [`runs/README.md`](./runs/README.md).
+Pour résoudre un ticket actif : `/run tasks/<id>-<slug>.md` (mode ticket auto, `@` optionnel). Le pipeline lit le ticket, demande à l'utilisateur de trancher la piste si plusieurs proposées, exécute en mode rapide, archive le ticket et commit. Détail : [`runs/README.md`](./runs/README.md).

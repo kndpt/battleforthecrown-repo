@@ -4,7 +4,7 @@ Un **run** = une exécution déléguée au pipeline lead + sub-agents (Claude Co
 
 Chaque run a sa fiche `<id>-<slug>.md` dans ce dossier. Source de vérité de l'état d'un run pendant et après son exécution.
 
-Pipeline d'orchestration : skill `/run @<path>` (mention fichier obligatoire). Le path détermine le mode :
+Pipeline d'orchestration : skill `/run <path>` (path de fichier obligatoire, avec ou sans préfixe `@` — Codex strip le `@` automatiquement). Le path détermine le mode :
 
 - `tasks/runs/<id>-<slug>.md` → **mode run**, pipeline 10 étapes complet.
 - `tasks/<id>-<slug>.md` → **mode ticket**, pipeline allégé (mode rapide auto, skip `code-mapper`/`test-runner`/`doc-writer` selon critères, cas A élargi à ≤ 30 lignes ≤ 2 fichiers, **review et hard gate `git diff` non-négociables**).
@@ -49,7 +49,7 @@ Définitions par harness : Claude Code → `.claude/agents/*.md` (kebab-case) ; 
 Disponibles dans les deux harnesses (Claude : `.claude/commands/*.md` ; Codex : skill `.agents/skills/<name>/SKILL.md` consommé via le symlink `.codex/skills/`) :
 
 - `/plan-run <description>` — crée une fiche de run depuis la roadmap (validation user avant écriture).
-- `/run @<path>` — exécute une fiche `PLANNED` (mode run) ou résout un ticket actif (mode ticket). Mention fichier obligatoire.
+- `/run <path>` — exécute une fiche `PLANNED` (mode run) ou résout un ticket actif (mode ticket). Path obligatoire, `@` optionnel (Codex le strip).
 
 ## Cycle de vie d'un run
 
