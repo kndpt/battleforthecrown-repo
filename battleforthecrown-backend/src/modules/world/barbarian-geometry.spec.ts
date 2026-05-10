@@ -105,9 +105,9 @@ describe('determineTier', () => {
     'distance %i returns %s',
     (dist: number, expectedTier: string) => {
       const pos: Position = { x: dist, y: 0 };
-      expect(
-        determineTier(pos, CENTER.x, CENTER.y, MINIMAL_TIERS_CONFIG),
-      ).toBe(expectedTier);
+      expect(determineTier(pos, CENTER.x, CENTER.y, MINIMAL_TIERS_CONFIG)).toBe(
+        expectedTier,
+      );
     },
   );
 

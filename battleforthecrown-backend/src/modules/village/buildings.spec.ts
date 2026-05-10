@@ -139,11 +139,13 @@ describe('BUILDING_TYPES catalogue', () => {
 describe('BUILDING_UNLOCK_REQUIREMENTS', () => {
   it('is derived from building definition unlock levels', () => {
     const expectedRequirements = Object.fromEntries(
-      (Object.entries(BUILDING_DEFINITIONS) as Array<
-        [BuildingType, BuildingDefinition]
-      >)
+      (
+        Object.entries(BUILDING_DEFINITIONS) as Array<
+          [BuildingType, BuildingDefinition]
+        >
+      )
         .filter(([, definition]) => definition.unlockCastleLevel !== undefined)
-        .map(([type, definition]) => [type, definition.unlockCastleLevel])
+        .map(([type, definition]) => [type, definition.unlockCastleLevel]),
     );
 
     expect(BUILDING_UNLOCK_REQUIREMENTS).toEqual(expectedRequirements);

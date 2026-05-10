@@ -33,6 +33,20 @@ Source unique : [`tests.md`](./tests.md). **À lire avant d'écrire ou demander 
 - ESLint flat config par workspace.
 - Pas de prettier global imposé — chaque workspace garde le sien si pertinent.
 
+## Vérification statique avant commit final
+
+Avant tout commit final (étape 10 d'un `/run`, ou commit direct), lancer **à la racine** :
+
+```bash
+yarn static-check
+```
+
+Enchaîne `tsc --noEmit` + `eslint` (sans `--fix`) sur backend et pixi. Catch les erreurs que `yarn dev` masque (rules type-aware comme `@typescript-eslint/no-unsafe-call`, types manquants TS2739, etc.) et qui ne sortent pas de `yarn test`.
+
+⚠️ Utiliser `lint:check` (ou `static-check` qui l'enchaîne), **jamais `yarn lint`** — cette dernière a `--fix` côté backend et mute les fichiers en silence.
+
+Si `static-check` échoue : fix les erreurs (ou justifie via une dérogation explicite dans le commit body / fiche de run). **Pas de `--no-verify` pour bypass.**
+
 ## Sécurité
 
 - JWT en `Authorization: Bearer …` côté REST, en `auth: { token }` côté Socket.IO.

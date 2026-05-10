@@ -6,7 +6,10 @@ import { ResourcesService } from '../resources/resources.service';
 import { BarbarianVillageStrategy } from './strategies/barbarian-village.strategy';
 import { PlayerVillageStrategy } from './strategies/player-village.strategy';
 import PgBoss from 'pg-boss';
-import { CombatContext } from './interfaces/combat-context.interface';
+import {
+  CombatContext,
+  CombatParticipant,
+} from './interfaces/combat-context.interface';
 import { PrismaClientOrTx } from '../../common/prisma.types';
 import { createOutboxEvent } from '../event/event.utils';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
@@ -18,7 +21,11 @@ import {
 import { parseUnitMap, encodeUnitMap, encodeLootResult } from './codecs';
 import { getStrategyBonusValue } from '@battleforthecrown/shared/village';
 import { calculateDistance } from '@battleforthecrown/shared/logic';
-import { UNIT_COSTS, type UnitMap, type UnitType } from '@battleforthecrown/shared/army';
+import {
+  UNIT_COSTS,
+  type UnitMap,
+  type UnitType,
+} from '@battleforthecrown/shared/army';
 import { typedEntries } from '@battleforthecrown/shared/utils';
 
 /**
@@ -248,7 +255,9 @@ export class CombatWorker implements OnModuleInit {
         // Release attacker population for dead units (always — PvP and barbarian raids).
         // Pop is freed at combat resolution, not at return — the units are dead now,
         // even if survivors are still on the road back. See docs/gameplay/02-economy-and-progression.md § Population.
-        const popReleasedAttacker = sumPopulationCost(resolution.lossesAttacker);
+        const popReleasedAttacker = sumPopulationCost(
+          resolution.lossesAttacker,
+        );
         if (popReleasedAttacker > 0) {
           await tx.population.update({
             where: { villageId: expedition.attackerVillageId },
@@ -479,23 +488,7 @@ export class CombatWorker implements OnModuleInit {
       }
     }
 
-    const defender:
-      | {
-          kind: 'BARBARIAN_VILLAGE';
-          village: NonNullable<
-            Awaited<ReturnType<typeof tx.village.findUnique>>
-          >;
-          units: UnitMap;
-          resources?: { wood: number; stone: number; iron: number };
-        }
-      | {
-          kind: 'PLAYER_VILLAGE';
-          village: NonNullable<
-            Awaited<ReturnType<typeof tx.village.findUnique>>
-          >;
-          units: UnitMap;
-          resources?: { wood: number; stone: number; iron: number };
-        } =
+    const defender =
       expedition.targetKind === 'BARBARIAN_VILLAGE'
         ? await this.buildBarbarianDefender(
             tx,
@@ -574,7 +567,7 @@ export class CombatWorker implements OnModuleInit {
       village,
       units,
       resources,
-      participants: [{ villageId: village.id, units }],
+      participants: [{ villageId: village.id, units, strategy: undefined }],
     };
   }
 
@@ -606,7 +599,7 @@ export class CombatWorker implements OnModuleInit {
       {
         villageId: village.id,
         units: localUnits,
-        strategy: village.strategyConfig?.strategy,
+        strategy: village.strategyConfig?.strategy || undefined,
       },
     ];
 

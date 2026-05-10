@@ -4,12 +4,26 @@ import {
   UNIT_STATS,
   type UnitType,
 } from '@battleforthecrown/shared/army';
-import { UNIT_POWER_WEIGHTS, getUnitPowerWeight } from '@battleforthecrown/shared/power';
+import {
+  UNIT_POWER_WEIGHTS,
+  getUnitPowerWeight,
+} from '@battleforthecrown/shared/power';
 
 describe('units catalog — pure logic (run 003 regression)', () => {
   it('expose les 10 unités spec (MILICE→SEIGNEUR)', () => {
     expect(Object.keys(UNIT_TYPES).sort()).toEqual(
-      ['ARCHER', 'CATAPULT', 'CAVALRY', 'MILITIA', 'NOBLE', 'RAM', 'SPY', 'SQUIRE', 'TEMPLAR', 'WARRIOR'].sort(),
+      [
+        'ARCHER',
+        'CATAPULT',
+        'CAVALRY',
+        'MILITIA',
+        'NOBLE',
+        'RAM',
+        'SPY',
+        'SQUIRE',
+        'TEMPLAR',
+        'WARRIOR',
+      ].sort(),
     );
   });
 
@@ -27,9 +41,14 @@ describe('units catalog — pure logic (run 003 regression)', () => {
       NOBLE: 100,
     };
 
-    for (const [type, weight] of Object.entries(expected) as [UnitType, number][]) {
+    for (const [type, weight] of Object.entries(expected) as [
+      UnitType,
+      number,
+    ][]) {
       expect(getUnitPowerWeight(type)).toBe(weight);
-      expect(UNIT_POWER_WEIGHTS[type as keyof typeof UNIT_POWER_WEIGHTS]).toBe(weight);
+      expect(UNIT_POWER_WEIGHTS[type as keyof typeof UNIT_POWER_WEIGHTS]).toBe(
+        weight,
+      );
     }
   });
 
@@ -74,7 +93,7 @@ describe('units catalog — pure logic (run 003 regression)', () => {
       defenseArcher: 5,
       speed: 20,
       carryCapacity: 35,
-      passive: { kind: 'attackOnRaid', bonus: 0.10 },
+      passive: { kind: 'attackOnRaid', bonus: 0.1 },
     });
 
     expect(UNIT_STATS[UNIT_TYPES.RAM]).toMatchObject({
@@ -84,7 +103,7 @@ describe('units catalog — pure logic (run 003 regression)', () => {
       defenseArcher: 10,
       speed: 5,
       carryCapacity: 0,
-      passive: { kind: 'attackVsWall', bonus: 0.50 },
+      passive: { kind: 'attackVsWall', bonus: 0.5 },
     });
   });
 });

@@ -11,6 +11,7 @@
     "postinstall": "yarn workspace @battleforthecrown/shared build",
     "build": "yarn workspaces run build",
     "lint": "yarn workspaces run lint",
+    "static-check": "yarn workspace battleforthecrown-backend type-check && yarn workspace battleforthecrown-pixi type-check && yarn workspace battleforthecrown-backend lint:check && yarn workspace battleforthecrown-pixi lint:check",
     "test": "yarn test:backend && yarn test:pixi && yarn test:smoke",
     "test:backend": "yarn workspace battleforthecrown-backend test",
     "test:pixi": "yarn workspace battleforthecrown-pixi test",

@@ -339,7 +339,12 @@ describe('smoke', () => {
     // client-side interpolation. cf. crowns.service.ts JSDoc.
     const world = await seedSmokeWorld(ctx.prisma);
     const user = await registerUser(ctx.server);
-    await joinWorld(ctx.server, user.accessToken, world.id, 'crown-village-zero');
+    await joinWorld(
+      ctx.server,
+      user.accessToken,
+      world.id,
+      'crown-village-zero',
+    );
 
     // No backdate — joinWorld sets lastUpdateTs to now, so elapsedHours ≈ 0.
 

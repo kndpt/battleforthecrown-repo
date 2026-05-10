@@ -75,6 +75,32 @@ const VillageConqueredPayloadSchema = z.object({
   buildingsKept: z.number(),
 });
 
+const ReinforcementSentPayloadSchema = z.object({
+  expeditionId: z.string(),
+  villageId: z.string(),
+  targetVillageId: z.string(),
+  arrivalAt: z.string(),
+});
+
+const ReinforcementRecalledPayloadSchema = z.object({
+  expeditionId: z.string(),
+  villageId: z.string(),
+  originVillageId: z.string(),
+  arrivalAt: z.string(),
+});
+
+const ReinforcementReturnedPayloadSchema = z.object({
+  villageId: z.string(),
+  originVillageId: z.string(),
+  units: UnitMapSchema,
+});
+
+const GarrisonAddedPayloadSchema = z.object({
+  villageId: z.string(),
+  originVillageId: z.string(),
+  units: UnitMapSchema,
+});
+
 const ResourcesChangedPayloadSchema = z.object({
   villageId: z.string(),
   wood: z.number(),
@@ -105,6 +131,10 @@ export const EVENT_PAYLOAD_SCHEMAS = {
   'battle.returned': BattleReturnedPayloadSchema,
   'village.attacked': VillageAttackedPayloadSchema,
   'village.conquered': VillageConqueredPayloadSchema,
+  'reinforcement.sent': ReinforcementSentPayloadSchema,
+  'reinforcement.recalled': ReinforcementRecalledPayloadSchema,
+  'reinforcement.returned': ReinforcementReturnedPayloadSchema,
+  'garrison.added': GarrisonAddedPayloadSchema,
   'resources.changed': ResourcesChangedPayloadSchema,
   'crowns.changed': CrownsChangedPayloadSchema,
 } as const satisfies Record<EventKind, z.ZodType>;

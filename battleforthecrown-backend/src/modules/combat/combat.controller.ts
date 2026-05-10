@@ -38,7 +38,8 @@ export class CombatController {
   @Post('reinforce')
   reinforce(
     @CurrentUser() user: AuthenticatedUser,
-    @Body(new ZodValidationPipe(reinforceCommandSchema)) dto: ReinforceCommandDto,
+    @Body(new ZodValidationPipe(reinforceCommandSchema))
+    dto: ReinforceCommandDto,
   ) {
     return this.combatService.initiateReinforce(user.id, dto);
   }

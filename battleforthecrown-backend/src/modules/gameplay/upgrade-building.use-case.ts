@@ -66,8 +66,7 @@ export class UpgradeBuildingUseCase {
       const nextLevel = currentLevel + 1;
 
       if (currentLevel === 0) {
-        const requiredCastleLevel =
-          getBuildingUnlockRequirement(buildingType);
+        const requiredCastleLevel = getBuildingUnlockRequirement(buildingType);
         if (requiredCastleLevel) {
           const castle = allBuildings.find((b) => b.type === 'CASTLE');
           const castleLevel = castle?.level ?? 1;

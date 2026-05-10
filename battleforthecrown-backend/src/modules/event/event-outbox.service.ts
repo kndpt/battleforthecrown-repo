@@ -13,6 +13,10 @@ import {
   type BattleReturnedPayload,
   type VillageAttackedPayload,
   type VillageConqueredPayload,
+  type ReinforcementSentPayload,
+  type ReinforcementRecalledPayload,
+  type ReinforcementReturnedPayload,
+  type GarrisonAddedPayload,
   type ResourcesChangedPayload,
   type CrownsChangedPayload,
 } from './event-types';
@@ -120,6 +124,26 @@ export class EventOutboxService {
         break;
       case 'village.conquered':
         this.notifyVillageConquered(
+          parseEventPayload(event.kind, event.payload),
+        );
+        break;
+      case 'reinforcement.sent':
+        await this.notifyReinforcementSent(
+          parseEventPayload(event.kind, event.payload),
+        );
+        break;
+      case 'reinforcement.recalled':
+        await this.notifyReinforcementRecalled(
+          parseEventPayload(event.kind, event.payload),
+        );
+        break;
+      case 'reinforcement.returned':
+        await this.notifyReinforcementReturned(
+          parseEventPayload(event.kind, event.payload),
+        );
+        break;
+      case 'garrison.added':
+        await this.notifyGarrisonAdded(
           parseEventPayload(event.kind, event.payload),
         );
         break;
@@ -314,6 +338,38 @@ export class EventOutboxService {
       productionRate: payload.productionRate,
       lastUpdateTs: payload.lastUpdateTs,
     });
+  }
+
+  private async notifyReinforcementSent(payload: ReinforcementSentPayload) {
+    const userId = await this.getUserIdByVillage(payload.villageId);
+    if (!userId) return;
+
+    this.gateway.notifyUser(userId, 'reinforcement.sent', payload);
+  }
+
+  private async notifyReinforcementRecalled(
+    payload: ReinforcementRecalledPayload,
+  ) {
+    const userId = await this.getUserIdByVillage(payload.villageId);
+    if (!userId) return;
+
+    this.gateway.notifyUser(userId, 'reinforcement.recalled', payload);
+  }
+
+  private async notifyReinforcementReturned(
+    payload: ReinforcementReturnedPayload,
+  ) {
+    const userId = await this.getUserIdByVillage(payload.villageId);
+    if (!userId) return;
+
+    this.gateway.notifyUser(userId, 'reinforcement.returned', payload);
+  }
+
+  private async notifyGarrisonAdded(payload: GarrisonAddedPayload) {
+    const userId = await this.getUserIdByVillage(payload.villageId);
+    if (!userId) return;
+
+    this.gateway.notifyUser(userId, 'garrison.added', payload);
   }
 
   private async getUserIdByVillage(villageId: string): Promise<string | null> {

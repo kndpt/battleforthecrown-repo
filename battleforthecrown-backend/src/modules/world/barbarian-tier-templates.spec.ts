@@ -38,7 +38,9 @@ describe('barbarian-tier-templates', () => {
   });
 
   it('getPopulationMax falls back to T1 on unknown tier', () => {
-    expect(getPopulationMax('UNKNOWN')).toBe(BARBARIAN_TIER_TEMPLATES.T1.populationMax);
+    expect(getPopulationMax('UNKNOWN')).toBe(
+      BARBARIAN_TIER_TEMPLATES.T1.populationMax,
+    );
   });
 
   it.each([

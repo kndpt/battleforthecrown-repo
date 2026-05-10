@@ -73,6 +73,32 @@ export interface VillageConqueredPayload {
   buildingsKept: number;
 }
 
+export interface ReinforcementSentPayload {
+  expeditionId: string;
+  villageId: string;
+  targetVillageId: string;
+  arrivalAt: string;
+}
+
+export interface ReinforcementRecalledPayload {
+  expeditionId: string;
+  villageId: string;
+  originVillageId: string;
+  arrivalAt: string;
+}
+
+export interface ReinforcementReturnedPayload {
+  villageId: string;
+  originVillageId: string;
+  units: UnitMap;
+}
+
+export interface GarrisonAddedPayload {
+  villageId: string;
+  originVillageId: string;
+  units: UnitMap;
+}
+
 export interface ResourcesChangedPayload {
   villageId: string;
   wood: number;
@@ -103,6 +129,10 @@ export type OutboxEventPayload =
   | { kind: 'battle.returned'; payload: BattleReturnedPayload }
   | { kind: 'village.attacked'; payload: VillageAttackedPayload }
   | { kind: 'village.conquered'; payload: VillageConqueredPayload }
+  | { kind: 'reinforcement.sent'; payload: ReinforcementSentPayload }
+  | { kind: 'reinforcement.recalled'; payload: ReinforcementRecalledPayload }
+  | { kind: 'reinforcement.returned'; payload: ReinforcementReturnedPayload }
+  | { kind: 'garrison.added'; payload: GarrisonAddedPayload }
   | { kind: 'resources.changed'; payload: ResourcesChangedPayload }
   | { kind: 'crowns.changed'; payload: CrownsChangedPayload };
 
@@ -121,6 +151,10 @@ export type AnyEventPayload =
   | BattleReturnedPayload
   | VillageAttackedPayload
   | VillageConqueredPayload
+  | ReinforcementSentPayload
+  | ReinforcementRecalledPayload
+  | ReinforcementReturnedPayload
+  | GarrisonAddedPayload
   | ResourcesChangedPayload
   | CrownsChangedPayload;
 
@@ -134,6 +168,10 @@ export interface ServerEvents {
   'battle.returned': BattleReturnedPayload;
   'village.attacked': VillageAttackedPayload;
   'village.conquered': VillageConqueredPayload;
+  'reinforcement.sent': ReinforcementSentPayload;
+  'reinforcement.recalled': ReinforcementRecalledPayload;
+  'reinforcement.returned': ReinforcementReturnedPayload;
+  'garrison.added': GarrisonAddedPayload;
 }
 
 export type ServerEventName = keyof ServerEvents;

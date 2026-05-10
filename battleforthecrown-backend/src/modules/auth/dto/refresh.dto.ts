@@ -1,1 +1,4 @@
-export { refreshSchema, type RefreshRequest as RefreshDto } from '@battleforthecrown/shared/auth';
+export {
+  refreshSchema,
+  type RefreshRequest as RefreshDto,
+} from '@battleforthecrown/shared/auth';

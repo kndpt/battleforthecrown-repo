@@ -25,15 +25,25 @@ describe('reinforcements smoke', () => {
 
   it('full flow: reinforce → station → defend with losses → recall', async () => {
     const world = await seedSmokeWorld(ctx.prisma);
-    
+
     // 1. Setup Player A (Sender)
     const userA = await registerUser(ctx.server, 'a' + Date.now());
-    const joinA = await joinWorld(ctx.server, userA.accessToken, world.id, 'village-a');
+    const joinA = await joinWorld(
+      ctx.server,
+      userA.accessToken,
+      world.id,
+      'village-a',
+    );
     const villageAId = joinA.village.id;
 
     // 2. Setup Player B (Host)
     const userB = await registerUser(ctx.server, 'b' + Date.now());
-    const joinB = await joinWorld(ctx.server, userB.accessToken, world.id, 'village-b');
+    const joinB = await joinWorld(
+      ctx.server,
+      userB.accessToken,
+      world.id,
+      'village-b',
+    );
     const villageBId = joinB.village.id;
 
     // 3. Give Player A some units and population
@@ -64,15 +74,25 @@ describe('reinforcements smoke', () => {
 
     // 5. Wait for arrival at village B
     await waitFor(
-      () => ctx.prisma.garrison.findFirst({
-        where: { villageId: villageBId, originVillageId: villageAId, quantity: 60 }
-      }),
-      { timeoutMs: 30_000 }
+      () =>
+        ctx.prisma.garrison.findFirst({
+          where: {
+            villageId: villageBId,
+            originVillageId: villageAId,
+            quantity: 60,
+          },
+        }),
+      { timeoutMs: 30_000 },
     );
 
     // 6. Setup Player C (Attacker) to attack village B
     const userC = await registerUser(ctx.server, 'c' + Date.now());
-    const joinC = await joinWorld(ctx.server, userC.accessToken, world.id, 'village-c');
+    const joinC = await joinWorld(
+      ctx.server,
+      userC.accessToken,
+      world.id,
+      'village-c',
+    );
     const villageCId = joinC.village.id;
 
     await ctx.prisma.unitInventory.create({
@@ -80,12 +100,12 @@ describe('reinforcements smoke', () => {
     });
     // Ensure B is in vision for C
     await ctx.prisma.village.update({
-        where: { id: villageCId },
-        data: { x: joinB.village.x + 1, y: joinB.village.y }
+      where: { id: villageCId },
+      data: { x: joinB.village.x + 1, y: joinB.village.y },
     });
     await ctx.prisma.building.updateMany({
-        where: { villageId: villageCId, type: 'WATCHTOWER' },
-        data: { level: 1 }
+      where: { villageId: villageCId, type: 'WATCHTOWER' },
+      data: { level: 1 },
     });
 
     // Attack B with C
@@ -106,29 +126,29 @@ describe('reinforcements smoke', () => {
     await outboxDispatched(
       ctx.prisma,
       { kind: 'battle.resolved', aggregateId: villageCId },
-      { timeoutMs: 30_000 }
+      { timeoutMs: 30_000 },
     );
 
     // 8. Verify losses distributed to Garrison
     const garrisonAfter = await ctx.prisma.garrison.findFirst({
-      where: { villageId: villageBId, originVillageId: villageAId }
+      where: { villageId: villageBId, originVillageId: villageAId },
     });
     expect(garrisonAfter?.quantity).toBe(0);
 
     // 9. Verify population of A is freed
     const popA = await ctx.prisma.population.findUniqueOrThrow({
-      where: { villageId: villageAId }
+      where: { villageId: villageAId },
     });
     expect(popA.used).toBe(40);
 
     // 10. Test Recall (send some more units first)
     await ctx.prisma.garrison.update({
-        where: { id: garrisonAfter!.id },
-        data: { quantity: 40 }
+      where: { id: garrisonAfter!.id },
+      data: { quantity: 40 },
     });
     await ctx.prisma.population.update({
-        where: { villageId: villageAId },
-        data: { used: 80 }
+      where: { villageId: villageAId },
+      data: { used: 80 },
     });
 
     const recallRes = await request(ctx.server)
@@ -143,14 +163,22 @@ describe('reinforcements smoke', () => {
 
     // Wait for return to A
     await waitFor(
-      () => ctx.prisma.unitInventory.findUnique({
-        where: { villageId_unitType: { villageId: villageAId, unitType: 'MILITIA' } }
-      }).then(inv => inv?.quantity === 80),
-      { timeoutMs: 30_000 }
+      () =>
+        ctx.prisma.unitInventory
+          .findUnique({
+            where: {
+              villageId_unitType: {
+                villageId: villageAId,
+                unitType: 'MILITIA',
+              },
+            },
+          })
+          .then((inv) => inv?.quantity === 80),
+      { timeoutMs: 30_000 },
     );
 
     const finalGarrison = await ctx.prisma.garrison.findUnique({
-        where: { id: garrisonAfter!.id }
+      where: { id: garrisonAfter!.id },
     });
     expect(finalGarrison?.quantity).toBe(0);
   }, 60_000);

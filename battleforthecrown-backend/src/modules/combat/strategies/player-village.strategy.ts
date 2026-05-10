@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CombatStrategy, CombatResolution } from './combat-strategy.interface';
-import { CombatContext, CombatParticipant } from '../interfaces/combat-context.interface';
+import {
+  CombatContext,
+  CombatParticipant,
+} from '../interfaces/combat-context.interface';
 import { LootManager } from '../loot/loot.manager';
 import { getUnitStats, type UnitMap } from '@battleforthecrown/shared/army';
 import { typedEntries } from '@battleforthecrown/shared/utils';
@@ -74,7 +77,7 @@ export class PlayerVillageStrategy implements CombatStrategy {
     // For now, use defenseInfantry as base defense
     // TODO v2: Determine attack type (infantry/cavalry/archer) and use appropriate defense
     let totalDefensePower = 0;
-    
+
     for (const participant of defender.participants) {
       let participantDefensePower = 0;
       for (const [unitType, quantity] of typedEntries(participant.units)) {
@@ -86,7 +89,10 @@ export class PlayerVillageStrategy implements CombatStrategy {
 
       // Apply defense bonus specific to this participant's origin style
       if (participant.strategy) {
-        const defenseBonus = getStrategyBonusValue(participant.strategy, 'defenseBonus');
+        const defenseBonus = getStrategyBonusValue(
+          participant.strategy,
+          'defenseBonus',
+        );
         if (defenseBonus) {
           participantDefensePower *= defenseBonus;
         }

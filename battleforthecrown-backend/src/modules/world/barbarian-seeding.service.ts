@@ -146,7 +146,10 @@ export class BarbarianSeedingService {
       ).size;
 
       const rawCapacity = randomInt(config.targetMin, config.targetMax);
-      const capacity = adjustCapacityForPlayerPresence(rawCapacity, distinctOtherPlayerCount);
+      const capacity = adjustCapacityForPlayerPresence(
+        rawCapacity,
+        distinctOtherPlayerCount,
+      );
 
       if (capacity === 0 && distinctOtherPlayerCount >= 2) {
         this.logger.debug(

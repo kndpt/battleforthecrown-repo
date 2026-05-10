@@ -12,6 +12,7 @@ import { VisionService } from '../world/vision.service';
 import { calculateDistance } from '@battleforthecrown/shared/logic';
 import type { AttackCommandDto } from './dto/attack-command.schema';
 import type { ReinforceCommandDto } from './dto/reinforce-command.schema';
+import type { RecallCommandDto } from './dto/recall-command.schema';
 import { ExpeditionKind } from '@prisma/client';
 import { encodeUnitMap } from './codecs';
 import PgBoss from 'pg-boss';
@@ -76,9 +77,7 @@ export class CombatService {
       const config = await this.worldConfig.getConfig(worldId);
       if (config.fogOfWar?.enabled) {
         const disks = await this.visionService.getVisionDisks(userId, worldId);
-        if (
-          !this.visionService.isInVision({ x: targetX, y: targetY }, disks)
-        ) {
+        if (!this.visionService.isInVision({ x: targetX, y: targetY }, disks)) {
           throw new ForbiddenException(
             'Target is outside your vision — extend your watchtower to attack.',
           );
@@ -367,10 +366,11 @@ export class CombatService {
     });
 
     const availableUnits = Object.fromEntries(
-      unitInventories.map((inv) => [inv.unitType, inv.quantity]),
+      unitInventories.map((inv: any) => [inv.unitType, inv.quantity]),
     );
 
-    for (const [unitType, quantity] of Object.entries(units)) {
+    for (const [unitType, qty] of Object.entries(units)) {
+      const quantity = qty;
       if (quantity === undefined || quantity <= 0) continue;
       if ((availableUnits[unitType] || 0) < quantity) {
         throw new BadRequestException(
@@ -379,7 +379,8 @@ export class CombatService {
       }
     }
 
-    for (const [unitType, quantity] of Object.entries(units)) {
+    for (const [unitType, qty] of Object.entries(units)) {
+      const quantity = qty;
       if (quantity === undefined || quantity <= 0) continue;
       await tx.unitInventory.update({
         where: {

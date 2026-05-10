@@ -13,6 +13,18 @@ export const DEFAULT_COMBAT_RULES: CombatRules = {
 // Legacy alias
 export type CombatConfig = CombatRules;
 
+export type {
+  TargetKind,
+  ExpeditionStatus,
+  ExpeditionKind,
+  AttackCommand,
+  ReinforceCommand,
+  RecallCommand,
+  ExpeditionResponse,
+  CombatLoot,
+  CombatReportResponse,
+} from './dtos';
+
 export * from './dtos';
 export * from './utils';
 export * from './loot';
