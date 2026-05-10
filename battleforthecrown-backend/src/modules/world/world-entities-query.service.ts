@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { z } from 'zod';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const barbarianVillageDataSchema = z.object({
   tier: z.string().nullable(),
   name: z.string(),

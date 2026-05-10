@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ResourceLootProvider } from './providers/resource-loot.provider';
-import {
-  CombatContext,
-  CombatConfig,
-} from '../interfaces/combat-context.interface';
+import { CombatContext } from '../interfaces/combat-context.interface';
 import { LootResult } from './interfaces/loot-result.interface';
 import { LootResolver } from './interfaces/loot-resolver.interface';
 import { getUnitStats, type UnitMap } from '@battleforthecrown/shared/army';
@@ -29,7 +26,6 @@ export class LootManager {
     // Calculate total carry capacity
     const totalCapacity = this.calculateTotalCarryCapacity(
       context.attacker.units,
-      context.config,
     );
 
     let remainingCapacity = totalCapacity;
@@ -76,10 +72,7 @@ export class LootManager {
   /**
    * Calculate total carry capacity of units
    */
-  private calculateTotalCarryCapacity(
-    units: UnitMap,
-    config: CombatConfig,
-  ): number {
+  private calculateTotalCarryCapacity(units: UnitMap): number {
     let total = 0;
 
     for (const [unitType, quantity] of typedEntries(units)) {

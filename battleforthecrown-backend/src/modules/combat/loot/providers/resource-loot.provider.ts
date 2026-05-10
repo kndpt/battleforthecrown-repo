@@ -7,6 +7,7 @@ import { CombatContext } from '../../interfaces/combat-context.interface';
 export class ResourceLootProvider implements LootResolver {
   private readonly logger = new Logger(ResourceLootProvider.name);
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async resolveLoot(
     context: CombatContext,
     remainingCapacity: number,

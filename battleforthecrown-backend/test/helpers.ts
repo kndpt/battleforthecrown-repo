@@ -96,14 +96,16 @@ export async function joinWorld(
   accessToken: string,
   worldId: string,
   villageName: string,
-) {
+): Promise<{ village: { id: string; x: number; y: number; name: string } }> {
   const res = await request(server)
     .post(`/world/${worldId}/join`)
     .set('Authorization', `Bearer ${accessToken}`)
     .send({ villageName });
   if (res.status >= 300)
     throw new Error(`join failed: ${res.status} ${JSON.stringify(res.body)}`);
-  return res.body;
+  return res.body as {
+    village: { id: string; x: number; y: number; name: string };
+  };
 }
 
 export interface WaitOpts {
@@ -129,7 +131,7 @@ export async function waitFor<T>(
     await new Promise((r) => setTimeout(r, interval));
   }
   throw new Error(
-    `waitFor timed out after ${timeout}ms${lastError ? ` (last error: ${String(lastError)})` : ''}`,
+    `waitFor timed out after ${timeout}ms${lastError ? ` (last error: ${lastError instanceof Error ? lastError.message : JSON.stringify(lastError)})` : ''}`,
   );
 }
 

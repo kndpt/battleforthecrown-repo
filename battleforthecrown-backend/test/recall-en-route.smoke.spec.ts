@@ -39,7 +39,7 @@ describe('recall en-route smoke', () => {
       userA.accessToken,
       world.id,
       'village-a',
-    )) as any;
+    )) as { village: { id: string; x: number; y: number } };
     const villageAId = joinA.village.id;
 
     // 2. Give Player A some units

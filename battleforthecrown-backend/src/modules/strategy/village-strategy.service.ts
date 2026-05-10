@@ -18,7 +18,6 @@ import {
   getStrategyBonusValue,
   getVillageStrategyPlan,
 } from '@battleforthecrown/shared/village';
-import type { ResourceType } from '@battleforthecrown/shared/resources';
 import { MS_PER_HOUR } from '@battleforthecrown/shared/time';
 
 export interface StrategyChangeResult {

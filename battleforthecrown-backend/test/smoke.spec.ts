@@ -23,6 +23,7 @@ describe('smoke', () => {
     ctx = await bootSmokeApp();
     await truncateAll(ctx.prisma);
     await ctx.app.listen(0);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     port = (ctx.server.address() as { port: number }).port;
   });
 
@@ -452,7 +453,7 @@ describe('smoke', () => {
       .post('/auth/refresh')
       .send({ refreshToken });
     expect(refreshed.status).toBeLessThan(300);
-    const t2 = refreshed.body.accessToken as string;
+    const t2 = (refreshed.body as { accessToken: string }).accessToken;
     expect(t2).toBeTruthy();
 
     const r2 = await request(ctx.server)
@@ -464,7 +465,7 @@ describe('smoke', () => {
       .post('/auth/login')
       .send({ email, password: 'smoke-password-123' });
     expect(login.status).toBeLessThan(300);
-    expect(login.body.accessToken).toBeTruthy();
+    expect((login.body as { accessToken: string }).accessToken).toBeTruthy();
   });
 
   it('fog of war: GET /world/:id/entities masks barbarians outside vision disks', async () => {

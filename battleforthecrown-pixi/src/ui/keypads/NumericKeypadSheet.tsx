@@ -30,7 +30,9 @@ export function NumericKeypadSheet({
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDraft(value);
+       
       setOpenSession((c) => c + 1);
     }
   }, [open, value]);

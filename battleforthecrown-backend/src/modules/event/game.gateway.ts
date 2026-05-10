@@ -36,11 +36,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       const payload = await this.jwtService.verifyAsync(token);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       client.userId = payload.sub;
       client.join(`user:${client.userId}`);
 
       this.logger.log(`Client ${client.id} connected as user ${client.userId}`);
-    } catch (error) {
+    } catch {
       this.logger.warn(`Client ${client.id} rejected: invalid token`);
       client.disconnect();
     }

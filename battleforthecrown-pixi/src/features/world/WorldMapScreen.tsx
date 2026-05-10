@@ -88,7 +88,7 @@ export function WorldMapScreen() {
     let raf = 0;
     const tick = () => {
       const pos = canvasRef.current?.worldToScreen(selectedEntity.x, selectedEntity.y);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+       
       if (pos) setTooltipPosition(pos);
       raf = requestAnimationFrame(tick);
     };

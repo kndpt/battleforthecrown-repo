@@ -13,7 +13,7 @@ import type { VillageStrategyType } from '@battleforthecrown/shared/village';
 // Bidirectional Records: if either side adds, removes, or renames a variant,
 // one of these objects fails to type-check — the build breaks before any
 // runtime cast is needed.
-const _expeditionStatusFromPrisma: Record<
+export const _expeditionStatusFromPrisma: Record<
   PrismaExpeditionStatus,
   ExpeditionStatus
 > = {
@@ -21,7 +21,7 @@ const _expeditionStatusFromPrisma: Record<
   RESOLVED: 'RESOLVED',
   RETURNING: 'RETURNING',
 };
-const _expeditionStatusToPrisma: Record<
+export const _expeditionStatusToPrisma: Record<
   ExpeditionStatus,
   PrismaExpeditionStatus
 > = {
@@ -30,6 +30,7 @@ const _expeditionStatusToPrisma: Record<
   RETURNING: 'RETURNING',
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _targetKindFromPrisma: Record<PrismaTargetKind, TargetKind> = {
   PLAYER_VILLAGE: 'PLAYER_VILLAGE',
   BARBARIAN_VILLAGE: 'BARBARIAN_VILLAGE',
@@ -38,7 +39,7 @@ const _targetKindFromPrisma: Record<PrismaTargetKind, TargetKind> = {
 // No bidirectional mapping for TargetKind anymore as they started to diverge
 // between Prisma and Shared.
 
-const _villageStrategyFromPrisma: Record<
+export const _villageStrategyFromPrisma: Record<
   PrismaVillageStrategy,
   VillageStrategyType
 > = {
@@ -47,7 +48,7 @@ const _villageStrategyFromPrisma: Record<
   ECONOMIC: 'ECONOMIC',
   BALANCED: 'BALANCED',
 };
-const _villageStrategyToPrisma: Record<
+export const _villageStrategyToPrisma: Record<
   VillageStrategyType,
   PrismaVillageStrategy
 > = {

@@ -8,7 +8,8 @@ import type { UnitType } from '@battleforthecrown/shared/army';
 describe('Combat Strategies', () => {
   let barbarianStrategy: BarbarianVillageStrategy;
   let playerStrategy: PlayerVillageStrategy;
-  let lootManager: LootManager;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  let _lootManager: LootManager;
 
   const mockLootManager = {
     calculateLoot: jest.fn(),
@@ -32,7 +33,7 @@ describe('Combat Strategies', () => {
       BarbarianVillageStrategy,
     );
     playerStrategy = module.get<PlayerVillageStrategy>(PlayerVillageStrategy);
-    lootManager = module.get<LootManager>(LootManager);
+    _lootManager = module.get<LootManager>(LootManager);
   });
 
   afterEach(() => {

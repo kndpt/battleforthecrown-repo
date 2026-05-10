@@ -1,9 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CombatStrategy, CombatResolution } from './combat-strategy.interface';
-import {
-  CombatContext,
-  CombatParticipant,
-} from '../interfaces/combat-context.interface';
+import { CombatContext } from '../interfaces/combat-context.interface';
 import { LootManager } from '../loot/loot.manager';
 import { getUnitStats, type UnitMap } from '@battleforthecrown/shared/army';
 import { typedEntries } from '@battleforthecrown/shared/utils';

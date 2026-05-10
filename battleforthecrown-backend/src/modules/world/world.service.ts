@@ -40,6 +40,7 @@ export class WorldService {
       where: { worldId },
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { config: _config, ...summary } = world;
     return { ...summary, playerCount };
   }

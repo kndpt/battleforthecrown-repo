@@ -80,7 +80,7 @@ export class ResourcesService {
       // Get current storage limit based on Warehouse level
       const warehouse = village.buildings.find((b) => b.type === 'WAREHOUSE');
       const warehouseLevel = warehouse?.level || 1;
-      const baseStorageLimit = await this.worldConfig.getStorageLimit(
+      const baseStorageLimit = this.worldConfig.getStorageLimit(
         worldId,
         warehouseLevel,
       );
@@ -241,7 +241,7 @@ export class ResourcesService {
       throw new NotFoundException('Village not found');
     }
 
-    const baseLimit = await this.worldConfig.getStorageLimit(
+    const baseLimit = this.worldConfig.getStorageLimit(
       village.worldId,
       warehouseLevel,
     );
