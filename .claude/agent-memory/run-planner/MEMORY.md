@@ -2,3 +2,4 @@
 - [Pilote 000 leçons](project_pilote_000_lessons.md) — power audit déjà fait, 3 tickets ouverts (29, 30, 31) ; éviter de re-couvrir
 - [Pattern audit-catalogue](pattern_audit_buildings.md) — squelette récurrent pour audit catalogue (bâtiments/unités) : tableau 1 ligne/item + lots éco/militaire/spécial + fix shared
 - [Pattern dette frontend post-audit](pattern_frontend_debt_post_audit.md) — runs UI dédiés après audit catalogue ; type=fix, helper pur partagé Panel+Modal+Pixi, choix UX en POINTS_D_ATTENTION
+- [Pattern fix — découpler worker d'une relation optionnelle supprimable](pattern_fix_decouple_worker_from_optional_relation.md) — dénormaliser sur l'entité worker-owned + smoke "delete relation in-flight"

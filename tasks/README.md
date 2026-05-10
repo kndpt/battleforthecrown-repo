@@ -21,6 +21,10 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 Fiches d'exécution déléguées aux harnesses Claude Code, Codex ou Gemini CLI (lead + sub-agents à scope chirurgical). Slash commands : `/plan-run <description>` pour créer une fiche depuis la roadmap, `/run <path>` pour exécuter (fiche de run **ou** ticket actif — path obligatoire, `@` optionnel ; le mode est détecté via le path). Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
+### Runs actifs
+
+- [011 — Découpler le return worker du CombatReport](./runs/011-fix-return-worker-decouple-report.md) — 📋 `PLANNED`. Fix : supprimer le rapport pendant le voyage retour fige l'expédition en `RETURNING` — dénormaliser `survivingUnits` + `loot` sur `Expedition` + smoke de régression.
+
 ### Runs archivés
 
 - [010 — Implémentation frontend renforts](./runs/archive/010-implementation-frontend-reinforcements.md) — ✅ `DONE` (2026-05-10). Frontend renforts finalisé : action `Renforcer`, garnison `INCOMING`/`OUTGOING`, `Rappeler`/`Renvoyer`, rendu `REINFORCE` liste/carte/mini-carte, WS + docs + smokes verts.
