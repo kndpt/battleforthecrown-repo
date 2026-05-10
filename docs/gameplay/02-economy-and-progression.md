@@ -229,7 +229,7 @@ Temps_niveau_n = Temps_base × (multiplicateur ^ (n-1)) × Bonus_château
 | Stockage | 300 s | 1.6 |
 | Stratégique | 400–500 s | 1.7–1.8 |
 
-**Bonus Château** : réduction de 4 % par niveau (max −40 % à niveau 10). Détail dans [`03-buildings.md`](./03-buildings.md).
+**Bonus Château** : réduction de 4 % par niveau ajouté (au-delà du niveau 1), soit 9 paliers × 4 % = **−36 % à niveau 10**. Détail dans [`03-buildings.md`](./03-buildings.md).
 
 ## Paliers de déblocage (Château)
 

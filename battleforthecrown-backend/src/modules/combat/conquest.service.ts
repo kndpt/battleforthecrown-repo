@@ -107,15 +107,16 @@ export class ConquestService {
         where: { villageId: targetVillageId, type: 'WATCHTOWER' },
       });
 
-      // Keep 50% of resources (game design choice)
+      // Reset stored resources to 0 on conquest. The attacker already received
+      // the loot from the pre-conquest battle; inheriting the residual stock
+      // would be a double reward. Cf. docs/gameplay/02-economy-and-progression.md
+      // § Conquête et reset, docs/gameplay/13-barbarian-conquest.md § Stock
+      // ressources et population, docs/gameplay/14-pvp-conquest.md § Stock
+      // ressources.
       if (target.resourceStock) {
         await tx.resourceStock.update({
           where: { villageId: targetVillageId },
-          data: {
-            wood: Math.floor(target.resourceStock.wood * 0.5),
-            stone: Math.floor(target.resourceStock.stone * 0.5),
-            iron: Math.floor(target.resourceStock.iron * 0.5),
-          },
+          data: { wood: 0, stone: 0, iron: 0 },
         });
       }
 
