@@ -6,6 +6,7 @@ import {
   Body,
   Query,
   Param,
+  HttpCode,
 } from '@nestjs/common';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { CurrentUser, Public, type AuthenticatedUser } from '../../common/auth';
@@ -94,6 +95,7 @@ export class WorldController {
   }
 
   @Delete(':worldId/me')
+  @HttpCode(204)
   async resetMe(
     @CurrentUser() user: AuthenticatedUser,
     @Param('worldId') worldId: string,
