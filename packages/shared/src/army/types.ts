@@ -1,11 +1,13 @@
 export const UNIT_TYPES = {
   MILITIA: 'MILITIA',
   SQUIRE: 'SQUIRE',
+  WARRIOR: 'WARRIOR',
   ARCHER: 'ARCHER',
-  CAVALRY: 'CAVALRY',
   TEMPLAR: 'TEMPLAR',
-  CATAPULT: 'CATAPULT',
+  CAVALRY: 'CAVALRY',
   SPY: 'SPY',
+  RAM: 'RAM',
+  CATAPULT: 'CATAPULT',
   NOBLE: 'NOBLE',
 } as const;
 
@@ -18,15 +20,30 @@ export interface UnitCost {
   population: number;
   time: number; // seconds
   requiredBarracksLevel: number;
+  requiredThroneHallLevel?: number;
 }
+
+export type UnitPassive =
+  | { readonly kind: 'attackVsUnits'; readonly targets: readonly UnitType[]; readonly bonus: number }
+  | { readonly kind: 'attackVsWall'; readonly bonus: number }
+  | { readonly kind: 'attackOnRaid'; readonly bonus: number }
+  | { readonly kind: 'defenseOnGarrison'; readonly bonus: number }
+  | { readonly kind: 'aoeDamage' }
+  | { readonly kind: 'scout' };
 
 export interface UnitStats {
   attack: number;
+  /**
+   * Défense scindée par archétype d'attaquant. Au MVP, les 3 valeurs sont
+   * identiques par design ; le split reste pour permettre la diff par run 004
+   * (résolution combat) sans casser le typage côté callers.
+   */
   defenseInfantry: number;
   defenseCavalry: number;
   defenseArcher: number;
   speed: number;
   carryCapacity: number;
+  passive: UnitPassive | null;
 }
 
 export interface UnitsConfig {

@@ -48,7 +48,7 @@ Spécificités runtime :
 | `ArmyUnit` | inventaire `{villageId, unitType, quantity}` |
 | `TrainingQueue` | entraînement en cours, `unitType`, `quantity`, `completesAt` |
 
-`unitType` ∈ `{ MILITIA, ARCHER, SQUIRE, TEMPLAR, SAVAGE, CAVALRY, CATAPULT, SPY, NOBLE }` — la liste exacte est dans `@battleforthecrown/shared/army`.
+`unitType` : énumération source de vérité dans `@battleforthecrown/shared/army` (`UNIT_TYPES`). Catalogue complet (stats, coûts, passifs) : [`docs/gameplay/08-units.md`](../gameplay/08-units.md).
 
 ### Combat
 

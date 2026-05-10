@@ -1,3 +1,4 @@
+import type { UnitType } from '../army/types';
 import type { PowerConfig } from '../world';
 
 export const BUILDING_POWER_WEIGHTS = Object.freeze({
@@ -16,15 +17,17 @@ export const BUILDING_POWER_WEIGHTS = Object.freeze({
 });
 
 export const UNIT_POWER_WEIGHTS = Object.freeze({
-  MILITIA: 5,
+  MILITIA: 2,
   SQUIRE: 8,
-  ARCHER: 9,
+  WARRIOR: 12,
+  ARCHER: 6,
+  TEMPLAR: 12,
   CAVALRY: 15,
-  TEMPLAR: 20,
-  CATAPULT: 30,
-  SPY: 4,
-  NOBLE: 50,
-});
+  SPY: 10,
+  RAM: 30,
+  CATAPULT: 40,
+  NOBLE: 100,
+} satisfies Record<UnitType, number>);
 
 const DEFAULT_BUILDING_POWER_WEIGHT = 5;
 const DEFAULT_UNIT_POWER_WEIGHT = 1;

@@ -19,6 +19,14 @@ export const UNIT_COSTS: Record<UnitType, UnitCost> = {
     time: seconds(60),
     requiredBarracksLevel: 2,
   },
+  [UNIT_TYPES.WARRIOR]: {
+    wood: 120,
+    stone: 80,
+    iron: 50,
+    population: 2,
+    time: seconds(180),
+    requiredBarracksLevel: 3,
+  },
   [UNIT_TYPES.ARCHER]: {
     wood: 60,
     stone: 40,
@@ -28,7 +36,7 @@ export const UNIT_COSTS: Record<UnitType, UnitCost> = {
     requiredBarracksLevel: 3,
   },
   [UNIT_TYPES.TEMPLAR]: {
-    wood: 200,
+    wood: 80,
     stone: 150,
     iron: 120,
     population: 2,
@@ -49,7 +57,15 @@ export const UNIT_COSTS: Record<UnitType, UnitCost> = {
     iron: 20,
     population: 1,
     time: seconds(90),
-    requiredBarracksLevel: 5,
+    requiredBarracksLevel: 3,
+  },
+  [UNIT_TYPES.RAM]: {
+    wood: 300,
+    stone: 400,
+    iron: 200,
+    population: 4,
+    time: seconds(360),
+    requiredBarracksLevel: 99, // désactivé MVP
   },
   [UNIT_TYPES.CATAPULT]: {
     wood: 400,
@@ -57,15 +73,16 @@ export const UNIT_COSTS: Record<UnitType, UnitCost> = {
     iron: 300,
     population: 5,
     time: seconds(480),
-    requiredBarracksLevel: 8,
+    requiredBarracksLevel: 99, // désactivé MVP
   },
   [UNIT_TYPES.NOBLE]: {
-    wood: 1000,
-    stone: 800,
-    iron: 500,
-    population: 5,
-    time: seconds(600),
-    requiredBarracksLevel: 10,
+    wood: 5000,
+    stone: 5000,
+    iron: 5000,
+    population: 15,
+    time: seconds(28800), // 8h
+    requiredBarracksLevel: 99, // sentinel — NOBLE est gated par requiredThroneHallLevel (run 006)
+    requiredThroneHallLevel: 6,
   },
 };
 
@@ -81,48 +98,70 @@ export const UNIT_STATS: Record<UnitType, UnitStats> = {
     ...defense(5),
     speed: 10,
     carryCapacity: 25,
+    passive: null,
   },
   [UNIT_TYPES.SQUIRE]: {
     attack: 10,
     ...defense(10),
     speed: 15,
     carryCapacity: 50,
+    passive: { kind: 'attackVsUnits', targets: [UNIT_TYPES.ARCHER], bonus: 0.10 },
+  },
+  [UNIT_TYPES.WARRIOR]: {
+    attack: 20,
+    ...defense(5),
+    speed: 20,
+    carryCapacity: 35,
+    passive: { kind: 'attackOnRaid', bonus: 0.10 },
   },
   [UNIT_TYPES.ARCHER]: {
     attack: 12,
     ...defense(6),
     speed: 12,
     carryCapacity: 20,
+    passive: { kind: 'attackVsUnits', targets: [UNIT_TYPES.MILITIA, UNIT_TYPES.WARRIOR], bonus: 0.10 },
   },
   [UNIT_TYPES.TEMPLAR]: {
-    attack: 10,
-    ...defense(23),
+    attack: 5,
+    ...defense(15),
     speed: 10,
-    carryCapacity: 10,
+    carryCapacity: 40,
+    passive: { kind: 'defenseOnGarrison', bonus: 0.15 },
   },
   [UNIT_TYPES.CAVALRY]: {
     attack: 15,
     ...defense(8),
     speed: 35,
     carryCapacity: 100,
+    passive: null,
   },
   [UNIT_TYPES.SPY]: {
     attack: 8,
     ...defense(2),
     speed: 100,
     carryCapacity: 0,
+    passive: { kind: 'scout' },
+  },
+  [UNIT_TYPES.RAM]: {
+    attack: 50,
+    ...defense(10),
+    speed: 5,
+    carryCapacity: 0,
+    passive: { kind: 'attackVsWall', bonus: 0.50 },
   },
   [UNIT_TYPES.CATAPULT]: {
     attack: 80,
     ...defense(5),
     speed: 3,
     carryCapacity: 0,
+    passive: { kind: 'aoeDamage' },
   },
   [UNIT_TYPES.NOBLE]: {
     attack: 500,
     ...defense(500),
     speed: 5,
     carryCapacity: 0,
+    passive: null,
   },
 };
 
