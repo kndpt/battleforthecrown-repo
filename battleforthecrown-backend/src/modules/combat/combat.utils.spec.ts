@@ -1,4 +1,8 @@
-import { calculateCasualtyStats, isVictoryForAttacker } from './combat.utils';
+import {
+  calculateCasualtyStats,
+  isVictoryForAttacker,
+  distributeLossesProportionally,
+} from './combat.utils';
 
 describe('Combat Utils', () => {
   describe('calculateCasualtyStats', () => {
@@ -202,6 +206,95 @@ describe('Combat Utils', () => {
       const result = isVictoryForAttacker(losses, original);
 
       expect(result).toBe(true); // ARCHER not in losses, so 50 survive
+    });
+  });
+
+  describe('distributeLossesProportionally', () => {
+    it('should distribute losses equally when participants have same units', () => {
+      const totalLosses = { MILITIA: 40 };
+      const totalUnits = { MILITIA: 100 };
+      const participantUnits = { MILITIA: 50 };
+
+      const result = distributeLossesProportionally(
+        totalLosses,
+        totalUnits,
+        participantUnits,
+      );
+
+      expect(result).toEqual({ MILITIA: 20 });
+    });
+
+    it('should distribute losses proportionally with different unit counts', () => {
+      const totalLosses = { MILITIA: 60 };
+      const totalUnits = { MILITIA: 300 };
+      const participantUnits = { MILITIA: 100 }; // 1/3 of total
+
+      const result = distributeLossesProportionally(
+        totalLosses,
+        totalUnits,
+        participantUnits,
+      );
+
+      expect(result).toEqual({ MILITIA: 20 });
+    });
+
+    it('should floor losses (round in favor of defender)', () => {
+      const totalLosses = { MILITIA: 10 };
+      const totalUnits = { MILITIA: 3 };
+      const participantUnits = { MILITIA: 1 }; // 1/3 of total losses = 3.33...
+
+      const result = distributeLossesProportionally(
+        totalLosses,
+        totalUnits,
+        participantUnits,
+      );
+
+      expect(result).toEqual({ MILITIA: 3 });
+    });
+
+    it('should handle multiple unit types', () => {
+      const totalLosses = { MILITIA: 50, ARCHER: 20 };
+      const totalUnits = { MILITIA: 100, ARCHER: 100 };
+      const participantUnits = { MILITIA: 20, ARCHER: 50 };
+
+      const result = distributeLossesProportionally(
+        totalLosses,
+        totalUnits,
+        participantUnits,
+      );
+
+      expect(result).toEqual({
+        MILITIA: 10, // 50 * 20/100
+        ARCHER: 10, // 20 * 50/100
+      });
+    });
+
+    it('should return empty object if participant has no units of that type', () => {
+      const totalLosses = { MILITIA: 50 };
+      const totalUnits = { MILITIA: 100, ARCHER: 100 };
+      const participantUnits = { ARCHER: 50 };
+
+      const result = distributeLossesProportionally(
+        totalLosses,
+        totalUnits,
+        participantUnits,
+      );
+
+      expect(result).toEqual({});
+    });
+
+    it('should handle zero total units gracefully', () => {
+      const totalLosses = { MILITIA: 50 };
+      const totalUnits = { MILITIA: 0 };
+      const participantUnits = { MILITIA: 0 };
+
+      const result = distributeLossesProportionally(
+        totalLosses,
+        totalUnits,
+        participantUnits,
+      );
+
+      expect(result).toEqual({});
     });
   });
 });

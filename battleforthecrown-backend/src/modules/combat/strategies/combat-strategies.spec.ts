@@ -81,6 +81,7 @@ describe('Combat Strategies', () => {
           },
           units: {},
           resources: { wood: 100, stone: 50, iron: 30 },
+          participants: [{ villageId: 'barb-1', units: {} }],
         },
         config: {
           combat: { attackBonus: 1.0, defenseBonus: 1.0, lootFactor: 0.5 },
@@ -148,6 +149,9 @@ describe('Combat Strategies', () => {
           },
           units: { MILITIA: 30, ARCHER: 10 },
           resources: { wood: 500, stone: 300, iron: 200 },
+          participants: [
+            { villageId: 'v2', units: { MILITIA: 30, ARCHER: 10 } },
+          ],
         },
         config: {
           combat: { attackBonus: 1.5, defenseBonus: 1.0, lootFactor: 0.5 },
@@ -225,6 +229,9 @@ describe('Combat Strategies', () => {
           },
           units: { MILITIA: 100, ARCHER: 50 },
           resources: { wood: 500, stone: 300, iron: 200 },
+          participants: [
+            { villageId: 'v2', units: { MILITIA: 100, ARCHER: 50 } },
+          ],
         },
         config: {
           combat: { attackBonus: 1.0, defenseBonus: 1.5, lootFactor: 0.5 },
@@ -299,6 +306,7 @@ describe('Combat Strategies', () => {
           },
           units: { MILITIA: 50 },
           resources: { wood: 100, stone: 50, iron: 30 },
+          participants: [{ villageId: 'v2', units: { MILITIA: 50 } }],
         },
         config: {
           combat: { attackBonus: 1.0, defenseBonus: 1.5, lootFactor: 0.5 },
@@ -372,6 +380,7 @@ describe('Combat Strategies', () => {
           },
           units: { MILITIA: 100 },
           resources: { wood: 100, stone: 50, iron: 30 },
+          participants: [{ villageId: 'v2', units: { MILITIA: 100 } }],
         },
         config: {
           combat: { attackBonus: 1.0, defenseBonus: 1.0, lootFactor: 0.5 },

@@ -1,5 +1,5 @@
 import { Injectable, Logger, Inject, OnModuleInit } from '@nestjs/common';
-import { Expedition, Prisma } from '@prisma/client';
+import { Expedition, Prisma, ExpeditionKind } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WorldConfigService } from '../world/world-config.service';
 import { ResourcesService } from '../resources/resources.service';
@@ -10,7 +10,11 @@ import { CombatContext } from './interfaces/combat-context.interface';
 import { PrismaClientOrTx } from '../../common/prisma.types';
 import { createOutboxEvent } from '../event/event.utils';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
-import { calculateCasualtyStats, isVictoryForAttacker } from './combat.utils';
+import {
+  calculateCasualtyStats,
+  isVictoryForAttacker,
+  distributeLossesProportionally,
+} from './combat.utils';
 import { parseUnitMap, encodeUnitMap, encodeLootResult } from './codecs';
 import { getStrategyBonusValue } from '@battleforthecrown/shared/village';
 import { calculateDistance } from '@battleforthecrown/shared/logic';
@@ -83,6 +87,10 @@ export class CombatWorker implements OnModuleInit {
             `Expedition ${data.expeditionId} already resolved (${expedition.status})`,
           );
           return;
+        }
+
+        if (expedition.kind === ExpeditionKind.REINFORCE) {
+          return this.handleReinforcementArrival(tx, expedition);
         }
 
         // 2. Build combat context
@@ -164,31 +172,75 @@ export class CombatWorker implements OnModuleInit {
               await this.outbox.resourcesChanged(defenderVillage.id, tx);
             }
 
-            // Update defender unit inventory (apply losses)
+            // Update defender participants (apply losses)
             const lossesDefender = resolution.lossesDefender || {};
-            for (const [unitType, losses] of Object.entries(lossesDefender)) {
-              if (losses > 0) {
-                await tx.unitInventory.update({
-                  where: {
-                    villageId_unitType: {
-                      villageId: defenderVillage.id,
-                      unitType,
-                    },
-                  },
-                  data: {
-                    quantity: { decrement: losses },
-                  },
-                });
-              }
-            }
+            const totalDefenderUnits = context.defender.units || {};
 
-            // Release defender population for dead units (PvP only — barbarians have no Population row).
-            const popReleasedDefender = sumPopulationCost(lossesDefender);
-            if (popReleasedDefender > 0) {
-              await tx.population.update({
-                where: { villageId: defenderVillage.id },
-                data: { used: { decrement: popReleasedDefender } },
-              });
+            for (const participant of context.defender.participants) {
+              const participantLosses = distributeLossesProportionally(
+                lossesDefender,
+                totalDefenderUnits,
+                participant.units,
+              );
+
+              if (participant.villageId === defenderVillage.id) {
+                // Local units losses
+                for (const [unitType, losses] of Object.entries(
+                  participantLosses,
+                )) {
+                  if (losses > 0) {
+                    await tx.unitInventory.update({
+                      where: {
+                        villageId_unitType: {
+                          villageId: defenderVillage.id,
+                          unitType,
+                        },
+                      },
+                      data: {
+                        quantity: { decrement: losses },
+                      },
+                    });
+                  }
+                }
+
+                // Release local population
+                const popReleasedLocal = sumPopulationCost(participantLosses);
+                if (popReleasedLocal > 0) {
+                  await tx.population.update({
+                    where: { villageId: defenderVillage.id },
+                    data: { used: { decrement: popReleasedLocal } },
+                  });
+                }
+              } else {
+                // Garrison units losses
+                for (const [unitType, losses] of Object.entries(
+                  participantLosses,
+                )) {
+                  if (losses > 0) {
+                    await tx.garrison.update({
+                      where: {
+                        villageId_originVillageId_unitType: {
+                          villageId: defenderVillage.id,
+                          originVillageId: participant.villageId,
+                          unitType,
+                        },
+                      },
+                      data: {
+                        quantity: { decrement: losses },
+                      },
+                    });
+                  }
+                }
+
+                // Release origin population
+                const popReleasedOrigin = sumPopulationCost(participantLosses);
+                if (popReleasedOrigin > 0) {
+                  await tx.population.update({
+                    where: { villageId: participant.villageId },
+                    data: { used: { decrement: popReleasedOrigin } },
+                  });
+                }
+              }
             }
           }
         }
@@ -515,26 +567,76 @@ export class CombatWorker implements OnModuleInit {
         })
       : { wood: 0, stone: 0, iron: 0 };
 
+    const units: UnitMap = {};
+
     return {
       kind: 'BARBARIAN_VILLAGE' as const,
       village,
-      units: {},
+      units,
       resources,
+      participants: [{ villageId: village.id, units }],
     };
   }
 
   private async buildPlayerDefender(tx: PrismaClientOrTx, villageId: string) {
     const village = await tx.village.findUniqueOrThrow({
       where: { id: villageId },
-      include: { resourceStock: true, unitInventory: true },
+      include: {
+        resourceStock: true,
+        unitInventory: true,
+        strategyConfig: true,
+      },
     });
+
+    // Get reinforcements stationned in this village
+    const garrisons = await tx.garrison.findMany({
+      where: { villageId },
+      include: {
+        originVillage: {
+          include: { strategyConfig: true },
+        },
+      },
+    });
+
+    const localUnits: UnitMap = Object.fromEntries(
+      village.unitInventory.map((inv) => [inv.unitType, inv.quantity]),
+    );
+
+    const participants: CombatParticipant[] = [
+      {
+        villageId: village.id,
+        units: localUnits,
+        strategy: village.strategyConfig?.strategy,
+      },
+    ];
+
+    const totalUnits: UnitMap = { ...localUnits };
+
+    for (const g of garrisons) {
+      const gUnits: UnitMap = { [g.unitType as UnitType]: g.quantity };
+      const existingParticipant = participants.find(
+        (p) => p.villageId === g.originVillageId,
+      );
+
+      if (existingParticipant) {
+        existingParticipant.units[g.unitType as UnitType] =
+          (existingParticipant.units[g.unitType as UnitType] ?? 0) + g.quantity;
+      } else {
+        participants.push({
+          villageId: g.originVillageId,
+          units: gUnits,
+          strategy: g.originVillage?.strategyConfig?.strategy,
+        });
+      }
+
+      totalUnits[g.unitType as UnitType] =
+        (totalUnits[g.unitType as UnitType] ?? 0) + g.quantity;
+    }
 
     return {
       kind: 'PLAYER_VILLAGE' as const,
       village,
-      units: Object.fromEntries(
-        village.unitInventory.map((inv) => [inv.unitType, inv.quantity]),
-      ),
+      units: totalUnits,
       resources: village.resourceStock
         ? {
             wood: village.resourceStock.wood,
@@ -542,6 +644,90 @@ export class CombatWorker implements OnModuleInit {
             iron: village.resourceStock.iron,
           }
         : { wood: 0, stone: 0, iron: 0 },
+      participants,
     };
+  }
+
+  private async handleReinforcementArrival(
+    tx: PrismaClientOrTx,
+    expedition: Expedition,
+  ) {
+    this.logger.log(`Processing reinforcement arrival: ${expedition.id}`);
+
+    const units = parseUnitMap(expedition.units, 'expedition.units');
+    const originVillageId =
+      expedition.reinforcementOriginVillageId || expedition.attackerVillageId;
+    const isReturningHome = expedition.targetRefId === originVillageId;
+
+    if (isReturningHome) {
+      this.logger.log(`Reinforcement returning home to ${originVillageId}`);
+      // Back to home inventory
+      for (const [unitType, quantity] of Object.entries(units)) {
+        if (quantity <= 0) continue;
+        await tx.unitInventory.upsert({
+          where: {
+            villageId_unitType: {
+              villageId: originVillageId,
+              unitType,
+            },
+          },
+          create: {
+            villageId: originVillageId,
+            unitType,
+            quantity,
+          },
+          update: {
+            quantity: { increment: quantity },
+          },
+        });
+      }
+    } else {
+      this.logger.log(
+        `Reinforcement arriving at ${expedition.targetRefId} from ${originVillageId}`,
+      );
+      // Transfer units to Garrison
+      for (const [unitType, quantity] of Object.entries(units)) {
+        if (quantity <= 0) continue;
+
+        await tx.garrison.upsert({
+          where: {
+            villageId_originVillageId_unitType: {
+              villageId: expedition.targetRefId,
+              originVillageId: originVillageId,
+              unitType,
+            },
+          },
+          create: {
+            villageId: expedition.targetRefId,
+            originVillageId: originVillageId,
+            unitType,
+            quantity,
+          },
+          update: {
+            quantity: { increment: quantity },
+          },
+        });
+      }
+    }
+
+    // 2. Update expedition status
+    await tx.expedition.update({
+      where: { id: expedition.id },
+      data: { status: 'RESOLVED' },
+    });
+
+    // 3. Create event
+    const eventKind = isReturningHome
+      ? 'reinforcement.returned'
+      : 'garrison.added';
+    await createOutboxEvent(tx, eventKind, expedition.targetRefId, {
+      villageId: expedition.targetRefId,
+      originVillageId: originVillageId,
+      units,
+    });
+
+    this.logger.log(
+      `Reinforcement ${isReturningHome ? 'returned' : 'stationed'}: ${expedition.id}`,
+    );
   }
 }

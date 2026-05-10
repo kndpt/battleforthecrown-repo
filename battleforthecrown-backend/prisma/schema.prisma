@@ -19,6 +19,11 @@ enum WorldRole {
   MOD
 }
 
+enum ExpeditionKind {
+  ATTACK
+  REINFORCE
+}
+
 enum ExpeditionStatus {
   EN_ROUTE
   RESOLVED
@@ -101,6 +106,8 @@ model Village {
   unitInventory UnitInventory[]
   unitTraining  UnitTraining[]
   strategyConfig     VillageStrategyConfig?
+  garrisons          Garrison[] @relation("VillageGarrison")
+  sentReinforcements Garrison[] @relation("OriginVillageGarrison")
 
   @@unique([worldId, x, y])
   @@index([userId])
@@ -281,6 +288,8 @@ model Expedition {
   id                String           @id @default(cuid())
   worldId           String           @map("world_id")
   attackerVillageId String           @map("attacker_village_id")
+  reinforcementOriginVillageId String? @map("reinforcement_origin_village_id")
+  kind              ExpeditionKind   @default(ATTACK)
   targetKind        TargetKind       @map("target_kind")
   targetRefId       String           @map("target_ref_id")
   targetX           Int              @map("target_x")
@@ -358,4 +367,20 @@ model VillageStrategyConfig {
   @@index([villageId])
   @@index([strategy])
   @@map("village_strategy_config")
+}
+
+model Garrison {
+  id              String  @id @default(cuid())
+  villageId       String  @map("village_id")
+  originVillageId String  @map("origin_village_id")
+  unitType        String  @map("unit_type")
+  quantity        Int     @default(0)
+
+  village       Village @relation("VillageGarrison", fields: [villageId], references: [id], onDelete: Cascade)
+  originVillage Village @relation("OriginVillageGarrison", fields: [originVillageId], references: [id], onDelete: Cascade)
+
+  @@unique([villageId, originVillageId, unitType])
+  @@index([villageId])
+  @@index([originVillageId])
+  @@map("garrison")
 }

@@ -83,10 +83,10 @@ combat/
 └── combat.utils.ts               # Helpers calcul (pertes, butin, distance, durée trajet)
 ```
 
-Flow attaque :
-1. `POST /combat/attack` → `CombatService.initiateAttack` valide + crée `Combat` + déclenche job pg-boss à `arrivalAt`.
-2. `CombatWorker.handle` → résout via la stratégie (Barbarian/Player), génère `CombatReport`, crée events `battle.resolved` + `village.attacked`/`conquered`.
-3. `ReturnWorker.handle` → ramène l'armée + butin à `returnAt`, event `battle.returned`.
+Flow expédition (Attaque/Renfort) :
+1. `POST /combat/attack` ou `/combat/reinforce` → `CombatService.initiate*` valide + crée `Expedition` + déclenche job pg-boss à `arrivalAt`.
+2. `CombatWorker.handle` → résout selon le `kind` (ATTACK: combat via stratégie ; REINFORCE: stationnement en `Garrison`), génère `CombatReport` (si combat), crée events `battle.resolved` + `village.attacked`/`conquered`.
+3. `ReturnWorker.handle` → ramène l'armée + butin (si raid) ou troupes rappelées (si renfort) à `returnAt`, event `battle.returned`.
 
 ### World
 

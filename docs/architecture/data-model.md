@@ -45,8 +45,9 @@ Spécificités runtime :
 
 | Table | Rôle |
 |-------|------|
-| `ArmyUnit` | inventaire `{villageId, unitType, quantity}` |
-| `TrainingQueue` | entraînement en cours, `unitType`, `quantity`, `completesAt` |
+| `UnitInventory` | inventaire `{villageId, unitType, quantity}` |
+| `UnitTraining` | entraînement en cours, `unitType`, `quantity`, `nextUnitEta` |
+| `Garrison` | troupes stationnées en renfort : `villageId` (hôte), `originVillageId` (source), `unitType`, `quantity`. |
 
 `unitType` : énumération source de vérité dans `@battleforthecrown/shared/army` (`UNIT_TYPES`). Catalogue complet (stats, coûts, passifs) : [`docs/gameplay/08-units.md`](../gameplay/08-units.md).
 
@@ -54,12 +55,12 @@ Spécificités runtime :
 
 | Table | Rôle |
 |-------|------|
-| `Combat` | une expédition, `originVillageId`, `targetVillageId` ou `targetBarbarianVillageId`, `arrivalAt`, `returnAt`, `isVictory`, `isResolved` |
-| `Army` | armée embarquée dans un combat (snapshot au départ, mutée pour les pertes) |
-| `Loot` | butin transporté au retour |
-| `CombatReport` | rapport persistant lu par les joueurs (`reader`/`opponent`) |
+| `Expedition` | un trajet d'armée (ou `Combat` dans la doc gameplay). Champs : `attackerVillageId`, `targetRefId`, `arrivalAt`, `returnAt`, `status`. |
+| `Expedition.kind` | `ATTACK` ou `REINFORCE`. Détermine le comportement à l'arrivée. |
+| `Expedition.reinforcementOriginVillageId` | utilisé pour identifier le village d'origine lors d'un rappel (Recall) de renforts. |
+| `CombatReport` | rapport persistant lu par les joueurs (`reader`/`opponent`). |
 
-Un combat passe par les phases `EN_ROUTE → RESOLVED → RETURNING → RETURNED` côté frontend. Backend : un job pg-boss à `arrivalAt` (résolution), puis un autre à `returnAt` (retour).
+Un trajet passe par les phases `EN_ROUTE → RESOLVED → RETURNING` (cf. `ExpeditionStatus`). Backend : un job pg-boss à `arrivalAt` (résolution), puis un autre à `returnAt` (retour).
 
 ### Crowns
 
@@ -98,15 +99,13 @@ User ──< WorldMembership >── World
  │
  └── Village ──< Building
       │
-      ├── BuildingQueue (0..1 par bâtiment ou agrégé)
+      ├── UnitInventory
+      ├── UnitTraining
+      ├── Garrison (hôte & source)
       │
-      ├── ArmyUnit ──< TrainingQueue
-      │
-      ├── Combat (origin)  ─→ Village ou BarbarianVillage (target)
+      ├── Expedition (origin)  ─→ Village ou BarbarianVillage (target)
       │     │
-      │     ├── Army (snapshot embarqué)
-      │     ├── Loot (au retour)
-      │     └── CombatReport (×2, attaquant + défenseur)
+      │     └── CombatReport (1:1 via reportId)
       │
       └── Crown ──< CrownTransaction
 ```

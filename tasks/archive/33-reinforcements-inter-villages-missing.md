@@ -1,7 +1,7 @@
 # 33 — Renforts inter-villages : 100 % non implémenté côté backend
 
 **Sévérité** : 🟠 Majeur (feature spec MVP manquante)
-**Statut** : 🆕 Ouvert 2026-05-10 (issue de [run 004](./runs/archive/004-audit-combat.md) — confirmation grep zéro hit)
+**Statut** : 🏃 RUNNING 2026-05-10 (Démarré)
 **Spec amont** : [ticket 13](./archive/13-reinforcements-between-own-villages.md) (✅ Résolu spec 2026-05-09) — règles tranchées, ce ticket couvre l'implémentation.
 
 ## Symptôme

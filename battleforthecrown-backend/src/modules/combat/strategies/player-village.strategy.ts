@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CombatStrategy, CombatResolution } from './combat-strategy.interface';
-import { CombatContext } from '../interfaces/combat-context.interface';
+import { CombatContext, CombatParticipant } from '../interfaces/combat-context.interface';
 import { LootManager } from '../loot/loot.manager';
 import { getUnitStats, type UnitMap } from '@battleforthecrown/shared/army';
 import { typedEntries } from '@battleforthecrown/shared/utils';
+import { getStrategyBonusValue } from '@battleforthecrown/shared/village';
 
 @Injectable()
 export class PlayerVillageStrategy implements CombatStrategy {
@@ -73,17 +74,29 @@ export class PlayerVillageStrategy implements CombatStrategy {
     // For now, use defenseInfantry as base defense
     // TODO v2: Determine attack type (infantry/cavalry/archer) and use appropriate defense
     let totalDefensePower = 0;
-    const defenderUnits = defender.units || {};
-    for (const [unitType, quantity] of typedEntries(defenderUnits)) {
-      const stats = getUnitStats(unitType);
-      if (stats) {
-        totalDefensePower += stats.defenseInfantry * quantity;
+    
+    for (const participant of defender.participants) {
+      let participantDefensePower = 0;
+      for (const [unitType, quantity] of typedEntries(participant.units)) {
+        const stats = getUnitStats(unitType);
+        if (stats) {
+          participantDefensePower += stats.defenseInfantry * quantity;
+        }
       }
+
+      // Apply defense bonus specific to this participant's origin style
+      if (participant.strategy) {
+        const defenseBonus = getStrategyBonusValue(participant.strategy, 'defenseBonus');
+        if (defenseBonus) {
+          participantDefensePower *= defenseBonus;
+        }
+      } else {
+        // Fallback to global config bonus if participant has no specific strategy (should not happen for players)
+        participantDefensePower *= config.combat.defenseBonus;
+      }
+
+      totalDefensePower += participantDefensePower;
     }
-
-    // Apply defense bonus from config
-
-    totalDefensePower *= config.combat.defenseBonus;
 
     // TODO v2: Add wall bonus
     // const wallBonus = this.calculateWallBonus(defender.village);
@@ -105,12 +118,12 @@ export class PlayerVillageStrategy implements CombatStrategy {
       // Attacker wins
       const lossRatio = totalDefensePower / totalAttackPower;
       lossesAttacker = this.applyLossRatio(attacker.units, lossRatio);
-      lossesDefender = { ...defenderUnits }; // All defenders die
+      lossesDefender = { ...(defender.units || {}) }; // All defenders die
     } else {
       // Defender wins
       const lossRatio = totalAttackPower / totalDefensePower;
       lossesAttacker = { ...attacker.units }; // All attackers die
-      lossesDefender = this.applyLossRatio(defenderUnits, lossRatio);
+      lossesDefender = this.applyLossRatio(defender.units || {}, lossRatio);
     }
 
     // Calculate survivors
@@ -119,7 +132,7 @@ export class PlayerVillageStrategy implements CombatStrategy {
       lossesAttacker,
     );
     const survivingDefender = this.subtractLosses(
-      defenderUnits,
+      defender.units || {},
       lossesDefender,
     );
 

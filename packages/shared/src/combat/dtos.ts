@@ -16,12 +16,31 @@ export const EXPEDITION_STATUSES = {
   RETURNING: 'RETURNING',
 } as const;
 
+export type ExpeditionKind = 'ATTACK' | 'REINFORCE';
+
+export const EXPEDITION_KINDS = {
+  ATTACK: 'ATTACK',
+  REINFORCE: 'REINFORCE',
+} as const;
+
 export interface AttackCommand {
   villageId: string;
   targetX: number;
   targetY: number;
   targetKind: TargetKind;
   targetRefId: string;
+  units: UnitMap;
+}
+
+export interface ReinforceCommand {
+  villageId: string;
+  targetVillageId: string;
+  units: UnitMap;
+}
+
+export interface RecallCommand {
+  villageId: string;
+  originVillageId: string;
   units: UnitMap;
 }
 

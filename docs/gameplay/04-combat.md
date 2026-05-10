@@ -39,7 +39,7 @@ Un joueur peut envoyer des troupes d'un de ses villages **A** vers un autre vill
 
 **Exception conquête** : pendant la **fenêtre de capture d'un village conquis** par l'attaquant, aucun renfort ni retrait n'est possible vers la garnison d'occupation. Cf. [`14-pvp-conquest.md` § Garnison d'occupation](./14-pvp-conquest.md#garnison-doccupation--ce-qui-reste-de-lescorte). Pour les renforts du **défenseur** vers son propre village pendant la fenêtre PvP, c'est autorisé et géré au § *Qui peut intervenir pendant la fenêtre PvP* (`14-pvp-conquest.md`).
 
-> 🔓 **Statut implémentation** : spec MVP — pas encore implémenté côté backend (tracker comme feature dédiée quand priorité donnée).
+> ✅ **Statut implémentation** : implémenté côté backend.
 
 ## Conquête
 

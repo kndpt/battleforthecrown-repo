@@ -12,6 +12,14 @@ import {
   attackCommandSchema,
   type AttackCommandDto,
 } from './dto/attack-command.schema';
+import {
+  reinforceCommandSchema,
+  type ReinforceCommandDto,
+} from './dto/reinforce-command.schema';
+import {
+  recallCommandSchema,
+  type RecallCommandDto,
+} from './dto/recall-command.schema';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { CurrentUser, type AuthenticatedUser } from '../../common/auth';
 
@@ -25,6 +33,22 @@ export class CombatController {
     @Body(new ZodValidationPipe(attackCommandSchema)) dto: AttackCommandDto,
   ) {
     return this.combatService.initiateAttack(user.id, dto);
+  }
+
+  @Post('reinforce')
+  reinforce(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(reinforceCommandSchema)) dto: ReinforceCommandDto,
+  ) {
+    return this.combatService.initiateReinforce(user.id, dto);
+  }
+
+  @Post('recall')
+  recall(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(recallCommandSchema)) dto: RecallCommandDto,
+  ) {
+    return this.combatService.initiateRecall(user.id, dto);
   }
 
   @Get(':villageId/active')
