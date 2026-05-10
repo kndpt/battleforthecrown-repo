@@ -21,6 +21,7 @@ Fiches d'exécution déléguées au système d'équipe Claude (lead + sub-agents
 - [005 — Audit spec 06 : barbares](./runs/005-audit-barbarians.md) — 📋 `PLANNED`. Phase 1, 5ᵉ sous-run. Templates T1-T5 (ajout T4/T5), blueprint troupes, défense barbare, régénération.
 - [006 — Audit spec 10 : conquête](./runs/006-audit-conquest.md) — 📋 `PLANNED`. Phase 1, 6ᵉ sous-run. Alignement coûts NOBLE + retrait Caserne + cap 1/village. 3 tickets externes ouverts (recruit-noble, capture window, hook combat) — débloque Phase 5.
 - [007 — Audit spec 07 : seeding barbares](./runs/007-audit-barbarian-spawning.md) — 📋 `PLANNED`. Phase 1, 7ᵉ et dernier sous-run. Cas particulier : spec en chantier, arbitrage A/B (finaliser vs reporter) en T1.
+- [009 — Fix UI bâtiments verrouillés / non construits](./runs/009-fix-ui-locked-unbuilt.md) — 📋 `PLANNED`. Phase 1, dette frontend post-run 002. Modale lock-aware, helper pur partagé, scène Pixi sans level 0, libellé `Niv. 0` → `Non construit`.
 
 ### Runs archivés
 
