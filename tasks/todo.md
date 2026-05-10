@@ -1,20 +1,19 @@
-# Ticket 29 — puissance publique village + royaume
+# Ticket 32 — unlockCastleLevel source unique
 
 ## Plan
 
-- [x] Préflight : repo clean, ticket ouvert, spec et rules relues.
-- [x] Trancher les questions produit avec l'utilisateur.
-- [x] Cartographier le module power backend.
-- [x] Ajouter des endpoints publics dédiés pour village et royaume.
-- [x] Vérifier build, QA backend, review et docs.
+- [x] Préflight : repo clean, ticket ouvert, spec/rules relues.
+- [x] Cartographier les exports `BUILDING_DEFINITIONS`, `BUILDING_UNLOCK_REQUIREMENTS` et les tests existants.
+- [x] Dériver `BUILDING_UNLOCK_REQUIREMENTS` depuis `BUILDING_DEFINITIONS` en conservant l'API publique.
+- [x] Vérifier typage/tests, review 5 axes et impact docs.
 - [x] Archiver le ticket, mettre à jour `tasks/README.md` et commit.
 
 ## Review
 
-- Correctness : aucun finding bloquant ou majeur. Les endpoints propriétaires restent inchangés, les endpoints publics retournent des payloads dédiés.
-- Readability : aucun finding.
-- Architecture : aucun finding. Piste B retenue pour éviter les DTOs variables sur les routes existantes.
-- Security : risque assumé par arbitrage produit sur `kingdomPower` public ; la puissance armée par village reste non exposée.
-- Performance : aucun finding pour le scope actuel.
-- Vérifications : build backend, tests backend, QA curl sur routes publiques et route propriétaire protégée.
-- Docs : mises à jour `docs/architecture/auth.md` et `docs/architecture/backend-modules.md`.
+- Correctness : aucun finding bloquant ou majeur. `BUILDING_UNLOCK_REQUIREMENTS` conserve son export public et se dérive de `BUILDING_DEFINITIONS`.
+- Readability : typage explicite des entrées de catalogue, test de contrat ciblé.
+- Architecture : source unique pour `unlockCastleLevel`; le record public devient une vue dérivée.
+- Security : aucun impact.
+- Performance : coût négligeable à l'import uniquement.
+- Vérifications : build shared vert, tests backend verts.
+- Docs : aucun changement nécessaire, raison : refacto interne d'un helper shared sans changement de mécanique ni API documentée.

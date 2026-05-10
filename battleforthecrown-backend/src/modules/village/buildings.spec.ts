@@ -1,9 +1,15 @@
 import {
+  BUILDING_DEFINITIONS,
   BUILDING_TYPES,
+  BUILDING_UNLOCK_REQUIREMENTS,
   getBuildingMaxLevel,
   getBuildingUnlockRequirement,
   isBuildingEnabled,
   getBuildingLevelValues,
+} from '@battleforthecrown/shared/village';
+import type {
+  BuildingDefinition,
+  BuildingType,
 } from '@battleforthecrown/shared/village';
 import { getBuildingPowerWeight } from '@battleforthecrown/shared/power';
 import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
@@ -127,5 +133,20 @@ describe('BUILDING_TYPES catalogue', () => {
     ];
     const actualTypes = Object.keys(BUILDING_TYPES).sort();
     expect(actualTypes).toEqual(expectedTypes.sort());
+  });
+});
+
+describe('BUILDING_UNLOCK_REQUIREMENTS', () => {
+  it('is derived from building definition unlock levels', () => {
+    const expectedRequirements = Object.fromEntries(
+      (Object.entries(BUILDING_DEFINITIONS) as Array<
+        [BuildingType, BuildingDefinition]
+      >)
+        .filter(([, definition]) => definition.unlockCastleLevel !== undefined)
+        .map(([type, definition]) => [type, definition.unlockCastleLevel])
+    );
+
+    expect(BUILDING_UNLOCK_REQUIREMENTS).toEqual(expectedRequirements);
+    expect(BUILDING_UNLOCK_REQUIREMENTS).not.toHaveProperty('CASTLE');
   });
 });

@@ -454,21 +454,17 @@ export const WATCHTOWER_VISION_LEVELS: Record<number, WatchtowerVisionLevel> = {
   10: { isWorldUnlocked: true, visibilityRadius: null },
 };
 
-export const BUILDING_UNLOCK_REQUIREMENTS: Partial<
-  Record<BuildingType, number>
-> = {
-  WOOD: 1,
-  STONE: 1,
-  IRON: 1,
-  WAREHOUSE: 1,
-  FARM: 1,
-  BARRACKS: 2,
-  WATCHTOWER: 3,
-  COUNCIL_HALL: 4,
-  THRONE_HALL: 6,
-  HIDEOUT: 4,
-  WALL: 5,
-};
+const BUILDING_DEFINITION_ENTRIES = Object.entries(BUILDING_DEFINITIONS) as Array<
+  [BuildingType, BuildingDefinition]
+>;
+
+export const BUILDING_UNLOCK_REQUIREMENTS: Partial<Record<BuildingType, number>> =
+  Object.fromEntries(
+    BUILDING_DEFINITION_ENTRIES.flatMap(([type, definition]) => {
+      if (definition.unlockCastleLevel === undefined) return [];
+      return [[type, definition.unlockCastleLevel]];
+    })
+  );
 
 export const getBuildingUnlockRequirement = (type: string): number | null =>
   BUILDING_UNLOCK_REQUIREMENTS[type as BuildingType] ?? null;

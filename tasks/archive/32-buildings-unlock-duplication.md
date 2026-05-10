@@ -1,7 +1,7 @@
 # 32 — Drift potentiel : `unlockCastleLevel` dupliqué entre `BUILDING_DEFINITIONS` et `BUILDING_UNLOCK_REQUIREMENTS`
 
 **Sévérité** : 🟡 Mineure (architecture / risque de drift silencieux)
-**Statut** : 🆕 Ouvert 2026-05-10 (issue de [run 002](./runs/archive/002-audit-buildings.md) — finding review `agent-skills:code-reviewer`)
+**Statut** : ✅ Résolu 2026-05-10 par `$run @tasks/32-buildings-unlock-duplication.md` (issue de [run 002](./runs/archive/002-audit-buildings.md) — finding review `agent-skills:code-reviewer`)
 
 ## Symptôme
 
@@ -51,3 +51,12 @@ Piste A en priorité (élimine la duplication, conserve l'API publique). Piste C
 ## Référence audit
 
 Run 002 — finding review `Architecture > majeur` (drift potentiel signalé par `agent-skills:code-reviewer`, hors scope du run pour rester dans le périmètre audit).
+
+## Résolution
+
+Piste A appliquée : `BUILDING_UNLOCK_REQUIREMENTS` est désormais dérivé de `BUILDING_DEFINITIONS[type].unlockCastleLevel`, en conservant l'export public consommé par le backend et le frontend.
+
+Vérifications :
+
+- `yarn workspace @battleforthecrown/shared build` vert.
+- `yarn workspace battleforthecrown-backend test` vert (12 suites / 159 tests).

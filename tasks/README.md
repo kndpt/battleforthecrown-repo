@@ -7,7 +7,6 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 - [40 — Recrutement Seigneur à la Salle du Trône](./40-recruit-noble-throne-hall.md) 🟠 Majeur — issue du [run 006](./runs/archive/006-audit-conquest.md). Use-case + endpoint dédié + déduction couronnes + file Trône.
 - [41 — Période de capture : `PendingConquest` + worker](./41-capture-window-data-model.md) 🔴 Bloquant conquête — issue du run 006. Data model Prisma + `conquest-finalize.worker` + 3 events Outbox. Bloqué par #40.
 - [42 — Hook combat post-résolution conquête](./42-combat-conquest-hook.md) 🟠 Majeur — issue du run 006. Seigneur survivant → ouvre #41 ; mort → loot ramené. Bloqué par #40 + #41.
-- [32 — Drift potentiel `unlockCastleLevel` ↔ `BUILDING_UNLOCK_REQUIREMENTS`](./32-buildings-unlock-duplication.md) 🟢 Mineur — issue du [run 002](./runs/archive/002-audit-buildings.md).
 - [33 — Renforts inter-villages non implémenté](./33-reinforcements-inter-villages-missing.md) 🟠 Majeur — issue du [run 004](./runs/archive/004-audit-combat.md). Spec amont : ticket 13 résolu.
 - [34 — Rappel d'armée pendant l'aller non implémenté](./34-army-recall-missing.md) 🟠 Majeur — issue du run 004.
 - [35 — Drift durée retour vs spec « même vitesse qu'à l'aller »](./35-return-travel-time-recomputed-vs-spec.md) 🟢 Mineur — issue du run 004.
@@ -43,6 +42,7 @@ Fiches d'exécution déléguées au système d'équipe Claude (lead + sub-agents
 - [29 — Puissance publique (village + royaume) non exposée](./archive/29-power-public-visibility-missing.md) ✅ Résolu 2026-05-10 par $run @tasks/29-power-public-visibility-missing.md (endpoints publics dédiés village/royaume).
 - [30 — Salle du Conseil : poids défini en spec, bâtiment absent du modèle](./archive/30-power-council-hall-missing.md) ✅ Résolu 2026-05-10 par run 002 (Piste A : implémentée comme bâtiment 1 niveau).
 - [31 — `PowerSnapshot.kingdom` : champ DB sémantiquement faux](./archive/31-power-snapshot-kingdom-field-misnamed.md) ✅ Résolu 2026-05-10 par $run @tasks/31-power-snapshot-kingdom-field-misnamed.md (Piste B : table morte supprimée).
+- [32 — Drift potentiel `unlockCastleLevel` ↔ `BUILDING_UNLOCK_REQUIREMENTS`](./archive/32-buildings-unlock-duplication.md) ✅ Résolu 2026-05-10 par $run @tasks/32-buildings-unlock-duplication.md (Piste A : source unique via dérivation depuis `BUILDING_DEFINITIONS`).
 - [01 — Audit des tests unitaires](./archive/01-unit-tests-audit.md) ✅ Résolu 2026-05-08
 - [02 — Tests smokes / E2E](./archive/02-smoke-tests-strategy.md) ✅ Résolu 2026-05-08
 - [03 — CI : automatiser ou pas](./archive/03-ci-strategy.md) ✅ Résolu 2026-05-08
