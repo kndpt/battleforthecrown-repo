@@ -21,7 +21,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Runs (exécutions semi-autonomes)
 
-Fiches d'exécution déléguées au système d'équipe Claude (lead + sub-agents à scope chirurgical). Slash commands : `/plan-run <description>` pour créer une fiche depuis la roadmap, `/run <path>` pour exécuter (fiche de run **ou** ticket actif — path obligatoire, `@` optionnel ; le mode est détecté via le path). Pipeline et conventions : [`runs/README.md`](./runs/README.md).
+Fiches d'exécution déléguées aux harnesses Claude Code, Codex ou Gemini CLI (lead + sub-agents à scope chirurgical). Slash commands : `/plan-run <description>` pour créer une fiche depuis la roadmap, `/run <path>` pour exécuter (fiche de run **ou** ticket actif — path obligatoire, `@` optionnel ; le mode est détecté via le path). Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 
 ### Runs archivés

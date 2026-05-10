@@ -1,18 +1,19 @@
 # Runs — fiches d'exécution semi-autonomes
 
-Un **run** = une exécution déléguée au pipeline lead + sub-agents (Claude Code ou Codex) sur un scope cadré : audit d'un module, implémentation d'une feature, fix d'un écart spec/code, etc.
+Un **run** = une exécution déléguée au pipeline lead + sub-agents (Claude Code, Codex ou Gemini CLI) sur un scope cadré : audit d'un module, implémentation d'une feature, fix d'un écart spec/code, etc.
 
 Chaque run a sa fiche `<id>-<slug>.md` dans ce dossier. Source de vérité de l'état d'un run pendant et après son exécution.
 
-Pipeline d'orchestration : skill `/run <path>` (path de fichier obligatoire, avec ou sans préfixe `@` — Codex strip le `@` automatiquement). Le path détermine le mode :
+Pipeline d'orchestration : skill `/run <path>` (path de fichier obligatoire, avec ou sans préfixe `@` — Codex/Gemini strip le `@` automatiquement). Le path détermine le mode :
 
 - `tasks/runs/<id>-<slug>.md` → **mode run**, pipeline 10 étapes complet.
 - `tasks/<id>-<slug>.md` → **mode ticket**, pipeline allégé (mode rapide auto, skip `code-mapper`/`test-runner`/`doc-writer` selon critères, cas A élargi à ≤ 30 lignes ≤ 2 fichiers, **review et hard gate `git diff` non-négociables**).
 
-Mêmes étapes 1-10 dans les deux harnesses, conventions de nommage des sub-agents adaptées :
+Mêmes étapes 1-10 dans les trois harnesses, conventions de nommage des sub-agents adaptées :
 
 - **Claude Code** : [`.claude/commands/run.md`](../../.claude/commands/run.md) (slash command natif) + sub-agents [`.claude/agents/*.md`](../../.claude/agents/) (kebab-case, ex `code-mapper`). Review = plugin `agent-skills:code-reviewer`.
-- **Codex** : [`.agents/skills/run/SKILL.md`](../../.agents/skills/run/SKILL.md) (consommé via le symlink `.codex/skills/run/`) + sub-agents [`.codex/agents/*.toml`](../../.codex/agents/) (snake_case, ex `code_mapper`). Review = lead lui-même ou agent `default` Codex (pas de reviewer dédié).
+- **Codex** : [`.agents/skills/run/SKILL.md`](../../.agents/skills/run/SKILL.md) (consommé via le symlink `.codex/skills/run/`) + sub-agents [`.codex/agents/*.toml`](../../.codex/agents/) (snake_case, ex `code_mapper`). Review = lead lui-même ou agent `default` Codex.
+- **Gemini CLI** : [`.agents/skills/run/SKILL.md`](../../.agents/skills/run/SKILL.md) (skill natif) + sub-agents [`.gemini/agents/*.md`](../../.gemini/agents/) (kebab-case, ex `code-mapper`). Review = lead ou agent `generalist`.
 
 ## Pipeline d'un run (étapes 1-10)
 
@@ -20,36 +21,41 @@ Mêmes étapes 1-10 dans les deux harnesses, conventions de nommage des sub-agen
 |---:|---|---|---|
 | 0 | Préflight (git clean, fiche `PLANNED`, spec lue, rules chargées) | Lead | Go / abort |
 | 1 | Clarification (≤ 4 questions, 1 aller-retour max) | Lead → User | Réponses ou skip |
-| 2 | Analyse code (cartographie) | Sub-agent `code-mapper` / `code_mapper` | `=== CARTE MODULE ===` |
+| 2 | Analyse code (cartographie) | Sub-agent `code-mapper` | `=== CARTE MODULE ===` |
 | 3 | Refinement (raisonnement, décomposition chirurgicale) | Lead | TaskList + maj fiche |
 | 4 | Coding | Lead (< 10 lignes, 1 fichier) **ou** sub-agent `implementer` | Diff + `=== RAPPORT EXEC ===` |
-| 5 | Testing (création/modif tests selon `tests.md`) | Lead (< 10 lignes) **ou** sub-agent `test-writer` / `test_writer` | Diff + rapport |
-| 6 | Review 5 axes | Claude : plugin `agent-skills:code-reviewer`. Codex : lead ou agent `default`. | Findings |
+| 5 | Testing (création/modif tests selon `tests.md`) | Lead (< 10 lignes) **ou** sub-agent `test-writer` | Diff + rapport |
+| 6 | Review 5 axes | Claude : plugin `agent-skills:code-reviewer`. Codex/Gemini : lead ou agent `generalist`. | Findings |
 | 7 | Fix des findings (1 finding = 1 tâche chirurgicale) | Sub-agent `implementer` | Diff + rapport |
-| 8 | Re-test | Sub-agent `test-runner` / `test_runner` | `=== RUN TESTS ===` |
-| 9 | Documentation (création/maj/références croisées) | Sub-agent `doc-writer` / `doc_writer` | Diff + rapport |
+| 8 | Re-test | Sub-agent `test-runner` | `=== RUN TESTS ===` |
+| 9 | Documentation (création/maj/références croisées) | Sub-agent `doc-writer` | Diff + rapport |
 | 10 | Archive + commit final | Lead | Fiche `DONE`, commit unique |
 
 Hard gate `git diff --stat` après chaque sub-agent qui écrit, sans exception.
 
 ## Sub-agents disponibles
 
-Définitions par harness : Claude Code → `.claude/agents/*.md` (kebab-case) ; Codex → `.codex/agents/*.toml` (snake_case, 6 agents convertis depuis Claude). Rôles identiques d'un côté à l'autre :
+Définitions par harness : 
+- Claude Code → `.claude/agents/*.md` (kebab-case)
+- Codex → `.codex/agents/*.toml` (snake_case)
+- Gemini CLI → `.gemini/agents/*.md` (kebab-case)
 
-- `run-planner` / `run_planner` — produit un draft de fiche depuis la roadmap (utilisé par `/plan-run`).
-- `code-mapper` / `code_mapper` — cartographie ciblée (signatures, callers, tests, écarts évidents).
+Rôles identiques d'un côté à l'autre :
+
+- `run-planner` — produit un draft de fiche depuis la roadmap (utilisé par `/plan-run`).
+- `code-mapper` — cartographie ciblée (signatures, callers, tests, écarts évidents).
 - `implementer` — applique un changement précis et bien cadré (≤ 5 fichiers).
-- `test-writer` / `test_writer` — écrit/modifie tests selon `tests.md` (refus anti-patterns).
-- `test-runner` / `test_runner` — lance suite, retourne uniquement les fails.
-- `doc-writer` / `doc_writer` — crée/maj docs + références croisées (refus duplication).
-- Review 5 axes : `agent-skills:code-reviewer` (plugin Claude) ou lead/agent `default` (Codex).
+- `test-writer` — écrit/modifie tests selon `tests.md` (refus anti-patterns).
+- `test-runner` — lance suite, retourne uniquement les fails.
+- `doc-writer` — crée/maj docs + références croisées (refus duplication).
+- Review 5 axes : `agent-skills:code-reviewer` (plugin Claude) ou lead/agent `generalist` (Gemini) / `default` (Codex).
 
 ## Slash commands
 
-Disponibles dans les deux harnesses (Claude : `.claude/commands/*.md` ; Codex : skill `.agents/skills/<name>/SKILL.md` consommé via le symlink `.codex/skills/`) :
+Disponibles dans les trois harnesses (Claude : `.claude/commands/*.md` ; Codex/Gemini : skill `.agents/skills/<name>/SKILL.md`) :
 
 - `/plan-run <description>` — crée une fiche de run depuis la roadmap (validation user avant écriture).
-- `/run <path>` — exécute une fiche `PLANNED` (mode run) ou résout un ticket actif (mode ticket). Path obligatoire, `@` optionnel (Codex le strip).
+- `/run <path>` — exécute une fiche `PLANNED` (mode run) ou résout un ticket actif (mode ticket). Path obligatoire, `@` optionnel.
 
 ## Cycle de vie d'un run
 

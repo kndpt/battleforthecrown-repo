@@ -1,8 +1,8 @@
 # Safety fallbacks — délégation sub-agent
 
-Mitigations **génériques** appliquées au pipeline `/run` quel que soit le harness (Claude Code ou Codex). Toutes activées par défaut, codifiées dans le pipeline (`.claude/commands/run.md` + `.agents/skills/run/SKILL.md`).
+Mitigations **génériques** appliquées au pipeline `/run` quel que soit le harness (Claude Code, Codex ou Gemini CLI). Toutes activées par défaut, codifiées dans le pipeline.
 
-> Pour les mitigations **avancées spécifiques à Claude Code** (worktree, fork, Agent Teams), voir [`safety-fallbacks-claude.md`](./safety-fallbacks-claude.md). Côté Codex, ces options n'ont pas d'équivalent natif à ce jour — les A-D ci-dessous restent la seule ligne de défense.
+> Pour les mitigations **avancées spécifiques à Claude Code** (worktree, fork, Agent Teams), voir [`safety-fallbacks-claude.md`](./safety-fallbacks-claude.md). Côté Codex/Gemini, ces options n'ont pas d'équivalent natif à ce jour — les A-D ci-dessous restent la seule ligne de défense.
 
 ## A — Hard gate `git diff --stat`
 
@@ -36,5 +36,5 @@ Si A-D s'avèrent insuffisants après 2 runs consécutifs (dérogation lead logu
 
 - [`README.md`](./README.md) — pipeline et conventions de runs.
 - [`safety-fallbacks-claude.md`](./safety-fallbacks-claude.md) — mitigations avancées Claude Code.
-- [`../../.claude/commands/run.md`](../../.claude/commands/run.md) — pipeline Claude Code (où A-D sont codifiées).
-- [`../../.agents/skills/run/SKILL.md`](../../.agents/skills/run/SKILL.md) — pipeline Codex (où A-D sont codifiées).
+- [`../../.agents/skills/run/SKILL.md`](../../.agents/skills/run/SKILL.md) — pipeline Codex/Gemini (skill).
+- [`../../.claude/commands/run.md`](../../.claude/commands/run.md) — pipeline Claude Code (slash command).
