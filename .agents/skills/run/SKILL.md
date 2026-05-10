@@ -39,6 +39,8 @@ Identifie les ambiguïtés bloquantes que **ni la spec ni les rules ne tranchent
 
 **Mode ticket** : si la cible a un § `## Question à trancher`, pose la question (une seule fois). Le user tranche la **piste** ; la décomposition reste de ton ressort.
 
+Exception : si la question est entièrement factuelle et vérifiable par cartographie (ex : "est-ce lu quelque part ?"), le lead peut trancher sans aller-retour user. Il doit alors loguer la preuve utilisée (commande/zone lue) dans les décisions.
+
 Pose tes questions au user en clair (1 message, ≤ 4 numérotées). Si non-réponse : statut `BLOCKED` (run) / log dans le ticket, exit.
 
 ## Étape 2 — Analyse code (cartographie)
@@ -75,10 +77,28 @@ Pour **chaque tâche chirurgicale** :
 | **A** (lead direct) | < 10 lignes, 1 fichier, sans subtilité | ≤ 30 lignes, ≤ 2 fichiers, sans subtilité | Lead via apply_patch. Logue dans `## Progress`. |
 | **B** (délégation) | sinon | sinon | Spawn the `implementer` agent. |
 
-Prompt `implementer` (refuse si scope ambigu) :
-- Spec source (section précise).
-- Fichiers à toucher (≤ 5).
-- Changement attendu, hors scope explicite, critère de succès observable.
+Prompt `implementer` (refuse si scope ambigu) : utiliser ces labels exacts pour matcher le contrat de l'agent, avec contenu libre mais précis.
+
+```text
+Spec source:
+- <ticket ou fiche run, section précise si utile>
+- <doc/spec canonique `docs/... § Section` quand elle existe>
+
+Fichiers à toucher:
+- <path 1>
+- <path 2>
+
+Changement attendu:
+- <description précise du changement>
+
+Hors scope explicite:
+- <ce qui ne doit pas être touché>
+
+Critère de succès:
+- <observable binaire>
+```
+
+`Spec source` peut être composée : ticket/finding pour le problème opérationnel + doc gameplay/architecture pour l'invariant canonique. Pour une migration destructive, le prompt doit mentionner explicitement la piste validée ou l'accord user.
 
 ## Hard gate (commun aux étapes 4, 5, 7, 9 — toute délégation qui écrit)
 

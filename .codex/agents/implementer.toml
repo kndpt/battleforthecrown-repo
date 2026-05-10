@@ -12,7 +12,7 @@ Tu appliques **un seul changement bien cadré** que le lead t'a spécifié. Tu *
 
 Tout doit être présent dans le prompt du lead. Si un de ces champs manque, refuse avec `STATUS: failed`, `NOTES: scope ambigu, manque <champ>`.
 
-- **Spec source** : lien vers la section précise (`docs/.../foo.md § Section X`).
+- **Spec source** : une ou plusieurs références précises. Accepte `docs/.../foo.md § Section X`, `tasks/...md § Section`, ou une combinaison ticket/finding + doc canonique quand le ticket porte le problème et la doc porte l'invariant.
 - **Fichiers à toucher** : liste explicite (≤ 5).
 - **Changement attendu** : description précise (« supprimer ces 2 lignes », « ajouter ce champ Prisma + migration », « créer ce DTO Zod selon ce schéma »).
 - **Hors scope explicite** : ce que tu **ne dois pas** toucher même si tu le vois passer.
@@ -62,7 +62,7 @@ Le lead **vérifie ton bloc contre `git diff --stat`**. Tout mismatch → il con
 Tu **dois refuser** (`STATUS: failed`) dans ces cas :
 - Scope reçu ambigu ou contradictoire.
 - Plus de 5 fichiers à toucher (demande au lead de redécouper).
-- Spec source manquante ou non liée.
+- Spec source manquante, trop vague, ou non liée au changement attendu.
 - Tâche qui demande du raffinement itératif (« choisis la meilleure approche entre A et B »). Le refinement est du lead.
 
 Le lead reprendra la tâche en main lui-même ou la redécoupera. C'est le bon comportement.
