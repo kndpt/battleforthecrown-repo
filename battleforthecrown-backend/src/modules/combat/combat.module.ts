@@ -12,7 +12,6 @@ import { PrismaModule } from '../../infra/prisma/prisma.module';
 import { WorldModule } from '../world/world.module';
 import { ArmyModule } from '../army/army.module';
 import { ResourcesModule } from '../resources/resources.module';
-import { PowerModule } from '../power/power.module';
 import { PgBossModule } from '../../infra/pg-boss/pg-boss.module';
 import { EventModule } from '../event/event.module';
 
@@ -22,7 +21,6 @@ import { EventModule } from '../event/event.module';
     WorldModule,
     ArmyModule,
     ResourcesModule,
-    PowerModule,
     PgBossModule,
     EventModule,
   ],

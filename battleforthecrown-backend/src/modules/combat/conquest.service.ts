@@ -5,17 +5,13 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
-import { PowerService } from '../power/power.service';
 import { createOutboxEvent } from '../event/event.utils';
 
 @Injectable()
 export class ConquestService {
   private readonly logger = new Logger(ConquestService.name);
 
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly powerService: PowerService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Conquer a village (MVP: barbarians only)
@@ -120,19 +116,6 @@ export class ConquestService {
         });
       }
 
-      // Buildings stay intact (one of the benefits of conquest!)
-
-      // Calculate initial power snapshot for new village
-      try {
-        await this.powerService.calculateAndSave(targetVillageId, tx);
-      } catch (error) {
-        this.logger.warn(
-          `Failed to calculate power for conquered village`,
-          error,
-        );
-      }
-
-      // Create event
       await createOutboxEvent(tx, 'village.conquered', targetVillageId, {
         villageId: targetVillageId,
         newOwnerId: attackerUserId,

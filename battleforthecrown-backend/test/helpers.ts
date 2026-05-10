@@ -38,7 +38,6 @@ const TABLES = [
   'village',
   'village_strategy_config',
   'event_outbox',
-  'power_snapshot',
   'zone_capacity',
   'chunk_spawn_state',
   'world_seed_state',

@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
-import { PrismaClientOrTx } from '../../common/prisma.types';
 import {
   getBuildingPowerWeight,
   getUnitPowerWeight,
@@ -80,34 +79,6 @@ export class PowerService {
     });
 
     return sorted.slice(0, limit);
-  }
-
-  /**
-   * Calculate and save power snapshot for a village
-   * Used after conquest or major changes
-   */
-  async calculateAndSave(villageId: string, tx?: PrismaClientOrTx) {
-    const prisma = tx || this.prisma;
-
-    const village = await prisma.village.findUnique({
-      where: { id: villageId },
-      include: { buildings: true, unitInventory: true },
-    });
-
-    if (!village) {
-      throw new NotFoundException('Village not found');
-    }
-
-    const scores = this.computeScores(village);
-
-    return prisma.powerSnapshot.create({
-      data: {
-        villageId,
-        total: scores.total,
-        kingdom: scores.building, // Note: DB field still named 'kingdom' but represents building power
-        army: scores.army,
-      },
-    });
   }
 
   private computeScores(village: {

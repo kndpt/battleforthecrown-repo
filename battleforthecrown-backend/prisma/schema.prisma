@@ -100,7 +100,6 @@ model Village {
   population    Population?
   unitInventory UnitInventory[]
   unitTraining  UnitTraining[]
-  powerSnapshot      PowerSnapshot[]
   strategyConfig     VillageStrategyConfig?
 
   @@unique([worldId, x, y])
@@ -233,19 +232,6 @@ model EventOutbox {
 
   @@index([dispatchedAt])
   @@map("event_outbox")
-}
-
-model PowerSnapshot {
-  villageId String   @map("village_id")
-  total     Int
-  kingdom   Int
-  army      Int
-  createdAt DateTime @default(now()) @map("created_at")
-
-  village Village @relation(fields: [villageId], references: [id], onDelete: Cascade)
-
-  @@id([villageId, createdAt])
-  @@map("power_snapshot")
 }
 
 model WorldMembership {

@@ -5,7 +5,7 @@
 ## Stack
 
 - **Postgres 16-alpine** dans Docker (`battleforthecrown-postgres`).
-- **Prisma 6.17** comme ORM (14 migrations dans `battleforthecrown-backend/prisma/migrations/`).
+- **Prisma 6.17** comme ORM (migrations dans `battleforthecrown-backend/prisma/migrations/`).
 - **pg-boss** utilise un schéma séparé `pgboss` (créé automatiquement par le backend au démarrage).
 - Connexion : `postgresql://postgres:postgres@localhost:5432/battleforthecrown` (cf. `battleforthecrown-backend/.env`).
 
@@ -36,7 +36,7 @@ docker exec battleforthecrown-postgres \
   psql -U postgres -d battleforthecrown -c '\dt'
 ```
 
-Tables attendues (extrait) : `User`, `World`, `Village`, `Building`, `ResourceStock`, `Population`, `UnitInventory`, `UnitTraining`, `WorldEntity`, `WorldSeedState`, `ChunkSpawnState`, `EventOutbox`, `PowerSnapshot`, `WorldMembership`, `ZoneCapacity`, `CrownBalance`, `Expedition`, `CombatReport`, `VillageStrategyConfig`.
+Tables attendues (extrait) : `User`, `World`, `Village`, `Building`, `ResourceStock`, `Population`, `UnitInventory`, `UnitTraining`, `WorldEntity`, `WorldSeedState`, `ChunkSpawnState`, `EventOutbox`, `WorldMembership`, `ZoneCapacity`, `CrownBalance`, `Expedition`, `CombatReport`, `VillageStrategyConfig`.
 
 ## Lancer le backend après le bootstrap
 
@@ -198,7 +198,7 @@ TRUNCATE TABLE
   "Building", "Population", "ResourceStock",
   "Village",
   "VillageStrategyConfig",
-  "EventOutbox", "PowerSnapshot",
+  "EventOutbox",
   "ZoneCapacity", "ChunkSpawnState", "WorldSeedState",
   "WorldEntity",
   "CrownBalance",
