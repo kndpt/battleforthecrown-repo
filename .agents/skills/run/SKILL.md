@@ -150,17 +150,27 @@ Pour chaque finding **bloquant** ou **majeur** :
 
 **Cap dur 3 cycles correctifs** (review → fix → re-review). Au 3ᵉ : escalade.
 
-## Étape 8 — Re-test
+## Étape 8 — Re-test + static-check
+
+**8a — Tests**
 
 | Mode | Qui fait |
 |---|---|
 | **Complet** | Spawn the `test_runner` agent. Périmètre : `backend-unit`, `pixi`, `backend-smoke`, ou `all`. |
 | **Rapide** | Lead lance `yarn workspace … test` directement via shell. |
 
-`RESULT: PASS` → continue. `RESULT: FAIL` :
+**8b — Static-check (obligatoire, les deux modes)**
+
+Lead lance `yarn static-check` à la racine (tsc `--noEmit` + eslint sans `--fix` sur backend + pixi). Catch les erreurs que tests + `yarn dev` masquent (rules type-aware `@typescript-eslint/no-unsafe-call`, types manquants TS2739, etc.).
+
+Si `static-check` échoue **et** que les erreurs sont dans le périmètre du run/ticket → retour étape 4. Sinon (erreurs préexistantes hors scope) → logue dans les décisions et continue.
+
+**Résultat global étape 8** : tests `PASS` ET static-check `PASS` → continue à 9.
+
+`FAIL` (tests ou static) :
 - Lié à une tâche → retour étape 4 (cap 2 cycles).
 - Test flaky connu → flag dans les décisions, accepte si stabilisation hors scope.
-- Bug indépendant → ticket, logue, n'aborte pas.
+- Bug indépendant ou erreur static préexistante hors scope → ticket, logue, n'aborte pas.
 
 ## Étape 9 — Documentation
 

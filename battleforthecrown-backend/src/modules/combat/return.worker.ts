@@ -64,7 +64,9 @@ export class ReturnWorker implements OnModuleInit {
         let reportId: string | null = null;
 
         if (expedition.recalled) {
-          this.logger.log(`Expedition ${data.expeditionId} was recalled, skipping report check`);
+          this.logger.log(
+            `Expedition ${data.expeditionId} was recalled, skipping report check`,
+          );
           survivingUnits = parseUnitMap(expedition.units, 'expedition.units');
         } else {
           const report = expedition.report;
@@ -119,7 +121,11 @@ export class ReturnWorker implements OnModuleInit {
         }
 
         // 5. Add looted resources to attacker's stock
-        if (lootedResources.wood > 0 || lootedResources.stone > 0 || lootedResources.iron > 0) {
+        if (
+          lootedResources.wood > 0 ||
+          lootedResources.stone > 0 ||
+          lootedResources.iron > 0
+        ) {
           await tx.resourceStock.update({
             where: { villageId: expedition.attackerVillageId },
             data: {

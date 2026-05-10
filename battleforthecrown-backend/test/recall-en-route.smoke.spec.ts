@@ -3,7 +3,6 @@ import {
   bootSmokeApp,
   joinWorld,
   registerUser,
-  seedSmokeWorld,
   truncateAll,
   waitFor,
   type SmokeContext,
@@ -35,12 +34,12 @@ describe('recall en-route smoke', () => {
 
     // 1. Setup Player A (Attacker)
     const userA = await registerUser(ctx.server, 'a' + Date.now());
-    const joinA = await joinWorld(
+    const joinA = (await joinWorld(
       ctx.server,
       userA.accessToken,
       world.id,
       'village-a',
-    );
+    )) as any;
     const villageAId = joinA.village.id;
 
     // 2. Give Player A some units
@@ -76,16 +75,17 @@ describe('recall en-route smoke', () => {
         units: { MILITIA: 100 },
       });
     expect(attackRes.status).toBeLessThan(300);
-    const expeditionId = attackRes.body.id;
+    const expeditionId = (attackRes.body as { id: string }).id;
 
     // 5. Recall en-route immediately
     const recallRes = await request(ctx.server)
       .post(`/combat/recall/${expeditionId}`)
       .set('Authorization', `Bearer ${userA.accessToken}`);
-    
+
     expect(recallRes.status).toBeLessThan(300);
-    expect(recallRes.body.recalled).toBe(true);
-    expect(recallRes.body.status).toBe('RETURNING');
+    const recallBody = recallRes.body as { recalled: boolean; status: string };
+    expect(recallBody.recalled).toBe(true);
+    expect(recallBody.status).toBe('RETURNING');
 
     // 6. Verify expedition status in DB
     const expedition = await ctx.prisma.expedition.findUnique({
@@ -93,7 +93,6 @@ describe('recall en-route smoke', () => {
     });
     expect(expedition?.recalled).toBe(true);
     expect(expedition?.status).toBe('RETURNING');
-
     // 7. Wait for return to A
     // Since we recalled immediately, returnAt should be very soon (elapsed time is small)
     await waitFor(

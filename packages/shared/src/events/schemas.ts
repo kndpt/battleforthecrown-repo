@@ -96,6 +96,20 @@ const ReinforcementReturnedPayloadSchema = z.object({
   units: UnitMapSchema,
 });
 
+const ExpeditionRecalledPayloadSchema = z.object({
+  expeditionId: z.string(),
+  villageId: z.string(),
+  returnAt: z.string(),
+});
+
+const ExpeditionReturnedPayloadSchema = z.object({
+  expeditionId: z.string(),
+  reportId: z.string().nullable(),
+  villageId: z.string(),
+  survivingUnits: UnitMapSchema,
+  loot: z.object({ resources: LootResourcesSchema }),
+});
+
 const GarrisonAddedPayloadSchema = z.object({
   villageId: z.string(),
   originVillageId: z.string(),
@@ -135,6 +149,8 @@ export const EVENT_PAYLOAD_SCHEMAS = {
   'reinforcement.sent': ReinforcementSentPayloadSchema,
   'reinforcement.recalled': ReinforcementRecalledPayloadSchema,
   'reinforcement.returned': ReinforcementReturnedPayloadSchema,
+  'expedition.recalled': ExpeditionRecalledPayloadSchema,
+  'expedition.returned': ExpeditionReturnedPayloadSchema,
   'garrison.added': GarrisonAddedPayloadSchema,
   'resources.changed': ResourcesChangedPayloadSchema,
   'crowns.changed': CrownsChangedPayloadSchema,

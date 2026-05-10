@@ -94,6 +94,20 @@ export interface ReinforcementReturnedPayload {
   units: UnitMap;
 }
 
+export interface ExpeditionRecalledPayload {
+  expeditionId: string;
+  villageId: string;
+  returnAt: string;
+}
+
+export interface ExpeditionReturnedPayload {
+  expeditionId: string;
+  reportId: string | null;
+  villageId: string;
+  survivingUnits: UnitMap;
+  loot: { resources: LootResources };
+}
+
 export interface GarrisonAddedPayload {
   villageId: string;
   originVillageId: string;
@@ -133,6 +147,8 @@ export type OutboxEventPayload =
   | { kind: 'reinforcement.sent'; payload: ReinforcementSentPayload }
   | { kind: 'reinforcement.recalled'; payload: ReinforcementRecalledPayload }
   | { kind: 'reinforcement.returned'; payload: ReinforcementReturnedPayload }
+  | { kind: 'expedition.recalled'; payload: ExpeditionRecalledPayload }
+  | { kind: 'expedition.returned'; payload: ExpeditionReturnedPayload }
   | { kind: 'garrison.added'; payload: GarrisonAddedPayload }
   | { kind: 'resources.changed'; payload: ResourcesChangedPayload }
   | { kind: 'crowns.changed'; payload: CrownsChangedPayload };
@@ -155,6 +171,8 @@ export type AnyEventPayload =
   | ReinforcementSentPayload
   | ReinforcementRecalledPayload
   | ReinforcementReturnedPayload
+  | ExpeditionRecalledPayload
+  | ExpeditionReturnedPayload
   | GarrisonAddedPayload
   | ResourcesChangedPayload
   | CrownsChangedPayload;
@@ -172,6 +190,8 @@ export interface ServerEvents {
   'reinforcement.sent': ReinforcementSentPayload;
   'reinforcement.recalled': ReinforcementRecalledPayload;
   'reinforcement.returned': ReinforcementReturnedPayload;
+  'expedition.recalled': ExpeditionRecalledPayload;
+  'expedition.returned': ExpeditionReturnedPayload;
   'garrison.added': GarrisonAddedPayload;
 }
 

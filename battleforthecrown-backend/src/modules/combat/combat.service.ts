@@ -17,6 +17,7 @@ import { ExpeditionKind } from '@prisma/client';
 import { encodeUnitMap } from './codecs';
 import PgBoss from 'pg-boss';
 import { createOutboxEvent } from '../event/event.utils';
+import { PrismaClientOrTx } from '../../common/prisma.types';
 
 export interface GarrisonLineDto {
   villageId: string;
@@ -402,7 +403,9 @@ export class CombatService {
       // 4. Verify timing (cannot recall if already arrived, even if worker hasn't run yet)
       const now = new Date();
       if (now >= expedition.arrivalAt) {
-        throw new BadRequestException('Expedition has already arrived at target');
+        throw new BadRequestException(
+          'Expedition has already arrived at target',
+        );
       }
 
       // 5. Calculate return time (time elapsed since departure)
@@ -420,13 +423,10 @@ export class CombatService {
       });
 
       // 7. Attempt to cancel combat resolution job
-      // Note: singletonKey used at dispatch is `combat:${expedition.id}`
-      // Falling back to status check in CombatWorker if cancel is not by singleton.
-      try {
-        await this.boss.cancel(`combat:${expeditionId}`);
-      } catch (err) {
-        this.logger.warn(`Failed to cancel combat job ${expeditionId}: ${err.message}`);
-      }
+      // Fallback: the job will still trigger but handleCombatResolution
+      // will skip it because the status is no longer EN_ROUTE.
+      // PgBoss.cancel requires a jobId, which we don't store.
+      // We rely on the status guard in the worker.
 
       // 8. Schedule return job
       await this.boss.send(
@@ -459,7 +459,7 @@ export class CombatService {
   }
 
   private async verifyAndDeductUnits(
-    tx: any,
+    tx: PrismaClientOrTx,
     villageId: string,
     units: Record<string, number>,
   ) {
@@ -468,7 +468,7 @@ export class CombatService {
     });
 
     const availableUnits = Object.fromEntries(
-      unitInventories.map((inv: any) => [inv.unitType, inv.quantity]),
+      unitInventories.map((inv) => [inv.unitType, inv.quantity]),
     );
 
     for (const [unitType, qty] of Object.entries(units)) {
@@ -499,7 +499,7 @@ export class CombatService {
   }
 
   private async calculateExpeditionTiming(
-    tx: any,
+    tx: PrismaClientOrTx,
     worldId: string,
     startX: number,
     startY: number,

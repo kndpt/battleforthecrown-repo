@@ -169,6 +169,34 @@ export function applyBattleReturned(payload: BattleReturnedPayload, ctx: Binding
   ctx.queryClient.invalidateQueries({ queryKey: ['army', payload.villageId] });
 }
 
+export function applyExpeditionRecalled(
+  payload: ServerEvents['expedition.recalled'],
+  _ctx: BindingsContext,
+): void {
+  useExpeditionsStore.getState().update(payload.expeditionId, {
+    phase: 'RETURNING',
+    returnAt: Date.parse(payload.returnAt),
+  });
+  useUiStore.getState().pushToast({
+    tone: 'warning',
+    title: 'Armée rappelée',
+    description: `Retour prévu à ${new Date(payload.returnAt).toLocaleTimeString()}`,
+    ttlMs: 4000,
+  });
+}
+
+export function applyExpeditionReturned(
+  payload: ServerEvents['expedition.returned'],
+  ctx: BindingsContext,
+): void {
+  useExpeditionsStore.getState().update(payload.expeditionId, { phase: 'RETURNED' });
+  scheduleTimeout(() => {
+    useExpeditionsStore.getState().remove(payload.expeditionId);
+  }, RETURNED_TO_CLEANUP_DELAY_MS);
+  ctx.queryClient.invalidateQueries({ queryKey: ['army', payload.villageId] });
+  ctx.queryClient.invalidateQueries({ queryKey: ['resources', payload.villageId] });
+}
+
 export function applyReinforcementSent(
   payload: ServerEvents['reinforcement.sent'],
   ctx: BindingsContext,
@@ -359,6 +387,8 @@ const bindings: ServerEventBindings = {
   'battle.sent': applyBattleSent,
   'battle.resolved': applyBattleResolved,
   'battle.returned': applyBattleReturned,
+  'expedition.recalled': applyExpeditionRecalled,
+  'expedition.returned': applyExpeditionReturned,
   'reinforcement.sent': applyReinforcementSent,
   'reinforcement.recalled': applyReinforcementRecalled,
   'reinforcement.returned': applyReinforcementReturned,

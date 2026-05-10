@@ -132,17 +132,27 @@ Pour chaque finding **bloquant** ou **majeur** :
 
 **Cap dur 3 cycles correctifs** (review → fix → re-review). Au 3ᵉ : escalade.
 
-## Étape 8 — Re-test
+## Étape 8 — Re-test + static-check
+
+**8a — Tests**
 
 | Mode | Qui fait |
 |---|---|
 | **Complet** | Spawn `test-runner` (`subagent_type: "test-runner"`). Périmètre : `backend-unit`, `pixi`, `backend-smoke`, ou `all` selon ce qui a été touché. |
 | **Rapide** | Lead lance `yarn workspace … test` directement via `Bash`. |
 
-`RESULT: PASS` → continue. `RESULT: FAIL` :
+**8b — Static-check (obligatoire, les deux modes)**
+
+Lead lance `yarn static-check` à la racine via `Bash` (tsc `--noEmit` + eslint sans `--fix` sur backend + pixi). Catch les erreurs que tests + `yarn dev` masquent (rules type-aware `@typescript-eslint/no-unsafe-call`, types manquants TS2739, etc.).
+
+Si `static-check` échoue **et** que les erreurs sont dans le périmètre du run/ticket → retour étape 4. Sinon (erreurs préexistantes hors scope) → logue dans les décisions et continue, ne réécris pas l'historique du repo.
+
+**Résultat global étape 8** : tests `PASS` ET static-check `PASS` → continue à 9.
+
+`FAIL` (tests ou static) :
 - Lié à une tâche du run/ticket → retour étape 4 (re-fix). Cap 2 cycles.
 - Test flaky connu → flag dans les décisions, accepte si stabilisation hors scope.
-- Bug indépendant détecté → ouvre un ticket, logue, n'aborte pas.
+- Bug indépendant détecté ou erreur static préexistante hors scope → ouvre un ticket, logue, n'aborte pas.
 
 ## Étape 9 — Documentation
 

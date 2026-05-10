@@ -16,6 +16,8 @@ import {
   type ReinforcementSentPayload,
   type ReinforcementRecalledPayload,
   type ReinforcementReturnedPayload,
+  type ExpeditionRecalledPayload,
+  type ExpeditionReturnedPayload,
   type GarrisonAddedPayload,
   type ResourcesChangedPayload,
   type CrownsChangedPayload,
@@ -139,6 +141,16 @@ export class EventOutboxService {
         break;
       case 'reinforcement.returned':
         await this.notifyReinforcementReturned(
+          parseEventPayload(event.kind, event.payload),
+        );
+        break;
+      case 'expedition.recalled':
+        await this.notifyExpeditionRecalled(
+          parseEventPayload(event.kind, event.payload),
+        );
+        break;
+      case 'expedition.returned':
+        await this.notifyExpeditionReturned(
           parseEventPayload(event.kind, event.payload),
         );
         break;
@@ -363,6 +375,20 @@ export class EventOutboxService {
     if (!userId) return;
 
     this.gateway.notifyUser(userId, 'reinforcement.returned', payload);
+  }
+
+  private async notifyExpeditionRecalled(payload: ExpeditionRecalledPayload) {
+    const userId = await this.getUserIdByVillage(payload.villageId);
+    if (!userId) return;
+
+    this.gateway.notifyUser(userId, 'expedition.recalled', payload);
+  }
+
+  private async notifyExpeditionReturned(payload: ExpeditionReturnedPayload) {
+    const userId = await this.getUserIdByVillage(payload.villageId);
+    if (!userId) return;
+
+    this.gateway.notifyUser(userId, 'expedition.returned', payload);
   }
 
   private async notifyGarrisonAdded(payload: GarrisonAddedPayload) {
