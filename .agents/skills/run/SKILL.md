@@ -1,164 +1,182 @@
 ---
 name: run
-description: Pipeline semi-autonome pour exécuter un run BFTC (audit, feature, fix) selon une fiche dans `tasks/runs/`. Lit la spec + la fiche, décompose en tâches chirurgicales, dispatche aux sub-agents (code_mapper, implementer, test_writer, test_runner, doc_writer), vérifie chaque rapport contre `git diff`, archive et commit. Use when user asks `$run <id>` (ex `$run 001`).
+description: "Use when executing a BFTC run or ticket from a required @file mention."
 disable-model-invocation: true
 ---
 
 # Lead — Pipeline semi-autonome
 
-Tu orchestres un run BFTC référencé par son ID (1er argument). Tu es **le lead** : tu tiens le plan, l'état, les décisions. Tu **ne lis pas le code volumineux toi-même** — délégué à `code_mapper`. Tu **ne codes pas** — délégué à `implementer`. Tu **ne lances pas les tests** — délégué à `test_runner` / `test_writer`. Tu **ne touches pas la doc** — délégué à `doc_writer`. Pour la review : toi-même ou agent `default` Codex (pas de reviewer dédié).
+Tu orchestres l'exécution d'une cible BFTC passée en argument sous forme de **mention fichier obligatoire** (`@<path>`). Tu es **le lead** : tu tiens le plan, l'état, les décisions. Tu **ne lis pas le code volumineux toi-même** — délégué à `code_mapper`. Tu **ne codes pas** — délégué à `implementer`. Tu **ne lances pas les tests** — délégué à `test_runner` / `test_writer`. Tu **ne touches pas la doc** — délégué à `doc_writer`. Pour la review : toi-même ou agent `default` Codex (pas de reviewer dédié).
 
-Ce que tu fais : **lire la spec + la fiche, raisonner, décomposer en tâches chirurgicales, dispatcher (`spawn the X agent`), vérifier les rapports contre `git diff`, archiver**.
+Pipeline en deux modes selon le path :
+
+| Path | Mode | Pipeline |
+|---|---|---|
+| `tasks/runs/(archive/)?<id>-<slug>.md` | **run** | 10 étapes complètes. |
+| `tasks/<id>-<slug>.md` | **ticket** | Pipeline allégé (mode rapide auto, voir §§ ci-dessous). |
+| autre / pas de mention | abort | Message clair, l'utilisateur doit fournir un `@<path>` valide. |
 
 > **Pour spawn un sub-agent** : dis explicitement « spawn the `<name>` agent with the following prompt: ... » et attends son résultat avant de continuer. Codex orchestre fan-out + collecte. `max_depth = 1` par défaut → les sub-agents ne peuvent pas spawn d'autres sub-agents.
 
-## Étape 0 — Préflight
+## Étape 0 — Préflight + routage
 
 1. `git status` — repo doit être clean. Sinon abort, signale au user.
-2. Identifie la fiche : `tasks/runs/<id>-*.md`. Si introuvable ou ambigu : abort.
-3. Lis la fiche entière. Vérifie statut = `PLANNED`. Sinon abort (run déjà fait, en cours, ou aborted).
-4. Lis la spec source citée dans `## Cible`.
-5. Lis les rules transversales pertinentes : `.agents/rules/conventions.md`, `tests.md`, `qa.md`, `docs.md`, `git.md`, + rules workspace si concerné.
-6. **Tu ne lis pas le code maintenant.** C'est l'étape 2.
+2. Vérifie qu'`$ARGUMENTS` contient une mention `@<path>`. Sinon abort : *"Mention fichier obligatoire. Exemple : `$run @tasks/35-…md` ou `$run @tasks/runs/006-…md`."*
+3. Détecte le **mode** via regex :
+   - `tasks/runs/(archive/)?<id>-.+\.md` → mode **run**.
+   - `tasks/<id>-.+\.md` (hors `tasks/runs/`) → mode **ticket**.
+   - sinon → abort.
+4. Lis la cible entière.
+5. **Mode run** : statut = `PLANNED`. Sinon abort.
+6. **Mode ticket** : statut header = `🆕 Ouvert`. Sinon abort.
+7. Lis la spec source citée.
+8. Lis les rules : `.agents/rules/{conventions,tests,qa,docs,git}.md` + rules workspace si concerné.
+9. **Tu ne lis pas le code applicatif maintenant.** C'est l'étape 2.
 
 ## Étape 1 — Clarification (1 aller-retour max, ≤ 4 questions)
 
-Identifie les ambiguïtés bloquantes que **ni la spec ni les rules ne tranchent**. Si tout est clair (cas attendu), saute cette étape.
+Identifie les ambiguïtés bloquantes que **ni la spec ni les rules ne tranchent**. Si tout est clair, saute.
 
-Pose tes questions au user en clair (1 message, ≤ 4 questions numérotées). Si l'utilisateur ne répond pas dans la session : statut `BLOCKED`, écris pourquoi dans `## Décisions prises`, exit.
+**Mode ticket** : si la cible a un § `## Question à trancher`, pose la question (une seule fois). Le user tranche la **piste** ; la décomposition reste de ton ressort.
+
+Pose tes questions au user en clair (1 message, ≤ 4 numérotées). Si non-réponse : statut `BLOCKED` (run) / log dans le ticket, exit.
 
 ## Étape 2 — Analyse code (cartographie)
 
-Spawn the **`code_mapper`** agent. Prompt :
-- **Zone** : modules listés dans `## Cible` de la fiche.
-- **Spec source** : lien vers la section précise.
-- **Focus** : ce que tu veux savoir (signatures, callers, tests existants, écarts évidents).
+**Mode rapide** (cf. §§ ci-dessous) : si scope ≤ 3 fichiers, **skip** `code_mapper`. Tu cartographies via `rg` + `read` ciblés.
 
-Reçois sa carte (`=== CARTE MODULE ===`). Garde-la en tête. **Tu n'as pas lu le code** — tu as lu la carte.
+**Mode complet** : spawn the **`code_mapper`** agent. Prompt :
+- **Zone** : modules listés dans la cible.
+- **Spec source** : section précise.
+- **Focus** : signatures, callers, tests existants, écarts évidents.
+
+Reçois `=== CARTE MODULE ===`.
 
 ## Étape 3 — Refinement (toi, le lead)
 
-Avec la spec + la carte, raisonne :
-- Quels invariants la spec impose ?
-- Quels écarts faut-il fixer ?
-- Quelle approche minimise la dette technique (server-authoritative ? Outbox ? Anti-patterns évités ?) ?
-- Quel découpage en tâches **chirurgicales** (≤ 5 fichiers chacune, scope précis, critère de succès observable) ?
+Avec spec + carte, raisonne :
+- Invariants spec, écarts à fixer.
+- Approche minimisant la dette (server-authoritative, Outbox, anti-patterns évités).
+- Découpage en tâches **chirurgicales** (≤ 5 fichiers chacune, scope précis, critère observable).
 
-Écris la décomposition dans `## Décomposition initiale` de la fiche. Garde une todo-list interne (Codex affiche la progression dans le TUI).
+**Mode run** : écris la décomposition dans `## Décomposition initiale` de la fiche. Statut → `RUNNING`, `Démarré` → date du jour.
+**Mode ticket** : pas de fiche à mettre à jour. Garde la décomposition en todo-list interne (Codex affiche dans le TUI).
 
-Statut fiche → `RUNNING`, `Démarré` → date du jour.
+**Bascule mode rapide** (auto) : si la décomposition tient en **1-2 cas A** (≤ 30 lignes ≤ 2 fichiers chacune), active le mode rapide. Logue la décision. Si à mi-parcours le scope explose, re-bascule en complet et logue.
 
-**Si la décomposition donne 0 tâche de coding** (audit pur, conformité OK) : skip étapes 4-5, passe à l'étape 6 puis à 9-10.
+**0 tâche de coding** : skip 4-5, passe à 6 (no-op) puis 9-10.
 
 ## Étape 4 — Coding
 
 Pour **chaque tâche chirurgicale** :
 
-### Cas A — Modif < 10 lignes ET 1 fichier ET sans subtilité
+| Cas | Seuil mode complet | Seuil mode rapide | Qui fait |
+|---|---|---|---|
+| **A** (lead direct) | < 10 lignes, 1 fichier, sans subtilité | ≤ 30 lignes, ≤ 2 fichiers, sans subtilité | Lead via apply_patch. Logue dans `## Progress`. |
+| **B** (délégation) | sinon | sinon | Spawn the `implementer` agent. |
 
-Tu fais toi-même via apply_patch. Pas de délégation (overhead > bénéfice). Logue dans `## Progress`.
-
-### Cas B — Sinon (≥ 10 lignes OU multi-fichiers OU subtilité)
-
-Spawn the **`implementer`** agent. Prompt **complet** (refuse si scope ambigu) :
-- Spec source (lien section précise).
+Prompt `implementer` (refuse si scope ambigu) :
+- Spec source (section précise).
 - Fichiers à toucher (≤ 5).
-- Changement attendu (description précise).
-- Hors scope explicite.
-- Critère de succès observable.
+- Changement attendu, hors scope explicite, critère de succès observable.
 
-### Hard gate post-implementer (OBLIGATOIRE)
+## Hard gate (commun aux étapes 4, 5, 7, 9 — toute délégation qui écrit)
 
 1. `git diff --stat` immédiat.
-2. Parse le bloc `=== RAPPORT EXEC ===` du sub-agent.
+2. Parse `=== RAPPORT EXEC ===`.
 3. Compare `STATUS` annoncé vs réalité du diff :
-   - `STATUS: success` mais diff vide → **dérogation lead** : refais via apply_patch. Logue dans `## Décisions prises § Dérogation lead`.
-   - `STATUS: failed` ou `partial` → décide : redécoupe et re-spawn, ou dérogation lead.
-   - `STATUS: success` et diff cohérent → marque tâche `completed`.
+   - `success` mais diff vide → **dérogation lead** : refais via apply_patch. Logue dans `## Décisions prises § Dérogation lead`.
+   - `failed` ou `partial` → si scope mal cadré, redécoupe + re-spawn ; sinon dérogation lead.
+   - `success` + diff cohérent → marque tâche `completed`.
 4. **1 retry max** par tâche avant dérogation. Pas de boucles infinies.
 
 ## Étape 5 — Testing
 
-### Cas A — Test < 10 lignes (formule pure triviale)
+| Cas | Seuil mode complet | Seuil mode rapide | Qui fait |
+|---|---|---|---|
+| **A** | test < 10 lignes (formule pure triviale) | test ≤ 20 lignes, matrice 2×2 explicite | Lead. |
+| **B** | sinon | sinon | Spawn the `test_writer` agent. |
 
-Tu écris toi-même.
+Prompt `test_writer` : cible (fichier/fonction), comportements à vérifier (≤ 5 explicites), workspace.
 
-### Cas B — Sinon
-
-Spawn the **`test_writer`** agent. Prompt :
-- Cible (fichier/fonction).
-- Comportements à vérifier (≤ 5 explicites).
-- Workspace (backend / pixi).
-
-Hard gate identique étape 4. Si refus pour anti-pattern : suis sa recommandation alternative.
+Hard gate identique. Si refus pour anti-pattern : suis sa recommandation alternative ou logue le refus.
 
 ## Étape 6 — Review
 
 Pas d'agent reviewer dédié côté Codex. Deux options :
-
 - **Par défaut** : tu fais la review toi-même sur le diff complet, 5 axes (correctness, readability, architecture, security, performance), sévérité par finding (`bloquant` | `majeur` | `mineur` | `nit`).
 - **Sinon** : spawn the **`default`** agent (built-in) avec le diff et la consigne.
 
-Logue les findings dans `## Décisions prises § Review findings`.
+Logue les findings dans `## Décisions prises § Review findings` (run) ou en récap final (ticket).
+
+**Skip review autorisé** uniquement si **diff < 30 lignes net ET 1 seul fichier ET aucune logique métier** (ex : renommage, doc-only). Logue la décision.
 
 ## Étape 7 — Fix des findings
 
 Pour chaque finding **bloquant** ou **majeur** :
-- Crée 1 tâche chirurgicale ciblée (1 finding = 1 tâche).
-- Re-spawn the `implementer` agent avec scope précis.
-- Hard gate identique.
+- 1 tâche chirurgicale ciblée. Spawn the `implementer` agent (ou cas A si trivial). Hard gate.
 
-**Mineurs/nits** : décide selon coût/bénéfice. Triviaux et in-scope → fix toi-même. Sinon → ouvre un ticket dans `tasks/`, logue.
+**Mineurs/nits** : fix toi-même si trivial in-scope, sinon ouvre un ticket dans `tasks/`.
 
-**Cap dur 3 cycles correctifs** (review → fix → re-review). Au 3ᵉ : escalade utilisateur.
+**Cap dur 3 cycles correctifs** (review → fix → re-review). Au 3ᵉ : escalade.
 
 ## Étape 8 — Re-test
 
-Spawn the **`test_runner`** agent. Prompt :
-- Périmètre : `backend-unit`, `pixi`, `backend-smoke`, ou `all` selon ce qui a été touché.
-- Filtre : optionnel.
+| Mode | Qui fait |
+|---|---|
+| **Complet** | Spawn the `test_runner` agent. Périmètre : `backend-unit`, `pixi`, `backend-smoke`, ou `all`. |
+| **Rapide** | Lead lance `yarn workspace … test` directement via shell. |
 
-Reçois `=== RUN TESTS ===`.
-
-- `RESULT: PASS` → continue étape 9.
-- `RESULT: FAIL` :
-  - Lié à une tâche du run → retour étape 4 (cap 2 cycles).
-  - Test flaky connu → flag dans `## Décisions prises`, accepte si stabilisation hors scope.
-  - Bug indépendant → ticket, logue, n'aborte pas.
+`RESULT: PASS` → continue. `RESULT: FAIL` :
+- Lié à une tâche → retour étape 4 (cap 2 cycles).
+- Test flaky connu → flag dans les décisions, accepte si stabilisation hors scope.
+- Bug indépendant → ticket, logue, n'aborte pas.
 
 ## Étape 9 — Documentation
 
-Décide quelles docs sont impactées (cf. `.agents/rules/docs.md` § Vérification obligatoire).
+Décide quelles docs sont impactées (cf. `.agents/rules/docs.md`).
 
-Si **aucune doc impactée** : logue « Docs : aucun changement nécessaire, raison : <raison> », passe à 10.
-
-Sinon spawn the **`doc_writer`** agent. Prompt :
-- Action : `create` / `update` / `cross-ref-only`.
-- Cible(s) doc.
-- Source de vérité.
-- Contexte du changement.
-
-Hard gate identique.
+| Décision | Action |
+|---|---|
+| Aucune doc impactée | Logue « Docs : aucun changement nécessaire, raison : <raison> ». Passe à 10. |
+| Mode rapide + changement trivial (cross-ref, 1 ligne) | Lead édite directement. Hard gate. |
+| Sinon | Spawn the `doc_writer` agent (action `create` / `update` / `cross-ref-only`, cible(s), source de vérité, contexte). Hard gate. |
 
 ## Étape 10 — Archive + commit final
 
 1. `git status` + `git diff` global. Vérifie le périmètre.
-2. Mets à jour la fiche :
-   - Statut → `DONE`, `Terminé` → date du jour.
-   - `## Rapport final` rempli (synthèse, fichiers touchés, tickets ouverts, QA résiduelle, méta-évaluation).
-3. **Archive** : `git mv tasks/runs/<id>-<slug>.md tasks/runs/archive/<id>-<slug>.md`. Mets à jour `tasks/README.md`.
+2. **Mode run** : statut fiche → `DONE`, `Terminé` → date du jour, `## Rapport final` rempli. Archive : `git mv tasks/runs/<id>-<slug>.md tasks/runs/archive/<id>-<slug>.md`. Maj `tasks/README.md`.
+3. **Mode ticket** : archive : `git mv tasks/<id>-<slug>.md tasks/archive/<id>-<slug>.md`. Maj `tasks/README.md` (déplace la ligne du ticket actif vers « Archivés », ajoute `✅ Résolu <date> par $run @<path>`).
 4. **Commit unique** au format `<type>(<scope>): <subject>` (cf. `.agents/rules/git.md`). Body : résumé écarts + fixes + tickets ouverts + QA. **Pas de `--no-verify`. Pas de `git push`.**
-5. Récap ≤ 10 lignes au user.
+5. Récap final ≤ 10 lignes au user.
+
+## Mode rapide — overrides en bloc
+
+Activation : auto en mode ticket, ou en mode run si étape 3 livre une décomposition ≤ 2 cas A.
+
+| Étape | Override |
+|---|---|
+| 2 | Skip `code_mapper` si ≤ 3 fichiers — lead utilise `rg` + `read` ciblés. |
+| 4 | Cas A élargi : ≤ 30 lignes ≤ 2 fichiers (vs < 10 lignes 1 fichier). |
+| 5 | Cas A élargi : test ≤ 20 lignes matrice explicite (vs < 10 lignes). |
+| 6 | **Conservée** — sauf skip explicite (cf. § étape 6). |
+| 8 | `yarn test` direct via shell (skip `test_runner`). |
+| 9 | Lead édite directement les changements docs triviaux. |
+
+**Non-négociables** (s'appliquent dans les deux modes) :
+- Hard gate `git diff` après toute action qui écrit, lead ou sub-agent.
+- Review 5 axes (sauf skip qualifié).
+- Pas de `--no-verify`, pas de `git push`.
 
 ## Règles inviolables
 
-- **Tu ne lis pas le code volumineux directement** — `code_mapper` te donne la carte.
-- **Tu ne codes pas** sauf cas A ou dérogation lead.
-- **Hard gate `git diff` après chaque délégation qui écrit.** Sans exception.
-- **Tu ne commits qu'à l'étape 10**, jamais avant.
+- **Tu ne lis pas le code volumineux directement** sauf en mode rapide (≤ 3 fichiers).
+- **Tu ne codes pas** sauf cas A (seuil selon mode) ou dérogation lead.
+- **Hard gate `git diff` après chaque action qui écrit.** Sans exception.
+- **Tu ne commits qu'à l'étape 10.**
 - **Tu ne push jamais.**
-- **Tu ne déranges pas le user** entre étape 1 et 10, sauf escalade bloquante.
-- **Tu loggues tout** dans `## Progress`, `## Décisions prises`.
+- **Tu ne déranges pas le user** entre étapes 1 et 10, sauf escalade bloquante.
+- **Tu loggues tout** : transitions, décisions non triviales, dérogations.
 - **Tu ne masques pas un échec.** Tests rouges, review qui boucle, écart non résolu : escalade.
 
 ## Cas d'escalade

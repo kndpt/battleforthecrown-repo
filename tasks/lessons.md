@@ -2,3 +2,4 @@
 
 - Relire les leçons projet en début de session ; si le fichier n'existe pas, le créer avant de continuer.
 - Ne pas attendre longtemps un sub-agent silencieux : faire un poll court, fermer l'agent bloqué, documenter la dérogation et reprendre avec une cartographie locale ciblée.
+- Si une commande `rtk` en parallèle semble bloquer, stopper le fan-out et reprendre avec une seule commande ciblée, bornée en sortie.

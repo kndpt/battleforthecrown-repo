@@ -50,13 +50,13 @@ Une fois validé :
 Rends la main au user avec un récap court (≤ 8 lignes) :
 - ID + slug créés.
 - Type, phase roadmap.
-- Liens : la fiche, le slash command pour lancer (`/run <id>`).
+- Liens : la fiche, le slash command pour lancer (`/run @tasks/runs/<id>-<slug>.md`).
 - Points d'attention si présents (à clarifier avant lancement).
 - Pas de commit (le user décide quand commiter).
 
 ## Règles inviolables
 
-- **Tu ne lances pas le run.** `/plan-run` ne fait que créer la fiche. C'est `/run <id>` qui exécute.
+- **Tu ne lances pas le run.** `/plan-run` ne fait que créer la fiche. C'est `/run @tasks/runs/<id>-<slug>.md` qui exécute.
 - **Tu ne crées pas la fiche sans validation user.** Étape 3 obligatoire.
 - **Tu ne devines pas le scope.** Si `run-planner` retourne `ESTIMATION_SCOPE: large` avec une note de segmentation, propose au user de découper en plusieurs runs avant écriture.
 - **Tu n'écris pas la fiche dans `archive/`** — toujours `tasks/runs/<id>-<slug>.md` (statut `PLANNED`).

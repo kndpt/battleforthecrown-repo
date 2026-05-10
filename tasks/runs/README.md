@@ -4,7 +4,12 @@ Un **run** = une exécution déléguée au pipeline lead + sub-agents (Claude Co
 
 Chaque run a sa fiche `<id>-<slug>.md` dans ce dossier. Source de vérité de l'état d'un run pendant et après son exécution.
 
-Pipeline d'orchestration : skill `/run <id>`. Mêmes étapes 1-10 dans les deux harnesses, conventions de nommage des sub-agents adaptées :
+Pipeline d'orchestration : skill `/run @<path>` (mention fichier obligatoire). Le path détermine le mode :
+
+- `tasks/runs/<id>-<slug>.md` → **mode run**, pipeline 10 étapes complet.
+- `tasks/<id>-<slug>.md` → **mode ticket**, pipeline allégé (mode rapide auto, skip `code-mapper`/`test-runner`/`doc-writer` selon critères, cas A élargi à ≤ 30 lignes ≤ 2 fichiers, **review et hard gate `git diff` non-négociables**).
+
+Mêmes étapes 1-10 dans les deux harnesses, conventions de nommage des sub-agents adaptées :
 
 - **Claude Code** : [`.claude/commands/run.md`](../../.claude/commands/run.md) (slash command natif) + sub-agents [`.claude/agents/*.md`](../../.claude/agents/) (kebab-case, ex `code-mapper`). Review = plugin `agent-skills:code-reviewer`.
 - **Codex** : [`.agents/skills/run/SKILL.md`](../../.agents/skills/run/SKILL.md) (consommé via le symlink `.codex/skills/run/`) + sub-agents [`.codex/agents/*.toml`](../../.codex/agents/) (snake_case, ex `code_mapper`). Review = lead lui-même ou agent `default` Codex (pas de reviewer dédié).
@@ -44,7 +49,7 @@ Définitions par harness : Claude Code → `.claude/agents/*.md` (kebab-case) ; 
 Disponibles dans les deux harnesses (Claude : `.claude/commands/*.md` ; Codex : skill `.agents/skills/<name>/SKILL.md` consommé via le symlink `.codex/skills/`) :
 
 - `/plan-run <description>` — crée une fiche de run depuis la roadmap (validation user avant écriture).
-- `/run <id>` — exécute une fiche `PLANNED` selon le pipeline 1-10.
+- `/run @<path>` — exécute une fiche `PLANNED` (mode run) ou résout un ticket actif (mode ticket). Mention fichier obligatoire.
 
 ## Cycle de vie d'un run
 
