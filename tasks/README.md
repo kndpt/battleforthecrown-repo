@@ -14,9 +14,13 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Runs (exécutions semi-autonomes)
 
-Fiches d'exécution déléguées à une équipe Claude (lead + teammates). Convention détaillée dans [`runs/README.md`](./runs/README.md).
+Fiches d'exécution déléguées au système d'équipe Claude (lead + sub-agents à scope chirurgical). Slash commands : `/plan-run <description>` pour créer une fiche depuis la roadmap, `/run <id>` pour exécuter. Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
-- [000 — Pilote : audit du module `power`](./runs/000-pilote-audit-power.md) — ✅ `DONE` (2026-05-10). Run de validation du système d'équipe avant généralisation. Rapport final dans la fiche.
+_Aucun run actif._
+
+### Runs archivés
+
+- [000 — Pilote : audit du module `power`](./runs/archive/000-pilote-audit-power.md) — ✅ `DONE` (2026-05-10). Run de validation du système avant généralisation. **Système refondé après ce run** suite au rapport méta — sub-agents fourre-tout `team-*` supprimés, remplacés par sub-agents à scope chirurgical (`code-mapper`, `implementer`, `test-writer`, `test-runner`, `doc-writer`).
 
 ## Archivés
 
