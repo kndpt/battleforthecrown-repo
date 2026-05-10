@@ -5,6 +5,7 @@ import { metaFor } from './buildingMeta';
 import { computeConstructionProgress, formatRemaining } from './constructionProgress';
 import { useTickingNow } from '@/lib/useTickingNow';
 import {
+  useBuildingQueueQuery,
   useUpgradeBuildingMutation,
   useCancelConstructionMutation,
   usePopulationQuery,
@@ -17,6 +18,7 @@ import { useDisplayResources } from '@/features/resources/useDisplayResources';
 import { useGameStore } from '@/stores/game';
 import {
   BUILDING_DEFINITIONS,
+  MAX_CONSTRUCTION_QUEUE,
   type BuildingType,
 } from '@battleforthecrown/shared/village/buildings';
 import { calculateBuildingCost } from '@battleforthecrown/shared/logic';
@@ -57,6 +59,8 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
   const worldId = useGameStore((state) => state.worldId);
   const buildingsQuery = useVillageBuildingsQuery(villageId);
   const worldConfigQuery = useWorldConfigQuery(worldId);
+  const { data: buildingQueue = [] } = useBuildingQueueQuery(villageId);
+  const isQueueFull = buildingQueue.length >= MAX_CONSTRUCTION_QUEUE;
 
   const castleLevel =
     building.type === 'CASTLE'
@@ -209,7 +213,7 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
                 variant="success"
                 size="lg"
                 className="w-full font-bold shadow-clay-lg !py-1"
-                disabled={upgrade.isPending || !canAfford}
+                disabled={upgrade.isPending || !canAfford || isQueueFull}
                 onClick={handleUpgrade}
               >
                 {upgrade.isPending ? (
@@ -228,13 +232,19 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
                   </div>
                 )}
               </Button>
-              {effectiveTimeMs !== null && (
-                <p className="text-center text-xs text-kingdom-600 font-game mt-2">
-                  ⏱ Temps de construction :{' '}
-                  <span className="font-bold">
-                    {formatRemaining(effectiveTimeMs)}
-                  </span>
+              {isQueueFull ? (
+                <p className="text-center text-xs text-game-red-dark font-game mt-2">
+                  🚧 File pleine ({buildingQueue.length}/{MAX_CONSTRUCTION_QUEUE}) — annule un chantier en cours pour démarrer celui-ci.
                 </p>
+              ) : (
+                effectiveTimeMs !== null && (
+                  <p className="text-center text-xs text-kingdom-600 font-game mt-2">
+                    ⏱ Temps de construction :{' '}
+                    <span className="font-bold">
+                      {formatRemaining(effectiveTimeMs)}
+                    </span>
+                  </p>
+                )
               )}
             </>
           )}
