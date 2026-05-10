@@ -41,7 +41,7 @@ Si la DB ne répond pas : `docker ps --filter name=battleforthecrown-postgres` d
   SQL=$'SELECT * FROM expedition WHERE status = \'EN_ROUTE\''
   postgresql-cli database query BFTC_DB_LOCAL "$SQL" --json
   ```
-- **Toujours `LIMIT`** sur tables potentiellement larges (`event_outbox`, `world_entity`, `combat_report`, `power_snapshot`, `chunk_spawn_state`).
+- **Toujours `LIMIT`** sur tables potentiellement larges (`event_outbox`, `world_entity`, `combat_report`, `chunk_spawn_state`).
 
 ## Cartographie tables ↔ gameplay
 
@@ -59,7 +59,6 @@ Si la DB ne répond pas : `docker ps --filter name=battleforthecrown-postgres` d
 | File d'entraînement | `unit_training` | total_qty, completed_qty, next_unit_eta_ts |
 | Couronnes (premium) | `crown_balance` | (user_id, world_id) PK, balance, last_update_ts |
 | Stratégie village | `village_strategy_config` | FORTRESS/RAIDERS/ECONOMIC/BALANCED, cooldown |
-| Puissance | `power_snapshot` | total/kingdom/army, append-only |
 | Entités carte | `world_entity` | kind, x/y, data JSON. Volumineux — toujours filtrer par `world_id` + `kind` |
 | Seed barbares | `chunk_spawn_state`, `world_seed_state`, `zone_capacity` | pour debug seeding/repop |
 | Expéditions | `expedition` | status (`EN_ROUTE/RESOLVED/RETURNING`), depart_at/arrival_at/return_at, units JSON |
@@ -101,11 +100,6 @@ FROM building WHERE village_id = '<village_id>' ORDER BY type;
 SELECT unit_type, quantity FROM unit_inventory WHERE village_id = '<village_id>';
 SELECT unit_type, total_qty, completed_qty, next_unit_eta_ts
 FROM unit_training WHERE village_id = '<village_id>';
-
--- Dernière puissance
-SELECT total, kingdom, army, created_at
-FROM power_snapshot WHERE village_id = '<village_id>'
-ORDER BY created_at DESC LIMIT 1;
 ```
 
 ### Outbox & temps réel

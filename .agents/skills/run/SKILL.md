@@ -100,6 +100,16 @@ Critère de succès:
 
 `Spec source` peut être composée : ticket/finding pour le problème opérationnel + doc gameplay/architecture pour l'invariant canonique. Pour une migration destructive, le prompt doit mentionner explicitement la piste validée ou l'accord user.
 
+### Politique migrations DB
+
+Quand une tâche crée ou modifie une migration Prisma, l'agent doit gérer l'application locale de la migration au lieu de laisser un état non appliqué :
+
+1. Inspecter les migrations en attente (`prisma migrate status` + lecture des `migration.sql` concernés).
+2. Si les migrations en attente sont **non destructives** (`CREATE`, `ALTER ADD`, `CREATE INDEX`, updates de config idempotents, renommages sûrs documentés), appliquer localement avec `yarn workspace battleforthecrown-backend prisma migrate deploy` puis vérifier `prisma migrate status`.
+3. Si une migration contient `DROP`, `TRUNCATE`, `DELETE`, `ALTER TABLE ... DROP COLUMN`, ou toute perte potentielle de données, **ne pas l'appliquer sans accord explicite du user**. Si l'accord est donné, loguer l'exception et appliquer.
+4. `prisma migrate reset` reste interdit sans exception dans le pipeline `/run`.
+5. Attention : `prisma migrate deploy` applique toutes les migrations en attente. Si une seule migration en attente est destructive et non autorisée, ne pas lancer `deploy`.
+
 ## Hard gate (commun aux étapes 4, 5, 7, 9 — toute délégation qui écrit)
 
 1. `git diff --stat` immédiat.
