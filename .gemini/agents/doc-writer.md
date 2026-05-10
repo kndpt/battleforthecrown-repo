@@ -10,7 +10,7 @@ tools:
   - glob
   - run_shell_command
   - list_directory
-model: inherit
+model: gemini-3-flash
 ---
 
 # Mission

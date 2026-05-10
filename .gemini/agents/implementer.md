@@ -10,7 +10,7 @@ tools:
   - grep_search
   - glob
   - list_directory
-model: inherit
+model: gemini-3-1-pro
 ---
 
 # Mission

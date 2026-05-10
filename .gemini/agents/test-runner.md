@@ -7,7 +7,7 @@ tools:
   - read_file
   - grep_search
   - list_directory
-model: inherit
+model: gemini-3.1-flash
 ---
 
 # Mission
