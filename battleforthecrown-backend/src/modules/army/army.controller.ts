@@ -3,7 +3,12 @@ import { ArmyService } from './army.service';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { CurrentUser, type AuthenticatedUser } from '../../common/auth';
 import { trainUnitsSchema, type TrainUnitsDto } from './dto/train-units.dto';
+import {
+  recruitNobleSchema,
+  type RecruitNobleDto,
+} from './dto/recruit-noble.dto';
 import { RecruitTroopsUseCase } from '../gameplay/recruit-troops.use-case';
+import { RecruitNobleUseCase } from '../gameplay/recruit-noble.use-case';
 import { CancelRecruitmentUseCase } from '../gameplay/cancel-recruitment.use-case';
 
 @Controller('army')
@@ -11,6 +16,7 @@ export class ArmyController {
   constructor(
     private readonly armyService: ArmyService,
     private readonly recruitTroops: RecruitTroopsUseCase,
+    private readonly recruitNoble: RecruitNobleUseCase,
     private readonly cancelRecruitment: CancelRecruitmentUseCase,
   ) {}
 
@@ -42,6 +48,16 @@ export class ArmyController {
       dto.quantity,
       user.id,
     );
+  }
+
+  @Post(':villageId/throne/recruit-noble')
+  recruitNobleAtThrone(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('villageId') villageId: string,
+    @Body(new ZodValidationPipe(recruitNobleSchema)) dto: RecruitNobleDto,
+  ) {
+    void dto;
+    return this.recruitNoble.execute(villageId, user.id);
   }
 
   @Delete(':villageId/training/:trainingId/cancel')

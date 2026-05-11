@@ -35,7 +35,9 @@ export class ArmyService {
     );
 
     const activeTraining =
-      village.unitTraining.length > 0 ? village.unitTraining[0] : null;
+      village.unitTraining.find(
+        (training) => training.building === 'BARRACKS',
+      ) ?? null;
 
     return allUnitTypes.map((unitType) => {
       const unitCost: UnitCost = UNIT_CATALOG.costs[unitType];

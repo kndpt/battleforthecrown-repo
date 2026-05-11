@@ -49,10 +49,12 @@ Spécificités runtime :
 | Table | Rôle |
 |-------|------|
 | `UnitInventory` | inventaire `{villageId, unitType, quantity}` |
-| `UnitTraining` | entraînement en cours, `unitType`, `quantity`, `nextUnitEta` |
+| `UnitTraining` | entraînement en cours, `building` (`BARRACKS` ou `THRONE_HALL`), `unitType`, `quantity`, `nextUnitEta` |
 | `Garrison` | troupes stationnées en renfort : `villageId` (hôte), `originVillageId` (source), `unitType`, `quantity`. |
 
 `unitType` : énumération source de vérité dans `@battleforthecrown/shared/army` (`UNIT_TYPES`). Catalogue complet (stats, coûts, passifs) : [`docs/gameplay/08-units.md`](../gameplay/08-units.md).
+
+`UnitTraining.building` matérialise une file par bâtiment : Caserne (`BARRACKS`) et Salle du Trône (`THRONE_HALL`) peuvent entraîner en parallèle, mais un village ne peut avoir qu'une file active par bâtiment.
 
 ### Combat
 

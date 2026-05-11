@@ -60,7 +60,9 @@ export class RecruitTroopsUseCase {
           tx.building.findFirst({ where: { villageId, type: 'BARRACKS' } }),
           tx.resourceStock.findUnique({ where: { villageId } }),
           tx.population.findUnique({ where: { villageId } }),
-          tx.unitTraining.findFirst({ where: { villageId } }),
+          tx.unitTraining.findFirst({
+            where: { villageId, building: 'BARRACKS' },
+          }),
         ]);
 
       if (!village) throw new NotFoundException('Village not found');
@@ -144,6 +146,7 @@ export class RecruitTroopsUseCase {
       const training = await tx.unitTraining.create({
         data: {
           villageId,
+          building: 'BARRACKS',
           unitType,
           totalQty: quantity,
           completedQty: 0,

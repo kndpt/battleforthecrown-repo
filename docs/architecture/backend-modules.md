@@ -55,8 +55,8 @@ src/
 | **world** | `GET /world/:slug/details`, `/entities` | `BarbarianSeedingCatchupWorker` | Seeding procédural des villages barbares + placement joueur ; catchup d'arrivée différée (cron quotidien) |
 | **village** | `GET /village/:id/buildings`, `/queue` | — | Lectures village + bâtiments. Les mutations (upgrade/cancel) délégées à `gameplay/` |
 | **resources** | `GET /resources/:villageId` | `ProductionWorker` | Production passive bois/pierre/fer, capé par warehouse. Pas de publication d'event (déléguée à `OutboxPublisher`) |
-| **army** | `GET /army/:villageId/inventory`, `/training` | — | Lectures inventaire + entraînements. Mutations (train/cancel) délégées à `gameplay/` |
-| **gameplay** | `POST /village/:id/upgrade`, `DELETE /village/:id/buildings/:bid/cancel`, `POST /army/:id/train`, `DELETE /army/:id/training/:tid/cancel` | `ConstructionWorker`, `TrainingWorker` | Use cases orchestrant les mutations multi-domaine (cf. ADR-12) |
+| **army** | `GET /army/:villageId/inventory`, `/training`, `POST /army/:villageId/throne/recruit-noble` | — | Lectures inventaire + entraînements. Mutations (train/cancel/recruit noble) déléguées à `gameplay/` |
+| **gameplay** | `POST /village/:id/upgrade`, `DELETE /village/:id/buildings/:bid/cancel`, `POST /army/:id/train`, `POST /army/:id/throne/recruit-noble`, `DELETE /army/:id/training/:tid/cancel` | `ConstructionWorker`, `TrainingWorker` | Use cases orchestrant les mutations multi-domaine (cf. ADR-12) |
 | **strategy** | (interne) | — | `VillageStrategyService` exposé à Population/Resources/Army/Gameplay sans couplage |
 | **combat** | `POST /combat/attack`, `POST /combat/reinforce`, `POST /combat/recall`, `POST /combat/recall/:expeditionId`, `GET /combat/:villageId/active`, `GET /combat/:villageId/garrison`, `GET /combat/reports` | `CombatWorker`, `ReturnWorker` | Attaque, renforts, garnison, conquête, butin, retour. Stratégies `Barbarian` / `Player` |
 | **crowns** | `GET /crowns/:userId` | `CrownProductionWorker` | Monnaie premium, production passive, transactions sécurisées |
@@ -134,6 +134,7 @@ gameplay/
 ├── upgrade-building.use-case.ts     # POST /village/:id/upgrade
 ├── cancel-construction.use-case.ts  # DELETE /village/:id/buildings/:bid/cancel
 ├── recruit-troops.use-case.ts       # POST /army/:id/train
+├── recruit-noble.use-case.ts        # POST /army/:id/throne/recruit-noble
 └── cancel-recruitment.use-case.ts   # DELETE /army/:id/training/:tid/cancel
 ```
 

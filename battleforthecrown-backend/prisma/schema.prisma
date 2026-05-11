@@ -35,6 +35,11 @@ enum TargetKind {
   BARBARIAN_VILLAGE
 }
 
+enum TrainingBuilding {
+  BARRACKS
+  THRONE_HALL
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -172,6 +177,7 @@ model UnitInventory {
 model UnitTraining {
   id            String   @id @default(cuid())
   villageId     String   @map("village_id")
+  building      TrainingBuilding @default(BARRACKS)
   unitType      String   @map("unit_type")
   totalQty      Int      @map("total_qty")
   completedQty  Int      @default(0) @map("completed_qty")
@@ -182,6 +188,7 @@ model UnitTraining {
 
   village Village @relation(fields: [villageId], references: [id], onDelete: Cascade)
 
+  @@unique([villageId, building])
   @@index([villageId])
   @@map("unit_training")
 }
