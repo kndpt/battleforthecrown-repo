@@ -1,16 +1,20 @@
-# Front recall attack action
+# Run tickets 36 + 37 — Barbarian runtime persistence and regeneration
 
 ## Plan
 
-- [x] Lire les tickets/runs cites et confirmer le scope deja traite.
-- [x] Cartographier le flux API/front des expeditions et du rappel.
-- [x] Ajouter l'action de rappel dans le HUD au bon endroit.
-- [x] Verifier par tests/build cibles et impact documentation.
+- [x] Preflight: verifier worktree clean, tickets, spec, rules, skills.
+- [x] Cartographier les modeles Prisma, factory barbare, combat/scout et smokes.
+- [x] Implementer la persistance runtime des troupes barbares a la creation.
+- [x] Implementer la regeneration lazy-on-read des troupes et ressources barbares.
+- [x] Ajouter le filet de regression adapte.
+- [x] Review diff, lancer les verifications cibles puis `yarn static-check`.
+- [x] Verifier impact docs, archiver les tickets, mettre a jour `tasks/README.md`.
+- [ ] Commit final unique.
 
 ## Review
 
-- Correctness : le backend exposait deja `POST /combat/recall/:expeditionId` et l'event `expedition.recalled`; le front avait seulement le rappel de garnison. Le HUD affiche maintenant `Rappeler` sur les attaques `EN_ROUTE`.
-- UI state : le seed REST conserve `kind` dans le store pour ne pas confondre attaque et renfort apres refresh.
-- Animation : `expedition.recalled` transforme le trajet en retour depuis la position courante afin de garder le marqueur cheval visible jusqu'au village d'origine.
-- Verification : type-check Pixi, lint Pixi, tests Pixi, test cible `ws-bindings` et `yarn static-check` verts.
-- Docs : mise a jour de `docs/architecture/backend-modules.md` pour documenter l'endpoint de rappel d'expedition en route.
+- Correctness : les BV crees par `BarbarianVillageFactory` ont maintenant un stock `UnitInventory` rollé a 60-100 % du blueprint max, avec `Population.used = 0`.
+- Runtime : `BarbarianRuntimeService.catchUpVillage()` regenere en lazy-on-read les troupes et ressources sans depasser les caps de tier.
+- Architecture : les formules pures vivent dans `packages/shared`; le `ProductionWorker` reste reserve aux villages joueurs.
+- Verification : test template cible, smoke backend complet et `yarn static-check` verts.
+- Docs : mises a jour `docs/architecture/{data-model,backend-modules,realtime}.md`.

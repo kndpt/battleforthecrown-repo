@@ -55,6 +55,7 @@ export class ProductionWorker implements OnModuleInit {
     try {
       // Get all villages
       const villages = await this.prisma.village.findMany({
+        where: { isBarbarian: false },
         select: { id: true, name: true },
       });
 

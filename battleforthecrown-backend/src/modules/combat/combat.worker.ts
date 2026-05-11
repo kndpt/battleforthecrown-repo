@@ -2,7 +2,7 @@ import { Injectable, Logger, Inject, OnModuleInit } from '@nestjs/common';
 import { Expedition, Prisma, ExpeditionKind } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WorldConfigService } from '../world/world-config.service';
-import { ResourcesService } from '../resources/resources.service';
+import { BarbarianRuntimeService } from '../world/barbarian-runtime.service';
 import { BarbarianVillageStrategy } from './strategies/barbarian-village.strategy';
 import { PlayerVillageStrategy } from './strategies/player-village.strategy';
 import PgBoss from 'pg-boss';
@@ -53,7 +53,7 @@ export class CombatWorker implements OnModuleInit {
     @Inject('PG_BOSS') private readonly boss: PgBoss,
     private readonly prisma: PrismaService,
     private readonly worldConfig: WorldConfigService,
-    private readonly resourcesService: ResourcesService,
+    private readonly barbarianRuntime: BarbarianRuntimeService,
     private readonly barbarianStrategy: BarbarianVillageStrategy,
     private readonly playerStrategy: PlayerVillageStrategy,
     private readonly outbox: OutboxPublisher,
@@ -480,11 +480,7 @@ export class CombatWorker implements OnModuleInit {
 
     const defender =
       expedition.targetKind === 'BARBARIAN_VILLAGE'
-        ? await this.buildBarbarianDefender(
-            tx,
-            expedition.targetRefId,
-            expedition.worldId,
-          )
+        ? await this.buildBarbarianDefender(tx, expedition.targetRefId)
         : await this.buildPlayerDefender(tx, expedition.targetRefId);
 
     // Bonus de défense du défenseur (seulement pour les villages joueurs)
@@ -535,22 +531,16 @@ export class CombatWorker implements OnModuleInit {
   private async buildBarbarianDefender(
     tx: PrismaClientOrTx,
     villageId: string,
-    worldId: string,
   ) {
     const village = await tx.village.findUniqueOrThrow({
       where: { id: villageId },
       include: { resourceStock: true, buildings: true },
     });
 
-    const resources = village.resourceStock
-      ? await this.resourcesService.calculateCurrentResources({
-          worldId,
-          resourceStock: village.resourceStock,
-          buildings: village.buildings,
-        })
-      : { wood: 0, stone: 0, iron: 0 };
-
-    const units: UnitMap = {};
+    const { units, resources } = await this.barbarianRuntime.catchUpVillage(
+      tx,
+      villageId,
+    );
 
     return {
       kind: 'BARBARIAN_VILLAGE' as const,

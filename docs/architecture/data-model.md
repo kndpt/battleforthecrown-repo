@@ -35,10 +35,13 @@ Un user peut avoir plusieurs villages (conquête), un seul `mainVillage` (par co
 
 ### Villages barbares
 
-Pas de table dédiée — les villages barbares sont des `Village` avec `isBarbarian=true` et `userId=null`, plus un `tier` (T1/T2/T3). Ils partagent les tables associées (`Building`, `ResourceStock`, `Population`) et les **mêmes enums** (`BUILDING_TYPES`) que les villages joueurs : la différence est purement compositionnelle (composition de bâtiments par tier dans `packages/shared/src/world/barbarian-templates.ts`).
+Pas de table dédiée — les villages barbares sont des `Village` avec `isBarbarian=true` et `userId=null`, plus un `tier` (T1→T5). Ils partagent les tables associées (`Building`, `ResourceStock`, `Population`, `UnitInventory`) et les **mêmes enums** (`BUILDING_TYPES`, `UNIT_TYPES`) que les villages joueurs : la différence est purement compositionnelle (composition de bâtiments et blueprint d'armée par tier dans `packages/shared/src/world/barbarian-templates.ts`).
 
 Spécificités runtime :
-- Pas de `UnitInventory` côté BV — `combat.worker.ts` (`buildBarbarianDefender`) injecte `units: {}` et `BarbarianVillageStrategy` confirme `// Barbarians have no troops`.
+- `UnitInventory` côté BV stocke les troupes runtime rollées à la création (60–100 % du blueprint max), plafonnées par `getUnits(tier)`.
+- `Village.barbarianTroopsLastRegenTs` sert de curseur lazy pour la régénération des troupes ; `ResourceStock.lastUpdateTs` sert de curseur ressources.
+- `BarbarianRuntimeService.catchUpVillage()` applique la régénération lazy avant les lectures runtime actuelles (combat, puis scout quand il sera implémenté).
+- `Population.used` reste à 0 tant que le village est barbare : les troupes barbares ne donnent pas de puissance joueur avant conquête.
 - Seedés procéduralement par `BarbarianSeedingService` (qui délègue à `BarbarianVillageFactory`) au join d'un joueur dans le monde ; le `BarbarianSeedingCatchupWorker` (cron quotidien) rattrape les chunks que le seeding sync n'a pas eu le temps de couvrir pour les joueurs créés < 1 h (cf. [`docs/gameplay/07-barbarian-spawning.md` § Catchup d'arrivée différée](../gameplay/07-barbarian-spawning.md)).
 
 ### Armée

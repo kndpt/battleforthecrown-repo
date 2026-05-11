@@ -5,6 +5,7 @@ import {
   getBuildingTemplate,
   getPopulationMax,
   getWarehouseLevel,
+  rollInitialBarbarianUnits,
 } from './barbarian-tier-templates';
 import { generateBarbarianName } from '@battleforthecrown/shared/world';
 
@@ -23,12 +24,14 @@ export class BarbarianVillageFactory {
   ) {
     const { worldId, tier, x, y } = params;
 
+    const now = new Date();
     const village = await tx.village.create({
       data: {
         worldId,
         userId: null,
         isBarbarian: true,
         tier,
+        barbarianTroopsLastRegenTs: now,
         name: generateBarbarianName(tier, x, y),
         x,
         y,
@@ -42,6 +45,16 @@ export class BarbarianVillageFactory {
     }));
     await tx.building.createMany({ data: buildings });
 
+    const units = rollInitialBarbarianUnits(tier);
+    const unitRows = Object.entries(units)
+      .filter(([, quantity]) => quantity > 0)
+      .map(([unitType, quantity]) => ({
+        villageId: village.id,
+        unitType,
+        quantity,
+      }));
+    await tx.unitInventory.createMany({ data: unitRows });
+
     const resources = this.generateResources(worldId, tier);
     await tx.resourceStock.create({
       data: {
@@ -50,7 +63,7 @@ export class BarbarianVillageFactory {
         stone: resources.stone,
         iron: resources.iron,
         maxPerType: resources.maxPerType,
-        lastUpdateTs: new Date(),
+        lastUpdateTs: now,
       },
     });
 

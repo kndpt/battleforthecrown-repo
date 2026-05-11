@@ -13,6 +13,8 @@ import {
 import { SMOKE_WORLD_CONFIG } from './fixtures/smoke-world-config';
 import { ConquestService } from '../src/modules/combat/conquest.service';
 import { BarbarianSeedingCatchupWorker } from '../src/modules/world/barbarian-seeding-catchup.worker';
+import { BarbarianRuntimeService } from '../src/modules/world/barbarian-runtime.service';
+import { BarbarianVillageFactory } from '../src/modules/world/barbarian-village.factory';
 
 describe('smoke', () => {
   let ctx: SmokeContext;
@@ -573,6 +575,69 @@ describe('smoke', () => {
     });
 
     expect(after).toBeGreaterThan(before);
+  });
+
+  it('barbarian runtime: factory persists troops and lazy catchup regenerates troops/resources', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const factory = ctx.app.get(BarbarianVillageFactory);
+    const runtime = ctx.app.get(BarbarianRuntimeService);
+
+    const barbarian = await ctx.prisma.$transaction((tx) =>
+      factory.create(tx, {
+        worldId: world.id,
+        tier: 'T1',
+        x: 320,
+        y: 320,
+      }),
+    );
+
+    const initialUnits = await ctx.prisma.unitInventory.findMany({
+      where: { villageId: barbarian.id },
+    });
+    const initialTotal = initialUnits.reduce(
+      (sum, unit) => sum + unit.quantity,
+      0,
+    );
+    expect(initialTotal).toBeGreaterThanOrEqual(9);
+    expect(initialTotal).toBeLessThanOrEqual(15);
+
+    const oldTs = new Date(Date.now() - 250 * 60 * 60 * 1_000);
+    await ctx.prisma.unitInventory.updateMany({
+      where: { villageId: barbarian.id },
+      data: { quantity: 0 },
+    });
+    await ctx.prisma.village.update({
+      where: { id: barbarian.id },
+      data: { barbarianTroopsLastRegenTs: oldTs },
+    });
+    await ctx.prisma.resourceStock.update({
+      where: { villageId: barbarian.id },
+      data: {
+        wood: 0,
+        stone: 0,
+        iron: 0,
+        lastUpdateTs: oldTs,
+      },
+    });
+
+    const caughtUp = await ctx.prisma.$transaction((tx) =>
+      runtime.catchUpVillage(tx, barbarian.id),
+    );
+
+    expect(caughtUp.units).toEqual({ MILITIA: 15 });
+    expect(caughtUp.resources.wood).toBeGreaterThan(0);
+    expect(caughtUp.resources.stone).toBeGreaterThan(0);
+    expect(caughtUp.resources.iron).toBeGreaterThan(0);
+
+    const persisted = await ctx.prisma.unitInventory.findUniqueOrThrow({
+      where: {
+        villageId_unitType: {
+          villageId: barbarian.id,
+          unitType: 'MILITIA',
+        },
+      },
+    });
+    expect(persisted.quantity).toBe(15);
   });
 
   it('jwt auth: register → access protected → refresh → access with new token', async () => {

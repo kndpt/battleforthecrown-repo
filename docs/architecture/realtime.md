@@ -114,13 +114,15 @@ Deux workers font des mutations DB **sans** écrire dans `EventOutbox`. C'est in
 
 ### `ProductionWorker` (`src/workers/production.worker.ts`)
 
-Tick horaire qui appelle `resourcesService.updateProduction(villageId)` pour chaque village. Cette méthode rafraîchit `ResourceStock` (wood/stone/iron/`lastUpdateTs`) **sans émettre `resources.changed`**.
+Tick horaire qui appelle `resourcesService.updateProduction(villageId)` pour chaque village joueur (`isBarbarian=false`). Cette méthode rafraîchit `ResourceStock` (wood/stone/iron/`lastUpdateTs`) **sans émettre `resources.changed`**.
 
 **Pourquoi** : le frontend interpole les ressources entre deux events via `projectResources` (`battleforthecrown-pixi/src/lib/interpolation.ts`). Tant que `productionRates` et `maxPerType` ne changent pas, l'interpolation est mathématiquement identique au calcul backend. Tout changement de rate déclenche déjà un event (`building.completed` invalide la query, `construction.worker.ts` émet `resources.changed` quand un producer ou un WAREHOUSE complète). Émettre N events × N villages × 1 tick/h ajouterait du noise WS sans valeur user-visible.
 
-Le tick joue donc deux rôles découplés du WS :
+Le tick joue donc deux rôles découplés du WS pour les villages joueurs :
 1. **Catchup DB périodique** pour que `lastUpdateTs` ne dérive pas trop quand un joueur reste connecté sans muter.
 2. **Backstop** pour le combat : `calculateCurrentResources` lit `lastUpdateTs` et calcule le pull à partir de là — la valeur est correcte même sans tick récent (cf. aussi le catchup automatique de `getResources` quand `elapsedMs > PRODUCTION_CATCHUP_THRESHOLD_MS`).
+
+Les villages barbares sont exclus de ce worker : leur stock ressources et leurs troupes sont régénérés par `BarbarianRuntimeService.catchUpVillage()` en lazy-on-read, avec `ResourceStock.lastUpdateTs` pour les ressources et `Village.barbarianTroopsLastRegenTs` pour les troupes. Cela évite du travail périodique sur les BV jamais consultés et garde les deux rythmes de régénération indépendants.
 
 ### `BarbarianSeedingCatchupWorker` (`src/modules/world/barbarian-seeding-catchup.worker.ts`)
 

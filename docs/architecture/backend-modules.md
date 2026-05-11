@@ -104,6 +104,7 @@ world/
 ├── world.service.ts
 ├── world-config.service.ts          # Lecture/merge de world.config (JSON)
 ├── barbarian-seeding.service.ts     # Génération procédurale (Voronoi-like, density par zone)
+├── barbarian-runtime.service.ts     # Stock initial + régénération lazy troupes/ressources BV
 ├── village-placement.service.ts     # Placement villages joueur dans des zones libres
 └── barbarian-seeding-catchup.worker.ts  # Catchup d'arrivée différée (chunks non couverts par le seeding sync)
 ```

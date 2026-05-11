@@ -1,10 +1,13 @@
 import { BUILDING_TYPES } from '@battleforthecrown/shared/village';
 import {
   BARBARIAN_TIER_TEMPLATES,
+  calculateBarbarianUnitRegen,
   getBuildingTemplate,
+  getBarbarianRegenRates,
   getPopulationMax,
   getUnits,
   getWarehouseLevel,
+  rollInitialBarbarianUnits,
 } from './barbarian-tier-templates';
 
 describe('barbarian-tier-templates', () => {
@@ -80,6 +83,40 @@ describe('barbarian-tier-templates', () => {
 
   it('getUnits falls back to T1 units on unknown tier', () => {
     expect(getUnits('UNKNOWN')).toEqual(BARBARIAN_TIER_TEMPLATES.T1.units);
+  });
+
+  it.each([
+    ['T1', 0.005, 0.01],
+    ['T3', 0.0075, 0.015],
+    ['T5', 0.01, 0.02],
+  ] as const)(
+    'getBarbarianRegenRates(%s) follows the spec anchors',
+    (tier, troopRate, resourceRate) => {
+      expect(getBarbarianRegenRates(tier)).toEqual({
+        troopRatePerHour: troopRate,
+        resourceRatePerHour: resourceRate,
+      });
+    },
+  );
+
+  it('rollInitialBarbarianUnits rolls total stock before preserving proportions', () => {
+    expect(rollInitialBarbarianUnits('T5', () => 0)).toEqual({
+      MILITIA: 54,
+      ARCHER: 23,
+      SQUIRE: 9,
+      TEMPLAR: 4,
+    });
+    expect(rollInitialBarbarianUnits('T5', () => 1)).toEqual(getUnits('T5'));
+  });
+
+  it('calculateBarbarianUnitRegen caps at the tier blueprint', () => {
+    expect(
+      calculateBarbarianUnitRegen({
+        tier: 'T2',
+        currentUnits: { MILITIA: 24, ARCHER: 0 },
+        elapsedHours: 1_000,
+      }),
+    ).toEqual({ MILITIA: 1, ARCHER: 10 });
   });
 
   it('returns tier-specific building templates and falls back to T1', () => {

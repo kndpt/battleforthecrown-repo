@@ -12,6 +12,11 @@ export interface TierTemplate {
   units: UnitMap;
 }
 
+export interface BarbarianRegenRates {
+  troopRatePerHour: number;
+  resourceRatePerHour: number;
+}
+
 /**
  * Tier templates for barbarian village generation.
  *
@@ -121,4 +126,95 @@ export function getWarehouseLevel(tier: string): number {
 
 export function getUnits(tier: string): UnitMap {
   return BARBARIAN_TIER_TEMPLATES[tier]?.units ?? BARBARIAN_TIER_TEMPLATES.T1.units;
+}
+
+export function getBarbarianRegenRates(tier: string): BarbarianRegenRates {
+  const normalizedTier = BARBARIAN_TIER_TEMPLATES[tier] ? tier : 'T1';
+  const tierIndex = Number(normalizedTier.slice(1)) - 1;
+
+  return {
+    troopRatePerHour: 0.005 + tierIndex * 0.00125,
+    resourceRatePerHour: 0.01 + tierIndex * 0.0025,
+  };
+}
+
+export function rollInitialBarbarianUnits(
+  tier: string,
+  random: () => number = Math.random,
+): UnitMap {
+  const blueprint = getUnits(tier);
+  const maxTotal = sumUnits(blueprint);
+  const initialTotal = Math.floor(maxTotal * (0.6 + random() * 0.4));
+
+  return allocateUnits(initialTotal, blueprint, blueprint);
+}
+
+export function calculateBarbarianUnitRegen(params: {
+  tier: string;
+  currentUnits: UnitMap;
+  elapsedHours: number;
+}): UnitMap {
+  const blueprint = getUnits(params.tier);
+  const maxTotal = sumUnits(blueprint);
+  const missingCapacity = subtractUnits(blueprint, params.currentUnits);
+  const missingTotal = sumUnits(missingCapacity);
+  const { troopRatePerHour } = getBarbarianRegenRates(params.tier);
+  const regenTotal = Math.min(
+    missingTotal,
+    Math.floor(maxTotal * troopRatePerHour * params.elapsedHours),
+  );
+
+  return allocateUnits(regenTotal, blueprint, missingCapacity);
+}
+
+function allocateUnits(total: number, weights: UnitMap, caps: UnitMap): UnitMap {
+  if (total <= 0) return {};
+
+  const cappedWeights: UnitMap = {};
+  for (const [unitType, weight] of Object.entries(weights)) {
+    const cap = caps[unitType as keyof UnitMap] ?? 0;
+    if (weight && cap > 0) cappedWeights[unitType as keyof UnitMap] = weight;
+  }
+
+  const weightTotal = sumUnits(cappedWeights);
+  if (weightTotal <= 0) return {};
+
+  const allocated: UnitMap = {};
+  const remainders: Array<{ unitType: keyof UnitMap; remainder: number }> = [];
+
+  for (const [unitType, weight] of Object.entries(cappedWeights)) {
+    const type = unitType as keyof UnitMap;
+    const cap = caps[type] ?? 0;
+    const exact = (total * weight) / weightTotal;
+    const quantity = Math.min(Math.floor(exact), cap);
+    if (quantity > 0) allocated[type] = quantity;
+    remainders.push({ unitType: type, remainder: exact - quantity });
+  }
+
+  let remaining = Math.min(total, sumUnits(caps)) - sumUnits(allocated);
+  remainders.sort((a, b) => b.remainder - a.remainder);
+
+  while (remaining > 0) {
+    const next = remainders.find(
+      ({ unitType }) => (allocated[unitType] ?? 0) < (caps[unitType] ?? 0),
+    );
+    if (!next) break;
+    allocated[next.unitType] = (allocated[next.unitType] ?? 0) + 1;
+    remaining--;
+  }
+
+  return allocated;
+}
+
+function subtractUnits(maxUnits: UnitMap, currentUnits: UnitMap): UnitMap {
+  const result: UnitMap = {};
+  for (const [unitType, maxQuantity] of Object.entries(maxUnits)) {
+    const current = currentUnits[unitType as keyof UnitMap] ?? 0;
+    result[unitType as keyof UnitMap] = Math.max(0, maxQuantity - current);
+  }
+  return result;
+}
+
+function sumUnits(units: UnitMap): number {
+  return Object.values(units).reduce((sum, quantity) => sum + quantity, 0);
 }

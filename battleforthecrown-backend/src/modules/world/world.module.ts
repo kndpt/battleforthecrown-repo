@@ -9,6 +9,7 @@ import { WorldEntitiesQueryService } from './world-entities-query.service';
 import { JoinWorldUseCase } from './join-world.use-case';
 import { ResetWorldUseCase } from './reset-world.use-case';
 import { BarbarianSeedingService } from './barbarian-seeding.service';
+import { BarbarianRuntimeService } from './barbarian-runtime.service';
 import { BarbarianVillageFactory } from './barbarian-village.factory';
 import { BarbarianSeedingCatchupWorker } from './barbarian-seeding-catchup.worker';
 import { VillagePlacementService } from './village-placement.service';
@@ -24,6 +25,7 @@ import { VisionService } from './vision.service';
     JoinWorldUseCase,
     ResetWorldUseCase,
     BarbarianSeedingService,
+    BarbarianRuntimeService,
     BarbarianVillageFactory,
     BarbarianSeedingCatchupWorker,
     VillagePlacementService,
@@ -34,6 +36,7 @@ import { VisionService } from './vision.service';
     WorldConfigService,
     WorldEntitiesQueryService,
     BarbarianSeedingService,
+    BarbarianRuntimeService,
     VillagePlacementService,
     VisionService,
   ],

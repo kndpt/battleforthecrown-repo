@@ -7,9 +7,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 - [40 — Recrutement Seigneur à la Salle du Trône](./40-recruit-noble-throne-hall.md) 🟠 Majeur — issue du [run 006](./runs/archive/006-audit-conquest.md). Use-case + endpoint dédié + déduction couronnes + file Trône.
 - [41 — Période de capture : `PendingConquest` + worker](./41-capture-window-data-model.md) 🔴 Bloquant conquête — issue du run 006. Data model Prisma + `conquest-finalize.worker` + 3 events Outbox. Bloqué par #40.
 - [42 — Hook combat post-résolution conquête](./42-combat-conquest-hook.md) 🟠 Majeur — issue du run 006. Seigneur survivant → ouvre #41 ; mort → loot ramené. Bloqué par #40 + #41.
-- [36 — Persistance runtime des troupes barbares + roll initial 60-100 %](./36-barbarian-troops-runtime-persistence.md) 🟠 Majeur — issue du [run 005](./runs/archive/005-audit-barbarians.md).
-- [37 — Régénération barbare (troupes + ressources) absente](./37-barbarian-regeneration-missing.md) 🟠 Majeur — issue du run 005. Bloqué par #36.
-- [38 — `BarbarianVillageStrategy` : résolution combat réelle](./38-barbarian-combat-real-resolution.md) 🟠 Majeur — issue conjointe runs 004 + 005. Bloqué par #36.
+- [38 — `BarbarianVillageStrategy` : résolution combat réelle](./38-barbarian-combat-real-resolution.md) 🟠 Majeur — issue conjointe runs 004 + 005.
 - [39 — Rapport de combat asymétrique victoire/défaite](./39-combat-report-asymmetric-defeat.md) 🟢 Mineur (Phase 2) — issue du run 005.
 
 ## Roadmap stratégique
@@ -41,6 +39,8 @@ _(Aucun run actif.)_
 
 ## Archivés
 
+- [37 — Régénération barbare (troupes + ressources) absente](./archive/37-barbarian-regeneration-missing.md) ✅ Résolu 2026-05-11 par $run @tasks/36-barbarian-troops-runtime-persistence.md @tasks/37-barbarian-regeneration-missing.md
+- [36 — Persistance runtime des troupes barbares + roll initial 60-100 %](./archive/36-barbarian-troops-runtime-persistence.md) ✅ Résolu 2026-05-11 par $run @tasks/36-barbarian-troops-runtime-persistence.md @tasks/37-barbarian-regeneration-missing.md
 - [35 — Drift durée retour vs spec « même vitesse qu'à l'aller »](./archive/35-return-travel-time-recomputed-vs-spec.md) ✅ Résolu 2026-05-11 par $run @tasks/35-return-travel-time-recomputed-vs-spec.md
 - [34 — Rappel d'armée pendant l'aller non implémenté](./archive/34-army-recall-missing.md) ✅ Résolu 2026-05-10 par $run @tasks/34-army-recall-missing.md
 - [33 — Renforts inter-villages non implémenté](./archive/33-reinforcements-inter-villages-missing.md) ✅ Résolu 2026-05-10 par $run @tasks/33-reinforcements-inter-villages-missing.md
