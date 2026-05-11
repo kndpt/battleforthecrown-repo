@@ -4,7 +4,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-- [42 — Hook combat post-résolution conquête](./42-combat-conquest-hook.md) 🟠 Majeur — issue du run 006. Seigneur survivant → ouvre #41 ; mort → loot ramené. Bloqué par #41.
+_(Aucun ticket actif.)_
 
 ## Roadmap stratégique
 
@@ -36,6 +36,7 @@ _(Aucun run actif.)_
 ## Archivés
 
 - [41 — Période de capture : `PendingConquest` + worker](./archive/41-capture-window-data-model.md) ✅ Résolu 2026-05-11 par $run @tasks/41-capture-window-data-model.md
+- [42 — Hook combat post-résolution conquête](./archive/42-combat-conquest-hook.md) ✅ Résolu 2026-05-11 par $run @tasks/42-combat-conquest-hook.md
 - [40 — Recrutement Seigneur à la Salle du Trône](./archive/40-recruit-noble-throne-hall.md) ✅ Résolu 2026-05-11 par $run @tasks/40-recruit-noble-throne-hall.md
 - [39 — Rapport de combat asymétrique victoire/défaite](./archive/39-combat-report-asymmetric-defeat.md) ✅ Résolu 2026-05-11 par $run @tasks/39-combat-report-asymmetric-defeat.md
 - [38 — `BarbarianVillageStrategy` : résolution combat réelle](./archive/38-barbarian-combat-real-resolution.md) ✅ Résolu 2026-05-11 par $run @tasks/38-barbarian-combat-real-resolution.md

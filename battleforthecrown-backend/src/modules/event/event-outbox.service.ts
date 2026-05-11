@@ -16,6 +16,7 @@ import {
   type VillageCaptureWindowOpenedPayload,
   type VillageCaptureWindowCompletedPayload,
   type VillageCaptureWindowInterruptedPayload,
+  type NobleKilledPayload,
   type ReinforcementSentPayload,
   type ReinforcementRecalledPayload,
   type ReinforcementReturnedPayload,
@@ -146,6 +147,9 @@ export class EventOutboxService {
         await this.notifyVillageCaptureWindowInterrupted(
           parseEventPayload(event.kind, event.payload),
         );
+        break;
+      case 'noble.killed':
+        this.notifyNobleKilled(parseEventPayload(event.kind, event.payload));
         break;
       case 'reinforcement.sent':
         await this.notifyReinforcementSent(
@@ -397,6 +401,10 @@ export class EventOutboxService {
       'village.capture-window-interrupted',
       payload,
     );
+  }
+
+  private notifyNobleKilled(payload: NobleKilledPayload) {
+    this.gateway.notifyUser(payload.attackerUserId, 'noble.killed', payload);
   }
 
   private notifyCrownsChanged(payload: CrownsChangedPayload) {

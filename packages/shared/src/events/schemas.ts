@@ -94,6 +94,12 @@ const VillageCaptureWindowInterruptedPayloadSchema = z.object({
   reason: z.string(),
 });
 
+const NobleKilledPayloadSchema = z.object({
+  attackerVillageId: z.string(),
+  attackerUserId: z.string(),
+  combatId: z.string(),
+});
+
 const ReinforcementSentPayloadSchema = z.object({
   expeditionId: z.string(),
   villageId: z.string(),
@@ -168,6 +174,7 @@ export const EVENT_PAYLOAD_SCHEMAS = {
   'village.capture-window-opened': VillageCaptureWindowOpenedPayloadSchema,
   'village.capture-window-completed': VillageCaptureWindowCompletedPayloadSchema,
   'village.capture-window-interrupted': VillageCaptureWindowInterruptedPayloadSchema,
+  'noble.killed': NobleKilledPayloadSchema,
   'reinforcement.sent': ReinforcementSentPayloadSchema,
   'reinforcement.recalled': ReinforcementRecalledPayloadSchema,
   'reinforcement.returned': ReinforcementReturnedPayloadSchema,

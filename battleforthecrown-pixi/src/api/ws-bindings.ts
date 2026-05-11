@@ -368,6 +368,20 @@ export function applyVillageCaptureWindowInterrupted(
   });
 }
 
+export function applyNobleKilled(
+  payload: ServerEvents['noble.killed'],
+  ctx: BindingsContext,
+): void {
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.attackerVillageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.attackerVillageId) });
+  useUiStore.getState().pushToast({
+    tone: 'error',
+    title: 'Seigneur perdu',
+    description: 'Conquête échouée',
+    ttlMs: 6000,
+  });
+}
+
 function resolveOrigin(villageId: string): { x: number; y: number } {
   const entity = useWorldMapStore.getState().entities[villageId];
   if (entity) return { x: entity.x, y: entity.y };
@@ -453,6 +467,7 @@ const bindings: ServerEventBindings = {
   'village.capture-window-opened': applyVillageCaptureWindowOpened,
   'village.capture-window-completed': applyVillageCaptureWindowCompleted,
   'village.capture-window-interrupted': applyVillageCaptureWindowInterrupted,
+  'noble.killed': applyNobleKilled,
 };
 
 export function bindServerEvents(ctx: BindingsContext): () => void {

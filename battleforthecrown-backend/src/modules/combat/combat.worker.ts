@@ -5,6 +5,7 @@ import { WorldConfigService } from '../world/world-config.service';
 import { BarbarianRuntimeService } from '../world/barbarian-runtime.service';
 import { BarbarianVillageStrategy } from './strategies/barbarian-village.strategy';
 import { PlayerVillageStrategy } from './strategies/player-village.strategy';
+import { ConquestService } from './conquest.service';
 import PgBoss from 'pg-boss';
 import {
   CombatContext,
@@ -23,10 +24,32 @@ import { getStrategyBonusValue } from '@battleforthecrown/shared/village';
 import { calculateDistance } from '@battleforthecrown/shared/logic';
 import {
   UNIT_COSTS,
+  UNIT_TYPES,
   type UnitMap,
   type UnitType,
 } from '@battleforthecrown/shared/army';
 import { typedEntries } from '@battleforthecrown/shared/utils';
+
+const BARBARIAN_CAPTURE_DURATIONS_MS: Record<string, number> = {
+  T1: 2 * 60 * 60 * 1000,
+  T2: 4 * 60 * 60 * 1000,
+  T3: 6 * 60 * 60 * 1000,
+  T4: 9 * 60 * 60 * 1000,
+  T5: 12 * 60 * 60 * 1000,
+};
+
+const PVP_CAPTURE_DURATIONS_MS = [
+  { minCastleLevel: 9, durationMs: 18 * 60 * 60 * 1000 },
+  { minCastleLevel: 7, durationMs: 12 * 60 * 60 * 1000 },
+  { minCastleLevel: 5, durationMs: 9 * 60 * 60 * 1000 },
+  { minCastleLevel: 3, durationMs: 6 * 60 * 60 * 1000 },
+  { minCastleLevel: 1, durationMs: 4 * 60 * 60 * 1000 },
+];
+
+interface PendingConquestToSchedule {
+  id: string;
+  captureUntil: Date;
+}
 
 /**
  * Total population freed by a set of unit losses. The pop of a dead unit is
@@ -57,6 +80,7 @@ export class CombatWorker implements OnModuleInit {
     private readonly barbarianStrategy: BarbarianVillageStrategy,
     private readonly playerStrategy: PlayerVillageStrategy,
     private readonly outbox: OutboxPublisher,
+    private readonly conquest: ConquestService,
   ) {}
 
   async onModuleInit() {
@@ -78,368 +102,356 @@ export class CombatWorker implements OnModuleInit {
     this.logger.log(`Processing combat resolution: ${data.expeditionId}`);
 
     try {
-      await this.prisma.$transaction(async (tx) => {
-        // 1. Get expedition with related data
-        const expedition = await tx.expedition.findUnique({
-          where: { id: data.expeditionId },
-        });
-
-        if (!expedition) {
-          this.logger.warn(`Expedition ${data.expeditionId} not found`);
-          return;
-        }
-
-        if (expedition.status !== 'EN_ROUTE') {
-          this.logger.warn(
-            `Expedition ${data.expeditionId} already resolved (${expedition.status})`,
-          );
-          return;
-        }
-
-        if (expedition.kind === ExpeditionKind.REINFORCE) {
-          return this.handleReinforcementArrival(tx, expedition);
-        }
-
-        // 2. Build combat context
-        const context = await this.buildCombatContext(tx, expedition);
-
-        // 3. Select strategy based on target kind
-        const strategy =
-          expedition.targetKind === 'BARBARIAN_VILLAGE'
-            ? this.barbarianStrategy
-            : this.playerStrategy;
-
-        if (!strategy) {
-          throw new Error(
-            `No strategy found for target kind: ${expedition.targetKind}`,
-          );
-        }
-
-        // 4. Resolve combat
-        const resolution = await strategy.resolve(context);
-
-        // 5. Apply loot to defender (deduct resources)
-        let defenderVillage: Prisma.VillageGetPayload<{
-          include: { resourceStock: true };
-        }> | null = null;
-
-        if (expedition.targetKind === 'BARBARIAN_VILLAGE') {
-          // For barbarians: deduct from Village.resourceStock (same as player villages)
-          defenderVillage = await tx.village.findUnique({
-            where: { id: expedition.targetRefId },
-            include: { resourceStock: true },
+      const pendingConquestToSchedule = await this.prisma.$transaction(
+        async (tx) => {
+          // 1. Get expedition with related data
+          const expedition = await tx.expedition.findUnique({
+            where: { id: data.expeditionId },
           });
 
-          if (defenderVillage?.resourceStock) {
-            const lootedResources = resolution.loot.resources || {
-              wood: 0,
-              stone: 0,
-              iron: 0,
-            };
+          if (!expedition) {
+            this.logger.warn(`Expedition ${data.expeditionId} not found`);
+            return;
+          }
 
-            // Deduct looted resources and reset timestamp for production
-            await tx.resourceStock.update({
-              where: { villageId: defenderVillage.id },
-              data: {
-                wood: { decrement: lootedResources.wood },
-                stone: { decrement: lootedResources.stone },
-                iron: { decrement: lootedResources.iron },
-                lastUpdateTs: new Date(), // Reset production timestamp
-              },
+          if (expedition.status !== 'EN_ROUTE') {
+            this.logger.warn(
+              `Expedition ${data.expeditionId} already resolved (${expedition.status})`,
+            );
+            return;
+          }
+
+          if (expedition.kind === ExpeditionKind.REINFORCE) {
+            return this.handleReinforcementArrival(tx, expedition);
+          }
+
+          // 2. Build combat context
+          const context = await this.buildCombatContext(tx, expedition);
+
+          // 3. Select strategy based on target kind
+          const strategy =
+            expedition.targetKind === 'BARBARIAN_VILLAGE'
+              ? this.barbarianStrategy
+              : this.playerStrategy;
+
+          if (!strategy) {
+            throw new Error(
+              `No strategy found for target kind: ${expedition.targetKind}`,
+            );
+          }
+
+          // 4. Resolve combat
+          const resolution = await strategy.resolve(context);
+
+          // 5. Apply loot to defender (deduct resources)
+          let defenderVillage: Prisma.VillageGetPayload<{
+            include: { resourceStock: true; buildings: true };
+          }> | null = null;
+          let pendingConquest: PendingConquestToSchedule | null = null;
+
+          if (expedition.targetKind === 'BARBARIAN_VILLAGE') {
+            // For barbarians: deduct from Village.resourceStock (same as player villages)
+            defenderVillage = await tx.village.findUnique({
+              where: { id: expedition.targetRefId },
+              include: { resourceStock: true, buildings: true },
             });
 
-            await this.outbox.resourcesChanged(defenderVillage.id, tx);
-          }
+            if (defenderVillage?.resourceStock) {
+              const lootedResources = resolution.loot.resources || {
+                wood: 0,
+                stone: 0,
+                iron: 0,
+              };
 
-          if (defenderVillage) {
-            for (const [unitType, losses] of Object.entries(
-              resolution.lossesDefender || {},
-            )) {
-              if (losses > 0) {
-                await tx.unitInventory.update({
-                  where: {
-                    villageId_unitType: {
-                      villageId: defenderVillage.id,
-                      unitType,
-                    },
-                  },
-                  data: {
-                    quantity: { decrement: losses },
-                  },
-                });
-              }
-            }
-          }
-        } else {
-          // For player villages: deduct from ResourceStock
-
-          defenderVillage = await tx.village.findUnique({
-            where: { id: expedition.targetRefId },
-            include: { resourceStock: true },
-          });
-
-          if (defenderVillage) {
-            const lootedResources = resolution.loot.resources || {
-              wood: 0,
-              stone: 0,
-              iron: 0,
-            };
-
-            if (defenderVillage.resourceStock) {
-              // Deduct looted resources from defender
+              // Deduct looted resources and reset timestamp for production
               await tx.resourceStock.update({
                 where: { villageId: defenderVillage.id },
                 data: {
                   wood: { decrement: lootedResources.wood },
                   stone: { decrement: lootedResources.stone },
                   iron: { decrement: lootedResources.iron },
+                  lastUpdateTs: new Date(), // Reset production timestamp
                 },
               });
 
               await this.outbox.resourcesChanged(defenderVillage.id, tx);
             }
 
-            // Update defender participants (apply losses)
-            const lossesDefender = resolution.lossesDefender || {};
-            const totalDefenderUnits = context.defender.units || {};
-
-            for (const participant of context.defender.participants) {
-              const participantLosses = distributeLossesProportionally(
-                lossesDefender,
-                totalDefenderUnits,
-                participant.units,
+            if (defenderVillage) {
+              await this.applyDefenderLosses(
+                tx,
+                defenderVillage,
+                context.defender.participants,
+                context.defender.units || {},
+                resolution.lossesDefender || {},
               );
-
-              if (participant.villageId === defenderVillage.id) {
-                // Local units losses
-                for (const [unitType, losses] of Object.entries(
-                  participantLosses,
-                )) {
-                  if (losses > 0) {
-                    await tx.unitInventory.update({
-                      where: {
-                        villageId_unitType: {
-                          villageId: defenderVillage.id,
-                          unitType,
-                        },
-                      },
-                      data: {
-                        quantity: { decrement: losses },
-                      },
-                    });
-                  }
-                }
-
-                // Release local population
-                const popReleasedLocal = sumPopulationCost(participantLosses);
-                if (popReleasedLocal > 0) {
-                  await tx.population.update({
-                    where: { villageId: defenderVillage.id },
-                    data: { used: { decrement: popReleasedLocal } },
-                  });
-                }
-              } else {
-                // Garrison units losses
-                for (const [unitType, losses] of Object.entries(
-                  participantLosses,
-                )) {
-                  if (losses > 0) {
-                    await tx.garrison.update({
-                      where: {
-                        villageId_originVillageId_unitType: {
-                          villageId: defenderVillage.id,
-                          originVillageId: participant.villageId,
-                          unitType,
-                        },
-                      },
-                      data: {
-                        quantity: { decrement: losses },
-                      },
-                    });
-                  }
-                }
-
-                // Release origin population
-                const popReleasedOrigin = sumPopulationCost(participantLosses);
-                if (popReleasedOrigin > 0) {
-                  await tx.population.update({
-                    where: { villageId: participant.villageId },
-                    data: { used: { decrement: popReleasedOrigin } },
-                  });
-                }
-              }
             }
-          }
-        }
+          } else {
+            // For player villages: deduct from ResourceStock
 
-        // Release attacker population for dead units (always — PvP and barbarian raids).
-        // Pop is freed at combat resolution, not at return — the units are dead now,
-        // even if survivors are still on the road back. See docs/gameplay/02-economy-and-progression.md § Population.
-        const popReleasedAttacker = sumPopulationCost(
-          resolution.lossesAttacker,
-        );
-        if (popReleasedAttacker > 0) {
-          await tx.population.update({
-            where: { villageId: expedition.attackerVillageId },
-            data: { used: { decrement: popReleasedAttacker } },
-          });
-        }
+            defenderVillage = await tx.village.findUnique({
+              where: { id: expedition.targetRefId },
+              include: { resourceStock: true, buildings: true },
+            });
 
-        // 6. Get attacker village for userId
-        const attackerVillage = await tx.village.findUnique({
-          where: { id: expedition.attackerVillageId },
-        });
-
-        if (!attackerVillage) {
-          throw new Error('Attacker village not found');
-        }
-
-        // 7. Create event for defender (if PvP)
-        if (expedition.targetKind === 'PLAYER_VILLAGE' && defenderVillage) {
-          const lossesDefender = resolution.lossesDefender || {};
-          const lootedResources = resolution.loot.resources || {
-            wood: 0,
-            stone: 0,
-            iron: 0,
-          };
-
-          // Check if defender survived (at least one unit)
-          const defenderSurvived = typedEntries(
-            resolution.lossesDefender || {},
-          ).some(([unitType, loss]) => {
-            const originalQty = context.defender.units?.[unitType] ?? 0;
-            return originalQty - loss > 0;
-          });
-
-          const defenderStats = calculateCasualtyStats(
-            context.defender.units || {},
-            lossesDefender,
-          );
-
-          await createOutboxEvent(tx, 'village.attacked', defenderVillage.id, {
-            defenderVillageId: defenderVillage.id,
-            attackerVillageId: expedition.attackerVillageId,
-            attackerVillageName: attackerVillage.name,
-            attackerX: attackerVillage.x,
-            attackerY: attackerVillage.y,
-            defenderVillageName: defenderVillage.name,
-            isDefenseSuccessful: defenderSurvived,
-            losses: lossesDefender,
-            casualtyRate: defenderStats.casualtyRate,
-            resourcesLost: lootedResources,
-            timestamp: new Date().toISOString(),
-          });
-        }
-
-        // 8. Create combat report
-        const report = await tx.combatReport.create({
-          data: {
-            worldId: expedition.worldId,
-            attackerVillageId: expedition.attackerVillageId,
-            attackerUserId: attackerVillage.userId!, // Guaranteed non-null for player attacks
-            defenderVillageId:
-              expedition.targetKind === 'PLAYER_VILLAGE'
-                ? expedition.targetRefId
-                : null,
-            defenderUserId:
-              expedition.targetKind === 'PLAYER_VILLAGE' && defenderVillage
-                ? defenderVillage.userId
-                : null,
-            targetKind: expedition.targetKind,
-            targetX: expedition.targetX,
-            targetY: expedition.targetY,
-            loot: encodeLootResult(resolution.loot),
-            totalUnitsAttacker: encodeUnitMap(
-              parseUnitMap(expedition.units, 'expedition.units'),
-            ),
-            totalUnitsDefender: encodeUnitMap(context.defender.units || {}),
-            lossesAttacker: encodeUnitMap(resolution.lossesAttacker),
-            lossesDefender: encodeUnitMap(resolution.lossesDefender || {}),
-            details: {
-              expeditionId: expedition.id,
-              targetTier: defenderVillage?.tier ?? null,
-              distance: context.config._distance,
-              travelTime: context.config._travelTime,
-            },
-          },
-        });
-
-        // 9. Reuse outbound duration so return speed cannot drift with config/style changes.
-        const returnAt = new Date(Date.now() + expedition.outboundTravelMs);
-
-        // 10. Update expedition
-        await tx.expedition.update({
-          where: { id: expedition.id },
-          data: {
-            status: 'RETURNING',
-            reportId: report.id,
-            returnAt,
-            survivingUnits: encodeUnitMap(resolution.survivingUnits),
-            loot: encodeLootResult(resolution.loot),
-          },
-        });
-
-        // 11. Determine victory status and calculate stats
-        const originalUnits = parseUnitMap(
-          expedition.units,
-          'expedition.units',
-        );
-        const isVictory = isVictoryForAttacker(
-          resolution.lossesAttacker,
-          originalUnits,
-        );
-
-        const attackerStats = calculateCasualtyStats(
-          originalUnits,
-          resolution.lossesAttacker,
-        );
-
-        // Get target name
-        const targetName = defenderVillage?.name || '';
-
-        // 12. Create event
-        await createOutboxEvent(
-          tx,
-          'battle.resolved',
-          expedition.attackerVillageId,
-          {
-            expeditionId: expedition.id,
-            reportId: report.id,
-            villageId: expedition.attackerVillageId,
-            villageName: attackerVillage.name,
-            targetKind: expedition.targetKind,
-            targetName,
-            targetX: expedition.targetX,
-            targetY: expedition.targetY,
-            isVictory,
-            loot: {
-              resources: resolution.loot.resources || {
+            if (defenderVillage) {
+              const lootedResources = resolution.loot.resources || {
                 wood: 0,
                 stone: 0,
                 iron: 0,
+              };
+
+              if (defenderVillage.resourceStock) {
+                // Deduct looted resources from defender
+                await tx.resourceStock.update({
+                  where: { villageId: defenderVillage.id },
+                  data: {
+                    wood: { decrement: lootedResources.wood },
+                    stone: { decrement: lootedResources.stone },
+                    iron: { decrement: lootedResources.iron },
+                  },
+                });
+
+                await this.outbox.resourcesChanged(defenderVillage.id, tx);
+              }
+
+              await this.applyDefenderLosses(
+                tx,
+                defenderVillage,
+                context.defender.participants,
+                context.defender.units || {},
+                resolution.lossesDefender || {},
+              );
+            }
+          }
+
+          // Release attacker population for dead units (always — PvP and barbarian raids).
+          // Pop is freed at combat resolution, not at return — the units are dead now,
+          // even if survivors are still on the road back. See docs/gameplay/02-economy-and-progression.md § Population.
+          const popReleasedAttacker = sumPopulationCost(
+            resolution.lossesAttacker,
+          );
+          if (popReleasedAttacker > 0) {
+            await tx.population.update({
+              where: { villageId: expedition.attackerVillageId },
+              data: { used: { decrement: popReleasedAttacker } },
+            });
+          }
+
+          // 6. Get attacker village for userId
+          const attackerVillage = await tx.village.findUnique({
+            where: { id: expedition.attackerVillageId },
+          });
+
+          if (!attackerVillage) {
+            throw new Error('Attacker village not found');
+          }
+
+          // 7. Create event for defender (if PvP)
+          if (expedition.targetKind === 'PLAYER_VILLAGE' && defenderVillage) {
+            const lossesDefender = resolution.lossesDefender || {};
+            const lootedResources = resolution.loot.resources || {
+              wood: 0,
+              stone: 0,
+              iron: 0,
+            };
+
+            // Check if defender survived (at least one unit)
+            const defenderSurvived = typedEntries(
+              resolution.lossesDefender || {},
+            ).some(([unitType, loss]) => {
+              const originalQty = context.defender.units?.[unitType] ?? 0;
+              return originalQty - loss > 0;
+            });
+
+            const defenderStats = calculateCasualtyStats(
+              context.defender.units || {},
+              lossesDefender,
+            );
+
+            await createOutboxEvent(
+              tx,
+              'village.attacked',
+              defenderVillage.id,
+              {
+                defenderVillageId: defenderVillage.id,
+                attackerVillageId: expedition.attackerVillageId,
+                attackerVillageName: attackerVillage.name,
+                attackerX: attackerVillage.x,
+                attackerY: attackerVillage.y,
+                defenderVillageName: defenderVillage.name,
+                isDefenseSuccessful: defenderSurvived,
+                losses: lossesDefender,
+                casualtyRate: defenderStats.casualtyRate,
+                resourcesLost: lootedResources,
+                timestamp: new Date().toISOString(),
+              },
+            );
+          }
+
+          // 8. Create combat report
+          const report = await tx.combatReport.create({
+            data: {
+              worldId: expedition.worldId,
+              attackerVillageId: expedition.attackerVillageId,
+              attackerUserId: attackerVillage.userId!, // Guaranteed non-null for player attacks
+              defenderVillageId:
+                expedition.targetKind === 'PLAYER_VILLAGE'
+                  ? expedition.targetRefId
+                  : null,
+              defenderUserId:
+                expedition.targetKind === 'PLAYER_VILLAGE' && defenderVillage
+                  ? defenderVillage.userId
+                  : null,
+              targetKind: expedition.targetKind,
+              targetX: expedition.targetX,
+              targetY: expedition.targetY,
+              loot: encodeLootResult(resolution.loot),
+              totalUnitsAttacker: encodeUnitMap(
+                parseUnitMap(expedition.units, 'expedition.units'),
+              ),
+              totalUnitsDefender: encodeUnitMap(context.defender.units || {}),
+              lossesAttacker: encodeUnitMap(resolution.lossesAttacker),
+              lossesDefender: encodeUnitMap(resolution.lossesDefender || {}),
+              details: {
+                expeditionId: expedition.id,
+                targetTier: defenderVillage?.tier ?? null,
+                distance: context.config._distance,
+                travelTime: context.config._travelTime,
               },
             },
-            lossesAttacker: resolution.lossesAttacker,
-            casualtyRate: attackerStats.casualtyRate,
-            survivingUnits: resolution.survivingUnits,
-            returnAt: returnAt.toISOString(),
-          },
-        );
+          });
 
-        // 13. Schedule return worker
-        await this.boss.send(
-          'combat:return',
-          { expeditionId: expedition.id },
-          {
-            startAfter: returnAt,
-            singletonKey: `return:${expedition.id}`,
-          },
-        );
+          // 9. Reuse outbound duration so return speed cannot drift with config/style changes.
+          const returnAt = new Date(Date.now() + expedition.outboundTravelMs);
+          const originalUnits = parseUnitMap(
+            expedition.units,
+            'expedition.units',
+          );
+          const isVictory = isVictoryForAttacker(
+            resolution.lossesAttacker,
+            originalUnits,
+          );
+          const startedWithNoble = (originalUnits[UNIT_TYPES.NOBLE] ?? 0) > 0;
+          const nobleSurvived =
+            (resolution.survivingUnits[UNIT_TYPES.NOBLE] ?? 0) > 0;
+          const returningUnits = { ...resolution.survivingUnits };
 
-        this.logger.log(
-          `Combat resolved for expedition ${expedition.id}, victory=${isVictory}, troops returning at ${returnAt.toISOString()}`,
-        );
-      });
+          if (isVictory && startedWithNoble && defenderVillage) {
+            if (nobleSurvived) {
+              returningUnits[UNIT_TYPES.NOBLE] =
+                (returningUnits[UNIT_TYPES.NOBLE] ?? 0) - 1;
+              if ((returningUnits[UNIT_TYPES.NOBLE] ?? 0) <= 0) {
+                delete returningUnits[UNIT_TYPES.NOBLE];
+              }
+
+              const captureUntil = new Date(
+                Date.now() + this.getCaptureDurationMs(defenderVillage),
+              );
+              pendingConquest = await this.conquest.openCaptureWindowInTx(tx, {
+                attackerVillageId: expedition.attackerVillageId,
+                targetVillageId: defenderVillage.id,
+                attackerUserId: attackerVillage.userId!,
+                captureUntil,
+              });
+
+              await tx.garrison.upsert({
+                where: {
+                  villageId_originVillageId_unitType: {
+                    villageId: defenderVillage.id,
+                    originVillageId: expedition.attackerVillageId,
+                    unitType: UNIT_TYPES.NOBLE,
+                  },
+                },
+                create: {
+                  villageId: defenderVillage.id,
+                  originVillageId: expedition.attackerVillageId,
+                  unitType: UNIT_TYPES.NOBLE,
+                  quantity: 1,
+                },
+                update: {
+                  quantity: { increment: 1 },
+                },
+              });
+            } else {
+              await createOutboxEvent(tx, 'noble.killed', attackerVillage.id, {
+                attackerVillageId: attackerVillage.id,
+                attackerUserId: attackerVillage.userId!,
+                combatId: report.id,
+              });
+            }
+          }
+
+          // 10. Update expedition
+          await tx.expedition.update({
+            where: { id: expedition.id },
+            data: {
+              status: 'RETURNING',
+              reportId: report.id,
+              returnAt,
+              survivingUnits: encodeUnitMap(returningUnits),
+              loot: encodeLootResult(resolution.loot),
+            },
+          });
+
+          // 11. Determine victory status and calculate stats
+          const attackerStats = calculateCasualtyStats(
+            originalUnits,
+            resolution.lossesAttacker,
+          );
+
+          // Get target name
+          const targetName = defenderVillage?.name || '';
+
+          // 12. Create event
+          await createOutboxEvent(
+            tx,
+            'battle.resolved',
+            expedition.attackerVillageId,
+            {
+              expeditionId: expedition.id,
+              reportId: report.id,
+              villageId: expedition.attackerVillageId,
+              villageName: attackerVillage.name,
+              targetKind: expedition.targetKind,
+              targetName,
+              targetX: expedition.targetX,
+              targetY: expedition.targetY,
+              isVictory,
+              loot: {
+                resources: resolution.loot.resources || {
+                  wood: 0,
+                  stone: 0,
+                  iron: 0,
+                },
+              },
+              lossesAttacker: resolution.lossesAttacker,
+              casualtyRate: attackerStats.casualtyRate,
+              survivingUnits: returningUnits,
+              returnAt: returnAt.toISOString(),
+            },
+          );
+
+          // 13. Schedule return worker
+          await this.boss.send(
+            'combat:return',
+            { expeditionId: expedition.id },
+            {
+              startAfter: returnAt,
+              singletonKey: `return:${expedition.id}`,
+            },
+          );
+
+          this.logger.log(
+            `Combat resolved for expedition ${expedition.id}, victory=${isVictory}, troops returning at ${returnAt.toISOString()}`,
+          );
+          return pendingConquest;
+        },
+      );
+
+      if (pendingConquestToSchedule) {
+        await this.conquest.scheduleFinalizeJob(pendingConquestToSchedule);
+      }
     } catch (error) {
       this.logger.error(
         `Failed to process combat for ${data.expeditionId}:`,
@@ -561,12 +573,47 @@ export class CombatWorker implements OnModuleInit {
       villageId,
     );
 
+    const garrisons = await tx.garrison.findMany({
+      where: { villageId },
+      include: {
+        originVillage: {
+          include: { strategyConfig: true },
+        },
+      },
+    });
+
+    const participants: CombatParticipant[] = [
+      { villageId: village.id, units, strategy: undefined },
+    ];
+    const totalUnits: UnitMap = { ...units };
+
+    for (const g of garrisons) {
+      const gUnits: UnitMap = { [g.unitType as UnitType]: g.quantity };
+      const existingParticipant = participants.find(
+        (p) => p.villageId === g.originVillageId,
+      );
+
+      if (existingParticipant) {
+        existingParticipant.units[g.unitType as UnitType] =
+          (existingParticipant.units[g.unitType as UnitType] ?? 0) + g.quantity;
+      } else {
+        participants.push({
+          villageId: g.originVillageId,
+          units: gUnits,
+          strategy: g.originVillage?.strategyConfig?.strategy,
+        });
+      }
+
+      totalUnits[g.unitType as UnitType] =
+        (totalUnits[g.unitType as UnitType] ?? 0) + g.quantity;
+    }
+
     return {
       kind: 'BARBARIAN_VILLAGE' as const,
       village,
-      units,
+      units: totalUnits,
       resources,
-      participants: [{ villageId: village.id, units, strategy: undefined }],
+      participants,
     };
   }
 
@@ -638,6 +685,113 @@ export class CombatWorker implements OnModuleInit {
         : { wood: 0, stone: 0, iron: 0 },
       participants,
     };
+  }
+
+  private async applyDefenderLosses(
+    tx: PrismaClientOrTx,
+    defenderVillage: Prisma.VillageGetPayload<{
+      include: { resourceStock: true; buildings: true };
+    }>,
+    participants: CombatParticipant[],
+    totalDefenderUnits: UnitMap,
+    lossesDefender: UnitMap,
+  ) {
+    const pending = await tx.pendingConquest.findFirst({
+      where: { targetVillageId: defenderVillage.id, status: 'OPEN' },
+      select: { attackerVillageId: true },
+    });
+
+    for (const participant of participants) {
+      const participantLosses = distributeLossesProportionally(
+        lossesDefender,
+        totalDefenderUnits,
+        participant.units,
+      );
+
+      if (participant.villageId === defenderVillage.id) {
+        for (const [unitType, losses] of Object.entries(participantLosses)) {
+          if (losses <= 0) continue;
+          await tx.unitInventory.update({
+            where: {
+              villageId_unitType: {
+                villageId: defenderVillage.id,
+                unitType,
+              },
+            },
+            data: {
+              quantity: { decrement: losses },
+            },
+          });
+        }
+
+        const popReleasedLocal = sumPopulationCost(participantLosses);
+        if (popReleasedLocal > 0 && !defenderVillage.isBarbarian) {
+          await tx.population.update({
+            where: { villageId: defenderVillage.id },
+            data: { used: { decrement: popReleasedLocal } },
+          });
+        }
+        continue;
+      }
+
+      for (const [unitType, losses] of Object.entries(participantLosses)) {
+        if (losses <= 0) continue;
+        await tx.garrison.update({
+          where: {
+            villageId_originVillageId_unitType: {
+              villageId: defenderVillage.id,
+              originVillageId: participant.villageId,
+              unitType,
+            },
+          },
+          data: {
+            quantity: { decrement: losses },
+          },
+        });
+      }
+
+      const popReleasedOrigin = sumPopulationCost(participantLosses);
+      if (popReleasedOrigin > 0) {
+        await tx.population.update({
+          where: { villageId: participant.villageId },
+          data: { used: { decrement: popReleasedOrigin } },
+        });
+      }
+
+      if (
+        pending?.attackerVillageId === participant.villageId &&
+        (participantLosses[UNIT_TYPES.NOBLE] ?? 0) > 0
+      ) {
+        await this.conquest.interruptCaptureWindowInTx(
+          tx,
+          defenderVillage.id,
+          'noble-killed-during-window',
+        );
+      }
+    }
+  }
+
+  private getCaptureDurationMs(
+    targetVillage: Prisma.VillageGetPayload<{
+      include: { resourceStock: true; buildings: true };
+    }>,
+  ): number {
+    if (targetVillage.isBarbarian) {
+      return (
+        BARBARIAN_CAPTURE_DURATIONS_MS[targetVillage.tier ?? ''] ??
+        BARBARIAN_CAPTURE_DURATIONS_MS.T1
+      );
+    }
+
+    const castleLevel =
+      targetVillage.buildings.find((building) => building.type === 'CASTLE')
+        ?.level ?? 1;
+
+    return (
+      PVP_CAPTURE_DURATIONS_MS.find(
+        (entry) => castleLevel >= entry.minCastleLevel,
+      )?.durationMs ?? PVP_CAPTURE_DURATIONS_MS.at(-1)!.durationMs
+    );
   }
 
   private async handleReinforcementArrival(

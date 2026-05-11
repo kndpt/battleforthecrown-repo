@@ -92,6 +92,12 @@ export interface VillageCaptureWindowInterruptedPayload {
   reason: string;
 }
 
+export interface NobleKilledPayload {
+  attackerVillageId: string;
+  attackerUserId: string;
+  combatId: string;
+}
+
 export interface ReinforcementSentPayload {
   expeditionId: string;
   villageId: string;
@@ -175,6 +181,7 @@ export type OutboxEventPayload =
       kind: 'village.capture-window-interrupted';
       payload: VillageCaptureWindowInterruptedPayload;
     }
+  | { kind: 'noble.killed'; payload: NobleKilledPayload }
   | { kind: 'reinforcement.sent'; payload: ReinforcementSentPayload }
   | { kind: 'reinforcement.recalled'; payload: ReinforcementRecalledPayload }
   | { kind: 'reinforcement.returned'; payload: ReinforcementReturnedPayload }
@@ -202,6 +209,7 @@ export type AnyEventPayload =
   | VillageCaptureWindowOpenedPayload
   | VillageCaptureWindowCompletedPayload
   | VillageCaptureWindowInterruptedPayload
+  | NobleKilledPayload
   | ReinforcementSentPayload
   | ReinforcementRecalledPayload
   | ReinforcementReturnedPayload
@@ -224,6 +232,7 @@ export interface ServerEvents {
   'village.capture-window-opened': VillageCaptureWindowOpenedPayload;
   'village.capture-window-completed': VillageCaptureWindowCompletedPayload;
   'village.capture-window-interrupted': VillageCaptureWindowInterruptedPayload;
+  'noble.killed': NobleKilledPayload;
   'reinforcement.sent': ReinforcementSentPayload;
   'reinforcement.recalled': ReinforcementRecalledPayload;
   'reinforcement.returned': ReinforcementReturnedPayload;

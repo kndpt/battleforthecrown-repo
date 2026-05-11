@@ -11,6 +11,7 @@ import PgBoss from 'pg-boss';
 import { PrismaClientOrTx } from '../../common/prisma.types';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { createOutboxEvent } from '../event/event.utils';
+import { UNIT_COSTS, UNIT_TYPES } from '@battleforthecrown/shared/army';
 
 export const CONQUEST_FINALIZE_QUEUE = 'conquest:finalize';
 
@@ -30,64 +31,84 @@ export class ConquestService {
     captureUntil: Date;
     attackerNobleId?: string;
   }) {
-    const pendingConquest = await this.prisma.$transaction(async (tx) => {
-      const [attacker, target, existingOpen] = await Promise.all([
-        tx.village.findUnique({
-          where: { id: params.attackerVillageId },
-          select: { id: true, userId: true, worldId: true },
-        }),
-        tx.village.findUnique({
-          where: { id: params.targetVillageId },
-          select: { id: true, worldId: true },
-        }),
-        tx.pendingConquest.findFirst({
-          where: {
-            targetVillageId: params.targetVillageId,
-            status: PendingConquestStatus.OPEN,
-          },
-        }),
-      ]);
+    const pendingConquest = await this.prisma.$transaction((tx) =>
+      this.openCaptureWindowInTx(tx, params),
+    );
+    await this.scheduleFinalizeJob(pendingConquest);
+    return this.prisma.pendingConquest.findUniqueOrThrow({
+      where: { id: pendingConquest.id },
+    });
+  }
 
-      if (!attacker) throw new NotFoundException('Attacker village not found');
-      if (!target) throw new NotFoundException('Target village not found');
-      if (attacker.userId !== params.attackerUserId) {
-        throw new ForbiddenException(
-          'Attacker village does not belong to user',
-        );
-      }
-      if (attacker.worldId !== target.worldId) {
-        throw new ForbiddenException('Target village is in another world');
-      }
-      if (existingOpen) {
-        throw new ConflictException('A capture window is already open');
-      }
-
-      const created = await tx.pendingConquest.create({
-        data: {
-          attackerVillageId: params.attackerVillageId,
-          attackerUserId: params.attackerUserId,
-          attackerNobleId: params.attackerNobleId,
+  async openCaptureWindowInTx(
+    tx: PrismaClientOrTx,
+    params: {
+      attackerVillageId: string;
+      targetVillageId: string;
+      attackerUserId: string;
+      captureUntil: Date;
+      attackerNobleId?: string;
+    },
+  ) {
+    const [attacker, target, existingOpen] = await Promise.all([
+      tx.village.findUnique({
+        where: { id: params.attackerVillageId },
+        select: { id: true, userId: true, worldId: true },
+      }),
+      tx.village.findUnique({
+        where: { id: params.targetVillageId },
+        select: { id: true, worldId: true },
+      }),
+      tx.pendingConquest.findFirst({
+        where: {
           targetVillageId: params.targetVillageId,
-          worldId: attacker.worldId,
-          captureUntil: params.captureUntil,
+          status: PendingConquestStatus.OPEN,
         },
-      });
+      }),
+    ]);
 
-      await createOutboxEvent(
-        tx,
-        'village.capture-window-opened',
-        params.targetVillageId,
-        {
-          pendingConquestId: created.id,
-          targetVillageId: params.targetVillageId,
-          attackerVillageId: params.attackerVillageId,
-          captureUntil: params.captureUntil.toISOString(),
-        },
-      );
+    if (!attacker) throw new NotFoundException('Attacker village not found');
+    if (!target) throw new NotFoundException('Target village not found');
+    if (attacker.userId !== params.attackerUserId) {
+      throw new ForbiddenException('Attacker village does not belong to user');
+    }
+    if (attacker.worldId !== target.worldId) {
+      throw new ForbiddenException('Target village is in another world');
+    }
+    if (existingOpen) {
+      throw new ConflictException('A capture window is already open');
+    }
 
-      return created;
+    const created = await tx.pendingConquest.create({
+      data: {
+        attackerVillageId: params.attackerVillageId,
+        attackerUserId: params.attackerUserId,
+        attackerNobleId: params.attackerNobleId,
+        targetVillageId: params.targetVillageId,
+        worldId: attacker.worldId,
+        captureUntil: params.captureUntil,
+      },
     });
 
+    await createOutboxEvent(
+      tx,
+      'village.capture-window-opened',
+      params.targetVillageId,
+      {
+        pendingConquestId: created.id,
+        targetVillageId: params.targetVillageId,
+        attackerVillageId: params.attackerVillageId,
+        captureUntil: params.captureUntil.toISOString(),
+      },
+    );
+
+    return created;
+  }
+
+  async scheduleFinalizeJob(pendingConquest: {
+    id: string;
+    captureUntil: Date;
+  }) {
     const finalizeJobId = await this.boss.send(
       CONQUEST_FINALIZE_QUEUE,
       { pendingConquestId: pendingConquest.id },
@@ -97,12 +118,50 @@ export class ConquestService {
       },
     );
 
-    if (!finalizeJobId) return pendingConquest;
+    if (!finalizeJobId) return;
 
-    return this.prisma.pendingConquest.update({
+    await this.prisma.pendingConquest.update({
       where: { id: pendingConquest.id },
       data: { finalizeJobId },
     });
+  }
+
+  async interruptCaptureWindowInTx(
+    tx: PrismaClientOrTx,
+    targetVillageId: string,
+    reason: string,
+  ): Promise<{
+    interrupted: boolean;
+    pendingConquestId?: string;
+    finalizeJobId?: string | null;
+  }> {
+    const pending = await tx.pendingConquest.findFirst({
+      where: { targetVillageId, status: PendingConquestStatus.OPEN },
+    });
+
+    if (!pending) return { interrupted: false };
+
+    await tx.pendingConquest.update({
+      where: { id: pending.id },
+      data: { status: PendingConquestStatus.INTERRUPTED },
+    });
+
+    await createOutboxEvent(
+      tx,
+      'village.capture-window-interrupted',
+      targetVillageId,
+      {
+        pendingConquestId: pending.id,
+        targetVillageId,
+        reason,
+      },
+    );
+
+    return {
+      interrupted: true,
+      pendingConquestId: pending.id,
+      finalizeJobId: pending.finalizeJobId,
+    };
   }
 
   async finalizeCaptureWindow(pendingConquestId: string): Promise<{
@@ -124,6 +183,8 @@ export class ConquestService {
         targetVillageId: pending.targetVillageId,
         attackerUserId: pending.attackerUserId,
       });
+
+      await this.installNobleInConqueredVillage(tx, pending);
 
       await tx.pendingConquest.update({
         where: { id: pending.id },
@@ -331,5 +392,56 @@ export class ConquestService {
       buildings: target.buildings.length,
       tier: target.tier || undefined,
     };
+  }
+
+  private async installNobleInConqueredVillage(
+    tx: PrismaClientOrTx,
+    pending: {
+      attackerVillageId: string;
+      targetVillageId: string;
+    },
+  ) {
+    const noblePopulation = UNIT_COSTS[UNIT_TYPES.NOBLE].population;
+
+    const deletedOccupation = await tx.garrison.deleteMany({
+      where: {
+        villageId: pending.targetVillageId,
+        originVillageId: pending.attackerVillageId,
+        unitType: UNIT_TYPES.NOBLE,
+      },
+    });
+
+    if (deletedOccupation.count === 0) return;
+
+    await tx.unitInventory.upsert({
+      where: {
+        villageId_unitType: {
+          villageId: pending.targetVillageId,
+          unitType: UNIT_TYPES.NOBLE,
+        },
+      },
+      create: {
+        villageId: pending.targetVillageId,
+        unitType: UNIT_TYPES.NOBLE,
+        quantity: 1,
+      },
+      update: {
+        quantity: { increment: 1 },
+      },
+    });
+
+    await tx.population.update({
+      where: { villageId: pending.attackerVillageId },
+      data: { used: { decrement: noblePopulation } },
+    });
+    await tx.population.upsert({
+      where: { villageId: pending.targetVillageId },
+      create: {
+        villageId: pending.targetVillageId,
+        used: noblePopulation,
+        max: noblePopulation,
+      },
+      update: { used: { increment: noblePopulation } },
+    });
   }
 }
