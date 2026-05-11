@@ -5,6 +5,7 @@ import {
   applyBattleReturned,
   applyBuildingCompleted,
   applyCrownsChanged,
+  applyExpeditionRecalled,
   applyGarrisonAdded,
   applyReinforcementRecalled,
   applyReinforcementReturned,
@@ -205,6 +206,47 @@ describe('applyBattleReturned', () => {
     expect(useExpeditionsStore.getState().byId['e2'].phase).toBe('RETURNED');
     vi.advanceTimersByTime(RETURNED_TO_CLEANUP_DELAY_MS);
     expect(useExpeditionsStore.getState().byId['e2']).toBeUndefined();
+  });
+});
+
+describe('applyExpeditionRecalled', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-04T22:00:05.000Z'));
+  });
+
+  afterEach(() => vi.useRealTimers());
+
+  it('keeps the expedition visible as a RETURNING trip from its current outbound position', () => {
+    useExpeditionsStore.getState().add({
+      expeditionId: 'recall-attack-1',
+      kind: 'ATTACK',
+      villageId: 'v1',
+      origin: { x: 0, y: 0 },
+      target: { x: 10, y: 0 },
+      phase: 'EN_ROUTE',
+      departAt: Date.parse('2026-05-04T22:00:00.000Z'),
+      arrivalAt: Date.parse('2026-05-04T22:00:10.000Z'),
+    });
+
+    applyExpeditionRecalled(
+      {
+        expeditionId: 'recall-attack-1',
+        villageId: 'v1',
+        returnAt: '2026-05-04T22:00:10.000Z',
+      },
+      { queryClient: new QueryClient() },
+    );
+
+    const recalled = useExpeditionsStore.getState().byId['recall-attack-1'];
+    expect(recalled).toMatchObject({
+      phase: 'RETURNING',
+      arrivalAt: Date.parse('2026-05-04T22:00:05.000Z'),
+      returnAt: Date.parse('2026-05-04T22:00:10.000Z'),
+    });
+    expect(recalled.target).not.toEqual({ x: 10, y: 0 });
+    expect(recalled.target.x).toBeGreaterThan(0);
+    expect(recalled.target.x).toBeLessThan(10);
   });
 });
 

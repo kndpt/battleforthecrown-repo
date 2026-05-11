@@ -1,4 +1,6 @@
-import { Badge, Panel, PanelBody, PanelHeader } from '@/ui';
+import { RotateCcw } from 'lucide-react';
+import { useRecallExpeditionMutation } from '@/api/queries';
+import { Badge, Button, Panel, PanelBody, PanelHeader } from '@/ui';
 import { useExpeditionsStore } from '@/stores/expeditions';
 import { useTickingNow } from '@/lib/useTickingNow';
 import { formatRemaining } from '@/features/village/constructionProgress';
@@ -18,10 +20,16 @@ const KIND_LABEL: Record<string, { label: string; variant: 'warning' | 'info' }>
   REINFORCE: { label: 'Renfort', variant: 'info' },
 };
 
+function formatCoord(value: number): string {
+  return String(Math.round(value));
+}
+
 export function ExpeditionList() {
   const expeditions = useExpeditionsStore((state) => state.byId);
+  const recallExpedition = useRecallExpeditionMutation();
   const now = useTickingNow(1_000);
   const list = Object.values(expeditions);
+  const pendingRecallId = recallExpedition.variables?.expeditionId;
 
   if (list.length === 0) {
     return (
@@ -48,6 +56,8 @@ export function ExpeditionList() {
             {list.map((exp) => {
               const phase = PHASE_LABEL[exp.phase] ?? PHASE_LABEL.EN_ROUTE;
               const kind = exp.kind === 'REINFORCE' ? KIND_LABEL.REINFORCE : KIND_LABEL.ATTACK;
+              const canRecall = exp.phase === 'EN_ROUTE' && exp.kind !== 'REINFORCE';
+              const isRecallPending = pendingRecallId === exp.expeditionId;
               const remainingMs =
                 exp.phase === 'EN_ROUTE'
                   ? exp.arrivalAt - now
@@ -73,7 +83,9 @@ export function ExpeditionList() {
                     </span>
                   </div>
                   <p className="text-xs text-white/90 font-game">
-                    ({exp.origin.x},{exp.origin.y}) → ({exp.target.x},{exp.target.y})
+                    {exp.phase === 'RETURNING'
+                      ? `Retour vers (${formatCoord(exp.origin.x)},${formatCoord(exp.origin.y)})`
+                      : `(${formatCoord(exp.origin.x)},${formatCoord(exp.origin.y)}) → (${formatCoord(exp.target.x)},${formatCoord(exp.target.y)})`}
                   </p>
                   {exp.phase === 'RESOLVED' && exp.isVictory != null && (
                     <p className="mt-1">
@@ -82,10 +94,35 @@ export function ExpeditionList() {
                       </Badge>
                     </p>
                   )}
+                  {canRecall && (
+                    <Button
+                      variant="danger"
+                      size="xs"
+                      className="mt-2 w-full"
+                      disabled={recallExpedition.isPending}
+                      title="Rappeler l'attaque avant son arrivée"
+                      onClick={() =>
+                        recallExpedition.mutate({
+                          expeditionId: exp.expeditionId,
+                          villageId: exp.villageId,
+                        })
+                      }
+                    >
+                      <span className="flex items-center justify-center gap-1.5">
+                        <RotateCcw size={13} aria-hidden />
+                        <span>{isRecallPending ? 'Rappel...' : 'Rappeler'}</span>
+                      </span>
+                    </Button>
+                  )}
                 </li>
               );
             })}
           </ul>
+          {recallExpedition.isError && (
+            <p className="rounded border border-red-300/40 bg-red-950/50 px-2 py-1 text-[11px] text-red-100">
+              Impossible de rappeler cette attaque pour le moment.
+            </p>
+          )}
         </PanelBody>
       </Panel>
     </div>

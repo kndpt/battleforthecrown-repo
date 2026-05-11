@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Compass, Map as MapIcon, X } from 'lucide-react';
+import { Compass, Map as MapIcon, Swords, X } from 'lucide-react';
 import { GameHeader } from '@/features/layout/GameHeader';
 import { ToastStack } from '@/features/layout/ToastStack';
-import { IconButton, Spinner, Tooltip } from '@/ui';
+import { BottomSheet, IconButton, Spinner, Tooltip } from '@/ui';
 import { WorldMapCanvas, type WorldMapCanvasController } from './WorldMapCanvas';
 import { SelectedEntityPanel } from './SelectedEntityPanel';
 import { WorldLockedScreen } from './WorldLockedScreen';
@@ -11,6 +11,7 @@ import { WorldMiniMap } from './WorldMiniMap';
 import { WorldEntityTooltip } from './WorldEntityTooltip';
 import { buildMapEntities, filterEntitiesByVision } from './buildMapEntities';
 import { AttackDetailModal } from '@/features/combat/AttackDetailModal';
+import { ExpeditionList } from '@/features/combat/ExpeditionList';
 import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
 import { BottomNavigationBar } from '@/features/layout/BottomNavigationBar';
 import { useBuildingsForLockCheck } from '@/features/layout/useBuildingsForLockCheck';
@@ -45,6 +46,7 @@ export function WorldMapScreen() {
   const setSelectedEntity = useWorldMapStore((state) => state.setSelectedEntity);
   const [attackTarget, setAttackTarget] = useState<MapEntity | null>(null);
   const [isMiniMapVisible, setIsMiniMapVisible] = useState(false);
+  const [isExpeditionsOpen, setIsExpeditionsOpen] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
   const canvasRef = useRef<WorldMapCanvasController | null>(null);
 
@@ -169,6 +171,22 @@ export function WorldMapScreen() {
                     onClick={() => setIsMiniMapVisible((v) => !v)}
                   />
                 </Tooltip>
+                <Tooltip content="Voir les expéditions" position="left" variant="dark">
+                  <div className="relative">
+                    <IconButton
+                      icon={Swords}
+                      variant="info"
+                      size="md"
+                      label="Voir les expéditions"
+                      onClick={() => setIsExpeditionsOpen(true)}
+                    />
+                    {expeditionSnapshots.length > 0 && (
+                      <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border border-white bg-game-red-dark px-1 text-[10px] font-bold text-white">
+                        {expeditionSnapshots.length}
+                      </span>
+                    )}
+                  </div>
+                </Tooltip>
               </div>
 
               <div className="pointer-events-auto absolute bottom-4 right-4">
@@ -218,6 +236,16 @@ export function WorldMapScreen() {
           onClose={() => setAttackTarget(null)}
         />
       )}
+
+      <BottomSheet
+        isOpen={isExpeditionsOpen}
+        onClose={() => setIsExpeditionsOpen(false)}
+        title="Expéditions en cours"
+      >
+        <div className="p-4">
+          <ExpeditionList />
+        </div>
+      </BottomSheet>
 
       <ToastStack />
     </div>

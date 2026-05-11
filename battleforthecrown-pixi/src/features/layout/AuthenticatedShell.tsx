@@ -16,6 +16,8 @@ import {
   useResourcesQuery,
 } from '@/api/queries';
 import { entityFromMyVillage } from '@/api/world-types';
+import { buildRecalledExpeditionPatch, inferRecallAt } from '@/lib/expeditionRecall';
+import type { ExpeditionSnapshot } from '@/stores/expeditions';
 
 /**
  * Mounted once at the top of the protected route tree (via <Outlet />).
@@ -98,8 +100,9 @@ export function AuthenticatedShell() {
     const liveIds = new Set(list.map((exp) => exp.id));
     list.forEach((exp) => {
       const origin = villageOrigins.get(exp.attackerVillageId) ?? { x: 0, y: 0 };
-      store.add({
+      const snapshot: ExpeditionSnapshot = {
         expeditionId: exp.id,
+        kind: exp.kind,
         reportId: exp.reportId ?? undefined,
         villageId: exp.attackerVillageId,
         origin,
@@ -109,7 +112,24 @@ export function AuthenticatedShell() {
         departAt: Date.parse(exp.departAt),
         arrivalAt: Date.parse(exp.arrivalAt),
         returnAt: exp.returnAt ? Date.parse(exp.returnAt) : undefined,
-      });
+      };
+
+      if (exp.recalled && snapshot.phase === 'RETURNING' && snapshot.returnAt) {
+        store.add({
+          ...snapshot,
+          ...buildRecalledExpeditionPatch(
+            snapshot,
+            inferRecallAt(
+              snapshot.departAt,
+              snapshot.returnAt,
+              exp.updatedAt ? Date.parse(exp.updatedAt) : undefined,
+            ),
+            snapshot.returnAt,
+          ),
+        });
+      } else {
+        store.add(snapshot);
+      }
     });
     Object.keys(store.byId).forEach((id) => {
       if (!liveIds.has(id)) store.remove(id);

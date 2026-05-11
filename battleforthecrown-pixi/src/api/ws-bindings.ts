@@ -23,6 +23,7 @@ import {
   RESOLVED_TO_RETURNING_DELAY_MS,
   RETURNED_TO_CLEANUP_DELAY_MS,
 } from '@/lib/expeditionTiming';
+import { buildRecalledExpeditionPatch } from '@/lib/expeditionRecall';
 
 export interface BindingsContext {
   queryClient: QueryClient;
@@ -173,10 +174,20 @@ export function applyExpeditionRecalled(
   payload: ServerEvents['expedition.recalled'],
   _ctx: BindingsContext,
 ): void {
-  useExpeditionsStore.getState().update(payload.expeditionId, {
-    phase: 'RETURNING',
-    returnAt: Date.parse(payload.returnAt),
-  });
+  const store = useExpeditionsStore.getState();
+  const current = store.byId[payload.expeditionId];
+  const returnAt = Date.parse(payload.returnAt);
+  store.update(
+    payload.expeditionId,
+    current
+      ? current.phase === 'RETURNING'
+        ? { phase: 'RETURNING', returnAt }
+        : buildRecalledExpeditionPatch(current, Date.now(), returnAt)
+      : {
+          phase: 'RETURNING',
+          returnAt,
+        },
+  );
   useUiStore.getState().pushToast({
     tone: 'warning',
     title: 'Armée rappelée',

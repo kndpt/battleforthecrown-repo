@@ -19,7 +19,9 @@ import {
 } from './types';
 import type { WorldEntityResponse } from './world-types';
 import { useAuthStore } from '@/stores/auth';
+import { useExpeditionsStore } from '@/stores/expeditions';
 import { useGameStore } from '@/stores/game';
+import { buildRecalledExpeditionPatch } from '@/lib/expeditionRecall';
 import type {
   Expedition,
   GarrisonLine,
@@ -414,6 +416,8 @@ export interface ActiveExpeditionDto {
   status: string;
   units: Record<string, number>;
   reportId?: string | null;
+  recalled?: boolean;
+  updatedAt?: string;
 }
 
 export function useActiveExpeditionsQuery(villageId: string | null) {
@@ -570,6 +574,38 @@ export function useInitiateAttackMutation() {
       queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
+    },
+  });
+}
+
+interface RecallExpeditionInput {
+  expeditionId: string;
+  villageId: string;
+}
+
+export function useRecallExpeditionMutation() {
+  const queryClient = useQueryClient();
+  return useMutation<Expedition, Error, RecallExpeditionInput>({
+    mutationFn: ({ expeditionId }) =>
+      apiClient.post<Expedition>(`/combat/recall/${expeditionId}`, {}),
+    onSuccess: (expedition, { expeditionId }) => {
+      const store = useExpeditionsStore.getState();
+      const current = store.byId[expeditionId];
+      const returnAt = expedition.returnAt ? Date.parse(String(expedition.returnAt)) : undefined;
+      store.update(
+        expeditionId,
+        current && returnAt
+          ? current.phase === 'RETURNING'
+            ? { phase: 'RETURNING', returnAt }
+            : buildRecalledExpeditionPatch(current, Date.now(), returnAt)
+          : {
+              phase: 'RETURNING',
+              returnAt,
+            },
+      );
+    },
+    onSettled: (_data, _err, { villageId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(villageId) });
     },
   });
 }
