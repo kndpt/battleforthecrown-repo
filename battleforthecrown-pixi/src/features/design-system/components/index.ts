@@ -108,6 +108,8 @@ export { Slider } from './Slider';
 export type { SliderProps } from './Slider';
 export { DigitTimer, Timer } from './Timer';
 export type { DigitTimerProps, TimerProps } from './Timer';
+export { BftcTooltip, TooltipTarget } from './Tooltip';
+export type { BftcTooltipProps, TooltipPosition, TooltipStat, TooltipTargetProps, TooltipTone } from './Tooltip';
 export { ToastPreview } from './ToastPreview';
 export type { ToastPreviewProps } from './ToastPreview';
 export { TroopRow } from './TroopRow';

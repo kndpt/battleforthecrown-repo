@@ -9,6 +9,7 @@ import {
   Badge,
   BannerTitle,
   BftcButton,
+  BftcTooltip,
   BoostPill,
   BottomNavPreview,
   BuildQueueCard,
@@ -50,6 +51,7 @@ import {
   ShopTile,
   Timer,
   ToastPreview,
+  TooltipTarget,
   TroopRow,
   TroopStepper,
   type ToastPreviewProps,
@@ -938,6 +940,61 @@ export function DesignSystemPreview() {
                 ]}
                 title="Ressource — Or"
               />
+            </div>
+          </div>
+        </section>
+
+        <section className={previewSectionClass}>
+          <h2 className={previewTitleClass}>Tooltips</h2>
+          <div className="grid gap-x-5 gap-y-8 px-2 sm:grid-cols-2">
+            <div className="flex min-h-[190px] items-end justify-center rounded-xl border border-[#8b7355]/30 bg-[#fef9f0]/35 px-6 pb-5 pt-28">
+              <BftcTooltip
+                stats={[
+                  { label: 'Attaque', value: '25' },
+                  { label: 'Défense', value: '15' },
+                  { label: 'Vitesse', value: '18 min/km' },
+                  { label: 'Charge', value: '30' },
+                ]}
+                title="Squire"
+              >
+                <TooltipTarget icon="/assets/army/squire.png" label="stats" />
+              </BftcTooltip>
+            </div>
+            <div className="flex min-h-[190px] items-end justify-center rounded-xl border border-[#8b7355]/30 bg-[#fef9f0]/35 px-6 pb-5 pt-28">
+              <BftcTooltip
+                flavor="« Le bois nourrit la forge et la cheminée. »"
+                stats={[
+                  { label: 'Production', value: '+120 /h' },
+                  { label: 'Stockage', value: '10.000' },
+                ]}
+                title="Camp de bûcherons"
+              >
+                <TooltipTarget icon="/assets/wood.png" label="building" />
+              </BftcTooltip>
+            </div>
+            <div className="flex min-h-[190px] items-end justify-center rounded-xl border border-[#8b7355]/30 bg-[#fef9f0]/35 px-6 pb-5 pt-28">
+              <BftcTooltip
+                stats={[
+                  { label: 'En coffre', value: '2.480' },
+                  { label: 'Plafond', value: '5.000' },
+                ]}
+                title="Ressource — Or"
+                tone="dark"
+              >
+                <TooltipTarget icon="/assets/casual-icons/coin.png" label="dark" />
+              </BftcTooltip>
+            </div>
+            <div className="flex min-h-[190px] items-center justify-start rounded-xl border border-[#8b7355]/30 bg-[#fef9f0]/35 px-10 py-5">
+              <BftcTooltip
+                position="right"
+                stats={[
+                  { label: 'Tribu', value: '[BFC]' },
+                  { label: 'Points', value: '48.210' },
+                ]}
+                title="Sire_Robert"
+              >
+                <TooltipTarget icon="/assets/crown.png" label="droite" />
+              </BftcTooltip>
             </div>
           </div>
         </section>
