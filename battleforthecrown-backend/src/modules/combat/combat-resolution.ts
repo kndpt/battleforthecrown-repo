@@ -1,5 +1,9 @@
 import { getStrategyBonusValue } from '@battleforthecrown/shared/village';
-import { getUnitStats, type UnitMap } from '@battleforthecrown/shared/army';
+import {
+  getUnitStats,
+  UNIT_TYPES,
+  type UnitMap,
+} from '@battleforthecrown/shared/army';
 import { typedEntries } from '@battleforthecrown/shared/utils';
 import { CombatContext } from './interfaces/combat-context.interface';
 
@@ -10,7 +14,48 @@ export interface CombatOutcome {
   survivingDefender: UnitMap;
 }
 
-export function calculateCombatOutcome(context: CombatContext): CombatOutcome {
+type RandomSource = () => number;
+
+const NOBLE_LOSS_CHANCE_BY_ATTACKER_LOSS_RATIO = [
+  [0.5, 0.01],
+  [0.55, 0.05],
+  [0.6, 0.1],
+  [0.65, 0.2],
+  [0.7, 0.3],
+  [0.75, 0.4],
+  [0.8, 0.5],
+  [0.85, 0.6],
+  [0.9, 0.7],
+  [0.95, 0.8],
+  [1, 1],
+] as const;
+
+export function calculateNobleLossChance(attackerLossRatio: number): number {
+  if (attackerLossRatio < 0.5) {
+    return 0;
+  }
+
+  const table = NOBLE_LOSS_CHANCE_BY_ATTACKER_LOSS_RATIO;
+  for (let i = 0; i < table.length; i += 1) {
+    const [ratio, chance] = table[i];
+    if (attackerLossRatio === ratio) {
+      return chance;
+    }
+    if (attackerLossRatio < ratio) {
+      const [previousRatio, previousChance] = table[i - 1];
+      const progress =
+        (attackerLossRatio - previousRatio) / (ratio - previousRatio);
+      return previousChance + progress * (chance - previousChance);
+    }
+  }
+
+  return 1;
+}
+
+export function calculateCombatOutcome(
+  context: CombatContext,
+  random: RandomSource = Math.random,
+): CombatOutcome {
   const { attacker, defender, config } = context;
   const defenderUnits = defender.units || {};
 
@@ -38,12 +83,20 @@ export function calculateCombatOutcome(context: CombatContext): CombatOutcome {
 
   const isAttackerWin = totalAttackPower > totalDefensePower;
 
-  const lossesAttacker = isAttackerWin
+  let lossesAttacker = isAttackerWin
     ? applyLossRatio(attacker.units, totalDefensePower / totalAttackPower)
     : { ...attacker.units };
   const lossesDefender = isAttackerWin
     ? { ...defenderUnits }
     : applyLossRatio(defenderUnits, totalAttackPower / totalDefensePower);
+
+  if (isAttackerWin) {
+    lossesAttacker = applyNobleVictoryLoss(
+      attacker.units,
+      lossesAttacker,
+      random,
+    );
+  }
 
   return {
     lossesAttacker,
@@ -100,6 +153,36 @@ function applyLossRatio(units: UnitMap, lossRatio: number): UnitMap {
     losses[unitType] = Math.floor(quantity * lossRatio);
   }
   return losses;
+}
+
+function applyNobleVictoryLoss(
+  attackerUnits: UnitMap,
+  lossesAttacker: UnitMap,
+  random: RandomSource,
+): UnitMap {
+  if ((attackerUnits[UNIT_TYPES.NOBLE] ?? 0) < 1) {
+    return lossesAttacker;
+  }
+
+  const totalUnits = sumUnits(attackerUnits);
+  if (totalUnits === 0) {
+    return lossesAttacker;
+  }
+
+  const lossRatio = sumUnits(lossesAttacker) / totalUnits;
+  const nobleLossChance = calculateNobleLossChance(lossRatio);
+  if (nobleLossChance === 0 || random() >= nobleLossChance) {
+    return lossesAttacker;
+  }
+
+  return {
+    ...lossesAttacker,
+    [UNIT_TYPES.NOBLE]: 1,
+  };
+}
+
+function sumUnits(units: UnitMap): number {
+  return typedEntries(units).reduce((sum, [, quantity]) => sum + quantity, 0);
 }
 
 function subtractLosses(units: UnitMap, losses: UnitMap): UnitMap {

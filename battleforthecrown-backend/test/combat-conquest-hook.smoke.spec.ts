@@ -37,7 +37,11 @@ describe('combat conquest hook smoke', () => {
     });
   }
 
-  async function seedConquestOrigin(worldId: string, suffix: string) {
+  async function seedConquestOrigin(
+    worldId: string,
+    suffix: string,
+    units = { MILITIA: 100, NOBLE: 1 },
+  ) {
     const user = await registerUser(ctx.server, suffix);
     const join = await joinWorld(
       ctx.server,
@@ -47,20 +51,29 @@ describe('combat conquest hook smoke', () => {
     );
 
     await ctx.prisma.unitInventory.createMany({
-      data: [
-        { villageId: join.village.id, unitType: 'MILITIA', quantity: 100 },
-        { villageId: join.village.id, unitType: 'NOBLE', quantity: 1 },
-      ],
+      data: Object.entries(units).map(([unitType, quantity]) => ({
+        villageId: join.village.id,
+        unitType,
+        quantity,
+      })),
     });
     await ctx.prisma.population.update({
       where: { villageId: join.village.id },
-      data: { used: 115, max: 200 },
+      data: {
+        used: (units.MILITIA ?? 0) + (units.NOBLE ?? 0) * 15,
+        max: 200,
+      },
     });
 
     return { user, village: join.village };
   }
 
-  async function seedBarbarianTarget(worldId: string, x: number, y: number) {
+  async function seedBarbarianTarget(
+    worldId: string,
+    x: number,
+    y: number,
+    units = { MILITIA: 1 },
+  ) {
     return ctx.prisma.village.create({
       data: {
         worldId,
@@ -76,7 +89,10 @@ describe('combat conquest hook smoke', () => {
           create: [{ type: 'CASTLE', level: 1 }],
         },
         unitInventory: {
-          create: [{ unitType: 'MILITIA', quantity: 1 }],
+          create: Object.entries(units).map(([unitType, quantity]) => ({
+            unitType,
+            quantity,
+          })),
         },
       },
     });
@@ -232,4 +248,64 @@ describe('combat conquest hook smoke', () => {
     });
     expect(originPop.used).toBe(100);
   }, 60_000);
+
+  it('keeps a costly conquest victory as a raid when the noble dies', async () => {
+    const randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0);
+    try {
+      const world = await seedWorld();
+      const origin = await seedConquestOrigin(world.id, `fatal-${Date.now()}`, {
+        MILITIA: 99,
+        NOBLE: 1,
+      });
+      const target = await seedBarbarianTarget(
+        world.id,
+        origin.village.x + 1,
+        origin.village.y,
+        { MILITIA: 101 },
+      );
+
+      const attackRes = await request(ctx.server)
+        .post('/combat/attack')
+        .set('Authorization', `Bearer ${origin.user.accessToken}`)
+        .send({
+          villageId: origin.village.id,
+          targetX: target.x,
+          targetY: target.y,
+          targetKind: 'BARBARIAN_VILLAGE',
+          targetRefId: target.id,
+          units: { MILITIA: 99, NOBLE: 1 },
+        });
+      expect(attackRes.status).toBeLessThan(300);
+      const attackBody = attackRes.body as { id: string };
+
+      await outboxDispatched(
+        ctx.prisma,
+        { kind: 'noble.killed', aggregateId: origin.village.id },
+        { timeoutMs: 10_000 },
+      );
+
+      const resolvedEvent = await outboxDispatched(
+        ctx.prisma,
+        { kind: 'battle.resolved', aggregateId: origin.village.id },
+        { timeoutMs: 10_000 },
+      );
+      expect(resolvedEvent.payload).toMatchObject({
+        expeditionId: attackBody.id,
+        isVictory: true,
+        lossesAttacker: { MILITIA: 50, NOBLE: 1 },
+        survivingUnits: { MILITIA: 49 },
+        loot: { resources: { wood: 50, stone: 50, iron: 50 } },
+      });
+
+      const pending = await ctx.prisma.pendingConquest.findFirst({
+        where: {
+          attackerVillageId: origin.village.id,
+          targetVillageId: target.id,
+        },
+      });
+      expect(pending).toBeNull();
+    } finally {
+      randomSpy.mockRestore();
+    }
+  }, 45_000);
 });

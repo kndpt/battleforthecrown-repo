@@ -1,7 +1,7 @@
 # 43 — Risque de mort du Seigneur sur victoire coûteuse
 
 **Sévérité** : 🟠 Majeur (règle spec atteignable en théorie, impossible avec l'algo actuel)
-**Statut** : 🆕 Ouvert 2026-05-11 (issue du run #42)
+**Statut** : ✅ Résolu 2026-05-11 par $run @tasks/43-noble-loss-chance-on-costly-victory.md
 **Spec amont** : [`docs/gameplay/10-conquest.md` § Cas particulier escorte-survivante](../docs/gameplay/10-conquest.md#cas-particulier--armée-gagne-le-combat-de-pré-conquête-mais-le-seigneur-meurt) + [`04-combat.md` § Conquête](../docs/gameplay/04-combat.md#conquête)
 
 ## Symptôme

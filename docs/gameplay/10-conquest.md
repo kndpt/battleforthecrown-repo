@@ -86,6 +86,23 @@ Si toutes les troupes ennemies sont vaincues **mais** le Seigneur fait partie de
 - **Escorte survivante** — rentre au village d'origine avec le loot (idem retour de raid).
 - **Coût Seigneur perdu sec** — 5 000 couronnes + 15 pop + ressources d'entraînement non récupérables. Pas de remboursement, pas de loot bonus, pas de mécanique de compensation.
 
+Le Seigneur peut mourir sur une victoire coûteuse selon le taux de pertes global de l'attaquant. Sous 50 % de pertes, il ne risque rien ; entre deux paliers, la chance est interpolée linéairement.
+
+| Pertes attaquant | Chance mort Seigneur |
+| ---: | ---: |
+| < 50 % | 0 % |
+| 50 % | 1 % |
+| 55 % | 5 % |
+| 60 % | 10 % |
+| 65 % | 20 % |
+| 70 % | 30 % |
+| 75 % | 40 % |
+| 80 % | 50 % |
+| 85 % | 60 % |
+| 90 % | 70 % |
+| 95 % | 80 % |
+| 100 % | 100 % |
+
 🎯 **Lecture design** : c'est le **prix du risque**. Lancer une conquête sans escorte solide ou contre une cible mal évaluée doit pouvoir coûter le Seigneur sans que le joueur soit doublement puni — il garde le butin militaire, perd l'investissement stratégique. Cohérent avec § *Stockage et exposition* ci-dessus (un Seigneur est toujours une cible, jamais protégé magiquement).
 
 ## Garde-fous globaux

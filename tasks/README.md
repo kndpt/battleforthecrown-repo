@@ -4,7 +4,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-- [43 — Risque de mort du Seigneur sur victoire coûteuse](./43-noble-loss-chance-on-costly-victory.md) 🟠 Majeur — rend atteignable le cas spec « armée gagne mais Seigneur meurt » avec probabilité croissante dès 50 % de pertes attaquant.
+_(Aucun ticket actif.)_
 
 ## Roadmap stratégique
 
@@ -35,6 +35,7 @@ _(Aucun run actif.)_
 
 ## Archivés
 
+- [43 — Risque de mort du Seigneur sur victoire coûteuse](./archive/43-noble-loss-chance-on-costly-victory.md) ✅ Résolu 2026-05-11 par $run @tasks/43-noble-loss-chance-on-costly-victory.md
 - [41 — Période de capture : `PendingConquest` + worker](./archive/41-capture-window-data-model.md) ✅ Résolu 2026-05-11 par $run @tasks/41-capture-window-data-model.md
 - [42 — Hook combat post-résolution conquête](./archive/42-combat-conquest-hook.md) ✅ Résolu 2026-05-11 par $run @tasks/42-combat-conquest-hook.md
 - [40 — Recrutement Seigneur à la Salle du Trône](./archive/40-recruit-noble-throne-hall.md) ✅ Résolu 2026-05-11 par $run @tasks/40-recruit-noble-throne-hall.md
