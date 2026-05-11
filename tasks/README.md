@@ -16,7 +16,7 @@ Fiches d'exécution déléguées aux harnesses Claude Code ou Codex (lead + sub-
 
 ### Runs actifs
 
-_(Aucun run actif.)_
+- [012 — Inbox combat reports](./runs/012-feature-inbox-combat-reports.md) — 📋 `PLANNED`. Phase 2 : finaliser le contrat MVP inbox et brancher les rapports de combat existants.
 
 ### Runs archivés
 
