@@ -84,15 +84,19 @@ export class BarbarianSeedingCatchupWorker {
       return;
     }
 
-    // Find recently created player villages (within last hour)
+    // Find recently created player villages (within last hour).
+    // Filter `isBarbarian: false` + `userId: not null` so the catchup only
+    // seeds around real player anchors — spec 07 § Catchup d'arrivée différée.
     const recentVillages = await this.prisma.village.findMany({
       where: {
         worldId,
+        isBarbarian: false,
+        userId: { not: null },
         createdAt: {
           gte: new Date(Date.now() - MS_PER_HOUR),
         },
       },
-      select: { x: true, y: true },
+      select: { id: true, x: true, y: true },
     });
 
     if (recentVillages.length === 0) {
@@ -112,10 +116,11 @@ export class BarbarianSeedingCatchupWorker {
 
       try {
         // Seed around this village (will be idempotent)
-        const result = await this.seeding['seedAroundVillage']({
+        const result = await this.seeding.seedAroundVillage({
           worldId,
           villageX: village.x,
           villageY: village.y,
+          anchorVillageId: village.id,
         });
 
         totalCreated += result.created;

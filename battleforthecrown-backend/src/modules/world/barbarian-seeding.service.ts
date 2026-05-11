@@ -33,8 +33,9 @@ export class BarbarianSeedingService {
     worldId: string;
     villageX: number;
     villageY: number;
+    anchorVillageId?: string;
   }): Promise<{ created: number; chunksProcessed: number }> {
-    const { worldId, villageX, villageY } = params;
+    const { worldId, villageX, villageY, anchorVillageId } = params;
     const config = await this.worldConfig.getConfig(worldId);
     const seedingConfig = config.barbarianSeeding;
 
@@ -76,6 +77,7 @@ export class BarbarianSeedingService {
         centerY: villageY,
         world,
         config: seedingConfig,
+        anchorVillageId,
       });
     }
 
@@ -97,8 +99,10 @@ export class BarbarianSeedingService {
     centerY: number;
     world: { gridWidth: number; gridHeight: number };
     config: BarbarianSeedingPlan;
+    anchorVillageId?: string;
   }): Promise<number> {
-    const { worldId, chunk, centerX, centerY, world, config } = params;
+    const { worldId, chunk, centerX, centerY, world, config, anchorVillageId } =
+      params;
 
     return this.prisma.$transaction(async (tx) => {
       await tx.chunkSpawnState.upsert({
@@ -136,12 +140,16 @@ export class BarbarianSeedingService {
           x: { gte: bounds.minX - halo, lte: bounds.maxX + halo },
           y: { gte: bounds.minY - halo, lte: bounds.maxY + halo },
         },
-        select: { x: true, y: true, isBarbarian: true, userId: true },
+        select: { id: true, x: true, y: true, isBarbarian: true, userId: true },
       });
 
+      // Spec § Anti-submersion : compte les villages joueurs AUTRES que le
+      // déclencheur (`id ≠ anchorVillageId`). Sans cette exclusion, le village
+      // anchor compte comme "autre joueur" dans son propre halo et la capacité
+      // est divisée par 2 systématiquement.
       const distinctOtherPlayerCount = new Set(
         haloVillages
-          .filter((v) => !v.isBarbarian && v.userId)
+          .filter((v) => !v.isBarbarian && v.userId && v.id !== anchorVillageId)
           .map((v) => v.userId as string),
       ).size;
 

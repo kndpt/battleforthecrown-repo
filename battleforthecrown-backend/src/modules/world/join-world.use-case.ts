@@ -77,6 +77,7 @@ export class JoinWorldUseCase {
         worldId,
         result.village.x,
         result.village.y,
+        result.village.id,
       );
     }
 
@@ -146,9 +147,10 @@ export class JoinWorldUseCase {
     worldId: string,
     villageX: number,
     villageY: number,
+    anchorVillageId: string,
   ) {
     void this.barbarianSeeding
-      .seedAroundVillage({ worldId, villageX, villageY })
+      .seedAroundVillage({ worldId, villageX, villageY, anchorVillageId })
       .then((seedResult) => {
         this.logger.log(
           `Barbarian seeding completed: ${seedResult.created} BVs in ${seedResult.chunksProcessed} chunks`,
