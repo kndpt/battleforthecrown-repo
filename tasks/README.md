@@ -16,7 +16,8 @@ Fiches d'exécution déléguées aux harnesses Claude Code ou Codex (lead + sub-
 
 ### Runs actifs
 
-_(Aucun run actif.)_
+- [013 — Feature village styles backend](./runs/013-feature-village-styles-backend.md) — 📋 `PLANNED`. Phase 3 styles de village : contrat shared/backend, coûts, cooldown, effets combat/économie, confidentialité et tests.
+- [014 — Feature village styles frontend](./runs/014-feature-village-styles-frontend.md) — 📋 `PLANNED`. Phase 3 styles de village : exposition Pixi/HUD, mutation UI, états bloqués, reload et smoke IG.
 
 ### Runs archivés
 
