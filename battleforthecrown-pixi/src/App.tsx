@@ -29,6 +29,11 @@ const MessagesScreen = lazy(() =>
 const UiTestScreen = lazy(() =>
   import('@/features/ui-test/UiTestScreen').then((m) => ({ default: m.UiTestScreen })),
 );
+const DesignSystemPreview = lazy(() =>
+  import('@/features/design-system/DesignSystemPreview').then((m) => ({
+    default: m.DesignSystemPreview,
+  })),
+);
 
 function GameLoader() {
   return (
@@ -99,6 +104,14 @@ export default function App() {
             element={
               <Suspense fallback={<GameLoader />}>
                 <UiTestScreen />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/design-system"
+            element={
+              <Suspense fallback={<GameLoader />}>
+                <DesignSystemPreview />
               </Suspense>
             }
           />
