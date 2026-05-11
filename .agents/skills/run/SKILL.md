@@ -102,11 +102,12 @@ Les sub-agents doivent retourner un rapport structuré (`STATUS: success|partial
 - Si rapport `success` mais diff vide : dérogation lead ou re-scope.
 - Si `failed`/`partial` : 1 retry max, puis dérogation lead ou escalade.
 - Migrations Prisma : suivre `bftc-prisma`; destructif = accord user explicite; `prisma migrate reset` interdit.
-- Smokes backend : lancer `yarn test:smoke:preflight` avant les smokes.
+- Smokes backend : **obligatoires** dès que le diff touche `battleforthecrown-backend/src/`. Lancer `yarn test:smoke:preflight` puis `yarn test:smoke`. Tout vert exigé avant commit final. Exception : diff strictement hors `src/` (docs, scripts hors boot, fixtures isolées) — justifier dans le rapport.
 - `yarn static-check` obligatoire avant commit final.
 - Rapport final : inclure une section `Acceptance & QA` obligatoire avec :
   - `Critères d'acceptance vérifiés` : checklist binaire des comportements attendus, avec preuve courte pour chaque item.
   - `Tests automatisés` : commandes exactes + résultat synthétique.
+  - `Smokes lancés` : commande exacte (`yarn test:smoke`) + résultat synthétique si backend touché, sinon `Non applicable, raison : <…>`.
   - `Smokes ajoutés/modifiés` : fichiers + scénario couvert, ou `Aucun`, raison.
   - `QA fonctionnelle agent` : tests bout-en-bout manuels exécutés par l'agent quand pertinent (`server + curl`, REST, WebSocket, worker/job, ou `SELECT` DB), avec résultat observable. Si non fait, écrire `Non nécessaire` ou `Non exécuté` + raison précise.
   - `Tests IG à faire par le user` : seulement ce qui demande une appréciation gameplay/visuelle, un vrai navigateur humain, ou un scénario trop coûteux à automatiser ; formuler en checklist observable. Sinon `Aucun test IG nécessaire`, raison.

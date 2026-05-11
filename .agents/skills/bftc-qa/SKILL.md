@@ -7,6 +7,15 @@ description: Use when finishing a BFTC task to choose QA: playable checklist, cu
 
 End every substantive task with one QA decision. Automated tests do not replace QA.
 
+## Smokes — non-négociables si backend touché
+
+Le hook `pre-push` ne lance plus les smokes (trop lents, flakies par ordering Jest). C'est désormais l'agent qui en porte la responsabilité.
+
+- Si le diff touche `battleforthecrown-backend/src/` → lancer `yarn test:smoke:preflight && yarn test:smoke` en fin de tâche, tout vert.
+- Reporter dans `Acceptance & QA` : commande exacte + résultat synthétique (suites passées / tests passés).
+- Si un smoke fail de façon flaky (ordering, timing), ne pas masquer : investiguer ou escalader. Pas de `--no-verify`.
+- Exception : diff strictement hors `src/` (docs, scripts hors boot, fixtures isolées) — écrire `Smokes : non applicables, raison : <…>`.
+
 ## Choose the mode
 
 | Change | QA |

@@ -1,4 +1,6 @@
 set -e
 
-echo "[pre-push] Running yarn test (backend unit + pixi unit + backend smokes)…"
-yarn test
+echo "[pre-push] Running static-check + unit tests (backend + pixi)…"
+yarn static-check
+yarn test:backend
+yarn test:pixi
