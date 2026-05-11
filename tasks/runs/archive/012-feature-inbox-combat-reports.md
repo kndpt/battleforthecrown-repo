@@ -1,8 +1,8 @@
 # Run #012 — feature-inbox-combat-reports
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-05-11 21:45 CEST
+> **Terminé** : 2026-05-11 22:30 CEST
 
 ## Cible
 
@@ -51,25 +51,56 @@
 
 ## Progress (rempli pendant le run)
 
-_(Vide au démarrage. Mis à jour à chaque transition d'étape ou de tâche.)_
+- [x] Préflight : worktree clean ; fiche run, rules, SPEC, docs source, lessons et skills spécialisés lus.
+- [x] Cartographie code : `CombatReport`, endpoints REST, `isRead`, suppression, `battle.resolved`, invalidation frontend et badge unread existent déjà.
+- [x] Refinement : scope MVP retenu = inbox combat uniquement, `CombatReport` reste source de vérité Phase 2 ; bug à corriger = lu/non-lu doit être par participant attaquant/défenseur, pas global.
+- [x] Implémentation : contrat MVP figé dans la doc gameplay, migration additive `CombatReport`, projection REST par participant, invalidation WS attaquant/défenseur, types shared alignés.
+- [x] Tests : presenter unit, Vitest WS bindings, smoke REST reports, smokes backend complets.
+- [x] Review : 5 axes effectués ; timeout smoke `noble.killed` élargi à 30s car le test passait isolé mais timeoutait en suite complète sous backlog worker.
 
 ## Décisions prises
 
-_(Vide au démarrage. Décisions archi non triviales, dérogations lead, findings de review, refus de sub-agents.)_
+- Dérogation préflight : le worktree contient des changements design-system préexistants hors scope (`DesignSystemPreview.tsx`, `components/index.ts`, `components/Tooltip.tsx`). User a demandé de continuer ; ces fichiers restent intouchés par le run inbox.
+- Architecture MVP : pas de table `Report` transverse dans ce run. `CombatReport` porte l'inbox combat Phase 2 ; scout/conquête/push/archive/pin restent hors scope.
+- Modèle lecture : le booléen global `isRead` est insuffisant pour un rapport PvP partagé. Le run ajoute un état lu/non-lu par participant sans migration destructive.
 
 ## Rapport final
 
-_(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tickets ouverts, méta-évaluation si applicable.)_
+Run livré.
+
+- Contrat MVP inbox combat finalisé dans `docs/gameplay/17-inbox-and-reports.md`.
+- `CombatReport` conservé comme source de vérité Phase 2 ; pas de table `Report` transverse.
+- Migration additive : état lu/non-lu et suppression par participant (`readByAttacker/readByDefender`, `hiddenByAttacker/hiddenByDefender`), backfill depuis `is_read`.
+- REST : liste/détail/read/delete filtrent maintenant les rapports masqués pour le joueur courant et projettent `isRead` selon son rôle.
+- WS frontend : `battle.resolved` invalide l'inbox attaquant ; `village.attacked` invalide l'inbox défenseur.
+- Docs architecture alignées (`data-model.md`, `realtime.md`).
 
 ### Acceptance & QA
 
 - **Critères d'acceptance vérifiés** :
-  - [ ] Un combat résolu crée une entrée persistante visible dans l'inbox — preuve : test auto / smoke / API.
-  - [ ] L'ouverture du rapport marque l'entrée comme lue et met à jour le badge — preuve : test frontend ou smoke fonctionnel.
-- **Tests automatisés** : commandes exactes + résultat synthétique.
-- **Smokes ajoutés/modifiés** : fichiers + scénario couvert, ou `Aucun`, raison.
-- **QA fonctionnelle agent** : tests bout-en-bout manuels exécutés par l'agent quand pertinent (`server + curl`, REST, WebSocket, worker/job, ou `SELECT` DB), avec résultat observable. Si non fait, `Non nécessaire` ou `Non exécuté` + raison précise.
-- **Tests IG à faire par le user** : seulement ce qui demande une appréciation gameplay/visuelle, un vrai navigateur humain, ou un scénario trop coûteux à automatiser ; checklist observable. Sinon `Aucun test IG nécessaire`, raison.
+  - [x] Contrat MVP minimal Phase 2 figé — preuve : `docs/gameplay/17-inbox-and-reports.md`.
+  - [x] Un combat résolu crée une entrée persistante visible dans l'inbox REST après reconnexion — preuve : `yarn test:smoke`, smoke combat existant + nouveau smoke `/combat/reports`.
+  - [x] L'inbox affiche uniquement les rapports accessibles au joueur connecté, triés récent → ancien — preuve : nouveau smoke `combat reports: list, read, and delete are scoped to the current participant`.
+  - [x] Ouvrir/marquer lu persiste par participant — preuve : smoke `PATCH /combat/report/:id/read` attaquant puis détail défenseur encore non lu.
+  - [x] Le compteur non-lu se met à jour après lecture/nouveau rapport — preuve : `ws-bindings.test.ts` invalide `queryKeys.combatReports(userId)` sur `battle.resolved` et `village.attacked`; mutation read invalide déjà la query.
+  - [x] Event WS de résolution invalide l'inbox — preuve : `applyBattleResolved` + `applyVillageAttacked` testés.
+  - [x] Asymétrie barbare conservée — preuve : `combat-report.presenter.spec.ts`.
+  - [x] Suppression sans casse retour armée/loot — preuve : smoke existant `combat: report deleted in-flight -> troops still return`.
+  - [x] Création rapport → liste inbox → lecture → unread count — preuve : smoke REST + Vitest WS bindings.
+- **Tests automatisés** :
+  - `yarn workspace battleforthecrown-backend prisma generate` — OK.
+  - `yarn workspace @battleforthecrown/shared build` — OK.
+  - `yarn workspace battleforthecrown-backend test -- combat-report.presenter.spec.ts` — OK, 4 tests.
+  - `yarn workspace battleforthecrown-pixi test -- ws-bindings.test.ts` — OK, 13 tests.
+  - `yarn test:smoke:preflight` — OK après migration smoke.
+  - `yarn test:smoke` — OK, 7 suites / 27 tests.
+  - `yarn static-check` — OK.
+- **Smokes lancés** : `yarn test:smoke` — OK, backend touché.
+- **Smokes ajoutés/modifiés** :
+  - `battleforthecrown-backend/test/smoke.spec.ts` — ajout scénario REST list/read/delete par participant.
+  - `battleforthecrown-backend/test/combat-conquest-hook.smoke.spec.ts` — timeout `noble.killed`/`battle.resolved` porté à 30s pour stabilité suite complète.
+- **QA fonctionnelle agent** : migration appliquée sur DB locale et DB smoke via `prisma migrate deploy`; smokes REST/DB/worker/Outbox verts.
+- **Tests IG à faire par le user** : ouvrir `/game/messages`, vérifier visuellement liste/détail/suppression/badge sur un vrai combat. Aucun autre test IG nécessaire.
 
 ## Points d'attention
 

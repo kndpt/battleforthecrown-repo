@@ -57,8 +57,12 @@ export interface CombatReportResponse {
   targetX: number;
   targetY: number;
   loot: CombatLoot;
+  totalUnitsAttacker?: UnitMap;
+  totalUnitsDefender?: UnitMap;
   lossesAttacker: UnitMap;
   lossesDefender?: UnitMap;
+  isRead: boolean;
+  isAttacker: boolean;
   timestamp: string;
 }
 

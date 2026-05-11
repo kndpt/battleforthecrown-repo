@@ -97,13 +97,13 @@ Chaque payload est validé runtime par `parseEventPayload(kind, raw)` (backend `
 | `unit.training.completed` | `userId` | `trainingId, villageId, unitType, completedQty, totalQty` | `TrainingWorker` |
 | `crowns.changed` | `userId` | `userId, worldId, balance, productionRate, lastUpdateTs` | `CrownProductionWorker` (chaque tick, par membership active) + `CrownsService.updateProduction` quand transaction crowns |
 | `battle.sent` | `userId` (attaquant) | `expeditionId, villageId, targetX, targetY, targetKind, arrivalAt` | `CombatService.initiateAttack` |
-| `battle.resolved` | `userId` (les 2 camps) | `expeditionId, reportId, villageId, isVictory, loot, lossesAttacker (UnitMap), survivingUnits (UnitMap), casualtyRate, returnAt, …` | `CombatWorker` |
+| `battle.resolved` | `userId` (attaquant) | `expeditionId, reportId, villageId, isVictory, loot, lossesAttacker (UnitMap), survivingUnits (UnitMap), casualtyRate, returnAt, …` | `CombatWorker` |
 | `battle.returned` | `userId` (attaquant) | `expeditionId, reportId` (nullable si le rapport a été supprimé), `villageId, survivingUnits (UnitMap), loot` | `ReturnWorker` |
 | `reinforcement.sent` | `userId` (village d'origine) | `expeditionId, villageId, targetVillageId, arrivalAt` | `CombatService.initiateReinforce` |
 | `reinforcement.recalled` | `userId` (village hôte ou d'origine) | `expeditionId, villageId, originVillageId, arrivalAt` | `CombatService.initiateRecall` |
 | `reinforcement.returned` | `userId` (village hôte ou d'origine) | `expeditionId, villageId, originVillageId, units` | `CombatWorker` quand un renfort repart vers son village d'origine |
 | `garrison.added` | `userId` (village hôte) | `villageId, originVillageId, units` | `CombatWorker` quand un renfort arrive et se stationne en garnison |
-| `village.attacked` | `userId` (défenseur) | `defenderVillageId, attackerVillageId, attackerVillageName, isDefenseSuccessful, losses (UnitMap), casualtyRate, resourcesLost, …` | `CombatWorker` (notification) |
+| `village.attacked` | `userId` (défenseur) | `defenderVillageId, attackerVillageId, attackerVillageName, isDefenseSuccessful, losses (UnitMap), casualtyRate, resourcesLost, …` | `CombatWorker` (notification + invalidation inbox défenseur côté frontend) |
 | `village.capture-window-opened` | `userId` (attaquant) | `pendingConquestId, targetVillageId, attackerVillageId, captureUntil` | `ConquestService.openCaptureWindow` |
 | `village.capture-window-completed` | `userId` (nouveau propriétaire) | `pendingConquestId, targetVillageId, newOwnerUserId` | `ConquestFinalizeWorker` via `ConquestService.finalizeCaptureWindow` |
 | `village.capture-window-interrupted` | `userId` (attaquant) | `pendingConquestId, targetVillageId, reason` | `ConquestService.interruptCaptureWindow` |

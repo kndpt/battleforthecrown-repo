@@ -2,6 +2,8 @@ import type { UnitMap } from '@battleforthecrown/shared/army';
 import { isVictoryForAttacker } from './combat.utils';
 
 type CombatReportVisibilityInput = {
+  attackerUserId?: string;
+  defenderUserId?: string | null;
   targetKind: string;
   loot: unknown;
   totalUnitsAttacker: unknown;
@@ -9,6 +11,9 @@ type CombatReportVisibilityInput = {
   lossesAttacker: unknown;
   lossesDefender: unknown;
   details: unknown;
+  isRead?: boolean;
+  readByAttacker?: boolean;
+  readByDefender?: boolean;
 };
 
 type CombatReportDetails = {
@@ -41,12 +46,20 @@ function shouldHideBarbarianDefeatDetails(
 
 export function presentCombatReport<
   TReport extends CombatReportVisibilityInput,
->(report: TReport, userId: string): TReport & { isAttacker: boolean } {
-  const isAttacker =
-    'attackerUserId' in report && report.attackerUserId === userId;
+>(
+  report: TReport,
+  userId: string,
+): TReport & { isAttacker: boolean; isRead: boolean } {
+  const isAttacker = report.attackerUserId === userId;
+  const isDefender = report.defenderUserId === userId;
+  const isRead = isAttacker
+    ? (report.readByAttacker ?? report.isRead ?? false)
+    : isDefender
+      ? (report.readByDefender ?? report.isRead ?? false)
+      : (report.isRead ?? false);
 
   if (!shouldHideBarbarianDefeatDetails(report, isAttacker)) {
-    return { ...report, isAttacker };
+    return { ...report, isAttacker, isRead };
   }
 
   const { targetTier } = reportDetails(report.details);
@@ -54,6 +67,7 @@ export function presentCombatReport<
   return {
     ...report,
     isAttacker,
+    isRead,
     loot: {},
     totalUnitsDefender: {},
     lossesDefender: {},

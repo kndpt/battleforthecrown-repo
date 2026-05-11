@@ -64,7 +64,7 @@ Spécificités runtime :
 | `Expedition.kind` | `ATTACK` ou `REINFORCE`. Détermine le comportement à l'arrivée. |
 | `Expedition.recalled` | boolean — vrai si l'armée a fait demi-tour pendant l'aller (Recall). |
 | `Expedition.reinforcementOriginVillageId` | utilisé pour identifier le village d'origine lors d'un rappel (Recall) de renforts. |
-| `CombatReport` | rapport persistant lu par les joueurs (`reader`/`opponent`). |
+| `CombatReport` | rapport persistant d'un combat. L'accès est porté par `attackerUserId` / `defenderUserId`; l'état inbox est par participant (`readByAttacker` / `readByDefender`, `hiddenByAttacker` / `hiddenByDefender`). |
 | `PendingConquest` | fenêtre de capture ouverte après un pré-combat victorieux avec Seigneur survivant. Stocke `attackerVillageId`, `attackerUserId`, `targetVillageId`, `captureUntil`, `status` (`OPEN`/`COMPLETED`/`INTERRUPTED`) et le `finalizeJobId` pg-boss. |
 
 Un trajet passe par les phases `EN_ROUTE → RESOLVED → RETURNING` (cf. `ExpeditionStatus`). Backend : un job pg-boss à `arrivalAt` (résolution), puis un autre à `returnAt` (retour). Pour les raids, `returnAt` est calculé avec `outboundTravelMs`, la durée aller figée au dispatch.

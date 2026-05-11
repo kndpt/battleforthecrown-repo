@@ -16,10 +16,11 @@ Fiches d'exécution déléguées aux harnesses Claude Code ou Codex (lead + sub-
 
 ### Runs actifs
 
-- [012 — Inbox combat reports](./runs/012-feature-inbox-combat-reports.md) — 📋 `PLANNED`. Phase 2 : finaliser le contrat MVP inbox et brancher les rapports de combat existants.
+_(Aucun run actif.)_
 
 ### Runs archivés
 
+- [012 — Inbox combat reports](./runs/archive/012-feature-inbox-combat-reports.md) — ✅ `DONE` (2026-05-11). Inbox combat MVP : contrat gameplay figé, `CombatReport` conservé, lu/suppression par participant, invalidation WS attaquant/défenseur, smoke REST reports + smokes backend verts.
 - [011 — Découpler le return worker du CombatReport](./runs/archive/011-fix-return-worker-decouple-report.md) — ✅ `DONE` (2026-05-10). Fix report supprimé pendant retour : snapshot `survivingUnits`/`loot` sur `Expedition`, `battle.returned.reportId` nullable, smoke de régression vert.
 - [010 — Implémentation frontend renforts](./runs/archive/010-implementation-frontend-reinforcements.md) — ✅ `DONE` (2026-05-10). Frontend renforts finalisé : action `Renforcer`, garnison `INCOMING`/`OUTGOING`, `Rappeler`/`Renvoyer`, rendu `REINFORCE` liste/carte/mini-carte, WS + docs + smokes verts.
 - [009 — Fix UI bâtiments verrouillés / non construits](./runs/archive/009-fix-ui-locked-unbuilt.md) — ✅ `DONE` (2026-05-10). Frontend village lock-aware : helper pur `getBuildingLockState`, modale sans upgrade verrouillé, scène Pixi sans bâtiments level 0, libellé `Non construit`, test Vitest + build Pixi verts.

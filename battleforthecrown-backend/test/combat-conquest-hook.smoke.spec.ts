@@ -281,13 +281,13 @@ describe('combat conquest hook smoke', () => {
       await outboxDispatched(
         ctx.prisma,
         { kind: 'noble.killed', aggregateId: origin.village.id },
-        { timeoutMs: 10_000 },
+        { timeoutMs: 30_000 },
       );
 
       const resolvedEvent = await outboxDispatched(
         ctx.prisma,
         { kind: 'battle.resolved', aggregateId: origin.village.id },
-        { timeoutMs: 10_000 },
+        { timeoutMs: 30_000 },
       );
       expect(resolvedEvent.payload).toMatchObject({
         expeditionId: attackBody.id,

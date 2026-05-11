@@ -1,6 +1,6 @@
 # Inbox & rapports persistants
 
-> 🚧 **Doc en chantier.** Spec à détailler plus tard. Cette page existe pour acter que le **système d'inbox** entre dans le scope **MVP** — l'analyse design (rétention, filtres, marquage, archivage, capacité) viendra dans une seconde passe.
+> ✅ **Contrat MVP Phase 2.** Cette page fixe le périmètre minimal de l'inbox pour le MVP : héberger les rapports de combat persistants. Les autres catégories et les fonctions avancées restent post-MVP.
 
 ## Pourquoi c'est obligatoire au MVP
 
@@ -11,20 +11,24 @@ Le **contenu** des rapports est déjà décrit dans les docs concernées :
 
 Mais le **système** qui héberge ces rapports — l'inbox — n'existe pas encore. Or sur mobile, l'inbox d'un MMORTS est **l'écran le plus consulté** : c'est là que le joueur revient à chaque session pour vérifier ce qui s'est passé pendant son absence (raids subis, retours d'armée, scouts arrivés, conquêtes résolues). Sans un système structuré, les rapports se perdent et l'asymétrie temporelle (cf. [`16-notifications.md`](./16-notifications.md)) reste irrésolue côté lecture.
 
-## Cible MVP — esquisse
+## Cible MVP
 
-| Élément | Question à trancher |
+| Élément | Contrat Phase 2 |
 | --- | --- |
-| **Catégories** | Combat (attaquant/défenseur séparés ?), scout, retour d'armée, conquête (succès/échec/interruption), événements serveur (Oyez, raid barbare global), classements ? |
-| **Rétention** | Durée de conservation par catégorie (7 j ? 30 j ? infini avec cap de capacité ?). Suppression auto ou opt-in ? |
-| **Capacité** | Plafond par joueur (ex : 200 rapports max) avec rotation FIFO ? Ou illimité avec compression côté DB ? |
-| **Marquage** | Lu / non-lu, badge global et par catégorie. Persistance cross-device. |
-| **Filtres** | Par catégorie, par village ciblé, par interlocuteur (joueur ennemi / barbare). Recherche texte ? Probablement pas au MVP. |
-| **Archivage / pin** | Possibilité d'épingler un rapport important (ex : rapport scout à conserver pour préparer une attaque) hors de la rotation. |
-| **Suppression manuelle** | Suppression unitaire + suppression de masse par filtre. |
-| **Source de vérité** | Table Prisma dédiée (`Report` ?) ou réutilisation de `EventOutbox` archivé ? À trancher avec l'architecture. |
+| **Catégories** | Combat uniquement : raids contre villages barbares et villages joueurs. Scout, conquête détaillée, push, serveur/Oyez et classements restent hors scope. |
+| **Source de vérité** | `CombatReport` est la source persistante Phase 2. `EventOutbox` reste un canal temps réel, pas une archive métier. Pas de table `Report` transverse au MVP. |
+| **Participants** | Un rapport PvP est partagé par le combat, mais l'état inbox est par participant : attaquant et défenseur ont chacun leur lu/non-lu et leur suppression. Un rapport barbare n'a qu'un participant joueur. |
+| **Marquage** | Lu / non-lu persistant cross-device. Ouvrir le détail marque le rapport comme lu pour le joueur connecté uniquement. |
+| **Badge** | Badge global "messages" = nombre de rapports combat non lus du joueur connecté. Il se met à jour après lecture, refetch, reconnexion et événement temps réel. |
+| **Tri** | Liste triée du plus récent au plus ancien. |
+| **Accès** | Le joueur connecté voit uniquement les rapports où il est attaquant ou défenseur, sauf entrée supprimée pour lui. |
+| **Suppression manuelle** | Suppression unitaire conservée au MVP. Elle masque l'entrée pour le joueur courant ; le rapport physique peut rester tant qu'un autre participant y a accès ou qu'un retour d'armée peut encore le référencer. Supprimer le rapport ne doit jamais bloquer la restitution des survivants/loot. |
+| **Rétention / capacité** | Pas de purge automatique ni cap au MVP. À réouvrir post-MVP après playtest. |
+| **Filtres / recherche / pin** | Hors scope MVP. La première version affiche une seule liste "rapports de combat". |
+| **REST minimal** | `GET /combat/reports`, `GET /combat/report/:id`, `PATCH /combat/report/:id/read`, `DELETE /combat/report/:id`. |
+| **Temps réel minimal** | Une résolution de combat qui crée un rapport invalide l'inbox via WS : `battle.resolved` côté attaquant, `village.attacked` côté défenseur. Le frontend refetch REST ensuite. |
 
-Modèle de référence : Tribal Wars / Kingsage gardent les rapports ~30 jours par défaut, avec un système de tags (favori, archive) et un cap de capacité (~500 rapports). C'est la cible UX raisonnable.
+Modèle de référence post-MVP : Tribal Wars / Kingsage gardent les rapports ~30 jours par défaut, avec tags/favoris/archive et un cap de capacité. Ce n'est pas requis pour la Phase 2 initiale.
 
 ## Articulation avec les notifications push
 

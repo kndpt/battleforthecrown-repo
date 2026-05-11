@@ -374,6 +374,10 @@ model CombatReport {
   lossesDefender    Json?     @map("losses_defender")
   
   isRead            Boolean   @default(false) @map("is_read")
+  readByAttacker    Boolean   @default(false) @map("read_by_attacker")
+  readByDefender    Boolean   @default(false) @map("read_by_defender")
+  hiddenByAttacker  Boolean   @default(false) @map("hidden_by_attacker")
+  hiddenByDefender  Boolean   @default(false) @map("hidden_by_defender")
   
   timestamp         DateTime  @default(now())
   createdAt         DateTime  @default(now()) @map("created_at")

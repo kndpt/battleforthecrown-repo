@@ -11,11 +11,13 @@ import {
   applyReinforcementReturned,
   applyReinforcementSent,
   applyResourcesChanged,
+  applyVillageAttacked,
 } from './ws-bindings';
 import { queryKeys } from './queries';
 import { useResourcesStore } from '@/stores/resources';
 import { useCrownsStore } from '@/stores/crowns';
 import { useUiStore } from '@/stores/ui';
+import { useAuthStore } from '@/stores/auth';
 import { useExpeditionsStore } from '@/stores/expeditions';
 import { useWorldMapStore } from '@/stores/worldMap';
 import {
@@ -27,6 +29,7 @@ beforeEach(() => {
   useResourcesStore.getState().clear();
   useCrownsStore.getState().clear();
   useUiStore.getState().clearToasts();
+  useAuthStore.getState().clearSession();
   useExpeditionsStore.getState().clear();
   useWorldMapStore.getState().clear();
 });
@@ -173,6 +176,69 @@ describe('applyBattleResolved', () => {
     expect(useExpeditionsStore.getState().byId['e1'].phase).toBe('RESOLVED');
     vi.advanceTimersByTime(RESOLVED_TO_RETURNING_DELAY_MS);
     expect(useExpeditionsStore.getState().byId['e1'].phase).toBe('RETURNING');
+  });
+
+  it('invalidates the signed-in player reports query for the unread badge', () => {
+    useAuthStore.getState().setSession({
+      accessToken: 'access',
+      refreshToken: 'refresh',
+      user: { id: 'user-1', email: 'u@example.test' },
+    });
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.combatReports('user-1'), []);
+
+    applyBattleResolved(
+      {
+        expeditionId: 'e1',
+        reportId: 'r1',
+        villageId: 'v1',
+        villageName: 'Capital',
+        targetKind: 'BARBARIAN_VILLAGE',
+        targetName: 'Camp',
+        targetX: 1,
+        targetY: 1,
+        isVictory: true,
+        loot: { resources: { wood: 0, stone: 0, iron: 0 } },
+        lossesAttacker: {},
+        casualtyRate: 0,
+        survivingUnits: {},
+        returnAt: '2026-05-04T22:00:01.000Z',
+      },
+      { queryClient },
+    );
+
+    expect(queryClient.getQueryState(queryKeys.combatReports('user-1'))?.isInvalidated).toBe(true);
+  });
+});
+
+describe('applyVillageAttacked', () => {
+  it('invalidates the signed-in defender reports query for the unread badge', () => {
+    useAuthStore.getState().setSession({
+      accessToken: 'access',
+      refreshToken: 'refresh',
+      user: { id: 'defender-1', email: 'd@example.test' },
+    });
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.combatReports('defender-1'), []);
+
+    applyVillageAttacked(
+      {
+        defenderVillageId: 'v-def',
+        attackerVillageId: 'v-att',
+        attackerVillageName: 'Attacker',
+        attackerX: 2,
+        attackerY: 3,
+        defenderVillageName: 'Defender',
+        isDefenseSuccessful: false,
+        losses: {},
+        casualtyRate: 0,
+        resourcesLost: { wood: 0, stone: 0, iron: 0 },
+        timestamp: '2026-05-04T22:00:00.000Z',
+      },
+      { queryClient },
+    );
+
+    expect(queryClient.getQueryState(queryKeys.combatReports('defender-1'))?.isInvalidated).toBe(true);
   });
 });
 

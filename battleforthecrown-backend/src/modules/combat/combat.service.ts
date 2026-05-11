@@ -625,7 +625,10 @@ export class CombatService {
   async getAllReports(userId: string) {
     const reports = await this.prisma.combatReport.findMany({
       where: {
-        OR: [{ attackerUserId: userId }, { defenderUserId: userId }],
+        OR: [
+          { attackerUserId: userId, hiddenByAttacker: false },
+          { defenderUserId: userId, hiddenByDefender: false },
+        ],
       },
       orderBy: { timestamp: 'desc' },
     });
@@ -642,8 +645,7 @@ export class CombatService {
       throw new NotFoundException('Report not found');
     }
 
-    // Verify user is attacker or defender
-    if (report.attackerUserId !== userId && report.defenderUserId !== userId) {
+    if (!this.canAccessReport(report, userId)) {
       throw new BadRequestException('Not authorized to view this report');
     }
 
@@ -659,11 +661,27 @@ export class CombatService {
       throw new NotFoundException('Report not found');
     }
 
-    if (report.attackerUserId !== userId && report.defenderUserId !== userId) {
+    if (!this.canAccessReport(report, userId)) {
       throw new BadRequestException('Not authorized to delete this report');
     }
 
-    await this.prisma.combatReport.delete({ where: { id: reportId } });
+    const role = this.getReportRole(report, userId);
+    const otherParticipantHidden =
+      role === 'attacker'
+        ? report.hiddenByDefender || !report.defenderUserId
+        : report.hiddenByAttacker;
+
+    if (otherParticipantHidden) {
+      await this.prisma.combatReport.delete({ where: { id: reportId } });
+    } else {
+      await this.prisma.combatReport.update({
+        where: { id: reportId },
+        data:
+          role === 'attacker'
+            ? { hiddenByAttacker: true }
+            : { hiddenByDefender: true },
+      });
+    }
 
     return { message: 'Report deleted successfully' };
   }
@@ -677,16 +695,46 @@ export class CombatService {
       throw new NotFoundException('Report not found');
     }
 
-    // Verify user is attacker or defender
-    if (report.attackerUserId !== userId && report.defenderUserId !== userId) {
+    if (!this.canAccessReport(report, userId)) {
       throw new BadRequestException('Not authorized to modify this report');
     }
 
+    const role = this.getReportRole(report, userId);
     const updated = await this.prisma.combatReport.update({
       where: { id: reportId },
-      data: { isRead: true },
+      data:
+        role === 'attacker'
+          ? { readByAttacker: true }
+          : { readByDefender: true },
     });
 
     return presentCombatReport(updated, userId);
+  }
+
+  private getReportRole(
+    report: {
+      attackerUserId: string;
+      defenderUserId: string | null;
+    },
+    userId: string,
+  ): 'attacker' | 'defender' | null {
+    if (report.attackerUserId === userId) return 'attacker';
+    if (report.defenderUserId === userId) return 'defender';
+    return null;
+  }
+
+  private canAccessReport(
+    report: {
+      attackerUserId: string;
+      defenderUserId: string | null;
+      hiddenByAttacker: boolean;
+      hiddenByDefender: boolean;
+    },
+    userId: string,
+  ): boolean {
+    const role = this.getReportRole(report, userId);
+    if (role === 'attacker') return !report.hiddenByAttacker;
+    if (role === 'defender') return !report.hiddenByDefender;
+    return false;
   }
 }

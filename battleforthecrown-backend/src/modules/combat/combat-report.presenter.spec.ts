@@ -24,6 +24,7 @@ describe('presentCombatReport', () => {
     expect(presentCombatReport(baseReport, 'attacker-1')).toEqual({
       ...baseReport,
       isAttacker: true,
+      isRead: false,
       loot: {},
       totalUnitsDefender: {},
       lossesDefender: {},
@@ -40,6 +41,7 @@ describe('presentCombatReport', () => {
     expect(presentCombatReport(report, 'attacker-1')).toEqual({
       ...report,
       isAttacker: true,
+      isRead: false,
     });
   });
 
@@ -47,6 +49,20 @@ describe('presentCombatReport', () => {
     expect(presentCombatReport(baseReport, 'other-user')).toEqual({
       ...baseReport,
       isAttacker: false,
+      isRead: false,
     });
+  });
+
+  it('projects read state for the requesting participant only', () => {
+    const report = {
+      ...baseReport,
+      defenderUserId: 'defender-1',
+      readByAttacker: true,
+      readByDefender: false,
+      lossesAttacker: { MILITIA: 9 },
+    };
+
+    expect(presentCombatReport(report, 'attacker-1').isRead).toBe(true);
+    expect(presentCombatReport(report, 'defender-1').isRead).toBe(false);
   });
 });

@@ -20,6 +20,7 @@ import type {
 import { useResourcesStore } from '@/stores/resources';
 import { useCrownsStore } from '@/stores/crowns';
 import { useUiStore } from '@/stores/ui';
+import { useAuthStore } from '@/stores/auth';
 import { useExpeditionsStore, type ExpeditionSnapshot } from '@/stores/expeditions';
 import { useWorldMapStore } from '@/stores/worldMap';
 import {
@@ -152,10 +153,7 @@ export function applyBattleResolved(payload: BattleResolvedPayload, ctx: Binding
   ctx.queryClient.invalidateQueries({ queryKey: ['resources', payload.villageId] });
   // Population freed for dead attacker units — see backend combat.worker:sumPopulationCost.
   ctx.queryClient.invalidateQueries({ queryKey: ['population', payload.villageId] });
-  // A new combat report just landed on the server. Tell TanStack to refetch the
-  // reports list so the unread bubble in the bottom nav updates without waiting
-  // on the 10s staleTime.
-  ctx.queryClient.invalidateQueries({ queryKey: ['combat', 'reports'] });
+  invalidateCombatReports(ctx);
   useUiStore.getState().pushToast({
     tone: payload.isVictory ? 'success' : 'error',
     title: payload.isVictory ? 'Victoire' : 'Défaite',
@@ -304,12 +302,18 @@ export function applyVillageAttacked(
   // Defender lost units → population was released server-side. Refresh the HUD.
   ctx.queryClient.invalidateQueries({ queryKey: ['population', payload.defenderVillageId] });
   ctx.queryClient.invalidateQueries({ queryKey: ['army', payload.defenderVillageId] });
+  invalidateCombatReports(ctx);
   useUiStore.getState().pushToast({
     tone: payload.isDefenseSuccessful ? 'success' : 'error',
     title: payload.isDefenseSuccessful ? 'Attaque repoussée' : 'Village attaqué',
     description: `${payload.attackerVillageName} (${payload.attackerX},${payload.attackerY})`,
     ttlMs: 6000,
   });
+}
+
+function invalidateCombatReports(ctx: BindingsContext): void {
+  const userId = useAuthStore.getState().user?.id ?? null;
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.combatReports(userId) });
 }
 
 export function applyVillageConquered(payload: VillageConqueredPayload, ctx: BindingsContext): void {
