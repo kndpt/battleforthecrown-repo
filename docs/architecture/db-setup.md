@@ -46,6 +46,8 @@ PORT=15001 yarn workspace battleforthecrown-backend start:dev
 # → CORS pré-configurés pour http://localhost:5173 (Vite)
 ```
 
+`start:dev` vérifie d'abord `prisma migrate status`. Si des migrations sont pending, le backend ne démarre pas et affiche la commande `prisma migrate deploy` à lancer.
+
 Sanity HTTP : `curl http://localhost:15001/health` → 200.
 
 ## DB smoke (`battleforthecrown_smoke`)
@@ -240,6 +242,7 @@ Pour DBeaver / TablePlus / DataGrip :
 |----------|----------------|-----|
 | `prisma migrate deploy` plante avec « migration already applied » | DB partiellement bootstrapée | `docker compose down -v` puis recommencer |
 | Backend crashe avec `P1001 Can't reach database` | Container down ou pas encore healthy | `docker compose ps`, attendre `healthy` |
+| `start:dev` stoppe avec `[dev-migration-check] Database migrations are not ready` | Migrations Prisma pending sur la DB dev | `yarn workspace battleforthecrown-backend prisma migrate deploy` |
 | Backend crashe avec `Schema "pgboss" does not exist` | Premier démarrage, pg-boss pas encore initialisé | Attendre 2-3s, le backend crée le schéma au boot |
 | Aucun event WS reçu après upgrade | OutboxWorker bloqué, ou EventOutbox.dispatchedAt resté null | `SELECT count(*) FROM "EventOutbox" WHERE "dispatchedAt" IS NULL` — si > 0 et croissant, restart le backend |
 | Port 5432 déjà utilisé | Une autre instance Postgres tourne en local | `lsof -i :5432`, kill l'autre, ou changer le port dans `docker-compose.yml` ET dans `.env` |

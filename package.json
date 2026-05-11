@@ -20,7 +20,7 @@
     "dev:shared": "yarn workspace @battleforthecrown/shared dev",
     "dev:backend": "PORT=15001 yarn workspace battleforthecrown-backend start:dev",
     "dev:frontend": "yarn workspace battleforthecrown-pixi dev --port 5173 --strictPort",
-    "dev": "echo '\\n  ▶ Frontend  http://localhost:5173\\n  ▶ Backend   http://localhost:15001\\n' && concurrently -n front,back -c magenta,blue -k \"cd battleforthecrown-pixi && exec node_modules/.bin/vite --port 5173 --strictPort\" \"cd battleforthecrown-backend && PORT=15001 exec node_modules/.bin/nest start --watch\""
+    "dev": "echo '\\n  ▶ Frontend  http://localhost:5173\\n  ▶ Backend   http://localhost:15001\\n' && concurrently -n front,back -c magenta,blue -k \"cd battleforthecrown-pixi && exec node_modules/.bin/vite --port 5173 --strictPort\" \"cd battleforthecrown-backend && scripts/dev-migration-check.sh && PORT=15001 exec node_modules/.bin/nest start --watch\""
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

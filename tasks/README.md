@@ -4,7 +4,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-- [44 — Crash armée : migration `unit_training.building` non appliquée](./44-army-training-schema-drift.md) — 🔴 Bloquant local : `/game/army` déclenche `P2022` car la DB n'a pas appliqué les migrations `UnitTraining.building`.
+_(Aucun ticket actif.)_
 
 ## Roadmap stratégique
 
@@ -35,6 +35,7 @@ _(Aucun run actif.)_
 
 ## Archivés
 
+- [44 — Crash armée : migration `unit_training.building` non appliquée](./archive/44-army-training-schema-drift.md) ✅ Résolu 2026-05-11 par application des migrations locales + garde-fou dev server.
 - [43 — Risque de mort du Seigneur sur victoire coûteuse](./archive/43-noble-loss-chance-on-costly-victory.md) ✅ Résolu 2026-05-11 par $run @tasks/43-noble-loss-chance-on-costly-victory.md
 - [41 — Période de capture : `PendingConquest` + worker](./archive/41-capture-window-data-model.md) ✅ Résolu 2026-05-11 par $run @tasks/41-capture-window-data-model.md
 - [42 — Hook combat post-résolution conquête](./archive/42-combat-conquest-hook.md) ✅ Résolu 2026-05-11 par $run @tasks/42-combat-conquest-hook.md

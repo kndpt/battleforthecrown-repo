@@ -1,7 +1,7 @@
 # 44 — Crash armée : migration `unit_training.building` non appliquée
 
 **Sévérité** : 🔴 Bloquant local (écran Armée en 500)
-**Statut** : 🟡 À traiter
+**Statut** : ✅ Résolu 2026-05-11 par application des migrations locales + garde-fou dev server
 **Déclencheur** : navigation frontend vers `/game/army`
 
 ## Symptôme
@@ -86,17 +86,39 @@ Ajouter un smoke minimal sur `/army/:villageId/inventory` et `/army/:villageId/t
 
 ## Critères d'acceptation
 
-- `yarn workspace battleforthecrown-backend prisma migrate status` ne liste plus de migrations pending sur la DB de dev.
-- `GET /army/:villageId/inventory` retourne 200.
-- `GET /army/:villageId/training` retourne 200.
-- L'écran `http://localhost:5173/game/army` ne déclenche plus de `P2022`.
-- Un garde-fou empêche de relancer le backend en watch contre une DB non migrée sans message explicite.
+- [x] `yarn workspace battleforthecrown-backend prisma migrate status` ne liste plus de migrations pending sur la DB de dev.
+- [x] `GET /army/:villageId/inventory` retourne 200.
+- [x] `GET /army/:villageId/training` retourne 200.
+- [x] L'écran `http://localhost:5173/game/army` ne déclenche plus de `P2022`.
+- [x] Un garde-fou empêche de relancer le backend en watch contre une DB non migrée sans message explicite.
+
+## Résolution
+
+Appliqué localement :
+
+```bash
+yarn workspace battleforthecrown-backend prisma migrate deploy
+```
+
+Migrations appliquées :
+
+- `20260511120000_add_training_building`
+- `20260511140000_add_training_building_unique`
+- `20260511150000_add_pending_conquest`
+
+Garde-fou ajouté :
+
+- `battleforthecrown-backend/scripts/dev-migration-check.sh`
+- `battleforthecrown-backend/package.json` — `start:dev` lance le check avant `nest start --watch`.
+- `package.json` — `yarn dev` lance le même check avant le backend watch.
+- `battleforthecrown-backend/test/army-training-read.smoke.spec.ts` — smoke de lecture `inventory` + `training` sur vraie DB.
 
 ## Commandes de vérification attendues
 
 ```bash
 yarn workspace battleforthecrown-backend prisma migrate status
 yarn workspace battleforthecrown-backend prisma migrate deploy
+yarn workspace battleforthecrown-backend test:smoke:run --runTestsByPath test/army-training-read.smoke.spec.ts
 yarn static-check
 ```
 
