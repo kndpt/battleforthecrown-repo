@@ -1,0 +1,50 @@
+# SPEC — BFTC Agent Runtime
+
+But : donner aux agents le minimum de contexte stable pour décider vite pendant `$run`.
+Ce fichier ne remplace pas `docs/` : il référence les sources de vérité et ne garde que les contraintes qui changent une décision d'exécution.
+
+## §C — Contraintes non négociables
+
+- Stack : NestJS + Prisma + Postgres backend, Pixi/React frontend, yarn workspaces.
+- Gameplay server-authoritative : pas de logique métier canonique côté client.
+- Events cross-process via Outbox ; pas de publication directe qui contourne l'Outbox.
+- DB : aucun `DROP`, `TRUNCATE`, `DELETE`, `ALTER TABLE ... DROP COLUMN` ou migration destructive sans accord user explicite.
+- `prisma migrate reset` interdit dans `/run`.
+- Git : pas de `--no-verify`, pas de `git push` automatique, commits en anglais au format `<type>(<scope>): <subject>`.
+- Shared package : `packages/shared/` expose types/formules pures ; les frontends le consomment sans y mettre de logique applicative.
+
+## §S — Sources de vérité
+
+| Domaine | Source |
+|---|---|
+| Architecture | `docs/architecture/decisions.md` |
+| Modèle DB | `docs/architecture/data-model.md` + `battleforthecrown-backend/prisma/schema.prisma` |
+| Realtime / Outbox | `docs/architecture/realtime.md` |
+| Setup DB | `docs/architecture/db-setup.md` |
+| Gameplay | `docs/gameplay/` |
+| Règles agentiques | `.agents/rules/` |
+| Runs / tickets | `tasks/runs/`, `tasks/`, `tasks/README.md` |
+
+## §V — Invariants à appliquer
+
+Format : `V<n> | <invariant actionnable> | source: <path>`
+
+<!-- Ajouter uniquement si l'invariant est durable, transversal, et réellement utile à un futur run. -->
+
+## §B — Bugs récurrents / anti-patterns
+
+Format :
+
+| id | symptôme | cause racine | fix canonique | source |
+|---|---|---|---|---|
+
+<!-- Ajouter uniquement si le bug est récurrent, subtil, ou assez coûteux pour mériter une prévention explicite. -->
+
+## §A — Règle d'ajout
+
+Avant d'ajouter une entrée :
+
+1. Vérifier que l'info n'appartient pas plutôt à `docs/`, `.agents/rules/`, une fiche run, ou un ticket.
+2. Ajouter une source traçable (`tasks/runs/archive/...`, `tasks/archive/...`, doc ou commit).
+3. Écrire une phrase actionnable, pas une observation vague.
+4. Ne pas ajouter d'entrée si elle ne changerait pas concrètement la cartographie, le refinement, l'implémentation, la review ou les tests.

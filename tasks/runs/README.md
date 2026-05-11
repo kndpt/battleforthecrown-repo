@@ -28,6 +28,7 @@ Mêmes étapes 1-10 dans les trois harnesses, conventions de nommage des sub-age
 | 6 | Review 5 axes | Claude : plugin `agent-skills:code-reviewer`. Codex/Gemini : lead ou agent `generalist`. | Findings |
 | 7 | Fix des findings (1 finding = 1 tâche chirurgicale) | Sub-agent `implementer` | Diff + rapport |
 | 8 | Re-test | Sub-agent `test-runner` | `=== RUN TESTS ===` |
+| 8c | Backprop SPEC (promo §V/§B si savoir transverse révélé) | Lead | Diff SPEC.md (hard gate) |
 | 9 | Documentation (création/maj/références croisées) | Sub-agent `doc-writer` | Diff + rapport |
 | 10 | Archive + commit final | Lead | Fiche `DONE`, commit unique |
 
@@ -82,6 +83,7 @@ PLANNED → RUNNING → (BLOCKED ↔ RUNNING) → DONE
 | `## Décomposition initiale` | Étape 3 | Lead |
 | `## Progress`, `## Décisions prises` | Étapes 2-9 | Lead (les sub-agents reportent au lead, qui logue) |
 | `## Rapport final` | Étape 10 | Lead |
+| `SPEC.md` racine | Étape 8c | Lead (édition directe, gouvernance) |
 
 Le lead **ne réécrit jamais** les sections « avant lancement » — il les lit et travaille à partir d'elles.
 

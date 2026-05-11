@@ -45,7 +45,7 @@ Hook `pre-push` (husky) qui lance `yarn test` (~30-45 s : unit backend + unit pi
 Le repo suit le standard ouvert [agentskills.io](https://agentskills.io) :
 
 - **Source de vérité** : `.agents/{rules,skills}/` à chaque niveau (racine, backend, pixi).
-- **Compat outils** : `.claude/{rules,skills}` et `.codex/{rules,skills}` sont des **symlinks** vers `.agents/`. Modifier un fichier ici = modifier la source.
+- **Compat outils** : `.claude/{rules,skills}`, `.codex/{rules,skills}` et `.gemini/skills` sont des **symlinks** vers `.agents/`. Modifier un fichier ici = modifier la source.
 - **Spécifique Claude** : `.claude/{agents,commands,agent-memory}/` + `settings.local.json` restent dans `.claude/` (formats propriétaires).
 - **Spécifique Codex** : `.codex/agents/*.toml` (6 agents convertis depuis `.claude/agents/*.md` — `code_mapper`, `test_runner`, `run_planner`, `doc_writer`, `implementer`, `test_writer`. Format TOML, modèles OpenAI).
 - `CLAUDE.md` à chaque niveau est un simple `@AGENTS.md` (import du standard).

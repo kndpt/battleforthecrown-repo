@@ -16,6 +16,8 @@ Pipeline en deux modes selon le path :
 | `tasks/<id>-<slug>.md` | **ticket** | Pipeline allégé (mode rapide auto, voir §§ ci-dessous). |
 | autre / pas de mention | abort | Message clair, l'utilisateur doit fournir un `@<path>` valide. |
 
+Ce que tu fais dans les deux modes : **lire la cible + la spec + les rules + `SPEC.md`, raisonner, décomposer chirurgicalement, dispatcher (ou agir directement en mode rapide), vérifier chaque diff, archiver, backprop le savoir transverse**.
+
 > **Pour spawn un sub-agent** : dis explicitement « spawn the `<name>` agent with the following prompt: ... » et attends son résultat avant de continuer. Codex orchestre fan-out + collecte. `max_depth = 1` par défaut → les sub-agents ne peuvent pas spawn d'autres sub-agents.
 
 ## Étape 0 — Préflight + routage
@@ -31,11 +33,12 @@ Pipeline en deux modes selon le path :
 6. **Mode ticket** : statut header = `🆕 Ouvert`. Sinon abort.
 7. Lis la spec source citée.
 8. Lis les rules : `.agents/rules/{conventions,tests,qa,docs,git}.md` + rules workspace si concerné.
-9. **Tu ne lis pas le code applicatif maintenant.** C'est l'étape 2.
+9. **Lis `SPEC.md` à la racine** si présent. C'est le savoir transverse projet (§V invariants, §B bugs récurrents). Ne le modifie pas à ce stade : il guide la clarification, la cartographie et le refinement.
+10. **Tu ne lis pas le code applicatif maintenant.** C'est l'étape 2.
 
 ## Étape 1 — Clarification (1 aller-retour max, ≤ 4 questions)
 
-Identifie les ambiguïtés bloquantes que **ni la spec ni les rules ne tranchent**. Si tout est clair, saute.
+Identifie les ambiguïtés bloquantes que **ni la spec ni les rules ni `SPEC.md` ne tranchent**. Si tout est clair, saute.
 
 **Mode ticket** : si la cible a un § `## Question à trancher`, pose la question (une seule fois). Le user tranche la **piste** ; la décomposition reste de ton ressort.
 
@@ -51,13 +54,15 @@ Pose tes questions au user en clair (1 message, ≤ 4 numérotées). Si non-rép
 - **Zone** : modules listés dans la cible.
 - **Spec source** : section précise.
 - **Focus** : signatures, callers, tests existants, écarts évidents.
+- **Lecture préalable** : `SPEC.md` racine si présent (§V/§B pertinents au scope).
 
 Reçois `=== CARTE MODULE ===`.
 
 ## Étape 3 — Refinement (toi, le lead)
 
-Avec spec + carte, raisonne :
+Avec spec + carte + `SPEC.md`, raisonne :
 - Invariants spec, écarts à fixer.
+- **Cohérence avec `SPEC.md`** : la décomposition respecte-t-elle les §V et évite-t-elle les §B ? Si un §V s'applique, cite-le explicitement.
 - Approche minimisant la dette (server-authoritative, Outbox, anti-patterns évités).
 - Découpage en tâches **chirurgicales** (≤ 5 fichiers chacune, scope précis, critère observable).
 
@@ -66,7 +71,7 @@ Avec spec + carte, raisonne :
 
 **Bascule mode rapide** (auto) : si la décomposition tient en **1-2 cas A** (≤ 30 lignes ≤ 2 fichiers chacune), active le mode rapide. Logue la décision. Si à mi-parcours le scope explose, re-bascule en complet et logue.
 
-**0 tâche de coding** : skip 4-5, passe à 6 (no-op) puis 9-10.
+**0 tâche de coding** : skip 4-5, passe à 6 (no-op) puis 8c, 9-10.
 
 ## Étape 4 — Coding
 
@@ -83,6 +88,7 @@ Prompt `implementer` (refuse si scope ambigu) : utiliser ces labels exacts pour 
 Spec source:
 - <ticket ou fiche run, section précise si utile>
 - <doc/spec canonique `docs/... § Section` quand elle existe>
+- <`SPEC.md` §V/§B pertinent si applicable>
 
 Fichiers à toucher:
 - <path 1>
@@ -100,6 +106,8 @@ Critère de succès:
 
 `Spec source` peut être composée : ticket/finding pour le problème opérationnel + doc gameplay/architecture pour l'invariant canonique. Pour une migration destructive, le prompt doit mentionner explicitement la piste validée ou l'accord user.
 
+Si un §V ou §B de `SPEC.md` s'applique au scope, l'implementer doit le respecter et le citer dans son rapport. Si le diff nécessaire semble violer un §V, il doit répondre `STATUS: failed` et proposer l'alternative au lead.
+
 ### Politique migrations DB
 
 Quand une tâche crée ou modifie une migration Prisma, l'agent doit gérer l'application locale de la migration au lieu de laisser un état non appliqué :
@@ -110,7 +118,7 @@ Quand une tâche crée ou modifie une migration Prisma, l'agent doit gérer l'ap
 4. `prisma migrate reset` reste interdit sans exception dans le pipeline `/run`.
 5. Attention : `prisma migrate deploy` applique toutes les migrations en attente. Si une seule migration en attente est destructive et non autorisée, ne pas lancer `deploy`.
 
-## Hard gate (commun aux étapes 4, 5, 7, 9 — toute délégation qui écrit)
+## Hard gate (commun aux étapes 4, 5, 7, 8c, 9 — toute écriture lead ou délégation)
 
 1. `git diff --stat` immédiat.
 2. Parse `=== RAPPORT EXEC ===`.
@@ -127,15 +135,17 @@ Quand une tâche crée ou modifie une migration Prisma, l'agent doit gérer l'ap
 | **A** | test < 10 lignes (formule pure triviale) | test ≤ 20 lignes, matrice 2×2 explicite | Lead. |
 | **B** | sinon | sinon | Spawn the `test_writer` agent. |
 
-Prompt `test_writer` : cible (fichier/fonction), comportements à vérifier (≤ 5 explicites), workspace.
+Prompt `test_writer` : cible (fichier/fonction), comportements à vérifier (≤ 5 explicites), workspace, et lecture préalable de `SPEC.md` pour les §V/§B pertinents.
 
 Hard gate identique. Si refus pour anti-pattern : suis sa recommandation alternative ou logue le refus.
 
 ## Étape 6 — Review
 
-Pas d'agent reviewer dédié côté Codex. Deux options :
+Pas d'agent reviewer dédié côté Codex/Gemini. Deux options :
 - **Par défaut** : tu fais la review toi-même sur le diff complet, 5 axes (correctness, readability, architecture, security, performance), sévérité par finding (`bloquant` | `majeur` | `mineur` | `nit`).
 - **Sinon** : spawn the **`default`** agent (built-in) avec le diff et la consigne.
+
+La review doit inclure `SPEC.md` : si le diff viole un §V ou reproduit un §B, le finding est `bloquant`.
 
 Logue les findings dans `## Décisions prises § Review findings` (run) ou en récap final (ticket).
 
@@ -165,12 +175,28 @@ Lead lance `yarn static-check` à la racine (tsc `--noEmit` + eslint sans `--fix
 
 Si `static-check` échoue **et** que les erreurs sont dans le périmètre du run/ticket → retour étape 4. Sinon (erreurs préexistantes hors scope) → logue dans les décisions et continue.
 
-**Résultat global étape 8** : tests `PASS` ET static-check `PASS` → continue à 9.
+**Résultat global étape 8** : tests `PASS` ET static-check `PASS` → continue à 8c.
 
 `FAIL` (tests ou static) :
 - Lié à une tâche → retour étape 4 (cap 2 cycles).
 - Test flaky connu → flag dans les décisions, accepte si stabilisation hors scope.
 - Bug indépendant ou erreur static préexistante hors scope → ticket, logue, n'aborte pas.
+
+## Étape 8c — Backprop SPEC (conditionnel)
+
+Si le run ou ticket a révélé un bug récurrent, un anti-pattern, ou un invariant non documenté :
+
+1. Décide si le savoir mérite d'être promu dans `SPEC.md` :
+   - **§V (invariant)** : règle durable qui doit guider tous les runs futurs.
+   - **§B (bug récurrent)** : symptôme observé au moins deux fois, ou suffisamment subtil pour mériter un anti-pattern documenté.
+   - **Aucun des deux** : skip cette étape et logue la décision en une ligne.
+2. Édite `SPEC.md` directement (fichier de gouvernance lead) :
+   - Ajoute la ligne dans §V ou §B avec référence vers `tasks/runs/archive/<id>-<slug>.md` ou `tasks/archive/<id>-<slug>.md`.
+   - Format §V : `V<n> | <invariant> | source: <path>`.
+   - Format §B : ligne pipe-table `| id | symptôme | cause racine | fix canonique | run source |`.
+   - Si un §V existant a été violé puis fixé, ne le supprime pas. Ajoute éventuellement un §B documentant la violation observée.
+3. Hard gate `git diff SPEC.md` comme toute autre écriture.
+4. Logue la décision dans `## Décisions prises § Backprop SPEC` (run) ou en récap final (ticket), avec id du §V ou §B ajouté.
 
 ## Étape 9 — Documentation
 
@@ -188,7 +214,7 @@ Décide quelles docs sont impactées (cf. `.agents/rules/docs.md`).
 2. `git status` + `git diff` global. Vérifie le périmètre.
 3. **Mode run** : statut fiche → `DONE`, `Terminé` → date du jour, `## Rapport final` rempli. Archive : `git mv tasks/runs/<id>-<slug>.md tasks/runs/archive/<id>-<slug>.md`. Maj `tasks/README.md`.
 4. **Mode ticket** : archive : `git mv tasks/<id>-<slug>.md tasks/archive/<id>-<slug>.md`. Maj `tasks/README.md` (déplace la ligne du ticket actif vers « Archivés », ajoute `✅ Résolu <date> par $run @<path>`).
-5. **Commit unique** au format `<type>(<scope>): <subject>` (cf. `.agents/rules/git.md`). Body : résumé écarts + fixes + tickets ouverts + QA. **Pas de `--no-verify`. Pas de `git push`.**
+5. **Commit unique** au format `<type>(<scope>): <subject>` (cf. `.agents/rules/git.md`). Body : résumé écarts + fixes + tickets ouverts + QA + backprop SPEC (ids §V/§B ajoutés s'il y en a). **Pas de `--no-verify`. Pas de `git push`.**
 6. Récap final ≤ 10 lignes au user.
 
 ## Mode rapide — overrides en bloc
@@ -202,12 +228,14 @@ Activation : auto en mode ticket, ou en mode run si étape 3 livre une décompos
 | 5 | Cas A élargi : test ≤ 20 lignes matrice explicite (vs < 10 lignes). |
 | 6 | **Conservée** — sauf skip explicite (cf. § étape 6). |
 | 8 | `yarn test` direct via shell (skip `test_runner`). |
+| 8c | **Conservée** — backprop SPEC reste obligatoire si savoir transverse révélé. |
 | 9 | Lead édite directement les changements docs triviaux. |
 | 10 | **`yarn static-check` obligatoire** avant le commit. |
 
 **Non-négociables** (s'appliquent dans les deux modes) :
 - Hard gate `git diff` après toute action qui écrit, lead ou sub-agent.
 - Review 5 axes (sauf skip qualifié).
+- Lecture `SPEC.md` en étape 0, évaluation backprop en étape 8c.
 - Pas de `--no-verify`, pas de `git push`.
 
 ## Règles inviolables
@@ -219,12 +247,14 @@ Activation : auto en mode ticket, ou en mode run si étape 3 livre une décompos
 - **Tu ne push jamais.**
 - **Tu ne déranges pas le user** entre étapes 1 et 10, sauf escalade bloquante.
 - **Tu loggues tout** : transitions, décisions non triviales, dérogations.
+- **Tu évalues toujours le backprop `SPEC.md`** après les vérifications, même si aucun ajout n'est nécessaire.
 - **Tu ne masques pas un échec.** Tests rouges, review qui boucle, écart non résolu : escalade.
 
 ## Cas d'escalade
 
 Diagnostic + ce qui a été tenté + question précise :
 - Spec ↔ code contradictoires sans rule pour trancher.
+- Spec ↔ `SPEC.md` §V contradictoires (un invariant accumulé entre en conflit avec une nouvelle spec).
 - 3 cycles correctifs review→fix dépassés.
 - 2 dérogations lead consécutives.
 - Token budget lead saturé.

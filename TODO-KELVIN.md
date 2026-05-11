@@ -1,2 +1,1 @@
-- Faire skill pour tests et smoke-tests
--
+- Front: je ne vois pas comment "annuler" une attaque
