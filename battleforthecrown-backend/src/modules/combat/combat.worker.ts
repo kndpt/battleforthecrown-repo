@@ -150,6 +150,26 @@ export class CombatWorker implements OnModuleInit {
 
             await this.outbox.resourcesChanged(defenderVillage.id, tx);
           }
+
+          if (defenderVillage) {
+            for (const [unitType, losses] of Object.entries(
+              resolution.lossesDefender || {},
+            )) {
+              if (losses > 0) {
+                await tx.unitInventory.update({
+                  where: {
+                    villageId_unitType: {
+                      villageId: defenderVillage.id,
+                      unitType,
+                    },
+                  },
+                  data: {
+                    quantity: { decrement: losses },
+                  },
+                });
+              }
+            }
+          }
         } else {
           // For player villages: deduct from ResourceStock
 

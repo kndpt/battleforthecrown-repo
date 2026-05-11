@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { CombatStrategy, CombatResolution } from './combat-strategy.interface';
 import { CombatContext } from '../interfaces/combat-context.interface';
 import { LootManager } from '../loot/loot.manager';
-import type { UnitMap } from '@battleforthecrown/shared/army';
+import { calculateCombatOutcome } from '../combat-resolution';
 
 @Injectable()
 export class BarbarianVillageStrategy implements CombatStrategy {
@@ -15,23 +15,27 @@ export class BarbarianVillageStrategy implements CombatStrategy {
       `Resolving barbarian attack: expedition ${context.expedition.id}`,
     );
 
-    // MVP: No losses for attacker
-    const lossesAttacker: UnitMap = {};
-    const lossesDefender: UnitMap | null = null; // Barbarians have no troops
-    const survivingUnits = { ...context.attacker.units };
+    const combatOutcome = calculateCombatOutcome(context);
 
-    // Calculate loot via LootManager
-    const loot = await this.lootManager.calculateLoot(context);
+    const loot = await this.lootManager.calculateLoot({
+      ...context,
+      attacker: {
+        ...context.attacker,
+        units: combatOutcome.survivingAttacker,
+      },
+    });
 
     this.logger.log(
-      `Barbarian attack resolved: looted ${JSON.stringify(loot.resources)}`,
+      `Barbarian attack resolved: attacker losses ${JSON.stringify(combatOutcome.lossesAttacker)}, ` +
+        `defender losses ${JSON.stringify(combatOutcome.lossesDefender)}, ` +
+        `loot ${JSON.stringify(loot.resources)}`,
     );
 
     return {
       loot,
-      lossesAttacker,
-      lossesDefender,
-      survivingUnits,
+      lossesAttacker: combatOutcome.lossesAttacker,
+      lossesDefender: combatOutcome.lossesDefender,
+      survivingUnits: combatOutcome.survivingAttacker,
     };
   }
 }

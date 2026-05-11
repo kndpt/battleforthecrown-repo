@@ -41,7 +41,7 @@ describe('Combat Strategies', () => {
   });
 
   describe('BarbarianVillageStrategy', () => {
-    it('should resolve barbarian attack with no attacker losses', async () => {
+    it('should resolve empty barbarian raid with no attacker losses', async () => {
       // Arrange
       const context: CombatContext = {
         worldId: 'world-1',
@@ -102,9 +102,76 @@ describe('Combat Strategies', () => {
 
       // Assert
       expect(result.lossesAttacker).toEqual({});
-      expect(result.lossesDefender).toBeNull();
+      expect(result.lossesDefender).toEqual({});
       expect(result.survivingUnits).toEqual({ MILITIA: 50 });
       expect(result.loot.resources).toEqual({ wood: 50, stone: 25, iron: 15 });
+    });
+
+    it('should resolve barbarian defenders with the shared combat formula', async () => {
+      const context: CombatContext = {
+        worldId: 'world-1',
+        expedition: {
+          id: 'exp-1',
+          attackerVillageId: 'v1',
+          targetKind: 'BARBARIAN_VILLAGE',
+          targetRefId: 'barb-1',
+          targetX: 10,
+          targetY: 20,
+          units: { MILITIA: 20 },
+          status: 'EN_ROUTE',
+          departAt: new Date(),
+          arrivalAt: new Date(),
+          returnAt: null,
+          reportId: null,
+          worldId: 'world-1',
+        } as any,
+        attacker: {
+          village: {
+            id: 'v1',
+            name: 'My Village',
+            x: 0,
+            y: 0,
+            userId: 'u1',
+            isBarbarian: false,
+          },
+          units: { MILITIA: 20 },
+        },
+        defender: {
+          kind: 'BARBARIAN_VILLAGE',
+          village: {
+            id: 'barb-1',
+            name: 'Barbarian',
+            x: 10,
+            y: 20,
+            userId: null,
+            isBarbarian: true,
+          },
+          units: { MILITIA: 10 },
+          resources: { wood: 100, stone: 50, iron: 30 },
+          participants: [{ villageId: 'barb-1', units: { MILITIA: 10 } }],
+        },
+        config: {
+          combat: { attackBonus: 1.0, defenseBonus: 1.0, lootFactor: 0.5 },
+          units: { stats: {} },
+          _distance: 14,
+          _travelTime: 14000,
+        } as any,
+      };
+
+      mockLootManager.calculateLoot.mockResolvedValue({
+        resources: { wood: 50, stone: 25, iron: 15 },
+      });
+
+      const result = await barbarianStrategy.resolve(context);
+
+      expect(result.lossesAttacker).toEqual({ MILITIA: 10 });
+      expect(result.lossesDefender).toEqual({ MILITIA: 10 });
+      expect(result.survivingUnits).toEqual({ MILITIA: 10 });
+      expect(mockLootManager.calculateLoot).toHaveBeenCalledWith(
+        expect.objectContaining({
+          attacker: expect.objectContaining({ units: { MILITIA: 10 } }),
+        }),
+      );
     });
   });
 

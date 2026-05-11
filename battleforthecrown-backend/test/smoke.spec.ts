@@ -189,6 +189,9 @@ describe('smoke', () => {
     await ctx.prisma.unitInventory.create({
       data: { villageId: attackerId, unitType: 'MILITIA', quantity: 100 },
     });
+    await ctx.prisma.unitInventory.create({
+      data: { villageId: barbarian.id, unitType: 'MILITIA', quantity: 10 },
+    });
 
     // Fog of war: target must be in vision. Bump watchtower to lvl 1 (radius 5).
     await ctx.prisma.building.updateMany({
@@ -237,6 +240,12 @@ describe('smoke', () => {
       where: { id: outbound.id },
       include: { report: true },
     });
+    expect(
+      (returning.report?.lossesAttacker as Record<string, number>).MILITIA,
+    ).toBe(10);
+    expect(
+      (returning.report?.lossesDefender as Record<string, number>).MILITIA,
+    ).toBe(10);
     const reportDetails = returning.report?.details as {
       travelTime?: number;
     };
@@ -258,6 +267,23 @@ describe('smoke', () => {
       { timeoutMs: 15_000 },
     );
     expect(returned?.dispatchedAt).toBeTruthy();
+
+    const defenderInventory = await ctx.prisma.unitInventory.findUniqueOrThrow({
+      where: {
+        villageId_unitType: {
+          villageId: barbarian.id,
+          unitType: 'MILITIA',
+        },
+      },
+    });
+    expect(defenderInventory.quantity).toBe(0);
+
+    const attackerInventory = await ctx.prisma.unitInventory.findUniqueOrThrow({
+      where: {
+        villageId_unitType: { villageId: attackerId, unitType: 'MILITIA' },
+      },
+    });
+    expect(attackerInventory.quantity).toBe(90);
   });
 
   it('combat: report deleted in-flight -> troops still return', async () => {
