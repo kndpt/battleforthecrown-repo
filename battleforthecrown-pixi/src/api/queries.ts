@@ -471,6 +471,7 @@ export interface CombatReportDto {
   totalUnitsDefender: Record<string, number>;
   lossesAttacker: Record<string, number>;
   lossesDefender: Record<string, number>;
+  details?: { targetTier?: string | null };
   isRead: boolean;
   isAttacker: boolean;
   timestamp: string;

@@ -357,9 +357,8 @@ export class CombatWorker implements OnModuleInit {
             lossesDefender: encodeUnitMap(resolution.lossesDefender || {}),
             details: {
               expeditionId: expedition.id,
-
+              targetTier: defenderVillage?.tier ?? null,
               distance: context.config._distance,
-
               travelTime: context.config._travelTime,
             },
           },

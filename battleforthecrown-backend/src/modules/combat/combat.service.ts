@@ -18,6 +18,7 @@ import { encodeUnitMap } from './codecs';
 import PgBoss from 'pg-boss';
 import { createOutboxEvent } from '../event/event.utils';
 import { PrismaClientOrTx } from '../../common/prisma.types';
+import { presentCombatReport } from './combat-report.presenter';
 
 export interface GarrisonLineDto {
   villageId: string;
@@ -629,10 +630,7 @@ export class CombatService {
       orderBy: { timestamp: 'desc' },
     });
 
-    return reports.map((report) => ({
-      ...report,
-      isAttacker: report.attackerUserId === userId,
-    }));
+    return reports.map((report) => presentCombatReport(report, userId));
   }
 
   async getReport(userId: string, reportId: string) {
@@ -649,10 +647,7 @@ export class CombatService {
       throw new BadRequestException('Not authorized to view this report');
     }
 
-    return {
-      ...report,
-      isAttacker: report.attackerUserId === userId,
-    };
+    return presentCombatReport(report, userId);
   }
 
   async deleteReport(userId: string, reportId: string) {
@@ -692,9 +687,6 @@ export class CombatService {
       data: { isRead: true },
     });
 
-    return {
-      ...updated,
-      isAttacker: updated.attackerUserId === userId,
-    };
+    return presentCombatReport(updated, userId);
   }
 }

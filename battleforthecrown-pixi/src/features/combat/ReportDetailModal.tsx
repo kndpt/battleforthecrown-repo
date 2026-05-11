@@ -169,7 +169,9 @@ export function ReportDetailModal({ reportId, onClose }: ReportDetailModalProps)
             const loot = data.loot?.resources ?? {};
             const remaining = data.loot?.remainingResources ?? {};
             const targetLabel =
-              data.targetKind === 'BARBARIAN_VILLAGE' ? 'Village barbare' : 'Village joueur';
+              data.targetKind === 'BARBARIAN_VILLAGE'
+                ? `Village barbare${data.details?.targetTier ? ` ${data.details.targetTier}` : ''}`
+                : 'Village joueur';
             const formattedDate = DATE_FORMATTER.format(new Date(data.timestamp));
             const hasAnyResource = (['wood', 'stone', 'iron'] as const).some(
               (t) => (loot[t] ?? 0) + (remaining[t] ?? 0) > 0,
