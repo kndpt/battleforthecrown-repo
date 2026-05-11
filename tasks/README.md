@@ -4,7 +4,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-_(Aucun ticket actif.)_
+- [43 — Risque de mort du Seigneur sur victoire coûteuse](./43-noble-loss-chance-on-costly-victory.md) 🟠 Majeur — rend atteignable le cas spec « armée gagne mais Seigneur meurt » avec probabilité croissante dès 50 % de pertes attaquant.
 
 ## Roadmap stratégique
 
