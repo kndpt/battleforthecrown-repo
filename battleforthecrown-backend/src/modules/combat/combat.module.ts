@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { CombatController } from './combat.controller';
 import { CombatService } from './combat.service';
 import { CombatWorker } from './combat.worker';
+import { ConquestFinalizeWorker } from './conquest-finalize.worker';
 import { ReturnWorker } from './return.worker';
 import { ConquestService } from './conquest.service';
 import { LootManager } from './loot/loot.manager';
@@ -28,6 +29,7 @@ import { EventModule } from '../event/event.module';
   providers: [
     CombatService,
     CombatWorker,
+    ConquestFinalizeWorker,
     ReturnWorker,
     ConquestService,
     LootManager,

@@ -13,6 +13,9 @@ import {
   type BattleReturnedPayload,
   type VillageAttackedPayload,
   type VillageConqueredPayload,
+  type VillageCaptureWindowOpenedPayload,
+  type VillageCaptureWindowCompletedPayload,
+  type VillageCaptureWindowInterruptedPayload,
   type ReinforcementSentPayload,
   type ReinforcementRecalledPayload,
   type ReinforcementReturnedPayload,
@@ -126,6 +129,21 @@ export class EventOutboxService {
         break;
       case 'village.conquered':
         this.notifyVillageConquered(
+          parseEventPayload(event.kind, event.payload),
+        );
+        break;
+      case 'village.capture-window-opened':
+        await this.notifyVillageCaptureWindowOpened(
+          parseEventPayload(event.kind, event.payload),
+        );
+        break;
+      case 'village.capture-window-completed':
+        this.notifyVillageCaptureWindowCompleted(
+          parseEventPayload(event.kind, event.payload),
+        );
+        break;
+      case 'village.capture-window-interrupted':
+        await this.notifyVillageCaptureWindowInterrupted(
           parseEventPayload(event.kind, event.payload),
         );
         break;
@@ -337,6 +355,48 @@ export class EventOutboxService {
       y: payload.y,
       buildingsKept: payload.buildingsKept,
     });
+  }
+
+  private async notifyVillageCaptureWindowOpened(
+    payload: VillageCaptureWindowOpenedPayload,
+  ) {
+    const pendingConquest = await this.prisma.pendingConquest.findUnique({
+      where: { id: payload.pendingConquestId },
+      select: { attackerUserId: true },
+    });
+    if (!pendingConquest) return;
+
+    this.gateway.notifyUser(
+      pendingConquest.attackerUserId,
+      'village.capture-window-opened',
+      payload,
+    );
+  }
+
+  private notifyVillageCaptureWindowCompleted(
+    payload: VillageCaptureWindowCompletedPayload,
+  ) {
+    this.gateway.notifyUser(
+      payload.newOwnerUserId,
+      'village.capture-window-completed',
+      payload,
+    );
+  }
+
+  private async notifyVillageCaptureWindowInterrupted(
+    payload: VillageCaptureWindowInterruptedPayload,
+  ) {
+    const pendingConquest = await this.prisma.pendingConquest.findUnique({
+      where: { id: payload.pendingConquestId },
+      select: { attackerUserId: true },
+    });
+    if (!pendingConquest) return;
+
+    this.gateway.notifyUser(
+      pendingConquest.attackerUserId,
+      'village.capture-window-interrupted',
+      payload,
+    );
   }
 
   private notifyCrownsChanged(payload: CrownsChangedPayload) {

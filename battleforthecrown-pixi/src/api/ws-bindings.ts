@@ -12,6 +12,9 @@ import type {
   ServerEvents,
   UnitTrainingCompletedPayload,
   VillageAttackedPayload,
+  VillageCaptureWindowCompletedPayload,
+  VillageCaptureWindowInterruptedPayload,
+  VillageCaptureWindowOpenedPayload,
   VillageConqueredPayload,
 } from './ws-types';
 import { useResourcesStore } from '@/stores/resources';
@@ -324,6 +327,47 @@ export function applyVillageConquered(payload: VillageConqueredPayload, ctx: Bin
   });
 }
 
+export function applyVillageCaptureWindowOpened(
+  payload: VillageCaptureWindowOpenedPayload,
+  ctx: BindingsContext,
+): void {
+  ctx.queryClient.invalidateQueries({ queryKey: ['world-entities'] });
+  useUiStore.getState().pushToast({
+    tone: 'warning',
+    title: 'Capture en cours',
+    description: `Fin prévue à ${new Date(payload.captureUntil).toLocaleTimeString()}`,
+    ttlMs: 6000,
+  });
+}
+
+export function applyVillageCaptureWindowCompleted(
+  payload: VillageCaptureWindowCompletedPayload,
+  ctx: BindingsContext,
+): void {
+  ctx.queryClient.invalidateQueries({ queryKey: ['memberships'] });
+  ctx.queryClient.invalidateQueries({ queryKey: ['villages'] });
+  ctx.queryClient.invalidateQueries({ queryKey: ['world-entities'] });
+  useUiStore.getState().pushToast({
+    tone: 'success',
+    title: 'Capture terminée',
+    description: payload.targetVillageId,
+    ttlMs: 6000,
+  });
+}
+
+export function applyVillageCaptureWindowInterrupted(
+  payload: VillageCaptureWindowInterruptedPayload,
+  ctx: BindingsContext,
+): void {
+  ctx.queryClient.invalidateQueries({ queryKey: ['world-entities'] });
+  useUiStore.getState().pushToast({
+    tone: 'error',
+    title: 'Capture interrompue',
+    description: payload.reason,
+    ttlMs: 6000,
+  });
+}
+
 function resolveOrigin(villageId: string): { x: number; y: number } {
   const entity = useWorldMapStore.getState().entities[villageId];
   if (entity) return { x: entity.x, y: entity.y };
@@ -406,6 +450,9 @@ const bindings: ServerEventBindings = {
   'garrison.added': applyGarrisonAdded,
   'village.attacked': applyVillageAttacked,
   'village.conquered': applyVillageConquered,
+  'village.capture-window-opened': applyVillageCaptureWindowOpened,
+  'village.capture-window-completed': applyVillageCaptureWindowCompleted,
+  'village.capture-window-interrupted': applyVillageCaptureWindowInterrupted,
 };
 
 export function bindServerEvents(ctx: BindingsContext): () => void {

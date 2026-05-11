@@ -1,7 +1,7 @@
 # 41 — Période de capture : data model `PendingConquest` + worker `conquest-finalize`
 
 **Sévérité** : 🔴 Bloquant pour la conquête (mécanique core absente)
-**Statut** : 🆕 Ouvert 2026-05-10 (issue de [run 006](./runs/archive/006-audit-conquest.md))
+**Statut** : ✅ Résolu 2026-05-11 par `$run @tasks/41-capture-window-data-model.md` (issue de [run 006](../runs/archive/006-audit-conquest.md))
 **Spec amont** : [`docs/gameplay/10-conquest.md` § Cadre commun](../docs/gameplay/10-conquest.md#cadre-commun--joueur-ou-barbare) + [`13-barbarian-conquest.md`](../docs/gameplay/13-barbarian-conquest.md) (durées par tier) + [`14-pvp-conquest.md`](../docs/gameplay/14-pvp-conquest.md) (durées PvP)
 
 ## Symptôme

@@ -1,21 +1,23 @@
-# Run ticket 39 - Combat report asymmetric defeat
+# Run ticket 41 - Capture window data model
 
 ## Plan
 
-- [x] Preflight: verifier worktree clean, ticket, spec, rules et briefings.
-- [x] Cartographier le flux lecture `CombatReport` backend et l'affichage Pixi.
-- [x] Implementer le masquage a la lecture pour les defaites attaquant vs village barbare.
-- [x] Ajouter le filet de regression adapte.
-- [x] Review diff, lancer les verifications cibles puis `yarn static-check`.
+- [x] Preflight: verifier worktree clean, ticket, specs, rules, briefings et skills requis.
+- [x] Cartographier schema Prisma, ConquestService, pg-boss workers, Outbox/event bindings et smokes existants.
+- [x] Refiner le scope exact: migration `PendingConquest`, APIs service, worker `conquest:finalize`, events et tests.
+- [x] Implementer le modele DB + generation Prisma.
+- [x] Implementer ouverture/interruption/finalisation de capture et events Outbox.
+- [x] Ajouter le smoke backend adapte.
+- [x] Review 5 axes, corriger findings, lancer preflight/smokes cibles puis `yarn static-check`.
 - [x] Verifier impact docs, archiver le ticket, mettre a jour `tasks/README.md`.
-- [x] Commit final unique.
+- [ ] Commit final unique.
 
 ## Review
 
-- Correctness : `presentCombatReport` masque loot, troupes/pertes defenseur et details techniques uniquement pour une defaite attaquant contre un village barbare.
-- Readability : logique de visibilite centralisee dans un presenter pur, service simplifie.
-- Architecture : stockage DB exhaustif conserve ; asymetrie appliquee au DTO de lecture.
-- Security : la reponse REST ne divulgue plus les ressources ou la garnison barbare apres defaite.
-- Performance : projection in-memory O(1) par rapport, aucun acces DB supplementaire.
-- Verification : test presenter cible et `yarn static-check` verts.
-- Docs : aucun changement necessaire, raison : la spec gameplay decrit deja l'asymetrie ; le changement aligne le code sur cette source.
+- Correctness : `PendingConquest` porte une fenetre durable, finalisee par pg-boss si `OPEN`, ignoree si `INTERRUPTED`.
+- Readability : orchestration concentree dans `ConquestService`, worker fin et idempotent.
+- Architecture : events Outbox typés shared + bindings Pixi ; migration non destructive ; index unique partiel pour une seule fenetre active par cible.
+- Security : notifications capture routées vers l'`attackerUserId`/`newOwnerUserId` figes, pas vers le proprietaire courant d'un village mutable.
+- Performance : worker charge une conquete par job, indexes `captureUntil/status`, `worldId/status`, `targetVillageId/status`.
+- Verification : smoke `conquest-finalize`, smoke legacy `conquest`, `yarn static-check` verts.
+- Docs : mises a jour `docs/architecture/data-model.md` et `docs/architecture/realtime.md`.

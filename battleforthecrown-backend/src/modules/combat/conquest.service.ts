@@ -1,21 +1,205 @@
 import {
-  Injectable,
-  NotFoundException,
+  ConflictException,
   ForbiddenException,
+  Inject,
+  Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
+import { PendingConquestStatus } from '@prisma/client';
+import PgBoss from 'pg-boss';
+import { PrismaClientOrTx } from '../../common/prisma.types';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { createOutboxEvent } from '../event/event.utils';
+
+export const CONQUEST_FINALIZE_QUEUE = 'conquest:finalize';
 
 @Injectable()
 export class ConquestService {
   private readonly logger = new Logger(ConquestService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject('PG_BOSS') private readonly boss: PgBoss,
+  ) {}
+
+  async openCaptureWindow(params: {
+    attackerVillageId: string;
+    targetVillageId: string;
+    attackerUserId: string;
+    captureUntil: Date;
+    attackerNobleId?: string;
+  }) {
+    const pendingConquest = await this.prisma.$transaction(async (tx) => {
+      const [attacker, target, existingOpen] = await Promise.all([
+        tx.village.findUnique({
+          where: { id: params.attackerVillageId },
+          select: { id: true, userId: true, worldId: true },
+        }),
+        tx.village.findUnique({
+          where: { id: params.targetVillageId },
+          select: { id: true, worldId: true },
+        }),
+        tx.pendingConquest.findFirst({
+          where: {
+            targetVillageId: params.targetVillageId,
+            status: PendingConquestStatus.OPEN,
+          },
+        }),
+      ]);
+
+      if (!attacker) throw new NotFoundException('Attacker village not found');
+      if (!target) throw new NotFoundException('Target village not found');
+      if (attacker.userId !== params.attackerUserId) {
+        throw new ForbiddenException(
+          'Attacker village does not belong to user',
+        );
+      }
+      if (attacker.worldId !== target.worldId) {
+        throw new ForbiddenException('Target village is in another world');
+      }
+      if (existingOpen) {
+        throw new ConflictException('A capture window is already open');
+      }
+
+      const created = await tx.pendingConquest.create({
+        data: {
+          attackerVillageId: params.attackerVillageId,
+          attackerUserId: params.attackerUserId,
+          attackerNobleId: params.attackerNobleId,
+          targetVillageId: params.targetVillageId,
+          worldId: attacker.worldId,
+          captureUntil: params.captureUntil,
+        },
+      });
+
+      await createOutboxEvent(
+        tx,
+        'village.capture-window-opened',
+        params.targetVillageId,
+        {
+          pendingConquestId: created.id,
+          targetVillageId: params.targetVillageId,
+          attackerVillageId: params.attackerVillageId,
+          captureUntil: params.captureUntil.toISOString(),
+        },
+      );
+
+      return created;
+    });
+
+    const finalizeJobId = await this.boss.send(
+      CONQUEST_FINALIZE_QUEUE,
+      { pendingConquestId: pendingConquest.id },
+      {
+        startAfter: pendingConquest.captureUntil,
+        singletonKey: `conquest-finalize:${pendingConquest.id}`,
+      },
+    );
+
+    if (!finalizeJobId) return pendingConquest;
+
+    return this.prisma.pendingConquest.update({
+      where: { id: pendingConquest.id },
+      data: { finalizeJobId },
+    });
+  }
+
+  async finalizeCaptureWindow(pendingConquestId: string): Promise<{
+    completed: boolean;
+    villageId?: string;
+  }> {
+    return this.prisma.$transaction(async (tx) => {
+      const pending = await tx.pendingConquest.findUnique({
+        where: { id: pendingConquestId },
+      });
+
+      if (!pending) throw new NotFoundException('Pending conquest not found');
+      if (pending.status !== PendingConquestStatus.OPEN) {
+        return { completed: false };
+      }
+
+      await this.conquerVillageInTx(tx, {
+        attackerVillageId: pending.attackerVillageId,
+        targetVillageId: pending.targetVillageId,
+        attackerUserId: pending.attackerUserId,
+      });
+
+      await tx.pendingConquest.update({
+        where: { id: pending.id },
+        data: { status: PendingConquestStatus.COMPLETED },
+      });
+
+      await createOutboxEvent(
+        tx,
+        'village.capture-window-completed',
+        pending.targetVillageId,
+        {
+          pendingConquestId: pending.id,
+          targetVillageId: pending.targetVillageId,
+          newOwnerUserId: pending.attackerUserId,
+        },
+      );
+
+      return { completed: true, villageId: pending.targetVillageId };
+    });
+  }
+
+  async interruptCaptureWindow(
+    targetVillageId: string,
+    reason: string,
+  ): Promise<{ interrupted: boolean; pendingConquestId?: string }> {
+    const result = await this.prisma.$transaction(async (tx) => {
+      const pending = await tx.pendingConquest.findFirst({
+        where: { targetVillageId, status: PendingConquestStatus.OPEN },
+      });
+
+      if (!pending) return { interrupted: false };
+
+      await tx.pendingConquest.update({
+        where: { id: pending.id },
+        data: { status: PendingConquestStatus.INTERRUPTED },
+      });
+
+      await createOutboxEvent(
+        tx,
+        'village.capture-window-interrupted',
+        targetVillageId,
+        {
+          pendingConquestId: pending.id,
+          targetVillageId,
+          reason,
+        },
+      );
+
+      return {
+        interrupted: true,
+        pendingConquestId: pending.id,
+        finalizeJobId: pending.finalizeJobId,
+      };
+    });
+
+    if (result.interrupted && result.finalizeJobId) {
+      try {
+        await this.boss.cancel(CONQUEST_FINALIZE_QUEUE, result.finalizeJobId);
+      } catch (error) {
+        this.logger.warn(
+          `Unable to cancel conquest finalization job ${result.finalizeJobId}: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      }
+    }
+
+    return {
+      interrupted: result.interrupted,
+      pendingConquestId: result.pendingConquestId,
+    };
+  }
 
   /**
-   * Conquer a village (MVP: barbarians only)
-   * Future: Support player villages with loyalty system
+   * Conquer a village immediately. Production flow should call
+   * `openCaptureWindow` first, then let `conquest:finalize` invoke this logic.
    */
   async conquerVillage(params: {
     attackerVillageId: string;
@@ -28,120 +212,17 @@ export class ConquestService {
     buildings: number;
     tier?: string;
   }> {
-    const { attackerVillageId, targetVillageId, attackerUserId } = params;
-
     this.logger.log(
-      `Attempting conquest: ${attackerVillageId} → ${targetVillageId}`,
+      `Attempting conquest: ${params.attackerVillageId} -> ${params.targetVillageId}`,
     );
 
-    return this.prisma.$transaction(async (tx) => {
-      // Fetch target village
-      const target = await tx.village.findUnique({
-        where: { id: targetVillageId },
-        include: {
-          buildings: true,
-          unitInventory: true,
-          resourceStock: true,
-        },
-      });
-
-      if (!target) {
-        throw new NotFoundException('Target village not found');
-      }
-
-      // MVP: Only barbarians can be conquered
-      if (!target.isBarbarian) {
-        throw new ForbiddenException(
-          'Player village conquest not implemented yet (requires loyalty system)',
-        );
-      }
-
-      // Future: For player villages, check loyalty
-      // if (!target.isBarbarian) {
-      //   const loyalty = await this.loyaltyService.getLoyalty(targetVillageId);
-      //   if (loyalty > 0) {
-      //     throw new ForbiddenException('Village loyalty too high for conquest');
-      //   }
-      // }
-
-      // Verify attacker exists
-      const attacker = await tx.village.findUnique({
-        where: { id: attackerVillageId },
-        select: { userId: true },
-      });
-
-      if (!attacker) {
-        throw new NotFoundException('Attacker village not found');
-      }
-
-      if (attacker.userId !== attackerUserId) {
-        throw new ForbiddenException(
-          'Attacker village does not belong to user',
-        );
-      }
-
-      // Transfer ownership
-      await tx.village.update({
-        where: { id: targetVillageId },
-        data: {
-          userId: attackerUserId,
-          isBarbarian: false,
-          tier: null, // Clear tier (now a player village)
-          conqueredAt: new Date(),
-        },
-      });
-
-      // Remove barbarian troops (they don't transfer)
-      await tx.unitInventory.deleteMany({
-        where: { villageId: targetVillageId },
-      });
-
-      // Watchtower is never materialized on barbarian conquest — the player must build it.
-      // Cf. docs/gameplay/13-barbarian-conquest.md § Vision propre. Aligns the higher tiers
-      // (T3+) whose templates include a Watchtower with the spec.
-      await tx.building.deleteMany({
-        where: { villageId: targetVillageId, type: 'WATCHTOWER' },
-      });
-
-      // Reset stored resources to 0 on conquest. The attacker already received
-      // the loot from the pre-conquest battle; inheriting the residual stock
-      // would be a double reward. Cf. docs/gameplay/02-economy-and-progression.md
-      // § Conquête et reset, docs/gameplay/13-barbarian-conquest.md § Stock
-      // ressources et population, docs/gameplay/14-pvp-conquest.md § Stock
-      // ressources.
-      if (target.resourceStock) {
-        await tx.resourceStock.update({
-          where: { villageId: targetVillageId },
-          data: { wood: 0, stone: 0, iron: 0 },
-        });
-      }
-
-      await createOutboxEvent(tx, 'village.conquered', targetVillageId, {
-        villageId: targetVillageId,
-        newOwnerId: attackerUserId,
-        previousTier: target.tier,
-        x: target.x,
-        y: target.y,
-        buildingsKept: target.buildings.length,
-      });
-
-      this.logger.log(
-        `✅ Village ${target.name} conquered by user ${attackerUserId}`,
-      );
-
-      return {
-        success: true,
-        villageId: target.id,
-        name: target.name,
-        buildings: target.buildings.length,
-        tier: target.tier || undefined,
-      };
-    });
+    return this.prisma.$transaction((tx) =>
+      this.conquerVillageInTx(tx, params),
+    );
   }
 
   /**
-   * Check if a village can be conquered
-   * Future: Check loyalty for player villages
+   * Check if a village can be conquered.
    */
   async canConquer(villageId: string): Promise<{
     canConquer: boolean;
@@ -156,15 +237,99 @@ export class ConquestService {
       return { canConquer: false, reason: 'Village not found' };
     }
 
-    // Barbarians can always be conquered (MVP)
-    if (village.isBarbarian) {
-      return { canConquer: true };
+    return { canConquer: true };
+  }
+
+  private async conquerVillageInTx(
+    tx: PrismaClientOrTx,
+    params: {
+      attackerVillageId: string;
+      targetVillageId: string;
+      attackerUserId: string;
+    },
+  ): Promise<{
+    success: boolean;
+    villageId: string;
+    name: string;
+    buildings: number;
+    tier?: string;
+  }> {
+    const { attackerVillageId, targetVillageId, attackerUserId } = params;
+    const target = await tx.village.findUnique({
+      where: { id: targetVillageId },
+      include: {
+        buildings: true,
+        resourceStock: true,
+      },
+    });
+
+    if (!target) {
+      throw new NotFoundException('Target village not found');
     }
 
-    // Player villages require loyalty system (future)
+    const attacker = await tx.village.findUnique({
+      where: { id: attackerVillageId },
+      select: { userId: true, worldId: true },
+    });
+
+    if (!attacker) {
+      throw new NotFoundException('Attacker village not found');
+    }
+
+    if (attacker.userId !== attackerUserId) {
+      throw new ForbiddenException('Attacker village does not belong to user');
+    }
+
+    if (attacker.worldId !== target.worldId) {
+      throw new ForbiddenException('Target village is in another world');
+    }
+
+    await tx.village.update({
+      where: { id: targetVillageId },
+      data: {
+        userId: attackerUserId,
+        isBarbarian: false,
+        tier: null,
+        conqueredAt: new Date(),
+      },
+    });
+
+    if (target.isBarbarian) {
+      await tx.unitInventory.deleteMany({
+        where: { villageId: targetVillageId },
+      });
+
+      await tx.building.deleteMany({
+        where: { villageId: targetVillageId, type: 'WATCHTOWER' },
+      });
+    }
+
+    if (target.resourceStock) {
+      await tx.resourceStock.update({
+        where: { villageId: targetVillageId },
+        data: { wood: 0, stone: 0, iron: 0 },
+      });
+    }
+
+    await createOutboxEvent(tx, 'village.conquered', targetVillageId, {
+      villageId: targetVillageId,
+      newOwnerId: attackerUserId,
+      previousTier: target.tier,
+      x: target.x,
+      y: target.y,
+      buildingsKept: target.buildings.length,
+    });
+
+    this.logger.log(
+      `Village ${target.name} conquered by user ${attackerUserId}`,
+    );
+
     return {
-      canConquer: false,
-      reason: 'Player village conquest not implemented',
+      success: true,
+      villageId: target.id,
+      name: target.name,
+      buildings: target.buildings.length,
+      tier: target.tier || undefined,
     };
   }
 }

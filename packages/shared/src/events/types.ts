@@ -73,6 +73,25 @@ export interface VillageConqueredPayload {
   buildingsKept: number;
 }
 
+export interface VillageCaptureWindowOpenedPayload {
+  pendingConquestId: string;
+  targetVillageId: string;
+  attackerVillageId: string;
+  captureUntil: string;
+}
+
+export interface VillageCaptureWindowCompletedPayload {
+  pendingConquestId: string;
+  targetVillageId: string;
+  newOwnerUserId: string;
+}
+
+export interface VillageCaptureWindowInterruptedPayload {
+  pendingConquestId: string;
+  targetVillageId: string;
+  reason: string;
+}
+
 export interface ReinforcementSentPayload {
   expeditionId: string;
   villageId: string;
@@ -144,6 +163,18 @@ export type OutboxEventPayload =
   | { kind: 'battle.returned'; payload: BattleReturnedPayload }
   | { kind: 'village.attacked'; payload: VillageAttackedPayload }
   | { kind: 'village.conquered'; payload: VillageConqueredPayload }
+  | {
+      kind: 'village.capture-window-opened';
+      payload: VillageCaptureWindowOpenedPayload;
+    }
+  | {
+      kind: 'village.capture-window-completed';
+      payload: VillageCaptureWindowCompletedPayload;
+    }
+  | {
+      kind: 'village.capture-window-interrupted';
+      payload: VillageCaptureWindowInterruptedPayload;
+    }
   | { kind: 'reinforcement.sent'; payload: ReinforcementSentPayload }
   | { kind: 'reinforcement.recalled'; payload: ReinforcementRecalledPayload }
   | { kind: 'reinforcement.returned'; payload: ReinforcementReturnedPayload }
@@ -168,6 +199,9 @@ export type AnyEventPayload =
   | BattleReturnedPayload
   | VillageAttackedPayload
   | VillageConqueredPayload
+  | VillageCaptureWindowOpenedPayload
+  | VillageCaptureWindowCompletedPayload
+  | VillageCaptureWindowInterruptedPayload
   | ReinforcementSentPayload
   | ReinforcementRecalledPayload
   | ReinforcementReturnedPayload
@@ -187,6 +221,9 @@ export interface ServerEvents {
   'battle.returned': BattleReturnedPayload;
   'village.attacked': VillageAttackedPayload;
   'village.conquered': VillageConqueredPayload;
+  'village.capture-window-opened': VillageCaptureWindowOpenedPayload;
+  'village.capture-window-completed': VillageCaptureWindowCompletedPayload;
+  'village.capture-window-interrupted': VillageCaptureWindowInterruptedPayload;
   'reinforcement.sent': ReinforcementSentPayload;
   'reinforcement.recalled': ReinforcementRecalledPayload;
   'reinforcement.returned': ReinforcementReturnedPayload;

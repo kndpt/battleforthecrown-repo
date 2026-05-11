@@ -75,6 +75,25 @@ const VillageConqueredPayloadSchema = z.object({
   buildingsKept: z.number(),
 });
 
+const VillageCaptureWindowOpenedPayloadSchema = z.object({
+  pendingConquestId: z.string(),
+  targetVillageId: z.string(),
+  attackerVillageId: z.string(),
+  captureUntil: z.string(),
+});
+
+const VillageCaptureWindowCompletedPayloadSchema = z.object({
+  pendingConquestId: z.string(),
+  targetVillageId: z.string(),
+  newOwnerUserId: z.string(),
+});
+
+const VillageCaptureWindowInterruptedPayloadSchema = z.object({
+  pendingConquestId: z.string(),
+  targetVillageId: z.string(),
+  reason: z.string(),
+});
+
 const ReinforcementSentPayloadSchema = z.object({
   expeditionId: z.string(),
   villageId: z.string(),
@@ -146,6 +165,9 @@ export const EVENT_PAYLOAD_SCHEMAS = {
   'battle.returned': BattleReturnedPayloadSchema,
   'village.attacked': VillageAttackedPayloadSchema,
   'village.conquered': VillageConqueredPayloadSchema,
+  'village.capture-window-opened': VillageCaptureWindowOpenedPayloadSchema,
+  'village.capture-window-completed': VillageCaptureWindowCompletedPayloadSchema,
+  'village.capture-window-interrupted': VillageCaptureWindowInterruptedPayloadSchema,
   'reinforcement.sent': ReinforcementSentPayloadSchema,
   'reinforcement.recalled': ReinforcementRecalledPayloadSchema,
   'reinforcement.returned': ReinforcementReturnedPayloadSchema,

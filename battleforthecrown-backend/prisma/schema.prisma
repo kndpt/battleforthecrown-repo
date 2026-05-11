@@ -40,6 +40,12 @@ enum TrainingBuilding {
   THRONE_HALL
 }
 
+enum PendingConquestStatus {
+  OPEN
+  COMPLETED
+  INTERRUPTED
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -87,6 +93,7 @@ model World {
   seedStates    WorldSeedState[]
   chunkStates   ChunkSpawnState[]
   zoneCapacities ZoneCapacity[]
+  pendingConquests PendingConquest[]
 
   @@map("world")
 }
@@ -114,6 +121,8 @@ model Village {
   strategyConfig     VillageStrategyConfig?
   garrisons          Garrison[] @relation("VillageGarrison")
   sentReinforcements Garrison[] @relation("OriginVillageGarrison")
+  pendingConquestAttacks PendingConquest[] @relation("PendingConquestAttacker")
+  pendingConquestTargets PendingConquest[] @relation("PendingConquestTarget")
 
   @@unique([worldId, x, y])
   @@index([userId])
@@ -172,6 +181,28 @@ model UnitInventory {
 
   @@id([villageId, unitType])
   @@map("unit_inventory")
+}
+
+model PendingConquest {
+  id                String                  @id @default(cuid())
+  attackerVillageId String                  @map("attacker_village_id")
+  attackerUserId    String                  @map("attacker_user_id")
+  attackerNobleId   String?                 @map("attacker_noble_id")
+  targetVillageId   String                  @map("target_village_id")
+  worldId           String                  @map("world_id")
+  openedAt          DateTime                @default(now()) @map("opened_at")
+  captureUntil      DateTime                @map("capture_until")
+  status            PendingConquestStatus   @default(OPEN)
+  finalizeJobId     String?                 @map("finalize_job_id")
+
+  attackerVillage Village @relation("PendingConquestAttacker", fields: [attackerVillageId], references: [id], onDelete: Cascade)
+  targetVillage   Village @relation("PendingConquestTarget", fields: [targetVillageId], references: [id], onDelete: Cascade)
+  world           World   @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  @@index([captureUntil, status])
+  @@index([worldId, status])
+  @@index([targetVillageId, status])
+  @@map("pending_conquest")
 }
 
 model UnitTraining {

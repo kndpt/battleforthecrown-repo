@@ -104,7 +104,10 @@ Chaque payload est validé runtime par `parseEventPayload(kind, raw)` (backend `
 | `reinforcement.returned` | `userId` (village hôte ou d'origine) | `expeditionId, villageId, originVillageId, units` | `CombatWorker` quand un renfort repart vers son village d'origine |
 | `garrison.added` | `userId` (village hôte) | `villageId, originVillageId, units` | `CombatWorker` quand un renfort arrive et se stationne en garnison |
 | `village.attacked` | `userId` (défenseur) | `defenderVillageId, attackerVillageId, attackerVillageName, isDefenseSuccessful, losses (UnitMap), casualtyRate, resourcesLost, …` | `CombatWorker` (notification) |
-| `village.conquered` | `worldId` | `villageId, newOwnerId, previousTier, x, y, buildingsKept` | `ConquestService` |
+| `village.capture-window-opened` | `userId` (attaquant) | `pendingConquestId, targetVillageId, attackerVillageId, captureUntil` | `ConquestService.openCaptureWindow` |
+| `village.capture-window-completed` | `userId` (nouveau propriétaire) | `pendingConquestId, targetVillageId, newOwnerUserId` | `ConquestFinalizeWorker` via `ConquestService.finalizeCaptureWindow` |
+| `village.capture-window-interrupted` | `userId` (attaquant) | `pendingConquestId, targetVillageId, reason` | `ConquestService.interruptCaptureWindow` |
+| `village.conquered` | `userId` (nouveau propriétaire) | `villageId, newOwnerId, previousTier, x, y, buildingsKept` | `ConquestService` |
 
 Pour les renforts, la forme exacte des payloads reste dérivée des schémas partagés (`packages/shared/src/events/{schemas,types}.ts`). Cette table ne liste que les champs discriminants utiles pour lire le flux fonctionnel.
 
