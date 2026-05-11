@@ -1,21 +1,77 @@
-# Run ticket 39 - Combat report asymmetric defeat
+# Design system React preview - batch core loop
 
 ## Plan
 
-- [x] Preflight: verifier worktree clean, ticket, spec, rules et briefings.
-- [x] Cartographier le flux lecture `CombatReport` backend et l'affichage Pixi.
-- [x] Implementer le masquage a la lecture pour les defaites attaquant vs village barbare.
-- [x] Ajouter le filet de regression adapte.
-- [x] Review diff, lancer les verifications cibles puis `yarn static-check`.
-- [x] Verifier impact docs, archiver le ticket, mettre a jour `tasks/README.md`.
-- [x] Commit final unique.
+- [x] Preflight: vérifier worktree, briefings, skill React HUD et export design.
+- [x] Cartographier les prototypes HTML et le routing Pixi.
+- [x] Créer `features/design-system` côté Pixi avec README.
+- [x] Porter 2-3 composants React/Tailwind pixel-alignés.
+- [x] Brancher une page preview publique.
+- [x] Ajouter un skill de migration design-system.
+- [x] Lancer les vérifications ciblées.
+- [x] Vérifier impact docs et documenter la review.
+- [x] Batch core loop : porter les primitives `Timer`, `CostRow`, `RequirementChip`, `ProgressBar`.
+- [x] Batch core loop : composer `BuildQueueCard` sans dupliquer les boutons.
+- [x] Batch core loop : ajouter les previews atomiques puis composées.
+- [x] Batch core loop : relancer vérifications.
+- [x] Batch feedback/military : créer les briques `IconTile`, `PanelSurface`.
+- [x] Batch feedback/military : porter `Toast`, `EmptyState`, `TroopRow`, `TroopStepper`, `CombatReportCard`.
+- [x] Batch feedback/military : ajouter la preview sans cards de section.
+- [x] Batch feedback/military : relancer vérifications.
+- [x] API pass : durcir le skill avec la règle props/interfaces.
+- [x] API pass : sortir les fixtures internes des composants vers `DesignSystemPreview`.
+- [x] API pass : vérifier interfaces exportées et non-duplication.
+- [x] API pass : relancer vérifications.
+- [x] Interaction pass : ajouter `Slider` natif stylé et `TroopStepper` contrôlé.
+- [x] Interaction pass : brancher la preview avec state React pour tabs, toasts, queue et stepper.
+- [x] Interaction pass : relancer vérifications.
+- [x] Batch carte/social/messages : inventorier les prototypes restants.
+- [x] Batch carte/social/messages : créer les primitives `Badge`, `SegmentedControl`, `NumberStepper`, `Avatar`.
+- [x] Batch carte/social/messages : porter `CoordinateInput`, marqueurs carte, profils, classement, inbox et chat.
+- [x] Batch carte/social/messages : relancer build/static-check et QA preview.
+- [x] Correction carte : aligner fond, marqueurs barbares, marches animées et callouts sur le prototype.
+- [x] Batch structure/economie/meta : inventorier prototypes restants.
+- [x] Batch structure/economie/meta : porter primitives header, cards, inputs, modals, icon buttons, banners, dividers, info cards.
+- [x] Batch structure/economie/meta : porter quêtes, rewards, boutique, premium, achievements, boosts, pips, power, scout, army movement, alliance.
+- [x] Batch structure/economie/meta : relancer build/static-check et QA preview.
+- [x] Correction densité : resserrer `HeaderBar` et corriger les tailles d'icônes invalides des bundles premium.
+- [x] Correction premium responsive : empêcher les débordements texte/prix et adapter la grille aux largeurs étroites.
 
 ## Review
 
-- Correctness : `presentCombatReport` masque loot, troupes/pertes defenseur et details techniques uniquement pour une defaite attaquant contre un village barbare.
-- Readability : logique de visibilite centralisee dans un presenter pur, service simplifie.
-- Architecture : stockage DB exhaustif conserve ; asymetrie appliquee au DTO de lecture.
-- Security : la reponse REST ne divulgue plus les ressources ou la garnison barbare apres defaite.
-- Performance : projection in-memory O(1) par rapport, aucun acces DB supplementaire.
-- Verification : test presenter cible et `yarn static-check` verts.
-- Docs : aucun changement necessaire, raison : la spec gameplay decrit deja l'asymetrie ; le changement aligne le code sur cette source.
+- Correctness : `/design-system` expose une preview publique sans auth et charge les trois ports React/Tailwind.
+- Visual scope : boutons, HUD ressources et bottom nav reprennent les dimensions, couleurs, gradients, bordures et ombres des prototypes HTML sources.
+- Architecture : composants isolés dans `features/design-system` tant qu'ils ne sont pas validés pour promotion vers `src/ui` ou `features/layout`.
+- Verification : `yarn workspace battleforthecrown-pixi type-check`, `yarn workspace battleforthecrown-pixi build`, `yarn static-check` verts après bootstrap local `shared` + Prisma.
+- Preview : Vite lancé sur `http://127.0.0.1:5173/design-system`, réponse HTTP 200 vérifiée.
+- Fix preview : `/design-system` isolé dans `main.tsx` pour éviter le chargement de `env.ts` sans `VITE_API_BASE_URL`.
+- Batch core loop : ajout de `Timer`, `DigitTimer`, `CostPill`, `CostRow`, `RequirementChip`, `ProgressBar` comme primitives.
+- Composition : `BuildQueueCard` réutilise `Timer`, `ProgressBar` et `BftcButton` ; pas de bouton accélérer/annuler dupliqué.
+- Verification batch : `yarn workspace battleforthecrown-pixi type-check`, `yarn workspace battleforthecrown-pixi build`, `yarn static-check` verts.
+- Preview layout : suppression des wrappers "card" autour des sections ; titres conservés, composants affichés directement dessous.
+- Batch feedback/military : ajout de `IconTile`, `PanelSurface`, `ToastPreview`, `EmptyState`, `TroopRow`, `TroopStepper`, `CombatReportCard`, `CombatReportMiniList`.
+- Composition : `TroopStepper` réutilise `CostPill` + `BftcButton`; `CombatReportCard` réutilise `CostRow` + `CostPill` + `BftcButton`.
+- Verification feedback/military : `yarn workspace battleforthecrown-pixi type-check`, `yarn workspace battleforthecrown-pixi build`, `yarn static-check` verts.
+- API pass : skill migration durci ; `BottomNavPreview`, `TroopStepper`, `CombatReportCard`, `CombatReportMiniList`, `BuildQueueCard`, `ToastPreview`, `EmptyState`, `TroopRow`, `Timer` pilotés par props/callbacks.
+- API pass : données de preview déplacées dans `DesignSystemPreview.tsx`.
+- Verification API pass : `yarn workspace battleforthecrown-pixi type-check`, `yarn workspace battleforthecrown-pixi build`, `yarn static-check` verts.
+- Interaction pass : `Slider` utilise un vrai `input[type=range]`; `TroopStepper` expose `quantity/onQuantityChange`.
+- Interaction pass : preview interactive pour `BottomNavPreview`, `ToastPreview`, `BuildQueueCard`, `EmptyState`, `TroopStepper`.
+- Verification interaction pass : `yarn workspace battleforthecrown-pixi type-check`, `yarn workspace battleforthecrown-pixi build`, `yarn static-check` verts.
+- Batch carte/social/messages : ajout de `Badge`, `SegmentedControl`, `NumberStepper`, `Avatar`, `CoordinateInput`, `MapMarker`, `ArmyMarchMarker`, `MapCallout`, `PlayerProfileCard`, `LeaderboardRow`, `MailInboxItem`, `ChatPanel`.
+- Composition : `TroopStepper` réutilise désormais `NumberStepper`; les composites carte/social/messages réutilisent `Badge`, `Avatar` et `BftcButton`.
+- Verification batch carte/social/messages : `yarn workspace battleforthecrown-pixi type-check`, `yarn workspace battleforthecrown-pixi build`, `yarn static-check` verts.
+- QA preview batch carte/social/messages : `/design-system` répond HTTP 200 ; rendu SSR Vite de `DesignSystemPreview` OK avec sections Carte et Canal alliance présentes.
+- Correction carte : `MapMarker` reprend les gradients radiaux/tier star du prototype, `ArmyMarchMarker` reprend le body rond + pulse + ETA badge, `MapCallout` passe en card sombre style prototype sans flèche tooltip.
+- Correction carte : la preview utilise les assets `world/entity/barbarian-village-tier*.png` pour les camps barbares et le fond radial quadrillé du prototype.
+- Verification correction carte : `yarn workspace battleforthecrown-pixi type-check`, `yarn workspace battleforthecrown-pixi build`, `yarn static-check`, HTTP 200 et rendu SSR Vite OK.
+- Batch structure/economie/meta : ajout de `HeaderBar`, `MiniCard`, `GameInput`, `GameModal`, `IconButton`, `BannerTitle`, `Divider`, `InfoCard`.
+- Batch structure/economie/meta : ajout de `AchievementCard`, `QuestCard`, `FeaturedQuestCard`, `DailyReward`, `ShopTile`, `PremiumBundle`, `BoostPill`, `ActiveBoostList`, `PipRating`, `LevelChip`, `PowerComparison`, `ScoutReport`, `ArmyMovementRow`, `HeraldicShield`, `AllianceBanner`, `AllianceRow`.
+- Composition : nouveaux composants réutilisent `BftcButton`, `CostPill`, `ProgressBar`, `SegmentedControl`, `Avatar` ou les nouvelles primitives quand pertinent.
+- Verification batch structure/economie/meta : `yarn workspace battleforthecrown-pixi type-check`, `yarn workspace battleforthecrown-pixi build`, `yarn static-check` verts.
+- QA preview batch structure/economie/meta : `/design-system` répond HTTP 200 ; rendu SSR Vite de `DesignSystemPreview` OK avec sections Quêtes, Alliance, Premium et Scout présentes.
+- Correction densité : `HeaderBar` reprend une composition compacte avatar + deux lignes de pills + bouton settings 34px ; `PremiumBundle` force les icônes de lignes en 18px et la preview premium passe en 3 colonnes.
+- Verification correction densité : `yarn workspace battleforthecrown-pixi type-check`, `yarn workspace battleforthecrown-pixi build`, `yarn static-check` verts ; rendu SSR Vite OK sans classe `size-4.5` dans Premium.
+- Correction premium responsive : `PremiumBundle` supprime le `scale`, réduit le hero, fixe `min-w-0`, tronque les labels de lignes, garde valeurs et prix en `whitespace-nowrap`, et la preview passe en `sm:grid-cols-2 xl:grid-cols-3`.
+- Verification correction premium responsive : `yarn workspace battleforthecrown-pixi type-check`, `yarn workspace battleforthecrown-pixi build`, `yarn static-check` verts ; rendu SSR Vite OK.
+- Docs : README local ajouté dans `features/design-system`; skill migration ajouté dans `.agents/skills`.
