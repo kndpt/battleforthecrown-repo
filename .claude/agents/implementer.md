@@ -58,7 +58,7 @@ Le lead **vérifie ton bloc contre `git diff --stat`**. Tout mismatch → il con
 - **Server-authoritative côté backend** : aucune valeur calculée côté front qui devrait l'être backend.
 - **Pas de `git commit`, pas de `git push`, pas de `--no-verify`.**
 - **Pas de migration Prisma destructive** sans accord explicite dans le prompt du lead.
-- **Conventions** : respecte `@.claude/rules/conventions.md`, `@.claude/rules/git.md`, les `AGENTS.md` workspace, et les skills spécialisés si le scope les déclenche (`bftc-prisma`, `bftc-workers-outbox`, `bftc-react-hud`, `bftc-pixi-scene`, `bftc-tests-policy`).
+- **Conventions** : respecte `.agents/rules/conventions.md`, `.agents/rules/git.md`, les `AGENTS.md` workspace, et les skills spécialisés si le scope les déclenche (`bftc-prisma`, `bftc-workers-outbox`, `bftc-react-hud`, `bftc-pixi-scene`, `bftc-tests-policy`).
 
 # Refus légitimes
 

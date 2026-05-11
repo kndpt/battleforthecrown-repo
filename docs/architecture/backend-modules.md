@@ -1,6 +1,6 @@
 # Backend — modules et arborescence
 
-> Référence détaillée de la structure NestJS du workspace `battleforthecrown-backend/`. Pour les conventions (Controllers/Services/DTOs/Guards), voir [`battleforthecrown-backend/.claude/rules/nest-conventions.md`](../../battleforthecrown-backend/.claude/rules/nest-conventions.md). Pour les workers et le pattern Outbox, voir [`battleforthecrown-backend/.claude/rules/workers.md`](../../battleforthecrown-backend/.claude/rules/workers.md).
+> Référence détaillée de la structure NestJS du workspace `battleforthecrown-backend/`. Pour les conventions (Controllers/Services/DTOs/Guards), voir [`battleforthecrown-backend/.agents/rules/nest-conventions.md`](../../battleforthecrown-backend/.agents/rules/nest-conventions.md). Pour les workers et le pattern Outbox, voir le skill [`bftc-workers-outbox`](../../.agents/skills/bftc-workers-outbox/SKILL.md).
 
 ## Arborescence `src/`
 

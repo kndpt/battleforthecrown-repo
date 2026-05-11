@@ -37,9 +37,9 @@ Avant tout commit final (étape 10 d'un `$run`, ou commit direct), lancer **à l
 yarn static-check
 ```
 
-Enchaîne `tsc --noEmit` + `eslint` (sans `--fix`) sur backend et pixi. Catch les erreurs que `yarn dev` masque (rules type-aware comme `@typescript-eslint/no-unsafe-call`, types manquants TS2739, etc.) et qui ne sortent pas de `yarn test`.
+Enchaîne `tsc --noEmit` + `eslint --quiet` (sans `--fix`) sur backend et pixi. Catch les erreurs que `yarn dev` masque (types manquants TS2739, règles ESLint en erreur, etc.) et qui ne sortent pas de `yarn test`, sans réimprimer les warnings baseline connus ni le warning externe `baseline-browser-mapping`.
 
-⚠️ Utiliser `lint:check` (ou `static-check` qui l'enchaîne), **jamais `yarn lint`** — cette dernière a `--fix` côté backend et mute les fichiers en silence.
+⚠️ Utiliser `static-check` ou `lint:check --quiet`, **jamais `yarn lint`** — cette dernière a `--fix` côté backend et mute les fichiers en silence.
 
 Si `static-check` échoue : fix les erreurs (ou justifie via une dérogation explicite dans le commit body / fiche de run). **Pas de `--no-verify` pour bypass.**
 

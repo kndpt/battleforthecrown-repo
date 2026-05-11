@@ -40,7 +40,7 @@
 - Latence mutation → event WS : 0 à ~1s. Acceptable pour un jeu tour par tour.
 - Garantie d'idempotence + at-least-once delivery (le client doit dédupliquer si pertinent — pour la plupart des events, l'invalidation TanStack rend ça naturel).
 - Pas de cohérence éventuelle non gérée : si le worker tombe, les events s'accumulent et seront re-dispatchés au redémarrage.
-- Détail dans `realtime.md` (§ Pattern Outbox) et `.claude/rules/workers.md` du backend.
+- Détail dans `realtime.md` (§ Pattern Outbox) et le skill `bftc-workers-outbox`.
 
 ---
 
@@ -67,7 +67,7 @@ Pattern : `onMutate` (snapshot + mutate cache) → `onError` (rollback via conte
 
 **Conséquences.**
 - Tick stable à 60 fps même avec 1000+ entités sur la WorldMap.
-- Code de scène plus complexe (gestion de cycle de vie explicite) — convention documentée dans `battleforthecrown-pixi/.claude/rules/pixi-conventions.md`.
+- Code de scène plus complexe (gestion de cycle de vie explicite) — convention documentée dans le skill `bftc-pixi-scene`.
 - Subscribe Zustand côté Pixi via `store.subscribe()` direct (pas `useStore`) pour éviter les React re-renders inutiles.
 
 ---
@@ -96,7 +96,7 @@ Le bundle pertinent est chargé via `loadBundle(name)` au mount du canvas corres
 **Conséquences.**
 - Pas de loading state bloquant — le HUD s'affiche immédiatement, les sprites paraissent ~500ms après.
 - Asset `manifest.ts` typé en `AssetsBundle[]` Pixi v8 → autocomplete des aliases.
-- Convention documentée dans `battleforthecrown-pixi/.claude/rules/pixi-conventions.md`.
+- Convention documentée dans le skill `bftc-pixi-scene`.
 
 ---
 
@@ -114,17 +114,20 @@ Le bundle pertinent est chargé via `loadBundle(name)` au mount du canvas corres
 
 ---
 
-## ADR-08 — Hiérarchie `CLAUDE.md` + `.claude/rules/` path-scoped
+## ADR-08 — Hiérarchie `AGENTS.md` + `.agents/{rules,skills}`
+
+> Superseded 2026-05-11 : les règles longues path-scoped ont été remplacées par des skills à la demande. Les rules restantes ne portent que les invariants toujours chargés.
 
 **Contexte.** Un seul `AGENTS.md` ou `CLAUDE.md` racine devient illisible dès que le repo grossit (multi-workspace, multi-stack). Les agents AI chargent toute la doc au boot et le contexte explose.
 
 **Décision.**
-- `/CLAUDE.md` racine : court (~50 lignes), pointe vers les workspaces et les rules transversales.
-- `<workspace>/CLAUDE.md` : briefing spécifique au workspace.
-- `.claude/rules/<scope>.md` : règles découpées par domaine (conventions, git, docs côté racine ; nest, prisma, workers côté backend ; pixi, react côté pixi-frontend).
+- `/AGENTS.md` racine : court, pointe vers les workspaces, rules courtes et skills.
+- `<workspace>/AGENTS.md` : briefing spécifique au workspace.
+- `.agents/rules/<scope>.md` : invariants courts toujours chargés.
+- `.agents/skills/<skill>/SKILL.md` : procédures détaillées chargées à la demande.
 - Doc humaine de référence dans `docs/architecture/`, `docs/gameplay/` (séparée des briefings agents).
 
-**Conséquences.** Charge cognitive et budget contexte limités. Les agents chargent uniquement les rules du workspace où ils travaillent. Détail dans `.claude/rules/docs.md`.
+**Conséquences.** Charge cognitive et budget contexte limités. Les agents chargent les briefings/rules courts au boot et les skills seulement quand leur description matche. Détail dans `.agents/rules/docs.md`.
 
 ---
 

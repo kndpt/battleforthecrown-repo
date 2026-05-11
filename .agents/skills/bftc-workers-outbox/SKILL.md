@@ -1,6 +1,6 @@
 ---
 name: bftc-workers-outbox
-description: Use when touching Battle for the Crown workers, pg-boss jobs, EventOutbox, Socket.IO game events, realtime updates, background ticks, combat/return workers, production/construction/training workers, barbarian seeding catchup, or any mutation that must notify the frontend.
+description: Use for BFTC workers, pg-boss, EventOutbox, Socket.IO events, realtime updates, ticks, combat/return, or frontend notifications.
 ---
 
 # BFTC Workers + Outbox

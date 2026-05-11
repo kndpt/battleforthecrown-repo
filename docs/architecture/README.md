@@ -21,16 +21,16 @@ Documentation technique de référence (humaine) pour les agents et les contribu
 
 ## Conventions transversales
 
-- TypeScript strict, yarn, server-authoritative — voir [`.claude/rules/conventions.md`](../../.claude/rules/conventions.md).
-- Commits EN au format `<type>(<scope>): <subject>` — voir [`.claude/rules/git.md`](../../.claude/rules/git.md).
-- Doc humain ici dans `docs/`. Doc opérationnelle Claude dans les `CLAUDE.md` + `.claude/rules/` des workspaces.
+- TypeScript strict, yarn, server-authoritative — voir [`.agents/rules/conventions.md`](../../.agents/rules/conventions.md).
+- Commits EN au format `<type>(<scope>): <subject>` — voir [`.agents/rules/git.md`](../../.agents/rules/git.md).
+- Doc humain ici dans `docs/`. Instructions agentiques dans `AGENTS.md` + `.agents/{rules,skills}/`.
 
 ## Workspaces
 
-| Workspace | CLAUDE.md | .claude/rules/ |
-|-----------|-----------|----------------|
-| `battleforthecrown-pixi/` | [pixi CLAUDE.md](../../battleforthecrown-pixi/CLAUDE.md) | `pixi-conventions.md`, `react-hud.md` |
-| `battleforthecrown-backend/` | [backend CLAUDE.md](../../battleforthecrown-backend/CLAUDE.md) | `nest-conventions.md`, `prisma.md`, `workers.md` |
+| Workspace | Instructions | Skills/rules spécialisés |
+|-----------|--------------|--------------------------|
+| `battleforthecrown-pixi/` | [pixi AGENTS.md](../../battleforthecrown-pixi/AGENTS.md) | `bftc-react-hud`, `bftc-pixi-scene` |
+| `battleforthecrown-backend/` | [backend AGENTS.md](../../battleforthecrown-backend/AGENTS.md) | `bftc-prisma`, `bftc-workers-outbox`, `nest-conventions.md` |
 | `packages/shared/` | — (code pur, pas de domaine) | — |
 
 ## Liens connexes

@@ -1,6 +1,6 @@
 ---
 name: bftc-pixi-scene
-description: Use when changing Battle for the Crown Pixi canvas code: battleforthecrown-pixi/src/pixi, PixiJS Application, scenes, SceneManager, viewport, canvas interaction, entity reconciliation, map/village rendering, animation tickers, sprites, Graphics, or Pixi performance.
+description: Use for BFTC Pixi canvas work: src/pixi, scenes, viewport/camera, coordinates, input handlers, tile maps, overlays, assets.
 ---
 
 # BFTC Pixi Scene

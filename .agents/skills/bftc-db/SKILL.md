@@ -1,6 +1,6 @@
 ---
 name: bftc-db
-description: Accès SQL à la DB locale Battle for the Crown (Postgres `battleforthecrown`). Toute opération DB — lecture, écriture, inspection schéma — passe par ce skill. Utiliser dès qu'on touche à la DB (joueurs, villages, ressources, Outbox, expéditions, combats, jobs pg-boss).
+description: Utiliser pour toute opération SQL BFTC locale: lecture/écriture DB, schéma, joueurs, villages, Outbox, combats, jobs.
 ---
 
 # bftc-db — Accès DB Battle for the Crown

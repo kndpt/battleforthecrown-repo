@@ -1,6 +1,6 @@
 ---
 name: bftc-react-hud
-description: Use when changing Battle for the Crown frontend HUD or React features: battleforthecrown-pixi/src/features, src/ui, Zustand stores, TanStack Query queries/mutations, REST client, Socket.IO bindings, Zod forms, optimistic UI, routing, modals, panels, navigation, or any non-canvas UI.
+description: Use for BFTC React HUD/features, Zustand stores, TanStack Query, DTO/Zod forms, panels, or optimistic UI.
 ---
 
 # BFTC React HUD

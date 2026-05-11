@@ -12,6 +12,8 @@
 - [x] Condenser `nest-conventions.md` en invariants backend courts.
 - [x] Mettre à jour `AGENTS.md` root/backend/pixi et `$run` pour charger les skills au bon moment.
 - [x] Supprimer les rules proxy restantes et corriger les agents Claude/Codex vers les skills.
+- [x] Corriger les dernières références obsolètes vers `tests.md` / anciennes rules dans les docs actives.
+- [x] Canoniser le preflight smoke DB et rendre `static-check` moins verbeux.
 - [x] Vérifier diff, grep résiduel, docs impact et checks pertinents.
 
 ## Review
@@ -21,5 +23,6 @@
 - Architecture : `.claude/skills` et `.codex/skills` restent des symlinks vers `.agents/skills`; `.claude/commands`, `.gemini`, les docs safety-fallbacks et les rules proxy supprimés ; règles permanentes limitées à conventions/docs/git + nest invariants.
 - Security : aucun secret ni configuration runtime touché.
 - Performance : aucun impact runtime.
-- Vérifications : grep ciblé anciens chemins/invocations actifs, agents Claude/Codex audités, symlinks OK, validation manuelle frontmatter skills OK, `rtk yarn static-check` PASS (0 erreur, warnings ESLint préexistants hors périmètre).
-- Docs : mises à jour dans `AGENTS.md` root/backend/pixi, `tasks/README.md`, `tasks/runs/README.md`, rules condensées, skills, règle conventions et leçon associée.
+- Vérifications : grep ciblé anciens chemins/invocations actifs, agents Claude/Codex audités, symlinks OK, validation manuelle frontmatter skills OK, `rtk yarn static-check` PASS.
+- Suite cleanup : docs actives déplacées vers `bftc-tests-policy` / `.agents/{rules,skills}`, descriptions skills raccourcies, preflight smoke DB canonisé via `yarn test:smoke:preflight`, `static-check` utilise ESLint `--quiet` et filtre le warning externe `baseline-browser-mapping`.
+- Docs : mises à jour dans `AGENTS.md` root/backend/pixi, `tasks/README.md`, `tasks/runs/README.md`, `docs/architecture/*`, rules condensées, skills, règle conventions et leçon associée.

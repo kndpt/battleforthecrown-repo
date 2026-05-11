@@ -1,6 +1,6 @@
 # Smoke tests — orchestration & I/O
 
-Source unique de la stratégie : [`.claude/rules/tests.md`](../../.claude/rules/tests.md).
+Source unique de la stratégie : skill [`bftc-tests-policy`](../../.agents/skills/bftc-tests-policy/SKILL.md).
 Ce document décrit la mise en œuvre concrète : où ils vivent, comment les lancer, comment en ajouter un.
 
 ## Où
@@ -20,7 +20,7 @@ battleforthecrown-backend/test/
 yarn workspace battleforthecrown-backend test:smoke
 ```
 
-Pré-requis : la base `battleforthecrown_smoke` doit exister + migrations appliquées (cf. [`db-setup.md`](./db-setup.md)). Un seul boot AppModule, ~23s pour les 10 flows.
+Pré-requis : la base `battleforthecrown_smoke` doit exister + migrations appliquées (cf. [`db-setup.md`](./db-setup.md)). La commande lance d'abord `scripts/smoke-preflight.sh` pour vérifier Docker, la DB smoke et `prisma migrate status`. Un seul boot AppModule, ~23s pour les 11 flows.
 
 ## Flows couverts
 
@@ -56,7 +56,7 @@ Pré-requis : la base `battleforthecrown_smoke` doit exister + migrations appliq
 
 ## Anti-patterns
 
-Cf. [`.claude/rules/tests.md`](../../.claude/rules/tests.md). Rappel critique :
+Cf. [`bftc-tests-policy`](../../.agents/skills/bftc-tests-policy/SKILL.md). Rappel critique :
 
 - **Jamais** mocker `PrismaService` ou `pg-boss` dans un smoke.
 - **Jamais** asserter sur `mock.toHaveBeenCalledWith(...)` — on assert sur l'effet (DB row, event row dispatched).

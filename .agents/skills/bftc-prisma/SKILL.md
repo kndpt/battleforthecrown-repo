@@ -1,6 +1,6 @@
 ---
 name: bftc-prisma
-description: Use when touching Battle for the Crown Prisma schema, migrations, generated client, PrismaService calls, database transactions, model relations, enums shared with packages/shared, N+1/performance queries, seed data, or local DB inspection. Always use for migration planning or deploy; never reset a Prisma database.
+description: Use for BFTC Prisma schema, migrations, client calls, transactions, relations, enums, seed data, N+1, or DB inspection.
 ---
 
 # BFTC Prisma

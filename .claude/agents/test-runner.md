@@ -21,7 +21,7 @@ Tu lances les suites de tests demandées et tu retournes **uniquement les échec
 
 1. Lance la commande appropriée :
    - `backend-unit` → `yarn workspace battleforthecrown-backend test [filtre]`
-   - `backend-smoke` → `yarn workspace battleforthecrown-backend test:smoke [filtre]`
+   - `backend-smoke` → `yarn workspace battleforthecrown-backend test:smoke:preflight`, puis `yarn workspace battleforthecrown-backend test:smoke:run [filtre]`
    - `pixi` → `yarn workspace battleforthecrown-pixi test [filtre]`
    - `all` → les trois en séquence
 2. Capture exit code + stdout/stderr.

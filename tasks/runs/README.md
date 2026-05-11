@@ -24,7 +24,7 @@ Même source de vérité dans les deux harnesses, conventions de nommage des sub
 | 2 | Analyse code (cartographie) | Sub-agent `code-mapper` | `=== CARTE MODULE ===` |
 | 3 | Refinement (raisonnement, décomposition chirurgicale) | Lead | TaskList + maj fiche |
 | 4 | Coding | Lead (< 10 lignes, 1 fichier) **ou** sub-agent `implementer` | Diff + `=== RAPPORT EXEC ===` |
-| 5 | Testing (création/modif tests selon `tests.md`) | Lead (< 10 lignes) **ou** sub-agent `test-writer` | Diff + rapport |
+| 5 | Testing (création/modif tests selon `bftc-tests-policy`) | Lead (< 10 lignes) **ou** sub-agent `test-writer` | Diff + rapport |
 | 6 | Review 5 axes | Lead ou agent généraliste disponible dans le harness. | Findings |
 | 7 | Fix des findings (1 finding = 1 tâche chirurgicale) | Sub-agent `implementer` | Diff + rapport |
 | 8 | Re-test | Sub-agent `test-runner` | `=== RUN TESTS ===` |
@@ -45,7 +45,7 @@ Rôles identiques d'un côté à l'autre :
 - `run-planner` / `run_planner` — produit un draft de fiche depuis la roadmap (utilisé par `$plan-run`).
 - `code-mapper` — cartographie ciblée (signatures, callers, tests, écarts évidents).
 - `implementer` — applique un changement précis et bien cadré (≤ 5 fichiers).
-- `test-writer` — écrit/modifie tests selon `tests.md` (refus anti-patterns).
+- `test-writer` — écrit/modifie tests selon `bftc-tests-policy` (refus anti-patterns).
 - `test-runner` — lance suite, retourne uniquement les fails.
 - `doc-writer` — crée/maj docs + références croisées (refus duplication).
 - Review 5 axes : lead par défaut, ou agent généraliste disponible (`default` côté Codex).

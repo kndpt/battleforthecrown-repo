@@ -1,6 +1,6 @@
 ---
 name: bftc-qa
-description: Use when finishing any Battle for the Crown task to decide and report QA: in-game checklist for visible UI/gameplay changes, backend verification by the agent for endpoints, workers, DB, logs, and Socket.IO, or an explicit no-runtime-QA reason for docs/types/internal-only changes. Also use during `$run` final verification.
+description: Use when finishing a BFTC task to choose QA: playable checklist, curl/SQL/logs, smokes, static checks, and docs impact.
 ---
 
 # BFTC QA

@@ -2,7 +2,7 @@
 
 Le projet est solo + agent IA, sans joueur ni collaborateur. On ne paie pas de minutes GitHub Actions et on n'a pas de bot reviewer. Le filet anti-régression vit donc **localement**, dans un hook git `pre-push` géré par husky.
 
-> Décision et alternatives discutées dans [`tasks/archive/03-ci-strategy.md`](../../tasks/archive/03-ci-strategy.md). Source unique de la stratégie tests : [`.claude/rules/tests.md`](../../.claude/rules/tests.md).
+> Décision et alternatives discutées dans [`tasks/archive/03-ci-strategy.md`](../../tasks/archive/03-ci-strategy.md). Source unique de la stratégie tests : skill [`bftc-tests-policy`](../../.agents/skills/bftc-tests-policy/SKILL.md).
 
 ## TL;DR
 
@@ -11,7 +11,7 @@ Le projet est solo + agent IA, sans joueur ni collaborateur. On ne paie pas de m
 ```
 yarn test:backend  → Jest unit pure-logic     (~5 s)
 yarn test:pixi     → Vitest jsdom              (~5 s)
-yarn test:smoke    → 10 flows orchestration    (~23 s, vraie DB)
+yarn test:smoke    → 11 flows orchestration    (~23 s, vraie DB)
                                           total ~30-45 s
 ```
 
@@ -30,9 +30,9 @@ Le smoke a besoin d'une vraie Postgres :
 | Pré-requis | Comment vérifier | Comment réparer |
 |---|---|---|
 | Container `battleforthecrown-postgres` healthy | `docker compose ps` (depuis `battleforthecrown-backend/`) | `cd battleforthecrown-backend && docker compose up -d` |
-| Base `battleforthecrown_smoke` existe + migrations à jour | `docker exec battleforthecrown-postgres psql -U postgres -lqt \| grep smoke` | Voir [`db-setup.md` § DB smoke](./db-setup.md) |
+| Base `battleforthecrown_smoke` existe + migrations à jour | `yarn test:smoke:preflight` | Voir [`db-setup.md` § DB smoke](./db-setup.md) |
 
-Le hook fait ces deux checks **avant** de lancer les tests et échoue avec un message ciblé si un pré-requis manque (gain de temps : pas d'attente de 23 s pour s'apercevoir que la DB n'est pas là).
+`yarn test` lance `yarn test:smoke:preflight` **avant** les suites unitaires. Le hook bénéficie donc du même preflight canonique et échoue avec un message ciblé si Docker, la DB smoke ou les migrations ne sont pas prêts.
 
 ## Câblage technique
 
@@ -86,7 +86,7 @@ Faire tourner les smokes en pre-push, c'est faire le travail du CI sur le poste 
 - **Solo**. Personne d'autre ne push, donc l'argument "couplage env local" est vide.
 - **Pas de joueur**. Pas de pression production, pas de coût d'incident à arbitrer.
 - **Pas de CI configurée**. Mieux vaut un filet imparfait qu'aucun.
-- **Volumétrie smokes maîtrisée**. 10 flows, ~23 s. Politique [`tests.md`](../../.claude/rules/tests.md) = "smoke seulement pour orchestration nouvelle" — pas d'explosion attendue.
+- **Volumétrie smokes maîtrisée**. 11 flows, ~23 s. Politique [`bftc-tests-policy`](../../.agents/skills/bftc-tests-policy/SKILL.md) = "smoke seulement pour orchestration nouvelle" — pas d'explosion attendue.
 - **Setup CI cloud = ~1 h de travail** sans bénéfice immédiat tant que ces conditions tiennent.
 
 C'est un **compromis pragmatique pour un projet solo en phase de développement**. Pas une recommandation générale.
@@ -152,7 +152,7 @@ Protection de branche `main` : merge bloqué si `ci.yml` rouge.
    - `prisma migrate deploy` avec `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/battleforthecrown_smoke`.
    - Lancer `yarn test:backend && yarn test:pixi && yarn test:smoke`.
 3. **Activer la protection de branche** sur `main` (Settings → Branches → Require status checks → cocher `ci.yml`).
-4. **Mettre à jour cette doc** : retirer la section "Note honnête" et "Cible long terme", remplacer par la description du nouveau setup. Mettre à jour `CLAUDE.md` racine et `.claude/rules/git.md` pour pointer vers le bon comportement de hook.
+4. **Mettre à jour cette doc** : retirer la section "Note honnête" et "Cible long terme", remplacer par la description du nouveau setup. Mettre à jour `AGENTS.md` racine et `.agents/rules/git.md` pour pointer vers le bon comportement de hook.
 5. **Vérifier le coût** : le tier gratuit GitHub Actions = 2000 min/mois sur repo privé. Un run ~3-5 min, donc ~400 runs/mois. Largement assez.
 
 ### Pièges anticipés

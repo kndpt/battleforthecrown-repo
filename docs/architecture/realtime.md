@@ -25,7 +25,7 @@ Le backend est **server-authoritative** : ressources, files, expéditions, solde
                   TanStack Query invalidate + Zustand update
 ```
 
-Détail du pattern et garanties dans [`battleforthecrown-backend/.claude/rules/workers.md`](../../battleforthecrown-backend/.claude/rules/workers.md).
+Détail opérationnel du pattern et des pièges worker dans le skill [`bftc-workers-outbox`](../../.agents/skills/bftc-workers-outbox/SKILL.md).
 
 ## Latence typique
 

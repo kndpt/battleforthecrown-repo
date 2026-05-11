@@ -1,6 +1,6 @@
 ---
 name: bftc-tests-policy
-description: Use when deciding whether to add or modify tests in Battle for the Crown, or when touching Jest, Vitest, smoke tests, test files, Zod validation, pure formulas, backend orchestration, Prisma, pg-boss, Socket.IO, Pixi scenes, stores, or frontend helpers. Also use during `$run` test planning and when the user asks for tests.
+description: Use for BFTC test decisions, Jest/Vitest/smokes, Zod, pure formulas, orchestration, stores, or `$run` test planning.
 ---
 
 # BFTC Tests Policy
@@ -26,6 +26,7 @@ Use the smallest durable regression net. Do not add tests "just in case".
 Commands:
 
 ```bash
+yarn test:smoke:preflight
 yarn workspace battleforthecrown-backend test
 yarn workspace battleforthecrown-backend test:smoke
 yarn workspace battleforthecrown-pixi test
@@ -44,5 +45,6 @@ If the user asks for a forbidden test, push back and propose the allowed substit
 ## Gotchas
 
 - Backend orchestration confidence comes from real effects: DB row, REST payload, Outbox event, WS event, or worker result.
+- Before backend smokes, run `yarn test:smoke:preflight`; it verifies Docker, `battleforthecrown_smoke`, and Prisma migration status.
 - Pixi scenes are expensive and low-signal in tests; extract layout/math/builders and test those.
 - Adding a test does not replace QA. Use `bftc-qa` before finalizing code changes.

@@ -1,6 +1,6 @@
 ---
 name: plan-run
-description: Génère un draft de fiche de run BFTC depuis la roadmap MVP et l'écrit dans `tasks/runs/` après validation user. Use when user asks `$plan-run <description>` (ex `$plan-run audit du module crowns`).
+description: Use when user asks `$plan-run <description>` to draft a BFTC run file in `tasks/runs/` after user validation.
 disable-model-invocation: true
 ---
 

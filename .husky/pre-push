@@ -1,24 +1,4 @@
 set -e
 
-if ! command -v docker >/dev/null 2>&1; then
-  echo "[pre-push] Docker CLI not found. Smokes need Postgres running locally."
-  echo "[pre-push] Install Docker Desktop or bypass once with: git push --no-verify"
-  exit 1
-fi
-
-if ! docker ps --format '{{.Names}}' | grep -q '^battleforthecrown-postgres$'; then
-  echo "[pre-push] Container 'battleforthecrown-postgres' is not running."
-  echo "[pre-push] Start it with: cd battleforthecrown-backend && docker compose up -d"
-  exit 1
-fi
-
-if ! docker exec battleforthecrown-postgres psql -U postgres -lqt \
-    | cut -d '|' -f 1 \
-    | grep -qw battleforthecrown_smoke; then
-  echo "[pre-push] Smoke database 'battleforthecrown_smoke' is missing."
-  echo "[pre-push] Create it (one-shot) — see docs/architecture/db-setup.md § DB smoke."
-  exit 1
-fi
-
 echo "[pre-push] Running yarn test (backend unit + pixi unit + backend smokes)…"
 yarn test
