@@ -298,6 +298,7 @@ model Expedition {
   status            ExpeditionStatus @default(EN_ROUTE)
   departAt          DateTime         @map("depart_at")
   arrivalAt         DateTime         @map("arrival_at")
+  outboundTravelMs  Int              @map("outbound_travel_ms")
   returnAt          DateTime?        @map("return_at")
   recalled          Boolean          @default(false)
   reportId          String?          @unique @map("report_id")

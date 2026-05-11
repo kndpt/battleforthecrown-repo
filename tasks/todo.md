@@ -1,20 +1,20 @@
-# Run 011 — fix-return-worker-decouple-report
+# Ticket 35 — return travel time recomputed vs spec
 
 ## Plan
 
-- [x] Reprendre l'état local du run en cours et relire règles/leçons.
-- [x] Vérifier le diff existant : schema, workers, smoke, migration.
-- [x] Finaliser le découplage return/report et renforcer le smoke.
-- [x] Lancer migrations/generate si nécessaire, tests backend et smoke.
-- [x] Lancer `yarn static-check`, review 5 axes et impact docs.
-- [x] Finaliser fiche, archive, README tasks et commit.
+- [x] Relire ticket, règles, SPEC et contexte return flow récent.
+- [x] Cartographier `Expedition`, dispatch combat/renfort/rappel et retour combat.
+- [x] Persister la durée aller au dispatch et la réutiliser au retour combat.
+- [x] Ajouter le filet smoke pertinent.
+- [x] Mettre à jour docs/ticket/README puis archiver.
+- [x] Lancer migrations/generate/tests/static-check, review et commit.
 
 ## Review
 
-- Correctness : le `ReturnWorker` ne dépend plus de `CombatReport`; le smoke report supprimé pendant retour couvre inventaire, ressources et event nullable.
-- Readability : changement localisé aux snapshots d'expédition et au contrat d'event partagé.
-- Architecture : Outbox + transaction unique conservées; `battle.returned.reportId` nullable aligné backend/shared/frontend.
-- Security : suppression de rapport reste contrôlée par l'endpoint existant, pas de nouvel accès.
-- Performance : deux colonnes JSON nullables, aucune requête additionnelle au retour.
-- Vérifications : backend unit, smokes complets, `static-check` verts.
-- Docs : mises à jour ciblées dans gameplay, data-model, realtime et smoke-tests.
+- Correctness : `CombatWorker` réutilise `Expedition.outboundTravelMs`; dispatch attaque/renfort/rappel remplit le champ depuis le calcul aller.
+- Readability : champ dédié et invariant `SPEC.md V1`; pas de dépendance implicite à `arrivalAt - departAt` dans le worker.
+- Architecture : migration non destructive appliquée dev + smoke; Outbox/pg-boss inchangés.
+- Security : aucun nouvel endpoint ni permission.
+- Performance : une colonne `Int`, aucune requête additionnelle au retour.
+- Vérifications : migrations dev + smoke appliquées, Prisma généré, backend type-check, unit backend, smokes backend et `static-check` verts.
+- Docs : mises à jour ciblées dans `docs/architecture/backend-modules.md`, `docs/architecture/data-model.md`, `SPEC.md`, ticket archivé et README tasks.

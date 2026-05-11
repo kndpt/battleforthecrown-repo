@@ -31,6 +31,8 @@ Format : `V<n> | <invariant actionnable> | source: <path>`
 
 <!-- Ajouter uniquement si l'invariant est durable, transversal, et réellement utile à un futur run. -->
 
+V1 | Un retour de raid doit réutiliser la durée aller figée au dispatch (`Expedition.outboundTravelMs`), jamais recalculer avec la config monde ou la stratégie courante au moment de la résolution. | source: tasks/archive/35-return-travel-time-recomputed-vs-spec.md
+
 ## §B — Bugs récurrents / anti-patterns
 
 Format :

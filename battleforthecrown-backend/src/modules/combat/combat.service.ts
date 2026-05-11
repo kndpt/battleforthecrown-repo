@@ -99,16 +99,17 @@ export class CombatService {
       await this.verifyAndDeductUnits(tx, dto.villageId, dto.units);
 
       // 5. Calculate timing
-      const { arrivalAt, now } = await this.calculateExpeditionTiming(
-        tx,
-        worldId,
-        village.x,
-        village.y,
-        targetX,
-        targetY,
-        dto.units,
-        dto.villageId,
-      );
+      const { travelTimeMs, arrivalAt, now } =
+        await this.calculateExpeditionTiming(
+          tx,
+          worldId,
+          village.x,
+          village.y,
+          targetX,
+          targetY,
+          dto.units,
+          dto.villageId,
+        );
 
       // 6. Create expedition
       const expedition = await tx.expedition.create({
@@ -124,6 +125,7 @@ export class CombatService {
           status: 'EN_ROUTE',
           departAt: now,
           arrivalAt,
+          outboundTravelMs: travelTimeMs,
         },
       });
 
@@ -191,16 +193,17 @@ export class CombatService {
       await this.verifyAndDeductUnits(tx, dto.villageId, dto.units);
 
       // 5. Calculate timing
-      const { arrivalAt, now } = await this.calculateExpeditionTiming(
-        tx,
-        worldId,
-        village.x,
-        village.y,
-        targetVillage.x,
-        targetVillage.y,
-        dto.units,
-        dto.villageId,
-      );
+      const { travelTimeMs, arrivalAt, now } =
+        await this.calculateExpeditionTiming(
+          tx,
+          worldId,
+          village.x,
+          village.y,
+          targetVillage.x,
+          targetVillage.y,
+          dto.units,
+          dto.villageId,
+        );
       // 6. Create expedition
       const expedition = await tx.expedition.create({
         data: {
@@ -216,6 +219,7 @@ export class CombatService {
           status: 'EN_ROUTE',
           departAt: now,
           arrivalAt,
+          outboundTravelMs: travelTimeMs,
         },
       });
 
@@ -311,17 +315,20 @@ export class CombatService {
 
       // 5. Calculate timing
       // Re-calculate timing with origin village strategy
-      const { arrivalAt: arrivalAtOrigin, now } =
-        await this.calculateExpeditionTiming(
-          tx,
-          worldId,
-          currentVillage.x,
-          currentVillage.y,
-          originVillage.x,
-          originVillage.y,
-          dto.units,
-          dto.originVillageId, // Strategy of origin follows the troupe
-        );
+      const {
+        travelTimeMs,
+        arrivalAt: arrivalAtOrigin,
+        now,
+      } = await this.calculateExpeditionTiming(
+        tx,
+        worldId,
+        currentVillage.x,
+        currentVillage.y,
+        originVillage.x,
+        originVillage.y,
+        dto.units,
+        dto.originVillageId, // Strategy of origin follows the troupe
+      );
 
       // 6. Create expedition
       const expedition = await tx.expedition.create({
@@ -338,6 +345,7 @@ export class CombatService {
           status: 'EN_ROUTE',
           departAt: now,
           arrivalAt: arrivalAtOrigin,
+          outboundTravelMs: travelTimeMs,
         },
       });
 

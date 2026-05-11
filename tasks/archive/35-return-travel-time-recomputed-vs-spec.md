@@ -1,7 +1,7 @@
 # 35 — Drift potentiel : durée retour recalculée vs spec « à la même vitesse qu'à l'aller »
 
 **Sévérité** : 🟢 Mineure (drift possible, pas de bug observé)
-**Statut** : 🆕 Ouvert 2026-05-10 (issue de [run 004](./runs/archive/004-audit-combat.md))
+**Statut** : ✅ Terminé 2026-05-11 (issue de [run 004](./runs/archive/004-audit-combat.md))
 
 ## Symptôme
 
@@ -62,3 +62,12 @@ Documenter dans [`docs/architecture/backend-modules.md` § Combat] que la durée
 ## Référence audit
 
 Run 004 — finding lecture critique `combat.worker.ts:288-300`. Pas de fix dans le run (audit pur, hors scope d'implémentation).
+
+## Rapport final
+
+Piste A implémentée après résolution du ticket 34.
+- Ajout de `Expedition.outboundTravelMs` avec migration non destructive et backfill depuis `arrivalAt - departAt`.
+- Dispatch attaque/renfort/retrait : la durée aller est figée au moment de création de l'expédition.
+- Résolution combat : `returnAt` réutilise `outboundTravelMs`, sans recalculer avec la config monde ou la stratégie courante.
+- Smoke renforcé : changement de `gameSpeed.travel` entre dispatch et résolution, puis vérification que le retour garde la durée aller.
+- Backprop `SPEC.md` : invariant `V1`.

@@ -175,7 +175,7 @@ describe('smoke', () => {
         worldId: world.id,
         isBarbarian: true,
         name: 'barb-target',
-        x: join.village.x + 1,
+        x: join.village.x + 5,
         y: join.village.y,
         tier: 'T1',
         resourceStock: {
@@ -207,12 +207,48 @@ describe('smoke', () => {
       });
     expect(res.status).toBeLessThan(300);
 
+    const outbound = await ctx.prisma.expedition.findFirstOrThrow({
+      where: { attackerVillageId: attackerId, status: 'EN_ROUTE' },
+    });
+    expect(outbound.outboundTravelMs).toBe(
+      outbound.arrivalAt.getTime() - outbound.departAt.getTime(),
+    );
+
+    await ctx.prisma.world.update({
+      where: { id: world.id },
+      data: {
+        config: {
+          ...SMOKE_WORLD_CONFIG,
+          gameSpeed: { ...SMOKE_WORLD_CONFIG.gameSpeed, travel: 1_000_000 },
+        },
+      },
+    });
+
     const resolved = await outboxDispatched(
       ctx.prisma,
       { kind: 'battle.resolved', aggregateId: attackerId },
       { timeoutMs: 15_000 },
     );
     expect(resolved?.dispatchedAt).toBeTruthy();
+
+    const returning = await ctx.prisma.expedition.findUniqueOrThrow({
+      where: { id: outbound.id },
+      include: { report: true },
+    });
+    const reportDetails = returning.report?.details as {
+      travelTime?: number;
+    };
+    expect(reportDetails.travelTime).toBeLessThan(outbound.outboundTravelMs);
+    expect(returning.returnAt?.getTime() ?? 0).toBeGreaterThanOrEqual(
+      (returning.report?.createdAt.getTime() ?? 0) +
+        outbound.outboundTravelMs -
+        500,
+    );
+    expect(returning.returnAt?.getTime() ?? 0).toBeLessThanOrEqual(
+      (returning.report?.createdAt.getTime() ?? 0) +
+        outbound.outboundTravelMs +
+        1_500,
+    );
 
     const returned = await outboxDispatched(
       ctx.prisma,

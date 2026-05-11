@@ -55,13 +55,13 @@ Spécificités runtime :
 
 | Table | Rôle |
 |-------|------|
-| `Expedition` | un trajet d'armée (ou `Combat` dans la doc gameplay). Champs : `attackerVillageId`, `targetRefId`, `arrivalAt`, `returnAt`, `status`, plus snapshot de retour `survivingUnits`/`loot` après résolution. |
+| `Expedition` | un trajet d'armée (ou `Combat` dans la doc gameplay). Champs : `attackerVillageId`, `targetRefId`, `arrivalAt`, `outboundTravelMs`, `returnAt`, `status`, plus snapshot de retour `survivingUnits`/`loot` après résolution. |
 | `Expedition.kind` | `ATTACK` ou `REINFORCE`. Détermine le comportement à l'arrivée. |
 | `Expedition.recalled` | boolean — vrai si l'armée a fait demi-tour pendant l'aller (Recall). |
 | `Expedition.reinforcementOriginVillageId` | utilisé pour identifier le village d'origine lors d'un rappel (Recall) de renforts. |
 | `CombatReport` | rapport persistant lu par les joueurs (`reader`/`opponent`). |
 
-Un trajet passe par les phases `EN_ROUTE → RESOLVED → RETURNING` (cf. `ExpeditionStatus`). Backend : un job pg-boss à `arrivalAt` (résolution), puis un autre à `returnAt` (retour).
+Un trajet passe par les phases `EN_ROUTE → RESOLVED → RETURNING` (cf. `ExpeditionStatus`). Backend : un job pg-boss à `arrivalAt` (résolution), puis un autre à `returnAt` (retour). Pour les raids, `returnAt` est calculé avec `outboundTravelMs`, la durée aller figée au dispatch.
 
 ### Crowns
 

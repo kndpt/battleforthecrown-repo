@@ -345,20 +345,8 @@ export class CombatWorker implements OnModuleInit {
           },
         });
 
-        // 9. Calculate return time
-        const distance = calculateDistance(
-          attackerVillage.x,
-          attackerVillage.y,
-          expedition.targetX,
-          expedition.targetY,
-        );
-        const travelTimeMs = await this.worldConfig.getTravelTimeForArmy(
-          expedition.worldId,
-          distance,
-          parseUnitMap(expedition.units, 'expedition.units'),
-          context.attackerStrategyConfig?.strategy,
-        );
-        const returnAt = new Date(Date.now() + travelTimeMs);
+        // 9. Reuse outbound duration so return speed cannot drift with config/style changes.
+        const returnAt = new Date(Date.now() + expedition.outboundTravelMs);
 
         // 10. Update expedition
         await tx.expedition.update({

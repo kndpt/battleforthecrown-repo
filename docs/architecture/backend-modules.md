@@ -86,8 +86,9 @@ combat/
 Flow expédition (Attaque/Renfort) :
 1. `POST /combat/attack` ou `/combat/reinforce` → `CombatService.initiate*` valide + crée `Expedition` + déclenche job pg-boss à `arrivalAt`.
 2. `CombatWorker.handle` → résout selon le `kind` (ATTACK: combat via stratégie ; REINFORCE: stationnement en `Garrison`), génère `CombatReport` (si combat), crée events `battle.resolved` + `village.attacked`/`conquered`.
-3. `ReturnWorker.handle` → ramène l'armée + butin après un combat/raid à `returnAt`, event `battle.returned`.
-4. `POST /combat/recall` crée aussi une `Expedition` de type `REINFORCE`, mais en sens retour ; son arrivée est traitée par `CombatWorker.handle`, qui réinjecte les unités au village d'origine et émet `reinforcement.returned`.
+3. Le retour d'un raid réutilise `Expedition.outboundTravelMs`, figé au dispatch, pour respecter "même vitesse qu'à l'aller" même si la config monde ou la stratégie changent avant résolution.
+4. `ReturnWorker.handle` → ramène l'armée + butin après un combat/raid à `returnAt`, event `battle.returned`.
+5. `POST /combat/recall` crée aussi une `Expedition` de type `REINFORCE`, mais en sens retour ; son arrivée est traitée par `CombatWorker.handle`, qui réinjecte les unités au village d'origine et émet `reinforcement.returned`.
 
 Lectures et contrôle de garnison :
 - `GET /combat/:villageId/active` liste les expéditions sortantes `EN_ROUTE` ou `RETURNING` du village.
