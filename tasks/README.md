@@ -4,7 +4,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-_(Aucun ticket actif.)_
+- [44 — Crash armée : migration `unit_training.building` non appliquée](./44-army-training-schema-drift.md) — 🔴 Bloquant local : `/game/army` déclenche `P2022` car la DB n'a pas appliqué les migrations `UnitTraining.building`.
 
 ## Roadmap stratégique
 
