@@ -2,7 +2,7 @@
 
 Frontend Battle for the Crown : Vite + React 19 + PixiJS v8 + Zustand + TanStack Query.
 
-> Briefing court. Le détail vit dans [`./README.md`](./README.md), les conventions techniques dans [`./.agents/rules/`](./.agents/rules/), les décisions structurantes dans [`../docs/architecture/decisions.md`](../docs/architecture/decisions.md).
+> Briefing court. Le détail humain vit dans [`./README.md`](./README.md). Les conventions détaillées sont dans les skills `bftc-react-hud` et `bftc-pixi-scene`.
 
 ## Règles transversales
 
@@ -38,9 +38,9 @@ Frontend Battle for the Crown : Vite + React 19 + PixiJS v8 + Zustand + TanStack
 
 `@/*` → `./src/*` (configuré dans `tsconfig.app.json` + `vite.config.ts` + `vitest.config.ts`).
 
-## Tests
+## Skills / Tests
 
-**Politique** : [`../.agents/rules/tests.md`](../.agents/rules/tests.md) (source unique transversale — quand écrire un test, quel type, anti-patterns).
+Utiliser `bftc-react-hud` pour l'UI React, `bftc-pixi-scene` pour le canvas, `bftc-tests-policy` avant d'écrire/modifier un test, et `bftc-qa` pour la vérification finale.
 
 Couverture actuelle Vitest (jsdom) :
 - `lib/` helpers purs (cn, interpolation, construction progress).

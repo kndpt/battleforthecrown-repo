@@ -1,12 +1,18 @@
 ---
 name: plan-run
-description: Génère un draft de fiche de run BFTC depuis la roadmap MVP et l'écrit dans `tasks/runs/` après validation user. Délègue l'analyse à l'agent `run_planner`, présente le draft, attend validation, écrit la fiche en statut `PLANNED`. Use when user asks `$plan-run <description>` (ex `$plan-run audit du module crowns`).
+description: Génère un draft de fiche de run BFTC depuis la roadmap MVP et l'écrit dans `tasks/runs/` après validation user. Use when user asks `$plan-run <description>` (ex `$plan-run audit du module crowns`).
 disable-model-invocation: true
 ---
 
 # Lead — Planification de run
 
 Ton job : produire une fiche de run prête à lancer (statut `PLANNED`) pour le sujet décrit en argument, **sans** exécuter le run lui-même (`$run` le fait plus tard).
+
+Ce skill est la source de vérité commune Claude Code + Codex. Utilise le nom d'agent disponible dans le harness courant :
+
+| Rôle | Codex | Claude Code |
+|---|---|---|
+| Planification | `run_planner` | `run-planner` |
 
 > **Pour spawn un sub-agent** : dis explicitement « spawn the `<name>` agent with the following prompt: ... » et attends son résultat avant de continuer.
 
@@ -17,9 +23,9 @@ Ton job : produire une fiche de run prête à lancer (statut `PLANNED`) pour le 
 3. Lis `tasks/runs/README.md` pour le format de fiche attendu.
 4. Identifie le **prochain ID disponible** : `ls tasks/runs/*.md tasks/runs/archive/*.md` → max ID + 1, formaté en 3-digit (ex : si max = 002, prochain = 003).
 
-## Étape 2 — Délégation à `run_planner`
+## Étape 2 — Délégation au run planner
 
-Spawn the **`run_planner`** agent avec le prompt :
+Spawn the **run planner** agent (`run_planner` côté Codex, `run-planner` côté Claude Code) avec le prompt :
 
 - **Description** : la description fournie par l'utilisateur, telle quelle.
 - **Indice de phase** (si tu l'identifies en lisant la roadmap) : phase suggérée.
@@ -68,5 +74,5 @@ Rends la main au user avec un récap court (≤ 8 lignes) :
 ## Cas d'escalade
 
 - Le sujet ne correspond à **aucune phase** de la roadmap → demande au user si c'est intentionnel (run hors-roadmap acceptable mais à acter).
-- `run_planner` retourne `STATUS: failed` ou un draft incohérent → re-spawn 1 fois avec un prompt plus précis, sinon escalade au user.
+- Le run planner retourne `STATUS: failed` ou un draft incohérent → re-spawn 1 fois avec un prompt plus précis, sinon escalade au user.
 - 3 cycles d'ajustement dépassés sans convergence → escalade au user.

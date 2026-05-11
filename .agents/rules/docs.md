@@ -28,17 +28,17 @@ docs/
 └── gameplay/       # mécaniques de jeu (économie, bâtiments, combat, événements)
 ```
 
-## CLAUDE.md hiérarchique
+## Briefings hiérarchiques
 
-- `/CLAUDE.md` — racine, court, pointe vers les rules + workspaces.
-- `/battleforthecrown-pixi/CLAUDE.md` — briefing du frontend Pixi.
-- `/battleforthecrown-backend/CLAUDE.md` — briefing du backend NestJS.
+- `/AGENTS.md` — racine, court, pointe vers rules courtes + skills.
+- `/battleforthecrown-pixi/AGENTS.md` — briefing frontend Pixi.
+- `/battleforthecrown-backend/AGENTS.md` — briefing backend NestJS.
+- `CLAUDE.md` reste un import de compat vers `AGENTS.md`.
 
-## Rules path-scoped
+## Rules et skills
 
-- `.claude/rules/` racine : `conventions.md`, `git.md`, `docs.md`, `qa.md`, `tests.md` (transversales).
-- `battleforthecrown-pixi/.claude/rules/` : `pixi-conventions.md`, `react-hud.md`.
-- `battleforthecrown-backend/.claude/rules/` : `nest-conventions.md`, `prisma.md`, `workers.md`.
+- `.agents/rules/` : invariants courts injectables.
+- `.agents/skills/` : procédures détaillées chargées à la demande.
 
 ## Où écrire quoi
 
@@ -48,8 +48,9 @@ docs/
 | Doc technique de référence (modules, data model, realtime, DB) | `docs/architecture/<domaine>.md`. |
 | Doc UI frontend (catalogue composants, design system, writing style) | `battleforthecrown-pixi/docs/ui-{library,design-system,writing-style}.md`. |
 | Mécanique gameplay | `docs/gameplay/`. |
-| Convention projet (transversale) | `.claude/rules/conventions.md`. |
-| Convention workspace | `<workspace>/.claude/rules/<scope>.md`. |
-| Briefing AI agent | `<workspace>/CLAUDE.md`. |
+| Convention projet (transversale) | `.agents/rules/conventions.md`. |
+| Convention workspace | `<workspace>/AGENTS.md` ou rule courte dédiée si elle doit être toujours chargée. |
+| Procédure détaillée agent | `.agents/skills/<skill>/SKILL.md`. |
+| Briefing AI agent | `<workspace>/AGENTS.md`. |
 | Onboarding humain | `README.md` de chaque workspace. |
 | Historique des changements | `git log` (les commits suivent `<type>(<scope>): <subject>`). |

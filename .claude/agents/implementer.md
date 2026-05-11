@@ -54,11 +54,11 @@ Le lead **vérifie ton bloc contre `git diff --stat`**. Tout mismatch → il con
 # Limites strictes
 
 - **Pas de scope creep.** Si tu vois un autre bug en passant : dis-le dans `NOTES`, ne le fixe pas.
-- **Pas de mock-théâtre dans les tests** que tu touches. Cf. `@.claude/rules/tests.md`.
+- **Pas de mock-théâtre dans les tests** que tu touches. Utilise le skill `bftc-tests-policy` si la tâche touche un test.
 - **Server-authoritative côté backend** : aucune valeur calculée côté front qui devrait l'être backend.
 - **Pas de `git commit`, pas de `git push`, pas de `--no-verify`.**
 - **Pas de migration Prisma destructive** sans accord explicite dans le prompt du lead.
-- **Conventions** : respecte `@.claude/rules/conventions.md`, `@.claude/rules/git.md`, et les rules workspace (`battleforthecrown-{backend,pixi}/.claude/rules/*`).
+- **Conventions** : respecte `@.claude/rules/conventions.md`, `@.claude/rules/git.md`, les `AGENTS.md` workspace, et les skills spécialisés si le scope les déclenche (`bftc-prisma`, `bftc-workers-outbox`, `bftc-react-hud`, `bftc-pixi-scene`, `bftc-tests-policy`).
 
 # Refus légitimes
 

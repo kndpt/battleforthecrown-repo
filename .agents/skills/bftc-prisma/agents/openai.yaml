@@ -1,0 +1,4 @@
+interface:
+  display_name: "BFTC Prisma"
+  short_description: "Handle BFTC Prisma schema, migrations, transactions, and DB gotchas."
+  default_prompt: "Use bftc-prisma for this BFTC Prisma or migration change."

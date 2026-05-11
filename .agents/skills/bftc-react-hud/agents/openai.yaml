@@ -1,0 +1,4 @@
+interface:
+  display_name: "BFTC React HUD"
+  short_description: "Build or change the BFTC React HUD, stores, queries, forms, and UI."
+  default_prompt: "Use bftc-react-hud for this BFTC React HUD or frontend feature change."

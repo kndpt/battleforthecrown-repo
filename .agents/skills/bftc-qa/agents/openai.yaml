@@ -1,0 +1,4 @@
+interface:
+  display_name: "BFTC QA"
+  short_description: "Choose and report the right end-of-task QA path."
+  default_prompt: "Use bftc-qa to decide and format the QA section for this BFTC task."

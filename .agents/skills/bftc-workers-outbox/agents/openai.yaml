@@ -1,0 +1,4 @@
+interface:
+  display_name: "BFTC workers/outbox"
+  short_description: "Work safely with BFTC pg-boss workers, Outbox, and realtime events."
+  default_prompt: "Use bftc-workers-outbox for this worker, Outbox, or realtime event change."

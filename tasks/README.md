@@ -18,7 +18,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Runs (exécutions semi-autonomes)
 
-Fiches d'exécution déléguées aux harnesses Claude Code, Codex ou Gemini CLI (lead + sub-agents à scope chirurgical). Slash commands : `/plan-run <description>` pour créer une fiche depuis la roadmap, `/run <path>` pour exécuter (fiche de run **ou** ticket actif — path obligatoire, `@` optionnel ; le mode est détecté via le path). Pipeline et conventions : [`runs/README.md`](./runs/README.md).
+Fiches d'exécution déléguées aux harnesses Claude Code ou Codex (lead + sub-agents à scope chirurgical). Skills workspace : `$plan-run <description>` pour créer une fiche depuis la roadmap, `$run <path>` pour exécuter (fiche de run **ou** ticket actif — path obligatoire, `@` optionnel ; le mode est détecté via le path). Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ### Runs actifs
 
@@ -85,4 +85,4 @@ _(Aucun run actif.)_
 
 ## Process
 
-Pour résoudre un ticket actif : `/run tasks/<id>-<slug>.md` (mode ticket auto, `@` optionnel). Le pipeline lit le ticket, demande à l'utilisateur de trancher la piste si plusieurs proposées, exécute en mode rapide, archive le ticket et commit. Détail : [`runs/README.md`](./runs/README.md).
+Pour résoudre un ticket actif : `$run tasks/<id>-<slug>.md` (mode ticket auto, `@` optionnel). Le pipeline lit le ticket, demande à l'utilisateur de trancher la piste si plusieurs proposées, exécute en mode rapide, archive le ticket et commit. Détail : [`runs/README.md`](./runs/README.md).

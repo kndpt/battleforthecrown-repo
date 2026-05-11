@@ -1,0 +1,4 @@
+interface:
+  display_name: "BFTC Pixi scene"
+  short_description: "Change BFTC Pixi canvas scenes, viewport, reconciliation, and interactions."
+  default_prompt: "Use bftc-pixi-scene for this BFTC Pixi canvas or scene change."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "BFTC tests policy"
+  short_description: "Decide when and how to test BFTC changes without mock-theatre."
+  default_prompt: "Use bftc-tests-policy to decide the right regression net for this BFTC change."

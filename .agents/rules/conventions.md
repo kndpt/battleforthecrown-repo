@@ -24,10 +24,6 @@ Acceptable quand :
 
 Pattern : `onMutate` (snapshot + mutate cache) → `onError` (rollback via context) → `onSettled` (invalidate les keys liées).
 
-## Tests
-
-Source unique : [`tests.md`](./tests.md). **À lire avant d'écrire ou demander un test.** Décide entre unit pure-logic, smoke, ou pas de test du tout.
-
 ## Lint / formatage
 
 - ESLint flat config par workspace.
@@ -35,7 +31,7 @@ Source unique : [`tests.md`](./tests.md). **À lire avant d'écrire ou demander 
 
 ## Vérification statique avant commit final
 
-Avant tout commit final (étape 10 d'un `/run`, ou commit direct), lancer **à la racine** :
+Avant tout commit final (étape 10 d'un `$run`, ou commit direct), lancer **à la racine** :
 
 ```bash
 yarn static-check

@@ -41,17 +41,18 @@ Chaque module = `controller.ts` + `service.ts` + `module.ts` + `dto/` + tests `*
 
 Toute mutation qui doit notifier le frontend écrit l'événement dans `EventOutbox` **dans la même transaction Prisma**. L'`OutboxWorker` poll ~1s, marque comme traité, et l'`event/game.gateway.ts` émet via Socket.IO. Délai mutation → event WS : 0–1 seconde.
 
-Détail dans [`.agents/rules/workers.md`](./.agents/rules/workers.md) (Outbox section).
+Détail opérationnel dans le skill `bftc-workers-outbox`.
 
-## Règles path-scoped
+## Skills path-scoped
 
-- [`.agents/rules/nest-conventions.md`](./.agents/rules/nest-conventions.md) — Controllers / Services / DTOs / Guards / structure modulaire.
-- [`.agents/rules/prisma.md`](./.agents/rules/prisma.md) — accès données, transactions, N+1, migrations.
-- [`.agents/rules/workers.md`](./.agents/rules/workers.md) — pg-boss, Outbox, isolation des erreurs.
+- [`.agents/rules/nest-conventions.md`](./.agents/rules/nest-conventions.md) — invariants NestJS courts.
+- `bftc-prisma` — schema, migrations, transactions, requêtes DB.
+- `bftc-workers-outbox` — pg-boss, Outbox, events WS, workers.
+- `bftc-tests-policy` / `bftc-qa` — tests et vérification de fin de tâche.
 
 ## Tests
 
-**Politique** : [`../.agents/rules/tests.md`](../.agents/rules/tests.md) (source unique transversale). Côté backend : pure-logic-only en unit (formules combat/monde, Zod, strategies, géométrie) ; orchestration (workers/controllers/services Prisma) → smoke (cf. [`../docs/architecture/smoke-tests.md`](../docs/architecture/smoke-tests.md)).
+Utiliser `bftc-tests-policy`. Côté backend : unit pure-logic seulement ; orchestration workers/controllers/services Prisma → smoke ou QA backend réelle.
 
 ## Variables d'environnement
 
@@ -69,5 +70,4 @@ Auth : voir [`docs/architecture/auth.md`](../docs/architecture/auth.md).
 - Pour tester un endpoint pendant l'implémentation, l'agent lance sa **propre instance** en background sur un port libre (ex `PORT=15002`) — accès direct aux logs/stack traces. Ne pas se reposer sur le serveur du user.
 - Après modif `schema.prisma` → `yarn prisma generate`. Après modif `packages/shared` → `yarn workspace @battleforthecrown/shared build`. Sinon le runtime ment.
 - Le frontend Pixi (`battleforthecrown-pixi/`) consomme cette API par REST + Socket.IO. Toute breaking change d'endpoint ou d'event WS doit être communiquée explicitement.
-- Le sous-repo backend a son **propre `.git`** — committer dedans avec `git -C battleforthecrown-backend ...`.
 - Si une instruction de l'`AGENTS.md` racine ou de `docs/` contredit le code observé, **fais confiance au code observé** et signale.

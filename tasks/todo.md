@@ -1,20 +1,25 @@
-# Ticket 35 — return travel time recomputed vs spec
+# Simplification multi-agent skills
 
 ## Plan
 
-- [x] Relire ticket, règles, SPEC et contexte return flow récent.
-- [x] Cartographier `Expedition`, dispatch combat/renfort/rappel et retour combat.
-- [x] Persister la durée aller au dispatch et la réutiliser au retour combat.
-- [x] Ajouter le filet smoke pertinent.
-- [x] Mettre à jour docs/ticket/README puis archiver.
-- [x] Lancer migrations/generate/tests/static-check, review et commit.
+- [x] Vérifier l'état Git et les sources actuelles `.agents` / `.claude` / `.codex` / `.gemini`.
+- [x] Valider avec le user la cible single-source `.agents/skills`.
+- [x] Supprimer les commandes Claude dupliquées et le dossier `.gemini`.
+- [x] Rendre `run` / `plan-run` harness-neutral dans `.agents/skills`.
+- [x] Mettre à jour les docs qui référencent slash commands ou Gemini.
+- [x] Supprimer les docs safety-fallbacks redondantes et condenser le filet dans `tasks/runs/README.md`.
+- [x] Transformer les rules longues tests/QA/Prisma/workers/React HUD/Pixi en skills à la demande.
+- [x] Condenser `nest-conventions.md` en invariants backend courts.
+- [x] Mettre à jour `AGENTS.md` root/backend/pixi et `$run` pour charger les skills au bon moment.
+- [x] Supprimer les rules proxy restantes et corriger les agents Claude/Codex vers les skills.
+- [x] Vérifier diff, grep résiduel, docs impact et checks pertinents.
 
 ## Review
 
-- Correctness : `CombatWorker` réutilise `Expedition.outboundTravelMs`; dispatch attaque/renfort/rappel remplit le champ depuis le calcul aller.
-- Readability : champ dédié et invariant `SPEC.md V1`; pas de dépendance implicite à `arrivalAt - departAt` dans le worker.
-- Architecture : migration non destructive appliquée dev + smoke; Outbox/pg-boss inchangés.
-- Security : aucun nouvel endpoint ni permission.
-- Performance : une colonne `Int`, aucune requête additionnelle au retour.
-- Vérifications : migrations dev + smoke appliquées, Prisma généré, backend type-check, unit backend, smokes backend et `static-check` verts.
-- Docs : mises à jour ciblées dans `docs/architecture/backend-modules.md`, `docs/architecture/data-model.md`, `SPEC.md`, ticket archivé et README tasks.
+- Correctness : `run` et `plan-run` ont une seule source dans `.agents/skills`; les noms d'agents sont explicités par harness Claude Code/Codex.
+- Readability : docs remplacent les anciennes slash commands par les skills workspace `$run` / `$plan-run`; safety-fallbacks condensé dans `tasks/runs/README.md`.
+- Architecture : `.claude/skills` et `.codex/skills` restent des symlinks vers `.agents/skills`; `.claude/commands`, `.gemini`, les docs safety-fallbacks et les rules proxy supprimés ; règles permanentes limitées à conventions/docs/git + nest invariants.
+- Security : aucun secret ni configuration runtime touché.
+- Performance : aucun impact runtime.
+- Vérifications : grep ciblé anciens chemins/invocations actifs, agents Claude/Codex audités, symlinks OK, validation manuelle frontmatter skills OK, `rtk yarn static-check` PASS (0 erreur, warnings ESLint préexistants hors périmètre).
+- Docs : mises à jour dans `AGENTS.md` root/backend/pixi, `tasks/README.md`, `tasks/runs/README.md`, rules condensées, skills, règle conventions et leçon associée.
