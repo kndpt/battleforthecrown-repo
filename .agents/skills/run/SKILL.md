@@ -53,7 +53,7 @@ Préflight commun :
 8. **Retest + static-check** — tests adaptés au scope, puis `yarn static-check`.
 8c. **Backprop SPEC** — ajouter §V/§B seulement si un invariant durable ou bug subtil/récurrent a été révélé.
 9. **Documentation** — décider l'impact doc via `.agents/rules/docs.md`; déléguer au doc writer si non trivial.
-10. **Archive + commit** — `DONE`, archive via `git mv`, maj `tasks/README.md`, commit unique EN `<type>(<scope>): <subject>`, pas de push.
+10. **Archive + commit** — `DONE`, archive via `git mv`, maj `tasks/README.md`, commit unique EN `<type>(<scope>): <subject>`, pas de push, puis rapport final avec section QA obligatoire.
 
 ## Mode Rapide
 
@@ -104,6 +104,10 @@ Les sub-agents doivent retourner un rapport structuré (`STATUS: success|partial
 - Migrations Prisma : suivre `bftc-prisma`; destructif = accord user explicite; `prisma migrate reset` interdit.
 - Smokes backend : lancer `yarn test:smoke:preflight` avant les smokes.
 - `yarn static-check` obligatoire avant commit final.
+- Rapport final : inclure une section `QA & tests` obligatoire avec :
+  - `Tests automatisés lancés` : commandes exactes + résultat synthétique.
+  - `Smokes ajoutés/modifiés` : fichiers + scénario couvert, ou `Aucun`, raison.
+  - `Tests IG à faire par le user` : étapes manuelles si feature/fix visible en jeu, ou `Aucun test IG nécessaire`, raison.
 
 ## Règles Inviolables
 
@@ -114,6 +118,7 @@ Les sub-agents doivent retourner un rapport structuré (`STATUS: success|partial
 - Ne commit qu'à l'étape 10.
 - Pas de `--no-verify`, pas de push.
 - Toujours conclure docs : `Docs : mises à jour ...` ou `Docs : aucun changement nécessaire, raison : ...`.
+- Ne jamais omettre la section `QA & tests` du rapport final, même pour un ticket backend invisible IG.
 
 ## Escalade
 

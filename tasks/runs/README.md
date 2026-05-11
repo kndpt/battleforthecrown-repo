@@ -141,7 +141,13 @@ _(Vide au démarrage. Décisions archi non triviales, dérogations lead, finding
 
 ## Rapport final
 
-_(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tickets ouverts, QA résiduelle qui revient à toi, méta-évaluation si applicable.)_
+_(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tickets ouverts, méta-évaluation si applicable.)_
+
+### QA & tests
+
+- **Tests automatisés lancés** : commandes exactes + résultat synthétique.
+- **Smokes ajoutés/modifiés** : fichiers + scénario couvert, ou `Aucun`, raison.
+- **Tests IG à faire par le user** : étapes manuelles si feature/fix visible en jeu, ou `Aucun test IG nécessaire`, raison.
 ```
 
 ## Liens
