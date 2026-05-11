@@ -143,11 +143,14 @@ _(Vide au démarrage. Décisions archi non triviales, dérogations lead, finding
 
 _(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tickets ouverts, méta-évaluation si applicable.)_
 
-### QA & tests
+### Acceptance & QA
 
-- **Tests automatisés lancés** : commandes exactes + résultat synthétique.
+- **Critères d'acceptance vérifiés** :
+  - [ ] <comportement attendu observable> — preuve : <test auto / smoke / curl / SELECT / capture>
+- **Tests automatisés** : commandes exactes + résultat synthétique.
 - **Smokes ajoutés/modifiés** : fichiers + scénario couvert, ou `Aucun`, raison.
-- **Tests IG à faire par le user** : étapes manuelles si feature/fix visible en jeu, ou `Aucun test IG nécessaire`, raison.
+- **QA fonctionnelle agent** : tests bout-en-bout manuels exécutés par l'agent quand pertinent (`server + curl`, REST, WebSocket, worker/job, ou `SELECT` DB), avec résultat observable. Si non fait, `Non nécessaire` ou `Non exécuté` + raison précise.
+- **Tests IG à faire par le user** : seulement ce qui demande une appréciation gameplay/visuelle, un vrai navigateur humain, ou un scénario trop coûteux à automatiser ; checklist observable. Sinon `Aucun test IG nécessaire`, raison.
 ```
 
 ## Liens

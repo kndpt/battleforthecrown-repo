@@ -5,4 +5,4 @@
 - Si une commande `rtk` en parallèle semble bloquer, stopper le fan-out et reprendre avec une seule commande ciblée, bornée en sortie.
 - Pour déléguer à `implementer`, utiliser les labels exacts attendus (`Spec source`, `Fichiers à toucher`, `Changement attendu`, `Hors scope explicite`, `Critère de succès`) ; le contenu peut rester souple, mais le contrat doit être stable.
 - Ne pas utiliser `tasks/todo.md` comme livrable durable hors exécution `$run` : il est volatile et peut être réécrit par le pipeline. Pour une adaptation de règle/skill, préférer la modification du skill/rule + review en réponse finale.
-- Après un `$run`, le rapport final doit toujours contenir `QA & tests` avec les commandes lancées, les smokes ajoutés/modifiés, et les tests IG à faire par le user ou la raison explicite s'il n'y en a pas.
+- Après un `$run`, le rapport final doit contenir `Acceptance & QA` : critères d'acceptance vérifiés, tests automatisés, smokes ajoutés/modifiés, QA fonctionnelle agent (`server + curl`, REST, worker/job, SELECT DB si pertinent), puis uniquement les tests IG qui restent réellement au user.

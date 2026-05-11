@@ -53,7 +53,7 @@ Préflight commun :
 8. **Retest + static-check** — tests adaptés au scope, puis `yarn static-check`.
 8c. **Backprop SPEC** — ajouter §V/§B seulement si un invariant durable ou bug subtil/récurrent a été révélé.
 9. **Documentation** — décider l'impact doc via `.agents/rules/docs.md`; déléguer au doc writer si non trivial.
-10. **Archive + commit** — `DONE`, archive via `git mv`, maj `tasks/README.md`, commit unique EN `<type>(<scope>): <subject>`, pas de push, puis rapport final avec section QA obligatoire.
+10. **Archive + commit** — `DONE`, archive via `git mv`, maj `tasks/README.md`, commit unique EN `<type>(<scope>): <subject>`, pas de push, puis rapport final avec critères d'acceptance + preuves QA.
 
 ## Mode Rapide
 
@@ -104,10 +104,12 @@ Les sub-agents doivent retourner un rapport structuré (`STATUS: success|partial
 - Migrations Prisma : suivre `bftc-prisma`; destructif = accord user explicite; `prisma migrate reset` interdit.
 - Smokes backend : lancer `yarn test:smoke:preflight` avant les smokes.
 - `yarn static-check` obligatoire avant commit final.
-- Rapport final : inclure une section `QA & tests` obligatoire avec :
-  - `Tests automatisés lancés` : commandes exactes + résultat synthétique.
+- Rapport final : inclure une section `Acceptance & QA` obligatoire avec :
+  - `Critères d'acceptance vérifiés` : checklist binaire des comportements attendus, avec preuve courte pour chaque item.
+  - `Tests automatisés` : commandes exactes + résultat synthétique.
   - `Smokes ajoutés/modifiés` : fichiers + scénario couvert, ou `Aucun`, raison.
-  - `Tests IG à faire par le user` : étapes manuelles si feature/fix visible en jeu, ou `Aucun test IG nécessaire`, raison.
+  - `QA fonctionnelle agent` : tests bout-en-bout manuels exécutés par l'agent quand pertinent (`server + curl`, REST, WebSocket, worker/job, ou `SELECT` DB), avec résultat observable. Si non fait, écrire `Non nécessaire` ou `Non exécuté` + raison précise.
+  - `Tests IG à faire par le user` : seulement ce qui demande une appréciation gameplay/visuelle, un vrai navigateur humain, ou un scénario trop coûteux à automatiser ; formuler en checklist observable. Sinon `Aucun test IG nécessaire`, raison.
 
 ## Règles Inviolables
 
@@ -118,7 +120,8 @@ Les sub-agents doivent retourner un rapport structuré (`STATUS: success|partial
 - Ne commit qu'à l'étape 10.
 - Pas de `--no-verify`, pas de push.
 - Toujours conclure docs : `Docs : mises à jour ...` ou `Docs : aucun changement nécessaire, raison : ...`.
-- Ne jamais omettre la section `QA & tests` du rapport final, même pour un ticket backend invisible IG.
+- Ne jamais omettre la section `Acceptance & QA` du rapport final, même pour un ticket backend invisible IG.
+- Ne pas déléguer au user un test que l'agent peut vérifier raisonnablement par test auto, smoke, curl/REST, worker/job ou requête DB.
 
 ## Escalade
 
