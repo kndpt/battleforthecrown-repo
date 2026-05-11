@@ -39,9 +39,7 @@ export class BarbarianRuntimeService {
     const tier = village.tier ?? 'T1';
     const currentUnits = toUnitMap(village.unitInventory);
     const troopsLastRegen =
-      village.barbarianTroopsLastRegenTs ??
-      village.resourceStock?.lastUpdateTs ??
-      village.createdAt;
+      village.barbarianTroopsLastRegenTs ?? village.createdAt;
     const troopElapsedHours = Math.max(
       0,
       (now.getTime() - troopsLastRegen.getTime()) / MS_PER_HOUR,
