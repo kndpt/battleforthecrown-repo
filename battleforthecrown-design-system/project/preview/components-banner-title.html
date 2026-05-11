@@ -1,0 +1,67 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Banner titles</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;padding:20px;align-items:flex-start;}
+.stack{display:flex;flex-direction:column;gap:20px;width:100%;}
+.tag{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--parchment-950);margin-bottom:6px;display:block;}
+
+/* === wood banner with title === */
+.b-wood{position:relative;height:64px;display:flex;align-items:center;justify-content:center;padding:0 80px;background:url(../assets/ui/banner.png) center/100% 100% no-repeat;color:#fef9f0;font-family:var(--bftc-font-display);font-weight:800;font-size:20px;text-shadow:0 2px 0 rgba(0,0,0,.6),0 0 8px rgba(0,0,0,.3);letter-spacing:.04em;}
+.b-wood .sub{position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);font-size:10px;color:#cdb88a;text-shadow:1px 1px 0 rgba(0,0,0,.6);font-weight:600;letter-spacing:.16em;text-transform:uppercase;}
+
+/* === simple gold ribbon === */
+.b-ribbon{position:relative;display:inline-flex;height:42px;padding:0 28px;align-items:center;justify-content:center;background:linear-gradient(to bottom,var(--game-gold-light),var(--game-gold-dark));border:2.5px solid var(--game-gold-border);color:#3a2a00;font-family:var(--bftc-font-display);font-weight:900;font-size:16px;letter-spacing:.06em;box-shadow:inset 0 2px 0 rgba(255,255,255,.45),0 4px 0 rgba(0,0,0,.22);clip-path:polygon(0 0,100% 0,calc(100% - 14px) 50%,100% 100%,0 100%,14px 50%);min-width:240px;}
+
+/* === stone slate title === */
+.b-stone{position:relative;display:flex;align-items:center;gap:14px;padding:14px 22px;background:linear-gradient(to bottom,#bfc7cb,#7e8b91);border:3px solid var(--game-stone-border);border-radius:12px;color:#1f2933;box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 4px 0 rgba(0,0,0,.25);}
+.b-stone::before{content:"";position:absolute;left:8px;top:8px;right:8px;bottom:8px;border:1.5px solid rgba(31,41,51,.3);border-radius:6px;pointer-events:none;}
+.b-stone .crest{width:48px;height:48px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#fef0c6,#a87b25);border:3px solid #3d2f1f;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 4px rgba(0,0,0,.3);}
+.b-stone .crest img{width:30px;height:30px;}
+.b-stone .body{display:flex;flex-direction:column;}
+.b-stone .ey{font-family:var(--bftc-font-display);font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:#3d4f60;font-weight:700;}
+.b-stone h2{font-family:var(--bftc-font-display);font-weight:800;font-size:19px;color:#1f2933;}
+
+/* === full-width parchment banner with serifs === */
+.b-parch{position:relative;padding:18px 28px;background:
+  linear-gradient(to bottom,#fef9f0,#e8d4a8);
+  border:3px solid #8b7355;border-radius:12px;text-align:center;color:#3d2f1f;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 4px 0 rgba(0,0,0,.18);}
+.b-parch::before,.b-parch::after{content:"";position:absolute;top:50%;width:14px;height:14px;background:linear-gradient(135deg,#fef0c6,#a87b25);transform:translateY(-50%) rotate(45deg);border:2px solid #704c0a;box-shadow:inset 0 1px 0 rgba(255,255,255,.5);}
+.b-parch::before{left:-9px;}
+.b-parch::after{right:-9px;}
+.b-parch h2{font-family:var(--bftc-font-display);font-weight:800;font-size:22px;letter-spacing:.04em;text-shadow:0 1px 0 rgba(255,255,255,.5);}
+.b-parch .deco{display:flex;align-items:center;gap:8px;justify-content:center;margin:3px 0;font-family:var(--bftc-font-display);font-size:10px;text-transform:uppercase;letter-spacing:.22em;color:#704c0a;font-weight:700;}
+.b-parch .deco .line{flex:0 0 60px;height:1.5px;background:linear-gradient(to right,transparent,#704c0a);}
+.b-parch .deco .line.r{background:linear-gradient(to left,transparent,#704c0a);}
+.b-parch .sub{font-family:var(--bftc-font-display);font-style:italic;font-size:11.5px;color:#6d5838;margin-top:4px;}
+
+/* === screen header bar === */
+.b-screen{position:relative;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;padding:10px 14px;background:linear-gradient(to bottom,#3d2f1f,#1a1a1a);border:2.5px solid var(--game-gold-dark);border-radius:12px;color:#f6d57b;box-shadow:0 4px 10px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.18);}
+.b-screen .back{appearance:none;border:2px solid var(--game-gold-border);background:linear-gradient(to bottom,var(--game-gold-light),var(--game-gold-dark));color:#3a2a00;width:34px;height:34px;border-radius:9px;font-family:var(--bftc-font-display);font-weight:900;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 2px 0 rgba(0,0,0,.25);}
+.b-screen .body{display:flex;flex-direction:column;line-height:1.1;text-align:center;}
+.b-screen .ey{font-family:var(--bftc-font-display);font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:#cdb88a;font-weight:700;}
+.b-screen h2{font-family:var(--bftc-font-display);font-weight:800;font-size:17px;color:#fef9f0;}
+.b-screen .meta{font-family:var(--bftc-font-display);font-weight:800;font-size:13px;color:#f6d57b;font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:5px;background:rgba(0,0,0,.4);border:1.5px solid var(--game-gold-border);padding:5px 9px;border-radius:8px;}
+.b-screen .meta img{width:16px;height:16px;}
+
+/* === section header with chevron tabs === */
+.b-section{display:flex;flex-direction:column;}
+.b-section .top{display:flex;align-items:flex-end;gap:0;}
+.b-section .top .crumb{padding:6px 16px 6px 12px;background:linear-gradient(to bottom,#8b7355,#5d4a32);color:#fef9f0;font-family:var(--bftc-font-display);font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,0 100%,10px 50%);margin-right:-10px;text-shadow:1px 1px 0 rgba(0,0,0,.4);}
+.b-section .top .crumb:first-child{clip-path:polygon(0 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,0 100%);}
+.b-section .top .crumb.cur{background:linear-gradient(to bottom,var(--game-gold-light),var(--game-gold-dark));color:#3a2a00;text-shadow:1px 1px 0 rgba(255,255,255,.3);z-index:2;}
+.b-section .row{background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:2px solid #8b7355;border-top-left-radius:0;border-radius:0 12px 12px 12px;padding:14px 18px;color:#3d2f1f;font-family:var(--bftc-font-display);}
+.b-section .row h2{font-weight:800;font-size:19px;margin-bottom:2px;}
+.b-section .row .sub{font-size:11.5px;color:#6d5838;font-style:italic;}
+</style></head>
+<body>
+<div class="card-stage" style="flex-direction:column;align-items:stretch;">
+<div class="stack">
+  <div><span class="tag">bois (banner.png)</span><div class="b-wood">Caserne du Roi<span class="sub">Niveau 5 · Conseil de guerre</span></div></div>
+  <div><span class="tag">ruban or</span><span class="b-ribbon">★ Salle du Trône ★</span></div>
+  <div><span class="tag">tablette pierre</span><div class="b-stone"><div class="crest"><img src="../assets/buildings/castle.png"/></div><div class="body"><span class="ey">Édit du Royaume</span><h2>Charte des bâtisseurs</h2></div></div></div>
+  <div><span class="tag">parchemin</span><div class="b-parch"><div class="deco"><span class="line"></span>Chapitre IV<span class="line r"></span></div><h2>Le Siège de Roc-d'Acier</h2><div class="sub">« Que la pierre tremble sous la cadence des marteaux. »</div></div></div>
+  <div><span class="tag">en-tête écran</span><div class="b-screen"><button class="back">‹</button><div class="body"><span class="ey">Tribu · Diplomatie</span><h2>Les Lames du Nord</h2></div><span class="meta"><img src="../assets/casual-icons/crown.png"/>24 / 30</span></div></div>
+  <div><span class="tag">fil d'ariane</span><div class="b-section"><div class="top"><span class="crumb">Empire</span><span class="crumb">Village</span><span class="crumb cur">Caserne</span></div><div class="row"><h2>Caserne · Niveau 3</h2><div class="sub">Forme les écuyers, les chevaliers et les templiers de votre garnison.</div></div></div></div>
+</div>
+</div>
+</body></html>

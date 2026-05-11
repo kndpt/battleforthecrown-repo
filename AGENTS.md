@@ -4,6 +4,7 @@ MMORTS médiéval style Kingsage / Tribal Wars. Yarn workspace avec :
 
 - `battleforthecrown-pixi/` — frontend actif. Vite + React 19 + PixiJS v8 + Zustand + TanStack Query. Voir [`battleforthecrown-pixi/AGENTS.md`](./battleforthecrown-pixi/AGENTS.md).
 - `battleforthecrown-backend/` — NestJS + Prisma + Postgres + Socket.IO + pg-boss. Voir [`battleforthecrown-backend/AGENTS.md`](./battleforthecrown-backend/AGENTS.md).
+- `battleforthecrown-design-system/` — design system et prototypes exportés. Référence tokens/assets/UI kit avant tout nouvel écran Pixi.
 - `packages/shared/` — types et formules pures. **Lecture seule** depuis les frontends.
 
 ## Règles transversales

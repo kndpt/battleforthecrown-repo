@@ -1,0 +1,74 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Player profile</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;padding:18px;align-items:flex-start;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;}
+.profile{background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:2px solid #8b7355;border-radius:14px;padding:12px;display:grid;grid-template-columns:64px 1fr;gap:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 4px 0 rgba(0,0,0,.16);position:relative;overflow:hidden;}
+.profile.ally::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(to bottom,var(--game-green-light),var(--game-green-dark));}
+.profile.enemy::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(to bottom,var(--game-red-light),var(--game-red-dark));}
+.profile.self::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(to bottom,var(--game-gold-light),var(--game-gold-dark));}
+.av{width:64px;height:64px;border-radius:14px;background:radial-gradient(circle at 30% 25%,#fef0c6,#8b6f47);border:3px solid #3d2f1f;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 2px 4px rgba(0,0,0,.3);position:relative;}
+.av img{width:46px;height:46px;}
+.av .crown{position:absolute;top:-10px;right:-6px;width:24px;height:24px;background:url(../assets/casual-icons/crown.png) center/contain no-repeat;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));}
+.av .online{position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;border-radius:50%;background:var(--game-green-light);border:2.5px solid #fef9f0;}
+.body{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.name{font-family:var(--bftc-font-display);font-weight:700;font-size:15px;color:#3d2f1f;display:flex;align-items:center;gap:6px;}
+.tribu{font-family:var(--bftc-font-display);font-size:11px;color:#6d5838;display:inline-flex;align-items:center;gap:4px;}
+.tribu .tag{background:linear-gradient(to bottom,var(--game-gold-light),var(--game-gold-dark));color:#3a2a00;padding:1px 6px;border-radius:9999px;border:1.5px solid var(--game-gold-border);font-weight:700;font-size:10px;text-shadow:none;}
+.stats{display:flex;gap:10px;margin-top:4px;font-family:var(--bftc-font-display);font-size:11px;color:#6d5838;flex-wrap:wrap;}
+.stats b{color:#3d2f1f;font-weight:700;font-variant-numeric:tabular-nums;}
+.stats img{width:13px;height:13px;vertical-align:middle;margin-right:2px;}
+.cta{grid-column:1/-1;display:flex;gap:6px;margin-top:4px;}
+.cta .gradient-button{font-size:11px;padding:5px 10px;flex:1;justify-content:center;}
+.compact{display:flex;align-items:center;gap:8px;padding:6px 10px;background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:2px solid #8b7355;border-radius:12px;}
+.compact .av{width:36px;height:36px;border-width:2px;border-radius:9px;}
+.compact .av img{width:26px;height:26px;}
+.compact .name{font-size:12px;}
+.compact .tribu{font-size:10px;}
+.compact .stats{font-size:10px;gap:8px;margin:0;}
+.compact .right{margin-left:auto;font-family:var(--bftc-font-display);font-weight:800;font-size:13px;color:#3d2f1f;font-variant-numeric:tabular-nums;}
+</style></head>
+<body>
+<div class="card-stage" style="flex-direction:column;align-items:stretch;">
+<div class="grid">
+  <div class="profile self">
+    <div class="av"><img src="../assets/icons/crown.png"/><span class="crown"></span><span class="online"></span></div>
+    <div class="body">
+      <div class="name">Sire_Vous <span style="font-size:10px;color:var(--game-gold-border);font-weight:600;">· VOUS</span></div>
+      <div class="tribu">Tribu <span class="tag">BFC</span> · Les Lames du Nord</div>
+      <div class="stats"><span><img src="../assets/casual-icons/crown.png"/><b>62.480</b> pts</span><span><img src="../assets/icons/army-power.png"/><b>4.250</b> pwr</span><span>🏰 <b>3</b> villages</span></div>
+    </div>
+  </div>
+  <div class="profile enemy">
+    <div class="av" style="background:radial-gradient(circle at 30% 25%,#fbd5d0,#a93226);"><img src="../assets/icons/hand-red.png"/></div>
+    <div class="body">
+      <div class="name">Sire_Robert</div>
+      <div class="tribu">Tribu <span class="tag" style="background:linear-gradient(to bottom,var(--game-red-light),var(--game-red-dark));border-color:var(--game-red-border);color:#fff;">RVN</span> · Corbeaux Noirs</div>
+      <div class="stats"><span><img src="../assets/casual-icons/crown.png"/><b>48.210</b></span><span><img src="../assets/icons/army-power.png"/><b>2.580</b></span><span>🏰 <b>2</b></span></div>
+    </div>
+    <div class="cta"><button class="gradient-button gb-neutral">Profil</button><button class="gradient-button gb-info">Espionner</button><button class="gradient-button gb-danger">Attaquer</button></div>
+  </div>
+  <div class="profile ally">
+    <div class="av" style="background:radial-gradient(circle at 30% 25%,#cfe2f6,#2e75b6);"><img src="../assets/icons/hand-silver.png"/></div>
+    <div class="body">
+      <div class="name">Dame_Aliénor</div>
+      <div class="tribu">Tribu <span class="tag">BFC</span> · Alliée</div>
+      <div class="stats"><span><img src="../assets/casual-icons/crown.png"/><b>71.020</b></span><span><img src="../assets/icons/army-power.png"/><b>5.840</b></span><span>🏰 <b>4</b></span></div>
+    </div>
+    <div class="cta"><button class="gradient-button gb-neutral">Profil</button><button class="gradient-button gb-info">Renforcer</button><button class="gradient-button gb-success">Message</button></div>
+  </div>
+  <div class="profile">
+    <div class="av" style="background:radial-gradient(circle at 30% 25%,#dee3e6,#7f8c8d);"><img src="../assets/army/militia.png"/></div>
+    <div class="body">
+      <div class="name">Brigand_223</div>
+      <div class="tribu">Tribu <span class="tag" style="background:linear-gradient(to bottom,#bfc7cb,#7f8c8d);color:#1f2933;border-color:var(--game-stone-border);">—</span> · sans tribu</div>
+      <div class="stats"><span><img src="../assets/casual-icons/crown.png"/><b>1.240</b></span><span><img src="../assets/icons/army-power.png"/><b>180</b></span></div>
+    </div>
+  </div>
+</div>
+<div style="margin-top:10px;display:flex;flex-direction:column;gap:5px;">
+  <div class="compact"><div class="av"><img src="../assets/icons/hand-red.png"/></div><div class="body"><div class="name">Sire_Robert</div><div class="tribu">[RVN] Corbeaux Noirs</div></div><div class="right">48.210</div></div>
+  <div class="compact"><div class="av" style="background:radial-gradient(circle at 30% 25%,#cfe2f6,#2e75b6);"><img src="../assets/icons/hand-silver.png"/></div><div class="body"><div class="name">Dame_Aliénor</div><div class="tribu">[BFC] alliée</div></div><div class="right">71.020</div></div>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Premium bundles</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:linear-gradient(to bottom,#3c2619,#5d4a32);padding:18px;align-items:flex-start;color:#f5e6d3;}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;width:100%;}
+.bundle{position:relative;background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:3px solid #8b7355;border-radius:14px;overflow:hidden;color:#3d2f1f;box-shadow:0 6px 14px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.5);}
+.bundle.featured{border-color:#704c0a;background:linear-gradient(to bottom,#fff5d8,#f0c860);transform:scale(1.04);box-shadow:0 0 0 3px rgba(241,196,15,.35),0 10px 22px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.55);}
+.bundle.royal{border-color:#1a052f;background:linear-gradient(to bottom,#5b2c8a,#2c0e4d);color:#f6d57b;}
+.tape{position:absolute;top:9px;right:-26px;transform:rotate(36deg);background:linear-gradient(to bottom,var(--game-red-light),var(--game-red-dark));color:#fff;font-family:var(--bftc-font-display);font-weight:800;font-size:10px;padding:3px 32px;text-shadow:1px 1px 2px rgba(0,0,0,.5);border:1.5px solid var(--game-red-border);box-shadow:0 1px 3px rgba(0,0,0,.4);letter-spacing:.08em;}
+.hero{padding:14px 12px 6px;text-align:center;}
+.hero .ey{font-family:var(--bftc-font-display);font-size:9.5px;text-transform:uppercase;letter-spacing:.18em;font-weight:700;opacity:.75;}
+.hero h3{font-family:var(--bftc-font-display);font-weight:800;font-size:17px;margin-top:1px;}
+.hero .img{width:90px;height:90px;margin:6px auto;border-radius:50%;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.5),rgba(0,0,0,.18));display:flex;align-items:center;justify-content:center;border:3px solid currentColor;}
+.hero .img img{width:70px;height:70px;}
+.bundle.royal .hero .img{background:radial-gradient(circle at 30% 25%,#f6d57b,#2c0e4d);border-color:#704c0a;}
+.contents{padding:0 12px 8px;display:flex;flex-direction:column;gap:4px;}
+.contents .line{display:flex;align-items:center;gap:7px;background:rgba(0,0,0,.05);padding:4px 8px;border-radius:8px;font-family:var(--bftc-font-display);font-size:11px;font-variant-numeric:tabular-nums;border:1px solid rgba(0,0,0,.1);}
+.bundle.royal .contents .line{background:rgba(255,255,255,.06);border-color:rgba(246,213,123,.2);}
+.contents .line img{width:18px;height:18px;}
+.contents .line b{margin-left:auto;font-weight:800;}
+.price{padding:8px 12px 12px;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.price .cross{font-family:var(--bftc-font-display);font-size:11px;text-decoration:line-through;opacity:.55;font-variant-numeric:tabular-nums;}
+.price .now{font-family:var(--bftc-font-display);font-weight:900;font-size:22px;color:var(--game-red-border);font-variant-numeric:tabular-nums;text-shadow:0 1px 0 rgba(255,255,255,.4);}
+.bundle.royal .price .now{color:#f6d57b;text-shadow:0 1px 0 rgba(0,0,0,.6);}
+.price button{width:100%;font-family:var(--bftc-font-display);font-weight:800;font-size:13px;color:#fff;background:linear-gradient(to bottom,var(--game-green-light),var(--game-green-dark));border:2px solid var(--game-green-border);padding:8px;border-radius:10px;cursor:pointer;text-shadow:1px 1px 2px rgba(0,0,0,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 3px 0 rgba(0,0,0,.22);margin-top:4px;}
+.bundle.royal .price button{background:linear-gradient(to bottom,var(--game-gold-light),var(--game-gold-dark));border-color:var(--game-gold-border);color:#3a2a00;text-shadow:none;}
+</style></head>
+<body>
+<div class="card-stage"><div class="grid">
+  <div class="bundle">
+    <div class="hero"><div class="ey">Pack Bourgeois</div><h3>Bourse du roturier</h3><div class="img"><img src="../assets/casual-icons/coin.png"/></div></div>
+    <div class="contents">
+      <div class="line"><img src="../assets/casual-icons/crown.png"/>Couronnes<b>×80</b></div>
+      <div class="line"><img src="../assets/resources/wood.png"/>Bois<b>5.000</b></div>
+      <div class="line"><img src="../assets/resources/stone.png"/>Pierre<b>5.000</b></div>
+    </div>
+    <div class="price"><span class="cross">4,99 €</span><span class="now">2,99 €</span><button>Acheter</button></div>
+  </div>
+  <div class="bundle featured">
+    <div class="tape">POPULAIRE</div>
+    <div class="hero"><div class="ey">Pack Baronnial</div><h3>Trésor de baron</h3><div class="img"><img src="../assets/casual-icons/crown.png"/></div></div>
+    <div class="contents">
+      <div class="line"><img src="../assets/casual-icons/crown.png"/>Couronnes<b>×450</b></div>
+      <div class="line"><img src="../assets/resources/iron.png"/>Fer<b>10.000</b></div>
+      <div class="line"><img src="../assets/army/templar.png"/>Templiers<b>×15</b></div>
+      <div class="line"><img src="../assets/icons/clock.png"/>Boost prod<b>24h</b></div>
+    </div>
+    <div class="price"><span class="cross">14,99 €</span><span class="now">9,99 €</span><button>Acheter</button></div>
+  </div>
+  <div class="bundle royal">
+    <div class="hero"><div class="ey" style="color:#f6d57b;">★ Royal</div><h3>Pacte du Souverain</h3><div class="img"><img src="../assets/casual-icons/crown.png"/></div></div>
+    <div class="contents">
+      <div class="line"><img src="../assets/casual-icons/crown.png"/>Couronnes<b>×2.000</b></div>
+      <div class="line" style="color:#f6d57b;">VIP Noblesse<b>30 jours</b></div>
+      <div class="line"><img src="../assets/buildings/castle.png"/>Skin château<b>Or</b></div>
+      <div class="line"><img src="../assets/icons/clock.png"/>Tous les boosts<b>72h</b></div>
+    </div>
+    <div class="price"><span class="cross" style="color:#cdb88a;">39,99 €</span><span class="now">29,99 €</span><button>Acheter</button></div>
+  </div>
+</div></div>
+</body></html>

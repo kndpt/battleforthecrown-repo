@@ -1,0 +1,67 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Dividers</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;padding:18px;align-items:flex-start;}
+.tag{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--parchment-950);}
+.stack{display:flex;flex-direction:column;gap:18px;width:100%;}
+.demo{background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:2px solid #8b7355;border-radius:12px;padding:16px 22px;box-shadow:inset 0 1px 0 rgba(255,255,255,.5);}
+.demo p{font-family:var(--bftc-font-display);font-size:12px;color:#6d5838;text-align:center;line-height:1.4;margin:6px 0;}
+.demo h4{font-family:var(--bftc-font-display);font-size:11px;text-transform:uppercase;letter-spacing:.16em;color:#704c0a;font-weight:700;margin-bottom:10px;}
+
+/* ornamental gold + diamond */
+.div-ornament{display:flex;align-items:center;gap:8px;margin:6px 0;}
+.div-ornament .line{flex:1;height:2px;background:linear-gradient(to right,transparent,var(--game-gold-dark) 30%,var(--game-gold-light) 50%,var(--game-gold-dark) 70%,transparent);}
+.div-ornament .diamond{width:10px;height:10px;background:linear-gradient(135deg,#fef0c6,#a87b25);transform:rotate(45deg);border:1.5px solid #704c0a;box-shadow:inset 0 1px 0 rgba(255,255,255,.5);}
+
+/* labeled center */
+.div-labeled{display:flex;align-items:center;gap:10px;margin:6px 0;font-family:var(--bftc-font-display);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:#704c0a;}
+.div-labeled .line{flex:1;height:1.5px;background:linear-gradient(to right,transparent,#8b7355);}
+.div-labeled:nth-child(odd) .line:last-of-type{background:linear-gradient(to left,transparent,#8b7355);}
+.div-labeled .badge{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:radial-gradient(circle at 30% 25%,#fef0c6,#a87b25);border:1.5px solid #704c0a;}
+.div-labeled .badge img{width:14px;height:14px;}
+
+/* rope */
+.div-rope{height:6px;margin:8px 0;background:
+  repeating-linear-gradient(45deg,#a87b25 0 4px,#704c0a 4px 8px);
+  border-top:1px solid #cdb88a;border-bottom:1px solid #3d2f1f;border-radius:3px;
+}
+
+/* sword crossed */
+.div-sword{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0;}
+.div-sword .line{flex:1;height:2px;background:linear-gradient(to right,transparent,#8b7355,#3d2f1f,#8b7355,transparent);}
+.div-sword .icon{width:36px;height:18px;display:flex;align-items:center;justify-content:center;}
+.div-sword .icon img{width:32px;height:32px;}
+
+/* hairline */
+.div-hairline{height:1px;background:rgba(61,47,31,.25);margin:8px 0;}
+
+/* heavy bossed */
+.div-bossed{height:6px;margin:8px 0;background:linear-gradient(to bottom,#8b7355,#3d2f1f);border-top:1px solid #cdb88a;border-bottom:1px solid #1a1a1a;border-radius:3px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 1px 2px rgba(0,0,0,.25);}
+
+/* parchment torn */
+.div-torn{height:14px;margin:6px 0;background:
+  radial-gradient(circle at 12% 50%, #8b7355 30%, transparent 31%),
+  radial-gradient(circle at 28% 50%, #8b7355 30%, transparent 31%),
+  radial-gradient(circle at 44% 50%, #8b7355 30%, transparent 31%),
+  radial-gradient(circle at 60% 50%, #8b7355 30%, transparent 31%),
+  radial-gradient(circle at 76% 50%, #8b7355 30%, transparent 31%),
+  radial-gradient(circle at 92% 50%, #8b7355 30%, transparent 31%);
+  background-size:8% 100%;
+}
+
+/* vertical */
+.vrow{display:flex;align-items:center;gap:12px;font-family:var(--bftc-font-display);font-size:13px;color:#3d2f1f;}
+.div-vert{width:2px;align-self:stretch;background:linear-gradient(to bottom,transparent,#8b7355 20%,#3d2f1f 50%,#8b7355 80%,transparent);}
+</style></head>
+<body>
+<div class="card-stage" style="flex-direction:column;align-items:stretch;">
+<div class="stack">
+  <div class="demo"><h4>Ornamental · or & losange</h4><p>Section précédente du registre royal.</p><div class="div-ornament"><span class="line"></span><span class="diamond"></span><span class="line"></span></div><p>Section suivante des chroniques.</p></div>
+  <div class="demo"><h4>Labellisé · avec icône</h4><p>Vos villages</p><div class="div-labeled"><span class="line"></span><span class="badge"><img src="../assets/casual-icons/crown.png"/></span><span>Royaume</span><span class="badge"><img src="../assets/buildings/castle.png"/></span><span class="line"></span></div><p>Villages alliés</p></div>
+  <div class="demo"><h4>Corde tressée</h4><p>Inventaire principal</p><div class="div-rope"></div><p>Inventaire secondaire</p></div>
+  <div class="demo"><h4>Épées croisées (section martiale)</h4><p>Caserne</p><div class="div-sword"><span class="line"></span><span class="icon"><img src="../assets/icons/hand-red.png"/></span><span class="line"></span></div><p>Atelier de siège</p></div>
+  <div class="demo"><h4>Variantes simples</h4><p>Hairline</p><div class="div-hairline"></div><p>Bombé en relief</p><div class="div-bossed"></div><p>Parchemin déchiré</p><div class="div-torn"></div></div>
+  <div class="demo"><h4>Vertical</h4><div class="vrow"><span>Bois <b>8.500</b></span><span class="div-vert"></span><span>Pierre <b>3.200</b></span><span class="div-vert"></span><span>Fer <b>1.500</b></span><span class="div-vert"></span><span>Pop. <b>120/200</b></span></div></div>
+</div>
+</div>
+</body></html>

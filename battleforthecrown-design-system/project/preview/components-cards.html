@@ -1,0 +1,35 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Cards</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;padding:20px;}
+.mini{width:160px;height:200px;display:flex;flex-direction:column;}
+.mini .img{flex:1;display:flex;align-items:center;justify-content:center;background:linear-gradient(to bottom right,rgba(255,255,255,.1),rgba(0,0,0,.1));border-bottom:2px solid rgba(0,0,0,.2);}
+.mini .img img{width:78px;height:78px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));}
+.mini .title{font-family:var(--bftc-font-display);font-weight:700;font-size:12px;color:#fff;text-shadow:var(--text-shadow-game);text-align:center;padding:6px 4px 4px;}
+.mini .foot{padding:0 6px 6px;display:flex;justify-content:center;}
+.mini .foot .gradient-button{width:100%;font-size:11px;padding:5px 6px;justify-content:center;}
+</style></head>
+<body>
+<div class="card-stage">
+  <div class="bftc-card bc-parchment mini">
+    <div class="img"><img src="../assets/buildings/castle.png"/></div>
+    <div class="title">Château</div>
+    <div class="foot"><button class="gradient-button gb-success">→ Niv. 4</button></div>
+  </div>
+  <div class="bftc-card bc-wood mini">
+    <div class="img"><img src="../assets/buildings/wood.png"/></div>
+    <div class="title">Camp de bûcherons</div>
+    <div class="foot"><button class="gradient-button gb-success">Construire</button></div>
+  </div>
+  <div class="bftc-card bc-stone mini">
+    <div class="img"><img src="../assets/buildings/iron.png"/></div>
+    <div class="title">Mine de fer</div>
+    <div class="foot"><button class="gradient-button gb-info">→ Niv. 2</button></div>
+  </div>
+  <div class="bftc-card bc-default mini">
+    <div class="img"><img src="../assets/buildings/watchtower.png" style="filter:grayscale(1) opacity(.8)"/></div>
+    <div class="title">Tour de guet</div>
+    <div class="foot"><button class="gradient-button gb-neutral">Verrouillé</button></div>
+  </div>
+</div>
+</body></html>

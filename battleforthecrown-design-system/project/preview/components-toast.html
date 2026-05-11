@@ -1,0 +1,27 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Toasts</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#3c2619;padding:18px;align-items:flex-start;}
+.stack{display:flex;flex-direction:column;gap:8px;width:100%;}
+.toast{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;border:2px solid;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 4px 14px rgba(0,0,0,.4);}
+.toast .icn{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.18);border:2px solid rgba(0,0,0,.18);flex-shrink:0;}
+.toast .icn img{width:24px;height:24px;}
+.toast .body{flex:1;min-width:0;}
+.toast .ttl{font-family:var(--bftc-font-display);font-weight:700;font-size:13px;line-height:1.1;text-shadow:1px 1px 2px rgba(0,0,0,.5);}
+.toast .sub{font-family:var(--bftc-font-display);font-size:11px;opacity:.85;margin-top:2px;line-height:1.2;}
+.toast .x{width:24px;height:24px;border-radius:6px;border:2px solid rgba(0,0,0,.25);background:rgba(0,0,0,.15);color:inherit;font-family:var(--bftc-font-display);font-weight:700;cursor:pointer;}
+.t-success{background:linear-gradient(to bottom,var(--game-green-light),var(--game-green-dark));border-color:var(--game-green-border);color:#fff;}
+.t-info{background:linear-gradient(to bottom,var(--game-blue-light),var(--game-blue-dark));border-color:var(--game-blue-border);color:#fff;}
+.t-danger{background:linear-gradient(to bottom,var(--game-red-light),var(--game-red-dark));border-color:var(--game-red-border);color:#fff;}
+.t-warn{background:linear-gradient(to bottom,var(--game-gold-light),var(--game-gold-dark));border-color:var(--game-gold-border);color:#3a2a00;}
+.t-warn .ttl,.t-warn .sub{text-shadow:none;}
+.toast::before{content:"";position:absolute;}
+</style></head>
+<body>
+<div class="card-stage"><div class="stack">
+  <div class="toast t-success"><div class="icn"><img src="../assets/buildings/barracks.png"/></div><div class="body"><div class="ttl">Construction terminée</div><div class="sub">Caserne · Niv. 2 prêt au combat.</div></div><button class="x">×</button></div>
+  <div class="toast t-info"><div class="icn"><img src="../assets/army/squire.png"/></div><div class="body"><div class="ttl">Entraînement lancé</div><div class="sub">24 squires · arrivée dans 1h 12m.</div></div><button class="x">×</button></div>
+  <div class="toast t-warn"><div class="icn"><img src="../assets/resources/wood.png"/></div><div class="body"><div class="ttl">Entrepôt presque plein</div><div class="sub">9.800 / 10.000 bois — pensez à dépenser.</div></div><button class="x">×</button></div>
+  <div class="toast t-danger"><div class="icn"><img src="../assets/icons/hand-red.png"/></div><div class="body"><div class="ttl">Attaque détectée</div><div class="sub">Sire_Robert marche sur votre village · 02:15:47.</div></div><button class="x">×</button></div>
+</div></div>
+</body></html>

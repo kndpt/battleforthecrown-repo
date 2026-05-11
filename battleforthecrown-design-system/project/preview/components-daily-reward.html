@@ -1,0 +1,44 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Daily reward</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:linear-gradient(to bottom,#3c2619,#5d4a32);padding:18px;color:#f5e6d3;align-items:flex-start;}
+.panel{background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:3px solid var(--game-gold-dark);border-radius:14px;padding:14px;width:100%;box-shadow:0 6px 14px rgba(0,0,0,.4),inset 0 2px 0 rgba(255,255,255,.5);color:#3d2f1f;}
+.head{text-align:center;margin-bottom:10px;}
+.head .ey{font-family:var(--bftc-font-display);font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:#704c0a;font-weight:700;}
+.head h3{font-family:var(--bftc-font-display);font-weight:800;font-size:18px;color:#3a2a00;margin-top:1px;}
+.head .sub{font-family:var(--bftc-font-display);font-size:11px;color:#6d5838;font-style:italic;}
+.row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+.day{position:relative;background:linear-gradient(to bottom,#fff8e8,#e8d4a8);border:2px solid #8b7355;border-radius:10px;padding:8px 4px 6px;text-align:center;}
+.day .d{font-family:var(--bftc-font-display);font-size:9.5px;text-transform:uppercase;letter-spacing:.1em;color:#6d5838;font-weight:700;margin-bottom:3px;}
+.day .ic{width:36px;height:36px;margin:0 auto;display:flex;align-items:center;justify-content:center;}
+.day .ic img{width:32px;height:32px;}
+.day .amt{font-family:var(--bftc-font-display);font-weight:800;font-size:11px;color:#3d2f1f;font-variant-numeric:tabular-nums;margin-top:2px;}
+.day.done{background:linear-gradient(to bottom,#d6ecc4,#a8d28d);border-color:var(--game-green-border);opacity:.85;}
+.day.done::after{content:"✓";position:absolute;top:3px;right:5px;font-family:var(--bftc-font-display);font-weight:900;color:var(--game-green-border);font-size:12px;}
+.day.done .ic{filter:grayscale(.5);}
+.day.today{background:linear-gradient(to bottom,#fef0c6,#e8c878);border-color:var(--game-gold-border);box-shadow:0 0 0 3px rgba(241,196,15,.4),0 0 14px rgba(241,196,15,.45);transform:translateY(-3px);}
+.day.today::before{content:"AUJOURD'HUI";position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:linear-gradient(to bottom,var(--game-gold-light),var(--game-gold-dark));border:2px solid var(--game-gold-border);color:#3a2a00;font-family:var(--bftc-font-display);font-weight:800;font-size:8px;padding:1px 6px;border-radius:9999px;white-space:nowrap;letter-spacing:.05em;}
+.day.big{grid-row:span 1;background:linear-gradient(to bottom,#fff,#f6d57b);border:3px solid #704c0a;}
+.day.big .ic img{width:42px;height:42px;}
+.day.big .amt{color:#704c0a;font-size:13px;}
+.day.big::before{content:"★ 7 JOURS";position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:linear-gradient(to bottom,#3d2f1f,#1a1a1a);color:#f6d57b;font-family:var(--bftc-font-display);font-weight:800;font-size:8px;padding:1px 6px;border-radius:9999px;white-space:nowrap;letter-spacing:.05em;border:1.5px solid #704c0a;}
+.foot{margin-top:12px;display:flex;justify-content:center;}
+.foot button{font-family:var(--bftc-font-display);font-weight:800;font-size:13px;color:#fff;background:linear-gradient(to bottom,var(--game-green-light),var(--game-green-dark));border:2px solid var(--game-green-border);padding:8px 22px;border-radius:10px;cursor:pointer;text-shadow:1px 1px 2px rgba(0,0,0,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 3px 0 rgba(0,0,0,.2);}
+</style></head>
+<body>
+<div class="card-stage" style="flex-direction:column;align-items:stretch;">
+<div class="panel">
+  <div class="head"><div class="ey">Récompense quotidienne</div><h3>Le héraut du royaume</h3><div class="sub">« Plus vous reviendrez, plus la cour vous comblera. »</div></div>
+  <div class="row">
+    <div class="day done"><div class="d">J 1</div><div class="ic"><img src="../assets/resources/wood.png"/></div><div class="amt">500</div></div>
+    <div class="day done"><div class="d">J 2</div><div class="ic"><img src="../assets/resources/stone.png"/></div><div class="amt">500</div></div>
+    <div class="day done"><div class="d">J 3</div><div class="ic"><img src="../assets/casual-icons/coin.png"/></div><div class="amt">200</div></div>
+    <div class="day today"><div class="d">J 4</div><div class="ic"><img src="../assets/resources/iron.png"/></div><div class="amt">400</div></div>
+    <div class="day"><div class="d">J 5</div><div class="ic"><img src="../assets/casual-icons/crown.png"/></div><div class="amt">5</div></div>
+    <div class="day"><div class="d">J 6</div><div class="ic"><img src="../assets/army/squire.png"/></div><div class="amt">×10</div></div>
+    <div class="day big"><div class="d">J 7</div><div class="ic"><img src="../assets/casual-icons/crown.png"/></div><div class="amt">25 + boost</div></div>
+  </div>
+  <div class="foot"><button>Réclamer aujourd'hui</button></div>
+</div>
+</div>
+</body></html>

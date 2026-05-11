@@ -5,12 +5,14 @@ MMORTS médiéval (Kingsage / Tribal Wars). Workspace yarn avec :
 - `battleforthecrown-pixi/` — **frontend actif** (Vite + React 19 + PixiJS v8 + Zustand + TanStack Query). Voir [son README](./battleforthecrown-pixi/README.md).
 - `battleforthecrown-backend/` — NestJS + Prisma + Postgres + Socket.IO + pg-boss.
 - `packages/shared/` — types et formules partagés (lecture seule pour les frontends).
+- `battleforthecrown-design-system/` — design system et prototypes exportés (tokens, assets, UI kit). Référence visuelle pour tout nouvel écran Pixi.
 
 ## Documentation
 
 - Décisions structurantes : [`docs/architecture/decisions.md`](./docs/architecture/decisions.md).
 - Doc technique de référence : [`docs/architecture/`](./docs/architecture/README.md).
 - Mécaniques de jeu : [`docs/gameplay/`](./docs/gameplay/README.md).
+- Design system : [`battleforthecrown-design-system/`](./battleforthecrown-design-system/README.md).
 - Briefings AI agents : `CLAUDE.md` à la racine et dans chaque workspace.
 
 ## Démarrage rapide

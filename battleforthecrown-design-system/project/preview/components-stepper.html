@@ -1,0 +1,61 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Stepper</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;padding:18px;align-items:flex-start;}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.row + .row{margin-top:14px;}
+.tag{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--parchment-950);min-width:100px;}
+.stp{display:inline-flex;align-items:stretch;border:2px solid #8b7355;border-radius:10px;overflow:hidden;background:linear-gradient(to bottom,#fef9f0,#e8d4a8);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 2px 0 rgba(0,0,0,.18);}
+.stp button{appearance:none;border:none;background:linear-gradient(to bottom,#fef9f0,#cdb88a);color:#3d2f1f;font-family:var(--bftc-font-display);font-weight:800;font-size:16px;width:30px;cursor:pointer;border-right:1.5px solid #8b7355;}
+.stp button:last-of-type{border-right:none;border-left:1.5px solid #8b7355;}
+.stp button:hover{background:linear-gradient(to bottom,#fff,#e8d4a8);}
+.stp button:disabled{color:#bfb29a;cursor:not-allowed;}
+.stp .val{min-width:62px;text-align:center;padding:5px 8px;font-family:var(--bftc-font-display);font-weight:800;font-size:14px;color:#3d2f1f;font-variant-numeric:tabular-nums;background:rgba(255,255,255,.4);align-self:center;}
+.stp.lg button{width:36px;font-size:18px;}
+.stp.lg .val{font-size:16px;min-width:78px;padding:7px 10px;}
+.stp.sm button{width:24px;font-size:13px;}
+.stp.sm .val{font-size:12px;min-width:42px;padding:3px 6px;}
+
+.troopcard{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;padding:8px 10px;background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:2px solid #8b7355;border-radius:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 3px 0 rgba(0,0,0,.16);}
+.troopcard img.av{width:42px;height:42px;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.45),rgba(0,0,0,.1));border-radius:8px;padding:4px;border:2px solid rgba(0,0,0,.18);}
+.troopcard .body{display:flex;flex-direction:column;}
+.troopcard .nm{font-family:var(--bftc-font-display);font-weight:800;font-size:13px;color:#3d2f1f;}
+.troopcard .sb{font-family:var(--bftc-font-display);font-size:11px;color:#6d5838;font-variant-numeric:tabular-nums;}
+.troopcard .pool{font-family:var(--bftc-font-display);font-weight:700;font-size:11px;color:#6d5838;font-variant-numeric:tabular-nums;text-align:right;}
+.troopcard .pool b{display:block;color:#3d2f1f;font-size:13px;font-weight:800;}
+.quick{display:inline-flex;gap:3px;margin-left:8px;}
+.quick button{appearance:none;border:1.5px solid #8b7355;background:rgba(255,255,255,.4);font-family:var(--bftc-font-display);font-weight:700;font-size:10px;padding:3px 7px;border-radius:6px;cursor:pointer;color:#3d2f1f;}
+.quick button:hover{background:rgba(255,255,255,.7);}
+.quick button.max{background:linear-gradient(to bottom,var(--game-gold-light),var(--game-gold-dark));border-color:var(--game-gold-border);color:#3a2a00;}
+</style></head>
+<body>
+<div class="card-stage" style="flex-direction:column;align-items:stretch;">
+<div class="row"><span class="tag">tailles</span>
+  <div class="stp sm"><button>−</button><span class="val">3</span><button>+</button></div>
+  <div class="stp"><button>−</button><span class="val">24</span><button>+</button></div>
+  <div class="stp lg"><button>−</button><span class="val">1.000</span><button>+</button></div>
+</div>
+<div class="row"><span class="tag">avec ±10</span>
+  <div class="stp"><button>−10</button><button>−</button><span class="val">125</span><button>+</button><button>+10</button></div>
+  <div class="stp lg"><button>−100</button><button>−10</button><span class="val">1.250</span><button>+10</button><button>+100</button></div>
+</div>
+<div class="row"><span class="tag">limites</span>
+  <div class="stp"><button disabled>−</button><span class="val">0</span><button>+</button></div>
+  <div class="stp"><button>−</button><span class="val" style="color:var(--game-red-border);">MAX</span><button disabled>+</button></div>
+</div>
+<div class="row" style="flex-direction:column;align-items:stretch;gap:6px;"><span class="tag">en jeu · recrutement</span>
+  <div class="troopcard">
+    <img class="av" src="../assets/army/squire.png"/>
+    <div class="body"><div class="nm">Écuyer · ATK 12 / DEF 8</div><div class="sb">Coût/unité : 50 🪵 · 30 🪨</div></div>
+    <div class="stp"><button>−10</button><button>−</button><span class="val">24</span><button>+</button><button>+10</button></div>
+    <div class="pool"><b>24 / 80</b><span>en caserne</span></div>
+  </div>
+  <div class="troopcard">
+    <img class="av" src="../assets/army/templar.png"/>
+    <div class="body"><div class="nm">Templier · ATK 45 / DEF 32</div><div class="sb">Coût/unité : 280 🪨 · 150 ⛏️</div></div>
+    <div class="stp"><button disabled>−10</button><button>−</button><span class="val">0</span><button>+</button><button>+10</button></div>
+    <div class="pool"><b>0 / 12</b><span>en caserne</span><div class="quick"><button>−</button><button>+5</button><button class="max">MAX</button></div></div>
+  </div>
+</div>
+</div>
+</body></html>

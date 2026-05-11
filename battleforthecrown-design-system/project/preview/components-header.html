@@ -1,0 +1,38 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Header bar</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#3c2619;padding:14px;}
+.head{width:100%;display:flex;align-items:center;gap:8px;background:linear-gradient(to bottom,rgba(60,38,25,.85),rgba(78,56,34,.85));border:2px solid #8b7355;border-radius:10px;padding:8px;}
+.avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(to bottom,#8b6f47,#6d5838);border:2px solid #5d4a32;display:flex;align-items:center;justify-content:center;font-family:var(--bftc-font-display);font-weight:700;font-size:13px;color:#fff;text-shadow:var(--text-shadow-game);position:relative;flex-shrink:0;}
+.lvl{position:absolute;bottom:-4px;right:-4px;background:linear-gradient(to bottom,#f6d57b,#c59e3f);border:2px solid #9e7b0d;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#3a2a00;}
+.col{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.pill{display:inline-flex;align-items:center;gap:5px;background:rgba(0,0,0,.35);border:2px solid rgba(255,255,255,.15);border-radius:9999px;padding:2px 8px;font-family:var(--bftc-font-display);font-weight:700;font-size:11px;color:#fff;font-variant-numeric:tabular-nums;text-shadow:var(--text-shadow-game);}
+.pill img{width:14px;height:14px;}
+.res{display:flex;gap:6px;}
+.res .pill{font-size:11px;padding:2px 6px;}
+.btn{width:34px;height:34px;border-radius:8px;background:linear-gradient(to bottom,#8b6f47,#5d4a32);border:2px solid #5d4a32;display:flex;align-items:center;justify-content:center;}
+svg{width:16px;height:16px;stroke:#f5e6d3;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+</style></head>
+<body>
+<div class="card-stage">
+  <div class="head">
+    <div class="avatar">SK<div class="lvl">12</div></div>
+    <div class="col">
+      <div class="row">
+        <div class="pill"><img src="../assets/icons/army-power.png"/>2 480</div>
+        <div class="pill"><img src="../assets/icons/crown.png"/>28</div>
+      </div>
+      <div class="row">
+        <div class="res">
+          <div class="pill"><img src="../assets/resources/wood.png"/>8.500</div>
+          <div class="pill"><img src="../assets/resources/stone.png"/>3.200</div>
+          <div class="pill"><img src="../assets/resources/iron.png"/>1.500</div>
+        </div>
+        <div class="pill"><img src="../assets/resources/population.png"/>120/200</div>
+      </div>
+    </div>
+    <div class="btn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+  </div>
+</div>
+</body></html>

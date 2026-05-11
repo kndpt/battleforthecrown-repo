@@ -1,0 +1,315 @@
+/* ============================================================================
+   Battle for the Crown — Design Tokens
+   Médiéval / mobile-first / "lisible mais profond"
+   Source: battleforthecrown-pixi (Tailwind config + ui/* primitives)
+   ============================================================================ */
+
+/* Webfont — load Cinzel from Google Fonts (medieval serif used throughout). */
+@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&display=swap");
+
+:root {
+  /* --------------------------------------------------------------------------
+     FONT FAMILIES
+     ----------------------------------------------------------------------- */
+  --bftc-font-display: "Cinzel", "Cormorant Garamond", Georgia, serif;
+  --bftc-font-body:    "Cinzel", Georgia, "Times New Roman", serif;
+  --bftc-font-numeric: "Cinzel", Georgia, serif; /* tabular nums in HUD */
+
+  /* --------------------------------------------------------------------------
+     BASE PALETTE — "Kingdom" warm browns / golds (Tailwind: kingdom.50–900)
+     The brand spine: deep amber + parchment + signet brown.
+     ----------------------------------------------------------------------- */
+  --kingdom-50:  #fef7ee;
+  --kingdom-100: #fdead4;
+  --kingdom-200: #fbd6a8;
+  --kingdom-300: #f9b97c;
+  --kingdom-400: #f59e0b;
+  --kingdom-500: #d97706;
+  --kingdom-600: #b45309;
+  --kingdom-700: #92400e;
+  --kingdom-800: #78350f;
+  --kingdom-900: #451a03;
+
+  /* --------------------------------------------------------------------------
+     PARCHMENT — the workhorse card / panel background
+     ----------------------------------------------------------------------- */
+  --parchment-50:  #fef9f0;
+  --parchment-100: #f9f3e8;
+  --parchment-200: #f5e6d3;
+  --parchment-300: #f4e4c1;
+  --parchment-400: #e8d4a8;
+  --parchment-500: #d4c094;
+  --parchment-600: #c9a882;
+  --parchment-700: #8b7355;
+  --parchment-800: #8b6f47;
+  --parchment-900: #6d5838;
+  --parchment-950: #5d4a32;
+  --parchment-flat: #d2b48c; /* the bare `bg-parchment` */
+
+  /* --------------------------------------------------------------------------
+     WOOD — secondary surface (panels, bottom nav)
+     ----------------------------------------------------------------------- */
+  --wood-light:  #a67c52;
+  --wood:        #8b6f47;
+  --wood-mid:    #7d5a3a;
+  --wood-dark:   #6d5838;
+  --wood-deeper: #5d4a32;
+  --wood-deep:   #3d2f1f;
+  --wood-bark:   #3c2619;
+
+  /* --------------------------------------------------------------------------
+     STONE — neutral / locked / disabled
+     ----------------------------------------------------------------------- */
+  --stone-light:  #b0b8c0;
+  --stone:        #95a5a6;
+  --stone-dark:   #7f8c8d;
+  --stone-border: #5d6d6e;
+  --stone-deep:   #606060;
+
+  /* --------------------------------------------------------------------------
+     SEMANTIC "GAME" PALETTE — the 5 action colors.
+     Every CTA, badge and panel state pulls from this set.
+     ----------------------------------------------------------------------- */
+  --game-green-light:  #6ebf49;  /* success: build, recruit, OK */
+  --game-green-dark:   #4a8c2a;
+  --game-green-border: #3a6c1f;
+
+  --game-blue-light:   #5b9bd5;  /* info: training, accept, secondary */
+  --game-blue-dark:    #2e75b6;
+  --game-blue-border:  #1f5288;
+
+  --game-red-light:    #e74c3c;  /* danger: attack, cancel, alert */
+  --game-red-dark:     #c0392b;
+  --game-red-border:   #a93226;
+
+  --game-gold-light:   #f1c40f;  /* warning: in-progress, premium */
+  --game-gold-dark:    #d4a017;
+  --game-gold-border:  #9e7b0d;
+  --game-gold-glow:    #f6d57b;  /* active nav tab */
+
+  --game-stone-light:  #95a5a6;  /* neutral / locked */
+  --game-stone-dark:   #7f8c8d;
+  --game-stone-border: #5d6d6e;
+
+  /* Resource-icon tints (used in HUD bar) */
+  --res-wood:  #8b6f47;
+  --res-stone: #95a5a6;
+  --res-iron:  #6b7280;
+  --res-gold:  #f1c40f;
+  --res-food:  #d4a017;
+
+  /* --------------------------------------------------------------------------
+     SURFACES — chrome, app shell, world map
+     ----------------------------------------------------------------------- */
+  --bg-app:        #1a1a2e;   /* root <html> dark navy backdrop */
+  --bg-parchment:  #d2b48c;   /* flat parchment fill */
+  --bg-landing-1:  #e8d5b7;   /* landing radial start */
+  --bg-landing-2:  #f5e6d3;
+  --bg-landing-3:  #d4c094;
+  --bg-overlay:    rgba(0, 0, 0, 0.6);   /* modal overlay */
+  --bg-blur:       saturate(120%) blur(6px);
+
+  /* --------------------------------------------------------------------------
+     FOREGROUND / TYPE COLORS
+     ----------------------------------------------------------------------- */
+  --fg-on-dark:        #f5f3e8;          /* default text on dark/wood */
+  --fg-on-parchment:   #1f2937;          /* gray-800 on parchment */
+  --fg-muted-parch:    #4b5563;          /* gray-600 on parchment */
+  --fg-quill:          var(--kingdom-900);
+  --fg-quill-soft:     var(--parchment-950);
+  --fg-on-cta:         #ffffff;          /* white on gradient buttons */
+  --fg-on-cta-shadow:  rgba(0, 0, 0, 0.7);
+
+  /* --------------------------------------------------------------------------
+     BORDERS / OUTLINES
+     ----------------------------------------------------------------------- */
+  --border-card:       2px;   /* inner border of every card */
+  --border-card-outline: 4px; /* the white outline AROUND the card */
+  --border-button:     2px;
+  --border-input:      4px;
+  --border-panel:      2px;
+  --border-modal:      4px;
+  --border-nav:        2px;
+
+  /* --------------------------------------------------------------------------
+     RADII — generous, mobile-friendly
+     ----------------------------------------------------------------------- */
+  --radius-xs:  4px;
+  --radius-sm:  6px;
+  --radius-md:  8px;          /* buttons (rounded-md) */
+  --radius-lg:  12px;         /* inputs (rounded-xl), panels */
+  --radius-xl:  16px;         /* cards (rounded-2xl) → 1rem */
+  --radius-pill: 9999px;      /* badges, avatars, resource chips */
+
+  /* --------------------------------------------------------------------------
+     SHADOWS — "clay" elevation system + game-specific inner highlights
+     ----------------------------------------------------------------------- */
+  /* Inner highlight along top edge of buttons/badges (the "molded" look) */
+  --shadow-game-inset:      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  --shadow-game-inset-red:  inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  /* Pressed state — text/icon "sinks" 0.5px down + dark inner */
+  --shadow-game-pressed:    inset 0 2px 4px rgba(0, 0, 0, 0.5);
+
+  /* Card clay elevation — used on BuildingCard / UnitCard */
+  --shadow-clay-sm: 0 4px 8px rgba(0, 0, 0, 0.2);
+  --shadow-clay-md: 0 18px 38px rgba(23, 26, 33, 0.24), 0 6px 10px rgba(23, 26, 33, 0.18);
+  --shadow-clay-lg: 0 24px 48px rgba(23, 26, 33, 0.32), 0 10px 16px rgba(23, 26, 33, 0.22);
+
+  /* Inner highlight + inner shadow that ride INSIDE every Card */
+  --shadow-card-inner-light: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  --shadow-card-inner-deep:  inset 0 -18px 28px rgba(0, 0, 0, 0.18), inset 0 2px 0 rgba(255, 255, 255, 0.35);
+
+  /* Bottom navigation bar — heavy upward shadow */
+  --shadow-nav-up: 0 -6px 18px rgba(0, 0, 0, 0.45);
+
+  /* Modal — double ring + drop */
+  --shadow-modal: 0 0 0 2px var(--parchment-950), 0 8px 32px rgba(0, 0, 0, 0.5);
+
+  /* Active-tab gold glow */
+  --shadow-gold-glow: 0 0 16px rgba(250, 224, 120, 0.45);
+
+  /* Text shadow on every CTA / heading — the "engraved" look */
+  --text-shadow-game: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  --text-shadow-soft: 0 1px 0 rgba(255, 255, 255, 0.6);
+
+  /* --------------------------------------------------------------------------
+     SPACING — Tailwind-native scale, kept loose for thumb taps
+     ----------------------------------------------------------------------- */
+  --space-0:  0;
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;   /* default panel padding */
+  --space-5:  20px;
+  --space-6:  24px;   /* lg panel */
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* --------------------------------------------------------------------------
+     MOTION — fast, snappy, no easing flourishes
+     ----------------------------------------------------------------------- */
+  --t-press:   100ms ease-in-out;  /* buttons, taps */
+  --t-hover:   150ms ease-in-out;  /* badges, tints */
+  --t-state:   200ms ease-in-out;  /* nav, cards hover */
+  --t-overlay: 300ms ease-in-out;  /* modals, overlays */
+  --press-translate: translateY(2px);
+
+  /* --------------------------------------------------------------------------
+     TYPE SCALE — every step explicit (Cinzel reads tight at small sizes,
+     so we keep min readable size at 12px / 0.75rem)
+     ----------------------------------------------------------------------- */
+  --fs-2xs: 10px;   /* badge counters, cost mini */
+  --fs-xs:  12px;   /* unit cost, helper text */
+  --fs-sm:  14px;   /* labels, buttons sm */
+  --fs-md:  16px;   /* body, buttons md */
+  --fs-lg:  18px;   /* card title, buttons lg */
+  --fs-xl:  20px;   /* modal subtitle */
+  --fs-2xl: 24px;   /* modal title */
+  --fs-3xl: 30px;   /* big numeric (training qty) */
+  --fs-4xl: 36px;   /* H1 small */
+  --fs-5xl: 48px;   /* landing H1 (mobile) */
+  --fs-6xl: 60px;   /* landing H1 (desktop) */
+
+  --lh-tight:  1.1;
+  --lh-snug:   1.25;
+  --lh-normal: 1.45;
+  --lh-loose:  1.6;
+
+  --tracking-display: 0.02em;
+  --tracking-eyebrow: 0.3em;   /* "MMORTS médiéval" landing eyebrow */
+  --tracking-button:  0.02em;
+}
+
+/* ============================================================================
+   SEMANTIC TYPE STYLES — drop on tags directly
+   ============================================================================ */
+
+html, body {
+  background: var(--bg-app);
+  color: var(--fg-on-dark);
+  font-family: var(--bftc-font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.bftc-eyebrow,
+[data-bftc="eyebrow"] {
+  font-family: var(--bftc-font-display);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--parchment-950);
+}
+
+.bftc-h1,
+[data-bftc="h1"] {
+  font-family: var(--bftc-font-display);
+  font-size: var(--fs-5xl);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-display);
+  color: var(--fg-on-parchment);
+}
+
+.bftc-h2,
+[data-bftc="h2"] {
+  font-family: var(--bftc-font-display);
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+  line-height: var(--lh-snug);
+  color: var(--fg-on-parchment);
+}
+
+.bftc-h3,
+[data-bftc="h3"] {
+  font-family: var(--bftc-font-display);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  line-height: var(--lh-snug);
+  color: var(--fg-on-parchment);
+}
+
+.bftc-card-title,
+[data-bftc="card-title"] {
+  font-family: var(--bftc-font-display);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+  text-shadow: var(--text-shadow-game);
+  color: var(--fg-on-cta);
+}
+
+.bftc-body,
+[data-bftc="body"] {
+  font-family: var(--bftc-font-body);
+  font-size: var(--fs-md);
+  line-height: var(--lh-normal);
+  color: var(--fg-on-parchment);
+}
+
+.bftc-quote,
+[data-bftc="quote"] {
+  font-family: var(--bftc-font-display);
+  font-style: italic;
+  color: var(--fg-muted-parch);
+  font-size: var(--fs-xs);
+}
+
+.bftc-numeric,
+[data-bftc="numeric"] {
+  font-family: var(--bftc-font-numeric);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.bftc-cta-label,
+[data-bftc="cta"] {
+  font-family: var(--bftc-font-display);
+  font-weight: 700;
+  color: var(--fg-on-cta);
+  text-shadow: var(--text-shadow-game);
+  letter-spacing: var(--tracking-button);
+}

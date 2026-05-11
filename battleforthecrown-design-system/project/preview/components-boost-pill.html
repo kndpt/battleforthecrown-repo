@@ -1,0 +1,49 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Boosts</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;padding:18px;align-items:flex-start;}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.row + .row{margin-top:10px;}
+.tag{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--parchment-950);min-width:90px;}
+.boost{display:inline-flex;align-items:center;gap:5px;padding:3px 9px 3px 4px;border-radius:9999px;border:2px solid;font-family:var(--bftc-font-display);font-weight:700;font-size:12px;font-variant-numeric:tabular-nums;}
+.boost .ic{width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;}
+.boost .ic img{width:16px;height:16px;}
+.boost .t{font-size:10px;opacity:.85;font-weight:600;display:inline-flex;align-items:center;gap:2px;}
+.boost .t::before{content:"·";margin:0 3px;opacity:.5;}
+.b-prod{background:linear-gradient(to bottom,#d6ecc4,#a8d28d);border-color:var(--game-green-border);color:#1a4408;}
+.b-atk{background:linear-gradient(to bottom,#fbd5d0,#e89c93);border-color:var(--game-red-border);color:#7a1d10;}
+.b-def{background:linear-gradient(to bottom,#cfe2f6,#8eb2dc);border-color:var(--game-blue-border);color:#102e58;}
+.b-build{background:linear-gradient(to bottom,#fef0c6,#e8c878);border-color:var(--game-gold-border);color:#5a4400;}
+.b-vip{background:linear-gradient(to bottom,#5b2c8a,#2c0e4d);border-color:#1a052f;color:#f6d57b;text-shadow:1px 1px 2px rgba(0,0,0,.6);}
+.b-debuff{background:linear-gradient(to bottom,#3d2f1f,#1a1a1a);border-color:#0a0a0a;color:#e74c3c;text-shadow:1px 1px 2px rgba(0,0,0,.6);}
+.shelf{display:flex;flex-direction:column;gap:6px;padding:10px;background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:2px solid #8b7355;border-radius:12px;width:100%;}
+.shelf h4{font-family:var(--bftc-font-display);font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:#5d4a32;font-weight:700;}
+.shelf .line{display:flex;justify-content:space-between;align-items:center;padding:5px 8px;background:rgba(255,255,255,.4);border-radius:8px;border:1.5px solid rgba(0,0,0,.12);}
+.shelf .line .name{font-family:var(--bftc-font-display);font-weight:700;font-size:12px;color:#3d2f1f;display:flex;align-items:center;gap:7px;}
+.shelf .line .name img{width:22px;height:22px;}
+.shelf .line .right{display:flex;align-items:center;gap:6px;}
+.shelf .line .clk{font-family:var(--bftc-font-display);font-weight:700;font-size:11px;color:#6d5838;font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:3px;}
+.shelf .line .clk img{width:12px;height:12px;}
+.shelf .line .x{width:22px;height:22px;border-radius:6px;background:rgba(0,0,0,.1);border:1.5px solid rgba(0,0,0,.18);font-weight:700;cursor:pointer;}
+</style></head>
+<body>
+<div class="card-stage" style="flex-direction:column;align-items:stretch;">
+<div class="row"><span class="tag">buffs</span>
+  <span class="boost b-prod"><span class="ic"><img src="../assets/resources/wood.png"/></span>+50% prod<span class="t">1h 23m</span></span>
+  <span class="boost b-atk"><span class="ic"><img src="../assets/icons/hand-red.png"/></span>+25% ATK<span class="t">12m</span></span>
+  <span class="boost b-def"><span class="ic"><img src="../assets/icons/hand-silver.png"/></span>+40% DEF<span class="t">2h 04m</span></span>
+  <span class="boost b-build"><span class="ic"><img src="../assets/icons/clock.png"/></span>−30% temps<span class="t">45m</span></span>
+</div>
+<div class="row"><span class="tag">premium / debuff</span>
+  <span class="boost b-vip"><span class="ic" style="background:rgba(246,213,123,.3);"><img src="../assets/casual-icons/crown.png"/></span>VIP NOBLESSE<span class="t" style="color:#f6d57b;">12j</span></span>
+  <span class="boost b-debuff"><span class="ic" style="background:rgba(231,76,60,.3);"><img src="../assets/icons/hand-red.png"/></span>Cible marquée<span class="t" style="color:#e89c93;">3h</span></span>
+</div>
+<div class="row" style="margin-top:14px;"><div class="shelf">
+  <h4>Effets actifs · 4</h4>
+  <div class="line"><div class="name"><img src="../assets/resources/wood.png"/>Boost production bois<span class="boost b-prod" style="font-size:10px;padding:1px 7px 1px 3px;"><span class="t" style="font-size:9.5px;">+50%</span></span></div><div class="right"><span class="clk"><img src="../assets/icons/clock.png"/>1h 23m</span><button class="x">×</button></div></div>
+  <div class="line"><div class="name"><img src="../assets/icons/hand-red.png"/>Cri de guerre<span class="boost b-atk" style="font-size:10px;padding:1px 7px 1px 3px;"><span class="t" style="font-size:9.5px;">+25% ATK</span></span></div><div class="right"><span class="clk"><img src="../assets/icons/clock.png"/>0:12</span><button class="x">×</button></div></div>
+  <div class="line"><div class="name"><img src="../assets/buildings/watchtower.png"/>Vigilance accrue<span class="boost b-def" style="font-size:10px;padding:1px 7px 1px 3px;"><span class="t" style="font-size:9.5px;">+40% DEF</span></span></div><div class="right"><span class="clk"><img src="../assets/icons/clock.png"/>2h 04m</span><button class="x">×</button></div></div>
+  <div class="line"><div class="name"><img src="../assets/casual-icons/crown.png"/>Pacte royal<span class="boost b-vip" style="font-size:10px;padding:1px 7px 1px 3px;"><span class="t" style="font-size:9.5px;color:#f6d57b;">VIP</span></span></div><div class="right"><span class="clk"><img src="../assets/icons/clock.png"/>12 j</span></div></div>
+</div></div>
+</div>
+</body></html>

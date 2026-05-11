@@ -1,0 +1,35 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Buttons</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;align-items:flex-start;padding-top:18px;}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;width:100%;}
+.row + .row{margin-top:10px;}
+.gradient-button.xs{font-size:11px;padding:4px 8px;}
+.gradient-button.lg{font-size:18px;padding:12px 24px;}
+.disabled{opacity:0.5;cursor:not-allowed;}
+.pressed{transform:translateY(2px);box-shadow:var(--shadow-game-pressed);}
+.tag{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--parchment-950);min-width:78px;}
+</style>
+</head>
+<body>
+<div class="card-stage" style="flex-direction:column;align-items:stretch;">
+  <div class="row"><span class="tag">5 variants</span>
+    <button class="gradient-button gb-success">OK</button>
+    <button class="gradient-button gb-info">ACCEPTER</button>
+    <button class="gradient-button gb-danger">NON</button>
+    <button class="gradient-button gb-warning">ATTENTION</button>
+    <button class="gradient-button gb-neutral">Retour</button>
+  </div>
+  <div class="row"><span class="tag">sm/md/lg</span>
+    <button class="gradient-button gb-success xs">Small</button>
+    <button class="gradient-button gb-info">Medium</button>
+    <button class="gradient-button gb-warning lg">Large</button>
+  </div>
+  <div class="row"><span class="tag">states</span>
+    <button class="gradient-button gb-success">Default</button>
+    <button class="gradient-button gb-success" style="filter:brightness(1.1)">Hover</button>
+    <button class="gradient-button gb-success pressed">Pressed</button>
+    <button class="gradient-button gb-success disabled">Disabled</button>
+  </div>
+</div>
+</body></html>

@@ -1,0 +1,81 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Army movement</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#3c2619;padding:18px;align-items:flex-start;color:#f5e6d3;}
+.list{display:flex;flex-direction:column;gap:6px;width:100%;}
+.mvt{display:grid;grid-template-columns:36px 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-radius:12px;border:2px solid;background:linear-gradient(to bottom,rgba(255,255,255,.06),rgba(0,0,0,.18));box-shadow:inset 0 1px 0 rgba(255,255,255,.18);}
+.mvt.attack{border-color:var(--game-red-border);background:linear-gradient(to bottom,rgba(231,76,60,.25),rgba(0,0,0,.4));}
+.mvt.defend{border-color:var(--game-blue-border);background:linear-gradient(to bottom,rgba(91,155,213,.28),rgba(0,0,0,.4));}
+.mvt.return{border-color:var(--game-green-border);background:linear-gradient(to bottom,rgba(110,191,73,.25),rgba(0,0,0,.4));}
+.mvt.scout{border-color:#7f8c8d;background:linear-gradient(to bottom,rgba(149,165,166,.22),rgba(0,0,0,.4));}
+.mvt.incoming{border-color:#e74c3c;animation:flash 1.5s ease-in-out infinite;}
+@keyframes flash{50%{filter:brightness(1.18) saturate(1.2);box-shadow:0 0 14px rgba(231,76,60,.55),inset 0 1px 0 rgba(255,255,255,.18);}}
+.mvt .icn{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid rgba(0,0,0,.3);background:rgba(0,0,0,.25);}
+.mvt .icn img{width:24px;height:24px;}
+.mvt .body{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.mvt .ttl{font-family:var(--bftc-font-display);font-weight:700;font-size:12.5px;color:#fff;text-shadow:1px 1px 2px rgba(0,0,0,.5);line-height:1.1;}
+.mvt .sub{font-family:var(--bftc-font-display);font-size:10.5px;color:#e0d4b8;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.mvt .sub b{color:#fff;font-weight:700;font-variant-numeric:tabular-nums;}
+.mvt .time{font-family:var(--bftc-font-display);font-weight:700;font-size:13px;color:#fff;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:4px;text-shadow:1px 1px 2px rgba(0,0,0,.6);}
+.mvt .time img{width:13px;height:13px;}
+.bar{grid-column:1/-1;height:5px;background:rgba(0,0,0,.4);border-radius:3px;overflow:hidden;border:1px solid rgba(0,0,0,.5);margin-top:4px;}
+.bar .fill{height:100%;}
+.attack .bar .fill{background:linear-gradient(to bottom,var(--game-red-light),var(--game-red-dark));}
+.defend .bar .fill{background:linear-gradient(to bottom,var(--game-blue-light),var(--game-blue-dark));}
+.return .bar .fill{background:linear-gradient(to bottom,var(--game-green-light),var(--game-green-dark));}
+.scout .bar .fill{background:linear-gradient(to bottom,#bdc3c7,#7f8c8d);}
+.tag{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:#cdb88a;margin-bottom:4px;}
+.recall{font-family:var(--bftc-font-display);font-weight:700;font-size:10px;background:linear-gradient(to bottom,#bfc7cb,#7f8c8d);border:2px solid var(--game-stone-border);color:#1f2933;border-radius:8px;padding:3px 8px;cursor:pointer;}
+</style></head>
+<body>
+<div class="card-stage" style="flex-direction:column;align-items:stretch;">
+<span class="tag">mouvements actifs · 4</span>
+<div class="list">
+  <div class="mvt incoming attack">
+    <div class="icn"><img src="../assets/icons/hand-red.png"/></div>
+    <div class="body">
+      <div class="ttl">⚠ ATTAQUE entrante</div>
+      <div class="sub">De <b>Sire_Robert</b> · Roc-d'Acier <b>238|617</b> · ≈ 240 unités</div>
+    </div>
+    <div class="time"><img src="../assets/icons/clock.png"/>02:15</div>
+    <div class="bar"><div class="fill" style="width:32%"></div></div>
+  </div>
+  <div class="mvt attack">
+    <div class="icn"><img src="../assets/army/squire.png"/></div>
+    <div class="body">
+      <div class="ttl">Attaque → Tours-Hautes</div>
+      <div class="sub"><b>120</b> squires + <b>60</b> archers · arrivée à 14h42</div>
+    </div>
+    <div class="time"><img src="../assets/icons/clock.png"/>0:47</div>
+    <div class="bar"><div class="fill" style="width:78%"></div></div>
+  </div>
+  <div class="mvt defend">
+    <div class="icn"><img src="../assets/icons/hand-silver.png"/></div>
+    <div class="body">
+      <div class="ttl">Renfort → Castelfort (allié)</div>
+      <div class="sub"><b>80</b> milice · au retour : 6h</div>
+    </div>
+    <div class="time"><img src="../assets/icons/clock.png"/>1h 12m</div>
+    <div class="bar"><div class="fill" style="width:25%"></div></div>
+  </div>
+  <div class="mvt return">
+    <div class="icn"><img src="../assets/army/squire.png"/></div>
+    <div class="body">
+      <div class="ttl">Retour de pillage · Roc-d'Acier</div>
+      <div class="sub">102 squires + 56 archers · <b>+2.400 butin</b></div>
+    </div>
+    <div class="time"><img src="../assets/icons/clock.png"/>0:12</div>
+    <div class="bar"><div class="fill" style="width:96%"></div></div>
+  </div>
+  <div class="mvt scout">
+    <div class="icn"><img src="../assets/icons/position.png"/></div>
+    <div class="body">
+      <div class="ttl">Éclaireur → Bois-d'Argent</div>
+      <div class="sub">×1 éclaireur · discret</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;"><div class="time"><img src="../assets/icons/clock.png"/>3:04</div><button class="recall">Rappeler</button></div>
+    <div class="bar"><div class="fill" style="width:22%"></div></div>
+  </div>
+</div>
+</div>
+</body></html>

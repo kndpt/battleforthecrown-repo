@@ -1,0 +1,218 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Alliance banner</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>
+body{background:#f5e6d3;padding:18px;align-items:flex-start;}
+.tag{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--parchment-950);min-width:78px;}
+.row{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;}
+.row + .row{margin-top:14px;}
+.col{display:flex;flex-direction:column;gap:6px;align-items:stretch;flex:1;min-width:0;}
+
+/* ====== heraldic shield ====== */
+.shield{position:relative;width:62px;height:74px;flex-shrink:0;
+  clip-path:path("M 31 0 L 62 0 L 62 42 Q 62 64 31 74 Q 0 64 0 42 L 0 0 Z");
+  filter:drop-shadow(0 3px 4px rgba(0,0,0,.45));
+}
+.shield::after{content:"";position:absolute;inset:0;
+  clip-path:path("M 31 0 L 62 0 L 62 42 Q 62 64 31 74 Q 0 64 0 42 L 0 0 Z");
+  background:linear-gradient(180deg,rgba(255,255,255,.35) 0%,transparent 35%,transparent 65%,rgba(0,0,0,.25) 100%);
+  pointer-events:none;
+}
+.shield .frame{position:absolute;inset:0;
+  clip-path:path("M 31 0 L 62 0 L 62 42 Q 62 64 31 74 Q 0 64 0 42 L 0 0 Z");
+  border:2.5px solid #3d2f1f;
+  /* fake border by using outline inside via box-shadow */
+  box-shadow:inset 0 0 0 2.5px #3d2f1f, inset 0 0 0 4px rgba(241,196,15,.5);
+}
+.shield .inner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;}
+.shield .inner img{width:30px;height:30px;filter:drop-shadow(0 1px 1px rgba(0,0,0,.5));z-index:2;position:relative;}
+.shield .glyph{position:relative;z-index:2;font-family:var(--bftc-font-display);font-weight:900;font-size:28px;color:#fef9f0;text-shadow:0 2px 0 rgba(0,0,0,.55),0 0 6px rgba(0,0,0,.5);letter-spacing:-.02em;}
+
+/* heraldic fields */
+.f-quartered{background:
+  linear-gradient(135deg,#a93226 50%,transparent 50.1%) top left/50% 50% no-repeat,
+  linear-gradient(225deg,#1a3a6e 50%,transparent 50.1%) top right/50% 50% no-repeat,
+  linear-gradient(45deg,#1a3a6e 50%,transparent 50.1%) bottom left/50% 50% no-repeat,
+  linear-gradient(315deg,#a93226 50%,transparent 50.1%) bottom right/50% 50% no-repeat,
+  #2a1810;
+}
+.f-sable{background:linear-gradient(180deg,#3d2f1f,#0a0a0a);}
+.f-gules{background:linear-gradient(180deg,#a93226,#5a1612);}
+.f-azure{background:linear-gradient(180deg,#2c5fa3,#102e58);}
+.f-vert{background:linear-gradient(180deg,#3e7e3e,#1d4a1d);}
+.f-or{background:linear-gradient(180deg,#f1c40f,#a87b25);}
+.f-purpure{background:linear-gradient(180deg,#5b2c8a,#2c0e4d);}
+
+/* charges (overlays on field) */
+.charge-chevron::before{content:"";position:absolute;inset:0;
+  background:linear-gradient(135deg,transparent 46%,#f1c40f 46.5%,#f1c40f 53.5%,transparent 54%) bottom left/52% 52% no-repeat,
+             linear-gradient(45deg,transparent 46%,#f1c40f 46.5%,#f1c40f 53.5%,transparent 54%) bottom right/52% 52% no-repeat;
+}
+.charge-fess::before{content:"";position:absolute;left:0;right:0;top:38%;height:14%;background:linear-gradient(180deg,#f1c40f,#a87b25);box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -1px 0 rgba(0,0,0,.3);}
+.charge-cross::before{content:"";position:absolute;left:42%;right:42%;top:8%;bottom:8%;background:linear-gradient(180deg,#fef9f0,#cdb88a);}
+.charge-cross::after{content:"";position:absolute;left:8%;right:8%;top:38%;height:18%;background:linear-gradient(180deg,#fef9f0,#cdb88a);z-index:1;}
+.charge-pile::before{content:"";position:absolute;top:-2%;left:50%;width:0;height:0;border-left:32px solid transparent;border-right:32px solid transparent;border-top:68px solid #f1c40f;transform:translateX(-50%);filter:drop-shadow(0 1px 1px rgba(0,0,0,.35));}
+
+/* ====== big banner card ====== */
+.banner-card{position:relative;display:flex;align-items:center;gap:14px;padding:14px 16px;background:linear-gradient(180deg,#3d2f1f,#1a1a1a);border:3px solid var(--game-gold-dark);border-radius:14px;color:#f6d57b;font-family:var(--bftc-font-display);box-shadow:0 6px 14px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.15);overflow:hidden;}
+.banner-card::before{content:"";position:absolute;inset:0;background:
+  radial-gradient(circle at 0% 0%,rgba(241,196,15,.13),transparent 45%),
+  radial-gradient(circle at 100% 100%,rgba(169,50,38,.18),transparent 50%);pointer-events:none;}
+.banner-card .meta{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;z-index:1;}
+.banner-card .tagline{display:flex;align-items:baseline;gap:8px;}
+.banner-card .ttag{font-weight:900;font-size:22px;letter-spacing:.06em;color:var(--game-gold-light);text-shadow:0 2px 0 #000,0 0 8px rgba(241,196,15,.4);font-variant:small-caps;}
+.banner-card .name{font-weight:700;font-size:15px;color:#fef9f0;}
+.banner-card .motto{font-size:10.5px;color:#cdb88a;font-style:italic;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;max-width:280px;}
+.banner-card .stats{display:flex;flex-direction:column;align-items:flex-end;font-size:10px;color:#cdb88a;text-align:right;letter-spacing:.04em;text-transform:uppercase;z-index:1;}
+.banner-card .stats b{color:#f6d57b;font-weight:800;font-size:16px;font-variant-numeric:tabular-nums;letter-spacing:0;text-transform:none;line-height:1;}
+.banner-card .stats .rk{display:inline-flex;align-items:center;gap:3px;background:linear-gradient(180deg,var(--game-gold-light),var(--game-gold-dark));color:#3a2a00;border:1.5px solid var(--game-gold-border);padding:2px 8px;border-radius:9999px;font-weight:800;font-size:11px;letter-spacing:0;text-transform:none;margin-top:3px;}
+
+/* ====== pennon (small flag) ====== */
+.pennon{position:relative;display:inline-flex;align-items:center;gap:8px;padding:5px 22px 5px 10px;font-family:var(--bftc-font-display);font-weight:800;font-size:13px;color:#fef9f0;background:linear-gradient(180deg,#a93226,#5a1612);border:2px solid #3d2f1f;border-right:none;clip-path:polygon(0 0,100% 0,calc(100% - 12px) 50%,100% 100%,0 100%);text-shadow:1px 1px 0 rgba(0,0,0,.6);letter-spacing:.05em;box-shadow:0 2px 0 rgba(0,0,0,.25);}
+.pennon.p-azure{background:linear-gradient(180deg,#2c5fa3,#102e58);}
+.pennon.p-sable{background:linear-gradient(180deg,#3d2f1f,#0a0a0a);color:#f6d57b;}
+.pennon.p-or{background:linear-gradient(180deg,#f1c40f,#a87b25);color:#3a2a00;text-shadow:1px 1px 0 rgba(255,255,255,.3);}
+
+/* ====== inline tag (next to player name) ====== */
+.inline-tag{display:inline-flex;align-items:center;gap:4px;font-family:var(--bftc-font-display);font-weight:800;font-size:10.5px;letter-spacing:.06em;padding:1px 7px 1px 3px;border-radius:4px;color:#fef9f0;text-shadow:1px 1px 0 rgba(0,0,0,.55);border:1.5px solid rgba(0,0,0,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.18);}
+.inline-tag::before{content:"";display:inline-block;width:11px;height:11px;border-radius:2px;background:currentColor;opacity:.95;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25);}
+.it-bfc{background:linear-gradient(180deg,#a93226,#5a1612);color:#fef9f0;}
+.it-bfc::before{background:#f1c40f;}
+.it-stn{background:linear-gradient(180deg,#7f8c8d,#3d4f60);color:#fef9f0;}
+.it-stn::before{background:#bfc7cb;}
+.it-rvn{background:linear-gradient(180deg,#3d2f1f,#0a0a0a);color:#f6d57b;}
+.it-rvn::before{background:#a93226;}
+.it-none{background:linear-gradient(180deg,#cdcdcd,#8b8b8b);color:#1f2933;text-shadow:none;border-color:#555;}
+.it-none::before{background:#1f2933;opacity:.35;}
+
+/* ====== alliance row card (list item) ====== */
+.alist{display:flex;flex-direction:column;gap:6px;}
+.acard{position:relative;display:grid;grid-template-columns:62px 1fr auto;gap:12px;align-items:center;padding:9px 12px 9px 9px;background:linear-gradient(180deg,#fef9f0,#e8d4a8);border:2px solid #8b7355;border-radius:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 3px 0 rgba(0,0,0,.16);}
+.acard.you{background:linear-gradient(180deg,#fef0c6,#e8c878);border-color:var(--game-gold-border);}
+.acard .body{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.acard .nm{font-family:var(--bftc-font-display);font-weight:800;font-size:13.5px;color:#3d2f1f;display:flex;align-items:center;gap:7px;}
+.acard .nm .tg{font-family:var(--bftc-font-display);font-weight:900;font-size:11px;color:#704c0a;letter-spacing:.06em;background:rgba(0,0,0,.06);padding:1px 6px;border-radius:5px;border:1.5px solid rgba(112,76,10,.4);}
+.acard .sb{font-family:var(--bftc-font-display);font-size:10.5px;color:#6d5838;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.acard .rel{display:inline-flex;align-items:center;gap:3px;padding:1px 7px;border-radius:9999px;font-family:var(--bftc-font-display);font-weight:700;font-size:10px;letter-spacing:.05em;text-transform:uppercase;}
+.rel.r-self{background:rgba(241,196,15,.22);color:#704c0a;border:1px solid rgba(112,76,10,.5);}
+.rel.r-ally{background:rgba(46,134,84,.22);color:#1a4408;border:1px solid var(--game-green-border);}
+.rel.r-nap{background:rgba(44,95,163,.18);color:#102e58;border:1px solid var(--game-blue-border);}
+.rel.r-war{background:linear-gradient(180deg,var(--game-red-light),var(--game-red-dark));color:#fff;border:1px solid var(--game-red-border);text-shadow:1px 1px 0 rgba(0,0,0,.4);}
+.acard .pts{text-align:right;font-family:var(--bftc-font-display);}
+.acard .pts b{display:block;font-weight:900;font-size:15px;color:#3d2f1f;font-variant-numeric:tabular-nums;line-height:1;}
+.acard .pts small{display:block;font-size:9.5px;color:#6d5838;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-top:3px;}
+
+/* ====== large profile (alliance page header) ====== */
+.profile{position:relative;display:grid;grid-template-columns:auto 1fr;gap:16px;padding:16px 18px;background:
+  linear-gradient(180deg,rgba(61,47,31,.95),rgba(26,26,26,.95)),
+  repeating-linear-gradient(45deg,rgba(241,196,15,.05) 0 8px,transparent 8px 16px);
+  border:3px solid var(--game-gold-dark);border-radius:14px;color:#f6d57b;font-family:var(--bftc-font-display);box-shadow:0 8px 16px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.18);}
+.profile .crest-wrap{position:relative;}
+.profile .crest-wrap .shield{width:78px;height:92px;}
+.profile .crest-wrap .ribbon{position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);padding:2px 12px;background:linear-gradient(180deg,#f1c40f,#a87b25);color:#3a2a00;font-weight:900;font-size:10.5px;letter-spacing:.12em;border:1.5px solid #704c0a;border-radius:3px;clip-path:polygon(8% 0,92% 0,100% 100%,0 100%);box-shadow:0 2px 4px rgba(0,0,0,.4);}
+.profile .body{display:flex;flex-direction:column;gap:6px;}
+.profile h2{font-weight:800;font-size:20px;color:#fef9f0;letter-spacing:.02em;}
+.profile .tagline{display:flex;align-items:center;gap:8px;}
+.profile .ttag2{font-family:var(--bftc-font-display);font-weight:900;font-size:13px;color:var(--game-gold-light);background:rgba(241,196,15,.15);padding:2px 9px;border-radius:5px;letter-spacing:.08em;border:1.5px solid rgba(241,196,15,.4);}
+.profile .motto{font-size:11.5px;color:#cdb88a;font-style:italic;}
+.profile .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px;}
+.profile .stat{background:rgba(0,0,0,.35);border:1.5px solid rgba(241,196,15,.25);border-radius:8px;padding:6px 8px;}
+.profile .stat b{display:block;color:#f6d57b;font-weight:900;font-size:16px;font-variant-numeric:tabular-nums;line-height:1;}
+.profile .stat small{display:block;font-size:9px;color:#cdb88a;text-transform:uppercase;letter-spacing:.1em;margin-top:3px;}
+</style></head>
+<body>
+<div class="card-stage" style="flex-direction:column;align-items:stretch;">
+
+<div class="row"><span class="tag">blasons</span>
+  <div class="shield f-quartered"><div class="frame"></div><div class="inner"><span class="glyph">B</span></div></div>
+  <div class="shield f-sable charge-chevron"><div class="frame"></div><div class="inner"><img src="../assets/casual-icons/crown.png"/></div></div>
+  <div class="shield f-azure charge-fess"><div class="frame"></div><div class="inner"><img src="../assets/icons/hand-silver.png"/></div></div>
+  <div class="shield f-gules charge-cross"><div class="frame"></div><div class="inner"></div></div>
+  <div class="shield f-or charge-pile"><div class="frame"></div><div class="inner"><img src="../assets/buildings/castle.png" style="filter:drop-shadow(0 1px 1px rgba(0,0,0,.7));"/></div></div>
+  <div class="shield f-vert"><div class="frame"></div><div class="inner"><img src="../assets/army/templar.png"/></div></div>
+  <div class="shield f-purpure"><div class="frame"></div><div class="inner"><span class="glyph" style="color:#f1c40f;font-size:24px;">R</span></div></div>
+</div>
+
+<div class="row" style="margin-top:14px;"><span class="tag">page de tribu</span>
+  <div class="profile" style="flex:1;min-width:0;">
+    <div class="crest-wrap">
+      <div class="shield f-sable charge-chevron"><div class="frame"></div><div class="inner"><img src="../assets/casual-icons/crown.png"/></div></div>
+      <div class="ribbon">EST.1247</div>
+    </div>
+    <div class="body">
+      <div class="tagline"><span class="ttag2">[BFC]</span><h2>Les Lames du Nord</h2></div>
+      <div class="motto">« Tant qu'il restera de l'acier, il restera des rois. »</div>
+      <div class="stats-grid">
+        <div class="stat"><b>1.482.310</b><small>Points</small></div>
+        <div class="stat"><b>#3</b><small>Rang serveur</small></div>
+        <div class="stat"><b>24 / 30</b><small>Membres</small></div>
+        <div class="stat"><b>3·1·2</b><small>Allié·NAP·Guerre</small></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row" style="margin-top:14px;"><span class="tag">bandeau compact</span>
+  <div class="banner-card" style="flex:1;min-width:0;">
+    <div class="shield f-quartered"><div class="frame"></div><div class="inner"><span class="glyph">B</span></div></div>
+    <div class="meta">
+      <div class="tagline"><span class="ttag">BFC</span><span class="name">Les Lames du Nord</span></div>
+      <div class="motto">« Tant qu'il restera de l'acier, il restera des rois. »</div>
+    </div>
+    <div class="stats">
+      <span>Points</span><b>1.482.310</b><span class="rk">★ Rang #3</span>
+    </div>
+  </div>
+</div>
+
+<div class="row" style="margin-top:14px;"><span class="tag">pennon</span>
+  <span class="pennon">BFC</span>
+  <span class="pennon p-azure">STN</span>
+  <span class="pennon p-sable">RVN</span>
+  <span class="pennon p-or">SOL</span>
+</div>
+
+<div class="row" style="margin-top:12px;align-items:center;"><span class="tag">tag inline</span>
+  <span style="font-family:var(--bftc-font-display);font-size:12.5px;color:#3d2f1f;">Sire_Robert <span class="inline-tag it-bfc">BFC</span></span>
+  <span style="font-family:var(--bftc-font-display);font-size:12.5px;color:#3d2f1f;">Dame_Aliénor <span class="inline-tag it-stn">STN</span></span>
+  <span style="font-family:var(--bftc-font-display);font-size:12.5px;color:#3d2f1f;">Brigand <span class="inline-tag it-rvn">RVN</span></span>
+  <span style="font-family:var(--bftc-font-display);font-size:12.5px;color:#3d2f1f;">Sans_Tribu <span class="inline-tag it-none">—</span></span>
+</div>
+
+<div class="row" style="margin-top:14px;flex-direction:column;align-items:stretch;gap:6px;"><span class="tag" style="margin-bottom:2px;">liste · diplomatie</span>
+  <div class="acard you">
+    <div class="shield f-sable charge-chevron"><div class="frame"></div><div class="inner"><img src="../assets/casual-icons/crown.png"/></div></div>
+    <div class="body">
+      <div class="nm"><span class="tg">[BFC]</span>Les Lames du Nord</div>
+      <div class="sb"><span class="rel r-self">★ Votre tribu</span><span>24 / 30 membres · fondée an 1247</span></div>
+    </div>
+    <div class="pts"><b>1.482.310</b><small>points</small></div>
+  </div>
+  <div class="acard">
+    <div class="shield f-azure charge-fess"><div class="frame"></div><div class="inner"><img src="../assets/icons/hand-silver.png"/></div></div>
+    <div class="body">
+      <div class="nm"><span class="tg">[STN]</span>Sentinelles du Trône</div>
+      <div class="sb"><span class="rel r-ally">✦ Alliée</span><span>19 membres · pacte scellé il y a 12 j</span></div>
+    </div>
+    <div class="pts"><b>1.124.880</b><small>points</small></div>
+  </div>
+  <div class="acard">
+    <div class="shield f-vert"><div class="frame"></div><div class="inner"><img src="../assets/army/templar.png"/></div></div>
+    <div class="body">
+      <div class="nm"><span class="tg">[SOL]</span>Soleil Levant</div>
+      <div class="sb"><span class="rel r-nap">≡ Non-agression</span><span>22 membres</span></div>
+    </div>
+    <div class="pts"><b>1.067.430</b><small>points</small></div>
+  </div>
+  <div class="acard">
+    <div class="shield f-gules charge-cross"><div class="frame"></div><div class="inner"></div></div>
+    <div class="body">
+      <div class="nm"><span class="tg">[RVN]</span>Corbeaux Noirs</div>
+      <div class="sb"><span class="rel r-war">⚔ En guerre</span><span>18 membres · 4 villages perdus cette saison</span></div>
+    </div>
+    <div class="pts"><b>982.140</b><small>points</small></div>
+  </div>
+</div>
+
+</div>
+</body></html>

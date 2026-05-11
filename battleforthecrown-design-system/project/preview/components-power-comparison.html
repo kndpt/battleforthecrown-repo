@@ -1,0 +1,64 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Power comparison</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;padding:18px;align-items:flex-start;}
+.panel{background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:2px solid #8b7355;border-radius:14px;padding:14px;width:100%;box-shadow:inset 0 1px 0 rgba(255,255,255,.5);}
+.head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.head h4{font-family:var(--bftc-font-display);font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:#5d4a32;font-weight:700;}
+.head .ratio{font-family:var(--bftc-font-display);font-weight:800;font-size:13px;color:#3d2f1f;font-variant-numeric:tabular-nums;}
+.scale{position:relative;height:38px;border-radius:10px;border:2px solid #3d2f1f;display:flex;overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,.35);}
+.scale .left{background:linear-gradient(to bottom,var(--game-red-light),var(--game-red-dark));display:flex;align-items:center;padding:0 10px;color:#fff;font-family:var(--bftc-font-display);font-weight:800;text-shadow:1px 1px 2px rgba(0,0,0,.6);}
+.scale .right{background:linear-gradient(to bottom,var(--game-blue-light),var(--game-blue-dark));display:flex;align-items:center;justify-content:flex-end;padding:0 10px;color:#fff;font-family:var(--bftc-font-display);font-weight:800;text-shadow:1px 1px 2px rgba(0,0,0,.6);flex:1;}
+.scale .mid{position:absolute;top:-3px;bottom:-3px;width:3px;background:#1a1a1a;left:50%;transform:translateX(-50%);box-shadow:0 0 4px rgba(0,0,0,.6);}
+.legend{display:flex;justify-content:space-between;margin-top:8px;font-family:var(--bftc-font-display);font-size:10.5px;color:#6d5838;}
+.legend b{color:#3d2f1f;font-weight:700;font-variant-numeric:tabular-nums;}
+.verdict{margin-top:10px;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;font-family:var(--bftc-font-display);font-size:12px;font-weight:600;}
+.verdict.win{background:rgba(110,191,73,.18);color:#3a6c1f;border:1.5px solid var(--game-green-border);}
+.verdict.lose{background:rgba(231,76,60,.18);color:#7a1d10;border:1.5px solid var(--game-red-border);}
+.verdict.close{background:rgba(241,196,15,.22);color:#5a4400;border:1.5px solid var(--game-gold-border);}
+.compo{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;margin-top:10px;align-items:center;}
+.compo .col{display:flex;flex-direction:column;gap:3px;}
+.compo .col.r{align-items:flex-end;}
+.compo .pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 3px;background:rgba(0,0,0,.06);border:1.5px solid rgba(0,0,0,.18);border-radius:9999px;font-family:var(--bftc-font-display);font-weight:700;font-size:11px;color:#3d2f1f;font-variant-numeric:tabular-nums;}
+.compo .pill img{width:16px;height:16px;}
+.compo .vs{font-family:var(--bftc-font-display);font-weight:900;font-size:18px;color:var(--game-red-border);text-shadow:0 1px 0 #fff;}
+.tag{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--parchment-950);margin-bottom:4px;}
+</style></head>
+<body>
+<div class="card-stage" style="flex-direction:column;align-items:stretch;">
+<span class="tag">preview · 234|612 → 238|617</span>
+<div class="panel">
+  <div class="head"><h4>Estimation de bataille</h4><div class="ratio">68% chances de victoire</div></div>
+  <div class="scale">
+    <div class="left" style="width:62%">⚔ 4.250</div>
+    <div class="right">🛡 2.580</div>
+    <div class="mid"></div>
+  </div>
+  <div class="legend"><span>Vous · puissance <b>4.250</b></span><span>Sire_Robert · puissance <b>2.580</b> (estimée)</span></div>
+  <div class="compo">
+    <div class="col">
+      <span class="pill"><img src="../assets/army/squire.png"/>×120</span>
+      <span class="pill"><img src="../assets/army/archer.png"/>×60</span>
+      <span class="pill"><img src="../assets/army/templar.png"/>×8</span>
+    </div>
+    <div class="vs">VS</div>
+    <div class="col r">
+      <span class="pill"><img src="../assets/army/militia.png"/>×120</span>
+      <span class="pill"><img src="../assets/army/squire.png"/>×~48</span>
+      <span class="pill"><img src="../assets/army/templar.png"/>×?</span>
+    </div>
+  </div>
+  <div class="verdict win">⚔ Avantage net — pertes estimées : ≈ 22 unités</div>
+</div>
+<div class="panel" style="margin-top:10px;">
+  <div class="head"><h4>Estimation</h4><div class="ratio" style="color:var(--game-red-border);">28%</div></div>
+  <div class="scale"><div class="left" style="width:32%">⚔ 1.180</div><div class="right">🛡 3.940</div><div class="mid"></div></div>
+  <div class="verdict lose">⚠ Défaite probable — renforcez avant d'attaquer</div>
+</div>
+<div class="panel" style="margin-top:10px;">
+  <div class="head"><h4>Estimation</h4><div class="ratio" style="color:#5a4400;">52%</div></div>
+  <div class="scale"><div class="left" style="width:51%">⚔ 2.850</div><div class="right">🛡 2.720</div><div class="mid"></div></div>
+  <div class="verdict close">⚖ Affrontement serré — issue incertaine</div>
+</div>
+</div>
+</body></html>

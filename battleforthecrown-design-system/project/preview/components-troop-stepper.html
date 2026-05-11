@@ -1,0 +1,54 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Troop stepper</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;padding:18px;align-items:flex-start;}
+.panel{background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:2px solid #8b7355;border-radius:14px;padding:12px;width:100%;box-shadow:inset 0 1px 0 rgba(255,255,255,.5);}
+.head{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.head .portrait{width:44px;height:44px;border-radius:10px;background:rgba(0,0,0,.18);border:2px solid rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center;}
+.head .portrait img{width:36px;height:36px;}
+.head .name{font-family:var(--bftc-font-display);font-weight:700;font-size:14px;color:#3d2f1f;}
+.head .avail{font-family:var(--bftc-font-display);font-size:11px;color:#6d5838;font-variant-numeric:tabular-nums;}
+.stepper{display:flex;align-items:stretch;background:rgba(0,0,0,.12);border:2px solid #5d4a32;border-radius:12px;overflow:hidden;}
+.stepper button{flex:0 0 auto;width:38px;height:38px;background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:none;font-family:var(--bftc-font-display);font-weight:800;font-size:18px;color:#3d2f1f;cursor:pointer;border-right:2px solid #5d4a32;}
+.stepper button:last-child{border-right:none;border-left:2px solid #5d4a32;}
+.stepper .qty{flex:1;background:#1a1a1a;color:#f6d57b;font-family:var(--bftc-font-display);font-weight:800;font-size:22px;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums;text-shadow:0 0 8px rgba(241,196,15,.5);}
+.quick{display:flex;gap:5px;margin-top:8px;}
+.quick button{flex:1;font-family:var(--bftc-font-display);font-weight:700;font-size:11px;padding:5px 8px;border:2px solid #8b7355;background:linear-gradient(to bottom,#fef9f0,#f5e6d3);color:#3d2f1f;border-radius:8px;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.5);}
+.quick button.max{background:linear-gradient(to bottom,var(--game-gold-light),var(--game-gold-dark));color:#5a4400;border-color:var(--game-gold-border);}
+.slider{margin-top:10px;height:14px;background:rgba(0,0,0,.22);border-radius:8px;border:2px solid #5d4a32;position:relative;overflow:hidden;}
+.slider .fill{position:absolute;left:0;top:0;height:100%;width:48%;background:linear-gradient(to bottom,var(--game-blue-light),var(--game-blue-dark));box-shadow:inset 0 1px 0 rgba(255,255,255,.4);}
+.slider .knob{position:absolute;top:-4px;left:48%;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fef9f0,#a67c52);border:2px solid #3d2f1f;transform:translateX(-50%);box-shadow:0 2px 3px rgba(0,0,0,.4);}
+.cost{display:flex;align-items:center;gap:6px;margin-top:10px;font-family:var(--bftc-font-display);font-size:12px;color:#3d2f1f;font-variant-numeric:tabular-nums;flex-wrap:wrap;}
+.cost .pill{display:inline-flex;align-items:center;gap:4px;padding:3px 8px 3px 4px;background:rgba(0,0,0,.06);border:1.5px solid rgba(0,0,0,.18);border-radius:9999px;font-weight:700;}
+.cost .pill img{width:16px;height:16px;}
+.cta{display:flex;gap:6px;margin-top:10px;}
+.cta .gradient-button{flex:1;justify-content:center;font-size:13px;padding:8px;}
+.tag{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--parchment-950);margin-bottom:4px;}
+</style></head>
+<body>
+<div class="card-stage" style="flex-direction:column;align-items:stretch;">
+<span class="tag">recrutement · composer une vague</span>
+<div class="panel">
+  <div class="head"><div class="portrait"><img src="../assets/army/squire.png"/></div>
+    <div style="flex:1;"><div class="name">Squire</div><div class="avail">Disponibles : 48 · Capacité libre : 72</div></div>
+  </div>
+  <div class="stepper">
+    <button>−10</button><button>−1</button>
+    <div class="qty">24</div>
+    <button>+1</button><button>+10</button>
+  </div>
+  <div class="slider"><div class="fill"></div><div class="knob"></div></div>
+  <div class="quick">
+    <button>0</button><button>10</button><button>25</button><button>50</button><button class="max">MAX (72)</button>
+  </div>
+  <div class="cost">
+    <span style="color:#6d5838;text-transform:uppercase;letter-spacing:.12em;font-size:10px;">Coût total ·</span>
+    <span class="pill"><img src="../assets/resources/wood.png"/>720</span>
+    <span class="pill"><img src="../assets/resources/iron.png"/>240</span>
+    <span class="pill"><img src="../assets/resources/population.png"/>24</span>
+    <span class="pill" style="margin-left:auto;"><img src="../assets/icons/clock.png"/>1h 12m</span>
+  </div>
+  <div class="cta"><button class="gradient-button gb-neutral">Annuler</button><button class="gradient-button gb-success">RECRUTER ×24</button></div>
+</div>
+</div>
+</body></html>

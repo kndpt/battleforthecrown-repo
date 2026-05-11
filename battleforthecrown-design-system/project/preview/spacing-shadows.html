@@ -1,0 +1,23 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Shadow / depth system</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;}
+.tile{display:flex;flex-direction:column;align-items:center;gap:8px;}
+.box{width:90px;height:60px;background:linear-gradient(to bottom,#a67c52,#7d5a3a);border:3px solid #3d2f1f;border-radius:10px;}
+.lbl{font-family:var(--bftc-font-display);font-weight:700;font-size:11px;color:var(--fg-on-parchment);}
+.cd{font-family:ui-monospace,Menlo,monospace;font-size:9px;color:var(--parchment-950);max-width:120px;text-align:center;}
+.b1{box-shadow:0 2px 0 rgba(0,0,0,.18);}
+.b2{box-shadow:0 4px 0 rgba(0,0,0,.22),0 6px 14px rgba(0,0,0,.28);}
+.b3{box-shadow:0 4px 0 rgba(0,0,0,.22),0 6px 14px rgba(0,0,0,.28),inset 0 2px 0 rgba(255,255,255,.25);}
+.b4{box-shadow:inset 0 2px 4px rgba(0,0,0,.30),inset 0 -2px 4px rgba(0,0,0,.30);background:linear-gradient(to bottom,#5d4a32,#3c2619);}
+.b5{box-shadow:0 0 0 3px rgba(246,213,123,.55),0 0 16px rgba(250,224,120,.6);}
+</style></head>
+<body>
+<div class="card-stage" style="gap:16px;">
+  <div class="tile"><div class="box b1"></div><span class="lbl">flat-2</span><span class="cd">Petit lift · boutons</span></div>
+  <div class="tile"><div class="box b2"></div><span class="lbl">card</span><span class="cd">Carte / panneau standard</span></div>
+  <div class="tile"><div class="box b3"></div><span class="lbl">card+rim</span><span class="cd">Boutons CTA + reflet haut</span></div>
+  <div class="tile"><div class="box b4"></div><span class="lbl">inset</span><span class="cd">Slot / champ creusé</span></div>
+  <div class="tile"><div class="box b5"></div><span class="lbl">glow</span><span class="cd">Onglet actif · sélection</span></div>
+</div>
+</body></html>

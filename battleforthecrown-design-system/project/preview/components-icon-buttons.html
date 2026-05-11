@@ -1,0 +1,22 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Icon buttons</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;}
+.ib{display:inline-flex;flex-direction:column;align-items:center;gap:6px;font-family:var(--bftc-font-display);font-size:10px;color:var(--parchment-950);}
+.dot{width:44px;height:44px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-game-inset);color:#fff;}
+.gb-success-bg { background: linear-gradient(to bottom, var(--game-green-light), var(--game-green-dark)); border-color: var(--game-green-border); }
+.gb-info-bg    { background: linear-gradient(to bottom, var(--game-blue-light),  var(--game-blue-dark));  border-color: var(--game-blue-border); }
+.gb-danger-bg  { background: linear-gradient(to bottom, var(--game-red-light),   var(--game-red-dark));   border-color: var(--game-red-border); }
+.gb-warning-bg { background: linear-gradient(to bottom, var(--game-gold-light),  var(--game-gold-dark));  border-color: var(--game-gold-border); }
+.gb-neutral-bg { background: linear-gradient(to bottom, var(--game-stone-light), var(--game-stone-dark)); border-color: var(--game-stone-border); }
+svg{width:20px;height:20px;stroke:#fff;stroke-width:2;fill:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4));}
+</style></head>
+<body>
+<div class="card-stage" style="justify-content:space-between;">
+  <div class="ib"><div class="dot gb-success-bg"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></div>Ajouter</div>
+  <div class="ib"><div class="dot gb-danger-bg"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg></div>Supprimer</div>
+  <div class="ib"><div class="dot gb-info-bg"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>Paramètres</div>
+  <div class="ib"><div class="dot gb-neutral-bg"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></div>Fermer</div>
+  <div class="ib"><div class="dot gb-warning-bg"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6m-3 9 5-5m-4.5-1.5 5 5"/></svg></div>Attaquer</div>
+</div>
+</body></html>

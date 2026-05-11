@@ -1,0 +1,21 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Progress bars</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;}
+.bar{position:relative;height:18px;background:rgba(0,0,0,.15);border-radius:9px;overflow:hidden;border:2px solid rgba(0,0,0,.18);box-shadow:inset 0 2px 3px rgba(0,0,0,.25);}
+.fill{height:100%;background:linear-gradient(to bottom,var(--game-green-light),var(--game-green-dark));position:relative;}
+.fill.gold{background:linear-gradient(to bottom,var(--game-gold-light),var(--game-gold-dark));}
+.fill.red{background:linear-gradient(to bottom,var(--game-red-light),var(--game-red-dark));}
+.fill::after{content:"";position:absolute;inset:0;background:linear-gradient(to right,transparent,rgba(255,255,255,.35),transparent);transform:translateX(-100%);animation:sh 2s linear infinite;}
+@keyframes sh{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.row{display:flex;flex-direction:column;gap:6px;width:100%;}
+.row .top{display:flex;justify-content:space-between;font-family:var(--bftc-font-display);font-size:11px;color:var(--parchment-950);font-weight:600;}
+.row .top b{color:var(--fg-on-parchment);font-weight:700;font-variant-numeric:tabular-nums;}
+</style></head>
+<body>
+<div class="card-stage" style="flex-direction:column;align-items:stretch;gap:14px;">
+  <div class="row"><div class="top"><span>Construction · Caserne Niv. 2</span><b>72%</b></div><div class="bar"><div class="fill gold" style="width:72%"></div></div></div>
+  <div class="row"><div class="top"><span>Entraînement · 24 squires</span><b>40%</b></div><div class="bar"><div class="fill" style="width:40%"></div></div></div>
+  <div class="row"><div class="top"><span>Santé du village</span><b>22 / 100</b></div><div class="bar"><div class="fill red" style="width:22%"></div></div></div>
+</div>
+</body></html>

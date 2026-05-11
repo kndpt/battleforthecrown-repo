@@ -1,0 +1,35 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Shop tile</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;padding:18px;align-items:flex-start;}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%;}
+.tile{position:relative;background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:2px solid #8b7355;border-radius:12px;padding:9px 8px 8px;text-align:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 3px 0 rgba(0,0,0,.16);}
+.tile .ic{width:60px;height:60px;margin:0 auto 4px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.5),rgba(0,0,0,.1));border-radius:50%;border:2px solid rgba(0,0,0,.18);}
+.tile .ic img{width:46px;height:46px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));}
+.tile .name{font-family:var(--bftc-font-display);font-weight:700;font-size:11.5px;color:#3d2f1f;line-height:1.15;min-height:28px;}
+.tile .qty{position:absolute;top:6px;left:6px;background:linear-gradient(to bottom,#3d2f1f,#1a1a1a);color:#f6d57b;font-family:var(--bftc-font-display);font-weight:800;font-size:11px;padding:1px 7px;border-radius:9999px;border:1.5px solid #704c0a;}
+.tile .pr{margin-top:5px;display:inline-flex;align-items:center;gap:3px;background:linear-gradient(to bottom,var(--game-gold-light),var(--game-gold-dark));border:2px solid var(--game-gold-border);color:#3a2a00;border-radius:9999px;padding:2px 9px 2px 4px;font-family:var(--bftc-font-display);font-weight:800;font-size:12px;font-variant-numeric:tabular-nums;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 2px 0 rgba(0,0,0,.18);}
+.tile .pr img{width:14px;height:14px;}
+.tile.cash .pr{background:linear-gradient(to bottom,var(--game-green-light),var(--game-green-dark));border-color:var(--game-green-border);color:#fff;text-shadow:1px 1px 2px rgba(0,0,0,.5);}
+.tile .tape{position:absolute;top:0;right:0;background:linear-gradient(to bottom,var(--game-red-light),var(--game-red-dark));color:#fff;font-family:var(--bftc-font-display);font-weight:800;font-size:9px;padding:1px 6px;border-radius:0 11px 0 6px;text-shadow:1px 1px 1px rgba(0,0,0,.5);}
+.tile.sold{opacity:.55;filter:grayscale(.6);}
+.tile.sold::after{content:"ÉPUISÉ";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--bftc-font-display);font-weight:900;font-size:14px;color:#fff;background:rgba(0,0,0,.4);border-radius:10px;letter-spacing:.15em;}
+.tabs{display:flex;gap:5px;margin-bottom:10px;background:rgba(0,0,0,.05);border:2px solid #8b7355;border-radius:10px;padding:3px;}
+.tabs button{flex:1;padding:5px;border:none;background:transparent;font-family:var(--bftc-font-display);font-weight:700;font-size:11px;color:#6d5838;cursor:pointer;border-radius:7px;}
+.tabs button.on{background:linear-gradient(to bottom,#fef9f0,#e8d4a8);box-shadow:0 1px 0 rgba(0,0,0,.18);color:#3d2f1f;}
+</style></head>
+<body>
+<div class="card-stage" style="flex-direction:column;align-items:stretch;">
+<div class="tabs"><button class="on">Boutique</button><button>Ressources</button><button>Boosts</button><button>Skins</button><button>Couronnes</button></div>
+<div class="grid">
+  <div class="tile cash"><span class="tape">−40%</span><div class="ic"><img src="../assets/resources/wood.png"/></div><div class="name">Cargaison de bois</div><div class="pr"><img src="../assets/casual-icons/coin.png"/>120</div></div>
+  <div class="tile cash"><div class="ic"><img src="../assets/resources/stone.png"/></div><div class="name">Cargaison de pierre</div><div class="pr"><img src="../assets/casual-icons/coin.png"/>140</div></div>
+  <div class="tile"><span class="qty">×3</span><div class="ic"><img src="../assets/icons/clock.png"/></div><div class="name">Bond de 1 heure</div><div class="pr"><img src="../assets/casual-icons/crown.png"/>15</div></div>
+  <div class="tile"><div class="ic"><img src="../assets/army/templar.png"/></div><div class="name">Tonique du templier</div><div class="pr"><img src="../assets/casual-icons/crown.png"/>50</div></div>
+  <div class="tile"><span class="tape">NEW</span><div class="ic"><img src="../assets/buildings/castle.png"/></div><div class="name">Skin château · Acier noir</div><div class="pr"><img src="../assets/casual-icons/crown.png"/>250</div></div>
+  <div class="tile"><div class="ic"><img src="../assets/resources/population.png"/></div><div class="name">Bonus population +20</div><div class="pr"><img src="../assets/casual-icons/crown.png"/>80</div></div>
+  <div class="tile sold"><div class="ic"><img src="../assets/casual-icons/card-gold.png"/></div><div class="name">Carte de bénédiction</div><div class="pr"><img src="../assets/casual-icons/crown.png"/>40</div></div>
+  <div class="tile"><span class="qty">×5</span><div class="ic"><img src="../assets/icons/hand-silver.png"/></div><div class="name">Paix royale 1h</div><div class="pr"><img src="../assets/casual-icons/crown.png"/>30</div></div>
+</div>
+</div>
+</body></html>

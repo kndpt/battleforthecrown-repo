@@ -1,0 +1,52 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Mail / inbox</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;padding:18px;align-items:flex-start;}
+.list{display:flex;flex-direction:column;gap:5px;width:100%;}
+.mail{display:grid;grid-template-columns:38px 1fr auto;gap:10px;align-items:center;padding:8px 10px;background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:2px solid #8b7355;border-radius:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.45);position:relative;cursor:pointer;}
+.mail.unread{background:linear-gradient(to bottom,#fff,#fef9f0);}
+.mail.unread::before{content:"";position:absolute;left:-2px;top:50%;transform:translateY(-50%);width:5px;height:60%;background:linear-gradient(to bottom,var(--game-gold-light),var(--game-gold-dark));border-radius:0 3px 3px 0;}
+.mail.unread .subj{font-weight:800;}
+.icn{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;border:2px solid rgba(0,0,0,.22);}
+.icn img{width:28px;height:28px;}
+.icn.report{background:linear-gradient(to bottom,#a8d28d,#4a8c2a);border-color:var(--game-green-border);}
+.icn.attack{background:linear-gradient(to bottom,var(--game-red-light),var(--game-red-dark));border-color:var(--game-red-border);}
+.icn.scout{background:linear-gradient(to bottom,#bfc7cb,#7f8c8d);border-color:var(--game-stone-border);}
+.icn.system{background:linear-gradient(to bottom,var(--game-gold-light),var(--game-gold-dark));border-color:var(--game-gold-border);}
+.icn.player{background:linear-gradient(to bottom,#cfe2f6,#2e75b6);border-color:var(--game-blue-border);}
+.body{display:flex;flex-direction:column;gap:1px;min-width:0;}
+.from{font-family:var(--bftc-font-display);font-size:10.5px;color:#6d5838;display:flex;align-items:center;gap:6px;}
+.from .tag{padding:1px 5px;border-radius:9999px;font-size:9px;font-weight:700;}
+.from .tag.sys{background:linear-gradient(to bottom,var(--game-gold-light),var(--game-gold-dark));color:#3a2a00;border:1px solid var(--game-gold-border);}
+.from .tag.rep{background:rgba(110,191,73,.2);color:#3a6c1f;border:1px solid var(--game-green-border);}
+.from .tag.atk{background:rgba(231,76,60,.18);color:#a93226;border:1px solid var(--game-red-border);}
+.from .tag.scout{background:rgba(149,165,166,.25);color:#3d4f60;border:1px solid var(--game-stone-border);}
+.subj{font-family:var(--bftc-font-display);font-weight:700;font-size:12.5px;color:#3d2f1f;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.prev{font-family:var(--bftc-font-display);font-size:10.5px;color:#6d5838;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2;}
+.meta{display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
+.meta .when{font-family:var(--bftc-font-display);font-size:10px;color:#6d5838;font-variant-numeric:tabular-nums;}
+.meta .b{min-width:20px;height:18px;border-radius:9999px;background:linear-gradient(to bottom,var(--game-red-light),var(--game-red-dark));border:1.5px solid var(--game-red-border);color:#fff;font-family:var(--bftc-font-display);font-weight:800;font-size:10px;display:flex;align-items:center;justify-content:center;padding:0 6px;text-shadow:1px 1px 1px rgba(0,0,0,.5);}
+.tag{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--parchment-950);margin-bottom:4px;}
+.tabs{display:flex;background:rgba(0,0,0,.05);border:2px solid #8b7355;border-radius:10px;padding:3px;margin-bottom:8px;gap:3px;}
+.tabs button{flex:1;padding:5px 8px;border:none;background:transparent;font-family:var(--bftc-font-display);font-weight:700;font-size:11px;color:#6d5838;cursor:pointer;border-radius:7px;display:flex;align-items:center;justify-content:center;gap:5px;}
+.tabs button.on{background:linear-gradient(to bottom,#fef9f0,#e8d4a8);box-shadow:0 1px 0 rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.5);color:#3d2f1f;}
+.tabs button .cnt{background:rgba(231,76,60,.85);color:#fff;font-size:9.5px;padding:1px 5px;border-radius:9999px;font-weight:800;}
+</style></head>
+<body>
+<div class="card-stage" style="flex-direction:column;align-items:stretch;">
+<span class="tag">boîte du seigneur · 12 messages</span>
+<div class="tabs">
+  <button class="on">Tous <span class="cnt">3</span></button>
+  <button>Rapports</button>
+  <button>Joueurs <span class="cnt">1</span></button>
+  <button>Système</button>
+</div>
+<div class="list">
+  <div class="mail unread"><div class="icn attack"><img src="../assets/icons/hand-red.png"/></div><div class="body"><div class="from"><span class="tag atk">ATTAQUE</span>Sire_Robert · [RVN]</div><div class="subj">⚠ Vos murs trembleront avant l'aube</div><div class="prev">Préparez vos défenses, j'arrive sous 2h…</div></div><div class="meta"><span class="when">il y a 4 min</span><span class="b">!</span></div></div>
+  <div class="mail unread"><div class="icn report"><img src="../assets/casual-icons/crown.png"/></div><div class="body"><div class="from"><span class="tag rep">VICTOIRE</span>Rapport · Roc-d'Acier</div><div class="subj">Pillage réussi · +2.400 butin ramené</div><div class="prev">Vos squires ont enfoncé la garnison adverse…</div></div><div class="meta"><span class="when">il y a 12 min</span></div></div>
+  <div class="mail unread"><div class="icn player"><img src="../assets/icons/hand-silver.png"/></div><div class="body"><div class="from">Dame_Aliénor · [BFC]</div><div class="subj">Renfort de 80 milices envoyé</div><div class="prev">Je marche vers Castelnef pour vous épauler.</div></div><div class="meta"><span class="when">9h42</span></div></div>
+  <div class="mail"><div class="icn scout"><img src="../assets/icons/position.png"/></div><div class="body"><div class="from"><span class="tag scout">ESPION</span>Rapport · Tours-Hautes</div><div class="subj">Garnison estimée : ~168 unités</div><div class="prev">Vos éclaireurs ont longé les murailles…</div></div><div class="meta"><span class="when">hier</span></div></div>
+  <div class="mail"><div class="icn system"><img src="../assets/casual-icons/bell-gold.png"/></div><div class="body"><div class="from"><span class="tag sys">HÉRAUT</span>Système</div><div class="subj">Nouvelle saison · La Couronne d'Or</div><div class="prev">La saison commence le 1er des récoltes…</div></div><div class="meta"><span class="when">3j</span></div></div>
+</div>
+</div>
+</body></html>

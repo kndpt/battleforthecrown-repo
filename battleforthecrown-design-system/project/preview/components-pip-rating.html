@@ -1,0 +1,71 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Pip rating</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;padding:18px;align-items:flex-start;}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.row + .row{margin-top:12px;}
+.tag{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--parchment-950);min-width:100px;}
+.pips{display:inline-flex;gap:3px;}
+.pip{width:10px;height:10px;border-radius:50%;background:rgba(0,0,0,.15);border:1.5px solid rgba(0,0,0,.3);box-shadow:inset 0 1px 1px rgba(0,0,0,.2);}
+.pip.on{background:radial-gradient(circle at 30% 25%,#fef0c6,#a87b25);border-color:#704c0a;box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 0 4px rgba(241,196,15,.5);}
+.pip.on.silver{background:radial-gradient(circle at 30% 25%,#f7fafc,#7e8b91);border-color:#4d595e;box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 0 3px rgba(127,140,141,.5);}
+.pip.on.red{background:radial-gradient(circle at 30% 25%,#fbd5d0,#7a1d10);border-color:var(--game-red-border);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 0 4px rgba(169,50,38,.5);}
+.pip.on.green{background:radial-gradient(circle at 30% 25%,#d6ecc4,#1d4a1d);border-color:var(--game-green-border);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 0 4px rgba(46,134,84,.5);}
+.pip.lg{width:14px;height:14px;}
+.pip.sm{width:7px;height:7px;border-width:1px;}
+/* star variant */
+.stars{display:inline-flex;gap:3px;}
+.star{width:18px;height:18px;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);background:rgba(0,0,0,.18);}
+.star.on{background:linear-gradient(to bottom,#fef0c6,#a87b25);filter:drop-shadow(0 1px 1px rgba(0,0,0,.3));}
+.stars.lg .star{width:24px;height:24px;}
+/* chevrons */
+.chevs{display:inline-flex;gap:2px;}
+.chev{width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:10px solid rgba(0,0,0,.2);}
+.chev.on{border-bottom-color:#a87b25;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3));}
+/* level chip with pips inline */
+.lvlchip{display:inline-flex;align-items:center;gap:7px;padding:4px 10px;background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:2px solid #8b7355;border-radius:9999px;font-family:var(--bftc-font-display);font-weight:800;font-size:12px;color:#3d2f1f;box-shadow:inset 0 1px 0 rgba(255,255,255,.45);}
+.lvlchip .num{font-variant-numeric:tabular-nums;}
+.lvlchip .sep{opacity:.4;}
+/* building row */
+.brow{display:grid;grid-template-columns:42px 1fr auto auto;gap:10px;align-items:center;padding:8px 10px;background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:2px solid #8b7355;border-radius:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 3px 0 rgba(0,0,0,.16);}
+.brow img{width:38px;height:38px;}
+.brow .nm{font-family:var(--bftc-font-display);font-weight:700;font-size:13px;color:#3d2f1f;}
+.brow .sb{font-family:var(--bftc-font-display);font-size:11px;color:#6d5838;}
+</style></head>
+<body>
+<div class="card-stage" style="flex-direction:column;align-items:stretch;">
+<div class="row"><span class="tag">5 pips · or</span>
+  <span class="pips"><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i><i class="pip"></i><i class="pip"></i></span>
+  <span class="pips"><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i><i class="pip"></i></span>
+  <span class="pips"><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i></span>
+</div>
+<div class="row"><span class="tag">10 pips</span>
+  <span class="pips"><i class="pip on sm"></i><i class="pip on sm"></i><i class="pip on sm"></i><i class="pip on sm"></i><i class="pip on sm"></i><i class="pip on sm"></i><i class="pip on sm"></i><i class="pip sm"></i><i class="pip sm"></i><i class="pip sm"></i></span>
+  <span style="font-family:var(--bftc-font-display);font-size:11px;color:#6d5838;">Niveau 7 / 10</span>
+</div>
+<div class="row"><span class="tag">teintes</span>
+  <span class="pips"><i class="pip on red"></i><i class="pip on red"></i><i class="pip on red"></i><i class="pip"></i><i class="pip"></i></span>
+  <span class="pips"><i class="pip on green"></i><i class="pip on green"></i><i class="pip on green"></i><i class="pip on green"></i><i class="pip"></i></span>
+  <span class="pips"><i class="pip on silver"></i><i class="pip on silver"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i></span>
+</div>
+<div class="row"><span class="tag">étoiles</span>
+  <span class="stars"><i class="star on"></i><i class="star on"></i><i class="star on"></i><i class="star"></i><i class="star"></i></span>
+  <span class="stars lg"><i class="star on"></i><i class="star on"></i><i class="star on"></i><i class="star on"></i><i class="star on"></i></span>
+</div>
+<div class="row"><span class="tag">chevrons (grade)</span>
+  <span class="chevs"><i class="chev on"></i></span>
+  <span class="chevs"><i class="chev on"></i><i class="chev on"></i></span>
+  <span class="chevs"><i class="chev on"></i><i class="chev on"></i><i class="chev on"></i></span>
+</div>
+<div class="row"><span class="tag">chips niveau</span>
+  <span class="lvlchip"><img src="../assets/casual-icons/crown.png" style="width:14px;height:14px;"/>Niv. <span class="num">12</span></span>
+  <span class="lvlchip">Niv. <span class="num">3</span><span class="sep">/</span><span class="num">10</span><span class="pips"><i class="pip on sm"></i><i class="pip on sm"></i><i class="pip on sm"></i><i class="pip sm"></i><i class="pip sm"></i><i class="pip sm"></i><i class="pip sm"></i><i class="pip sm"></i><i class="pip sm"></i><i class="pip sm"></i></span></span>
+  <span class="lvlchip" style="background:linear-gradient(to bottom,var(--game-gold-light),var(--game-gold-dark));border-color:var(--game-gold-border);color:#3a2a00;">★ MAX</span>
+</div>
+<div class="row" style="flex-direction:column;align-items:stretch;gap:6px;"><span class="tag">en jeu · bâtiments</span>
+  <div class="brow"><img src="../assets/buildings/castle.png"/><div><div class="nm">Château</div><div class="sb">Cœur de la cité</div></div><span class="pips"><i class="pip on lg"></i><i class="pip on lg"></i><i class="pip on lg"></i><i class="pip on lg"></i><i class="pip lg"></i></span><span class="lvlchip">Niv. <span class="num">4</span><span class="sep">/</span><span class="num">5</span></span></div>
+  <div class="brow"><img src="../assets/buildings/wood.png"/><div><div class="nm">Camp de bûcherons</div><div class="sb">+120 bois / heure</div></div><span class="pips"><i class="pip on lg"></i><i class="pip on lg"></i><i class="pip on lg"></i><i class="pip lg"></i><i class="pip lg"></i></span><span class="lvlchip">Niv. <span class="num">3</span><span class="sep">/</span><span class="num">5</span></span></div>
+  <div class="brow"><img src="../assets/buildings/iron.png"/><div><div class="nm">Mine de fer</div><div class="sb">+50 fer / heure</div></div><span class="pips"><i class="pip on lg green"></i><i class="pip on lg green"></i><i class="pip on lg green"></i><i class="pip on lg green"></i><i class="pip on lg green"></i></span><span class="lvlchip" style="background:linear-gradient(to bottom,var(--game-gold-light),var(--game-gold-dark));border-color:var(--game-gold-border);color:#3a2a00;">★ MAX</span></div>
+</div>
+</div>
+</body></html>

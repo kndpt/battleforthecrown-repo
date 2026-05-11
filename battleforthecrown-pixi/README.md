@@ -3,6 +3,7 @@
 Nouveau frontend Battle for the Crown : Vite + React 19 + PixiJS v8 + Zustand + TanStack Query.
 
 > Le legacy Next.js vit dans `../battleforthecrown/` jusqu'à validation user (suppression Phase 7+). Sa branche `main` est aussi disponible sous `legacy/nextjs-frontend` dans le `.git` du legacy.
+> Le design system vit dans `../battleforthecrown-design-system/` : tokens, assets, prototypes et UI kit à consulter avant tout nouvel écran ou refonte visuelle.
 
 ## Démarrer le dev
 
@@ -84,3 +85,4 @@ L'index initial fait ~363 KB JS / ~109 KB gzip (sans Pixi). Pixi + viewport + sc
 
 - Décisions structurantes (stack, Outbox, reconciliation Pixi…) : [`../docs/architecture/decisions.md`](../docs/architecture/decisions.md).
 - Doc technique de référence : [`../docs/architecture/`](../docs/architecture/README.md).
+- Design system : [`../battleforthecrown-design-system/`](../battleforthecrown-design-system/README.md).

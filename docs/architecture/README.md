@@ -31,8 +31,10 @@ Documentation technique de référence (humaine) pour les agents et les contribu
 |-----------|--------------|--------------------------|
 | `battleforthecrown-pixi/` | [pixi AGENTS.md](../../battleforthecrown-pixi/AGENTS.md) | `bftc-react-hud`, `bftc-pixi-scene` |
 | `battleforthecrown-backend/` | [backend AGENTS.md](../../battleforthecrown-backend/AGENTS.md) | `bftc-prisma`, `bftc-workers-outbox`, `nest-conventions.md` |
+| `battleforthecrown-design-system/` | [design system README](../../battleforthecrown-design-system/README.md) | Tokens, assets, prototypes, UI kit |
 | `packages/shared/` | — (code pur, pas de domaine) | — |
 
 ## Liens connexes
 
 - Gameplay : [`docs/gameplay/`](../gameplay/README.md)
+- Design system : [`battleforthecrown-design-system/`](../../battleforthecrown-design-system/README.md)

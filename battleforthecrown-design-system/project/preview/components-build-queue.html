@@ -1,0 +1,58 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Build Queue</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;padding:18px;align-items:flex-start;}
+.queue{display:flex;flex-direction:column;gap:8px;width:100%;}
+.qrow{display:flex;align-items:center;gap:10px;background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:2px solid #8b7355;border-radius:12px;padding:8px 10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 3px 0 rgba(0,0,0,.18);}
+.qrow.training{background:linear-gradient(to bottom,#c7dffb,#8fb6e0);border-color:#1f5288;}
+.qrow.idle{background:linear-gradient(to bottom,#e8e0cf,#cdbf9a);border-color:#7d5a3a;opacity:.7;}
+.qrow .thumb{width:46px;height:46px;border-radius:8px;background:rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;border:2px solid rgba(0,0,0,.25);flex-shrink:0;}
+.qrow .thumb img{width:38px;height:38px;object-fit:contain;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4));}
+.qrow .body{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;}
+.qrow .ttl{display:flex;justify-content:space-between;align-items:baseline;gap:6px;}
+.qrow .name{font-family:var(--bftc-font-display);font-weight:700;font-size:13px;color:#3d2f1f;line-height:1.1;}
+.qrow .time{font-family:var(--bftc-font-display);font-weight:700;font-size:12px;color:#3d2f1f;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:3px;}
+.qrow .time img{width:12px;height:12px;}
+.bar{position:relative;height:8px;background:rgba(0,0,0,.22);border-radius:5px;overflow:hidden;border:1px solid rgba(0,0,0,.25);}
+.bar .fill{height:100%;background:linear-gradient(to bottom,var(--game-gold-light),var(--game-gold-dark));position:relative;}
+.qrow.training .bar .fill{background:linear-gradient(to bottom,var(--game-blue-light),var(--game-blue-dark));}
+.bar .fill::after{content:"";position:absolute;inset:0;background:linear-gradient(to right,transparent,rgba(255,255,255,.4),transparent);transform:translateX(-100%);animation:sh 2s linear infinite;}
+@keyframes sh{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.qrow .accel{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;}
+.qrow .accel button{font-family:var(--bftc-font-display);font-weight:700;font-size:10px;color:#3a2a00;background:linear-gradient(to bottom,var(--game-gold-light),var(--game-gold-dark));border:2px solid var(--game-gold-border);border-radius:8px;padding:4px 6px;display:flex;align-items:center;gap:3px;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 2px 0 rgba(0,0,0,.2);}
+.qrow .accel button img{width:12px;height:12px;}
+.qrow .x{background:linear-gradient(to bottom,var(--game-red-light),var(--game-red-dark));color:#fff;border:2px solid var(--game-red-border);border-radius:8px;width:28px;height:28px;font-family:var(--bftc-font-display);font-weight:700;cursor:pointer;text-shadow:1px 1px 2px rgba(0,0,0,.6);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 0 rgba(0,0,0,.2);}
+.qrow.idle .name{color:#6d5838;font-style:italic;font-weight:500;}
+.qhead{display:flex;justify-content:space-between;align-items:center;padding:0 4px;}
+.qhead .ttl{font-family:var(--bftc-font-display);font-weight:700;font-size:12px;color:#3d2f1f;text-transform:uppercase;letter-spacing:.15em;}
+.qhead .cnt{font-family:var(--bftc-font-display);font-weight:700;font-size:11px;color:#5d4a32;font-variant-numeric:tabular-nums;}
+</style></head>
+<body>
+<div class="card-stage" style="flex-direction:column;align-items:stretch;gap:8px;">
+  <div class="qhead"><span class="ttl">File de construction</span><span class="cnt">2 / 3 actifs</span></div>
+  <div class="queue">
+    <div class="qrow">
+      <div class="thumb"><img src="../assets/buildings/barracks.png"/></div>
+      <div class="body">
+        <div class="ttl"><span class="name">Caserne → Niv. 2</span><span class="time"><img src="../assets/icons/clock.png"/>2:15</span></div>
+        <div class="bar"><div class="fill" style="width:72%"></div></div>
+      </div>
+      <div class="accel"><button><img src="../assets/casual-icons/crown.png"/>10</button></div>
+      <button class="x">×</button>
+    </div>
+    <div class="qrow training">
+      <div class="thumb"><img src="../assets/army/squire.png"/></div>
+      <div class="body">
+        <div class="ttl"><span class="name">Squires · ×24</span><span class="time"><img src="../assets/icons/clock.png"/>1h 12m</span></div>
+        <div class="bar"><div class="fill" style="width:40%"></div></div>
+      </div>
+      <div class="accel"><button><img src="../assets/casual-icons/crown.png"/>25</button></div>
+      <button class="x">×</button>
+    </div>
+    <div class="qrow idle">
+      <div class="thumb" style="opacity:.5;"><img src="../assets/icons/lock.png"/></div>
+      <div class="body"><div class="ttl"><span class="name">Slot libre · Construire</span><span class="time">—</span></div></div>
+    </div>
+  </div>
+</div>
+</body></html>

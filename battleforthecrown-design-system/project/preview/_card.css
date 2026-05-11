@@ -1,0 +1,117 @@
+/* Shared style for design system preview cards.
+   Each card is a ~700px wide HTML file rendered at small scale.
+   We keep chrome minimal — the asset name is rendered OUTSIDE.
+*/
+
+@import url("../colors_and_type.css");
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; }
+body {
+  font-family: var(--bftc-font-body);
+  background: var(--parchment-200);
+  color: var(--fg-on-parchment);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.card-stage {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Color swatch tile */
+.swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 62px;
+}
+.swatch .chip {
+  height: 56px;
+  border-radius: 8px 8px 4px 4px;
+  border: 1px solid rgba(0,0,0,0.12);
+  box-shadow: inset 0 -8px 12px rgba(0,0,0,0.06);
+}
+.swatch .meta {
+  padding-top: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: var(--bftc-font-display);
+}
+.swatch .meta b { font-size: 11px; font-weight: 700; color: var(--fg-on-parchment); }
+.swatch .meta code { font-family: ui-monospace, Menlo, monospace; font-size: 9px; color: var(--parchment-950); }
+
+/* ---------- Gradient buttons (BftC "GradientButton") ---------- */
+.gradient-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--bftc-font-display);
+  font-weight: 700;
+  font-size: 14px;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+  padding: 8px 16px;
+  border: 2px solid;
+  border-radius: 10px;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.25);
+  cursor: pointer;
+  letter-spacing: 0.02em;
+}
+.gb-success { background: linear-gradient(to bottom, var(--game-green-light), var(--game-green-dark)); border-color: var(--game-green-border); }
+.gb-info    { background: linear-gradient(to bottom, var(--game-blue-light),  var(--game-blue-dark));  border-color: var(--game-blue-border); }
+.gb-danger  { background: linear-gradient(to bottom, var(--game-red-light),   var(--game-red-dark));   border-color: var(--game-red-border); }
+.gb-warning { background: linear-gradient(to bottom, var(--game-gold-light),  var(--game-gold-dark));  border-color: var(--game-gold-border); color:#3a2a00; text-shadow:none;}
+.gb-neutral { background: linear-gradient(to bottom, var(--game-stone-light), var(--game-stone-dark)); border-color: var(--game-stone-border); }
+
+/* ---------- Badge ---------- */
+.bftc-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 23px;
+  height: 23px;
+  padding: 0 6px;
+  font-family: var(--bftc-font-display);
+  font-weight: 700;
+  font-size: 11.5px;
+  border: 2px solid;
+  border-radius: 9999px;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.25), 0 1px 1px rgba(0,0,0,0.25);
+}
+.bb-default { background: linear-gradient(to bottom, #8b6f47, #5d4a32); border-color: #3d2f1f; }
+.bb-success { background: linear-gradient(to bottom, var(--game-green-light), var(--game-green-dark)); border-color: var(--game-green-border); }
+.bb-info    { background: linear-gradient(to bottom, var(--game-blue-light),  var(--game-blue-dark));  border-color: var(--game-blue-border); }
+.bb-warning { background: linear-gradient(to bottom, var(--game-gold-light),  var(--game-gold-dark));  border-color: var(--game-gold-border); color:#3a2a00; text-shadow:none;}
+.bb-danger  { background: linear-gradient(to bottom, var(--game-red-light),   var(--game-red-dark));   border-color: var(--game-red-border); }
+.bb-neutral { background: linear-gradient(to bottom, var(--game-stone-light), var(--game-stone-dark)); border-color: var(--game-stone-border); }
+
+/* ---------- Card surfaces ---------- */
+.bftc-card {
+  border-radius: 14px;
+  border: 4px solid;
+  overflow: hidden;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.22), 0 6px 14px rgba(0,0,0,0.28), inset 0 2px 0 rgba(255,255,255,0.25);
+  position: relative;
+}
+.bc-parchment { background: linear-gradient(to bottom, #fef9f0, #f5e6d3); border-color: #8b7355; color: var(--fg-on-parchment); }
+.bc-wood      { background: linear-gradient(to bottom, #a67c52, #7d5a3a); border-color: #3d2f1f; color: var(--fg-on-dark); }
+.bc-stone     { background: linear-gradient(to bottom, #b0b8c0, #7d8a92); border-color: #5d6d6e; color: var(--fg-on-dark); }
+.bc-default   { background: linear-gradient(to bottom, #d4c094, #c9a882); border-color: #8b7355; color: var(--fg-on-parchment); }
+
+/* Shadow helpers used in components */
+:root {
+  --shadow-game-inset: inset 0 2px 4px rgba(0,0,0,0.20), inset 0 -2px 4px rgba(0,0,0,0.20);
+  --shadow-game-pressed: 0 1px 0 rgba(0,0,0,0.18);
+  --text-shadow-game: 1px 1px 2px rgba(0,0,0,0.6);
+}

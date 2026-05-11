@@ -1,0 +1,57 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Troop row</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;padding:18px;align-items:flex-start;}
+.list{display:flex;flex-direction:column;gap:6px;width:100%;}
+.unit{display:grid;grid-template-columns:54px 1fr auto auto;gap:10px;align-items:center;background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:2px solid #8b7355;border-radius:12px;padding:6px 10px 6px 6px;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 3px 0 rgba(0,0,0,.18);}
+.unit.locked{opacity:.55;filter:grayscale(.7);}
+.unit .portrait{width:54px;height:54px;border-radius:10px;background:linear-gradient(135deg,rgba(255,255,255,.35),rgba(0,0,0,.18));display:flex;align-items:center;justify-content:center;border:2px solid rgba(0,0,0,.22);}
+.unit .portrait img{width:44px;height:44px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4));}
+.unit .info{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.unit .name{font-family:var(--bftc-font-display);font-weight:700;font-size:13px;color:#3d2f1f;}
+.unit .stats{display:flex;gap:8px;font-family:var(--bftc-font-display);font-size:11px;color:#6d5838;font-variant-numeric:tabular-nums;}
+.unit .stats b{color:#3d2f1f;font-weight:700;}
+.unit .stats .atk{color:var(--game-red-border);}
+.unit .stats .def{color:var(--game-blue-border);}
+.unit .qty{font-family:var(--bftc-font-display);font-weight:800;font-size:18px;color:#3d2f1f;font-variant-numeric:tabular-nums;line-height:1;}
+.unit .qty small{display:block;font-size:9.5px;color:#6d5838;font-weight:600;text-align:right;}
+.unit .gradient-button{font-size:11px;padding:5px 10px;}
+.tag{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--parchment-950);margin-bottom:4px;}
+</style></head>
+<body>
+<div class="card-stage" style="flex-direction:column;align-items:stretch;">
+<span class="tag">caserne · répertoire</span>
+<div class="list">
+  <div class="unit">
+    <div class="portrait"><img src="../assets/army/militia.png"/></div>
+    <div class="info"><div class="name">Milice</div><div class="stats"><span class="atk">⚔ <b>10</b></span><span class="def">🛡 <b>15</b></span><span>👣 <b>18 m/km</b></span><span>📦 <b>25</b></span></div></div>
+    <div class="qty">120<small>casernées</small></div>
+    <button class="gradient-button gb-success">Recruter</button>
+  </div>
+  <div class="unit">
+    <div class="portrait"><img src="../assets/army/squire.png"/></div>
+    <div class="info"><div class="name">Squire</div><div class="stats"><span class="atk">⚔ <b>25</b></span><span class="def">🛡 <b>15</b></span><span>👣 <b>18 m/km</b></span><span>📦 <b>30</b></span></div></div>
+    <div class="qty">48<small>casernées</small></div>
+    <button class="gradient-button gb-success">Recruter</button>
+  </div>
+  <div class="unit">
+    <div class="portrait"><img src="../assets/army/archer.png"/></div>
+    <div class="info"><div class="name">Archer</div><div class="stats"><span class="atk">⚔ <b>40</b></span><span class="def">🛡 <b>10</b></span><span>👣 <b>15 m/km</b></span><span>📦 <b>20</b></span></div></div>
+    <div class="qty">22<small>casernées</small></div>
+    <button class="gradient-button gb-info">+10</button>
+  </div>
+  <div class="unit">
+    <div class="portrait"><img src="../assets/army/templar.png"/></div>
+    <div class="info"><div class="name">Templier</div><div class="stats"><span class="atk">⚔ <b>120</b></span><span class="def">🛡 <b>90</b></span><span>👣 <b>10 m/km</b></span><span>📦 <b>10</b></span></div></div>
+    <div class="qty">0<small>casernées</small></div>
+    <button class="gradient-button gb-success">Recruter</button>
+  </div>
+  <div class="unit locked">
+    <div class="portrait"><img src="../assets/army/savage.png"/></div>
+    <div class="info"><div class="name">Sauvage</div><div class="stats"><span style="color:#7f8c8d;">🔒 Caserne niv. 5 requise</span></div></div>
+    <div class="qty">—</div>
+    <button class="gradient-button gb-neutral">Verrouillé</button>
+  </div>
+</div>
+</div>
+</body></html>

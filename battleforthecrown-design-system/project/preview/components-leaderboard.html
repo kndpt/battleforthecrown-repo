@@ -1,0 +1,44 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Leaderboard</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;padding:18px;align-items:flex-start;}
+.tbl{display:flex;flex-direction:column;gap:4px;width:100%;}
+.lb{display:grid;grid-template-columns:42px 1fr auto auto;gap:10px;align-items:center;padding:7px 10px;background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:2px solid #8b7355;border-radius:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.45);}
+.lb.self{border-color:var(--game-gold-border);background:linear-gradient(to bottom,#fef0c6,#e8c878);}
+.rank{font-family:var(--bftc-font-display);font-weight:800;font-size:16px;color:#3d2f1f;text-align:center;font-variant-numeric:tabular-nums;}
+.lb.gold{background:linear-gradient(to bottom,#fff3c6,#e8c360);border-color:#9e7b0d;}
+.lb.silver{background:linear-gradient(to bottom,#f0f3f5,#c1ccd1);border-color:#7f8c8d;}
+.lb.bronze{background:linear-gradient(to bottom,#f0c89a,#a76928);border-color:#7a4915;}
+.lb.gold .rank,.lb.silver .rank,.lb.bronze .rank{font-size:0;}
+.lb.gold .rank::before,.lb.silver .rank::before,.lb.bronze .rank::before{display:inline-flex;width:32px;height:32px;border-radius:50%;align-items:center;justify-content:center;font-family:var(--bftc-font-display);font-weight:900;font-size:18px;text-shadow:1px 1px 2px rgba(0,0,0,.5);color:#fff;border:2px solid;}
+.lb.gold .rank::before{content:"1";background:radial-gradient(circle at 30% 25%,#fff5b8,#b48800);border-color:#704c0a;}
+.lb.silver .rank::before{content:"2";background:radial-gradient(circle at 30% 25%,#f7fafc,#7e8b91);border-color:#4d595e;}
+.lb.bronze .rank::before{content:"3";background:radial-gradient(circle at 30% 25%,#f4cea3,#7a4915);border-color:#492810;}
+.who{display:flex;align-items:center;gap:8px;min-width:0;}
+.av{width:32px;height:32px;border-radius:8px;background:radial-gradient(circle at 30% 25%,#fef0c6,#8b6f47);border:2px solid #3d2f1f;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.av img{width:22px;height:22px;}
+.who .col{display:flex;flex-direction:column;min-width:0;}
+.who .nm{font-family:var(--bftc-font-display);font-weight:700;font-size:12.5px;color:#3d2f1f;line-height:1.1;}
+.who .tr{font-family:var(--bftc-font-display);font-size:10px;color:#6d5838;}
+.delta{font-family:var(--bftc-font-display);font-weight:700;font-size:11px;font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:2px;padding:2px 6px;border-radius:9999px;}
+.delta.up{background:rgba(110,191,73,.2);color:#3a6c1f;}
+.delta.down{background:rgba(231,76,60,.18);color:#a93226;}
+.delta.flat{background:rgba(0,0,0,.06);color:#6d5838;}
+.pts{font-family:var(--bftc-font-display);font-weight:800;font-size:14px;color:#3d2f1f;font-variant-numeric:tabular-nums;text-align:right;min-width:80px;}
+.pts small{display:block;font-size:9.5px;color:#6d5838;font-weight:600;text-transform:uppercase;letter-spacing:.1em;}
+.head{display:grid;grid-template-columns:42px 1fr auto auto;gap:10px;padding:0 10px 4px;font-family:var(--bftc-font-display);font-size:9.5px;text-transform:uppercase;letter-spacing:.14em;color:#6d5838;font-weight:700;}
+</style></head>
+<body>
+<div class="card-stage" style="flex-direction:column;align-items:stretch;">
+<div class="head"><span>Rang</span><span>Seigneur</span><span>Δ 24h</span><span>Points</span></div>
+<div class="tbl">
+  <div class="lb gold"><div class="rank">1</div><div class="who"><div class="av"><img src="../assets/icons/crown.png"/></div><div class="col"><span class="nm">Dame_Aliénor</span><span class="tr">[BFC] alliée · 4 villages</span></div></div><span class="delta up">▲ 3</span><div class="pts">71.020<small>points</small></div></div>
+  <div class="lb silver"><div class="rank">2</div><div class="who"><div class="av" style="background:radial-gradient(circle at 30% 25%,#fef0c6,#a87b25);"><img src="../assets/icons/crown.png"/></div><div class="col"><span class="nm">Sire_Vous</span><span class="tr">[BFC] · 3 villages</span></div></div><span class="delta flat">— 0</span><div class="pts">62.480<small>points</small></div></div>
+  <div class="lb bronze"><div class="rank">3</div><div class="who"><div class="av" style="background:radial-gradient(circle at 30% 25%,#fbd5d0,#a93226);"><img src="../assets/icons/hand-red.png"/></div><div class="col"><span class="nm">Sire_Robert</span><span class="tr">[RVN] · 2 villages</span></div></div><span class="delta up">▲ 1</span><div class="pts">48.210<small>points</small></div></div>
+  <div class="lb"><div class="rank">4</div><div class="who"><div class="av"><img src="../assets/army/templar.png"/></div><div class="col"><span class="nm">Baron_Léofric</span><span class="tr">[BFC] · 3 villages</span></div></div><span class="delta down">▼ 2</span><div class="pts">42.110<small>points</small></div></div>
+  <div class="lb"><div class="rank">5</div><div class="who"><div class="av"><img src="../assets/army/squire.png"/></div><div class="col"><span class="nm">Comte_Henri</span><span class="tr">[STN] · 2 villages</span></div></div><span class="delta flat">— 0</span><div class="pts">38.920<small>points</small></div></div>
+  <div class="lb"><div class="rank">6</div><div class="who"><div class="av"><img src="../assets/army/archer.png"/></div><div class="col"><span class="nm">Dame_Iseult</span><span class="tr">[RVN] · 2 villages</span></div></div><span class="delta up">▲ 4</span><div class="pts">36.480<small>points</small></div></div>
+  <div class="lb"><div class="rank">7</div><div class="who"><div class="av"><img src="../assets/army/militia.png"/></div><div class="col"><span class="nm">Sire_Tristan</span><span class="tr">sans tribu · 1 village</span></div></div><span class="delta down">▼ 1</span><div class="pts">32.140<small>points</small></div></div>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,84 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Coordinate input</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;padding:18px;align-items:flex-start;}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.row + .row{margin-top:14px;}
+.tag{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--parchment-950);min-width:90px;}
+
+.coord{display:inline-flex;align-items:stretch;background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:2px solid #8b7355;border-radius:10px;overflow:hidden;font-family:var(--bftc-font-display);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 2px 0 rgba(0,0,0,.18);}
+.coord .lbl{display:flex;align-items:center;gap:5px;padding:0 8px;background:linear-gradient(to bottom,#8b7355,#5d4a32);color:#fef9f0;font-weight:800;font-size:11px;text-shadow:1px 1px 0 rgba(0,0,0,.4);}
+.coord .lbl img{width:14px;height:14px;}
+.coord input{appearance:none;border:none;background:transparent;font-family:var(--bftc-font-display);font-weight:800;font-size:14px;color:#3d2f1f;font-variant-numeric:tabular-nums;width:50px;text-align:center;padding:6px 4px;}
+.coord input:focus{outline:none;background:rgba(241,196,15,.18);}
+.coord .sep{display:flex;align-items:center;color:#8b7355;font-weight:900;font-size:18px;padding:0 1px;background:rgba(0,0,0,.04);border-left:1px solid rgba(0,0,0,.12);border-right:1px solid rgba(0,0,0,.12);}
+.coord .go{appearance:none;border:none;background:linear-gradient(to bottom,var(--game-green-light),var(--game-green-dark));color:#fff;font-family:var(--bftc-font-display);font-weight:800;font-size:12px;padding:0 14px;cursor:pointer;text-shadow:1px 1px 0 rgba(0,0,0,.4);border-left:2px solid rgba(0,0,0,.18);display:inline-flex;align-items:center;gap:4px;}
+.coord.invalid{border-color:var(--game-red-border);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 2px 0 rgba(0,0,0,.18),0 0 0 3px rgba(231,76,60,.18);}
+.coord.invalid input{color:var(--game-red-border);}
+.coord.invalid .go{background:linear-gradient(to bottom,#7f8c8d,#3d4f60);cursor:not-allowed;}
+
+.note{font-family:var(--bftc-font-display);font-size:11px;color:#6d5838;font-style:italic;}
+.note.err{color:var(--game-red-border);font-style:normal;font-weight:700;}
+
+.history{display:flex;gap:6px;flex-wrap:wrap;}
+.history .chip{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;background:rgba(255,255,255,.5);border:1.5px solid #8b7355;border-radius:9999px;font-family:var(--bftc-font-display);font-weight:700;font-size:11px;color:#3d2f1f;cursor:pointer;font-variant-numeric:tabular-nums;}
+.history .chip img{width:13px;height:13px;}
+.history .chip:hover{background:rgba(241,196,15,.18);}
+.history .chip .x{opacity:.5;}
+
+/* compact map jump widget */
+.jump{display:flex;flex-direction:column;gap:8px;padding:12px;background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:2px solid #8b7355;border-radius:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 3px 0 rgba(0,0,0,.16);}
+.jump h4{font-family:var(--bftc-font-display);font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:#704c0a;font-weight:700;display:flex;align-items:center;gap:6px;}
+.jump h4 img{width:16px;height:16px;}
+
+.minimap{position:relative;width:96px;height:96px;background:
+  radial-gradient(circle at 50% 50%,#a8d28d 0%,#7e8b91 30%,#3d4f60 70%);
+  border:2.5px solid #3d2f1f;border-radius:8px;overflow:hidden;flex-shrink:0;box-shadow:inset 0 0 8px rgba(0,0,0,.5);}
+.minimap::before{content:"";position:absolute;inset:0;background:
+  linear-gradient(rgba(0,0,0,.08) 1px,transparent 1px) 0 0/16px 16px,
+  linear-gradient(90deg,rgba(0,0,0,.08) 1px,transparent 1px) 0 0/16px 16px;
+  pointer-events:none;}
+.minimap .pin{position:absolute;width:8px;height:8px;border-radius:50%;background:var(--game-gold-light);border:1.5px solid #3a2a00;box-shadow:0 0 0 2px rgba(241,196,15,.3),0 1px 2px rgba(0,0,0,.4);transform:translate(-50%,-50%);}
+.minimap .pin.you{background:#fef9f0;border-color:#a93226;box-shadow:0 0 0 3px rgba(255,255,255,.5),0 0 8px rgba(169,50,38,.6);animation:pinpulse 1.4s ease-in-out infinite;}
+@keyframes pinpulse{50%{box-shadow:0 0 0 5px rgba(255,255,255,.35),0 0 12px rgba(169,50,38,.8);}}
+.jump .layout{display:flex;gap:12px;align-items:flex-start;}
+.jump .col{display:flex;flex-direction:column;gap:6px;flex:1;min-width:0;}
+</style></head>
+<body>
+<div class="card-stage" style="flex-direction:column;align-items:stretch;">
+<div class="row"><span class="tag">défaut</span>
+  <div class="coord"><span class="lbl"><img src="../assets/casual-icons/crown.png"/>Coord.</span><input value="234"/><span class="sep">|</span><input value="612"/><button class="go">Aller ›</button></div>
+</div>
+<div class="row"><span class="tag">vide / focus</span>
+  <div class="coord"><span class="lbl"><img src="../assets/casual-icons/crown.png"/>X · Y</span><input placeholder="000"/><span class="sep">|</span><input placeholder="000"/><button class="go">Aller ›</button></div>
+</div>
+<div class="row"><span class="tag">invalide</span>
+  <div class="coord invalid"><span class="lbl"><img src="../assets/casual-icons/crown.png"/>Coord.</span><input value="999"/><span class="sep">|</span><input value="999"/><button class="go">Aller</button></div>
+  <span class="note err">Hors carte — max 500|500</span>
+</div>
+<div class="row" style="flex-direction:column;align-items:stretch;gap:6px;"><span class="tag">historique</span>
+  <div class="history">
+    <span class="chip"><img src="../assets/buildings/castle.png"/>Bastion · 234|612 <span class="x">×</span></span>
+    <span class="chip"><img src="../assets/icons/hand-red.png"/>Roc-d'Acier · 312|488 <span class="x">×</span></span>
+    <span class="chip"><img src="../assets/icons/hand-silver.png"/>Allié_Dame · 198|601 <span class="x">×</span></span>
+    <span class="chip">+ Ajouter favori</span>
+  </div>
+</div>
+<div class="row" style="margin-top:18px;"><div class="jump" style="flex:1;min-width:0;">
+  <h4><img src="../assets/casual-icons/crown.png"/>Aller à une coordonnée</h4>
+  <div class="layout">
+    <div class="minimap">
+      <span class="pin you" style="left:62%;top:48%;"></span>
+      <span class="pin" style="left:38%;top:30%;"></span>
+      <span class="pin" style="left:74%;top:72%;"></span>
+      <span class="pin" style="left:22%;top:60%;"></span>
+    </div>
+    <div class="col">
+      <div class="coord"><span class="lbl">X</span><input value="234"/><span class="sep">|</span><span class="lbl">Y</span><input value="612"/><button class="go">Voir ›</button></div>
+      <span class="note">Continent K34 · 12 villages dans la région</span>
+      <div class="history"><span class="chip"><img src="../assets/buildings/castle.png"/>234|612</span><span class="chip">312|488</span><span class="chip">198|601</span></div>
+    </div>
+  </div>
+</div></div>
+</div>
+</body></html>

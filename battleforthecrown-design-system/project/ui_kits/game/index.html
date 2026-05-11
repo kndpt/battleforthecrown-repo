@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Battle for the Crown — Game UI Kit</title>
+<link rel="stylesheet" href="../../colors_and_type.css"/>
+<style>
+  html, body { height: 100%; margin: 0; background: #1a1a2e; color: #f5e6d3; font-family: var(--bftc-font-body); }
+  .frame {
+    width: 360px; height: 720px; margin: 24px auto; border-radius: 36px; overflow: hidden;
+    background: #1a1a2e; border: 8px solid #0c0c1a;
+    box-shadow: 0 30px 60px rgba(0,0,0,.6), inset 0 0 0 2px #2a2a45;
+    display: flex; flex-direction: column; position: relative;
+  }
+  .status-bar { height: 28px; display: flex; justify-content: space-between; align-items: center; padding: 0 18px; color: #fff; font-size: 11px; font-family: var(--bftc-font-display); font-weight: 700; background: #0c0c1a; }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script type="text/babel" src="components.jsx"></script>
+  <script type="text/babel" src="screens.jsx"></script>
+  <script type="text/babel">
+    const { useState } = React;
+    function App() {
+      const [screen, setScreen] = useState("login");
+      const [selected, setSelected] = useState(null);
+      const [tab, setTab] = useState("build");
+
+      return (
+        <div className="frame">
+          <div className="status-bar">
+            <span>9:41</span>
+            <span style={{ display: "inline-flex", gap: 6 }}>
+              <span>5G</span><span>100%</span>
+            </span>
+          </div>
+
+          {screen === "login" && <LoginScreen onLogin={() => setScreen("village")}/>}
+
+          {screen === "village" && (
+            <>
+              <TopBar
+                name="Sire Kelvin" level={12} power="2 480" crowns={28}
+                resources={{
+                  wood:       { value: "8 500", sub: "+120/h" },
+                  stone:      { value: "3 200", sub: "+80/h" },
+                  iron:       { value: "1 500", sub: "+50/h" },
+                  population: { value: "120/200", sub: "villageois" },
+                }}
+              />
+              <VillageScreen onSelect={(b) => setSelected(b)}/>
+              <BottomNav active={tab} onChange={setTab}/>
+              <BuildingDetailModal building={selected} onClose={() => setSelected(null)}/>
+            </>
+          )}
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  </script>
+</body>
+</html>

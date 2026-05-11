@@ -1,0 +1,48 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Timer & countdown</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;padding:18px;align-items:flex-start;}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.row + .row{margin-top:10px;}
+.tag{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--parchment-950);min-width:78px;}
+.timer{display:inline-flex;align-items:center;gap:5px;font-family:var(--bftc-font-display);font-weight:700;font-variant-numeric:tabular-nums;padding:4px 9px;border-radius:9999px;border:2px solid;}
+.timer img{width:13px;height:13px;}
+.t-gold{background:linear-gradient(to bottom,#fef0c6,#e8c878);color:#5a4400;border-color:var(--game-gold-border);text-shadow:0 1px 0 rgba(255,255,255,.5);}
+.t-blue{background:linear-gradient(to bottom,#cfe2f6,#8eb2dc);color:#102e58;border-color:var(--game-blue-border);}
+.t-red{background:linear-gradient(to bottom,#fbd5d0,#e89c93);color:#7a1d10;border-color:var(--game-red-border);}
+.t-stone{background:linear-gradient(to bottom,#dee3e6,#aab4b8);color:#2c3942;border-color:var(--game-stone-border);}
+.t-xs{font-size:10px;padding:2px 6px;}
+.t-sm{font-size:11px;}
+.t-md{font-size:13px;padding:5px 11px;}
+.t-lg{font-size:18px;padding:8px 14px;}
+.t-lg img{width:18px;height:18px;}
+.t-mega{font-size:28px;padding:10px 18px;letter-spacing:.02em;}
+.t-mega img{width:24px;height:24px;}
+.digits{display:inline-flex;gap:3px;align-items:baseline;}
+.digits .d{background:#1a1a1a;color:#fff;border-radius:4px;padding:2px 5px;font-family:var(--bftc-font-numeric);font-weight:800;font-size:18px;text-shadow:0 0 6px rgba(241,196,15,.6);}
+.digits .sep{font-weight:700;color:#3d2f1f;}
+.t-urgent{animation:pulse 1.2s ease-in-out infinite;}
+@keyframes pulse{50%{filter:brightness(1.18) saturate(1.2);}}
+</style></head>
+<body>
+<div class="card-stage" style="flex-direction:column;align-items:stretch;gap:6px;">
+  <div class="row"><span class="tag">tailles</span>
+    <span class="timer t-gold t-xs"><img src="../assets/icons/clock.png"/>45s</span>
+    <span class="timer t-gold t-sm"><img src="../assets/icons/clock.png"/>2:15</span>
+    <span class="timer t-gold t-md"><img src="../assets/icons/clock.png"/>1h 12m</span>
+    <span class="timer t-gold t-lg"><img src="../assets/icons/clock.png"/>3h 04m</span>
+  </div>
+  <div class="row"><span class="tag">variants</span>
+    <span class="timer t-gold t-sm"><img src="../assets/icons/clock.png"/>2:15</span>
+    <span class="timer t-blue t-sm"><img src="../assets/icons/clock.png"/>Entraînement</span>
+    <span class="timer t-red t-sm t-urgent"><img src="../assets/icons/clock.png"/>0:12</span>
+    <span class="timer t-stone t-sm">⏸ En pause</span>
+  </div>
+  <div class="row"><span class="tag">attaque dans</span>
+    <span class="digits"><span class="d">02</span><span class="sep">:</span><span class="d">15</span><span class="sep">:</span><span class="d">47</span></span>
+  </div>
+  <div class="row"><span class="tag">mega</span>
+    <span class="timer t-red t-mega t-urgent"><img src="../assets/icons/clock.png"/>00:12</span>
+  </div>
+</div>
+</body></html>

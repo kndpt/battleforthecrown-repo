@@ -1,0 +1,39 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Empty state</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;padding:18px;align-items:flex-start;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;}
+.empty{background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:2px solid #8b7355;border-radius:14px;padding:20px 16px;text-align:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.45);}
+.empty img{width:64px;height:64px;opacity:.45;filter:grayscale(.4);margin-bottom:8px;}
+.empty h4{font-family:var(--bftc-font-display);font-weight:700;font-size:14px;color:#3d2f1f;margin-bottom:6px;}
+.empty .quote{font-family:var(--bftc-font-display);font-style:italic;font-size:11.5px;color:#6d5838;line-height:1.45;max-width:240px;margin:0 auto 10px;}
+.empty .quote::before{content:"« ";}
+.empty .quote::after{content:" »";}
+.empty .gradient-button{font-size:12px;padding:6px 14px;}
+</style></head>
+<body>
+<div class="card-stage"><div class="grid">
+  <div class="empty">
+    <img src="../assets/army/militia.png"/>
+    <h4>Aucune armée à déployer</h4>
+    <p class="quote">À ceux qui osent, le royaume offre gloire et richesses.</p>
+    <button class="gradient-button gb-success">Recruter</button>
+  </div>
+  <div class="empty">
+    <img src="../assets/icons/hand-silver.png"/>
+    <h4>Boîte de rapports vide</h4>
+    <p class="quote">Quand la trompe sonnera, c'est ici qu'arriveront vos messages.</p>
+  </div>
+  <div class="empty">
+    <img src="../assets/buildings/watchtower.png" style="filter:grayscale(1) opacity(.6);"/>
+    <h4>Tour de guet verrouillée</h4>
+    <p class="quote">Château niv. 5 requis pour scruter les terres alentours.</p>
+    <button class="gradient-button gb-warning">Voir conditions</button>
+  </div>
+  <div class="empty">
+    <img src="../assets/casual-icons/card-gold.png"/>
+    <h4>Aucune quête active</h4>
+    <p class="quote">Le héraut prépare votre prochaine épreuve. Patientez, sire.</p>
+  </div>
+</div></div>
+</body></html>

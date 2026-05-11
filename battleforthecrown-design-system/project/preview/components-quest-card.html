@@ -1,0 +1,69 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Quest cards</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:#f5e6d3;padding:18px;align-items:flex-start;}
+.list{display:flex;flex-direction:column;gap:8px;width:100%;}
+.q{display:grid;grid-template-columns:46px 1fr auto;gap:10px;align-items:center;padding:9px 11px;background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:2px solid #8b7355;border-radius:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 3px 0 rgba(0,0,0,.16);position:relative;}
+.q.done{background:linear-gradient(to bottom,#d6ecc4,#a8d28d);border-color:var(--game-green-border);}
+.q.ready{animation:glow 1.6s ease-in-out infinite;}
+@keyframes glow{50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 3px 0 rgba(0,0,0,.16),0 0 16px rgba(241,196,15,.55);}}
+.q .ic{width:46px;height:46px;border-radius:10px;background:linear-gradient(135deg,rgba(255,255,255,.4),rgba(0,0,0,.18));border:2px solid rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center;}
+.q .ic img{width:34px;height:34px;}
+.q .body{display:flex;flex-direction:column;gap:4px;min-width:0;}
+.q .name{font-family:var(--bftc-font-display);font-weight:700;font-size:13px;color:#3d2f1f;}
+.q .desc{font-family:var(--bftc-font-display);font-size:11px;color:#6d5838;line-height:1.3;}
+.bar{position:relative;height:8px;background:rgba(0,0,0,.22);border-radius:4px;border:1px solid rgba(0,0,0,.25);overflow:hidden;}
+.bar .fill{height:100%;background:linear-gradient(to bottom,var(--game-gold-light),var(--game-gold-dark));}
+.q .prog{font-family:var(--bftc-font-display);font-weight:700;font-size:10.5px;color:#3d2f1f;font-variant-numeric:tabular-nums;}
+.reward{display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
+.reward .gives{display:flex;gap:3px;}
+.reward .pill{display:inline-flex;align-items:center;gap:3px;padding:2px 6px 2px 3px;background:rgba(0,0,0,.06);border:1.5px solid rgba(0,0,0,.18);border-radius:9999px;font-family:var(--bftc-font-display);font-weight:700;font-size:10.5px;color:#3d2f1f;font-variant-numeric:tabular-nums;}
+.reward .pill img{width:14px;height:14px;}
+.reward .gradient-button{font-size:10.5px;padding:4px 10px;}
+.tag{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--parchment-950);margin-bottom:4px;}
+.qhead{display:flex;justify-content:space-between;font-family:var(--bftc-font-display);font-size:11px;color:#5d4a32;text-transform:uppercase;letter-spacing:.14em;font-weight:700;}
+.featured{padding:14px;background:linear-gradient(135deg,#fef0c6,#e8c878);border:3px solid var(--game-gold-border);border-radius:14px;color:#3a2a00;box-shadow:0 6px 14px rgba(0,0,0,.2),inset 0 2px 0 rgba(255,255,255,.5);position:relative;display:grid;grid-template-columns:72px 1fr;gap:12px;}
+.featured .ic{width:72px;height:72px;background:radial-gradient(circle at 30% 25%,#fff5b8,#a87b25);border:3px solid #704c0a;border-radius:14px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 0 rgba(255,255,255,.5);}
+.featured .ic img{width:54px;height:54px;}
+.featured .eyebrow{font-family:var(--bftc-font-display);font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:#704c0a;font-weight:700;}
+.featured h3{font-family:var(--bftc-font-display);font-weight:800;font-size:17px;color:#3a2a00;margin:2px 0;}
+.featured p{font-family:var(--bftc-font-display);font-size:11.5px;color:#5a4400;line-height:1.35;}
+.featured .row{display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap;}
+.featured .gradient-button{font-size:12px;padding:6px 14px;}
+</style></head>
+<body>
+<div class="card-stage" style="flex-direction:column;align-items:stretch;">
+<div class="qhead"><span>Quêtes du jour</span><span>3 / 5 · expire dans 6h 22m</span></div>
+<div class="featured">
+  <div class="ic"><img src="../assets/casual-icons/crown.png"/></div>
+  <div><div class="eyebrow">Quête de chapitre · IV</div>
+    <h3>Briser le siège de Roc-d'Acier</h3>
+    <p>Lancez une attaque réussie contre Sire_Robert avant la pleine lune. Le héraut récompensera votre audace.</p>
+    <div class="row">
+      <span class="pill" style="background:rgba(0,0,0,.08);border:1.5px solid #704c0a;color:#3a2a00;padding:3px 9px;border-radius:9999px;font-family:var(--bftc-font-display);font-weight:700;font-size:11px;">Récompense :</span>
+      <span class="pill" style="background:rgba(255,255,255,.45);border:1.5px solid #704c0a;color:#3a2a00;padding:3px 8px 3px 4px;border-radius:9999px;font-family:var(--bftc-font-display);font-weight:700;font-size:11px;display:inline-flex;align-items:center;gap:4px;"><img src="../assets/casual-icons/crown.png" style="width:15px;height:15px;"/>50</span>
+      <span class="pill" style="background:rgba(255,255,255,.45);border:1.5px solid #704c0a;color:#3a2a00;padding:3px 8px 3px 4px;border-radius:9999px;font-family:var(--bftc-font-display);font-weight:700;font-size:11px;display:inline-flex;align-items:center;gap:4px;"><img src="../assets/resources/iron.png" style="width:15px;height:15px;"/>2.000</span>
+      <button class="gradient-button gb-info" style="margin-left:auto;">Détails</button>
+    </div>
+  </div>
+</div>
+<div class="list">
+  <div class="q"><div class="ic"><img src="../assets/buildings/wood.png"/></div>
+    <div class="body"><div class="name">Récolter 5.000 bois</div><div class="prog"><span class="bar"><span class="fill" style="width:64%;display:block;"></span></span></div><div class="prog">3.200 / 5.000</div></div>
+    <div class="reward"><div class="gives"><span class="pill"><img src="../assets/casual-icons/coin.png"/>200</span></div></div>
+  </div>
+  <div class="q ready done"><div class="ic"><img src="../assets/army/squire.png"/></div>
+    <div class="body"><div class="name">Recruter 24 squires</div><div class="prog">✓ Terminé</div></div>
+    <div class="reward"><div class="gives"><span class="pill"><img src="../assets/casual-icons/crown.png"/>5</span></div><button class="gradient-button gb-success">Réclamer</button></div>
+  </div>
+  <div class="q"><div class="ic"><img src="../assets/icons/hand-red.png"/></div>
+    <div class="body"><div class="name">Gagner 1 bataille</div><div class="bar"><div class="fill" style="width:0%;"></div></div><div class="prog">0 / 1</div></div>
+    <div class="reward"><div class="gives"><span class="pill"><img src="../assets/resources/wood.png"/>500</span><span class="pill"><img src="../assets/resources/stone.png"/>500</span></div></div>
+  </div>
+  <div class="q"><div class="ic" style="opacity:.5;"><img src="../assets/icons/lock.png"/></div>
+    <div class="body"><div class="name" style="color:#7f8c8d;">Améliorer le château au niv. 5</div><div class="desc" style="font-style:italic;">Débloque à la fin du chapitre III.</div></div>
+    <div class="reward"><div class="gives"><span class="pill" style="opacity:.5;"><img src="../assets/casual-icons/crown.png"/>10</span></div></div>
+  </div>
+</div>
+</div>
+</body></html>

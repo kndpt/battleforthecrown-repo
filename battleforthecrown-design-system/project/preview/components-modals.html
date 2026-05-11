@@ -1,0 +1,55 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>Modals</title>
+<link rel="stylesheet" href="_card.css"/>
+<style>body{background:rgba(0,0,0,.6);padding:18px;align-items:flex-start;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;}
+.modal{position:relative;background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:4px solid #5d4a32;border-radius:14px;box-shadow:0 0 0 2px #5d4a32,0 12px 32px rgba(0,0,0,.55),inset 0 2px 0 rgba(255,255,255,.55);overflow:hidden;}
+.bar{height:6px;background:linear-gradient(to right,var(--game-gold-light),var(--game-gold-dark));}
+.modal.success .bar{background:linear-gradient(to right,var(--game-green-light),var(--game-green-dark));}
+.modal.danger .bar{background:linear-gradient(to right,var(--game-red-light),var(--game-red-dark));}
+.modal.info .bar{background:linear-gradient(to right,var(--game-blue-light),var(--game-blue-dark));}
+.head{padding:10px 14px 4px;display:flex;align-items:center;gap:8px;}
+.head h3{font-family:var(--bftc-font-display);font-weight:700;font-size:15px;color:#3d2f1f;}
+.head .x{margin-left:auto;width:24px;height:24px;border-radius:6px;background:rgba(0,0,0,.12);border:2px solid rgba(0,0,0,.2);font-weight:700;cursor:pointer;}
+.body{padding:6px 14px 10px;font-family:var(--bftc-font-display);font-size:12px;color:#3d2f1f;line-height:1.4;}
+.body .quote{font-style:italic;color:#6d5838;font-size:11px;border-left:3px solid var(--game-gold-dark);padding-left:8px;margin:6px 0;}
+.foot{display:flex;gap:6px;padding:8px 14px 12px;justify-content:flex-end;background:rgba(0,0,0,.04);}
+.icn{width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;border:2px solid rgba(0,0,0,.22);}
+.icn img{width:24px;height:24px;}
+.foot .gradient-button{font-size:12px;padding:5px 12px;}
+.success .icn{background:linear-gradient(to bottom,var(--game-green-light),var(--game-green-dark));color:#fff;text-shadow:1px 1px 2px rgba(0,0,0,.5);font-weight:800;font-size:18px;border-color:var(--game-green-border);}
+.danger .icn{background:linear-gradient(to bottom,var(--game-red-light),var(--game-red-dark));border-color:var(--game-red-border);}
+.info .icn{background:linear-gradient(to bottom,var(--game-blue-light),var(--game-blue-dark));border-color:var(--game-blue-border);}
+.warn .icn{background:linear-gradient(to bottom,var(--game-gold-light),var(--game-gold-dark));border-color:var(--game-gold-border);}
+.celebrate{padding:18px 14px;text-align:center;}
+.celebrate .big{font-family:var(--bftc-font-display);font-weight:900;font-size:34px;letter-spacing:.06em;color:#5a4400;text-shadow:0 2px 0 #fff,0 3px 6px rgba(0,0,0,.25);}
+.celebrate img{width:80px;height:80px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.35));margin:4px auto;}
+.celebrate p{font-size:12px;color:#6d5838;font-family:var(--bftc-font-display);}
+</style></head>
+<body>
+<div class="card-stage"><div class="grid">
+  <div class="modal info">
+    <div class="bar"></div>
+    <div class="head"><div class="icn"><img src="../assets/buildings/barracks.png"/></div><h3>Construire Caserne</h3><button class="x">×</button></div>
+    <div class="body">Améliorer la caserne au Niv. 2 ? Coût : 1.200 bois · 800 pierre · 650 fer.<div class="quote">« Une garnison forte garde les portes au clair de la lune. »</div></div>
+    <div class="foot"><button class="gradient-button gb-neutral">Annuler</button><button class="gradient-button gb-info">Construire</button></div>
+  </div>
+  <div class="modal danger">
+    <div class="bar"></div>
+    <div class="head"><div class="icn"><img src="../assets/icons/hand-red.png"/></div><h3>Lancer l'attaque ?</h3><button class="x">×</button></div>
+    <div class="body">Vous envoyez 240 unités contre <b>Sire_Robert</b>. Cette action est irréversible.</div>
+    <div class="foot"><button class="gradient-button gb-neutral">Annuler</button><button class="gradient-button gb-danger">ATTAQUER</button></div>
+  </div>
+  <div class="modal success">
+    <div class="bar"></div>
+    <div class="celebrate"><img src="../assets/casual-icons/crown.png"/><div class="big">VICTOIRE</div><p>Vous avez pillé 2.400 ressources et capturé 12 prisonniers.</p></div>
+    <div class="foot" style="justify-content:center;"><button class="gradient-button gb-success">Voir le rapport</button></div>
+  </div>
+  <div class="modal warn">
+    <div class="bar" style="background:linear-gradient(to right,var(--game-gold-light),var(--game-gold-dark));"></div>
+    <div class="head"><div class="icn"><img src="../assets/resources/wood.png"/></div><h3>Entrepôt presque plein</h3><button class="x">×</button></div>
+    <div class="body">Vos coffres de bois sont à 98 %. Augmentez votre entrepôt ou dépensez avant la perte de production.</div>
+    <div class="foot"><button class="gradient-button gb-neutral">Plus tard</button><button class="gradient-button gb-warning">Améliorer</button></div>
+  </div>
+</div></div>
+</body></html>
