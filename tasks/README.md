@@ -16,7 +16,8 @@ Fiches d'exécution déléguées aux harnesses Claude Code ou Codex (lead + sub-
 
 ### Runs actifs
 
-_(Aucun run actif.)_
+- [016 — Feature scouting backend shared](./runs/016-feature-scouting-backend-shared.md) — 📋 `PLANNED`. Phase 4 Scouting backend/shared : mission scout, `ScoutReport`, snapshot, retour ESPION, invalidations inbox et smoke cycle complet.
+- [017 — Feature scouting frontend inbox](./runs/017-feature-scouting-frontend-inbox.md) — 📋 `PLANNED`. Phase 4 Scouting frontend : bouton `Scout` dans le flow cible/attaque, rendu inbox du rapport scout, lu/suppression et absence de leak style hors rapport.
 
 ### Runs archivés
 
