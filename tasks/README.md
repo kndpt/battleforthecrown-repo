@@ -16,7 +16,7 @@ Fiches d'exécution déléguées aux harnesses Claude Code ou Codex (lead + sub-
 
 ### Runs actifs
 
-_(Aucun run actif.)_
+- [015 — Close phase 2 inbox reports](./runs/015-close-phase-2-inbox-reports.md) — 📋 `PLANNED`. Clôture Phase 2 : vérifier le delta post-run 012 entre spec inbox, code reports REST/WS/frontend et roadmap.
 
 ### Runs archivés
 
