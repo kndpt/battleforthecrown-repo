@@ -68,7 +68,8 @@ export { TroopRow } from './TroopRow';
 export type { TroopRowProps, TroopStat } from './TroopRow';
 export { TroopStepper } from './TroopStepper';
 export type { TroopStepperCost, TroopStepperProps, TroopStepperQuickValue } from './TroopStepper';
-export { scaleVillageStyleCost, VillageStyleModal, VillageStyleTrigger, villageStyleOptions } from './VillageStyleModal';
+export { VillageStyleModal, VillageStyleTrigger } from './VillageStyleModal';
+export { scaleVillageStyleCost, villageStyleOptions } from './villageStyleData';
 export type {
   VillageStyleCost,
   VillageStyleEffect,

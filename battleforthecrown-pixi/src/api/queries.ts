@@ -3,6 +3,12 @@ import {
   WorldConfigSchema,
   type WorldConfig,
 } from '@battleforthecrown/shared/world';
+import type {
+  StrategyBonus,
+  VillageStrategyChangeCost,
+  VillageStrategyDefinition,
+  VillageStrategyType,
+} from '@battleforthecrown/shared/village';
 import { apiClient } from './index';
 import {
   toAuthSession,
@@ -38,6 +44,7 @@ export const queryKeys = {
   population: (villageId: string | null) => ['population', villageId] as const,
   resources: (villageId: string | null) => ['resources', villageId] as const,
   crowns: (userId: string | null, worldId: string | null) => ['crowns', userId, worldId] as const,
+  villageStrategy: (villageId: string | null) => ['village-strategy', villageId] as const,
   villagePower: (villageId: string | null) => ['power', 'village', villageId] as const,
   kingdomPower: (userId: string | null) => ['power', 'kingdom', userId] as const,
   armyInventory: (villageId: string | null) => ['army', 'inventory', villageId] as const,
@@ -217,6 +224,28 @@ export interface CrownsBalanceDto {
   productionRate: number;
 }
 
+export interface VillageStrategyInfoDto {
+  currentStrategy: VillageStrategyType;
+  lastChangedAt: string;
+  cooldownEndsAt: string | null;
+  canChange: boolean;
+  changeCost: number;
+  changeCosts: Record<VillageStrategyType, VillageStrategyChangeCost>;
+  hasCouncilHall: boolean;
+  strategies: Record<
+    VillageStrategyType,
+    Omit<VillageStrategyDefinition, 'bonuses'> & { bonuses: StrategyBonus }
+  >;
+}
+
+export interface ChangeVillageStrategyResultDto {
+  success: boolean;
+  newStrategy: VillageStrategyType;
+  cost: VillageStrategyChangeCost;
+  cooldownEndsAt: string;
+  message: string;
+}
+
 export function useCrownsQuery(worldId: string | null) {
   const userId = useAuthStore((state) => state.user?.id ?? null);
   return useQuery<CrownsBalanceDto>({
@@ -229,6 +258,42 @@ export function useCrownsQuery(worldId: string | null) {
     },
     enabled: Boolean(userId && worldId),
     staleTime: 30_000,
+  });
+}
+
+export function useVillageStrategyQuery(villageId: string | null, enabled = true) {
+  return useQuery<VillageStrategyInfoDto>({
+    queryKey: queryKeys.villageStrategy(villageId),
+    queryFn: () => {
+      if (!villageId) {
+        return Promise.reject(new Error('No village selected'));
+      }
+      return apiClient.get<VillageStrategyInfoDto>('/village/strategy', { query: { villageId } });
+    },
+    enabled: Boolean(villageId && enabled),
+    staleTime: 5_000,
+  });
+}
+
+interface ChangeVillageStrategyInput {
+  villageId: string;
+  strategy: VillageStrategyType;
+}
+
+export function useChangeVillageStrategyMutation() {
+  const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
+
+  return useMutation<ChangeVillageStrategyResultDto, Error, ChangeVillageStrategyInput>({
+    mutationFn: ({ villageId, strategy }) =>
+      apiClient.post<ChangeVillageStrategyResultDto>(`/village/${villageId}/strategy`, { strategy }),
+    onSettled: (_data, _err, { villageId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.villageStrategy(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.resources(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.crowns(userId, worldId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
+    },
   });
 }
 

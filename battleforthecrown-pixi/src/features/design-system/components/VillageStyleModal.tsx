@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
+import type { VillageStrategyType } from '@battleforthecrown/shared/village';
 import { cn } from '@/lib/cn';
 import { publicAsset } from '@/lib/publicAsset';
+import { scaleVillageStyleCost, villageStyleOptions } from './villageStyleData';
 
-export type VillageStyleId = 'fortress' | 'raiders' | 'economic' | 'balanced';
+export type VillageStyleId = VillageStrategyType;
 export type VillageStyleResource = 'wood' | 'stone' | 'iron' | 'crowns';
 
 export interface VillageStyleCost {
@@ -33,15 +35,23 @@ export interface VillageStyleOption {
 }
 
 export interface VillageStyleModalProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
+  canChange?: boolean;
   castleLevel?: number;
   cooldownHours?: number;
+  cooldownEndsAt?: string | null;
   currentStyleId?: VillageStyleId;
+  errorMessage?: string | null;
+  hasCouncilHall?: boolean;
+  isStockLoading?: boolean;
   initialStyleId?: VillageStyleId;
+  isSubmitting?: boolean;
   onAdopt?: (styleId: VillageStyleId) => void;
   onChange?: (styleId: VillageStyleId) => void;
   onClose?: () => void;
   open: boolean;
+  overlayMode?: 'absolute' | 'fixed';
   options?: VillageStyleOption[];
+  scaleCosts?: boolean;
   stock?: VillageStyleCost;
   value?: VillageStyleId;
 }
@@ -59,73 +69,7 @@ const resourceIcons: Record<VillageStyleResource, string> = {
   wood: '/assets/resources/wood.png',
 };
 
-export const villageStyleOptions: VillageStyleOption[] = [
-  {
-    bonuses: [
-      { label: 'Défense unité', value: '+25%' },
-      { label: 'Stockage', value: '+10%' },
-    ],
-    color: { border: '#1f3e66', dark: '#2e5a88', light: '#5b8fbf' },
-    cost: { crowns: 80, iron: 50, stone: 100, wood: 200 },
-    glyph: '🛡',
-    id: 'fortress',
-    maluses: [{ label: 'Vitesse de déplacement', value: '−20%' }],
-    name: 'Forteresse',
-    tagline: 'Murs hauts, portes lourdes.',
-  },
-  {
-    bonuses: [
-      { label: 'Vitesse de déplacement', value: '+15%' },
-      { label: 'Pillage', value: '+10%' },
-    ],
-    color: { border: '#a93226', dark: '#c0392b', light: '#e74c3c' },
-    cost: { crowns: 80, iron: 200, stone: 100, wood: 50 },
-    glyph: '⚔',
-    id: 'raiders',
-    maluses: [{ label: 'Défense', value: '−10%' }],
-    name: 'Raiders',
-    tagline: 'Légers, rapides, sans pitié.',
-  },
-  {
-    bonuses: [
-      { label: 'Production', value: '+20%' },
-      { label: 'Population max', value: '+10%' },
-    ],
-    color: { border: '#3a6c1f', dark: '#4a8c2a', light: '#6ebf49' },
-    cost: { crowns: 60, iron: 50, stone: 200, wood: 100 },
-    glyph: '⚙',
-    id: 'economic',
-    maluses: [
-      { label: 'Attaque', value: '−10%' },
-      { label: 'Défense', value: '−10%' },
-    ],
-    name: 'Économique',
-    tagline: 'Plus de bras, plus de récolte.',
-  },
-  {
-    bonuses: [],
-    color: { border: '#5d4a32', dark: '#7d5a3a', light: '#b89968' },
-    cost: { crowns: 80, iron: 100, stone: 100, wood: 100 },
-    glyph: '⚖',
-    id: 'balanced',
-    maluses: [],
-    name: 'Équilibré',
-    tagline: 'Aucun engagement. Aucune faveur.',
-  },
-];
-
 const defaultStock: VillageStyleCost = { crowns: 142, iron: 1240, stone: 940, wood: 1820 };
-
-export function scaleVillageStyleCost(cost: VillageStyleCost, castleLevel: number): VillageStyleCost {
-  const multiplier = Math.pow(1.25, Math.max(0, castleLevel - 4));
-
-  return {
-    crowns: Math.round(cost.crowns * multiplier),
-    iron: Math.round(cost.iron * multiplier),
-    stone: Math.round(cost.stone * multiplier),
-    wood: Math.round(cost.wood * multiplier),
-  };
-}
 
 function getStyleVars(style: VillageStyleOption): CSSProperties {
   return {
@@ -321,16 +265,24 @@ function HeroStat({ kind, label, value }: VillageStyleEffect & { kind: 'bonus' |
 }
 
 export function VillageStyleModal({
+  canChange = true,
   castleLevel = 5,
   className,
   cooldownHours = 24,
-  currentStyleId = 'balanced',
+  cooldownEndsAt,
+  currentStyleId = 'BALANCED',
+  errorMessage,
+  hasCouncilHall = true,
+  isStockLoading = false,
   initialStyleId,
+  isSubmitting = false,
   onAdopt,
   onChange,
   onClose,
   open,
+  overlayMode = 'fixed',
   options = villageStyleOptions,
+  scaleCosts = true,
   stock = defaultStock,
   value,
   ...props
@@ -341,10 +293,32 @@ export function VillageStyleModal({
   const [internalIndex, setInternalIndex] = useState(startIndex);
   const index = controlledIndex >= 0 ? controlledIndex : internalIndex;
   const option = options[index] ?? options[0];
-  const cost = useMemo(() => scaleVillageStyleCost(option.cost, castleLevel), [castleLevel, option.cost]);
+  const cost = useMemo(
+    () => (scaleCosts ? scaleVillageStyleCost(option.cost, castleLevel) : option.cost),
+    [castleLevel, option.cost, scaleCosts],
+  );
   const affordable = isAffordable(cost, stock);
   const current = option.id === currentStyleId;
   const multiplier = Math.pow(1.25, Math.max(0, castleLevel - 4)).toFixed(2);
+  const disabled = current || !hasCouncilHall || isStockLoading || !canChange || !affordable || isSubmitting;
+  const cooldownLabel = cooldownEndsAt
+    ? `Disponible ${new Date(cooldownEndsAt).toLocaleString()}`
+    : `Verrouillé ${cooldownHours} h · invisible des voisins`;
+  const statusMessage =
+    errorMessage ??
+    (isSubmitting
+      ? 'Changement en cours...'
+      : !hasCouncilHall
+        ? 'Salle du Conseil requise'
+        : current
+          ? 'Cette voie est déjà la vôtre.'
+          : isStockLoading
+            ? 'Stock en chargement'
+            : !canChange
+              ? cooldownLabel
+              : !affordable
+                ? 'Ressources insuffisantes'
+                : `Verrouillé ${cooldownHours} h · invisible des voisins`);
 
   const setIndex = useCallback(
     (nextIndex: number | ((currentIndex: number) => number)) => {
@@ -357,12 +331,6 @@ export function VillageStyleModal({
     },
     [controlledIndex, index, onChange, options],
   );
-
-  useEffect(() => {
-    if (open && controlledIndex < 0) {
-      setInternalIndex(startIndex);
-    }
-  }, [controlledIndex, open, startIndex]);
 
   useEffect(() => {
     if (!open) return;
@@ -382,7 +350,8 @@ export function VillageStyleModal({
   return (
     <div
       className={cn(
-        'absolute inset-0 z-30 flex items-center justify-center bg-[rgba(0,0,0,.62)] p-3 [backdrop-filter:blur(3px)]',
+        overlayMode === 'fixed' ? 'fixed' : 'absolute',
+        'inset-0 z-30 flex items-center justify-center bg-[rgba(0,0,0,.62)] p-3 [backdrop-filter:blur(3px)]',
         className,
       )}
       onClick={onClose}
@@ -439,16 +408,18 @@ export function VillageStyleModal({
                 <CostChip ok={stock.crowns >= cost.crowns} resource="crowns" value={cost.crowns} />
               </div>
             </div>
-            <PixelButton disabled={!affordable || current} onClick={() => onAdopt?.(option.id)}>
-              {current ? 'Voie actuelle' : `Adopter — ${option.name}`}
+            <PixelButton disabled={disabled} onClick={() => onAdopt?.(option.id)}>
+              {isSubmitting ? 'Adoption...' : current ? 'Voie actuelle' : `Adopter — ${option.name}`}
             </PixelButton>
             <div
               className={cn(
                 'text-center font-game text-[9.5px]',
-                !affordable && !current ? 'font-bold text-[#c0392b]' : 'text-[#cdb88a]',
+                errorMessage || isStockLoading || (!affordable && !current) || !hasCouncilHall || !canChange
+                  ? 'font-bold text-[#c0392b]'
+                  : 'text-[#cdb88a]',
               )}
             >
-              {current ? 'Cette voie est déjà la vôtre.' : !affordable ? 'Ressources insuffisantes' : `Verrouillé ${cooldownHours} h · invisible des voisins`}
+              {statusMessage}
             </div>
           </div>
         </ModalShell>
@@ -459,7 +430,7 @@ export function VillageStyleModal({
 
 export function VillageStyleTrigger({
   className,
-  currentStyleId = 'balanced',
+  currentStyleId = 'BALANCED',
   onClick,
   options = villageStyleOptions,
   ...props

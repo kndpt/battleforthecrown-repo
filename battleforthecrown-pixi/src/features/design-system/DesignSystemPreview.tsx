@@ -108,7 +108,7 @@ export function DesignSystemPreview() {
   const [stepperValue, setStepperValue] = useState(125);
   const [troopQuantity, setTroopQuantity] = useState(24);
   const [villageStyleOpen, setVillageStyleOpen] = useState(true);
-  const [villageStyle, setVillageStyle] = useState<VillageStyleId>('raiders');
+  const [villageStyle, setVillageStyle] = useState<VillageStyleId>('RAIDERS');
 
   return (
     <main className="min-h-full overflow-y-auto bg-[#f5e6d3] p-[18px] text-[#1f2937]">
@@ -445,11 +445,11 @@ export function DesignSystemPreview() {
                 <div className="absolute inset-x-0 bottom-0 h-16 border-t-2 border-[#8b7355] bg-[linear-gradient(to_top,rgba(60,38,25,.95),rgba(78,56,34,.9))]" />
               </div>
               <div className="absolute inset-x-0 bottom-[86px] flex justify-center">
-                <VillageStyleTrigger currentStyleId="balanced" onClick={() => setVillageStyleOpen(true)} />
+                <VillageStyleTrigger currentStyleId="BALANCED" onClick={() => setVillageStyleOpen(true)} />
               </div>
               <VillageStyleModal
                 castleLevel={5}
-                currentStyleId="balanced"
+                currentStyleId="BALANCED"
                 initialStyleId={villageStyle}
                 onAdopt={(styleId) => {
                   setVillageStyle(styleId);
@@ -458,6 +458,7 @@ export function DesignSystemPreview() {
                 onChange={setVillageStyle}
                 onClose={() => setVillageStyleOpen(false)}
                 open={villageStyleOpen}
+                overlayMode="absolute"
                 stock={{ crowns: 60, iron: 180, stone: 940, wood: 1820 }}
                 value={villageStyle}
               />

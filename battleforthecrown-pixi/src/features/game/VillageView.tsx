@@ -10,6 +10,7 @@ import { BuildingManagementPanel } from '@/features/village/BuildingManagementPa
 import { BuildingDetailModal } from '@/features/village/BuildingDetailModal';
 import { QueueFloatingButton } from '@/features/village/QueueFloatingButton';
 import { QueueBottomSheet } from '@/features/village/QueueBottomSheet';
+import { VillageStyleControl } from '@/features/village/VillageStyleControl';
 import { metaFor } from '@/features/village/buildingMeta';
 import { ExpeditionList } from '@/features/combat/ExpeditionList';
 import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
@@ -114,6 +115,8 @@ export function VillageView() {
           onToggle={() => setIsQueueOpen((prev) => !prev)}
         />
       </div>
+
+      {villageId && <VillageStyleControl villageId={villageId} buildings={buildings} />}
 
       <QueueBottomSheet
         isOpen={isQueueOpen && !isBuildingPanelOpen}

@@ -89,6 +89,7 @@ export function applyBuildingCompleted(
   ctx.queryClient.invalidateQueries({ queryKey: ['queue', payload.villageId] });
   ctx.queryClient.invalidateQueries({ queryKey: ['population', payload.villageId] });
   ctx.queryClient.invalidateQueries({ queryKey: ['resources', payload.villageId] });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.villageStrategy(payload.villageId) });
   useUiStore.getState().pushToast({
     tone: 'success',
     title: 'Construction terminée',

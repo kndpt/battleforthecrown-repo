@@ -113,6 +113,7 @@ describe('applyCrownsChanged', () => {
 describe('applyBuildingCompleted', () => {
   it('invalidates building queries and pushes a success toast', () => {
     const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.villageStrategy('v1'), { currentStrategy: 'BALANCED' });
     let invalidationCount = 0;
     const originalInvalidate = queryClient.invalidateQueries.bind(queryClient);
     queryClient.invalidateQueries = ((...args: Parameters<typeof originalInvalidate>) => {
@@ -130,7 +131,8 @@ describe('applyBuildingCompleted', () => {
       { queryClient },
     );
 
-    expect(invalidationCount).toBe(4);
+    expect(invalidationCount).toBe(5);
+    expect(queryClient.getQueryState(queryKeys.villageStrategy('v1'))?.isInvalidated).toBe(true);
     const toasts = useUiStore.getState().toasts;
     expect(toasts).toHaveLength(1);
     expect(toasts[0].tone).toBe('success');

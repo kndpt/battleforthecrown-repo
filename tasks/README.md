@@ -16,10 +16,11 @@ Fiches d'exécution déléguées aux harnesses Claude Code ou Codex (lead + sub-
 
 ### Runs actifs
 
-- [014 — Feature village styles frontend](./runs/014-feature-village-styles-frontend.md) — 📋 `PLANNED`. Phase 3 styles de village : exposition Pixi/HUD, mutation UI, états bloqués, reload et smoke IG.
+_(Aucun run actif.)_
 
 ### Runs archivés
 
+- [014 — Feature village styles frontend](./runs/archive/014-feature-village-styles-frontend.md) — ✅ `DONE` (2026-05-12). Phase 3 styles de village frontend : HUD Salle du Conseil, modal branchée API stratégie, coûts/cooldown/erreurs serveur, refetch après mutation, tests Pixi + static-check verts.
 - [013 — Feature village styles backend](./runs/archive/013-feature-village-styles-backend.md) — ✅ `DONE` (2026-05-12). Phase 3 styles de village backend : coûts thématiques scalés Château, premier changement payant, gate Salle du Conseil, cooldown, confidentialité carte, Forteresse combat, smokes backend verts.
 - [012 — Inbox combat reports](./runs/archive/012-feature-inbox-combat-reports.md) — ✅ `DONE` (2026-05-11). Inbox combat MVP : contrat gameplay figé, `CombatReport` conservé, lu/suppression par participant, invalidation WS attaquant/défenseur, smoke REST reports + smokes backend verts.
 - [011 — Découpler le return worker du CombatReport](./runs/archive/011-fix-return-worker-decouple-report.md) — ✅ `DONE` (2026-05-10). Fix report supprimé pendant retour : snapshot `survivingUnits`/`loot` sur `Expedition`, `battle.returned.reportId` nullable, smoke de régression vert.
