@@ -17,3 +17,4 @@
 - Design system React : si un composant prototype ne correspond pas au futur usage produit, le retirer du sas plutôt que le laisser comme faux standard à intégrer plus tard.
 - Design system React : un composant interactif validé visuellement doit aussi être contrôlable (`value/onChange`, bornes, callbacks d'action) avant d'être considéré intégrable.
 - Design system React : le skill de migration doit traiter le contrat d'API production-ready comme critère d'acceptance bloquant, pas comme une règle secondaire après la fidélité visuelle.
+- Quand une feature frontend mentionne un composant design précis, inspecter aussi le preview voisin (`DesignSystemPreview.tsx`) pour repérer les composites déjà prêts à intégrer, pas seulement le fichier cité.

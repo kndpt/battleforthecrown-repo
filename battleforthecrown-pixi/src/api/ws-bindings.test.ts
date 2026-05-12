@@ -188,6 +188,7 @@ describe('applyBattleResolved', () => {
     });
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.combatReports('user-1'), []);
+    queryClient.setQueryData(queryKeys.scoutReports('user-1'), []);
 
     applyBattleResolved(
       {
@@ -210,6 +211,7 @@ describe('applyBattleResolved', () => {
     );
 
     expect(queryClient.getQueryState(queryKeys.combatReports('user-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.scoutReports('user-1'))?.isInvalidated).toBe(true);
   });
 });
 
@@ -222,6 +224,7 @@ describe('applyVillageAttacked', () => {
     });
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.combatReports('defender-1'), []);
+    queryClient.setQueryData(queryKeys.scoutReports('defender-1'), []);
 
     applyVillageAttacked(
       {
@@ -241,6 +244,7 @@ describe('applyVillageAttacked', () => {
     );
 
     expect(queryClient.getQueryState(queryKeys.combatReports('defender-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.scoutReports('defender-1'))?.isInvalidated).toBe(true);
   });
 });
 

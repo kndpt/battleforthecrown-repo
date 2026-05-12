@@ -367,6 +367,7 @@ export function applyVillageAttacked(
 function invalidateCombatReports(ctx: BindingsContext): void {
   const userId = useAuthStore.getState().user?.id ?? null;
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.combatReports(userId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.scoutReports(userId) });
 }
 
 export function applyVillageConquered(payload: VillageConqueredPayload, ctx: BindingsContext): void {

@@ -4,13 +4,13 @@ import { GameHeader } from '@/features/layout/GameHeader';
 import { ToastStack } from '@/features/layout/ToastStack';
 import { BottomNavigationBar } from '@/features/layout/BottomNavigationBar';
 import { PowerBottomSheet } from '@/features/power/PowerBottomSheet';
-import { ReportsList } from './ReportsList';
+import { ReportsList, type InboxReportSummary } from './ReportsList';
 import { ReportDetailModal } from './ReportDetailModal';
 import { useUnreadReportsCount } from './useUnreadReportsCount';
 
 export function MessagesScreen() {
   const navigate = useNavigate();
-  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [selectedReport, setSelectedReport] = useState<InboxReportSummary | null>(null);
   const [isPowerSheetOpen, setIsPowerSheetOpen] = useState(false);
   const unreadCount = useUnreadReportsCount();
 
@@ -26,9 +26,9 @@ export function MessagesScreen() {
       >
         <main className="container mx-auto px-3 py-4 max-w-2xl">
           <h1 className="font-cinzel text-xl font-bold text-kingdom-900 mb-4 px-1">
-            Rapports de combat
+            Rapports
           </h1>
-          <ReportsList onReportClick={(id) => setSelectedReportId(id)} />
+          <ReportsList onReportClick={setSelectedReport} />
         </main>
       </div>
 
@@ -41,10 +41,11 @@ export function MessagesScreen() {
         unreadCount={unreadCount}
       />
 
-      {selectedReportId && (
+      {selectedReport && (
         <ReportDetailModal
-          reportId={selectedReportId}
-          onClose={() => setSelectedReportId(null)}
+          reportId={selectedReport.report.id}
+          reportKind={selectedReport.kind}
+          onClose={() => setSelectedReport(null)}
         />
       )}
 

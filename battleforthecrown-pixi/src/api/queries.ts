@@ -34,6 +34,7 @@ import type {
   RecallReinforcementPayload,
   ReinforcePayload,
 } from '@/lib/types';
+import type { ScoutReportResponse } from '@battleforthecrown/shared/combat';
 
 export const queryKeys = {
   worlds: () => ['worlds'] as const,
@@ -53,6 +54,8 @@ export const queryKeys = {
   garrison: (villageId: string | null) => ['combat', 'garrison', villageId] as const,
   combatReports: (userId: string | null) => ['combat', 'reports', userId] as const,
   combatReport: (reportId: string | null) => ['combat', 'report', reportId] as const,
+  scoutReports: (userId: string | null) => ['combat', 'scout-reports', userId] as const,
+  scoutReport: (reportId: string | null) => ['combat', 'scout-report', reportId] as const,
   worldConfigFull: (worldId: string | null) => ['world-config-full', worldId] as const,
   worldEntities: (worldId: string | null) => ['world-entities', worldId] as const,
   worldConfig: (worldId: string | null) => ['world-config', worldId] as const,
@@ -465,7 +468,7 @@ export function useCancelTrainingMutation() {
 
 export interface ActiveExpeditionDto {
   id: string;
-  kind?: 'ATTACK' | 'REINFORCE';
+  kind?: 'ATTACK' | 'REINFORCE' | 'SCOUT';
   attackerVillageId: string;
   attackerUserId: string;
   defenderVillageId?: string | null;
@@ -569,6 +572,34 @@ export function useCombatReportQuery(reportId: string | null) {
   });
 }
 
+export type ScoutReportDto = ScoutReportResponse;
+
+export function useScoutReportsQuery() {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  return useQuery<ScoutReportDto[]>({
+    queryKey: queryKeys.scoutReports(userId),
+    queryFn: () => {
+      if (!userId) return Promise.resolve([] as ScoutReportDto[]);
+      return apiClient.get<ScoutReportDto[]>('/combat/scout-reports');
+    },
+    enabled: Boolean(userId),
+    staleTime: 10_000,
+  });
+}
+
+export function useScoutReportQuery(reportId: string | null) {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  return useQuery<ScoutReportDto>({
+    queryKey: queryKeys.scoutReport(reportId),
+    queryFn: () => {
+      if (!reportId) return Promise.reject(new Error('Missing scout report'));
+      return apiClient.get<ScoutReportDto>(`/combat/scout-report/${reportId}`);
+    },
+    enabled: Boolean(reportId && userId),
+    staleTime: 60_000,
+  });
+}
+
 interface MarkReportReadInput {
   reportId: string;
 }
@@ -586,6 +617,19 @@ export function useMarkReportReadMutation() {
   });
 }
 
+export function useMarkScoutReportReadMutation() {
+  const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  return useMutation<ScoutReportDto, Error, MarkReportReadInput>({
+    mutationFn: ({ reportId }) =>
+      apiClient.patch<ScoutReportDto>(`/combat/scout-report/${reportId}/read`),
+    onSettled: (_data, _err, { reportId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.scoutReports(userId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.scoutReport(reportId) });
+    },
+  });
+}
+
 interface DeleteReportInput {
   reportId: string;
 }
@@ -598,6 +642,18 @@ export function useDeleteReportMutation() {
       apiClient.delete<unknown>(`/combat/report/${reportId}`),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.combatReports(userId) });
+    },
+  });
+}
+
+export function useDeleteScoutReportMutation() {
+  const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  return useMutation<unknown, Error, DeleteReportInput>({
+    mutationFn: ({ reportId }) =>
+      apiClient.delete<unknown>(`/combat/scout-report/${reportId}`),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.scoutReports(userId) });
     },
   });
 }
@@ -629,6 +685,26 @@ export function useInitiateAttackMutation() {
   return useMutation<unknown, Error, AttackInput>({
     mutationFn: ({ villageId, targetX, targetY, targetKind, targetRefId, units }) =>
       apiClient.post<unknown>('/combat/attack', {
+        villageId,
+        targetX,
+        targetY,
+        targetKind,
+        targetRefId,
+        units,
+      }),
+    onSettled: (_data, _err, { villageId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
+    },
+  });
+}
+
+export function useInitiateScoutMutation() {
+  const queryClient = useQueryClient();
+  return useMutation<unknown, Error, AttackInput>({
+    mutationFn: ({ villageId, targetX, targetY, targetKind, targetRefId, units }) =>
+      apiClient.post<unknown>('/combat/scout', {
         villageId,
         targetX,
         targetY,

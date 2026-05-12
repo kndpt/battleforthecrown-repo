@@ -11,16 +11,22 @@ import {
   Tooltip,
 } from '@/ui';
 import {
+  useDeleteScoutReportMutation,
   useCombatReportQuery,
   useDeleteReportMutation,
   useMarkReportReadMutation,
+  useMarkScoutReportReadMutation,
+  useScoutReportQuery,
   type CombatReportDto,
 } from '@/api/queries';
 import { unitMetaFor } from '@/features/army/unitConfig';
 import { formatResourceAmount } from '@/lib/resourceConfig';
+import { ScoutReportCard } from '@/features/design-system/components/ScoutReportCard';
+import { buildScoutReportCardProps } from './scoutReportView';
 
 interface ReportDetailModalProps {
   reportId: string;
+  reportKind: 'combat' | 'scout';
   onClose: () => void;
 }
 
@@ -132,7 +138,91 @@ function UnitsTable({ report }: { report: CombatReportDto }) {
   );
 }
 
-export function ReportDetailModal({ reportId, onClose }: ReportDetailModalProps) {
+function ScoutReportDetail({
+  reportId,
+  onClose,
+}: {
+  reportId: string;
+  onClose: () => void;
+}) {
+  const report = useScoutReportQuery(reportId);
+  const { mutate: markRead } = useMarkScoutReportReadMutation();
+  const { mutateAsync: deleteReport } = useDeleteScoutReportMutation();
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    if (!report.data || report.data.isRead) return;
+    markRead({ reportId });
+  }, [report.data, reportId, markRead]);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteReport({ reportId });
+      onClose();
+    } catch (err) {
+      console.error('Erreur lors de la suppression du rapport scout:', err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <Modal isOpen onClose={onClose} size="md" variant="default">
+      <ModalBody className="!p-0 relative flex flex-col overflow-hidden h-[90vh] max-h-[90vh]">
+        <header className="px-4 py-3 bg-gradient-to-r from-[#3d4f60] via-[#4d6478] to-[#7a92a8] border-b-2 border-[#1f2933] flex items-center gap-2 flex-shrink-0">
+          <div className="w-9" aria-hidden />
+          <div className="flex-1 text-center">
+            <h1 className="font-cinzel font-bold text-white text-shadow-game">
+              Rapport Scout
+            </h1>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+            aria-label="Fermer"
+          >
+            <X className="w-5 h-5 text-white" />
+          </button>
+        </header>
+
+        {report.isLoading || !report.data ? (
+          <div className="flex-1 flex items-center justify-center">
+            <Spinner size="lg" />
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100 p-4 pb-6">
+            <ScoutReportCard
+              {...buildScoutReportCardProps(report.data, handleDelete, isDeleting)}
+              className="mx-auto w-full max-w-[360px]"
+            />
+          </div>
+        )}
+
+        {report.error && (
+          <div className="p-4 text-sm text-game-red-dark font-game text-center">
+            Impossible de charger le rapport scout.
+          </div>
+        )}
+      </ModalBody>
+    </Modal>
+  );
+}
+
+export function ReportDetailModal({ reportId, reportKind, onClose }: ReportDetailModalProps) {
+  return reportKind === 'scout'
+    ? <ScoutReportDetail reportId={reportId} onClose={onClose} />
+    : <CombatReportDetail reportId={reportId} onClose={onClose} />;
+}
+
+function CombatReportDetail({
+  reportId,
+  onClose,
+}: {
+  reportId: string;
+  onClose: () => void;
+}) {
   const report = useCombatReportQuery(reportId);
   const { mutate: markRead } = useMarkReportReadMutation();
   const { mutateAsync: deleteReport } = useDeleteReportMutation();
