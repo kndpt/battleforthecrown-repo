@@ -7,14 +7,16 @@ import {
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import { CrownsService } from '../crowns/crowns.service';
-import {
-  VillageStrategy,
-  VillageStrategyConfig as PrismaVillageStrategyConfig,
-} from '@prisma/client';
+import { WorldConfigService } from '../world/world-config.service';
+import { createOutboxEvent } from '../event/event.utils';
+import { VillageStrategy } from '@prisma/client';
 import {
   BASE_VILLAGE_STRATEGY_BONUS,
+  BUILDING_TYPES,
   StrategyBonus,
+  VillageStrategyChangeCost,
   VillageStrategyType,
+  getVillageStrategyChangeCost,
   getStrategyBonusValue,
   getVillageStrategyPlan,
 } from '@battleforthecrown/shared/village';
@@ -23,7 +25,7 @@ import { MS_PER_HOUR } from '@battleforthecrown/shared/time';
 export interface StrategyChangeResult {
   success: boolean;
   newStrategy: VillageStrategyType;
-  cost: number;
+  cost: VillageStrategyChangeCost;
   cooldownEndsAt: Date;
   message: string;
 }
@@ -34,6 +36,8 @@ export interface StrategyInfo {
   cooldownEndsAt: Date | null;
   canChange: boolean;
   changeCost: number;
+  changeCosts: Record<VillageStrategyType, VillageStrategyChangeCost>;
+  hasCouncilHall: boolean;
   strategies: Record<
     VillageStrategyType,
     {
@@ -50,6 +54,7 @@ export class VillageStrategyService {
     private prisma: PrismaService,
     private ownership: OwnershipService,
     private crowns: CrownsService,
+    private worldConfig: WorldConfigService,
   ) {}
 
   async getStrategyInfo(
@@ -61,7 +66,7 @@ export class VillageStrategyService {
       where: { id: villageId },
       include: {
         strategyConfig: true,
-        world: true,
+        buildings: true,
       },
     });
 
@@ -80,9 +85,15 @@ export class VillageStrategyService {
     const lastChangedAt = village.strategyConfig?.lastChangedAt || new Date();
     const cooldownEndsAt = village.strategyConfig?.cooldownEndsAt || null;
     const now = new Date();
+    const castleLevel = this.getBuildingLevel(
+      village.buildings,
+      BUILDING_TYPES.CASTLE,
+    );
+    const hasCouncilHall = this.hasCouncilHall(village.buildings);
 
     const canChange = !cooldownEndsAt || now >= cooldownEndsAt;
-    const changeCost = this.calculateChangeCost(village.strategyConfig);
+    const changeCosts = this.calculateChangeCosts(castleLevel);
+    const changeCost = changeCosts[currentStrategy].crowns;
 
     return {
       currentStrategy,
@@ -90,6 +101,8 @@ export class VillageStrategyService {
       cooldownEndsAt,
       canChange,
       changeCost,
+      changeCosts,
+      hasCouncilHall,
       strategies: strategyConfig.strategies,
     };
   }
@@ -105,8 +118,8 @@ export class VillageStrategyService {
       where: { id: villageId },
       include: {
         strategyConfig: true,
-        world: true,
-        user: true,
+        resourceStock: true,
+        buildings: true,
       },
     });
 
@@ -125,7 +138,22 @@ export class VillageStrategyService {
       throw new BadRequestException(`Invalid strategy: ${newStrategy}`);
     }
 
-    // Vérifier le cooldown
+    if (village.isBarbarian) {
+      throw new BadRequestException('Barbarian villages cannot use strategies');
+    }
+
+    const currentStrategy =
+      village.strategyConfig?.strategy || VillageStrategy.BALANCED;
+    if (currentStrategy === newStrategy) {
+      throw new BadRequestException('Village already uses this strategy');
+    }
+
+    if (!this.hasCouncilHall(village.buildings)) {
+      throw new BadRequestException(
+        'Council Hall is required to change strategy',
+      );
+    }
+
     const now = new Date();
     if (
       village.strategyConfig?.cooldownEndsAt &&
@@ -134,8 +162,24 @@ export class VillageStrategyService {
       throw new ConflictException('Strategy change is on cooldown');
     }
 
-    // Vérifier le coût en couronnes
-    const changeCost = this.calculateChangeCost(village.strategyConfig);
+    if (!village.resourceStock) {
+      throw new NotFoundException('Village resources not found');
+    }
+
+    const castleLevel = this.getBuildingLevel(
+      village.buildings,
+      BUILDING_TYPES.CASTLE,
+    );
+    const changeCost = getVillageStrategyChangeCost(newStrategy, castleLevel);
+
+    if (
+      village.resourceStock.wood < changeCost.wood ||
+      village.resourceStock.stone < changeCost.stone ||
+      village.resourceStock.iron < changeCost.iron
+    ) {
+      throw new BadRequestException('Insufficient resources');
+    }
+
     const crownBalance = await this.prisma.crownBalance.findUnique({
       where: {
         userId_worldId: {
@@ -145,7 +189,7 @@ export class VillageStrategyService {
       },
     });
 
-    if (!crownBalance || crownBalance.balance < changeCost) {
+    if (!crownBalance || crownBalance.balance < changeCost.crowns) {
       throw new BadRequestException('Insufficient crowns');
     }
 
@@ -155,7 +199,6 @@ export class VillageStrategyService {
     );
 
     return this.prisma.$transaction(async (tx) => {
-      // Déduire les couronnes
       await tx.crownBalance.update({
         where: {
           userId_worldId: {
@@ -164,7 +207,7 @@ export class VillageStrategyService {
           },
         },
         data: {
-          balance: crownBalance.balance - changeCost,
+          balance: crownBalance.balance - changeCost.crowns,
           lastUpdateTs: now,
         },
       });
@@ -173,22 +216,45 @@ export class VillageStrategyService {
       // crown-production avec production > 0 (cf. crowns.service.ts JSDoc).
       await this.crowns.createCrownsChangedEvent(userId, village.worldId, tx);
 
-      // Mettre à jour ou créer la configuration de stratégie
+      const updatedStock = await tx.resourceStock.update({
+        where: { villageId },
+        data: {
+          wood: { decrement: changeCost.wood },
+          stone: { decrement: changeCost.stone },
+          iron: { decrement: changeCost.iron },
+          maxPerType: this.getStorageLimitForStrategy(village, newStrategy),
+          lastUpdateTs: now,
+        },
+      });
+
       await tx.villageStrategyConfig.upsert({
         where: { villageId },
         update: {
           strategy: newStrategy as VillageStrategy,
           lastChangedAt: now,
           cooldownEndsAt,
-          changeCost,
+          changeCost: changeCost.crowns,
         },
         create: {
           villageId,
           strategy: newStrategy as VillageStrategy,
           lastChangedAt: now,
           cooldownEndsAt,
-          changeCost,
+          changeCost: changeCost.crowns,
         },
+      });
+
+      await createOutboxEvent(tx, 'resources.changed', villageId, {
+        villageId,
+        wood: updatedStock.wood,
+        stone: updatedStock.stone,
+        iron: updatedStock.iron,
+        maxPerType: updatedStock.maxPerType,
+        lastUpdateTs: updatedStock.lastUpdateTs.toISOString(),
+        productionRates: await this.getProductionRatesForStrategy(
+          village,
+          newStrategy,
+        ),
       });
 
       return {
@@ -269,31 +335,92 @@ export class VillageStrategyService {
     }
   }
 
-  private calculateChangeCost(
-    strategyConfig: PrismaVillageStrategyConfig | null,
+  private calculateChangeCosts(castleLevel: number) {
+    return {
+      FORTRESS: getVillageStrategyChangeCost('FORTRESS', castleLevel),
+      RAIDERS: getVillageStrategyChangeCost('RAIDERS', castleLevel),
+      ECONOMIC: getVillageStrategyChangeCost('ECONOMIC', castleLevel),
+      BALANCED: getVillageStrategyChangeCost('BALANCED', castleLevel),
+    };
+  }
+
+  private getBuildingLevel(
+    buildings: Array<{ type: string; level: number }>,
+    buildingType: string,
   ): number {
-    const BASE_COST = 100; // Base cost from world config (can be overridden)
-    const MAX_COST = 500; // Cap to prevent abuse
-    const PENALTY_MULTIPLIER = 1.5; // +50% penalty if within 24h
-    const PENALTY_WINDOW_HOURS = 24;
+    return buildings.find((b) => b.type === buildingType)?.level ?? 0;
+  }
 
-    // First change is free
-    if (!strategyConfig) {
-      return 0;
-    }
+  private hasCouncilHall(buildings: Array<{ type: string; level: number }>) {
+    return this.getBuildingLevel(buildings, BUILDING_TYPES.COUNCIL_HALL) >= 1;
+  }
 
-    // Compute cost with penalty for repeated changes within cooldown window
-    const hoursSinceLastChange =
-      (Date.now() - strategyConfig.lastChangedAt.getTime()) / (1000 * 60 * 60);
+  private getStorageLimitForStrategy(
+    village: {
+      worldId: string;
+      buildings: Array<{ type: string; level: number }>;
+    },
+    strategy: VillageStrategyType,
+  ): number {
+    const warehouseLevel = this.getBuildingLevel(
+      village.buildings,
+      BUILDING_TYPES.WAREHOUSE,
+    );
+    const baseLimit = this.worldConfig.getStorageLimit(
+      village.worldId,
+      warehouseLevel || 1,
+    );
+    return Math.floor(
+      baseLimit * getStrategyBonusValue(strategy, 'storageBonus'),
+    );
+  }
 
-    const baseCost = strategyConfig.changeCost || BASE_COST;
-    const costWithPenalty =
-      hoursSinceLastChange < PENALTY_WINDOW_HOURS
-        ? Math.floor(baseCost * PENALTY_MULTIPLIER)
-        : baseCost;
+  private async getProductionRatesForStrategy(
+    village: {
+      worldId: string;
+      buildings: Array<{ type: string; level: number }>;
+    },
+    strategy: VillageStrategyType,
+  ) {
+    const woodLevel = this.getBuildingLevel(
+      village.buildings,
+      BUILDING_TYPES.WOOD,
+    );
+    const stoneLevel = this.getBuildingLevel(
+      village.buildings,
+      BUILDING_TYPES.STONE,
+    );
+    const ironLevel = this.getBuildingLevel(
+      village.buildings,
+      BUILDING_TYPES.IRON,
+    );
 
-    // Apply cap to prevent abuse
-    return Math.min(costWithPenalty, MAX_COST);
+    return {
+      wood: woodLevel
+        ? (await this.worldConfig.getProductionRate(
+            village.worldId,
+            'WOOD',
+            woodLevel,
+            strategy,
+          )) * 60
+        : 0,
+      stone: stoneLevel
+        ? (await this.worldConfig.getProductionRate(
+            village.worldId,
+            'STONE',
+            stoneLevel,
+            strategy,
+          )) * 60
+        : 0,
+      iron: ironLevel
+        ? (await this.worldConfig.getProductionRate(
+            village.worldId,
+            'IRON',
+            ironLevel,
+            strategy,
+          )) * 60
+        : 0,
+    };
   }
 
   async getStrategyRecommendations(villageId: string, userId: string) {

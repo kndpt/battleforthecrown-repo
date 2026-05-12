@@ -278,9 +278,14 @@ describe('combat conquest hook smoke', () => {
       expect(attackRes.status).toBeLessThan(300);
       const attackBody = attackRes.body as { id: string };
 
-      await outboxDispatched(
-        ctx.prisma,
-        { kind: 'noble.killed', aggregateId: origin.village.id },
+      await waitFor(
+        () =>
+          ctx.prisma.eventOutbox.findFirst({
+            where: {
+              kind: 'noble.killed',
+              aggregateId: origin.village.id,
+            },
+          }),
         { timeoutMs: 30_000 },
       );
 

@@ -19,10 +19,18 @@ export async function bootSmokeApp(): Promise<SmokeContext> {
   }).compile();
   const app = moduleFixture.createNestApplication();
   await app.init();
+  const prisma = app.get(PrismaService);
+  const boss = app.get<PgBoss>('PG_BOSS');
+  const closeApp = app.close.bind(app);
+  app.close = async () => {
+    await boss.stop({ graceful: true, wait: true, timeout: 1_000 });
+    await prisma.$executeRawUnsafe('DELETE FROM pgboss.job');
+    await closeApp();
+  };
   return {
     app,
-    prisma: app.get(PrismaService),
-    boss: app.get<PgBoss>('PG_BOSS'),
+    prisma,
+    boss,
     server: app.getHttpServer(),
   };
 }

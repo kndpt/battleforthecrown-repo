@@ -651,7 +651,19 @@ describe('smoke', () => {
     );
     const villageId = join.village.id;
 
-    // Give the user enough crowns to afford a strategy change.
+    await ctx.prisma.building.updateMany({
+      where: { villageId, type: 'CASTLE' },
+      data: { level: 4 },
+    });
+    await ctx.prisma.building.create({
+      data: { villageId, type: 'COUNCIL_HALL', level: 1 },
+    });
+    await ctx.prisma.resourceStock.update({
+      where: { villageId },
+      data: { wood: 1_000, stone: 1_000, iron: 1_000 },
+    });
+
+    // Give the user enough crowns to afford a paid first strategy change.
     await ctx.prisma.crownBalance.update({
       where: { userId_worldId: { userId: user.userId, worldId: world.id } },
       data: { balance: 10_000 },
@@ -662,6 +674,9 @@ describe('smoke', () => {
       .set('Authorization', `Bearer ${user.accessToken}`)
       .send({ strategy: 'FORTRESS' });
     expect(res.status).toBeLessThan(300);
+    expect(res.body).toMatchObject({
+      cost: { wood: 200, stone: 100, iron: 50, crowns: 80 },
+    });
 
     const event = await outboxDispatched(
       ctx.prisma,

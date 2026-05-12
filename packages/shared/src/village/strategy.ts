@@ -33,6 +33,26 @@ export interface VillageStrategyPlan {
   strategies: Record<VillageStrategyType, VillageStrategyDefinition>;
 }
 
+export interface VillageStrategyChangeCost {
+  wood: number;
+  stone: number;
+  iron: number;
+  crowns: number;
+}
+
+export const VILLAGE_STRATEGY_BASE_CHANGE_COSTS: Record<
+  VillageStrategyType,
+  VillageStrategyChangeCost
+> = {
+  FORTRESS: { wood: 200, stone: 100, iron: 50, crowns: 80 },
+  RAIDERS: { wood: 50, stone: 100, iron: 200, crowns: 80 },
+  ECONOMIC: { wood: 100, stone: 200, iron: 50, crowns: 60 },
+  BALANCED: { wood: 100, stone: 100, iron: 100, crowns: 80 },
+};
+
+export const VILLAGE_STRATEGY_COST_CASTLE_BASE_LEVEL = 4;
+export const VILLAGE_STRATEGY_COST_CASTLE_MULTIPLIER = 1.25;
+
 export const BASE_VILLAGE_STRATEGY_BONUS: Required<StrategyBonus> = {
   attackBonus: 1,
   defenseBonus: 1,
@@ -97,7 +117,7 @@ export const DEFAULT_VILLAGE_STRATEGY: VillageStrategyPlan = {
 const fallbackStrategy = DEFAULT_VILLAGE_STRATEGY.strategies.BALANCED;
 
 const mergeProductionBonus = (
-  bonus?: Record<ResourceType, number>
+  bonus?: Record<ResourceType, number>,
 ): Record<ResourceType, number> => {
   const base = BASE_VILLAGE_STRATEGY_BONUS.productionBonus;
   return {
@@ -132,14 +152,36 @@ const mergeBonus = (bonus: StrategyBonus): StrategyBonus => ({
 export const getVillageStrategyPlan = (): VillageStrategyPlan =>
   DEFAULT_VILLAGE_STRATEGY;
 
+export const getVillageStrategyChangeCost = (
+  targetStrategy: VillageStrategyType,
+  castleLevel: number,
+): VillageStrategyChangeCost => {
+  const base = VILLAGE_STRATEGY_BASE_CHANGE_COSTS[targetStrategy];
+  const safeCastleLevel = Math.max(
+    VILLAGE_STRATEGY_COST_CASTLE_BASE_LEVEL,
+    castleLevel,
+  );
+  const multiplier = Math.pow(
+    VILLAGE_STRATEGY_COST_CASTLE_MULTIPLIER,
+    safeCastleLevel - VILLAGE_STRATEGY_COST_CASTLE_BASE_LEVEL,
+  );
+
+  return {
+    wood: Math.floor(base.wood * multiplier),
+    stone: Math.floor(base.stone * multiplier),
+    iron: Math.floor(base.iron * multiplier),
+    crowns: Math.floor(base.crowns * multiplier),
+  };
+};
+
 export const getStrategyDefinition = (
-  strategy: VillageStrategyType
+  strategy: VillageStrategyType,
 ): VillageStrategyDefinition => {
   return DEFAULT_VILLAGE_STRATEGY.strategies[strategy] ?? fallbackStrategy;
 };
 
 export const getStrategyBonuses = (
-  strategy: VillageStrategyType
+  strategy: VillageStrategyType,
 ): StrategyBonus => {
   const definition = getStrategyDefinition(strategy);
   return mergeBonus(definition.bonuses ?? {});
@@ -147,7 +189,7 @@ export const getStrategyBonuses = (
 
 export function getStrategyBonusValue<K extends keyof StrategyBonus>(
   strategy: VillageStrategyType,
-  bonus: K
+  bonus: K,
 ): NonNullable<StrategyBonus[K]> {
   const bonuses = getStrategyBonuses(strategy);
   if (bonus === "productionBonus") {
