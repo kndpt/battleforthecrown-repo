@@ -1,31 +1,15 @@
-import { ReactNode } from 'react';
-import { X } from 'lucide-react';
-import { BftcButton, type BftcButtonProps } from './BftcButton';
-import { cn } from '@/lib/cn';
+import type { ReactNode } from 'react';
+import { BftcButton, type BftcButtonVariant } from './BftcButton';
 import { publicAsset } from '@/lib/publicAsset';
+import { cn } from '@/lib/cn';
 
-export type GameModalTone = 'default' | 'success' | 'danger' | 'info' | 'warning';
-
-const barClass: Record<GameModalTone, string> = {
-  default: 'from-[#f1c40f] to-[#d4a017]',
-  success: 'from-[#6ebf49] to-[#4a8c2a]',
-  danger: 'from-[#e74c3c] to-[#c0392b]',
-  info: 'from-[#5b9bd5] to-[#2e75b6]',
-  warning: 'from-[#f1c40f] to-[#d4a017]',
-};
-
-const iconClass: Record<GameModalTone, string> = {
-  default: 'bg-black/20 border-black/20',
-  success: 'bg-gradient-to-b from-[#6ebf49] to-[#4a8c2a] border-[#3a6c1f]',
-  danger: 'bg-gradient-to-b from-[#e74c3c] to-[#c0392b] border-[#a93226]',
-  info: 'bg-gradient-to-b from-[#5b9bd5] to-[#2e75b6] border-[#1f5288]',
-  warning: 'bg-gradient-to-b from-[#f1c40f] to-[#d4a017] border-[#9e7b0d]',
-};
+export type GameModalTone = 'warning' | 'success' | 'danger' | 'info';
+export type GameModalVariant = 'default' | 'celebration';
 
 export interface GameModalAction {
   label: string;
   onClick?: () => void;
-  variant?: BftcButtonProps['variant'];
+  variant?: BftcButtonVariant;
 }
 
 export interface GameModalProps {
@@ -35,46 +19,81 @@ export interface GameModalProps {
   icon?: string;
   onClose?: () => void;
   quote?: string;
+  subtitle?: string;
   title: string;
   tone?: GameModalTone;
+  variant?: GameModalVariant;
 }
 
-export function GameModal({ actions = [], children, className, icon, onClose, quote, title, tone = 'default' }: GameModalProps) {
+const toneBarClass: Record<GameModalTone, string> = {
+  warning: 'bg-[linear-gradient(to_right,#f1c40f,#d4a017)]',
+  success: 'bg-[linear-gradient(to_right,#6ebf49,#4a8c2a)]',
+  danger: 'bg-[linear-gradient(to_right,#e74c3c,#c0392b)]',
+  info: 'bg-[linear-gradient(to_right,#5b9bd5,#2e75b6)]',
+};
+
+const iconClass: Record<GameModalTone, string> = {
+  warning: 'border-[#9e7b0d] bg-[linear-gradient(to_bottom,#f1c40f,#d4a017)]',
+  success: 'border-[#3a6c1f] bg-[linear-gradient(to_bottom,#6ebf49,#4a8c2a)] text-white text-lg font-extrabold [text-shadow:1px_1px_2px_rgba(0,0,0,.5)]',
+  danger: 'border-[#a93226] bg-[linear-gradient(to_bottom,#e74c3c,#c0392b)]',
+  info: 'border-[#1f5288] bg-[linear-gradient(to_bottom,#5b9bd5,#2e75b6)]',
+};
+
+export function GameModal({
+  actions = [],
+  children,
+  className,
+  icon,
+  onClose,
+  quote,
+  subtitle,
+  title,
+  tone = 'warning',
+  variant = 'default',
+}: GameModalProps) {
+  const celebration = variant === 'celebration';
+
   return (
     <section
       className={cn(
-        'relative overflow-hidden rounded-[14px] border-4 border-[#5d4a32] bg-gradient-to-b from-[#fef9f0] to-[#e8d4a8] text-[#3d2f1f]',
-        'shadow-[0_0_0_2px_#5d4a32,0_12px_32px_rgba(0,0,0,.45),inset_0_2px_0_rgba(255,255,255,.55)]',
+        'relative overflow-hidden rounded-[14px] border-4 border-[#5d4a32] bg-[linear-gradient(to_bottom,#fef9f0,#e8d4a8)] shadow-[0_0_0_2px_#5d4a32,0_12px_32px_rgba(0,0,0,.55),inset_0_2px_0_rgba(255,255,255,.55)]',
         className,
       )}
     >
-      <div className={cn('h-1.5 bg-gradient-to-r', barClass[tone])} />
-      <header className="flex items-center gap-2 px-3.5 pb-1 pt-2.5">
-        {icon ? (
-          <span className={cn('grid size-9 place-items-center rounded-full border-2', iconClass[tone])}>
-            <img alt="" className="size-6 object-contain" src={publicAsset(icon)} />
-          </span>
-        ) : null}
-        <h3 className="font-game text-[15px] font-bold text-[#3d2f1f]">{title}</h3>
-        {onClose ? (
-          <button
-            aria-label="Fermer"
-            className="ml-auto grid size-6 place-items-center rounded-md border-2 border-black/20 bg-black/10 font-bold"
-            onClick={onClose}
-            type="button"
-          >
-            <X size={14} />
-          </button>
-        ) : null}
-      </header>
-      <div className="px-3.5 py-1.5 font-game text-xs leading-5 text-[#3d2f1f]">
-        {children}
-        {quote ? <div className="my-1.5 border-l-[3px] border-[#d4a017] pl-2 text-[11px] italic text-[#6d5838]">{quote}</div> : null}
-      </div>
+      <div className={cn('h-1.5', toneBarClass[tone])} />
+      {celebration ? (
+        <div className="px-3.5 py-[18px] text-center">
+          {icon ? <img alt="" className="mx-auto my-1 size-20 drop-shadow-[0_4px_8px_rgba(0,0,0,.35)]" src={publicAsset(icon)} /> : null}
+          <div className="font-game text-[34px] font-black uppercase tracking-[.06em] text-[#5a4400] [text-shadow:0_2px_0_#fff,0_3px_6px_rgba(0,0,0,.25)]">{title}</div>
+          {subtitle ? <p className="font-game text-xs text-[#6d5838]">{subtitle}</p> : null}
+        </div>
+      ) : (
+        <>
+          <header className="flex items-center gap-2 px-3.5 pb-1 pt-2.5">
+            <div className={cn('flex size-9 items-center justify-center rounded-full border-2', iconClass[tone])}>
+              {icon ? <img alt="" className="size-6" src={publicAsset(icon)} /> : null}
+            </div>
+            <h3 className="font-game text-[15px] font-bold text-[#3d2f1f]">{title}</h3>
+            {onClose ? (
+              <button
+                className="ml-auto flex size-6 items-center justify-center rounded-md border-2 border-[rgba(0,0,0,.2)] bg-[rgba(0,0,0,.12)] font-game font-bold leading-none text-[#3d2f1f]"
+                onClick={onClose}
+                type="button"
+              >
+                ×
+              </button>
+            ) : null}
+          </header>
+          <div className="px-3.5 py-1.5 font-game text-xs leading-[1.4] text-[#3d2f1f]">
+            {children}
+            {quote ? <div className="my-1.5 border-l-[3px] border-[#d4a017] pl-2 text-[11px] italic text-[#6d5838]">{quote}</div> : null}
+          </div>
+        </>
+      )}
       {actions.length > 0 ? (
-        <footer className="flex justify-end gap-1.5 bg-black/[0.04] px-3.5 py-2">
+        <footer className={cn('flex gap-1.5 bg-[rgba(0,0,0,.04)] px-3.5 pb-3 pt-2', celebration ? 'justify-center' : 'justify-end')}>
           {actions.map((action) => (
-            <BftcButton key={action.label} onClick={action.onClick} size="xs" variant={action.variant ?? 'neutral'}>
+            <BftcButton className="px-3 py-[5px] text-xs" key={action.label} onClick={action.onClick} variant={action.variant ?? 'neutral'}>
               {action.label}
             </BftcButton>
           ))}

@@ -1,63 +1,119 @@
 import { cn } from '@/lib/cn';
 
-export interface NumberStepperProps {
-  ariaLabel: string;
-  className?: string;
-  max: number;
-  min?: number;
-  onChange: (value: number) => void;
-  stepDeltas?: [number, number, number, number];
-  value: number;
+export type NumberStepperSize = 'sm' | 'md' | 'lg';
+
+export interface NumberStepperControl {
+  disabled?: boolean;
+  label: string;
+  onClick?: () => void;
 }
 
+export interface NumberStepperProps {
+  className?: string;
+  leftControls?: NumberStepperControl[];
+  max?: number;
+  min?: number;
+  onChange?: (value: number) => void;
+  rightControls?: NumberStepperControl[];
+  size?: NumberStepperSize;
+  step?: number;
+  value: number | string;
+  valueTone?: 'default' | 'danger';
+}
+
+const buttonSizeClass: Record<NumberStepperSize, string> = {
+  sm: 'w-6 text-[13px]',
+  md: 'w-[30px] text-base',
+  lg: 'w-9 text-lg',
+};
+
+const signedNumberButtonSizeClass: Record<NumberStepperSize, string> = {
+  sm: 'text-[11px]',
+  md: 'text-[12px]',
+  lg: 'text-[13px]',
+};
+
+const valueSizeClass: Record<NumberStepperSize, string> = {
+  sm: 'min-w-[42px] px-1.5 py-[3px] text-xs',
+  md: 'min-w-[62px] px-2 py-[5px] text-sm',
+  lg: 'min-w-[78px] px-2.5 py-[7px] text-base',
+};
+
 export function NumberStepper({
-  ariaLabel,
   className,
-  max,
-  min = 0,
+  leftControls = [{ label: '−' }],
+  max = Number.POSITIVE_INFINITY,
+  min = Number.NEGATIVE_INFINITY,
   onChange,
-  stepDeltas = [-10, -1, 1, 10],
+  rightControls = [{ label: '+' }],
+  size = 'md',
+  step = 1,
   value,
+  valueTone = 'default',
 }: NumberStepperProps) {
-  const [largeDown, smallDown, smallUp, largeUp] = stepDeltas;
-  const clamp = (next: number) => Math.min(max, Math.max(min, next));
-  const commit = (next: number) => onChange(clamp(next));
+  const getControlTextClass = (label: string) => (/^[+−-]\d/.test(label) ? signedNumberButtonSizeClass[size] : undefined);
+  const numericValue = typeof value === 'number' ? value : undefined;
+  const parseDelta = (label: string) => {
+    if (label === '+') return step;
+    if (label === '−' || label === '-') return -step;
+    return Number(label.replace('−', '-'));
+  };
+  const handleControlClick = (control: NumberStepperControl) => {
+    if (control.onClick) {
+      control.onClick();
+      return;
+    }
+    if (numericValue === undefined || !onChange) return;
+    const delta = parseDelta(control.label);
+    if (Number.isNaN(delta)) return;
+    onChange(Math.max(min, Math.min(max, numericValue + delta)));
+  };
 
   return (
     <div
-      aria-label={ariaLabel}
-      className={cn('flex items-stretch overflow-hidden rounded-xl border-2 border-[#5d4a32] bg-black/10', className)}
-      role="group"
+      className={cn(
+        'inline-flex items-stretch overflow-hidden rounded-[10px] border-2 border-[#8b7355] bg-gradient-to-b from-[#fef9f0] to-[#e8d4a8] shadow-[inset_0_1px_0_rgba(255,255,255,.5),0_2px_0_rgba(0,0,0,.18)]',
+        className,
+      )}
     >
-      {[largeDown, smallDown].map((delta) => (
+      {leftControls.map((control) => (
         <button
-          key={delta}
-          className="h-[38px] w-[42px] border-r-2 border-[#5d4a32] bg-gradient-to-b from-[#fef9f0] to-[#e8d4a8] font-game text-lg font-extrabold text-[#3d2f1f] disabled:opacity-45"
-          disabled={value <= min}
-          onClick={() => commit(value + delta)}
+          className={cn(
+            'cursor-pointer appearance-none border-0 border-r-[1.5px] border-[#8b7355] bg-gradient-to-b from-[#fef9f0] to-[#cdb88a] font-game font-extrabold text-[#3d2f1f] disabled:cursor-not-allowed disabled:text-[#bfb29a]',
+            buttonSizeClass[size],
+            getControlTextClass(control.label),
+          )}
+          disabled={control.disabled}
+          key={`left-${control.label}`}
+          onClick={() => handleControlClick(control)}
           type="button"
         >
-          {delta}
+          {control.label}
         </button>
       ))}
-      <input
-        aria-label={ariaLabel}
-        className="h-[38px] min-w-0 flex-1 bg-[#1a1a1a] text-center font-game text-[22px] font-extrabold tabular-nums text-[#f6d57b] outline-none [text-shadow:0_0_8px_rgba(241,196,15,0.5)]"
-        max={max}
-        min={min}
-        onChange={(event) => commit(Number(event.currentTarget.value || min))}
-        type="number"
-        value={value}
-      />
-      {[smallUp, largeUp].map((delta) => (
+      <span
+        className={cn(
+          'self-center bg-[rgba(255,255,255,.4)] text-center font-game font-extrabold tabular-nums',
+          valueTone === 'danger' ? 'text-[#a93226]' : 'text-[#3d2f1f]',
+          valueSizeClass[size],
+        )}
+      >
+        {value}
+      </span>
+      {rightControls.map((control, index) => (
         <button
-          key={delta}
-          className="h-[38px] w-[42px] border-l-2 border-[#5d4a32] bg-gradient-to-b from-[#fef9f0] to-[#e8d4a8] font-game text-lg font-extrabold text-[#3d2f1f] disabled:opacity-45"
-          disabled={value >= max}
-          onClick={() => commit(value + delta)}
+          className={cn(
+            'cursor-pointer appearance-none border-0 bg-gradient-to-b from-[#fef9f0] to-[#cdb88a] font-game font-extrabold text-[#3d2f1f] disabled:cursor-not-allowed disabled:text-[#bfb29a]',
+            index === 0 ? 'border-l-[1.5px] border-[#8b7355]' : 'border-l-[1.5px] border-[#8b7355]',
+            buttonSizeClass[size],
+            getControlTextClass(control.label),
+          )}
+          disabled={control.disabled}
+          key={`right-${control.label}`}
+          onClick={() => handleControlClick(control)}
           type="button"
         >
-          +{delta}
+          {control.label}
         </button>
       ))}
     </div>

@@ -1,314 +1,480 @@
+import { useState } from 'react';
 import {
-  AchievementCard,
-  ActiveBoostList,
-  AllianceBanner,
-  AllianceRow,
-  ArmyMarchMarker,
-  ArmyMovementRow,
+  ArmyMovementList,
   Avatar,
+  AvatarProfileLine,
+  AvatarStack,
   Badge,
-  BannerTitle,
   BftcButton,
-  BftcTooltip,
-  BoostPill,
-  BottomNavPreview,
+  BorderStrokeTile,
+  BuildingCard,
+  BuildingIconTile,
+  BuildingLevelRow,
   BuildQueueCard,
   ChatPanel,
-  CombatReportCard,
-  CombatReportMiniList,
-  CoordinateInput,
+  CinzelDisplaySample,
+  ColorSwatchTile,
   CostPill,
   CostRow,
-  DailyReward,
+  DarkSegmentedStage,
   DigitTimer,
-  Divider,
   EmptyState,
   FeaturedQuestCard,
   GameInput,
   GameModal,
   HeaderBar,
-  HeraldicShield,
   IconButton,
-  InfoCard,
+  InboxTabs,
+  LeaderboardHeader,
   LeaderboardRow,
   LevelChip,
   MailInboxItem,
-  MapCallout,
-  MapDot,
-  MapMarker,
-  MiniCard,
   NumberStepper,
   PipRating,
   PlayerProfileCard,
-  PowerComparison,
-  PremiumBundle,
   ProgressBar,
-  QuestCard,
+  QuestMissionCard,
+  RadiusTile,
   RequirementChip,
-  ResourceHud,
-  ScoutReport,
+  ResourceIconTile,
   SegmentedControl,
-  ShopTile,
+  SemanticColorRow,
+  ShadowDepthTile,
+  SurfaceTile,
   Timer,
   ToastPreview,
-  TooltipTarget,
   TroopRow,
   TroopStepper,
-  type ToastPreviewProps,
-  type ResourceHudItem,
+  VillageStyleModal,
+  VillageStyleTrigger,
   type ChatMessage,
-  type CoordinateValue,
+  type VillageStyleId,
 } from './components';
-import { Hammer, Lock, Mail, Plus, ScrollText, Settings, Shield, Swords, Trash2, User, X } from 'lucide-react';
-import { useState } from 'react';
 
-const resourceRows: ResourceHudItem[][] = [
-  [
-    { icon: '/assets/resources/wood.png', value: '8.500', label: '+120/h · /10.000' },
-    { icon: '/assets/resources/stone.png', value: '3.200', label: '+80/h · /5.000' },
-    { icon: '/assets/resources/iron.png', value: '1.500', label: '+50/h · /8.000' },
-    { icon: '/assets/resources/population.png', value: '120 / 200', label: 'villageois' },
-  ],
-  [
-    { icon: '/assets/resources/wood.png', value: '9.800', label: 'presque plein', low: true },
-    { icon: '/assets/resources/stone.png', value: '150', label: '+5/h · faible', low: true },
-    { icon: '/assets/crown.png', value: '28', label: 'couronnes' },
-  ],
-];
-
-const bottomNavItems = [
-  { id: 'army', label: 'Armée', Icon: Swords },
-  { id: 'buildings', label: 'Bâtiments', Icon: Hammer },
-  { id: 'messages', label: 'Messages', Icon: Mail, badge: 3 },
-  { id: 'world', label: 'Monde', Icon: Lock, locked: true },
-];
-
-const troopStepperBaseData = {
-  availableLabel: 'Disponibles : 48 · Capacité libre : 72',
-  costs: [
-    { icon: '/assets/resources/wood.png', value: '720' },
-    { icon: '/assets/resources/iron.png', value: '240' },
-    { icon: '/assets/resources/population.png', value: '24' },
-    { icon: '/assets/clock.png', value: '1h 12m' },
-  ],
-  icon: '/assets/army/squire.png',
-  max: 72,
-  name: 'Squire',
-  quickValues: [
-    { label: '0', value: 0 },
-    { label: '10', value: 10 },
-    { label: '25', value: 25 },
-    { label: '50', value: 50 },
-    { label: 'MAX (72)', value: 72, isMax: true },
-  ],
-};
-
-const initialToasts: ToastPreviewProps[] = [
+const chatMessages: ChatMessage[] = [
   {
-    icon: '/assets/barracks.png',
-    subtitle: 'Caserne · Niv. 2 prêt au combat.',
-    title: 'Construction terminée',
+    id: 'system-join',
+    message: 'Dame_Aliénor a rejoint le canal',
+    time: '09h12',
+    type: 'system',
   },
   {
-    icon: '/assets/army/squire.png',
-    subtitle: '24 squires · arrivée dans 1h 12m.',
-    title: 'Entraînement lancé',
-    tone: 'info',
-  },
-  {
-    icon: '/assets/resources/wood.png',
-    subtitle: '9.800 / 10.000 bois — pensez à dépenser.',
-    title: 'Entrepôt presque plein',
-    tone: 'warning',
-  },
-  {
-    icon: '/assets/hand-red.png',
-    subtitle: 'Sire_Robert marche sur votre village · 02:15:47.',
-    title: 'Attaque détectée',
-    tone: 'danger',
-  },
-];
-
-const combatReport = {
-  actions: [
-    { label: 'Partager', variant: 'neutral' as const },
-    { label: 'Détails', variant: 'info' as const },
-  ],
-  attacker: { name: 'Vous', location: 'Castelnef · 234|612' },
-  defender: { name: 'Sire_Robert', location: "Roc-d'Acier · 238|617" },
-  icon: '/assets/casual-icons/crown.png',
-  loot: [
-    { icon: '/assets/resources/wood.png', value: '1.240' },
-    { icon: '/assets/resources/stone.png', value: '820' },
-    { icon: '/assets/resources/iron.png', value: '340' },
-    { icon: '/assets/casual-icons/coin.png', value: '1.200' },
-  ],
-  outcome: 'win' as const,
-  title: 'VICTOIRE',
-  troopColumns: [
-    {
-      title: 'Attaquant — pertes',
-      troops: [
-        { icon: '/assets/army/squire.png', sent: '120', lost: '−18' },
-        { icon: '/assets/army/archer.png', sent: '60', lost: '−4' },
-      ],
-    },
-    {
-      title: 'Défenseur — pertes',
-      troops: [
-        { icon: '/assets/army/militia.png', sent: '80', lost: '−80' },
-        { icon: '/assets/army/templar.png', sent: '5', lost: '−5' },
-      ],
-    },
-  ],
-};
-
-const combatReportMinis = [
-  { badge: 'V', title: "Pillage · Roc-d'Acier", subtitle: 'Il y a 12 min · +2.400 G ramenés', value: '−22' },
-  { badge: 'D', lost: true, title: 'Défense · Castelnef', subtitle: 'Il y a 1h · Dame_Aliénor', value: '−240' },
-  { badge: 'E', title: 'Espionnage · Tours-Hautes', subtitle: 'Il y a 3h · 1 éclaireur revenu', value: '+info' },
-];
-
-const coordinateHistory = [
-  { label: 'Capitale', x: 234, y: 612 },
-  { label: 'Avant-poste', x: 238, y: 617 },
-  { label: 'Fer', x: 229, y: 604 },
-];
-
-const leaderboardRows = [
-  {
-    avatar: { crown: true, initials: 'AR', tone: 'red' as const },
-    delta: 'flat' as const,
-    name: 'Arthur',
-    points: '128k',
-    rank: 1,
-    tribe: 'RDR',
-  },
-  {
-    avatar: { initials: 'AL', status: 'online' as const, tone: 'green' as const },
-    delta: 'up' as const,
-    name: 'Aliénor',
-    points: '115k',
-    rank: 2,
-    tribe: 'LYS',
-  },
-  {
-    avatar: { initials: 'VO', tone: 'blue' as const },
-    delta: 'down' as const,
-    name: 'Vous',
-    points: '102k',
-    rank: 3,
-    self: true,
-    tribe: 'BFTC',
-  },
-  {
-    avatar: { initials: 'RB', status: 'attack' as const, tone: 'red' as const },
-    delta: 'up' as const,
-    name: 'Sire_Robert',
-    points: '99k',
-    rank: 4,
-    tribe: 'WOL',
-  },
-];
-
-const mailItems = [
-  {
-    avatar: { icon: '/assets/hand-red.png', tone: 'red' as const },
-    badge: 'Attaque',
-    preview: 'Une armée ennemie marche vers Castelnef.',
-    sender: 'Tour de guet',
-    subject: 'Alerte militaire',
-    time: '02:15',
-    type: 'attack' as const,
-    unread: true,
-  },
-  {
-    avatar: { icon: '/assets/casual-icons/crown.png', tone: 'green' as const },
-    badge: 'Rapport',
-    preview: '+2.400 ressources ramenées.',
-    sender: 'Héraut',
-    subject: "Pillage · Roc-d'Acier",
-    time: '12 min',
-    type: 'report' as const,
-  },
-  {
-    avatar: { initials: 'AL', tone: 'purple' as const },
-    badge: 'MP',
-    preview: 'On synchronise le soutien à 21h.',
+    avatarIcon: '/assets/icons/hand-silver.png',
+    id: 'alienor',
+    message: 'Sire Vous, des éclaireurs ont vu 240 unités à 238|617. Restez vigilant.',
+    role: { label: 'DUC' },
     sender: 'Dame_Aliénor',
-    subject: 'Défense groupée',
-    time: '1h',
-    type: 'player' as const,
-    unread: true,
-  },
-];
-
-const initialChatMessages: ChatMessage[] = [
-  { id: 'system-1', message: 'Dame_Aliénor a rejoint le canal.', type: 'system' },
-  {
-    avatar: { initials: 'AL', status: 'online', tone: 'purple' },
-    id: 'm-1',
-    message: 'Soutien prêt sur Castelnef.',
-    role: 'Officier',
-    sender: 'Aliénor',
-    time: '20:14',
+    time: '09h12',
     type: 'other',
   },
-  { id: 'm-2', message: 'Je lance les squires maintenant.', time: '20:15', type: 'self' },
   {
-    avatar: { initials: 'RB', status: 'attack', tone: 'red' },
-    id: 'm-3',
-    message: 'Ping sur 238|617, activité ennemie.',
-    sender: 'Robert',
-    time: '20:16',
+    id: 'self',
+    inlinePing: { icon: '/assets/position.png', label: '234|612' },
+    message: "Bien reçu. J'ai 4.250 pwr, je tiens. Renfort possible ?",
+    sender: 'Vous',
+    time: '09h13',
+    type: 'self',
+  },
+  {
+    avatarIcon: '/assets/icons/hand-silver.png',
+    id: 'leofric',
+    message: "J'envoie 80 milice. ETA 12 min.",
+    role: { label: 'CHEF', tone: 'stone' },
+    sender: 'Baron_Léofric',
+    time: '09h14',
     type: 'other',
   },
+  {
+    id: 'system-war',
+    message: '⚔ Sire_Robert a déclaré la guerre — il y a 4 min',
+    type: 'system',
+  },
 ];
-
-const previewSectionClass = 'space-y-4';
-const previewTitleClass = 'font-game text-2xl font-bold text-[#1f2937]';
 
 export function DesignSystemPreview() {
-  const [activeTab, setActiveTab] = useState('buildings');
+  const [inputValue, setInputValue] = useState('');
+  const [lordName, setLordName] = useState('');
+  const [kingdomName, setKingdomName] = useState('Le Grand Nord');
+  const [passwordValue, setPasswordValue] = useState('......');
+  const [messages, setMessages] = useState(chatMessages);
+  const [segmentAttack, setSegmentAttack] = useState('attack');
+  const [segmentList, setSegmentList] = useState('list');
+  const [segmentBuilding, setSegmentBuilding] = useState('barracks');
+  const [segmentIcon, setSegmentIcon] = useState('offense');
+  const [segmentReports, setSegmentReports] = useState('mine');
+  const [segmentRange, setSegmentRange] = useState('1h');
+  const [segmentWorld, setSegmentWorld] = useState('world');
+  const [inboxTab, setInboxTab] = useState('all');
+  const [stepperValue, setStepperValue] = useState(125);
   const [troopQuantity, setTroopQuantity] = useState(24);
-  const [toasts, setToasts] = useState(initialToasts);
-  const [queueMessage, setQueueMessage] = useState('Aucune action lancée.');
-  const [filter, setFilter] = useState('all');
-  const [coordinates, setCoordinates] = useState<CoordinateValue>({ x: 234, y: 612 });
-  const [selectedMarker, setSelectedMarker] = useState('Castelnef');
-  const [genericAmount, setGenericAmount] = useState(20);
-  const [chatInput, setChatInput] = useState('');
-  const [chatMessages, setChatMessages] = useState(initialChatMessages);
-  const [lordName, setLordName] = useState('Sire Kelvin');
-  const [realmName, setRealmName] = useState('Le Grand Nord');
-  const [password, setPassword] = useState('secret');
-  const [modalOpen, setModalOpen] = useState(true);
-
-  const troopStepperCosts = [
-    { icon: '/assets/resources/wood.png', value: String(troopQuantity * 30) },
-    { icon: '/assets/resources/iron.png', value: String(troopQuantity * 10) },
-    { icon: '/assets/resources/population.png', value: String(troopQuantity) },
-    { icon: '/assets/clock.png', value: troopQuantity > 0 ? `${Math.max(1, Math.ceil(troopQuantity * 3))}m` : '0m' },
-  ];
+  const [villageStyleOpen, setVillageStyleOpen] = useState(true);
+  const [villageStyle, setVillageStyle] = useState<VillageStyleId>('raiders');
 
   return (
-    <main className="min-h-full overflow-y-auto bg-[#f5e6d3] px-4 py-6 text-[#1f2937]">
-      <div className="mx-auto flex max-w-5xl flex-col gap-6">
+    <main className="min-h-full overflow-y-auto bg-[#f5e6d3] p-[18px] text-[#1f2937]">
+      <div className="mx-auto flex w-full max-w-[700px] flex-col items-stretch gap-6">
         <header className="space-y-2">
           <p className="font-game text-sm font-semibold uppercase tracking-[0.3em] text-[#5d4a32]">
             Battle for the Crown
           </p>
           <h1 className="font-game text-4xl font-bold leading-tight text-[#1f2937]">Design system React</h1>
           <p className="max-w-2xl font-game text-sm leading-6 text-[#4b5563]">
-            Portage React/Tailwind des références HTML. Cette page sert de sas de validation
-            avant migration des composants de jeu.
+            Reset du sas React. Les prochains composants doivent reproduire le prototype HTML source avant toute extraction.
           </p>
         </header>
 
-        <section className={previewSectionClass}>
-          <h2 className={previewTitleClass}>Gradient buttons</h2>
-          <div className="flex flex-col gap-2.5">
-            <div className="flex flex-wrap items-center gap-2.5">
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Kingdom palette</h2>
+          <div className="flex w-full flex-wrap items-center justify-center gap-2">
+            <ColorSwatchTile color="#fef7ee" label="50" value="#fef7ee" />
+            <ColorSwatchTile color="#fdead4" label="100" value="#fdead4" />
+            <ColorSwatchTile color="#fbd6a8" label="200" value="#fbd6a8" />
+            <ColorSwatchTile color="#f9b97c" label="300" value="#f9b97c" />
+            <ColorSwatchTile color="#f59e0b" label="400" value="#f59e0b" />
+            <ColorSwatchTile color="#d97706" label="500" value="#d97706" />
+            <ColorSwatchTile color="#b45309" label="600" value="#b45309" />
+            <ColorSwatchTile color="#92400e" label="700" value="#92400e" />
+            <ColorSwatchTile color="#78350f" label="800" value="#78350f" />
+            <ColorSwatchTile color="#451a03" label="900" value="#451a03" />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Parchment palette</h2>
+          <div className="flex w-full flex-wrap items-center justify-center gap-2">
+            <ColorSwatchTile color="#fef9f0" label="50" value="#fef9f0" />
+            <ColorSwatchTile color="#f9f3e8" label="100" value="#f9f3e8" />
+            <ColorSwatchTile color="#f5e6d3" label="200" value="#f5e6d3" />
+            <ColorSwatchTile color="#f4e4c1" label="300" value="#f4e4c1" />
+            <ColorSwatchTile color="#e8d4a8" label="400" value="#e8d4a8" />
+            <ColorSwatchTile color="#d4c094" label="500" value="#d4c094" />
+            <ColorSwatchTile color="#c9a882" label="600" value="#c9a882" />
+            <ColorSwatchTile color="#8b6f47" label="800" value="#8b6f47" />
+            <ColorSwatchTile color="#6d5838" label="900" value="#6d5838" />
+            <ColorSwatchTile color="#5d4a32" label="950" value="#5d4a32" />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Game semantic colors</h2>
+          <div className="flex w-full flex-col items-stretch gap-2.5">
+            <SemanticColorRow
+              borderColor="#3a6c1f"
+              label="Success"
+              segments={[
+                { color: '#6ebf49' },
+                { color: '#4a8c2a' },
+                { color: '#3a6c1f' },
+              ]}
+            />
+            <SemanticColorRow
+              borderColor="#1f5288"
+              label="Info"
+              segments={[
+                { color: '#5b9bd5' },
+                { color: '#2e75b6' },
+                { color: '#1f5288' },
+              ]}
+            />
+            <SemanticColorRow
+              borderColor="#9e7b0d"
+              label="Warning"
+              segments={[
+                { color: '#f1c40f', textTone: 'dark' },
+                { color: '#d4a017' },
+                { color: '#9e7b0d' },
+              ]}
+            />
+            <SemanticColorRow
+              borderColor="#a93226"
+              label="Danger"
+              segments={[
+                { color: '#e74c3c' },
+                { color: '#c0392b' },
+                { color: '#a93226' },
+              ]}
+            />
+            <SemanticColorRow
+              borderColor="#5d6d6e"
+              label="Neutral"
+              segments={[
+                { color: '#95a5a6' },
+                { color: '#7f8c8d' },
+                { color: '#5d6d6e' },
+              ]}
+            />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Cinzel display</h2>
+          <CinzelDisplaySample
+            lines={[
+              { text: 'MMORTS MÉDIÉVAL · EYEBROW · 11/0.3em', variant: 'eyebrow' },
+              { text: 'Battle for the Crown', variant: 'hero' },
+              { text: 'Forgez votre royaume', variant: 'title' },
+              { text: 'Camp de bûcherons', variant: 'section' },
+              { text: '« À ceux qui osent, le royaume offre gloire et richesses. »', variant: 'quote' },
+            ]}
+          />
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Surfaces & gradients</h2>
+          <div className="flex w-full flex-wrap items-center justify-center gap-[14px]">
+            <SurfaceTile code="#1a1a2e" label="App backdrop" tone="appBackdrop" />
+            <SurfaceTile code="#d2b48c" label="Flat parchment" tone="flatParchment" />
+            <SurfaceTile code="e8d5b7→d4c094" label="Landing radial" tone="landingRadial" />
+            <SurfaceTile code="3c2619→6b4b2b" label="Bottom nav" tone="bottomNav" />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Shadows & depth</h2>
+          <div className="flex w-full flex-wrap items-center justify-center gap-4">
+            <ShadowDepthTile description="Petit lift · boutons" label="flat-2" tone="flat2" />
+            <ShadowDepthTile description="Carte / panneau standard" label="card" tone="card" />
+            <ShadowDepthTile description="Boutons CTA + reflet haut" label="card+rim" tone="cardRim" />
+            <ShadowDepthTile description="Slot / champ creusé" label="inset" tone="inset" />
+            <ShadowDepthTile description="Onglet actif · sélection" label="glow" tone="glow" />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Resource icons</h2>
+          <div className="flex w-full flex-wrap items-center justify-center gap-[14px] bg-[#3c2619] p-[18px]">
+            <ResourceIconTile icon="/assets/resources/wood.png" label="Bois" />
+            <ResourceIconTile icon="/assets/resources/stone.png" label="Pierre" />
+            <ResourceIconTile icon="/assets/resources/iron.png" label="Fer" />
+            <ResourceIconTile icon="/assets/resources/population.png" label="Population" />
+            <ResourceIconTile icon="/assets/crown.png" label="Couronne" tone="premium" />
+            <ResourceIconTile icon="/assets/army-power.png" label="Puissance" />
+            <ResourceIconTile icon="/assets/clock.png" label="Temps" />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Building icons</h2>
+          <div className="flex w-full flex-wrap items-center justify-center gap-[14px] bg-[#5b8f3a] p-[18px]">
+            <BuildingIconTile icon="/assets/castle.png" label="Château" />
+            <BuildingIconTile icon="/assets/barracks.png" label="Caserne" />
+            <BuildingIconTile icon="/assets/farm.png" label="Ferme" />
+            <BuildingIconTile icon="/assets/warehouse.png" label="Entrepôt" />
+            <BuildingIconTile icon="/assets/watchtower.png" label="Tour de guet" />
+            <BuildingIconTile icon="/assets/wood.png" label="Bûcherons" />
+            <BuildingIconTile icon="/assets/stone.png" label="Carrière" />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Building cards</h2>
+          <div className="flex w-full flex-wrap items-center justify-center gap-2">
+            <BuildingCard actionLabel="→ Niv. 4" icon="/assets/castle.png" surface="parchment" title="Château" />
+            <BuildingCard actionLabel="Construire" icon="/assets/wood.png" surface="wood" title="Camp de bûcherons" />
+            <BuildingCard actionLabel="→ Niv. 2" actionTone="info" icon="/assets/iron.png" surface="stone" title="Mine de fer" />
+            <BuildingCard actionDisabled actionLabel="Verrouillé" actionTone="neutral" icon="/assets/watchtower.png" iconMuted surface="default" title="Tour de guet" />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Borders & strokes</h2>
+          <div className="flex w-full flex-wrap items-center justify-center gap-[18px]">
+            <BorderStrokeTile description="Cartes simples" label="2px wood" tone="wood2" />
+            <BorderStrokeTile description="CTA · panneaux" label="3px deep" tone="deep3" />
+            <BorderStrokeTile description="Inputs · cartes BftC" label="4px parch" tone="parch4" />
+            <BorderStrokeTile description="Drop-target · ghost" label="dashed" tone="dashed" />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Radii</h2>
+          <div className="flex w-full flex-wrap items-center justify-center gap-[18px]">
+            <RadiusTile description="6px · inputs" label="sm" tone="sm" />
+            <RadiusTile description="10px · buttons" label="md" tone="md" />
+            <RadiusTile description="14px · cards" label="lg" tone="lg" />
+            <RadiusTile description="18px · modals" label="xl" tone="xl" />
+            <RadiusTile description="∞ · badges" label="pill" tone="pill" />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Avatar</h2>
+          <div className="flex w-full flex-col items-stretch gap-[14px]">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="min-w-[100px] font-mono text-[10px] text-[#5d4a32]">tailles</span>
+              <Avatar initials="R" size="s24" />
+              <Avatar initials="A" size="s32" />
+              <Avatar initials="SR" size="s44" />
+              <Avatar initials="SR" size="s64" />
+              <Avatar initials="SR" size="s88" />
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="min-w-[100px] font-mono text-[10px] text-[#5d4a32]">teintes (tribu)</span>
+              <Avatar initials="B" tone="red" />
+              <Avatar initials="S" tone="blue" />
+              <Avatar initials="V" tone="green" />
+              <Avatar initials="R" tone="purple" />
+              <Avatar initials="N" tone="stone" />
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="min-w-[100px] font-mono text-[10px] text-[#5d4a32]">statut</span>
+              <Avatar initials="B" status="online" tone="red" />
+              <Avatar initials="S" status="attack" tone="blue" />
+              <Avatar initials="V" status="defense" tone="green" />
+              <Avatar initials="N" status="offline" tone="stone" />
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="min-w-[100px] font-mono text-[10px] text-[#5d4a32]">niveau / chef</span>
+              <Avatar initials="B" levelLabel="Niv. 18" size="s64" status="online" tone="red" />
+              <Avatar crownIcon="/assets/casual-icons/crown.png" initials="R" levelLabel="★ Chef" size="s64" tone="purple" />
+              <Avatar icon="/assets/army/templar.png" levelLabel="Héros" size="s64" />
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="min-w-[100px] font-mono text-[10px] text-[#5d4a32]">stack (membres)</span>
+              <AvatarStack
+                items={[
+                  { id: 'braves', initials: 'B', tone: 'red' },
+                  { id: 'saphir', initials: 'S', tone: 'blue' },
+                  { id: 'verdoyants', initials: 'V', tone: 'green' },
+                  { id: 'neutres', initials: 'N', tone: 'stone' },
+                ]}
+                moreLabel="+18"
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="min-w-[100px] font-mono text-[10px] text-[#5d4a32]">ligne profil</span>
+              <AvatarProfileLine
+                avatar={{ initials: 'SR', status: 'online', tone: 'red' }}
+                name="Sire_Robert"
+                subtitle="Niv. 18 · [BFC] · 38.420 pts"
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Army movement</h2>
+          <div className="flex w-full flex-col items-stretch bg-[#3c2619] p-[18px] text-[#f5e6d3]">
+            <ArmyMovementList
+              label="mouvements actifs · 4"
+              movements={[
+                {
+                  icon: '/assets/hand-red.png',
+                  incoming: true,
+                  movementId: 'incoming-robert',
+                  progress: 32,
+                  subtitle: (
+                    <>
+                      De <b>Sire_Robert</b> · Roc-d&apos;Acier <b>238|617</b> · ≈ 240 unités
+                    </>
+                  ),
+                  time: '02:15',
+                  title: '⚠ ATTAQUE entrante',
+                  tone: 'attack',
+                },
+                {
+                  icon: '/assets/army/squire.png',
+                  movementId: 'attack-tours-hautes',
+                  progress: 78,
+                  subtitle: (
+                    <>
+                      <b>120</b> squires + <b>60</b> archers · arrivée à 14h42
+                    </>
+                  ),
+                  time: '0:47',
+                  title: 'Attaque → Tours-Hautes',
+                  tone: 'attack',
+                },
+                {
+                  icon: '/assets/hand-silver.png',
+                  movementId: 'reinforce-castelfort',
+                  progress: 25,
+                  subtitle: (
+                    <>
+                      <b>80</b> milice · au retour : 6h
+                    </>
+                  ),
+                  time: '1h 12m',
+                  title: 'Renfort → Castelfort (allié)',
+                  tone: 'defend',
+                },
+                {
+                  icon: '/assets/army/squire.png',
+                  movementId: 'return-roc-acier',
+                  progress: 96,
+                  subtitle: (
+                    <>
+                      102 squires + 56 archers · <b>+2.400 butin</b>
+                    </>
+                  ),
+                  time: '0:12',
+                  title: "Retour de pillage · Roc-d'Acier",
+                  tone: 'return',
+                },
+                {
+                  icon: '/assets/position.png',
+                  movementId: 'scout-bois-argent',
+                  onRecall: () => undefined,
+                  progress: 22,
+                  recallLabel: 'Rappeler',
+                  subtitle: '×1 éclaireur · discret',
+                  time: '3:04',
+                  title: "Éclaireur → Bois-d'Argent",
+                  tone: 'scout',
+                },
+              ]}
+            />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Choix du Style — Village</h2>
+          <div className="flex flex-wrap gap-4">
+            <div className="relative h-[720px] w-[360px] overflow-hidden rounded-[36px] border-[8px] border-[#0c0c1a] bg-[#1a1a2e] shadow-[0_30px_60px_rgba(0,0,0,.6),inset_0_0_0_2px_#2a2a45]">
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,#7c9756_0%,#a8b977_28%,#cdbf8e_60%,#b89968_100%)]">
+                <div className="absolute inset-x-0 top-0 flex h-[62px] items-center gap-2 border-b-2 border-[#8b7355] bg-[linear-gradient(to_bottom,rgba(60,38,25,.94),rgba(78,56,34,.94))] px-2.5 py-2">
+                  <div className="size-10 rounded-full border-2 border-[#5d4a32] bg-[linear-gradient(to_bottom,#8b6f47,#6d5838)]" />
+                  <div className="flex flex-1 flex-col gap-[5px]">
+                    <div className="h-3.5 w-[100px] rounded bg-[rgba(255,255,255,.18)]" />
+                    <div className="h-[22px] rounded-md bg-[rgba(0,0,0,.32)]" />
+                  </div>
+                </div>
+                <img alt="" className="absolute left-[70px] top-[200px] w-[130px] opacity-85" src="/assets/castle.png" />
+                <img alt="" className="absolute left-[200px] top-[380px] w-[100px] opacity-85" src="/assets/warehouse.png" />
+                <img alt="" className="absolute left-[30px] top-[430px] w-[110px] opacity-85" src="/assets/farm.png" />
+                <div className="absolute inset-x-0 bottom-0 h-16 border-t-2 border-[#8b7355] bg-[linear-gradient(to_top,rgba(60,38,25,.95),rgba(78,56,34,.9))]" />
+              </div>
+              <div className="absolute inset-x-0 bottom-[86px] flex justify-center">
+                <VillageStyleTrigger currentStyleId="balanced" onClick={() => setVillageStyleOpen(true)} />
+              </div>
+              <VillageStyleModal
+                castleLevel={5}
+                currentStyleId="balanced"
+                initialStyleId={villageStyle}
+                onAdopt={(styleId) => {
+                  setVillageStyle(styleId);
+                  setVillageStyleOpen(false);
+                }}
+                onChange={setVillageStyle}
+                onClose={() => setVillageStyleOpen(false)}
+                open={villageStyleOpen}
+                stock={{ crowns: 60, iron: 180, stone: 940, wood: 1820 }}
+                value={villageStyle}
+              />
+            </div>
+            <div className="flex max-w-[300px] flex-col justify-center gap-2 rounded-xl border-2 border-[#8b7355] bg-[linear-gradient(to_bottom,#fef9f0,#e8d4a8)] p-4 font-game text-sm text-[#3d2f1f]">
+              <div className="text-xs font-bold uppercase tracking-[.18em] text-[#6d5838]">Scénario source</div>
+              <div>Carrousel focalisé · Château 5 · style actuel Équilibré.</div>
+              <div>Stock volontairement insuffisant pour Raiders : bois 1.820 · pierre 940 · fer 180 · couronnes 60.</div>
+              <BftcButton onClick={() => setVillageStyleOpen(true)} variant="info">Réouvrir la modal</BftcButton>
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Buttons</h2>
+          <div className="flex w-full flex-col items-stretch gap-2.5">
+            <div className="flex w-full flex-wrap items-center gap-2.5">
               <span className="min-w-[78px] font-mono text-[10px] text-[#5d4a32]">5 variants</span>
               <BftcButton>OK</BftcButton>
               <BftcButton variant="info">ACCEPTER</BftcButton>
@@ -316,75 +482,151 @@ export function DesignSystemPreview() {
               <BftcButton variant="warning">ATTENTION</BftcButton>
               <BftcButton variant="neutral">Retour</BftcButton>
             </div>
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex w-full flex-wrap items-center gap-2.5">
               <span className="min-w-[78px] font-mono text-[10px] text-[#5d4a32]">sm/md/lg</span>
               <BftcButton size="xs">Small</BftcButton>
               <BftcButton variant="info">Medium</BftcButton>
-              <BftcButton size="lg" variant="warning">
-                Large
-              </BftcButton>
+              <BftcButton size="lg" variant="warning">Large</BftcButton>
             </div>
-            <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex w-full flex-wrap items-center gap-2.5">
               <span className="min-w-[78px] font-mono text-[10px] text-[#5d4a32]">states</span>
               <BftcButton>Default</BftcButton>
-              <BftcButton className="brightness-110">Hover</BftcButton>
-              <BftcButton className="translate-y-0.5 shadow-game-pressed">Pressed</BftcButton>
-              <BftcButton disabled>Disabled</BftcButton>
+              <BftcButton state="hover">Hover</BftcButton>
+              <BftcButton state="pressed">Pressed</BftcButton>
+              <BftcButton state="disabled">Disabled</BftcButton>
             </div>
           </div>
         </section>
 
-        <section className={previewSectionClass}>
-          <h2 className={previewTitleClass}>Resource HUD</h2>
-          <div className="flex flex-col gap-2.5 bg-gradient-to-b from-[#3c2619] to-[#5d4a32]">
-            {resourceRows.map((row, index) => (
-              <ResourceHud key={index} items={row} />
-            ))}
-          </div>
-        </section>
-
-        <section className={previewSectionClass}>
-          <h2 className={previewTitleClass}>Bottom navigation</h2>
-          <div className="bg-[#5b8f3a]">
-            <BottomNavPreview
-              active={activeTab}
-              items={bottomNavItems.map((item) => ({
-                ...item,
-                onClick: item.locked ? undefined : () => setActiveTab(item.id),
-              }))}
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Inputs</h2>
+          <div className="flex w-full flex-col items-stretch gap-3">
+            <GameInput
+              helperText="Visible par vos voisins du royaume."
+              label="Nom du seigneur"
+              onChange={setLordName}
+              placeholder="Sire Kelvin"
+              value={lordName}
+            />
+            <GameInput
+              label="Royaume"
+              onChange={setKingdomName}
+              tone="parchment"
+              value={kingdomName}
+            />
+            <GameInput
+              errorText="8 caractères minimum."
+              label="Mot de passe"
+              onChange={setPasswordValue}
+              type="password"
+              value={passwordValue}
             />
           </div>
         </section>
 
-        <section className={previewSectionClass}>
-          <h2 className={previewTitleClass}>Atomes · temps, coûts, conditions</h2>
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="min-w-[78px] font-mono text-[10px] text-[#5d4a32]">badges</span>
-              <Badge>Défaut</Badge>
-              <Badge tone="success">Succès</Badge>
-              <Badge tone="info">Info</Badge>
-              <Badge tone="warning">Alerte</Badge>
-              <Badge tone="danger">Danger</Badge>
-              <Badge tone="neutral">Neutre</Badge>
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Icon buttons</h2>
+          <div className="flex w-full flex-wrap items-center justify-between gap-2">
+            <IconButton
+              icon={(
+                <svg strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              )}
+              label="Ajouter"
+              tone="success"
+            />
+            <IconButton
+              icon={(
+                <svg strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                  <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                </svg>
+              )}
+              label="Supprimer"
+              tone="danger"
+            />
+            <IconButton
+              icon={(
+                <svg strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+              )}
+              label="Paramètres"
+              tone="info"
+            />
+            <IconButton
+              icon={(
+                <svg strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              )}
+              label="Fermer"
+              tone="neutral"
+            />
+            <IconButton
+              icon={(
+                <svg strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                  <path d="M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6m-3 9 5-5m-4.5-1.5 5 5" />
+                </svg>
+              )}
+              label="Attaquer"
+              tone="warning"
+            />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Header bar</h2>
+          <div className="w-full max-w-[390px] bg-[#3c2619] p-3.5">
+            <HeaderBar
+              avatarInitials="SK"
+              level={12}
+              population={{ icon: '/assets/resources/population.png', label: 'Population', value: '120/200' }}
+              primaryStats={[
+                { icon: '/assets/army-power.png', label: 'Puissance', value: '2 480' },
+                { icon: '/assets/crown.png', label: 'Couronnes', value: '28' },
+              ]}
+              resources={[
+                { icon: '/assets/resources/wood.png', label: 'Bois', value: '8.500' },
+                { icon: '/assets/resources/stone.png', label: 'Pierre', value: '3.200' },
+                { icon: '/assets/resources/iron.png', label: 'Fer', value: '1.500' },
+              ]}
+            />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Badges</h2>
+          <div className="flex w-full flex-col items-stretch gap-2.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="min-w-[60px] font-mono text-[10px] text-[#5d4a32]">variants</span>
+              <Badge>12</Badge>
+              <Badge tone="success">OK</Badge>
+              <Badge tone="info">Niv. 3</Badge>
+              <Badge tone="warning">Niv. 5</Badge>
+              <Badge tone="danger">3</Badge>
+              <Badge tone="neutral">Non construit</Badge>
             </div>
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="min-w-[78px] font-mono text-[10px] text-[#5d4a32]">segment</span>
-              <SegmentedControl
-                ariaLabel="Filtre rapports"
-                onChange={setFilter}
-                options={[
-                  { icon: <ScrollText size={14} />, label: 'Tous', value: 'all' },
-                  { badge: <Badge size="sm" tone="danger">2</Badge>, icon: <Swords size={14} />, label: 'Attaques', value: 'attack' },
-                  { icon: <Shield size={14} />, label: 'Défense', value: 'defense' },
-                ]}
-                value={filter}
-              />
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="min-w-[60px] font-mono text-[10px] text-[#5d4a32]">sm/md/lg</span>
+              <Badge size="sm" tone="warning">9</Badge>
+              <Badge tone="warning">Niv. 3</Badge>
+              <Badge size="lg" tone="warning">12</Badge>
             </div>
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="min-w-[78px] font-mono text-[10px] text-[#5d4a32]">stepper</span>
-              <NumberStepper ariaLabel="Quantité générique" className="w-full max-w-[320px]" max={100} onChange={setGenericAmount} value={genericAmount} />
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="min-w-[60px] font-mono text-[10px] text-[#5d4a32]">en jeu</span>
+              <Badge tone="success">Niv. MAX</Badge>
+              <Badge tone="info">×24</Badge>
+              <Badge tone="danger">!</Badge>
+              <Badge tone="warning">+15%</Badge>
             </div>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Timer & countdown</h2>
+          <div className="flex w-full flex-col items-stretch gap-2.5">
             <div className="flex flex-wrap items-center gap-2.5">
               <span className="min-w-[78px] font-mono text-[10px] text-[#5d4a32]">tailles</span>
               <Timer size="xs">45s</Timer>
@@ -395,13 +637,9 @@ export function DesignSystemPreview() {
             <div className="flex flex-wrap items-center gap-2.5">
               <span className="min-w-[78px] font-mono text-[10px] text-[#5d4a32]">variants</span>
               <Timer>2:15</Timer>
-              <Timer variant="blue">Entraînement</Timer>
-              <Timer urgent variant="red">
-                0:12
-              </Timer>
-              <Timer showIcon={false} variant="stone">
-                ⏸ En pause
-              </Timer>
+              <Timer tone="blue">Entraînement</Timer>
+              <Timer tone="red" urgent>0:12</Timer>
+              <Timer showIcon={false} tone="stone">⏸ En pause</Timer>
             </div>
             <div className="flex flex-wrap items-center gap-2.5">
               <span className="min-w-[78px] font-mono text-[10px] text-[#5d4a32]">attaque dans</span>
@@ -409,32 +647,28 @@ export function DesignSystemPreview() {
             </div>
             <div className="flex flex-wrap items-center gap-2.5">
               <span className="min-w-[78px] font-mono text-[10px] text-[#5d4a32]">mega</span>
-              <Timer size="mega" urgent variant="red">
-                00:12
-              </Timer>
+              <Timer size="mega" tone="red" urgent>00:12</Timer>
             </div>
+          </div>
+        </section>
 
-            <div className="h-px bg-[#8b7355]/30" />
-
-            <div className="flex flex-wrap items-center gap-1.5">
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Cost row</h2>
+          <div className="flex w-full flex-col items-stretch gap-3">
+            <CostRow>
               <span className="min-w-[78px] font-mono text-[10px] text-[#5d4a32]">inline</span>
-              <CostRow>
-                <CostPill icon="/assets/resources/wood.png" value="200" />
-                <CostPill icon="/assets/resources/stone.png" value="150" />
-                <CostPill icon="/assets/resources/iron.png" value="80" />
-                <CostPill icon="/assets/resources/population.png" value="5" />
-              </CostRow>
-            </div>
-            <div className="flex flex-wrap items-center gap-1.5">
+              <CostPill icon="/assets/resources/wood.png" value="200" />
+              <CostPill icon="/assets/resources/stone.png" value="150" />
+              <CostPill icon="/assets/resources/iron.png" value="80" />
+              <CostPill icon="/assets/resources/population.png" value="5" />
+            </CostRow>
+            <CostRow>
               <span className="min-w-[78px] font-mono text-[10px] text-[#5d4a32]">manque</span>
-              <CostRow>
-                <CostPill icon="/assets/resources/wood.png" value="200" />
-                <CostPill current="320" icon="/assets/resources/stone.png" insufficient value="1.500" />
-                <CostPill current="150" icon="/assets/resources/iron.png" insufficient value="800" />
-              </CostRow>
-            </div>
-
-            <div className="rounded-xl border-2 border-[#8b7355] bg-gradient-to-b from-[#fef9f0] to-[#f5e6d3] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+              <CostPill icon="/assets/resources/wood.png" value="200" />
+              <CostPill current="320" icon="/assets/resources/stone.png" insufficient value="1.500" />
+              <CostPill current="150" icon="/assets/resources/iron.png" insufficient value="800" />
+            </CostRow>
+            <div className="w-full rounded-xl border-2 border-[#8b7355] bg-gradient-to-b from-[#fef9f0] to-[#f5e6d3] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,.5)]">
               <h3 className="mb-1.5 font-game text-xs font-bold uppercase tracking-[0.15em] text-[#5d4a32]">
                 Coût · Caserne → Niv. 2
               </h3>
@@ -443,111 +677,210 @@ export function DesignSystemPreview() {
                 <CostPill icon="/assets/resources/stone.png" size="lg" value="800" />
                 <CostPill current="420" icon="/assets/resources/iron.png" insufficient size="lg" value="650" />
                 <CostPill icon="/assets/resources/population.png" size="lg" value="8" />
-                <CostPill icon="/assets/clock.png" size="lg" value="12m" />
+                <CostPill className="ml-auto" icon="/assets/clock.png" size="lg" value="12m" />
               </CostRow>
             </div>
+          </div>
+        </section>
 
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Requirement chip</h2>
+          <div className="flex w-full flex-col items-stretch gap-2.5">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="min-w-[78px] font-mono text-[10px] text-[#5d4a32]">états</span>
               <RequirementChip icon="/assets/lock.png">Château niv. 5 requis</RequirementChip>
-              <RequirementChip icon="/assets/lock.png" state="soon">
-                Caserne niv. 3 requise
-              </RequirementChip>
-              <RequirementChip icon="/assets/castle.png" state="current">
-                Château niv. 4 / 5
-              </RequirementChip>
-              <RequirementChip icon="/assets/barracks.png" state="done">
-                Caserne niv. 3 ✓
-              </RequirementChip>
+              <RequirementChip icon="/assets/lock.png" state="soon">Caserne niv. 3 requise</RequirementChip>
+              <RequirementChip icon="/assets/castle.png" state="current">Château niv. 4 / 5</RequirementChip>
+              <RequirementChip icon="/assets/barracks.png" state="done">Caserne niv. 3 ✓</RequirementChip>
             </div>
-            <div className="rounded-xl border-2 border-[#8b7355] bg-gradient-to-b from-[#fef9f0] to-[#f5e6d3] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+            <div className="mt-1.5 w-full rounded-xl border-2 border-[#8b7355] bg-gradient-to-b from-[#fef9f0] to-[#f5e6d3] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,.5)]">
               <h3 className="mb-1.5 font-game text-[11px] font-bold uppercase tracking-[0.15em] text-[#5d4a32]">
                 Conditions · Atelier de siège
               </h3>
               <div className="flex flex-col gap-1">
-                <RequirementChip className="w-full pr-3" icon="/assets/castle.png" state="done" status="✓ rempli">
-                  Château niv. 5
-                </RequirementChip>
-                <RequirementChip className="w-full pr-3" icon="/assets/barracks.png" state="done" status="✓ rempli">
-                  Caserne niv. 3
-                </RequirementChip>
-                <RequirementChip className="w-full pr-3" icon="/assets/iron.png" state="current" status="3 / 4">
-                  Mine de fer niv. 4
-                </RequirementChip>
-                <RequirementChip className="w-full pr-3" icon="/assets/warehouse.png" status="1 / 6">
-                  Entrepôt niv. 6
-                </RequirementChip>
+                <RequirementChip icon="/assets/castle.png" state="done" status="✓ rempli">Château niv. 5</RequirementChip>
+                <RequirementChip icon="/assets/barracks.png" state="done" status="✓ rempli">Caserne niv. 3</RequirementChip>
+                <RequirementChip icon="/assets/iron.png" state="current" status="3 / 4">Mine de fer niv. 4</RequirementChip>
+                <RequirementChip icon="/assets/warehouse.png" status="1 / 6">Entrepôt niv. 6</RequirementChip>
               </div>
             </div>
           </div>
         </section>
 
-        <section className={previewSectionClass}>
-          <h2 className={previewTitleClass}>Atomes · progression</h2>
-          <div className="flex flex-col gap-3.5">
-            <ProgressBar label="Construction · Caserne Niv. 2" suffix="72%" value={72} variant="gold" />
-            <ProgressBar label="Entraînement · 24 squires" suffix="40%" value={40} />
-            <ProgressBar label="Santé du village" suffix="22 / 100" value={22} variant="red" />
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Pip rating / level</h2>
+          <div className="flex flex-col items-stretch gap-3">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="min-w-[100px] font-mono text-[10px] text-[#5d4a32]">5 pips · or</span>
+              <PipRating max={5} value={3} />
+              <PipRating max={5} value={4} />
+              <PipRating max={5} value={5} />
+            </div>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="min-w-[100px] font-mono text-[10px] text-[#5d4a32]">10 pips</span>
+              <PipRating max={10} size="sm" value={7} />
+              <span className="font-game text-[11px] text-[#6d5838]">Niveau 7 / 10</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="min-w-[100px] font-mono text-[10px] text-[#5d4a32]">teintes</span>
+              <PipRating max={5} tone="red" value={3} />
+              <PipRating max={5} tone="green" value={4} />
+              <PipRating max={5} tone="silver" value={2} />
+            </div>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="min-w-[100px] font-mono text-[10px] text-[#5d4a32]">étoiles</span>
+              <PipRating max={5} value={3} variant="star" />
+              <PipRating max={5} size="lg" value={5} variant="star" />
+            </div>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="min-w-[100px] font-mono text-[10px] text-[#5d4a32]">chevrons</span>
+              <PipRating max={1} value={1} variant="chevron" />
+              <PipRating max={2} value={2} variant="chevron" />
+              <PipRating max={3} value={3} variant="chevron" />
+            </div>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="min-w-[100px] font-mono text-[10px] text-[#5d4a32]">chips niveau</span>
+              <LevelChip icon="/assets/casual-icons/crown.png" value={12} />
+              <LevelChip max={10} value={3} />
+              <LevelChip tone="max" />
+            </div>
+            <div className="flex flex-col items-stretch gap-1.5">
+              <span className="font-mono text-[10px] text-[#5d4a32]">en jeu · bâtiments</span>
+              <BuildingLevelRow icon="/assets/castle.png" level={4} maxLevel={5} subtitle="Cœur de la cité" title="Château" />
+              <BuildingLevelRow icon="/assets/wood.png" level={3} maxLevel={5} subtitle="+120 bois / heure" title="Camp de bûcherons" />
+              <BuildingLevelRow icon="/assets/iron.png" level={5} maxLevel={5} ratingTone="green" subtitle="+50 fer / heure" title="Mine de fer" />
+            </div>
           </div>
         </section>
 
-        <section className={previewSectionClass}>
-          <div className="mb-2 flex items-center justify-between px-1">
-            <h2 className="font-game text-xs font-bold uppercase tracking-[0.15em] text-[#3d2f1f]">
-              File de construction
-            </h2>
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Progress bars</h2>
+          <div className="flex w-full flex-col items-stretch gap-3.5">
+            <ProgressBar label="Construction · Caserne Niv. 2" suffix="72%" tone="gold" value={72} />
+            <ProgressBar label="Entraînement · 24 squires" suffix="40%" value={40} />
+            <ProgressBar label="Santé du village" suffix="22 / 100" tone="red" value={22} />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Segmented control</h2>
+          <div className="flex w-full flex-col items-stretch gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="min-w-[90px] font-mono text-[10px] text-[#5d4a32]">2 options</span>
+              <SegmentedControl ariaLabel="Type de marche" onChange={setSegmentAttack} options={[{ label: 'Attaque', value: 'attack' }, { label: 'Soutien', value: 'support' }]} value={segmentAttack} />
+              <SegmentedControl ariaLabel="Vue" onChange={setSegmentList} options={[{ label: 'Carte', value: 'map' }, { label: 'Liste', value: 'list' }]} value={segmentList} />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="min-w-[90px] font-mono text-[10px] text-[#5d4a32]">3 options</span>
+              <SegmentedControl ariaLabel="Bâtiment" onChange={setSegmentBuilding} options={[{ label: 'Caserne', value: 'barracks' }, { label: 'Atelier', value: 'workshop' }, { label: 'Forge', value: 'forge' }]} value={segmentBuilding} />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="min-w-[90px] font-mono text-[10px] text-[#5d4a32]">avec icônes</span>
+              <SegmentedControl
+                ariaLabel="Doctrine"
+                onChange={setSegmentIcon}
+                options={[
+                  { icon: '/assets/hand-red.png', label: 'Offensif', value: 'offense' },
+                  { icon: '/assets/hand-silver.png', label: 'Défensif', value: 'defense' },
+                  { icon: '/assets/watchtower.png', label: 'Espion', value: 'spy' },
+                ]}
+                value={segmentIcon}
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="min-w-[90px] font-mono text-[10px] text-[#5d4a32]">grandes tabs</span>
+              <SegmentedControl ariaLabel="Rapports" onChange={setSegmentReports} options={[{ label: 'Mes rapports', value: 'mine' }, { badge: '3', label: 'Tribu', value: 'tribe' }, { label: 'Archives', value: 'archives' }]} size="tabs" value={segmentReports} />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="min-w-[90px] font-mono text-[10px] text-[#5d4a32]">compact</span>
+              <SegmentedControl ariaLabel="Période" onChange={setSegmentRange} options={[{ label: '1h', value: '1h' }, { label: '24h', value: '24h' }, { label: '7j', value: '7d' }, { label: '30j', value: '30d' }, { label: 'Tout', value: 'all' }]} size="compact" value={segmentRange} />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="min-w-[90px] font-mono text-[10px] text-[#5d4a32]">fond sombre</span>
+              <DarkSegmentedStage>
+                <SegmentedControl ariaLabel="Zoom monde" onChange={setSegmentWorld} options={[{ label: 'Monde', value: 'world' }, { label: 'Continent', value: 'continent' }, { label: 'Région', value: 'region' }]} tone="dark" value={segmentWorld} />
+              </DarkSegmentedStage>
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Stepper</h2>
+          <div className="flex w-full flex-col items-stretch gap-3.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="min-w-[100px] font-mono text-[10px] text-[#5d4a32]">tailles</span>
+              <NumberStepper size="sm" value="3" />
+              <NumberStepper value="24" />
+              <NumberStepper size="lg" value="1.000" />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="min-w-[100px] font-mono text-[10px] text-[#5d4a32]">avec ±10</span>
+              <NumberStepper leftControls={[{ label: '−10' }, { label: '−' }]} max={500} min={0} onChange={setStepperValue} rightControls={[{ label: '+' }, { label: '+10' }]} value={stepperValue} />
+              <NumberStepper leftControls={[{ label: '−100' }, { label: '−10' }]} rightControls={[{ label: '+10' }, { label: '+100' }]} size="lg" value="1.250" />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="min-w-[100px] font-mono text-[10px] text-[#5d4a32]">limites</span>
+              <NumberStepper leftControls={[{ disabled: true, label: '−' }]} value="0" />
+              <NumberStepper rightControls={[{ disabled: true, label: '+' }]} value="MAX" valueTone="danger" />
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <span className="font-mono text-[10px] text-[#5d4a32]">recrutement · composer une vague</span>
+          <TroopStepper
+            availableLabel="Disponibles : 48 · Capacité libre : 72"
+            costs={[
+              { icon: '/assets/resources/wood.png', value: '720' },
+              { icon: '/assets/resources/stone.png', value: '480' },
+              { icon: '/assets/resources/iron.png', value: '240' },
+              { icon: '/assets/resources/population.png', value: '24' },
+              { icon: '/assets/clock.png', value: '1h 12m' },
+            ]}
+            icon="/assets/army/squire.png"
+            max={72}
+            name="Squire"
+            onCancel={() => setTroopQuantity(0)}
+            onChange={setTroopQuantity}
+            quickValues={[
+              { label: '0', value: 0 },
+              { label: '10', value: 10 },
+              { label: '25', value: 25 },
+              { label: '50', value: 50 },
+              { label: 'MAX (72)', max: true, value: 72 },
+            ]}
+            value={troopQuantity}
+          />
+        </section>
+
+        <section className="space-y-4">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="font-game text-xs font-bold uppercase tracking-[0.15em] text-[#3d2f1f]">File de construction</h2>
             <span className="font-game text-[11px] font-bold tabular-nums text-[#5d4a32]">2 / 3 actifs</span>
           </div>
-          <div className="flex flex-col gap-2">
-            <BuildQueueCard
-              accelerateCost="10"
-              icon="/assets/barracks.png"
-              onAccelerate={() => setQueueMessage('Accélération construction demandée.')}
-              onCancel={() => setQueueMessage('Annulation construction demandée.')}
-              progress={72}
-              title="Caserne → Niv. 2"
-              time="2:15"
-            />
-            <BuildQueueCard
-              accelerateCost="25"
-              icon="/assets/army/squire.png"
-              kind="training"
-              onAccelerate={() => setQueueMessage('Accélération entraînement demandée.')}
-              onCancel={() => setQueueMessage('Annulation entraînement demandée.')}
-              progress={40}
-              title="Squires · ×24"
-              time="1h 12m"
-            />
-            <BuildQueueCard icon="/assets/lock.png" kind="idle" title="Slot libre · Construire" />
-            <p className="font-game text-[11px] text-[#6d5838]">{queueMessage}</p>
+          <div className="flex w-full flex-col gap-2">
+            <BuildQueueCard accelerateCost="10" icon="/assets/barracks.png" progress={72} time="2:15" title="Caserne → Niv. 2" />
+            <BuildQueueCard accelerateCost="25" icon="/assets/army/squire.png" progress={40} time="1h 12m" title="Squires · ×24" tone="training" />
+            <BuildQueueCard icon="/assets/lock.png" title="Slot libre · Construire" tone="idle" />
           </div>
         </section>
 
-        <section className={previewSectionClass}>
-          <h2 className={previewTitleClass}>Feedback · toasts</h2>
-          <div className="flex flex-col gap-2 bg-[#3c2619]">
-            {toasts.map((toast) => (
-              <ToastPreview
-                key={toast.title}
-                {...toast}
-                onClose={() => setToasts((current) => current.filter((item) => item.title !== toast.title))}
-              />
-            ))}
-            {toasts.length === 0 ? (
-              <BftcButton onClick={() => setToasts(initialToasts)} variant="warning">
-                Réafficher les toasts
-              </BftcButton>
-            ) : null}
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Toasts</h2>
+          <div className="flex w-full flex-col gap-2 bg-[#3c2619] p-[18px]">
+            <ToastPreview icon="/assets/barracks.png" subtitle="Caserne · Niv. 2 prêt au combat." title="Construction terminée" />
+            <ToastPreview icon="/assets/army/squire.png" subtitle="24 squires · arrivée dans 1h 12m." title="Entraînement lancé" tone="info" />
+            <ToastPreview icon="/assets/resources/wood.png" subtitle="9.800 / 10.000 bois — pensez à dépenser." title="Entrepôt presque plein" tone="warning" />
+            <ToastPreview icon="/assets/hand-red.png" subtitle="Sire_Robert marche sur votre village · 02:15:47." title="Attaque détectée" tone="danger" />
           </div>
         </section>
 
-        <section className={previewSectionClass}>
-          <h2 className={previewTitleClass}>Feedback · empty states</h2>
-          <div className="grid gap-3.5 md:grid-cols-2">
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Empty state</h2>
+          <div className="grid w-full gap-3.5 sm:grid-cols-2">
             <EmptyState
               actionLabel="Recruter"
               icon="/assets/army/militia.png"
-              onAction={() => setTroopQuantity(10)}
               quote="À ceux qui osent, le royaume offre gloire et richesses."
               title="Aucune armée à déployer"
             />
@@ -559,8 +892,8 @@ export function DesignSystemPreview() {
             <EmptyState
               actionLabel="Voir conditions"
               actionVariant="warning"
+              grayscale
               icon="/assets/watchtower.png"
-              mutedIcon
               quote="Château niv. 5 requis pour scruter les terres alentours."
               title="Tour de guet verrouillée"
             />
@@ -572,14 +905,319 @@ export function DesignSystemPreview() {
           </div>
         </section>
 
-        <section className={previewSectionClass}>
-          <h2 className={previewTitleClass}>Militaire · troop rows</h2>
-          <div className="flex flex-col gap-1.5">
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Modal variants</h2>
+          <div className="grid w-full gap-3.5 bg-[rgba(0,0,0,.6)] p-[18px] sm:grid-cols-2">
+            <GameModal
+              actions={[{ label: 'Annuler', variant: 'neutral' }, { label: 'Construire', variant: 'info' }]}
+              icon="/assets/barracks.png"
+              quote="« Une garnison forte garde les portes au clair de la lune. »"
+              title="Construire Caserne"
+              tone="info"
+            >
+              Améliorer la caserne au Niv. 2 ? Coût : 1.200 bois · 800 pierre · 650 fer.
+            </GameModal>
+            <GameModal
+              actions={[{ label: 'Annuler', variant: 'neutral' }, { label: 'ATTAQUER', variant: 'danger' }]}
+              icon="/assets/hand-red.png"
+              title="Lancer l'attaque ?"
+              tone="danger"
+            >
+              Vous envoyez 240 unités contre <b>Sire_Robert</b>. Cette action est irréversible.
+            </GameModal>
+            <GameModal
+              actions={[{ label: 'Voir le rapport', variant: 'success' }]}
+              icon="/assets/casual-icons/crown.png"
+              subtitle="Vous avez pillé 2.400 ressources et capturé 12 prisonniers."
+              title="VICTOIRE"
+              tone="success"
+              variant="celebration"
+            />
+            <GameModal
+              actions={[{ label: 'Plus tard', variant: 'neutral' }, { label: 'Améliorer', variant: 'warning' }]}
+              icon="/assets/resources/wood.png"
+              title="Entrepôt presque plein"
+              tone="warning"
+            >
+              Vos coffres de bois sont à 98 %. Augmentez votre entrepôt ou dépensez avant la perte de production.
+            </GameModal>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <span className="font-mono text-[10px] text-[#5d4a32]">boîte du seigneur · 12 messages</span>
+          <InboxTabs
+            onChange={setInboxTab}
+            options={[
+              { count: '3', label: 'Tous', value: 'all' },
+              { label: 'Rapports', value: 'reports' },
+              { count: '1', label: 'Joueurs', value: 'players' },
+              { label: 'Système', value: 'system' },
+            ]}
+            value={inboxTab}
+          />
+          <div className="flex w-full flex-col gap-[5px]">
+            <MailInboxItem
+              alertLabel="!"
+              icon="/assets/hand-red.png"
+              preview="Préparez vos défenses, j'arrive sous 2h…"
+              sender="Sire_Robert · [RVN]"
+              subject="⚠ Vos murs trembleront avant l'aube"
+              tag={{ label: 'ATTAQUE', tone: 'attack' }}
+              time="il y a 4 min"
+              tone="attack"
+              unread
+            />
+            <MailInboxItem
+              icon="/assets/casual-icons/crown.png"
+              preview="Vos squires ont enfoncé la garnison adverse…"
+              sender="Rapport · Roc-d'Acier"
+              subject="Pillage réussi · +2.400 butin ramené"
+              tag={{ label: 'VICTOIRE', tone: 'report' }}
+              time="il y a 12 min"
+              tone="report"
+              unread
+            />
+            <MailInboxItem
+              icon="/assets/hand-silver.png"
+              preview="Je marche vers Castelnef pour vous épauler."
+              sender="Dame_Aliénor · [BFC]"
+              subject="Renfort de 80 milices envoyé"
+              time="9h42"
+              tone="player"
+              unread
+            />
+            <MailInboxItem
+              icon="/assets/position.png"
+              preview="Vos éclaireurs ont longé les murailles…"
+              sender="Rapport · Tours-Hautes"
+              subject="Garnison estimée : ~168 unités"
+              tag={{ label: 'ESPION', tone: 'scout' }}
+              time="hier"
+              tone="scout"
+            />
+            <MailInboxItem
+              icon="/assets/casual-icons/bell-gold.png"
+              preview="La saison commence le 1er des récoltes…"
+              sender="Système"
+              subject="Nouvelle saison · La Couronne d'Or"
+              tag={{ label: 'HÉRAUT', tone: 'system' }}
+              time="3j"
+              tone="system"
+            />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Leaderboard row</h2>
+          <LeaderboardHeader />
+          <div className="flex w-full flex-col gap-1">
+            <LeaderboardRow
+              avatarIcon="/assets/crown.png"
+              delta={{ label: '▲ 3', tone: 'up' }}
+              name="Dame_Aliénor"
+              points="71.020"
+              rank={1}
+              rankTone="gold"
+              subtitle="[BFC] alliée · 4 villages"
+            />
+            <LeaderboardRow
+              avatarIcon="/assets/crown.png"
+              avatarTone="gold"
+              delta={{ label: '— 0', tone: 'flat' }}
+              name="Sire_Vous"
+              points="62.480"
+              rank={2}
+              rankTone="silver"
+              subtitle="[BFC] · 3 villages"
+            />
+            <LeaderboardRow
+              avatarIcon="/assets/hand-red.png"
+              avatarTone="enemy"
+              delta={{ label: '▲ 1', tone: 'up' }}
+              name="Sire_Robert"
+              points="48.210"
+              rank={3}
+              rankTone="bronze"
+              subtitle="[RVN] · 2 villages"
+            />
+            <LeaderboardRow
+              avatarIcon="/assets/army/templar.png"
+              delta={{ label: '▼ 2', tone: 'down' }}
+              name="Baron_Léofric"
+              points="42.110"
+              rank={4}
+              subtitle="[BFC] · 3 villages"
+            />
+            <LeaderboardRow
+              avatarIcon="/assets/army/squire.png"
+              delta={{ label: '— 0', tone: 'flat' }}
+              name="Comte_Henri"
+              points="38.920"
+              rank={5}
+              subtitle="[LDR] · 2 villages"
+            />
+            <LeaderboardRow
+              avatarIcon="/assets/army/archer.png"
+              delta={{ label: '▲ 5', tone: 'up' }}
+              name="Dame_Iseult"
+              points="36.480"
+              rank={6}
+              subtitle="[BFC] · 2 villages"
+            />
+            <LeaderboardRow
+              avatarIcon="/assets/army/militia.png"
+              delta={{ label: '▼ 1', tone: 'down' }}
+              name="Sire_Tristan"
+              points="32.140"
+              rank={7}
+              subtitle="sans alliance · 1 village"
+            />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Player profile card</h2>
+          <div className="grid w-full gap-3 sm:grid-cols-2">
+            <PlayerProfileCard
+              avatarIcon="/assets/crown.png"
+              name="Sire_Vous"
+              online
+              relation="self"
+              selfLabel="VOUS"
+              showCrown
+              stats={[
+                { icon: '/assets/casual-icons/crown.png', label: 'pts', value: '62.480' },
+                { icon: '/assets/army-power.png', label: 'pwr', value: '4.250' },
+                { label: '🏰', value: '3 villages' },
+              ]}
+              tribe={{ name: 'Les Lames du Nord', tag: 'BFC' }}
+            />
+            <PlayerProfileCard
+              actions={[
+                { label: 'Profil', variant: 'neutral' },
+                { label: 'Espionner', variant: 'info' },
+                { label: 'Attaquer', variant: 'danger' },
+              ]}
+              avatarIcon="/assets/hand-red.png"
+              avatarTone="enemy"
+              name="Sire_Robert"
+              relation="enemy"
+              stats={[
+                { icon: '/assets/casual-icons/crown.png', value: '48.210' },
+                { icon: '/assets/army-power.png', value: '2.580' },
+                { label: '🏰', value: '2' },
+              ]}
+              tribe={{ name: 'Corbeaux Noirs', tag: 'RVN', tone: 'red' }}
+            />
+            <PlayerProfileCard
+              actions={[
+                { label: 'Profil', variant: 'neutral' },
+                { label: 'Renforcer', variant: 'info' },
+                { label: 'Message', variant: 'success' },
+              ]}
+              avatarIcon="/assets/hand-silver.png"
+              avatarTone="ally"
+              name="Dame_Aliénor"
+              relation="ally"
+              stats={[
+                { icon: '/assets/casual-icons/crown.png', value: '71.020' },
+                { icon: '/assets/army-power.png', value: '5.840' },
+                { label: '🏰', value: '4' },
+              ]}
+              tribe={{ name: 'Alliée', tag: 'BFC' }}
+            />
+            <PlayerProfileCard
+              avatarIcon="/assets/army/militia.png"
+              avatarTone="neutral"
+              name="Brigand_223"
+              stats={[
+                { icon: '/assets/casual-icons/crown.png', value: '1.240' },
+                { icon: '/assets/army-power.png', value: '180' },
+              ]}
+              tribe={{ name: 'sans tribu', tag: '—', tone: 'stone' }}
+            />
+          </div>
+          <div className="flex flex-col gap-[5px]">
+            <PlayerProfileCard
+              avatarIcon="/assets/hand-red.png"
+              compactValue="48.210"
+              name="Sire_Robert"
+              tribe={{ name: 'Corbeaux Noirs', tag: 'RVN' }}
+              variant="compact"
+            />
+            <PlayerProfileCard
+              avatarIcon="/assets/hand-silver.png"
+              avatarTone="ally"
+              compactValue="71.020"
+              name="Dame_Aliénor"
+              tribe={{ name: 'alliée', tag: 'BFC' }}
+              variant="compact"
+            />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div className="flex justify-between font-game text-[11px] font-bold uppercase tracking-[.14em] text-[#5d4a32]">
+            <span>Quêtes du jour</span>
+            <span>3 / 5 · expire dans 6h 22m</span>
+          </div>
+          <FeaturedQuestCard
+            actionLabel="Détails"
+            description="Lancez une attaque réussie contre Sire_Robert avant la pleine lune. Le héraut récompensera votre audace."
+            eyebrow="Quête de chapitre · IV"
+            icon="/assets/casual-icons/crown.png"
+            rewards={[
+              { icon: '/assets/casual-icons/crown.png', value: '50' },
+              { icon: '/assets/resources/iron.png', value: '2.000' },
+            ]}
+            title="Briser le siège de Roc-d'Acier"
+          />
+          <div className="flex w-full flex-col gap-2">
+            <QuestMissionCard
+              icon="/assets/wood.png"
+              progressLabel="3.200 / 5.000"
+              progressPercent={64}
+              rewards={[{ icon: '/assets/casual-icons/coin.png', value: '200' }]}
+              title="Récolter 5.000 bois"
+            />
+            <QuestMissionCard
+              actionLabel="Réclamer"
+              icon="/assets/army/squire.png"
+              progressLabel="✓ Terminé"
+              rewards={[{ icon: '/assets/casual-icons/crown.png', value: '5' }]}
+              state="ready"
+              title="Recruter 24 squires"
+            />
+            <QuestMissionCard
+              icon="/assets/hand-red.png"
+              progressLabel="0 / 1"
+              progressPercent={0}
+              rewards={[
+                { icon: '/assets/resources/wood.png', value: '500' },
+                { icon: '/assets/resources/stone.png', value: '500' },
+              ]}
+              title="Gagner 1 bataille"
+            />
+            <QuestMissionCard
+              description="Débloque à la fin du chapitre III."
+              icon="/assets/lock.png"
+              rewards={[{ icon: '/assets/casual-icons/crown.png', value: '10' }]}
+              state="locked"
+              title="Améliorer le château au niv. 5"
+            />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <span className="font-mono text-[10px] text-[#5d4a32]">caserne · répertoire</span>
+          <div className="flex w-full flex-col gap-1.5">
             <TroopRow
               actionLabel="Recruter"
               icon="/assets/army/militia.png"
               name="Milice"
               quantity="120"
+              quantityLabel="casernées"
               stats={[
                 { label: '⚔', tone: 'attack', value: '10' },
                 { label: '🛡', tone: 'defense', value: '15' },
@@ -592,6 +1230,7 @@ export function DesignSystemPreview() {
               icon="/assets/army/squire.png"
               name="Squire"
               quantity="48"
+              quantityLabel="casernées"
               stats={[
                 { label: '⚔', tone: 'attack', value: '25' },
                 { label: '🛡', tone: 'defense', value: '15' },
@@ -605,11 +1244,25 @@ export function DesignSystemPreview() {
               icon="/assets/army/archer.png"
               name="Archer"
               quantity="22"
+              quantityLabel="casernées"
               stats={[
                 { label: '⚔', tone: 'attack', value: '40' },
                 { label: '🛡', tone: 'defense', value: '10' },
                 { label: '👣', value: '15 m/km' },
                 { label: '📦', value: '20' },
+              ]}
+            />
+            <TroopRow
+              actionLabel="Recruter"
+              icon="/assets/army/templar.png"
+              name="Templier"
+              quantity="0"
+              quantityLabel="casernées"
+              stats={[
+                { label: '⚔', tone: 'attack', value: '120' },
+                { label: '🛡', tone: 'defense', value: '90' },
+                { label: '👣', value: '10 m/km' },
+                { label: '📦', value: '10' },
               ]}
             />
             <TroopRow
@@ -619,595 +1272,37 @@ export function DesignSystemPreview() {
               locked
               name="Sauvage"
               quantity="—"
-              stats={[{ label: '🔒', tone: 'neutral', value: 'Caserne niv. 5 requise' }]}
+              stats={[{ label: '🔒 Caserne niv. 5 requise', tone: 'locked' }]}
             />
           </div>
         </section>
 
-        <section className={previewSectionClass}>
-          <h2 className={previewTitleClass}>Militaire · troop stepper</h2>
-          <TroopStepper
-            {...troopStepperBaseData}
-            costs={troopStepperCosts}
-            onCancel={() => setTroopQuantity(0)}
-            onConfirm={() => setQueueMessage(`Recrutement ×${troopQuantity} demandé.`)}
-            onQuantityChange={setTroopQuantity}
-            quantity={troopQuantity}
-            submitLabel={`RECRUTER ×${troopQuantity}`}
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Chat bubble · alliance chat</h2>
+          <ChatPanel
+            emblemIcon="/assets/casual-icons/crown.png"
+            inputValue={inputValue}
+            messages={messages}
+            onInputChange={setInputValue}
+            onSubmit={() => {
+              const nextMessage = inputValue.trim();
+              if (!nextMessage) return;
+              setMessages((current) => [
+                ...current,
+                {
+                  id: `local-${current.length}`,
+                  message: nextMessage,
+                  sender: 'Vous',
+                  time: 'maintenant',
+                  type: 'self',
+                },
+              ]);
+              setInputValue('');
+            }}
+            selfAvatarIcon="/assets/icons/crown.png"
+            subtitle="24 membres · 6 en ligne"
+            title="[BFC] Les Lames du Nord"
           />
-        </section>
-
-        <section className={previewSectionClass}>
-          <h2 className={previewTitleClass}>Combat · reports</h2>
-          <div className="grid gap-3 md:grid-cols-2">
-            <CombatReportCard {...combatReport} />
-            <div className="flex flex-col gap-2">
-              <CombatReportMiniList items={combatReportMinis} />
-            </div>
-          </div>
-        </section>
-
-        <section className={previewSectionClass}>
-          <h2 className={previewTitleClass}>Carte · coordonnées & marqueurs</h2>
-          <div className="flex flex-wrap items-center gap-8 py-2">
-            <span className="min-w-[120px] font-mono text-sm text-[#5d4a32]">marches</span>
-            <ArmyMarchMarker eta="2:15" icon="/assets/hand-red.png" label="Attaque entrante" tone="attack" />
-            <ArmyMarchMarker eta="0:48" icon="/assets/army/templar.png" label="Marche sortante" tone="out" />
-            <ArmyMarchMarker eta="5:32" icon="/assets/hand-silver.png" label="Soutien allié" tone="support" />
-            <ArmyMarchMarker eta="1:04" icon="/assets/army/squire.png" label="Retour" tone="return" />
-          </div>
-          <div className="grid gap-3 md:grid-cols-[320px_1fr]">
-            <CoordinateInput
-              error={coordinates.x > 999 || coordinates.y > 999 ? 'Coordonnées hors monde.' : undefined}
-              history={coordinateHistory}
-              onChange={setCoordinates}
-              onSubmit={(value) => setQueueMessage(`Carte centrée sur ${value.x}|${value.y}.`)}
-              value={coordinates}
-            />
-            <div className="relative min-h-[320px] overflow-hidden rounded-[18px] border-[4px] border-[#3d2f1f] bg-[radial-gradient(ellipse_at_60%_40%,#a8d28d_0%,#7d9d6e_22%,#5d6e58_42%,#3d4f60_78%)] shadow-[inset_0_0_28px_rgba(0,0,0,.56)]">
-              <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,.055)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,.055)_1px,transparent_1px)] bg-[length:42px_42px]" />
-              <MapMarker
-                className="absolute left-[50%] top-[50%] -translate-x-1/2 -translate-y-1/2"
-                icon="/assets/casual-icons/crown.png"
-                label="Bastion"
-                onClick={() => setSelectedMarker('Bastion')}
-                selected={selectedMarker === 'Bastion'}
-                tone="tribe"
-              />
-              <span className="absolute left-[50%] top-[50%] translate-x-[-50%] translate-y-[32px] rounded bg-black/55 px-1.5 py-0.5 font-mono text-xs text-[#fef9f0]">
-                Bastion · 234|612
-              </span>
-              <MapMarker
-                className="absolute left-[28%] top-[34%] -translate-x-1/2 -translate-y-1/2"
-                icon="/assets/hand-silver.png"
-                label="Dame_Aliénor"
-                onClick={() => setSelectedMarker('Dame_Aliénor')}
-                selected={selectedMarker === 'Dame_Aliénor'}
-                size="sm"
-                tone="ally"
-              />
-              <span className="absolute left-[28%] top-[34%] translate-x-[-50%] translate-y-[26px] rounded bg-black/55 px-1.5 py-0.5 font-mono text-xs text-[#fef9f0]">
-                [BFC] Dame_Aliénor
-              </span>
-              <MapMarker
-                className="absolute left-[75%] top-[68%] -translate-x-1/2 -translate-y-1/2"
-                icon="/assets/hand-red.png"
-                label="Sire_Corbeau"
-                onClick={() => setSelectedMarker('Sire_Corbeau')}
-                selected={selectedMarker === 'Sire_Corbeau'}
-                size="sm"
-                tone="enemy"
-              />
-              <span className="absolute left-[75%] top-[68%] translate-x-[-50%] translate-y-[26px] rounded bg-black/55 px-1.5 py-0.5 font-mono text-xs text-[#fef9f0]">
-                [RVN] Sire_Corbeau
-              </span>
-              <MapMarker
-                className="absolute left-[18%] top-[72%] -translate-x-1/2 -translate-y-1/2"
-                icon="/assets/world/entity/barbarian-village-tier2.png"
-                label="Camp barbare T2"
-                onClick={() => setSelectedMarker('Camp barbare')}
-                selected={selectedMarker === 'Camp barbare'}
-                size="sm"
-                tier={2}
-                tone="barbarian"
-              />
-              <MapMarker
-                className="absolute left-[64%] top-[24%] -translate-x-1/2 -translate-y-1/2"
-                icon="/assets/world/entity/barbarian-village-tier3.png"
-                label="Camp barbare T5"
-                onClick={() => setSelectedMarker('Camp barbare')}
-                selected={selectedMarker === 'Camp barbare'}
-                size="sm"
-                tier={5}
-                tone="barbarian"
-              />
-              <MapMarker
-                className="absolute left-[42%] top-[80%] -translate-x-1/2 -translate-y-1/2"
-                icon="/assets/world/entity/barbarian-village-tier3.png"
-                label="Camp barbare T3"
-                onClick={() => setSelectedMarker('Camp barbare')}
-                selected={selectedMarker === 'Camp barbare'}
-                size="sm"
-                tier={3}
-                tone="barbarian"
-              />
-              <div className="absolute left-[14%] top-[18%]"><MapDot label="Allié éloigné" tone="ally" /></div>
-              <div className="absolute left-[88%] top-[42%]"><MapDot label="Ennemi éloigné" tone="enemy" /></div>
-              <div className="absolute left-[88%] top-[84%]"><MapDot label="Barbare éloigné" tone="barbarian" /></div>
-              <div className="absolute left-[8%] top-[48%]"><MapDot label="PNA éloigné" tone="nap" /></div>
-              <div className="absolute left-[62%] top-[56%] -translate-x-1/2 -translate-y-1/2">
-                <ArmyMarchMarker eta="2:15" icon="/assets/hand-red.png" label="Attaque entrante" tone="attack" />
-              </div>
-              <div className="absolute left-[40%] top-[42%] -translate-x-1/2 -translate-y-1/2">
-                <ArmyMarchMarker eta="0:48" icon="/assets/army/templar.png" label="Marche sortante" tone="out" />
-              </div>
-            </div>
-          </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            <MapCallout
-              actions={[
-                { label: '⚔ Attaquer', variant: 'danger' },
-                { label: '👁 Espionner', variant: 'info' },
-              ]}
-              coordinates="312|488"
-              levelLabel="🏰 Niv. 6"
-              owner="Inhabité · pillable"
-              points="8.420"
-              tierLabel="T4 OR"
-              title="★ Camp barbare"
-            />
-            <MapCallout
-              actions={[
-                { label: '🛡 Soutenir', variant: 'success' },
-                { label: '✉ Message', variant: 'info' },
-              ]}
-              coordinates="312|490"
-              levelLabel="🏰 Château Niv. 4"
-              owner="Sire_Robert · [BFC] allié"
-              points="12.480"
-              title="Roc-d'Acier"
-            />
-          </div>
-        </section>
-
-        <section className={previewSectionClass}>
-          <h2 className={previewTitleClass}>Social · avatars, profils, classement</h2>
-          <div className="flex flex-wrap items-end gap-3">
-            <Avatar crown initials="AR" level={92} size="xl" status="online" tone="red" />
-            <Avatar initials="AL" level={71} size="lg" status="defense" tone="purple" />
-            <Avatar icon="/assets/army/squire.png" size="md" status="attack" tone="blue" />
-            <Avatar initials="RB" size="sm" status="offline" tone="stone" />
-            <Avatar initials="?" size="xs" tone="default" />
-          </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            <PlayerProfileCard
-              actions={[
-                { label: 'Message', variant: 'info' },
-                { label: 'Profil', variant: 'neutral' },
-              ]}
-              avatar={{ crown: true, initials: 'VO', level: 42, status: 'online', tone: 'blue' }}
-              name="Vous"
-              rank="#3 royaume"
-              relation="self"
-              stats={[
-                { label: 'Points', value: '102k' },
-                { label: 'Villages', value: '7' },
-                { label: 'Couronnes', value: '28' },
-              ]}
-              tribe="BFTC"
-            />
-            <PlayerProfileCard
-              actions={[
-                { label: 'Attaquer', variant: 'danger' },
-                { label: 'Espionner', variant: 'warning' },
-              ]}
-              avatar={{ initials: 'RB', level: 38, status: 'attack', tone: 'red' }}
-              name="Sire_Robert"
-              rank="#4 royaume"
-              relation="enemy"
-              stats={[
-                { label: 'Points', value: '99k' },
-                { label: 'Villages', value: '6' },
-                { label: 'Distance', value: '12m' },
-              ]}
-              tribe="WOL"
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            {leaderboardRows.map((row) => (
-              <LeaderboardRow key={row.rank} {...row} onClick={() => setSelectedMarker(row.name)} />
-            ))}
-          </div>
-        </section>
-
-        <section className={previewSectionClass}>
-          <h2 className={previewTitleClass}>Messages · inbox & chat</h2>
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <SegmentedControl
-                ariaLabel="Boîte de réception"
-                onChange={setFilter}
-                options={[
-                  { icon: <Mail size={14} />, label: 'Inbox', value: 'all' },
-                  { badge: <Badge size="sm" tone="danger">2</Badge>, icon: <Swords size={14} />, label: 'Alertes', value: 'attack' },
-                  { icon: <User size={14} />, label: 'Joueurs', value: 'players' },
-                ]}
-                value={filter}
-              />
-              {mailItems.map((item) => (
-                <MailInboxItem key={item.subject} {...item} onClick={() => setQueueMessage(`Message ouvert : ${item.subject}`)} />
-              ))}
-            </div>
-            <ChatPanel
-              inputValue={chatInput}
-              messages={chatMessages}
-              onInputChange={setChatInput}
-              onSubmit={() => {
-                const nextMessage = chatInput.trim();
-                if (!nextMessage) return;
-                setChatMessages((current) => [
-                  ...current,
-                  { id: `local-${current.length}`, message: nextMessage, time: 'maintenant', type: 'self' },
-                ]);
-                setChatInput('');
-              }}
-              title="Canal alliance"
-            />
-          </div>
-        </section>
-
-        <section className={previewSectionClass}>
-          <h2 className={previewTitleClass}>Structure · header, inputs, cards</h2>
-          <div className="flex flex-col gap-3 bg-[#3c2619] p-3">
-            <HeaderBar
-              avatar={{ initials: 'SK', level: 12, tone: 'stone' }}
-              primary={[
-                { icon: '/assets/army-power.png', value: '2 480' },
-                { icon: '/assets/crown.png', value: '28' },
-              ]}
-              resources={[
-                { icon: '/assets/resources/wood.png', value: '8.500' },
-                { icon: '/assets/resources/stone.png', value: '3.200' },
-                { icon: '/assets/resources/iron.png', value: '1.500' },
-                { icon: '/assets/resources/population.png', value: '120/200' },
-              ]}
-            />
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <GameInput helper="Visible par vos voisins du royaume." label="Nom du seigneur" onChange={setLordName} value={lordName} />
-            <GameInput label="Royaume" onChange={setRealmName} tone="parchment" value={realmName} />
-            <GameInput helper="8 caractères minimum." label="Mot de passe" onChange={setPassword} tone={password.length < 8 ? 'error' : 'default'} type="password" value={password} />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <IconButton icon={<Plus size={20} />} label="Ajouter" tone="success" />
-            <IconButton icon={<Trash2 size={20} />} label="Supprimer" tone="danger" />
-            <IconButton icon={<Settings size={20} />} label="Paramètres" tone="info" />
-            <IconButton icon={<X size={20} />} label="Fermer" tone="neutral" />
-            <IconButton icon={<Swords size={20} />} label="Attaquer" tone="warning" />
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <MiniCard actionLabel="→ Niv. 4" icon="/assets/castle.png" title="Château" />
-            <MiniCard actionLabel="Construire" icon="/assets/wood.png" title="Camp de bûcherons" tone="wood" />
-            <MiniCard actionLabel="→ Niv. 2" actionVariant="info" icon="/assets/iron.png" title="Mine de fer" tone="stone" />
-            <MiniCard actionLabel="Verrouillé" icon="/assets/watchtower.png" locked title="Tour de guet" tone="default" />
-          </div>
-        </section>
-
-        <section className={previewSectionClass}>
-          <h2 className={previewTitleClass}>Structure · banners, dividers, cards info</h2>
-          <div className="flex flex-col gap-4">
-            <BannerTitle subtitle="Niveau 5 · Conseil de guerre" title="Caserne du Roi" variant="wood" />
-            <BannerTitle title="★ Salle du Trône ★" variant="ribbon" />
-            <BannerTitle eyebrow="Édit du Royaume" icon="/assets/castle.png" title="Charte des bâtisseurs" variant="stone" />
-            <BannerTitle eyebrow="Chapitre IV" subtitle="« Que la pierre tremble sous la cadence des marteaux. »" title="Le Siège de Roc-d'Acier" />
-            <BannerTitle eyebrow="Tribu · Diplomatie" meta="👑 24 / 30" title="Les Lames du Nord" variant="screen" />
-            <BannerTitle
-              crumbs={[{ label: 'Empire' }, { label: 'Village' }, { current: true, label: 'Caserne' }]}
-              subtitle="Forme les écuyers, les chevaliers et les templiers de votre garnison."
-              title="Caserne · Niveau 3"
-              variant="section"
-            />
-            <Divider />
-            <Divider icon="/assets/casual-icons/crown.png" label="Royaume" variant="labeled" />
-            <Divider variant="rope" />
-            <Divider icon="/assets/hand-red.png" variant="sword" />
-            <div className="grid gap-3 md:grid-cols-3">
-              <InfoCard
-                icon="/assets/army/squire.png"
-                stats={[
-                  { label: 'Attaque', value: '25' },
-                  { label: 'Défense', value: '15' },
-                  { label: 'Vitesse', value: '18 min/km' },
-                  { label: 'Charge', value: '30' },
-                ]}
-                title="Squire"
-              />
-              <InfoCard
-                flavor="« Le bois nourrit la forge et la cheminée. »"
-                icon="/assets/wood.png"
-                stats={[
-                  { label: 'Production', value: '+120 /h' },
-                  { label: 'Stockage', value: '10.000' },
-                ]}
-                title="Camp de bûcherons"
-              />
-              <InfoCard
-                dark
-                icon="/assets/casual-icons/coin.png"
-                stats={[
-                  { label: 'En coffre', value: '2.480' },
-                  { label: 'Plafond', value: '5.000' },
-                ]}
-                title="Ressource — Or"
-              />
-            </div>
-          </div>
-        </section>
-
-        <section className={previewSectionClass}>
-          <h2 className={previewTitleClass}>Tooltips</h2>
-          <div className="grid gap-x-5 gap-y-8 px-2 sm:grid-cols-2">
-            <div className="flex min-h-[190px] items-end justify-center rounded-xl border border-[#8b7355]/30 bg-[#fef9f0]/35 px-6 pb-5 pt-28">
-              <BftcTooltip
-                stats={[
-                  { label: 'Attaque', value: '25' },
-                  { label: 'Défense', value: '15' },
-                  { label: 'Vitesse', value: '18 min/km' },
-                  { label: 'Charge', value: '30' },
-                ]}
-                title="Squire"
-              >
-                <TooltipTarget icon="/assets/army/squire.png" label="stats" />
-              </BftcTooltip>
-            </div>
-            <div className="flex min-h-[190px] items-end justify-center rounded-xl border border-[#8b7355]/30 bg-[#fef9f0]/35 px-6 pb-5 pt-28">
-              <BftcTooltip
-                flavor="« Le bois nourrit la forge et la cheminée. »"
-                stats={[
-                  { label: 'Production', value: '+120 /h' },
-                  { label: 'Stockage', value: '10.000' },
-                ]}
-                title="Camp de bûcherons"
-              >
-                <TooltipTarget icon="/assets/wood.png" label="building" />
-              </BftcTooltip>
-            </div>
-            <div className="flex min-h-[190px] items-end justify-center rounded-xl border border-[#8b7355]/30 bg-[#fef9f0]/35 px-6 pb-5 pt-28">
-              <BftcTooltip
-                stats={[
-                  { label: 'En coffre', value: '2.480' },
-                  { label: 'Plafond', value: '5.000' },
-                ]}
-                title="Ressource — Or"
-                tone="dark"
-              >
-                <TooltipTarget icon="/assets/casual-icons/coin.png" label="dark" />
-              </BftcTooltip>
-            </div>
-            <div className="flex min-h-[190px] items-center justify-start rounded-xl border border-[#8b7355]/30 bg-[#fef9f0]/35 px-10 py-5">
-              <BftcTooltip
-                position="right"
-                stats={[
-                  { label: 'Tribu', value: '[BFC]' },
-                  { label: 'Points', value: '48.210' },
-                ]}
-                title="Sire_Robert"
-              >
-                <TooltipTarget icon="/assets/crown.png" label="droite" />
-              </BftcTooltip>
-            </div>
-          </div>
-        </section>
-
-        <section className={previewSectionClass}>
-          <h2 className={previewTitleClass}>Modales</h2>
-          <div className="grid gap-3 md:grid-cols-2">
-            {modalOpen ? (
-              <GameModal
-                actions={[
-                  { label: 'Annuler', onClick: () => setModalOpen(false), variant: 'neutral' },
-                  { label: 'Construire', variant: 'info' },
-                ]}
-                icon="/assets/barracks.png"
-                onClose={() => setModalOpen(false)}
-                quote="« Une garnison forte garde les portes au clair de la lune. »"
-                title="Construire Caserne"
-                tone="info"
-              >
-                Améliorer la caserne au Niv. 2 ? Coût : 1.200 bois · 800 pierre · 650 fer.
-              </GameModal>
-            ) : (
-              <BftcButton onClick={() => setModalOpen(true)} variant="info">Réouvrir modale</BftcButton>
-            )}
-            <GameModal
-              actions={[
-                { label: 'Annuler', variant: 'neutral' },
-                { label: 'ATTAQUER', variant: 'danger' },
-              ]}
-              icon="/assets/hand-red.png"
-              title="Lancer l'attaque ?"
-              tone="danger"
-            >
-              Vous envoyez 240 unités contre <b>Sire_Robert</b>. Cette action est irréversible.
-            </GameModal>
-            <GameModal actions={[{ label: 'Voir le rapport', variant: 'success' }]} icon="/assets/casual-icons/crown.png" title="VICTOIRE" tone="success">
-              Vous avez pillé 2.400 ressources et capturé 12 prisonniers.
-            </GameModal>
-            <GameModal actions={[{ label: 'Plus tard', variant: 'neutral' }, { label: 'Améliorer', variant: 'warning' }]} icon="/assets/resources/wood.png" title="Entrepôt presque plein" tone="warning">
-              Vos coffres de bois sont à 98 %. Augmentez votre entrepôt ou dépensez avant la perte de production.
-            </GameModal>
-          </div>
-        </section>
-
-        <section className={previewSectionClass}>
-          <h2 className={previewTitleClass}>Quêtes · récompenses · boutique</h2>
-          <div className="flex flex-col gap-3">
-            <FeaturedQuestCard
-              actionLabel="Détails"
-              description="Lancez une attaque réussie contre Sire_Robert avant la pleine lune. Le héraut récompensera votre audace."
-              eyebrow="Quête de chapitre · IV"
-              icon="/assets/casual-icons/crown.png"
-              rewards={[{ icon: '/assets/casual-icons/crown.png', value: '50' }, { icon: '/assets/resources/iron.png', value: '2.000' }]}
-              title="Briser le siège de Roc-d'Acier"
-            />
-            <QuestCard icon="/assets/wood.png" name="Récolter 5.000 bois" progress={{ label: '3.200 / 5.000', value: 64 }} rewards={[{ icon: '/assets/casual-icons/coin.png', value: '200' }]} />
-            <QuestCard actionLabel="Réclamer" icon="/assets/army/squire.png" name="Recruter 24 squires" progress={{ label: '✓ Terminé', value: 100 }} ready rewards={[{ icon: '/assets/casual-icons/crown.png', value: '5' }]} />
-            <DailyReward
-              actionLabel="Réclamer aujourd'hui"
-              days={[
-                { amount: '500', day: 'J 1', done: true, icon: '/assets/resources/wood.png' },
-                { amount: '500', day: 'J 2', done: true, icon: '/assets/resources/stone.png' },
-                { amount: '200', day: 'J 3', done: true, icon: '/assets/casual-icons/coin.png' },
-                { amount: '400', day: 'J 4', icon: '/assets/resources/iron.png', today: true },
-                { amount: '5', day: 'J 5', icon: '/assets/casual-icons/crown.png' },
-                { amount: '×10', day: 'J 6', icon: '/assets/army/squire.png' },
-                { amount: '25 + boost', day: 'J 7', icon: '/assets/casual-icons/crown.png', jackpot: true },
-              ]}
-              eyebrow="Récompense quotidienne"
-              subtitle="« Plus vous reviendrez, plus la cour vous comblera. »"
-              title="Le héraut du royaume"
-            />
-            <SegmentedControl
-              ariaLabel="Boutique"
-              onChange={setFilter}
-              options={[
-                { label: 'Boutique', value: 'all' },
-                { label: 'Ressources', value: 'resources' },
-                { label: 'Boosts', value: 'boosts' },
-                { label: 'Skins', value: 'skins' },
-              ]}
-              value={filter}
-            />
-            <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">
-              <ShopTile badge="−40%" currencyIcon="/assets/casual-icons/coin.png" icon="/assets/resources/wood.png" name="Cargaison de bois" price="120" tone="cash" />
-              <ShopTile currencyIcon="/assets/casual-icons/coin.png" icon="/assets/resources/stone.png" name="Cargaison de pierre" price="140" tone="cash" />
-              <ShopTile currencyIcon="/assets/casual-icons/crown.png" icon="/assets/clock.png" name="Bond de 1 heure" price="15" quantity="×3" />
-              <ShopTile currencyIcon="/assets/casual-icons/crown.png" icon="/assets/casual-icons/card-gold.png" name="Carte de bénédiction" price="40" soldOut />
-            </div>
-          </div>
-        </section>
-
-        <section className={previewSectionClass}>
-          <h2 className={previewTitleClass}>Premium · achievements · boosts</h2>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <PremiumBundle
-              eyebrow="Pack Bourgeois"
-              icon="/assets/casual-icons/coin.png"
-              lines={[{ icon: '/assets/casual-icons/crown.png', label: 'Couronnes', value: '×80' }, { icon: '/assets/resources/wood.png', label: 'Bois', value: '5.000' }]}
-              oldPrice="4,99 €"
-              price="2,99 €"
-              title="Bourse du roturier"
-            />
-            <PremiumBundle
-              badge="POPULAIRE"
-              eyebrow="Pack Baronnial"
-              featured
-              icon="/assets/casual-icons/crown.png"
-              lines={[{ icon: '/assets/casual-icons/crown.png', label: 'Couronnes', value: '×450' }, { icon: '/assets/army/templar.png', label: 'Templiers', value: '×15' }, { icon: '/assets/clock.png', label: 'Boost prod', value: '24h' }]}
-              oldPrice="14,99 €"
-              price="9,99 €"
-              title="Trésor de baron"
-            />
-            <PremiumBundle
-              eyebrow="★ Royal"
-              icon="/assets/casual-icons/crown.png"
-              lines={[{ icon: '/assets/casual-icons/crown.png', label: 'Couronnes', value: '×2.000' }, { label: 'VIP Noblesse', value: '30 jours' }, { icon: '/assets/castle.png', label: 'Skin château', value: 'Or' }]}
-              oldPrice="39,99 €"
-              price="29,99 €"
-              royal
-              title="Pacte du Souverain"
-            />
-          </div>
-          <div className="grid gap-2 sm:grid-cols-4">
-            <AchievementCard icon="/assets/casual-icons/crown.png" name="Premier sacre" points="50" tier="gold" tierLabel="OR" />
-            <AchievementCard icon="/assets/army/squire.png" name="Recruteur" points="25" tier="silver" tierLabel="ARGENT" />
-            <AchievementCard icon="/assets/wood.png" name="Premier coup de hache" points="10" tier="bronze" tierLabel="BRONZE" />
-            <AchievementCard icon="/assets/hand-red.png" name="Conquérant" points="75" progress={{ label: '21 / 50 batailles', value: 42 }} tier="gold" tierLabel="OR · I / III" />
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            <BoostPill icon="/assets/resources/wood.png" label="+50% prod" time="1h 23m" tone="production" />
-            <BoostPill icon="/assets/hand-red.png" label="+25% ATK" time="12m" tone="attack" />
-            <BoostPill icon="/assets/hand-silver.png" label="+40% DEF" time="2h 04m" tone="defense" />
-            <BoostPill icon="/assets/clock.png" label="−30% temps" time="45m" tone="build" />
-            <BoostPill icon="/assets/casual-icons/crown.png" label="VIP NOBLESSE" time="12j" tone="vip" />
-          </div>
-          <ActiveBoostList
-            items={[
-              { icon: '/assets/resources/wood.png', label: 'Boost production bois', time: '1h 23m', tone: 'production', value: '+50%' },
-              { icon: '/assets/hand-red.png', label: 'Cri de guerre', time: '0:12', tone: 'attack', value: '+25% ATK' },
-              { icon: '/assets/watchtower.png', label: 'Vigilance accrue', time: '2h 04m', tone: 'defense', value: '+40% DEF' },
-            ]}
-            title="Effets actifs · 3"
-          />
-        </section>
-
-        <section className={previewSectionClass}>
-          <h2 className={previewTitleClass}>Progression · puissance · rapports</h2>
-          <div className="flex flex-wrap items-center gap-3">
-            <PipRating value={3} />
-            <PipRating tone="green" value={4} />
-            <PipRating max={10} size="sm" value={7} />
-            <PipRating value={4} variant="star" />
-            <PipRating value={3} variant="chevron" />
-            <LevelChip icon="/assets/casual-icons/crown.png" value={12} />
-            <LevelChip max={10} value={3} />
-            <LevelChip value="MAX" />
-          </div>
-          <PowerComparison
-            attackerLabel="Vous · puissance"
-            attackerPower="4.250"
-            attackerUnits={[{ icon: '/assets/army/squire.png', value: '×120' }, { icon: '/assets/army/archer.png', value: '×60' }, { icon: '/assets/army/templar.png', value: '×8' }]}
-            defenderLabel="Sire_Robert · puissance"
-            defenderPower="2.580"
-            defenderUnits={[{ icon: '/assets/army/militia.png', value: '×120' }, { icon: '/assets/army/squire.png', value: '×~48' }, { icon: '/assets/army/templar.png', value: '×?' }]}
-            ratioLabel="68% chances de victoire"
-            value={62}
-            verdict="⚔ Avantage net — pertes estimées : ≈ 22 unités"
-          />
-          <ScoutReport
-            actions={[{ label: 'Partager tribu', variant: 'neutral' }, { label: 'Planifier attaque', variant: 'danger' }]}
-            columns={[
-              { title: 'Ressources visibles', rows: [{ icon: '/assets/resources/wood.png', label: 'Bois', value: '8.420' }, { icon: '/assets/resources/stone.png', label: 'Pierre', value: '3.180' }, { icon: '/assets/resources/iron.png', label: 'Fer', value: '1.640' }, { icon: '/assets/casual-icons/coin.png', label: 'Or', value: '4.200' }] },
-              { title: 'Garnison estimée', rows: [{ icon: '/assets/army/militia.png', label: 'Milice', value: '120' }, { icon: '/assets/army/squire.png', label: 'Squires', value: '~48' }, { hidden: true, icon: '/assets/army/archer.png', label: 'Archers', value: '???' }, { hidden: true, icon: '/assets/army/templar.png', label: 'Templiers', value: '???' }] },
-            ]}
-            defenses={[{ icon: '/assets/watchtower.png', label: 'Tour niv. 3' }, { icon: '/assets/castle.png', label: 'Château niv. 5' }, { danger: true, label: '⚠ Mur niv. 8' }]}
-            note="« Vos éclaireurs ont longé les murailles à l'aube. »"
-            subtitle="Cible"
-            tag="1 éclaireur revenu · 0 perdu"
-            target="Sire_Robert · Roc-d'Acier 238|617"
-            time="il y a 4 min"
-            title="RAPPORT D'ESPIONNAGE"
-          />
-        </section>
-
-        <section className={previewSectionClass}>
-          <h2 className={previewTitleClass}>Mouvements & alliances</h2>
-          <div className="flex flex-col gap-1.5 rounded-xl bg-[#3c2619] p-3">
-            <ArmyMovementRow icon="/assets/hand-red.png" incoming progress={32} subtitle="De Sire_Robert · Roc-d'Acier 238|617 · ≈ 240 unités" time="02:15" title="⚠ ATTAQUE entrante" tone="attack" />
-            <ArmyMovementRow icon="/assets/army/squire.png" progress={78} subtitle="120 squires + 60 archers · arrivée à 14h42" time="0:47" title="Attaque → Tours-Hautes" tone="attack" />
-            <ArmyMovementRow icon="/assets/hand-silver.png" progress={25} subtitle="80 milice · au retour : 6h" time="1h 12m" title="Renfort → Castelfort (allié)" tone="defend" />
-            <ArmyMovementRow actionLabel="Rappeler" icon="/assets/position.png" progress={22} subtitle="×1 éclaireur · discret" time="3:04" title="Éclaireur → Bois-d'Argent" tone="scout" />
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <HeraldicShield charge="chevron" field="sable" icon="/assets/casual-icons/crown.png" />
-            <HeraldicShield charge="fess" field="azure" icon="/assets/hand-silver.png" />
-            <HeraldicShield charge="cross" field="gules" />
-            <HeraldicShield charge="pile" field="or" icon="/assets/castle.png" />
-          </div>
-          <AllianceBanner
-            members="24 / 30 membres"
-            motto="« Tant qu'il restera de l'acier, il restera des rois. »"
-            name="Les Lames du Nord"
-            points="1.482.310"
-            rank="★ Rang #3"
-            shield={{ charge: 'chevron', field: 'sable', icon: '/assets/casual-icons/crown.png' }}
-            tag="BFC"
-          />
-          <div className="flex flex-col gap-1.5">
-            <AllianceRow members="24 / 30 membres · fondée an 1247" name="Les Lames du Nord" points="1.482.310" relation="★ Votre tribu" relationTone="self" shield={{ charge: 'chevron', field: 'sable', icon: '/assets/casual-icons/crown.png' }} tag="BFC" />
-            <AllianceRow members="19 membres · pacte scellé il y a 12 j" name="Sentinelles du Trône" points="1.124.880" relation="✦ Alliée" relationTone="ally" shield={{ charge: 'fess', field: 'azure', icon: '/assets/hand-silver.png' }} tag="STN" />
-            <AllianceRow members="18 membres · 4 villages perdus cette saison" name="Corbeaux Noirs" points="982.140" relation="⚔ En guerre" relationTone="war" shield={{ charge: 'cross', field: 'gules' }} tag="RVN" />
-          </div>
         </section>
       </div>
     </main>

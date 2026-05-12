@@ -1,90 +1,184 @@
-import { Badge } from './Badge';
-import { BftcButton } from './BftcButton';
-import { Avatar, type AvatarProps } from './Avatar';
+import { BftcButton, type BftcButtonVariant } from './BftcButton';
+import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
 
-export type PlayerRelation = 'self' | 'ally' | 'enemy' | 'neutral';
+export type PlayerProfileRelation = 'self' | 'ally' | 'enemy' | 'neutral';
+export type PlayerProfileVariant = 'card' | 'compact';
+export type PlayerProfileAvatarTone = 'default' | 'enemy' | 'ally' | 'neutral';
+export type PlayerProfileTribeTone = 'gold' | 'red' | 'stone';
 
-const relationClass: Record<PlayerRelation, string> = {
-  self: 'border-[#9e7b0d]',
-  ally: 'border-[#3a6c1f]',
-  enemy: 'border-[#a93226]',
-  neutral: 'border-[#8b7355]',
-};
-
-const relationBadge: Record<PlayerRelation, { label: string; tone: 'warning' | 'success' | 'danger' | 'default' }> = {
-  self: { label: 'Vous', tone: 'warning' },
-  ally: { label: 'Allié', tone: 'success' },
-  enemy: { label: 'Ennemi', tone: 'danger' },
-  neutral: { label: 'Neutre', tone: 'default' },
-};
+export interface PlayerProfileTribe {
+  name: string;
+  tag: string;
+  tone?: PlayerProfileTribeTone;
+}
 
 export interface PlayerProfileStat {
-  label: string;
+  icon?: string;
+  label?: string;
   value: string;
 }
 
 export interface PlayerProfileAction {
   label: string;
   onClick?: () => void;
-  variant?: 'success' | 'info' | 'danger' | 'warning' | 'neutral';
+  variant?: BftcButtonVariant;
 }
 
 export interface PlayerProfileCardProps {
   actions?: PlayerProfileAction[];
-  avatar: AvatarProps;
+  avatarIcon: string;
+  avatarTone?: PlayerProfileAvatarTone;
   className?: string;
+  compactValue?: string;
   name: string;
-  rank?: string;
-  relation?: PlayerRelation;
-  stats: PlayerProfileStat[];
-  tribe?: string;
+  online?: boolean;
+  relation?: PlayerProfileRelation;
+  showCrown?: boolean;
+  selfLabel?: string;
+  stats?: PlayerProfileStat[];
+  tribe?: PlayerProfileTribe;
+  variant?: PlayerProfileVariant;
+}
+
+const relationBarClass: Record<PlayerProfileRelation, string> = {
+  self: 'bg-[linear-gradient(to_bottom,#f1c40f,#d4a017)]',
+  ally: 'bg-[linear-gradient(to_bottom,#6ebf49,#4a8c2a)]',
+  enemy: 'bg-[linear-gradient(to_bottom,#e74c3c,#c0392b)]',
+  neutral: '',
+};
+
+const avatarToneClass: Record<PlayerProfileAvatarTone, string> = {
+  default: 'bg-[radial-gradient(circle_at_30%_25%,#fef0c6,#8b6f47)]',
+  enemy: 'bg-[radial-gradient(circle_at_30%_25%,#fbd5d0,#a93226)]',
+  ally: 'bg-[radial-gradient(circle_at_30%_25%,#cfe2f6,#2e75b6)]',
+  neutral: 'bg-[radial-gradient(circle_at_30%_25%,#dee3e6,#7f8c8d)]',
+};
+
+const tribeToneClass: Record<PlayerProfileTribeTone, string> = {
+  gold: 'border-[#9e7b0d] bg-[linear-gradient(to_bottom,#f1c40f,#d4a017)] text-[#3a2a00]',
+  red: 'border-[#a93226] bg-[linear-gradient(to_bottom,#e74c3c,#c0392b)] text-white',
+  stone: 'border-[#5d6d6e] bg-[linear-gradient(to_bottom,#bfc7cb,#7f8c8d)] text-[#1f2933]',
+};
+
+function PlayerAvatar({
+  avatarIcon,
+  compact = false,
+  online,
+  showCrown,
+  tone,
+}: {
+  avatarIcon: string;
+  compact?: boolean;
+  online?: boolean;
+  showCrown?: boolean;
+  tone: PlayerProfileAvatarTone;
+}) {
+  return (
+    <div
+      className={cn(
+        'relative flex items-center justify-center border-[#3d2f1f] shadow-[inset_0_2px_0_rgba(255,255,255,.5),0_2px_4px_rgba(0,0,0,.3)]',
+        avatarToneClass[tone],
+        compact ? 'size-9 rounded-[9px] border-2' : 'size-16 rounded-[14px] border-[3px]',
+      )}
+    >
+      <img alt="" className={compact ? 'size-[26px]' : 'size-[46px]'} src={publicAsset(avatarIcon)} />
+      {showCrown && !compact ? (
+        <span className="absolute -right-1.5 -top-2.5 size-6 bg-[url('/assets/casual-icons/crown.png')] bg-contain bg-center bg-no-repeat drop-shadow-[0_1px_2px_rgba(0,0,0,.5)]" />
+      ) : null}
+      {online && !compact ? <span className="absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full border-[2.5px] border-[#fef9f0] bg-[#6ebf49]" /> : null}
+    </div>
+  );
+}
+
+function TribeLine({ compact = false, tribe }: { compact?: boolean; tribe?: PlayerProfileTribe }) {
+  if (!tribe) return null;
+
+  if (compact) {
+    return <div className="font-game text-[10px] text-[#6d5838]">[{tribe.tag}] {tribe.name}</div>;
+  }
+
+  return (
+    <div className="inline-flex items-center gap-1 font-game text-[11px] text-[#6d5838]">
+      Tribu
+      <span className={cn('rounded-full border-[1.5px] px-1.5 py-px font-game text-[10px] font-bold [text-shadow:none]', tribeToneClass[tribe.tone ?? 'gold'])}>
+        {tribe.tag}
+      </span>
+      · {tribe.name}
+    </div>
+  );
+}
+
+function ProfileStats({ compact = false, stats = [] }: { compact?: boolean; stats?: PlayerProfileStat[] }) {
+  if (stats.length === 0) return null;
+
+  return (
+    <div className={cn('flex flex-wrap font-game text-[#6d5838]', compact ? 'm-0 gap-2 text-[10px]' : 'mt-1 gap-2.5 text-[11px]')}>
+      {stats.map((stat) => (
+        <span key={`${stat.icon ?? stat.label ?? ''}-${stat.value}`}>
+          {stat.icon ? <img alt="" className="mr-0.5 inline size-[13px] align-middle" src={publicAsset(stat.icon)} /> : null}
+          {stat.label ? `${stat.label} ` : null}
+          <b className="font-bold tabular-nums text-[#3d2f1f]">{stat.value}</b>
+        </span>
+      ))}
+    </div>
+  );
 }
 
 export function PlayerProfileCard({
   actions = [],
-  avatar,
+  avatarIcon,
+  avatarTone = 'default',
   className,
+  compactValue,
   name,
-  rank,
+  online = false,
   relation = 'neutral',
-  stats,
+  showCrown = false,
+  selfLabel,
+  stats = [],
   tribe,
+  variant = 'card',
 }: PlayerProfileCardProps) {
-  const badge = relationBadge[relation];
+  if (variant === 'compact') {
+    return (
+      <article
+        className={cn(
+          'flex items-center gap-2 rounded-xl border-2 border-[#8b7355] bg-[linear-gradient(to_bottom,#fef9f0,#e8d4a8)] px-2.5 py-1.5',
+          className,
+        )}
+      >
+        <PlayerAvatar avatarIcon={avatarIcon} compact tone={avatarTone} />
+        <div className="min-w-0">
+          <div className="font-game text-xs font-bold text-[#3d2f1f]">{name}</div>
+          <TribeLine compact tribe={tribe} />
+        </div>
+        {compactValue ? <div className="ml-auto font-game text-[13px] font-extrabold tabular-nums text-[#3d2f1f]">{compactValue}</div> : null}
+      </article>
+    );
+  }
 
   return (
     <article
       className={cn(
-        'rounded-[16px] border-[3px] bg-gradient-to-b from-[#fef9f0] to-[#e8d4a8] p-3 shadow-[0_4px_0_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.6)]',
-        relationClass[relation],
+        'relative grid grid-cols-[64px_1fr] gap-3 overflow-hidden rounded-[14px] border-2 border-[#8b7355] bg-[linear-gradient(to_bottom,#fef9f0,#e8d4a8)] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.5),0_4px_0_rgba(0,0,0,.16)]',
         className,
       )}
     >
-      <div className="flex items-start gap-3">
-        <Avatar {...avatar} size={avatar.size ?? 'lg'} />
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <h3 className="truncate font-game text-xl font-extrabold text-[#1f2937]">{name}</h3>
-            <Badge tone={badge.tone}>{badge.label}</Badge>
-          </div>
-          <div className="mt-0.5 font-game text-[11px] font-bold text-[#6d5838]">
-            {tribe ? `[${tribe}]` : 'Sans tribu'}{rank ? ` · ${rank}` : ''}
-          </div>
+      {relation !== 'neutral' ? <span className={cn('absolute bottom-0 left-0 top-0 w-[5px]', relationBarClass[relation])} /> : null}
+      <PlayerAvatar avatarIcon={avatarIcon} online={online} showCrown={showCrown} tone={avatarTone} />
+      <div className="flex min-w-0 flex-col gap-[3px]">
+        <div className="flex items-center gap-1.5 font-game text-[15px] font-bold text-[#3d2f1f]">
+          {name}
+          {selfLabel ? <span className="text-[10px] font-semibold text-[#9e7b0d]">· {selfLabel}</span> : null}
         </div>
-      </div>
-      <div className="mt-3 grid grid-cols-3 gap-1.5">
-        {stats.map((stat) => (
-          <div key={stat.label} className="rounded-lg border-2 border-[#b8a082] bg-white/45 px-2 py-1">
-            <div className="font-game text-[9px] font-bold uppercase tracking-[0.08em] text-[#6d5838]">{stat.label}</div>
-            <div className="font-game text-sm font-extrabold tabular-nums text-[#1f2937]">{stat.value}</div>
-          </div>
-        ))}
+        <TribeLine tribe={tribe} />
+        <ProfileStats stats={stats} />
       </div>
       {actions.length > 0 ? (
-        <div className="mt-3 flex flex-wrap gap-1.5">
+        <div className="col-span-full mt-1 flex gap-1.5">
           {actions.map((action) => (
-            <BftcButton key={action.label} onClick={action.onClick} size="xs" variant={action.variant ?? 'success'}>
+            <BftcButton className="flex-1 justify-center px-2.5 py-[5px] text-[11px]" key={action.label} onClick={action.onClick} variant={action.variant ?? 'neutral'}>
               {action.label}
             </BftcButton>
           ))}

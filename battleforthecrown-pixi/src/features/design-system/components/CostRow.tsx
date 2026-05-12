@@ -1,55 +1,58 @@
-import { ReactNode } from 'react';
-import { cn } from '@/lib/cn';
+import type { HTMLAttributes, ReactNode } from 'react';
 import { publicAsset } from '@/lib/publicAsset';
+import { cn } from '@/lib/cn';
 
-type CostSize = 'md' | 'lg';
+export type CostPillSize = 'md' | 'lg';
 
-export interface CostPillProps {
+export interface CostPillProps extends HTMLAttributes<HTMLSpanElement> {
   current?: string;
   icon: string;
   insufficient?: boolean;
-  size?: CostSize;
+  size?: CostPillSize;
   value: string;
 }
 
-const sizeClass: Record<CostSize, string> = {
-  md: 'gap-1 py-[3px] pl-1 pr-2 text-[13px] [&_img]:size-[18px]',
-  lg: 'gap-1 py-[5px] pl-[5px] pr-[11px] text-[15px] [&_img]:size-[22px]',
+export interface CostRowProps extends HTMLAttributes<HTMLDivElement> {
+  children: ReactNode;
+}
+
+const sizeClass: Record<CostPillSize, string> = {
+  md: 'px-2 py-[3px] pl-1 text-[13px] [&_img]:size-[18px]',
+  lg: 'px-[11px] py-[5px] pl-[5px] text-[15px] [&_img]:size-[22px]',
 };
 
 export function CostPill({
+  className,
   current,
   icon,
   insufficient = false,
   size = 'md',
   value,
+  ...props
 }: CostPillProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full border font-game font-bold tabular-nums',
+        'inline-flex items-center gap-1 rounded-full border-[1.5px] bg-[rgba(0,0,0,.06)] font-game font-bold tabular-nums text-[#3d2f1f] border-black/18',
         insufficient
-          ? 'border-[#a93226] bg-gradient-to-b from-[#e74c3c]/20 to-[#e74c3c]/10 text-[#a93226]'
-          : 'border-black/20 bg-black/[0.06] text-[#3d2f1f]',
+          ? 'border-[#a93226] bg-gradient-to-b from-[rgba(231,76,60,.18)] to-[rgba(231,76,60,.08)] text-[#a93226]'
+          : '',
         sizeClass[size],
+        className,
       )}
+      {...props}
     >
-      <img alt="" src={publicAsset(icon)} />
+      <img alt="" className="object-contain" src={publicAsset(icon)} />
       {value}
-      {current ? (
-        <span className={cn('font-medium opacity-70', insufficient && 'text-[#e74c3c]')}>
-          / {current}
-        </span>
-      ) : null}
+      {current ? <span className={cn('font-medium opacity-[.7]', insufficient ? 'text-[#e74c3c]' : '')}>/ {current}</span> : null}
     </span>
   );
 }
 
-export interface CostRowProps {
-  children: ReactNode;
-  className?: string;
-}
-
-export function CostRow({ children, className }: CostRowProps) {
-  return <div className={cn('flex flex-wrap items-center gap-1.5', className)}>{children}</div>;
+export function CostRow({ children, className, ...props }: CostRowProps) {
+  return (
+    <div className={cn('flex flex-wrap items-center gap-1.5', className)} {...props}>
+      {children}
+    </div>
+  );
 }

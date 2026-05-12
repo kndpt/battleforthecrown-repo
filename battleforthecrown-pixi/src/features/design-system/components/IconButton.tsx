@@ -1,38 +1,55 @@
-import { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
-export type IconButtonTone = 'success' | 'info' | 'danger' | 'warning' | 'neutral';
+export type IconButtonTone = 'success' | 'danger' | 'info' | 'neutral' | 'warning';
 
-const toneClass: Record<IconButtonTone, string> = {
-  success: 'border-[#3a6c1f] bg-gradient-to-b from-[#6ebf49] to-[#4a8c2a]',
-  info: 'border-[#1f5288] bg-gradient-to-b from-[#5b9bd5] to-[#2e75b6]',
-  danger: 'border-[#a93226] bg-gradient-to-b from-[#e74c3c] to-[#c0392b]',
-  warning: 'border-[#9e7b0d] bg-gradient-to-b from-[#f1c40f] to-[#d4a017]',
-  neutral: 'border-[#5d6d6e] bg-gradient-to-b from-[#95a5a6] to-[#7f8c8d]',
-};
-
-export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
   icon: ReactNode;
   label: string;
   showLabel?: boolean;
   tone?: IconButtonTone;
 }
 
-export function IconButton({ className, icon, label, showLabel = true, tone = 'neutral', ...props }: IconButtonProps) {
+const toneClass: Record<IconButtonTone, string> = {
+  success: 'border-[#3a6c1f] bg-[linear-gradient(to_bottom,#6ebf49,#4a8c2a)]',
+  danger: 'border-[#a93226] bg-[linear-gradient(to_bottom,#e74c3c,#c0392b)]',
+  info: 'border-[#1f5288] bg-[linear-gradient(to_bottom,#5b9bd5,#2e75b6)]',
+  neutral: 'border-[#5d6d6e] bg-[linear-gradient(to_bottom,#95a5a6,#7f8c8d)]',
+  warning: 'border-[#9e7b0d] bg-[linear-gradient(to_bottom,#f1c40f,#d4a017)]',
+};
+
+export function IconButton({
+  className,
+  disabled = false,
+  icon,
+  label,
+  showLabel = true,
+  tone = 'success',
+  type = 'button',
+  ...props
+}: IconButtonProps) {
   return (
-    <span className={cn('inline-flex flex-col items-center gap-1.5 font-game text-[10px] font-semibold text-[#5d4a32]', className)}>
-      <button
-        aria-label={label}
+    <button
+      aria-label={label}
+      className={cn(
+        'inline-flex flex-col items-center gap-1.5 font-game text-[10px] text-[#5d4a32]',
+        disabled ? 'cursor-not-allowed' : 'cursor-pointer',
+        className,
+      )}
+      disabled={disabled}
+      type={type}
+      {...props}
+    >
+      <span
         className={cn(
-          'grid size-11 place-items-center rounded-full border-2 text-white shadow-game-inset transition hover:brightness-110 active:translate-y-0.5',
+          'flex size-11 items-center justify-center rounded-full border-2 text-white shadow-[inset_0_1px_0_rgba(255,255,255,.4)]',
+          '[&_svg]:size-5 [&_svg]:fill-none [&_svg]:stroke-white [&_svg]:stroke-2 [&_svg]:drop-shadow-[0_1px_1px_rgba(0,0,0,.4)]',
           toneClass[tone],
         )}
-        type="button"
-        {...props}
       >
         {icon}
-      </button>
+      </span>
       {showLabel ? <span>{label}</span> : null}
-    </span>
+    </button>
   );
 }
