@@ -119,8 +119,9 @@ describe('village strategy smoke', () => {
       where: { villageId: village.id, type: 'CASTLE' },
       data: { level: 4 },
     });
-    await ctx.prisma.building.create({
-      data: { villageId: village.id, type: 'COUNCIL_HALL', level: 1 },
+    await ctx.prisma.building.updateMany({
+      where: { villageId: village.id, type: 'COUNCIL_HALL' },
+      data: { level: 1 },
     });
     await stockVillage(village.id);
     await ctx.prisma.crownBalance.update({

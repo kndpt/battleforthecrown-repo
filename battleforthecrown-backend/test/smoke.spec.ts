@@ -655,8 +655,9 @@ describe('smoke', () => {
       where: { villageId, type: 'CASTLE' },
       data: { level: 4 },
     });
-    await ctx.prisma.building.create({
-      data: { villageId, type: 'COUNCIL_HALL', level: 1 },
+    await ctx.prisma.building.updateMany({
+      where: { villageId, type: 'COUNCIL_HALL' },
+      data: { level: 1 },
     });
     await ctx.prisma.resourceStock.update({
       where: { villageId },
