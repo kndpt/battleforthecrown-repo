@@ -4,12 +4,12 @@
 
 ## Pourquoi c'est obligatoire au MVP
 
-Le **contenu** des rapports est déjà décrit dans les docs concernées :
+Le **contenu** des rapports est décrit dans les docs concernées :
 
 - Rapport de combat → [`04-combat.md`](./04-combat.md) + asymétrique pour les barbares ([`06-barbarians.md` § Rapport de combat](./06-barbarians.md#rapport-de-combat)).
 - Rapport de scout → [`11-scouting.md`](./11-scouting.md).
 
-Mais le **système** qui héberge ces rapports — l'inbox — n'existe pas encore. Or sur mobile, l'inbox d'un MMORTS est **l'écran le plus consulté** : c'est là que le joueur revient à chaque session pour vérifier ce qui s'est passé pendant son absence (raids subis, retours d'armée, scouts arrivés, conquêtes résolues). Sans un système structuré, les rapports se perdent et l'asymétrie temporelle (cf. [`16-notifications.md`](./16-notifications.md)) reste irrésolue côté lecture.
+Le **système** qui héberge ces rapports — l'inbox — est livré au MVP pour les rapports de combat persistants. Sur mobile, l'inbox d'un MMORTS est **l'écran le plus consulté** : c'est là que le joueur revient à chaque session pour vérifier ce qui s'est passé pendant son absence (raids subis, retours d'armée, scouts arrivés, conquêtes résolues). Les catégories hors combat restent à brancher dans leurs phases dédiées.
 
 ## Cible MVP
 

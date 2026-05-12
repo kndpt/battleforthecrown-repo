@@ -26,13 +26,15 @@ Critère de fin : pour chaque spec ci-dessus, soit le code est conforme, soit l'
 
 ### Phase 2 — Inbox & rapports
 
-Spec : [`17-inbox-and-reports.md`](../docs/gameplay/17-inbox-and-reports.md) (en chantier — esquisse à compléter en début de phase).
+Spec : [`17-inbox-and-reports.md`](../docs/gameplay/17-inbox-and-reports.md) (MVP combat livré par le run [`012`](./runs/archive/012-feature-inbox-combat-reports.md), clôturé par le run [`015`](./runs/archive/015-close-phase-2-inbox-reports.md)).
 
 Pourquoi ici : fondation transverse. Combat, scout, retour d'armée, conquête écriront tous dans l'inbox. Si on la code après ces features, on rouvre chacune pour y injecter le rapport.
 
-Livrable : structure persistante (table `Report` ou recyclage `EventOutbox` — à trancher), API REST + WS, écran inbox côté Pixi/HUD, rapport de combat câblé dessus (déjà existant côté contenu, juste à brancher).
+Livrable MVP livré : `CombatReport` comme source persistante Phase 2, API REST minimale, invalidation WS via `battle.resolved` / `village.attacked`, écran rapports côté Pixi/HUD, badge non-lu et lu/suppression par participant.
 
 Critère de fin : un combat qui s'achève laisse un rapport persistant lisible dans l'inbox côté joueur, marquage lu/non-lu fonctionnel.
+
+Statut : ✅ **clos MVP combat**. Scout, conquête détaillée, push deep-link, filtres, pin, archive et rétention automatique restent hors scope Phase 2 et seront traités par leurs phases dédiées ou post-MVP.
 
 ### Phase 3 — Styles de village
 
