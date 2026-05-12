@@ -45,6 +45,7 @@ export function WorldMapScreen() {
   const selectedEntityId = useWorldMapStore((state) => state.selectedEntityId);
   const setSelectedEntity = useWorldMapStore((state) => state.setSelectedEntity);
   const [attackTarget, setAttackTarget] = useState<MapEntity | null>(null);
+  const [attackInitialMode, setAttackInitialMode] = useState<'attack' | 'scout'>('attack');
   const [isMiniMapVisible, setIsMiniMapVisible] = useState(false);
   const [isExpeditionsOpen, setIsExpeditionsOpen] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
@@ -210,6 +211,12 @@ export function WorldMapScreen() {
                   currentVillageId={currentVillageId}
                   onClose={() => setSelectedEntity(null)}
                   onAttack={(target) => {
+                    setAttackInitialMode('attack');
+                    setAttackTarget(target);
+                    setSelectedEntity(null);
+                  }}
+                  onScout={(target) => {
+                    setAttackInitialMode('scout');
                     setAttackTarget(target);
                     setSelectedEntity(null);
                   }}
@@ -233,6 +240,7 @@ export function WorldMapScreen() {
         <AttackDetailModal
           target={attackTarget}
           origin={{ x: myVillage.x, y: myVillage.y }}
+          initialMode={attackInitialMode}
           onClose={() => setAttackTarget(null)}
         />
       )}

@@ -18,3 +18,4 @@
 - Design system React : un composant interactif validé visuellement doit aussi être contrôlable (`value/onChange`, bornes, callbacks d'action) avant d'être considéré intégrable.
 - Design system React : le skill de migration doit traiter le contrat d'API production-ready comme critère d'acceptance bloquant, pas comme une règle secondaire après la fidélité visuelle.
 - Quand une feature frontend mentionne un composant design précis, inspecter aussi le preview voisin (`DesignSystemPreview.tsx`) pour repérer les composites déjà prêts à intégrer, pas seulement le fichier cité.
+- Pour une action ajoutée dans une modale, vérifier aussi le premier point d'entrée utilisateur qui ouvre cette modale ; une feature peut être codée mais rester invisible si le panel amont ne propose pas l'action.

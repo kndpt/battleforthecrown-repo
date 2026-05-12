@@ -1,4 +1,4 @@
-import { Shield, Swords, X } from 'lucide-react';
+import { Eye, Shield, Swords, X } from 'lucide-react';
 import { Button, Panel } from '@/ui';
 import type { MapEntity } from '@/api/world-types';
 
@@ -7,6 +7,7 @@ interface SelectedEntityPanelProps {
   currentVillageId?: string | null;
   onClose: () => void;
   onAttack?: (entity: MapEntity) => void;
+  onScout?: (entity: MapEntity) => void;
 }
 
 const TIER_LABEL: Record<NonNullable<MapEntity['tier']>, string> = {
@@ -30,6 +31,7 @@ export function SelectedEntityPanel({
   currentVillageId,
   onClose,
   onAttack,
+  onScout,
 }: SelectedEntityPanelProps) {
   if (!entity) return null;
 
@@ -37,13 +39,14 @@ export function SelectedEntityPanel({
   const isOwnedPlayerVillage = entity.kind === 'PLAYER_VILLAGE' && entity.isMine;
   const isBarbarian = entity.kind === 'BARBARIAN_VILLAGE';
   const showAttack = (isBarbarian || isPlayerVillage) && Boolean(onAttack);
+  const showScout = (isBarbarian || isPlayerVillage) && Boolean(onScout);
   const showReinforce = isOwnedPlayerVillage
     && entity.id !== currentVillageId
     && Boolean(onAttack);
   const actionLabel = showReinforce ? 'Renforcer' : 'Attaquer';
   const ActionIcon = showReinforce ? Shield : Swords;
 
-  const showAction = showAttack || showReinforce;
+  const showAction = showAttack || showScout || showReinforce;
 
   return (
     <Panel
@@ -70,17 +73,34 @@ export function SelectedEntityPanel({
       </div>
 
       {showAction && (
-        <Button
-          variant={showReinforce ? 'neutral' : 'danger'}
-          size="sm"
-          onClick={() => onAttack?.(entity)}
-          className="w-full font-bold"
-        >
-          <span className="inline-flex items-center justify-center gap-2">
-            <ActionIcon size={16} />
-            <span>{actionLabel}</span>
-          </span>
-        </Button>
+        <div className="grid grid-cols-2 gap-2">
+          {(showAttack || showReinforce) && (
+            <Button
+              variant={showReinforce ? 'neutral' : 'danger'}
+              size="sm"
+              onClick={() => onAttack?.(entity)}
+              className="w-full font-bold"
+            >
+              <span className="inline-flex items-center justify-center gap-2">
+                <ActionIcon size={16} />
+                <span>{actionLabel}</span>
+              </span>
+            </Button>
+          )}
+          {showScout && (
+            <Button
+              variant="info"
+              size="sm"
+              onClick={() => onScout?.(entity)}
+              className="w-full font-bold"
+            >
+              <span className="inline-flex items-center justify-center gap-2">
+                <Eye size={16} />
+                <span>Scout</span>
+              </span>
+            </Button>
+          )}
+        </div>
       )}
     </Panel>
   );

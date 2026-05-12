@@ -32,10 +32,16 @@ import type { MapEntity } from '@/api/world-types';
 interface AttackDetailModalProps {
   target: MapEntity;
   origin: { x: number; y: number };
+  initialMode?: 'attack' | 'scout';
   onClose: () => void;
 }
 
-export function AttackDetailModal({ target, origin, onClose }: AttackDetailModalProps) {
+export function AttackDetailModal({
+  target,
+  origin,
+  initialMode = 'attack',
+  onClose,
+}: AttackDetailModalProps) {
   const villageId = useGameStore((state) => state.villageId);
   const worldId = useGameStore((state) => state.worldId);
   const userId = useAuthStore((state) => state.user?.id ?? null);
@@ -45,7 +51,7 @@ export function AttackDetailModal({ target, origin, onClose }: AttackDetailModal
   const reinforce = useInitiateReinforceMutation();
   const scout = useInitiateScoutMutation();
   const [selectedUnits, setSelectedUnits] = useState<Record<string, number>>({});
-  const [mode, setMode] = useState<'attack' | 'scout'>('attack');
+  const [mode, setMode] = useState<'attack' | 'scout'>(initialMode);
   const [error, setError] = useState<string | null>(null);
 
   const targetKind = target.kind === 'BARBARIAN_VILLAGE'
