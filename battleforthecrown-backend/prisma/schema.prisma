@@ -22,6 +22,7 @@ enum WorldRole {
 enum ExpeditionKind {
   ATTACK
   REINFORCE
+  SCOUT
 }
 
 enum ExpeditionStatus {
@@ -341,11 +342,13 @@ model Expedition {
   returnAt          DateTime?        @map("return_at")
   recalled          Boolean          @default(false)
   reportId          String?          @unique @map("report_id")
+  scoutReportId     String?          @unique @map("scout_report_id")
   survivingUnits    Json?            @map("surviving_units")
   loot              Json?            @map("loot")
   createdAt         DateTime         @default(now()) @map("created_at")
 
-  report CombatReport? @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  report      CombatReport? @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  scoutReport ScoutReport?  @relation(fields: [scoutReportId], references: [id], onDelete: SetNull)
 
   @@index([attackerVillageId])
   @@index([status])
@@ -390,6 +393,34 @@ model CombatReport {
   @@index([worldId])
   @@index([timestamp])
   @@map("combat_report")
+}
+
+model ScoutReport {
+  id             String          @id @default(cuid())
+  worldId        String          @map("world_id")
+  scoutVillageId String          @map("scout_village_id")
+  scoutUserId    String          @map("scout_user_id")
+  targetVillageId String?        @map("target_village_id")
+  targetKind     TargetKind      @map("target_kind")
+  targetX        Int             @map("target_x")
+  targetY        Int             @map("target_y")
+  targetName     String?         @map("target_name")
+  targetTier     String?         @map("target_tier")
+  units          Json
+  resources      Json
+  strategy       VillageStrategy?
+  isRead         Boolean         @default(false) @map("is_read")
+  hidden         Boolean         @default(false)
+  timestamp      DateTime        @default(now())
+  createdAt      DateTime        @default(now()) @map("created_at")
+  details        Json
+
+  expedition Expedition?
+
+  @@index([scoutUserId])
+  @@index([worldId])
+  @@index([timestamp])
+  @@map("scout_report")
 }
 
 enum VillageStrategy {

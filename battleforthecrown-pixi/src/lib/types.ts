@@ -9,6 +9,7 @@ import {
 import {
   EXPEDITION_STATUSES,
   TARGET_KINDS,
+  type ExpeditionKind as SharedExpeditionKind,
   type ExpeditionStatus as SharedExpeditionStatus,
   type LootResources,
   type TargetKind as SharedTargetKind,
@@ -127,6 +128,7 @@ export interface GameState {
 
 export const ExpeditionStatus = EXPEDITION_STATUSES;
 export type ExpeditionStatus = SharedExpeditionStatus;
+export type ExpeditionKind = SharedExpeditionKind;
 
 export const TargetKind = TARGET_KINDS;
 export type TargetKind = SharedTargetKind;
@@ -135,6 +137,7 @@ export interface Expedition {
   id: string;
   worldId: string;
   attackerVillageId: string;
+  kind?: ExpeditionKind;
   targetKind: TargetKind;
   targetRefId: string;
   targetX: number;

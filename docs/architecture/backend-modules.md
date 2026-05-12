@@ -58,7 +58,7 @@ src/
 | **army** | `GET /army/:villageId/inventory`, `/training`, `POST /army/:villageId/throne/recruit-noble` | — | Lectures inventaire + entraînements. Mutations (train/cancel/recruit noble) déléguées à `gameplay/` |
 | **gameplay** | `POST /village/:id/upgrade`, `DELETE /village/:id/buildings/:bid/cancel`, `POST /army/:id/train`, `POST /army/:id/throne/recruit-noble`, `DELETE /army/:id/training/:tid/cancel` | `ConstructionWorker`, `TrainingWorker` | Use cases orchestrant les mutations multi-domaine (cf. ADR-12) |
 | **strategy** | (interne) | — | `VillageStrategyService` exposé à Population/Resources/Army/Gameplay sans couplage |
-| **combat** | `POST /combat/attack`, `POST /combat/reinforce`, `POST /combat/recall`, `POST /combat/recall/:expeditionId`, `GET /combat/:villageId/active`, `GET /combat/:villageId/garrison`, `GET /combat/reports` | `CombatWorker`, `ReturnWorker` | Attaque, renforts, garnison, conquête, butin, retour. Stratégies `Barbarian` / `Player` |
+| **combat** | `POST /combat/attack`, `POST /combat/scout`, `POST /combat/reinforce`, `POST /combat/recall`, `POST /combat/recall/:expeditionId`, `GET /combat/:villageId/active`, `GET /combat/:villageId/garrison`, `GET /combat/reports`, `GET /combat/scout-reports` | `CombatWorker`, `ReturnWorker` | Attaque, scout, renforts, garnison, conquête, butin, retour. Stratégies `Barbarian` / `Player` |
 | **crowns** | `GET /crowns/:userId` | `CrownProductionWorker` | Monnaie premium, production passive, transactions sécurisées |
 | **population** | `GET /population/:villageId` | — | Population courante / max via `getFarmPopulationLimit` |
 | **power** | `GET /power?villageId=…`, `GET /power/village/:id/public`, `GET /power/kingdom`, `GET /power/kingdom/:userId/public`, `GET /power/leaderboard` | — | Calcul puissance bâtiments + armée d'un village (propriétaire), puissance bâtiments publique d'un village, puissance royaume du joueur authentifié ou publique, leaderboard public (post-MVP) |
@@ -70,7 +70,7 @@ src/
 
 ```
 combat/
-├── combat.service.ts             # Orchestration attaque + résolution
+├── combat.service.ts             # Orchestration attaque/scout/renforts + rapports
 ├── combat.controller.ts
 ├── combat.worker.ts              # Job pg-boss déclenché à arrival time
 ├── return.worker.ts              # Job retour d'armée
@@ -83,11 +83,11 @@ combat/
 └── combat.utils.ts               # Helpers calcul (pertes, butin, distance, durée trajet)
 ```
 
-Flow expédition (Attaque/Renfort) :
-1. `POST /combat/attack` ou `/combat/reinforce` → `CombatService.initiate*` valide + crée `Expedition` + déclenche job pg-boss à `arrivalAt`.
-2. `CombatWorker.handle` → résout selon le `kind` (ATTACK: combat via stratégie ; REINFORCE: stationnement en `Garrison`), génère `CombatReport` (si combat), crée events `battle.resolved` + `village.attacked`/`conquered`.
+Flow expédition (Attaque/Scout/Renfort) :
+1. `POST /combat/attack`, `/combat/scout` ou `/combat/reinforce` → `CombatService.initiate*` valide + crée `Expedition` + déclenche job pg-boss à `arrivalAt`.
+2. `CombatWorker.handle` → résout selon le `kind` (`ATTACK`: combat via stratégie ; `SCOUT`: snapshot `ScoutReport`, succès auto sans perte ; `REINFORCE`: stationnement en `Garrison`), crée les events adaptés (`battle.*`, `scout.*`, `reinforcement.*`).
 3. Le retour d'un raid réutilise `Expedition.outboundTravelMs`, figé au dispatch, pour respecter "même vitesse qu'à l'aller" même si la config monde ou la stratégie changent avant résolution.
-4. `ReturnWorker.handle` → ramène l'armée + butin après un combat/raid à `returnAt`, event `battle.returned`.
+4. `ReturnWorker.handle` → ramène l'armée + butin après un combat/raid à `returnAt`, event `battle.returned`; pour un scout, il ramène les ESPIONs sans loot et émet `scout.returned`.
 5. `POST /combat/recall/:expeditionId` rappelle une expédition sortante encore `EN_ROUTE` : passage en `RETURNING`, planification `combat:return`, event `expedition.recalled`, puis restitution sans combat par `ReturnWorker`.
 6. `POST /combat/recall` crée aussi une `Expedition` de type `REINFORCE`, mais en sens retour ; son arrivée est traitée par `CombatWorker.handle`, qui réinjecte les unités au village d'origine et émet `reinforcement.returned`.
 

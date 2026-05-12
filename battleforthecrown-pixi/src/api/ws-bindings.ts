@@ -8,6 +8,9 @@ import type {
   BuildingCompletedPayload,
   CrownsChangedPayload,
   ResourcesChangedPayload,
+  ScoutReportedPayload,
+  ScoutReturnedPayload,
+  ScoutSentPayload,
   ServerEventName,
   ServerEvents,
   UnitTrainingCompletedPayload,
@@ -169,6 +172,55 @@ export function applyBattleReturned(payload: BattleReturnedPayload, ctx: Binding
     useExpeditionsStore.getState().remove(payload.expeditionId);
   }, RETURNED_TO_CLEANUP_DELAY_MS);
   ctx.queryClient.invalidateQueries({ queryKey: ['resources', payload.villageId] });
+  ctx.queryClient.invalidateQueries({ queryKey: ['army', payload.villageId] });
+}
+
+export function applyScoutSent(
+  payload: ScoutSentPayload,
+  _ctx?: BindingsContext,
+): void {
+  const origin = resolveOrigin(payload.villageId);
+  const snapshot: ExpeditionSnapshot = {
+    expeditionId: payload.expeditionId,
+    kind: 'SCOUT',
+    villageId: payload.villageId,
+    originVillageId: payload.villageId,
+    origin,
+    target: { x: payload.targetX, y: payload.targetY },
+    targetKind: payload.targetKind,
+    phase: 'EN_ROUTE',
+    departAt: Date.now(),
+    arrivalAt: Date.parse(payload.arrivalAt),
+  };
+  useExpeditionsStore.getState().add(snapshot);
+}
+
+export function applyScoutReported(
+  payload: ScoutReportedPayload,
+  ctx: BindingsContext,
+): void {
+  useExpeditionsStore.getState().update(payload.expeditionId, {
+    phase: 'RESOLVED',
+    reportId: payload.reportId,
+    targetName: payload.targetName ?? undefined,
+    target: { x: payload.targetX, y: payload.targetY },
+    arrivalAt: Date.now(),
+    returnAt: Date.parse(payload.returnAt),
+  });
+  scheduleTimeout(() => {
+    useExpeditionsStore.getState().update(payload.expeditionId, { phase: 'RETURNING' });
+  }, RESOLVED_TO_RETURNING_DELAY_MS);
+  invalidateCombatReports(ctx);
+}
+
+export function applyScoutReturned(
+  payload: ScoutReturnedPayload,
+  ctx: BindingsContext,
+): void {
+  useExpeditionsStore.getState().update(payload.expeditionId, { phase: 'RETURNED' });
+  scheduleTimeout(() => {
+    useExpeditionsStore.getState().remove(payload.expeditionId);
+  }, RETURNED_TO_CLEANUP_DELAY_MS);
   ctx.queryClient.invalidateQueries({ queryKey: ['army', payload.villageId] });
 }
 
@@ -461,6 +513,9 @@ const bindings: ServerEventBindings = {
   'battle.sent': applyBattleSent,
   'battle.resolved': applyBattleResolved,
   'battle.returned': applyBattleReturned,
+  'scout.sent': applyScoutSent,
+  'scout.reported': applyScoutReported,
+  'scout.returned': applyScoutReturned,
   'expedition.recalled': applyExpeditionRecalled,
   'expedition.returned': applyExpeditionReturned,
   'reinforcement.sent': applyReinforcementSent,

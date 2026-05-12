@@ -16,11 +16,11 @@ Fiches d'exécution déléguées aux harnesses Claude Code ou Codex (lead + sub-
 
 ### Runs actifs
 
-- [016 — Feature scouting backend shared](./runs/016-feature-scouting-backend-shared.md) — 📋 `PLANNED`. Phase 4 Scouting backend/shared : mission scout, `ScoutReport`, snapshot, retour ESPION, invalidations inbox et smoke cycle complet.
 - [017 — Feature scouting frontend inbox](./runs/017-feature-scouting-frontend-inbox.md) — 📋 `PLANNED`. Phase 4 Scouting frontend : bouton `Scout` dans le flow cible/attaque, rendu inbox du rapport scout, lu/suppression et absence de leak style hors rapport.
 
 ### Runs archivés
 
+- [016 — Feature scouting backend shared](./runs/archive/016-feature-scouting-backend-shared.md) — ✅ `DONE` (2026-05-12). Phase 4 Scouting backend/shared : mission scout SPY-only, `ScoutReport`, events `scout.*`, retour ESPION, endpoints reports scout, docs + smokes backend verts.
 - [015 — Close phase 2 inbox reports](./runs/archive/015-close-phase-2-inbox-reports.md) — ✅ `DONE` (2026-05-12). Clôture Phase 2 : roadmap/spec alignées avec le MVP combat livré par run 012 ; aucun delta backend/frontend requis ; static-check vert.
 - [014 — Feature village styles frontend](./runs/archive/014-feature-village-styles-frontend.md) — ✅ `DONE` (2026-05-12). Phase 3 styles de village frontend : HUD Salle du Conseil, modal branchée API stratégie, coûts/cooldown/erreurs serveur, refetch après mutation, tests Pixi + static-check verts.
 - [013 — Feature village styles backend](./runs/archive/013-feature-village-styles-backend.md) — ✅ `DONE` (2026-05-12). Phase 3 styles de village backend : coûts thématiques scalés Château, premier changement payant, gate Salle du Conseil, cooldown, confidentialité carte, Forteresse combat, smokes backend verts.

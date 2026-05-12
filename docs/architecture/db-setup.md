@@ -36,7 +36,7 @@ docker exec battleforthecrown-postgres \
   psql -U postgres -d battleforthecrown -c '\dt'
 ```
 
-Tables attendues (extrait) : `User`, `World`, `Village`, `Building`, `ResourceStock`, `Population`, `UnitInventory`, `UnitTraining`, `WorldEntity`, `WorldSeedState`, `ChunkSpawnState`, `EventOutbox`, `WorldMembership`, `ZoneCapacity`, `CrownBalance`, `Expedition`, `CombatReport`, `VillageStrategyConfig`.
+Tables attendues (extrait) : `User`, `World`, `Village`, `Building`, `ResourceStock`, `Population`, `UnitInventory`, `UnitTraining`, `WorldEntity`, `WorldSeedState`, `ChunkSpawnState`, `EventOutbox`, `WorldMembership`, `ZoneCapacity`, `CrownBalance`, `Expedition`, `CombatReport`, `ScoutReport`, `VillageStrategyConfig`.
 
 ## Lancer le backend après le bootstrap
 
@@ -195,7 +195,7 @@ docker exec -i battleforthecrown-postgres \
 
 ```sql
 TRUNCATE TABLE
-  "Expedition", "CombatReport",
+  "Expedition", "CombatReport", "ScoutReport",
   "UnitTraining", "UnitInventory",
   "Building", "Population", "ResourceStock",
   "Village",

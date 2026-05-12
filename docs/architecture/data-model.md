@@ -21,7 +21,7 @@
 
 `World.config` (JSON) contient notamment : `gameSpeed.{construction,training,travel}` (diviseurs de temps — valeur > 1 ⇒ plus rapide), `economy.productionRate` (amplificateur du taux — valeur > 1 ⇒ plus de ressources/min), `combat.{attackBonus,defenseBonus,lootFactor}`, paramètres de seeding barbares.
 
-**Cycle de vie player ↔ monde** : `JoinWorldUseCase` crée le tuple `(WorldMembership, Village, Building rows, ResourceStock, Population, CrownBalance, UnitInventory skeleton, VillageStrategyConfig)`. `ResetWorldUseCase` (`DELETE /world/:worldId/me`) effectue l'opération inverse — full wipe par `(userId, worldId)` + anonymisation des `CombatReport` côté défenseur. Aucun event Outbox émis. Le joueur peut re-join immédiatement comme un nouveau joueur. Code : `src/modules/world/{join,reset}-world.use-case.ts`.
+**Cycle de vie player ↔ monde** : `JoinWorldUseCase` crée le tuple `(WorldMembership, Village, Building rows, ResourceStock, Population, CrownBalance, UnitInventory skeleton, VillageStrategyConfig)`. `ResetWorldUseCase` (`DELETE /world/:worldId/me`) effectue l'opération inverse — full wipe par `(userId, worldId)`, suppression des `ScoutReport` du joueur et anonymisation des `CombatReport` côté défenseur. Aucun event Outbox émis. Le joueur peut re-join immédiatement comme un nouveau joueur. Code : `src/modules/world/{join,reset}-world.use-case.ts`.
 
 **Invariant ajout bâtiment joueur** : tout nouveau `BUILDING_TYPES.*` activé pour les villages joueurs doit être ajouté à `INITIAL_BUILDINGS` dans `JoinWorldUseCase`, généralement en `level: 0` si le bâtiment est débloqué plus tard. `GET /village/buildings` expose les rows DB réelles et ne synthétise pas de bâtiments manquants pour masquer une donnée ancienne. Si des villages existants doivent recevoir le nouveau bâtiment, choisir explicitement entre reset utilisateur, migration/backfill non destructif, ou laisser l'ancien état inchangé.
 
@@ -42,7 +42,7 @@ Pas de table dédiée — les villages barbares sont des `Village` avec `isBarba
 Spécificités runtime :
 - `UnitInventory` côté BV stocke les troupes runtime rollées à la création (60–100 % du blueprint max), plafonnées par `getUnits(tier)`.
 - `Village.barbarianTroopsLastRegenTs` sert de curseur lazy pour la régénération des troupes ; `ResourceStock.lastUpdateTs` sert de curseur ressources.
-- `BarbarianRuntimeService.catchUpVillage()` applique la régénération lazy avant les lectures runtime actuelles (combat, puis scout quand il sera implémenté).
+- `BarbarianRuntimeService.catchUpVillage()` applique la régénération lazy avant les lectures runtime actuelles (combat et scout).
 - `Population.used` reste à 0 tant que le village est barbare : les troupes barbares ne donnent pas de puissance joueur avant conquête.
 - Seedés procéduralement par `BarbarianSeedingService` (qui délègue à `BarbarianVillageFactory`) au join d'un joueur dans le monde ; le `BarbarianSeedingCatchupWorker` (cron quotidien) rattrape les chunks que le seeding sync n'a pas eu le temps de couvrir pour les joueurs créés < 1 h (cf. [`docs/gameplay/07-barbarian-spawning.md` § Catchup d'arrivée différée](../gameplay/07-barbarian-spawning.md)).
 
@@ -63,13 +63,14 @@ Spécificités runtime :
 | Table | Rôle |
 |-------|------|
 | `Expedition` | un trajet d'armée (ou `Combat` dans la doc gameplay). Champs : `attackerVillageId`, `targetRefId`, `arrivalAt`, `outboundTravelMs`, `returnAt`, `status`, plus snapshot de retour `survivingUnits`/`loot` après résolution. |
-| `Expedition.kind` | `ATTACK` ou `REINFORCE`. Détermine le comportement à l'arrivée. |
+| `Expedition.kind` | `ATTACK`, `REINFORCE` ou `SCOUT`. Détermine le comportement à l'arrivée. |
 | `Expedition.recalled` | boolean — vrai si l'armée a fait demi-tour pendant l'aller (Recall). |
 | `Expedition.reinforcementOriginVillageId` | utilisé pour identifier le village d'origine lors d'un rappel (Recall) de renforts. |
 | `CombatReport` | rapport persistant d'un combat. L'accès est porté par `attackerUserId` / `defenderUserId`; l'état inbox est par participant (`readByAttacker` / `readByDefender`, `hiddenByAttacker` / `hiddenByDefender`). |
+| `ScoutReport` | rapport persistant d'une mission scout. L'accès est porté par `scoutUserId`; snapshot de `units`, `resources` et `strategy` nullable au moment d'arrivée. L'état inbox est mono-participant (`isRead`, `hidden`). |
 | `PendingConquest` | fenêtre de capture ouverte après un pré-combat victorieux avec Seigneur survivant. Stocke `attackerVillageId`, `attackerUserId`, `targetVillageId`, `captureUntil`, `status` (`OPEN`/`COMPLETED`/`INTERRUPTED`) et le `finalizeJobId` pg-boss. |
 
-Un trajet passe par les phases `EN_ROUTE → RESOLVED → RETURNING` (cf. `ExpeditionStatus`). Backend : un job pg-boss à `arrivalAt` (résolution), puis un autre à `returnAt` (retour). Pour les raids, `returnAt` est calculé avec `outboundTravelMs`, la durée aller figée au dispatch.
+Un trajet passe par les phases `EN_ROUTE → RESOLVED → RETURNING` (cf. `ExpeditionStatus`). Backend : un job pg-boss à `arrivalAt` (résolution), puis un autre à `returnAt` (retour). Pour les raids et scouts, `returnAt` est calculé avec `outboundTravelMs`, la durée aller figée au dispatch.
 
 Une conquête passe par `PendingConquest.OPEN → COMPLETED|INTERRUPTED`. La DB impose une seule fenêtre `OPEN` par `targetVillageId` via index unique partiel SQL ; les historiques terminés/interrompus peuvent coexister pour une même cible. Pendant la fenêtre, le Seigneur survivant est stationné comme `Garrison { villageId: targetVillageId, originVillageId: attackerVillageId, unitType: NOBLE }`; s'il survit jusqu'à la finalisation, il est converti en `UnitInventory.NOBLE` du village conquis.
 
@@ -116,7 +117,8 @@ User ──< WorldMembership >── World
       │
       ├── Expedition (origin)  ─→ Village ou BarbarianVillage (target)
       │     │
-      │     └── CombatReport (1:1 via reportId)
+      │     ├── CombatReport (1:1 via reportId)
+      │     └── ScoutReport (1:1 via scoutReportId)
       │
       ├── PendingConquest (attacker)
       └── PendingConquest (target)
@@ -132,7 +134,7 @@ User ──< WorldMembership >── World
 - **JSON** : 8 colonnes typées via Zod, source de vérité dans `packages/shared/src/`.
   - `World.config` → `WorldConfigSchema` (shared `world/schemas.ts`), parsé dans `WorldConfigService`.
   - `EventOutbox.payload` → registre `EVENT_PAYLOAD_SCHEMAS` par `EventKind` (shared `events/schemas.ts`), parsé runtime par `parseEventPayload` côté backend (`event/codecs/payload.codec.ts`) au moment du dispatch.
-  - `Expedition.units`, `Expedition.survivingUnits`, `CombatReport.{lossesAttacker, lossesDefender, totalUnitsAttacker, totalUnitsDefender}` → `UnitMapSchema` (shared `army/unit-map.ts`), parsés via `parseUnitMap` (backend `combat/codecs/unit-map.codec.ts`).
+  - `Expedition.units`, `Expedition.survivingUnits`, `CombatReport.{lossesAttacker, lossesDefender, totalUnitsAttacker, totalUnitsDefender}`, `ScoutReport.units` → `UnitMapSchema` (shared `army/unit-map.ts`), parsés via `parseUnitMap` (backend `combat/codecs/unit-map.codec.ts`).
   - `Expedition.loot`, `CombatReport.loot` → `LootResultSchema` / `CombatLootSchema` (shared `combat/schemas.ts`), parsés via `parseLootResult` ou `parseCombatLoot` (backend `combat/codecs/loot.codec.ts`).
   - `WorldEntity.data` → schema discriminé par `kind` (actuellement BarbarianVillage), typé localement dans `world/world-entities-query.service.ts`.
   - **Règle** : toute lecture/écriture d'une colonne JSON Prisma passe par un codec ; le seul cast frontière `as unknown as Prisma.InputJsonValue` est isolé dans les codecs eux-mêmes.

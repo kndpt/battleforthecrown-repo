@@ -20,6 +20,10 @@ import {
   recallCommandSchema,
   type RecallCommandDto,
 } from './dto/recall-command.schema';
+import {
+  scoutCommandSchema,
+  type ScoutCommandDto,
+} from './dto/scout-command.schema';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { CurrentUser, type AuthenticatedUser } from '../../common/auth';
 
@@ -33,6 +37,14 @@ export class CombatController {
     @Body(new ZodValidationPipe(attackCommandSchema)) dto: AttackCommandDto,
   ) {
     return this.combatService.initiateAttack(user.id, dto);
+  }
+
+  @Post('scout')
+  scout(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(scoutCommandSchema)) dto: ScoutCommandDto,
+  ) {
+    return this.combatService.initiateScout(user.id, dto);
   }
 
   @Post('reinforce')
@@ -79,6 +91,35 @@ export class CombatController {
   @Get('reports')
   async getAllReports(@CurrentUser() user: AuthenticatedUser) {
     return this.combatService.getAllReports(user.id);
+  }
+
+  @Get('scout-reports')
+  async getAllScoutReports(@CurrentUser() user: AuthenticatedUser) {
+    return this.combatService.getAllScoutReports(user.id);
+  }
+
+  @Get('scout-report/:reportId')
+  async getScoutReport(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('reportId') reportId: string,
+  ) {
+    return this.combatService.getScoutReport(user.id, reportId);
+  }
+
+  @Patch('scout-report/:reportId/read')
+  async markScoutReportAsRead(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('reportId') reportId: string,
+  ) {
+    return this.combatService.markScoutReportAsRead(user.id, reportId);
+  }
+
+  @Delete('scout-report/:reportId')
+  async deleteScoutReport(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('reportId') reportId: string,
+  ) {
+    return this.combatService.deleteScoutReport(user.id, reportId);
   }
 
   @Get('report/:reportId')

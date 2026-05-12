@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 export type ExpeditionPhase = 'EN_ROUTE' | 'RESOLVED' | 'RETURNING' | 'RETURNED';
-export type ExpeditionKind = 'ATTACK' | 'REINFORCE';
+export type ExpeditionKind = 'ATTACK' | 'REINFORCE' | 'SCOUT';
 
 export interface ExpeditionSnapshot {
   expeditionId: string;

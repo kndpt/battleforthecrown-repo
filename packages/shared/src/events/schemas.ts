@@ -52,6 +52,33 @@ const BattleReturnedPayloadSchema = z.object({
   loot: z.object({ resources: LootResourcesSchema }),
 });
 
+const ScoutSentPayloadSchema = z.object({
+  expeditionId: z.string(),
+  villageId: z.string(),
+  targetX: z.number(),
+  targetY: z.number(),
+  targetKind: z.string(),
+  arrivalAt: z.string(),
+});
+
+const ScoutReportedPayloadSchema = z.object({
+  expeditionId: z.string(),
+  reportId: z.string(),
+  villageId: z.string(),
+  targetKind: z.string(),
+  targetName: z.string().nullable(),
+  targetX: z.number(),
+  targetY: z.number(),
+  returnAt: z.string(),
+});
+
+const ScoutReturnedPayloadSchema = z.object({
+  expeditionId: z.string(),
+  reportId: z.string().nullable(),
+  villageId: z.string(),
+  survivingUnits: UnitMapSchema,
+});
+
 const VillageAttackedPayloadSchema = z.object({
   defenderVillageId: z.string(),
   attackerVillageId: z.string(),
@@ -169,6 +196,9 @@ export const EVENT_PAYLOAD_SCHEMAS = {
   'battle.sent': BattleSentPayloadSchema,
   'battle.resolved': BattleResolvedPayloadSchema,
   'battle.returned': BattleReturnedPayloadSchema,
+  'scout.sent': ScoutSentPayloadSchema,
+  'scout.reported': ScoutReportedPayloadSchema,
+  'scout.returned': ScoutReturnedPayloadSchema,
   'village.attacked': VillageAttackedPayloadSchema,
   'village.conquered': VillageConqueredPayloadSchema,
   'village.capture-window-opened': VillageCaptureWindowOpenedPayloadSchema,

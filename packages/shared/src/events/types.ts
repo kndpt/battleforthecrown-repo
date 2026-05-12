@@ -50,6 +50,33 @@ export interface BattleReturnedPayload {
   loot: { resources: LootResources };
 }
 
+export interface ScoutSentPayload {
+  expeditionId: string;
+  villageId: string;
+  targetX: number;
+  targetY: number;
+  targetKind: string;
+  arrivalAt: string;
+}
+
+export interface ScoutReportedPayload {
+  expeditionId: string;
+  reportId: string;
+  villageId: string;
+  targetKind: string;
+  targetName: string | null;
+  targetX: number;
+  targetY: number;
+  returnAt: string;
+}
+
+export interface ScoutReturnedPayload {
+  expeditionId: string;
+  reportId: string | null;
+  villageId: string;
+  survivingUnits: UnitMap;
+}
+
 export interface VillageAttackedPayload {
   defenderVillageId: string;
   attackerVillageId: string;
@@ -167,6 +194,9 @@ export type OutboxEventPayload =
   | { kind: 'battle.sent'; payload: BattleSentPayload }
   | { kind: 'battle.resolved'; payload: BattleResolvedPayload }
   | { kind: 'battle.returned'; payload: BattleReturnedPayload }
+  | { kind: 'scout.sent'; payload: ScoutSentPayload }
+  | { kind: 'scout.reported'; payload: ScoutReportedPayload }
+  | { kind: 'scout.returned'; payload: ScoutReturnedPayload }
   | { kind: 'village.attacked'; payload: VillageAttackedPayload }
   | { kind: 'village.conquered'; payload: VillageConqueredPayload }
   | {
@@ -204,6 +234,9 @@ export type AnyEventPayload =
   | BattleSentPayload
   | BattleResolvedPayload
   | BattleReturnedPayload
+  | ScoutSentPayload
+  | ScoutReportedPayload
+  | ScoutReturnedPayload
   | VillageAttackedPayload
   | VillageConqueredPayload
   | VillageCaptureWindowOpenedPayload
@@ -227,6 +260,9 @@ export interface ServerEvents {
   'battle.sent': BattleSentPayload;
   'battle.resolved': BattleResolvedPayload;
   'battle.returned': BattleReturnedPayload;
+  'scout.sent': ScoutSentPayload;
+  'scout.reported': ScoutReportedPayload;
+  'scout.returned': ScoutReturnedPayload;
   'village.attacked': VillageAttackedPayload;
   'village.conquered': VillageConqueredPayload;
   'village.capture-window-opened': VillageCaptureWindowOpenedPayload;

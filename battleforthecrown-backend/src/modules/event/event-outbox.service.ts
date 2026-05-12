@@ -11,6 +11,9 @@ import {
   type BattleSentPayload,
   type BattleResolvedPayload,
   type BattleReturnedPayload,
+  type ScoutSentPayload,
+  type ScoutReportedPayload,
+  type ScoutReturnedPayload,
   type VillageAttackedPayload,
   type VillageConqueredPayload,
   type VillageCaptureWindowOpenedPayload,
@@ -115,6 +118,21 @@ export class EventOutboxService {
         break;
       case 'battle.returned':
         await this.notifyBattleReturned(
+          parseEventPayload(event.kind, event.payload),
+        );
+        break;
+      case 'scout.sent':
+        await this.notifyScoutSent(
+          parseEventPayload(event.kind, event.payload),
+        );
+        break;
+      case 'scout.reported':
+        await this.notifyScoutReported(
+          parseEventPayload(event.kind, event.payload),
+        );
+        break;
+      case 'scout.returned':
+        await this.notifyScoutReturned(
           parseEventPayload(event.kind, event.payload),
         );
         break;
@@ -308,6 +326,27 @@ export class EventOutboxService {
       survivingUnits: payload.survivingUnits,
       loot: payload.loot,
     });
+  }
+
+  private async notifyScoutSent(payload: ScoutSentPayload) {
+    const userId = await this.getUserIdByVillage(payload.villageId);
+    if (!userId) return;
+
+    this.gateway.notifyUser(userId, 'scout.sent', payload);
+  }
+
+  private async notifyScoutReported(payload: ScoutReportedPayload) {
+    const userId = await this.getUserIdByVillage(payload.villageId);
+    if (!userId) return;
+
+    this.gateway.notifyUser(userId, 'scout.reported', payload);
+  }
+
+  private async notifyScoutReturned(payload: ScoutReturnedPayload) {
+    const userId = await this.getUserIdByVillage(payload.villageId);
+    if (!userId) return;
+
+    this.gateway.notifyUser(userId, 'scout.returned', payload);
   }
 
   private async notifyVillageAttacked(payload: VillageAttackedPayload) {

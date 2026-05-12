@@ -11,7 +11,7 @@ battleforthecrown-backend/test/
 ├── helpers.ts                # bootSmokeApp, truncateAll, registerUser, joinWorld, waitFor, outboxDispatched
 ├── jest-smoke.json           # config Jest dédiée (testRegex smoke.spec.ts$, runInBand)
 ├── jest-smoke-setup.ts       # env vars (DATABASE_URL smoke, JWT secrets de test)
-└── fixtures/smoke-world-config.ts   # WorldConfig avec gameSpeed élevé (durations clampées au 1s minimum)
+└── fixtures/smoke-world-config.ts   # WorldConfig avec gameSpeed élevé
 ```
 
 ## Comment lancer
@@ -20,7 +20,7 @@ battleforthecrown-backend/test/
 yarn workspace battleforthecrown-backend test:smoke
 ```
 
-Pré-requis : la base `battleforthecrown_smoke` doit exister + migrations appliquées (cf. [`db-setup.md`](./db-setup.md)). La commande lance d'abord `scripts/smoke-preflight.sh` pour vérifier Docker, la DB smoke et `prisma migrate status`. Un seul boot AppModule, ~23s pour les 11 flows.
+Pré-requis : la base `battleforthecrown_smoke` doit exister + migrations appliquées (cf. [`db-setup.md`](./db-setup.md)). La commande lance d'abord `scripts/smoke-preflight.sh` pour vérifier Docker, la DB smoke et `prisma migrate status`. Un seul boot AppModule, ~100s pour la suite complète locale actuelle.
 
 ## Flows couverts
 
@@ -31,12 +31,15 @@ Pré-requis : la base `battleforthecrown_smoke` doit exister + migrations appliq
 | 3 | training | `POST /army/:id/train` | `UnitInventory.quantity≥1` + `unit.training.completed` dispatched |
 | 4 | combat resolve+return | `POST /combat/attack` | `battle.resolved` + `battle.returned` dispatched |
 | 5 | combat report supprimé pendant retour | `POST /combat/attack` puis `DELETE /combat/report/:id` | expédition supprimée, troupes/loot revenus, `battle.returned.reportId = null` dispatched |
-| 6 | conquest | `ConquestService.conquerVillage()` | `Village.userId` reassigned + `village.conquered` dispatched |
-| 7 | crown production | `boss.send('crowns:production')` | `crowns.changed` dispatched |
-| 8 | barbarian seeding catchup | `BarbarianSeedingCatchupWorker.handleCatchup()` | new BVs seeded in DB for players created < 1h (no Outbox by design) |
-| 9 | JWT auth + refresh | REST register/login/refresh | tokens valides, route protégée 200 |
-| 10 | fog of war | `GET /world/:id/entities` | barbares hors vision portent `kind: 'fogged'` |
-| 11 | outbox dispatch (transversal) | upgrade WOOD + Socket.IO client | client reçoit `building.completed` via WS réel |
+| 6 | combat reports participant-scoped | REST reports read/delete | lu/suppression isolés par participant |
+| 7 | target outside vision | `POST /combat/attack` | 403 |
+| 8 | scouting resolve+return | `POST /combat/scout` | SPY gate Caserne 3, SPY-only, `ScoutReport`, `scout.reported` + `scout.returned`, style ennemi absent du public |
+| 9 | conquest | `ConquestService.conquerVillage()` | `Village.userId` reassigned + `village.conquered` dispatched |
+| 10 | crown production | `boss.send('crowns:production')` | `crowns.changed` dispatched |
+| 11 | barbarian seeding catchup | `BarbarianSeedingCatchupWorker.handleCatchup()` | new BVs seeded in DB for players created < 1h (no Outbox by design) |
+| 12 | JWT auth + refresh | REST register/login/refresh | tokens valides, route protégée 200 |
+| 13 | fog of war | `GET /world/:id/entities` | barbares hors vision portent `kind: 'fogged'` |
+| 14 | outbox dispatch (transversal) | upgrade WOOD + Socket.IO client | client reçoit `building.completed` via WS réel |
 
 ## Quand ajouter un smoke
 

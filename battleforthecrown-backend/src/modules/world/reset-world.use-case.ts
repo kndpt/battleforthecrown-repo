@@ -38,6 +38,9 @@ export class ResetWorldUseCase {
         where: { worldId, defenderUserId: userId },
         data: { defenderUserId: null, defenderVillageId: null },
       });
+      await tx.scoutReport.deleteMany({
+        where: { worldId, scoutUserId: userId },
+      });
       await tx.village.deleteMany({ where: { userId, worldId } });
       await tx.crownBalance.deleteMany({ where: { userId, worldId } });
       await tx.worldSeedState.deleteMany({ where: { userId, worldId } });

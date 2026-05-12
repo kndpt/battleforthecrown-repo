@@ -125,6 +125,10 @@ export class CombatWorker implements OnModuleInit {
             return this.handleReinforcementArrival(tx, expedition);
           }
 
+          if (expedition.kind === ExpeditionKind.SCOUT) {
+            return this.handleScoutArrival(tx, expedition);
+          }
+
           // 2. Build combat context
           const context = await this.buildCombatContext(tx, expedition);
 
@@ -885,6 +889,120 @@ export class CombatWorker implements OnModuleInit {
 
     this.logger.log(
       `Reinforcement ${isReturningHome ? 'returned' : 'stationed'}: ${expedition.id}`,
+    );
+  }
+
+  private async handleScoutArrival(
+    tx: PrismaClientOrTx,
+    expedition: Expedition,
+  ) {
+    this.logger.log(`Processing scout arrival: ${expedition.id}`);
+
+    const [attackerVillage, targetVillage] = await Promise.all([
+      tx.village.findUnique({
+        where: { id: expedition.attackerVillageId },
+      }),
+      tx.village.findUnique({
+        where: { id: expedition.targetRefId },
+        include: {
+          resourceStock: true,
+          unitInventory: true,
+          strategyConfig: true,
+        },
+      }),
+    ]);
+
+    if (!attackerVillage?.userId) {
+      throw new Error('Scout origin village not found');
+    }
+    if (!targetVillage) {
+      throw new Error('Scout target village not found');
+    }
+
+    const snapshot =
+      expedition.targetKind === 'BARBARIAN_VILLAGE'
+        ? await this.barbarianRuntime.catchUpVillage(tx, expedition.targetRefId)
+        : {
+            units: Object.fromEntries(
+              targetVillage.unitInventory.map((unit) => [
+                unit.unitType,
+                unit.quantity,
+              ]),
+            ) as UnitMap,
+            resources: targetVillage.resourceStock
+              ? {
+                  wood: targetVillage.resourceStock.wood,
+                  stone: targetVillage.resourceStock.stone,
+                  iron: targetVillage.resourceStock.iron,
+                }
+              : { wood: 0, stone: 0, iron: 0 },
+          };
+
+    const report = await tx.scoutReport.create({
+      data: {
+        worldId: expedition.worldId,
+        scoutVillageId: expedition.attackerVillageId,
+        scoutUserId: attackerVillage.userId,
+        targetVillageId: targetVillage.id,
+        targetKind: expedition.targetKind,
+        targetX: expedition.targetX,
+        targetY: expedition.targetY,
+        targetName: targetVillage.name,
+        targetTier: targetVillage.tier,
+        units: encodeUnitMap(snapshot.units),
+        resources: snapshot.resources,
+        strategy:
+          expedition.targetKind === 'PLAYER_VILLAGE'
+            ? targetVillage.strategyConfig?.strategy
+            : null,
+        details: {
+          expeditionId: expedition.id,
+          scoutUnits: parseUnitMap(expedition.units, 'expedition.units'),
+        },
+      },
+    });
+
+    const returnAt = new Date(Date.now() + expedition.outboundTravelMs);
+    const survivingUnits = parseUnitMap(expedition.units, 'expedition.units');
+
+    await tx.expedition.update({
+      where: { id: expedition.id },
+      data: {
+        status: 'RETURNING',
+        scoutReportId: report.id,
+        returnAt,
+        survivingUnits: encodeUnitMap(survivingUnits),
+        loot: { resources: { wood: 0, stone: 0, iron: 0 } },
+      },
+    });
+
+    await createOutboxEvent(
+      tx,
+      'scout.reported',
+      expedition.attackerVillageId,
+      {
+        expeditionId: expedition.id,
+        reportId: report.id,
+        villageId: expedition.attackerVillageId,
+        targetKind: expedition.targetKind,
+        targetName: targetVillage.name,
+        targetX: expedition.targetX,
+        targetY: expedition.targetY,
+        returnAt: returnAt.toISOString(),
+      },
+    );
+
+    await this.boss.send(
+      'combat:return',
+      { expeditionId: expedition.id },
+      {
+        startAfter: returnAt,
+        singletonKey: `return:${expedition.id}`,
+      },
+    );
+
+    this.logger.log(
+      `Scout resolved for expedition ${expedition.id}, report=${report.id}, returns at ${returnAt.toISOString()}`,
     );
   }
 }

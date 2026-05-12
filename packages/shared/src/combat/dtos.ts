@@ -16,11 +16,12 @@ export const EXPEDITION_STATUSES = {
   RETURNING: 'RETURNING',
 } as const;
 
-export type ExpeditionKind = 'ATTACK' | 'REINFORCE';
+export type ExpeditionKind = 'ATTACK' | 'REINFORCE' | 'SCOUT';
 
 export const EXPEDITION_KINDS = {
   ATTACK: 'ATTACK',
   REINFORCE: 'REINFORCE',
+  SCOUT: 'SCOUT',
 } as const;
 
 export interface AttackCommand {
@@ -35,6 +36,15 @@ export interface AttackCommand {
 export interface ReinforceCommand {
   villageId: string;
   targetVillageId: string;
+  units: UnitMap;
+}
+
+export interface ScoutCommand {
+  villageId: string;
+  targetX: number;
+  targetY: number;
+  targetKind: TargetKind;
+  targetRefId: string;
   units: UnitMap;
 }
 
@@ -63,6 +73,22 @@ export interface CombatReportResponse {
   lossesDefender?: UnitMap;
   isRead: boolean;
   isAttacker: boolean;
+  timestamp: string;
+}
+
+export interface ScoutReportResponse {
+  id: string;
+  scoutVillageId: string;
+  targetVillageId?: string;
+  targetKind: string;
+  targetX: number;
+  targetY: number;
+  targetName?: string | null;
+  targetTier?: string | null;
+  units: UnitMap;
+  resources: LootResources;
+  strategy?: string | null;
+  isRead: boolean;
   timestamp: string;
 }
 

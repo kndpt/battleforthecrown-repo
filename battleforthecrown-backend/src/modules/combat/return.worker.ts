@@ -70,7 +70,10 @@ export class ReturnWorker implements OnModuleInit {
         // 2. Determine surviving units and loot
         let survivingUnits: UnitMap = {};
         let lootedResources = { wood: 0, stone: 0, iron: 0 };
-        const reportId: string | null = expedition.reportId;
+        const reportId: string | null =
+          expedition.kind === 'SCOUT'
+            ? expedition.scoutReportId
+            : expedition.reportId;
 
         if (expedition.recalled) {
           this.logger.log(
@@ -133,15 +136,26 @@ export class ReturnWorker implements OnModuleInit {
         // 7. Create event
         await createOutboxEvent(
           tx,
-          expedition.recalled ? 'expedition.returned' : 'battle.returned',
+          expedition.recalled
+            ? 'expedition.returned'
+            : expedition.kind === 'SCOUT'
+              ? 'scout.returned'
+              : 'battle.returned',
           expedition.attackerVillageId,
-          {
-            expeditionId: expedition.id,
-            reportId,
-            villageId: expedition.attackerVillageId,
-            survivingUnits,
-            loot: { resources: lootedResources },
-          },
+          expedition.kind === 'SCOUT' && !expedition.recalled
+            ? {
+                expeditionId: expedition.id,
+                reportId,
+                villageId: expedition.attackerVillageId,
+                survivingUnits,
+              }
+            : {
+                expeditionId: expedition.id,
+                reportId,
+                villageId: expedition.attackerVillageId,
+                survivingUnits,
+                loot: { resources: lootedResources },
+              },
         );
 
         this.logger.log(

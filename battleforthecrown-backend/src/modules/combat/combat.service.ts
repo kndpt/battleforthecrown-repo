@@ -10,15 +10,18 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WorldConfigService } from '../world/world-config.service';
 import { VisionService } from '../world/vision.service';
 import { calculateDistance } from '@battleforthecrown/shared/logic';
+import { UNIT_TYPES } from '@battleforthecrown/shared/army';
 import type { AttackCommandDto } from './dto/attack-command.schema';
 import type { ReinforceCommandDto } from './dto/reinforce-command.schema';
 import type { RecallCommandDto } from './dto/recall-command.schema';
+import type { ScoutCommandDto } from './dto/scout-command.schema';
 import { ExpeditionKind } from '@prisma/client';
 import { encodeUnitMap } from './codecs';
 import PgBoss from 'pg-boss';
 import { createOutboxEvent } from '../event/event.utils';
 import { PrismaClientOrTx } from '../../common/prisma.types';
 import { presentCombatReport } from './combat-report.presenter';
+import { presentScoutReport } from './scout-report.presenter';
 
 export interface GarrisonLineDto {
   villageId: string;
@@ -152,6 +155,90 @@ export class CombatService {
 
       this.logger.log(
         `Attack expedition created: ${expedition.id}, arrives at ${arrivalAt.toISOString()}`,
+      );
+
+      return expedition;
+    });
+  }
+
+  async initiateScout(userId: string, dto: ScoutCommandDto) {
+    this.logger.log(`Scout initiated by user ${userId}`, { dto });
+
+    return this.prisma.$transaction(async (tx) => {
+      const village = await tx.village.findFirst({
+        where: { id: dto.villageId, userId },
+      });
+
+      if (!village) {
+        throw new NotFoundException('Village not found or not owned');
+      }
+
+      this.assertScoutUnitsOnly(dto.units);
+
+      const worldId = village.worldId;
+      const target = await this.resolveTargetVillage(tx, worldId, dto);
+
+      const config = await this.worldConfig.getConfig(worldId);
+      if (config.fogOfWar?.enabled) {
+        const disks = await this.visionService.getVisionDisks(userId, worldId);
+        if (!this.visionService.isInVision(target, disks)) {
+          throw new ForbiddenException(
+            'Target is outside your vision — extend your watchtower to scout.',
+          );
+        }
+      }
+
+      await this.verifyAndDeductUnits(tx, dto.villageId, dto.units);
+
+      const { travelTimeMs, arrivalAt, now } =
+        await this.calculateExpeditionTiming(
+          tx,
+          worldId,
+          village.x,
+          village.y,
+          target.x,
+          target.y,
+          dto.units,
+          dto.villageId,
+        );
+
+      const expedition = await tx.expedition.create({
+        data: {
+          worldId,
+          attackerVillageId: dto.villageId,
+          kind: ExpeditionKind.SCOUT,
+          targetKind: dto.targetKind,
+          targetRefId: target.id,
+          targetX: target.x,
+          targetY: target.y,
+          units: encodeUnitMap(dto.units),
+          status: 'EN_ROUTE',
+          departAt: now,
+          arrivalAt,
+          outboundTravelMs: travelTimeMs,
+        },
+      });
+
+      await createOutboxEvent(tx, 'scout.sent', dto.villageId, {
+        expeditionId: expedition.id,
+        villageId: dto.villageId,
+        targetX: target.x,
+        targetY: target.y,
+        targetKind: dto.targetKind,
+        arrivalAt: arrivalAt.toISOString(),
+      });
+
+      await this.boss.send(
+        'combat:resolve',
+        { expeditionId: expedition.id },
+        {
+          startAfter: arrivalAt,
+          singletonKey: `combat:${expedition.id}`,
+        },
+      );
+
+      this.logger.log(
+        `Scout expedition created: ${expedition.id}, arrives at ${arrivalAt.toISOString()}`,
       );
 
       return expedition;
@@ -511,6 +598,57 @@ export class CombatService {
     }
   }
 
+  private assertScoutUnitsOnly(units: Record<string, number>) {
+    if ((units[UNIT_TYPES.SPY] ?? 0) <= 0) {
+      throw new BadRequestException('Scout missions require at least one SPY');
+    }
+
+    const hasNonSpy = Object.entries(units).some(
+      ([unitType, quantity]) =>
+        unitType !== UNIT_TYPES.SPY && quantity !== undefined && quantity > 0,
+    );
+    if (hasNonSpy) {
+      throw new BadRequestException(
+        'Scout missions must contain SPY units only',
+      );
+    }
+  }
+
+  private async resolveTargetVillage(
+    tx: PrismaClientOrTx,
+    worldId: string,
+    dto: Pick<
+      ScoutCommandDto | AttackCommandDto,
+      'targetKind' | 'targetRefId' | 'targetX' | 'targetY'
+    >,
+  ) {
+    const targetVillage = await tx.village.findUnique({
+      where: { id: dto.targetRefId },
+    });
+
+    if (dto.targetKind === 'BARBARIAN_VILLAGE') {
+      if (!targetVillage || !targetVillage.isBarbarian) {
+        throw new BadRequestException('Barbarian village not found');
+      }
+    } else if (
+      !targetVillage ||
+      targetVillage.worldId !== worldId ||
+      targetVillage.isBarbarian
+    ) {
+      throw new BadRequestException('Target village not found');
+    }
+
+    if (targetVillage.worldId !== worldId) {
+      throw new BadRequestException('Target village not found');
+    }
+
+    if (targetVillage.x !== dto.targetX || targetVillage.y !== dto.targetY) {
+      throw new BadRequestException('Target coordinates do not match target');
+    }
+
+    return targetVillage;
+  }
+
   private async calculateExpeditionTiming(
     tx: PrismaClientOrTx,
     worldId: string,
@@ -634,6 +772,77 @@ export class CombatService {
     });
 
     return reports.map((report) => presentCombatReport(report, userId));
+  }
+
+  async getAllScoutReports(userId: string) {
+    const reports = await this.prisma.scoutReport.findMany({
+      where: { scoutUserId: userId, hidden: false },
+      orderBy: { timestamp: 'desc' },
+    });
+
+    return reports.map((report) => presentScoutReport(report));
+  }
+
+  async getScoutReport(userId: string, reportId: string) {
+    const report = await this.prisma.scoutReport.findUnique({
+      where: { id: reportId },
+    });
+
+    if (!report) {
+      throw new NotFoundException('Scout report not found');
+    }
+
+    if (report.scoutUserId !== userId || report.hidden) {
+      throw new BadRequestException('Not authorized to view this scout report');
+    }
+
+    return presentScoutReport(report);
+  }
+
+  async markScoutReportAsRead(userId: string, reportId: string) {
+    const report = await this.prisma.scoutReport.findUnique({
+      where: { id: reportId },
+    });
+
+    if (!report) {
+      throw new NotFoundException('Scout report not found');
+    }
+
+    if (report.scoutUserId !== userId || report.hidden) {
+      throw new BadRequestException(
+        'Not authorized to modify this scout report',
+      );
+    }
+
+    const updated = await this.prisma.scoutReport.update({
+      where: { id: reportId },
+      data: { isRead: true },
+    });
+
+    return presentScoutReport(updated);
+  }
+
+  async deleteScoutReport(userId: string, reportId: string) {
+    const report = await this.prisma.scoutReport.findUnique({
+      where: { id: reportId },
+    });
+
+    if (!report) {
+      throw new NotFoundException('Scout report not found');
+    }
+
+    if (report.scoutUserId !== userId || report.hidden) {
+      throw new BadRequestException(
+        'Not authorized to delete this scout report',
+      );
+    }
+
+    await this.prisma.scoutReport.update({
+      where: { id: reportId },
+      data: { hidden: true },
+    });
+
+    return { message: 'Scout report deleted successfully' };
   }
 
   async getReport(userId: string, reportId: string) {

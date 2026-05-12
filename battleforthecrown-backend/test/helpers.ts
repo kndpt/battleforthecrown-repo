@@ -37,6 +37,7 @@ export async function bootSmokeApp(): Promise<SmokeContext> {
 
 const TABLES = [
   'expedition',
+  'scout_report',
   'combat_report',
   'pending_conquest',
   'unit_training',
