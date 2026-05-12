@@ -162,7 +162,7 @@ export class JoinWorldUseCase {
   }
 }
 
-const INITIAL_BUILDINGS = [
+export const INITIAL_BUILDINGS = [
   { type: BUILDING_TYPES.CASTLE, level: 1 },
   { type: BUILDING_TYPES.WOOD, level: 1 },
   { type: BUILDING_TYPES.STONE, level: 1 },
@@ -171,6 +171,8 @@ const INITIAL_BUILDINGS = [
   { type: BUILDING_TYPES.FARM, level: 0 },
   { type: BUILDING_TYPES.BARRACKS, level: 0 },
   { type: BUILDING_TYPES.WATCHTOWER, level: 0 },
+  { type: BUILDING_TYPES.COUNCIL_HALL, level: 0 },
+  { type: BUILDING_TYPES.THRONE_HALL, level: 0 },
 ] as const;
 
 function numericEnv(key: string): number {

@@ -21,7 +21,9 @@
 
 `World.config` (JSON) contient notamment : `gameSpeed.{construction,training,travel}` (diviseurs de temps — valeur > 1 ⇒ plus rapide), `economy.productionRate` (amplificateur du taux — valeur > 1 ⇒ plus de ressources/min), `combat.{attackBonus,defenseBonus,lootFactor}`, paramètres de seeding barbares.
 
-**Cycle de vie player ↔ monde** : `JoinWorldUseCase` crée le tuple `(WorldMembership, Village, ResourceStock, Population, CrownBalance, UnitInventory skeleton, VillageStrategyConfig)`. `ResetWorldUseCase` (`DELETE /world/:worldId/me`) effectue l'opération inverse — full wipe par `(userId, worldId)` + anonymisation des `CombatReport` côté défenseur. Aucun event Outbox émis. Le joueur peut re-join immédiatement comme un nouveau joueur. Code : `src/modules/world/{join,reset}-world.use-case.ts`.
+**Cycle de vie player ↔ monde** : `JoinWorldUseCase` crée le tuple `(WorldMembership, Village, Building rows, ResourceStock, Population, CrownBalance, UnitInventory skeleton, VillageStrategyConfig)`. `ResetWorldUseCase` (`DELETE /world/:worldId/me`) effectue l'opération inverse — full wipe par `(userId, worldId)` + anonymisation des `CombatReport` côté défenseur. Aucun event Outbox émis. Le joueur peut re-join immédiatement comme un nouveau joueur. Code : `src/modules/world/{join,reset}-world.use-case.ts`.
+
+**Invariant ajout bâtiment joueur** : tout nouveau `BUILDING_TYPES.*` activé pour les villages joueurs doit être ajouté à `INITIAL_BUILDINGS` dans `JoinWorldUseCase`, généralement en `level: 0` si le bâtiment est débloqué plus tard. `GET /village/buildings` expose les rows DB réelles et ne synthétise pas de bâtiments manquants pour masquer une donnée ancienne. Si des villages existants doivent recevoir le nouveau bâtiment, choisir explicitement entre reset utilisateur, migration/backfill non destructif, ou laisser l'ancien état inchangé.
 
 ### Villages joueurs
 

@@ -139,17 +139,19 @@ function PixelButton({
 function ModalShell({
   accent,
   accentLight,
-  children,
+  body,
+  footer,
   onClose,
 }: {
   accent: string;
   accentLight: string;
-  children: ReactNode;
+  body: ReactNode;
+  footer: ReactNode;
   onClose?: () => void;
 }) {
   return (
     <div
-      className="relative flex max-h-full w-80 max-w-[94%] flex-col overflow-hidden rounded-2xl border-4 border-[#3c2619] bg-[linear-gradient(to_bottom,#fef9f0,#e8d4a8)] shadow-[0_0_0_2px_var(--modal-accent),0_12px_32px_rgba(0,0,0,.6),inset_0_2px_0_rgba(255,255,255,.55)]"
+      className="relative flex h-[calc(100dvh-32px)] max-h-[760px] w-[calc(100vw-32px)] max-w-[430px] flex-col overflow-hidden rounded-2xl border-4 border-[#3c2619] bg-[linear-gradient(to_bottom,#fef9f0,#e8d4a8)] shadow-[0_0_0_2px_var(--modal-accent),0_12px_32px_rgba(0,0,0,.6),inset_0_2px_0_rgba(255,255,255,.55)]"
       style={{ '--modal-accent': accent } as CSSProperties}
     >
       <div
@@ -173,7 +175,14 @@ function ModalShell({
         </button>
       </div>
       <div className="mx-3.5 h-px bg-[rgba(93,74,50,.35)]" />
-      {children}
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col justify-center overflow-y-auto overscroll-contain">
+          {body}
+        </div>
+        <div className="shrink-0 px-3.5 pb-3 pt-2">
+          {footer}
+        </div>
+      </div>
     </div>
   );
 }
@@ -193,7 +202,7 @@ function VillageStyleHeroCard({
 
   return (
     <div
-      className="relative min-h-[220px] overflow-hidden rounded-[14px] border-[3px] border-[var(--village-style-border)] bg-[linear-gradient(160deg,var(--village-style-light)_0%,var(--village-style-dark)_100%)] p-[14px_14px_12px] shadow-[inset_0_1px_0_rgba(255,255,255,.35),0_6px_14px_rgba(0,0,0,.35)]"
+      className="relative min-h-[275px] overflow-hidden rounded-[14px] border-[3px] border-[var(--village-style-border)] bg-[linear-gradient(160deg,var(--village-style-light)_0%,var(--village-style-dark)_100%)] p-[14px_14px_12px] shadow-[inset_0_1px_0_rgba(255,255,255,.35),0_6px_14px_rgba(0,0,0,.35)]"
       style={getStyleVars(option)}
     >
       <div className="pointer-events-none absolute -right-[18px] -top-[18px] select-none font-game text-[200px] font-black leading-none text-[rgba(255,255,255,.10)]">
@@ -203,21 +212,23 @@ function VillageStyleHeroCard({
         <div className="flex size-[46px] shrink-0 items-center justify-center rounded-xl border-2 border-[rgba(255,255,255,.4)] bg-[rgba(0,0,0,.28)] shadow-[inset_0_1px_0_rgba(255,255,255,.35)]">
           <Glyph>{option.glyph}</Glyph>
         </div>
-        <div className="min-w-0 flex-1">
+        <div className={cn('min-w-0 flex-1', current ? 'pr-[78px]' : '')}>
           <div className="font-game text-[9.5px] font-bold uppercase tracking-[.22em] text-[rgba(255,255,255,.7)]">
             Voie {index + 1} / {total}
           </div>
-          <div className="font-game text-xl font-black leading-[1.1] tracking-[.03em] text-white [text-shadow:1px_1px_2px_rgba(0,0,0,.55),0_1px_0_rgba(255,255,255,.15)]">
+          <div className="truncate font-game text-xl font-black leading-[1.1] tracking-[.03em] text-white [text-shadow:1px_1px_2px_rgba(0,0,0,.55),0_1px_0_rgba(255,255,255,.15)]">
             {option.name}
           </div>
         </div>
         {current ? (
-          <span className="rounded-full border-[1.5px] border-[#9e7b0d] bg-[linear-gradient(to_bottom,#f1c40f,#d4a017)] px-[7px] py-[3px] font-game text-[9px] font-extrabold tracking-[.14em] text-[#3a2a00]">
+          <span className="absolute right-0 top-1/2 -translate-y-1/2 rounded-full border-[1.5px] border-[#9e7b0d] bg-[linear-gradient(to_bottom,#f1c40f,#d4a017)] px-[7px] py-[3px] font-game text-[9px] font-extrabold tracking-[.14em] text-[#3a2a00]">
             ACTUEL
           </span>
         ) : null}
       </div>
-      <div className="my-2 font-game text-[11.5px] italic text-[rgba(255,255,255,.92)] [text-shadow:1px_1px_2px_rgba(0,0,0,.5)]">« {option.tagline} »</div>
+      <div className="my-3 line-clamp-2 min-h-[42px] font-game text-[11.5px] italic leading-[1.75] text-[rgba(255,255,255,.92)] [text-shadow:1px_1px_2px_rgba(0,0,0,.5)]">
+        « {option.tagline} »
+      </div>
       <div className="flex flex-col gap-[5px] rounded-[10px] border-[1.5px] border-[rgba(255,255,255,.18)] bg-[rgba(0,0,0,.22)] px-2.5 py-2">
         {!hasEffects ? (
           <div className="py-1.5 text-center font-game text-[11.5px] font-bold tracking-[.06em] text-white [text-shadow:1px_1px_1px_rgba(0,0,0,.4)]">
@@ -351,78 +362,87 @@ export function VillageStyleModal({
     <div
       className={cn(
         overlayMode === 'fixed' ? 'fixed' : 'absolute',
-        'inset-0 z-30 flex items-center justify-center bg-[rgba(0,0,0,.62)] p-3 [backdrop-filter:blur(3px)]',
+        'inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,0,.62)] p-3 [backdrop-filter:blur(3px)]',
         className,
       )}
       onClick={onClose}
       {...props}
     >
       <div onClick={(event) => event.stopPropagation()}>
-        <ModalShell accent={option.color.dark} accentLight={option.color.light} onClose={onClose}>
-          <div className="relative px-3.5 pt-3">
-            <VillageStyleHeroCard current={current} index={index} option={option} total={options.length} />
-            <button
-              aria-label="Voie précédente"
-              className="absolute left-[-2px] top-1/2 z-[2] size-auto h-11 w-8 -translate-y-1/2 cursor-pointer rounded-[10px] border-2 border-[#3c2619] bg-[linear-gradient(to_bottom,#a67c52,#5d4a32)] font-game text-lg font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,.3),0_2px_0_rgba(0,0,0,.25)] [text-shadow:1px_1px_1px_rgba(0,0,0,.5)]"
-              onClick={() => setIndex((currentIndex) => currentIndex - 1)}
-              type="button"
-            >
-              ‹
-            </button>
-            <button
-              aria-label="Voie suivante"
-              className="absolute right-[-2px] top-1/2 z-[2] size-auto h-11 w-8 -translate-y-1/2 cursor-pointer rounded-[10px] border-2 border-[#3c2619] bg-[linear-gradient(to_bottom,#a67c52,#5d4a32)] font-game text-lg font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,.3),0_2px_0_rgba(0,0,0,.25)] [text-shadow:1px_1px_1px_rgba(0,0,0,.5)]"
-              onClick={() => setIndex((currentIndex) => currentIndex + 1)}
-              type="button"
-            >
-              ›
-            </button>
-          </div>
-          <div className="flex justify-center gap-1.5 px-0 pb-1 pt-2">
-            {options.map((item, itemIndex) => (
-              <button
-                aria-label={`Voie ${itemIndex + 1}`}
+        <ModalShell
+          accent={option.color.dark}
+          accentLight={option.color.light}
+          onClose={onClose}
+          body={
+            <>
+              <div className="relative px-3.5 pt-3">
+                <VillageStyleHeroCard current={current} index={index} option={option} total={options.length} />
+                <button
+                  aria-label="Voie précédente"
+                  className="absolute left-[-2px] top-1/2 z-[2] size-auto h-11 w-8 -translate-y-1/2 cursor-pointer rounded-[10px] border-2 border-[#3c2619] bg-[linear-gradient(to_bottom,#a67c52,#5d4a32)] font-game text-lg font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,.3),0_2px_0_rgba(0,0,0,.25)] [text-shadow:1px_1px_1px_rgba(0,0,0,.5)]"
+                  onClick={() => setIndex((currentIndex) => currentIndex - 1)}
+                  type="button"
+                >
+                  ‹
+                </button>
+                <button
+                  aria-label="Voie suivante"
+                  className="absolute right-[-2px] top-1/2 z-[2] size-auto h-11 w-8 -translate-y-1/2 cursor-pointer rounded-[10px] border-2 border-[#3c2619] bg-[linear-gradient(to_bottom,#a67c52,#5d4a32)] font-game text-lg font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,.3),0_2px_0_rgba(0,0,0,.25)] [text-shadow:1px_1px_1px_rgba(0,0,0,.5)]"
+                  onClick={() => setIndex((currentIndex) => currentIndex + 1)}
+                  type="button"
+                >
+                  ›
+                </button>
+              </div>
+              <div className="flex justify-center gap-1.5 px-0 pb-1 pt-2">
+                {options.map((item, itemIndex) => (
+                  <button
+                    aria-label={`Voie ${itemIndex + 1}`}
+                    className={cn(
+                      'h-2 rounded-full border-[1.5px] border-[rgba(93,74,50,.55)] p-0 transition-[width,background] duration-[180ms]',
+                      itemIndex === index
+                        ? 'w-[22px] bg-[linear-gradient(to_bottom,var(--village-style-light),var(--village-style-dark))]'
+                        : 'w-2 bg-[rgba(93,74,50,.25)]',
+                    )}
+                    key={item.id}
+                    onClick={() => setIndex(itemIndex)}
+                    style={getStyleVars(item)}
+                    type="button"
+                  />
+                ))}
+              </div>
+            </>
+          }
+          footer={
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 rounded-xl border-2 border-[#3c2619] bg-[linear-gradient(to_bottom,rgba(60,38,25,.96),rgba(78,56,34,.96))] px-2.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,.15),0_2px_0_rgba(0,0,0,.2)]">
+                <div className="flex items-center justify-between">
+                  <span className="font-game text-[9.5px] font-bold uppercase tracking-[.18em] text-[#f0e0c0]">Coût · Château {castleLevel}</span>
+                  <span className="font-game text-[9px] font-bold tracking-[.14em] text-[#cdb88a]">×{multiplier}</span>
+                </div>
+                <div className="flex flex-wrap gap-[5px]">
+                  <CostChip ok={stock.wood >= cost.wood} resource="wood" value={cost.wood} />
+                  <CostChip ok={stock.stone >= cost.stone} resource="stone" value={cost.stone} />
+                  <CostChip ok={stock.iron >= cost.iron} resource="iron" value={cost.iron} />
+                  <CostChip ok={stock.crowns >= cost.crowns} resource="crowns" value={cost.crowns} />
+                </div>
+              </div>
+              <PixelButton disabled={disabled} onClick={() => onAdopt?.(option.id)}>
+                {isSubmitting ? 'Adoption...' : current ? 'Voie actuelle' : `Adopter — ${option.name}`}
+              </PixelButton>
+              <div
                 className={cn(
-                  'h-2 rounded-full border-[1.5px] border-[rgba(93,74,50,.55)] p-0 transition-[width,background] duration-[180ms]',
-                  itemIndex === index
-                    ? 'w-[22px] bg-[linear-gradient(to_bottom,var(--village-style-light),var(--village-style-dark))]'
-                    : 'w-2 bg-[rgba(93,74,50,.25)]',
+                  'min-h-[16px] text-center font-game text-[9.5px]',
+                  errorMessage || isStockLoading || (!affordable && !current) || !hasCouncilHall || !canChange
+                    ? 'font-bold text-[#c0392b]'
+                    : 'text-[#cdb88a]',
                 )}
-                key={item.id}
-                onClick={() => setIndex(itemIndex)}
-                style={getStyleVars(item)}
-                type="button"
-              />
-            ))}
-          </div>
-          <div className="flex flex-col gap-2 px-3.5 pb-3 pt-1">
-            <div className="flex flex-col gap-2 rounded-xl border-2 border-[#3c2619] bg-[linear-gradient(to_bottom,rgba(60,38,25,.96),rgba(78,56,34,.96))] px-2.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,.15),0_2px_0_rgba(0,0,0,.2)]">
-              <div className="flex items-center justify-between">
-                <span className="font-game text-[9.5px] font-bold uppercase tracking-[.18em] text-[#f0e0c0]">Coût · Château {castleLevel}</span>
-                <span className="font-game text-[9px] font-bold tracking-[.14em] text-[#cdb88a]">×{multiplier}</span>
-              </div>
-              <div className="flex flex-wrap gap-[5px]">
-                <CostChip ok={stock.wood >= cost.wood} resource="wood" value={cost.wood} />
-                <CostChip ok={stock.stone >= cost.stone} resource="stone" value={cost.stone} />
-                <CostChip ok={stock.iron >= cost.iron} resource="iron" value={cost.iron} />
-                <CostChip ok={stock.crowns >= cost.crowns} resource="crowns" value={cost.crowns} />
+              >
+                {statusMessage}
               </div>
             </div>
-            <PixelButton disabled={disabled} onClick={() => onAdopt?.(option.id)}>
-              {isSubmitting ? 'Adoption...' : current ? 'Voie actuelle' : `Adopter — ${option.name}`}
-            </PixelButton>
-            <div
-              className={cn(
-                'text-center font-game text-[9.5px]',
-                errorMessage || isStockLoading || (!affordable && !current) || !hasCouncilHall || !canChange
-                  ? 'font-bold text-[#c0392b]'
-                  : 'text-[#cdb88a]',
-              )}
-            >
-              {statusMessage}
-            </div>
-          </div>
-        </ModalShell>
+          }
+        />
       </div>
     </div>
   );

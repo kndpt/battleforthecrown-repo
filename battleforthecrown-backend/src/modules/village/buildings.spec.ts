@@ -13,6 +13,7 @@ import type {
 } from '@battleforthecrown/shared/village';
 import { getBuildingPowerWeight } from '@battleforthecrown/shared/power';
 import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
+import { INITIAL_BUILDINGS } from '../world/join-world.use-case';
 
 describe('COUNCIL_HALL', () => {
   it('has max level 1', () => {
@@ -133,6 +134,17 @@ describe('BUILDING_TYPES catalogue', () => {
     ];
     const actualTypes = Object.keys(BUILDING_TYPES).sort();
     expect(actualTypes).toEqual(expectedTypes.sort());
+  });
+});
+
+describe('initial player village buildings', () => {
+  it('creates enabled advanced buildings as unbuilt rows', () => {
+    expect(INITIAL_BUILDINGS).toEqual(
+      expect.arrayContaining([
+        { type: BUILDING_TYPES.COUNCIL_HALL, level: 0 },
+        { type: BUILDING_TYPES.THRONE_HALL, level: 0 },
+      ]),
+    );
   });
 });
 

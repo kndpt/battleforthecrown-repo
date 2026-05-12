@@ -87,13 +87,31 @@ export const BUILDING_META: Record<string, BuildingMeta> = {
     cardVariant: 'stone',
     sortKey: 7,
   },
+  COUNCIL_HALL: {
+    label: 'Salle du Conseil',
+    description:
+      'Débloque les styles stratégiques du village et permet de choisir une voie spécialisée.',
+    iconPath: null,
+    emoji: '🧑‍⚖️',
+    cardVariant: 'parchment',
+    sortKey: 8,
+  },
+  THRONE_HALL: {
+    label: 'Salle du Trône',
+    description:
+      'Permet de recruter un Seigneur pour lancer des conquêtes.',
+    iconPath: null,
+    emoji: '👑',
+    cardVariant: 'parchment',
+    sortKey: 9,
+  },
   WALL: {
     label: 'Rempart',
     description: 'Renforce les défenses de votre village contre les attaques.',
     iconPath: null,
     emoji: '🧱',
     cardVariant: 'stone',
-    sortKey: 8,
+    sortKey: 10,
   },
   HIDEOUT: {
     label: 'Cachette',
@@ -102,7 +120,7 @@ export const BUILDING_META: Record<string, BuildingMeta> = {
     iconPath: null,
     emoji: '🕳️',
     cardVariant: 'stone',
-    sortKey: 9,
+    sortKey: 11,
   },
 };
 
