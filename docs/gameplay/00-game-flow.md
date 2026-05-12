@@ -6,7 +6,7 @@
 
 ## TL;DR
 
-Un monde Battle for the Crown dure **~4 mois** ([19](./19-world-lifecycle.md)). 14 j d'inscriptions massives + 7 j de retardataires + 99 j en cohorte verrouillée. Pendant ces 120 j, chaque joueur fait tourner 4 boucles (économie, militaire, exploration, conquête, cf. [01](./01-overview.md#boucles-de-gameplay)) en sessions courtes mobile (2-5 min, plusieurs fois/jour), sous pression douce des raids barbares globaux et des événements Oyez ([05](./05-events-and-retention.md)). À `endsAt` : wipe complet, seuls les cosmétiques restent. Le serveur enchaîne les saisons en parallèle, un nouveau monde toutes les ~7 j.
+Un monde Battle for the Crown dure **~4 mois** ([19](./19-world-lifecycle.md)). 14 j d'inscriptions massives + 7 j de retardataires + 99 j en cohorte verrouillée. Pendant ces 120 j, chaque joueur fait tourner 4 boucles (économie, militaire, exploration, conquête, cf. [01](./01-overview.md#boucles-de-gameplay)) en sessions courtes mobile (2-5 min, plusieurs fois/jour), avec des cartes quotidiennes personnelles et des Oyez qui donnent un contexte monde léger ([05](./05-daily-cards-and-oyez.md)). À `endsAt` : wipe complet, seuls les cosmétiques restent. Le serveur enchaîne les saisons en parallèle, un nouveau monde toutes les ~7 j.
 
 ---
 
@@ -53,7 +53,7 @@ Recrutement à la **Caserne** (file unique par village, consomme Pop), envoi d'*
 
 ### Boucle d'exploration
 
-**Watchtower** (vision = union de disques de toutes mes tours, lvl 1 = 5 cases, lvl 10 = monde entier). Hors vision : *blip* gris anonyme pour les villages, **rien** pour les expéditions. Filtré server-side, pas seulement UI ([`01` § Exploration](./01-overview.md#exploration--brouillard-de-guerre)). **Espionnage** via l'unité ESPION pour révéler une cible spécifique ([`11`](./11-scouting.md)).
+**Watchtower** (vision = union de disques de toutes mes tours, lvl 1 = 5 cases, lvl 10 = 50 cases). Aucune tour ne révèle tout le monde seule : voir loin exige de conquérir ou développer des villages à des positions stratégiques. Hors vision : *blip* gris anonyme pour les villages, **rien** pour les expéditions. Filtré server-side, pas seulement UI ([`01` § Exploration](./01-overview.md#exploration--brouillard-de-guerre)). **Espionnage** via l'unité ESPION pour révéler une cible spécifique ([`11`](./11-scouting.md)).
 
 ### Boucle de conquête (end-game)
 
@@ -64,12 +64,11 @@ Château 6 → débloque **Salle du Trône** → recrute un **Seigneur** (5 000 
 3. **Fenêtre vulnérable** : défenseur d'origine + tiers opportunistes peuvent attaquer pour tuer la garnison.
 4. **Survit la fenêtre** → village transféré, ressources reset, bâtiments + Moulin hérités tels quels, Seigneur sacrifié (devient Seigneur du village conquis, plus dispo pour une autre conquête).
 
-### Pression de rétention superposée
+### Rétention mobile superposée
 
-- **Raid barbare global** subi tous les **3-5 j** (3 défaites consécutives = village en ruines, reconquérable gratuitement, [`05` § Raids globaux](./05-events-and-retention.md#raids-barbares-globaux)).
-- **Oyez** (1-2/sem) : event serveur unique avec bonus thématique (production, vitesse, vision…) ([`05` § Oyez](./05-events-and-retention.md#événements-oyez-almanax)).
-- **Quête quotidienne** : reset 04:00 Europe/Paris, équivalent 4-10 h de production ([`05` § Quêtes](./05-events-and-retention.md#quêtes-quotidiennes)).
-- **Bénédictions quotidiennes** (3 tirées, 1 choisie, 4 h) — *post-MVP*.
+- **Cartes quotidiennes** : 1 carte / jour, backlog limité, tâches naturelles, récompense modérée ([`05`](./05-daily-cards-and-oyez.md#cartes-quotidiennes)).
+- **Oyez** : contexte monde léger qui oriente les cartes et la priorité du moment, sans bonus snowballant ([`05`](./05-daily-cards-and-oyez.md#oyez)).
+- **Notifications push** : retour mobile au bon moment (attaque entrante, retour d'armée, fin de capture, etc. — cf. [`16`](./16-notifications.md)).
 
 ### Garde-fous PvP en continu
 
@@ -129,7 +128,7 @@ Ordre chronologique de lecture pour comprendre le jeu de bout en bout :
 5. [`08-units.md`](./08-units.md) + [`04-combat.md`](./04-combat.md) — troupes et résolution.
 6. [`06-barbarians.md`](./06-barbarians.md) + [`07-barbarian-spawning.md`](./07-barbarian-spawning.md) — adversaires neutres.
 7. [`10-conquest.md`](./10-conquest.md) + [`13-barbarian-conquest.md`](./13-barbarian-conquest.md) + [`14-pvp-conquest.md`](./14-pvp-conquest.md) — boucle long terme.
-8. [`05-events-and-retention.md`](./05-events-and-retention.md) — pression de rétention.
+8. [`05-daily-cards-and-oyez.md`](./05-daily-cards-and-oyez.md) — cartes quotidiennes et Oyez.
 9. [`12-village-styles.md`](./12-village-styles.md) — styles stratégiques.
 10. [`11-scouting.md`](./11-scouting.md) — espionnage.
 11. [`09-power-and-rankings.md`](./09-power-and-rankings.md) — puissance, classements.

@@ -5,16 +5,17 @@
 
 ## Résolution
 
-**Décision (user)** : tout le système de **bénédictions quotidiennes** est **hors scope MVP**. La spec reste en place comme intention, mais l'implémentation et la règle d'application temporelle (snapshot vs continuous check) seront tranchées au moment de la mise en chantier réelle, post-MVP.
+**Décision (user)** : tout le système de **bénédictions quotidiennes** est **hors scope MVP**. Depuis le rework rétention, l'ancienne doc `05-events-and-retention.md` a été supprimée et remplacée par `05-daily-cards-and-oyez.md`; les bénédictions ne sont plus une spec vivante.
 
 **Doc mise à jour** :
-- `docs/gameplay/05-events-and-retention.md` § Bénédictions quotidiennes : encart explicite *« Hors scope MVP »* en tête de section, avec lien vers ce ticket pour la traçabilité de la décision.
+- Ancien état : `docs/gameplay/05-events-and-retention.md` § Bénédictions quotidiennes.
+- État courant : supprimé de la source canonique ; les effets utiles éventuels devront être réintroduits via [`docs/gameplay/05-daily-cards-and-oyez.md`](../../docs/gameplay/05-daily-cards-and-oyez.md) ou un nouveau ticket.
 
 **Suite** : à reprendre quand le MVP sera stabilisé. Les 3 cas flous (combat lancé pendant bénédiction, construction démarrée avec bonus Maçon, slot Architecte à l'expiration) seront tranchés à ce moment-là avec une vision plus claire des contraintes runtime.
 
 ## Symptôme
 
-`docs/gameplay/05-events-and-retention.md:71-88` — bénédictions 4 h. Effets ponctuels (« +20 % butin sur barbares », « +1 slot construction ») ou continus (« Production globale +8 % ») mélangés sans règle d'application temporelle.
+Ancien symptôme : `docs/gameplay/05-events-and-retention.md:71-88` — bénédictions 4 h. Effets ponctuels (« +20 % butin sur barbares », « +1 slot construction ») ou continus (« Production globale +8 % ») mélangés sans règle d'application temporelle.
 
 Cas flous :
 - Combat lancé pendant la bénédiction Forgeron, résolu après timeout : bonus appliqué ?
@@ -29,4 +30,4 @@ Règle uniforme par catégorie de bonus :
 - **Snapshot au démarrage** (combat/upgrade lancé sous bénédiction → bonus garanti jusqu'à fin) ?
 - **Continuous check** (bonus actif uniquement quand timer actif, perdu sinon) ?
 
-Documenter dans `05-events-and-retention.md`.
+Si le sujet revient, documenter dans une nouvelle spec dédiée ou dans `05-daily-cards-and-oyez.md` seulement si cela reste lié aux cartes.

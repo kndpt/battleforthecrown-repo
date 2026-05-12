@@ -2,7 +2,7 @@
 
 Vision design des **villages barbares** : leurs principes, leur cycle de vie, leur rôle dans la boucle militaire du joueur.
 
-> ⚠️ Ce doc traite uniquement des **villages barbares** (entités neutres sur la carte du monde, attaquables et pillables). Le **raid barbare global** (événement serveur subi par le joueur tous les 3 à 5 jours) est documenté dans [`05-events-and-retention.md`](./05-events-and-retention.md#raids-barbares-globaux). Ce sont deux mécaniques distinctes.
+> ⚠️ Ce doc traite uniquement des **villages barbares** (entités neutres sur la carte du monde, attaquables et pillables). Les anciens **raids barbares globaux** ne sont plus portés par la doc de rétention ; toute pression PVM barbare future doit être reprise dans le chantier lab [`barbarians-pvm-pillar.md`](./lab/barbarians-pvm-pillar.md).
 
 ## Identité
 
@@ -214,7 +214,7 @@ Cycle d'engagement type d'un joueur avec les villages barbares :
 **Décision** : ❌ **OFF au MVP**. Les villages barbares ne lancent **aucune attaque** sur les joueurs. Ils restent des cibles passives (raid pour piller, conquête pour annexer).
 
 **Pression défensive du joueur, sans initiative barbare** :
-- **Raids barbares globaux** (événement, 3-5 jours) — cf. [`05-events-and-retention.md`](./05-events-and-retention.md). Vague d'attaques mondiales, à durée limitée.
+- **Pression PVM barbare future** — à reprendre dans le chantier lab [`barbarians-pvm-pillar.md`](./lab/barbarians-pvm-pillar.md), pas dans la doc de rétention.
 - **PvP** entre joueurs — la principale source de menace défensive du MVP (raids, conquêtes).
 - **Vautour PvP autour des conquêtes** — un voisin opportuniste peut frapper la garnison fraîchement installée pendant la fenêtre de capture (cf. [`14-pvp-conquest.md` § Cooldown de re-conquête](./14-pvp-conquest.md#3-cooldown-de-re-conquête)).
 
@@ -234,9 +234,8 @@ Cycle d'engagement type d'un joueur avec les villages barbares :
 - [`02-economy-and-progression.md`](./02-economy-and-progression.md) — équilibre 50/50 production/pillage qui justifie le rôle des barbares.
 - [`04-combat.md`](./04-combat.md) — mécanique de combat appliquée aux raids barbares.
 - [`08-units.md`](./08-units.md) — catalogue des unités (source du blueprint d'armée barbare).
-- [`05-events-and-retention.md`](./05-events-and-retention.md) — raid barbare **global** (événement, à ne pas confondre avec les villages barbares).
+- [`lab/barbarians-pvm-pillar.md`](./lab/barbarians-pvm-pillar.md) — pistes futures pour faire des barbares un vrai pilier PVM.
 - [`07-barbarian-spawning.md`](./07-barbarian-spawning.md) — algorithme de génération adaptatif des villages barbares (à rédiger).
 - [`10-conquest.md`](./10-conquest.md) — règles communes de conquête (Seigneur, période de capture variable, garde-fous globaux).
 - [`13-barbarian-conquest.md`](./13-barbarian-conquest.md) — spec complète de la conquête barbare (matérialisation, niveaux, stock).
 - [`11-scouting.md`](./11-scouting.md) — mécanique de scout (ESPION), feature transversale appliquée aux barbares pour révéler troupes et ressources cachées.
-- [`audit/01-barbarian-raids-no-risk.md`](./audit/01-barbarian-raids-no-risk.md) — constat à l'origine de cette spec.

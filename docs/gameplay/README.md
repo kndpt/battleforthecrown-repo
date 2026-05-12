@@ -9,7 +9,7 @@ Documentation gameplay consolidée. Vision design, mécaniques, formules d'équi
 2. [`02-economy-and-progression.md`](./02-economy-and-progression.md) — ressources, population, couronnes, formules de progression, équilibrage économique (production vs pillage).
 3. [`03-buildings.md`](./03-buildings.md) — catalogue des bâtiments MVP (Castle, Wood, Stone, Iron, Warehouse, Farm, Barracks, Watchtower, Salle du Conseil) avec coûts, temps et bonus passifs par niveau. Wall et Hideout sont prévus mais **désactivés MVP**.
 4. [`04-combat.md`](./04-combat.md) — résolution combat, conquête, styles stratégiques de village.
-5. [`05-events-and-retention.md`](./05-events-and-retention.md) — raid barbare global, événements Oyez, bénédictions quotidiennes, quêtes.
+5. [`05-daily-cards-and-oyez.md`](./05-daily-cards-and-oyez.md) — cartes quotidiennes et Oyez : rétention personnelle + contexte monde, sans pass ni bénédictions séparées.
 6. [`06-barbarians.md`](./06-barbarians.md) — villages barbares : tiers, génération, régénération, distribution carte, lisibilité joueur, questions ouvertes.
 7. [`07-barbarian-spawning.md`](./07-barbarian-spawning.md) — algorithme de génération des villages barbares à l'arrivée d'un joueur : déclencheur, anneau et chunking, distribution T1-T5 par distance, anti-submersion par présence joueur, catchup d'arrivée différée.
 8. [`08-units.md`](./08-units.md) — catalogue des troupes : stats, coûts, passifs, archétypes, contre-relations.
@@ -26,6 +26,10 @@ Documentation gameplay consolidée. Vision design, mécaniques, formules d'équi
 19. [`19-world-lifecycle.md`](./19-world-lifecycle.md) — cycle de vie d'un monde : monde borné 120 j, fenêtre d'inscription 14 j, multi-mondes autorisés, wipe planifié à `endsAt`. **Spec MVP tranchée** (defaults paramétrables).
 20. [`20-defensive-friends.md`](./20-defensive-friends.md) — liste d'amis défensifs (renforts mutuels uniquement, cap 5) : candidate MVP minimaliste, doc en chantier.
 21. [`21-alliances-and-tribes.md`](./21-alliances-and-tribes.md) — système complet d'alliances / tribus (chat, diplomatie, guerre coordonnée) : **strictement post-MVP**, doc en chantier.
+
+### Laboratoire
+
+- [`lab/`](./lab/) — idées exploratoires non canoniques : rétention mobile moderne, tribus, barbares PVM, mondes à règles spéciales.
 
 ## Lecture conseillée
 

@@ -26,4 +26,4 @@ Récompenses, déclencheurs UI, tolérance aux raccourcis (skip-tuto, replay), m
 
 - [`01-overview.md`](./01-overview.md) — vision globale, boucles de gameplay, philosophie mobile.
 - [`14-pvp-conquest.md` § Bouclier débutant](./14-pvp-conquest.md#3-bouclier-débutant--48-h-à-larrivée-sur-le-monde) — l'autre filet d'onboarding (protection 48 h temps réel).
-- [`05-events-and-retention.md`](./05-events-and-retention.md) — quêtes quotidiennes (rétention long terme, distinct du tuto initial).
+- [`05-daily-cards-and-oyez.md`](./05-daily-cards-and-oyez.md) — cartes quotidiennes (rétention long terme, distincte du tuto initial).

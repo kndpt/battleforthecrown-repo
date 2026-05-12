@@ -163,7 +163,7 @@ Principe fondamental : **production passive et pillage sur un pied d'égalité (
 | **Production passive** | ~54 000 ressources | Baseline, progression constante |
 | **Pillage actif** | ~54 000 ressources | Double la vitesse de progression |
 | **Raids barbares défensifs** | bonus légers | Récompenses si défense réussie |
-| **Quête quotidienne** | 5 000 – 10 000 | +10–15 % au total |
+| **Cartes quotidiennes** | Valeur modérée, à plafonner | Bonus de confort / rattrapage, pas troisième pilier économique |
 
 > 💡 Un joueur qui pille activement (10–15 raids/jour) progresse **2× plus vite** qu'un joueur passif.
 
