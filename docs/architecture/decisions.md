@@ -159,7 +159,7 @@ Le bundle pertinent est chargé via `loadBundle(name)` au mount du canvas corres
 
 ## ADR-11 — Brouillard de guerre server-authoritative
 
-**Contexte.** La tour de guet définit un rayon de visibilité gameplay (5 cases au lvl 1, +5 par niveau, infini au lvl 10). Avant cette décision, l'API `GET /world/:slug/entities` renvoyait toutes les entités du monde et le frontend Pixi se contentait de dessiner un anneau doré au rayon de la tour — purement cosmétique. Un client modifié pouvait lire toutes les positions, owners et niveaux. Le rayon n'était pas une règle de jeu, juste un effet visuel.
+**Contexte.** La tour de guet définit un rayon de visibilité gameplay (5 cases au lvl 1, +5 par niveau). Avant cette décision, l'API `GET /world/:slug/entities` renvoyait toutes les entités du monde et le frontend Pixi se contentait de dessiner un anneau doré au rayon de la tour — purement cosmétique. Un client modifié pouvait lire toutes les positions, owners et niveaux. Le rayon n'était pas une règle de jeu, juste un effet visuel.
 
 **Décision.** Le filtrage devient **server-side**. Trois états :
 - **Visible** (dans le rayon d'au moins une tour de guet du joueur) : payload complet (id, kind, owner, level, name, data).
@@ -173,7 +173,7 @@ Détail du payload blip — **chaque champ est volontaire**, ne pas "corriger" e
 - Tout le reste (`tier`, `name`, `villageId`, `userId`, etc.) est strippé — c'est ça la vraie fog.
 
 Implémentation :
-- Un `VisionService` (NestJS) calcule les disques de vision du joueur (un par tour de guet, lvl 10 ⇒ disque illimité).
+- Un `VisionService` (NestJS) calcule les disques de vision du joueur (un par tour de guet). Legacy runtime : lvl 10 utilise encore un disque illimité (`radius === null`) ; la cible gameplay est lvl 10 = 50 cases, suivi par [`tasks/45-watchtower-finite-vision.md`](../../tasks/45-watchtower-finite-vision.md).
 - `applyFogOfWar(entities, disks)` mappe chaque entité vers le payload visible ou un blip.
 - Appliqué dans `GET /world/:slug/entities` (le seul endpoint consommé par la WorldMap).
 - Le controller récupère l'utilisateur via `@CurrentUser()` (auth globale, voir [`auth.md`](./auth.md)) — aucune fuite possible côté client (pas de query param userId).

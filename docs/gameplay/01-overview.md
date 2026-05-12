@@ -64,12 +64,12 @@ Les détails sur les ressources, la population et les couronnes sont dans [`02-e
 
 ### Boucle de rétention
 
-1. **Raid barbare global** toutes les 3–5 jours.
-2. **Événements temporaires ("Oyez")** : bonus production, entraînement, vision, etc.
-3. **Classements hebdo/mensuels** : Offensive, Défensive, Économique, Architecte. _(Esquisse post-MVP — cf. [`09-power-and-rankings.md` § Classements](./09-power-and-rankings.md#classements).)_
-4. **Calendrier saisonnier léger** : récompenses cosmétique / ressource en fin de semaine.
+1. **Cartes quotidiennes** : action personnelle courte, backlog limité, récompense modérée.
+2. **Oyez** : contexte monde léger qui oriente les cartes et la priorité du moment.
+3. **Notifications** : retour mobile au bon moment pour les timers et menaces critiques.
+4. **Classements / progression de saison** : post-MVP, à retravailler seulement si le besoin de rétention long terme apparaît.
 
-Détail dans [`05-events-and-retention.md`](./05-events-and-retention.md).
+Détail cartes + Oyez : [`05-daily-cards-and-oyez.md`](./05-daily-cards-and-oyez.md). Notifications : [`16-notifications.md`](./16-notifications.md).
 
 ## Exploration & brouillard de guerre
 
@@ -83,8 +83,8 @@ La carte du monde n'est pas révélée d'un coup. Le joueur **construit sa visio
 
 ### Règles
 
-- **Rayon** = `WATCHTOWER_VISION_LEVELS[level].visibilityRadius`. Lvl 1 = 5 cases, +5 / niveau, **lvl 10 = monde entier**.
-- **Vision = union** des disques de toutes mes tours de guet (un joueur avec 3 villages voit l'union de 3 cercles).
+- **Rayon** = `WATCHTOWER_VISION_LEVELS[level].visibilityRadius`. Lvl 1 = 5 cases, +5 / niveau, **lvl 10 = 50 cases**.
+- **Vision = union** des disques de toutes mes tours de guet (un joueur avec 3 villages voit l'union de 3 cercles). Aucune tour ne donne une vision mondiale : la couverture large vient de villages multiples, conquis ou développés à des positions stratégiques.
 - **Pas de mémoire** : une entité qui sort de mon rayon redevient un blip. Pas de "déjà découvert".
 - **Expéditions** : visibles **uniquement** dans la vision. Hors vision, rien — pas même un blip. C'est la simplification volontaire qui évite de transformer la carte en radar.
 - **Blip non-cliquable** : impossible de sélectionner, attaquer ou tooltip un blip. Il faut le révéler en étendant sa vision.

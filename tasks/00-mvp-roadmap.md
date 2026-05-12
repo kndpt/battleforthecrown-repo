@@ -118,7 +118,7 @@ Ne pas prioriser dans cette roadmap, mais ne pas perdre de vue :
 
 - [`21-alliances-and-tribes.md`](../docs/gameplay/21-alliances-and-tribes.md) — alliances/tribus complètes.
 - [`09-power-and-rankings.md`](../docs/gameplay/09-power-and-rankings.md) § Classements hebdo/mensuels — récompenses périodiques.
-- Bénédictions quotidiennes ([`05`](../docs/gameplay/05-events-and-retention.md)) — application temporelle.
+- Progression de saison / pass — lab uniquement pour l'instant, pas MVP.
 - Marché royal, zones d'influence, Cachette (bâtiment), unités destructrices de bâtiments.
 
 ## Mise à jour de ce document

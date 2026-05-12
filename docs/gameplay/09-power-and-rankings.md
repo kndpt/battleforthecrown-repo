@@ -119,6 +119,6 @@ L'esquisse actuelle crée un **snowball mécanique** non maîtrisé :
 - [`02-economy-and-progression.md` § Couronnes](./02-economy-and-progression.md#couronnes) — la puissance bâtiments pilote le rendement en couronnes.
 - [`03-buildings.md`](./03-buildings.md) — détail par bâtiment, dont le Château (poids le plus élevé).
 - [`04-combat.md`](./04-combat.md) — combat et conquête (consommateur principal de l'évaluation stratégique).
-- [`05-events-and-retention.md`](./05-events-and-retention.md) — événements et rétention, dont les classements font partie.
+- [`05-daily-cards-and-oyez.md`](./05-daily-cards-and-oyez.md) — cartes quotidiennes et Oyez ; les classements restent séparés et post-MVP.
 - [`08-units.md`](./08-units.md) — catalogue des unités, dont les poids alimentent la puissance armée.
 - Backend : [`docs/architecture/backend-modules.md` § power](../architecture/backend-modules.md) — endpoints `GET /power?villageId=…`, `GET /power/kingdom`, `GET /power/leaderboard`.

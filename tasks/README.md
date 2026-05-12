@@ -4,7 +4,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-_(Aucun ticket actif.)_
+- [45 — Watchtower niveau 10 : supprimer la vision globale](./45-watchtower-finite-vision.md)
 
 ## Roadmap stratégique
 

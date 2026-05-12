@@ -131,15 +131,15 @@ Les villages barbares **n'ont pas de style**. Leur composition d'armée est fix�
 
 | Source | Cumul avec style ? |
 | --- | --- |
-| Bénédictions quotidiennes (cf. [`05-events-and-retention.md`](./05-events-and-retention.md#bénédictions-quotidiennes)) | À spécifier — probablement non-cumul si même catégorie (ex : style Raiders +15 % vitesse + bénédiction Éclaireur +5 % vitesse) |
-| Événements Almanax (Oyez) | À spécifier — même règle |
+| Cartes quotidiennes / récompenses temporaires (cf. [`05-daily-cards-and-oyez.md`](./05-daily-cards-and-oyez.md)) | Non-cumul si même catégorie |
+| Oyez | Même règle : le meilleur bonus de même catégorie gagne |
 | Bonus de bâtiments (Watchtower ; Wall post-MVP) | Cumul **OUI** — natures différentes |
 
-> ⚠️ Le cumul exact entre styles, bénédictions et Almanax est à finaliser. La règle existante "non-cumulable même catégorie" du système Bénédictions devrait s'étendre aux styles.
+> ⚠️ Le cumul exact entre styles, cartes et Oyez est à finaliser. Cible actuelle : non-cumul même catégorie.
 
 ## Questions ouvertes
 
-- **Cumul styles ↔ bénédictions / Almanax** : règle à clarifier. Probablement non-cumul même catégorie, mais à valider.
+- **Cumul styles ↔ cartes / Oyez** : règle à clarifier précisément. Cible actuelle : non-cumul même catégorie.
 - **Styles post-MVP** : envisager Renseignement (+scout, +vision) et Conquérant (+vitesse Seigneur, +capture). La Salle du Trône est MVP en mono-niveau (recrutement seul) ; les bonus passifs liés (vitesse entraînement, vitesse de noblage) arriveront avec ses niveaux 2+ et pourront alimenter le style Conquérant.
 
 ## Liens connexes
@@ -149,4 +149,4 @@ Les villages barbares **n'ont pas de style**. Leur composition d'armée est fix�
 - [`02-economy-and-progression.md`](./02-economy-and-progression.md) — application des bonus de production / pop.
 - [`11-scouting.md`](./11-scouting.md) — scout ESPION qui révèle le style.
 - [`06-barbarians.md`](./06-barbarians.md) — barbares (pas de style applicable).
-- [`05-events-and-retention.md`](./05-events-and-retention.md) — bénédictions et Almanax (interaction de cumul à clarifier).
+- [`05-daily-cards-and-oyez.md`](./05-daily-cards-and-oyez.md) — cartes quotidiennes et Oyez (interaction de cumul à clarifier).

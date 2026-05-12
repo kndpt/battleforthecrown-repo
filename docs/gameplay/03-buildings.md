@@ -339,13 +339,15 @@ Identique au Wood : 50 → 1 030 par heure.
 | 7 | 35 cases | ✅ Oui |
 | 8 | 40 cases | ✅ Oui |
 | 9 | 45 cases | ✅ Oui |
-| 10 | Infini | ✅ Oui |
+| 10 | 50 cases | ✅ Oui |
 
-> 💡 Vision **offensive/exploratoire uniquement** — n'augmente pas la défense (voir Rempart).
+> 💡 Vision **offensive/exploratoire uniquement** — n'augmente pas la défense (voir Rempart). Le niveau 10 reste localement puissant, mais ne révèle jamais toute la carte à lui seul.
 
 ### Effet sur le brouillard de guerre
 
-Hors du rayon, les villages voisins (joueurs + barbares) apparaissent comme un **blip anonyme** — un point gris non-cliquable, sans owner, niveau ou nom. Le joueur sait qu'une entité existe mais pas ce que c'est. Au lvl 10, plus de brouillard du tout.
+Hors du rayon, les villages voisins (joueurs + barbares) apparaissent comme un **blip anonyme** — un point gris non-cliquable, sans owner, niveau ou nom. Le joueur sait qu'une entité existe mais pas ce que c'est. Même au niveau 10, le brouillard reste présent hors du disque de 50 cases.
+
+La vision large doit venir de la **position des villages** : conquérir un village avancé puis y développer une Tour de guet ouvre un nouveau disque de vision. La Watchtower devient donc un outil de contrôle territorial, pas un bouton de révélation globale.
 
 Les **expéditions** sont visibles uniquement dans le rayon ; hors vision, elles sont invisibles (pas de blip pour elles, par simplification volontaire).
 

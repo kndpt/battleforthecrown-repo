@@ -68,7 +68,7 @@ Conséquence runtime : un joueur qui crée son 1er village voit les BV proches a
 
 > 💡 La capacité d'un chunk est tirée une fois lors du premier seeding du chunk — pas de re-roll. Le `existingCount` (BV déjà présents) est soustrait de la capacité avant sampling : `need = max(0, capacity − existingCount)`. Ça garantit l'idempotence : un chunk déjà au-dessus de sa cible ne reçoit aucun nouveau BV.
 
-**Rationale** : 3-6 BV par chunk de 50×50 → **~9 BV en moyenne par anneau initial** (rayon ≤ rMax) côté nouveau joueur, ce qui donne 5-10 cibles tier 1-2 immédiates dans la zone de découverte (Watchtower lvl 1 = vision 5 tiles ; les BV proches deviennent visibles dès le premier upgrade Watchtower). Cohérent avec la boucle « première session a du contenu » (cf. [`05-events-and-retention.md`](./05-events-and-retention.md)).
+**Rationale** : 3-6 BV par chunk de 50×50 → **~9 BV en moyenne par anneau initial** (rayon ≤ rMax) côté nouveau joueur, ce qui donne 5-10 cibles tier 1-2 immédiates dans la zone de découverte (Watchtower lvl 1 = vision 5 tiles ; les BV proches deviennent visibles dès le premier upgrade Watchtower). Cohérent avec la boucle « première session a du contenu » (cf. [`15-onboarding.md`](./15-onboarding.md)).
 
 ## Rayon et placement
 
