@@ -1,59 +1,153 @@
 <!doctype html>
-<html><head><meta charset="utf-8"/><title>Scout report</title>
+<html lang="fr"><head><meta charset="utf-8"/><title>Scout report</title>
 <link rel="stylesheet" href="_card.css"/>
-<style>body{background:#f5e6d3;padding:18px;align-items:flex-start;}
-.scout{background:linear-gradient(to bottom,#fef9f0,#e8d4a8);border:2px solid #8b7355;border-radius:14px;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.5);width:100%;}
-.banner{padding:8px 12px;display:flex;align-items:center;gap:8px;font-family:var(--bftc-font-display);font-weight:800;font-size:14px;color:#fff;text-shadow:1px 1px 2px rgba(0,0,0,.6);background:linear-gradient(to bottom,#7a92a8,#3d4f60);border-bottom:2px solid #1f2933;}
+<style>
+body{background:#f5e6d3;padding:18px;align-items:flex-start;}
+.card-stage{justify-content:center;}
+
+.scout{
+  width:360px;
+  background:linear-gradient(to bottom,#fef9f0,#e8d4a8);
+  border:2px solid #8b7355;border-radius:14px;overflow:hidden;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 4px 0 rgba(0,0,0,.22),0 6px 14px rgba(0,0,0,.28);
+}
+
+.banner{
+  padding:10px 12px;display:flex;align-items:center;gap:8px;
+  font-family:var(--bftc-font-display);font-weight:800;font-size:13px;letter-spacing:.06em;
+  color:#fff;text-shadow:1px 1px 2px rgba(0,0,0,.6);
+  background:linear-gradient(to bottom,#7a92a8,#3d4f60);
+  border-bottom:2px solid #1f2933;
+}
 .banner img{width:22px;height:22px;}
-.banner .tag{margin-left:auto;font-size:11px;background:rgba(0,0,0,.3);padding:2px 8px;border-radius:9999px;border:1px solid rgba(255,255,255,.2);}
-.who{padding:8px 12px;display:flex;justify-content:space-between;align-items:center;font-family:var(--bftc-font-display);font-size:11px;color:#6d5838;border-bottom:1px solid rgba(0,0,0,.08);}
-.who b{color:#3d2f1f;font-weight:700;font-size:12px;}
-.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px 12px;}
-.col{background:rgba(255,255,255,.4);border:1.5px solid rgba(0,0,0,.12);border-radius:10px;padding:8px 10px;}
-.col h5{font-family:var(--bftc-font-display);font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:#6d5838;margin-bottom:6px;font-weight:700;}
-.col .row{display:flex;justify-content:space-between;align-items:center;font-family:var(--bftc-font-display);font-size:12px;color:#3d2f1f;font-variant-numeric:tabular-nums;padding:2px 0;}
-.col .row img{width:18px;height:18px;margin-right:6px;}
-.col .row span:first-child{display:flex;align-items:center;}
-.col .row b{font-weight:700;}
-.col .row.hidden{color:#7f8c8d;}
-.col .row.hidden b{filter:blur(3px);user-select:none;}
-.col .row.hidden::after{content:"🔒";margin-left:6px;}
-.defs{padding:6px 12px 10px;display:flex;flex-wrap:wrap;gap:5px;border-top:1px solid rgba(0,0,0,.08);}
-.defs .pill{display:inline-flex;align-items:center;gap:4px;padding:3px 8px 3px 4px;background:rgba(0,0,0,.06);border:1.5px solid rgba(0,0,0,.18);border-radius:9999px;font-family:var(--bftc-font-display);font-weight:700;font-size:11px;color:#3d2f1f;}
-.defs .pill img{width:16px;height:16px;}
-.foot{padding:8px 12px;display:flex;gap:6px;justify-content:flex-end;background:rgba(0,0,0,.04);}
-.foot .gradient-button{font-size:11px;padding:5px 12px;}
-.note{padding:6px 12px;font-family:var(--bftc-font-display);font-style:italic;font-size:11px;color:#6d5838;background:rgba(0,0,0,.04);border-bottom:1px solid rgba(0,0,0,.08);}
+.banner .tag{
+  margin-left:auto;font-size:10px;
+  background:rgba(0,0,0,.32);padding:3px 8px;border-radius:9999px;
+  border:1px solid rgba(255,255,255,.18);letter-spacing:.02em;font-weight:700;
+}
+
+.who{
+  padding:9px 12px;display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--bftc-font-display);font-size:11px;color:#6d5838;
+  border-bottom:1px solid rgba(0,0,0,.08);gap:8px;
+}
+.who .who-main{display:flex;flex-direction:column;gap:1px;min-width:0;}
+.who .who-main b{color:#3d2f1f;font-weight:800;font-size:13px;letter-spacing:.02em;}
+.who .who-main .where{font-size:10.5px;color:#6d5838;font-variant-numeric:tabular-nums;}
+.who .when{font-size:10.5px;color:#6d5838;white-space:nowrap;}
+
+.note{
+  padding:8px 12px;font-family:var(--bftc-font-display);font-style:italic;font-size:11px;
+  color:#6d5838;background:rgba(0,0,0,.04);border-bottom:1px solid rgba(0,0,0,.08);line-height:1.35;
+}
+
+.section-ttl{
+  font-family:var(--bftc-font-display);font-size:10px;text-transform:uppercase;
+  letter-spacing:.16em;color:#6d5838;font-weight:700;
+  display:flex;align-items:center;gap:8px;
+}
+.section-ttl::after{content:"";flex:1;height:1px;background:rgba(0,0,0,.12);}
+
+/* Verdict heroes */
+.heroes{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 12px;
+  border-bottom:1px solid rgba(0,0,0,.08);
+}
+.hero{
+  background:linear-gradient(to bottom,rgba(241,196,15,.20),rgba(241,196,15,.06));
+  border:1.5px solid var(--game-gold-border);
+  border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;
+}
+.hero .lbl{
+  font-family:var(--bftc-font-display);font-size:9px;text-transform:uppercase;letter-spacing:.14em;
+  color:#6d5838;font-weight:700;
+}
+.hero .val{
+  font-family:var(--bftc-font-display);font-weight:800;font-size:20px;color:#3d2f1f;
+  font-variant-numeric:tabular-nums;line-height:1.1;letter-spacing:.01em;
+}
+.hero.danger{
+  background:linear-gradient(to bottom,rgba(231,76,60,.18),rgba(231,76,60,.05));
+  border-color:var(--game-red-border);
+}
+.hero.danger .lbl,.hero.danger .val{color:var(--game-red-border);}
+
+/* Stacked sections */
+.section{padding:10px 12px;border-bottom:1px solid rgba(0,0,0,.08);}
+.section:last-of-type{border-bottom:none;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin-top:8px;}
+.stat{
+  display:flex;align-items:center;gap:8px;
+  font-family:var(--bftc-font-display);font-size:13px;color:#3d2f1f;
+  font-variant-numeric:tabular-nums;
+}
+.stat img{width:22px;height:22px;flex:0 0 22px;}
+.stat .lbl{font-size:11px;color:#6d5838;flex:1;}
+.stat b{font-weight:800;font-size:14px;}
+.stat.hidden b{filter:blur(4px);user-select:none;color:#7f8c8d;}
+.stat.hidden::after{content:"🔒";font-size:11px;}
+
+/* Foot — single full-width CTA */
+.foot{padding:12px;background:rgba(0,0,0,.04);}
+.foot .gradient-button{
+  width:100%;justify-content:center;
+  font-size:16px;padding:12px 16px;
+  letter-spacing:.06em;text-transform:uppercase;
+}
 </style></head>
 <body>
-<div class="card-stage" style="flex-direction:column;align-items:stretch;">
-<div class="scout">
-  <div class="banner"><img src="../assets/icons/position.png"/>RAPPORT D'ESPIONNAGE<span class="tag">1 éclaireur revenu · 0 perdu</span></div>
-  <div class="who"><span>Cible · <b>Sire_Robert</b> · Roc-d'Acier <b>238|617</b></span><span>il y a 4 min</span></div>
-  <div class="note">« Vos éclaireurs ont longé les murailles à l'aube. »</div>
-  <div class="cols">
-    <div class="col">
-      <h5>Ressources visibles</h5>
-      <div class="row"><span><img src="../assets/resources/wood.png"/>Bois</span><b>8.420</b></div>
-      <div class="row"><span><img src="../assets/resources/stone.png"/>Pierre</span><b>3.180</b></div>
-      <div class="row"><span><img src="../assets/resources/iron.png"/>Fer</span><b>1.640</b></div>
-      <div class="row"><span><img src="../assets/casual-icons/coin.png"/>Or</span><b>4.200</b></div>
+<div class="card-stage" style="flex-direction:column;align-items:center;">
+
+  <div class="scout">
+    <div class="banner">
+      <img src="../assets/icons/position.png"/>RAPPORT D'ESPIONNAGE
+      <span class="tag">1 retour · 0 perte</span>
     </div>
-    <div class="col">
-      <h5>Garnison estimée</h5>
-      <div class="row"><span><img src="../assets/army/militia.png"/>Milice</span><b>120</b></div>
-      <div class="row"><span><img src="../assets/army/squire.png"/>Squires</span><b>~48</b></div>
-      <div class="row hidden"><span><img src="../assets/army/archer.png"/>Archers</span><b>???</b></div>
-      <div class="row hidden"><span><img src="../assets/army/templar.png"/>Templiers</span><b>???</b></div>
+    <div class="who">
+      <div class="who-main">
+        <span>Cible · <b>Sire_Robert</b></span>
+        <span class="where">Roc-d'Acier · 238|617</span>
+      </div>
+      <div class="when">il y a 4 min</div>
+    </div>
+    <div class="note">« Vos éclaireurs ont longé les murailles à l'aube — la garde paraît clairsemée du côté ouest. »</div>
+
+    <!-- Hero verdict: pillage estimé + menace mur -->
+    <div class="heroes">
+      <div class="hero">
+        <span class="lbl">Pillage estimé</span>
+        <span class="val">17.440</span>
+      </div>
+      <div class="hero danger">
+        <span class="lbl">Menace · mur</span>
+        <span class="val">Niv. 8</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-ttl">Ressources visibles</div>
+      <div class="grid-2">
+        <div class="stat"><img src="../assets/resources/wood.png"/><span class="lbl">Bois</span><b>8.420</b></div>
+        <div class="stat"><img src="../assets/resources/stone.png"/><span class="lbl">Pierre</span><b>3.180</b></div>
+        <div class="stat"><img src="../assets/resources/iron.png"/><span class="lbl">Fer</span><b>1.640</b></div>
+        <div class="stat"><img src="../assets/casual-icons/coin.png"/><span class="lbl">Or</span><b>4.200</b></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-ttl">Garnison estimée</div>
+      <div class="grid-2">
+        <div class="stat"><img src="../assets/army/militia.png"/><span class="lbl">Milice</span><b>120</b></div>
+        <div class="stat"><img src="../assets/army/squire.png"/><span class="lbl">Squires</span><b>~48</b></div>
+        <div class="stat hidden"><img src="../assets/army/archer.png"/><span class="lbl">Archers</span><b>???</b></div>
+        <div class="stat hidden"><img src="../assets/army/templar.png"/><span class="lbl">Templiers</span><b>???</b></div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <button class="gradient-button gb-danger lg">Attaquer</button>
     </div>
   </div>
-  <div class="defs">
-    <span style="font-family:var(--bftc-font-display);font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#6d5838;font-weight:700;align-self:center;margin-right:4px;">Défenses ·</span>
-    <span class="pill"><img src="../assets/buildings/watchtower.png"/>Tour niv. 3</span>
-    <span class="pill"><img src="../assets/buildings/castle.png"/>Château niv. 5</span>
-    <span class="pill" style="background:linear-gradient(to bottom,rgba(231,76,60,.16),rgba(231,76,60,.06));border-color:var(--game-red-border);color:var(--game-red-border);">⚠ Mur niv. 8</span>
-  </div>
-  <div class="foot"><button class="gradient-button gb-neutral">Partager tribu</button><button class="gradient-button gb-danger">Planifier attaque</button></div>
-</div>
+
 </div>
 </body></html>

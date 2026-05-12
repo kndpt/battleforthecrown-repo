@@ -58,6 +58,8 @@ export { DarkSegmentedStage, SegmentedControl } from './SegmentedControl';
 export type { SegmentedControlOption, SegmentedControlProps, SegmentedControlSize, SegmentedControlTone } from './SegmentedControl';
 export { SemanticColorRow } from './SemanticColorRow';
 export type { SemanticColorRowProps, SemanticColorSegment } from './SemanticColorRow';
+export { ScoutReportCard } from './ScoutReportCard';
+export type { ScoutReportAction, ScoutReportCardProps, ScoutReportSection, ScoutReportStat, ScoutReportVerdict, ScoutReportVerdictTone } from './ScoutReportCard';
 export { ShadowDepthTile } from './ShadowDepthTile';
 export type { ShadowDepthTileProps, ShadowDepthTone } from './ShadowDepthTile';
 export { SurfaceTile } from './SurfaceTile';

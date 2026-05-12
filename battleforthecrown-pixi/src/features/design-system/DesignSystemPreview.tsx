@@ -37,6 +37,7 @@ import {
   RadiusTile,
   RequirementChip,
   ResourceIconTile,
+  ScoutReportCard,
   SegmentedControl,
   SemanticColorRow,
   ShadowDepthTile,
@@ -1005,6 +1006,47 @@ export function DesignSystemPreview() {
               tag={{ label: 'HÉRAUT', tone: 'system' }}
               time="3j"
               tone="system"
+            />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Scout report</h2>
+          <div className="flex w-full justify-center">
+            <ScoutReportCard
+              action={{ label: 'Attaquer' }}
+              bannerIcon="/assets/position.png"
+              metaLabel="1 retour · 0 perte"
+              note="« Vos éclaireurs ont longé les murailles à l'aube — la garde paraît clairsemée du côté ouest. »"
+              sections={[
+                {
+                  items: [
+                    { icon: '/assets/resources/wood.png', label: 'Bois', value: '8.420' },
+                    { icon: '/assets/resources/stone.png', label: 'Pierre', value: '3.180' },
+                    { icon: '/assets/resources/iron.png', label: 'Fer', value: '1.640' },
+                    { icon: '/assets/casual-icons/coin.png', label: 'Or', value: '4.200' },
+                  ],
+                  title: 'Ressources visibles',
+                },
+                {
+                  items: [
+                    { icon: '/assets/army/militia.png', label: 'Milice', value: '120' },
+                    { icon: '/assets/army/squire.png', label: 'Squires', value: '~48' },
+                    { hidden: true, icon: '/assets/army/archer.png', label: 'Archers', value: '???' },
+                    { hidden: true, icon: '/assets/army/templar.png', label: 'Templiers', value: '???' },
+                  ],
+                  title: 'Garnison estimée',
+                },
+              ]}
+              targetName="Sire_Robert"
+              targetPrefix="Cible"
+              timeLabel="il y a 4 min"
+              title="RAPPORT D'ESPIONNAGE"
+              verdicts={[
+                { label: 'Pillage estimé', value: '17.440' },
+                { label: 'Menace · mur', tone: 'danger', value: 'Niv. 8' },
+              ]}
+              villageLabel="Roc-d'Acier · 238|617"
             />
           </div>
         </section>
