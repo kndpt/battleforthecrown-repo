@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes } from 'react';
+import { X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { publicAsset } from '@/lib/publicAsset';
 
@@ -14,6 +15,7 @@ export interface ScoutReportStat {
   hidden?: boolean;
   icon: string;
   label: string;
+  lossValue?: string;
   value: string;
 }
 
@@ -32,8 +34,9 @@ export interface ScoutReportCardProps {
   action: ScoutReportAction;
   bannerIcon: string;
   className?: string;
-  metaLabel: string;
-  note: string;
+  metaLabel?: string;
+  note?: string;
+  onClose?: ButtonHTMLAttributes<HTMLButtonElement>['onClick'];
   sections: ScoutReportSection[];
   targetName: string;
   targetPrefix: string;
@@ -54,6 +57,7 @@ export function ScoutReportCard({
   className,
   metaLabel,
   note,
+  onClose,
   sections,
   targetName,
   targetPrefix,
@@ -65,16 +69,29 @@ export function ScoutReportCard({
   return (
     <article
       className={cn(
-        'w-[360px] overflow-hidden rounded-[14px] border-2 border-[#8b7355] bg-[linear-gradient(to_bottom,#fef9f0,#e8d4a8)] shadow-[inset_0_1px_0_rgba(255,255,255,.55),0_4px_0_rgba(0,0,0,.22),0_6px_14px_rgba(0,0,0,.28)]',
+        'flex w-[360px] flex-col overflow-hidden rounded-[14px] border-2 border-[#8b7355] bg-[linear-gradient(to_bottom,#fef9f0,#e8d4a8)] shadow-[inset_0_1px_0_rgba(255,255,255,.55),0_4px_0_rgba(0,0,0,.22),0_6px_14px_rgba(0,0,0,.28)]',
         className,
       )}
     >
-      <header className="flex items-center gap-2 border-b-2 border-[#1f2933] bg-[linear-gradient(to_bottom,#7a92a8,#3d4f60)] px-3 py-2.5 font-game text-[13px] font-extrabold uppercase tracking-[.06em] text-white [text-shadow:1px_1px_2px_rgba(0,0,0,.6)]">
-        <img alt="" className="size-[22px]" src={publicAsset(bannerIcon)} />
+      <header className="flex min-h-[70px] items-center gap-3 border-b-2 border-[#1f5288] bg-[linear-gradient(to_bottom,#5b9bd5,#1f5288)] px-4 py-4 font-game text-[16px] font-extrabold uppercase tracking-[.06em] text-white [text-shadow:1px_1px_2px_rgba(0,0,0,.6)]">
+        <img alt="" className="size-[26px]" src={publicAsset(bannerIcon)} />
         <span>{title}</span>
-        <span className="ml-auto rounded-full border border-[rgba(255,255,255,.18)] bg-[rgba(0,0,0,.32)] px-2 py-[3px] text-[10px] font-bold normal-case tracking-[.02em]">
-          {metaLabel}
-        </span>
+        <span className="ml-auto" />
+        {metaLabel ? (
+          <span className="rounded-full border border-[rgba(255,255,255,.18)] bg-[rgba(0,0,0,.32)] px-2 py-[3px] text-[10px] font-bold normal-case tracking-[.02em]">
+            {metaLabel}
+          </span>
+        ) : null}
+        {onClose ? (
+          <button
+            aria-label="Fermer"
+            className="flex size-7 items-center justify-center rounded-full bg-[rgba(0,0,0,.28)] text-white transition hover:bg-[rgba(0,0,0,.40)]"
+            onClick={onClose}
+            type="button"
+          >
+            <X className="size-4" strokeWidth={3} />
+          </button>
+        ) : null}
       </header>
 
       <div className="flex items-center justify-between gap-2 border-b border-[rgba(0,0,0,.08)] px-3 py-[9px] font-game text-[11px] text-[#6d5838]">
@@ -87,9 +104,11 @@ export function ScoutReportCard({
         <span className="whitespace-nowrap text-[10.5px] text-[#6d5838]">{timeLabel}</span>
       </div>
 
-      <p className="border-b border-[rgba(0,0,0,.08)] bg-[rgba(0,0,0,.04)] px-3 py-2 font-game text-[11px] italic leading-[1.35] text-[#6d5838]">
-        {note}
-      </p>
+      {note ? (
+        <p className="border-b border-[rgba(0,0,0,.08)] bg-[rgba(0,0,0,.04)] px-3 py-2 font-game text-[11px] italic leading-[1.35] text-[#6d5838]">
+          {note}
+        </p>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-2 border-b border-[rgba(0,0,0,.08)] px-3 py-2.5">
         {verdicts.map((verdict) => {
@@ -118,7 +137,15 @@ export function ScoutReportCard({
               <div className="flex items-center gap-2 font-game text-[13px] tabular-nums text-[#3d2f1f]" key={`${section.title}-${item.label}`}>
                 <img alt="" className="size-[22px] flex-none object-contain" src={publicAsset(item.icon)} />
                 <span className="flex-1 text-[11px] text-[#6d5838]">{item.label}</span>
-                <b className={cn('text-sm font-extrabold', item.hidden ? 'select-none text-[#7f8c8d] blur-[4px]' : '')}>{item.value}</b>
+                {item.lossValue ? (
+                  <span className="flex items-baseline gap-2">
+                    <b className="text-sm font-extrabold">{item.value}</b>
+                    <span className="text-sm font-extrabold text-[#6d5838]">→</span>
+                    <b className="text-sm font-extrabold text-[#a93226]">{item.lossValue}</b>
+                  </span>
+                ) : (
+                  <b className={cn('text-sm font-extrabold', item.hidden ? 'select-none text-[#7f8c8d] blur-[4px]' : '')}>{item.value}</b>
+                )}
                 {item.hidden ? <span className="text-[11px]">🔒</span> : null}
               </div>
             ))}
@@ -126,9 +153,9 @@ export function ScoutReportCard({
         </section>
       ))}
 
-      <footer className="bg-[rgba(0,0,0,.04)] p-3">
+      <footer className="mt-auto bg-[rgba(0,0,0,.04)] p-3">
         <button
-          className="flex w-full cursor-pointer items-center justify-center gap-[6px] rounded-[10px] border-2 border-[#a93226] bg-[linear-gradient(to_bottom,#e74c3c,#c0392b)] px-4 py-3 font-game text-base font-bold uppercase tracking-[.06em] text-white shadow-[0_2px_0_rgba(0,0,0,.18),inset_0_1px_0_rgba(255,255,255,.25)] [text-shadow:1px_1px_2px_rgba(0,0,0,.6)] disabled:cursor-not-allowed disabled:opacity-[.5]"
+          className="flex w-full cursor-pointer items-center justify-center gap-[6px] rounded-[9px] border-2 border-[#a93226] bg-[linear-gradient(to_bottom,#e74c3c,#c0392b)] px-4 py-2.5 font-game text-sm font-bold uppercase tracking-[.06em] text-white shadow-[0_2px_0_rgba(0,0,0,.18),inset_0_1px_0_rgba(255,255,255,.25)] [text-shadow:1px_1px_2px_rgba(0,0,0,.6)] disabled:cursor-not-allowed disabled:opacity-[.5]"
           disabled={action.disabled}
           onClick={action.onClick}
           type="button"

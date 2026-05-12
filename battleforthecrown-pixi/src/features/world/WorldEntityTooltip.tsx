@@ -45,7 +45,7 @@ export function WorldEntityTooltip({ screenPosition, children }: WorldEntityTool
   return (
     <div
       ref={ref}
-      className="pointer-events-auto fixed z-30 max-w-xs"
+      className="pointer-events-auto fixed z-30 max-w-none"
       style={{ left: pos.left, top: pos.top }}
     >
       {children}

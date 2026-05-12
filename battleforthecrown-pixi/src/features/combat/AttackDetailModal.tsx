@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Eye, Shield, Swords, X } from 'lucide-react';
+import { Shield, Swords, X } from 'lucide-react';
 import {
   Badge,
   Button,
@@ -27,6 +27,8 @@ import { ApiError } from '@/api';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
 import { unitMetaFor } from '@/features/army/unitConfig';
+import { SegmentedControl } from '@/features/design-system/components';
+import { publicAsset } from '@/lib/publicAsset';
 import type { MapEntity } from '@/api/world-types';
 
 interface AttackDetailModalProps {
@@ -196,15 +198,25 @@ export function AttackDetailModal({
 
         <div
           className={`relative h-32 bg-gradient-to-br border-b-4 flex-shrink-0 flex items-center justify-center ${
-            isReinforcement
+            activeMode === 'reinforce'
               ? 'from-game-blue-light to-game-blue-border border-game-blue-border'
+              : activeMode === 'scout'
+                ? 'from-game-blue-light to-game-blue-dark border-game-blue-border'
               : 'from-game-red-light to-game-red-dark border-game-red-border'
           }`}
         >
           <div className="text-center">
-            <div className="text-3xl mb-1" aria-hidden>
-              {isReinforcement ? '🛡️' : '⚔️'}
-            </div>
+            {activeMode === 'scout' ? (
+              <img
+                alt=""
+                className="mx-auto mb-1 size-10 object-contain drop-shadow-[0_2px_2px_rgba(0,0,0,.35)]"
+                src={publicAsset('/assets/lupa.png')}
+              />
+            ) : (
+              <div className="text-3xl mb-1" aria-hidden>
+                {isReinforcement ? '🛡️' : '⚔️'}
+              </div>
+            )}
             <h2 className="font-cinzel text-xl font-bold text-white text-shadow">
               {activeMode === 'reinforce'
                 ? 'Préparer un renfort'
@@ -220,34 +232,21 @@ export function AttackDetailModal({
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {!isReinforcement && canScout && (
-            <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant={activeMode === 'attack' ? 'danger' : 'neutral'}
-                size="md"
-                className="font-bold"
-                onClick={() => {
-                  setMode('attack');
-                  setError(null);
-                }}
-                disabled={isPending}
-              >
-                <Swords size={16} />
-                Attaque
-              </Button>
-              <Button
-                variant={activeMode === 'scout' ? 'info' : 'neutral'}
-                size="md"
-                className="font-bold"
-                onClick={() => {
-                  setMode('scout');
-                  setError(null);
-                }}
-                disabled={isPending}
-              >
-                <Eye size={16} />
-                Scout
-              </Button>
-            </div>
+            <SegmentedControl
+              ariaLabel="Mode de mission"
+              className="w-full [&>button]:flex-1 [&>button]:justify-center"
+              onChange={(value) => {
+                if (isPending) return;
+                setMode(value as 'attack' | 'scout');
+                setError(null);
+              }}
+              options={[
+                { icon: '/assets/army-power.png', label: 'Attaque', value: 'attack' },
+                { icon: '/assets/lupa.png', label: 'Scout', value: 'scout' },
+              ]}
+              size="tabs"
+              value={activeMode === 'scout' ? 'scout' : 'attack'}
+            />
           )}
 
           {inventory.isLoading ? (
@@ -270,13 +269,17 @@ export function AttackDetailModal({
               {heldUnits.map((unit) => {
                 const meta = unitMetaFor(unit.type);
                 const value = selectedUnits[unit.type] ?? 0;
+                const unitIconPath =
+                  activeMode === 'scout' && unit.type === UNIT_TYPES.SPY
+                    ? '/assets/lupa.png'
+                    : meta.iconPath;
                 return (
                   <div key={unit.type} className="space-y-2">
                     <div className="flex items-center gap-3 justify-between">
                       <div className="flex items-center gap-2">
-                        {meta.iconPath ? (
+                        {unitIconPath ? (
                           <img
-                            src={meta.iconPath}
+                            src={unitIconPath}
                             alt={meta.name}
                             width={24}
                             height={24}
@@ -383,7 +386,7 @@ export function AttackDetailModal({
                   {activeMode === 'reinforce'
                     ? <Shield size={16} />
                     : activeMode === 'scout'
-                      ? <Eye size={16} />
+                      ? <img alt="" className="size-4 object-contain" src={publicAsset('/assets/lupa.png')} />
                       : <Swords size={16} />}
                   <span>
                     {activeMode === 'reinforce'

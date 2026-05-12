@@ -905,6 +905,7 @@ export class CombatWorker implements OnModuleInit {
       tx.village.findUnique({
         where: { id: expedition.targetRefId },
         include: {
+          buildings: true,
           resourceStock: true,
           unitInventory: true,
           strategyConfig: true,
@@ -937,6 +938,9 @@ export class CombatWorker implements OnModuleInit {
                 }
               : { wood: 0, stone: 0, iron: 0 },
           };
+    const wallLevel =
+      targetVillage.buildings.find((building) => building.type === 'WALL')
+        ?.level ?? 0;
 
     const report = await tx.scoutReport.create({
       data: {
@@ -957,7 +961,9 @@ export class CombatWorker implements OnModuleInit {
             : null,
         details: {
           expeditionId: expedition.id,
+          scoutLosses: {},
           scoutUnits: parseUnitMap(expedition.units, 'expedition.units'),
+          wallLevel,
         },
       },
     });

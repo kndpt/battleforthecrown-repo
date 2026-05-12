@@ -29,6 +29,7 @@ import {
   LeaderboardRow,
   LevelChip,
   MailInboxItem,
+  MapEntityCallout,
   NumberStepper,
   PipRating,
   PlayerProfileCard,
@@ -413,7 +414,7 @@ export function DesignSystemPreview() {
                   tone: 'return',
                 },
                 {
-                  icon: '/assets/position.png',
+                  icon: '/assets/lupa.png',
                   movementId: 'scout-bois-argent',
                   onRecall: () => undefined,
                   progress: 22,
@@ -782,9 +783,9 @@ export function DesignSystemPreview() {
                 ariaLabel="Doctrine"
                 onChange={setSegmentIcon}
                 options={[
-                  { icon: '/assets/hand-red.png', label: 'Offensif', value: 'offense' },
+                  { icon: '/assets/army-power.png', label: 'Offensif', value: 'offense' },
                   { icon: '/assets/hand-silver.png', label: 'Défensif', value: 'defense' },
-                  { icon: '/assets/watchtower.png', label: 'Espion', value: 'spy' },
+                  { icon: '/assets/lupa.png', label: 'Espion', value: 'spy' },
                 ]}
                 value={segmentIcon}
               />
@@ -947,13 +948,12 @@ export function DesignSystemPreview() {
         </section>
 
         <section className="space-y-4">
-          <span className="font-mono text-[10px] text-[#5d4a32]">boîte du seigneur · 12 messages</span>
           <InboxTabs
             onChange={setInboxTab}
             options={[
               { count: '3', label: 'Tous', value: 'all' },
-              { label: 'Rapports', value: 'reports' },
-              { count: '1', label: 'Joueurs', value: 'players' },
+              { label: 'Combats', value: 'reports' },
+              { count: '1', label: 'Scouts', value: 'players' },
               { label: 'Système', value: 'system' },
             ]}
             value={inboxTab}
@@ -973,7 +973,7 @@ export function DesignSystemPreview() {
             <MailInboxItem
               icon="/assets/casual-icons/crown.png"
               preview="Vos squires ont enfoncé la garnison adverse…"
-              sender="Rapport · Roc-d'Acier"
+              sender="Roc-d'Acier"
               subject="Pillage réussi · +2.400 butin ramené"
               tag={{ label: 'VICTOIRE', tone: 'report' }}
               time="il y a 12 min"
@@ -990,9 +990,9 @@ export function DesignSystemPreview() {
               unread
             />
             <MailInboxItem
-              icon="/assets/position.png"
+              icon="/assets/lupa.png"
               preview="Vos éclaireurs ont longé les murailles…"
-              sender="Rapport · Tours-Hautes"
+              sender="Tours-Hautes"
               subject="Garnison estimée : ~168 unités"
               tag={{ label: 'ESPION', tone: 'scout' }}
               time="hier"
@@ -1015,10 +1015,16 @@ export function DesignSystemPreview() {
           <div className="flex w-full justify-center">
             <ScoutReportCard
               action={{ label: 'Attaquer' }}
-              bannerIcon="/assets/position.png"
+              bannerIcon="/assets/lupa.png"
               metaLabel="1 retour · 0 perte"
               note="« Vos éclaireurs ont longé les murailles à l'aube — la garde paraît clairsemée du côté ouest. »"
               sections={[
+                {
+                  items: [
+                    { icon: '/assets/lupa.png', label: 'Espion', lossValue: '-1', value: '12' },
+                  ],
+                  title: 'Espions — pertes',
+                },
                 {
                   items: [
                     { icon: '/assets/resources/wood.png', label: 'Bois', value: '8.420' },
@@ -1115,6 +1121,43 @@ export function DesignSystemPreview() {
               points="32.140"
               rank={7}
               subtitle="sans alliance · 1 village"
+            />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Map entity callout</h2>
+          <div className="flex w-full flex-wrap items-start gap-6 bg-[#f5e6d3] p-[18px]">
+            <span className="min-w-[100px] font-mono text-[10px] text-[#5d4a32]">
+              callout · barbare T4
+            </span>
+            <MapEntityCallout
+              actions={[
+                { icon: '⚔', label: 'Attaquer', tone: 'attack' },
+                { icon: '/assets/lupa.png', label: 'Espionner', tone: 'scout' },
+              ]}
+              coordinates="312|488"
+              stats={[
+                { icon: '/assets/casual-icons/crown.png', value: '8.420' },
+                { icon: '/assets/watchtower.png', value: 'Niv. 6' },
+              ]}
+              subtitle="Inhabité · pillable"
+              tier={{ label: '★ T4 OR' }}
+              title="Camp barbare"
+              titleIcon="★"
+            />
+            <MapEntityCallout
+              actions={[
+                { icon: '🛡', label: 'Soutenir', tone: 'support' },
+                { icon: '✉', label: 'Message', tone: 'scout' },
+              ]}
+              coordinates="312|490"
+              stats={[
+                { icon: '/assets/casual-icons/crown.png', value: '12.480' },
+                { icon: '/assets/castle.png', value: 'Château Niv. 4' },
+              ]}
+              subtitle="Sire_Robert · [BFC] allié"
+              title="Roc-d'Acier"
             />
           </div>
         </section>

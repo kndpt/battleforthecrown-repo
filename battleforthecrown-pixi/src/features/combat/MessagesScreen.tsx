@@ -25,9 +25,6 @@ export function MessagesScreen() {
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         <main className="container mx-auto px-3 py-4 max-w-2xl">
-          <h1 className="font-cinzel text-xl font-bold text-kingdom-900 mb-4 px-1">
-            Rapports
-          </h1>
           <ReportsList onReportClick={setSelectedReport} />
         </main>
       </div>

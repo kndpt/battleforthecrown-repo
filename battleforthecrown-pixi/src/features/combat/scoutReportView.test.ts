@@ -21,6 +21,7 @@ const report: ScoutReportDto = {
   units: { MILITIA: 12, SPY: 2 },
   resources: { wood: 100, stone: 50, iron: 25 },
   strategy: 'FORTRESS',
+  details: { scoutLosses: { SPY: 0 }, scoutUnits: { SPY: 20 }, wallLevel: 6 },
   isRead: false,
   timestamp: '2026-05-12T10:00:00.000Z',
 };
@@ -37,25 +38,39 @@ describe('scoutReportView', () => {
   it('builds card props from backend scout data without hiding revealed fields', () => {
     const props = buildScoutReportCardProps(report, undefined, false);
 
-    expect(props.metaLabel).toBe('Nouveau');
-    expect(props.verdicts.map((verdict) => verdict.value)).toEqual(['14', '175']);
-    expect(props.sections[0].items).toEqual([
+    expect(props.metaLabel).toBeUndefined();
+    expect(props.verdicts).toEqual([
+      expect.objectContaining({ label: 'Pillage estimé', value: '175' }),
+      expect.objectContaining({ label: 'Menace · mur', value: 'Niv. 6' }),
+    ]);
+    expect(props.targetPrefix).toBe('Cible');
+    expect(props.villageLabel).toBe('Village joueur · 12|34');
+    expect(props.sections[0]).toEqual(
+      expect.objectContaining({
+        title: 'Espions — pertes',
+        items: [expect.objectContaining({ label: 'Espion', lossValue: '0', value: '20' })],
+      }),
+    );
+    expect(props.sections[1].items).toEqual([
       expect.objectContaining({ label: 'Milice de paysans', value: '12' }),
       expect.objectContaining({ label: 'Espion', value: '2' }),
     ]);
-    expect(props.sections[2].items[0]).toEqual(
+    expect(props.sections[3].items[0]).toEqual(
       expect.objectContaining({ label: 'Style', value: 'Forteresse' }),
     );
   });
 
   it('keeps barbarian tier visible in the target label', () => {
-    expect(
-      scoutReportTargetLabel({
-        ...report,
-        targetKind: 'BARBARIAN_VILLAGE',
-        targetName: null,
-        targetTier: 'T2',
-      }),
-    ).toBe('Village barbare T2');
+    const barbarianReport: ScoutReportDto = {
+      ...report,
+      targetKind: 'BARBARIAN_VILLAGE',
+      targetName: null,
+      targetTier: 'T2',
+    };
+
+    expect(scoutReportTargetLabel(barbarianReport)).toBe('Village barbare T2');
+    expect(buildScoutReportCardProps(barbarianReport, undefined, false).sections).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ title: 'Style stratégique' })]),
+    );
   });
 });

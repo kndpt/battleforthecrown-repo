@@ -88,6 +88,7 @@ export interface ScoutReportResponse {
   units: UnitMap;
   resources: LootResources;
   strategy?: string | null;
+  details?: { scoutLosses?: UnitMap; scoutUnits?: UnitMap; wallLevel?: number };
   isRead: boolean;
   timestamp: string;
 }

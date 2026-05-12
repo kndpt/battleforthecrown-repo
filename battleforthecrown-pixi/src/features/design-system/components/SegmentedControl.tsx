@@ -68,7 +68,7 @@ export function SegmentedControl({
             onClick={() => onChange(option.value)}
             type="button"
           >
-            {option.icon ? <img alt="" className="size-3.5 object-contain" src={publicAsset(option.icon)} /> : null}
+            {option.icon ? <img alt="" className="size-5 object-contain" src={publicAsset(option.icon)} /> : null}
             {option.label}
             {option.badge ? (
               <span className="ml-0.5 rounded-full border border-[#a93226] bg-gradient-to-b from-[#e74c3c] to-[#c0392b] px-1.5 py-px text-[10px] font-extrabold text-white">

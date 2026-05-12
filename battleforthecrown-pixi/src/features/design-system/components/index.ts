@@ -34,6 +34,8 @@ export { IconButton } from './IconButton';
 export type { IconButtonProps, IconButtonTone } from './IconButton';
 export { InboxTabs, MailInboxItem } from './MailInboxItem';
 export type { InboxTabOption, InboxTabsProps, MailInboxItemProps, MailInboxTag, MailInboxTone } from './MailInboxItem';
+export { MapEntityCallout } from './MapEntityCallout';
+export type { MapEntityCalloutAction, MapEntityCalloutActionTone, MapEntityCalloutProps, MapEntityCalloutStat, MapEntityCalloutTier } from './MapEntityCallout';
 export { LeaderboardHeader, LeaderboardRow } from './LeaderboardRow';
 export type { LeaderboardDelta, LeaderboardDeltaTone, LeaderboardHeaderProps, LeaderboardRankTone, LeaderboardRowProps } from './LeaderboardRow';
 export { DigitTimer, Timer } from './Timer';

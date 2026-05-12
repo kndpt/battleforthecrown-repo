@@ -168,34 +168,18 @@ function ScoutReportDetail({
   };
 
   return (
-    <Modal isOpen onClose={onClose} size="md" variant="default">
+    <Modal isOpen onClose={onClose} size="sm" variant="default">
       <ModalBody className="!p-0 relative flex flex-col overflow-hidden h-[90vh] max-h-[90vh]">
-        <header className="px-4 py-3 bg-gradient-to-r from-[#3d4f60] via-[#4d6478] to-[#7a92a8] border-b-2 border-[#1f2933] flex items-center gap-2 flex-shrink-0">
-          <div className="w-9" aria-hidden />
-          <div className="flex-1 text-center">
-            <h1 className="font-cinzel font-bold text-white text-shadow-game">
-              Rapport Scout
-            </h1>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-            aria-label="Fermer"
-          >
-            <X className="w-5 h-5 text-white" />
-          </button>
-        </header>
-
         {report.isLoading || !report.data ? (
           <div className="flex-1 flex items-center justify-center">
             <Spinner size="lg" />
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100 p-4 pb-6">
+          <div className="flex-1 overflow-y-auto bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
             <ScoutReportCard
               {...buildScoutReportCardProps(report.data, handleDelete, isDeleting)}
-              className="mx-auto w-full max-w-[360px]"
+              className="min-h-full w-full max-w-none rounded-none border-0 shadow-none"
+              onClose={onClose}
             />
           </div>
         )}

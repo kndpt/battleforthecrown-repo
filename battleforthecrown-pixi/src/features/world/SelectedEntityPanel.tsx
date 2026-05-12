@@ -1,11 +1,9 @@
-import { Eye, Shield, Swords, X } from 'lucide-react';
-import { Button, Panel } from '@/ui';
+import { MapEntityCallout } from '@/features/design-system/components';
 import type { MapEntity } from '@/api/world-types';
 
 interface SelectedEntityPanelProps {
   entity: MapEntity | null;
   currentVillageId?: string | null;
-  onClose: () => void;
   onAttack?: (entity: MapEntity) => void;
   onScout?: (entity: MapEntity) => void;
 }
@@ -29,7 +27,6 @@ function typeLabel(entity: MapEntity): string {
 export function SelectedEntityPanel({
   entity,
   currentVillageId,
-  onClose,
   onAttack,
   onScout,
 }: SelectedEntityPanelProps) {
@@ -43,65 +40,52 @@ export function SelectedEntityPanel({
   const showReinforce = isOwnedPlayerVillage
     && entity.id !== currentVillageId
     && Boolean(onAttack);
-  const actionLabel = showReinforce ? 'Renforcer' : 'Attaquer';
-  const ActionIcon = showReinforce ? Shield : Swords;
-
-  const showAction = showAttack || showScout || showReinforce;
+  const actions = [
+    ...(showAttack
+      ? [
+          {
+            icon: '⚔',
+            label: 'Attaquer',
+            tone: 'attack' as const,
+            onClick: () => onAttack?.(entity),
+          },
+        ]
+      : []),
+    ...(showScout
+      ? [
+          {
+            icon: '/assets/lupa.png',
+            label: 'Espionner',
+            tone: 'scout' as const,
+            onClick: () => onScout?.(entity),
+          },
+        ]
+      : []),
+    ...(showReinforce
+      ? [
+          {
+            icon: '🛡',
+            label: 'Renforcer',
+            tone: 'support' as const,
+            onClick: () => onAttack?.(entity),
+          },
+        ]
+      : []),
+  ];
 
   return (
-    <Panel
-      variant="parchment"
-      padding="sm"
-      className="relative flex flex-col gap-2 text-sm text-kingdom-800 shadow-lg w-full max-w-xs"
-    >
-      <button
-        type="button"
-        onClick={onClose}
-        aria-label="Fermer"
-        className="absolute top-1 right-1 p-1 rounded-full text-kingdom-700 hover:bg-black/10 transition-colors"
-      >
-        <X size={16} />
-      </button>
-
-      <div className="flex flex-col leading-tight pr-6">
-        <span className="font-cinzel text-[11px] uppercase tracking-wide text-kingdom-600">
-          {typeLabel(entity)}
-        </span>
-        <span className="font-cinzel text-base font-bold text-kingdom-900">
-          {entity.name}
-        </span>
-      </div>
-
-      {showAction && (
-        <div className="grid grid-cols-2 gap-2">
-          {(showAttack || showReinforce) && (
-            <Button
-              variant={showReinforce ? 'neutral' : 'danger'}
-              size="sm"
-              onClick={() => onAttack?.(entity)}
-              className="w-full font-bold"
-            >
-              <span className="inline-flex items-center justify-center gap-2">
-                <ActionIcon size={16} />
-                <span>{actionLabel}</span>
-              </span>
-            </Button>
-          )}
-          {showScout && (
-            <Button
-              variant="info"
-              size="sm"
-              onClick={() => onScout?.(entity)}
-              className="w-full font-bold"
-            >
-              <span className="inline-flex items-center justify-center gap-2">
-                <Eye size={16} />
-                <span>Scout</span>
-              </span>
-            </Button>
-          )}
-        </div>
-      )}
-    </Panel>
+    <MapEntityCallout
+      actions={actions}
+      coordinates={`${entity.x}|${entity.y}`}
+      subtitle={subtitleFor(entity)}
+      tier={entity.tier ? { label: `★ ${entity.tier}` } : undefined}
+      title={entity.name}
+      titleIcon={isBarbarian ? '★' : undefined}
+    />
   );
+}
+
+function subtitleFor(entity: MapEntity): string {
+  if (entity.kind === 'BARBARIAN_VILLAGE') return 'Inhabité · pillable';
+  return typeLabel(entity);
 }

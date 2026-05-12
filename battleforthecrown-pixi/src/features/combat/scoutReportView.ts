@@ -50,6 +50,20 @@ export function scoutReportResourceTotal(report: ScoutReportDto): number {
   );
 }
 
+function scoutReportUnitMapTotal(units: Record<string, number> | undefined): number {
+  return Object.values(units ?? {}).reduce((sum, quantity) => sum + quantity, 0);
+}
+
+function formatRelativeTime(timestamp: string): string {
+  const elapsedMs = Math.max(0, Date.now() - new Date(timestamp).getTime());
+  const elapsedMinutes = Math.floor(elapsedMs / 60_000);
+  if (elapsedMinutes < 1) return "à l'instant";
+  if (elapsedMinutes < 60) return `il y a ${elapsedMinutes} min`;
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+  if (elapsedHours < 24) return `il y a ${elapsedHours} h`;
+  return `il y a ${Math.floor(elapsedHours / 24)} j`;
+}
+
 export function scoutReportStrategyLabel(strategy: string | null | undefined): string {
   if (!strategy) return 'Non applicable';
   return DEFAULT_VILLAGE_STRATEGY.strategies[strategy as VillageStrategyType]?.displayName ?? strategy;
@@ -60,6 +74,9 @@ export function buildScoutReportCardProps(
   onDelete: ScoutReportCardProps['action']['onClick'],
   deleteDisabled: boolean,
 ): ScoutReportCardProps {
+  const scoutMeta = unitMetaFor('SPY');
+  const scoutUnits = scoutReportUnitMapTotal(report.details?.scoutUnits);
+  const scoutLosses = scoutReportUnitMapTotal(report.details?.scoutLosses);
   const armyItems = Object.entries(report.units ?? {})
     .filter(([, quantity]) => quantity > 0)
     .sort(([a], [b]) => a.localeCompare(b))
@@ -80,6 +97,17 @@ export function buildScoutReportCardProps(
 
   const sections: ScoutReportSection[] = [
     {
+      title: 'Espions — pertes',
+      items: [
+        {
+          icon: scoutMeta.iconPath ?? '/assets/lupa.png',
+          label: scoutMeta.name,
+          lossValue: scoutLosses > 0 ? `-${NUMBER_FORMATTER.format(scoutLosses)}` : '0',
+          value: NUMBER_FORMATTER.format(scoutUnits),
+        },
+      ],
+    },
+    {
       title: 'Armée observée',
       items: armyItems.length > 0
         ? armyItems
@@ -89,16 +117,20 @@ export function buildScoutReportCardProps(
       title: 'Ressources',
       items: resourceItems,
     },
-    {
-      title: 'Style stratégique',
-      items: [
-        {
-          icon: '/assets/strategy-icons/spritesheet.png',
-          label: 'Style',
-          value: scoutReportStrategyLabel(report.strategy),
-        },
-      ],
-    },
+    ...(report.targetKind === 'BARBARIAN_VILLAGE'
+      ? []
+      : [
+          {
+            title: 'Style stratégique',
+            items: [
+              {
+                icon: '/assets/strategy-icons/spritesheet.png',
+                label: 'Style',
+                value: scoutReportStrategyLabel(report.strategy),
+              },
+            ],
+          },
+        ]),
   ];
 
   return {
@@ -107,29 +139,28 @@ export function buildScoutReportCardProps(
       label: deleteDisabled ? 'Suppression...' : 'Supprimer',
       onClick: onDelete,
     },
-    bannerIcon: '/assets/watchtower.png',
-    metaLabel: report.isRead ? 'Lu' : 'Nouveau',
-    note: "Snapshot observé à l'arrivée des ESPIONs. Les stocks et troupes peuvent avoir changé depuis.",
+    bannerIcon: '/assets/lupa.png',
     sections,
     targetName: scoutReportTitle(report),
-    targetPrefix: scoutReportTargetLabel(report),
-    timeLabel: new Date(report.timestamp).toLocaleString('fr-FR', {
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    }),
+    targetPrefix: 'Cible',
+    timeLabel: formatRelativeTime(report.timestamp),
     title: 'Rapport scout',
     verdicts: [
       {
-        label: 'Unités',
-        value: NUMBER_FORMATTER.format(scoutReportUnitTotal(report)),
+        label: 'Pillage estimé',
+        value: NUMBER_FORMATTER.format(scoutReportResourceTotal(report)),
       },
-      {
-        label: 'Stock',
-        value: formatResourceAmount(scoutReportResourceTotal(report)),
-      },
+      report.details?.wallLevel !== undefined
+        ? {
+            label: 'Menace · mur',
+            tone: report.details.wallLevel > 0 ? 'danger' : 'default',
+            value: `Niv. ${report.details.wallLevel}`,
+          }
+        : {
+            label: 'Menace · mur',
+            value: 'Inconnu',
+          },
     ],
-    villageLabel: `(${report.targetX}, ${report.targetY})`,
+    villageLabel: `${scoutReportTargetLabel(report)} · ${report.targetX}|${report.targetY}`,
   };
 }

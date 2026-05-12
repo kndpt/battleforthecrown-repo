@@ -1,6 +1,6 @@
 # Scout / Espionnage
 
-Mécanique de **scout** : observer une cible avant de l'attaquer pour révéler sa composition d'armée et son stock de ressources. Feature **transversale** : s'applique à tout type d'entité (villages joueurs, villages barbares, et futures entités).
+Mécanique de **scout** : observer une cible avant de l'attaquer pour révéler sa composition d'armée, son stock de ressources et son niveau de Rempart. Feature **transversale** : s'applique à tout type d'entité (villages joueurs, villages barbares, et futures entités).
 
 > Cette doc spécifie le scout côté gameplay. La mécanique d'unité ESPION elle-même est définie dans [`08-units.md`](./08-units.md). Le combat de résolution (cas où la cible se défend) suit l'infra de [`04-combat.md`](./04-combat.md).
 
@@ -11,7 +11,7 @@ Mécanique de **scout** : observer une cible avant de l'attaquer pour révéler 
 | Outil | Unité **ESPION** (cf. [`08-units.md`](./08-units.md)) |
 | Caserne requise | **3** (early-mid game, en même temps que ARCHER / GUERRIER) |
 | Cibles supportées | Toute entité visible : village joueur, village barbare, autres types futurs |
-| Information révélée | Composition d'armée + stock de ressources + **style stratégique** du village (snapshot au moment T) |
+| Information révélée | Composition d'armée + stock de ressources + niveau de **Rempart** + **style stratégique** du village joueur (snapshot au moment T) |
 | Risque MVP | Aucun — la mission réussit toujours |
 | Risque post-MVP | Combat ESPION vs ESPION ou défense via Cachette (cf. § Évolutions post-MVP) |
 
@@ -34,6 +34,8 @@ Le scout réutilise l'infrastructure combat existante (déplacement euclidien, m
 **Caractéristiques du rapport** :
 - **Snapshot, pas temps réel** : l'info reflète l'état de la cible au moment où l'ESPION y est arrivé. Si l'attaque réelle a lieu plus tard, l'état peut avoir changé (production passive, autres pillards, régen barbare).
 - **Pas de péremption explicite** : le rapport reste consultable, mais le joueur sait qu'il vieillit.
+- **Pertes d'ESPION** : le rapport affiche les ESPIONs engagés et perdus. MVP : perte toujours à 0 tant que la mission réussit automatiquement.
+- **Niveau de Rempart** : le rapport expose le niveau observé du mur de la cible pour calibrer la puissance d'attaque nécessaire.
 - **Style stratégique** : le scout est le seul moyen de connaître le style d'un village ennemi (Forteresse / Raiders / Économique / Équilibré) — info essentielle pour calibrer une attaque, cf. [`12-village-styles.md`](./12-village-styles.md).
 
 ## Cohérence avec les autres mécaniques

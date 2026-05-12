@@ -209,7 +209,6 @@ export function WorldMapScreen() {
                 <SelectedEntityPanel
                   entity={selectedEntity}
                   currentVillageId={currentVillageId}
-                  onClose={() => setSelectedEntity(null)}
                   onAttack={(target) => {
                     setAttackInitialMode('attack');
                     setAttackTarget(target);

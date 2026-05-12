@@ -38,7 +38,7 @@ export interface InboxTabsProps {
 const iconToneClass: Record<MailInboxTone, string> = {
   attack: 'border-[#a93226] bg-[linear-gradient(to_bottom,#e74c3c,#c0392b)]',
   report: 'border-[#3a6c1f] bg-[linear-gradient(to_bottom,#a8d28d,#4a8c2a)]',
-  scout: 'border-[#5d6d6e] bg-[linear-gradient(to_bottom,#bfc7cb,#7f8c8d)]',
+  scout: 'border-[#1f5288] bg-[linear-gradient(to_bottom,#5b9bd5,#1f5288)]',
   system: 'border-[#9e7b0d] bg-[linear-gradient(to_bottom,#f1c40f,#d4a017)]',
   player: 'border-[#1f5288] bg-[linear-gradient(to_bottom,#cfe2f6,#2e75b6)]',
 };
@@ -46,7 +46,7 @@ const iconToneClass: Record<MailInboxTone, string> = {
 const tagToneClass: Record<MailInboxTag['tone'], string> = {
   attack: 'border-[#a93226] bg-[rgba(231,76,60,.18)] text-[#a93226]',
   report: 'border-[#3a6c1f] bg-[rgba(110,191,73,.2)] text-[#3a6c1f]',
-  scout: 'border-[#5d6d6e] bg-[rgba(149,165,166,.25)] text-[#3d4f60]',
+  scout: 'border-[#1f5288] bg-[rgba(91,155,213,.22)] text-[#1f5288]',
   system: 'border-[#9e7b0d] bg-[linear-gradient(to_bottom,#f1c40f,#d4a017)] text-[#3a2a00]',
 };
 

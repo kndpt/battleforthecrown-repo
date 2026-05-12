@@ -57,7 +57,7 @@ function combatInboxItem(report: CombatReportDto) {
     preview: totalLoot > 0
       ? `Butin ramené : ${NUMBER_FORMATTER.format(totalLoot)} ressources.`
       : 'Aucun butin ramené.',
-    sender: report.isAttacker ? 'Rapport · Attaque' : 'Rapport · Défense',
+    sender: report.isAttacker ? 'Attaque' : 'Défense',
     subject: `${isVictory ? 'Victoire' : 'Défaite'} · (${report.targetX}, ${report.targetY})`,
     tag: { label: isVictory ? 'VICTOIRE' : 'DÉFAITE', tone: 'report' as const },
     tone: report.isAttacker ? 'attack' as const : 'report' as const,
@@ -66,9 +66,9 @@ function combatInboxItem(report: CombatReportDto) {
 
 function scoutInboxItem(report: ScoutReportDto) {
   return {
-    icon: '/assets/position.png',
+    icon: '/assets/lupa.png',
     preview: `${NUMBER_FORMATTER.format(scoutReportUnitTotal(report))} unités · ${NUMBER_FORMATTER.format(scoutReportResourceTotal(report))} ressources visibles.`,
-    sender: `Rapport · ${scoutReportTargetLabel(report)}`,
+    sender: scoutReportTargetLabel(report),
     subject: `Reconnaissance · ${scoutReportTitle(report)}`,
     tag: { label: 'ESPION', tone: 'scout' as const },
     tone: 'scout' as const,
@@ -89,6 +89,8 @@ export function ReportsList({ onReportClick }: ReportsListProps) {
       ? allReports.filter((report) => report.kind === 'combat')
       : allReports;
   const unreadCount = allReports.filter((report) => !report.report.isRead).length;
+  const unreadCombatCount = (combatReports.data ?? []).filter((report) => !report.isRead).length;
+  const unreadScoutCount = (scoutReports.data ?? []).filter((report) => !report.isRead).length;
 
   if (combatReports.isLoading || scoutReports.isLoading) {
     return (
@@ -123,15 +125,12 @@ export function ReportsList({ onReportClick }: ReportsListProps) {
 
   return (
     <div className="space-y-2">
-      <span className="font-mono text-[10px] text-[#5d4a32]">
-        boîte du seigneur · {allReports.length} message{allReports.length > 1 ? 's' : ''}
-      </span>
       <InboxTabs
         onChange={setTab}
         options={[
           { count: unreadCount > 0 ? String(unreadCount) : undefined, label: 'Tous', value: 'all' },
-          { count: combatReports.data?.length ? String(combatReports.data.length) : undefined, label: 'Combats', value: 'combat' },
-          { count: scoutReports.data?.length ? String(scoutReports.data.length) : undefined, label: 'Scouts', value: 'scout' },
+          { count: unreadCombatCount > 0 ? String(unreadCombatCount) : undefined, label: 'Combats', value: 'combat' },
+          { count: unreadScoutCount > 0 ? String(unreadScoutCount) : undefined, label: 'Scouts', value: 'scout' },
         ]}
         value={tab}
       />
