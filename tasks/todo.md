@@ -1,29 +1,22 @@
-# Run 016 - Scouting backend/shared
+# Ticket 54 - Retour fantôme pendant capture
 
 ## Plan
 
-- [x] Preflight: worktree clean, fiche run, rules, SPEC, docs source, lessons.
-- [x] Cartographie: backend combat/expeditions/reports/outbox, Prisma schema, shared events/unit config, smokes existants.
-- [x] Refinement: découper en tâches chirurgicales backend/shared/test/docs.
-- [x] Implémentation: modèle `ScoutReport`, endpoint scout, worker/résolution/retour, events outbox, shared contracts.
-- [x] Tests: smoke cycle complet + vérifications ciblées Prisma/shared.
-- [x] Review 5 axes + fixes.
-- [x] Retest: smokes obligatoires backend + `yarn static-check`.
-- [x] Docs impact + backprop SPEC si nécessaire.
-- [x] Archive run, update `tasks/README.md`, commit final.
+- [x] Preflight : lire leçons, vérifier worktree, identifier changements hors scope.
+- [x] Analyse : tracer backend combat/conquête, event `battle.resolved`, store expéditions frontend et rendu Pixi.
+- [x] Ticket : créer une fiche active avec symptôme, cause racine, scope et critères de succès.
+- [x] Vérification : relire diff et vérifier absence de modification hors scope.
+- [x] Commit : stage des fichiers de ticket/docs et commit en anglais.
 
-## Notes de cadrage
+## Notes d'analyse
 
-- Scope MVP: scout SPY-only, succès automatique, aucune perte, retour des ESPIONs.
-- Source gameplay: `docs/gameplay/11-scouting.md` + unités `docs/gameplay/08-units.md`.
-- Respecter SPEC §C: backend server-authoritative, Outbox, pas de migration destructive.
-- Tests backend orchestration: smoke réel, pas de mocks Prisma/pg-boss.
-- Découpage implémenté: migration additive `ScoutReport` + `ExpeditionKind.SCOUT`, endpoint `POST /combat/scout`, events `scout.sent/reported/returned`, bindings WS front non-UI.
+- Worktree déjà modifié hors scope : `battleforthecrown-backend/src/common/auth/jwt-auth.guard.ts`. Ne pas toucher.
+- En conquête réussie avec Seigneur survivant, `combat.worker.ts` transfère les survivants en `garrison` puis supprime ces unités de `returningUnits`.
+- Juste après, `returnAt` reste calculé sur `hasReturningUnits || hasReturningLoot`. Donc une capture avec `returningUnits = {}` mais loot > 0 produit encore une expédition `RETURNING`.
+- Le frontend ne semble pas inventer le retour : `applyBattleResolved` bascule en `RETURNING` seulement quand `payload.returnAt` existe, puis `ExpeditionVisual` affiche le glyph `🐎` pour `progress.returning`.
 
 ## Review
 
-- Correctness: smoke réel couvre SPY gate Caserne 3, SPY-only, cible barbare/joueur visible, refus hors vision, `ScoutReport` snapshot, style joueur, retour des ESPIONs.
-- Readability: ajout isolé dans `initiateScout`, `handleScoutArrival`, `presentScoutReport`; pas de surcharge des rapports combat.
-- Architecture: `ScoutReport` dédié + events `scout.*`; Outbox et pg-boss existants réutilisés.
-- Security: accès report via `scoutUserId`, cible hors vision refusée, style ennemi absent du public hors report.
-- Performance: indexes `scoutUserId/worldId/timestamp`, pas de nouveau polling ou scan large.
+- Ticket actif `tasks/54-conquest-capture-phantom-return.md` créé avec cause racine, comportement attendu, scope backend et smoke de régression.
+- `tasks/README.md` référence le ticket dans les actifs.
+- Aucun fichier runtime modifié. Le fichier auth déjà sale reste hors scope.
