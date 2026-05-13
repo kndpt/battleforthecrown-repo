@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Compass, Map as MapIcon, Swords, X } from 'lucide-react';
+import { Compass, Map as MapIcon, X } from 'lucide-react';
 import { GameHeader } from '@/features/layout/GameHeader';
 import { ToastStack } from '@/features/layout/ToastStack';
 import { BottomSheet, IconButton, Spinner, Tooltip } from '@/ui';
@@ -199,15 +199,6 @@ export function WorldMapScreen() {
                     size="md"
                     label={isMiniMapVisible ? 'Masquer la mini-carte' : 'Afficher la mini-carte'}
                     onClick={() => setIsMiniMapVisible((v) => !v)}
-                  />
-                </Tooltip>
-                <Tooltip content="Voir les expéditions" position="left" variant="dark">
-                  <IconButton
-                    icon={Swords}
-                    variant="info"
-                    size="md"
-                    label="Voir les activités"
-                    onClick={() => openKingdomActivities('expeditions')}
                   />
                 </Tooltip>
               </div>
