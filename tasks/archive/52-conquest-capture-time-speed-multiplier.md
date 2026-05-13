@@ -1,7 +1,7 @@
 # 52 — Multiplier de vitesse pour les durées de capture/conquête
 
 **Sévérité** : 🟠 Moyenne  
-**Statut** : 🆕 Ouvert  
+**Statut** : ✅ Résolu 2026-05-13 par `$run @tasks/52-conquest-capture-time-speed-multiplier.md`  
 **Décision gameplay** : les durées de capture/conquête doivent pouvoir être accélérées ou ralenties par la configuration du monde, comme les temps de trajet, d'entraînement et de progression économique.
 
 ## Symptôme

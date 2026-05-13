@@ -45,6 +45,7 @@ const PVP_CAPTURE_DURATIONS_MS = [
   { minCastleLevel: 3, durationMs: 6 * 60 * 60 * 1000 },
   { minCastleLevel: 1, durationMs: 4 * 60 * 60 * 1000 },
 ];
+const MIN_CAPTURE_DURATION_MS = 1000;
 
 interface PendingConquestToSchedule {
   id: string;
@@ -376,7 +377,11 @@ export class CombatWorker implements OnModuleInit {
           if (isVictory && startedWithNoble && defenderVillage) {
             if (nobleSurvived) {
               const captureUntil = new Date(
-                Date.now() + this.getCaptureDurationMs(defenderVillage),
+                Date.now() +
+                  this.getCaptureDurationMs(
+                    defenderVillage,
+                    context.config.gameSpeed.capture,
+                  ),
               );
               pendingConquest = await this.conquest.openCaptureWindowInTx(tx, {
                 attackerVillageId: expedition.attackerVillageId,
@@ -848,22 +853,28 @@ export class CombatWorker implements OnModuleInit {
     targetVillage: Prisma.VillageGetPayload<{
       include: { resourceStock: true; buildings: true };
     }>,
+    captureSpeed: number,
   ): number {
+    let baseDurationMs: number;
+
     if (targetVillage.isBarbarian) {
-      return (
+      baseDurationMs =
         BARBARIAN_CAPTURE_DURATIONS_MS[targetVillage.tier ?? ''] ??
-        BARBARIAN_CAPTURE_DURATIONS_MS.T1
-      );
+        BARBARIAN_CAPTURE_DURATIONS_MS.T1;
+    } else {
+      const castleLevel =
+        targetVillage.buildings.find((building) => building.type === 'CASTLE')
+          ?.level ?? 1;
+
+      baseDurationMs =
+        PVP_CAPTURE_DURATIONS_MS.find(
+          (entry) => castleLevel >= entry.minCastleLevel,
+        )?.durationMs ?? PVP_CAPTURE_DURATIONS_MS.at(-1)!.durationMs;
     }
 
-    const castleLevel =
-      targetVillage.buildings.find((building) => building.type === 'CASTLE')
-        ?.level ?? 1;
-
-    return (
-      PVP_CAPTURE_DURATIONS_MS.find(
-        (entry) => castleLevel >= entry.minCastleLevel,
-      )?.durationMs ?? PVP_CAPTURE_DURATIONS_MS.at(-1)!.durationMs
+    return Math.max(
+      MIN_CAPTURE_DURATION_MS,
+      Math.round(baseDurationMs / captureSpeed),
     );
   }
 

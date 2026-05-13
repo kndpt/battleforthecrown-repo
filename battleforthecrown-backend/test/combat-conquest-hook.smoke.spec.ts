@@ -10,6 +10,8 @@ import {
 } from './helpers';
 import { SMOKE_WORLD_CONFIG } from './fixtures/smoke-world-config';
 
+const T1_CAPTURE_DURATION_MS = 2 * 60 * 60 * 1000;
+
 describe('combat conquest hook smoke', () => {
   let ctx: SmokeContext;
 
@@ -23,14 +25,14 @@ describe('combat conquest hook smoke', () => {
     await ctx.app.close();
   });
 
-  async function seedWorld() {
+  async function seedWorld(config: object = SMOKE_WORLD_CONFIG) {
     return ctx.prisma.world.create({
       data: {
         id: `combat-conquest-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         name: 'Combat Conquest Hook',
         status: 'OPEN',
         config: {
-          ...SMOKE_WORLD_CONFIG,
+          ...config,
           fogOfWar: { enabled: false },
         } as object,
       },
@@ -140,6 +142,15 @@ describe('combat conquest hook smoke', () => {
     };
   }
 
+  function expectCaptureDuration(
+    pending: { openedAt: Date; captureUntil: Date },
+    expectedMs: number,
+  ) {
+    const actualMs =
+      pending.captureUntil.getTime() - pending.openedAt.getTime();
+    expect(Math.abs(actualMs - expectedMs)).toBeLessThanOrEqual(5000);
+  }
+
   it('opens a capture window and immobilizes the surviving escort in occupation garrison', async () => {
     const world = await seedWorld();
     const conquest = await launchConquest(world.id, `open-${Date.now()}`);
@@ -198,6 +209,34 @@ describe('combat conquest hook smoke', () => {
       },
     });
   }, 45_000);
+
+  it('applies world capture speed and keeps legacy config fallback at normal duration', async () => {
+    const acceleratedWorld = await seedWorld({
+      ...SMOKE_WORLD_CONFIG,
+      gameSpeed: { ...SMOKE_WORLD_CONFIG.gameSpeed, capture: 10 },
+    });
+    const accelerated = await launchConquest(
+      acceleratedWorld.id,
+      `capture-speed-${Date.now()}`,
+    );
+
+    expectCaptureDuration(accelerated.pending, T1_CAPTURE_DURATION_MS / 10);
+
+    const legacyWorld = await seedWorld({
+      ...SMOKE_WORLD_CONFIG,
+      gameSpeed: {
+        construction: SMOKE_WORLD_CONFIG.gameSpeed.construction,
+        training: SMOKE_WORLD_CONFIG.gameSpeed.training,
+        travel: SMOKE_WORLD_CONFIG.gameSpeed.travel,
+      },
+    });
+    const legacy = await launchConquest(
+      legacyWorld.id,
+      `capture-legacy-${Date.now()}`,
+    );
+
+    expectCaptureDuration(legacy.pending, T1_CAPTURE_DURATION_MS);
+  }, 60_000);
 
   it('interrupts an open capture window when a hostile attack kills the immobilized noble', async () => {
     const world = await seedWorld();
