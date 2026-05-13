@@ -2,7 +2,7 @@
 
 **Sévérité** : 🟡 Majeure
 
-**Statut** : 🧩 Découpé
+**Statut** : ✅ Résolu
 
 **Décision produit** : une capture ouverte est un état long, critique et réhydratable. `PendingConquest` doit rester la source de vérité, l'UI ne doit pas reconstruire cet état uniquement depuis les events WS.
 
@@ -10,7 +10,7 @@
 
 Ce ticket ne doit plus être exécuté directement. Il est découpé en trois tickets ordonnés :
 
-1. [48 — Design-system du panneau Activités du royaume](./archive/48-kingdom-activities-design-system.md)
+1. [48 — Design-system du panneau Activités du royaume](./48-kingdom-activities-design-system.md)
 2. [49 — Snapshots serveur des activités du royaume](./49-kingdom-activities-snapshots.md)
 3. [50 — Intégration HUD et bottom sheet des activités du royaume](./50-kingdom-activities-bottom-sheet-integration.md)
 
@@ -219,3 +219,11 @@ Contraintes UI :
 - Vérification finale :
   - `yarn static-check` vert ;
   - smoke backend si le endpoint touche `battleforthecrown-backend/src/`.
+
+## Résolution
+
+Résolu le 2026-05-13 après livraison des tickets 48, 49 et 50.
+
+- `PendingConquest` reste la source de vérité serveur.
+- Snapshot `GET /combat/conquests/open` livré par le ticket 49.
+- Tracker persistant affiché dans `Activités du royaume`, avec badge `Captures`, livré par le ticket 50.

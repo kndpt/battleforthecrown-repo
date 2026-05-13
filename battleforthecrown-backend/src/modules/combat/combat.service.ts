@@ -20,7 +20,7 @@ import type { ReinforceCommandDto } from './dto/reinforce-command.schema';
 import type { RecallCommandDto } from './dto/recall-command.schema';
 import type { ScoutCommandDto } from './dto/scout-command.schema';
 import { ExpeditionKind, PendingConquestStatus } from '@prisma/client';
-import { encodeUnitMap } from './codecs';
+import { encodeUnitMap, parseUnitMap } from './codecs';
 import PgBoss from 'pg-boss';
 import { createOutboxEvent } from '../event/event.utils';
 import { PrismaClientOrTx } from '../../common/prisma.types';
@@ -778,10 +778,12 @@ export class CombatService {
           expedition.attackerVillageId,
         );
         const target = targetById.get(expedition.targetRefId);
+        const units = parseUnitMap(expedition.units, 'expedition.units');
 
         return {
           expeditionId: expedition.id,
           kind: expedition.kind,
+          isConquest: (units.NOBLE ?? 0) > 0,
           attackerVillageId: expedition.attackerVillageId,
           attackerVillageName: attackerVillage?.name ?? '',
           targetVillageId: target?.id ?? null,

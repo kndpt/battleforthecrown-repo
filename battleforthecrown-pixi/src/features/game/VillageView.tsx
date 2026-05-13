@@ -12,12 +12,13 @@ import { QueueFloatingButton } from '@/features/village/QueueFloatingButton';
 import { QueueBottomSheet } from '@/features/village/QueueBottomSheet';
 import { VillageStyleControl } from '@/features/village/VillageStyleControl';
 import { metaFor } from '@/features/village/buildingMeta';
-import { ExpeditionList } from '@/features/combat/ExpeditionList';
+import { KingdomActivitiesBottomSheet } from '@/features/combat/KingdomActivitiesBottomSheet';
 import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
 import { PowerBottomSheet } from '@/features/power/PowerBottomSheet';
 import { useVillageBuildingsQuery } from '@/api/queries';
 import { useGameStore } from '@/stores/game';
 import type { BuildingDto } from '@/api';
+import type { KingdomActivityTab } from '@/features/design-system/components';
 
 function VillageCanvasFrame({
   villageId,
@@ -42,6 +43,7 @@ function VillageCanvasFrame({
 export function VillageView() {
   const navigate = useNavigate();
   const villageId = useGameStore((state) => state.villageId);
+  const worldId = useGameStore((state) => state.worldId);
   const buildingsQuery = useVillageBuildingsQuery(villageId);
 
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingDto | null>(null);
@@ -49,6 +51,8 @@ export function VillageView() {
   const [isQueueOpen, setIsQueueOpen] = useState(false);
   const [isPowerSheetOpen, setIsPowerSheetOpen] = useState(false);
   const [isExpeditionsOpen, setIsExpeditionsOpen] = useState(false);
+  const [kingdomActivityTab, setKingdomActivityTab] =
+    useState<KingdomActivityTab>('expeditions');
   const unreadCount = useUnreadReportsCount();
 
   const buildings = useMemo(() => {
@@ -139,11 +143,14 @@ export function VillageView() {
       <BottomSheet
         isOpen={isExpeditionsOpen}
         onClose={() => setIsExpeditionsOpen(false)}
-        title="Expéditions en cours"
+        maxHeight="82vh"
       >
-        <div className="p-4">
-          <ExpeditionList />
-        </div>
+        <KingdomActivitiesBottomSheet
+          activeTab={kingdomActivityTab}
+          onClose={() => setIsExpeditionsOpen(false)}
+          onTabChange={setKingdomActivityTab}
+          worldId={worldId}
+        />
       </BottomSheet>
 
       <ToastStack />

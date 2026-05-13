@@ -2,7 +2,7 @@
 
 **Sévérité** : 🟡 Majeure
 
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ Résolu
 
 **Décision UX** : la carte doit afficher un ou deux badges d'activités en haut de map. Cliquer sur un badge ouvre la même bottom sheet `Activités du royaume`, avec l'onglet correspondant actif.
 
@@ -85,3 +85,13 @@ MVP recommandé :
 - Tests composants pour loading/error/empty/list.
 - `yarn static-check`.
 - Inspection navigateur du flow badge → bottom sheet.
+
+## Résolution
+
+Résolu le 2026-05-13 par `$run @tasks/46-capture-window-tracker-missing.md @tasks/50-kingdom-activities-bottom-sheet-integration.md`.
+
+- Badges monde `Expéditions` et `Captures` branchés sur snapshots serveur.
+- Bottom sheet unifiée `Activités du royaume` branchée sur les mêmes queries dans monde, armée et village.
+- Conquêtes exposées comme mouvements d'armée `CONQUÊTE` côté expéditions.
+- Invalidations WS captures/expéditions ajoutées.
+- Ancienne présentation `ExpeditionList` supprimée.

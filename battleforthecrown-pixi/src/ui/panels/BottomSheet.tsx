@@ -49,7 +49,7 @@ export const BottomSheet = forwardRef<HTMLDivElement, BottomSheetProps>(
 
         {/* Panel Container - Slide uniquement */}
         <div
-          className={`absolute bottom-0 left-0 right-0 transform transition-transform duration-300 ${
+          className={`absolute bottom-0 left-0 right-0 z-10 transform transition-transform duration-300 ${
             isOpen ? 'translate-y-0' : 'translate-y-full'
           } ${className}`}
           style={{ maxHeight }}

@@ -11,12 +11,14 @@ import { WorldMiniMap } from './WorldMiniMap';
 import { WorldEntityTooltip } from './WorldEntityTooltip';
 import { buildMapEntities, filterEntitiesByVision } from './buildMapEntities';
 import { AttackDetailModal } from '@/features/combat/AttackDetailModal';
-import { ExpeditionList } from '@/features/combat/ExpeditionList';
+import { KingdomActivitiesBottomSheet } from '@/features/combat/KingdomActivitiesBottomSheet';
 import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
 import { BottomNavigationBar } from '@/features/layout/BottomNavigationBar';
 import { useBuildingsForLockCheck } from '@/features/layout/useBuildingsForLockCheck';
 import {
   useMyVillagesQuery,
+  useOpenConquestsQuery,
+  useOpenExpeditionsQuery,
   useWorldDetailsQuery,
   useWorldEntitiesQuery,
 } from '@/api/queries';
@@ -26,6 +28,10 @@ import { useExpeditionsStore } from '@/stores/expeditions';
 import { useWorldMapStore } from '@/stores/worldMap';
 import { WATCHTOWER_VISION_LEVELS } from '@battleforthecrown/shared/village/buildings';
 import type { MapEntity } from '@/api/world-types';
+import {
+  KingdomActivityHudBadges,
+  type KingdomActivityTab,
+} from '@/features/design-system/components';
 
 const FALLBACK_GRID = { gridWidth: 500, gridHeight: 500 };
 
@@ -36,6 +42,8 @@ export function WorldMapScreen() {
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const worldEntities = useWorldEntitiesQuery(worldId);
   const myVillages = useMyVillagesQuery(worldId);
+  const openConquests = useOpenConquestsQuery(worldId);
+  const openExpeditions = useOpenExpeditionsQuery(worldId);
   const worldDetails = useWorldDetailsQuery(worldId);
   const { isWatchtowerBuilt, watchtowerLevel } = useBuildingsForLockCheck();
   const unreadCount = useUnreadReportsCount();
@@ -47,7 +55,8 @@ export function WorldMapScreen() {
   const [attackTarget, setAttackTarget] = useState<MapEntity | null>(null);
   const [attackInitialMode, setAttackInitialMode] = useState<'attack' | 'scout'>('attack');
   const [isMiniMapVisible, setIsMiniMapVisible] = useState(false);
-  const [isExpeditionsOpen, setIsExpeditionsOpen] = useState(false);
+  const [isKingdomActivitiesOpen, setIsKingdomActivitiesOpen] = useState(false);
+  const [kingdomActivityTab, setKingdomActivityTab] = useState<KingdomActivityTab>('expeditions');
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
   const canvasRef = useRef<WorldMapCanvasController | null>(null);
 
@@ -118,6 +127,11 @@ export function WorldMapScreen() {
     }
   };
 
+  const openKingdomActivities = (tab: KingdomActivityTab) => {
+    setKingdomActivityTab(tab);
+    setIsKingdomActivitiesOpen(true);
+  };
+
   return (
     <div className="h-screen w-full flex flex-col overflow-hidden bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
       <div className="flex-shrink">
@@ -142,8 +156,26 @@ export function WorldMapScreen() {
             )}
 
             <div className="pointer-events-none absolute inset-0">
-              <div className="pointer-events-auto absolute left-3 top-3 rounded border-2 border-game-gold-border bg-black/70 px-3 py-1 text-xs text-parchment/80">
-                {visibleEntities.length} entité{visibleEntities.length > 1 ? 's' : ''}
+              <div className="pointer-events-auto absolute left-3 top-3 flex flex-col items-start gap-2">
+                <div className="rounded border-2 border-game-gold-border bg-black/70 px-3 py-1 text-xs text-parchment/80">
+                  {visibleEntities.length} entité{visibleEntities.length > 1 ? 's' : ''}
+                </div>
+                <KingdomActivityHudBadges
+                  badges={[
+                    {
+                      count: openExpeditions.data?.length ?? 0,
+                      label: 'Expéditions',
+                      onClick: () => openKingdomActivities('expeditions'),
+                      tone: 'stone',
+                    },
+                    {
+                      count: openConquests.data?.length ?? 0,
+                      label: 'Captures',
+                      onClick: () => openKingdomActivities('captures'),
+                      tone: 'gold',
+                    },
+                  ]}
+                />
               </div>
 
               <div className="pointer-events-auto absolute right-3 top-3 flex flex-col items-end gap-2">
@@ -173,20 +205,13 @@ export function WorldMapScreen() {
                   />
                 </Tooltip>
                 <Tooltip content="Voir les expéditions" position="left" variant="dark">
-                  <div className="relative">
-                    <IconButton
-                      icon={Swords}
-                      variant="info"
-                      size="md"
-                      label="Voir les expéditions"
-                      onClick={() => setIsExpeditionsOpen(true)}
-                    />
-                    {expeditionSnapshots.length > 0 && (
-                      <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border border-white bg-game-red-dark px-1 text-[10px] font-bold text-white">
-                        {expeditionSnapshots.length}
-                      </span>
-                    )}
-                  </div>
+                  <IconButton
+                    icon={Swords}
+                    variant="info"
+                    size="md"
+                    label="Voir les activités"
+                    onClick={() => openKingdomActivities('expeditions')}
+                  />
                 </Tooltip>
               </div>
 
@@ -245,13 +270,16 @@ export function WorldMapScreen() {
       )}
 
       <BottomSheet
-        isOpen={isExpeditionsOpen}
-        onClose={() => setIsExpeditionsOpen(false)}
-        title="Expéditions en cours"
+        isOpen={isKingdomActivitiesOpen}
+        onClose={() => setIsKingdomActivitiesOpen(false)}
+        maxHeight="82vh"
       >
-        <div className="p-4">
-          <ExpeditionList />
-        </div>
+        <KingdomActivitiesBottomSheet
+          activeTab={kingdomActivityTab}
+          onClose={() => setIsKingdomActivitiesOpen(false)}
+          onTabChange={setKingdomActivityTab}
+          worldId={worldId}
+        />
       </BottomSheet>
 
       <ToastStack />

@@ -34,7 +34,11 @@ import type {
   RecallReinforcementPayload,
   ReinforcePayload,
 } from '@/lib/types';
-import type { ScoutReportResponse } from '@battleforthecrown/shared/combat';
+import type {
+  OpenConquestDto,
+  OpenExpeditionDto,
+  ScoutReportResponse,
+} from '@battleforthecrown/shared/combat';
 
 export const queryKeys = {
   worlds: () => ['worlds'] as const,
@@ -51,6 +55,8 @@ export const queryKeys = {
   armyInventory: (villageId: string | null) => ['army', 'inventory', villageId] as const,
   armyTraining: (villageId: string | null) => ['army', 'training', villageId] as const,
   activeExpeditions: (villageId: string | null) => ['combat', 'active', villageId] as const,
+  openConquests: (userId: string | null, worldId: string | null) => ['combat', 'conquests', 'open', userId, worldId] as const,
+  openExpeditions: (userId: string | null, worldId: string | null) => ['combat', 'expeditions', 'open', userId, worldId] as const,
   garrison: (villageId: string | null) => ['combat', 'garrison', villageId] as const,
   combatReports: (userId: string | null) => ['combat', 'reports', userId] as const,
   combatReport: (reportId: string | null) => ['combat', 'report', reportId] as const,
@@ -525,6 +531,36 @@ export function useActiveExpeditionsQuery(villageId: string | null) {
   });
 }
 
+export function useOpenConquestsQuery(worldId: string | null) {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  return useQuery<OpenConquestDto[]>({
+    queryKey: queryKeys.openConquests(userId, worldId),
+    queryFn: () => {
+      if (!userId || !worldId) return Promise.resolve([] as OpenConquestDto[]);
+      return apiClient.get<OpenConquestDto[]>('/combat/conquests/open', { query: { worldId } });
+    },
+    enabled: Boolean(userId && worldId),
+    refetchInterval: (query) =>
+      query.state.data && query.state.data.length > 0 ? 10_000 : false,
+    staleTime: 2_000,
+  });
+}
+
+export function useOpenExpeditionsQuery(worldId: string | null) {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  return useQuery<OpenExpeditionDto[]>({
+    queryKey: queryKeys.openExpeditions(userId, worldId),
+    queryFn: () => {
+      if (!userId || !worldId) return Promise.resolve([] as OpenExpeditionDto[]);
+      return apiClient.get<OpenExpeditionDto[]>('/combat/expeditions/open', { query: { worldId } });
+    },
+    enabled: Boolean(userId && worldId),
+    refetchInterval: (query) =>
+      query.state.data && query.state.data.length > 0 ? 5_000 : false,
+    staleTime: 2_000,
+  });
+}
+
 export function useGarrisonQuery(villageId: string | null) {
   return useQuery<GarrisonLine[]>({
     queryKey: queryKeys.garrison(villageId),
@@ -703,6 +739,8 @@ interface AttackInput {
 
 export function useInitiateAttackMutation() {
   const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
   return useMutation<unknown, Error, AttackInput>({
     mutationFn: ({ villageId, targetX, targetY, targetKind, targetRefId, units }) =>
       apiClient.post<unknown>('/combat/attack', {
@@ -716,6 +754,7 @@ export function useInitiateAttackMutation() {
     onSettled: (_data, _err, { villageId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.openExpeditions(userId, worldId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
     },
   });
@@ -723,6 +762,8 @@ export function useInitiateAttackMutation() {
 
 export function useInitiateScoutMutation() {
   const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
   return useMutation<unknown, Error, AttackInput>({
     mutationFn: ({ villageId, targetX, targetY, targetKind, targetRefId, units }) =>
       apiClient.post<unknown>('/combat/scout', {
@@ -736,6 +777,7 @@ export function useInitiateScoutMutation() {
     onSettled: (_data, _err, { villageId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.openExpeditions(userId, worldId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
     },
   });
@@ -748,6 +790,8 @@ interface RecallExpeditionInput {
 
 export function useRecallExpeditionMutation() {
   const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
   return useMutation<Expedition, Error, RecallExpeditionInput>({
     mutationFn: ({ expeditionId }) =>
       apiClient.post<Expedition>(`/combat/recall/${expeditionId}`, {}),
@@ -769,12 +813,15 @@ export function useRecallExpeditionMutation() {
     },
     onSettled: (_data, _err, { villageId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.openExpeditions(userId, worldId) });
     },
   });
 }
 
 export function useInitiateReinforceMutation() {
   const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
   return useMutation<Expedition, Error, ReinforcePayload>({
     mutationFn: ({ villageId, targetVillageId, units }) =>
       apiClient.post<Expedition>('/combat/reinforce', {
@@ -787,6 +834,7 @@ export function useInitiateReinforceMutation() {
       queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(targetVillageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(targetVillageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.openExpeditions(userId, worldId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.garrison(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.garrison(targetVillageId) });
     },
@@ -795,6 +843,8 @@ export function useInitiateReinforceMutation() {
 
 export function useRecallReinforcementMutation() {
   const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
   return useMutation<Expedition, Error, RecallReinforcementPayload>({
     mutationFn: ({ villageId, originVillageId, units }) =>
       apiClient.post<Expedition>('/combat/recall', {
@@ -807,6 +857,7 @@ export function useRecallReinforcementMutation() {
       queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(originVillageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(originVillageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.openExpeditions(userId, worldId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.garrison(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.garrison(originVillageId) });
     },

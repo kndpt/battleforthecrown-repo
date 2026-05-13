@@ -12,6 +12,8 @@ import {
   applyReinforcementSent,
   applyResourcesChanged,
   applyNobleKilled,
+  applyVillageCaptureWindowCompleted,
+  applyVillageCaptureWindowInterrupted,
   applyVillageCaptureWindowOpened,
   applyVillageAttacked,
 } from './ws-bindings';
@@ -21,6 +23,7 @@ import { useCrownsStore } from '@/stores/crowns';
 import { useUiStore } from '@/stores/ui';
 import { useAuthStore } from '@/stores/auth';
 import { useExpeditionsStore } from '@/stores/expeditions';
+import { useGameStore } from '@/stores/game';
 import { useWorldMapStore } from '@/stores/worldMap';
 import {
   RESOLVED_TO_RETURNING_DELAY_MS,
@@ -33,8 +36,18 @@ beforeEach(() => {
   useUiStore.getState().clearToasts();
   useAuthStore.getState().clearSession();
   useExpeditionsStore.getState().clear();
+  useGameStore.getState().clear();
   useWorldMapStore.getState().clear();
 });
+
+function setCurrentWorldSession(): void {
+  useAuthStore.getState().setSession({
+    accessToken: 'access',
+    refreshToken: 'refresh',
+    user: { id: 'user-1', email: 'user@example.test' },
+  });
+  useGameStore.getState().setContext({ worldId: 'world-1', villageId: 'v-att' });
+}
 
 function createQueryClientWithReinforcementData(villageIds: string[]): QueryClient {
   const queryClient = new QueryClient();
@@ -252,11 +265,14 @@ describe('applyVillageAttacked', () => {
 
 describe('conquest websocket bindings', () => {
   it('refreshes conquest attacker state when a capture window opens', () => {
+    setCurrentWorldSession();
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.worldEntities('w1'), []);
     queryClient.setQueryData(queryKeys.activeExpeditions('v-att'), []);
     queryClient.setQueryData(queryKeys.armyInventory('v-att'), []);
     queryClient.setQueryData(queryKeys.population('v-att'), { used: 1, max: 10, available: 9 });
+    queryClient.setQueryData(queryKeys.openConquests('user-1', 'world-1'), []);
+    queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
 
     applyVillageCaptureWindowOpened(
       {
@@ -272,13 +288,45 @@ describe('conquest websocket bindings', () => {
     expect(queryClient.getQueryState(queryKeys.activeExpeditions('v-att'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.armyInventory('v-att'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.population('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.openConquests('user-1', 'world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
+  });
+
+  it('refreshes open conquests when capture terminal events arrive', () => {
+    setCurrentWorldSession();
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.openConquests('user-1', 'world-1'), []);
+
+    applyVillageCaptureWindowCompleted(
+      {
+        newOwnerUserId: 'user-1',
+        pendingConquestId: 'pc1',
+        targetVillageId: 'barb-1',
+      },
+      { queryClient },
+    );
+    expect(queryClient.getQueryState(queryKeys.openConquests('user-1', 'world-1'))?.isInvalidated).toBe(true);
+
+    queryClient.setQueryData(queryKeys.openConquests('user-1', 'world-1'), []);
+    applyVillageCaptureWindowInterrupted(
+      {
+        pendingConquestId: 'pc1',
+        reason: 'NOBLE_KILLED',
+        targetVillageId: 'barb-1',
+      },
+      { queryClient },
+    );
+    expect(queryClient.getQueryState(queryKeys.openConquests('user-1', 'world-1'))?.isInvalidated).toBe(true);
   });
 
   it('refreshes attacker army state when the noble dies', () => {
+    setCurrentWorldSession();
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.activeExpeditions('v-att'), []);
     queryClient.setQueryData(queryKeys.armyInventory('v-att'), []);
     queryClient.setQueryData(queryKeys.population('v-att'), { used: 1, max: 10, available: 9 });
+    queryClient.setQueryData(queryKeys.openConquests('user-1', 'world-1'), []);
+    queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
 
     applyNobleKilled(
       {
@@ -292,6 +340,29 @@ describe('conquest websocket bindings', () => {
     expect(queryClient.getQueryState(queryKeys.activeExpeditions('v-att'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.armyInventory('v-att'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.population('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.openConquests('user-1', 'world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
+  });
+});
+
+describe('kingdom activity expedition invalidations', () => {
+  it('refreshes open expeditions when battle and scout lifecycle events arrive', () => {
+    setCurrentWorldSession();
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
+
+    applyBattleReturned(
+      {
+        expeditionId: 'battle-1',
+        loot: { resources: { wood: 0, stone: 0, iron: 0 } },
+        reportId: 'report-1',
+        survivingUnits: {},
+        villageId: 'v-att',
+      },
+      { queryClient },
+    );
+
+    expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
   });
 });
 

@@ -25,6 +25,7 @@ import { useCrownsStore } from '@/stores/crowns';
 import { useUiStore } from '@/stores/ui';
 import { useAuthStore } from '@/stores/auth';
 import { useExpeditionsStore, type ExpeditionSnapshot } from '@/stores/expeditions';
+import { useGameStore } from '@/stores/game';
 import { useWorldMapStore } from '@/stores/worldMap';
 import {
   RESOLVED_TO_RETURNING_DELAY_MS,
@@ -118,7 +119,7 @@ export function applyUnitTrainingCompleted(
 
 export function applyBattleSent(
   payload: BattleSentPayload,
-  _ctx?: BindingsContext,
+  ctx: BindingsContext,
 ): void {
   const origin = resolveOrigin(payload.villageId);
   const snapshot: ExpeditionSnapshot = {
@@ -135,6 +136,7 @@ export function applyBattleSent(
     arrivalAt: Date.parse(payload.arrivalAt),
   };
   useExpeditionsStore.getState().add(snapshot);
+  invalidateOpenExpeditions(ctx);
 }
 
 export function applyBattleResolved(payload: BattleResolvedPayload, ctx: BindingsContext): void {
@@ -158,6 +160,7 @@ export function applyBattleResolved(payload: BattleResolvedPayload, ctx: Binding
   // Population freed for dead attacker units — see backend combat.worker:sumPopulationCost.
   ctx.queryClient.invalidateQueries({ queryKey: ['population', payload.villageId] });
   invalidateCombatReports(ctx);
+  invalidateOpenExpeditions(ctx);
   useUiStore.getState().pushToast({
     tone: payload.isVictory ? 'success' : 'error',
     title: payload.isVictory ? 'Victoire' : 'Défaite',
@@ -173,11 +176,12 @@ export function applyBattleReturned(payload: BattleReturnedPayload, ctx: Binding
   }, RETURNED_TO_CLEANUP_DELAY_MS);
   ctx.queryClient.invalidateQueries({ queryKey: ['resources', payload.villageId] });
   ctx.queryClient.invalidateQueries({ queryKey: ['army', payload.villageId] });
+  invalidateOpenExpeditions(ctx);
 }
 
 export function applyScoutSent(
   payload: ScoutSentPayload,
-  _ctx?: BindingsContext,
+  ctx: BindingsContext,
 ): void {
   const origin = resolveOrigin(payload.villageId);
   const snapshot: ExpeditionSnapshot = {
@@ -193,6 +197,7 @@ export function applyScoutSent(
     arrivalAt: Date.parse(payload.arrivalAt),
   };
   useExpeditionsStore.getState().add(snapshot);
+  invalidateOpenExpeditions(ctx);
 }
 
 export function applyScoutReported(
@@ -211,6 +216,7 @@ export function applyScoutReported(
     useExpeditionsStore.getState().update(payload.expeditionId, { phase: 'RETURNING' });
   }, RESOLVED_TO_RETURNING_DELAY_MS);
   invalidateCombatReports(ctx);
+  invalidateOpenExpeditions(ctx);
 }
 
 export function applyScoutReturned(
@@ -222,11 +228,12 @@ export function applyScoutReturned(
     useExpeditionsStore.getState().remove(payload.expeditionId);
   }, RETURNED_TO_CLEANUP_DELAY_MS);
   ctx.queryClient.invalidateQueries({ queryKey: ['army', payload.villageId] });
+  invalidateOpenExpeditions(ctx);
 }
 
 export function applyExpeditionRecalled(
   payload: ServerEvents['expedition.recalled'],
-  _ctx: BindingsContext,
+  ctx: BindingsContext,
 ): void {
   const store = useExpeditionsStore.getState();
   const current = store.byId[payload.expeditionId];
@@ -248,6 +255,7 @@ export function applyExpeditionRecalled(
     description: `Retour prévu à ${new Date(payload.returnAt).toLocaleTimeString()}`,
     ttlMs: 4000,
   });
+  invalidateOpenExpeditions(ctx);
 }
 
 export function applyExpeditionReturned(
@@ -260,6 +268,7 @@ export function applyExpeditionReturned(
   }, RETURNED_TO_CLEANUP_DELAY_MS);
   ctx.queryClient.invalidateQueries({ queryKey: ['army', payload.villageId] });
   ctx.queryClient.invalidateQueries({ queryKey: ['resources', payload.villageId] });
+  invalidateOpenExpeditions(ctx);
 }
 
 export function applyReinforcementSent(
@@ -288,6 +297,7 @@ export function applyReinforcementSent(
   };
   useExpeditionsStore.getState().add(snapshot);
   invalidateReinforcementQueries(ctx, payload.villageId, payload.targetVillageId);
+  invalidateOpenExpeditions(ctx);
 }
 
 export function applyReinforcementRecalled(
@@ -316,6 +326,7 @@ export function applyReinforcementRecalled(
   };
   useExpeditionsStore.getState().add(snapshot);
   invalidateReinforcementQueries(ctx, payload.villageId, payload.originVillageId);
+  invalidateOpenExpeditions(ctx);
 }
 
 export function applyReinforcementReturned(
@@ -334,6 +345,7 @@ export function applyReinforcementReturned(
     getString(payload, 'originVillageId'),
     getString(payload, 'targetVillageId'),
   );
+  invalidateOpenExpeditions(ctx);
 }
 
 export function applyGarrisonAdded(
@@ -346,6 +358,7 @@ export function applyGarrisonAdded(
     getString(payload, 'originVillageId'),
     getString(payload, 'targetVillageId'),
   );
+  invalidateOpenExpeditions(ctx);
 }
 
 export function applyVillageAttacked(
@@ -370,10 +383,23 @@ function invalidateCombatReports(ctx: BindingsContext): void {
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.scoutReports(userId) });
 }
 
+function invalidateOpenConquests(ctx: BindingsContext): void {
+  const userId = useAuthStore.getState().user?.id ?? null;
+  const worldId = useGameStore.getState().worldId;
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.openConquests(userId, worldId) });
+}
+
+function invalidateOpenExpeditions(ctx: BindingsContext): void {
+  const userId = useAuthStore.getState().user?.id ?? null;
+  const worldId = useGameStore.getState().worldId;
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.openExpeditions(userId, worldId) });
+}
+
 export function applyVillageConquered(payload: VillageConqueredPayload, ctx: BindingsContext): void {
   ctx.queryClient.invalidateQueries({ queryKey: ['memberships'] });
   ctx.queryClient.invalidateQueries({ queryKey: ['villages'] });
   ctx.queryClient.invalidateQueries({ queryKey: ['world-entities'] });
+  invalidateOpenConquests(ctx);
   // Mark the entity as conquered on the map by simply removing it; the next
   // refetch will reinsert it under the new owner.
   useWorldMapStore.getState().removeEntity(payload.villageId);
@@ -391,6 +417,8 @@ export function applyVillageCaptureWindowOpened(
 ): void {
   ctx.queryClient.invalidateQueries({ queryKey: ['world-entities'] });
   invalidateConquestAttackerState(ctx, payload.attackerVillageId);
+  invalidateOpenConquests(ctx);
+  invalidateOpenExpeditions(ctx);
   useUiStore.getState().pushToast({
     tone: 'warning',
     title: 'Capture en cours',
@@ -406,6 +434,7 @@ export function applyVillageCaptureWindowCompleted(
   ctx.queryClient.invalidateQueries({ queryKey: ['memberships'] });
   ctx.queryClient.invalidateQueries({ queryKey: ['villages'] });
   ctx.queryClient.invalidateQueries({ queryKey: ['world-entities'] });
+  invalidateOpenConquests(ctx);
   useUiStore.getState().pushToast({
     tone: 'success',
     title: 'Capture terminée',
@@ -419,6 +448,7 @@ export function applyVillageCaptureWindowInterrupted(
   ctx: BindingsContext,
 ): void {
   ctx.queryClient.invalidateQueries({ queryKey: ['world-entities'] });
+  invalidateOpenConquests(ctx);
   useUiStore.getState().pushToast({
     tone: 'error',
     title: 'Capture interrompue',
@@ -434,6 +464,8 @@ export function applyNobleKilled(
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.attackerVillageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.attackerVillageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(payload.attackerVillageId) });
+  invalidateOpenConquests(ctx);
+  invalidateOpenExpeditions(ctx);
   useUiStore.getState().pushToast({
     tone: 'error',
     title: 'Seigneur perdu',

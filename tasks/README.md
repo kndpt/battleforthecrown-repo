@@ -4,12 +4,11 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-- [50 — Intégration HUD et bottom sheet des activités du royaume](./50-kingdom-activities-bottom-sheet-integration.md) — 🟡 Majeur. Badges haut de carte + panneau `Activités du royaume` branchés sur les données réelles.
 - [47 — Queue visuelle de formation du Noble manquante](./47-noble-training-visual-queue-missing.md) — 🟠 Moyen. La Salle du Trône indique que le Noble est en formation, mais n'affiche pas de progression/temps restant comme la Caserne.
 
 ## Tickets découpés
 
-- [46 — Tracker persistant de fenêtre de capture manquant](./46-capture-window-tracker-missing.md) — 🧩 Découpé en tickets 48, 49 et 50. Ne pas exécuter directement.
+_(Aucun ticket découpé.)_
 
 ## Roadmap stratégique
 
@@ -48,6 +47,8 @@ _(Aucun run actif.)_
 
 ## Archivés
 
+- [50 — Intégration HUD et bottom sheet des activités du royaume](./archive/50-kingdom-activities-bottom-sheet-integration.md) ✅ Résolu 2026-05-13 par $run @tasks/46-capture-window-tracker-missing.md @tasks/50-kingdom-activities-bottom-sheet-integration.md
+- [46 — Tracker persistant de fenêtre de capture manquant](./archive/46-capture-window-tracker-missing.md) ✅ Résolu 2026-05-13 après livraison des tickets 48, 49 et 50.
 - [45 — Watchtower niveau 10 : supprimer la vision globale](./archive/45-watchtower-finite-vision.md) ✅ Résolu 2026-05-13 par $run @tasks/45-watchtower-finite-vision.md
 - [49 — Snapshots serveur des activités du royaume](./archive/49-kingdom-activities-snapshots.md) ✅ Résolu 2026-05-13 par $run @tasks/49-kingdom-activities-snapshots.md
 - [48 — Design-system du panneau Activités du royaume](./archive/48-kingdom-activities-design-system.md) ✅ Résolu 2026-05-13 par migration design-system directe.

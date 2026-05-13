@@ -245,7 +245,7 @@ describe('kingdom activities snapshots smoke', () => {
           targetRefId: targetA.id,
           targetX: targetA.x,
           targetY: targetA.y,
-          units: { MILITIA: 10 },
+          units: { MILITIA: 10, NOBLE: 1 },
           status: 'EN_ROUTE',
           departAt: new Date(now),
           arrivalAt: new Date(now + 120_000),
@@ -330,6 +330,7 @@ describe('kingdom activities snapshots smoke', () => {
       },
       {
         kind: 'ATTACK',
+        isConquest: true,
         attackerVillageId: join.village.id,
         attackerVillageName: 'origin-a',
         targetVillageId: targetA.id,

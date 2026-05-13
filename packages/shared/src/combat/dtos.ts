@@ -123,6 +123,7 @@ export interface OpenConquestDto {
 export interface OpenExpeditionDto {
   expeditionId: string;
   kind: ExpeditionKind;
+  isConquest: boolean;
   attackerVillageId: string;
   attackerVillageName: string;
   targetVillageId: string | null;
