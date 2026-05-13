@@ -12,8 +12,49 @@ import { PrismaClientOrTx } from '../../common/prisma.types';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { createOutboxEvent } from '../event/event.utils';
 import { UNIT_COSTS, UNIT_TYPES } from '@battleforthecrown/shared/army';
+import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
+import {
+  BUILDING_TYPES,
+  getBuildingLevelValues,
+  getFarmPopulationLimit,
+  type BuildingType,
+} from '@battleforthecrown/shared/village';
 
 export const CONQUEST_FINALIZE_QUEUE = 'conquest:finalize';
+
+const BARBARIAN_CONQUEST_BUILDINGS = [
+  BUILDING_TYPES.CASTLE,
+  BUILDING_TYPES.WOOD,
+  BUILDING_TYPES.STONE,
+  BUILDING_TYPES.IRON,
+  BUILDING_TYPES.WAREHOUSE,
+  BUILDING_TYPES.FARM,
+  BUILDING_TYPES.BARRACKS,
+] as const satisfies readonly BuildingType[];
+
+const BARBARIAN_CONQUEST_LEVEL_BY_TIER = {
+  T1: 1,
+  T2: 1,
+  T3: 2,
+  T4: 3,
+  T5: 4,
+} as const;
+
+const calculateBuildingPopulationUsed = (
+  buildings: {
+    type: BuildingType;
+    level: number;
+  }[],
+) => {
+  return buildings.reduce((total, building) => {
+    let buildingPopulation = 0;
+    for (let level = 1; level <= building.level; level += 1) {
+      buildingPopulation +=
+        getBuildingLevelValues(building.type, level)?.population ?? 0;
+    }
+    return total + buildingPopulation;
+  }, 0);
+};
 
 @Injectable()
 export class ConquestService {
@@ -355,20 +396,77 @@ export class ConquestService {
       },
     });
 
+    let buildingsKept = target.buildings.length;
+
     if (target.isBarbarian) {
+      const materializedLevel =
+        BARBARIAN_CONQUEST_LEVEL_BY_TIER[
+          target.tier as keyof typeof BARBARIAN_CONQUEST_LEVEL_BY_TIER
+        ] ?? 1;
+      const materializedBuildings = BARBARIAN_CONQUEST_BUILDINGS.map(
+        (type) => ({
+          villageId: targetVillageId,
+          type,
+          level: materializedLevel,
+        }),
+      );
+      const usedPopulation = calculateBuildingPopulationUsed(
+        materializedBuildings,
+      );
+      const maxPopulation = getFarmPopulationLimit(materializedLevel);
+
       await tx.unitInventory.deleteMany({
         where: { villageId: targetVillageId },
       });
 
       await tx.building.deleteMany({
-        where: { villageId: targetVillageId, type: 'WATCHTOWER' },
+        where: { villageId: targetVillageId },
       });
+      await tx.building.createMany({
+        data: materializedBuildings,
+      });
+
+      await tx.villageStrategyConfig.upsert({
+        where: { villageId: targetVillageId },
+        create: { villageId: targetVillageId, strategy: 'BALANCED' },
+        update: {
+          strategy: 'BALANCED',
+          changeCost: 0,
+          cooldownEndsAt: null,
+        },
+      });
+
+      await tx.population.upsert({
+        where: { villageId: targetVillageId },
+        create: {
+          villageId: targetVillageId,
+          used: usedPopulation,
+          max: maxPopulation,
+        },
+        update: {
+          used: usedPopulation,
+          max: maxPopulation,
+        },
+      });
+
+      buildingsKept = materializedBuildings.length;
     }
 
     if (target.resourceStock) {
       await tx.resourceStock.update({
         where: { villageId: targetVillageId },
-        data: { wood: 0, stone: 0, iron: 0 },
+        data: {
+          wood: 0,
+          stone: 0,
+          iron: 0,
+          maxPerType: target.isBarbarian
+            ? getWarehouseStorageLimit(
+                BARBARIAN_CONQUEST_LEVEL_BY_TIER[
+                  target.tier as keyof typeof BARBARIAN_CONQUEST_LEVEL_BY_TIER
+                ] ?? 1,
+              ).wood
+            : target.resourceStock.maxPerType,
+        },
       });
     }
 
@@ -378,7 +476,7 @@ export class ConquestService {
       previousTier: target.tier,
       x: target.x,
       y: target.y,
-      buildingsKept: target.buildings.length,
+      buildingsKept,
     });
 
     this.logger.log(
@@ -389,7 +487,7 @@ export class ConquestService {
       success: true,
       villageId: target.id,
       name: target.name,
-      buildings: target.buildings.length,
+      buildings: buildingsKept,
       tier: target.tier || undefined,
     };
   }
@@ -412,23 +510,6 @@ export class ConquestService {
     });
 
     if (deletedOccupation.count === 0) return;
-
-    await tx.unitInventory.upsert({
-      where: {
-        villageId_unitType: {
-          villageId: pending.targetVillageId,
-          unitType: UNIT_TYPES.NOBLE,
-        },
-      },
-      create: {
-        villageId: pending.targetVillageId,
-        unitType: UNIT_TYPES.NOBLE,
-        quantity: 1,
-      },
-      update: {
-        quantity: { increment: 1 },
-      },
-    });
 
     await tx.population.update({
       where: { villageId: pending.attackerVillageId },

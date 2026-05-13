@@ -16,11 +16,11 @@ Fiches d'exécution déléguées aux harnesses Claude Code ou Codex (lead + sub-
 
 ### Runs actifs
 
-- [018 — Feature barbarian conquest backend shared](./runs/018-feature-barbarian-conquest-backend-shared.md) — 📋 `PLANNED`. Phase 5 backend/shared : cycle conquête barbare, finalisation, matérialisation, events et smoke T2.
 - [019 — Feature barbarian conquest frontend UI](./runs/019-feature-barbarian-conquest-frontend-ui.md) — 📋 `PLANNED`. Phase 5 frontend/UI : recrutement Seigneur, lancement conquête barbare, durée visible et suivi des events.
 
 ### Runs archivés
 
+- [018 — Feature barbarian conquest backend shared](./runs/archive/018-feature-barbarian-conquest-backend-shared.md) — ✅ `DONE` (2026-05-13). Phase 5 backend/shared : finalisation barbare conforme spec, bâtiments matérialisés par tier, Seigneur installé hors armée, smoke T2 + smokes backend + static-check verts.
 - [017 — Feature scouting frontend inbox](./runs/archive/017-feature-scouting-frontend-inbox.md) — ✅ `DONE` (2026-05-12). Phase 4 Scouting frontend : action `Scout` SPY-only, coût sans couronnes, inbox mixte combat/scout via design system, détail `ScoutReportCard`, tests Pixi + static-check verts.
 - [016 — Feature scouting backend shared](./runs/archive/016-feature-scouting-backend-shared.md) — ✅ `DONE` (2026-05-12). Phase 4 Scouting backend/shared : mission scout SPY-only, `ScoutReport`, events `scout.*`, retour ESPION, endpoints reports scout, docs + smokes backend verts.
 - [015 — Close phase 2 inbox reports](./runs/archive/015-close-phase-2-inbox-reports.md) — ✅ `DONE` (2026-05-12). Clôture Phase 2 : roadmap/spec alignées avec le MVP combat livré par run 012 ; aucun delta backend/frontend requis ; static-check vert.

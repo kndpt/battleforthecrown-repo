@@ -34,7 +34,7 @@ Pré-requis : la base `battleforthecrown_smoke` doit exister + migrations appliq
 | 6 | combat reports participant-scoped | REST reports read/delete | lu/suppression isolés par participant |
 | 7 | target outside vision | `POST /combat/attack` | 403 |
 | 8 | scouting resolve+return | `POST /combat/scout` | SPY gate Caserne 3, SPY-only, `ScoutReport`, `scout.reported` + `scout.returned`, style ennemi absent du public |
-| 9 | conquest | `ConquestService.conquerVillage()` | `Village.userId` reassigned + `village.conquered` dispatched |
+| 9 | conquest | combat + `PendingConquest` + `conquest:finalize` | fenêtre de capture, Seigneur immobilisé, finalisation, village matérialisé spec + events dispatched |
 | 10 | crown production | `boss.send('crowns:production')` | `crowns.changed` dispatched |
 | 11 | barbarian seeding catchup | `BarbarianSeedingCatchupWorker.handleCatchup()` | new BVs seeded in DB for players created < 1h (no Outbox by design) |
 | 12 | JWT auth + refresh | REST register/login/refresh | tokens valides, route protégée 200 |
@@ -69,4 +69,4 @@ Cf. [`bftc-tests-policy`](../../.agents/skills/bftc-tests-policy/SKILL.md). Rapp
 
 - **Production tick et barbarian seeding catchup n'écrivent pas dans l'Outbox** : choix archi (frontend interpole pour les ressources ; le catchup est invisible côté UI). Le smoke valide l'effet DB seul.
 - **Crown production** gate l'event sur `production > 0`. Le smoke backdate `lastUpdateTs` d'1 jour pour forcer une production mesurable.
-- **Le flow combat → conquête** demande un NOBLE (BARRACKS lvl 10). Le smoke `conquest` court-circuite via `ConquestService.conquerVillage()` direct — c'est le service métier, pas le combat.
+- **Le flow combat → conquête** demande un NOBLE recruté à la Salle du Trône. Les smokes dédiés couvrent le recrutement, l'ouverture de fenêtre après combat, la mort du Seigneur, l'interruption et la finalisation `conquest:finalize`.

@@ -1071,15 +1071,22 @@ describe('smoke', () => {
     // Player has no WATCHTOWER → 0 vision disks → every world entity comes back as 'fogged'
     const world = await seedSmokeWorld(ctx.prisma);
     const user = await registerUser(ctx.server);
-    await joinWorld(ctx.server, user.accessToken, world.id, 'fog-watcher');
+    const join = await joinWorld(
+      ctx.server,
+      user.accessToken,
+      world.id,
+      'fog-watcher',
+    );
+    const foggedX = join.village.x + 10;
+    const foggedY = join.village.y + 10;
 
     await ctx.prisma.village.create({
       data: {
         worldId: world.id,
         isBarbarian: true,
         name: 'fogged-barb',
-        x: 250,
-        y: 250,
+        x: foggedX,
+        y: foggedY,
         tier: 'T1',
       },
     });
@@ -1095,7 +1102,7 @@ describe('smoke', () => {
       x: number;
       y: number;
     }>;
-    const found = entities.find((e) => e.x === 250 && e.y === 250);
+    const found = entities.find((e) => e.x === foggedX && e.y === foggedY);
     expect(found).toBeTruthy();
     expect(found?.kind).toBe('fogged');
   });

@@ -12,6 +12,29 @@ import {
   CONQUEST_FINALIZE_QUEUE,
   ConquestService,
 } from '../src/modules/combat/conquest.service';
+import { UNIT_COSTS, UNIT_TYPES } from '@battleforthecrown/shared/army';
+import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
+import {
+  BUILDING_TYPES,
+  getBuildingLevelValues,
+  getFarmPopulationLimit,
+} from '@battleforthecrown/shared/village';
+
+const EXPECTED_T2_BUILDINGS = [
+  BUILDING_TYPES.BARRACKS,
+  BUILDING_TYPES.CASTLE,
+  BUILDING_TYPES.FARM,
+  BUILDING_TYPES.IRON,
+  BUILDING_TYPES.STONE,
+  BUILDING_TYPES.WAREHOUSE,
+  BUILDING_TYPES.WOOD,
+];
+const EXPECTED_T2_LEVEL = 1;
+const EXPECTED_T2_BUILDING_POPULATION = EXPECTED_T2_BUILDINGS.reduce(
+  (total, type) =>
+    total + (getBuildingLevelValues(type, EXPECTED_T2_LEVEL)?.population ?? 0),
+  0,
+);
 
 describe('conquest finalize smoke', () => {
   let ctx: SmokeContext;
@@ -34,7 +57,7 @@ describe('conquest finalize smoke', () => {
         name: `capture-target-${x}-${y}`,
         x,
         y,
-        tier: 'T1',
+        tier: 'T2',
         resourceStock: {
           create: { wood: 100, stone: 100, iron: 100, maxPerType: 100_000 },
         },
@@ -68,6 +91,18 @@ describe('conquest finalize smoke', () => {
       join.village.x + 1,
       join.village.y,
     );
+    await ctx.prisma.garrison.create({
+      data: {
+        villageId: target.id,
+        originVillageId: join.village.id,
+        unitType: UNIT_TYPES.NOBLE,
+        quantity: 1,
+      },
+    });
+    await ctx.prisma.population.update({
+      where: { villageId: join.village.id },
+      data: { used: { increment: UNIT_COSTS[UNIT_TYPES.NOBLE].population } },
+    });
 
     const conquest = ctx.app.get(ConquestService);
     const pending = await conquest.openCaptureWindow({
@@ -95,13 +130,51 @@ describe('conquest finalize smoke', () => {
       where: { id: target.id },
       include: { resourceStock: true, buildings: true, unitInventory: true },
     });
+    const buildingsByType = [...conquered.buildings].sort((a, b) =>
+      a.type.localeCompare(b.type),
+    );
+    const strategyConfig =
+      await ctx.prisma.villageStrategyConfig.findUniqueOrThrow({
+        where: { villageId: target.id },
+      });
+    const population = await ctx.prisma.population.findUniqueOrThrow({
+      where: { villageId: target.id },
+    });
+    const originPopulation = await ctx.prisma.population.findUniqueOrThrow({
+      where: { villageId: join.village.id },
+    });
+    const noblePopulation = UNIT_COSTS[UNIT_TYPES.NOBLE].population;
+
     expect(conquered.userId).toBe(user.userId);
     expect(conquered.isBarbarian).toBe(false);
     expect(conquered.resourceStock?.wood).toBe(0);
+    expect(conquered.resourceStock?.stone).toBe(0);
+    expect(conquered.resourceStock?.iron).toBe(0);
+    expect(conquered.resourceStock?.maxPerType).toBe(
+      getWarehouseStorageLimit(EXPECTED_T2_LEVEL).wood,
+    );
+    expect(buildingsByType.map((building) => building.type)).toEqual(
+      EXPECTED_T2_BUILDINGS,
+    );
     expect(
-      conquered.buildings.some((building) => building.type === 'WATCHTOWER'),
-    ).toBe(false);
+      buildingsByType.every((building) => building.level === EXPECTED_T2_LEVEL),
+    ).toBe(true);
+    expect(buildingsByType.map((building) => building.type)).not.toContain(
+      BUILDING_TYPES.WATCHTOWER,
+    );
+    expect(buildingsByType.map((building) => building.type)).not.toContain(
+      BUILDING_TYPES.COUNCIL_HALL,
+    );
+    expect(buildingsByType.map((building) => building.type)).not.toContain(
+      BUILDING_TYPES.THRONE_HALL,
+    );
     expect(conquered.unitInventory).toHaveLength(0);
+    expect(originPopulation.used).toBe(17);
+    expect(strategyConfig.strategy).toBe('BALANCED');
+    expect(population.used).toBe(
+      EXPECTED_T2_BUILDING_POPULATION + noblePopulation,
+    );
+    expect(population.max).toBe(getFarmPopulationLimit(EXPECTED_T2_LEVEL));
 
     await outboxDispatched(
       ctx.prisma,
