@@ -10,6 +10,7 @@ Documentation technique de référence (humaine) pour les agents et les contribu
 - [`realtime.md`](./realtime.md) — pattern Outbox, gateway WebSocket, catalogue d'événements, latence, reconnection.
 - [`auth.md`](./auth.md) — JWT global, `@Public()` opt-out, `OwnershipService`, handshake WS, modèle de menace.
 - [`db-setup.md`](./db-setup.md) — bootstrap Postgres + Prisma, snippets SQL de debug, reset.
+- [`worktree-dev.md`](./worktree-dev.md) — lancement backend/frontend depuis un worktree parallèle, ports dédiés, variables Vite/CORS.
 - [`smoke-tests.md`](./smoke-tests.md) — stratégie smokes orchestration/I/O : flows couverts, comment ajouter, anti-patterns.
 
 ## À lire avant tout travail backend

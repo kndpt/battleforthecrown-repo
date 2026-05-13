@@ -11,6 +11,7 @@ MMORTS médiéval (Kingsage / Tribal Wars). Workspace yarn avec :
 
 - Décisions structurantes : [`docs/architecture/decisions.md`](./docs/architecture/decisions.md).
 - Doc technique de référence : [`docs/architecture/`](./docs/architecture/README.md).
+- Dev en worktree parallèle : [`docs/architecture/worktree-dev.md`](./docs/architecture/worktree-dev.md).
 - Mécaniques de jeu : [`docs/gameplay/`](./docs/gameplay/README.md).
 - Design system : [`battleforthecrown-design-system/`](./battleforthecrown-design-system/README.md).
 - Briefings AI agents : `CLAUDE.md` à la racine et dans chaque workspace.
@@ -32,6 +33,8 @@ PORT=15001 yarn workspace battleforthecrown-backend start:dev
 # Nouveau frontend Pixi (port 5173)
 yarn workspace battleforthecrown-pixi dev
 ```
+
+Si tu lances depuis un worktree ou sur un port frontend différent, voir [`docs/architecture/worktree-dev.md`](./docs/architecture/worktree-dev.md) pour les variables `FRONTEND_URL`, `VITE_API_BASE_URL` et `VITE_WS_URL`.
 
 ## Conventions globales
 

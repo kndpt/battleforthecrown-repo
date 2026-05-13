@@ -24,6 +24,7 @@ Composant témoin actuel :
 - `ToastPreview` depuis `preview/components-toast.html`
 - `EmptyState` depuis `preview/components-empty-state.html`
 - `TroopRow` depuis `preview/components-troop-row.html`
+- `TroopDetailModal` depuis `project/troop-detail-modal.jsx`
 - `ChatPanel` depuis `preview/components-chat-bubble.html`
 
 ## Workflow de migration

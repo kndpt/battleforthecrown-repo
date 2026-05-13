@@ -70,6 +70,17 @@ export { ToastPreview } from './ToastPreview';
 export type { ToastPreviewProps, ToastTone } from './ToastPreview';
 export { TroopRow } from './TroopRow';
 export type { TroopRowProps, TroopStat } from './TroopRow';
+export { TROOP_DETAIL_FIELD_MAX, TROOP_DETAIL_LABELS_FR } from './TroopDetailModal.constants';
+export { TroopDetailModal, TroopDetailPhoneFrame } from './TroopDetailModal';
+export type {
+  TroopDetailCost,
+  TroopDetailLabels,
+  TroopDetailModalProps,
+  TroopDetailPassive,
+  TroopDetailResource,
+  TroopDetailRoleTone,
+  TroopDetailStats,
+} from './TroopDetailModal';
 export { TroopStepper } from './TroopStepper';
 export type { TroopStepperCost, TroopStepperProps, TroopStepperQuickValue } from './TroopStepper';
 export { VillageStyleModal, VillageStyleTrigger } from './VillageStyleModal';

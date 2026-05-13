@@ -26,7 +26,7 @@ export const UNIT_META: Record<UnitType, UnitMeta> = {
   WARRIOR: {
     name: 'Guerrier',
     description: 'Infanterie offensive aguerrie, efficace contre les troupes légères.',
-    iconPath: null,
+    iconPath: '/assets/army/savage.png',
     emoji: '⚔️',
   },
   ARCHER: {
