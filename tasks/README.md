@@ -23,6 +23,7 @@ Fiches d'exécution déléguées aux harnesses Claude Code ou Codex (lead + sub-
 ### Runs actifs
 
 - [020 — Stats unités uniquement + défense par archétype branchée](./runs/020-feature-units-stats-only-wire-defense-archetype.md) — 📋 `PLANNED`. Suppression complète des passifs (`UnitPassive`) côté shared/backend/frontend/doc, et activation de `defenseInfantry/Cavalry/Archer` dans le résolveur de combat selon l'archétype attaquant.
+- [021 — Navigation multi-village par étiquettes](./runs/021-feature-village-labels-navigation.md) — 📋 `PLANNED`. Phase 9 : étiquettes privées `Offensif`/`Défensif`/`Économique`, capitale déterministe, sélecteur multi-village et règle future de ciblage des récompenses.
 
 ### Runs archivés
 
