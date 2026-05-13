@@ -21,6 +21,8 @@ export type {
   ReinforceCommand,
   RecallCommand,
   ExpeditionResponse,
+  OpenConquestDto,
+  OpenExpeditionDto,
   CombatLoot,
   CombatReportResponse,
 } from './dtos';

@@ -2,7 +2,7 @@
 
 **Sévérité** : 🟡 Majeure
 
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ Résolu
 
 **Décision produit** : les badges et la bottom sheet d'activités doivent se réhydrater depuis le serveur. Les events WS invalident les snapshots, mais ne sont pas la source de vérité.
 

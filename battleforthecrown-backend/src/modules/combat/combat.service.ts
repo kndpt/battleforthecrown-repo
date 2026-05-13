@@ -11,11 +11,15 @@ import { WorldConfigService } from '../world/world-config.service';
 import { VisionService } from '../world/vision.service';
 import { calculateDistance } from '@battleforthecrown/shared/logic';
 import { UNIT_TYPES } from '@battleforthecrown/shared/army';
+import type {
+  OpenConquestDto,
+  OpenExpeditionDto,
+} from '@battleforthecrown/shared/combat';
 import type { AttackCommandDto } from './dto/attack-command.schema';
 import type { ReinforceCommandDto } from './dto/reinforce-command.schema';
 import type { RecallCommandDto } from './dto/recall-command.schema';
 import type { ScoutCommandDto } from './dto/scout-command.schema';
-import { ExpeditionKind } from '@prisma/client';
+import { ExpeditionKind, PendingConquestStatus } from '@prisma/client';
 import { encodeUnitMap } from './codecs';
 import PgBoss from 'pg-boss';
 import { createOutboxEvent } from '../event/event.utils';
@@ -32,6 +36,8 @@ export interface GarrisonLineDto {
   unitType: string;
   quantity: number;
 }
+
+type CaptureTierDto = OpenConquestDto['targetTier'];
 
 @Injectable()
 export class CombatService {
@@ -697,6 +703,113 @@ export class CombatService {
     });
   }
 
+  async getOpenConquests(
+    userId: string,
+    worldId?: string,
+  ): Promise<OpenConquestDto[]> {
+    const conquests = await this.prisma.pendingConquest.findMany({
+      where: {
+        attackerUserId: userId,
+        status: PendingConquestStatus.OPEN,
+        ...(worldId ? { worldId } : {}),
+      },
+      include: {
+        attackerVillage: { select: { id: true, name: true } },
+        targetVillage: {
+          select: { id: true, name: true, x: true, y: true, tier: true },
+        },
+      },
+      orderBy: { captureUntil: 'asc' },
+    });
+
+    return conquests.map((conquest) => ({
+      pendingConquestId: conquest.id,
+      attackerVillageId: conquest.attackerVillageId,
+      attackerVillageName: conquest.attackerVillage.name,
+      targetVillageId: conquest.targetVillageId,
+      targetName: conquest.targetVillage.name,
+      targetX: conquest.targetVillage.x,
+      targetY: conquest.targetVillage.y,
+      targetTier: this.toCaptureTier(conquest.targetVillage.tier),
+      captureStartedAt: conquest.openedAt.toISOString(),
+      captureUntil: conquest.captureUntil.toISOString(),
+      status: 'OPEN',
+    }));
+  }
+
+  async getOpenExpeditions(
+    userId: string,
+    worldId?: string,
+  ): Promise<OpenExpeditionDto[]> {
+    const attackerVillages = await this.prisma.village.findMany({
+      where: {
+        userId,
+        ...(worldId ? { worldId } : {}),
+      },
+      select: { id: true, name: true },
+    });
+    const attackerVillageById = new Map(
+      attackerVillages.map((village) => [village.id, village]),
+    );
+    const attackerVillageIds = attackerVillages.map((village) => village.id);
+    if (!attackerVillageIds.length) return [];
+
+    const expeditions = await this.prisma.expedition.findMany({
+      where: {
+        attackerVillageId: { in: attackerVillageIds },
+        status: { in: ['EN_ROUTE', 'RETURNING'] },
+        ...(worldId ? { worldId } : {}),
+      },
+    });
+    const targetIds = [
+      ...new Set(expeditions.map((expedition) => expedition.targetRefId)),
+    ];
+    const targets = targetIds.length
+      ? await this.prisma.village.findMany({
+          where: { id: { in: targetIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const targetById = new Map(targets.map((target) => [target.id, target]));
+
+    return expeditions
+      .map((expedition) => {
+        const attackerVillage = attackerVillageById.get(
+          expedition.attackerVillageId,
+        );
+        const target = targetById.get(expedition.targetRefId);
+
+        return {
+          expeditionId: expedition.id,
+          kind: expedition.kind,
+          attackerVillageId: expedition.attackerVillageId,
+          attackerVillageName: attackerVillage?.name ?? '',
+          targetVillageId: target?.id ?? null,
+          targetName: target?.name ?? null,
+          targetX: expedition.targetX,
+          targetY: expedition.targetY,
+          targetKind: expedition.targetKind,
+          departAt: expedition.departAt.toISOString(),
+          arrivalAt: expedition.arrivalAt.toISOString(),
+          returnAt: expedition.returnAt?.toISOString() ?? null,
+          status: expedition.status,
+          recalled: expedition.recalled,
+        };
+      })
+      .sort((left, right) => {
+        const leftDue =
+          left.status === 'RETURNING' && left.returnAt
+            ? left.returnAt
+            : left.arrivalAt;
+        const rightDue =
+          right.status === 'RETURNING' && right.returnAt
+            ? right.returnAt
+            : right.arrivalAt;
+
+        return leftDue.localeCompare(rightDue);
+      });
+  }
+
   async getGarrison(
     userId: string,
     villageId: string,
@@ -758,6 +871,20 @@ export class CombatService {
       unitType: garrison.unitType,
       quantity: garrison.quantity,
     }));
+  }
+
+  private toCaptureTier(tier: string | null): CaptureTierDto {
+    if (
+      tier === 'T1' ||
+      tier === 'T2' ||
+      tier === 'T3' ||
+      tier === 'T4' ||
+      tier === 'T5'
+    ) {
+      return tier;
+    }
+
+    return null;
   }
 
   async getAllReports(userId: string) {

@@ -105,3 +105,34 @@ export interface ExpeditionResponse {
   returnAt?: string;
   units: UnitMap;
 }
+
+export interface OpenConquestDto {
+  pendingConquestId: string;
+  attackerVillageId: string;
+  attackerVillageName: string;
+  targetVillageId: string;
+  targetName: string;
+  targetX: number;
+  targetY: number;
+  targetTier: 'T1' | 'T2' | 'T3' | 'T4' | 'T5' | null;
+  captureStartedAt: string;
+  captureUntil: string;
+  status: 'OPEN';
+}
+
+export interface OpenExpeditionDto {
+  expeditionId: string;
+  kind: ExpeditionKind;
+  attackerVillageId: string;
+  attackerVillageName: string;
+  targetVillageId: string | null;
+  targetName: string | null;
+  targetX: number;
+  targetY: number;
+  targetKind: string;
+  departAt: string;
+  arrivalAt: string;
+  returnAt: string | null;
+  status: ExpeditionStatus;
+  recalled: boolean;
+}

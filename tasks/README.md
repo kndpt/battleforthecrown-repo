@@ -4,7 +4,6 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-- [49 — Snapshots serveur des activités du royaume](./49-kingdom-activities-snapshots.md) — 🟡 Majeur. Endpoints réhydratables pour captures ouvertes et expéditions actives multi-villages.
 - [50 — Intégration HUD et bottom sheet des activités du royaume](./50-kingdom-activities-bottom-sheet-integration.md) — 🟡 Majeur. Badges haut de carte + panneau `Activités du royaume` branchés sur les données réelles.
 - [47 — Queue visuelle de formation du Noble manquante](./47-noble-training-visual-queue-missing.md) — 🟠 Moyen. La Salle du Trône indique que le Noble est en formation, mais n'affiche pas de progression/temps restant comme la Caserne.
 
@@ -50,6 +49,7 @@ _(Aucun run actif.)_
 ## Archivés
 
 - [45 — Watchtower niveau 10 : supprimer la vision globale](./archive/45-watchtower-finite-vision.md) ✅ Résolu 2026-05-13 par $run @tasks/45-watchtower-finite-vision.md
+- [49 — Snapshots serveur des activités du royaume](./archive/49-kingdom-activities-snapshots.md) ✅ Résolu 2026-05-13 par $run @tasks/49-kingdom-activities-snapshots.md
 - [48 — Design-system du panneau Activités du royaume](./archive/48-kingdom-activities-design-system.md) ✅ Résolu 2026-05-13 par migration design-system directe.
 - [44 — Crash armée : migration `unit_training.building` non appliquée](./archive/44-army-training-schema-drift.md) ✅ Résolu 2026-05-11 par application des migrations locales + garde-fou dev server.
 - [43 — Risque de mort du Seigneur sur victoire coûteuse](./archive/43-noble-loss-chance-on-costly-victory.md) ✅ Résolu 2026-05-11 par $run @tasks/43-noble-loss-chance-on-costly-victory.md

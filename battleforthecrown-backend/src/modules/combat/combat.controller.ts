@@ -6,6 +6,7 @@ import {
   Body,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { CombatService } from './combat.service';
 import {
@@ -70,6 +71,22 @@ export class CombatController {
     @Param('expeditionId') expeditionId: string,
   ) {
     return this.combatService.recallEnRoute(user.id, expeditionId);
+  }
+
+  @Get('conquests/open')
+  async getOpenConquests(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('worldId') worldId?: string,
+  ) {
+    return this.combatService.getOpenConquests(user.id, worldId);
+  }
+
+  @Get('expeditions/open')
+  async getOpenExpeditions(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('worldId') worldId?: string,
+  ) {
+    return this.combatService.getOpenExpeditions(user.id, worldId);
   }
 
   @Get(':villageId/active')
