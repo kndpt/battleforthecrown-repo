@@ -33,6 +33,12 @@ export interface MapEntity {
   y: number;
   name: string;
   tier: WorldTier | null;
+  captureWindow?: {
+    status: "OPEN";
+    pendingConquestId: string;
+    attackerVillageId: string;
+    captureUntil: string;
+  };
 }
 
 export function entityFromWorldDto(
@@ -58,6 +64,7 @@ export function entityFromWorldDto(
     name:
       typeof dto.data.name === "string" ? dto.data.name : dto.id.slice(0, 6),
     tier: normalizeTier(dto.data.tier),
+    captureWindow: normalizeCaptureWindow(dto.data.captureWindow),
   };
 }
 
@@ -86,5 +93,25 @@ export function entityFromMyVillage(
     y: dto.y,
     name: dto.name,
     tier: null,
+  };
+}
+
+function normalizeCaptureWindow(value: unknown): MapEntity["captureWindow"] {
+  if (!value || typeof value !== "object") return undefined;
+  const data = value as Record<string, unknown>;
+  if (
+    data.status !== "OPEN" ||
+    typeof data.pendingConquestId !== "string" ||
+    typeof data.attackerVillageId !== "string" ||
+    typeof data.captureUntil !== "string"
+  ) {
+    return undefined;
+  }
+
+  return {
+    status: "OPEN",
+    pendingConquestId: data.pendingConquestId,
+    attackerVillageId: data.attackerVillageId,
+    captureUntil: data.captureUntil,
   };
 }

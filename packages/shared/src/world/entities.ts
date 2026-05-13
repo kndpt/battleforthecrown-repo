@@ -15,6 +15,12 @@ export interface WorldEntityDto {
     name?: string;
     villageId?: string;
     userId?: string;
+    captureWindow?: {
+      status: 'OPEN';
+      pendingConquestId: string;
+      attackerVillageId: string;
+      captureUntil: string;
+    };
   };
 }
 

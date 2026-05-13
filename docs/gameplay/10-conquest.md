@@ -77,6 +77,8 @@ Quand la fenêtre de capture se termine sans interruption, le Seigneur s'install
 
 Pendant toute la fenêtre, la **garnison d'occupation** est composée du Seigneur et de l'escorte survivante du combat de pré-conquête. Elle ne rentre pas au village d'origine : elle défend la capture. Si cette escorte est entièrement détruite, ou si le Seigneur meurt, la capture est interrompue.
 
+La fenêtre de capture est un **signal public de carte** : tout joueur qui voit le village cible voit un indicateur visuel autour du village. Le badge HUD `Captures` reste privé au conquérant, mais le marqueur sur la cible est public pour rendre l'opportunité PvP lisible.
+
 Si la conquête est interrompue (combat perdu pendant la fenêtre de capture), le Seigneur **meurt** avec le reste de la garnison attaquée. Pas de récupération, pas de retour au village d'origine.
 
 ### Cas particulier : armée gagne le combat de pré-conquête mais le Seigneur meurt

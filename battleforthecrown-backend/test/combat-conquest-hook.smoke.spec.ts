@@ -178,6 +178,25 @@ describe('combat conquest hook smoke', () => {
       expeditionId: conquest.expeditionId,
       survivingUnits: {},
     });
+
+    const entitiesRes = await request(ctx.server)
+      .get(`/world/${world.id}/entities`)
+      .set('Authorization', `Bearer ${conquest.user.accessToken}`);
+    expect(entitiesRes.status).toBe(200);
+    const targetEntity = (
+      entitiesRes.body as Array<{ id: string; data?: unknown }>
+    ).find((entity) => entity.id === conquest.target.id);
+    expect(targetEntity).toMatchObject({
+      id: conquest.target.id,
+      data: {
+        captureWindow: {
+          status: 'OPEN',
+          pendingConquestId: conquest.pending.id,
+          attackerVillageId: conquest.village.id,
+          captureUntil: conquest.pending.captureUntil.toISOString(),
+        },
+      },
+    });
   }, 45_000);
 
   it('interrupts an open capture window when a hostile attack kills the immobilized noble', async () => {

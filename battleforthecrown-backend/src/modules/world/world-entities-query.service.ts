@@ -7,6 +7,14 @@ const barbarianVillageDataSchema = z.object({
   tier: z.string().nullable(),
   name: z.string(),
   villageId: z.string(),
+  captureWindow: z
+    .object({
+      status: z.literal('OPEN'),
+      pendingConquestId: z.string(),
+      attackerVillageId: z.string(),
+      captureUntil: z.string(),
+    })
+    .optional(),
 });
 
 type BarbarianVillageData = z.infer<typeof barbarianVillageDataSchema>;
@@ -122,18 +130,51 @@ export class WorldEntitiesQueryService {
             }
           : {}),
       },
-      select: { id: true, x: true, y: true, name: true, tier: true },
+      select: {
+        id: true,
+        x: true,
+        y: true,
+        name: true,
+        tier: true,
+        pendingConquestTargets: {
+          where: { status: 'OPEN' },
+          select: {
+            id: true,
+            attackerVillageId: true,
+            captureUntil: true,
+          },
+          take: 1,
+        },
+      },
       orderBy: [{ y: 'asc' }, { x: 'asc' }],
     });
 
-    return barbarians.map((b) => ({
-      id: b.id,
-      worldId,
-      kind: 'BARBARIAN_VILLAGE' as const,
-      x: b.x,
-      y: b.y,
-      data: { tier: b.tier, name: b.name, villageId: b.id },
-    }));
+    return barbarians.map((b) => {
+      const capture = b.pendingConquestTargets[0];
+
+      return {
+        id: b.id,
+        worldId,
+        kind: 'BARBARIAN_VILLAGE' as const,
+        x: b.x,
+        y: b.y,
+        data: {
+          tier: b.tier,
+          name: b.name,
+          villageId: b.id,
+          ...(capture
+            ? {
+                captureWindow: {
+                  status: 'OPEN' as const,
+                  pendingConquestId: capture.id,
+                  attackerVillageId: capture.attackerVillageId,
+                  captureUntil: capture.captureUntil.toISOString(),
+                },
+              }
+            : {}),
+        },
+      };
+    });
   }
 }
 

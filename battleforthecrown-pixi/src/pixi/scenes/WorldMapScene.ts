@@ -52,6 +52,8 @@ const COLOR = {
   selected: 0xfff9d6,
   worldBorder: 0xffecbe,
   fogOverlay: 0x0c0804,
+  capture: 0xf1c40f,
+  captureDark: 0x7a4b00,
 };
 
 function mulberry32(seed: number): () => number {
@@ -67,6 +69,7 @@ function mulberry32(seed: number): () => number {
 interface EntityVisual {
   container: Container;
   graphic: Graphics;
+  captureMarker: Graphics;
   sprite: Sprite;
   label: Text;
   data: MapEntity;
@@ -341,7 +344,7 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
   };
 
   const drawEntity = (visual: EntityVisual) => {
-    const { graphic, sprite, data } = visual;
+    const { captureMarker, graphic, sprite, data } = visual;
     const { color, ringColor, radius, zIndex } = styleFor(data);
     const isSelected = data.id === selectedId;
     const alias = aliasFor(data);
@@ -378,6 +381,30 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     visual.container.zIndex = zIndex + (isSelected ? 50 : 0);
     visual.label.text = data.name;
     visual.label.visible = isMine || isSelected;
+    if (!data.captureWindow) captureMarker.clear();
+  };
+
+  const drawCaptureMarker = (visual: EntityVisual, nowMs: number) => {
+    const { captureMarker, data } = visual;
+    captureMarker.clear();
+    if (!data.captureWindow) return;
+
+    const alias = aliasFor(data);
+    const texture = alias ? Assets.get<Texture>(alias) : null;
+    const size = texture ? (data.isMine ? PLAYER_SPRITE_SIZE : SPRITE_SIZE) : styleFor(data).radius * 2;
+    const baseRadius = size * 0.58;
+    const pulse = (Math.sin(nowMs / 360) + 1) / 2;
+    const outerRadius = baseRadius + 6 + pulse * 7;
+
+    captureMarker
+      .circle(0, 0, outerRadius)
+      .stroke({ color: COLOR.capture, width: 4, alpha: 0.35 + pulse * 0.35 });
+    captureMarker
+      .circle(0, 0, baseRadius + 2)
+      .stroke({ color: COLOR.captureDark, width: 2.5, alpha: 0.85 });
+    captureMarker
+      .circle(0, 0, baseRadius + 7)
+      .stroke({ color: 0xffffff, width: 1.5, alpha: 0.45 });
   };
 
   const ensureVisual = (entity: MapEntity): EntityVisual => {
@@ -396,6 +423,10 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
 
     const graphic = new Graphics();
     container.addChild(graphic);
+
+    const captureMarker = new Graphics();
+    captureMarker.eventMode = 'none';
+    container.addChild(captureMarker);
 
     const sprite = new Sprite();
     sprite.anchor.set(0.5);
@@ -430,7 +461,7 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
 
     entitiesLayer.addChild(container);
 
-    visual = { container, graphic, sprite, label, data: entity };
+    visual = { container, graphic, captureMarker, sprite, label, data: entity };
     visuals.set(entity.id, visual);
     drawEntity(visual);
     return visual;
@@ -611,6 +642,7 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
       // page load, which would make `nowMs - departAt` deeply negative and
       // freeze the unit at t = 0.
       const now = Date.now();
+      visuals.forEach((visual) => drawCaptureMarker(visual, now));
       expeditionVisuals.forEach((visual) => visual.tick(now));
       textureRetryAccumulator += deltaMs;
       if (textureRetryAccumulator >= 500) {

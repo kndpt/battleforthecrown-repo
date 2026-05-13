@@ -44,6 +44,34 @@ describe('buildMapEntities', () => {
     expect(other?.ownerId).toBe('other-user');
   });
 
+  it('maps an open capture window from public entity data', () => {
+    const result = buildMapEntities(
+      [
+        {
+          ...barbarian,
+          data: {
+            ...barbarian.data,
+            captureWindow: {
+              status: 'OPEN',
+              pendingConquestId: 'pc1',
+              attackerVillageId: 'attacker-village',
+              captureUntil: '2026-05-13T22:00:00.000Z',
+            },
+          },
+        },
+      ],
+      [],
+      null,
+    );
+
+    expect(result[0].captureWindow).toEqual({
+      status: 'OPEN',
+      pendingConquestId: 'pc1',
+      attackerVillageId: 'attacker-village',
+      captureUntil: '2026-05-13T22:00:00.000Z',
+    });
+  });
+
   it('flags entities owned by myUserId as `isMine`', () => {
     const mineFromFeed: WorldEntityDto = {
       ...playerEntity,
