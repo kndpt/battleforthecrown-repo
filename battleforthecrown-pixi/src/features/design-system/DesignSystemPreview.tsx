@@ -45,6 +45,10 @@ import {
   SurfaceTile,
   Timer,
   ToastPreview,
+  TroopDetailModal,
+  TroopDetailPhoneFrame,
+  TROOP_DETAIL_FIELD_MAX,
+  TROOP_DETAIL_LABELS_FR,
   TroopRow,
   TroopStepper,
   VillageStyleModal,
@@ -92,6 +96,36 @@ const chatMessages: ChatMessage[] = [
     type: 'system',
   },
 ];
+
+const troopDetailFixture = {
+  archetype: 'Infanterie · Frappe rapide',
+  closeLabel: 'Fermer',
+  cost: { crowns: 0, iron: 45, stone: 0, wood: 30 },
+  name: 'Guerrier',
+  passive: {
+    bonus: '+10 %',
+    description: '+10 % d’attaque lorsque la troupe participe à un raid.',
+    icon: '⚡',
+    name: 'Frénésie du pillard',
+  },
+  populationCost: 1,
+  portraitSrc: '/assets/army/savage.png',
+  recruitLabel: 'Recruter',
+  roleLabel: 'Offensif',
+  stats: {
+    attack: 20,
+    carryCapacity: 35,
+    defenseArcher: 5,
+    defenseCavalry: 5,
+    defenseInfantry: 5,
+    speed: 20,
+  },
+  stock: { crowns: 142, iron: 1240, stone: 940, wood: 1820 },
+  tagline: '« Frappe d’abord. Dort sous les armes. »',
+  tierBadge: 'II',
+  tierLabel: 'Tier II · Caserne niv. 3',
+  trainingTime: '1 m 35 s',
+};
 
 export function DesignSystemPreview() {
   const [inputValue, setInputValue] = useState('');
@@ -1292,6 +1326,38 @@ export function DesignSystemPreview() {
               state="locked"
               title="Améliorer le château au niv. 5"
             />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="font-game text-2xl font-bold text-[#1f2937]">TroopDetailModal</h2>
+            <span className="font-mono text-[10px] text-[#5d4a32]">caserne · détail de troupe</span>
+          </div>
+          <div className="flex w-full justify-center">
+            <TroopDetailPhoneFrame>
+              <TroopDetailModal
+                archetype={troopDetailFixture.archetype}
+                closeLabel={troopDetailFixture.closeLabel}
+                cost={troopDetailFixture.cost}
+                fieldMax={TROOP_DETAIL_FIELD_MAX}
+                labels={TROOP_DETAIL_LABELS_FR}
+                name={troopDetailFixture.name}
+                onClose={() => undefined}
+                onRecruit={() => undefined}
+                passive={troopDetailFixture.passive}
+                populationCost={troopDetailFixture.populationCost}
+                portraitSrc={troopDetailFixture.portraitSrc}
+                recruitLabel={troopDetailFixture.recruitLabel}
+                roleLabel={troopDetailFixture.roleLabel}
+                stats={troopDetailFixture.stats}
+                stock={troopDetailFixture.stock}
+                tagline={troopDetailFixture.tagline}
+                tierBadge={troopDetailFixture.tierBadge}
+                tierLabel={troopDetailFixture.tierLabel}
+                trainingTime={troopDetailFixture.trainingTime}
+              />
+            </TroopDetailPhoneFrame>
           </div>
         </section>
 

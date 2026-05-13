@@ -18,8 +18,12 @@ PORT=15001 yarn workspace battleforthecrown-backend start:dev
 Front Pixi :
 
 ```bash
-yarn workspace battleforthecrown-pixi dev    # http://localhost:5173
+VITE_API_BASE_URL=http://localhost:15001 \
+VITE_WS_URL=http://localhost:15001 \
+  yarn workspace battleforthecrown-pixi dev    # http://localhost:5173
 ```
+
+En worktree ou si `5173` est déjà occupé, utiliser un port dédié et aligner aussi `FRONTEND_URL` côté backend. Voir [`../docs/architecture/worktree-dev.md`](../docs/architecture/worktree-dev.md).
 
 ## Scripts
 
