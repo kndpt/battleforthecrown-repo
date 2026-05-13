@@ -45,14 +45,24 @@ export interface WorldVillageDto {
   createdAt?: string;
 }
 
-export type WorldTier = 'T1' | 'T2' | 'T3';
+export type WorldTier = 'T1' | 'T2' | 'T3' | 'T4' | 'T5';
 
 export function normalizeTier(value: unknown): WorldTier | null {
-  if (value === 'T1' || value === 'T2' || value === 'T3') return value;
+  if (
+    value === 'T1' ||
+    value === 'T2' ||
+    value === 'T3' ||
+    value === 'T4' ||
+    value === 'T5'
+  ) {
+    return value;
+  }
   if (typeof value === 'string') {
     if (value.toLowerCase().includes('1')) return 'T1';
     if (value.toLowerCase().includes('2')) return 'T2';
     if (value.toLowerCase().includes('3')) return 'T3';
+    if (value.toLowerCase().includes('4')) return 'T4';
+    if (value.toLowerCase().includes('5')) return 'T5';
   }
   return null;
 }

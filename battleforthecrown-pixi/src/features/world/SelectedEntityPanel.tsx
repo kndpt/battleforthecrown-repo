@@ -1,5 +1,6 @@
 import { MapEntityCallout } from '@/features/design-system/components';
 import type { MapEntity } from '@/api/world-types';
+import { getBarbarianCaptureDurationLabel } from './barbarianConquest';
 
 interface SelectedEntityPanelProps {
   entity: MapEntity | null;
@@ -12,6 +13,8 @@ const TIER_LABEL: Record<NonNullable<MapEntity['tier']>, string> = {
   T1: 'Tier 1',
   T2: 'Tier 2',
   T3: 'Tier 3',
+  T4: 'Tier 4',
+  T5: 'Tier 5',
 };
 
 function typeLabel(entity: MapEntity): string {
@@ -77,6 +80,7 @@ export function SelectedEntityPanel({
     <MapEntityCallout
       actions={actions}
       coordinates={`${entity.x}|${entity.y}`}
+      stats={isBarbarian ? captureStatsFor(entity) : undefined}
       subtitle={subtitleFor(entity)}
       tier={entity.tier ? { label: `★ ${entity.tier}` } : undefined}
       title={entity.name}
@@ -88,4 +92,9 @@ export function SelectedEntityPanel({
 function subtitleFor(entity: MapEntity): string {
   if (entity.kind === 'BARBARIAN_VILLAGE') return 'Inhabité · pillable';
   return typeLabel(entity);
+}
+
+function captureStatsFor(entity: MapEntity) {
+  const duration = getBarbarianCaptureDurationLabel(entity.tier);
+  return duration ? [{ label: 'Capture', value: duration }] : undefined;
 }

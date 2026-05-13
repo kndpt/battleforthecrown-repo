@@ -390,6 +390,7 @@ export function applyVillageCaptureWindowOpened(
   ctx: BindingsContext,
 ): void {
   ctx.queryClient.invalidateQueries({ queryKey: ['world-entities'] });
+  invalidateConquestAttackerState(ctx, payload.attackerVillageId);
   useUiStore.getState().pushToast({
     tone: 'warning',
     title: 'Capture en cours',
@@ -432,12 +433,19 @@ export function applyNobleKilled(
 ): void {
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.attackerVillageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.attackerVillageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(payload.attackerVillageId) });
   useUiStore.getState().pushToast({
     tone: 'error',
     title: 'Seigneur perdu',
     description: 'Conquête échouée',
     ttlMs: 6000,
   });
+}
+
+function invalidateConquestAttackerState(ctx: BindingsContext, attackerVillageId: string): void {
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(attackerVillageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(attackerVillageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(attackerVillageId) });
 }
 
 function resolveOrigin(villageId: string): { x: number; y: number } {

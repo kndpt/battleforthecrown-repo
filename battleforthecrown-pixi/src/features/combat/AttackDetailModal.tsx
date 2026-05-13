@@ -30,6 +30,7 @@ import { unitMetaFor } from '@/features/army/unitConfig';
 import { SegmentedControl } from '@/features/design-system/components';
 import { publicAsset } from '@/lib/publicAsset';
 import type { MapEntity } from '@/api/world-types';
+import { getBarbarianCaptureDurationLabel } from '@/features/world/barbarianConquest';
 
 interface AttackDetailModalProps {
   target: MapEntity;
@@ -102,6 +103,12 @@ export function AttackDetailModal({
       return total + (stats?.attack ?? 0) * qty;
     }, 0);
   }, [effectiveUnits]);
+  const selectedNobleCount = effectiveUnits[UNIT_TYPES.NOBLE] ?? 0;
+  const isBarbarianConquest =
+    target.kind === 'BARBARIAN_VILLAGE' &&
+    activeMode === 'attack' &&
+    selectedNobleCount > 0;
+  const captureDuration = getBarbarianCaptureDurationLabel(target.tier);
 
   const handleUnitChange = (unitType: string, raw: number) => {
     const unit = heldUnits.find((u) => u.type === unitType);
@@ -320,6 +327,22 @@ export function AttackDetailModal({
               <InputHelperText variant="error">{error}</InputHelperText>
             </div>
           )}
+
+          {target.kind === 'BARBARIAN_VILLAGE' && activeMode === 'attack' && (
+            <div className="p-3 bg-game-gold-light/10 border-2 border-game-gold-border/30 rounded-lg text-sm text-kingdom-800">
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-semibold">Fenêtre de capture</span>
+                <Badge variant={isBarbarianConquest ? 'warning' : 'neutral'} size="sm">
+                  {captureDuration ?? 'Inconnue'}
+                </Badge>
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-kingdom-700">
+                {isBarbarianConquest
+                  ? 'Un Noble sélectionné ouvrira cette fenêtre si le combat est gagné et qu’il survit.'
+                  : 'Ajoute un Noble à l’attaque pour transformer cette mission en conquête.'}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="p-4 border-t-2 border-kingdom-200 bg-gradient-to-b from-kingdom-50 to-kingdom-100 flex-shrink-0 flex flex-col gap-2">
@@ -393,7 +416,9 @@ export function AttackDetailModal({
                       ? 'Renforcer'
                       : activeMode === 'scout'
                         ? 'Envoyer scout'
-                        : 'Attaquer'}
+                        : isBarbarianConquest
+                          ? 'Lancer conquête'
+                          : 'Attaquer'}
                   </span>
                 </div>
               )}

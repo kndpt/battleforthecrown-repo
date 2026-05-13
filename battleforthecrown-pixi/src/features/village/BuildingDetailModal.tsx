@@ -1,26 +1,31 @@
-import { useState } from 'react';
-import { Hammer, Lock, X } from 'lucide-react';
-import { Button, InputHelperText, Modal, ModalBody, Spinner } from '@/ui';
+import { useState, type ReactNode } from 'react';
+import { Crown, Hammer, Lock, X } from 'lucide-react';
+import { Button, InputHelperText, Modal, ModalBody, ResourceIcon, Spinner } from '@/ui';
 import { metaFor } from './buildingMeta';
 import { computeConstructionProgress, formatRemaining } from './constructionProgress';
 import { useTickingNow } from '@/lib/useTickingNow';
 import {
+  useArmyInventoryQuery,
+  useArmyTrainingQuery,
   useBuildingQueueQuery,
   useUpgradeBuildingMutation,
   useCancelConstructionMutation,
   usePopulationQuery,
+  useRecruitNobleMutation,
   useVillageBuildingsQuery,
   useWorldConfigQuery,
 } from '@/api/queries';
 import { ApiError } from '@/api';
 import type { BuildingDto } from '@/api';
-import { useDisplayResources } from '@/features/resources/useDisplayResources';
+import { useDisplayCrowns, useDisplayResources } from '@/features/resources/useDisplayResources';
+import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
 import {
   BUILDING_DEFINITIONS,
   MAX_CONSTRUCTION_QUEUE,
   type BuildingType,
 } from '@battleforthecrown/shared/village/buildings';
+import { UNIT_COSTS, UNIT_TYPES } from '@battleforthecrown/shared/army';
 import { calculateBuildingCost } from '@battleforthecrown/shared/logic';
 import { BuildingHeader } from './BuildingDetailModal/BuildingHeader';
 import { ConstructionProgress } from './BuildingDetailModal/ConstructionProgress';
@@ -44,6 +49,7 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
   );
   const upgrade = useUpgradeBuildingMutation();
   const cancel = useCancelConstructionMutation();
+  const recruitNoble = useRecruitNobleMutation();
   const [error, setError] = useState<string | null>(null);
 
   const isUnderConstruction = progress.inProgress;
@@ -56,10 +62,14 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
     ? Math.max(0, populationQuery.data.max - populationQuery.data.used)
     : 0;
 
+  const userId = useAuthStore((state) => state.user?.id ?? null);
   const worldId = useGameStore((state) => state.worldId);
+  const { balance: crownsBalance } = useDisplayCrowns(userId, worldId);
   const buildingsQuery = useVillageBuildingsQuery(villageId);
   const worldConfigQuery = useWorldConfigQuery(worldId);
   const { data: buildingQueue = [] } = useBuildingQueueQuery(villageId);
+  const armyInventory = useArmyInventoryQuery(villageId);
+  const armyTraining = useArmyTrainingQuery(villageId);
   const isQueueFull = buildingQueue.length >= MAX_CONSTRUCTION_QUEUE;
 
   const castleLevel =
@@ -89,6 +99,29 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
     (displayResources?.iron ?? 0) >= nextCost.iron &&
     availablePopulation >= nextCost.population;
 
+  const nobleCost = UNIT_COSTS[UNIT_TYPES.NOBLE];
+  const nobleInGarrison =
+    armyInventory.data?.find((unit) => unit.type === UNIT_TYPES.NOBLE)?.quantity ?? 0;
+  const nobleInTraining = armyTraining.data?.some(
+    (training) => training.unitType === UNIT_TYPES.NOBLE,
+  ) ?? false;
+  const nobleTimeMs = Math.round(
+    (nobleCost.time / (worldConfigQuery.data?.gameSpeed.training ?? 1)) * 1000,
+  );
+  const canAffordNoble =
+    building.type === 'THRONE_HALL' &&
+    building.level > 0 &&
+    !isUnderConstruction &&
+    !nobleInGarrison &&
+    !nobleInTraining &&
+    Boolean(displayResources) &&
+    crownsBalance !== null &&
+    (displayResources?.wood ?? 0) >= nobleCost.wood &&
+    (displayResources?.stone ?? 0) >= nobleCost.stone &&
+    (displayResources?.iron ?? 0) >= nobleCost.iron &&
+    crownsBalance >= (nobleCost.crowns ?? 0) &&
+    availablePopulation >= nobleCost.population;
+
   const handleUpgrade = () => {
     if (isUnbuiltLocked) return;
     setError(null);
@@ -111,6 +144,18 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
         onSuccess: () => onClose(),
         onError: (err) => {
           setError(err instanceof ApiError ? err.message : "Échec de l'annulation");
+        },
+      },
+    );
+  };
+
+  const handleRecruitNoble = () => {
+    setError(null);
+    recruitNoble.mutate(
+      { villageId },
+      {
+        onError: (err) => {
+          setError(err instanceof ApiError ? err.message : 'Échec du recrutement du Noble');
         },
       },
     );
@@ -181,6 +226,81 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
 
           {building.type === 'CASTLE' && !isMaxLevel && (
             <BuildingUnlockPreview nextCastleLevel={nextLevel} />
+          )}
+
+          {building.type === 'THRONE_HALL' && building.level > 0 && !isUnderConstruction && (
+            <div className="space-y-3 rounded-lg border-2 border-game-gold-border/40 bg-game-gold-light/10 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-cinzel text-base font-bold text-kingdom-900">
+                    Recrutement du Noble
+                  </h3>
+                  <p className="mt-1 text-xs leading-relaxed text-kingdom-700">
+                    Un seul Noble peut être disponible ou en formation par village.
+                  </p>
+                </div>
+                <span className="text-2xl" aria-hidden>👑</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                <NobleCostCell
+                  label="Bois"
+                  required={nobleCost.wood}
+                  current={displayResources?.wood ?? 0}
+                  icon={<ResourceIcon resource="wood" size={22} />}
+                />
+                <NobleCostCell
+                  label="Pierre"
+                  required={nobleCost.stone}
+                  current={displayResources?.stone ?? 0}
+                  icon={<ResourceIcon resource="stone" size={22} />}
+                />
+                <NobleCostCell
+                  label="Fer"
+                  required={nobleCost.iron}
+                  current={displayResources?.iron ?? 0}
+                  icon={<ResourceIcon resource="iron" size={22} />}
+                />
+                <NobleCostCell
+                  label="Couronnes"
+                  required={nobleCost.crowns ?? 0}
+                  current={crownsBalance ?? 0}
+                  icon={<Crown size={20} />}
+                />
+                <NobleCostCell
+                  label="Pop."
+                  required={nobleCost.population}
+                  current={availablePopulation}
+                  icon={<span className="text-xl leading-none">👥</span>}
+                />
+              </div>
+
+              <Button
+                variant={canAffordNoble ? 'warning' : 'neutral'}
+                size="md"
+                className="w-full font-bold"
+                disabled={!canAffordNoble || recruitNoble.isPending}
+                onClick={handleRecruitNoble}
+              >
+                {recruitNoble.isPending ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Spinner size="sm" />
+                    <span>Recrutement...</span>
+                  </div>
+                ) : nobleInTraining ? (
+                  'Noble déjà en formation'
+                ) : nobleInGarrison ? (
+                  'Noble déjà disponible'
+                ) : canAffordNoble ? (
+                  'Recruter le Noble'
+                ) : (
+                  'Prérequis insuffisants'
+                )}
+              </Button>
+              <p className="text-center text-xs text-kingdom-600 font-game">
+                Temps de recrutement : <span className="font-bold">{formatRemaining(nobleTimeMs)}</span>
+              </p>
+            </div>
           )}
 
           {isMaxLevel && (
@@ -284,5 +404,32 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
         </div>
       </ModalBody>
     </Modal>
+  );
+}
+
+interface NobleCostCellProps {
+  current: number;
+  icon: ReactNode;
+  label: string;
+  required: number;
+}
+
+function NobleCostCell({ current, icon, label, required }: NobleCostCellProps) {
+  const canAfford = current >= required;
+  return (
+    <div
+      className={`rounded-lg border p-2 text-center ${
+        canAfford
+          ? 'border-game-green-border bg-game-green-light/10 text-game-green-dark'
+          : 'border-game-red-border bg-game-red-light/10 text-game-red-dark'
+      }`}
+    >
+      <div className="mb-1 flex justify-center">{icon}</div>
+      <p className="text-[10px] font-game text-kingdom-600">{label}</p>
+      <p className="text-xs font-bold tabular-nums">{required.toLocaleString()}</p>
+      <p className="text-[10px] text-kingdom-700 tabular-nums">
+        / {Math.floor(current).toLocaleString()}
+      </p>
+    </div>
   );
 }

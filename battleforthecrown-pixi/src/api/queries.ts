@@ -448,6 +448,27 @@ export function useTrainUnitsMutation() {
   });
 }
 
+interface RecruitNobleInput {
+  villageId: string;
+}
+
+export function useRecruitNobleMutation() {
+  const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
+  return useMutation<ArmyTrainingDto, Error, RecruitNobleInput>({
+    mutationFn: ({ villageId }) =>
+      apiClient.post<ArmyTrainingDto>(`/army/${villageId}/throne/recruit-noble`, {}),
+    onSettled: (_data, _err, { villageId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.armyTraining(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.resources(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.crowns(userId, worldId) });
+    },
+  });
+}
+
 interface CancelTrainingInput {
   villageId: string;
   trainingId: string;

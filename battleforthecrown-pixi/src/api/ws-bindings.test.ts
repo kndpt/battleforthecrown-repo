@@ -11,6 +11,8 @@ import {
   applyReinforcementReturned,
   applyReinforcementSent,
   applyResourcesChanged,
+  applyNobleKilled,
+  applyVillageCaptureWindowOpened,
   applyVillageAttacked,
 } from './ws-bindings';
 import { queryKeys } from './queries';
@@ -245,6 +247,51 @@ describe('applyVillageAttacked', () => {
 
     expect(queryClient.getQueryState(queryKeys.combatReports('defender-1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.scoutReports('defender-1'))?.isInvalidated).toBe(true);
+  });
+});
+
+describe('conquest websocket bindings', () => {
+  it('refreshes conquest attacker state when a capture window opens', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.worldEntities('w1'), []);
+    queryClient.setQueryData(queryKeys.activeExpeditions('v-att'), []);
+    queryClient.setQueryData(queryKeys.armyInventory('v-att'), []);
+    queryClient.setQueryData(queryKeys.population('v-att'), { used: 1, max: 10, available: 9 });
+
+    applyVillageCaptureWindowOpened(
+      {
+        pendingConquestId: 'pc1',
+        targetVillageId: 'barb-1',
+        attackerVillageId: 'v-att',
+        captureUntil: '2026-05-04T23:00:00.000Z',
+      },
+      { queryClient },
+    );
+
+    expect(queryClient.getQueryState(queryKeys.worldEntities('w1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.activeExpeditions('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.armyInventory('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.population('v-att'))?.isInvalidated).toBe(true);
+  });
+
+  it('refreshes attacker army state when the noble dies', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.activeExpeditions('v-att'), []);
+    queryClient.setQueryData(queryKeys.armyInventory('v-att'), []);
+    queryClient.setQueryData(queryKeys.population('v-att'), { used: 1, max: 10, available: 9 });
+
+    applyNobleKilled(
+      {
+        attackerVillageId: 'v-att',
+        attackerUserId: 'u-att',
+        combatId: 'combat-1',
+      },
+      { queryClient },
+    );
+
+    expect(queryClient.getQueryState(queryKeys.activeExpeditions('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.armyInventory('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.population('v-att'))?.isInvalidated).toBe(true);
   });
 });
 

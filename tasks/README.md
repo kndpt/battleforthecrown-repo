@@ -16,10 +16,11 @@ Fiches d'exécution déléguées aux harnesses Claude Code ou Codex (lead + sub-
 
 ### Runs actifs
 
-- [019 — Feature barbarian conquest frontend UI](./runs/019-feature-barbarian-conquest-frontend-ui.md) — 📋 `PLANNED`. Phase 5 frontend/UI : recrutement Seigneur, lancement conquête barbare, durée visible et suivi des events.
+_(Aucun run actif.)_
 
 ### Runs archivés
 
+- [019 — Feature barbarian conquest frontend UI](./runs/archive/019-feature-barbarian-conquest-frontend-ui.md) — ✅ `DONE` (2026-05-13). Phase 5 frontend/UI : recrutement Seigneur Salle du Trône, lancement conquête barbare lisible, durée capture T1-T5 visible, invalidations WS et static-check verts.
 - [018 — Feature barbarian conquest backend shared](./runs/archive/018-feature-barbarian-conquest-backend-shared.md) — ✅ `DONE` (2026-05-13). Phase 5 backend/shared : finalisation barbare conforme spec, bâtiments matérialisés par tier, Seigneur installé hors armée, smoke T2 + smokes backend + static-check verts.
 - [017 — Feature scouting frontend inbox](./runs/archive/017-feature-scouting-frontend-inbox.md) — ✅ `DONE` (2026-05-12). Phase 4 Scouting frontend : action `Scout` SPY-only, coût sans couronnes, inbox mixte combat/scout via design system, détail `ScoutReportCard`, tests Pixi + static-check verts.
 - [016 — Feature scouting backend shared](./runs/archive/016-feature-scouting-backend-shared.md) — ✅ `DONE` (2026-05-12). Phase 4 Scouting backend/shared : mission scout SPY-only, `ScoutReport`, events `scout.*`, retour ESPION, endpoints reports scout, docs + smokes backend verts.

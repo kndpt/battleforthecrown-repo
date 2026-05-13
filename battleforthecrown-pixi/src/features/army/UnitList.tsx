@@ -14,7 +14,7 @@ interface UnitListProps {
 const UNIT_ORDER = Object.values(UNIT_TYPES) as string[];
 
 export function UnitList({ units, trainings, barracksLevel, onUnitClick }: UnitListProps) {
-  const sorted = [...units].sort((a, b) => {
+  const sorted = units.filter((unit) => unit.type !== UNIT_TYPES.NOBLE).sort((a, b) => {
     const ai = UNIT_ORDER.indexOf(a.type);
     const bi = UNIT_ORDER.indexOf(b.type);
     return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);

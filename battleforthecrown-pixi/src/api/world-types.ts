@@ -1,5 +1,6 @@
 import {
   normalizeTier,
+  type WorldTier,
   type WorldEntityFogged,
   type WorldEntityResponse,
   type WorldVillageDto,
@@ -31,7 +32,7 @@ export interface MapEntity {
   x: number;
   y: number;
   name: string;
-  tier: "T1" | "T2" | "T3" | null;
+  tier: WorldTier | null;
 }
 
 export function entityFromWorldDto(
