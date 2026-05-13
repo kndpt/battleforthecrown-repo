@@ -6,7 +6,7 @@
 
 Quand un joueur possède plusieurs villages, il doit comprendre vite à quoi sert chacun. La profondeur doit venir des décisions stratégiques, pas de la friction de navigation mobile.
 
-Le MVP ajoute donc des **rôles privés** et des **favoris** pour organiser son royaume.
+Le MVP ajoute donc des **étiquettes privées** pour organiser son royaume.
 
 ## Scope MVP
 
@@ -18,35 +18,36 @@ Le MVP ajoute donc des **rôles privés** et des **favoris** pour organiser son 
 | Usage principal | Navigation, filtres, lecture du royaume |
 | Support initial | Villages possédés par le joueur uniquement |
 
-## Rôles proposés
+## Étiquettes proposées
 
 Liste fixe MVP :
 
-- `Favori`
-- `Capitale`
-- `Raid`
-- `Défense`
-- `Économie`
-- `Frontière`
-- `Conquête`
+- `Offensif`
+- `Défensif`
+- `Économique`
 
 Interprétation :
 
-| Rôle | Intention UI |
+| Étiquette | Intention UI |
 | --- | --- |
-| `Favori` | Accès rapide aux villages importants |
-| `Capitale` | Centre symbolique du royaume, sans bonus mécanique MVP |
-| `Raid` | Village utilisé pour attaques barbares ou raids |
-| `Défense` | Village à surveiller / renforcer |
-| `Économie` | Village orienté production |
-| `Frontière` | Village exposé ou avancé |
-| `Conquête` | Village préparant un Seigneur ou une expansion |
+| `Offensif` | Village utilisé pour attaques, raids ou conquêtes |
+| `Défensif` | Village à surveiller / renforcer |
+| `Économique` | Village orienté production |
+
+## Capitale
+
+`Capitale` n'est pas une étiquette choisie par le joueur. C'est un état dérivé automatiquement :
+
+- la capitale initiale est le tout premier village du joueur ;
+- si cette capitale est prise, le premier village conquis restant devient la nouvelle capitale ;
+- la capitale n'apporte aucun bonus mécanique MVP.
 
 ## Garde-fous
 
 - Un rôle n'est pas un **style stratégique** : les bonus de combat restent dans [`12-village-styles.md`](./12-village-styles.md).
-- `Capitale` est symbolique au MVP : pas de bonus défensif, pas de protection spéciale, pas de logistique liée.
+- La capitale est symbolique au MVP : pas de bonus défensif, pas de protection spéciale, pas de logistique liée.
 - Pas de tags libres au MVP, pour éviter bruit UI et modération inutile.
+- Pas de favoris au MVP.
 - Pas de partage tribu ou public.
 - Pas de presets automatiques de recrutement, construction ou attaque.
 
@@ -54,25 +55,26 @@ Interprétation :
 
 Le rôle doit servir à aller plus vite :
 
-- filtre dans la liste des villages ;
+- filtre par étiquette dans la liste des villages ;
 - icône ou badge discret dans le sélecteur de village ;
-- favori accessible en premier ;
+- badge discret pour la capitale dérivée ;
 - affichage compact sur mobile.
 
-Le rôle ne doit pas devenir un écran de configuration lourd. Si le joueur ignore totalement la feature, le jeu reste jouable.
+L'étiquette ne doit pas devenir un écran de configuration lourd. Si le joueur ignore totalement la feature, le jeu reste jouable.
 
-## Questions à trancher avant implémentation
+## Règle pour les récompenses futures
 
-- **Cible des récompenses joueur quand il possède plusieurs villages.** À trancher ici puis référencée par [`05-daily-cards-and-oyez.md`](./05-daily-cards-and-oyez.md). Options : village `Capitale`, village actif (dernier consulté), choix à la réception, répartition au prorata. Justification de l'ordre des phases : voir [`tasks/00-mvp-roadmap.md`](../../tasks/00-mvp-roadmap.md) (Phase 9).
-- **Unicité de `Capitale`.** Un seul village peut-il porter ce rôle, ou plusieurs ? Si la cible des récompenses est `Capitale`, l'unicité devient implicite.
-- **Un village peut-il porter plusieurs rôles simultanément ?** Le MVP léger reste plus simple avec un rôle unique par village (hors `Favori` qui peut être combiné).
+Quand une récompense joueur doit s'appliquer à un village alors que le joueur en possède plusieurs, le joueur choisit le village destinataire au moment de valider la récompense.
+
+Le système retient ensuite le dernier village ayant reçu une récompense et le propose par défaut à la validation suivante. La Phase 10 consomme cette règle sans la re-trancher.
 
 ## Évolutions post-MVP
 
 À étudier seulement après observation du multi-village :
 
 - tags personnalisés ;
-- plusieurs rôles simultanés par village ;
+- plusieurs étiquettes simultanées par village ;
+- favoris ;
 - dashboard royaume consolidé ;
 - alertes par rôle (entrepôt plein, garnison faible, file inactive) ;
 - presets d'actions ;

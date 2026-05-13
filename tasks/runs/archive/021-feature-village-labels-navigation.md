@@ -1,8 +1,8 @@
 # Run #021 — feature-village-labels-navigation
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-05-13
+> **Terminé** : 2026-05-13
 
 ## Cible
 
@@ -96,21 +96,75 @@ Objectif du run : fermer l'écart spec/code sur ces décisions, ajouter le contr
 
 ## Progress (rempli pendant le run)
 
-_(Vide au démarrage. Mis à jour à chaque transition d'étape ou de tâche.)_
+- 2026-05-13 — Préflight : fiche `PLANNED`, worktree clean après commit de planification, specs/rules/SPEC/skills chargés. Scope non rapide confirmé (Prisma + backend + shared + frontend + docs), cartographie déléguée à `code_mapper`.
+- 2026-05-13 — Étapes 2-4 : cartographie reçue. Socle backend/shared/docs appliqué en lead : enum `VillageLabel`, migration non destructive, DTO Zod, `GET /village` enrichi `label`/`isCapital`, endpoint `PATCH /village/:id/label`, specs Phase 9/10 alignées. Frontend délégué à `implementer`.
+- 2026-05-13 — Étapes 5-8 : smoke `village-labels` ajouté, migration appliquée sur DB dev + smoke, backend unit vert, Pixi tests verts, `yarn test:smoke` vert, `yarn static-check` vert après review.
 
 ## Décisions prises
 
-_(Vide au démarrage. Décisions archi non triviales, dérogations lead, findings de review, refus de sub-agents.)_
+- `VillageLabel` utilise des valeurs techniques `OFFENSIVE` / `DEFENSIVE` / `ECONOMIC`, avec libellés UI partagés `Offensif` / `Défensif` / `Économique`.
+- La capitale est dérivée côté backend par date d'acquisition : `conqueredAt ?? createdAt`. Les villages conquis utilisent `conqueredAt`, ce qui évite qu'un vieux spawn barbare conquis devienne capitale par erreur.
+- Le label est porté directement par `Village` en colonne nullable, sans table dédiée : MVP privé, une seule étiquette par village, pas de favoris.
+- SPEC.md inchangé : aucun invariant transverse nouveau au-delà de la spec gameplay Phase 9 et du smoke ajouté.
 
 ## Rapport final
 
-_(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tickets ouverts, méta-évaluation si applicable.)_
+Run 021 livre la navigation multi-village MVP Phase 9 : étiquettes privées, capitale dérivée, sélecteur actif, filtre par étiquette, et alignement documentaire pour la Phase 10.
+
+Changements livrés :
+
+- `VillageLabel` partagé + enum Prisma + migration non destructive `20260513130000_add_village_label`.
+- `GET /village` expose `label`, `isCapital`, `userId` et `conqueredAt`; `PATCH /village/:villageId/label` permet set/clear avec validation Zod et ownership check.
+- Frontend : mutation TanStack label, sélecteur multi-village dans le header, fallback vers capitale si le village actif est invalide, badges capitale/étiquette, filtre carte par étiquette.
+- Docs : Phase 9/Phase 10/roadmap alignées sur les décisions : pas de favoris MVP, 3 étiquettes, capitale non choisie, récompense future choisie à la validation avec dernier village mémorisé.
+- Smoke backend réel `village-labels.smoke.spec.ts` couvre capitale initiale, fallback après perte, set/clear label, valeur invalide et ownership.
+
+Fichiers touchés :
+
+- `battleforthecrown-backend/prisma/schema.prisma`
+- `battleforthecrown-backend/prisma/migrations/20260513130000_add_village_label/migration.sql`
+- `battleforthecrown-backend/src/modules/village/dto/village-label.dto.ts`
+- `battleforthecrown-backend/src/modules/village/village.controller.ts`
+- `battleforthecrown-backend/src/modules/village/village.service.ts`
+- `battleforthecrown-backend/test/village-labels.smoke.spec.ts`
+- `battleforthecrown-pixi/src/api/queries.ts`
+- `battleforthecrown-pixi/src/api/world-types.ts`
+- `battleforthecrown-pixi/src/features/layout/GameHeader.tsx`
+- `battleforthecrown-pixi/src/features/world/WorldMapScreen.tsx`
+- `docs/gameplay/05-daily-cards-and-oyez.md`
+- `docs/gameplay/22-village-roles-and-navigation.md`
+- `packages/shared/src/village/dtos.ts`
+- `packages/shared/src/world/dtos.ts`
+- `packages/shared/src/world/entities.ts`
+- `tasks/00-mvp-roadmap.md`
+
+Tickets ouverts : aucun.
 
 ### Acceptance & QA
 
 - **Critères d'acceptance vérifiés** :
-  - [ ] <comportement attendu observable> — preuve : <test auto / smoke / curl / SELECT / capture>
-- **Tests automatisés** : commandes exactes + résultat synthétique.
-- **Smokes ajoutés/modifiés** : fichiers + scénario couvert, ou `Aucun`, raison.
-- **QA fonctionnelle agent** : tests bout-en-bout manuels exécutés par l'agent quand pertinent (`server + curl`, REST, WebSocket, worker/job, ou `SELECT` DB), avec résultat observable. Si non fait, `Non nécessaire` ou `Non exécuté` + raison précise.
-- **Tests IG à faire par le user** : seulement ce qui demande une appréciation gameplay/visuelle, un vrai navigateur humain, ou un scénario trop coûteux à automatiser ; checklist observable. Sinon `Aucun test IG nécessaire`, raison.
+  - [x] Phase 9 ne mentionne plus les favoris comme livrable MVP — preuve : `docs/gameplay/22-village-roles-and-navigation.md`, `tasks/00-mvp-roadmap.md`.
+  - [x] Les seules étiquettes MVP sont `Offensif`, `Défensif`, `Économique`, sans bonus mécanique — preuve : shared `VILLAGE_LABELS`, Prisma enum, docs Phase 9.
+  - [x] Capitale non modifiable et dérivée premier village puis premier conquis restant — preuve : `village-labels.smoke.spec.ts`.
+  - [x] API villages renvoie `label` + `isCapital` — preuve : `VillageService.getVillages`, smoke `GET /village`.
+  - [x] Endpoint backend set/clear label avec validation stricte et ownership — preuve : `PATCH /village/:id/label`, smoke valeur invalide + autre user refusé.
+  - [x] Frontend permet changement de village actif via sélecteur mobile-compact — preuve : `GameHeader.tsx`, typecheck Pixi.
+  - [x] Frontend affiche badges capitale/étiquette sans favoris — preuve : `GameHeader.tsx`.
+  - [x] Frontend permet de filtrer les villages par étiquette — preuve : `WorldMapScreen.tsx`.
+  - [x] Daily Cards référence la règle Phase 9 pour le village destinataire de récompense — preuve : `docs/gameplay/05-daily-cards-and-oyez.md`.
+- **Tests automatisés** :
+  - `yarn workspace @battleforthecrown/shared build` ✅
+  - `yarn workspace battleforthecrown-backend prisma generate` ✅
+  - `yarn workspace battleforthecrown-backend test --runInBand` ✅ 14 suites / 193 tests.
+  - `yarn workspace battleforthecrown-pixi test` ✅ 19 fichiers / 112 tests (warning jsdom canvas existant, suite verte).
+  - `yarn static-check` ✅ backend type-check, pixi type-check, backend lint, pixi lint.
+- **Smokes lancés** :
+  - `yarn test:smoke:preflight` ✅ après application de la migration smoke.
+  - `yarn workspace battleforthecrown-backend jest --config ./test/jest-smoke.json --runInBand village-labels` ✅ 1 test.
+  - `yarn test:smoke` ✅ 10 suites / 36 tests.
+- **Smokes ajoutés/modifiés** :
+  - Ajouté `battleforthecrown-backend/test/village-labels.smoke.spec.ts` : capitale initiale, fallback après perte, set/clear label, valeur invalide, ownership.
+- **QA fonctionnelle agent** : couverte par smoke REST réel Nest + Prisma + DB smoke. Mutation label et fallback capitale observés par assertions REST/DB.
+- **Tests IG à faire par le user** :
+  - [ ] Sur un compte multi-village, vérifier visuellement que le header reste lisible sur mobile.
+  - [ ] Changer de village actif depuis le header, poser/retirer une étiquette, puis vérifier le badge et le filtre carte.

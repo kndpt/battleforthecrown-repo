@@ -41,6 +41,8 @@ Chaque jour, le joueur reçoit une **carte de devoir royal** : un petit set de t
 | Expiration | Pas d'expiration brutale tant que la carte tient dans le backlog |
 | Récompense | Modérée, scalée, non-snowballante |
 
+Si la récompense s'applique à un village, le joueur choisit le village destinataire au moment de valider la carte. Le système propose par défaut le dernier village ayant reçu une récompense. Cette règle vient de la Phase 9 Navigation multi-village, voir [`22-village-roles-and-navigation.md`](./22-village-roles-and-navigation.md).
+
 ### Types de tâches
 
 | Boucle | Exemples |
@@ -124,4 +126,3 @@ Le joueur doit comprendre en une lecture : quoi faire, pourquoi maintenant, ce q
 - Oyez cadence hebdo ou semi-hebdo ?
 - Les cartes peuvent-elles cibler des sites d'exploitation quand cette feature existe ?
 - Les cartes sont-elles par monde uniquement ? Reco actuelle : oui.
-

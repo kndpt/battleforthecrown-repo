@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Param,
   Body,
@@ -21,6 +22,10 @@ import {
   changeStrategySchema,
   type ChangeStrategyDto,
 } from './dto/strategy.dto';
+import {
+  updateVillageLabelSchema,
+  type UpdateVillageLabelDto,
+} from './dto/village-label.dto';
 
 @Controller('village')
 export class VillageController {
@@ -69,6 +74,16 @@ export class VillageController {
     @Param('villageId') villageId: string,
   ) {
     return this.villageService.getQueue(villageId, user.id);
+  }
+
+  @Patch(':villageId/label')
+  updateLabel(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('villageId') villageId: string,
+    @Body(new ZodValidationPipe(updateVillageLabelSchema))
+    dto: UpdateVillageLabelDto,
+  ) {
+    return this.villageService.updateLabel(villageId, user.id, dto.label);
   }
 
   @Post(':villageId/upgrade')

@@ -5,6 +5,7 @@ import {
   type WorldEntityResponse,
   type WorldVillageDto,
 } from "@battleforthecrown/shared/world";
+import { VILLAGE_LABEL_DISPLAY, type VillageLabel } from "@battleforthecrown/shared/village";
 
 export type {
   WorldEntityKind,
@@ -33,6 +34,8 @@ export interface MapEntity {
   y: number;
   name: string;
   tier: WorldTier | null;
+  label?: VillageLabel | null;
+  isCapital?: boolean;
   captureWindow?: {
     status: "OPEN";
     pendingConquestId: string;
@@ -64,6 +67,8 @@ export function entityFromWorldDto(
     name:
       typeof dto.data.name === "string" ? dto.data.name : dto.id.slice(0, 6),
     tier: normalizeTier(dto.data.tier),
+    label: ownerId === myUserId ? normalizeVillageLabel(dto.data.label) : undefined,
+    isCapital: ownerId === myUserId ? dto.data.isCapital === true : undefined,
     captureWindow: normalizeCaptureWindow(dto.data.captureWindow),
   };
 }
@@ -93,6 +98,8 @@ export function entityFromMyVillage(
     y: dto.y,
     name: dto.name,
     tier: null,
+    label: dto.label ?? null,
+    isCapital: dto.isCapital ?? false,
   };
 }
 
@@ -114,4 +121,10 @@ function normalizeCaptureWindow(value: unknown): MapEntity["captureWindow"] {
     attackerVillageId: data.attackerVillageId,
     captureUntil: data.captureUntil,
   };
+}
+
+function normalizeVillageLabel(value: unknown): VillageLabel | null {
+  return typeof value === "string" && value in VILLAGE_LABEL_DISPLAY
+    ? (value as VillageLabel)
+    : null;
 }

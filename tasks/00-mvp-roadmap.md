@@ -99,17 +99,17 @@ Livrable : 5 étapes scriptées chaînées dès la création du premier village 
 
 Critère de fin : un compte fraîchement créé est guidé étape par étape, sans pouvoir se perdre, jusqu'à compléter les 5 étapes en ≤ 10 min.
 
-### Phase 9 — Navigation multi-village (rôles, favoris, sélecteur)
+### Phase 9 — Navigation multi-village (étiquettes, capitale, sélecteur)
 
 Spec : [`22-village-roles-and-navigation.md`](../docs/gameplay/22-village-roles-and-navigation.md).
 
 Pourquoi ici (et pas Phase 11 comme prévu initialement) : dès la fin de Phase 5 (conquête barbare livrée) un joueur peut déjà posséder plusieurs villages, mais l'UX ne sait pas encore les distinguer. Surtout, la Phase 10 (Rétention quotidienne) doit pouvoir cibler **un** village pour appliquer ses récompenses — sans Phase 9, on hardcoderait une cible arbitraire (premier village, dernier consulté…) et on rouvrirait la Phase 10 plus tard. On la remonte donc avant Rétention. Elle reste isolée des boucles principales (pas de bonus de combat, pas d'effet serveur), donc pas de risque d'invalider du code déjà livré.
 
-Livrable : étiquettes privées (`Favori`, `Capitale`, `Raid`, `Défense`, `Économie`, `Frontière`, `Conquête`) sans bonus mécanique, sélecteur de village, filtres dans la liste/carte, badges discrets, focus mobile. Pas de tags libres, pas de partage tribu, pas de preset automatique, pas de dashboard royaume consolidé (post-MVP, cf. [`lab/tickets/06-multi-village-governance.md`](../docs/gameplay/lab/tickets/06-multi-village-governance.md)).
+Livrable : étiquettes privées (`Offensif`, `Défensif`, `Économique`) sans bonus mécanique, capitale dérivée automatiquement, sélecteur de village, filtres dans la liste/carte, badges discrets, focus mobile. Pas de favoris, pas de tags libres, pas de partage tribu, pas de preset automatique, pas de dashboard royaume consolidé (post-MVP, cf. [`lab/tickets/06-multi-village-governance.md`](../docs/gameplay/lab/tickets/06-multi-village-governance.md)).
 
-**Décision à trancher dans cette phase, bloquante pour Phase 10** : *sur quel village une récompense (ou un effet joueur global) s'applique-t-il quand le joueur en possède plusieurs ?* Options à arbitrer : village marqué `Capitale`, village actif (dernier consulté), village choisi à la réception, ressources réparties au prorata, etc. La règle retenue devra être référencée par la spec [`05-daily-cards-and-oyez.md`](../docs/gameplay/05-daily-cards-and-oyez.md) avant d'attaquer Phase 10.
+Décisions retenues pour Phase 10 : la capitale n'est pas choisie par le joueur, elle est dérivée du premier village puis du premier village conquis restant si la capitale est prise. Quand une récompense doit cibler un village, le joueur choisit le village destinataire à la validation ; le système retient le dernier village récompensé.
 
-Critère de fin : un joueur multi-village peut marquer un village `Capitale` et un autre `Favori`, retrouver ces étiquettes dans le sélecteur et les filtres, et la règle « récompense → quel village » est tranchée et documentée.
+Critère de fin : un joueur multi-village peut étiqueter ses villages `Offensif`, `Défensif` ou `Économique`, retrouver ces étiquettes dans le sélecteur et les filtres, voir sa capitale dérivée, et la règle « récompense → quel village » est documentée.
 
 ### Phase 10 — Rétention quotidienne MVP
 

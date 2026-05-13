@@ -5,6 +5,8 @@ import {
 } from '@battleforthecrown/shared/world';
 import type {
   StrategyBonus,
+  UpdateVillageLabelRequest,
+  VillageLabel,
   VillageStrategyChangeCost,
   VillageStrategyDefinition,
   VillageStrategyType,
@@ -177,6 +179,28 @@ export function useMyVillagesQuery(worldId: string | null) {
       return apiClient.get<JoinedVillage[]>('/village', { query: { worldId } });
     },
     enabled: Boolean(userId && worldId),
+  });
+}
+
+interface UpdateVillageLabelInput {
+  villageId: string;
+  label: VillageLabel | null;
+}
+
+export function useUpdateVillageLabelMutation() {
+  const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
+
+  return useMutation<Pick<JoinedVillage, 'id' | 'label'>, Error, UpdateVillageLabelInput>({
+    mutationFn: ({ villageId, label }) =>
+      apiClient.patch<Pick<JoinedVillage, 'id' | 'label'>>(`/village/${villageId}/label`, {
+        label,
+      } satisfies UpdateVillageLabelRequest),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.myVillages(userId, worldId) });
+      queryClient.invalidateQueries({ queryKey: ['villages'] });
+    },
   });
 }
 

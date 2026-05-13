@@ -1,3 +1,5 @@
+import type { VillageLabel } from '../village';
+
 export type WorldEntityKind =
   | 'BARBARIAN_VILLAGE'
   | 'PLAYER_VILLAGE'
@@ -49,6 +51,8 @@ export interface WorldVillageDto {
   isBarbarian?: boolean;
   tier?: string | null;
   createdAt?: string;
+  label?: VillageLabel | null;
+  isCapital?: boolean;
 }
 
 export type WorldTier = 'T1' | 'T2' | 'T3' | 'T4' | 'T5';

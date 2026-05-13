@@ -23,10 +23,10 @@ Fiches d'exécution déléguées aux harnesses Claude Code ou Codex (lead + sub-
 ### Runs actifs
 
 - [020 — Stats unités uniquement + défense par archétype branchée](./runs/020-feature-units-stats-only-wire-defense-archetype.md) — 📋 `PLANNED`. Suppression complète des passifs (`UnitPassive`) côté shared/backend/frontend/doc, et activation de `defenseInfantry/Cavalry/Archer` dans le résolveur de combat selon l'archétype attaquant.
-- [021 — Navigation multi-village par étiquettes](./runs/021-feature-village-labels-navigation.md) — 📋 `PLANNED`. Phase 9 : étiquettes privées `Offensif`/`Défensif`/`Économique`, capitale déterministe, sélecteur multi-village et règle future de ciblage des récompenses.
 
 ### Runs archivés
 
+- [021 — Navigation multi-village par étiquettes](./runs/archive/021-feature-village-labels-navigation.md) — ✅ `DONE` (2026-05-13). Phase 9 : étiquettes privées, capitale dérivée, sélecteur multi-village, filtre carte et règle future de ciblage des récompenses.
 - [019 — Feature barbarian conquest frontend UI](./runs/archive/019-feature-barbarian-conquest-frontend-ui.md) — ✅ `DONE` (2026-05-13). Phase 5 frontend/UI : recrutement Seigneur Salle du Trône, lancement conquête barbare lisible, durée capture T1-T5 visible, invalidations WS et static-check verts.
 - [018 — Feature barbarian conquest backend shared](./runs/archive/018-feature-barbarian-conquest-backend-shared.md) — ✅ `DONE` (2026-05-13). Phase 5 backend/shared : finalisation barbare conforme spec, bâtiments matérialisés par tier, Seigneur installé hors armée, smoke T2 + smokes backend + static-check verts.
 - [017 — Feature scouting frontend inbox](./runs/archive/017-feature-scouting-frontend-inbox.md) — ✅ `DONE` (2026-05-12). Phase 4 Scouting frontend : action `Scout` SPY-only, coût sans couronnes, inbox mixte combat/scout via design system, détail `ScoutReportCard`, tests Pixi + static-check verts.

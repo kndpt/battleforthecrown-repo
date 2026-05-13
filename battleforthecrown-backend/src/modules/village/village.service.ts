@@ -4,6 +4,7 @@ import { OwnershipService } from '../../common/auth';
 import {
   getBuildingLevelValues,
   getBuildingMaxLevel,
+  type VillageLabel,
 } from '@battleforthecrown/shared/village';
 
 @Injectable()
@@ -16,8 +17,9 @@ export class VillageService {
   async getVillages(worldId: string, userId: string) {
     const villages = await this.prisma.village.findMany({
       where: { worldId, userId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: [{ conqueredAt: 'asc' }, { createdAt: 'asc' }],
     });
+    const capitalVillageId = this.getCapitalVillageId(villages);
 
     return villages.map((v) => ({
       id: v.id,
@@ -25,8 +27,25 @@ export class VillageService {
       worldId: v.worldId,
       x: v.x,
       y: v.y,
+      userId: v.userId ?? undefined,
       createdAt: v.createdAt,
+      conqueredAt: v.conqueredAt,
+      label: v.label,
+      isCapital: v.id === capitalVillageId,
     }));
+  }
+
+  async updateLabel(
+    villageId: string,
+    userId: string,
+    label: VillageLabel | null,
+  ) {
+    await this.ownership.assertVillageOwnedBy(villageId, userId);
+    return this.prisma.village.update({
+      where: { id: villageId },
+      data: { label },
+      select: { id: true, label: true },
+    });
   }
 
   async getBuildings(villageId: string, userId: string) {
@@ -68,5 +87,16 @@ export class VillageService {
       startTime: b.startTime,
       endTime: b.endTime,
     }));
+  }
+
+  private getCapitalVillageId(
+    villages: Array<{ id: string; conqueredAt: Date | null; createdAt: Date }>,
+  ): string | null {
+    const [capital] = [...villages].sort((a, b) => {
+      const aAcquiredAt = a.conqueredAt ?? a.createdAt;
+      const bAcquiredAt = b.conqueredAt ?? b.createdAt;
+      return aAcquiredAt.getTime() - bAcquiredAt.getTime();
+    });
+    return capital?.id ?? null;
   }
 }

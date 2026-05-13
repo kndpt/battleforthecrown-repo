@@ -47,6 +47,12 @@ enum PendingConquestStatus {
   INTERRUPTED
 }
 
+enum VillageLabel {
+  OFFENSIVE
+  DEFENSIVE
+  ECONOMIC
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -108,6 +114,7 @@ model Village {
   y           Int
   isBarbarian Boolean   @default(false) @map("is_barbarian")
   tier        String?
+  label       VillageLabel?
   barbarianTroopsLastRegenTs DateTime? @map("barbarian_troops_last_regen_ts")
   conqueredAt DateTime? @map("conquered_at")
   createdAt   DateTime  @default(now()) @map("created_at")

@@ -1,3 +1,5 @@
+import type { VillageLabel } from '../village';
+
 export interface JoinWorldRequest {
   villageName?: string;
 }
@@ -19,6 +21,8 @@ export interface JoinedVillage {
   isBarbarian?: boolean;
   tier?: string | null;
   conqueredAt?: string | null;
+  label?: VillageLabel | null;
+  isCapital?: boolean;
 }
 
 export interface WorldMembershipResponse {

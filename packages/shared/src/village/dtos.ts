@@ -1,6 +1,16 @@
 import type { BuildingType } from './buildings';
 import type { VillageStrategyType } from './strategy';
 
+export const VILLAGE_LABELS = ['OFFENSIVE', 'DEFENSIVE', 'ECONOMIC'] as const;
+
+export type VillageLabel = (typeof VILLAGE_LABELS)[number];
+
+export const VILLAGE_LABEL_DISPLAY: Record<VillageLabel, string> = {
+  OFFENSIVE: 'Offensif',
+  DEFENSIVE: 'Défensif',
+  ECONOMIC: 'Économique',
+};
+
 export interface UpgradeBuildingRequest {
   buildingType: BuildingType;
 }
@@ -49,4 +59,8 @@ export interface PopulationResponse {
 
 export interface ChangeStrategyRequest {
   strategy: VillageStrategyType;
+}
+
+export interface UpdateVillageLabelRequest {
+  label: VillageLabel | null;
 }
