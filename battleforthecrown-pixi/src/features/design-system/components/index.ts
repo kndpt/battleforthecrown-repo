@@ -4,6 +4,8 @@ export { Avatar, AvatarProfileLine, AvatarStack } from './Avatar';
 export type { AvatarProfileLineProps, AvatarProps, AvatarSize, AvatarStackItem, AvatarStackProps, AvatarStatus, AvatarTone } from './Avatar';
 export { ArmyMovementList, ArmyMovementRow } from './ArmyMovementRow';
 export type { ArmyMovementListProps, ArmyMovementRowProps, ArmyMovementSurface, ArmyMovementTone } from './ArmyMovementRow';
+export { BaseModal } from './BaseModal';
+export type { BaseModalProps, BaseModalTone } from './BaseModal';
 export { BftcButton } from './BftcButton';
 export type { BftcButtonProps, BftcButtonSize, BftcButtonState, BftcButtonVariant } from './BftcButton';
 export { BorderStrokeTile } from './BorderStrokeTile';

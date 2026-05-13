@@ -1,9 +1,4 @@
-import { ApiError } from '@/api';
-import {
-  usePopulationQuery,
-  useTrainUnitsMutation,
-  useWorldConfigQuery,
-} from '@/api/queries';
+import { useWorldConfigQuery } from '@/api/queries';
 import type { ArmyUnitDto } from '@/api/queries';
 import {
   TROOP_DETAIL_FIELD_MAX,
@@ -15,7 +10,6 @@ import {
 import { useDisplayCrowns, useDisplayResources } from '@/features/resources/useDisplayResources';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
-import { useUiStore } from '@/stores/ui';
 import {
   UNIT_COSTS,
   UNIT_STATS,
@@ -26,7 +20,6 @@ import {
 import { unitMetaFor } from './unitConfig';
 
 interface UnitDetailModalProps {
-  barracksLevel: number;
   onClose: () => void;
   unit: ArmyUnitDto;
 }
@@ -112,6 +105,11 @@ function passiveFor(passive: UnitPassive | null, unitName: string): TroopDetailP
 }
 
 function roleFor(type: UnitType, stats: typeof UNIT_STATS[UnitType]): { archetype: string; label: string; tone: TroopDetailRoleTone } {
+  if (type === UNIT_TYPES.MILITIA) return { archetype: 'Infanterie · Base polyvalente', label: 'Neutre', tone: 'neutral' };
+  if (type === UNIT_TYPES.SQUIRE) return { archetype: 'Infanterie · Ligne polyvalente', label: 'Neutre', tone: 'neutral' };
+  if (type === UNIT_TYPES.ARCHER) return { archetype: 'Défense · Anti-cavalerie', label: 'Défensif', tone: 'info' };
+  if (type === UNIT_TYPES.TEMPLAR) return { archetype: 'Défense · Tenue de ligne', label: 'Défensif', tone: 'info' };
+  if (type === UNIT_TYPES.WARRIOR) return { archetype: 'Infanterie · Frappe rapide', label: 'Offensif', tone: 'danger' };
   if (type === UNIT_TYPES.SPY) return { archetype: 'Reconnaissance · Discrétion', label: 'Espion', tone: 'info' };
   if (type === UNIT_TYPES.RAM || type === UNIT_TYPES.CATAPULT) return { archetype: 'Siège · Destruction', label: 'Siège', tone: 'warning' };
   if (type === UNIT_TYPES.NOBLE) return { archetype: 'Conquête · Autorité', label: 'Noble', tone: 'warning' };
@@ -122,7 +120,7 @@ function roleFor(type: UnitType, stats: typeof UNIT_STATS[UnitType]): { archetyp
   return { archetype: 'Infanterie · Frappe rapide', label: 'Offensif', tone: 'danger' };
 }
 
-export function UnitDetailModal({ barracksLevel, onClose, unit }: UnitDetailModalProps) {
+export function UnitDetailModal({ onClose, unit }: UnitDetailModalProps) {
   const unitType = isUnitType(unit.type) ? unit.type : null;
   const meta = unitMetaFor(unit.type);
   const stats = unitType ? UNIT_STATS[unitType] : null;
@@ -130,17 +128,13 @@ export function UnitDetailModal({ barracksLevel, onClose, unit }: UnitDetailModa
   const villageId = useGameStore((state) => state.villageId);
   const worldId = useGameStore((state) => state.worldId);
   const userId = useAuthStore((state) => state.user?.id ?? null);
-  const train = useTrainUnitsMutation();
-  const pushToast = useUiStore((state) => state.pushToast);
   const { display } = useDisplayResources(villageId);
   const { balance: crownsBalance } = useDisplayCrowns(userId, worldId);
-  const population = usePopulationQuery(villageId);
   const trainingMultiplier = useWorldConfigQuery(worldId).data?.gameSpeed.training;
 
   if (!unitType || !stats || !cost) return null;
 
   const requiredLevel = cost.requiredBarracksLevel;
-  const isLocked = barracksLevel < requiredLevel;
   const troopCost = {
     crowns: cost.crowns ?? 0,
     iron: cost.iron,
@@ -153,45 +147,18 @@ export function UnitDetailModal({ barracksLevel, onClose, unit }: UnitDetailModa
     stone: display?.stone ?? 0,
     wood: display?.wood ?? 0,
   };
-  const hasEnoughResources =
-    Boolean(display) &&
-    stock.wood >= troopCost.wood &&
-    stock.stone >= troopCost.stone &&
-    stock.iron >= troopCost.iron &&
-    stock.crowns >= troopCost.crowns;
-  const availablePopulation = population.data?.available ?? 0;
-  const hasPopulation = availablePopulation >= cost.population;
-  const canRecruit = !isLocked && hasEnoughResources && hasPopulation && Boolean(villageId) && !train.isPending;
   const role = roleFor(unitType, stats);
   const passive = passiveFor(stats.passive, meta.name);
   const perUnitSeconds = trainingMultiplier ? cost.time / trainingMultiplier : cost.time;
 
-  const handleRecruit = () => {
-    if (!villageId || !canRecruit) return;
-
-    train.mutate(
-      { quantity: 1, unitType, villageId },
-      {
-        onError: (err) => {
-          pushToast({
-            description: err instanceof ApiError ? err.message : 'Échec de l’entraînement',
-            title: 'Entraînement impossible',
-            tone: 'error',
-            ttlMs: 4000,
-          });
-        },
-      },
-    );
-  };
-
   return (
     <div
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,0,.62)] p-3 [backdrop-filter:blur(3px)]"
+      className="fixed inset-0 z-50 grid place-items-center bg-[rgba(0,0,0,.62)] p-3 [backdrop-filter:blur(3px)]"
       onClick={onClose}
       role="dialog"
     >
-      <div onClick={(event) => event.stopPropagation()}>
+      <div className="flex w-full justify-center" onClick={(event) => event.stopPropagation()}>
         <DesignTroopDetailModal
           archetype={role.archetype}
           closeLabel="Fermer"
@@ -200,20 +167,16 @@ export function UnitDetailModal({ barracksLevel, onClose, unit }: UnitDetailModa
           labels={TROOP_DETAIL_LABELS_FR}
           name={meta.name}
           onClose={onClose}
-          onRecruit={handleRecruit}
           passive={passive}
           populationCost={cost.population}
           portraitFallback={meta.emoji}
           portraitSrc={meta.iconPath}
-          recruitDisabled={!canRecruit}
-          recruitLabel={train.isPending ? 'Recrutement...' : 'Recruter'}
           roleLabel={role.label}
           roleTone={role.tone}
           stats={stats}
           stock={stock}
           tagline={`« ${meta.description} »`}
           tierBadge={roman(Math.min(requiredLevel, 10))}
-          tierLabel={`Tier ${roman(Math.min(requiredLevel, 10))} · Caserne niv. ${requiredLevel}`}
           trainingTime={formatDuration(perUnitSeconds)}
         />
       </div>

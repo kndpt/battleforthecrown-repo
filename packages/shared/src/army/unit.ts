@@ -117,7 +117,9 @@ export const UNIT_STATS: Record<UnitType, UnitStats> = {
   },
   [UNIT_TYPES.ARCHER]: {
     attack: 12,
-    ...defense(6),
+    defenseInfantry: 6,
+    defenseCavalry: 20,
+    defenseArcher: 6,
     speed: 12,
     carryCapacity: 20,
     passive: { kind: 'attackVsUnits', targets: [UNIT_TYPES.MILITIA, UNIT_TYPES.WARRIOR], bonus: 0.10 },

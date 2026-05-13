@@ -350,7 +350,6 @@ export function ArmyScreen() {
       {selectedUnit && (
         <UnitDetailModal
           unit={selectedUnit}
-          barracksLevel={barracksLevel}
           onClose={() => setSelectedUnit(null)}
         />
       )}

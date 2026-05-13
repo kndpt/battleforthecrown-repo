@@ -4,6 +4,7 @@ import { cn } from '@/lib/cn';
 export type ProgressBarTone = 'green' | 'gold' | 'red';
 
 export interface ProgressBarProps extends HTMLAttributes<HTMLDivElement> {
+  animated?: boolean;
   label: string;
   suffix: string;
   tone?: ProgressBarTone;
@@ -16,7 +17,7 @@ const toneClass: Record<ProgressBarTone, string> = {
   red: 'bg-gradient-to-b from-[#e74c3c] to-[#c0392b]',
 };
 
-export function ProgressBar({ className, label, suffix, tone = 'green', value, ...props }: ProgressBarProps) {
+export function ProgressBar({ animated = true, className, label, suffix, tone = 'green', value, ...props }: ProgressBarProps) {
   const boundedValue = Math.max(0, Math.min(100, value));
 
   return (
@@ -27,7 +28,7 @@ export function ProgressBar({ className, label, suffix, tone = 'green', value, .
       </div>
       <div className="relative h-[18px] overflow-hidden rounded-[9px] border-2 border-[rgba(0,0,0,.18)] bg-[rgba(0,0,0,.15)] shadow-[inset_0_2px_3px_rgba(0,0,0,.25)]">
         <div className={cn('relative h-full overflow-hidden', toneClass[tone])} style={{ width: `${boundedValue}%` }}>
-          <span className="absolute inset-0 animate-shimmer bg-[linear-gradient(to_right,transparent,rgba(255,255,255,.35),transparent)]" />
+          {animated ? <span className="absolute inset-0 animate-shimmer bg-[linear-gradient(to_right,transparent,rgba(255,255,255,.35),transparent)]" /> : null}
         </div>
       </div>
     </div>

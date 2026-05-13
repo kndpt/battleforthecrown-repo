@@ -12,7 +12,7 @@ Chaque unité a un **coût**, un **temps d'entraînement** et des **stats de com
 | 🛡️ **ÉCUYER** | Infanterie avancée | 80 | 50 | 30 | 1 | 60 s | 2 | 10 | 10 | 50 | 15 | 8 | +10 % attaque vs ARCHER |
 | ⚔️ **GUERRIER** | Infanterie offensive | 120 | 80 | 50 | 2 | 180 s | 3 | 20 | 5 | 35 | 20 | 12 | +10 % attaque en raid offensif (sortie de son village) |
 | ✝️ **TEMPLIER** | Chevalier lourd | 80 | 150 | 120 | 2 | 180 s | 4 | 5 | 15 | 40 | 10 | 12 | +15 % défense quand stationné en garnison |
-| 🏹 **ARCHER** | Tir à distance | 60 | 40 | 30 | 1 | 90 s | 3 | 12 | 6 | 20 | 12 | 6 | +10 % attaque vs MILICE et GUERRIER (anti-infanterie sans armure) |
+| 🏹 **ARCHER** | Tir à distance | 60 | 40 | 30 | 1 | 90 s | 3 | 12 | 6 / 20 vs Cavalerie | 20 | 12 | 6 | +10 % attaque vs MILICE et GUERRIER (anti-infanterie sans armure) |
 | 🐴 **CAVALIER** | Cavalerie | 200 | 100 | 150 | 3 | 240 s | 5 | 15 | 8 | 100 | 35 | 15 | Pilleur optimal — meilleure capacité/mobilité du jeu |
 | 🕵️ **ESPION** | Reconnaissance | 50 | 50 | 20 | 1 | 90 s | 3 | 8 | 2 | 0 | 100 | 10 | Scoute la cible : révèle composition d'armée et stockage avant attaque (cf. [`11-scouting.md`](./11-scouting.md)) |
 | 🪨 **BÉLIER** | Siège | 300 | 400 | 200 | 4 | 360 s | 7 | 50 | 10 | 0 | 5 | 30 | +50 % attaque vs Wall (anti-fortification) |

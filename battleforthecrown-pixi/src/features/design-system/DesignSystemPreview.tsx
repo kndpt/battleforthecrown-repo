@@ -5,6 +5,7 @@ import {
   AvatarProfileLine,
   AvatarStack,
   Badge,
+  BaseModal,
   BftcButton,
   BorderStrokeTile,
   BuildingCard,
@@ -117,7 +118,6 @@ const troopDetailFixture = {
   },
   populationCost: 1,
   portraitSrc: '/assets/army/savage.png',
-  recruitLabel: 'Recruter',
   roleLabel: 'Offensif',
   stats: {
     attack: 20,
@@ -130,7 +130,6 @@ const troopDetailFixture = {
   stock: { crowns: 142, iron: 1240, stone: 940, wood: 1820 },
   tagline: '« Frappe d’abord. Dort sous les armes. »',
   tierBadge: 'II',
-  tierLabel: 'Tier II · Caserne niv. 3',
   trainingTime: '1 m 35 s',
 };
 
@@ -1235,6 +1234,26 @@ export function DesignSystemPreview() {
         <section className="space-y-4">
           <h2 className="font-game text-2xl font-bold text-[#1f2937]">Modal variants</h2>
           <div className="grid w-full gap-3.5 bg-[rgba(0,0,0,.6)] p-[18px] sm:grid-cols-2">
+            <BaseModal
+              footer={
+                <div className="flex justify-end gap-2">
+                  <BftcButton className="px-3 py-[5px] text-xs" variant="neutral">Annuler</BftcButton>
+                  <BftcButton className="px-3 py-[5px] text-xs" variant="info">Confirmer</BftcButton>
+                </div>
+              }
+              title="Base modale"
+              tone="blue"
+              width={360}
+            >
+              <p className="font-game text-xs leading-[1.4] text-[#3d2f1f]">
+                Body libre via children. Le footer est optionnel et accepte n'importe quel JSX.
+              </p>
+            </BaseModal>
+            <BaseModal tone="brown" width={360}>
+              <p className="font-game text-xs leading-[1.4] text-[#3d2f1f]">
+                Variante sans titre ni footer, couleur marron par défaut.
+              </p>
+            </BaseModal>
             <GameModal
               actions={[{ label: 'Annuler', variant: 'neutral' }, { label: 'Construire', variant: 'info' }]}
               icon="/assets/barracks.png"
@@ -1643,17 +1662,14 @@ export function DesignSystemPreview() {
                 labels={TROOP_DETAIL_LABELS_FR}
                 name={troopDetailFixture.name}
                 onClose={() => undefined}
-                onRecruit={() => undefined}
                 passive={troopDetailFixture.passive}
                 populationCost={troopDetailFixture.populationCost}
                 portraitSrc={troopDetailFixture.portraitSrc}
-                recruitLabel={troopDetailFixture.recruitLabel}
                 roleLabel={troopDetailFixture.roleLabel}
                 stats={troopDetailFixture.stats}
                 stock={troopDetailFixture.stock}
                 tagline={troopDetailFixture.tagline}
                 tierBadge={troopDetailFixture.tierBadge}
-                tierLabel={troopDetailFixture.tierLabel}
                 trainingTime={troopDetailFixture.trainingTime}
               />
             </TroopDetailPhoneFrame>

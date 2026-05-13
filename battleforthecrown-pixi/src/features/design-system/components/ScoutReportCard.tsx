@@ -34,6 +34,8 @@ export interface ScoutReportCardProps {
   action: ScoutReportAction;
   bannerIcon: string;
   className?: string;
+  hideFooter?: boolean;
+  hideHeader?: boolean;
   metaLabel?: string;
   note?: string;
   onClose?: ButtonHTMLAttributes<HTMLButtonElement>['onClick'];
@@ -55,6 +57,8 @@ export function ScoutReportCard({
   action,
   bannerIcon,
   className,
+  hideFooter = false,
+  hideHeader = false,
   metaLabel,
   note,
   onClose,
@@ -73,26 +77,28 @@ export function ScoutReportCard({
         className,
       )}
     >
-      <header className="flex min-h-[70px] items-center gap-3 border-b-2 border-[#1f5288] bg-[linear-gradient(to_bottom,#5b9bd5,#1f5288)] px-4 py-4 font-game text-[16px] font-extrabold uppercase tracking-[.06em] text-white [text-shadow:1px_1px_2px_rgba(0,0,0,.6)]">
-        <img alt="" className="size-[26px]" src={publicAsset(bannerIcon)} />
-        <span>{title}</span>
-        <span className="ml-auto" />
-        {metaLabel ? (
-          <span className="rounded-full border border-[rgba(255,255,255,.18)] bg-[rgba(0,0,0,.32)] px-2 py-[3px] text-[10px] font-bold normal-case tracking-[.02em]">
-            {metaLabel}
-          </span>
-        ) : null}
-        {onClose ? (
-          <button
-            aria-label="Fermer"
-            className="flex size-7 items-center justify-center rounded-full bg-[rgba(0,0,0,.28)] text-white transition hover:bg-[rgba(0,0,0,.40)]"
-            onClick={onClose}
-            type="button"
-          >
-            <X className="size-4" strokeWidth={3} />
-          </button>
-        ) : null}
-      </header>
+      {!hideHeader ? (
+        <header className="flex min-h-[70px] items-center gap-3 border-b-2 border-[#1f5288] bg-[linear-gradient(to_bottom,#5b9bd5,#1f5288)] px-4 py-4 font-game text-[16px] font-extrabold uppercase tracking-[.06em] text-white [text-shadow:1px_1px_2px_rgba(0,0,0,.6)]">
+          <img alt="" className="size-[26px]" src={publicAsset(bannerIcon)} />
+          <span>{title}</span>
+          <span className="ml-auto" />
+          {metaLabel ? (
+            <span className="rounded-full border border-[rgba(255,255,255,.18)] bg-[rgba(0,0,0,.32)] px-2 py-[3px] text-[10px] font-bold normal-case tracking-[.02em]">
+              {metaLabel}
+            </span>
+          ) : null}
+          {onClose ? (
+            <button
+              aria-label="Fermer"
+              className="flex size-7 items-center justify-center rounded-full bg-[rgba(0,0,0,.28)] text-white transition hover:bg-[rgba(0,0,0,.40)]"
+              onClick={onClose}
+              type="button"
+            >
+              <X className="size-4" strokeWidth={3} />
+            </button>
+          ) : null}
+        </header>
+      ) : null}
 
       <div className="flex items-center justify-between gap-2 border-b border-[rgba(0,0,0,.08)] px-3 py-[9px] font-game text-[11px] text-[#6d5838]">
         <div className="flex min-w-0 flex-col gap-px">
@@ -153,16 +159,18 @@ export function ScoutReportCard({
         </section>
       ))}
 
-      <footer className="mt-auto bg-[rgba(0,0,0,.04)] p-3">
-        <button
-          className="flex w-full cursor-pointer items-center justify-center gap-[6px] rounded-[9px] border-2 border-[#a93226] bg-[linear-gradient(to_bottom,#e74c3c,#c0392b)] px-4 py-2.5 font-game text-sm font-bold uppercase tracking-[.06em] text-white shadow-[0_2px_0_rgba(0,0,0,.18),inset_0_1px_0_rgba(255,255,255,.25)] [text-shadow:1px_1px_2px_rgba(0,0,0,.6)] disabled:cursor-not-allowed disabled:opacity-[.5]"
-          disabled={action.disabled}
-          onClick={action.onClick}
-          type="button"
-        >
-          {action.label}
-        </button>
-      </footer>
+      {!hideFooter ? (
+        <footer className="mt-auto bg-[rgba(0,0,0,.04)] p-3">
+          <button
+            className="flex w-full cursor-pointer items-center justify-center gap-[6px] rounded-[9px] border-2 border-[#a93226] bg-[linear-gradient(to_bottom,#e74c3c,#c0392b)] px-4 py-2.5 font-game text-sm font-bold uppercase tracking-[.06em] text-white shadow-[0_2px_0_rgba(0,0,0,.18),inset_0_1px_0_rgba(255,255,255,.25)] [text-shadow:1px_1px_2px_rgba(0,0,0,.6)] disabled:cursor-not-allowed disabled:opacity-[.5]"
+            disabled={action.disabled}
+            onClick={action.onClick}
+            type="button"
+          >
+            {action.label}
+          </button>
+        </footer>
+      ) : null}
     </article>
   );
 }

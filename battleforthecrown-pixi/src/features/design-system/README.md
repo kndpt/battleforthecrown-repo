@@ -10,6 +10,7 @@ Route locale : `/design-system`
 
 Composant témoin actuel :
 
+- `BaseModal` — base générique pour modales libres (titre, ton, body children, footer optionnel)
 - `BftcButton` depuis `preview/components-buttons.html`
 - `Badge` depuis `preview/components-badges.html`
 - `Timer` / `DigitTimer` depuis `preview/components-timer.html`

@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Sword, Trash2, X } from 'lucide-react';
+import { Sword, Trash2 } from 'lucide-react';
 import {
-  Modal,
-  ModalBody,
   Panel,
   PanelBody,
   PanelHeader,
@@ -21,6 +19,8 @@ import {
 } from '@/api/queries';
 import { unitMetaFor } from '@/features/army/unitConfig';
 import { formatResourceAmount } from '@/lib/resourceConfig';
+import { publicAsset } from '@/lib/publicAsset';
+import { BaseModal } from '@/features/design-system/components';
 import { ScoutReportCard } from '@/features/design-system/components/ScoutReportCard';
 import { buildScoutReportCardProps } from './scoutReportView';
 
@@ -37,6 +37,43 @@ const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
   hour: '2-digit',
   minute: '2-digit',
 });
+
+const REPORT_MODAL_FOOTER_CLASS =
+  'border-t border-[rgba(93,74,50,.24)] bg-[linear-gradient(to_bottom,rgba(255,250,238,.96),rgba(232,212,168,.92))] px-3 pb-3 pt-2.5';
+
+function ReportModalFooter({
+  deleteLabel,
+  disabled,
+  onClose,
+  onDelete,
+}: {
+  deleteLabel: string;
+  disabled: boolean;
+  onClose: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="flex gap-2">
+      <button
+        aria-label={deleteLabel}
+        className="flex aspect-square h-10 shrink-0 cursor-pointer items-center justify-center rounded-[9px] border-2 border-[#a93226] bg-[linear-gradient(to_bottom,#e74c3c,#c0392b)] text-white shadow-[0_2px_0_rgba(0,0,0,.22),inset_0_1px_0_rgba(255,255,255,.28)] [text-shadow:1px_1px_2px_rgba(0,0,0,.6)] disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={disabled}
+        onClick={onDelete}
+        title="Supprimer"
+        type="button"
+      >
+        <Trash2 size={19} strokeWidth={2.5} />
+      </button>
+      <button
+        className="flex min-w-0 flex-1 cursor-pointer items-center justify-center rounded-[9px] border-2 border-[#5d6d6e] bg-[linear-gradient(to_bottom,#95a5a6,#7f8c8d)] px-3 py-2 font-game text-xs font-bold uppercase tracking-[.08em] text-white shadow-[0_2px_0_rgba(0,0,0,.22),inset_0_1px_0_rgba(255,255,255,.28)] [text-shadow:1px_1px_2px_rgba(0,0,0,.6)]"
+        onClick={onClose}
+        type="button"
+      >
+        Fermer
+      </button>
+    </div>
+  );
+}
 
 function totalQty(map: Record<string, number>): number {
   return Object.values(map ?? {}).reduce((s, v) => s + v, 0);
@@ -168,29 +205,59 @@ function ScoutReportDetail({
   };
 
   return (
-    <Modal isOpen onClose={onClose} size="sm" variant="default">
-      <ModalBody className="!p-0 relative flex flex-col overflow-hidden h-[90vh] max-h-[90vh]">
-        {report.isLoading || !report.data ? (
-          <div className="flex-1 flex items-center justify-center">
-            <Spinner size="lg" />
-          </div>
-        ) : (
-          <div className="flex-1 overflow-y-auto bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
+    <div
+      aria-modal="true"
+      className="fixed inset-0 z-50 grid place-items-center bg-[rgba(0,0,0,.62)] p-3 [backdrop-filter:blur(3px)]"
+      onClick={onClose}
+      role="dialog"
+    >
+      <div className="flex w-full justify-center" onClick={(event) => event.stopPropagation()}>
+        <BaseModal
+          bodyClassName="flex min-h-0 flex-1 flex-col overflow-y-auto p-0"
+          footer={
+            report.data ? (
+              <ReportModalFooter
+                deleteLabel="Supprimer le rapport scout"
+                disabled={isDeleting}
+                onClose={onClose}
+                onDelete={handleDelete}
+              />
+            ) : null
+          }
+          footerClassName={REPORT_MODAL_FOOTER_CLASS}
+          headerClassName="px-4 py-4"
+          maxHeight="min(90dvh, 760px)"
+          onClose={onClose}
+          title={
+            <span className="flex items-center gap-3 uppercase tracking-[.08em] text-[#3d2f1f]">
+              <img alt="" className="size-[26px]" src={publicAsset('/assets/lupa.png')} />
+              Rapport scout
+            </span>
+          }
+          tone="blue"
+          width={360}
+        >
+          {report.isLoading || !report.data ? (
+            <div className="flex min-h-[320px] flex-1 items-center justify-center">
+              <Spinner size="lg" />
+            </div>
+          ) : (
             <ScoutReportCard
               {...buildScoutReportCardProps(report.data, handleDelete, isDeleting)}
               className="min-h-full w-full max-w-none rounded-none border-0 shadow-none"
-              onClose={onClose}
+              hideFooter
+              hideHeader
             />
-          </div>
-        )}
+          )}
 
-        {report.error && (
-          <div className="p-4 text-sm text-game-red-dark font-game text-center">
-            Impossible de charger le rapport scout.
-          </div>
-        )}
-      </ModalBody>
-    </Modal>
+          {report.error && (
+            <div className="p-4 text-sm text-game-red-dark font-game text-center">
+              Impossible de charger le rapport scout.
+            </div>
+          )}
+        </BaseModal>
+      </div>
+    </div>
   );
 }
 
@@ -229,65 +296,83 @@ function CombatReportDetail({
     }
   };
 
+  const data = report.data;
+
   return (
-    <Modal isOpen onClose={onClose} size="md" variant="default">
-      <ModalBody className="!p-0 relative flex flex-col overflow-hidden h-[90vh] max-h-[90vh]">
-        {report.isLoading || !report.data ? (
-          <div className="flex-1 flex items-center justify-center">
-            <Spinner size="lg" />
-          </div>
-        ) : (
-          (() => {
-            const data = report.data;
-            const outcome = reportOutcome(data);
-            const loot = data.loot?.resources ?? {};
-            const remaining = data.loot?.remainingResources ?? {};
-            const targetLabel =
-              data.targetKind === 'BARBARIAN_VILLAGE'
-                ? `Village barbare${data.details?.targetTier ? ` ${data.details.targetTier}` : ''}`
-                : 'Village joueur';
-            const formattedDate = DATE_FORMATTER.format(new Date(data.timestamp));
-            const hasAnyResource = (['wood', 'stone', 'iron'] as const).some(
-              (t) => (loot[t] ?? 0) + (remaining[t] ?? 0) > 0,
-            );
+    <div
+      aria-modal="true"
+      className="fixed inset-0 z-50 grid place-items-center bg-[rgba(0,0,0,.62)] p-3 [backdrop-filter:blur(3px)]"
+      onClick={onClose}
+      role="dialog"
+    >
+      <div className="flex w-full justify-center" onClick={(event) => event.stopPropagation()}>
+        <BaseModal
+          bodyClassName="flex min-h-0 flex-1 flex-col overflow-y-auto p-0"
+          footer={
+            data ? (
+              <ReportModalFooter
+                deleteLabel="Supprimer le rapport"
+                disabled={isDeleting}
+                onClose={onClose}
+                onDelete={handleDelete}
+              />
+            ) : null
+          }
+          footerClassName={REPORT_MODAL_FOOTER_CLASS}
+          headerClassName="px-4 py-4"
+          maxHeight="min(90dvh, 760px)"
+          onClose={onClose}
+          title={
+            <span className="flex items-center gap-3 uppercase tracking-[.08em] text-[#3d2f1f]">
+              <Sword className="size-5 text-[#a93226]" strokeWidth={2.5} />
+              Rapport de combat
+            </span>
+          }
+          tone="red"
+          width={360}
+        >
+          {report.isLoading || !data ? (
+            <div className="flex min-h-[320px] flex-1 items-center justify-center">
+              <Spinner size="lg" />
+            </div>
+          ) : (
+            (() => {
+              const outcome = reportOutcome(data);
+              const loot = data.loot?.resources ?? {};
+              const remaining = data.loot?.remainingResources ?? {};
+              const targetLabel =
+                data.targetKind === 'BARBARIAN_VILLAGE'
+                  ? `Village barbare${data.details?.targetTier ? ` ${data.details.targetTier}` : ''}`
+                  : 'Village joueur';
+              const formattedDate = DATE_FORMATTER.format(new Date(data.timestamp));
+              const hasAnyResource = (['wood', 'stone', 'iron'] as const).some(
+                (t) => (loot[t] ?? 0) + (remaining[t] ?? 0) > 0,
+              );
 
-            return (
-              <>
-                <header className="px-4 py-3 bg-gradient-to-r from-[#8b6f47] via-[#6f5139] to-[#5d4a32] border-b-2 border-[#3d2f1f] flex items-center gap-2 flex-shrink-0">
-                  <div className="w-9" aria-hidden />
-                  <div className="flex-1 text-center">
-                    <h1 className="font-cinzel font-bold text-white text-shadow-game">
-                      Rapport de Combat
-                    </h1>
-                    <p className="text-[10px] text-gray-200">{formattedDate}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                    aria-label="Fermer"
-                  >
-                    <X className="w-5 h-5 text-white" />
-                  </button>
-                </header>
-
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
+              return (
+                <div className="flex-1 space-y-4 overflow-y-auto p-4">
                   <Panel variant="parchment" padding="none">
                     <PanelHeader variant="parchment">
                       <span>Informations de combat</span>
                     </PanelHeader>
                     <PanelBody>
                       <div className="space-y-2">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-3">
                           <span className="text-sm text-gray-600">Cible</span>
-                          <span className="text-sm font-semibold text-gray-800">
+                          <span className="text-right text-sm font-semibold text-gray-800">
                             {targetLabel}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between gap-3">
                           <span className="text-sm text-gray-600">Position</span>
                           <span className="text-sm font-semibold text-gray-800">
                             ({data.targetX}, {data.targetY})
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-sm text-gray-600">Date</span>
+                          <span className="text-right text-sm font-semibold text-gray-800">
+                            {formattedDate}
                           </span>
                         </div>
                       </div>
@@ -297,31 +382,31 @@ function CombatReportDetail({
                   <div className="flex items-center justify-center gap-2 py-2">
                     <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-400 to-gray-400" />
                     <div
-                      className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 shadow-lg ${
+                      className={`flex items-center gap-2 rounded-full border-2 px-4 py-2 shadow-lg ${
                         outcome.isVictory
-                          ? 'bg-gradient-to-br from-[#f1c40f] to-[#d4a017] border-[#9e7b0d]'
-                          : 'bg-gradient-to-br from-game-red-light to-game-red-dark border-game-red-border'
+                          ? 'border-[#9e7b0d] bg-gradient-to-br from-[#f1c40f] to-[#d4a017]'
+                          : 'border-game-red-border bg-gradient-to-br from-game-red-light to-game-red-dark'
                       }`}
                     >
-                      <Sword className="w-5 h-5 text-white" />
+                      <Sword className="h-5 w-5 text-white" />
                       <span className="font-cinzel text-sm font-bold text-white text-shadow-game">
                         {outcome.label}
                       </span>
-                      <Sword className="w-5 h-5 text-white transform rotate-180" />
+                      <Sword className="h-5 w-5 rotate-180 transform text-white" />
                     </div>
                     <div className="h-px flex-1 bg-gradient-to-l from-transparent via-gray-400 to-gray-400" />
                   </div>
 
                   <Panel variant="default" padding="none">
                     <PanelHeader variant="parchment">
-                      <div className="flex items-center justify-between w-full">
+                      <div className="flex w-full items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full bg-game-red-light border border-game-red-border" />
+                          <div className="h-3 w-3 rounded-full border border-game-red-border bg-game-red-light" />
                           <span className="text-sm">Attaquant</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-sm">Défenseur</span>
-                          <div className="w-3 h-3 rounded-full bg-game-blue-light border border-game-blue-border" />
+                          <div className="h-3 w-3 rounded-full border border-game-blue-border bg-game-blue-light" />
                         </div>
                       </div>
                     </PanelHeader>
@@ -345,7 +430,7 @@ function CombatReportDetail({
                             return (
                               <div
                                 key={type}
-                                className="flex flex-col items-center gap-1 min-w-0"
+                                className="flex min-w-0 flex-col items-center gap-1"
                               >
                                 <ResourceIcon resource={type} size={28} showTooltip />
                                 <div
@@ -369,30 +454,17 @@ function CombatReportDetail({
                     </Panel>
                   )}
                 </div>
+              );
+            })()
+          )}
 
-                <footer className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-r from-[#8b6f47] via-[#6f5139] to-[#5d4a32] border-t-2 border-[#3d2f1f] shadow-[0_-2px_8px_rgba(0,0,0,0.3)] px-4 flex items-center justify-center z-20">
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                    aria-label="Supprimer le rapport"
-                    title="Supprimer le rapport"
-                    className="w-12 h-12 flex items-center justify-center rounded-full bg-gradient-to-b from-game-red-light to-game-red-dark border-2 border-game-red-border text-white shadow-game-inset-red hover:brightness-110 active:translate-y-0.5 active:shadow-game-pressed transition-all duration-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Trash2 size={22} strokeWidth={2.5} />
-                  </button>
-                </footer>
-              </>
-            );
-          })()
-        )}
-
-        {report.error && (
-          <div className="p-4 text-sm text-game-red-dark font-game text-center">
-            Impossible de charger le rapport.
-          </div>
-        )}
-      </ModalBody>
-    </Modal>
+          {report.error && (
+            <div className="p-4 text-center font-game text-sm text-game-red-dark">
+              Impossible de charger le rapport.
+            </div>
+          )}
+        </BaseModal>
+      </div>
+    </div>
   );
 }

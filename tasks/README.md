@@ -22,7 +22,7 @@ Fiches d'exécution déléguées aux harnesses Claude Code ou Codex (lead + sub-
 
 ### Runs actifs
 
-_(Aucun run actif.)_
+- [020 — Stats unités uniquement + défense par archétype branchée](./runs/020-feature-units-stats-only-wire-defense-archetype.md) — 📋 `PLANNED`. Suppression complète des passifs (`UnitPassive`) côté shared/backend/frontend/doc, et activation de `defenseInfantry/Cavalry/Archer` dans le résolveur de combat selon l'archétype attaquant.
 
 ### Runs archivés
 

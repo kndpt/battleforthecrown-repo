@@ -4,7 +4,7 @@ export const TROOP_DETAIL_FIELD_MAX: TroopDetailStats = {
   attack: 20,
   carryCapacity: 100,
   defenseArcher: 15,
-  defenseCavalry: 15,
+  defenseCavalry: 20,
   defenseInfantry: 15,
   speed: 35,
 };
@@ -19,7 +19,6 @@ export const TROOP_DETAIL_LABELS_FR: TroopDetailLabels = {
   defenseCavalry: 'vs Cavalerie',
   defenseGroup: 'Défense',
   defenseInfantry: 'vs Infanterie',
-  eyebrow: 'Caserne · Détail de la troupe',
   population: 'Population',
   speed: 'Vitesse',
   tiers: {
