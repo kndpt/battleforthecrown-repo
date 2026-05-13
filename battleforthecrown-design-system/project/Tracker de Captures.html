@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Tracker de Captures · Battle for the Crown</title>
+<link rel="stylesheet" href="colors_and_type.css"/>
+<style>
+  html, body {
+    margin: 0;
+    background: #f0eee9;
+    color: #3d2f1f;
+    font-family: var(--bftc-font-body);
+  }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="bftc-primitives.jsx"></script>
+  <script type="text/babel" src="ui_kits/game/components.jsx"></script>
+  <script type="text/babel" src="capture-window-tracker.jsx"></script>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    // ---------- Mock data ----------
+    const CAPTURES_LIVE = [
+      {
+        id: 'c1',
+        target: 'Village barbare',
+        tier: 'T3',
+        coords: '259|242',
+        origin: 'Royaume du Nord',
+        timeRemaining: '3h 42m',
+        endTime: '21:18',
+        percent: 38,
+        noble: 'Seigneur Aldric',
+        state: 'en-cours',
+      },
+      {
+        id: 'c2',
+        target: 'Camp de pillards',
+        tier: 'T4',
+        coords: '241|261',
+        origin: 'Royaume du Nord',
+        timeRemaining: '6h 14m',
+        endTime: '23:50',
+        percent: 19,
+        noble: 'Dame Yseult',
+        state: 'en-cours',
+      },
+      {
+        id: 'c3',
+        target: 'Village barbare',
+        tier: 'T2',
+        coords: '273|228',
+        origin: 'Avant-poste de Brisecol',
+        timeRemaining: '0h 11m',
+        endTime: '17:47',
+        percent: 96,
+        noble: 'Baron Halrid',
+        state: 'bientot-terminee',
+      },
+    ];
+
+    const CAPTURES_ALL_STATES = [
+      ...CAPTURES_LIVE,
+      {
+        id: 'c4',
+        target: 'Village barbare',
+        tier: 'T1',
+        coords: '266|231',
+        origin: 'Royaume du Nord',
+        timeRemaining: '— —',
+        endTime: '16:02',
+        percent: 100,
+        noble: 'Seigneur Eldwen',
+        state: 'reussie',
+      },
+      {
+        id: 'c5',
+        target: 'Camp fortifié',
+        tier: 'T5',
+        coords: '288|211',
+        origin: 'Forteresse d\u2019Aubépine',
+        timeRemaining: '— —',
+        endTime: '15:33',
+        percent: 64,
+        noble: 'Seigneur Garric ✝',
+        state: 'interrompue',
+      },
+    ];
+
+    // ---------- Tiny annotated label ----------
+    function Note({ children, top, left, right, w = 140, arrow }) {
+      return (
+        <div style={{
+          position: 'absolute', top, left, right, width: w,
+          fontFamily: 'var(--bftc-font-display)', fontSize: 10.5, lineHeight: 1.35,
+          color: 'rgba(60,38,25,.78)', pointerEvents: 'none',
+        }}>
+          <span style={{
+            display: 'inline-block', padding: '2px 6px', borderRadius: 4,
+            background: '#fffdf3', border: '1px solid rgba(60,38,25,.18)',
+            boxShadow: '0 2px 4px rgba(0,0,0,.06)',
+          }}>{children}</span>
+          {arrow && (
+            <div style={{
+              position: 'absolute', top: arrow.top, left: arrow.left,
+              width: arrow.w || 28, height: 1,
+              background: 'rgba(60,38,25,.4)',
+              transform: `rotate(${arrow.rot || 0}deg)`,
+              transformOrigin: 'left center',
+            }}>
+              <span style={{
+                position: 'absolute', right: -3, top: -2, width: 5, height: 5,
+                borderRadius: 99, background: 'rgba(60,38,25,.55)',
+              }}/>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ============================================================
+    //  Artboard 1 — Anatomie de la carte
+    // ============================================================
+    function AnatomyBoard() {
+      return (
+        <div style={{
+          width: '100%', height: '100%', padding: '40px 32px 32px',
+          background: 'linear-gradient(180deg, #fefbf3, #f4ecd9)',
+          position: 'relative',
+        }}>
+          <div style={{ maxWidth: 380, margin: '0 auto', position: 'relative' }}>
+            <CaptureWindowCard
+              target="Village barbare"
+              tier="T3"
+              coords="259|242"
+              origin="Royaume du Nord"
+              timeRemaining="3h 42m"
+              endTime="21:18"
+              percent={38}
+              noble="Seigneur Aldric"
+              state="en-cours"
+            />
+            {/* Callouts */}
+            <Note top={-2} left={-150} w={130}>
+              <strong>Bande d&apos;état</strong> — couleur = lecture instantanée du statut.
+            </Note>
+            <Note top={50} left={-160} w={140}>
+              <strong>Tier crest</strong> — convention barbare T1→T5, plus un crest = plus de butin.
+            </Note>
+            <Note top={4} right={-160} w={140}>
+              <strong>Pill statut</strong> — confirmation explicite de l&apos;état, jamais cachée.
+            </Note>
+            <Note top={56} right={-170} w={150}>
+              <strong>Coordonnées + origine</strong> — répond à <em>où est mon Seigneur</em>.
+            </Note>
+            <Note top={132} left={-160} w={140}>
+              <strong>Temps restant</strong> — donnée principale, Cinzel tabular 22 px.
+            </Note>
+            <Note top={132} right={-160} w={140}>
+              <strong>Seigneur immobilisé</strong> — répond à <em>qui est exposé</em>.
+            </Note>
+            <Note top={210} left={-160} w={140}>
+              <strong>Jauge fenêtre</strong> — pas une queue de construction : track hachuré + remplissage teinté.
+            </Note>
+          </div>
+
+          <div style={{
+            position: 'absolute', bottom: 14, left: 0, right: 0, textAlign: 'center',
+            fontFamily: 'var(--bftc-font-display)', fontSize: 11,
+            color: '#6d5838', letterSpacing: '.04em', fontStyle: 'italic',
+          }}>
+            Une carte = une réponse à <strong>quoi · où · combien de temps</strong>. Aucune autre information ne mérite la première lecture.
+          </div>
+        </div>
+      );
+    }
+
+    // ============================================================
+    //  Artboard 2 — Les 4 états (en-cours, bientôt, interrompue, réussie)
+    // ============================================================
+    function StatesBoard() {
+      const states = [
+        {
+          title: 'Normal — capture en cours',
+          subtitle: '2–12 h restantes. Bande gold, ton serein, donnée temporelle dominante.',
+          props: {
+            target: 'Village barbare', tier: 'T3', coords: '259|242',
+            origin: 'Royaume du Nord', timeRemaining: '3h 42m', endTime: '21:18',
+            percent: 38, noble: 'Seigneur Aldric', state: 'en-cours',
+          }
+        },
+        {
+          title: 'Bientôt terminée — < 15 min',
+          subtitle: 'Bande verte qui pulse, pill vert, temps en vert. Joueur peut revenir défendre / récolter.',
+          props: {
+            target: 'Village barbare', tier: 'T2', coords: '273|228',
+            origin: 'Avant-poste de Brisecol', timeRemaining: '0h 11m', endTime: '17:47',
+            percent: 96, noble: 'Baron Halrid', state: 'bientot-terminee',
+          }
+        },
+        {
+          title: 'Capture interrompue — transitoire',
+          subtitle: 'Affiché si l\u2019event arrive pendant que le panneau est ouvert. Bande rouge, opacité réduite, ruban d\u2019état. Disparaît au refetch suivant.',
+          props: {
+            target: 'Camp fortifié', tier: 'T5', coords: '288|211',
+            origin: 'Forteresse d\u2019Aubépine', timeRemaining: '— —', endTime: '15:33',
+            percent: 64, noble: 'Seigneur Garric ✝', state: 'interrompue',
+          }
+        },
+        {
+          title: 'Capture réussie — transitoire',
+          subtitle: 'Pareil : flash visuel le temps que le store revalide et que le village rejoigne la liste des possessions.',
+          props: {
+            target: 'Village barbare', tier: 'T1', coords: '266|231',
+            origin: 'Royaume du Nord', timeRemaining: '— —', endTime: '16:02',
+            percent: 100, noble: 'Seigneur Eldwen', state: 'reussie',
+          }
+        },
+      ];
+      return (
+        <div style={{
+          width: '100%', height: '100%', padding: 24,
+          background: 'linear-gradient(180deg, #fefbf3, #f4ecd9)',
+          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, alignContent: 'start',
+        }}>
+          {states.map((s, i) => (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div>
+                <div style={{
+                  fontFamily: 'var(--bftc-font-display)', fontWeight: 800, fontSize: 13,
+                  color: '#3d2f1f', letterSpacing: '.02em',
+                }}>{s.title}</div>
+                <div style={{
+                  fontFamily: 'var(--bftc-font-display)', fontSize: 11, color: '#6d5838',
+                  lineHeight: 1.45, marginTop: 3, fontStyle: 'italic',
+                }}>{s.subtitle}</div>
+              </div>
+              <CaptureWindowCard {...s.props}/>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // ============================================================
+    //  Artboard 3 — Bottom sheet ouvert dans le HUD mobile
+    // ============================================================
+    function PhoneShellBackground() {
+      // Faded village backdrop. Cheap parchment + green field gradient, no
+      // sprites — keeps focus on the sheet.
+      return (
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(180deg,#7eab57 0%,#5b8f3a 60%,#3d6e1f 100%)',
+        }}>
+          <div style={{
+            position: 'absolute', inset: 0, opacity: 0.5,
+            backgroundImage: 'radial-gradient(circle at 30% 50%, rgba(255,255,255,.25), transparent 40%), radial-gradient(circle at 70% 70%, rgba(0,0,0,.18), transparent 50%)',
+          }}/>
+          <div style={{
+            position: 'absolute', inset: 0, opacity: 0.35,
+            filter: 'blur(2px)',
+            backgroundImage: 'url(assets/buildings/castle.png), url(assets/buildings/farm.png), url(assets/buildings/barracks.png)',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: '50% 22%, 12% 48%, 78% 56%',
+            backgroundSize: '38%, 30%, 28%',
+          }}/>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(60,38,25,.32)', backdropFilter: 'blur(1px)' }}/>
+        </div>
+      );
+    }
+
+    function MobileBottomSheetBoard() {
+      const [tab, setTab] = useState('captures');
+      return (
+        <div style={{
+          width: 360, height: 720, position: 'relative', overflow: 'hidden',
+          display: 'flex', flexDirection: 'column',
+          fontFamily: 'var(--bftc-font-display)',
+        }}>
+          <PhoneShellBackground/>
+
+          {/* Top HUD — reuses the TopBar shape; we just want the badge slot */}
+          <div style={{ position: 'relative', zIndex: 2 }}>
+            <TopBar
+              name="Sire Kelvin"
+              level={12}
+              power="2 480"
+              crowns={28}
+              resources={{
+                wood: { value: '8 500', sub: '+120/h' },
+                stone: { value: '3 200', sub: '+80/h' },
+                iron: { value: '1 500', sub: '+50/h' },
+                population: { value: '120/200', sub: 'villageois' },
+              }}
+            />
+            {/* Secondary HUD row : capture badge */}
+            <div style={{
+              padding: '6px 10px 8px',
+              background: 'linear-gradient(180deg, rgba(60,38,25,.78), rgba(60,38,25,.0))',
+              display: 'flex', alignItems: 'center', gap: 6,
+            }}>
+              <CaptureHUDBadge count={3}/>
+              <span style={{
+                fontSize: 10, fontWeight: 600, color: 'rgba(245,243,232,.7)',
+                letterSpacing: '.05em',
+              }}>· 1 fenêtre se ferme bientôt</span>
+            </div>
+          </div>
+
+          {/* Stage filler */}
+          <div style={{ flex: 1, position: 'relative' }}/>
+
+          {/* Bottom sheet */}
+          <div style={{ position: 'relative', zIndex: 5 }}>
+            <ExpeditionPanelTabs
+              items={CAPTURES_LIVE}
+              activeTab={tab}
+              onTabChange={setTab}
+              embedded
+            />
+          </div>
+        </div>
+      );
+    }
+
+    // ============================================================
+    //  Artboard 4 — État vide & badge HUD silencieux
+    // ============================================================
+    function EmptyAndSilentBoard() {
+      return (
+        <div style={{
+          width: '100%', height: '100%', padding: 24,
+          background: 'linear-gradient(180deg, #fefbf3, #f4ecd9)',
+          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 22, alignContent: 'start',
+        }}>
+          {/* Empty list */}
+          <div>
+            <div style={{
+              fontFamily: 'var(--bftc-font-display)', fontWeight: 800, fontSize: 13,
+              color: '#3d2f1f', marginBottom: 8,
+            }}>Onglet « Captures » — état vide</div>
+            <div style={{
+              fontFamily: 'var(--bftc-font-display)', fontSize: 11, color: '#6d5838',
+              fontStyle: 'italic', marginBottom: 12, lineHeight: 1.45,
+            }}>Pas de bruit permanent : le HUD reste silencieux, et le panneau affiche une citation, pas un message d&apos;erreur.</div>
+            <div style={{
+              borderRadius: 14,
+              background: 'linear-gradient(180deg, #f5e6d3, #e8d4a8)',
+              border: '3px solid #3c2619',
+              boxShadow: 'inset 0 2px 0 rgba(255,255,255,.45), 0 6px 18px rgba(0,0,0,.25)',
+              overflow: 'hidden',
+            }}>
+              <CaptureWindowList items={[]}/>
+            </div>
+          </div>
+
+          {/* HUD silent vs active */}
+          <div>
+            <div style={{
+              fontFamily: 'var(--bftc-font-display)', fontWeight: 800, fontSize: 13,
+              color: '#3d2f1f', marginBottom: 8,
+            }}>Badge HUD — silencieux vs actif</div>
+            <div style={{
+              fontFamily: 'var(--bftc-font-display)', fontSize: 11, color: '#6d5838',
+              fontStyle: 'italic', marginBottom: 12, lineHeight: 1.45,
+            }}>Aucune capture = pas de pastille. Au moins une = pastille gold (compteur). Au moins une &lt; 15 min = pastille verte qui flotte légèrement.
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <HudStrip label="0 capture en cours" content={null} note="(aucun badge — silence total)"/>
+              <HudStrip label="3 captures en cours" content={<CaptureHUDBadge count={3}/>} note="Pastille gold, compteur blanc"/>
+              <HudStrip label="3 captures · 1 bientôt finie" content={<CaptureHUDBadge count={3} attention/>} note="Pastille verte qui pulse"/>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function HudStrip({ label, content, note }) {
+      return (
+        <div>
+          <div style={{
+            display: 'flex', alignItems: 'center',
+            background: 'linear-gradient(180deg, rgba(60,38,25,.95), rgba(78,56,34,.95))',
+            border: '2px solid #3c2619',
+            borderRadius: 10,
+            padding: '8px 10px',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,.18), 0 3px 8px rgba(0,0,0,.2)',
+            minHeight: 38,
+          }}>
+            <span style={{
+              fontFamily: 'var(--bftc-font-display)', fontWeight: 800, fontSize: 10.5,
+              color: '#f0e0c0', letterSpacing: '.18em', textTransform: 'uppercase',
+              opacity: .65, marginRight: 'auto',
+            }}>HUD royaume</span>
+            {content || (
+              <span style={{
+                fontFamily: 'var(--bftc-font-display)', fontSize: 10, color: 'rgba(245,243,232,.4)',
+                fontStyle: 'italic',
+              }}>—</span>
+            )}
+          </div>
+          <div style={{
+            fontFamily: 'var(--bftc-font-display)', fontSize: 10.5, color: '#6d5838',
+            marginTop: 4, display: 'flex', justifyContent: 'space-between', gap: 8,
+          }}>
+            <span style={{ fontWeight: 700 }}>{label}</span>
+            <span style={{ fontStyle: 'italic', opacity: .8 }}>{note}</span>
+          </div>
+        </div>
+      );
+    }
+
+    // ============================================================
+    //  Artboard 5 — Variante desktop / panel compact (future sidebar)
+    // ============================================================
+    function DesktopPanelBoard() {
+      return (
+        <div style={{
+          width: '100%', height: '100%', padding: 28,
+          background: 'linear-gradient(180deg, #2a2f3d 0%, #14161f 70%)',
+          display: 'flex', gap: 24, alignItems: 'flex-start', justifyContent: 'center',
+        }}>
+          <CaptureSidePanel items={CAPTURES_LIVE}/>
+          <div style={{
+            maxWidth: 280, marginTop: 12,
+            fontFamily: 'var(--bftc-font-display)', fontSize: 12, lineHeight: 1.55,
+            color: 'rgba(245,243,232,.78)',
+          }}>
+            <div style={{
+              fontSize: 10.5, fontWeight: 700, letterSpacing: '.3em',
+              color: 'rgba(245,243,232,.55)', textTransform: 'uppercase', marginBottom: 6,
+            }}>Variante desktop</div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#f5f3e8', marginBottom: 10 }}>
+              Sidebar « Activités »
+            </div>
+            <p style={{ margin: '0 0 10px' }}>
+              Même composant <code style={{ background: 'rgba(255,255,255,.08)', padding: '1px 5px', borderRadius: 4 }}>CaptureWindowCard</code> ; chrome bois + bandeau gold pour vivre dans une colonne flottante.
+            </p>
+            <p style={{ margin: 0, fontStyle: 'italic', opacity: .8 }}>
+              Réservé au moment où on aura un historique ou une gestion avancée — pas MVP.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // ============================================================
+    //  App
+    // ============================================================
+    function App() {
+      return (
+        <DesignCanvas
+          title="46 · CaptureWindowTracker"
+          subtitle="Tracker persistant des captures de villages barbares. État long (2–12 h), réhydratable, indépendant des toasts WS. Liste de cartes compactes, intégrable dans le bottom sheet « Activités du royaume » à côté de l'onglet Expéditions."
+        >
+          <DCSection
+            id="anatomy"
+            title="Anatomie"
+            subtitle="Une carte = trois questions résolues : QUOI · OÙ · COMBIEN DE TEMPS. Aucun bruit supplémentaire."
+          >
+            <DCArtboard id="a1" label="Anatomie · une carte annotée" width={780} height={420}>
+              <AnatomyBoard/>
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="states"
+            title="États visuels"
+            subtitle="Normal (gold) · bientôt terminée (vert pulse, < 15 min) · interrompue (rouge, transitoire) · réussie (indigo, transitoire). Les deux dernières disparaissent au refetch suivant."
+          >
+            <DCArtboard id="a2" label="Les 4 états côte à côte" width={820} height={520}>
+              <StatesBoard/>
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="context-mobile"
+            title="En contexte — bottom sheet mobile"
+            subtitle="Placement MVP recommandé : onglet « Captures » dans le bottom sheet existant des Expéditions. HUD montre une pastille gold avec le compteur ; le sheet se déploie sur le HUD du village. Mobile portrait 360 × 720."
+          >
+            <DCArtboard id="a3" label="Téléphone · sheet ouvert" width={360} height={720}>
+              <MobileBottomSheetBoard/>
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="empty-and-badge"
+            title="État vide & pastille HUD"
+            subtitle="Quand le joueur n'a pas de capture en cours, rien dans le HUD. Le panneau affiche une citation, pas un message d'erreur. Quand la pastille passe verte, c'est qu'au moins une fenêtre se ferme."
+          >
+            <DCArtboard id="a4" label="Vide · pastille silencieuse vs active" width={780} height={460}>
+              <EmptyAndSilentBoard/>
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="desktop"
+            title="Variante desktop · sidebar compacte"
+            subtitle="Même composant, chrome bois + bandeau gold. Non-MVP — réservé à une future colonne « Activités » sur viewports larges."
+          >
+            <DCArtboard id="a5" label="Sidebar desktop" width={680} height={520}>
+              <DesktopPanelBoard/>
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  </script>
+</body>
+</html>
