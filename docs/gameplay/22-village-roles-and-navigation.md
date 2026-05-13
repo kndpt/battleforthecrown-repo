@@ -61,6 +61,12 @@ Le rôle doit servir à aller plus vite :
 
 Le rôle ne doit pas devenir un écran de configuration lourd. Si le joueur ignore totalement la feature, le jeu reste jouable.
 
+## Questions à trancher avant implémentation
+
+- **Cible des récompenses joueur quand il possède plusieurs villages.** À trancher ici puis référencée par [`05-daily-cards-and-oyez.md`](./05-daily-cards-and-oyez.md). Options : village `Capitale`, village actif (dernier consulté), choix à la réception, répartition au prorata. Justification de l'ordre des phases : voir [`tasks/00-mvp-roadmap.md`](../../tasks/00-mvp-roadmap.md) (Phase 9).
+- **Unicité de `Capitale`.** Un seul village peut-il porter ce rôle, ou plusieurs ? Si la cible des récompenses est `Capitale`, l'unicité devient implicite.
+- **Un village peut-il porter plusieurs rôles simultanément ?** Le MVP léger reste plus simple avec un rôle unique par village (hors `Favori` qui peut être combiné).
+
 ## Évolutions post-MVP
 
 À étudier seulement après observation du multi-village :

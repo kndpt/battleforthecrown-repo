@@ -99,7 +99,19 @@ Livrable : 5 étapes scriptées chaînées dès la création du premier village 
 
 Critère de fin : un compte fraîchement créé est guidé étape par étape, sans pouvoir se perdre, jusqu'à compléter les 5 étapes en ≤ 10 min.
 
-### Phase 9 — Rétention quotidienne MVP
+### Phase 9 — Navigation multi-village (rôles, favoris, sélecteur)
+
+Spec : [`22-village-roles-and-navigation.md`](../docs/gameplay/22-village-roles-and-navigation.md).
+
+Pourquoi ici (et pas Phase 11 comme prévu initialement) : dès la fin de Phase 5 (conquête barbare livrée) un joueur peut déjà posséder plusieurs villages, mais l'UX ne sait pas encore les distinguer. Surtout, la Phase 10 (Rétention quotidienne) doit pouvoir cibler **un** village pour appliquer ses récompenses — sans Phase 9, on hardcoderait une cible arbitraire (premier village, dernier consulté…) et on rouvrirait la Phase 10 plus tard. On la remonte donc avant Rétention. Elle reste isolée des boucles principales (pas de bonus de combat, pas d'effet serveur), donc pas de risque d'invalider du code déjà livré.
+
+Livrable : étiquettes privées (`Favori`, `Capitale`, `Raid`, `Défense`, `Économie`, `Frontière`, `Conquête`) sans bonus mécanique, sélecteur de village, filtres dans la liste/carte, badges discrets, focus mobile. Pas de tags libres, pas de partage tribu, pas de preset automatique, pas de dashboard royaume consolidé (post-MVP, cf. [`lab/tickets/06-multi-village-governance.md`](../docs/gameplay/lab/tickets/06-multi-village-governance.md)).
+
+**Décision à trancher dans cette phase, bloquante pour Phase 10** : *sur quel village une récompense (ou un effet joueur global) s'applique-t-il quand le joueur en possède plusieurs ?* Options à arbitrer : village marqué `Capitale`, village actif (dernier consulté), village choisi à la réception, ressources réparties au prorata, etc. La règle retenue devra être référencée par la spec [`05-daily-cards-and-oyez.md`](../docs/gameplay/05-daily-cards-and-oyez.md) avant d'attaquer Phase 10.
+
+Critère de fin : un joueur multi-village peut marquer un village `Capitale` et un autre `Favori`, retrouver ces étiquettes dans le sélecteur et les filtres, et la règle « récompense → quel village » est tranchée et documentée.
+
+### Phase 10 — Rétention quotidienne MVP
 
 Spec : [`05-daily-cards-and-oyez.md`](../docs/gameplay/05-daily-cards-and-oyez.md).
 
@@ -107,11 +119,13 @@ Pourquoi ici : les boucles principales existent déjà, donc les cartes peuvent 
 
 Livrable : carte quotidienne empilable, backlog limité, tâches liées aux boucles naturelles, Oyez léger qui influence la priorité du jour, récompenses modestes et non-snowballantes.
 
+Dépendance Phase 9 : la cible d'application des récompenses (village destinataire) suit la règle tranchée en Phase 9. Ne pas re-trancher ici, ne pas hardcoder une cible avant qu'elle existe.
+
 Hors scope MVP explicite : pass premium, progression de saison avancée, grosses récompenses de puissance, tâches artificielles.
 
-Critère de fin : un joueur reçoit une carte quotidienne, peut la compléter en session courte, voit l'Oyez actif si présent, et récupère une récompense modérée sans avantage PvP durable.
+Critère de fin : un joueur reçoit une carte quotidienne, peut la compléter en session courte, voit l'Oyez actif si présent, et récupère une récompense modérée sans avantage PvP durable, appliquée au village défini par la règle Phase 9.
 
-### Phase 10 — World lifecycle
+### Phase 11 — World lifecycle
 
 Spec : [`19-world-lifecycle.md`](../docs/gameplay/19-world-lifecycle.md) (spec MVP tranchée).
 
@@ -121,13 +135,11 @@ Coût attendu : faible (1-2 jours), schéma DB et garde-fou `JoinWorldUseCase` d
 
 Critère de fin : un monde test fait son cycle complet (avec durées raccourcies via `WorldConfig`) et on observe les transitions, le wipe et les récompenses cosmétiques attribuées sur le compte global.
 
-### Phase 11 — Ajouts mineurs MVP
+### Phase 12 — Ajouts mineurs MVP
 
-Specs : [`20-defensive-friends.md`](../docs/gameplay/20-defensive-friends.md), [`18-inactivity-and-abandonment.md`](../docs/gameplay/18-inactivity-and-abandonment.md) (post-MVP selon la doc, mais cap des comptes-zombies utile avant lancement public — à arbitrer), [`22-village-roles-and-navigation.md`](../docs/gameplay/22-village-roles-and-navigation.md).
+Specs : [`20-defensive-friends.md`](../docs/gameplay/20-defensive-friends.md), [`18-inactivity-and-abandonment.md`](../docs/gameplay/18-inactivity-and-abandonment.md) (post-MVP selon la doc, mais cap des comptes-zombies utile avant lancement public — à arbitrer).
 
-Pourquoi ici : ajouts isolés sans impact sur les boucles principales. On les case en dernier pour ne pas charger le scope MVP plus tôt.
-
-Livrable rôles/favoris : étiquettes privées de navigation multi-village (`Favori`, `Raid`, `Défense`, `Économie`, `Frontière`, `Conquête`, `Capitale`) sans bonus mécanique, sans preset automatique, sans partage tribu.
+Pourquoi ici : ajouts isolés sans impact sur les boucles principales. On les case en dernier pour ne pas charger le scope MVP plus tôt. La navigation multi-village, initialement prévue ici, a été remontée en Phase 9 (cf. justification dans cette phase).
 
 ## Post-MVP (hors roadmap)
 
