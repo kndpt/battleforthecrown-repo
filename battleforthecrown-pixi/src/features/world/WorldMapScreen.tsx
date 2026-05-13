@@ -157,9 +157,6 @@ export function WorldMapScreen() {
 
             <div className="pointer-events-none absolute inset-0">
               <div className="pointer-events-auto absolute left-3 top-3 flex flex-col items-start gap-2">
-                <div className="rounded border-2 border-game-gold-border bg-black/70 px-3 py-1 text-xs text-parchment/80">
-                  {visibleEntities.length} entité{visibleEntities.length > 1 ? 's' : ''}
-                </div>
                 <KingdomActivityHudBadges
                   badges={[
                     {
