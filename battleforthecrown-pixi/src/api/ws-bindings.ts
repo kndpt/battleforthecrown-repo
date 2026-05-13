@@ -140,6 +140,8 @@ export function applyBattleSent(
 }
 
 export function applyBattleResolved(payload: BattleResolvedPayload, ctx: BindingsContext): void {
+  const returnAt = payload.returnAt ? Date.parse(payload.returnAt) : undefined;
+
   useExpeditionsStore.getState().update(payload.expeditionId, {
     phase: 'RESOLVED',
     isVictory: payload.isVictory,
@@ -148,12 +150,16 @@ export function applyBattleResolved(payload: BattleResolvedPayload, ctx: Binding
     targetName: payload.targetName,
     target: { x: payload.targetX, y: payload.targetY },
     arrivalAt: Date.now(),
-    returnAt: Date.parse(payload.returnAt),
+    returnAt,
   });
   // Wait for the FX flash to finish before troops turn back. Source of truth
   // for the delay lives in `lib/expeditionTiming` alongside the flash duration.
   scheduleTimeout(() => {
-    useExpeditionsStore.getState().update(payload.expeditionId, { phase: 'RETURNING' });
+    if (returnAt) {
+      useExpeditionsStore.getState().update(payload.expeditionId, { phase: 'RETURNING' });
+      return;
+    }
+    useExpeditionsStore.getState().remove(payload.expeditionId);
   }, RESOLVED_TO_RETURNING_DELAY_MS);
 
   ctx.queryClient.invalidateQueries({ queryKey: ['resources', payload.villageId] });

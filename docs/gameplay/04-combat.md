@@ -17,7 +17,7 @@ Détail technique côté backend dans [`docs/architecture/backend-modules.md` §
 ## Pertes et raids
 
 - **Raid victorieux** : pertes selon le ratio puissance attaque vs défense, butin proportionnel à la capacité de transport restante.
-- **Raid perdu** : armée détruite, retour à vide. Cible peut perdre quelques ressources stockées.
+- **Raid perdu** : si toute l'armée attaquante est détruite, l'expédition se termine sur place : aucun trajet retour visuel, aucune restitution de troupes ou loot. Cible peut perdre quelques ressources stockées.
 - **Défense** : armée stationnée applique sa puissance défensive + bonus stratégie + Wall (post-MVP).
 
 Cas particulier des villages barbares (rapport de combat asymétrique selon victoire/défaite) : [`06-barbarians.md` § Rapport de combat](./06-barbarians.md#rapport-de-combat).

@@ -39,7 +39,7 @@ export interface BattleResolvedPayload {
   lossesAttacker: UnitMap;
   casualtyRate: number;
   survivingUnits: UnitMap;
-  returnAt: string;
+  returnAt: string | null;
 }
 
 export interface BattleReturnedPayload {

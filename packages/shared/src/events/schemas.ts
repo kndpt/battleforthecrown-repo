@@ -41,7 +41,7 @@ const BattleResolvedPayloadSchema = z.object({
   lossesAttacker: UnitMapSchema,
   casualtyRate: z.number(),
   survivingUnits: UnitMapSchema,
-  returnAt: z.string(),
+  returnAt: z.string().nullable(),
 });
 
 const BattleReturnedPayloadSchema = z.object({

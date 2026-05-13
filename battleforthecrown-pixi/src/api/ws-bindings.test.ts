@@ -195,6 +195,42 @@ describe('applyBattleResolved', () => {
     expect(useExpeditionsStore.getState().byId['e1'].phase).toBe('RETURNING');
   });
 
+  it('removes a resolved battle when no return trip is scheduled', () => {
+    useExpeditionsStore.getState().add({
+      expeditionId: 'e1',
+      villageId: 'v1',
+      origin: { x: 0, y: 0 },
+      target: { x: 1, y: 1 },
+      phase: 'EN_ROUTE',
+      departAt: 0,
+      arrivalAt: 1000,
+    });
+
+    applyBattleResolved(
+      {
+        expeditionId: 'e1',
+        reportId: 'r1',
+        villageId: 'v1',
+        villageName: 'Capital',
+        targetKind: 'BARBARIAN',
+        targetName: 'Camp',
+        targetX: 1,
+        targetY: 1,
+        isVictory: false,
+        loot: { resources: { wood: 0, stone: 0, iron: 0 } },
+        lossesAttacker: { MILITIA: 1 },
+        casualtyRate: 1,
+        survivingUnits: {},
+        returnAt: null,
+      },
+      { queryClient: new QueryClient() },
+    );
+
+    expect(useExpeditionsStore.getState().byId['e1'].phase).toBe('RESOLVED');
+    vi.advanceTimersByTime(RESOLVED_TO_RETURNING_DELAY_MS);
+    expect(useExpeditionsStore.getState().byId['e1']).toBeUndefined();
+  });
+
   it('invalidates the signed-in player reports query for the unread badge', () => {
     useAuthStore.getState().setSession({
       accessToken: 'access',

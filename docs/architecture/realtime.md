@@ -97,7 +97,7 @@ Chaque payload est validé runtime par `parseEventPayload(kind, raw)` (backend `
 | `unit.training.completed` | `userId` | `trainingId, villageId, unitType, completedQty, totalQty` | `TrainingWorker` |
 | `crowns.changed` | `userId` | `userId, worldId, balance, productionRate, lastUpdateTs` | `CrownProductionWorker` (chaque tick, par membership active) + `CrownsService.updateProduction` quand transaction crowns |
 | `battle.sent` | `userId` (attaquant) | `expeditionId, villageId, targetX, targetY, targetKind, arrivalAt` | `CombatService.initiateAttack` |
-| `battle.resolved` | `userId` (attaquant) | `expeditionId, reportId, villageId, isVictory, loot, lossesAttacker (UnitMap), survivingUnits (UnitMap), casualtyRate, returnAt, …` | `CombatWorker` |
+| `battle.resolved` | `userId` (attaquant) | `expeditionId, reportId, villageId, isVictory, loot, lossesAttacker (UnitMap), survivingUnits (UnitMap), casualtyRate, returnAt` nullable si aucun retour, … | `CombatWorker` |
 | `battle.returned` | `userId` (attaquant) | `expeditionId, reportId` (nullable si le rapport a été supprimé), `villageId, survivingUnits (UnitMap), loot` | `ReturnWorker` |
 | `scout.sent` | `userId` (scout owner) | `expeditionId, villageId, targetX, targetY, targetKind, arrivalAt` | `CombatService.initiateScout` |
 | `scout.reported` | `userId` (scout owner) | `expeditionId, reportId, villageId, targetKind, targetName, targetX, targetY, returnAt` | `CombatWorker` quand une expédition `SCOUT` arrive |

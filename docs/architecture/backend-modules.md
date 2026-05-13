@@ -87,7 +87,7 @@ Flow expédition (Attaque/Scout/Renfort) :
 1. `POST /combat/attack`, `/combat/scout` ou `/combat/reinforce` → `CombatService.initiate*` valide + crée `Expedition` + déclenche job pg-boss à `arrivalAt`.
 2. `CombatWorker.handle` → résout selon le `kind` (`ATTACK`: combat via stratégie ; `SCOUT`: snapshot `ScoutReport`, succès auto sans perte ; `REINFORCE`: stationnement en `Garrison`), crée les events adaptés (`battle.*`, `scout.*`, `reinforcement.*`).
 3. Le retour d'un raid réutilise `Expedition.outboundTravelMs`, figé au dispatch, pour respecter "même vitesse qu'à l'aller" même si la config monde ou la stratégie changent avant résolution.
-4. `ReturnWorker.handle` → ramène l'armée + butin après un combat/raid à `returnAt`, event `battle.returned`; pour un scout, il ramène les ESPIONs sans loot et émet `scout.returned`.
+4. `ReturnWorker.handle` → ramène l'armée + butin après un combat/raid à `returnAt`, event `battle.returned`; si aucun survivant ni loot ne revient, aucun job retour n'est planifié. Pour un scout, il ramène les ESPIONs sans loot et émet `scout.returned`.
 5. `POST /combat/recall/:expeditionId` rappelle une expédition sortante encore `EN_ROUTE` : passage en `RETURNING`, planification `combat:return`, event `expedition.recalled`, puis restitution sans combat par `ReturnWorker`.
 6. `POST /combat/recall` crée aussi une `Expedition` de type `REINFORCE`, mais en sens retour ; son arrivée est traitée par `CombatWorker.handle`, qui réinjecte les unités au village d'origine et émet `reinforcement.returned`.
 

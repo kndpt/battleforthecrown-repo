@@ -286,6 +286,92 @@ describe('smoke', () => {
     expect(attackerInventory.quantity).toBe(90);
   });
 
+  it('combat: total attacker loss resolves without empty return expedition', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const user = await registerUser(ctx.server);
+    const join = await joinWorld(
+      ctx.server,
+      user.accessToken,
+      world.id,
+      'attacker-total-loss',
+    );
+    const attackerId = join.village.id;
+
+    const barbarian = await ctx.prisma.village.create({
+      data: {
+        worldId: world.id,
+        isBarbarian: true,
+        name: 'barb-total-loss-target',
+        x: join.village.x + 1,
+        y: join.village.y,
+        tier: 'T1',
+        resourceStock: {
+          create: { wood: 500, stone: 500, iron: 500, maxPerType: 100_000 },
+        },
+      },
+    });
+
+    await ctx.prisma.unitInventory.create({
+      data: { villageId: attackerId, unitType: 'MILITIA', quantity: 1 },
+    });
+    await ctx.prisma.unitInventory.create({
+      data: { villageId: barbarian.id, unitType: 'MILITIA', quantity: 100 },
+    });
+    await ctx.prisma.building.updateMany({
+      where: { villageId: attackerId, type: 'WATCHTOWER' },
+      data: { level: 1 },
+    });
+
+    const res = await request(ctx.server)
+      .post('/combat/attack')
+      .set('Authorization', `Bearer ${user.accessToken}`)
+      .send({
+        villageId: attackerId,
+        targetX: barbarian.x,
+        targetY: barbarian.y,
+        targetKind: 'BARBARIAN_VILLAGE',
+        targetRefId: barbarian.id,
+        units: { MILITIA: 1 },
+      });
+    expect(res.status).toBeLessThan(300);
+    const attackBody = res.body as { id: string };
+
+    await ctx.prisma.world.update({
+      where: { id: world.id },
+      data: {
+        config: {
+          ...SMOKE_WORLD_CONFIG,
+          gameSpeed: { ...SMOKE_WORLD_CONFIG.gameSpeed, travel: 1_000_000 },
+        },
+      },
+    });
+
+    const resolved = await outboxDispatched(
+      ctx.prisma,
+      { kind: 'battle.resolved', aggregateId: attackerId },
+      { timeoutMs: 15_000 },
+    );
+    expect(resolved?.dispatchedAt).toBeTruthy();
+    expect(resolved.payload).toMatchObject({
+      expeditionId: attackBody.id,
+      isVictory: false,
+      survivingUnits: {},
+      returnAt: null,
+    });
+
+    const expedition = await ctx.prisma.expedition.findUniqueOrThrow({
+      where: { id: attackBody.id },
+    });
+    expect(expedition.status).toBe('RESOLVED');
+    expect(expedition.returnAt).toBeNull();
+
+    const openRes = await request(ctx.server)
+      .get(`/combat/expeditions/open?worldId=${world.id}`)
+      .set('Authorization', `Bearer ${user.accessToken}`);
+    expect(openRes.status).toBe(200);
+    expect(openRes.body).toEqual([]);
+  });
+
   it('combat: report deleted in-flight -> troops still return', async () => {
     const world = await seedSmokeWorld(ctx.prisma);
     const user = await registerUser(ctx.server);

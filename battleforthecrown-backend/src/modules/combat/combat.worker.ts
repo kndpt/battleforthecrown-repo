@@ -327,7 +327,6 @@ export class CombatWorker implements OnModuleInit {
           });
 
           // 9. Reuse outbound duration so return speed cannot drift with config/style changes.
-          const returnAt = new Date(Date.now() + expedition.outboundTravelMs);
           const originalUnits = parseUnitMap(
             expedition.units,
             'expedition.units',
@@ -388,11 +387,28 @@ export class CombatWorker implements OnModuleInit {
             }
           }
 
+          const returningLoot = resolution.loot.resources || {
+            wood: 0,
+            stone: 0,
+            iron: 0,
+          };
+          const hasReturningUnits = typedEntries(returningUnits).some(
+            ([, quantity]) => quantity > 0,
+          );
+          const hasReturningLoot =
+            returningLoot.wood > 0 ||
+            returningLoot.stone > 0 ||
+            returningLoot.iron > 0;
+          const returnAt =
+            hasReturningUnits || hasReturningLoot
+              ? new Date(Date.now() + expedition.outboundTravelMs)
+              : null;
+
           // 10. Update expedition
           await tx.expedition.update({
             where: { id: expedition.id },
             data: {
-              status: 'RETURNING',
+              status: returnAt ? 'RETURNING' : 'RESOLVED',
               reportId: report.id,
               returnAt,
               survivingUnits: encodeUnitMap(returningUnits),
@@ -424,32 +440,28 @@ export class CombatWorker implements OnModuleInit {
               targetX: expedition.targetX,
               targetY: expedition.targetY,
               isVictory,
-              loot: {
-                resources: resolution.loot.resources || {
-                  wood: 0,
-                  stone: 0,
-                  iron: 0,
-                },
-              },
+              loot: { resources: returningLoot },
               lossesAttacker: resolution.lossesAttacker,
               casualtyRate: attackerStats.casualtyRate,
               survivingUnits: returningUnits,
-              returnAt: returnAt.toISOString(),
+              returnAt: returnAt?.toISOString() ?? null,
             },
           );
 
           // 13. Schedule return worker
-          await this.boss.send(
-            'combat:return',
-            { expeditionId: expedition.id },
-            {
-              startAfter: returnAt,
-              singletonKey: `return:${expedition.id}`,
-            },
-          );
+          if (returnAt) {
+            await this.boss.send(
+              'combat:return',
+              { expeditionId: expedition.id },
+              {
+                startAfter: returnAt,
+                singletonKey: `return:${expedition.id}`,
+              },
+            );
+          }
 
           this.logger.log(
-            `Combat resolved for expedition ${expedition.id}, victory=${isVictory}, troops returning at ${returnAt.toISOString()}`,
+            `Combat resolved for expedition ${expedition.id}, victory=${isVictory}, returnAt=${returnAt?.toISOString() ?? 'none'}`,
           );
           return pendingConquest;
         },
