@@ -16,7 +16,8 @@ Fiches d'exécution déléguées aux harnesses Claude Code ou Codex (lead + sub-
 
 ### Runs actifs
 
-_(Aucun run actif.)_
+- [018 — Feature barbarian conquest backend shared](./runs/018-feature-barbarian-conquest-backend-shared.md) — 📋 `PLANNED`. Phase 5 backend/shared : cycle conquête barbare, finalisation, matérialisation, events et smoke T2.
+- [019 — Feature barbarian conquest frontend UI](./runs/019-feature-barbarian-conquest-frontend-ui.md) — 📋 `PLANNED`. Phase 5 frontend/UI : recrutement Seigneur, lancement conquête barbare, durée visible et suivi des events.
 
 ### Runs archivés
 
