@@ -53,7 +53,7 @@ Recrutement à la **Caserne** (file unique par village, consomme Pop), envoi d'*
 
 ### Boucle d'exploration
 
-**Watchtower** (vision = union de disques de toutes mes tours, lvl 1 = 5 cases, lvl 10 = 50 cases). Aucune tour ne révèle tout le monde seule : voir loin exige de conquérir ou développer des villages à des positions stratégiques. Hors vision : *blip* gris anonyme pour les villages, **rien** pour les expéditions. Filtré server-side, pas seulement UI ([`01` § Exploration](./01-overview.md#exploration--brouillard-de-guerre)). **Espionnage** via l'unité ESPION pour révéler une cible spécifique ([`11`](./11-scouting.md)).
+**Watchtower** (vision = union de disques de toutes mes tours, lvl 1 = 5 cases, lvl 10 = 50 cases). Aucune tour ne révèle tout le monde seule : voir loin exige de conquérir ou développer des villages à des positions stratégiques. Hors vision : *blip* gris anonyme pour les villages, **rien** pour les expéditions. Filtré server-side, pas seulement UI ([`01` § Exploration](./01-overview.md#exploration--brouillard-de-guerre)). **Espionnage** via l'unité ESPION pour révéler une cible spécifique ([`11`](./11-scouting.md)). Le MVP garde ensuite une dernière intel connue privée par cible et affiche une menace estimée non exacte avant attaque.
 
 ### Boucle de conquête (end-game)
 
@@ -83,6 +83,7 @@ Château 6 → débloque **Salle du Trône** → recrute un **Seigneur** (5 000 
 - **Amis défensifs** (cap 5, renforts mutuels) — candidate MVP minimaliste ([`20`](./20-defensive-friends.md)).
 - **Inbox + rapports** persistants (combat, scout, retour, conquête) — esquisse MVP ([`17`](./17-inbox-and-reports.md)).
 - **Notifications push** (attaque entrante, fin de capture, fin de construction) — esquisse MVP ([`16`](./16-notifications.md)).
+- **Rôles privés de villages** (`Favori`, `Raid`, `Défense`, etc.) — navigation multi-village sans bonus mécanique ([`22`](./22-village-roles-and-navigation.md)).
 
 ## 6. J+120 — Fin (`LOCKED → ENDED`)
 
@@ -132,4 +133,4 @@ Ordre chronologique de lecture pour comprendre le jeu de bout en bout :
 9. [`12-village-styles.md`](./12-village-styles.md) — styles stratégiques.
 10. [`11-scouting.md`](./11-scouting.md) — espionnage.
 11. [`09-power-and-rankings.md`](./09-power-and-rankings.md) — puissance, classements.
-12. [`15`](./15-onboarding.md), [`16`](./16-notifications.md), [`17`](./17-inbox-and-reports.md), [`18`](./18-inactivity-and-abandonment.md), [`20`](./20-defensive-friends.md), [`21`](./21-alliances-and-tribes.md) — esquisses MVP / post-MVP.
+12. [`15`](./15-onboarding.md), [`16`](./16-notifications.md), [`17`](./17-inbox-and-reports.md), [`18`](./18-inactivity-and-abandonment.md), [`20`](./20-defensive-friends.md), [`21`](./21-alliances-and-tribes.md), [`22`](./22-village-roles-and-navigation.md) — esquisses MVP / post-MVP.

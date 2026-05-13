@@ -1,7 +1,9 @@
 # 11 — Carnet d'intel
 
-**Statut** : idée à approfondir  
+**Statut** : promu MVP léger dans [`11-scouting.md`](../../11-scouting.md#carnet-dintel-minimal-mvp-léger)
 **Ratio bénéfice / coût** : bon
+
+> Ce ticket est conservé pour trace. Il n'est plus source de vérité.
 
 ## Opportunité
 
@@ -35,4 +37,3 @@ Le scout devient plus exploitable. Le joueur comprend que l'information vieillit
 - Combien de temps garder l'intel ?
 - Accessible depuis carte, rapport, panneau cible ?
 - Partage avec tribu post-MVP ou strictement privé ?
-

@@ -1,7 +1,9 @@
 # 09 — Villages favoris et rôles visibles
 
-**Statut** : idée à approfondir  
+**Statut** : promu MVP léger dans [`22-village-roles-and-navigation.md`](../../22-village-roles-and-navigation.md)
 **Ratio bénéfice / coût** : très bon côté UX
+
+> Ce ticket est conservé pour trace. Il n'est plus source de vérité.
 
 ## Opportunité
 
@@ -38,4 +40,3 @@ Meilleure navigation, meilleurs filtres, meilleure lecture du royaume. Prépare 
 - Liste fixe ou tags personnalisables ?
 - Affichage carte, liste village, dashboard royaume ?
 - Interaction future avec presets d'armée / alertes / gouvernance multi-village ?
-

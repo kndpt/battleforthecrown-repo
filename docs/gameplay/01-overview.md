@@ -61,6 +61,7 @@ Les détails sur les ressources, la population et les couronnes sont dans [`02-e
 
 🔹 Un Seigneur est **unique** et se sacrifie après conquête réussie.
 🔹 Chaque village est **unique**, avec ses features. Le joueur peut donc se créer un réseau de villages.
+🔹 Les rôles privés (`Favori`, `Raid`, `Défense`, etc.) aident à lire ce réseau sans ajouter de bonus mécanique. Détail : [`22-village-roles-and-navigation.md`](./22-village-roles-and-navigation.md).
 
 ### Boucle de rétention
 
@@ -141,7 +142,7 @@ C'est une vraie règle de jeu **server-authoritative**, pas un effet visuel : le
 | **Alliances / Tribus** | Petits regroupements défensifs |
 | **Techno globale** | Arbre léger centré sur économie |
 | **Prestige visuel** | Skins, bannières, effets |
-| **Campagne solo** | Tutoriel interactif et quêtes dynamiques |
+| **Campagne solo** | Tutoriel interactif au-delà du tuto MVP |
 
 ## Résumé design
 

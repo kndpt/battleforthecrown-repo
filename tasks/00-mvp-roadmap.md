@@ -52,9 +52,12 @@ Spec : [`11-scouting.md`](../docs/gameplay/11-scouting.md).
 
 Pourquoi ici : feature transverse autonome qui consomme l'inbox (phase 2) et le style (phase 3). Sans ces deux, le scout est codé incomplet.
 
-Livrable : unité ESPION recrutable, mission scout, snapshot à l'arrivée, retour, rapport scout dans l'inbox révélant compo + stock + style.
+Livrable : unité ESPION recrutable, mission scout, snapshot à l'arrivée, retour, rapport scout dans l'inbox révélant compo + stock + style, puis deux aides **MVP légères** :
 
-Critère de fin : un joueur peut envoyer un ESPION sur un village barbare ou joueur, recevoir un rapport scout dans l'inbox.
+- **Carnet d'intel minimal** : dernière info connue par village cible, privée, datée, liée au rapport source. Pas de partage social, pas de mise à jour magique.
+- **Menace estimée avant attaque** : label `Inconnue / Faible / Moyenne / Élevée` basé sur infos publiques + dernier scout disponible. Pas de simulateur exact, pas de promesse de victoire.
+
+Critère de fin : un joueur peut envoyer un ESPION sur un village barbare ou joueur, recevoir un rapport scout dans l'inbox, revoir la dernière intel connue depuis la cible, et obtenir une estimation non exacte avant d'envoyer une attaque.
 
 ### Phase 5 — Conquête barbare
 
@@ -96,7 +99,19 @@ Livrable : 5 étapes scriptées chaînées dès la création du premier village 
 
 Critère de fin : un compte fraîchement créé est guidé étape par étape, sans pouvoir se perdre, jusqu'à compléter les 5 étapes en ≤ 10 min.
 
-### Phase 9 — World lifecycle
+### Phase 9 — Rétention quotidienne MVP
+
+Spec : [`05-daily-cards-and-oyez.md`](../docs/gameplay/05-daily-cards-and-oyez.md).
+
+Pourquoi ici : les boucles principales existent déjà, donc les cartes peuvent pointer vers de vraies actions sans inventer une checklist artificielle. C'est aussi le bon moment pour caler la rétention mobile avant de brancher le cycle de monde complet.
+
+Livrable : carte quotidienne empilable, backlog limité, tâches liées aux boucles naturelles, Oyez léger qui influence la priorité du jour, récompenses modestes et non-snowballantes.
+
+Hors scope MVP explicite : pass premium, progression de saison avancée, grosses récompenses de puissance, tâches artificielles.
+
+Critère de fin : un joueur reçoit une carte quotidienne, peut la compléter en session courte, voit l'Oyez actif si présent, et récupère une récompense modérée sans avantage PvP durable.
+
+### Phase 10 — World lifecycle
 
 Spec : [`19-world-lifecycle.md`](../docs/gameplay/19-world-lifecycle.md) (spec MVP tranchée).
 
@@ -106,11 +121,13 @@ Coût attendu : faible (1-2 jours), schéma DB et garde-fou `JoinWorldUseCase` d
 
 Critère de fin : un monde test fait son cycle complet (avec durées raccourcies via `WorldConfig`) et on observe les transitions, le wipe et les récompenses cosmétiques attribuées sur le compte global.
 
-### Phase 10 — Ajouts mineurs MVP
+### Phase 11 — Ajouts mineurs MVP
 
-Specs : [`20-defensive-friends.md`](../docs/gameplay/20-defensive-friends.md), [`18-inactivity-and-abandonment.md`](../docs/gameplay/18-inactivity-and-abandonment.md) (post-MVP selon la doc, mais cap des comptes-zombies utile avant lancement public — à arbitrer).
+Specs : [`20-defensive-friends.md`](../docs/gameplay/20-defensive-friends.md), [`18-inactivity-and-abandonment.md`](../docs/gameplay/18-inactivity-and-abandonment.md) (post-MVP selon la doc, mais cap des comptes-zombies utile avant lancement public — à arbitrer), [`22-village-roles-and-navigation.md`](../docs/gameplay/22-village-roles-and-navigation.md).
 
 Pourquoi ici : ajouts isolés sans impact sur les boucles principales. On les case en dernier pour ne pas charger le scope MVP plus tôt.
+
+Livrable rôles/favoris : étiquettes privées de navigation multi-village (`Favori`, `Raid`, `Défense`, `Économie`, `Frontière`, `Conquête`, `Capitale`) sans bonus mécanique, sans preset automatique, sans partage tribu.
 
 ## Post-MVP (hors roadmap)
 
@@ -118,7 +135,7 @@ Ne pas prioriser dans cette roadmap, mais ne pas perdre de vue :
 
 - [`21-alliances-and-tribes.md`](../docs/gameplay/21-alliances-and-tribes.md) — alliances/tribus complètes.
 - [`09-power-and-rankings.md`](../docs/gameplay/09-power-and-rankings.md) § Classements hebdo/mensuels — récompenses périodiques.
-- Progression de saison / pass — lab uniquement pour l'instant, pas MVP.
+- Progression de saison avancée / pass premium — lab uniquement pour l'instant, pas MVP.
 - Marché royal, zones d'influence, Cachette (bâtiment), unités destructrices de bâtiments.
 
 ## Mise à jour de ce document

@@ -1,7 +1,9 @@
 # 08 — Menace estimée avant attaque
 
-**Statut** : idée à approfondir  
+**Statut** : promu MVP léger dans [`11-scouting.md`](../../11-scouting.md#menace-estimée-avant-attaque-mvp-léger)
 **Ratio bénéfice / coût** : bon si l'estimation reste simple
+
+> Ce ticket est conservé pour trace. Il n'est plus source de vérité.
 
 ## Opportunité
 
@@ -41,4 +43,3 @@ Réduit les erreurs frustrantes. Rend le combat plus lisible pour mobile. Encour
 - Doit-elle exister en PvP dès le MVP ?
 - Quelle fraîcheur max pour un scout utilisé dans le calcul ?
 - Même système pour raids, conquêtes et sites d'exploitation ?
-

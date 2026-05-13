@@ -26,6 +26,7 @@ Documentation gameplay consolidée. Vision design, mécaniques, formules d'équi
 19. [`19-world-lifecycle.md`](./19-world-lifecycle.md) — cycle de vie d'un monde : monde borné 120 j, fenêtre d'inscription 14 j, multi-mondes autorisés, wipe planifié à `endsAt`. **Spec MVP tranchée** (defaults paramétrables).
 20. [`20-defensive-friends.md`](./20-defensive-friends.md) — liste d'amis défensifs (renforts mutuels uniquement, cap 5) : candidate MVP minimaliste, doc en chantier.
 21. [`21-alliances-and-tribes.md`](./21-alliances-and-tribes.md) — système complet d'alliances / tribus (chat, diplomatie, guerre coordonnée) : **strictement post-MVP**, doc en chantier.
+22. [`22-village-roles-and-navigation.md`](./22-village-roles-and-navigation.md) — rôles privés et favoris de villages : navigation multi-village MVP légère, sans bonus mécanique.
 
 ### Laboratoire
 

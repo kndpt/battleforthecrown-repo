@@ -14,6 +14,16 @@ Objectif : explorer les pistes qui pourraient moderniser Battle for the Crown sa
 | [Mondes à règles spéciales](./special-world-rules.md) | Idée courte | Varier les saisons avec des rulesets spéciaux pour renouveler le métagame. |
 | [Tickets d'exploration](./tickets/) | Backlog court | Garder les idées utiles à approfondir sans les promouvoir en specs. |
 
+## Idées promues
+
+Ces idées ne sont plus sources de vérité dans le lab :
+
+| Idée lab | Décision | Source canonique |
+| --- | --- | --- |
+| Menace estimée avant attaque | MVP léger | [`11-scouting.md`](../11-scouting.md#menace-estimée-avant-attaque-mvp-léger) |
+| Carnet d'intel | MVP léger | [`11-scouting.md`](../11-scouting.md#carnet-dintel-minimal-mvp-léger) |
+| Villages favoris et rôles visibles | MVP léger | [`22-village-roles-and-navigation.md`](../22-village-roles-and-navigation.md) |
+
 ## Règle de promotion
 
 Une idée du lab peut devenir une spec seulement si elle a :
