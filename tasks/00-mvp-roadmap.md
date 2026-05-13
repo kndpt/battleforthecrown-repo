@@ -69,7 +69,7 @@ Livrable : recrutement Seigneur, lancement conquête, combat de pré-conquête, 
 
 Critère de fin : un joueur peut conquérir un village barbare T2 et le voir basculer dans son royaume, vérifié IG.
 
-### Phase 6 — Notifications push
+### Phase 6 — Notifications push (POST MVP car pas prévu de déployer sur mobile pour l'instant)
 
 Spec : [`16-notifications.md`](../docs/gameplay/16-notifications.md) (en chantier — catalogue à compléter en début de phase).
 
