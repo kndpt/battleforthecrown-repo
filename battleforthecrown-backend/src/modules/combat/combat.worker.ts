@@ -64,6 +64,12 @@ function sumPopulationCost(losses: UnitMap): number {
   return total;
 }
 
+function hasSurvivingUnits(totalUnits: UnitMap, losses: UnitMap): boolean {
+  return typedEntries(totalUnits).some(
+    ([unitType, quantity]) => quantity - (losses[unitType] ?? 0) > 0,
+  );
+}
+
 interface CombatJob {
   expeditionId: string;
 }
@@ -152,12 +158,24 @@ export class CombatWorker implements OnModuleInit {
             include: { resourceStock: true; buildings: true };
           }> | null = null;
           let pendingConquest: PendingConquestToSchedule | null = null;
+          let occupationDefense: {
+            attackerUserId: string;
+            attackerVillageId: string;
+          } | null = null;
 
           if (expedition.targetKind === 'BARBARIAN_VILLAGE') {
             // For barbarians: deduct from Village.resourceStock (same as player villages)
             defenderVillage = await tx.village.findUnique({
               where: { id: expedition.targetRefId },
               include: { resourceStock: true, buildings: true },
+            });
+
+            occupationDefense = await tx.pendingConquest.findFirst({
+              where: {
+                targetVillageId: expedition.targetRefId,
+                status: 'OPEN',
+              },
+              select: { attackerUserId: true, attackerVillageId: true },
             });
 
             if (defenderVillage?.resourceStock) {
@@ -251,22 +269,23 @@ export class CombatWorker implements OnModuleInit {
             throw new Error('Attacker village not found');
           }
 
-          // 7. Create event for defender (if PvP)
-          if (expedition.targetKind === 'PLAYER_VILLAGE' && defenderVillage) {
+          // 7. Create event for defender (PvP owner, or occupation owner on a barbarian capture).
+          const defenderUserId =
+            expedition.targetKind === 'PLAYER_VILLAGE'
+              ? defenderVillage?.userId
+              : occupationDefense?.attackerUserId;
+
+          if (
+            defenderVillage &&
+            defenderUserId &&
+            defenderUserId !== attackerVillage.userId
+          ) {
             const lossesDefender = resolution.lossesDefender || {};
             const lootedResources = resolution.loot.resources || {
               wood: 0,
               stone: 0,
               iron: 0,
             };
-
-            // Check if defender survived (at least one unit)
-            const defenderSurvived = typedEntries(
-              resolution.lossesDefender || {},
-            ).some(([unitType, loss]) => {
-              const originalQty = context.defender.units?.[unitType] ?? 0;
-              return originalQty - loss > 0;
-            });
 
             const defenderStats = calculateCasualtyStats(
               context.defender.units || {},
@@ -279,12 +298,18 @@ export class CombatWorker implements OnModuleInit {
               defenderVillage.id,
               {
                 defenderVillageId: defenderVillage.id,
+                ...(expedition.targetKind === 'BARBARIAN_VILLAGE'
+                  ? { defenderUserId }
+                  : {}),
                 attackerVillageId: expedition.attackerVillageId,
                 attackerVillageName: attackerVillage.name,
                 attackerX: attackerVillage.x,
                 attackerY: attackerVillage.y,
                 defenderVillageName: defenderVillage.name,
-                isDefenseSuccessful: defenderSurvived,
+                isDefenseSuccessful: hasSurvivingUnits(
+                  context.defender.units || {},
+                  lossesDefender,
+                ),
                 losses: lossesDefender,
                 casualtyRate: defenderStats.casualtyRate,
                 resourcesLost: lootedResources,
@@ -300,13 +325,13 @@ export class CombatWorker implements OnModuleInit {
               attackerVillageId: expedition.attackerVillageId,
               attackerUserId: attackerVillage.userId!, // Guaranteed non-null for player attacks
               defenderVillageId:
-                expedition.targetKind === 'PLAYER_VILLAGE'
+                expedition.targetKind === 'PLAYER_VILLAGE' || occupationDefense
                   ? expedition.targetRefId
                   : null,
               defenderUserId:
                 expedition.targetKind === 'PLAYER_VILLAGE' && defenderVillage
                   ? defenderVillage.userId
-                  : null,
+                  : (occupationDefense?.attackerUserId ?? null),
               targetKind: expedition.targetKind,
               targetX: expedition.targetX,
               targetY: expedition.targetY,
@@ -322,6 +347,14 @@ export class CombatWorker implements OnModuleInit {
                 targetTier: defenderVillage?.tier ?? null,
                 distance: context.config._distance,
                 travelTime: context.config._travelTime,
+                ...(occupationDefense
+                  ? {
+                      occupationDefense: {
+                        attackerVillageId: occupationDefense.attackerVillageId,
+                        defenderUserId: occupationDefense.attackerUserId,
+                      },
+                    }
+                  : {}),
               },
             },
           });

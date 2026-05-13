@@ -106,7 +106,7 @@ Chaque payload est validé runtime par `parseEventPayload(kind, raw)` (backend `
 | `reinforcement.recalled` | `userId` (village hôte ou d'origine) | `expeditionId, villageId, originVillageId, arrivalAt` | `CombatService.initiateRecall` |
 | `reinforcement.returned` | `userId` (village hôte ou d'origine) | `expeditionId, villageId, originVillageId, units` | `CombatWorker` quand un renfort repart vers son village d'origine |
 | `garrison.added` | `userId` (village hôte) | `villageId, originVillageId, units` | `CombatWorker` quand un renfort arrive et se stationne en garnison |
-| `village.attacked` | `userId` (défenseur) | `defenderVillageId, attackerVillageId, attackerVillageName, isDefenseSuccessful, losses (UnitMap), casualtyRate, resourcesLost, …` | `CombatWorker` (notification + invalidation inbox défenseur côté frontend) |
+| `village.attacked` | `userId` (défenseur ou occupant de capture) | `defenderVillageId, defenderUserId?` pour une occupation barbare, `attackerVillageId, attackerVillageName, isDefenseSuccessful, losses (UnitMap), casualtyRate, resourcesLost, …` | `CombatWorker` (notification + invalidation inbox défenseur côté frontend) |
 | `village.capture-window-opened` | `userId` (attaquant) | `pendingConquestId, targetVillageId, attackerVillageId, captureUntil` | `ConquestService.openCaptureWindow` |
 | `village.capture-window-completed` | `userId` (nouveau propriétaire) | `pendingConquestId, targetVillageId, newOwnerUserId` | `ConquestFinalizeWorker` via `ConquestService.finalizeCaptureWindow` |
 | `village.capture-window-interrupted` | `userId` (attaquant) | `pendingConquestId, targetVillageId, reason` | `ConquestService.interruptCaptureWindow` |

@@ -4,7 +4,6 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-- [53 — Rapport défenseur manquant quand une capture est attaquée](./53-capture-occupation-defense-report-missing.md) — 🔴 Haut. Une garnison d'occupation détruite pendant une capture doit produire un rapport pour le joueur occupant.
 - [52 — Multiplier de vitesse pour les durées de capture/conquête](./52-conquest-capture-time-speed-multiplier.md) — 🟠 Moyen. Ajouter un diviseur de temps de capture dans la world config.
 - [51 — Standardiser les bottom sheets sur le design `Activités du royaume`](./51-bottom-sheet-design-system-base.md) — 🟠 Moyen. Faire du nouveau panneau la base design-system des bottom sheets actuels et futurs.
 - [47 — Queue visuelle de formation du Noble manquante](./47-noble-training-visual-queue-missing.md) — 🟠 Moyen. La Salle du Trône indique que le Noble est en formation, mais n'affiche pas de progression/temps restant comme la Caserne.
@@ -50,6 +49,7 @@ _(Aucun run actif.)_
 
 ## Archivés
 
+- [53 — Rapport défenseur manquant quand une capture est attaquée](./archive/53-capture-occupation-defense-report-missing.md) ✅ Résolu 2026-05-13 par $run @tasks/53-capture-occupation-defense-report-missing.md
 - [50 — Intégration HUD et bottom sheet des activités du royaume](./archive/50-kingdom-activities-bottom-sheet-integration.md) ✅ Résolu 2026-05-13 par $run @tasks/46-capture-window-tracker-missing.md @tasks/50-kingdom-activities-bottom-sheet-integration.md
 - [46 — Tracker persistant de fenêtre de capture manquant](./archive/46-capture-window-tracker-missing.md) ✅ Résolu 2026-05-13 après livraison des tickets 48, 49 et 50.
 - [45 — Watchtower niveau 10 : supprimer la vision globale](./archive/45-watchtower-finite-vision.md) ✅ Résolu 2026-05-13 par $run @tasks/45-watchtower-finite-vision.md

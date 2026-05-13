@@ -53,6 +53,26 @@ describe('presentCombatReport', () => {
     });
   });
 
+  it('presents self-attacks against an occupied capture as defense reports', () => {
+    const report = {
+      ...baseReport,
+      defenderUserId: 'attacker-1',
+      details: {
+        ...baseReport.details,
+        occupationDefense: {
+          attackerVillageId: 'origin-village',
+          defenderUserId: 'attacker-1',
+        },
+      },
+    };
+
+    expect(presentCombatReport(report, 'attacker-1')).toEqual({
+      ...report,
+      isAttacker: false,
+      isRead: false,
+    });
+  });
+
   it('projects read state for the requesting participant only', () => {
     const report = {
       ...baseReport,

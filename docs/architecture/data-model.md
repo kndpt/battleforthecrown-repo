@@ -66,7 +66,7 @@ Spécificités runtime :
 | `Expedition.kind` | `ATTACK`, `REINFORCE` ou `SCOUT`. Détermine le comportement à l'arrivée. |
 | `Expedition.recalled` | boolean — vrai si l'armée a fait demi-tour pendant l'aller (Recall). |
 | `Expedition.reinforcementOriginVillageId` | utilisé pour identifier le village d'origine lors d'un rappel (Recall) de renforts. |
-| `CombatReport` | rapport persistant d'un combat. L'accès est porté par `attackerUserId` / `defenderUserId`; l'état inbox est par participant (`readByAttacker` / `readByDefender`, `hiddenByAttacker` / `hiddenByDefender`). |
+| `CombatReport` | rapport persistant d'un combat. L'accès est porté par `attackerUserId` / `defenderUserId`; l'état inbox est par participant (`readByAttacker` / `readByDefender`, `hiddenByAttacker` / `hiddenByDefender`). Sur un village barbare sous capture, `defenderUserId` peut représenter le joueur occupant la garnison de capture. |
 | `ScoutReport` | rapport persistant d'une mission scout. L'accès est porté par `scoutUserId`; snapshot de `units`, `resources` et `strategy` nullable au moment d'arrivée. L'état inbox est mono-participant (`isRead`, `hidden`). |
 | `PendingConquest` | fenêtre de capture ouverte après un pré-combat victorieux avec Seigneur survivant. Stocke `attackerVillageId`, `attackerUserId`, `targetVillageId`, `captureUntil`, `status` (`OPEN`/`COMPLETED`/`INTERRUPTED`) et le `finalizeJobId` pg-boss. |
 

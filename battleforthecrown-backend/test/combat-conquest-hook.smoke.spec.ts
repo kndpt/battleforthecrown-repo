@@ -255,6 +255,16 @@ describe('combat conquest hook smoke', () => {
       },
       { timeoutMs: 10_000 },
     );
+    const attackedEvent = await outboxDispatched(
+      ctx.prisma,
+      { kind: 'village.attacked', aggregateId: conquest.target.id },
+      { timeoutMs: 10_000 },
+    );
+    expect(attackedEvent.payload).toMatchObject({
+      defenderUserId: conquest.user.userId,
+      defenderVillageId: conquest.target.id,
+      losses: { MILITIA: 100, NOBLE: 1 },
+    });
 
     const occupationGarrison = await ctx.prisma.garrison.findMany({
       where: {
@@ -268,6 +278,120 @@ describe('combat conquest hook smoke', () => {
       where: { villageId: conquest.village.id },
     });
     expect(originPop.used).toBe(0);
+
+    const reportsRes = await request(ctx.server)
+      .get('/combat/reports')
+      .set('Authorization', `Bearer ${conquest.user.accessToken}`);
+    expect(reportsRes.status).toBe(200);
+    const occupationDefenseReport = (
+      reportsRes.body as Array<{
+        id: string;
+        defenderUserId?: string;
+        defenderVillageId?: string;
+        isAttacker: boolean;
+        lossesDefender?: Record<string, number>;
+      }>
+    ).find(
+      (report) =>
+        report.defenderUserId === conquest.user.userId &&
+        report.defenderVillageId === conquest.target.id,
+    );
+    expect(occupationDefenseReport).toMatchObject({
+      defenderUserId: conquest.user.userId,
+      defenderVillageId: conquest.target.id,
+      isAttacker: false,
+      lossesDefender: { MILITIA: 100, NOBLE: 1 },
+    });
+
+    const deleteRes = await request(ctx.server)
+      .delete(`/combat/report/${occupationDefenseReport!.id}`)
+      .set('Authorization', `Bearer ${conquest.user.accessToken}`);
+    expect(deleteRes.status).toBeLessThan(300);
+
+    const afterDeleteRes = await request(ctx.server)
+      .get('/combat/reports')
+      .set('Authorization', `Bearer ${conquest.user.accessToken}`);
+    expect(afterDeleteRes.status).toBe(200);
+    expect(
+      (
+        afterDeleteRes.body as Array<{
+          defenderUserId?: string;
+          defenderVillageId?: string;
+        }>
+      ).some(
+        (report) =>
+          report.defenderUserId === conquest.user.userId &&
+          report.defenderVillageId === conquest.target.id,
+      ),
+    ).toBe(false);
+  }, 60_000);
+
+  it('presents a self-attack against an occupied capture as a defense report', async () => {
+    const world = await seedWorld();
+    const conquest = await launchConquest(world.id, `self-${Date.now()}`);
+
+    await ctx.prisma.unitInventory.upsert({
+      where: {
+        villageId_unitType: {
+          villageId: conquest.village.id,
+          unitType: 'MILITIA',
+        },
+      },
+      create: {
+        villageId: conquest.village.id,
+        unitType: 'MILITIA',
+        quantity: 200,
+      },
+      update: { quantity: { increment: 200 } },
+    });
+    await ctx.prisma.population.update({
+      where: { villageId: conquest.village.id },
+      data: { used: 200, max: 350 },
+    });
+
+    const attackRes = await request(ctx.server)
+      .post('/combat/attack')
+      .set('Authorization', `Bearer ${conquest.user.accessToken}`)
+      .send({
+        villageId: conquest.village.id,
+        targetX: conquest.target.x,
+        targetY: conquest.target.y,
+        targetKind: 'BARBARIAN_VILLAGE',
+        targetRefId: conquest.target.id,
+        units: { MILITIA: 200 },
+      });
+    expect(attackRes.status).toBeLessThan(300);
+
+    await waitFor(
+      () =>
+        ctx.prisma.pendingConquest.findFirst({
+          where: { id: conquest.pending.id, status: 'INTERRUPTED' },
+        }),
+      { timeoutMs: 30_000 },
+    );
+
+    const reportsRes = await request(ctx.server)
+      .get('/combat/reports')
+      .set('Authorization', `Bearer ${conquest.user.accessToken}`);
+    expect(reportsRes.status).toBe(200);
+    const occupationDefenseReport = (
+      reportsRes.body as Array<{
+        defenderUserId?: string;
+        defenderVillageId?: string;
+        isAttacker: boolean;
+        lossesDefender?: Record<string, number>;
+      }>
+    ).find(
+      (report) =>
+        report.defenderUserId === conquest.user.userId &&
+        report.defenderVillageId === conquest.target.id,
+    );
+    expect(occupationDefenseReport).toMatchObject({
+      defenderUserId: conquest.user.userId,
+      defenderVillageId: conquest.target.id,
+      isAttacker: false,
+      lossesDefender: { MILITIA: 100, NOBLE: 1 },
+    });
   }, 60_000);
 
   it('keeps a costly conquest victory as a raid when the noble dies', async () => {

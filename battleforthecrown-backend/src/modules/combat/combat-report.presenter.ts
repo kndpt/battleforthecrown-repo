@@ -17,6 +17,7 @@ type CombatReportVisibilityInput = {
 };
 
 type CombatReportDetails = {
+  occupationDefense?: unknown;
   targetTier?: string;
 };
 
@@ -50,7 +51,11 @@ export function presentCombatReport<
   report: TReport,
   userId: string,
 ): TReport & { isAttacker: boolean; isRead: boolean } {
-  const isAttacker = report.attackerUserId === userId;
+  const isOccupationDefenseForUser =
+    report.defenderUserId === userId &&
+    Boolean(reportDetails(report.details).occupationDefense);
+  const isAttacker =
+    report.attackerUserId === userId && !isOccupationDefenseForUser;
   const isDefender = report.defenderUserId === userId;
   const isRead = isAttacker
     ? (report.readByAttacker ?? report.isRead ?? false)

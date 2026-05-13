@@ -354,7 +354,9 @@ export class EventOutboxService {
     const defenderVillageId = payload.defenderVillageId;
     if (!defenderVillageId) return;
 
-    const userId = await this.getUserIdByVillage(defenderVillageId);
+    const userId =
+      payload.defenderUserId ??
+      (await this.getUserIdByVillage(defenderVillageId));
     if (!userId) return;
 
     this.logger.log(`🛡️ [Outbox] Envoi WebSocket village.attacked:`, {
@@ -366,6 +368,7 @@ export class EventOutboxService {
 
     this.gateway.notifyUser(userId, 'village.attacked', {
       defenderVillageId: payload.defenderVillageId,
+      defenderUserId: payload.defenderUserId,
       attackerVillageId: payload.attackerVillageId,
       attackerVillageName: payload.attackerVillageName,
       attackerX: payload.attackerX,

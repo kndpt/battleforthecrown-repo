@@ -1004,6 +1004,15 @@ export class CombatService {
     }
 
     const role = this.getReportRole(report, userId);
+    if (
+      report.attackerUserId === userId &&
+      report.defenderUserId === userId &&
+      this.isOccupationDefenseReport(report.details)
+    ) {
+      await this.prisma.combatReport.delete({ where: { id: reportId } });
+      return { message: 'Report deleted successfully' };
+    }
+
     const otherParticipantHidden =
       role === 'attacker'
         ? report.hiddenByDefender || !report.defenderUserId
@@ -1053,12 +1062,27 @@ export class CombatService {
     report: {
       attackerUserId: string;
       defenderUserId: string | null;
+      details?: unknown;
     },
     userId: string,
   ): 'attacker' | 'defender' | null {
+    if (
+      report.defenderUserId === userId &&
+      this.isOccupationDefenseReport(report.details)
+    ) {
+      return 'defender';
+    }
     if (report.attackerUserId === userId) return 'attacker';
     if (report.defenderUserId === userId) return 'defender';
     return null;
+  }
+
+  private isOccupationDefenseReport(details: unknown): boolean {
+    return (
+      details !== null &&
+      typeof details === 'object' &&
+      'occupationDefense' in details
+    );
   }
 
   private canAccessReport(

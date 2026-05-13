@@ -42,6 +42,7 @@ Format :
 
 <!-- Ajouter uniquement si le bug est récurrent, subtil, ou assez coûteux pour mériter une prévention explicite. -->
 
+| B1 | capture interrompue sans rapport défenseur pour l'occupant | les villages barbares sous capture étaient traités comme sans `defenderUserId` malgré leur garnison joueur | si une `PendingConquest.OPEN` existe sur la cible, la garnison d'occupation rend `attackerUserId` défenseur de rapport et destinataire `village.attacked` | tasks/53-capture-occupation-defense-report-missing.md |
 ## §A — Règle d'ajout
 
 Avant d'ajouter une entrée :

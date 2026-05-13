@@ -79,6 +79,7 @@ export interface ScoutReturnedPayload {
 
 export interface VillageAttackedPayload {
   defenderVillageId: string;
+  defenderUserId?: string;
   attackerVillageId: string;
   attackerVillageName: string;
   attackerX: number;
