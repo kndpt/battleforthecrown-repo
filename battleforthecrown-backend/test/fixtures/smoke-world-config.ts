@@ -11,6 +11,7 @@ export const SMOKE_WORLD_CONFIG: WorldConfig = {
     construction: 100,
     training: 100,
     travel: 1000,
+    capture: 1,
   },
   economy: {
     productionRate: 1,

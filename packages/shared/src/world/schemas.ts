@@ -6,6 +6,7 @@ const GameSpeedSchema = z.strictObject({
   construction: z.number().positive(),
   training: z.number().positive(),
   travel: z.number().positive(),
+  capture: z.number().positive().default(1),
 });
 
 // productionRate amplifies the resource yield (rate × productionRate).

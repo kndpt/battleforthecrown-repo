@@ -18,9 +18,11 @@ Hub de la mécanique de **conquête**. Cette doc consolide les **règles commune
 | Outil de conquête | Seigneur (unité unique, sacrificielle) — cf. § Le Seigneur ci-dessous + fiche stat dans [`08-units.md`](./08-units.md) |
 | Bâtiment de recrutement | **Salle du Trône** (Château 6 requis) — cf. [`03-buildings.md` § Salle du Trône](./03-buildings.md#salle-du-trône) |
 | Pré-requis combat | Toutes les troupes ennemies vaincues + Seigneur survivant |
-| Période de capture | **Variable selon le contexte** — par tier pour les barbares ([`13`](./13-barbarian-conquest.md)), à définir pour le PvP ([`14`](./14-pvp-conquest.md)). Le Seigneur s'installe et reste immobilisé toute la fenêtre. |
+| Période de capture | **Variable selon le contexte** — par tier pour les barbares ([`13`](./13-barbarian-conquest.md)), par niveau de Château cible pour le PvP ([`14`](./14-pvp-conquest.md)). Le Seigneur s'installe et reste immobilisé toute la fenêtre. |
 | Effet de la capture | Si non-attaqué pendant la fenêtre → conquête réussie, le village change de propriétaire |
 | Sacrifice du Seigneur | Le Seigneur s'installe et **devient le Seigneur du village conquis**. Il n'est plus disponible pour une autre conquête. |
+
+Les durées indiquées dans les sub-docs sont les durées de base du monde. Au runtime, elles sont divisées par `gameSpeed.capture` et figées dans `PendingConquest.captureUntil` au moment où la fenêtre s'ouvre ; une capture déjà ouverte n'est pas recalculée si la config monde change.
 
 Mécanique détaillée du combat de pré-conquête : [`04-combat.md` § Conquête](./04-combat.md#conquête).
 

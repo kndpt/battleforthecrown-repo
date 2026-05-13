@@ -21,6 +21,7 @@ describe('WorldConfigService', () => {
       construction: 2,
       training: 3,
       travel: 1,
+      capture: 1,
     },
     economy: {
       productionRate: 1.5,
@@ -70,6 +71,7 @@ describe('WorldConfigService', () => {
         construction: 2,
         training: 3,
         travel: 1,
+        capture: 1,
       });
       expect(result.economy).toEqual({ productionRate: 1.5 });
       expect(result.fogOfWar.enabled).toBe(true);
@@ -117,6 +119,24 @@ describe('WorldConfigService', () => {
         /invalid config/,
       );
     });
+
+    it('defaults capture speed for legacy configs', async () => {
+      mockPrismaService.world.findUnique.mockResolvedValue({
+        id: 'world-1',
+        config: {
+          ...mockWorldConfig,
+          gameSpeed: {
+            construction: 2,
+            training: 3,
+            travel: 1,
+          },
+        },
+      });
+
+      const result = await service.getConfig('world-1');
+
+      expect(result.gameSpeed.capture).toBe(1);
+    });
   });
 
   describe('getCost', () => {
@@ -142,7 +162,12 @@ describe('WorldConfigService', () => {
 
     it('enforces a minimum time of 1000ms', async () => {
       mockWorld({
-        gameSpeed: { construction: 1000000, training: 1, travel: 1 },
+        gameSpeed: {
+          construction: 1000000,
+          training: 1,
+          travel: 1,
+          capture: 1,
+        },
       });
 
       const result = await service.getCost('world-1', 'WOOD', 1, 1);
@@ -233,6 +258,7 @@ describe('WorldConfigService', () => {
           construction: 2,
           training: 3,
           travel: 2,
+          capture: 1,
         },
       });
 

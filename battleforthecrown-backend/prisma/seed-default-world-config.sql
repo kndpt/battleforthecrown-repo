@@ -5,7 +5,8 @@ SET config = '{
   "gameSpeed": {
     "construction": 1,
     "training": 1,
-    "travel": 1
+    "travel": 1,
+    "capture": 1
   },
   "economy": {
     "productionRate": 1
