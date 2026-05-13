@@ -5,6 +5,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 ## Tickets actifs
 
 - [54 — Retour fantôme pendant capture avec Seigneur](./54-conquest-capture-phantom-return.md) — 🟡 Majeur. Une capture avec Seigneur survivant peut encore planifier un retour si du loot existe, ce qui affiche un cheval alors que toute l'escorte reste en occupation.
+- [56 — Popup village possédé : afficher les troupes présentes](./56-own-village-popup-troops-list.md) — 🟠 Moyen. Le callout sur clic d'un village qu'on possède n'affiche pas les troupes à quai (natives + renforts) ; il faut ouvrir l'écran Armée pour les voir.
 - [51 — Standardiser les bottom sheets sur le design `Activités du royaume`](./51-bottom-sheet-design-system-base.md) — 🟠 Moyen. Faire du nouveau panneau la base design-system des bottom sheets actuels et futurs.
 - [47 — Queue visuelle de formation du Noble manquante](./47-noble-training-visual-queue-missing.md) — 🟠 Moyen. La Salle du Trône indique que le Noble est en formation, mais n'affiche pas de progression/temps restant comme la Caserne.
 
