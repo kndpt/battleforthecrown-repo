@@ -1,8 +1,25 @@
 # 46 — Tracker persistant des captures en cours
 
-**Sévérité** : 🟡 Majeure  
-**Statut** : 🆕 Ouvert  
+**Sévérité** : 🟡 Majeure
+
+**Statut** : 🧩 Découpé
+
 **Décision produit** : une capture ouverte est un état long, critique et réhydratable. `PendingConquest` doit rester la source de vérité, l'UI ne doit pas reconstruire cet état uniquement depuis les events WS.
+
+## Découpage retenu
+
+Ce ticket ne doit plus être exécuté directement. Il est découpé en trois tickets ordonnés :
+
+1. [48 — Design-system du panneau Activités du royaume](./archive/48-kingdom-activities-design-system.md)
+2. [49 — Snapshots serveur des activités du royaume](./49-kingdom-activities-snapshots.md)
+3. [50 — Intégration HUD et bottom sheet des activités du royaume](./50-kingdom-activities-bottom-sheet-integration.md)
+
+Pourquoi ce découpage :
+
+- la maquette couvre désormais captures et expéditions dans un même panneau ;
+- le badge haut de carte nécessite des compteurs réhydratables ;
+- les expéditions doivent être comptées au niveau royaume, pas seulement depuis le village actif ;
+- la migration design-system doit précéder l'intégration app pour éviter de re-coder deux fois la bottom sheet.
 
 ## Symptôme
 

@@ -3,7 +3,7 @@ export type { BadgeProps, BadgeSize, BadgeTone } from './Badge';
 export { Avatar, AvatarProfileLine, AvatarStack } from './Avatar';
 export type { AvatarProfileLineProps, AvatarProps, AvatarSize, AvatarStackItem, AvatarStackProps, AvatarStatus, AvatarTone } from './Avatar';
 export { ArmyMovementList, ArmyMovementRow } from './ArmyMovementRow';
-export type { ArmyMovementListProps, ArmyMovementRowProps, ArmyMovementTone } from './ArmyMovementRow';
+export type { ArmyMovementListProps, ArmyMovementRowProps, ArmyMovementSurface, ArmyMovementTone } from './ArmyMovementRow';
 export { BftcButton } from './BftcButton';
 export type { BftcButtonProps, BftcButtonSize, BftcButtonState, BftcButtonVariant } from './BftcButton';
 export { BorderStrokeTile } from './BorderStrokeTile';
@@ -34,6 +34,34 @@ export { IconButton } from './IconButton';
 export type { IconButtonProps, IconButtonTone } from './IconButton';
 export { InboxTabs, MailInboxItem } from './MailInboxItem';
 export type { InboxTabOption, InboxTabsProps, MailInboxItemProps, MailInboxTag, MailInboxTone } from './MailInboxItem';
+export {
+  CaptureStatusPill,
+  CaptureTierBadge,
+  CaptureWindowCard,
+  CaptureWindowList,
+  ExpeditionActivityCard,
+  ExpeditionActivityList,
+  KingdomActivitiesPanel,
+  KingdomActivityHudBadge,
+  KingdomActivityHudBadges,
+} from './KingdomActivitiesPanel';
+export type {
+  CaptureTier,
+  CaptureWindowCardProps,
+  CaptureWindowListProps,
+  CaptureWindowState,
+  ExpeditionActivityCardProps,
+  ExpeditionActivityKind,
+  ExpeditionActivityListProps,
+  ExpeditionActivityPhase,
+  KingdomActivitiesPanelLabels,
+  KingdomActivitiesPanelProps,
+  KingdomActivitiesPanelState,
+  KingdomActivityHudBadgeProps,
+  KingdomActivityHudBadgeTone,
+  KingdomActivityHudBadgesProps,
+  KingdomActivityTab,
+} from './KingdomActivitiesPanel';
 export { MapEntityCallout } from './MapEntityCallout';
 export type { MapEntityCalloutAction, MapEntityCalloutActionTone, MapEntityCalloutProps, MapEntityCalloutStat, MapEntityCalloutTier } from './MapEntityCallout';
 export { LeaderboardHeader, LeaderboardRow } from './LeaderboardRow';

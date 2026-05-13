@@ -25,6 +25,9 @@ import {
   HeaderBar,
   IconButton,
   InboxTabs,
+  CaptureWindowCard,
+  KingdomActivitiesPanel,
+  KingdomActivityHudBadges,
   LeaderboardHeader,
   LeaderboardRow,
   LevelChip,
@@ -53,7 +56,11 @@ import {
   TroopStepper,
   VillageStyleModal,
   VillageStyleTrigger,
+  type CaptureWindowCardProps,
   type ChatMessage,
+  type ExpeditionActivityCardProps,
+  type KingdomActivitiesPanelLabels,
+  type KingdomActivityTab,
   type VillageStyleId,
 } from './components';
 
@@ -127,6 +134,174 @@ const troopDetailFixture = {
   trainingTime: '1 m 35 s',
 };
 
+const kingdomActivityLabels: KingdomActivitiesPanelLabels = {
+  captureEmptyQuote: '« Envoyez un Noble sur un village barbare pour ouvrir une fenêtre de capture. »',
+  captureEmptyTitle: 'Aucune capture en cours',
+  captureErrorLabel: 'Impossible de charger les captures.',
+  captureLoadingLabel: 'Chargement des captures...',
+  captureRetryLabel: 'Réessayer',
+  capturesTab: 'Captures',
+  closeLabel: 'Fermer',
+  expeditionEmptyQuote: '« Quand vos troupes marcheront, le héraut consignera leur route ici. »',
+  expeditionEmptyTitle: 'Aucune expédition active',
+  expeditionErrorLabel: 'Impossible de charger les expéditions.',
+  expeditionLoadingLabel: 'Chargement des expéditions...',
+  expeditionRetryLabel: 'Réessayer',
+  expeditionsTab: 'Expéditions',
+  headerEyebrow: 'Panneau',
+  headerTitle: 'Activités du royaume',
+};
+
+const captureWindows: CaptureWindowCardProps[] = [
+  {
+    coordinates: '259|242',
+    endTime: '21:18',
+    endTimeLabel: 'Fin à',
+    nobleEyebrow: 'Seigneur immobilisé',
+    nobleName: 'Seigneur Aldric',
+    originLabelPrefix: 'Depuis',
+    originName: 'Royaume du Nord',
+    progress: 38,
+    state: 'open',
+    statusLabel: 'Capture en cours',
+    targetName: 'Village b...',
+    tier: 'T3',
+    tierSubLabel: 'Tier',
+    timeRemaining: '3h 42m',
+  },
+  {
+    coordinates: '241|261',
+    endTime: '23:50',
+    endTimeLabel: 'Fin à',
+    nobleEyebrow: 'Seigneur immobilisé',
+    nobleName: 'Dame Yseult',
+    originLabelPrefix: 'Depuis',
+    originName: 'Royaume du Nord',
+    progress: 19,
+    state: 'open',
+    statusLabel: 'Capture en cours',
+    targetName: 'Camp de ...',
+    tier: 'T4',
+    tierSubLabel: 'Tier',
+    timeRemaining: '6h 14m',
+  },
+  {
+    coordinates: '273|228',
+    endTime: '17:47',
+    endTimeLabel: 'Fin à',
+    nobleEyebrow: 'Seigneur immobilisé',
+    nobleName: 'Baron Halrid',
+    originLabelPrefix: 'Depuis',
+    originName: 'Avant-poste de Br...',
+    progress: 96,
+    state: 'soon',
+    statusLabel: 'Bientôt terminée',
+    targetName: 'Village b...',
+    tier: 'T2',
+    tierSubLabel: 'Tier',
+    timeRemaining: '0h 11m',
+  },
+];
+
+const allCaptureStates: CaptureWindowCardProps[] = [
+  ...captureWindows,
+  {
+    coordinates: '266|231',
+    endTime: '16:02',
+    endTimeLabel: 'Capturé à',
+    nobleEyebrow: 'Seigneur immobilisé',
+    nobleName: 'Seigneur Eldwen',
+    originLabelPrefix: 'Depuis',
+    originName: 'Royaume du Nord',
+    progress: 100,
+    state: 'completed',
+    statusLabel: 'Capture réussie',
+    targetName: 'Village barbare',
+    tier: 'T1',
+    tierSubLabel: 'Tier',
+    timeRemaining: '— —',
+  },
+  {
+    coordinates: '288|211',
+    endTime: '15:33',
+    endTimeLabel: 'Interrompue à',
+    nobleEyebrow: 'Seigneur immobilisé',
+    nobleName: 'Seigneur Garric',
+    originLabelPrefix: 'Depuis',
+    originName: 'Forteresse d’Aubépine',
+    progress: 64,
+    state: 'interrupted',
+    statusLabel: 'Capture interrompue',
+    targetName: 'Camp fortifié',
+    tier: 'T5',
+    tierSubLabel: 'Tier',
+    timeRemaining: '— —',
+  },
+];
+
+const expeditionActivities: ExpeditionActivityCardProps[] = [
+  {
+    icon: '/assets/hand-red.png',
+    kind: 'attack',
+    movementId: 'raid-village-barbare-t2',
+    phase: 'en_route',
+    progress: 42,
+    statusLabel: 'ATTAQUE',
+    subtitle: (
+      <>
+        <b>231|198</b> · Arrivée dans 12 min
+      </>
+    ),
+    time: '12m',
+    title: 'Village barbare T2',
+  },
+  {
+    icon: '/assets/hand-silver.png',
+    kind: 'reinforce',
+    movementId: 'renfort-royaume-sud',
+    phase: 'returning',
+    progress: 68,
+    statusLabel: 'RENFORT',
+    subtitle: (
+      <>
+        <b>208|245</b> · Retour dans 1h 04m
+      </>
+    ),
+    time: '1h 04m',
+    title: 'Royaume du Sud',
+  },
+  {
+    icon: '/assets/lupa.png',
+    kind: 'scout',
+    movementId: 'scout-camp-pillards',
+    phase: 'resolved',
+    progress: 87,
+    statusLabel: 'SCOUT',
+    subtitle: (
+      <>
+        <b>259|242</b> · Rapport dans 8 min
+      </>
+    ),
+    time: '8m',
+    title: 'Camp de pillards',
+  },
+  {
+    icon: '/assets/casual-icons/crown.png',
+    kind: 'conquest',
+    movementId: 'conquete-camp-t4',
+    phase: 'en_route',
+    progress: 24,
+    statusLabel: 'CONQUÊTE',
+    subtitle: (
+      <>
+        Noble + escorte · <b>241|261</b> · ouverture capture
+      </>
+    ),
+    time: '46m',
+    title: 'Camp de conquête T4',
+  },
+];
+
 export function DesignSystemPreview() {
   const [inputValue, setInputValue] = useState('');
   const [lordName, setLordName] = useState('');
@@ -141,6 +316,7 @@ export function DesignSystemPreview() {
   const [segmentRange, setSegmentRange] = useState('1h');
   const [segmentWorld, setSegmentWorld] = useState('world');
   const [inboxTab, setInboxTab] = useState('all');
+  const [kingdomActivityTab, setKingdomActivityTab] = useState<KingdomActivityTab>('captures');
   const [stepperValue, setStepperValue] = useState(125);
   const [troopQuantity, setTroopQuantity] = useState(24);
   const [villageStyleOpen, setVillageStyleOpen] = useState(true);
@@ -432,7 +608,7 @@ export function DesignSystemPreview() {
                   ),
                   time: '1h 12m',
                   title: 'Renfort → Castelfort (allié)',
-                  tone: 'defend',
+                  tone: 'reinforce',
                 },
                 {
                   icon: '/assets/army/squire.png',
@@ -630,6 +806,120 @@ export function DesignSystemPreview() {
                 { icon: '/assets/resources/iron.png', label: 'Fer', value: '1.500' },
               ]}
             />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Activités du royaume</h2>
+          <div className="min-w-0 overflow-hidden rounded-[14px] border-2 border-[#3c2619] bg-[#5b8f3a] shadow-[0_8px_24px_rgba(0,0,0,.28)]">
+            <div className="relative flex min-h-[720px] min-w-0 max-w-[390px] flex-col overflow-hidden bg-[linear-gradient(180deg,#7eab57_0%,#5b8f3a_58%,#3d6e1f_100%)]">
+              <div className="absolute inset-0 opacity-[.35] blur-[2px] [background-image:url('/assets/castle.png'),url('/assets/farm.png'),url('/assets/barracks.png')] [background-position:50%_22%,12%_48%,78%_56%] [background-repeat:no-repeat] [background-size:38%,30%,28%]" />
+              <div className="absolute inset-0 bg-[rgba(60,38,25,.32)] backdrop-blur-[1px]" />
+              <div className="relative z-[2] bg-[#3c2619] p-3.5">
+                <HeaderBar
+                  avatarInitials="SK"
+                  level={12}
+                  population={{ icon: '/assets/resources/population.png', label: 'Population', value: '120/200' }}
+                  primaryStats={[
+                    { icon: '/assets/army-power.png', label: 'Puissance', value: '2 480' },
+                    { icon: '/assets/crown.png', label: 'Couronnes', value: '28' },
+                  ]}
+                  resources={[
+                    { icon: '/assets/resources/wood.png', label: 'Bois', value: '8.500' },
+                    { icon: '/assets/resources/stone.png', label: 'Pierre', value: '3.200' },
+                    { icon: '/assets/resources/iron.png', label: 'Fer', value: '1.500' },
+                  ]}
+                />
+              </div>
+              <div className="relative z-[2] flex flex-wrap items-center gap-1.5 bg-[linear-gradient(180deg,rgba(60,38,25,.78),rgba(60,38,25,0))] px-2.5 pb-2 pt-1.5">
+                <KingdomActivityHudBadges
+                  badges={[
+                    {
+                      count: expeditionActivities.length,
+                      label: 'Expéditions',
+                      onClick: () => setKingdomActivityTab('expeditions'),
+                      tone: 'stone',
+                    },
+                    {
+                      count: captureWindows.length,
+                      label: 'Captures',
+                      onClick: () => setKingdomActivityTab('captures'),
+                      tone: 'gold',
+                    },
+                  ]}
+                />
+                <span className="font-game text-[10px] font-semibold tracking-[.05em] text-[rgba(245,243,232,.7)]">
+                  · 1 fenêtre se ferme bientôt
+                </span>
+              </div>
+              <div className="relative flex-1" />
+              <div className="relative z-[5]">
+                <KingdomActivitiesPanel
+                  activeTab={kingdomActivityTab}
+                  captureCount={captureWindows.length}
+                  captures={captureWindows}
+                  embedded
+                  expeditionCount={expeditionActivities.length}
+                  expeditions={expeditionActivities}
+                  labels={kingdomActivityLabels}
+                  onTabChange={setKingdomActivityTab}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+            <div className="min-w-0 rounded-[14px] border-2 border-[#8b7355] bg-[linear-gradient(180deg,#f5e6d3,#e8d4a8)] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.45)]">
+              <h3 className="mb-2 font-game text-xs font-bold uppercase tracking-[.12em] text-[#3d2f1f]">États de capture</h3>
+              <div className="flex flex-col gap-2.5">
+                {allCaptureStates.map((capture) => (
+                  <CaptureWindowCard
+                    key={`${capture.tier}-${capture.coordinates}`}
+                    {...capture}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="flex min-w-0 flex-col gap-3">
+              <div className="min-w-0 rounded-[14px] border-2 border-[#8b7355] bg-[linear-gradient(180deg,#f5e6d3,#e8d4a8)] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.45)]">
+                <h3 className="mb-2 font-game text-xs font-bold uppercase tracking-[.12em] text-[#3d2f1f]">Badges HUD</h3>
+                <div className="flex flex-col gap-3">
+                  <div className="flex min-h-[38px] flex-wrap items-center gap-1.5 rounded-[10px] border-2 border-[#3c2619] bg-[linear-gradient(180deg,rgba(60,38,25,.95),rgba(78,56,34,.95))] px-2.5 py-2">
+                    <span className="mr-auto font-game text-[10.5px] font-extrabold uppercase tracking-[.18em] text-[rgba(240,224,192,.65)]">HUD royaume</span>
+                    <KingdomActivityHudBadges
+                      badges={[
+                        { count: 0, label: 'Expéditions', tone: 'stone' },
+                        { count: 0, label: 'Captures', tone: 'gold' },
+                      ]}
+                    />
+                    <span className="font-game text-[10px] italic text-[rgba(245,243,232,.4)]">—</span>
+                  </div>
+                  <div className="flex min-h-[38px] flex-wrap items-center gap-1.5 rounded-[10px] border-2 border-[#3c2619] bg-[linear-gradient(180deg,rgba(60,38,25,.95),rgba(78,56,34,.95))] px-2.5 py-2">
+                    <span className="mr-auto font-game text-[10.5px] font-extrabold uppercase tracking-[.18em] text-[rgba(240,224,192,.65)]">HUD royaume</span>
+                    <KingdomActivityHudBadges badges={[{ count: 3, label: 'Captures', tone: 'gold' }]} />
+                  </div>
+                  <div className="flex min-h-[38px] flex-wrap items-center gap-1.5 rounded-[10px] border-2 border-[#3c2619] bg-[linear-gradient(180deg,rgba(60,38,25,.95),rgba(78,56,34,.95))] px-2.5 py-2">
+                    <span className="mr-auto font-game text-[10.5px] font-extrabold uppercase tracking-[.18em] text-[rgba(240,224,192,.65)]">HUD royaume</span>
+                    <KingdomActivityHudBadges
+                      badges={[
+                        { count: 2, label: 'Expéditions', tone: 'stone' },
+                        { count: 3, label: 'Captures', tone: 'green' },
+                      ]}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <KingdomActivitiesPanel
+                activeTab="expeditions"
+                captureCount={0}
+                captures={[]}
+                expeditionCount={expeditionActivities.length}
+                expeditions={expeditionActivities}
+                labels={kingdomActivityLabels}
+                onTabChange={() => undefined}
+              />
+            </div>
           </div>
         </section>
 
