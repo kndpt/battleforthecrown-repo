@@ -4,7 +4,8 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-_(Aucun ticket actif.)_
+- [46 — Tracker persistant de fenêtre de capture manquant](./46-capture-window-tracker-missing.md) — 🟠 Moyen. La capture en cours est visible via events/toasts, mais pas réhydratable après reload faute de snapshot backend.
+- [47 — Queue visuelle de formation du Noble manquante](./47-noble-training-visual-queue-missing.md) — 🟠 Moyen. La Salle du Trône indique que le Noble est en formation, mais n'affiche pas de progression/temps restant comme la Caserne.
 
 ## Roadmap stratégique
 
