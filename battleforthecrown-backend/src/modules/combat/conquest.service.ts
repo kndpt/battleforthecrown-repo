@@ -11,7 +11,11 @@ import PgBoss from 'pg-boss';
 import { PrismaClientOrTx } from '../../common/prisma.types';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { createOutboxEvent } from '../event/event.utils';
-import { UNIT_COSTS, UNIT_TYPES } from '@battleforthecrown/shared/army';
+import {
+  UNIT_COSTS,
+  UNIT_TYPES,
+  type UnitType,
+} from '@battleforthecrown/shared/army';
 import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
 import {
   BUILDING_TYPES,
@@ -182,6 +186,8 @@ export class ConquestService {
 
     if (!pending) return { interrupted: false };
 
+    await this.clearOccupationGarrisonInTx(tx, pending);
+
     await tx.pendingConquest.update({
       where: { id: pending.id },
       data: { status: PendingConquestStatus.INTERRUPTED },
@@ -257,6 +263,8 @@ export class ConquestService {
       });
 
       if (!pending) return { interrupted: false };
+
+      await this.clearOccupationGarrisonInTx(tx, pending);
 
       await tx.pendingConquest.update({
         where: { id: pending.id },
@@ -524,5 +532,42 @@ export class ConquestService {
       },
       update: { used: { increment: noblePopulation } },
     });
+  }
+
+  private async clearOccupationGarrisonInTx(
+    tx: PrismaClientOrTx,
+    pending: {
+      attackerVillageId: string;
+      targetVillageId: string;
+    },
+  ) {
+    const occupation = await tx.garrison.findMany({
+      where: {
+        villageId: pending.targetVillageId,
+        originVillageId: pending.attackerVillageId,
+      },
+      select: { unitType: true, quantity: true },
+    });
+
+    if (!occupation.length) return;
+
+    const remainingPopulation = occupation.reduce((total, line) => {
+      const popCost = UNIT_COSTS[line.unitType as UnitType]?.population ?? 0;
+      return total + popCost * Math.max(0, line.quantity);
+    }, 0);
+
+    await tx.garrison.deleteMany({
+      where: {
+        villageId: pending.targetVillageId,
+        originVillageId: pending.attackerVillageId,
+      },
+    });
+
+    if (remainingPopulation > 0) {
+      await tx.population.update({
+        where: { villageId: pending.attackerVillageId },
+        data: { used: { decrement: remainingPopulation } },
+      });
+    }
   }
 }

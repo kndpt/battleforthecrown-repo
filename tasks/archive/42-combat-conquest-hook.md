@@ -33,10 +33,10 @@ Après la résolution combat, **avant** le `ReturnWorker` :
 si (attaque réussie ET army contenait NOBLE au départ):
   si (NOBLE survivant dans army.units):
     → ouvrir PendingConquest (ticket #41)
-       - immobiliser le Seigneur : retirer de army.units survivants (n'embarque pas dans le retour)
+       - immobiliser le Seigneur + l'escorte survivante en garnison d'occupation
        - calculer captureUntil selon contexte (tier barbare / PvP)
        - émettre village.capture-window-opened
-    → ReturnWorker prend le reste de l'escorte (sans NOBLE) + loot
+    → ReturnWorker ne reprend pas l'escorte : elle défend la fenêtre de capture
   sinon (NOBLE mort):
     → conquête échouée
     → émettre noble.killed (nouvel event Outbox, payload: { villageId, attackerUserId })
@@ -64,9 +64,9 @@ Ce ticket n'embarque pas les durées (PvE = ticket #41 § « Durées par context
 ## Tests
 
 - Smoke (vraie DB + pg-boss + Outbox) : 3 scénarios :
-  1. Attaque réussie avec Seigneur survivant → `PendingConquest` créé, event `village.capture-window-opened`.
+  1. Attaque réussie avec Seigneur survivant → `PendingConquest` créé, event `village.capture-window-opened`, escorte survivante en garnison d'occupation.
   2. Attaque réussie avec Seigneur mort → pas de `PendingConquest`, escorte rentre avec loot, event `noble.killed`.
-  3. Attaque hostile pendant fenêtre + Seigneur défenseur tué → `PendingConquest.status = INTERRUPTED`, event `village.capture-window-interrupted`.
+  3. Attaque hostile pendant fenêtre + Seigneur ou escorte d'occupation détruite → `PendingConquest.status = INTERRUPTED`, event `village.capture-window-interrupted`.
 - Pure-logic : aucun helper extractible évident — orchestration pure.
 
 ## Tradeoff scope

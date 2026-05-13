@@ -343,12 +343,6 @@ export class CombatWorker implements OnModuleInit {
 
           if (isVictory && startedWithNoble && defenderVillage) {
             if (nobleSurvived) {
-              returningUnits[UNIT_TYPES.NOBLE] =
-                (returningUnits[UNIT_TYPES.NOBLE] ?? 0) - 1;
-              if ((returningUnits[UNIT_TYPES.NOBLE] ?? 0) <= 0) {
-                delete returningUnits[UNIT_TYPES.NOBLE];
-              }
-
               const captureUntil = new Date(
                 Date.now() + this.getCaptureDurationMs(defenderVillage),
               );
@@ -359,24 +353,32 @@ export class CombatWorker implements OnModuleInit {
                 captureUntil,
               });
 
-              await tx.garrison.upsert({
-                where: {
-                  villageId_originVillageId_unitType: {
+              for (const [unitType, quantity] of typedEntries(
+                resolution.survivingUnits,
+              )) {
+                if (!quantity || quantity <= 0) continue;
+
+                await tx.garrison.upsert({
+                  where: {
+                    villageId_originVillageId_unitType: {
+                      villageId: defenderVillage.id,
+                      originVillageId: expedition.attackerVillageId,
+                      unitType,
+                    },
+                  },
+                  create: {
                     villageId: defenderVillage.id,
                     originVillageId: expedition.attackerVillageId,
-                    unitType: UNIT_TYPES.NOBLE,
+                    unitType,
+                    quantity,
                   },
-                },
-                create: {
-                  villageId: defenderVillage.id,
-                  originVillageId: expedition.attackerVillageId,
-                  unitType: UNIT_TYPES.NOBLE,
-                  quantity: 1,
-                },
-                update: {
-                  quantity: { increment: 1 },
-                },
-              });
+                  update: {
+                    quantity: { increment: quantity },
+                  },
+                });
+
+                delete returningUnits[unitType];
+              }
             } else {
               await createOutboxEvent(tx, 'noble.killed', attackerVillage.id, {
                 attackerVillageId: attackerVillage.id,
@@ -771,6 +773,28 @@ export class CombatWorker implements OnModuleInit {
           defenderVillage.id,
           'noble-killed-during-window',
         );
+        continue;
+      }
+
+      if (pending?.attackerVillageId === participant.villageId) {
+        const occupation = await tx.garrison.findMany({
+          where: {
+            villageId: defenderVillage.id,
+            originVillageId: participant.villageId,
+          },
+          select: { unitType: true, quantity: true },
+        });
+        const hasEscortAlive = occupation.some(
+          (line) => line.unitType !== UNIT_TYPES.NOBLE && line.quantity > 0,
+        );
+
+        if (!hasEscortAlive) {
+          await this.conquest.interruptCaptureWindowInTx(
+            tx,
+            defenderVillage.id,
+            'occupation-escort-destroyed-during-window',
+          );
+        }
       }
     }
   }

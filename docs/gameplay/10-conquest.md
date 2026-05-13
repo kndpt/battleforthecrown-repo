@@ -75,6 +75,8 @@ Un Seigneur entraîné peut rester en garnison **indéfiniment**. Il ne se rebel
 
 Quand la fenêtre de capture se termine sans interruption, le Seigneur s'installe et **devient le Seigneur du village conquis**. Il n'est plus une unité du village d'origine, n'est plus disponible pour d'autres conquêtes — il administre désormais son nouveau territoire au nom du joueur (qui reste le **Roi** en haut de la chaîne, cohérent avec le titre du jeu).
 
+Pendant toute la fenêtre, la **garnison d'occupation** est composée du Seigneur et de l'escorte survivante du combat de pré-conquête. Elle ne rentre pas au village d'origine : elle défend la capture. Si cette escorte est entièrement détruite, ou si le Seigneur meurt, la capture est interrompue.
+
 Si la conquête est interrompue (combat perdu pendant la fenêtre de capture), le Seigneur **meurt** avec le reste de la garnison attaquée. Pas de récupération, pas de retour au village d'origine.
 
 ### Cas particulier : armée gagne le combat de pré-conquête mais le Seigneur meurt

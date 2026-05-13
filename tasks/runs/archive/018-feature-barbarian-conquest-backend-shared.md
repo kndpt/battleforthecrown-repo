@@ -92,7 +92,7 @@ Tickets ouverts : aucun. Le frontend/UI reste dans le run `019`.
 - **Critères d'acceptance vérifiés** :
   - [x] Pipeline `NOBLE` / `PendingConquest` / `conquest:finalize` confronté aux specs `10`/`13` — preuve : cartographie lead + `code_mapper`, gap résiduel limité à la finalisation barbare.
   - [x] Fenêtre de capture par tier et Seigneur survivant/mort — preuve : `yarn test:smoke`, suite `combat-conquest-hook.smoke.spec.ts` verte.
-  - [x] Seigneur immobilisé hors retour, escorte/loot conservés — preuve : `combat-conquest-hook.smoke.spec.ts` verte, event `battle.resolved` sans `NOBLE` survivant retourné.
+  - [x] Seigneur + escorte survivante immobilisés hors retour en garnison d'occupation — preuve : `combat-conquest-hook.smoke.spec.ts` verte, event `battle.resolved` sans unités survivantes retournées pendant la fenêtre.
   - [x] Mort Seigneur sans fenêtre, `noble.killed`, loot ramené — preuve : `combat-conquest-hook.smoke.spec.ts` verte.
   - [x] T2 finalisé devient village joueur, `isBarbarian=false`, tier vidé, ressources `0/0/0`, armée résidente `0` — preuve : `conquest-finalize.smoke.spec.ts`.
   - [x] Bâtiments hérités whitelist spec, aucun Watchtower/Council/Throne — preuve : `conquest-finalize.smoke.spec.ts`.

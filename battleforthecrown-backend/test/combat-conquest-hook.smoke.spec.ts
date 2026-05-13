@@ -140,7 +140,7 @@ describe('combat conquest hook smoke', () => {
     };
   }
 
-  it('opens a capture window and immobilizes the surviving noble outside the return snapshot', async () => {
+  it('opens a capture window and immobilizes the surviving escort in occupation garrison', async () => {
     const world = await seedWorld();
     const conquest = await launchConquest(world.id, `open-${Date.now()}`);
 
@@ -153,16 +153,21 @@ describe('combat conquest hook smoke', () => {
       { timeoutMs: 10_000 },
     );
 
-    const garrison = await ctx.prisma.garrison.findUniqueOrThrow({
+    const garrison = await ctx.prisma.garrison.findMany({
       where: {
-        villageId_originVillageId_unitType: {
-          villageId: conquest.target.id,
-          originVillageId: conquest.village.id,
-          unitType: 'NOBLE',
-        },
+        villageId: conquest.target.id,
+        originVillageId: conquest.village.id,
       },
+      orderBy: { unitType: 'asc' },
     });
-    expect(garrison.quantity).toBe(1);
+    expect(
+      Object.fromEntries(
+        garrison.map((line) => [line.unitType, line.quantity]),
+      ),
+    ).toEqual({
+      MILITIA: 100,
+      NOBLE: 1,
+    });
 
     const resolvedEvent = await outboxDispatched(
       ctx.prisma,
@@ -171,7 +176,7 @@ describe('combat conquest hook smoke', () => {
     );
     expect(resolvedEvent.payload).toMatchObject({
       expeditionId: conquest.expeditionId,
-      survivingUnits: { MILITIA: 100 },
+      survivingUnits: {},
     });
   }, 45_000);
 
@@ -232,21 +237,18 @@ describe('combat conquest hook smoke', () => {
       { timeoutMs: 10_000 },
     );
 
-    const nobleGarrison = await ctx.prisma.garrison.findUnique({
+    const occupationGarrison = await ctx.prisma.garrison.findMany({
       where: {
-        villageId_originVillageId_unitType: {
-          villageId: conquest.target.id,
-          originVillageId: conquest.village.id,
-          unitType: 'NOBLE',
-        },
+        villageId: conquest.target.id,
+        originVillageId: conquest.village.id,
       },
     });
-    expect(nobleGarrison?.quantity).toBe(0);
+    expect(occupationGarrison).toHaveLength(0);
 
     const originPop = await ctx.prisma.population.findUniqueOrThrow({
       where: { villageId: conquest.village.id },
     });
-    expect(originPop.used).toBe(100);
+    expect(originPop.used).toBe(0);
   }, 60_000);
 
   it('keeps a costly conquest victory as a raid when the noble dies', async () => {
