@@ -4,6 +4,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
+- [51 — Standardiser les bottom sheets sur le design `Activités du royaume`](./51-bottom-sheet-design-system-base.md) — 🟠 Moyen. Faire du nouveau panneau la base design-system des bottom sheets actuels et futurs.
 - [47 — Queue visuelle de formation du Noble manquante](./47-noble-training-visual-queue-missing.md) — 🟠 Moyen. La Salle du Trône indique que le Noble est en formation, mais n'affiche pas de progression/temps restant comme la Caserne.
 
 ## Tickets découpés
