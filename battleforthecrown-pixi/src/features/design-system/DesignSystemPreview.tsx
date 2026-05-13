@@ -1465,6 +1465,15 @@ export function DesignSystemPreview() {
                 { icon: '/assets/casual-icons/crown.png', value: '8.420' },
                 { icon: '/assets/watchtower.png', value: 'Niv. 6' },
               ]}
+              sections={[
+                {
+                  title: 'Capture',
+                  rows: [
+                    { label: 'Durée de conquête', value: '9h' },
+                    { label: 'Statut', value: 'Disponible' },
+                  ],
+                },
+              ]}
               subtitle="Inhabité · pillable"
               tier={{ label: '★ T4 OR' }}
               title="Camp barbare"

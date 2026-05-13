@@ -80,7 +80,7 @@ export function SelectedEntityPanel({
     <MapEntityCallout
       actions={actions}
       coordinates={`${entity.x}|${entity.y}`}
-      stats={isBarbarian ? captureStatsFor(entity) : undefined}
+      sections={isBarbarian ? captureSectionsFor(entity) : undefined}
       subtitle={subtitleFor(entity)}
       tier={entity.tier ? { label: `★ ${entity.tier}` } : undefined}
       title={entity.name}
@@ -94,7 +94,19 @@ function subtitleFor(entity: MapEntity): string {
   return typeLabel(entity);
 }
 
-function captureStatsFor(entity: MapEntity) {
+function captureSectionsFor(entity: MapEntity) {
   const duration = getBarbarianCaptureDurationLabel(entity.tier);
-  return duration ? [{ label: 'Capture', value: duration }] : undefined;
+  if (!duration) return undefined;
+
+  return [
+    {
+      title: 'Capture',
+      rows: [
+        { label: 'Durée de conquête', value: duration },
+        ...(entity.captureWindow
+          ? [{ label: 'Statut', value: 'Capture en cours' }]
+          : []),
+      ],
+    },
+  ];
 }
