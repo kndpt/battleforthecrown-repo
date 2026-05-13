@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildMapEntities } from './buildMapEntities';
-import type { WorldEntityDto, WorldVillageDto } from '@/api/world-types';
+import { buildMapEntities, filterEntitiesByVision } from './buildMapEntities';
+import type { MapEntity, WorldEntityDto, WorldVillageDto } from '@/api/world-types';
 
 const barbarian: WorldEntityDto = {
   id: 'b1',
@@ -70,5 +70,44 @@ describe('buildMapEntities', () => {
 
   it('returns empty when both feeds are empty', () => {
     expect(buildMapEntities([], [], null)).toEqual([]);
+  });
+});
+
+describe('filterEntitiesByVision', () => {
+  const mine: MapEntity = {
+    id: 'mine',
+    kind: 'PLAYER_VILLAGE',
+    x: 0,
+    y: 0,
+    isMine: true,
+    ownerId: 'me',
+    name: 'Mine',
+    tier: null,
+  };
+  const inside: MapEntity = {
+    id: 'inside',
+    kind: 'BARBARIAN_VILLAGE',
+    x: 50,
+    y: 0,
+    isMine: false,
+    tier: 'T1',
+    name: 'Inside',
+  };
+  const outside: MapEntity = {
+    id: 'outside',
+    kind: 'BARBARIAN_VILLAGE',
+    x: 51,
+    y: 0,
+    isMine: false,
+    tier: 'T1',
+    name: 'Outside',
+  };
+
+  it('keeps level 10 watchtower vision finite', () => {
+    expect(filterEntitiesByVision([mine, inside, outside], 10)).toEqual([mine, inside]);
+  });
+
+  it('keeps only own villages when watchtower vision is locked', () => {
+    expect(filterEntitiesByVision([mine, inside], 0)).toEqual([mine]);
   });
 });

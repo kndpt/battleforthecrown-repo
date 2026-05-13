@@ -15,8 +15,8 @@ export interface WorldMapOptions {
   initialZoom?: number;
   /** World coords of the player's own village, for vision overlay + crosshair. */
   myVillage?: { x: number; y: number } | null;
-  /** Watchtower vision in tiles. null = unlimited. */
-  visibilityRadius?: number | null;
+  /** Watchtower vision in tiles. */
+  visibilityRadius?: number;
   onSelectEntity?: (entityId: string | null) => void;
   onHoverEntity?: (entityId: string | null) => void;
 }
@@ -90,7 +90,7 @@ export interface WorldMapHandle {
   setSelected: (entityId: string | null) => void;
   centerOn: (worldX: number, worldY: number) => void;
   /** Update the vision center / radius (when watchtower upgrades). */
-  setVision: (myVillage: { x: number; y: number } | null, radius: number | null) => void;
+  setVision: (myVillage: { x: number; y: number } | null, radius: number) => void;
   /** Convert world tile coords to current screen pixel coords (for tooltip positioning). */
   worldToScreen: (tileX: number, tileY: number) => { x: number; y: number };
 }
@@ -260,7 +260,7 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
   viewport.addChild(crosshair);
 
   let myVillage = options.myVillage ?? null;
-  let visibilityRadius = options.visibilityRadius ?? null;
+  let visibilityRadius = options.visibilityRadius ?? 0;
 
   const tileToWorld = (tx: number, ty: number) => ({
     px: tx * tileSize + tileSize / 2,
@@ -276,11 +276,6 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     fogHole.clear();
     visionRing.clear();
 
-    // Lvl 10 (unlimited) → no fog at all.
-    if (visibilityRadius === null) {
-      fogContainer.visible = false;
-      return;
-    }
     fogContainer.visible = true;
 
     // Dark veil over the entire world. The hole graphics below punches a
@@ -591,7 +586,7 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
 
   const setVision = (
     nextMyVillage: { x: number; y: number } | null,
-    nextRadius: number | null,
+    nextRadius: number,
   ) => {
     myVillage = nextMyVillage;
     visibilityRadius = nextRadius;

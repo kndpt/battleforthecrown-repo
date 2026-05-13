@@ -1,7 +1,7 @@
 # 45 — Watchtower niveau 10 : supprimer la vision globale
 
 **Sévérité** : 🟡 Majeure  
-**Statut** : À traiter  
+**Statut** : ✅ Résolu  
 **Décision gameplay** : la Tour de guet niveau 10 doit avoir un rayon fini de **50 cases**, pas une vision mondiale.
 
 ## Symptôme

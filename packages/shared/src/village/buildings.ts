@@ -437,7 +437,7 @@ export const CASTLE_CONSTRUCTION_SPEED_BONUS: Record<number, number> = {
 
 export interface WatchtowerVisionLevel {
   isWorldUnlocked: boolean;
-  visibilityRadius: number | null;
+  visibilityRadius: number;
 }
 
 export const WATCHTOWER_VISION_LEVELS: Record<number, WatchtowerVisionLevel> = {
@@ -451,7 +451,7 @@ export const WATCHTOWER_VISION_LEVELS: Record<number, WatchtowerVisionLevel> = {
   7: { isWorldUnlocked: true, visibilityRadius: 35 },
   8: { isWorldUnlocked: true, visibilityRadius: 40 },
   9: { isWorldUnlocked: true, visibilityRadius: 45 },
-  10: { isWorldUnlocked: true, visibilityRadius: null },
+  10: { isWorldUnlocked: true, visibilityRadius: 50 },
 };
 
 const BUILDING_DEFINITION_ENTRIES = Object.entries(BUILDING_DEFINITIONS) as Array<

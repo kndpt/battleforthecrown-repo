@@ -173,7 +173,7 @@ Détail du payload blip — **chaque champ est volontaire**, ne pas "corriger" e
 - Tout le reste (`tier`, `name`, `villageId`, `userId`, etc.) est strippé — c'est ça la vraie fog.
 
 Implémentation :
-- Un `VisionService` (NestJS) calcule les disques de vision du joueur (un par tour de guet). Legacy runtime : lvl 10 utilise encore un disque illimité (`radius === null`) ; la cible gameplay est lvl 10 = 50 cases, suivi par [`tasks/45-watchtower-finite-vision.md`](../../tasks/45-watchtower-finite-vision.md).
+- Un `VisionService` (NestJS) calcule les disques de vision finis du joueur (un par tour de guet). La Tour de guet suit `WATCHTOWER_VISION_LEVELS` : lvl 1 = 5 cases, +5 par niveau, lvl 10 = 50 cases.
 - `applyFogOfWar(entities, disks)` mappe chaque entité vers le payload visible ou un blip.
 - Appliqué dans `GET /world/:slug/entities` (le seul endpoint consommé par la WorldMap).
 - Le controller récupère l'utilisateur via `@CurrentUser()` (auth globale, voir [`auth.md`](./auth.md)) — aucune fuite possible côté client (pas de query param userId).

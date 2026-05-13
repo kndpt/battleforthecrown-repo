@@ -4,7 +4,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-- [45 — Watchtower niveau 10 : supprimer la vision globale](./45-watchtower-finite-vision.md)
+_(Aucun ticket actif.)_
 
 ## Roadmap stratégique
 
@@ -41,6 +41,7 @@ _(Aucun run actif.)_
 
 ## Archivés
 
+- [45 — Watchtower niveau 10 : supprimer la vision globale](./archive/45-watchtower-finite-vision.md) ✅ Résolu 2026-05-13 par $run @tasks/45-watchtower-finite-vision.md
 - [44 — Crash armée : migration `unit_training.building` non appliquée](./archive/44-army-training-schema-drift.md) ✅ Résolu 2026-05-11 par application des migrations locales + garde-fou dev server.
 - [43 — Risque de mort du Seigneur sur victoire coûteuse](./archive/43-noble-loss-chance-on-costly-victory.md) ✅ Résolu 2026-05-11 par $run @tasks/43-noble-loss-chance-on-costly-victory.md
 - [41 — Période de capture : `PendingConquest` + worker](./archive/41-capture-window-data-model.md) ✅ Résolu 2026-05-11 par $run @tasks/41-capture-window-data-model.md

@@ -8,7 +8,7 @@ interface WorldMiniMapProps {
   entities: MapEntity[];
   expeditions: ExpeditionSnapshot[];
   myVillage: MapEntity | null;
-  visibilityRadius: number | null;
+  visibilityRadius: number;
   /** Tile coords currently centred in the main viewport (for the camera box). */
   cameraCenter: { x: number; y: number };
   /** Visible viewport size in world tiles (for the camera box). */
@@ -67,7 +67,7 @@ export function WorldMiniMap({
     const sy = SIZE / gridHeight;
 
     // Vision disc
-    if (myVillage && visibilityRadius !== null && visibilityRadius > 0) {
+    if (myVillage && visibilityRadius > 0) {
       const cx = myVillage.x * sx;
       const cy = myVillage.y * sy;
       const r = visibilityRadius * Math.max(sx, sy);

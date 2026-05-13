@@ -17,7 +17,7 @@ interface WorldMapCanvasProps {
   gridWidth: number;
   gridHeight: number;
   myVillage?: MapEntity | null;
-  visibilityRadius?: number | null;
+  visibilityRadius?: number;
   controllerRef?: MutableRefObject<WorldMapCanvasController | null>;
 }
 
@@ -25,7 +25,7 @@ export function WorldMapCanvas({
   gridWidth,
   gridHeight,
   myVillage,
-  visibilityRadius = null,
+  visibilityRadius = 0,
   controllerRef,
 }: WorldMapCanvasProps) {
   const setSelectedEntity = useWorldMapStore((state) => state.setSelectedEntity);

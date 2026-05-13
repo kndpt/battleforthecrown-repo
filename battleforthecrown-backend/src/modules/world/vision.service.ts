@@ -76,16 +76,11 @@ export class VisionService {
    * - A fogged target **cannot be attacked**: enforced server-side in
    *   `CombatService.initiateAttack` (gated by `world.config.fogOfWar.enabled`).
    *
-   * Master vision shortcut: if any disk has `radius === null` (watchtower
-   * lvl 10), every entity is returned unmasked.
    */
   applyFogOfWar<T extends PositionedEntity>(
     entities: readonly T[],
     disks: readonly VisionDisk[],
   ): FogResult<T>[] {
-    if (disks.some((d) => d.radius === null)) {
-      return [...entities];
-    }
     return entities.map<FogResult<T>>((entity) => {
       if (this.isInVision(entity, disks)) return entity;
       return { kind: 'fogged', id: entity.id, x: entity.x, y: entity.y };

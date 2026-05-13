@@ -31,9 +31,8 @@ export function buildMapEntities(
 
 /**
  * Restricts the visible entity feed to those within the watchtower's vision
- * radius from the player's own village. Mirrors the legacy fog-of-war: at level
- * 0 the player only sees their own villages; at level 10 the radius becomes
- * `null` (unlimited) so we return the full set.
+ * radius from the player's own village. At level 0 the player only sees their
+ * own villages; higher levels reveal finite disks around each owned village.
  *
  * Always keeps `isMine` entities in the feed, even when out of range.
  */
@@ -42,12 +41,8 @@ export function filterEntitiesByVision(
   watchtowerLevel: number,
 ): MapEntity[] {
   const vision = WATCHTOWER_VISION_LEVELS[watchtowerLevel];
-  // Unlimited vision (level 10).
-  if (!vision || vision.visibilityRadius === null) {
-    return entities;
-  }
   // Watchtower not built or destroyed → only own villages are visible.
-  if (vision.visibilityRadius === 0) {
+  if (!vision || vision.visibilityRadius === 0) {
     return entities.filter((e) => e.isMine);
   }
 

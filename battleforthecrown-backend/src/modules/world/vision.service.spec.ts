@@ -49,14 +49,14 @@ describe('VisionService', () => {
       expect(disks[0]).toEqual({ x: 10, y: 20, radius: 15 });
     });
 
-    it('returns radius=null for watchtower level 10 (unlimited)', async () => {
+    it('returns a finite radius for watchtower level 10', async () => {
       mockPrismaService.village.findMany.mockResolvedValueOnce([
         { x: 0, y: 0, buildings: [{ level: 10 }] },
       ]);
 
       const disks = await service.getVisionDisks('user-1', 'world-1');
 
-      expect(disks).toEqual([{ x: 0, y: 0, radius: null }]);
+      expect(disks).toEqual([{ x: 0, y: 0, radius: 50 }]);
     });
 
     it('skips watchtower level 0 (world locked)', async () => {
@@ -94,12 +94,9 @@ describe('VisionService', () => {
       expect(service.isInVision({ x: 10, y: 10 }, disks)).toBe(false);
     });
 
-    it('returns true when any disk has radius=null (unlimited)', () => {
-      const disks: VisionDisk[] = [
-        { x: 0, y: 0, radius: 5 },
-        { x: 100, y: 100, radius: null },
-      ];
-      expect(service.isInVision({ x: 9999, y: 9999 }, disks)).toBe(true);
+    it('returns false outside a max-level watchtower radius', () => {
+      const disks: VisionDisk[] = [{ x: 0, y: 0, radius: 50 }];
+      expect(service.isInVision({ x: 51, y: 0 }, disks)).toBe(false);
     });
 
     it('returns false on empty disks list', () => {
@@ -131,11 +128,15 @@ describe('VisionService', () => {
       expect(result[2]).toEqual({ kind: 'fogged', id: 'e3', x: 100, y: 100 });
     });
 
-    it('reveals everything when a disk has radius=null', () => {
-      const disks: VisionDisk[] = [{ x: 0, y: 0, radius: null }];
+    it('fogs entities outside a max-level watchtower radius', () => {
+      const disks: VisionDisk[] = [{ x: 0, y: 0, radius: 50 }];
       const result = service.applyFogOfWar(entities, disks);
 
-      expect(result).toEqual(entities);
+      expect(result).toEqual([
+        entities[0],
+        { kind: 'fogged', id: 'e2', x: 50, y: 50 },
+        { kind: 'fogged', id: 'e3', x: 100, y: 100 },
+      ]);
     });
 
     it('fogs everything when disks list is empty', () => {

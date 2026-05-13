@@ -110,7 +110,7 @@ export function WorldMapScreen() {
       }
     : FALLBACK_GRID;
 
-  const visibilityRadius = WATCHTOWER_VISION_LEVELS[watchtowerLevel]?.visibilityRadius ?? null;
+  const visibilityRadius = WATCHTOWER_VISION_LEVELS[watchtowerLevel]?.visibilityRadius ?? 0;
 
   const handleRecenter = () => {
     if (myVillage) {
