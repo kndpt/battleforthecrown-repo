@@ -14,9 +14,9 @@ import { PowerBadge } from '@/features/power/PowerBadge';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
 import {
+  useKingdomPowerQuery,
   useMyVillagesQuery,
   usePopulationQuery,
-  useVillagePowerQuery,
 } from '@/api/queries';
 import { VILLAGE_LABEL_DISPLAY } from '@battleforthecrown/shared/village';
 
@@ -44,7 +44,7 @@ export function GameHeader({
   const setVillage = useGameStore((state) => state.setVillage);
   const user = useAuthStore((state) => state.user);
   const population = usePopulationQuery(villageId);
-  const villagePower = useVillagePowerQuery(villageId);
+  const kingdomPower = useKingdomPowerQuery();
   const myVillages = useMyVillagesQuery(worldId);
   const { display, productionRates, hasSnapshot } = useDisplayResources(villageId);
   const [isVillageMenuOpen, setIsVillageMenuOpen] = useState(false);
@@ -95,7 +95,7 @@ export function GameHeader({
     ? Math.max(0, population.data.max - population.data.used)
     : undefined;
 
-  const powerValue = villagePower.data?.total ?? 0;
+  const powerValue = kingdomPower.data?.kingdomPower ?? 0;
 
   const switchVillage = (direction: -1 | 1) => {
     if (villages.length <= 1) return;
