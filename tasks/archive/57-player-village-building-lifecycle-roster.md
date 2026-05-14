@@ -1,7 +1,7 @@
 # 57 — Source canonique du lifecycle des bâtiments joueur
 
 **Sévérité** : 🟡 Majeure  
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ DONE (2026-05-14)
 
 ## Problème
 

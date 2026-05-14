@@ -6,7 +6,6 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 - [54 — Retour fantôme pendant capture avec Seigneur](./54-conquest-capture-phantom-return.md) — 🟡 Majeur. Une capture avec Seigneur survivant peut encore planifier un retour si du loot existe, ce qui affiche un cheval alors que toute l'escorte reste en occupation.
 - [58 — Vision multi-village : seuls les cercles du village sélectionné sont affichés](./58-multi-village-vision-disks-missing.md) — 🟡 Majeur. La spec dit union des disques de toutes les Watchtowers, mais le frontend affiche un seul cercle basé sur le village courant.
-- [57 — Source canonique du lifecycle des bâtiments joueur](./57-player-village-building-lifecycle-roster.md) — 🟡 Majeur. Centraliser la politique join/conquête/backfill des bâtiments pour éviter les oublis à chaque nouveau bâtiment activé.
 - [51 — Standardiser les bottom sheets sur le design `Activités du royaume`](./51-bottom-sheet-design-system-base.md) — 🟠 Moyen. Faire du nouveau panneau la base design-system des bottom sheets actuels et futurs.
 
 ## Tickets découpés
@@ -56,6 +55,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ## Archivés
 
+- [57 — Source canonique du lifecycle des bâtiments joueur](./archive/57-player-village-building-lifecycle-roster.md) ✅ Résolu 2026-05-14 par $run @tasks/57-player-village-building-lifecycle-roster.md
 - [59 — Smokes backend : flakies par ordering Jest](./archive/59-smokes-jest-ordering-flakies.md) ✅ Résolu 2026-05-14 par $run @tasks/59-smokes-jest-ordering-flakies.md
 - [55 — Bâtiments avancés absents après conquête d'un village barbare](./archive/55-conquered-village-missing-advanced-buildings.md) ✅ Résolu 2026-05-14 par $run @tasks/55-conquered-village-missing-advanced-buildings.md
 - [56 — Popup village possédé : afficher les troupes présentes](./archive/56-own-village-popup-troops-list.md) ✅ Résolu 2026-05-14 par $run @tasks/56-own-village-popup-troops-list.md

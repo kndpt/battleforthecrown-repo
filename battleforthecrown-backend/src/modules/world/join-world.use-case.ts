@@ -9,7 +9,7 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WorldConfigService } from './world-config.service';
 import { BarbarianSeedingService } from './barbarian-seeding.service';
 import { VillagePlacementService } from './village-placement.service';
-import { BUILDING_TYPES } from '@battleforthecrown/shared/village';
+import { getInitialPlayerVillageBuildings } from '../village/player-village-building-lifecycle';
 
 interface JoinWorldParams {
   userId: string;
@@ -106,7 +106,7 @@ export class JoinWorldUseCase {
     });
 
     await tx.building.createMany({
-      data: INITIAL_BUILDINGS.map((b) => ({
+      data: getInitialPlayerVillageBuildings().map((b) => ({
         villageId: village.id,
         type: b.type,
         level: b.level,
@@ -161,19 +161,6 @@ export class JoinWorldUseCase {
       });
   }
 }
-
-export const INITIAL_BUILDINGS = [
-  { type: BUILDING_TYPES.CASTLE, level: 1 },
-  { type: BUILDING_TYPES.WOOD, level: 1 },
-  { type: BUILDING_TYPES.STONE, level: 1 },
-  { type: BUILDING_TYPES.IRON, level: 1 },
-  { type: BUILDING_TYPES.WAREHOUSE, level: 1 },
-  { type: BUILDING_TYPES.FARM, level: 0 },
-  { type: BUILDING_TYPES.BARRACKS, level: 0 },
-  { type: BUILDING_TYPES.WATCHTOWER, level: 0 },
-  { type: BUILDING_TYPES.COUNCIL_HALL, level: 0 },
-  { type: BUILDING_TYPES.THRONE_HALL, level: 0 },
-] as const;
 
 function numericEnv(key: string): number {
   const raw = process.env[key];

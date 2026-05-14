@@ -18,35 +18,13 @@ import {
 } from '@battleforthecrown/shared/army';
 import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
 import {
-  BUILDING_TYPES,
   getBuildingLevelValues,
   getFarmPopulationLimit,
-  isBuildingEnabled,
   type BuildingType,
 } from '@battleforthecrown/shared/village';
+import { getBarbarianConquestVillageBuildings } from '../village/player-village-building-lifecycle';
 
 export const CONQUEST_FINALIZE_QUEUE = 'conquest:finalize';
-
-const BARBARIAN_CONQUEST_BUILDINGS = [
-  BUILDING_TYPES.CASTLE,
-  BUILDING_TYPES.WOOD,
-  BUILDING_TYPES.STONE,
-  BUILDING_TYPES.IRON,
-  BUILDING_TYPES.WAREHOUSE,
-  BUILDING_TYPES.FARM,
-  BUILDING_TYPES.BARRACKS,
-] as const satisfies readonly BuildingType[];
-
-const BARBARIAN_CONQUEST_BUILDING_SET = new Set<BuildingType>(
-  BARBARIAN_CONQUEST_BUILDINGS,
-);
-
-const BARBARIAN_CONQUEST_UNBUILT_BUILDINGS = (
-  Object.values(BUILDING_TYPES) as BuildingType[]
-).filter(
-  (type) =>
-    isBuildingEnabled(type) && !BARBARIAN_CONQUEST_BUILDING_SET.has(type),
-);
 
 const BARBARIAN_CONQUEST_LEVEL_BY_TIER = {
   T1: 1,
@@ -423,18 +401,13 @@ export class ConquestService {
         BARBARIAN_CONQUEST_LEVEL_BY_TIER[
           target.tier as keyof typeof BARBARIAN_CONQUEST_LEVEL_BY_TIER
         ] ?? 1;
-      const materializedBuildings = [
-        ...BARBARIAN_CONQUEST_BUILDINGS.map((type) => ({
-          villageId: targetVillageId,
-          type,
-          level: materializedLevel,
-        })),
-        ...BARBARIAN_CONQUEST_UNBUILT_BUILDINGS.map((type) => ({
-          villageId: targetVillageId,
-          type,
-          level: 0,
-        })),
-      ];
+      const materializedBuildings = getBarbarianConquestVillageBuildings(
+        materializedLevel,
+      ).map((building) => ({
+        villageId: targetVillageId,
+        type: building.type,
+        level: building.level,
+      }));
       const usedPopulation = calculateBuildingPopulationUsed(
         materializedBuildings,
       );
