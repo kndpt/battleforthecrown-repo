@@ -23,6 +23,11 @@ export interface WorldMapOptions {
   onHoverEntity?: (entityId: string | null) => void;
 }
 
+export interface WorldMapCameraSnapshot {
+  center: { x: number; y: number };
+  viewportTiles: { width: number; height: number };
+}
+
 const DEFAULT_TILE_SIZE = 32;
 const DEFAULT_CONTINENT_SIZE = 100;
 const SPRITE_SIZE = 64;
@@ -94,6 +99,7 @@ export interface WorldMapHandle {
   reconcileExpeditions: (expeditions: ExpeditionSnapshot[]) => void;
   setSelected: (entityId: string | null) => void;
   centerOn: (worldX: number, worldY: number) => void;
+  onCameraChange: (callback: (camera: WorldMapCameraSnapshot) => void) => () => void;
   /** Update the active village halo and authoritative vision disks. */
   setVision: (
     myVillage: { x: number; y: number } | null,
@@ -125,7 +131,7 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     .pinch()
     .wheel({ smooth: 5 })
     .decelerate({ friction: 0.92 })
-    .clampZoom({ minScale: 0.15, maxScale: 4 })
+    .clampZoom({ minScale: 0.15, maxScale: 1 })
     .clamp({ direction: 'all' });
 
   view.addChild(viewport);
@@ -280,6 +286,35 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
   const worldToScene = (point: { x: number; y: number }) => {
     const { px, py } = tileToWorld(point.x, point.y);
     return { x: px, y: py };
+  };
+  const cameraListeners = new Set<(camera: WorldMapCameraSnapshot) => void>();
+  let cameraRaf = 0;
+
+  const readCamera = (): WorldMapCameraSnapshot => {
+    const topLeft = viewport.toWorld(0, 0);
+    const bottomRight = viewport.toWorld(app.screen.width, app.screen.height);
+
+    return {
+      center: {
+        x: viewport.center.x / tileSize,
+        y: viewport.center.y / tileSize,
+      },
+      viewportTiles: {
+        width: Math.abs(bottomRight.x - topLeft.x) / tileSize,
+        height: Math.abs(bottomRight.y - topLeft.y) / tileSize,
+      },
+    };
+  };
+
+  const notifyCameraChange = () => {
+    cameraRaf = 0;
+    const camera = readCamera();
+    cameraListeners.forEach((listener) => listener(camera));
+  };
+
+  const scheduleCameraChange = () => {
+    if (cameraRaf) return;
+    cameraRaf = requestAnimationFrame(notifyCameraChange);
   };
 
   const drawFog = () => {
@@ -511,13 +546,18 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     viewport.moveCenter(centerPx.px, centerPx.py);
     drawActiveVillageHalo();
     drawFog();
+    scheduleCameraChange();
   };
 
   const handleResize = () => {
     viewport.resize(app.screen.width, app.screen.height, worldPx, worldPy);
+    scheduleCameraChange();
   };
 
   const exit = () => {
+    if (cameraRaf) cancelAnimationFrame(cameraRaf);
+    cameraRaf = 0;
+    cameraListeners.clear();
     app.renderer.off('resize', handleResize);
     viewport.removeAllListeners();
     visuals.clear();
@@ -526,6 +566,8 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
   };
 
   app.renderer.on('resize', handleResize);
+  viewport.on('moved', scheduleCameraChange);
+  viewport.on('zoomed', scheduleCameraChange);
 
   const destroyVisual = (id: string) => {
     const visual = visuals.get(id);
@@ -616,6 +658,15 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
   const centerOn = (worldX: number, worldY: number) => {
     const { px, py } = tileToWorld(worldX, worldY);
     viewport.moveCenter(px, py);
+    scheduleCameraChange();
+  };
+
+  const onCameraChange = (callback: (camera: WorldMapCameraSnapshot) => void) => {
+    cameraListeners.add(callback);
+    callback(readCamera());
+    return () => {
+      cameraListeners.delete(callback);
+    };
   };
 
   const setVision = (
@@ -658,5 +709,5 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     },
   };
 
-  return { scene, reconcile, reconcileExpeditions, setSelected, centerOn, setVision, worldToScreen };
+  return { scene, reconcile, reconcileExpeditions, setSelected, centerOn, onCameraChange, setVision, worldToScreen };
 }

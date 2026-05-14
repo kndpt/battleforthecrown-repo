@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { MapEntity } from '@/api/world-types';
 import type { ExpeditionSnapshot } from '@/stores/expeditions';
 import type { VisionDisk } from '@battleforthecrown/shared/world';
@@ -14,9 +14,11 @@ interface WorldMiniMapProps {
   cameraCenter: { x: number; y: number };
   /** Visible viewport size in world tiles (for the camera box). */
   viewportTiles: { width: number; height: number };
+  onRecenter?: (tileX: number, tileY: number) => void;
 }
 
 const SIZE = 180;
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 const KIND_COLOR: Record<string, string> = {
   PLAYER_VILLAGE: 'rgba(200, 150, 100, 0.9)',
@@ -42,8 +44,40 @@ export function WorldMiniMap({
   visionDisks,
   cameraCenter,
   viewportTiles,
+  onRecenter,
 }: WorldMiniMapProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const activePointerIdRef = useRef<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const recenterFromPointer = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    if (!onRecenter) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const tileX = clamp(((event.clientX - rect.left) / rect.width) * gridWidth, 0, gridWidth);
+    const tileY = clamp(((event.clientY - rect.top) / rect.height) * gridHeight, 0, gridHeight);
+    onRecenter(tileX, tileY);
+  };
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    activePointerIdRef.current = event.pointerId;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setIsDragging(true);
+    recenterFromPointer(event);
+  };
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    if (activePointerIdRef.current !== event.pointerId) return;
+    recenterFromPointer(event);
+  };
+
+  const stopDrag = (event: ReactPointerEvent<HTMLCanvasElement>) => {
+    if (activePointerIdRef.current !== event.pointerId) return;
+    activePointerIdRef.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    setIsDragging(false);
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -137,5 +171,14 @@ export function WorldMiniMap({
     viewportTiles,
   ]);
 
-  return <canvas ref={canvasRef} className="rounded-md shadow-lg" />;
+  return (
+    <canvas
+      ref={canvasRef}
+      className={`touch-none rounded-md shadow-lg ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={stopDrag}
+      onPointerCancel={stopDrag}
+    />
+  );
 }

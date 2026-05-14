@@ -1,7 +1,7 @@
 # 62 — Mini-carte interactive : sync bidirectionnel avec la carte principale
 
 **Sévérité** : 🟠 Moyen
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ Résolu
 **Spec amont** : Aucune (pure UX/UI). Connexe : [`61-active-village-map-indicator.md`](./61-active-village-map-indicator.md) et [`runs/archive/021-feature-village-labels-navigation.md`](./runs/archive/021-feature-village-labels-navigation.md) (Phase 9 nav multi-village).
 
 ## Symptôme

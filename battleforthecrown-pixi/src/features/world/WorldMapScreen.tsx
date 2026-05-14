@@ -28,6 +28,7 @@ import { useExpeditionsStore } from '@/stores/expeditions';
 import { useWorldMapStore } from '@/stores/worldMap';
 import type { MapEntity } from '@/api/world-types';
 import type { VisionDisk } from '@battleforthecrown/shared/world';
+import type { WorldMapCameraSnapshot } from '@/pixi/scenes/WorldMapScene';
 import {
   KingdomActivityHudBadges,
   type KingdomActivityTab,
@@ -35,6 +36,7 @@ import {
 
 const FALLBACK_GRID = { gridWidth: 500, gridHeight: 500 };
 const EMPTY_VISION_DISKS: readonly VisionDisk[] = [];
+const FALLBACK_VIEWPORT_TILES = { width: 30, height: 30 };
 
 export function WorldMapScreen() {
   const navigate = useNavigate();
@@ -60,9 +62,21 @@ export function WorldMapScreen() {
   const [isKingdomActivitiesOpen, setIsKingdomActivitiesOpen] = useState(false);
   const [kingdomActivityTab, setKingdomActivityTab] = useState<KingdomActivityTab>('expeditions');
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
+  const [camera, setCamera] = useState<WorldMapCameraSnapshot>({
+    center: { x: FALLBACK_GRID.gridWidth / 2, y: FALLBACK_GRID.gridHeight / 2 },
+    viewportTiles: FALLBACK_VIEWPORT_TILES,
+  });
   const canvasRef = useRef<WorldMapCanvasController | null>(null);
+  const latestCameraRef = useRef(camera);
+  const hasCameraSnapshotRef = useRef(false);
   const visionDisks = worldEntities.data?.visionDisks ?? EMPTY_VISION_DISKS;
   const fogOfWarEnabled = worldEntities.data?.fogOfWarEnabled ?? true;
+  const dims = worldDetails.data
+    ? {
+        gridWidth: worldDetails.data.gridWidth ?? FALLBACK_GRID.gridWidth,
+        gridHeight: worldDetails.data.gridHeight ?? FALLBACK_GRID.gridHeight,
+      }
+    : FALLBACK_GRID;
 
   const allEntities: MapEntity[] = useMemo(
     () => buildMapEntities(worldEntities.data?.entities ?? [], myVillages.data ?? [], userId),
@@ -112,17 +126,26 @@ export function WorldMapScreen() {
     return () => cancelAnimationFrame(raf);
   }, [selectedEntity]);
 
+  useEffect(() => {
+    if (hasCameraSnapshotRef.current) return;
+    const fallbackCamera = {
+      center: myVillage ?? { x: dims.gridWidth / 2, y: dims.gridHeight / 2 },
+      viewportTiles: FALLBACK_VIEWPORT_TILES,
+    };
+    latestCameraRef.current = fallbackCamera;
+    setCamera(fallbackCamera);
+  }, [dims.gridWidth, dims.gridHeight, myVillage]);
+
+  useEffect(() => {
+    if (isMiniMapVisible) {
+      setCamera(latestCameraRef.current);
+    }
+  }, [isMiniMapVisible]);
+
   const canViewWorld = !fogOfWarEnabled || isWatchtowerBuilt || visionDisks.length > 0;
   if (!worldEntities.isLoading && !canViewWorld) {
     return <WorldLockedScreen />;
   }
-
-  const dims = worldDetails.data
-    ? {
-        gridWidth: worldDetails.data.gridWidth ?? FALLBACK_GRID.gridWidth,
-        gridHeight: worldDetails.data.gridHeight ?? FALLBACK_GRID.gridHeight,
-      }
-    : FALLBACK_GRID;
 
   const handleRecenter = () => {
     if (myVillage) {
@@ -161,6 +184,13 @@ export function WorldMapScreen() {
                 myVillage={myVillage}
                 visionDisks={visionDisks}
                 fogOfWarEnabled={fogOfWarEnabled}
+                onCameraChange={(nextCamera) => {
+                  hasCameraSnapshotRef.current = true;
+                  latestCameraRef.current = nextCamera;
+                  if (isMiniMapVisible) {
+                    setCamera(nextCamera);
+                  }
+                }}
                 controllerRef={canvasRef}
               />
             )}
@@ -194,8 +224,9 @@ export function WorldMapScreen() {
                     expeditions={expeditionSnapshots}
                     myVillage={myVillage}
                     visionDisks={visionDisks}
-                    cameraCenter={myVillage ?? { x: dims.gridWidth / 2, y: dims.gridHeight / 2 }}
-                    viewportTiles={{ width: 30, height: 30 }}
+                    cameraCenter={camera.center}
+                    viewportTiles={camera.viewportTiles}
+                    onRecenter={(x, y) => canvasRef.current?.centerOn(x, y)}
                   />
                 )}
                 <Tooltip

@@ -1,25 +1,25 @@
-# Tickets 60 + 61 - WorldMap active village UX
+# Ticket 62 - Interactive minimap sync
 
 ## Plan
 
-- [x] Préflight : Git clean, tickets 60/61 lus, rules/SPEC chargés.
-- [x] Cartographie : inspecter panel d'entité, écran WorldMap, canvas Pixi et tests existants.
-- [x] Implémentation : bouton "Aller à ce village" + halo du village actif.
-- [x] Tests : étendre les tests utiles du panel et vérifier la policy Pixi.
-- [x] Vérification : review diff, tests ciblés, `yarn static-check`, QA front adaptée.
+- [x] Préflight : Git clean, ticket 62 lu, rules/SPEC chargés.
+- [x] Cartographie : inspecter WorldMapScene, WorldMapCanvas, WorldMapScreen, WorldMiniMap.
+- [x] Implémentation : exposer camera subscription, relayer au controller, brancher minimap tap/drag.
+- [x] Tests : vérifier selon policy Pixi/front et lancer les commandes adaptées.
+- [x] Review : contrôler diff, performance rAF, cleanup listeners et absence de boucle.
 - [x] Documentation : vérifier impact doc et justifier.
-- [x] Archive : passer tickets en DONE, archiver, mettre à jour `tasks/README.md`, commit.
+- [x] Archive : passer ticket en DONE, archiver, mettre à jour tasks/README.md, commit.
 
 ## Choix de scope
 
-- Inclus : `60-own-village-popup-goto-button.md` et `61-active-village-map-indicator.md`.
-- Exclu : `62-interactive-minimap-sync.md`, plus large car il introduit une souscription caméra bidirectionnelle.
+- Inclus : sync bidirectionnelle mini-carte <-> caméra principale.
+- Exclu : tests unitaires Pixi/canvas, peu utiles ici selon `bftc-tests-policy`.
 
 ## Review
 
-- `SelectedEntityPanel` affiche "Aller à ce village" seulement sur village possédé inactif et appelle un callback dédié.
-- `WorldMapScreen` bascule le village actif, navigue vers `/game`, puis ferme le popup.
-- `WorldMapScene` remplace le crosshair discret par un halo doré pulsé sous le sprite du village actif.
-- Tests : `SelectedEntityPanel.test.tsx` couvre présence/clic du bouton et absence sur village actif/non possédé.
-- Vérifications : test ciblé, suite Pixi complète, `yarn static-check`, health backend et Vite worktree.
+- `WorldMapScene` expose `onCameraChange` avec snapshot centre/taille visible, écoute `moved` + `zoomed` + resize, et coalesce les émissions en `requestAnimationFrame`.
+- `WorldMapCanvas` relaie le hook via controller et prop, avec cleanup explicite au destroy.
+- `WorldMapScreen` garde la dernière caméra en ref et ne re-render pour le viewbox que lorsque la mini-carte est visible.
+- `WorldMiniMap` supporte tap + drag pointer capturé, avec conversion canvas -> tile clampée et curseur grab/grabbing.
+- Tests : Pixi type-check, Pixi lint, Pixi Vitest avec env Vite, `yarn static-check` racine.
 - Docs : aucun changement nécessaire, UX pure sans invariant gameplay/architecture durable.

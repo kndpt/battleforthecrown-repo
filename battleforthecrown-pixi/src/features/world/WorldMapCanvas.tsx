@@ -2,7 +2,11 @@ import { useCallback, useEffect, useRef, type MutableRefObject } from 'react';
 import { type Application } from 'pixi.js';
 import { PixiCanvas } from '@/pixi/PixiCanvas';
 import { SceneManager } from '@/pixi/scenes/SceneManager';
-import { createWorldMapScene, type WorldMapHandle } from '@/pixi/scenes/WorldMapScene';
+import {
+  createWorldMapScene,
+  type WorldMapCameraSnapshot,
+  type WorldMapHandle,
+} from '@/pixi/scenes/WorldMapScene';
 import { loadBundle } from '@/pixi/assets/loader';
 import { useWorldMapStore } from '@/stores/worldMap';
 import { useExpeditionsStore } from '@/stores/expeditions';
@@ -13,6 +17,7 @@ const EMPTY_VISION_DISKS: readonly VisionDisk[] = [];
 
 export interface WorldMapCanvasController {
   centerOn: (worldX: number, worldY: number) => void;
+  onCameraChange: (callback: (camera: WorldMapCameraSnapshot) => void) => () => void;
   worldToScreen: (tileX: number, tileY: number) => { x: number; y: number };
 }
 
@@ -22,6 +27,7 @@ interface WorldMapCanvasProps {
   myVillage?: MapEntity | null;
   visionDisks?: readonly VisionDisk[];
   fogOfWarEnabled?: boolean;
+  onCameraChange?: (camera: WorldMapCameraSnapshot) => void;
   controllerRef?: MutableRefObject<WorldMapCanvasController | null>;
 }
 
@@ -31,17 +37,20 @@ export function WorldMapCanvas({
   myVillage,
   visionDisks = EMPTY_VISION_DISKS,
   fogOfWarEnabled = true,
+  onCameraChange,
   controllerRef,
 }: WorldMapCanvasProps) {
   const setSelectedEntity = useWorldMapStore((state) => state.setSelectedEntity);
   const handleRef = useRef<WorldMapHandle | null>(null);
   const myVillageRef = useRef(myVillage);
   const visionDisksRef = useRef(visionDisks);
+  const onCameraChangeRef = useRef(onCameraChange);
 
   useEffect(() => {
     myVillageRef.current = myVillage;
     visionDisksRef.current = visionDisks;
-  }, [myVillage, visionDisks]);
+    onCameraChangeRef.current = onCameraChange;
+  }, [myVillage, visionDisks, onCameraChange]);
 
   const onReady = useCallback(
     (app: Application) => {
@@ -62,6 +71,7 @@ export function WorldMapCanvas({
       if (controllerRef) {
         controllerRef.current = {
           centerOn: handle.centerOn,
+          onCameraChange: handle.onCameraChange,
           worldToScreen: handle.worldToScreen,
         };
       }
@@ -88,10 +98,14 @@ export function WorldMapCanvas({
           handle.reconcileExpeditions(Object.values(state.byId));
         }
       });
+      const unsubCamera = handle.onCameraChange((camera) => {
+        onCameraChangeRef.current?.(camera);
+      });
 
       return () => {
         unsubEntities();
         unsubExpeditions();
+        unsubCamera();
         if (controllerRef) controllerRef.current = null;
         handleRef.current = null;
         manager.destroy();
