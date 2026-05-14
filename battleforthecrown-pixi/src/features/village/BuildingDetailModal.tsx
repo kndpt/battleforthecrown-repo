@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from 'react';
-import { Crown, Hammer, Lock, X } from 'lucide-react';
-import { Button, InputHelperText, Modal, ModalBody, ResourceIcon, Spinner } from '@/ui';
+import { useEffect, useState, type ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { Clock, Crown, Hammer, Lock, X, XCircle } from 'lucide-react';
+import { Button, InputHelperText, Modal, ModalBody, ProgressBar, ResourceIcon, Spinner } from '@/ui';
 import { metaFor } from './buildingMeta';
 import { computeConstructionProgress, formatRemaining } from './constructionProgress';
 import { useTickingNow } from '@/lib/useTickingNow';
@@ -8,7 +9,9 @@ import {
   useArmyInventoryQuery,
   useArmyTrainingQuery,
   useBuildingQueueQuery,
+  useCancelTrainingMutation,
   useUpgradeBuildingMutation,
+  queryKeys,
   useCancelConstructionMutation,
   usePopulationQuery,
   useRecruitNobleMutation,
@@ -33,6 +36,8 @@ import { CostSection } from './BuildingDetailModal/CostSection';
 import { BonusSection } from './BuildingDetailModal/BonusSection';
 import { BuildingUnlockPreview } from './BuildingDetailModal/BuildingUnlockPreview';
 import { getBuildingLockState } from './buildingLockState';
+import { computeUnitTrainingProgress } from '@/features/army/trainingProgress';
+import type { ArmyTrainingDto } from '@/api/queries';
 
 interface BuildingDetailModalProps {
   villageId: string;
@@ -49,7 +54,9 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
   );
   const upgrade = useUpgradeBuildingMutation();
   const cancel = useCancelConstructionMutation();
+  const cancelTraining = useCancelTrainingMutation();
   const recruitNoble = useRecruitNobleMutation();
+  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
 
   const isUnderConstruction = progress.inProgress;
@@ -102,9 +109,10 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
   const nobleCost = UNIT_COSTS[UNIT_TYPES.NOBLE];
   const nobleInGarrison =
     armyInventory.data?.find((unit) => unit.type === UNIT_TYPES.NOBLE)?.quantity ?? 0;
-  const nobleInTraining = armyTraining.data?.some(
+  const nobleTraining = armyTraining.data?.find(
     (training) => training.unitType === UNIT_TYPES.NOBLE,
-  ) ?? false;
+  );
+  const nobleInTraining = Boolean(nobleTraining);
   const nobleTimeMs = Math.round(
     (nobleCost.time / (worldConfigQuery.data?.gameSpeed.training ?? 1)) * 1000,
   );
@@ -121,6 +129,19 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
     (displayResources?.iron ?? 0) >= nobleCost.iron &&
     crownsBalance >= (nobleCost.crowns ?? 0) &&
     availablePopulation >= nobleCost.population;
+
+  useEffect(() => {
+    if (!nobleTraining) return;
+    const trainingProgress = computeUnitTrainingProgress(nobleTraining, now);
+    if (
+      trainingProgress.totalRemainingMs === 0 &&
+      nobleTraining.completedQty < nobleTraining.totalQty
+    ) {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.armyTraining(villageId),
+      });
+    }
+  }, [nobleTraining, now, queryClient, villageId]);
 
   const handleUpgrade = () => {
     if (isUnbuiltLocked) return;
@@ -156,6 +177,19 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
       {
         onError: (err) => {
           setError(err instanceof ApiError ? err.message : 'Échec du recrutement du Noble');
+        },
+      },
+    );
+  };
+
+  const handleCancelNobleTraining = () => {
+    if (!nobleTraining) return;
+    setError(null);
+    cancelTraining.mutate(
+      { villageId, trainingId: nobleTraining.id },
+      {
+        onError: (err) => {
+          setError(err instanceof ApiError ? err.message : "Échec de l'annulation");
         },
       },
     );
@@ -275,31 +309,42 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
                 />
               </div>
 
-              <Button
-                variant={canAffordNoble ? 'warning' : 'neutral'}
-                size="md"
-                className="w-full font-bold"
-                disabled={!canAffordNoble || recruitNoble.isPending}
-                onClick={handleRecruitNoble}
-              >
-                {recruitNoble.isPending ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <Spinner size="sm" />
-                    <span>Recrutement...</span>
-                  </div>
-                ) : nobleInTraining ? (
-                  'Noble déjà en formation'
-                ) : nobleInGarrison ? (
-                  'Noble déjà disponible'
-                ) : canAffordNoble ? (
-                  'Recruter le Noble'
-                ) : (
-                  'Prérequis insuffisants'
-                )}
-              </Button>
-              <p className="text-center text-xs text-kingdom-600 font-game">
-                Temps de recrutement : <span className="font-bold">{formatRemaining(nobleTimeMs)}</span>
-              </p>
+              {nobleTraining && (
+                <NobleTrainingProgress
+                  training={nobleTraining}
+                  now={now}
+                  cancelPending={cancelTraining.isPending}
+                  onCancel={handleCancelNobleTraining}
+                />
+              )}
+
+              {!nobleTraining && (
+                <>
+                  <Button
+                    variant={canAffordNoble ? 'warning' : 'neutral'}
+                    size="md"
+                    className="w-full font-bold"
+                    disabled={!canAffordNoble || recruitNoble.isPending}
+                    onClick={handleRecruitNoble}
+                  >
+                    {recruitNoble.isPending ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <Spinner size="sm" />
+                        <span>Recrutement...</span>
+                      </div>
+                    ) : nobleInGarrison ? (
+                      'Noble déjà disponible'
+                    ) : canAffordNoble ? (
+                      'Recruter le Noble'
+                    ) : (
+                      'Prérequis insuffisants'
+                    )}
+                  </Button>
+                  <p className="text-center text-xs text-kingdom-600 font-game">
+                    Temps de recrutement : <span className="font-bold">{formatRemaining(nobleTimeMs)}</span>
+                  </p>
+                </>
+              )}
             </div>
           )}
 
@@ -404,6 +449,65 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
         </div>
       </ModalBody>
     </Modal>
+  );
+}
+
+interface NobleTrainingProgressProps {
+  cancelPending: boolean;
+  now: number;
+  onCancel: () => void;
+  training: ArmyTrainingDto;
+}
+
+function NobleTrainingProgress({
+  cancelPending,
+  now,
+  onCancel,
+  training,
+}: NobleTrainingProgressProps) {
+  const progress = computeUnitTrainingProgress(training, now);
+  const eta = new Date(progress.finishedAtMs).toLocaleTimeString('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  return (
+    <div className="rounded-lg border-2 border-game-gold-border/50 bg-kingdom-50/80 p-3 shadow-inner">
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 font-cinzel text-sm font-bold text-kingdom-900">
+            <Clock size={16} className="text-game-gold-dark" />
+            <span>Noble en formation</span>
+          </div>
+          <p className="mt-1 text-xs text-kingdom-700">
+            {progress.displayedCompletedQty}/{training.totalQty} · fin à {eta}
+          </p>
+        </div>
+        <Button
+          variant="danger"
+          size="sm"
+          className="shrink-0 !px-2"
+          disabled={cancelPending}
+          onClick={onCancel}
+        >
+          <div className="flex items-center justify-center gap-1">
+            {cancelPending ? <Spinner size="sm" /> : <XCircle size={14} />}
+            <span>Annuler</span>
+          </div>
+        </Button>
+      </div>
+      <ProgressBar
+        value={progress.percent}
+        variant="warning"
+        size="sm"
+        animated
+        showPercentage={false}
+      />
+      <div className="mt-2 flex items-center justify-between text-xs font-game text-kingdom-700">
+        <span>Restant : {formatRemaining(progress.totalRemainingMs)}</span>
+        <span>Jalon : {formatRemaining(progress.currentUnitRemainingMs)}</span>
+      </div>
+    </div>
   );
 }
 

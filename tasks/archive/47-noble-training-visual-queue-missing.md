@@ -1,7 +1,7 @@
 # 47 — Queue visuelle de formation du Noble manquante
 
 **Sévérité** : 🟠 Moyenne  
-**Statut** : 🆕 Ouvert  
+**Statut** : ✅ Résolu  
 **Décision UX** : la formation du Noble doit afficher une progression visuelle comme les troupes de Caserne.
 
 ## Symptôme

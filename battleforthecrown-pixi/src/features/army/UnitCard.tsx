@@ -30,6 +30,7 @@ import { useGameStore } from "@/stores/game";
 import { useUiStore } from "@/stores/ui";
 import { useTickingNow } from "@/lib/useTickingNow";
 import { unitMetaFor } from "./unitConfig";
+import { computeUnitTrainingProgress } from "./trainingProgress";
 
 interface UnitCardProps {
   unit: ArmyUnitDto;
@@ -79,9 +80,8 @@ export function UnitCard({
   // refetch on every tick until the server catches up and removes it.
   useEffect(() => {
     if (!training || !villageId) return;
-    const totalDurationMs =
-      training.totalQty * Math.max(1, training.timePerUnitMs);
-    const overdue = now - Date.parse(training.createdAt) >= totalDurationMs;
+    const trainingProgress = computeUnitTrainingProgress(training, now);
+    const overdue = trainingProgress.totalRemainingMs === 0;
     if (overdue && training.completedQty < training.totalQty) {
       queryClient.invalidateQueries({
         queryKey: queryKeys.armyTraining(villageId),
@@ -139,25 +139,9 @@ export function UnitCard({
     );
   }, [totalCost, display, availablePopulation]);
 
-  let progress = 0;
-  let totalRemainingMs = 0;
-  let perUnitRemainingMs = 0;
-  let displayedCompletedQty = training?.completedQty ?? 0;
-  if (training) {
-    const perUnitMs = Math.max(1, training.timePerUnitMs);
-    const totalDurationMs = training.totalQty * perUnitMs;
-    const elapsedMs = Math.min(
-      totalDurationMs,
-      Math.max(0, now - Date.parse(training.createdAt)),
-    );
-    totalRemainingMs = totalDurationMs - elapsedMs;
-    perUnitRemainingMs = perUnitMs - (elapsedMs % perUnitMs);
-    progress = Math.min(100, (elapsedMs / Math.max(1, totalDurationMs)) * 100);
-    displayedCompletedQty = Math.max(
-      training.completedQty,
-      Math.floor(elapsedMs / perUnitMs),
-    );
-  }
+  const trainingProgress = training
+    ? computeUnitTrainingProgress(training, now)
+    : null;
 
   const stop = (event: React.MouseEvent) => event.stopPropagation();
 
@@ -287,22 +271,26 @@ export function UnitCard({
                 <div className="flex items-center gap-1 font-semibold text-game-gold-dark">
                   <Clock size={12} />
                   <span>
-                    {displayedCompletedQty}/{training.totalQty}
+                    {trainingProgress?.displayedCompletedQty ?? 0}/
+                    {training.totalQty}
                   </span>
                 </div>
                 <span className="text-game-gold-dark font-medium">
-                  {formatProgressTime(totalRemainingMs)}
+                  {formatProgressTime(trainingProgress?.totalRemainingMs ?? 0)}
                 </span>
               </div>
               <ProgressBar
-                value={progress}
+                value={trainingProgress?.percent ?? 0}
                 variant="warning"
                 size="sm"
                 animated
                 showPercentage={false}
               />
               <p className="text-[10px] text-center text-game-gold-dark font-medium">
-                Prochaine dans {formatProgressTime(perUnitRemainingMs)}
+                Prochaine dans{" "}
+                {formatProgressTime(
+                  trainingProgress?.currentUnitRemainingMs ?? 0,
+                )}
               </p>
             </div>
           ) : !isLocked && cost && totalCost ? (

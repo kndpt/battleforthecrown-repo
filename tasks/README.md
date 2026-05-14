@@ -7,7 +7,6 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 - [54 — Retour fantôme pendant capture avec Seigneur](./54-conquest-capture-phantom-return.md) — 🟡 Majeur. Une capture avec Seigneur survivant peut encore planifier un retour si du loot existe, ce qui affiche un cheval alors que toute l'escorte reste en occupation.
 - [56 — Popup village possédé : afficher les troupes présentes](./56-own-village-popup-troops-list.md) — 🟠 Moyen. Le callout sur clic d'un village qu'on possède n'affiche pas les troupes à quai (natives + renforts) ; il faut ouvrir l'écran Armée pour les voir.
 - [51 — Standardiser les bottom sheets sur le design `Activités du royaume`](./51-bottom-sheet-design-system-base.md) — 🟠 Moyen. Faire du nouveau panneau la base design-system des bottom sheets actuels et futurs.
-- [47 — Queue visuelle de formation du Noble manquante](./47-noble-training-visual-queue-missing.md) — 🟠 Moyen. La Salle du Trône indique que le Noble est en formation, mais n'affiche pas de progression/temps restant comme la Caserne.
 
 ## Tickets découpés
 
@@ -51,6 +50,7 @@ Fiches d'exécution déléguées aux harnesses Claude Code ou Codex (lead + sub-
 
 ## Archivés
 
+- [47 — Queue visuelle de formation du Noble manquante](./archive/47-noble-training-visual-queue-missing.md) ✅ Résolu 2026-05-14 par $run @tasks/47-noble-training-visual-queue-missing.md
 - [52 — Multiplier de vitesse pour les durées de capture/conquête](./archive/52-conquest-capture-time-speed-multiplier.md) ✅ Résolu 2026-05-13 par $run @tasks/52-conquest-capture-time-speed-multiplier.md
 - [53 — Rapport défenseur manquant quand une capture est attaquée](./archive/53-capture-occupation-defense-report-missing.md) ✅ Résolu 2026-05-13 par $run @tasks/53-capture-occupation-defense-report-missing.md
 - [50 — Intégration HUD et bottom sheet des activités du royaume](./archive/50-kingdom-activities-bottom-sheet-integration.md) ✅ Résolu 2026-05-13 par $run @tasks/46-capture-window-tracker-missing.md @tasks/50-kingdom-activities-bottom-sheet-integration.md
