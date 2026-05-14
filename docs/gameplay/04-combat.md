@@ -1,6 +1,6 @@
 # Combat
 
-Mécanique de résolution des combats, conquête, styles stratégiques de village. Le **catalogue des unités** (stats, coûts, passifs) vit dans [`08-units.md`](./08-units.md). Le **système de puissance** (calcul, poids, visibilité) est consolidé dans [`09-power-and-rankings.md`](./09-power-and-rankings.md).
+Mécanique de résolution des combats, conquête, styles stratégiques de village. Le **catalogue des unités** (stats, coûts, archétypes) vit dans [`08-units.md`](./08-units.md). Le **système de puissance** (calcul, poids, visibilité) est consolidé dans [`09-power-and-rankings.md`](./09-power-and-rankings.md).
 
 ## Mécanique générale
 
@@ -18,7 +18,7 @@ Détail technique côté backend dans [`docs/architecture/backend-modules.md` §
 
 - **Raid victorieux** : pertes selon le ratio puissance attaque vs défense, butin proportionnel à la capacité de transport restante.
 - **Raid perdu** : si toute l'armée attaquante est détruite, l'expédition se termine sur place : aucun trajet retour visuel, aucune restitution de troupes ou loot. Cible peut perdre quelques ressources stockées.
-- **Défense** : armée stationnée applique sa puissance défensive + bonus stratégie + Wall (post-MVP).
+- **Défense** : armée stationnée applique sa puissance défensive + bonus stratégie + Wall (post-MVP). La stat défensive consommée dépend de l'archétype attaquant : infanterie/siège/scout/conquête → `defenseInfantry`, cavalerie → `defenseCavalry`, archers → `defenseArcher`. Pour une armée mixte, la défense effective est pondérée par la puissance d'attaque de chaque archétype. Valeurs unitaires : [`08-units.md`](./08-units.md).
 
 Cas particulier des villages barbares (rapport de combat asymétrique selon victoire/défaite) : [`06-barbarians.md` § Rapport de combat](./06-barbarians.md#rapport-de-combat).
 

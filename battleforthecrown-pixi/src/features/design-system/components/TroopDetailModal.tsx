@@ -28,14 +28,6 @@ export interface TroopDetailCost {
   wood: number;
 }
 
-export interface TroopDetailPassive {
-  bonus: string;
-  description: string;
-  icon: ReactNode;
-  name: string;
-  watermarkIcon?: ReactNode;
-}
-
 export interface TroopDetailLabels {
   attack: string;
   carryCapacity: string;
@@ -68,7 +60,6 @@ export interface TroopDetailModalProps {
   maxHeight?: number | string;
   name: string;
   onClose?: () => void;
-  passive?: TroopDetailPassive | null;
   populationCost: number;
   portraitFallback?: ReactNode;
   portraitSrc?: string | null;
@@ -333,32 +324,6 @@ function SubStat({
   );
 }
 
-function PassiveCard({ passive }: { passive: TroopDetailPassive }) {
-  return (
-    <div className="relative mx-3.5 flex items-center gap-[9px] overflow-hidden rounded-xl border-2 border-[#9e7b0d] bg-[linear-gradient(to_bottom,#fff7e0_0%,#f3df9e_100%)] px-2.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,.6),0_2px_0_rgba(0,0,0,.12)]">
-      <span className="pointer-events-none absolute -right-2.5 -top-2 font-game text-[64px] font-black leading-none text-[rgba(154,121,28,.18)]">
-        {passive.watermarkIcon ?? passive.icon}
-      </span>
-      <div className="relative flex size-[30px] shrink-0 items-center justify-center rounded-lg border-2 border-[#9e7b0d] bg-[linear-gradient(to_bottom,#f1c40f,#d4a017)] font-game text-base font-black text-[#3a2a00] shadow-[inset_0_1px_0_rgba(255,255,255,.5)]">
-        {passive.icon}
-      </div>
-      <div className="relative min-w-0 flex-1">
-        <div className="flex items-baseline gap-1.5">
-          <span className="font-game text-[12.5px] font-extrabold tracking-[.02em] text-[#3a2a00]">
-            {passive.name}
-          </span>
-          <span className="font-game text-[11px] font-black text-[#7d4e08] tabular-nums">
-            {passive.bonus}
-          </span>
-        </div>
-        <div className="font-game text-[10.5px] leading-[1.3] text-[#6b4d10]">
-          {passive.description}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function CostChip({
   ok,
   resource,
@@ -458,7 +423,6 @@ export function TroopDetailModal({
   maxHeight = "min(720px, calc(100dvh - 24px))",
   name,
   onClose,
-  passive,
   populationCost,
   portraitFallback,
   portraitSrc,
@@ -556,12 +520,6 @@ export function TroopDetailModal({
           />
         </div>
 
-        {passive ? (
-          <>
-            <div className="h-2.5" />
-            <PassiveCard passive={passive} />
-          </>
-        ) : null}
         <div className="h-3 shrink-0" />
       </div>
     </BaseModal>

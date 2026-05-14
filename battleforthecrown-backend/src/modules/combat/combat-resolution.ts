@@ -2,6 +2,8 @@ import { getStrategyBonusValue } from '@battleforthecrown/shared/village';
 import {
   getUnitStats,
   UNIT_TYPES,
+  type UnitStats,
+  type UnitType,
   type UnitMap,
 } from '@battleforthecrown/shared/army';
 import { typedEntries } from '@battleforthecrown/shared/utils';
@@ -15,6 +17,8 @@ export interface CombatOutcome {
 }
 
 type RandomSource = () => number;
+type DefenseStat = 'defenseInfantry' | 'defenseCavalry' | 'defenseArcher';
+type DefenseStatWeights = Record<DefenseStat, number>;
 
 const NOBLE_LOSS_CHANCE_BY_ATTACKER_LOSS_RATIO = [
   [0.5, 0.01],
@@ -119,13 +123,15 @@ function sumAttackPower(units: UnitMap): number {
 
 function sumDefensePower(context: CombatContext): number {
   let total = 0;
+  const defenseStatWeights = getDefenseStatWeights(context.attacker.units);
 
   for (const participant of context.defender.participants) {
     let participantDefensePower = 0;
     for (const [unitType, quantity] of typedEntries(participant.units)) {
       const stats = getUnitStats(unitType);
       if (stats) {
-        participantDefensePower += stats.defenseInfantry * quantity;
+        participantDefensePower +=
+          getWeightedDefensePower(stats, defenseStatWeights) * quantity;
       }
     }
 
@@ -145,6 +151,63 @@ function sumDefensePower(context: CombatContext): number {
   }
 
   return total;
+}
+
+export function getDefenseStatForAttackerUnit(
+  attackerUnitType: UnitType,
+): DefenseStat {
+  if (attackerUnitType === UNIT_TYPES.CAVALRY) {
+    return 'defenseCavalry';
+  }
+
+  if (attackerUnitType === UNIT_TYPES.ARCHER) {
+    return 'defenseArcher';
+  }
+
+  return 'defenseInfantry';
+}
+
+export function getDefenseStatWeights(
+  attackerUnits: UnitMap,
+): DefenseStatWeights {
+  const weights: DefenseStatWeights = {
+    defenseArcher: 0,
+    defenseCavalry: 0,
+    defenseInfantry: 0,
+  };
+  let totalAttackPower = 0;
+
+  for (const [unitType, quantity] of typedEntries(attackerUnits)) {
+    const stats = getUnitStats(unitType);
+    if (!stats) {
+      continue;
+    }
+
+    const attackPower = stats.attack * quantity;
+    weights[getDefenseStatForAttackerUnit(unitType)] += attackPower;
+    totalAttackPower += attackPower;
+  }
+
+  if (totalAttackPower <= 0) {
+    return { defenseArcher: 0, defenseCavalry: 0, defenseInfantry: 1 };
+  }
+
+  return {
+    defenseArcher: weights.defenseArcher / totalAttackPower,
+    defenseCavalry: weights.defenseCavalry / totalAttackPower,
+    defenseInfantry: weights.defenseInfantry / totalAttackPower,
+  };
+}
+
+export function getWeightedDefensePower(
+  stats: Pick<UnitStats, DefenseStat>,
+  weights: DefenseStatWeights,
+): number {
+  return (
+    stats.defenseInfantry * weights.defenseInfantry +
+    stats.defenseCavalry * weights.defenseCavalry +
+    stats.defenseArcher * weights.defenseArcher
+  );
 }
 
 function applyLossRatio(units: UnitMap, lossRatio: number): UnitMap {

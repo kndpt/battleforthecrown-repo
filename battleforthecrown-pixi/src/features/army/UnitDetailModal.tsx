@@ -4,7 +4,6 @@ import {
   TROOP_DETAIL_FIELD_MAX,
   TROOP_DETAIL_LABELS_FR,
   TroopDetailModal as DesignTroopDetailModal,
-  type TroopDetailPassive,
   type TroopDetailRoleTone,
 } from '@/features/design-system/components';
 import { useDisplayCrowns, useDisplayResources } from '@/features/resources/useDisplayResources';
@@ -14,7 +13,6 @@ import {
   UNIT_COSTS,
   UNIT_STATS,
   UNIT_TYPES,
-  type UnitPassive,
   type UnitType,
 } from '@battleforthecrown/shared/army';
 import { unitMetaFor } from './unitConfig';
@@ -41,67 +39,6 @@ function formatDuration(seconds: number): string {
   if (hours > 0) return `${hours} h ${minutes} m`;
   if (minutes > 0) return `${minutes} m ${secs} s`;
   return `${secs} s`;
-}
-
-function formatBonus(value: number): string {
-  return `+${Math.round(value * 100)} %`;
-}
-
-function passiveFor(passive: UnitPassive | null, unitName: string): TroopDetailPassive | null {
-  if (!passive) return null;
-
-  if (passive.kind === 'attackVsUnits') {
-    const targets = passive.targets.map((target) => unitMetaFor(target).name).join(', ');
-    return {
-      bonus: formatBonus(passive.bonus),
-      description: `${formatBonus(passive.bonus)} d’attaque contre ${targets}.`,
-      icon: '⚔',
-      name: 'Avantage tactique',
-    };
-  }
-
-  if (passive.kind === 'attackVsWall') {
-    return {
-      bonus: formatBonus(passive.bonus),
-      description: `${formatBonus(passive.bonus)} d’attaque contre les remparts.`,
-      icon: '💥',
-      name: 'Briseur de remparts',
-    };
-  }
-
-  if (passive.kind === 'attackOnRaid') {
-    return {
-      bonus: formatBonus(passive.bonus),
-      description: `${formatBonus(passive.bonus)} d’attaque lorsque la troupe participe à un raid.`,
-      icon: '⚡',
-      name: 'Frénésie du pillard',
-    };
-  }
-
-  if (passive.kind === 'defenseOnGarrison') {
-    return {
-      bonus: formatBonus(passive.bonus),
-      description: `${formatBonus(passive.bonus)} de défense lorsque ${unitName} tient une garnison.`,
-      icon: '⛨',
-      name: 'Mur vivant',
-    };
-  }
-
-  if (passive.kind === 'aoeDamage') {
-    return {
-      bonus: 'Zone',
-      description: 'Inflige des dégâts de siège répartis sur plusieurs lignes.',
-      icon: '✹',
-      name: 'Impact de zone',
-    };
-  }
-
-  return {
-    bonus: 'Discret',
-    description: 'Spécialisé dans la reconnaissance et l’espionnage.',
-    icon: '◉',
-    name: 'Reconnaissance',
-  };
 }
 
 function roleFor(type: UnitType, stats: typeof UNIT_STATS[UnitType]): { archetype: string; label: string; tone: TroopDetailRoleTone } {
@@ -148,7 +85,6 @@ export function UnitDetailModal({ onClose, unit }: UnitDetailModalProps) {
     wood: display?.wood ?? 0,
   };
   const role = roleFor(unitType, stats);
-  const passive = passiveFor(stats.passive, meta.name);
   const perUnitSeconds = trainingMultiplier ? cost.time / trainingMultiplier : cost.time;
 
   return (
@@ -167,7 +103,6 @@ export function UnitDetailModal({ onClose, unit }: UnitDetailModalProps) {
           labels={TROOP_DETAIL_LABELS_FR}
           name={meta.name}
           onClose={onClose}
-          passive={passive}
           populationCost={cost.population}
           portraitFallback={meta.emoji}
           portraitSrc={meta.iconPath}

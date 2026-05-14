@@ -111,12 +111,6 @@ const troopDetailFixture = {
   closeLabel: 'Fermer',
   cost: { crowns: 0, iron: 45, stone: 0, wood: 30 },
   name: 'Guerrier',
-  passive: {
-    bonus: '+10 %',
-    description: '+10 % d’attaque lorsque la troupe participe à un raid.',
-    icon: '⚡',
-    name: 'Frénésie du pillard',
-  },
   populationCost: 1,
   portraitSrc: '/assets/army/savage.png',
   roleLabel: 'Offensif',
@@ -1695,7 +1689,6 @@ export function DesignSystemPreview() {
                 labels={TROOP_DETAIL_LABELS_FR}
                 name={troopDetailFixture.name}
                 onClose={() => undefined}
-                passive={troopDetailFixture.passive}
                 populationCost={troopDetailFixture.populationCost}
                 portraitSrc={troopDetailFixture.portraitSrc}
                 roleLabel={troopDetailFixture.roleLabel}
