@@ -26,7 +26,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ### Runs actifs
 
-_(Aucun run actif.)_
+- [023 — migrate runtime toasts design system](./runs/023-migrate-runtime-toasts-design-system.md) — 📋 `PLANNED`. Remplacer les toasts runtime par le composant toast du design-system et clarifier l'ancien système concurrent.
 
 ### Runs archivés
 
