@@ -4,6 +4,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
+- [62 — Mini-carte interactive : sync bidirectionnel avec la carte principale](./62-interactive-minimap-sync.md) — 🟠 Moyen. Drag/tap sur la mini-carte recentre la map principale, et pan/zoom de la map principale déplace le viewbox de la mini-carte en temps réel.
 - [61 — Indicateur visuel du village actif sur la WorldMap](./61-active-village-map-indicator.md) — 🟠 Moyen. Halo doré pulsé autour du village actif pour le distinguer des autres sprites en multi-village ; crosshair actuel trop discret remplacé.
 - [60 — Popup village possédé : bouton « Aller à ce village »](./60-own-village-popup-goto-button.md) — 🟢 Mineur. Sur la worldmap, ajouter un bouton dans le panel d'info pour basculer directement sur un autre village m'appartenant.
 - [57 — Source canonique du lifecycle des bâtiments joueur](./57-player-village-building-lifecycle-roster.md) — 🟡 Majeur. Centraliser la politique join/conquête/backfill des bâtiments pour éviter les oublis à chaque nouveau bâtiment activé.
