@@ -25,6 +25,8 @@
 
 **Invariant ajout bâtiment joueur** : tout nouveau `BUILDING_TYPES.*` activé pour les villages joueurs doit être ajouté à `INITIAL_BUILDINGS` dans `JoinWorldUseCase`, généralement en `level: 0` si le bâtiment est débloqué plus tard. `GET /village/buildings` expose les rows DB réelles et ne synthétise pas de bâtiments manquants pour masquer une donnée ancienne. Si des villages existants doivent recevoir le nouveau bâtiment, choisir explicitement entre reset utilisateur, migration/backfill non destructif, ou laisser l'ancien état inchangé.
 
+**Invariant conquête barbare** : la finalisation de conquête matérialise les bâtiments économiques/militaires de base au niveau du tier capturé, puis crée les bâtiments activés restants en `level: 0` pour conserver les mêmes unlocks frontend qu'un village joueur initial. Les bâtiments désactivés restent absents.
+
 ### Villages joueurs
 
 | Table | Rôle |

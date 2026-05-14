@@ -21,6 +21,7 @@ import {
   BUILDING_TYPES,
   getBuildingLevelValues,
   getFarmPopulationLimit,
+  isBuildingEnabled,
   type BuildingType,
 } from '@battleforthecrown/shared/village';
 
@@ -35,6 +36,17 @@ const BARBARIAN_CONQUEST_BUILDINGS = [
   BUILDING_TYPES.FARM,
   BUILDING_TYPES.BARRACKS,
 ] as const satisfies readonly BuildingType[];
+
+const BARBARIAN_CONQUEST_BUILDING_SET = new Set<BuildingType>(
+  BARBARIAN_CONQUEST_BUILDINGS,
+);
+
+const BARBARIAN_CONQUEST_UNBUILT_BUILDINGS = (
+  Object.values(BUILDING_TYPES) as BuildingType[]
+).filter(
+  (type) =>
+    isBuildingEnabled(type) && !BARBARIAN_CONQUEST_BUILDING_SET.has(type),
+);
 
 const BARBARIAN_CONQUEST_LEVEL_BY_TIER = {
   T1: 1,
@@ -411,13 +423,18 @@ export class ConquestService {
         BARBARIAN_CONQUEST_LEVEL_BY_TIER[
           target.tier as keyof typeof BARBARIAN_CONQUEST_LEVEL_BY_TIER
         ] ?? 1;
-      const materializedBuildings = BARBARIAN_CONQUEST_BUILDINGS.map(
-        (type) => ({
+      const materializedBuildings = [
+        ...BARBARIAN_CONQUEST_BUILDINGS.map((type) => ({
           villageId: targetVillageId,
           type,
           level: materializedLevel,
-        }),
-      );
+        })),
+        ...BARBARIAN_CONQUEST_UNBUILT_BUILDINGS.map((type) => ({
+          villageId: targetVillageId,
+          type,
+          level: 0,
+        })),
+      ];
       const usedPopulation = calculateBuildingPopulationUsed(
         materializedBuildings,
       );

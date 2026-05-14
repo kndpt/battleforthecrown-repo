@@ -16,11 +16,13 @@ import { UNIT_COSTS, UNIT_TYPES } from '@battleforthecrown/shared/army';
 import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
 import {
   BUILDING_TYPES,
+  isBuildingEnabled,
   getBuildingLevelValues,
   getFarmPopulationLimit,
+  type BuildingType,
 } from '@battleforthecrown/shared/village';
 
-const EXPECTED_T2_BUILDINGS = [
+const EXPECTED_MATERIALIZED_BUILDINGS = [
   BUILDING_TYPES.BARRACKS,
   BUILDING_TYPES.CASTLE,
   BUILDING_TYPES.FARM,
@@ -28,9 +30,24 @@ const EXPECTED_T2_BUILDINGS = [
   BUILDING_TYPES.STONE,
   BUILDING_TYPES.WAREHOUSE,
   BUILDING_TYPES.WOOD,
-];
+] as const satisfies readonly BuildingType[];
+const EXPECTED_MATERIALIZED_BUILDING_SET = new Set<BuildingType>(
+  EXPECTED_MATERIALIZED_BUILDINGS,
+);
+const EXPECTED_UNBUILT_BUILDINGS = (
+  Object.values(BUILDING_TYPES) as BuildingType[]
+)
+  .filter(
+    (type) =>
+      isBuildingEnabled(type) && !EXPECTED_MATERIALIZED_BUILDING_SET.has(type),
+  )
+  .sort();
+const EXPECTED_T2_BUILDINGS = [
+  ...EXPECTED_MATERIALIZED_BUILDINGS,
+  ...EXPECTED_UNBUILT_BUILDINGS,
+].sort();
 const EXPECTED_T2_LEVEL = 1;
-const EXPECTED_T2_BUILDING_POPULATION = EXPECTED_T2_BUILDINGS.reduce(
+const EXPECTED_T2_BUILDING_POPULATION = EXPECTED_MATERIALIZED_BUILDINGS.reduce(
   (total, type) =>
     total + (getBuildingLevelValues(type, EXPECTED_T2_LEVEL)?.population ?? 0),
   0,
@@ -157,16 +174,24 @@ describe('conquest finalize smoke', () => {
       EXPECTED_T2_BUILDINGS,
     );
     expect(
-      buildingsByType.every((building) => building.level === EXPECTED_T2_LEVEL),
-    ).toBe(true);
-    expect(buildingsByType.map((building) => building.type)).not.toContain(
-      BUILDING_TYPES.WATCHTOWER,
+      buildingsByType.filter((building) =>
+        EXPECTED_MATERIALIZED_BUILDING_SET.has(building.type as BuildingType),
+      ),
+    ).toEqual(
+      [...EXPECTED_MATERIALIZED_BUILDINGS]
+        .sort()
+        .map((type) =>
+          expect.objectContaining({ type, level: EXPECTED_T2_LEVEL }),
+        ),
     );
-    expect(buildingsByType.map((building) => building.type)).not.toContain(
-      BUILDING_TYPES.COUNCIL_HALL,
-    );
-    expect(buildingsByType.map((building) => building.type)).not.toContain(
-      BUILDING_TYPES.THRONE_HALL,
+    expect(
+      buildingsByType.filter((building) =>
+        EXPECTED_UNBUILT_BUILDINGS.includes(building.type as BuildingType),
+      ),
+    ).toEqual(
+      EXPECTED_UNBUILT_BUILDINGS.map((type) =>
+        expect.objectContaining({ type, level: 0 }),
+      ),
     );
     expect(conquered.unitInventory).toHaveLength(0);
     expect(originPopulation.used).toBe(17);

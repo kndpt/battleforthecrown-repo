@@ -1,7 +1,7 @@
 # 55 — Bâtiments avancés absents après conquête d'un village barbare
 
 **Sévérité** : 🟠 Moyenne
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ Résolu
 
 ## Symptôme
 

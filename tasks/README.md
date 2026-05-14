@@ -50,6 +50,7 @@ Fiches d'exécution déléguées aux harnesses Claude Code ou Codex (lead + sub-
 
 ## Archivés
 
+- [55 — Bâtiments avancés absents après conquête d'un village barbare](./archive/55-conquered-village-missing-advanced-buildings.md) ✅ Résolu 2026-05-14 par $run @tasks/55-conquered-village-missing-advanced-buildings.md
 - [47 — Queue visuelle de formation du Noble manquante](./archive/47-noble-training-visual-queue-missing.md) ✅ Résolu 2026-05-14 par $run @tasks/47-noble-training-visual-queue-missing.md
 - [52 — Multiplier de vitesse pour les durées de capture/conquête](./archive/52-conquest-capture-time-speed-multiplier.md) ✅ Résolu 2026-05-13 par $run @tasks/52-conquest-capture-time-speed-multiplier.md
 - [53 — Rapport défenseur manquant quand une capture est attaquée](./archive/53-capture-occupation-defense-report-missing.md) ✅ Résolu 2026-05-13 par $run @tasks/53-capture-occupation-defense-report-missing.md
