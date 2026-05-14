@@ -92,10 +92,7 @@ export function ArmyScreen() {
   return (
     <div className="h-screen w-full flex flex-col overflow-hidden bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
       <div className="flex-shrink">
-        <GameHeader
-          onPowerClick={() => setIsPowerSheetOpen(true)}
-          onNotificationsClick={() => setIsExpeditionsOpen(true)}
-        />
+        <GameHeader onPowerClick={() => setIsPowerSheetOpen(true)} />
       </div>
 
       <div

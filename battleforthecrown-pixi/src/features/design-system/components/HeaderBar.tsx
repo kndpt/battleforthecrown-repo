@@ -6,6 +6,8 @@ export interface HeaderBarStat {
   icon: string;
   label: string;
   value: string;
+  fillRatio?: number;
+  onClick?: () => void;
 }
 
 export interface HeaderBarProps extends HTMLAttributes<HTMLElement> {
@@ -17,17 +19,42 @@ export interface HeaderBarProps extends HTMLAttributes<HTMLElement> {
   resources: [HeaderBarStat, HeaderBarStat, HeaderBarStat];
 }
 
-function HeaderPill({ className, icon, label, value }: HeaderBarStat & { className?: string }) {
-  return (
-    <div
-      aria-label={`${label} ${value}`}
-      className={cn(
-        'inline-flex min-w-0 items-center justify-center gap-[5px] rounded-full border-2 border-[rgba(255,255,255,.15)] bg-[rgba(0,0,0,.35)] px-2 py-0.5 font-game text-[11px] font-bold text-white shadow-none [font-variant-numeric:tabular-nums] [text-shadow:1px_1px_2px_rgba(0,0,0,.6)]',
-        className,
+function HeaderPill({ className, icon, label, value, fillRatio, onClick }: HeaderBarStat & { className?: string }) {
+  const ratio = fillRatio === undefined ? undefined : Math.max(0, Math.min(1, fillRatio));
+  const isAtCapacity = ratio !== undefined && ratio >= 1;
+  const baseClass = cn(
+    'relative inline-flex min-w-0 items-center justify-center gap-[5px] overflow-hidden rounded-full border-2 border-[rgba(255,255,255,.15)] bg-[rgba(0,0,0,.35)] px-2 py-0.5 font-game text-[11px] font-bold text-white shadow-none [font-variant-numeric:tabular-nums] [text-shadow:1px_1px_2px_rgba(0,0,0,.6)]',
+    onClick && 'cursor-pointer transition-transform active:scale-95',
+    className,
+  );
+  const content = (
+    <>
+      {ratio !== undefined && (
+        <span
+          aria-hidden="true"
+          className={cn(
+            'pointer-events-none absolute inset-y-0 left-0 transition-[width] duration-300',
+            isAtCapacity
+              ? 'bg-gradient-to-r from-red-500/35 to-red-400/45'
+              : 'bg-gradient-to-r from-white/25 to-white/10',
+          )}
+          style={{ width: `${ratio * 100}%` }}
+        />
       )}
-    >
-      <img alt="" className="size-3.5 shrink-0" src={publicAsset(icon)} />
-      <span className="min-w-0 truncate">{value}</span>
+      <img alt="" className="relative z-10 size-3.5 shrink-0" src={publicAsset(icon)} />
+      <span className="relative z-10 min-w-0 truncate">{value}</span>
+    </>
+  );
+  if (onClick) {
+    return (
+      <button aria-label={`${label} ${value}`} className={baseClass} onClick={onClick} type="button">
+        {content}
+      </button>
+    );
+  }
+  return (
+    <div aria-label={`${label} ${value}`} className={baseClass}>
+      {content}
     </div>
   );
 }
