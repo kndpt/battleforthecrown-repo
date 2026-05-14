@@ -4,7 +4,6 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-- [54 — Retour fantôme pendant capture avec Seigneur](./54-conquest-capture-phantom-return.md) — 🟡 Majeur. Une capture avec Seigneur survivant peut encore planifier un retour si du loot existe, ce qui affiche un cheval alors que toute l'escorte reste en occupation.
 - [58 — Vision multi-village : seuls les cercles du village sélectionné sont affichés](./58-multi-village-vision-disks-missing.md) — 🟡 Majeur. La spec dit union des disques de toutes les Watchtowers, mais le frontend affiche un seul cercle basé sur le village courant.
 - [57 — Source canonique du lifecycle des bâtiments joueur](./57-player-village-building-lifecycle-roster.md) — 🟡 Majeur. Centraliser la politique join/conquête/backfill des bâtiments pour éviter les oublis à chaque nouveau bâtiment activé.
 - [51 — Standardiser les bottom sheets sur le design `Activités du royaume`](./51-bottom-sheet-design-system-base.md) — 🟠 Moyen. Faire du nouveau panneau la base design-system des bottom sheets actuels et futurs.
@@ -70,6 +69,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 - [48 — Design-system du panneau Activités du royaume](./archive/48-kingdom-activities-design-system.md) ✅ Résolu 2026-05-13 par migration design-system directe.
 - [44 — Crash armée : migration `unit_training.building` non appliquée](./archive/44-army-training-schema-drift.md) ✅ Résolu 2026-05-11 par application des migrations locales + garde-fou dev server.
 - [43 — Risque de mort du Seigneur sur victoire coûteuse](./archive/43-noble-loss-chance-on-costly-victory.md) ✅ Résolu 2026-05-11 par $run @tasks/43-noble-loss-chance-on-costly-victory.md
+- [54 — Retour fantôme pendant capture avec Seigneur](./archive/54-conquest-capture-phantom-return.md) ✅ Résolu 2026-05-14 par $run @tasks/54-conquest-capture-phantom-return.md
 - [41 — Période de capture : `PendingConquest` + worker](./archive/41-capture-window-data-model.md) ✅ Résolu 2026-05-11 par $run @tasks/41-capture-window-data-model.md
 - [42 — Hook combat post-résolution conquête](./archive/42-combat-conquest-hook.md) ✅ Résolu 2026-05-11 par $run @tasks/42-combat-conquest-hook.md
 - [40 — Recrutement Seigneur à la Salle du Trône](./archive/40-recruit-noble-throne-hall.md) ✅ Résolu 2026-05-11 par $run @tasks/40-recruit-noble-throne-hall.md

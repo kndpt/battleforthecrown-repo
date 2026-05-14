@@ -373,6 +373,7 @@ export class CombatWorker implements OnModuleInit {
           const nobleSurvived =
             (resolution.survivingUnits[UNIT_TYPES.NOBLE] ?? 0) > 0;
           const returningUnits = { ...resolution.survivingUnits };
+          let captureWindowOpened = false;
 
           if (isVictory && startedWithNoble && defenderVillage) {
             if (nobleSurvived) {
@@ -416,6 +417,7 @@ export class CombatWorker implements OnModuleInit {
 
                 delete returningUnits[unitType];
               }
+              captureWindowOpened = true;
             } else {
               await createOutboxEvent(tx, 'noble.killed', attackerVillage.id, {
                 attackerVillageId: attackerVillage.id,
@@ -425,11 +427,24 @@ export class CombatWorker implements OnModuleInit {
             }
           }
 
-          const returningLoot = resolution.loot.resources || {
+          const resolvedLoot = resolution.loot.resources || {
             wood: 0,
             stone: 0,
             iron: 0,
           };
+          const returningLoot = captureWindowOpened
+            ? { wood: 0, stone: 0, iron: 0 }
+            : resolvedLoot;
+          const expeditionLoot = captureWindowOpened
+            ? {
+                resources: returningLoot,
+                metadata: {
+                  ...resolution.loot.metadata,
+                  totalCapacityUsed: 0,
+                  cappedByCapacity: false,
+                },
+              }
+            : resolution.loot;
           const hasReturningUnits = typedEntries(returningUnits).some(
             ([, quantity]) => quantity > 0,
           );
@@ -450,7 +465,7 @@ export class CombatWorker implements OnModuleInit {
               reportId: report.id,
               returnAt,
               survivingUnits: encodeUnitMap(returningUnits),
-              loot: encodeLootResult(resolution.loot),
+              loot: encodeLootResult(expeditionLoot),
             },
           });
 
