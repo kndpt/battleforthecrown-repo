@@ -76,6 +76,29 @@ Overrides :
 - `SMOKE_TEMPLATE_DB` : change le nom du template (défaut `battleforthecrown_smoke`).
 - `SMOKE_WORKERS` : change le nombre de clones générés par le préflight (défaut `8`).
 
+### Scaler quand la suite grossit
+
+Plancher incompressible = durée du **plus long fichier smoke** (aujourd'hui `combat-conquest-hook` ~22 s). Tout le reste se parallélise. Quand la suite dépasse à nouveau le seuil de douleur (~3-5 min), tirer ces leviers dans cet ordre :
+
+1. **Splitter le fichier le plus long.** Si un smoke pèse plus que la moyenne × 3, le découper par sous-domaine — c'est lui qui dicte le temps total, pas le nombre de fichiers. Faire passer `combat-conquest-hook` de 22 s à 2 × 11 s donne -10 s sur le total avec 0 perte d'isolation.
+2. **Monter `maxWorkers` et `SMOKE_WORKERS` en miroir.** Plafond utile = nombre de cores physiques (au-delà, contention CPU & I/O annule le gain). Sur Mac M-series courants : 8-10. Sur CI cloud : matcher au runner. Les deux variables doivent **rester égales** sinon des workers cherchent une DB qui n'existe pas.
+3. **Bumper `max_connections` Postgres.** Si un run échoue avec `sorry, too many clients already`, augmenter dans `docker-compose.yml` (`postgres -c max_connections=…`). Règle de pouce : `maxWorkers × 25` (Prisma pool ~17 + pg-boss ~10 par app Nest).
+4. **Réduire le pool Prisma par worker.** Si bumper `max_connections` est cher (CI), forcer un pool plus petit en ajoutant `?connection_limit=5` dans le `DATABASE_URL` construit par `jest-smoke-setup.ts`. Conservateur mais robuste.
+5. **Bumper le temps imparti à `boss.stop`.** Si le pg-boss du worker n'a pas le temps de finir ses jobs en `afterAll`, on voit des warnings `Boss.#monitor` et des flakies de timing. Passer le `timeout` de `bootSmokeApp.close` (helpers.ts) de 1 s à 5-10 s. Lent mais propre.
+6. **Dernier recours : Testcontainers (1 docker par spec).** Vrai isolement matériel (extensions Postgres custom, version pinnée par spec, etc.). Coût : ~3-5 s d'overhead init par container, complexité docker compose dans la CI. À envisager seulement si un cas concret le justifie (tests qui touchent `ALTER SYSTEM`, extensions, ou versions Postgres différentes).
+
+Signaux pour décider :
+
+| Symptôme | Action |
+|---|---|
+| Suite > 3 min, ratio plus-long/moyenne > 3 | (1) split fichier |
+| Suite > 3 min, fichiers équilibrés, cores libres | (2) monter `maxWorkers` |
+| `sorry, too many clients already` | (3) bump `max_connections` |
+| Flakies sous charge concurrente (`waitFor timed out`) | (4) réduire pool ou (5) bumper `boss.stop` timeout |
+| Besoin d'isoler version/extensions Postgres par spec | (6) Testcontainers |
+
+Ne pas anticiper : appliquer le levier minimum qui résout le symptôme observé. Chaque levier ajoute un peu de complexité (variables d'env, doc, comportement runtime).
+
 ## Snippets SQL utiles (debug)
 
 > Préfixe à utiliser dans toutes les commandes :
