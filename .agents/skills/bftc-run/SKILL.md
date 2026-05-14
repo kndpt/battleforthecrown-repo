@@ -129,7 +129,8 @@ Les sub-agents doivent retourner un rapport structuré (`STATUS: success|partial
 - Pas de `--no-verify`, pas de push.
 - Toujours conclure docs : `Docs : mises à jour ...` ou `Docs : aucun changement nécessaire, raison : ...`.
 - Ne jamais omettre la section `Acceptance & QA` du rapport final, même pour un ticket backend invisible IG.
-- Ne pas déléguer au user un test que l'agent peut vérifier raisonnablement par test auto, smoke, curl/REST, worker/job ou requête DB.
+- Préférer un test auto, smoke, curl/REST, worker/job ou requête DB plutôt qu'un test IG quand le comportement à vérifier est purement data/logique côté backend et sans effet observable côté front.
+- Un smoke / curl / requête DB ne remplace **jamais** un test IG dès que le diff modifie un fichier rendu côté Pixi/React, un store front, un hook/query consommé par l'UI, ou la shape d'une payload API consommée par le front. Dans ces cas, la checklist `Tests IG à faire par le user` doit contenir au moins un item observable (rendu, interaction, état UI).
 
 ## Escalade
 
