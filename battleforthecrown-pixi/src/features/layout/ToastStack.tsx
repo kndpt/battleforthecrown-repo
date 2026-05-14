@@ -1,11 +1,20 @@
 import { useEffect } from 'react';
 import { useUiStore } from '@/stores/ui';
+import type { ToastTone } from '@/features/design-system/components/ToastPreview';
+import { ToastPreview } from '@/features/design-system/components/ToastPreview';
 
-const TONE_CLASS: Record<string, string> = {
-  info: 'border-game-blue-border bg-game-blue-dark/60',
-  success: 'border-game-green-border bg-game-green-dark/60',
-  warning: 'border-game-gold-border bg-game-gold-dark/60',
-  error: 'border-game-red-border bg-game-red-dark/60',
+const TONE_MAP: Record<string, ToastTone> = {
+  error: 'danger',
+  info: 'info',
+  success: 'success',
+  warning: 'warning',
+};
+
+const ICON_MAP: Record<ToastTone, string> = {
+  danger: 'assets/ui/icons/warning.svg',
+  info: 'assets/ui/icons/quest.svg',
+  success: 'assets/ui/icons/check.svg',
+  warning: 'assets/ui/icons/warning.svg',
 };
 
 export function ToastStack() {
@@ -25,27 +34,21 @@ export function ToastStack() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="pointer-events-none fixed right-4 top-20 z-50 flex w-full max-w-xs flex-col gap-2">
-      {toasts.map((toast) => (
-        <div
-          key={toast.id}
-          role="status"
-          className={`pointer-events-auto rounded-md border-2 px-3 py-2 text-sm text-white shadow-game-inset ${
-            TONE_CLASS[toast.tone] ?? TONE_CLASS.info
-          }`}
-        >
-          <p className="font-game text-xs uppercase tracking-widest">{toast.title}</p>
-          {toast.description && <p className="mt-0.5 text-xs text-parchment">{toast.description}</p>}
-          <button
-            type="button"
-            onClick={() => dismiss(toast.id)}
-            className="absolute right-2 top-1.5 text-xs text-parchment/70 hover:text-white"
-            aria-label="Fermer"
-          >
-            ✕
-          </button>
-        </div>
-      ))}
+    <div className="pointer-events-none fixed left-1/2 top-28 z-50 flex w-[min(21rem,calc(100vw-2rem))] -translate-x-1/2 flex-col gap-2 sm:left-auto sm:right-4 sm:translate-x-0">
+      {toasts.map((toast) => {
+        const tone = TONE_MAP[toast.tone] ?? 'info';
+        return (
+          <div key={toast.id} role="status" className="pointer-events-auto">
+            <ToastPreview
+              icon={ICON_MAP[tone]}
+              onClose={() => dismiss(toast.id)}
+              subtitle={toast.description}
+              title={toast.title}
+              tone={tone}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }

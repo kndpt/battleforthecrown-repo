@@ -28,6 +28,8 @@ import { useAuthStore } from '@/stores/auth';
 import { useExpeditionsStore, type ExpeditionSnapshot } from '@/stores/expeditions';
 import { useGameStore } from '@/stores/game';
 import { useWorldMapStore } from '@/stores/worldMap';
+import { unitMetaFor } from '@/features/army/unitConfig';
+import { metaFor as buildingMetaFor } from '@/features/village/buildingMeta';
 import {
   RESOLVED_TO_RETURNING_DELAY_MS,
   RETURNED_TO_CLEANUP_DELAY_MS,
@@ -56,6 +58,19 @@ const scheduleTimeout = (fn: () => void, ms: number): void => {
 
 type ServerEventBindings = {
   [K in ServerEventName]: ServerEventListener<K>;
+};
+
+const UNIT_PLURAL_LABELS: Record<string, string> = {
+  ARCHER: 'Archers',
+  CATAPULT: 'Catapultes',
+  CAVALRY: 'Cavalerie',
+  MILITIA: 'Milices de paysans',
+  NOBLE: 'Seigneurs',
+  RAM: 'Béliers',
+  SPY: 'Espions',
+  SQUIRE: 'Écuyers',
+  TEMPLAR: 'Templiers',
+  WARRIOR: 'Guerriers',
 };
 
 export function applyResourcesChanged(
@@ -99,7 +114,7 @@ export function applyBuildingCompleted(
   useUiStore.getState().pushToast({
     tone: 'success',
     title: 'Construction terminée',
-    description: `${payload.buildingType} niveau ${payload.level}`,
+    description: `${buildingMetaFor(payload.buildingType).label} niveau ${payload.level}`,
     ttlMs: 4000,
   });
 }
@@ -124,7 +139,7 @@ export function applyUnitTrainingCompleted(
   useUiStore.getState().pushToast({
     tone: 'success',
     title: 'Entraînement terminé',
-    description: `${payload.completedQty} ${payload.unitType}`,
+    description: `${payload.completedQty} ${formatUnitName(payload.unitType, payload.completedQty)}`,
     ttlMs: 4000,
   });
 }
@@ -529,6 +544,11 @@ function parseEventDate(payload: unknown, key: string): number | undefined {
 
 function resolveExpeditionId(payload: unknown, fallbackParts: string[]): string {
   return getString(payload, 'expeditionId') ?? fallbackParts.join(':');
+}
+
+function formatUnitName(unitType: string, quantity: number): string {
+  const name = unitMetaFor(unitType).name;
+  return quantity > 1 ? (UNIT_PLURAL_LABELS[unitType] ?? name) : name;
 }
 
 function markExpeditionReturned(expeditionId: string): void {

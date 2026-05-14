@@ -12,6 +12,7 @@ import {
   applyReinforcementSent,
   applyResourcesChanged,
   applyNobleKilled,
+  applyUnitTrainingCompleted,
   applyUnitTrained,
   applyVillageCaptureWindowCompleted,
   applyVillageCaptureWindowInterrupted,
@@ -164,6 +165,38 @@ describe('applyBuildingCompleted', () => {
     expect(toasts).toHaveLength(1);
     expect(toasts[0].tone).toBe('success');
     expect(toasts[0].title).toContain('Construction');
+    expect(toasts[0].description).toBe('Camp de bûcherons niveau 3');
+  });
+});
+
+describe('applyUnitTrainingCompleted', () => {
+  it('pushes localized unit labels for singular and plural training completion toasts', () => {
+    const queryClient = new QueryClient();
+
+    applyUnitTrainingCompleted(
+      {
+        trainingId: 'training-1',
+        villageId: 'v1',
+        unitType: 'NOBLE',
+        completedQty: 1,
+        totalQty: 1,
+      },
+      { queryClient },
+    );
+    applyUnitTrainingCompleted(
+      {
+        trainingId: 'training-2',
+        villageId: 'v1',
+        unitType: 'MILITIA',
+        completedQty: 3,
+        totalQty: 3,
+      },
+      { queryClient },
+    );
+
+    const toasts = useUiStore.getState().toasts;
+    expect(toasts[0].description).toBe('1 Seigneur');
+    expect(toasts[1].description).toBe('3 Milices de paysans');
   });
 });
 

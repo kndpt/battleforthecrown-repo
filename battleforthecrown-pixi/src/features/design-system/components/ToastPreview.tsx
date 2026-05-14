@@ -7,7 +7,7 @@ export interface ToastPreviewProps {
   className?: string;
   icon: string;
   onClose?: () => void;
-  subtitle: string;
+  subtitle?: string;
   title: string;
   tone?: ToastTone;
 }
@@ -33,11 +33,16 @@ export function ToastPreview({ className, icon, onClose, subtitle, title, tone =
       </div>
       <div className="min-w-0 flex-1">
         <div className="toast-text font-game text-[13px] font-bold leading-tight [text-shadow:1px_1px_2px_rgba(0,0,0,.5)]">{title}</div>
-        <div className="toast-text mt-0.5 font-game text-[11px] leading-tight opacity-[.85] [text-shadow:1px_1px_2px_rgba(0,0,0,.5)]">{subtitle}</div>
+        {subtitle && (
+          <div className="toast-text mt-0.5 font-game text-[11px] leading-tight opacity-[.85] [text-shadow:1px_1px_2px_rgba(0,0,0,.5)]">
+            {subtitle}
+          </div>
+        )}
       </div>
       <button
         className="flex size-6 items-center justify-center rounded-md border-2 border-[rgba(0,0,0,.25)] bg-[rgba(0,0,0,.15)] font-game font-bold leading-none text-inherit"
         onClick={onClose}
+        aria-label="Fermer"
         type="button"
       >
         ×
