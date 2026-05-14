@@ -50,26 +50,31 @@ PORT=15001 yarn workspace battleforthecrown-backend start:dev
 
 Sanity HTTP : `curl http://localhost:15001/health` → 200.
 
-## DB smoke (`battleforthecrown_smoke`)
+## DB smoke (`battleforthecrown_smoke` + clones par worker)
 
-Base **isolée** pour `yarn test:smoke` (cf. [`smoke-tests.md`](./smoke-tests.md)). Elle vit dans le même container Postgres que la DB dev mais sur une base distincte — la DB dev n'est jamais touchée par les tests.
+Stratégie : un **template** migré (`battleforthecrown_smoke`) sert de modèle Postgres ; le préflight crée N **clones** (`battleforthecrown_smoke_w1` … `_wN`) via `CREATE DATABASE … TEMPLATE`. Chaque Jest worker se connecte à son propre clone → vraie isolation, parallélisme `maxWorkers: 8`.
 
 ```bash
-# Créer la base (une fois)
+# 1. Créer la base template (une fois)
 docker exec battleforthecrown-postgres \
   psql -U postgres -c 'CREATE DATABASE battleforthecrown_smoke;'
 
-# Appliquer les migrations Prisma
+# 2. Appliquer les migrations Prisma au template
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/battleforthecrown_smoke" \
   yarn workspace battleforthecrown-backend prisma migrate deploy
 
-# Lancer le suite smoke
+# 3. Lancer la suite smoke (le préflight (re)crée les 8 clones depuis le template)
 yarn workspace battleforthecrown-backend test:smoke
 ```
 
-À chaque évolution du schéma Prisma, rejouer `prisma migrate deploy` sur cette base. Pas de seed manuel : chaque smoke insère son propre `World` test (config aux durations courtes — cf. `test/fixtures/smoke-world-config.ts`).
+À chaque évolution du schéma Prisma, rejouer `prisma migrate deploy` sur le **template**. Le préflight clone le template à chaque run, donc les clones sont toujours à jour. Pas de seed manuel : chaque smoke insère son propre `World` (cf. `test/fixtures/smoke-world-config.ts`).
 
-URL surchargeable via `SMOKE_DATABASE_URL` si la base vit ailleurs.
+Le container Postgres doit autoriser ≥ 300 connections (8 workers × Nest + pg-boss ≈ 200) — configuré dans `docker-compose.yml` via `command: postgres -c max_connections=300`. Recréer le container après changement (`docker compose up -d --force-recreate postgres`).
+
+Overrides :
+- `SMOKE_DATABASE_URL` : bypass complet, force une URL spécifique (debug d'un test précis).
+- `SMOKE_TEMPLATE_DB` : change le nom du template (défaut `battleforthecrown_smoke`).
+- `SMOKE_WORKERS` : change le nombre de clones générés par le préflight (défaut `8`).
 
 ## Snippets SQL utiles (debug)
 

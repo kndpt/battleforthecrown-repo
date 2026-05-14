@@ -9,6 +9,9 @@ services:
       POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
+    # Smokes can fan out to maxWorkers: 8 (each = Nest + Prisma pool + pg-boss),
+    # which blows past the default 100 connections. 300 leaves headroom.
+    command: postgres -c max_connections=300
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

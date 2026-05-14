@@ -1,7 +1,13 @@
 process.env.NODE_ENV = 'test';
+
+// Each Jest worker gets its own database clone created by smoke-preflight.sh
+// (`battleforthecrown_smoke_w1`, `_w2`, …). Setting DATABASE_URL here, before
+// any Nest module loads, ensures Prisma + pg-boss bind to the right clone.
+const workerId = process.env.JEST_WORKER_ID || '1';
+const templateDb = process.env.SMOKE_TEMPLATE_DB || 'battleforthecrown_smoke';
 process.env.DATABASE_URL =
   process.env.SMOKE_DATABASE_URL ??
-  'postgresql://postgres:postgres@localhost:5432/battleforthecrown_smoke';
+  `postgresql://postgres:postgres@localhost:5432/${templateDb}_w${workerId}`;
 process.env.JWT_ACCESS_SECRET ??=
   'smoke-access-secret-must-be-at-least-32-chars-long';
 process.env.JWT_REFRESH_SECRET ??=
