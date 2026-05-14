@@ -89,4 +89,18 @@ export class OutboxPublisher {
       payload,
     );
   }
+
+  async unitTrained(
+    payload: {
+      trainingId: string;
+      villageId: string;
+      unitType: string;
+      completedQty: number;
+      totalQty: number;
+    },
+    tx?: PrismaClientOrTx,
+  ): Promise<void> {
+    const client: PrismaClientOrTx = tx ?? this.prisma;
+    await createOutboxEvent(client, 'unit.trained', payload.villageId, payload);
+  }
 }

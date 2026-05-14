@@ -1,8 +1,8 @@
 # Run #022 — fix-power-realtime-reactivity
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-05-14
+> **Terminé** : 2026-05-14
 
 ## Cible
 
@@ -76,25 +76,55 @@ Choisir B aujourd'hui pose la pierre du pattern « event métier émis depuis le
 
 ## Décomposition initiale (rempli par le lead à l'étape 3)
 
-_(Vide au démarrage. Tâches chirurgicales : ≤ 5 fichiers chacune, scope précis, critère de succès observable.)_
+- Backend/shared event contract : ajouter `unit.trained` aux types/schémas partagés, publisher et dispatcher Outbox ; émettre l'event dans `TrainingWorker` à chaque unité produite, dans la transaction Prisma existante.
+- Frontend WS bindings : invalider `armyInventory`, `population`, `power.village.*` et `power.kingdom.*` sur `unit.trained`, et `power.*` sur `building.completed`.
+- Regression smoke : étendre `army-training.smoke.spec.ts` pour vérifier N events `unit.trained` + 1 completion sur un training de N unités.
+- Docs : acter le pattern event métier dans `realtime.md`, la réactivité power dans la spec power, et les déclencheurs candidats cartes/onboarding.
 
 ## Progress (rempli pendant le run)
 
-_(Vide au démarrage. Mis à jour à chaque transition d'étape ou de tâche.)_
+- Préflight OK : worktree clean, run `PLANNED`, rules/spec/briefings chargés.
+- Cartographie OK : diagnostic planner confirmé dans `training.worker.ts` et `ws-bindings.ts`.
+- Coding OK : event `unit.trained`, invalidations power et docs ajoutés.
+- Review ciblée OK : wiring partagé/backend/frontend cohérent, aucun finding bloquant avant tests.
+- Tests OK : smoke backend complet, Vitest ciblé ws-bindings et `yarn static-check` verts.
 
 ## Décisions prises
 
-_(Vide au démarrage. Décisions archi non triviales, dérogations lead, findings de review, refus de sub-agents. La décision amont piste B est tracée dans la section « Contexte & décisions amont » ci-dessus.)_
+- Mode complet sans sub-agent : scope borné et fichiers identifiés ; exécution directe plus économique que délégation, sans contourner les hard gates.
+- `unit.trained` reprend le même payload que `unit.training.completed` (`trainingId`, `villageId`, `unitType`, `completedQty`, `totalQty`) pour garder un contrat simple et réutilisable par power, cartes quotidiennes et onboarding.
 
 ## Rapport final
 
-_(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tickets ouverts, méta-évaluation si applicable.)_
+Implémenté :
+
+- Nouveau contrat partagé `unit.trained` + validation Zod + dispatch Outbox user-scoped.
+- `TrainingWorker` écrit `unit.trained` dans la même transaction Prisma que l'incrément d'inventaire, à chaque unité produite, tout en conservant `unit.training.completed` à la fin de queue.
+- `ws-bindings.ts` invalide `armyInventory`, `population`, `power.village.*`, `power.kingdom.*` sur `unit.trained`, et `power.*` sur `building.completed`.
+- Smoke `army-training.smoke.spec.ts` couvre 3 unités → 3 events `unit.trained` + 1 completion.
+- Test Vitest `ws-bindings.test.ts` couvre les invalidations power pour `unit.trained` et `building.completed`.
+- Docs mises à jour : realtime, power, cartes quotidiennes/Oyez, onboarding.
+- Fix de vérification : `packages/shared clean` supprime aussi `tsconfig.tsbuildinfo`, sinon `clean && build` peut laisser un `dist` vide.
 
 ### Acceptance & QA
 
 - **Critères d'acceptance vérifiés** :
-  - [ ] <comportement attendu observable> — preuve : <test auto / smoke / curl / SELECT / capture>
-- **Tests automatisés** : commandes exactes + résultat synthétique.
-- **Smokes ajoutés/modifiés** : fichiers + scénario couvert, ou `Aucun`, raison.
-- **QA fonctionnelle agent** : tests bout-en-bout manuels exécutés par l'agent quand pertinent (`server + curl`, REST, WebSocket, worker/job, ou `SELECT` DB), avec résultat observable. Si non fait, `Non nécessaire` ou `Non exécuté` + raison précise.
-- **Tests IG à faire par le user** : seulement ce qui demande une appréciation gameplay/visuelle, un vrai navigateur humain, ou un scénario trop coûteux à automatiser ; checklist observable. Sinon `Aucun test IG nécessaire`, raison.
+  - [x] Training en cours rafraîchit la puissance sans F5 — preuve : `unit.trained` invalide `power.village.*` + `power.kingdom.*` dans `ws-bindings.test.ts`.
+  - [x] `building.completed` rafraîchit la puissance sans F5 — preuve : `applyBuildingCompleted` invalide `power.*` dans `ws-bindings.test.ts`.
+  - [x] `unit.trained` émis dans la transaction Prisma du tick training — preuve : appel `this.outbox.unitTrained(..., tx)` dans `TrainingWorker` juste après `unitInventory.upsert`.
+  - [x] `unit.training.completed` conservé — preuve : smoke training attend toujours l'event final dispatché.
+  - [x] Volume Outbox borné — preuve : smoke 3 unités attend 3 `unit.trained` + 1 `unit.training.completed`.
+  - [x] Docs demandées mises à jour — preuve : `docs/architecture/realtime.md`, `docs/gameplay/09-power-and-rankings.md`, `docs/gameplay/05-daily-cards-and-oyez.md`, `docs/gameplay/15-onboarding.md`.
+- **Tests automatisés** :
+  - `rtk yarn test:smoke:preflight` — OK.
+  - `rtk yarn test:smoke` — OK, 22 suites / 37 tests.
+  - `VITE_API_BASE_URL=http://localhost:15001 VITE_WS_URL=http://localhost:15001 rtk yarn workspace battleforthecrown-pixi test src/api/ws-bindings.test.ts` — OK, 19 tests.
+  - `rtk yarn static-check` — OK.
+  - `rtk yarn workspace @battleforthecrown/shared clean && rtk yarn workspace @battleforthecrown/shared build` — OK, `dist/time/index.js` présent.
+- **Smokes lancés** : `rtk yarn test:smoke` — OK.
+- **Smokes ajoutés/modifiés** : `battleforthecrown-backend/test/army-training.smoke.spec.ts` — training de 3 unités, N events `unit.trained`, 1 completion.
+- **QA fonctionnelle agent** : smoke backend réel couvre REST `/army/:villageId/train`, pg-boss training worker, Prisma DB et EventOutbox.
+- **Tests IG à faire par le user** :
+  - [ ] Lancer un training de plusieurs unités et vérifier que le badge puissance du `GameHeader` augmente unité par unité sans F5.
+  - [ ] Ouvrir "Puissance Totale" pendant ce training et vérifier que la puissance village + royaume se rafraîchit sans F5.
+  - [ ] Lancer un upgrade court et vérifier qu'à `building.completed`, le badge + la bottom sheet puissance se mettent à jour sans F5.

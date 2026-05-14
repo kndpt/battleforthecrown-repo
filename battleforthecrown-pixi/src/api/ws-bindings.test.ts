@@ -12,6 +12,7 @@ import {
   applyReinforcementSent,
   applyResourcesChanged,
   applyNobleKilled,
+  applyUnitTrained,
   applyVillageCaptureWindowCompleted,
   applyVillageCaptureWindowInterrupted,
   applyVillageCaptureWindowOpened,
@@ -127,8 +128,15 @@ describe('applyCrownsChanged', () => {
 
 describe('applyBuildingCompleted', () => {
   it('invalidates building queries and pushes a success toast', () => {
+    useAuthStore.getState().setSession({
+      accessToken: 'access',
+      refreshToken: 'refresh',
+      user: { id: 'user-1', email: 'user@example.test' },
+    });
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.villageStrategy('v1'), { currentStrategy: 'BALANCED' });
+    queryClient.setQueryData(queryKeys.villagePower('v1'), { total: 1 });
+    queryClient.setQueryData(queryKeys.kingdomPower('user-1'), { kingdomPower: 1 });
     let invalidationCount = 0;
     const originalInvalidate = queryClient.invalidateQueries.bind(queryClient);
     queryClient.invalidateQueries = ((...args: Parameters<typeof originalInvalidate>) => {
@@ -146,12 +154,46 @@ describe('applyBuildingCompleted', () => {
       { queryClient },
     );
 
-    expect(invalidationCount).toBe(5);
+    expect(invalidationCount).toBe(7);
     expect(queryClient.getQueryState(queryKeys.villageStrategy('v1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.villagePower('v1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.kingdomPower('user-1'))?.isInvalidated).toBe(true);
     const toasts = useUiStore.getState().toasts;
     expect(toasts).toHaveLength(1);
     expect(toasts[0].tone).toBe('success');
     expect(toasts[0].title).toContain('Construction');
+  });
+});
+
+describe('applyUnitTrained', () => {
+  it('invalidates inventory, population and power queries without pushing a toast', () => {
+    useAuthStore.getState().setSession({
+      accessToken: 'access',
+      refreshToken: 'refresh',
+      user: { id: 'user-1', email: 'user@example.test' },
+    });
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.armyInventory('v1'), []);
+    queryClient.setQueryData(queryKeys.population('v1'), { used: 1, max: 10, available: 9 });
+    queryClient.setQueryData(queryKeys.villagePower('v1'), { total: 1 });
+    queryClient.setQueryData(queryKeys.kingdomPower('user-1'), { kingdomPower: 1 });
+
+    applyUnitTrained(
+      {
+        trainingId: 'training-1',
+        villageId: 'v1',
+        unitType: 'MILITIA',
+        completedQty: 1,
+        totalQty: 3,
+      },
+      { queryClient },
+    );
+
+    expect(queryClient.getQueryState(queryKeys.armyInventory('v1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.population('v1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.villagePower('v1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.kingdomPower('user-1'))?.isInvalidated).toBe(true);
+    expect(useUiStore.getState().toasts).toHaveLength(0);
   });
 });
 

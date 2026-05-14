@@ -8,6 +8,7 @@ import {
   type EventKind,
   type BuildingCompletedPayload,
   type UnitTrainingCompletedPayload,
+  type UnitTrainedPayload,
   type BattleSentPayload,
   type BattleResolvedPayload,
   type BattleReturnedPayload,
@@ -103,6 +104,11 @@ export class EventOutboxService {
         break;
       case 'unit.training.completed':
         await this.notifyUnitTrainingCompleted(
+          parseEventPayload(event.kind, event.payload),
+        );
+        break;
+      case 'unit.trained':
+        await this.notifyUnitTrained(
           parseEventPayload(event.kind, event.payload),
         );
         break;
@@ -251,6 +257,13 @@ export class EventOutboxService {
       completedQty: payload.completedQty,
       totalQty: payload.totalQty,
     });
+  }
+
+  private async notifyUnitTrained(payload: UnitTrainedPayload) {
+    const userId = await this.getUserIdByVillage(payload.villageId);
+    if (!userId) return;
+
+    this.gateway.notifyUser(userId, 'unit.trained', payload);
   }
 
   private async notifyResourcesChanged(payload: ResourcesChangedPayload) {

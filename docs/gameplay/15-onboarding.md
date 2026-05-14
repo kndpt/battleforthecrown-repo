@@ -22,6 +22,17 @@ L'`01-overview.md` listait initialement la « Campagne solo » comme extension *
 
 Récompenses, déclencheurs UI, tolérance aux raccourcis (skip-tuto, replay), modélisation de la progression — **à trancher plus tard**.
 
+### Déclencheurs runtime candidats
+
+Le tutoriel doit écouter des faits gameplay server-side plutôt que des états purement visuels :
+
+| Étape | Event métier candidat |
+| --- | --- |
+| Premier upgrade terminé | `building.completed` |
+| Première unité recrutée | `unit.trained` |
+| Premier raid résolu | `battle.resolved` |
+| Premier scout résolu | `scout.reported` |
+
 ## Liens
 
 - [`01-overview.md`](./01-overview.md) — vision globale, boucles de gameplay, philosophie mobile.

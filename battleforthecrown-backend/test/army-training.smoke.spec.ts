@@ -23,7 +23,7 @@ describe('army training smoke', () => {
     await ctx.app.close();
   });
 
-  it('training: train 1 MILITIA → UnitInventory + unit.training.completed dispatched', async () => {
+  it('training: train 3 MILITIA → UnitInventory + unit.trained per unit + completion', async () => {
     const world = await seedSmokeWorld(ctx.prisma);
     const user = await registerUser(ctx.server);
     const join = await joinWorld(
@@ -58,22 +58,37 @@ describe('army training smoke', () => {
     const res = await request(ctx.server)
       .post(`/army/${villageId}/train`)
       .set('Authorization', `Bearer ${user.accessToken}`)
-      .send({ unitType: 'MILITIA', quantity: 1 });
+      .send({ unitType: 'MILITIA', quantity: 3 });
     expect(res.status).toBeLessThan(300);
 
     await waitFor(
       () =>
         ctx.prisma.unitInventory.findFirst({
-          where: { villageId, unitType: 'MILITIA', quantity: { gte: 1 } },
+          where: { villageId, unitType: 'MILITIA', quantity: { gte: 3 } },
         }),
-      { timeoutMs: 10_000 },
+      { timeoutMs: 15_000 },
     );
 
     const event = await outboxDispatched(
       ctx.prisma,
       { kind: 'unit.training.completed', aggregateId: villageId },
-      { timeoutMs: 10_000 },
+      { timeoutMs: 15_000 },
     );
     expect(event?.dispatchedAt).toBeTruthy();
+
+    const events = await ctx.prisma.eventOutbox.findMany({
+      where: {
+        aggregateId: villageId,
+        kind: { in: ['unit.trained', 'unit.training.completed'] },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+    expect(events.filter((item) => item.kind === 'unit.trained')).toHaveLength(
+      3,
+    );
+    expect(
+      events.filter((item) => item.kind === 'unit.training.completed'),
+    ).toHaveLength(1);
+    expect(events).toHaveLength(4);
   });
 });

@@ -82,6 +82,17 @@ export class TrainingWorker implements OnModuleInit {
           },
         });
 
+        await this.outbox.unitTrained(
+          {
+            trainingId: data.trainingId,
+            villageId: data.villageId,
+            unitType: data.unitType,
+            completedQty: newCompletedQty,
+            totalQty: training.totalQty,
+          },
+          tx,
+        );
+
         if (isComplete) {
           // Training complete, delete record
           await tx.unitTraining.delete({

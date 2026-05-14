@@ -16,6 +16,14 @@ export interface UnitTrainingCompletedPayload {
   totalQty: number;
 }
 
+export interface UnitTrainedPayload {
+  trainingId: string;
+  villageId: string;
+  unitType: string;
+  completedQty: number;
+  totalQty: number;
+}
+
 export interface BattleSentPayload {
   expeditionId: string;
   villageId: string;
@@ -192,6 +200,7 @@ export interface CrownsChangedPayload {
 export type OutboxEventPayload =
   | { kind: 'building.completed'; payload: BuildingCompletedPayload }
   | { kind: 'unit.training.completed'; payload: UnitTrainingCompletedPayload }
+  | { kind: 'unit.trained'; payload: UnitTrainedPayload }
   | { kind: 'battle.sent'; payload: BattleSentPayload }
   | { kind: 'battle.resolved'; payload: BattleResolvedPayload }
   | { kind: 'battle.returned'; payload: BattleReturnedPayload }
@@ -232,6 +241,7 @@ export type PayloadForKind<K extends EventKind> = Extract<
 export type AnyEventPayload =
   | BuildingCompletedPayload
   | UnitTrainingCompletedPayload
+  | UnitTrainedPayload
   | BattleSentPayload
   | BattleResolvedPayload
   | BattleReturnedPayload
@@ -258,6 +268,7 @@ export interface ServerEvents {
   'crowns.changed': CrownsChangedPayload;
   'building.completed': BuildingCompletedPayload;
   'unit.training.completed': UnitTrainingCompletedPayload;
+  'unit.trained': UnitTrainedPayload;
   'battle.sent': BattleSentPayload;
   'battle.resolved': BattleResolvedPayload;
   'battle.returned': BattleReturnedPayload;

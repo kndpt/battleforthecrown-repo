@@ -55,6 +55,18 @@ Si la récompense s'applique à un village, le joueur choisit le village destina
 
 À éviter : tâches artificielles, répétitives, ou qui poussent à une action sous-optimale juste pour cocher une case.
 
+### Validation par events métier
+
+Les tâches doivent se valider sur des faits gameplay émis par le runtime, pas sur des signaux d'UI. Candidats canoniques :
+
+| Tâche | Event métier candidat |
+| --- | --- |
+| Recruter | `unit.trained` |
+| Lancer / finir un upgrade | `building.completed` pour la fin ; l'action de lancement reste côté mutation construction. |
+| Raider un barbare | `battle.resolved` avec cible barbare |
+| Scout une cible | `scout.reported` |
+| Renforcer un village | `reinforcement.sent` puis `garrison.added` selon le besoin de validation |
+
 ### Récompenses
 
 Préférer :
