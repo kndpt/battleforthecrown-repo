@@ -1,6 +1,6 @@
 ---
-name: run
-description: "Use when executing a BFTC run or ticket from a required @file mention."
+name: bftc-run
+description: "Use when user asks `$bftc-run <path>` to execute a BFTC run or ticket from a required @file mention."
 disable-model-invocation: true
 ---
 

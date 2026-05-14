@@ -1,6 +1,6 @@
 # SPEC — BFTC Agent Runtime
 
-But : donner aux agents le minimum de contexte stable pour décider vite pendant `$run`.
+But : donner aux agents le minimum de contexte stable pour décider vite pendant `$bftc-run`.
 Ce fichier ne remplace pas `docs/` : il référence les sources de vérité et ne garde que les contraintes qui changent une décision d'exécution.
 
 ## §C — Contraintes non négociables

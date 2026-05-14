@@ -49,12 +49,12 @@ Si tu lances depuis un worktree ou sur un port frontend différent, voir [`docs/
 
 Système d'équipe Claude — lead orchestre, sub-agents à scope chirurgical exécutent.
 
-**Slash commands**
+**Skills d'orchestration**
 
-- `/plan-run <description>` — crée fiche dans `tasks/runs/` (statut `PLANNED`). Lit roadmap + spec + carto code. Validation user avant écriture.
-- `/run <id>` — exécute pipeline 1-10 sur fiche `PLANNED`. Termine `DONE` + commit + déplacement vers `tasks/runs/archive/`.
+- `$bftc-plan <input>` — triage un sujet (description libre, path roadmap + section, path spec) en **ticket** (`tasks/<id>.md`) ou **fiche de run** (`tasks/runs/<id>.md` statut `PLANNED`). Lit roadmap + spec + carto code. Validation user avant écriture.
+- `$bftc-run <path>` — exécute pipeline 1-10 sur fiche `PLANNED` ou ticket actif (path obligatoire, `@` optionnel). Termine `DONE` + commit + déplacement vers `tasks/runs/archive/` ou `tasks/archive/`.
 
-**Pipeline `/run`** : 0 préflight → 1 clarif (≤4Q) → 2 carto code → 3 refinement (lead) → 4 coding → 5 testing → 6 review 5 axes → 7 fix findings → 8 re-tests → 9 docs → 10 archive+commit. Hard gate `git diff` post chaque sub-agent qui écrit.
+**Pipeline `$bftc-run`** : 0 préflight → 1 clarif (≤4Q) → 2 carto code → 3 refinement (lead) → 4 coding → 5 testing → 6 review 5 axes → 7 fix findings → 8 re-tests → 9 docs → 10 archive+commit. Hard gate `git diff` post chaque sub-agent qui écrit.
 
 **Sub-agents** (`.claude/agents/`)
 

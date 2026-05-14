@@ -1,7 +1,7 @@
 # 34 — Rappel d'armée pendant l'aller : non implémenté
 
 **Sévérité** : 🟠 Majeur (feature spec MVP manquante — règle globale du combat)
-**Statut** : ✅ Terminé 2026-05-10 (par $run @tasks/34-army-recall-missing.md)
+**Statut** : ✅ Terminé 2026-05-10 (par $bftc-run @tasks/34-army-recall-missing.md)
 
 ## Symptôme
 

@@ -44,7 +44,7 @@ Le repo suit le standard ouvert [agentskills.io](https://agentskills.io) :
 
 - **Source de vérité** : `.agents/{rules,skills}/`. Rules = court/injectable ; skills = détaillé/à la demande.
 - **Compat outils** : `.claude/{rules,skills}` et `.codex/{rules,skills}` sont des **symlinks** vers `.agents/`. Modifier un fichier ici = modifier la source.
-- **Skills workspace** : `run` et `plan-run` vivent uniquement dans `.agents/skills/`; Claude Code et Codex les consomment via leurs symlinks de compat. Ne pas recréer de slash commands dupliquées dans `.claude/commands/`.
+- **Skills workspace** : `bftc-run` et `bftc-plan` vivent uniquement dans `.agents/skills/`; Claude Code et Codex les consomment via leurs symlinks de compat. Ne pas recréer de slash commands dupliquées dans `.claude/commands/`. Préfixe `bftc-` choisi pour éviter la collision avec le plugin `agent-skills` qui expose un `/plan` global.
 - **Spécifique Claude** : `.claude/{agents,agent-memory}/` + `settings.local.json` restent dans `.claude/` (formats propriétaires).
 - **Spécifique Codex** : `.codex/agents/*.toml` (6 agents convertis depuis `.claude/agents/*.md` — `code_mapper`, `test_runner`, `run_planner`, `doc_writer`, `implementer`, `test_writer`. Format TOML, modèles OpenAI).
 - `CLAUDE.md` à chaque niveau est un simple `@AGENTS.md` (import du standard).

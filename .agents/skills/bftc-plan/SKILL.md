@@ -1,12 +1,12 @@
 ---
-name: plan
-description: "Use when user asks `$plan <input>` to triage a sujet (bug, feature, idée, phase roadmap, spec gameplay) into either a ticket or a run fiche, après validation user."
+name: bftc-plan
+description: "Use when user asks `$bftc-plan <input>` to triage a sujet (bug, feature, idée, phase roadmap, spec gameplay) into either a ticket or a run fiche, après validation user."
 disable-model-invocation: true
 ---
 
 # Lead — Planification (triage ticket vs run)
 
-Ton job : transformer un sujet **vague ou cadré** en un artefact prêt à exécuter (`$run @path`), au bon endroit. Tu décides toi-même si c'est un **ticket** (`tasks/<id>-<slug>.md`) ou une **fiche de run** (`tasks/runs/<id>-<slug>.md` statut `PLANNED`). Tu **n'exécutes pas** — `$run` le fera plus tard.
+Ton job : transformer un sujet **vague ou cadré** en un artefact prêt à exécuter (`$bftc-run @path`), au bon endroit. Tu décides toi-même si c'est un **ticket** (`tasks/<id>-<slug>.md`) ou une **fiche de run** (`tasks/runs/<id>-<slug>.md` statut `PLANNED`). Tu **n'exécutes pas** — `$bftc-run` le fera plus tard.
 
 Ce skill est la source de vérité commune Claude Code + Codex. Sub-agent utilisé :
 
@@ -20,9 +20,9 @@ Ce skill est la source de vérité commune Claude Code + Codex. Sub-agent utilis
 
 | Forme | Exemple | Préflight additionnel |
 |---|---|---|
-| **Path roadmap + section** | `$plan @tasks/00-mvp-roadmap.md Phase 6` | Lire la phase ciblée et ses dépendances en amont |
-| **Path spec gameplay/archi** | `$plan @docs/gameplay/14-pvp-conquest.md` | Lire la spec entière, confronter au code existant |
-| **Description libre** | `$plan la vision multi-village ne marche pas` | `rg` agressif sur keywords, identifier fichiers candidats |
+| **Path roadmap + section** | `$bftc-plan @tasks/00-mvp-roadmap.md Phase 6` | Lire la phase ciblée et ses dépendances en amont |
+| **Path spec gameplay/archi** | `$bftc-plan @docs/gameplay/14-pvp-conquest.md` | Lire la spec entière, confronter au code existant |
+| **Description libre** | `$bftc-plan la vision multi-village ne marche pas` | `rg` agressif sur keywords, identifier fichiers candidats |
 
 Toutes passent par la **même mécanique** : préflight → cartographie via `run_planner` → triage → validation user → écriture.
 
@@ -191,7 +191,7 @@ Rends la main au user avec un récap court (≤ 10 lignes) :
 - Artefact retenu : `ticket` ou `run`, raison.
 - Path créé.
 - Type, phase roadmap (ou Hors roadmap).
-- Liens : la fiche, la commande pour exécuter (`$run @<path>`).
+- Liens : la fiche, la commande pour exécuter (`$bftc-run @<path>`).
 - **Liens détectés** : rappeler `avant` / `après` / `connexe` retenus (ou « Aucun, keywords: … »).
 - Points d'attention si présents.
 - Pas de commit (le user décide).
@@ -204,7 +204,7 @@ Le `run_planner` doit appliquer ces critères. Si **AU MOINS UN** est vrai → `
 |---|---|
 | Touche backend **et** frontend simultanément | Coordination interface → review 5 axes critique, doc archi probable |
 | Introduit un invariant durable (backprop SPEC obligatoire) | Mérite la fiche de run pour traçabilité de la décision |
-| Demande une décision archi entre 2+ pistes design | Validation user en étape 3 du `$run` indispensable |
+| Demande une décision archi entre 2+ pistes design | Validation user en étape 3 du `$bftc-run` indispensable |
 | > 4 fichiers estimés au scope | Au-delà, le mode rapide n'est plus sûr |
 | Impact non trivial sur `docs/architecture/` | Demande passage `doc-writer` |
 | Phase entière de la roadmap (Phase 6, 7, etc.) | Toujours un run (et souvent à découper en plusieurs) |
@@ -213,7 +213,7 @@ Tous les autres cas → `ARTEFACT: ticket` (bug ciblé, refacto local, ajout end
 
 ## Règles inviolables
 
-- **Tu ne lances pas le run.** `$plan` ne fait que créer l'artefact. C'est `$run @path` qui exécute.
+- **Tu ne lances pas le run.** `$bftc-plan` ne fait que créer l'artefact. C'est `$bftc-run @path` qui exécute.
 - **Tu ne crées pas l'artefact sans validation user.** Étape 3 obligatoire.
 - **Tu n'écris jamais une fiche de run dans `archive/`** — toujours `tasks/runs/<id>-<slug>.md` (statut `PLANNED`).
 - **Tu n'écris jamais un ticket dans `archive/`** — toujours `tasks/<id>-<slug>.md` (statut `🆕 Ouvert`).

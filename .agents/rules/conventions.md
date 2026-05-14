@@ -31,7 +31,7 @@ Pattern : `onMutate` (snapshot + mutate cache) → `onError` (rollback via conte
 
 ## Vérification statique avant commit final
 
-Avant tout commit final (étape 10 d'un `$run`, ou commit direct), lancer **à la racine** :
+Avant tout commit final (étape 10 d'un `$bftc-run`, ou commit direct), lancer **à la racine** :
 
 ```bash
 yarn static-check

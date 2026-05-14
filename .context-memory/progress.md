@@ -4,7 +4,7 @@
 
 ## Done
 
-- 2026-05-11: Simplification multi-agent run/plan-run : `.agents/skills` devient la source unique, `.claude/commands` et `.gemini` supprimés, docs alignées sur `$run` / `$plan-run`.
+- 2026-05-11: Simplification multi-agent run/plan-run : `.agents/skills` devient la source unique, `.claude/commands` et `.gemini` supprimés, docs alignées sur `$bftc-run` / `$plan-run`.
 - 2026-05-11: Rules diet : tests/QA/Prisma/workers/React HUD/Pixi déplacés en skills à la demande, `nest-conventions.md` condensé, AGENTS/rules passés en bootstrap court.
 - 2026-05-11: Cleanup post-rules : docs actives repointées vers `.agents/{rules,skills}`, descriptions skills raccourcies, preflight smoke DB canonisé, `static-check` passé en ESLint `--quiet` + filtre du warning `baseline-browser-mapping`.
 - 2026-05-10: Revue des modèles `.codex/agents/` ; `run_planner`, `implementer`, `test_writer` migrés vers `gpt-5.5`, `doc_writer` vers `gpt-5.4`, agents rapides conservés en `gpt-5.4-mini`.

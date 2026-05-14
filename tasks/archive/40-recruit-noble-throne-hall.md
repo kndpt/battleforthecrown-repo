@@ -1,7 +1,7 @@
 # 40 — Recrutement Seigneur à la Salle du Trône (use-case + endpoint dédié)
 
 **Sévérité** : 🟠 Majeur (mécanique de conquête bloquée tant que NOBLE n'est pas recrutable)
-**Statut** : ✅ Résolu 2026-05-11 par `$run tasks/40-recruit-noble-throne-hall.md` (issue de [run 006](./runs/archive/006-audit-conquest.md))
+**Statut** : ✅ Résolu 2026-05-11 par `$bftc-run tasks/40-recruit-noble-throne-hall.md` (issue de [run 006](./runs/archive/006-audit-conquest.md))
 **Spec amont** : [`docs/gameplay/10-conquest.md` § Le Seigneur — recrutement et règles](../docs/gameplay/10-conquest.md#le-seigneur--recrutement-et-règles)
 
 ## Symptôme

@@ -1,7 +1,7 @@
 # 32 — Drift potentiel : `unlockCastleLevel` dupliqué entre `BUILDING_DEFINITIONS` et `BUILDING_UNLOCK_REQUIREMENTS`
 
 **Sévérité** : 🟡 Mineure (architecture / risque de drift silencieux)
-**Statut** : ✅ Résolu 2026-05-10 par `$run @tasks/32-buildings-unlock-duplication.md` (issue de [run 002](./runs/archive/002-audit-buildings.md) — finding review `agent-skills:code-reviewer`)
+**Statut** : ✅ Résolu 2026-05-10 par `$bftc-run @tasks/32-buildings-unlock-duplication.md` (issue de [run 002](./runs/archive/002-audit-buildings.md) — finding review `agent-skills:code-reviewer`)
 
 ## Symptôme
 

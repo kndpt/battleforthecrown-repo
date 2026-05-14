@@ -4,14 +4,14 @@ Un **run** = une exécution déléguée au pipeline lead + sub-agents (Claude Co
 
 Chaque run a sa fiche `<id>-<slug>.md` dans ce dossier. Source de vérité de l'état d'un run pendant et après son exécution.
 
-Pipeline d'orchestration : skill `$run <path>` (path de fichier obligatoire, avec ou sans préfixe `@` — certains harnesses strip le `@` automatiquement). Le path détermine le mode :
+Pipeline d'orchestration : skill `$bftc-run <path>` (path de fichier obligatoire, avec ou sans préfixe `@` — certains harnesses strip le `@` automatiquement). Le path détermine le mode :
 
 - `tasks/runs/<id>-<slug>.md` → **mode run**, pipeline 10 étapes complet.
 - `tasks/<id>-<slug>.md` → **mode ticket**, pipeline allégé (mode rapide auto, skip `code-mapper`/`test-runner`/`doc-writer` selon critères, cas A élargi à ≤ 30 lignes ≤ 2 fichiers, **review et hard gate `git diff` non-négociables**).
 
 Même source de vérité dans les deux harnesses, conventions de nommage des sub-agents adaptées :
 
-- **Source unique** : [`.agents/skills/run/SKILL.md`](../../.agents/skills/run/SKILL.md) et [`.agents/skills/plan/SKILL.md`](../../.agents/skills/plan/SKILL.md).
+- **Source unique** : [`.agents/skills/bftc-run/SKILL.md`](../../.agents/skills/bftc-run/SKILL.md) et [`.agents/skills/bftc-plan/SKILL.md`](../../.agents/skills/bftc-plan/SKILL.md).
 - **Claude Code** : consomme les skills via le symlink `.claude/skills/`; sub-agents [`.claude/agents/*.md`](../../.claude/agents/) en kebab-case, ex `code-mapper`.
 - **Codex** : consomme les skills via le symlink `.codex/skills/`; sub-agents [`.codex/agents/*.toml`](../../.codex/agents/) en snake_case, ex `code_mapper`.
 
@@ -42,7 +42,7 @@ Définitions par harness :
 
 Rôles identiques d'un côté à l'autre :
 
-- `run-planner` / `run_planner` — cartographie un sujet et produit un draft d'artefact (ticket ou fiche de run) avec verdict explicite. Utilisé par `$plan`.
+- `run-planner` / `run_planner` — cartographie un sujet et produit un draft d'artefact (ticket ou fiche de run) avec verdict explicite. Utilisé par `$bftc-plan`.
 - `code-mapper` — cartographie ciblée (signatures, callers, tests, écarts évidents).
 - `implementer` — applique un changement précis et bien cadré (≤ 5 fichiers).
 - `test-writer` — écrit/modifie tests selon `bftc-tests-policy` (refus anti-patterns).
@@ -54,8 +54,8 @@ Rôles identiques d'un côté à l'autre :
 
 Disponibles dans Claude Code et Codex via les symlinks `.claude/skills` et `.codex/skills` vers `.agents/skills` :
 
-- `$plan <input>` — triage un sujet (description libre, path roadmap + section, ou path spec) en **ticket** ou **fiche de run** selon critères explicites. Validation user avant écriture.
-- `$run <path>` — exécute une fiche `PLANNED` (mode run) ou résout un ticket actif (mode ticket). Path obligatoire, `@` optionnel.
+- `$bftc-plan <input>` — triage un sujet (description libre, path roadmap + section, ou path spec) en **ticket** ou **fiche de run** selon critères explicites. Validation user avant écriture.
+- `$bftc-run <path>` — exécute une fiche `PLANNED` (mode run) ou résout un ticket actif (mode ticket). Path obligatoire, `@` optionnel.
 
 ## Cycle de vie d'un run
 
@@ -88,7 +88,7 @@ Le lead **ne réécrit jamais** les sections « avant lancement » — il les li
 
 ## Archivage
 
-Quand un run passe à `DONE` ou `ABORTED`, sa fiche est **déplacée** vers [`archive/`](./archive/) (cohérence avec `tasks/archive/` pour les tickets résolus). Le mouvement est fait à l'étape 10 du pipeline `$run` via `git mv`. **Pas de suppression** — trace décisionnelle (pourquoi ce choix, qu'est-ce qui a coincé).
+Quand un run passe à `DONE` ou `ABORTED`, sa fiche est **déplacée** vers [`archive/`](./archive/) (cohérence avec `tasks/archive/` pour les tickets résolus). Le mouvement est fait à l'étape 10 du pipeline `$bftc-run` via `git mv`. **Pas de suppression** — trace décisionnelle (pourquoi ce choix, qu'est-ce qui a coincé).
 
 Les liens depuis `tasks/README.md` et autres docs doivent être mis à jour vers `runs/archive/<id>-<slug>.md` lors de l'archivage.
 
@@ -157,5 +157,5 @@ _(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tick
 
 - [`../00-mvp-roadmap.md`](../00-mvp-roadmap.md) — roadmap des phases dont sont dérivés les runs.
 - [`../README.md`](../README.md) — index global des tickets/runs/archives.
-- [`../../.agents/skills/run/SKILL.md`](../../.agents/skills/run/SKILL.md) — pipeline `$run` source unique.
-- [`../../.agents/skills/plan/SKILL.md`](../../.agents/skills/plan/SKILL.md) — pipeline `$plan` source unique.
+- [`../../.agents/skills/bftc-run/SKILL.md`](../../.agents/skills/bftc-run/SKILL.md) — pipeline `$bftc-run` source unique.
+- [`../../.agents/skills/bftc-plan/SKILL.md`](../../.agents/skills/bftc-plan/SKILL.md) — pipeline `$bftc-plan` source unique.

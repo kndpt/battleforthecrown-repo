@@ -1,7 +1,7 @@
 # 29 — Puissance publique (village + royaume) non exposée
 
 **Sévérité** : 🟡 Majeure
-**Statut** : ✅ Résolu 2026-05-10 par `$run @tasks/29-power-public-visibility-missing.md` (issue de [run 000](../runs/archive/000-pilote-audit-power.md))
+**Statut** : ✅ Résolu 2026-05-10 par `$bftc-run @tasks/29-power-public-visibility-missing.md` (issue de [run 000](../runs/archive/000-pilote-audit-power.md))
 
 ## Symptôme
 

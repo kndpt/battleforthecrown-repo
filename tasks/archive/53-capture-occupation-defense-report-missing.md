@@ -1,7 +1,7 @@
 # 53 — Rapport défenseur manquant quand une capture est attaquée
 
 **Sévérité** : 🔴 Haute  
-**Statut** : ✅ Résolu 2026-05-13 par `$run @tasks/53-capture-occupation-defense-report-missing.md`
+**Statut** : ✅ Résolu 2026-05-13 par `$bftc-run @tasks/53-capture-occupation-defense-report-missing.md`
 **Décision gameplay** : attaquer un village sous capture doit produire un rapport lisible pour le joueur qui occupe la cible, comme s'il défendait une attaque.
 
 ## Symptôme

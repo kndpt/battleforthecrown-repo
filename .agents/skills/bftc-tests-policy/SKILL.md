@@ -1,6 +1,6 @@
 ---
 name: bftc-tests-policy
-description: Use for BFTC test decisions, Jest/Vitest/smokes, Zod, pure formulas, orchestration, stores, or `$run` test planning.
+description: Use for BFTC test decisions, Jest/Vitest/smokes, Zod, pure formulas, orchestration, stores, or `$bftc-run` test planning.
 ---
 
 # BFTC Tests Policy

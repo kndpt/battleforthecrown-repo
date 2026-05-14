@@ -88,7 +88,7 @@ MVP recommandé :
 
 ## Résolution
 
-Résolu le 2026-05-13 par `$run @tasks/46-capture-window-tracker-missing.md @tasks/50-kingdom-activities-bottom-sheet-integration.md`.
+Résolu le 2026-05-13 par `$bftc-run @tasks/46-capture-window-tracker-missing.md @tasks/50-kingdom-activities-bottom-sheet-integration.md`.
 
 - Badges monde `Expéditions` et `Captures` branchés sur snapshots serveur.
 - Bottom sheet unifiée `Activités du royaume` branchée sur les mêmes queries dans monde, armée et village.

@@ -5,7 +5,7 @@ Le projet est solo + agent IA, sans joueur ni collaborateur, sans CI cloud confi
 1. **Hook git `pre-push` (husky)** — léger, synchrone, bloque le push si du code qui ne compile pas ou casse les unit tests quitte la machine.
 2. **Skill `/run`** — porte la responsabilité des smokes en fin de chaque run/ticket via la section `Acceptance & QA` obligatoire.
 
-> Source unique de la stratégie tests : skill [`bftc-tests-policy`](../../.agents/skills/bftc-tests-policy/SKILL.md). Politique QA et obligation smokes : skill [`bftc-qa`](../../.agents/skills/bftc-qa/SKILL.md). Hard Gate `/run` : skill [`run`](../../.agents/skills/run/SKILL.md).
+> Source unique de la stratégie tests : skill [`bftc-tests-policy`](../../.agents/skills/bftc-tests-policy/SKILL.md). Politique QA et obligation smokes : skill [`bftc-qa`](../../.agents/skills/bftc-qa/SKILL.md). Hard Gate `/run` : skill [`run`](../../.agents/skills/bftc-run/SKILL.md).
 
 ## TL;DR
 
@@ -32,7 +32,7 @@ Pas de CI cloud non plus (refus explicite : projet solo, on ne veut pas allonger
 
 ## Câblage `/run` ↔ smokes
 
-Voir le Hard Gate dans [`run/SKILL.md`](../../.agents/skills/run/SKILL.md) et la section dédiée dans [`bftc-qa/SKILL.md`](../../.agents/skills/bftc-qa/SKILL.md). En résumé : smokes obligatoires dès que le diff touche `battleforthecrown-backend/src/`, reportés dans `Acceptance & QA`, flaky non masqué.
+Voir le Hard Gate dans [`run/SKILL.md`](../../.agents/skills/bftc-run/SKILL.md) et la section dédiée dans [`bftc-qa/SKILL.md`](../../.agents/skills/bftc-qa/SKILL.md). En résumé : smokes obligatoires dès que le diff touche `battleforthecrown-backend/src/`, reportés dans `Acceptance & QA`, flaky non masqué.
 
 ## Pourquoi pre-push et pas pre-commit
 

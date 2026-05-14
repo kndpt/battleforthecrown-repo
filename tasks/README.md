@@ -19,8 +19,8 @@ _(Aucun ticket découpé.)_
 
 Fiches d'exécution déléguées aux harnesses Claude Code ou Codex (lead + sub-agents à scope chirurgical). Skills workspace :
 
-- `$plan <input>` — triage un sujet (description libre, path roadmap + section, ou path spec) en **ticket** (`tasks/<id>.md`) ou **fiche de run** (`tasks/runs/<id>.md` statut `PLANNED`) selon des critères explicites (backend+frontend, invariant SPEC, > 4 fichiers, etc.). Validation user avant écriture.
-- `$run <path>` — exécute (fiche de run **ou** ticket actif — path obligatoire, `@` optionnel ; le mode est détecté via le path).
+- `$bftc-plan <input>` — triage un sujet (description libre, path roadmap + section, ou path spec) en **ticket** (`tasks/<id>.md`) ou **fiche de run** (`tasks/runs/<id>.md` statut `PLANNED`) selon des critères explicites (backend+frontend, invariant SPEC, > 4 fichiers, etc.). Validation user avant écriture.
+- `$bftc-run <path>` — exécute (fiche de run **ou** ticket actif — path obligatoire, `@` optionnel ; le mode est détecté via le path).
 
 Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
@@ -54,36 +54,36 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ## Archivés
 
-- [57 — Source canonique du lifecycle des bâtiments joueur](./archive/57-player-village-building-lifecycle-roster.md) ✅ Résolu 2026-05-14 par $run @tasks/57-player-village-building-lifecycle-roster.md
-- [59 — Smokes backend : flakies par ordering Jest](./archive/59-smokes-jest-ordering-flakies.md) ✅ Résolu 2026-05-14 par $run @tasks/59-smokes-jest-ordering-flakies.md
-- [55 — Bâtiments avancés absents après conquête d'un village barbare](./archive/55-conquered-village-missing-advanced-buildings.md) ✅ Résolu 2026-05-14 par $run @tasks/55-conquered-village-missing-advanced-buildings.md
-- [56 — Popup village possédé : afficher les troupes présentes](./archive/56-own-village-popup-troops-list.md) ✅ Résolu 2026-05-14 par $run @tasks/56-own-village-popup-troops-list.md
-- [47 — Queue visuelle de formation du Noble manquante](./archive/47-noble-training-visual-queue-missing.md) ✅ Résolu 2026-05-14 par $run @tasks/47-noble-training-visual-queue-missing.md
-- [51 — Standardiser les bottom sheets sur le design `Activités du royaume`](./archive/51-bottom-sheet-design-system-base.md) ✅ Résolu 2026-05-14 par $run @tasks/51-bottom-sheet-design-system-base.md
-- [52 — Multiplier de vitesse pour les durées de capture/conquête](./archive/52-conquest-capture-time-speed-multiplier.md) ✅ Résolu 2026-05-13 par $run @tasks/52-conquest-capture-time-speed-multiplier.md
-- [53 — Rapport défenseur manquant quand une capture est attaquée](./archive/53-capture-occupation-defense-report-missing.md) ✅ Résolu 2026-05-13 par $run @tasks/53-capture-occupation-defense-report-missing.md
-- [50 — Intégration HUD et bottom sheet des activités du royaume](./archive/50-kingdom-activities-bottom-sheet-integration.md) ✅ Résolu 2026-05-13 par $run @tasks/46-capture-window-tracker-missing.md @tasks/50-kingdom-activities-bottom-sheet-integration.md
+- [57 — Source canonique du lifecycle des bâtiments joueur](./archive/57-player-village-building-lifecycle-roster.md) ✅ Résolu 2026-05-14 par $bftc-run @tasks/57-player-village-building-lifecycle-roster.md
+- [59 — Smokes backend : flakies par ordering Jest](./archive/59-smokes-jest-ordering-flakies.md) ✅ Résolu 2026-05-14 par $bftc-run @tasks/59-smokes-jest-ordering-flakies.md
+- [55 — Bâtiments avancés absents après conquête d'un village barbare](./archive/55-conquered-village-missing-advanced-buildings.md) ✅ Résolu 2026-05-14 par $bftc-run @tasks/55-conquered-village-missing-advanced-buildings.md
+- [56 — Popup village possédé : afficher les troupes présentes](./archive/56-own-village-popup-troops-list.md) ✅ Résolu 2026-05-14 par $bftc-run @tasks/56-own-village-popup-troops-list.md
+- [47 — Queue visuelle de formation du Noble manquante](./archive/47-noble-training-visual-queue-missing.md) ✅ Résolu 2026-05-14 par $bftc-run @tasks/47-noble-training-visual-queue-missing.md
+- [51 — Standardiser les bottom sheets sur le design `Activités du royaume`](./archive/51-bottom-sheet-design-system-base.md) ✅ Résolu 2026-05-14 par $bftc-run @tasks/51-bottom-sheet-design-system-base.md
+- [52 — Multiplier de vitesse pour les durées de capture/conquête](./archive/52-conquest-capture-time-speed-multiplier.md) ✅ Résolu 2026-05-13 par $bftc-run @tasks/52-conquest-capture-time-speed-multiplier.md
+- [53 — Rapport défenseur manquant quand une capture est attaquée](./archive/53-capture-occupation-defense-report-missing.md) ✅ Résolu 2026-05-13 par $bftc-run @tasks/53-capture-occupation-defense-report-missing.md
+- [50 — Intégration HUD et bottom sheet des activités du royaume](./archive/50-kingdom-activities-bottom-sheet-integration.md) ✅ Résolu 2026-05-13 par $bftc-run @tasks/46-capture-window-tracker-missing.md @tasks/50-kingdom-activities-bottom-sheet-integration.md
 - [46 — Tracker persistant de fenêtre de capture manquant](./archive/46-capture-window-tracker-missing.md) ✅ Résolu 2026-05-13 après livraison des tickets 48, 49 et 50.
-- [45 — Watchtower niveau 10 : supprimer la vision globale](./archive/45-watchtower-finite-vision.md) ✅ Résolu 2026-05-13 par $run @tasks/45-watchtower-finite-vision.md
-- [49 — Snapshots serveur des activités du royaume](./archive/49-kingdom-activities-snapshots.md) ✅ Résolu 2026-05-13 par $run @tasks/49-kingdom-activities-snapshots.md
+- [45 — Watchtower niveau 10 : supprimer la vision globale](./archive/45-watchtower-finite-vision.md) ✅ Résolu 2026-05-13 par $bftc-run @tasks/45-watchtower-finite-vision.md
+- [49 — Snapshots serveur des activités du royaume](./archive/49-kingdom-activities-snapshots.md) ✅ Résolu 2026-05-13 par $bftc-run @tasks/49-kingdom-activities-snapshots.md
 - [48 — Design-system du panneau Activités du royaume](./archive/48-kingdom-activities-design-system.md) ✅ Résolu 2026-05-13 par migration design-system directe.
 - [44 — Crash armée : migration `unit_training.building` non appliquée](./archive/44-army-training-schema-drift.md) ✅ Résolu 2026-05-11 par application des migrations locales + garde-fou dev server.
-- [43 — Risque de mort du Seigneur sur victoire coûteuse](./archive/43-noble-loss-chance-on-costly-victory.md) ✅ Résolu 2026-05-11 par $run @tasks/43-noble-loss-chance-on-costly-victory.md
-- [54 — Retour fantôme pendant capture avec Seigneur](./archive/54-conquest-capture-phantom-return.md) ✅ Résolu 2026-05-14 par $run @tasks/54-conquest-capture-phantom-return.md
-- [41 — Période de capture : `PendingConquest` + worker](./archive/41-capture-window-data-model.md) ✅ Résolu 2026-05-11 par $run @tasks/41-capture-window-data-model.md
-- [42 — Hook combat post-résolution conquête](./archive/42-combat-conquest-hook.md) ✅ Résolu 2026-05-11 par $run @tasks/42-combat-conquest-hook.md
-- [40 — Recrutement Seigneur à la Salle du Trône](./archive/40-recruit-noble-throne-hall.md) ✅ Résolu 2026-05-11 par $run @tasks/40-recruit-noble-throne-hall.md
-- [39 — Rapport de combat asymétrique victoire/défaite](./archive/39-combat-report-asymmetric-defeat.md) ✅ Résolu 2026-05-11 par $run @tasks/39-combat-report-asymmetric-defeat.md
-- [38 — `BarbarianVillageStrategy` : résolution combat réelle](./archive/38-barbarian-combat-real-resolution.md) ✅ Résolu 2026-05-11 par $run @tasks/38-barbarian-combat-real-resolution.md
-- [37 — Régénération barbare (troupes + ressources) absente](./archive/37-barbarian-regeneration-missing.md) ✅ Résolu 2026-05-11 par $run @tasks/36-barbarian-troops-runtime-persistence.md @tasks/37-barbarian-regeneration-missing.md
-- [36 — Persistance runtime des troupes barbares + roll initial 60-100 %](./archive/36-barbarian-troops-runtime-persistence.md) ✅ Résolu 2026-05-11 par $run @tasks/36-barbarian-troops-runtime-persistence.md @tasks/37-barbarian-regeneration-missing.md
-- [35 — Drift durée retour vs spec « même vitesse qu'à l'aller »](./archive/35-return-travel-time-recomputed-vs-spec.md) ✅ Résolu 2026-05-11 par $run @tasks/35-return-travel-time-recomputed-vs-spec.md
-- [34 — Rappel d'armée pendant l'aller non implémenté](./archive/34-army-recall-missing.md) ✅ Résolu 2026-05-10 par $run @tasks/34-army-recall-missing.md
-- [33 — Renforts inter-villages non implémenté](./archive/33-reinforcements-inter-villages-missing.md) ✅ Résolu 2026-05-10 par $run @tasks/33-reinforcements-inter-villages-missing.md
-- [29 — Puissance publique (village + royaume) non exposée](./archive/29-power-public-visibility-missing.md) ✅ Résolu 2026-05-10 par $run @tasks/29-power-public-visibility-missing.md (endpoints publics dédiés village/royaume).
+- [43 — Risque de mort du Seigneur sur victoire coûteuse](./archive/43-noble-loss-chance-on-costly-victory.md) ✅ Résolu 2026-05-11 par $bftc-run @tasks/43-noble-loss-chance-on-costly-victory.md
+- [54 — Retour fantôme pendant capture avec Seigneur](./archive/54-conquest-capture-phantom-return.md) ✅ Résolu 2026-05-14 par $bftc-run @tasks/54-conquest-capture-phantom-return.md
+- [41 — Période de capture : `PendingConquest` + worker](./archive/41-capture-window-data-model.md) ✅ Résolu 2026-05-11 par $bftc-run @tasks/41-capture-window-data-model.md
+- [42 — Hook combat post-résolution conquête](./archive/42-combat-conquest-hook.md) ✅ Résolu 2026-05-11 par $bftc-run @tasks/42-combat-conquest-hook.md
+- [40 — Recrutement Seigneur à la Salle du Trône](./archive/40-recruit-noble-throne-hall.md) ✅ Résolu 2026-05-11 par $bftc-run @tasks/40-recruit-noble-throne-hall.md
+- [39 — Rapport de combat asymétrique victoire/défaite](./archive/39-combat-report-asymmetric-defeat.md) ✅ Résolu 2026-05-11 par $bftc-run @tasks/39-combat-report-asymmetric-defeat.md
+- [38 — `BarbarianVillageStrategy` : résolution combat réelle](./archive/38-barbarian-combat-real-resolution.md) ✅ Résolu 2026-05-11 par $bftc-run @tasks/38-barbarian-combat-real-resolution.md
+- [37 — Régénération barbare (troupes + ressources) absente](./archive/37-barbarian-regeneration-missing.md) ✅ Résolu 2026-05-11 par $bftc-run @tasks/36-barbarian-troops-runtime-persistence.md @tasks/37-barbarian-regeneration-missing.md
+- [36 — Persistance runtime des troupes barbares + roll initial 60-100 %](./archive/36-barbarian-troops-runtime-persistence.md) ✅ Résolu 2026-05-11 par $bftc-run @tasks/36-barbarian-troops-runtime-persistence.md @tasks/37-barbarian-regeneration-missing.md
+- [35 — Drift durée retour vs spec « même vitesse qu'à l'aller »](./archive/35-return-travel-time-recomputed-vs-spec.md) ✅ Résolu 2026-05-11 par $bftc-run @tasks/35-return-travel-time-recomputed-vs-spec.md
+- [34 — Rappel d'armée pendant l'aller non implémenté](./archive/34-army-recall-missing.md) ✅ Résolu 2026-05-10 par $bftc-run @tasks/34-army-recall-missing.md
+- [33 — Renforts inter-villages non implémenté](./archive/33-reinforcements-inter-villages-missing.md) ✅ Résolu 2026-05-10 par $bftc-run @tasks/33-reinforcements-inter-villages-missing.md
+- [29 — Puissance publique (village + royaume) non exposée](./archive/29-power-public-visibility-missing.md) ✅ Résolu 2026-05-10 par $bftc-run @tasks/29-power-public-visibility-missing.md (endpoints publics dédiés village/royaume).
 - [30 — Salle du Conseil : poids défini en spec, bâtiment absent du modèle](./archive/30-power-council-hall-missing.md) ✅ Résolu 2026-05-10 par run 002 (Piste A : implémentée comme bâtiment 1 niveau).
-- [31 — `PowerSnapshot.kingdom` : champ DB sémantiquement faux](./archive/31-power-snapshot-kingdom-field-misnamed.md) ✅ Résolu 2026-05-10 par $run @tasks/31-power-snapshot-kingdom-field-misnamed.md (Piste B : table morte supprimée).
-- [32 — Drift potentiel `unlockCastleLevel` ↔ `BUILDING_UNLOCK_REQUIREMENTS`](./archive/32-buildings-unlock-duplication.md) ✅ Résolu 2026-05-10 par $run @tasks/32-buildings-unlock-duplication.md (Piste A : source unique via dérivation depuis `BUILDING_DEFINITIONS`).
+- [31 — `PowerSnapshot.kingdom` : champ DB sémantiquement faux](./archive/31-power-snapshot-kingdom-field-misnamed.md) ✅ Résolu 2026-05-10 par $bftc-run @tasks/31-power-snapshot-kingdom-field-misnamed.md (Piste B : table morte supprimée).
+- [32 — Drift potentiel `unlockCastleLevel` ↔ `BUILDING_UNLOCK_REQUIREMENTS`](./archive/32-buildings-unlock-duplication.md) ✅ Résolu 2026-05-10 par $bftc-run @tasks/32-buildings-unlock-duplication.md (Piste A : source unique via dérivation depuis `BUILDING_DEFINITIONS`).
 - [01 — Audit des tests unitaires](./archive/01-unit-tests-audit.md) ✅ Résolu 2026-05-08
 - [02 — Tests smokes / E2E](./archive/02-smoke-tests-strategy.md) ✅ Résolu 2026-05-08
 - [03 — CI : automatiser ou pas](./archive/03-ci-strategy.md) ✅ Résolu 2026-05-08
@@ -121,4 +121,4 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ## Process
 
-Pour résoudre un ticket actif : `$run tasks/<id>-<slug>.md` (mode ticket auto, `@` optionnel). Le pipeline lit le ticket, demande à l'utilisateur de trancher la piste si plusieurs proposées, exécute en mode rapide, archive le ticket et commit. Détail : [`runs/README.md`](./runs/README.md).
+Pour résoudre un ticket actif : `$bftc-run tasks/<id>-<slug>.md` (mode ticket auto, `@` optionnel). Le pipeline lit le ticket, demande à l'utilisateur de trancher la piste si plusieurs proposées, exécute en mode rapide, archive le ticket et commit. Détail : [`runs/README.md`](./runs/README.md).
