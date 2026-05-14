@@ -22,12 +22,11 @@ Si une étape échoue, le push est bloqué. Les **smokes ne tournent pas** dans 
 
 ## Pourquoi sortir les smokes du hook
 
-L'expérience a montré deux problèmes structurels :
+**Coût synchrone trop élevé** — la suite smoke pèse ~2-3 min (boot Nest × N fichiers + scénarios DB réels). À chaque push, c'est rédhibitoire quand on push souvent. Le hook reste donc minimaliste (~10-15 s).
 
-1. **Flakies par ordering** — Jest exécute les fichiers smoke dans un ordre dépendant du cache `.jest-cache` (heuristique `slowestFirst`). Le même code passe ou casse selon que `smoke.spec.ts` tourne en 1er ou en 5e. Résultat : `yarn test` en local vert, `pre-push` rouge, rerun vert.
-2. **Coût synchrone trop élevé** — 75 s à chaque push devient insupportable quand on push souvent et que le filet flakie.
+Pas de CI cloud non plus (refus explicite : projet solo, on ne veut pas allonger la boucle ticket → push → résultat). On déporte la responsabilité smokes là où elle a le plus de sens : **l'agent qui vient de toucher le code backend**, dans le cadre formel du `/run`.
 
-Pas de CI cloud non plus (refus explicite : projet solo, on ne veut pas allonger la boucle ticket → push → résultat). On déporte donc la responsabilité smokes là où elle a le plus de sens : **l'agent qui vient de toucher le code backend**, dans le cadre formel du `/run`.
+> Historique : un flake « ordering Jest » avait été cité comme 2e raison. Causé par le sequencer par défaut (`slowestFirst`) dont l'ordre dépend du cache `.jest-cache`. Résolu en figeant l'ordre des fichiers smoke via `test/jest-smoke-sequencer.js` (ordre alphabétique stable). Voir `tasks/archive/59-smokes-jest-ordering-flakies.md`.
 
 ## Câblage `/run` ↔ smokes
 
