@@ -10,6 +10,7 @@ import { OwnershipService } from '../../common/auth';
 import { WorldService } from '../world/world.service';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
 import { VillageStrategyService } from '../strategy/village-strategy.service';
+import { applyPopulationBonus } from '../population/population-capacity';
 import { CrownsService } from '../crowns/crowns.service';
 import {
   canRecruitNoble,
@@ -104,7 +105,11 @@ export class RecruitNobleUseCase {
         throw new BadRequestException('Insufficient resources');
       }
 
-      const availablePopulation = population.max - population.used;
+      const populationStrategyBonus =
+        await this.villageStrategy.getStrategyBonus(villageId, 'population');
+      const availablePopulation =
+        applyPopulationBonus(population.max, populationStrategyBonus) -
+        population.used;
       if (availablePopulation < unitCost.population) {
         throw new BadRequestException('Insufficient population');
       }

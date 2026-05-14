@@ -57,6 +57,13 @@ Poids = (Coût_cumulé_level_10 / 500) × Multiplicateur_stratégique
 - **Évaluation de cible** : la puissance bâtiments est publique, ce qui permet d'estimer la difficulté d'une attaque sans espion.
 - **Villages cachés** : un village peut avoir peu de bâtiments mais une armée massive (piège) — d'où l'intérêt du scout avant un raid sérieux.
 
+### Réactivité temps réel
+
+La puissance affichée côté HUD se rafraîchit par invalidation REST après les events Outbox métier :
+
+- `unit.trained` à chaque unité fabriquée rafraîchit la puissance village et royaume pendant un training en cours.
+- `building.completed` rafraîchit la puissance village et royaume à la fin d'un upgrade.
+
 ## Classements
 
 > 🚧 **Feature post-MVP — à retravailler entièrement.** L'esquisse ci-dessous est conservée pour mémoire mais **sort du scope MVP**. Les motivations et points à reprendre sont listés juste en dessous.

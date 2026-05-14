@@ -96,6 +96,7 @@ Chaque payload est validé runtime par `parseEventPayload(kind, raw)` (backend `
 |-------|-------|------------------------------|---------------------|
 | `resources.changed` | `userId` | `villageId, wood, stone, iron, maxPerType, lastUpdateTs, productionRates` | `OutboxPublisher.resourcesChanged` (upgrade-building, recruit-troops, cancel-construction, cancel-recruitment, construction worker quand un producer/warehouse complète, `combat.worker.ts` quand le défenseur est pillé, `return.worker.ts` quand l'attaquant récupère son butin). **Pas le `ProductionWorker` tick** — cf. § Exceptions au pattern Outbox. |
 | `building.completed` | `userId` | `buildingId, villageId, buildingType, level` | `ConstructionWorker` |
+| `unit.trained` | `userId` | `trainingId, villageId, unitType, completedQty, totalQty` | `TrainingWorker`, à chaque unité produite dans la même transaction que l'incrément d'inventaire. |
 | `unit.training.completed` | `userId` | `trainingId, villageId, unitType, completedQty, totalQty` | `TrainingWorker` |
 | `crowns.changed` | `userId` | `userId, worldId, balance, productionRate, lastUpdateTs` | `CrownProductionWorker` (chaque tick, par membership active) + `CrownsService.updateProduction` quand transaction crowns |
 | `battle.sent` | `userId` (attaquant) | `expeditionId, villageId, targetX, targetY, targetKind, arrivalAt` | `CombatService.initiateAttack` |
@@ -116,6 +117,12 @@ Chaque payload est validé runtime par `parseEventPayload(kind, raw)` (backend `
 | `village.conquered` | `userId` (nouveau propriétaire) | `villageId, newOwnerId, previousTier, x, y, buildingsKept` | `ConquestService` |
 
 Pour les renforts, la forme exacte des payloads reste dérivée des schémas partagés (`packages/shared/src/events/{schemas,types}.ts`). Cette table ne liste que les champs discriminants utiles pour lire le flux fonctionnel.
+
+## Event métier consommé par plusieurs invalidations
+
+Quand un worker produit un fait gameplay réutilisable, l'event Outbox doit décrire ce fait métier plutôt qu'une consigne d'invalidation frontend. Exemple canonique : `TrainingWorker` émet `unit.trained` à chaque unité fabriquée. Le frontend s'en sert aujourd'hui pour rafraîchir `armyInventory`, `population`, `power.village.*` et `power.kingdom.*`; demain, le même event pourra alimenter les cartes quotidiennes, l'onboarding, les achievements ou les statistiques.
+
+Ce choix garde le backend server-authoritative sans le coupler à TanStack Query. Un event signal-pur comme `power.changed` serait plus étroit, moins réutilisable, et obligerait à ajouter un second event le jour où une feature doit savoir qu'une unité a réellement été formée.
 
 ## Exceptions au pattern Outbox
 

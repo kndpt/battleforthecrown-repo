@@ -14,6 +14,7 @@ import type {
   ServerEventName,
   ServerEvents,
   UnitTrainingCompletedPayload,
+  UnitTrainedPayload,
   VillageAttackedPayload,
   VillageCaptureWindowCompletedPayload,
   VillageCaptureWindowInterruptedPayload,
@@ -94,12 +95,23 @@ export function applyBuildingCompleted(
   ctx.queryClient.invalidateQueries({ queryKey: ['population', payload.villageId] });
   ctx.queryClient.invalidateQueries({ queryKey: ['resources', payload.villageId] });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.villageStrategy(payload.villageId) });
+  invalidatePowerQueries(ctx, payload.villageId);
   useUiStore.getState().pushToast({
     tone: 'success',
     title: 'Construction terminée',
     description: `${payload.buildingType} niveau ${payload.level}`,
     ttlMs: 4000,
   });
+}
+
+export function applyUnitTrained(
+  payload: UnitTrainedPayload,
+  ctx: BindingsContext,
+): void {
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyTraining(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
+  invalidatePowerQueries(ctx, payload.villageId);
 }
 
 export function applyUnitTrainingCompleted(
@@ -401,6 +413,12 @@ function invalidateOpenExpeditions(ctx: BindingsContext): void {
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.openExpeditions(userId, worldId) });
 }
 
+function invalidatePowerQueries(ctx: BindingsContext, villageId: string): void {
+  const userId = useAuthStore.getState().user?.id ?? null;
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.villagePower(villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.kingdomPower(userId) });
+}
+
 export function applyVillageConquered(payload: VillageConqueredPayload, ctx: BindingsContext): void {
   ctx.queryClient.invalidateQueries({ queryKey: ['memberships'] });
   ctx.queryClient.invalidateQueries({ queryKey: ['villages'] });
@@ -557,6 +575,7 @@ const bindings: ServerEventBindings = {
   'crowns.changed': applyCrownsChanged,
   'building.completed': applyBuildingCompleted,
   'unit.training.completed': applyUnitTrainingCompleted,
+  'unit.trained': applyUnitTrained,
   'battle.sent': applyBattleSent,
   'battle.resolved': applyBattleResolved,
   'battle.returned': applyBattleReturned,

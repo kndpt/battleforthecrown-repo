@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { UNIT_TYPES } from '@battleforthecrown/shared/army';
 import {
   bootSmokeApp,
   joinWorld,
@@ -23,7 +24,7 @@ describe('army training smoke', () => {
     await ctx.app.close();
   });
 
-  it('training: train 1 MILITIA → UnitInventory + unit.training.completed dispatched', async () => {
+  it('training: train 3 MILITIA → UnitInventory + unit.trained per unit + completion', async () => {
     const world = await seedSmokeWorld(ctx.prisma);
     const user = await registerUser(ctx.server);
     const join = await joinWorld(
@@ -58,22 +59,90 @@ describe('army training smoke', () => {
     const res = await request(ctx.server)
       .post(`/army/${villageId}/train`)
       .set('Authorization', `Bearer ${user.accessToken}`)
-      .send({ unitType: 'MILITIA', quantity: 1 });
+      .send({ unitType: 'MILITIA', quantity: 3 });
     expect(res.status).toBeLessThan(300);
 
     await waitFor(
       () =>
         ctx.prisma.unitInventory.findFirst({
-          where: { villageId, unitType: 'MILITIA', quantity: { gte: 1 } },
+          where: { villageId, unitType: 'MILITIA', quantity: { gte: 3 } },
         }),
-      { timeoutMs: 10_000 },
+      { timeoutMs: 15_000 },
     );
 
     const event = await outboxDispatched(
       ctx.prisma,
       { kind: 'unit.training.completed', aggregateId: villageId },
-      { timeoutMs: 10_000 },
+      { timeoutMs: 15_000 },
     );
     expect(event?.dispatchedAt).toBeTruthy();
+
+    const events = await ctx.prisma.eventOutbox.findMany({
+      where: {
+        aggregateId: villageId,
+        kind: { in: ['unit.trained', 'unit.training.completed'] },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+    expect(events.filter((item) => item.kind === 'unit.trained')).toHaveLength(
+      3,
+    );
+    expect(
+      events.filter((item) => item.kind === 'unit.training.completed'),
+    ).toHaveLength(1);
+    expect(events).toHaveLength(4);
+  });
+
+  it('training: accepts WARRIOR when an ECONOMIC population bonus covers the quantity', async () => {
+    const world = await seedSmokeWorld(
+      ctx.prisma,
+      `train-warrior-${Date.now()}`,
+    );
+    const user = await registerUser(ctx.server, 'train-warrior');
+    const join = await joinWorld(
+      ctx.server,
+      user.accessToken,
+      world.id,
+      'train-warrior-village',
+    );
+    const villageId = join.village.id;
+
+    await ctx.prisma.building.updateMany({
+      where: { villageId, type: 'BARRACKS' },
+      data: { level: 3 },
+    });
+    await ctx.prisma.villageStrategyConfig.upsert({
+      where: { villageId },
+      create: { villageId, strategy: 'ECONOMIC' },
+      update: { strategy: 'ECONOMIC' },
+    });
+    await ctx.prisma.resourceStock.update({
+      where: { villageId },
+      data: {
+        wood: 100_000,
+        stone: 100_000,
+        iron: 100_000,
+        maxPerType: 1_000_000,
+      },
+    });
+    await ctx.prisma.population.update({
+      where: { villageId },
+      data: { used: 166, max: 250 },
+    });
+
+    const res = await request(ctx.server)
+      .post(`/army/${villageId}/train`)
+      .set('Authorization', `Bearer ${user.accessToken}`)
+      .send({ unitType: UNIT_TYPES.WARRIOR, quantity: 43 });
+
+    expect(res.status).toBeLessThan(300);
+    await expect(
+      ctx.prisma.unitTraining.findFirstOrThrow({
+        where: { villageId, unitType: UNIT_TYPES.WARRIOR },
+      }),
+    ).resolves.toMatchObject({ totalQty: 43, completedQty: 0 });
+    await expect(
+      ctx.prisma.population.findUniqueOrThrow({ where: { villageId } }),
+    ).resolves.toMatchObject({ used: 252, max: 250 });
   });
 });

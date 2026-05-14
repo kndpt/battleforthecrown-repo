@@ -10,6 +10,7 @@ import { OwnershipService } from '../../common/auth';
 import { WorldService } from '../world/world.service';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
 import { VillageStrategyService } from '../strategy/village-strategy.service';
+import { applyPopulationBonus } from '../population/population-capacity';
 import {
   UNIT_CATALOG,
   UnitType,
@@ -78,10 +79,10 @@ export class RecruitTroopsUseCase {
         throw new BadRequestException('Training already in progress');
       }
 
-      const strategyBonus = await this.villageStrategy.getStrategyBonus(
-        villageId,
-        'training',
-      );
+      const [strategyBonus, populationStrategyBonus] = await Promise.all([
+        this.villageStrategy.getStrategyBonus(villageId, 'training'),
+        this.villageStrategy.getStrategyBonus(villageId, 'population'),
+      ]);
 
       const unitCostMultiplier =
         strategyBonus &&
@@ -113,7 +114,9 @@ export class RecruitTroopsUseCase {
         throw new BadRequestException('Insufficient resources');
       }
 
-      const availablePopulation = population.max - population.used;
+      const availablePopulation =
+        applyPopulationBonus(population.max, populationStrategyBonus) -
+        population.used;
       if (availablePopulation < totalPopulation) {
         throw new BadRequestException('Insufficient population');
       }

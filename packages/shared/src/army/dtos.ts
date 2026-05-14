@@ -1,6 +1,6 @@
-import type { UnitType } from './types';
+import type { BarracksUnitType } from './types';
 
 export interface TrainUnitsRequest {
-  unitType: UnitType;
+  unitType: BarracksUnitType;
   quantity: number;
 }

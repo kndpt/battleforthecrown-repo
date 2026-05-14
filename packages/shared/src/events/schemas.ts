@@ -18,6 +18,14 @@ const UnitTrainingCompletedPayloadSchema = z.object({
   totalQty: z.number(),
 });
 
+const UnitTrainedPayloadSchema = z.object({
+  trainingId: z.string(),
+  villageId: z.string(),
+  unitType: z.string(),
+  completedQty: z.number(),
+  totalQty: z.number(),
+});
+
 const BattleSentPayloadSchema = z.object({
   expeditionId: z.string(),
   villageId: z.string(),
@@ -194,6 +202,7 @@ const CrownsChangedPayloadSchema = z.object({
 export const EVENT_PAYLOAD_SCHEMAS = {
   'building.completed': BuildingCompletedPayloadSchema,
   'unit.training.completed': UnitTrainingCompletedPayloadSchema,
+  'unit.trained': UnitTrainedPayloadSchema,
   'battle.sent': BattleSentPayloadSchema,
   'battle.resolved': BattleResolvedPayloadSchema,
   'battle.returned': BattleReturnedPayloadSchema,

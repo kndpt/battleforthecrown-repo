@@ -3,6 +3,7 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import { WorldConfigService } from '../world/world-config.service';
 import { VillageStrategyService } from '../strategy/village-strategy.service';
+import { applyPopulationBonus } from './population-capacity';
 
 @Injectable()
 export class PopulationService {
@@ -28,19 +29,11 @@ export class PopulationService {
       throw new NotFoundException('Village not found');
     }
 
-    // Apply strategy bonus to max population if available
-    let adjustedMax = population.max;
     const strategyBonus = await this.villageStrategy.getStrategyBonus(
       villageId,
       'population',
     );
-    if (
-      strategyBonus &&
-      typeof strategyBonus.populationBonus === 'number' &&
-      strategyBonus.populationBonus !== 0
-    ) {
-      adjustedMax = Math.floor(population.max * strategyBonus.populationBonus);
-    }
+    const adjustedMax = applyPopulationBonus(population.max, strategyBonus);
 
     return {
       used: population.used,
