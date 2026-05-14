@@ -1,8 +1,8 @@
 # 54 — Retour fantôme pendant capture avec Seigneur
 
 **Sévérité** : 🟡 Majeur  
-**Statut** : 🆕 Ouvert  
-**Spec amont** : [`docs/gameplay/10-conquest.md` § Devenir « Seigneur du village conquis »](../docs/gameplay/10-conquest.md#devenir--seigneur-du-village-conquis) + [`docs/gameplay/04-combat.md` § Mécanique générale](../docs/gameplay/04-combat.md#mécanique-générale)
+**Statut** : ✅ Résolu
+**Spec amont** : [`docs/gameplay/10-conquest.md` § Devenir « Seigneur du village conquis »](../../docs/gameplay/10-conquest.md#devenir--seigneur-du-village-conquis) + [`docs/gameplay/04-combat.md` § Mécanique générale](../../docs/gameplay/04-combat.md#mécanique-générale)
 
 ## Symptôme
 

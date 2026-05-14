@@ -188,7 +188,32 @@ describe('combat conquest hook smoke', () => {
     expect(resolvedEvent.payload).toMatchObject({
       expeditionId: conquest.expeditionId,
       survivingUnits: {},
+      loot: { resources: { wood: 0, stone: 0, iron: 0 } },
+      returnAt: null,
     });
+
+    const expedition = await ctx.prisma.expedition.findUniqueOrThrow({
+      where: { id: conquest.expeditionId },
+    });
+    expect(expedition.status).toBe('RESOLVED');
+    expect(expedition.returnAt).toBeNull();
+    expect(expedition.survivingUnits).toEqual({});
+    expect(expedition.loot).toEqual({
+      resources: { wood: 0, stone: 0, iron: 0 },
+      metadata: {
+        cappedByCapacity: false,
+        totalCapacityAvailable: 2500,
+        totalCapacityUsed: 0,
+      },
+    });
+
+    const returnJobs = await ctx.prisma.$queryRaw<Array<{ id: string }>>`
+      SELECT id
+      FROM pgboss.job
+      WHERE name = 'combat:return'
+        AND data->>'expeditionId' = ${conquest.expeditionId}
+    `;
+    expect(returnJobs).toHaveLength(0);
 
     const entitiesRes = await request(ctx.server)
       .get(`/world/${world.id}/entities`)
