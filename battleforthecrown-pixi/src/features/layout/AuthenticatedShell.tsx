@@ -45,7 +45,14 @@ export function AuthenticatedShell() {
     });
   }, [worldId]);
 
-  useEffect(() => bindServerEvents({ queryClient }), [queryClient]);
+  // Depends on accessToken because gameSocket.disconnect() (triggered on token
+  // refresh by the connect effect above) calls removeAllListeners() on the
+  // socket. Without rebinding when the token changes, all WS handlers stay
+  // attached to the now-destroyed socket and live updates silently stop.
+  useEffect(() => {
+    if (!accessToken) return;
+    return bindServerEvents({ queryClient });
+  }, [queryClient, accessToken]);
 
   const resourcesQuery = useResourcesQuery(villageId);
   const setResources = useResourcesStore((state) => state.setResources);

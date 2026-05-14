@@ -67,6 +67,8 @@ La WebSocket vit dans `battleforthecrown-pixi/src/features/layout/AuthenticatedS
 
 **Règle pour ajouter un écran protégé** : le placer sous `<Route element={<AuthenticatedShell />}>` dans `App.tsx`. Ne **jamais** re-wrapper l'écran lui-même avec un composant qui (re)connecte la WS — cela démonterait le shell à chaque navigation et ferait cycler la connexion (régression historique du défunt `GameSession`, cf. ticket d'audit 13).
 
+**Invariant — listeners et lifecycle du socket** : `gameSocket.disconnect()` appelle `socket.removeAllListeners()` puis met l'instance à `null`. Tout `useEffect` qui attache des handlers via `gameSocket.on(...)` doit donc dépendre du **même cycle de vie** que celui qui appelle `gameSocket.connect()` (typiquement `[accessToken]`). Sans cette dépendance partagée, après un refresh de token (ou tout autre re-connect), le nouveau socket est créé sans aucun handler métier et **tous** les events (combat, training, conquête, ressources, couronnes, building, etc.) sont silencieusement perdus jusqu'au prochain F5. Le shell est l'endroit canonique pour ce binding via `bindServerEvents`. Si un composant feature attache son propre listener (ex. effets visuels Pixi), appliquer la même règle.
+
 ## Routing par scope
 
 Chaque event a un scope :
