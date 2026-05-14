@@ -304,9 +304,6 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
       const { px, py } = tileToWorld(disk.x, disk.y);
       const radiusPx = disk.radius * tileSize;
       fogHole.circle(px, py, radiusPx).fill({ color: 0xffffff, alpha: 1 });
-      visionRing
-        .circle(px, py, radiusPx)
-        .stroke({ color: COLOR.worldBorder, width: 2, alpha: 0.55 });
     }
 
     fogContainer.updateCacheTexture();
