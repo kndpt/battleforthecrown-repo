@@ -11,9 +11,11 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import { WorldConfigService } from '../world/world-config.service';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
+import { applyPopulationBonus } from '../population/population-capacity';
 import {
   getBuildingMaxLevel,
   getBuildingUnlockRequirement,
+  getStrategyBonusValue,
   isBuildingEnabled,
   MAX_CONSTRUCTION_QUEUE,
 } from '@battleforthecrown/shared/village';
@@ -115,7 +117,19 @@ export class UpgradeBuildingUseCase {
         throw new BadRequestException('Insufficient resources');
       }
 
-      if (population.max - population.used < cost.population) {
+      const adjustedMaxPopulation = applyPopulationBonus(
+        population.max,
+        currentStrategy
+          ? {
+              populationBonus: getStrategyBonusValue(
+                currentStrategy,
+                'populationBonus',
+              ),
+            }
+          : null,
+      );
+
+      if (adjustedMaxPopulation - population.used < cost.population) {
         throw new BadRequestException('Insufficient population');
       }
 

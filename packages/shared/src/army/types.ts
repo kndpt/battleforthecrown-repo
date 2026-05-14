@@ -13,6 +13,20 @@ export const UNIT_TYPES = {
 
 export type UnitType = (typeof UNIT_TYPES)[keyof typeof UNIT_TYPES];
 
+export const BARRACKS_UNIT_TYPES = [
+  UNIT_TYPES.MILITIA,
+  UNIT_TYPES.SQUIRE,
+  UNIT_TYPES.WARRIOR,
+  UNIT_TYPES.ARCHER,
+  UNIT_TYPES.TEMPLAR,
+  UNIT_TYPES.CAVALRY,
+  UNIT_TYPES.SPY,
+  UNIT_TYPES.RAM,
+  UNIT_TYPES.CATAPULT,
+] as const satisfies readonly [UnitType, ...UnitType[]];
+
+export type BarracksUnitType = (typeof BARRACKS_UNIT_TYPES)[number];
+
 export interface UnitCost {
   wood: number;
   stone: number;

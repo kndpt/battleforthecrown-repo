@@ -4,6 +4,10 @@ import { ResourcesService } from '../modules/resources/resources.service';
 import { CrownsService } from '../modules/crowns/crowns.service';
 import { OutboxPublisher } from '../modules/event/outbox-publisher.service';
 import PgBoss from 'pg-boss';
+import {
+  BUILDING_TYPES,
+  getFarmPopulationLimit,
+} from '@battleforthecrown/shared/village';
 
 interface ConstructionJob {
   buildingId: string;
@@ -114,7 +118,7 @@ export class ConstructionWorker implements OnModuleInit {
         }
 
         // Upgrade building level
-        await tx.building.update({
+        const completedBuilding = await tx.building.update({
           where: { id: data.buildingId },
           data: {
             level: data.targetLevel,
@@ -122,6 +126,13 @@ export class ConstructionWorker implements OnModuleInit {
             endTime: null,
           },
         });
+
+        if (completedBuilding.type === BUILDING_TYPES.FARM) {
+          await tx.population.update({
+            where: { villageId: completedBuilding.villageId },
+            data: { max: getFarmPopulationLimit(completedBuilding.level) },
+          });
+        }
 
         // Create event in outbox for WebSocket notification
         await this.outbox.buildingCompleted(

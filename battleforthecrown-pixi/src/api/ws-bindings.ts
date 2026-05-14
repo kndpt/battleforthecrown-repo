@@ -108,6 +108,7 @@ export function applyUnitTrained(
   payload: UnitTrainedPayload,
   ctx: BindingsContext,
 ): void {
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyTraining(payload.villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
   invalidatePowerQueries(ctx, payload.villageId);

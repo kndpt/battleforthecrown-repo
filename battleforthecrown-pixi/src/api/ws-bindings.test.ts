@@ -166,13 +166,14 @@ describe('applyBuildingCompleted', () => {
 });
 
 describe('applyUnitTrained', () => {
-  it('invalidates inventory, population and power queries without pushing a toast', () => {
+  it('invalidates training, inventory, population and power queries without pushing a toast', () => {
     useAuthStore.getState().setSession({
       accessToken: 'access',
       refreshToken: 'refresh',
       user: { id: 'user-1', email: 'user@example.test' },
     });
     const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.armyTraining('v1'), []);
     queryClient.setQueryData(queryKeys.armyInventory('v1'), []);
     queryClient.setQueryData(queryKeys.population('v1'), { used: 1, max: 10, available: 9 });
     queryClient.setQueryData(queryKeys.villagePower('v1'), { total: 1 });
@@ -189,6 +190,7 @@ describe('applyUnitTrained', () => {
       { queryClient },
     );
 
+    expect(queryClient.getQueryState(queryKeys.armyTraining('v1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.armyInventory('v1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.population('v1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.villagePower('v1'))?.isInvalidated).toBe(true);
