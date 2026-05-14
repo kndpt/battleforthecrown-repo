@@ -13,7 +13,11 @@ import type {
 } from '@battleforthecrown/shared/village';
 import { getBuildingPowerWeight } from '@battleforthecrown/shared/power';
 import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
-import { INITIAL_BUILDINGS } from '../world/join-world.use-case';
+import {
+  PLAYER_VILLAGE_BUILDING_LIFECYCLE,
+  getBarbarianConquestVillageBuildings,
+  getInitialPlayerVillageBuildings,
+} from './player-village-building-lifecycle';
 
 describe('COUNCIL_HALL', () => {
   it('has max level 1', () => {
@@ -137,10 +141,44 @@ describe('BUILDING_TYPES catalogue', () => {
   });
 });
 
-describe('initial player village buildings', () => {
-  it('creates enabled advanced buildings as unbuilt rows', () => {
-    expect(INITIAL_BUILDINGS).toEqual(
+describe('player village building lifecycle roster', () => {
+  it('forces every enabled building to have an explicit lifecycle policy', () => {
+    const enabledTypes = (
+      Object.values(BUILDING_TYPES) as BuildingType[]
+    ).filter(isBuildingEnabled);
+    const lifecycleTypes = PLAYER_VILLAGE_BUILDING_LIFECYCLE.map(
+      (building) => building.type,
+    );
+
+    expect([...new Set(lifecycleTypes)].sort()).toEqual(
+      [...enabledTypes].sort(),
+    );
+    expect(lifecycleTypes).not.toContain(BUILDING_TYPES.WALL);
+    expect(lifecycleTypes).not.toContain(BUILDING_TYPES.HIDEOUT);
+  });
+
+  it('creates enabled advanced buildings as unbuilt rows for a new player village', () => {
+    expect(getInitialPlayerVillageBuildings()).toEqual(
       expect.arrayContaining([
+        { type: BUILDING_TYPES.COUNCIL_HALL, level: 0 },
+        { type: BUILDING_TYPES.THRONE_HALL, level: 0 },
+      ]),
+    );
+  });
+
+  it('keeps join and barbarian conquest on the same player-building roster', () => {
+    const initialBuildings = getInitialPlayerVillageBuildings();
+    const conqueredBuildings = getBarbarianConquestVillageBuildings(3);
+
+    expect(conqueredBuildings.map((building) => building.type).sort()).toEqual(
+      initialBuildings.map((building) => building.type).sort(),
+    );
+    expect(conqueredBuildings).toEqual(
+      expect.arrayContaining([
+        { type: BUILDING_TYPES.CASTLE, level: 3 },
+        { type: BUILDING_TYPES.WOOD, level: 3 },
+        { type: BUILDING_TYPES.BARRACKS, level: 3 },
+        { type: BUILDING_TYPES.WATCHTOWER, level: 0 },
         { type: BUILDING_TYPES.COUNCIL_HALL, level: 0 },
         { type: BUILDING_TYPES.THRONE_HALL, level: 0 },
       ]),

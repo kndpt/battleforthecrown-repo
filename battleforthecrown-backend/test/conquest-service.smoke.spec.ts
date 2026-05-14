@@ -1,4 +1,8 @@
 import {
+  BUILDING_TYPES,
+  type BuildingType,
+} from '@battleforthecrown/shared/village';
+import {
   bootSmokeApp,
   joinWorld,
   outboxDispatched,
@@ -59,6 +63,30 @@ describe('conquest service smoke', () => {
       where: { id: barbarian.id },
     });
     expect(conquered.userId).toBe(user.userId);
+
+    const joinBuildings = await ctx.prisma.building.findMany({
+      where: { villageId: attackerId },
+      select: { type: true },
+    });
+    const conqueredBuildings = await ctx.prisma.building.findMany({
+      where: { villageId: barbarian.id },
+      select: { type: true, level: true },
+    });
+    const conqueredByType = new Map(
+      conqueredBuildings.map((building) => [
+        building.type as BuildingType,
+        building.level,
+      ]),
+    );
+
+    expect(conqueredBuildings.map((building) => building.type).sort()).toEqual(
+      joinBuildings.map((building) => building.type).sort(),
+    );
+    expect(conqueredByType.get(BUILDING_TYPES.WATCHTOWER)).toBe(0);
+    expect(conqueredByType.get(BUILDING_TYPES.COUNCIL_HALL)).toBe(0);
+    expect(conqueredByType.get(BUILDING_TYPES.THRONE_HALL)).toBe(0);
+    expect(conqueredByType.has(BUILDING_TYPES.WALL)).toBe(false);
+    expect(conqueredByType.has(BUILDING_TYPES.HIDEOUT)).toBe(false);
 
     const event = await outboxDispatched(
       ctx.prisma,
