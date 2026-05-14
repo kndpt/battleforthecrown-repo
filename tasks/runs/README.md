@@ -11,7 +11,7 @@ Pipeline d'orchestration : skill `$run <path>` (path de fichier obligatoire, ave
 
 Même source de vérité dans les deux harnesses, conventions de nommage des sub-agents adaptées :
 
-- **Source unique** : [`.agents/skills/run/SKILL.md`](../../.agents/skills/run/SKILL.md) et [`.agents/skills/plan-run/SKILL.md`](../../.agents/skills/plan-run/SKILL.md).
+- **Source unique** : [`.agents/skills/run/SKILL.md`](../../.agents/skills/run/SKILL.md) et [`.agents/skills/plan/SKILL.md`](../../.agents/skills/plan/SKILL.md).
 - **Claude Code** : consomme les skills via le symlink `.claude/skills/`; sub-agents [`.claude/agents/*.md`](../../.claude/agents/) en kebab-case, ex `code-mapper`.
 - **Codex** : consomme les skills via le symlink `.codex/skills/`; sub-agents [`.codex/agents/*.toml`](../../.codex/agents/) en snake_case, ex `code_mapper`.
 
@@ -42,7 +42,7 @@ Définitions par harness :
 
 Rôles identiques d'un côté à l'autre :
 
-- `run-planner` / `run_planner` — produit un draft de fiche depuis la roadmap (utilisé par `$plan-run`).
+- `run-planner` / `run_planner` — cartographie un sujet et produit un draft d'artefact (ticket ou fiche de run) avec verdict explicite. Utilisé par `$plan`.
 - `code-mapper` — cartographie ciblée (signatures, callers, tests, écarts évidents).
 - `implementer` — applique un changement précis et bien cadré (≤ 5 fichiers).
 - `test-writer` — écrit/modifie tests selon `bftc-tests-policy` (refus anti-patterns).
@@ -54,7 +54,7 @@ Rôles identiques d'un côté à l'autre :
 
 Disponibles dans Claude Code et Codex via les symlinks `.claude/skills` et `.codex/skills` vers `.agents/skills` :
 
-- `$plan-run <description>` — crée une fiche de run depuis la roadmap (validation user avant écriture).
+- `$plan <input>` — triage un sujet (description libre, path roadmap + section, ou path spec) en **ticket** ou **fiche de run** selon critères explicites. Validation user avant écriture.
 - `$run <path>` — exécute une fiche `PLANNED` (mode run) ou résout un ticket actif (mode ticket). Path obligatoire, `@` optionnel.
 
 ## Cycle de vie d'un run
@@ -158,4 +158,4 @@ _(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tick
 - [`../00-mvp-roadmap.md`](../00-mvp-roadmap.md) — roadmap des phases dont sont dérivés les runs.
 - [`../README.md`](../README.md) — index global des tickets/runs/archives.
 - [`../../.agents/skills/run/SKILL.md`](../../.agents/skills/run/SKILL.md) — pipeline `$run` source unique.
-- [`../../.agents/skills/plan-run/SKILL.md`](../../.agents/skills/plan-run/SKILL.md) — pipeline `$plan-run` source unique.
+- [`../../.agents/skills/plan/SKILL.md`](../../.agents/skills/plan/SKILL.md) — pipeline `$plan` source unique.

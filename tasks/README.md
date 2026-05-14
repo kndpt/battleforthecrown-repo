@@ -20,7 +20,12 @@ _(Aucun ticket découpé.)_
 
 ## Runs (exécutions semi-autonomes)
 
-Fiches d'exécution déléguées aux harnesses Claude Code ou Codex (lead + sub-agents à scope chirurgical). Skills workspace : `$plan-run <description>` pour créer une fiche depuis la roadmap, `$run <path>` pour exécuter (fiche de run **ou** ticket actif — path obligatoire, `@` optionnel ; le mode est détecté via le path). Pipeline et conventions : [`runs/README.md`](./runs/README.md).
+Fiches d'exécution déléguées aux harnesses Claude Code ou Codex (lead + sub-agents à scope chirurgical). Skills workspace :
+
+- `$plan <input>` — triage un sujet (description libre, path roadmap + section, ou path spec) en **ticket** (`tasks/<id>.md`) ou **fiche de run** (`tasks/runs/<id>.md` statut `PLANNED`) selon des critères explicites (backend+frontend, invariant SPEC, > 4 fichiers, etc.). Validation user avant écriture.
+- `$run <path>` — exécute (fiche de run **ou** ticket actif — path obligatoire, `@` optionnel ; le mode est détecté via le path).
+
+Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ### Runs actifs
 
