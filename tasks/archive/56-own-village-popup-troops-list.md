@@ -1,7 +1,7 @@
 # 56 — Popup village possédé : afficher les troupes présentes
 
 **Sévérité** : 🟠 Moyen
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ Résolu
 **Référence UI** : [`battleforthecrown-pixi/src/features/design-system/components/MapEntityCallout.tsx`](../battleforthecrown-pixi/src/features/design-system/components/MapEntityCallout.tsx) + [`SelectedEntityPanel.tsx`](../battleforthecrown-pixi/src/features/world/SelectedEntityPanel.tsx)
 
 ## Symptôme

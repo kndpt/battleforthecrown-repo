@@ -67,7 +67,7 @@ export type {
   KingdomActivityTab,
 } from './KingdomActivitiesPanel';
 export { MapEntityCallout } from './MapEntityCallout';
-export type { MapEntityCalloutAction, MapEntityCalloutActionTone, MapEntityCalloutProps, MapEntityCalloutStat, MapEntityCalloutTier } from './MapEntityCallout';
+export type { MapEntityCalloutAction, MapEntityCalloutActionTone, MapEntityCalloutProps, MapEntityCalloutSection, MapEntityCalloutSectionRow, MapEntityCalloutStat, MapEntityCalloutTier } from './MapEntityCallout';
 export { LeaderboardHeader, LeaderboardRow } from './LeaderboardRow';
 export type { LeaderboardDelta, LeaderboardDeltaTone, LeaderboardHeaderProps, LeaderboardRankTone, LeaderboardRowProps } from './LeaderboardRow';
 export { DigitTimer, Timer } from './Timer';

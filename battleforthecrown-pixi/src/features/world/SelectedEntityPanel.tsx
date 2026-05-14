@@ -1,6 +1,8 @@
 import { MapEntityCallout } from '@/features/design-system/components';
+import { useArmyInventoryQuery, useGarrisonQuery } from '@/api/queries';
 import type { MapEntity } from '@/api/world-types';
 import { getBarbarianCaptureDurationLabel } from './barbarianConquest';
+import { buildTroopsSection, summarizePresentTroops } from './selectedEntityTroops';
 
 interface SelectedEntityPanelProps {
   entity: MapEntity | null;
@@ -33,6 +35,10 @@ export function SelectedEntityPanel({
   onAttack,
   onScout,
 }: SelectedEntityPanelProps) {
+  const ownedVillageId = entity?.kind === 'PLAYER_VILLAGE' && entity.isMine ? entity.id : null;
+  const armyInventory = useArmyInventoryQuery(ownedVillageId);
+  const garrison = useGarrisonQuery(ownedVillageId);
+
   if (!entity) return null;
 
   const isPlayerVillage = entity.kind === 'PLAYER_VILLAGE' && !entity.isMine;
@@ -43,6 +49,13 @@ export function SelectedEntityPanel({
   const showReinforce = isOwnedPlayerVillage
     && entity.id !== currentVillageId
     && Boolean(onAttack);
+  const troopSection = troopsSectionFor(
+    isOwnedPlayerVillage,
+    armyInventory.data ?? [],
+    garrison.data ?? [],
+    armyInventory.isLoading || garrison.isLoading,
+    armyInventory.isError || garrison.isError,
+  );
   const actions = [
     ...(showAttack
       ? [
@@ -80,7 +93,10 @@ export function SelectedEntityPanel({
     <MapEntityCallout
       actions={actions}
       coordinates={`${entity.x}|${entity.y}`}
-      sections={isBarbarian ? captureSectionsFor(entity) : undefined}
+      sections={[
+        ...(isBarbarian ? captureSectionsFor(entity) : []),
+        ...(troopSection ? [troopSection] : []),
+      ]}
       subtitle={subtitleFor(entity)}
       tier={entity.tier ? { label: `★ ${entity.tier}` } : undefined}
       title={entity.name}
@@ -96,7 +112,7 @@ function subtitleFor(entity: MapEntity): string {
 
 function captureSectionsFor(entity: MapEntity) {
   const duration = getBarbarianCaptureDurationLabel(entity.tier);
-  if (!duration) return undefined;
+  if (!duration) return [];
 
   return [
     {
@@ -109,4 +125,21 @@ function captureSectionsFor(entity: MapEntity) {
       ],
     },
   ];
+}
+
+function troopsSectionFor(
+  isOwnedPlayerVillage: boolean,
+  inventory: Parameters<typeof summarizePresentTroops>[0],
+  garrison: Parameters<typeof summarizePresentTroops>[1],
+  isLoading: boolean,
+  isError: boolean,
+) {
+  if (!isOwnedPlayerVillage || isError) return null;
+  if (isLoading) {
+    return {
+      title: 'Troupes présentes',
+      rows: [{ label: 'Chargement', value: '...' }],
+    };
+  }
+  return buildTroopsSection(summarizePresentTroops(inventory, garrison));
 }

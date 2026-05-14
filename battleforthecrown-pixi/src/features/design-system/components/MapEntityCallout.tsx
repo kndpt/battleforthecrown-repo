@@ -24,6 +24,7 @@ export interface MapEntityCalloutTier {
 }
 
 export interface MapEntityCalloutSectionRow {
+  icon?: string;
   label: string;
   value: string;
 }
@@ -126,7 +127,14 @@ export function MapEntityCallout({
                     className="flex items-center justify-between gap-3 text-[12px]"
                     key={`${row.label}-${row.value}`}
                   >
-                    <span className="text-[#cdb88a]">{row.label}</span>
+                    <span className="flex min-w-0 items-center gap-1.5 text-[#cdb88a]">
+                      {row.icon ? (
+                        row.icon.startsWith('/')
+                          ? <img alt="" className="size-[14px] shrink-0" src={publicAsset(row.icon)} />
+                          : <span aria-hidden className="shrink-0">{row.icon}</span>
+                      ) : null}
+                      <span className="truncate">{row.label}</span>
+                    </span>
                     <span className="text-right font-bold text-[#fef9f0] tabular-nums">
                       {row.value}
                     </span>

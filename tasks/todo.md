@@ -1,21 +1,24 @@
-# Bottom sheets design-system
+# Ticket 56 - Popup village possede : troupes presentes
 
 ## Plan
 
-- [x] Préflight : vérifier Git clean, lire ticket, rules, `SPEC.md`, briefing Pixi et skill React HUD.
-- [x] Cartographie : localiser `BottomSheet`, `KingdomActivitiesPanel`, `PowerBottomSheet`, `QueueBottomSheet`, `BuildingManagementPanel`.
-- [x] Implémentation : créer `GameBottomSheetPanel` dans le design system et l'exporter.
-- [x] Migration : rebrancher `KingdomActivitiesPanel`, `PowerBottomSheet`, `QueueBottomSheet`, `BuildingManagementPanel`.
-- [x] Interaction : ajouter la fermeture par swipe-down dans la primitive `BottomSheet`.
-- [x] Vérification : review diff, tests ciblés/type-check, inspection navigateur mobile/desktop, `yarn static-check`.
+- [x] Préflight : vérifier Git clean, lire ticket, rules, `SPEC.md`, briefing Pixi.
+- [x] Cartographie : localiser `SelectedEntityPanel`, `MapEntityCallout`, hooks armée/garnison, meta unités.
+- [x] Implémentation : agréger natives + renforts `INCOMING` et afficher une section compacte dans le callout.
+- [x] Tests : couvrir l’agrégat, le village vide et le format compact.
+- [x] Vérification : review diff, tests ciblés, `yarn static-check`.
 - [x] Archive : passer le ticket en DONE, archiver, mettre à jour `tasks/README.md`, commit.
+
+## Notes d'analyse
+
+- `SelectedEntityPanel` est le point de composition des sections du popup.
+- `useArmyInventoryQuery` et `useGarrisonQuery` existent déjà et sont invalidés par les flux armée/renfort.
+- `MapEntityCallout` rend seulement des lignes label/value aujourd’hui ; on peut l’étendre sans casser la section `Capture`.
 
 ## Review
 
-- `GameBottomSheetPanel` centralise la coque visuelle : poignée, header `eyebrow/title`, bouton close, actions de header, zone scrollable et variantes `default/compact/tabbed`.
-- `KingdomActivitiesPanel` consomme la nouvelle base sans changer ses listes, onglets ou view models.
-- `PowerBottomSheet`, `QueueBottomSheet` et `BuildingManagementPanel` gardent leurs contenus métier mais partagent la même coque.
-- `BottomSheet` ferme aussi par swipe-down depuis la zone haute du sheet, sans intercepter les boutons/onglets/inputs.
-- Tests : `yarn workspace battleforthecrown-pixi type-check` et `yarn static-check` verts.
-- QA visuelle : Playwright sur `/design-system` en 390x844 et 1280x900, aucune erreur console/page, pas d'overflow horizontal.
-- Docs : mise à jour `battleforthecrown-pixi/src/ui/panels/README.bottomsheet.md` pour le swipe de fermeture.
+- `SelectedEntityPanel` fetch uniquement pour les villages possédés et compose natives + renforts `INCOMING`.
+- `MapEntityCallout` accepte maintenant une icône optionnelle par ligne de section ; la section `Capture` reste sur le même contrat label/value.
+- Tests : `SelectedEntityPanel` couvre village possédé non-actif, actif, vide, et village non possédé sans fetch ; helper pur couvre l’agrégat et le format compact.
+- `yarn workspace battleforthecrown-pixi test` et `yarn static-check` verts.
+- Docs : aucun changement nécessaire, raison : aucune doc UI existante ne référence `MapEntityCallout`, comportement local couvert par le ticket archivé.
