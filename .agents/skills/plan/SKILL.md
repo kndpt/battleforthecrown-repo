@@ -39,6 +39,22 @@ Toutes passent par la **même mécanique** : préflight → cartographie via `ru
    - **roadmap** : lire la section de phase + phases en amont citées en dépendance.
    - **spec** : lire la spec entière.
    - **libre** : laisser le `run_planner` faire la cartographie initiale.
+6. **Scan des tickets/runs liés** (obligatoire, jamais skippé) :
+   - Lister les filenames (slugs) des 4 dossiers :
+     - `tasks/*.md` (tickets actifs)
+     - `tasks/runs/*.md` (runs actifs)
+     - `tasks/archive/*.md` (tickets archivés)
+     - `tasks/runs/archive/*.md` (runs archivés)
+   - Extraire 3-6 **keywords** du sujet (mots significatifs du nom de phase / titre spec / description libre — pas les mots vides type `feature`, `fix`, `add`).
+   - Matcher les keywords contre les slugs (substring, insensible à la casse). Lister les hits.
+   - **Lire le contenu** uniquement pour les hits (0-3 typiquement). Pour chaque hit, classer en :
+     - `avant` — dépendance à réaliser avant le sujet actuel (ex : invariant manquant, doc archi prérequise).
+     - `après` — chantier qui dépend du sujet actuel et qu'il faudra enchaîner.
+     - `doublon` — recouvre tout ou partie du sujet → escalade obligatoire user étape 3.
+     - `connexe` — touche le même domaine sans dépendance directe, à mentionner pour contexte.
+     - `déjà résolu` — archive qui a déjà traité le sujet (proposer au user de réutiliser/fermer au lieu de recréer).
+   - Si rien ne matche, noter explicitement les keywords scannés (preuve que le check a eu lieu).
+   - Passer la liste classée au `run_planner` dans son prompt.
 
 ## Étape 2 — Délégation au run planner
 
@@ -47,10 +63,12 @@ Spawn the **run planner** (`run_planner` côté Codex, `run-planner` côté Clau
 - **Forme d'input** : `roadmap-phase` | `spec` | `description-libre`.
 - **Input brut** : ce que l'utilisateur a tapé.
 - **Contexte de phase** (si roadmap) : section ciblée + dépendances lues.
+- **Liens détectés en préflight** : liste classée (`avant` / `après` / `doublon` / `connexe` / `déjà résolu`) issue de l'étape 1.6, ou `Aucun (keywords scannés: ...)`.
 - **Mission** :
   1. Cartographier le scope (signatures, fichiers candidats, callers, tests existants).
-  2. Émettre un draft structuré.
-  3. Émettre un **verdict d'artefact** explicite : `ARTEFACT: ticket` ou `ARTEFACT: run`, avec justification basée sur les critères ci-dessous.
+  2. Confirmer ou enrichir la liste `LIENS_DETECTÉS` (peut requalifier un `connexe` en `avant` après lecture code).
+  3. Émettre un draft structuré.
+  4. Émettre un **verdict d'artefact** explicite : `ARTEFACT: ticket` ou `ARTEFACT: run`, avec justification basée sur les critères ci-dessous.
 
 Le draft doit contenir :
 
@@ -72,6 +90,13 @@ SCOPE_ESTIMÉ:
   - Frontend: <fichiers candidats>
   - Shared/Docs: <fichiers candidats>
 PISTES: <A, B, C... si plusieurs options de design, sinon `Une seule piste évidente`>
+LIENS_DETECTÉS:
+  - À faire avant: <[id-slug](path) — raison>, ou `Aucun`
+  - À faire après: <[id-slug](path) — raison>, ou `Aucun`
+  - Doublon potentiel: <[id-slug](path) — raison>, ou `Aucun`
+  - Connexe (contexte): <[id-slug](path) — raison>, ou `Aucun`
+  - Déjà résolu (archive): <[id-slug](path) — raison>, ou `Aucun`
+  - Keywords scannés: [k1, k2, ...]
 DÉCOMPOSITION_INITIALE: <si run, sous-tâches chirurgicales ≤ 5 fichiers>
 CRITÈRES_ACCEPTANCE: <checklist observable et binaire>
 POINTS_D_ATTENTION: <pièges, dérives possibles, dépendances cachées>
@@ -88,6 +113,7 @@ Affiche le draft au user dans un format lisible (markdown rendu, pas le bloc bru
 1. `ARTEFACT` retenu + raison.
 2. ID + slug + type.
 3. Scope estimé et pistes si plusieurs.
+4. **Liens détectés** — séparer les catégories. Si un `doublon` ou `déjà résolu` est présent, l'afficher **en tête** avec mention explicite « Vérifier avant écriture » : le user doit décider de fusionner, fermer le doublon, ou poursuivre quand même.
 
 Pose ensuite la question :
 
@@ -96,7 +122,8 @@ Pose ensuite la question :
 > 2. Ajuster avant écriture (réponds avec ce qu'il faut changer)
 > 3. Contester le verdict `ARTEFACT` (force ticket ou run, motiver)
 > 4. Découper en plusieurs runs/tickets (si `ESTIMATION_SCOPE: large`)
-> 5. Annuler
+> 5. Fusionner avec un lien détecté / annuler au profit d'un existant
+> 6. Annuler
 
 Si « Ajuster » : applique les modifications sur le draft, reboucle au début de l'étape 3. Cap 3 cycles d'ajustement avant escalade.
 
@@ -165,6 +192,7 @@ Rends la main au user avec un récap court (≤ 10 lignes) :
 - Path créé.
 - Type, phase roadmap (ou Hors roadmap).
 - Liens : la fiche, la commande pour exécuter (`$run @<path>`).
+- **Liens détectés** : rappeler `avant` / `après` / `connexe` retenus (ou « Aucun, keywords: … »).
 - Points d'attention si présents.
 - Pas de commit (le user décide).
 
@@ -192,6 +220,7 @@ Tous les autres cas → `ARTEFACT: ticket` (bug ciblé, refacto local, ajout end
 - **Tu n'inventes pas un ID** — toujours `max(existing) + 1` dans le dossier cible (tickets ou runs).
 - **Pas de `git commit`.** Le user décide.
 - **Le user a le dernier mot sur `ARTEFACT`** — si le verdict est contesté, applique la décision user et logue-le.
+- **Tu ne sautes jamais le scan tickets/runs liés** (étape 1.6). Même résultat « Aucun lien » → loguer les keywords scannés dans `LIENS_DETECTÉS`. Si un `doublon` ou `déjà résolu` est détecté, **escalade au user en étape 3** avant écriture.
 
 ## Cas d'escalade
 
