@@ -1,24 +1,25 @@
-# Ticket 57 - Player village building lifecycle roster
+# Tickets 60 + 61 - WorldMap active village UX
 
 ## Plan
 
-- [x] Préflight : vérifier Git clean, lire ticket, rules, `SPEC.md`, briefing backend, policy tests.
-- [x] Cartographie : localiser catalogue bâtiments, join, conquête, tests existants, doc architecture.
-- [x] Implémentation : créer roster lifecycle canonique et le consommer dans join + conquête.
-- [x] Tests : couvrir absence de policy lifecycle et alignement join/conquête.
-- [x] Documentation : documenter la règle durable et le backfill historique explicite.
-- [x] Vérification : review diff, tests ciblés, smokes backend si requis, `yarn static-check`.
-- [x] Archive : passer le ticket en DONE, archiver, mettre à jour `tasks/README.md`, commit.
+- [x] Préflight : Git clean, tickets 60/61 lus, rules/SPEC chargés.
+- [x] Cartographie : inspecter panel d'entité, écran WorldMap, canvas Pixi et tests existants.
+- [x] Implémentation : bouton "Aller à ce village" + halo du village actif.
+- [x] Tests : étendre les tests utiles du panel et vérifier la policy Pixi.
+- [x] Vérification : review diff, tests ciblés, `yarn static-check`, QA front adaptée.
+- [x] Documentation : vérifier impact doc et justifier.
+- [x] Archive : passer tickets en DONE, archiver, mettre à jour `tasks/README.md`, commit.
 
-## Notes d'analyse
+## Choix de scope
 
-- Duplication trouvée entre `JoinWorldUseCase.INITIAL_BUILDINGS` et les constantes de matérialisation barbare dans `ConquestService`.
-- `docs/architecture/data-model.md` contenait déjà l'invariant, mais pointait vers `INITIAL_BUILDINGS` au lieu d'une source lifecycle complète.
+- Inclus : `60-own-village-popup-goto-button.md` et `61-active-village-map-indicator.md`.
+- Exclu : `62-interactive-minimap-sync.md`, plus large car il introduit une souscription caméra bidirectionnelle.
 
 ## Review
 
-- `PLAYER_VILLAGE_BUILDING_LIFECYCLE` devient la source canonique : chaque bâtiment activé a une politique join + conquête explicite.
-- `JoinWorldUseCase` consomme le roster pour les villages initiaux ; `ConquestService` le consomme pour matérialiser les villages barbares conquis.
-- Tests : `buildings.spec.ts` couvre le garde-fou de policy manquante et l'alignement roster ; `conquest-service.smoke.spec.ts` vérifie les rows DB après conquête.
-- Vérifications : test ciblé, smoke preflight, smokes backend complets, `yarn static-check` verts.
-- Docs : mises à jour dans `docs/architecture/data-model.md`.
+- `SelectedEntityPanel` affiche "Aller à ce village" seulement sur village possédé inactif et appelle un callback dédié.
+- `WorldMapScreen` bascule le village actif, navigue vers `/game`, puis ferme le popup.
+- `WorldMapScene` remplace le crosshair discret par un halo doré pulsé sous le sprite du village actif.
+- Tests : `SelectedEntityPanel.test.tsx` couvre présence/clic du bouton et absence sur village actif/non possédé.
+- Vérifications : test ciblé, suite Pixi complète, `yarn static-check`, health backend et Vite worktree.
+- Docs : aucun changement nécessaire, UX pure sans invariant gameplay/architecture durable.

@@ -9,6 +9,7 @@ interface SelectedEntityPanelProps {
   currentVillageId?: string | null;
   onAttack?: (entity: MapEntity) => void;
   onScout?: (entity: MapEntity) => void;
+  onGoToVillage?: (entity: MapEntity) => void;
 }
 
 const TIER_LABEL: Record<NonNullable<MapEntity['tier']>, string> = {
@@ -34,6 +35,7 @@ export function SelectedEntityPanel({
   currentVillageId,
   onAttack,
   onScout,
+  onGoToVillage,
 }: SelectedEntityPanelProps) {
   const ownedVillageId = entity?.kind === 'PLAYER_VILLAGE' && entity.isMine ? entity.id : null;
   const armyInventory = useArmyInventoryQuery(ownedVillageId);
@@ -49,6 +51,9 @@ export function SelectedEntityPanel({
   const showReinforce = isOwnedPlayerVillage
     && entity.id !== currentVillageId
     && Boolean(onAttack);
+  const showGoToVillage = isOwnedPlayerVillage
+    && entity.id !== currentVillageId
+    && Boolean(onGoToVillage);
   const troopSection = troopsSectionFor(
     isOwnedPlayerVillage,
     armyInventory.data ?? [],
@@ -84,6 +89,16 @@ export function SelectedEntityPanel({
             label: 'Renforcer',
             tone: 'support' as const,
             onClick: () => onAttack?.(entity),
+          },
+        ]
+      : []),
+    ...(showGoToVillage
+      ? [
+          {
+            icon: '↪',
+            label: 'Aller à ce village',
+            tone: 'support' as const,
+            onClick: () => onGoToVillage?.(entity),
           },
         ]
       : []),

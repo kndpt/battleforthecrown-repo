@@ -14,7 +14,7 @@ export interface WorldMapOptions {
   continentSize?: number;
   initialCenter?: { x: number; y: number };
   initialZoom?: number;
-  /** World coords of the selected/player village, for the crosshair. */
+  /** World coords of the selected/player village, for the active village halo. */
   myVillage?: { x: number; y: number } | null;
   /** Authoritative watchtower vision disks in tiles. */
   visionDisks?: readonly VisionDisk[];
@@ -94,7 +94,7 @@ export interface WorldMapHandle {
   reconcileExpeditions: (expeditions: ExpeditionSnapshot[]) => void;
   setSelected: (entityId: string | null) => void;
   centerOn: (worldX: number, worldY: number) => void;
-  /** Update the crosshair village and authoritative vision disks. */
+  /** Update the active village halo and authoritative vision disks. */
   setVision: (
     myVillage: { x: number; y: number } | null,
     disks: readonly VisionDisk[],
@@ -263,10 +263,11 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
   visionRing.eventMode = 'none';
   viewport.addChild(visionRing);
 
-  // === Crosshair on my village ===
-  const crosshair = new Graphics();
-  crosshair.visible = false;
-  viewport.addChild(crosshair);
+  // === Active village halo ===
+  const activeVillageHalo = new Graphics();
+  activeVillageHalo.eventMode = 'none';
+  activeVillageHalo.visible = false;
+  viewport.addChild(activeVillageHalo);
 
   let myVillage = options.myVillage ?? null;
   let visionDisks = options.visionDisks ?? [];
@@ -309,28 +310,19 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     fogContainer.updateCacheTexture();
   };
 
-  const drawCrosshair = () => {
-    crosshair.clear();
+  const drawActiveVillageHalo = (nowMs = Date.now()) => {
+    activeVillageHalo.clear();
     if (!myVillage) {
-      crosshair.visible = false;
+      activeVillageHalo.visible = false;
       return;
     }
     const { px, py } = tileToWorld(myVillage.x, myVillage.y);
-    crosshair.visible = true;
-    // Small dotted-ish crosshair behind the sprite. Sits below the sprite
-    // (lower zIndex) so it doesn't paint over the player village.
-    const arm = 14;
-    const gap = 8;
-    crosshair
-      .moveTo(px - arm, py)
-      .lineTo(px - gap, py)
-      .moveTo(px + gap, py)
-      .lineTo(px + arm, py)
-      .moveTo(px, py - arm)
-      .lineTo(px, py - gap)
-      .moveTo(px, py + gap)
-      .lineTo(px, py + arm)
-      .stroke({ color: COLOR.myVillageStroke, width: 1.5, alpha: 0.6 });
+    const pulse = (Math.sin(nowMs / 240) + 1) / 2;
+    activeVillageHalo.visible = true;
+    activeVillageHalo
+      .circle(px, py, PLAYER_SPRITE_SIZE * 0.62)
+      .fill({ color: COLOR.myVillage, alpha: 0.18 })
+      .stroke({ color: COLOR.myVillage, width: 4, alpha: 0.45 + pulse * 0.3 });
   };
 
   const visuals = new Map<string, EntityVisual>();
@@ -517,7 +509,7 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     const centerPx = tileToWorld(initialCenter.x, initialCenter.y);
     viewport.setZoom(initialZoom, false);
     viewport.moveCenter(centerPx.px, centerPx.py);
-    drawCrosshair();
+    drawActiveVillageHalo();
     drawFog();
   };
 
@@ -634,7 +626,7 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     myVillage = nextMyVillage;
     visionDisks = nextDisks;
     fogOfWarEnabled = nextFogOfWarEnabled;
-    drawCrosshair();
+    drawActiveVillageHalo();
     drawFog();
   };
 
@@ -655,6 +647,7 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
       // page load, which would make `nowMs - departAt` deeply negative and
       // freeze the unit at t = 0.
       const now = Date.now();
+      drawActiveVillageHalo(now);
       visuals.forEach((visual) => drawCaptureMarker(visual, now));
       expeditionVisuals.forEach((visual) => visual.tick(now));
       textureRetryAccumulator += deltaMs;

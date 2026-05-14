@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { ComponentProps } from 'react';
 import { apiClient } from '@/api';
 import type { MapEntity } from '@/api/world-types';
 import { SelectedEntityPanel } from './SelectedEntityPanel';
@@ -14,13 +15,18 @@ function makeQueryClient() {
   });
 }
 
-function renderPanel(entity: MapEntity, currentVillageId = 'active-village') {
+function renderPanel(
+  entity: MapEntity,
+  currentVillageId = 'active-village',
+  overrides: Partial<ComponentProps<typeof SelectedEntityPanel>> = {},
+) {
   return render(
     <QueryClientProvider client={makeQueryClient()}>
       <SelectedEntityPanel
         currentVillageId={currentVillageId}
         entity={entity}
         onAttack={() => undefined}
+        {...overrides}
       />
     </QueryClientProvider>,
   );
@@ -82,16 +88,29 @@ describe('SelectedEntityPanel owned village troops', () => {
     expect(screen.getByRole('button', { name: /Renforcer/i })).toBeInTheDocument();
   });
 
+  it('shows a go-to action on an owned inactive village', async () => {
+    const onGoToVillage = vi.fn();
+    mockTroopApi({});
+
+    renderPanel(playerVillage(), 'another-village', { onGoToVillage });
+
+    const button = await screen.findByRole('button', { name: /Aller à ce village/i });
+    fireEvent.click(button);
+
+    expect(onGoToVillage).toHaveBeenCalledWith(expect.objectContaining({ id: 'village-1' }));
+  });
+
   it('shows troops on the active village without the reinforce action', async () => {
     mockTroopApi({
       inventory: [{ id: 'archer-1', type: 'ARCHER', quantity: 4, populationCost: 1 }],
     });
 
-    renderPanel(playerVillage(), 'village-1');
+    renderPanel(playerVillage(), 'village-1', { onGoToVillage: vi.fn() });
 
     expect(await screen.findByText('Archer')).toBeInTheDocument();
     expect(screen.getByText('Troupes présentes')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Renforcer/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Aller à ce village/i })).not.toBeInTheDocument();
   });
 
   it('shows an explicit empty state for an owned empty village', async () => {
@@ -105,9 +124,10 @@ describe('SelectedEntityPanel owned village troops', () => {
   it('does not fetch or show troop sections for a village the player does not own', async () => {
     const getSpy = vi.spyOn(apiClient, 'get');
 
-    renderPanel(playerVillage({ id: 'enemy-1', isMine: false }));
+    renderPanel(playerVillage({ id: 'enemy-1', isMine: false }), 'village-1', { onGoToVillage: vi.fn() });
 
     expect(screen.queryByText('Troupes présentes')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Aller à ce village/i })).not.toBeInTheDocument();
     await waitFor(() => expect(getSpy).not.toHaveBeenCalled());
   });
 });

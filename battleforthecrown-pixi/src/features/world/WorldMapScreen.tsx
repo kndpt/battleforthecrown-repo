@@ -51,6 +51,7 @@ export function WorldMapScreen() {
   const expeditions = useExpeditionsStore((state) => state.byId);
 
   const setEntities = useWorldMapStore((state) => state.setEntities);
+  const setVillage = useGameStore((state) => state.setVillage);
   const selectedEntityId = useWorldMapStore((state) => state.selectedEntityId);
   const setSelectedEntity = useWorldMapStore((state) => state.setSelectedEntity);
   const [attackTarget, setAttackTarget] = useState<MapEntity | null>(null);
@@ -127,6 +128,12 @@ export function WorldMapScreen() {
     if (myVillage) {
       canvasRef.current?.centerOn(myVillage.x, myVillage.y);
     }
+  };
+
+  const goToVillage = (target: MapEntity) => {
+    setVillage(target.id);
+    navigate('/game');
+    setSelectedEntity(null);
   };
 
   const openKingdomActivities = (tab: KingdomActivityTab) => {
@@ -235,6 +242,7 @@ export function WorldMapScreen() {
                     setAttackTarget(target);
                     setSelectedEntity(null);
                   }}
+                  onGoToVillage={goToVillage}
                 />
               </WorldEntityTooltip>
             )}

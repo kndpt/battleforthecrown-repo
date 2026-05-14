@@ -1,7 +1,7 @@
 # 61 — Indicateur visuel du village actif sur la WorldMap
 
 **Sévérité** : 🟠 Moyen
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ DONE
 **Spec amont** : Aucune (pure UX/UI). Contexte : [`runs/archive/021-feature-village-labels-navigation.md`](./runs/archive/021-feature-village-labels-navigation.md) — Phase 9 navigation multi-village.
 
 ## Symptôme

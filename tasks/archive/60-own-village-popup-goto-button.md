@@ -1,7 +1,7 @@
 # 60 — Popup village possédé : bouton « Aller à ce village »
 
 **Sévérité** : 🟢 Mineur
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ DONE
 **Spec amont** : Aucune (UX pure, cohérent avec sélecteur multi-village livré par [run 021](./runs/archive/021-feature-village-labels-navigation.md))
 **Référence UI** : [`SelectedEntityPanel.tsx`](../battleforthecrown-pixi/src/features/world/SelectedEntityPanel.tsx), [`WorldMapScreen.tsx`](../battleforthecrown-pixi/src/features/world/WorldMapScreen.tsx)
 

@@ -5,8 +5,6 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 ## Tickets actifs
 
 - [62 — Mini-carte interactive : sync bidirectionnel avec la carte principale](./62-interactive-minimap-sync.md) — 🟠 Moyen. Drag/tap sur la mini-carte recentre la map principale, et pan/zoom de la map principale déplace le viewbox de la mini-carte en temps réel.
-- [61 — Indicateur visuel du village actif sur la WorldMap](./61-active-village-map-indicator.md) — 🟠 Moyen. Halo doré pulsé autour du village actif pour le distinguer des autres sprites en multi-village ; crosshair actuel trop discret remplacé.
-- [60 — Popup village possédé : bouton « Aller à ce village »](./60-own-village-popup-goto-button.md) — 🟢 Mineur. Sur la worldmap, ajouter un bouton dans le panel d'info pour basculer directement sur un autre village m'appartenant.
 - [57 — Source canonique du lifecycle des bâtiments joueur](./57-player-village-building-lifecycle-roster.md) — 🟡 Majeur. Centraliser la politique join/conquête/backfill des bâtiments pour éviter les oublis à chaque nouveau bâtiment activé.
 - [51 — Standardiser les bottom sheets sur le design `Activités du royaume`](./51-bottom-sheet-design-system-base.md) — 🟠 Moyen. Faire du nouveau panneau la base design-system des bottom sheets actuels et futurs.
 
@@ -57,6 +55,8 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ## Archivés
 
+- [61 — Indicateur visuel du village actif sur la WorldMap](./archive/61-active-village-map-indicator.md) ✅ Résolu 2026-05-14 par $bftc-run @tasks/61-active-village-map-indicator.md
+- [60 — Popup village possédé : bouton « Aller à ce village »](./archive/60-own-village-popup-goto-button.md) ✅ Résolu 2026-05-14 par $bftc-run @tasks/60-own-village-popup-goto-button.md
 - [58 — Vision multi-village : seuls les cercles du village sélectionné sont affichés](./archive/58-multi-village-vision-disks-missing.md) ✅ Résolu 2026-05-14 par $bftc-run @tasks/58-multi-village-vision-disks-missing.md
 - [57 — Source canonique du lifecycle des bâtiments joueur](./archive/57-player-village-building-lifecycle-roster.md) ✅ Résolu 2026-05-14 par $bftc-run @tasks/57-player-village-building-lifecycle-roster.md
 - [59 — Smokes backend : flakies par ordering Jest](./archive/59-smokes-jest-ordering-flakies.md) ✅ Résolu 2026-05-14 par $bftc-run @tasks/59-smokes-jest-ordering-flakies.md
