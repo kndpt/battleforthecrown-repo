@@ -8,7 +8,6 @@ export interface VictoryModalProps {
   villageName: string;
   x: number;
   y: number;
-  buildingsKept: number;
   onClose: () => void;
   onViewVillage: () => void;
   closeOnOverlayClick?: boolean;
@@ -20,7 +19,6 @@ export const VictoryModal = ({
   villageName,
   x,
   y,
-  buildingsKept,
   onClose,
   onViewVillage,
   closeOnOverlayClick = true,
@@ -51,9 +49,6 @@ export const VictoryModal = ({
       onClose();
     }
   };
-
-  const buildingsLabel =
-    buildingsKept === 1 ? '1 bâtiment hérité' : `${buildingsKept} bâtiments hérités`;
 
   return (
     <>
@@ -90,7 +85,7 @@ export const VictoryModal = ({
               Vous avez conquis <span className="font-bold text-[#3d2f1f]">{villageName}</span> !
               <br />
               <span className="text-xs text-[#8b6f47]">
-                ({x}, {y}) · {buildingsLabel}
+                ({x}, {y})
               </span>
             </p>
           </div>

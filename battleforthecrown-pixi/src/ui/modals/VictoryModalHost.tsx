@@ -28,7 +28,6 @@ export const VictoryModalHost = () => {
       villageName={current.villageName}
       x={current.x}
       y={current.y}
-      buildingsKept={current.buildingsKept}
       onClose={handleClose}
       onViewVillage={handleViewVillage}
     />

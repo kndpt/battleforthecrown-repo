@@ -60,19 +60,6 @@ type ServerEventBindings = {
   [K in ServerEventName]: ServerEventListener<K>;
 };
 
-const UNIT_PLURAL_LABELS: Record<string, string> = {
-  ARCHER: 'Archers',
-  CATAPULT: 'Catapultes',
-  CAVALRY: 'Cavalerie',
-  MILITIA: 'Milices de paysans',
-  NOBLE: 'Seigneurs',
-  RAM: 'Béliers',
-  SPY: 'Espions',
-  SQUIRE: 'Écuyers',
-  TEMPLAR: 'Templiers',
-  WARRIOR: 'Guerriers',
-};
-
 export function applyResourcesChanged(
   payload: ResourcesChangedPayload,
   _ctx?: BindingsContext,
@@ -547,8 +534,8 @@ function resolveExpeditionId(payload: unknown, fallbackParts: string[]): string 
 }
 
 function formatUnitName(unitType: string, quantity: number): string {
-  const name = unitMetaFor(unitType).name;
-  return quantity > 1 ? (UNIT_PLURAL_LABELS[unitType] ?? name) : name;
+  const meta = unitMetaFor(unitType);
+  return quantity > 1 ? meta.pluralName : meta.name;
 }
 
 function markExpeditionReturned(expeditionId: string): void {

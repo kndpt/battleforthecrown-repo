@@ -1335,7 +1335,6 @@ export function DesignSystemPreview() {
             villageName="Cravia"
             x={42}
             y={88}
-            buildingsKept={6}
             onClose={() => setVictoryModalOpen(false)}
             onViewVillage={() => setVictoryModalOpen(false)}
           />
