@@ -1,10 +1,21 @@
 import {
+  UNIT_STATS,
+  UNIT_TYPES,
+  type UnitMap,
+} from '@battleforthecrown/shared/army';
+import {
   calculateCombatOutcome,
   calculateNobleLossChance,
+  getDefenseStatForAttackerUnit,
+  getDefenseStatWeights,
+  getWeightedDefensePower,
 } from './combat-resolution';
 import { CombatContext } from './interfaces/combat-context.interface';
 
-function createConquestContext(): CombatContext {
+function createCombatContext(
+  attackerUnits: UnitMap,
+  defenderUnits: UnitMap,
+): CombatContext {
   return {
     worldId: 'world-1',
     expedition: {
@@ -14,7 +25,7 @@ function createConquestContext(): CombatContext {
       targetRefId: 'barb-1',
       targetX: 1,
       targetY: 0,
-      units: { MILITIA: 99, NOBLE: 1 },
+      units: attackerUnits,
       status: 'EN_ROUTE',
       departAt: new Date(),
       arrivalAt: new Date(),
@@ -31,7 +42,7 @@ function createConquestContext(): CombatContext {
         userId: 'u1',
         isBarbarian: false,
       },
-      units: { MILITIA: 99, NOBLE: 1 },
+      units: attackerUnits,
     },
     defender: {
       kind: 'BARBARIAN_VILLAGE',
@@ -43,8 +54,8 @@ function createConquestContext(): CombatContext {
         userId: null,
         isBarbarian: true,
       },
-      units: { MILITIA: 101 },
-      participants: [{ villageId: 'barb-1', units: { MILITIA: 101 } }],
+      units: defenderUnits,
+      participants: [{ villageId: 'barb-1', units: defenderUnits }],
     },
     config: {
       combat: { attackBonus: 1, defenseBonus: 1, lootFactor: 0.5 },
@@ -53,6 +64,10 @@ function createConquestContext(): CombatContext {
       _travelTime: 1000,
     } as any,
   };
+}
+
+function createConquestContext(): CombatContext {
+  return createCombatContext({ MILITIA: 99, NOBLE: 1 }, { MILITIA: 101 });
 }
 
 describe('combat resolution', () => {
@@ -94,5 +109,37 @@ describe('combat resolution', () => {
 
     expect(result.lossesAttacker).toEqual({ MILITIA: 50, NOBLE: 0 });
     expect(result.survivingAttacker).toEqual({ MILITIA: 49, NOBLE: 1 });
+  });
+
+  it('uses defenseCavalry when cavalry attacks archers', () => {
+    const result = calculateCombatOutcome(
+      createCombatContext({ CAVALRY: 10 }, { ARCHER: 10 }),
+    );
+
+    expect(result.lossesAttacker).toEqual({ CAVALRY: 10 });
+    expect(result.lossesDefender).toEqual({ ARCHER: 7 });
+    expect(result.survivingDefender).toEqual({ ARCHER: 3 });
+  });
+
+  it('uses defenseInfantry when infantry attacks archers', () => {
+    const result = calculateCombatOutcome(
+      createCombatContext({ WARRIOR: 10 }, { ARCHER: 10 }),
+    );
+
+    expect(result.lossesAttacker).toEqual({ WARRIOR: 3 });
+    expect(result.lossesDefender).toEqual({ ARCHER: 10 });
+    expect(result.survivingAttacker).toEqual({ WARRIOR: 7 });
+  });
+
+  it('routes archer attacks to defenseArcher', () => {
+    expect(getDefenseStatForAttackerUnit(UNIT_TYPES.ARCHER)).toBe(
+      'defenseArcher',
+    );
+    expect(
+      getWeightedDefensePower(
+        UNIT_STATS[UNIT_TYPES.TEMPLAR],
+        getDefenseStatWeights({ ARCHER: 10 }),
+      ),
+    ).toBe(UNIT_STATS[UNIT_TYPES.TEMPLAR].defenseArcher);
   });
 });

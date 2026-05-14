@@ -85,7 +85,7 @@ describe('units catalog — pure logic (run 003 regression)', () => {
     expect(cost.requiredBarracksLevel).toBe(99); // sentinel — gating réel via Throne Hall
   });
 
-  it('UNIT_STATS[WARRIOR], UNIT_STATS[ARCHER] et UNIT_STATS[RAM] alignent la spec avec leurs passifs respectifs', () => {
+  it('UNIT_STATS[WARRIOR], UNIT_STATS[ARCHER] et UNIT_STATS[RAM] alignent la spec', () => {
     expect(UNIT_STATS[UNIT_TYPES.WARRIOR]).toMatchObject({
       attack: 20,
       defenseInfantry: 5,
@@ -93,7 +93,6 @@ describe('units catalog — pure logic (run 003 regression)', () => {
       defenseArcher: 5,
       speed: 20,
       carryCapacity: 35,
-      passive: { kind: 'attackOnRaid', bonus: 0.1 },
     });
 
     expect(UNIT_STATS[UNIT_TYPES.ARCHER]).toMatchObject({
@@ -103,11 +102,6 @@ describe('units catalog — pure logic (run 003 regression)', () => {
       defenseArcher: 6,
       speed: 12,
       carryCapacity: 20,
-      passive: {
-        kind: 'attackVsUnits',
-        targets: [UNIT_TYPES.MILITIA, UNIT_TYPES.WARRIOR],
-        bonus: 0.1,
-      },
     });
 
     expect(UNIT_STATS[UNIT_TYPES.RAM]).toMatchObject({
@@ -117,7 +111,6 @@ describe('units catalog — pure logic (run 003 regression)', () => {
       defenseArcher: 10,
       speed: 5,
       carryCapacity: 0,
-      passive: { kind: 'attackVsWall', bonus: 0.5 },
     });
   });
 });

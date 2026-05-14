@@ -108,7 +108,6 @@ export type {
   TroopDetailCost,
   TroopDetailLabels,
   TroopDetailModalProps,
-  TroopDetailPassive,
   TroopDetailResource,
   TroopDetailRoleTone,
   TroopDetailStats,

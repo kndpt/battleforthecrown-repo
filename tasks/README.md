@@ -27,10 +27,10 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 ### Runs actifs
 
 - [022 — Réactivité temps réel de la puissance (training + bâtiments)](./runs/022-fix-power-realtime-reactivity.md) — 📋 `PLANNED`. Nouvel event Outbox `unit.trained` émis à chaque tick training (piste B) + invalidations `power.*` côté `ws-bindings` ; pose le pattern d'event métier réutilisé plus tard par les cartes quotidiennes (Phase 10) et l'onboarding (Phase 8).
-- [020 — Stats unités uniquement + défense par archétype branchée](./runs/020-feature-units-stats-only-wire-defense-archetype.md) — 📋 `PLANNED`. Suppression complète des passifs (`UnitPassive`) côté shared/backend/frontend/doc, et activation de `defenseInfantry/Cavalry/Archer` dans le résolveur de combat selon l'archétype attaquant.
 
 ### Runs archivés
 
+- [020 — Stats unités uniquement + défense par archétype branchée](./runs/archive/020-feature-units-stats-only-wire-defense-archetype.md) — ✅ `DONE` (2026-05-14). Suppression complète des passifs `UnitPassive` côté shared/backend/frontend/doc ; résolution combat branchée sur `defenseInfantry/Cavalry/Archer` selon l'archétype attaquant, avec smoke cavalerie vs archers.
 - [021 — Navigation multi-village par étiquettes](./runs/archive/021-feature-village-labels-navigation.md) — ✅ `DONE` (2026-05-13). Phase 9 : étiquettes privées, capitale dérivée, sélecteur multi-village, filtre carte et règle future de ciblage des récompenses.
 - [019 — Feature barbarian conquest frontend UI](./runs/archive/019-feature-barbarian-conquest-frontend-ui.md) — ✅ `DONE` (2026-05-13). Phase 5 frontend/UI : recrutement Seigneur Salle du Trône, lancement conquête barbare lisible, durée capture T1-T5 visible, invalidations WS et static-check verts.
 - [018 — Feature barbarian conquest backend shared](./runs/archive/018-feature-barbarian-conquest-backend-shared.md) — ✅ `DONE` (2026-05-13). Phase 5 backend/shared : finalisation barbare conforme spec, bâtiments matérialisés par tier, Seigneur installé hors armée, smoke T2 + smokes backend + static-check verts.
