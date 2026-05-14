@@ -4,6 +4,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
+- [61 — Indicateur visuel du village actif sur la WorldMap](./61-active-village-map-indicator.md) — 🟠 Moyen. Halo doré pulsé autour du village actif pour le distinguer des autres sprites en multi-village ; crosshair actuel trop discret remplacé.
 - [60 — Popup village possédé : bouton « Aller à ce village »](./60-own-village-popup-goto-button.md) — 🟢 Mineur. Sur la worldmap, ajouter un bouton dans le panel d'info pour basculer directement sur un autre village m'appartenant.
 - [58 — Vision multi-village : seuls les cercles du village sélectionné sont affichés](./58-multi-village-vision-disks-missing.md) — 🟡 Majeur. La spec dit union des disques de toutes les Watchtowers, mais le frontend affiche un seul cercle basé sur le village courant.
 - [51 — Standardiser les bottom sheets sur le design `Activités du royaume`](./51-bottom-sheet-design-system-base.md) — 🟠 Moyen. Faire du nouveau panneau la base design-system des bottom sheets actuels et futurs.

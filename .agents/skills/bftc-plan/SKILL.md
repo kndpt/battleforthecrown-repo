@@ -194,7 +194,7 @@ Rends la main au user avec un récap court (≤ 10 lignes) :
 - Liens : la fiche, la commande pour exécuter (`$bftc-run @<path>`).
 - **Liens détectés** : rappeler `avant` / `après` / `connexe` retenus (ou « Aucun, keywords: … »).
 - Points d'attention si présents.
-- Pas de commit (le user décide).
+- Commit si pas d'étape dépendante de l'utilisateur.
 
 ## Triage — critères explicites
 
