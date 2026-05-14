@@ -1,7 +1,7 @@
 # 59 — Smokes backend : flakies par ordering Jest
 
 **Sévérité** : 🟠 Moyen
-**Statut** : ✅ DONE (2026-05-14)
+**Statut** : 🆕 Ouvert
 **Spec amont** : [`docs/architecture/local-ci.md` § Pourquoi sortir les smokes du hook](../docs/architecture/local-ci.md#pourquoi-sortir-les-smokes-du-hook)
 
 ## Symptôme
@@ -64,18 +64,3 @@ Hypothèses à confronter :
 - Aucun smoke n'a besoin d'être re-run pour passer.
 - `docs/architecture/local-ci.md` reflète la situation réelle (plus de flake documenté comme acquis).
 - Décision pre-push smokes vs `/run` explicitée et actée dans la doc.
-
-## Résolution (2026-05-14)
-
-**Décision** : piste A seule (sequencer alphabétique). Le seul facteur de non-déterminisme restant après `--runInBand` était l'ordre des fichiers, choisi par défaut via l'heuristique `slowestFirst` (dépend de `.jest-cache`).
-
-**Changements** :
-- `battleforthecrown-backend/test/jest-smoke-sequencer.js` : nouveau, étend `@jest/test-sequencer` et trie les fichiers par `path.localeCompare`.
-- `battleforthecrown-backend/test/jest-smoke.json` : ajoute `"testSequencer": "<rootDir>/jest-smoke-sequencer.js"`.
-- `docs/architecture/local-ci.md` : la section « Pourquoi sortir les smokes du hook » ne cite plus le flake comme raison ; le coût synchrone (~2-3 min) reste la justification unique. Référence historique vers ce ticket archivé.
-
-**Décision pre-push** : smokes restent hors du hook, dans `/run`. Le coût (~2-3 min full suite) est rédhibitoire à chaque push, indépendamment du fix de déterminisme.
-
-**Preuve** : 5 runs `yarn test:smoke` consécutifs verts (36/36, ordre identique à chaque run).
-
-**Piste C (fuite d'état)** : pas nécessaire dans l'immédiat. Si une nouvelle flakie apparaît malgré le sequencer stable, ouvrir un ticket dédié pour audit `beforeAll`/`afterAll` (Outbox worker timer, pg-boss queue drain, registre singleton Nest).
