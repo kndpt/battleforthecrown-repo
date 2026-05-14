@@ -17,6 +17,7 @@ import {
   applyVillageCaptureWindowInterrupted,
   applyVillageCaptureWindowOpened,
   applyVillageAttacked,
+  applyVillageConquered,
 } from './ws-bindings';
 import { queryKeys } from './queries';
 import { useResourcesStore } from '@/stores/resources';
@@ -35,6 +36,7 @@ beforeEach(() => {
   useResourcesStore.getState().clear();
   useCrownsStore.getState().clear();
   useUiStore.getState().clearToasts();
+  useUiStore.getState().clearVictoryModals();
   useAuthStore.getState().clearSession();
   useExpeditionsStore.getState().clear();
   useGameStore.getState().clear();
@@ -307,6 +309,58 @@ describe('applyBattleResolved', () => {
 
     expect(queryClient.getQueryState(queryKeys.combatReports('user-1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.scoutReports('user-1'))?.isInvalidated).toBe(true);
+  });
+});
+
+describe('applyVillageConquered', () => {
+  it('pushes a victory modal and removes the entity from the world map', () => {
+    setCurrentWorldSession();
+    useWorldMapStore.getState().setEntities([
+      {
+        id: 'v-target',
+        kind: 'BARBARIAN_VILLAGE',
+        ownerId: undefined,
+        isMine: false,
+        x: 42,
+        y: 88,
+        name: 'Cravia',
+        tier: 'T2',
+      },
+    ]);
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(['memberships'], []);
+    queryClient.setQueryData(['villages'], []);
+    queryClient.setQueryData(['world-entities'], []);
+    queryClient.setQueryData(queryKeys.openConquests('user-1', 'world-1'), []);
+
+    applyVillageConquered(
+      {
+        villageId: 'v-target',
+        villageName: 'Cravia',
+        newOwnerId: 'user-1',
+        previousTier: 'T2',
+        x: 42,
+        y: 88,
+        buildingsKept: 6,
+      },
+      { queryClient },
+    );
+
+    const modals = useUiStore.getState().victoryModals;
+    expect(modals).toHaveLength(1);
+    expect(modals[0]).toMatchObject({
+      villageId: 'v-target',
+      villageName: 'Cravia',
+      x: 42,
+      y: 88,
+      buildingsKept: 6,
+      previousTier: 'T2',
+    });
+
+    expect(useUiStore.getState().toasts).toHaveLength(0);
+    expect(useWorldMapStore.getState().entities['v-target']).toBeUndefined();
+    expect(queryClient.getQueryState(['villages'])?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(['world-entities'])?.isInvalidated).toBe(true);
   });
 });
 

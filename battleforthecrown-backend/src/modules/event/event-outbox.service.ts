@@ -408,6 +408,7 @@ export class EventOutboxService {
 
     this.gateway.notifyUser(userId, 'village.conquered', {
       villageId: payload.villageId,
+      villageName: payload.villageName,
       newOwnerId: payload.newOwnerId,
       previousTier: payload.previousTier,
       x: payload.x,

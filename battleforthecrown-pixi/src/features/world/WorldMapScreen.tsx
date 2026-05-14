@@ -56,6 +56,8 @@ export function WorldMapScreen() {
   const setVillage = useGameStore((state) => state.setVillage);
   const selectedEntityId = useWorldMapStore((state) => state.selectedEntityId);
   const setSelectedEntity = useWorldMapStore((state) => state.setSelectedEntity);
+  const pendingFocus = useWorldMapStore((state) => state.pendingFocus);
+  const setPendingFocus = useWorldMapStore((state) => state.setPendingFocus);
   const [attackTarget, setAttackTarget] = useState<MapEntity | null>(null);
   const [attackInitialMode, setAttackInitialMode] = useState<'attack' | 'scout'>('attack');
   const [isMiniMapVisible, setIsMiniMapVisible] = useState(false);
@@ -129,12 +131,22 @@ export function WorldMapScreen() {
   useEffect(() => {
     if (hasCameraSnapshotRef.current) return;
     const fallbackCamera = {
-      center: myVillage ?? { x: dims.gridWidth / 2, y: dims.gridHeight / 2 },
+      center: pendingFocus ?? myVillage ?? { x: dims.gridWidth / 2, y: dims.gridHeight / 2 },
       viewportTiles: FALLBACK_VIEWPORT_TILES,
     };
     latestCameraRef.current = fallbackCamera;
     setCamera(fallbackCamera);
+    // pendingFocus volontairement hors deps : on l'utilise comme seed initial une fois,
+    // l'application via centerOn est gérée par l'effet ci-dessous quand le canvas est prêt.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dims.gridWidth, dims.gridHeight, myVillage]);
+
+  useEffect(() => {
+    if (!pendingFocus) return;
+    if (!canvasRef.current) return;
+    canvasRef.current.centerOn(pendingFocus.x, pendingFocus.y);
+    setPendingFocus(null);
+  }, [pendingFocus, worldEntities.isLoading, myVillages.isLoading, setPendingFocus]);
 
   useEffect(() => {
     if (isMiniMapVisible) {

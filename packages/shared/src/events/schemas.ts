@@ -104,6 +104,7 @@ const VillageAttackedPayloadSchema = z.object({
 
 const VillageConqueredPayloadSchema = z.object({
   villageId: z.string(),
+  villageName: z.string(),
   newOwnerId: z.string(),
   previousTier: z.string().nullable(),
   x: z.number(),

@@ -13,6 +13,7 @@ import { Spinner } from '@/ui/spinners';
 import { useGameStore } from '@/stores/game';
 import { AuthenticatedShell } from '@/features/layout/AuthenticatedShell';
 import { DebugOverlay } from '@/features/layout/DebugOverlay';
+import { VictoryModalHost } from '@/ui/modals/VictoryModalHost';
 
 const VillageView = lazy(() =>
   import('@/features/game/VillageView').then((m) => ({ default: m.VillageView })),
@@ -129,6 +130,7 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <VictoryModalHost />
       </BrowserRouter>
       {import.meta.env.DEV && (
         <>

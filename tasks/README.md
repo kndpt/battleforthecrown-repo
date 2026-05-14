@@ -30,6 +30,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ### Runs archivés
 
+- [024 — Modal Victoire de conquête](./runs/archive/024-feature-conquest-victory-modal.md) — ✅ `DONE` (2026-05-14). Payload `village.conquered` enrichi de `villageName`, store UI étendu avec queue FIFO de modaux victoire, composant `VictoryModal` porté du design-system, host singleton dans `App.tsx`, CTA "Voir le village" qui recentre la WorldMap via `pendingFocus`, tests unit ajoutés.
 - [020 — Stats unités uniquement + défense par archétype branchée](./runs/archive/020-feature-units-stats-only-wire-defense-archetype.md) — ✅ `DONE` (2026-05-14). Suppression complète des passifs `UnitPassive` côté shared/backend/frontend/doc ; résolution combat branchée sur `defenseInfantry/Cavalry/Archer` selon l'archétype attaquant, avec smoke cavalerie vs archers.
 - [022 — Réactivité temps réel de la puissance (training + bâtiments)](./runs/archive/022-fix-power-realtime-reactivity.md) — ✅ `DONE` (2026-05-14). Event métier `unit.trained` à chaque tick training, invalidations power front sur training/building, docs realtime/cartes/onboarding et smokes backend verts.
 - [021 — Navigation multi-village par étiquettes](./runs/archive/021-feature-village-labels-navigation.md) — ✅ `DONE` (2026-05-13). Phase 9 : étiquettes privées, capitale dérivée, sélecteur multi-village, filtre carte et règle future de ciblage des récompenses.

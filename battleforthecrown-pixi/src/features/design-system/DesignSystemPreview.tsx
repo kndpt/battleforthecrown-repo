@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Button } from '@/ui/buttons/Button';
+import { VictoryModal } from '@/ui/modals/VictoryModal';
 import {
   ArmyMovementList,
   Avatar,
@@ -315,6 +317,7 @@ export function DesignSystemPreview() {
   const [troopQuantity, setTroopQuantity] = useState(24);
   const [villageStyleOpen, setVillageStyleOpen] = useState(true);
   const [villageStyle, setVillageStyle] = useState<VillageStyleId>('RAIDERS');
+  const [victoryModalOpen, setVictoryModalOpen] = useState(false);
 
   return (
     <main className="min-h-full overflow-y-auto bg-[#f5e6d3] p-[18px] text-[#1f2937]">
@@ -1315,6 +1318,27 @@ export function DesignSystemPreview() {
               Vos coffres de bois sont à 98 %. Augmentez votre entrepôt ou dépensez avant la perte de production.
             </GameModal>
           </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Victory Modal (runtime)</h2>
+          <p className="text-sm text-[#6d5838]">
+            Modal monté par <code>VictoryModalHost</code> au niveau racine quand l'event WS
+            <code> village.conquered</code> arrive. Le bouton CTA recentre la carte du monde sur le
+            village conquis.
+          </p>
+          <Button variant="success" size="md" onClick={() => setVictoryModalOpen(true)}>
+            Ouvrir l'aperçu
+          </Button>
+          <VictoryModal
+            isOpen={victoryModalOpen}
+            villageName="Cravia"
+            x={42}
+            y={88}
+            buildingsKept={6}
+            onClose={() => setVictoryModalOpen(false)}
+            onViewVillage={() => setVictoryModalOpen(false)}
+          />
         </section>
 
         <section className="space-y-4">

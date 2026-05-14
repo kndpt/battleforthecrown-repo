@@ -427,11 +427,13 @@ export function applyVillageConquered(payload: VillageConqueredPayload, ctx: Bin
   // Mark the entity as conquered on the map by simply removing it; the next
   // refetch will reinsert it under the new owner.
   useWorldMapStore.getState().removeEntity(payload.villageId);
-  useUiStore.getState().pushToast({
-    tone: 'warning',
-    title: 'Village conquis',
-    description: `(${payload.x}, ${payload.y})`,
-    ttlMs: 6000,
+  useUiStore.getState().pushVictoryModal({
+    villageId: payload.villageId,
+    villageName: payload.villageName,
+    x: payload.x,
+    y: payload.y,
+    buildingsKept: payload.buildingsKept,
+    previousTier: payload.previousTier,
   });
 }
 

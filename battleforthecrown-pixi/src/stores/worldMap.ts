@@ -1,19 +1,27 @@
 import { create } from 'zustand';
 import type { MapEntity } from '@/api/world-types';
 
+export interface PendingMapFocus {
+  x: number;
+  y: number;
+}
+
 interface WorldMapState {
   entities: Record<string, MapEntity>;
   selectedEntityId: string | null;
+  pendingFocus: PendingMapFocus | null;
   setEntities: (entities: MapEntity[]) => void;
   upsertEntity: (entity: MapEntity) => void;
   removeEntity: (id: string) => void;
   setSelectedEntity: (id: string | null) => void;
+  setPendingFocus: (focus: PendingMapFocus | null) => void;
   clear: () => void;
 }
 
 export const useWorldMapStore = create<WorldMapState>((set) => ({
   entities: {},
   selectedEntityId: null,
+  pendingFocus: null,
   setEntities: (entities) => {
     const next: Record<string, MapEntity> = {};
     for (const entity of entities) {
@@ -32,5 +40,6 @@ export const useWorldMapStore = create<WorldMapState>((set) => ({
       return { entities: next, selectedEntityId };
     }),
   setSelectedEntity: (id) => set({ selectedEntityId: id }),
-  clear: () => set({ entities: {}, selectedEntityId: null }),
+  setPendingFocus: (focus) => set({ pendingFocus: focus }),
+  clear: () => set({ entities: {}, selectedEntityId: null, pendingFocus: null }),
 }));

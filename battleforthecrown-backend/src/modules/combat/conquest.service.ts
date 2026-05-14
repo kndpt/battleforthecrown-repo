@@ -470,6 +470,7 @@ export class ConquestService {
 
     await createOutboxEvent(tx, 'village.conquered', targetVillageId, {
       villageId: targetVillageId,
+      villageName: target.name,
       newOwnerId: attackerUserId,
       previousTier: target.tier,
       x: target.x,

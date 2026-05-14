@@ -102,6 +102,7 @@ export interface VillageAttackedPayload {
 
 export interface VillageConqueredPayload {
   villageId: string;
+  villageName: string;
   newOwnerId: string;
   previousTier: string | null;
   x: number;
