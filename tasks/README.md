@@ -5,6 +5,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 ## Tickets actifs
 
 - [54 — Retour fantôme pendant capture avec Seigneur](./54-conquest-capture-phantom-return.md) — 🟡 Majeur. Une capture avec Seigneur survivant peut encore planifier un retour si du loot existe, ce qui affiche un cheval alors que toute l'escorte reste en occupation.
+- [58 — Vision multi-village : seuls les cercles du village sélectionné sont affichés](./58-multi-village-vision-disks-missing.md) — 🟡 Majeur. La spec dit union des disques de toutes les Watchtowers, mais le frontend affiche un seul cercle basé sur le village courant.
 - [57 — Source canonique du lifecycle des bâtiments joueur](./57-player-village-building-lifecycle-roster.md) — 🟡 Majeur. Centraliser la politique join/conquête/backfill des bâtiments pour éviter les oublis à chaque nouveau bâtiment activé.
 - [51 — Standardiser les bottom sheets sur le design `Activités du royaume`](./51-bottom-sheet-design-system-base.md) — 🟠 Moyen. Faire du nouveau panneau la base design-system des bottom sheets actuels et futurs.
 
