@@ -1,5 +1,5 @@
-import { X } from 'lucide-react';
-import { BottomSheet, Panel, PanelBody, PanelHeader, Spinner } from '@/ui';
+import { BottomSheet, Spinner } from '@/ui';
+import { GameBottomSheetPanel } from '@/features/design-system/components';
 import { useKingdomPowerQuery, useVillagePowerQuery } from '@/api/queries';
 import { useGameStore } from '@/stores/game';
 import { PowerBreakdown } from './PowerBreakdown';
@@ -16,22 +16,13 @@ export function PowerBottomSheet({ isOpen, onClose }: PowerBottomSheetProps) {
 
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} maxHeight="80vh" zIndex={50}>
-      <Panel variant="parchment" padding="none" className="rounded-t-2xl shadow-2xl">
-        <PanelHeader
-          variant="parchment"
-          className="flex items-center justify-between sticky top-0 z-10 rounded-t-2xl"
-        >
-          <span className="font-bold">⚜️ Puissance Totale</span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 hover:bg-black/10 rounded-full transition-colors"
-            aria-label="Fermer"
-          >
-            <X size={24} className="text-gray-800" />
-          </button>
-        </PanelHeader>
-        <PanelBody className="p-4">
+      <GameBottomSheetPanel
+        bodyClassName="p-4"
+        closeLabel="Fermer"
+        eyebrow="Panneau"
+        onClose={onClose}
+        title="Puissance Totale"
+      >
           <div className="text-center mb-6">
             <p className="text-xs text-kingdom-700 font-game mb-1">
               Puissance du royaume
@@ -95,8 +86,7 @@ export function PowerBottomSheet({ isOpen, onClose }: PowerBottomSheetProps) {
               La puissance du royaume représente la force cumulée de tous vos villages.
             </p>
           </div>
-        </PanelBody>
-      </Panel>
+      </GameBottomSheetPanel>
     </BottomSheet>
   );
 }

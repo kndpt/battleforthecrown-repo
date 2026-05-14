@@ -21,6 +21,7 @@ import {
   DigitTimer,
   EmptyState,
   FeaturedQuestCard,
+  GameBottomSheetPanel,
   GameInput,
   GameModal,
   HeaderBar,
@@ -918,6 +919,38 @@ export function DesignSystemPreview() {
                 labels={kingdomActivityLabels}
                 onTabChange={() => undefined}
               />
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Bottom sheet shell</h2>
+          <div className="flex w-full justify-center">
+            <div className="h-[420px] w-full max-w-[390px] overflow-hidden rounded-2xl border-2 border-[#3c2619] bg-[#2f5125] shadow-[0_12px_28px_rgba(60,38,25,.22)]">
+              <div className="flex h-full items-end">
+                <GameBottomSheetPanel
+                  bodyClassName="space-y-3 p-3"
+                  closeLabel="Fermer"
+                  eyebrow="Panneau"
+                  headerActions={<Badge tone="warning" size="sm">2 / 3</Badge>}
+                  onClose={() => undefined}
+                  title="Constructions actives"
+                >
+                  <BuildQueueCard
+                    icon="/assets/barracks.png"
+                    progress={72}
+                    time="3:42"
+                    title="Caserne niv. 2"
+                  />
+                  <BuildQueueCard
+                    icon="/assets/watchtower.png"
+                    progress={0}
+                    time="8:10"
+                    title="Tour de guet niv. 1"
+                    tone="idle"
+                  />
+                </GameBottomSheetPanel>
+              </div>
             </div>
           </div>
         </section>

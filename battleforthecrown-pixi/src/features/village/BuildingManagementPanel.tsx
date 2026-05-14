@@ -1,5 +1,6 @@
-import { Hammer, Lock, X } from 'lucide-react';
-import { Badge, BottomSheet, Panel, PanelBody, PanelHeader } from '@/ui';
+import { Hammer, Lock } from 'lucide-react';
+import { Badge, BottomSheet, PanelHeader } from '@/ui';
+import { GameBottomSheetPanel } from '@/features/design-system/components';
 import {
   MAX_CONSTRUCTION_QUEUE,
 } from '@battleforthecrown/shared/village/buildings';
@@ -78,38 +79,18 @@ export function BuildingManagementPanel({
   return (
     <>
       <BottomSheet isOpen={isOpen} onClose={onClose} maxHeight="85vh" zIndex={50}>
-        <Panel
-          variant="parchment"
-          padding="none"
-          className="rounded-t-3xl shadow-2xl"
+        <GameBottomSheetPanel
+          bodyClassName="max-h-[calc(85vh-92px)] p-3"
+          closeLabel="Fermer"
+          eyebrow="Panneau"
+          headerActions={(
+            <Badge variant="warning" size="sm">
+              {buildingQueue.length} / {MAX_CONSTRUCTION_QUEUE}
+            </Badge>
+          )}
+          onClose={onClose}
+          title="Bâtiments"
         >
-          <PanelHeader
-            variant="wood"
-            className="flex items-center justify-between sticky top-0 z-10 rounded-t-2xl"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-xl" aria-hidden>
-                🏗️
-              </span>
-              <span className="font-bold">Bâtiments</span>
-              <Badge variant="warning" size="sm">
-                {buildingQueue.length} / {MAX_CONSTRUCTION_QUEUE}
-              </Badge>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-2 hover:bg-black/10 rounded-full transition-colors"
-              aria-label="Fermer"
-            >
-              <X size={24} className="text-white" />
-            </button>
-          </PanelHeader>
-
-          <PanelBody
-            className="p-3 overflow-y-auto max-h-[calc(85vh-140px)] overscroll-contain"
-            style={{ WebkitOverflowScrolling: 'touch' }}
-          >
             {availableBuildings.length > 0 && (
               <PanelHeader
                 variant="info"
@@ -323,8 +304,7 @@ export function BuildingManagementPanel({
             </div>
 
             <div className="h-20" />
-          </PanelBody>
-        </Panel>
+        </GameBottomSheetPanel>
       </BottomSheet>
 
       <style>{`

@@ -28,6 +28,8 @@ export { EmptyState } from './EmptyState';
 export type { EmptyStateProps } from './EmptyState';
 export { GameModal } from './GameModal';
 export type { GameModalAction, GameModalProps, GameModalTone, GameModalVariant } from './GameModal';
+export { GameBottomSheetPanel } from './GameBottomSheetPanel';
+export type { GameBottomSheetPanelProps, GameBottomSheetPanelVariant } from './GameBottomSheetPanel';
 export { GameInput } from './GameInput';
 export type { GameInputProps, GameInputTone } from './GameInput';
 export { HeaderBar } from './HeaderBar';
