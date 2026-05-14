@@ -112,7 +112,7 @@ function roleFor(type: UnitType, stats: typeof UNIT_STATS[UnitType]): { archetyp
   if (type === UNIT_TYPES.WARRIOR) return { archetype: 'Infanterie · Frappe rapide', label: 'Offensif', tone: 'danger' };
   if (type === UNIT_TYPES.SPY) return { archetype: 'Reconnaissance · Discrétion', label: 'Espion', tone: 'info' };
   if (type === UNIT_TYPES.RAM || type === UNIT_TYPES.CATAPULT) return { archetype: 'Siège · Destruction', label: 'Siège', tone: 'warning' };
-  if (type === UNIT_TYPES.NOBLE) return { archetype: 'Conquête · Autorité', label: 'Noble', tone: 'warning' };
+  if (type === UNIT_TYPES.NOBLE) return { archetype: 'Conquête · Autorité', label: 'Seigneur', tone: 'warning' };
 
   const defense = Math.max(stats.defenseInfantry, stats.defenseCavalry, stats.defenseArcher);
   if (defense > stats.attack) return { archetype: 'Défense · Tenue de ligne', label: 'Défensif', tone: 'info' };

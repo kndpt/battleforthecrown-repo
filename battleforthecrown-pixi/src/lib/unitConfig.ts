@@ -60,7 +60,7 @@ export const UNIT_CONFIG: Record<UnitType, UnitConfig> = {
   },
   [UnitType.NOBLE]: {
     id: UnitType.NOBLE,
-    name: "Noble",
+    name: "Seigneur",
     assetPath: "/assets/army/noble.png",
   },
 };

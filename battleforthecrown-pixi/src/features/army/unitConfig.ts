@@ -66,8 +66,8 @@ export const UNIT_META: Record<UnitType, UnitMeta> = {
     emoji: '🪵',
   },
   NOBLE: {
-    name: 'Noble',
-    description: 'Noble de haut rang. Permet de conquérir des villages ennemis.',
+    name: 'Seigneur',
+    description: 'Seigneur de haut rang. Permet de conquérir des villages ennemis.',
     iconPath: null,
     emoji: '👑',
   },
