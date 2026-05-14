@@ -1,4 +1,5 @@
 import type { VillageLabel } from '../village';
+import type { VisionDisk } from './vision';
 
 export type WorldEntityKind =
   | 'BARBARIAN_VILLAGE'
@@ -34,6 +35,12 @@ export interface WorldEntityFogged {
 }
 
 export type WorldEntityResponse = WorldEntityDto | WorldEntityFogged;
+
+export interface WorldEntitiesResponse {
+  entities: WorldEntityResponse[];
+  visionDisks: VisionDisk[];
+  fogOfWarEnabled: boolean;
+}
 
 export function isFoggedEntity(
   entity: WorldEntityResponse,

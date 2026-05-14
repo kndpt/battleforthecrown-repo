@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, type MutableRefObject } from 'react';
+import { useCallback, useEffect, useRef, type MutableRefObject } from 'react';
 import { type Application } from 'pixi.js';
 import { PixiCanvas } from '@/pixi/PixiCanvas';
 import { SceneManager } from '@/pixi/scenes/SceneManager';
@@ -7,6 +7,9 @@ import { loadBundle } from '@/pixi/assets/loader';
 import { useWorldMapStore } from '@/stores/worldMap';
 import { useExpeditionsStore } from '@/stores/expeditions';
 import type { MapEntity } from '@/api/world-types';
+import type { VisionDisk } from '@battleforthecrown/shared/world';
+
+const EMPTY_VISION_DISKS: readonly VisionDisk[] = [];
 
 export interface WorldMapCanvasController {
   centerOn: (worldX: number, worldY: number) => void;
@@ -17,7 +20,8 @@ interface WorldMapCanvasProps {
   gridWidth: number;
   gridHeight: number;
   myVillage?: MapEntity | null;
-  visibilityRadius?: number;
+  visionDisks?: readonly VisionDisk[];
+  fogOfWarEnabled?: boolean;
   controllerRef?: MutableRefObject<WorldMapCanvasController | null>;
 }
 
@@ -25,26 +29,33 @@ export function WorldMapCanvas({
   gridWidth,
   gridHeight,
   myVillage,
-  visibilityRadius = 0,
+  visionDisks = EMPTY_VISION_DISKS,
+  fogOfWarEnabled = true,
   controllerRef,
 }: WorldMapCanvasProps) {
   const setSelectedEntity = useWorldMapStore((state) => state.setSelectedEntity);
   const handleRef = useRef<WorldMapHandle | null>(null);
-  const initialCenter = useMemo(
-    () => myVillage ?? { x: gridWidth / 2, y: gridHeight / 2 },
-    [myVillage, gridWidth, gridHeight],
-  );
+  const myVillageRef = useRef(myVillage);
+  const visionDisksRef = useRef(visionDisks);
+
+  useEffect(() => {
+    myVillageRef.current = myVillage;
+    visionDisksRef.current = visionDisks;
+  }, [myVillage, visionDisks]);
 
   const onReady = useCallback(
     (app: Application) => {
       const manager = new SceneManager(app);
+      const currentMyVillage = myVillageRef.current;
+      const initialCenter = currentMyVillage ?? { x: gridWidth / 2, y: gridHeight / 2 };
       const handle = createWorldMapScene(app, {
         gridWidth,
         gridHeight,
         initialCenter: { x: initialCenter.x, y: initialCenter.y },
         initialZoom: 1,
-        myVillage: myVillage ? { x: myVillage.x, y: myVillage.y } : null,
-        visibilityRadius,
+        myVillage: currentMyVillage ? { x: currentMyVillage.x, y: currentMyVillage.y } : null,
+        visionDisks: visionDisksRef.current,
+        fogOfWarEnabled,
         onSelectEntity: (id) => setSelectedEntity(id),
       });
       handleRef.current = handle;
@@ -89,22 +100,20 @@ export function WorldMapCanvas({
     [
       gridWidth,
       gridHeight,
-      initialCenter.x,
-      initialCenter.y,
-      myVillage,
-      visibilityRadius,
+      fogOfWarEnabled,
       setSelectedEntity,
       controllerRef,
     ],
   );
 
-  // Update vision overlay when watchtower upgrades without remounting the scene.
+  // Update vision overlay when the backend vision disks change without remounting the scene.
   useEffect(() => {
     handleRef.current?.setVision(
       myVillage ? { x: myVillage.x, y: myVillage.y } : null,
-      visibilityRadius,
+      visionDisks,
+      fogOfWarEnabled,
     );
-  }, [myVillage, visibilityRadius]);
+  }, [myVillage, visionDisks, fogOfWarEnabled]);
 
   useEffect(() => {
     return () => {

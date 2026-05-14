@@ -219,9 +219,12 @@ describe('combat conquest hook smoke', () => {
       .get(`/world/${world.id}/entities`)
       .set('Authorization', `Bearer ${conquest.user.accessToken}`);
     expect(entitiesRes.status).toBe(200);
-    const targetEntity = (
-      entitiesRes.body as Array<{ id: string; data?: unknown }>
-    ).find((entity) => entity.id === conquest.target.id);
+    const entitiesBody = entitiesRes.body as {
+      entities: Array<{ id: string; data?: unknown }>;
+    };
+    const targetEntity = entitiesBody.entities.find(
+      (entity) => entity.id === conquest.target.id,
+    );
     expect(targetEntity).toMatchObject({
       id: conquest.target.id,
       data: {

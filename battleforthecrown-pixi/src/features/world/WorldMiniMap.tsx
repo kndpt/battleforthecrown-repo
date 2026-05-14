@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { MapEntity } from '@/api/world-types';
 import type { ExpeditionSnapshot } from '@/stores/expeditions';
+import type { VisionDisk } from '@battleforthecrown/shared/world';
 
 interface WorldMiniMapProps {
   gridWidth: number;
@@ -8,7 +9,7 @@ interface WorldMiniMapProps {
   entities: MapEntity[];
   expeditions: ExpeditionSnapshot[];
   myVillage: MapEntity | null;
-  visibilityRadius: number;
+  visionDisks: readonly VisionDisk[];
   /** Tile coords currently centred in the main viewport (for the camera box). */
   cameraCenter: { x: number; y: number };
   /** Visible viewport size in world tiles (for the camera box). */
@@ -38,7 +39,7 @@ export function WorldMiniMap({
   entities,
   expeditions,
   myVillage,
-  visibilityRadius,
+  visionDisks,
   cameraCenter,
   viewportTiles,
 }: WorldMiniMapProps) {
@@ -66,11 +67,12 @@ export function WorldMiniMap({
     const sx = SIZE / gridWidth;
     const sy = SIZE / gridHeight;
 
-    // Vision disc
-    if (myVillage && visibilityRadius > 0) {
-      const cx = myVillage.x * sx;
-      const cy = myVillage.y * sy;
-      const r = visibilityRadius * Math.max(sx, sy);
+    // Vision disks
+    for (const disk of visionDisks) {
+      if (disk.radius <= 0) continue;
+      const cx = disk.x * sx;
+      const cy = disk.y * sy;
+      const r = disk.radius * Math.max(sx, sy);
       ctx.fillStyle = 'rgba(246, 214, 123, 0.18)';
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
@@ -97,13 +99,14 @@ export function WorldMiniMap({
       ctx.fill();
     }
 
-    // My village (golden marker)
-    if (myVillage) {
-      ctx.fillStyle = '#f6e7b1';
+    // Own villages (selected one brighter)
+    for (const e of entities) {
+      if (!e.isMine) continue;
+      ctx.fillStyle = e.id === myVillage?.id ? '#f6e7b1' : 'rgba(246, 231, 177, 0.72)';
       ctx.strokeStyle = '#a07028';
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.arc(myVillage.x * sx, myVillage.y * sy, 3.2, 0, Math.PI * 2);
+      ctx.arc(e.x * sx, e.y * sy, e.id === myVillage?.id ? 3.2 : 2.4, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
     }
@@ -129,7 +132,7 @@ export function WorldMiniMap({
     entities,
     expeditions,
     myVillage,
-    visibilityRadius,
+    visionDisks,
     cameraCenter,
     viewportTiles,
   ]);

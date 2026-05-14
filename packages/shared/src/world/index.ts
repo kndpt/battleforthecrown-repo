@@ -12,6 +12,7 @@ export {
   type WorldEntityDto,
   type WorldEntityFogged,
   type WorldEntityResponse,
+  type WorldEntitiesResponse,
   type WorldVillageDto,
   type WorldTier,
 } from './entities';

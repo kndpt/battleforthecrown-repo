@@ -3,6 +3,7 @@ import { Viewport } from 'pixi-viewport';
 import type { PixiScene } from './SceneManager';
 import type { MapEntity } from '@/api/world-types';
 import type { ExpeditionSnapshot } from '@/stores/expeditions';
+import type { VisionDisk } from '@battleforthecrown/shared/world';
 import { createExpeditionVisual, type ExpeditionVisualHandle } from '@/pixi/entities/ExpeditionVisual';
 import { createBlipSprite, type BlipSpriteHandle } from '@/pixi/entities/BlipSprite';
 
@@ -13,10 +14,11 @@ export interface WorldMapOptions {
   continentSize?: number;
   initialCenter?: { x: number; y: number };
   initialZoom?: number;
-  /** World coords of the player's own village, for vision overlay + crosshair. */
+  /** World coords of the selected/player village, for the crosshair. */
   myVillage?: { x: number; y: number } | null;
-  /** Watchtower vision in tiles. */
-  visibilityRadius?: number;
+  /** Authoritative watchtower vision disks in tiles. */
+  visionDisks?: readonly VisionDisk[];
+  fogOfWarEnabled?: boolean;
   onSelectEntity?: (entityId: string | null) => void;
   onHoverEntity?: (entityId: string | null) => void;
 }
@@ -92,8 +94,12 @@ export interface WorldMapHandle {
   reconcileExpeditions: (expeditions: ExpeditionSnapshot[]) => void;
   setSelected: (entityId: string | null) => void;
   centerOn: (worldX: number, worldY: number) => void;
-  /** Update the vision center / radius (when watchtower upgrades). */
-  setVision: (myVillage: { x: number; y: number } | null, radius: number) => void;
+  /** Update the crosshair village and authoritative vision disks. */
+  setVision: (
+    myVillage: { x: number; y: number } | null,
+    disks: readonly VisionDisk[],
+    fogOfWarEnabled: boolean,
+  ) => void;
   /** Convert world tile coords to current screen pixel coords (for tooltip positioning). */
   worldToScreen: (tileX: number, tileY: number) => { x: number; y: number };
 }
@@ -263,7 +269,8 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
   viewport.addChild(crosshair);
 
   let myVillage = options.myVillage ?? null;
-  let visibilityRadius = options.visibilityRadius ?? 0;
+  let visionDisks = options.visionDisks ?? [];
+  let fogOfWarEnabled = options.fogOfWarEnabled ?? true;
 
   const tileToWorld = (tx: number, ty: number) => ({
     px: tx * tileSize + tileSize / 2,
@@ -279,6 +286,12 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     fogHole.clear();
     visionRing.clear();
 
+    if (!fogOfWarEnabled) {
+      fogContainer.visible = false;
+      fogContainer.updateCacheTexture();
+      return;
+    }
+
     fogContainer.visible = true;
 
     // Dark veil over the entire world. The hole graphics below punches a
@@ -286,9 +299,10 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     // cached as a texture).
     fogDark.rect(0, 0, worldPx, worldPy).fill({ color: COLOR.fogOverlay, alpha: 0.6 });
 
-    if (myVillage && visibilityRadius > 0) {
-      const { px, py } = tileToWorld(myVillage.x, myVillage.y);
-      const radiusPx = visibilityRadius * tileSize;
+    for (const disk of visionDisks) {
+      if (disk.radius <= 0) continue;
+      const { px, py } = tileToWorld(disk.x, disk.y);
+      const radiusPx = disk.radius * tileSize;
       fogHole.circle(px, py, radiusPx).fill({ color: 0xffffff, alpha: 1 });
       visionRing
         .circle(px, py, radiusPx)
@@ -617,10 +631,12 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
 
   const setVision = (
     nextMyVillage: { x: number; y: number } | null,
-    nextRadius: number,
+    nextDisks: readonly VisionDisk[],
+    nextFogOfWarEnabled: boolean,
   ) => {
     myVillage = nextMyVillage;
-    visibilityRadius = nextRadius;
+    visionDisks = nextDisks;
+    fogOfWarEnabled = nextFogOfWarEnabled;
     drawCrosshair();
     drawFog();
   };

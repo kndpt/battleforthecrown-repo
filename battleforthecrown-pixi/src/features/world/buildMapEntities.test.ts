@@ -131,11 +131,35 @@ describe('filterEntitiesByVision', () => {
     name: 'Outside',
   };
 
-  it('keeps level 10 watchtower vision finite', () => {
-    expect(filterEntitiesByVision([mine, inside, outside], 10)).toEqual([mine, inside]);
+  it('uses backend-provided vision disks instead of one selected village level', () => {
+    const secondVillage: MapEntity = {
+      ...mine,
+      id: 'mine-2',
+      x: 100,
+      y: 100,
+      name: 'Mine 2',
+    };
+    const insideSecondDisk: MapEntity = {
+      ...inside,
+      id: 'inside-second',
+      x: 110,
+      y: 100,
+      name: 'Inside second',
+    };
+
+    expect(
+      filterEntitiesByVision([mine, secondVillage, inside, insideSecondDisk, outside], [
+        { x: 0, y: 0, radius: 50 },
+        { x: 100, y: 100, radius: 10 },
+      ]),
+    ).toEqual([mine, secondVillage, inside, insideSecondDisk]);
   });
 
   it('keeps only own villages when watchtower vision is locked', () => {
-    expect(filterEntitiesByVision([mine, inside], 0)).toEqual([mine]);
+    expect(filterEntitiesByVision([mine, inside], [])).toEqual([mine]);
+  });
+
+  it('does not locally filter entities when server fog is disabled', () => {
+    expect(filterEntitiesByVision([mine, inside], [], false)).toEqual([mine, inside]);
   });
 });

@@ -94,14 +94,119 @@ describe('vision smoke', () => {
       .set('Authorization', `Bearer ${user.accessToken}`);
     expect(res.status).toBe(200);
 
-    const entities = res.body as Array<{
-      id: string;
-      kind: string;
-      x: number;
-      y: number;
-    }>;
-    const found = entities.find((e) => e.x === foggedX && e.y === foggedY);
+    const body = res.body as {
+      entities: Array<{
+        id: string;
+        kind: string;
+        x: number;
+        y: number;
+      }>;
+      visionDisks: Array<{ x: number; y: number; radius: number }>;
+      fogOfWarEnabled: boolean;
+    };
+    const found = body.entities.find((e) => e.x === foggedX && e.y === foggedY);
+    expect(body.fogOfWarEnabled).toBe(true);
+    expect(body.visionDisks).toEqual([]);
     expect(found).toBeTruthy();
     expect(found?.kind).toBe('fogged');
+  });
+
+  it('fog of war: entities response exposes multi-village vision disks and uses their union', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const user = await registerUser(ctx.server);
+    const join = await joinWorld(
+      ctx.server,
+      user.accessToken,
+      world.id,
+      'two-tower-kingdom',
+    );
+
+    await ctx.prisma.building.updateMany({
+      where: { villageId: join.village.id, type: 'WATCHTOWER' },
+      data: { level: 2 },
+    });
+
+    const secondX =
+      join.village.x > 250 ? join.village.x - 100 : join.village.x + 100;
+    const secondY = join.village.y;
+    await ctx.prisma.village.create({
+      data: {
+        worldId: world.id,
+        userId: user.userId,
+        isBarbarian: false,
+        name: 'second-watchtower',
+        x: secondX,
+        y: secondY,
+        buildings: {
+          create: { type: 'WATCHTOWER', level: 4 },
+        },
+      },
+    });
+
+    await ctx.prisma.village.createMany({
+      data: [
+        {
+          worldId: world.id,
+          isBarbarian: true,
+          name: 'inside-first-disk',
+          x: join.village.x + 9,
+          y: join.village.y,
+          tier: 'T1',
+        },
+        {
+          worldId: world.id,
+          isBarbarian: true,
+          name: 'inside-second-disk',
+          x: secondX + 19,
+          y: secondY,
+          tier: 'T1',
+        },
+        {
+          worldId: world.id,
+          isBarbarian: true,
+          name: 'outside-all-disks',
+          x: secondX,
+          y: secondY + 60,
+          tier: 'T1',
+        },
+      ],
+    });
+
+    const res = await request(ctx.server)
+      .get(`/world/${world.id}/entities`)
+      .set('Authorization', `Bearer ${user.accessToken}`);
+    expect(res.status).toBe(200);
+
+    const body = res.body as {
+      entities: Array<{
+        id: string;
+        kind: string;
+        x: number;
+        y: number;
+        data?: { name?: string };
+      }>;
+      visionDisks: Array<{ x: number; y: number; radius: number }>;
+      fogOfWarEnabled: boolean;
+    };
+    expect(body.fogOfWarEnabled).toBe(true);
+    expect(body.visionDisks).toEqual(
+      expect.arrayContaining([
+        { x: join.village.x, y: join.village.y, radius: 10 },
+        { x: secondX, y: secondY, radius: 20 },
+      ]),
+    );
+
+    const insideFirst = body.entities.find(
+      (e) => e.data?.name === 'inside-first-disk',
+    );
+    const insideSecond = body.entities.find(
+      (e) => e.data?.name === 'inside-second-disk',
+    );
+    const outside = body.entities.find(
+      (e) => e.x === secondX && e.y === secondY + 60,
+    );
+    expect(insideFirst?.kind).toBe('BARBARIAN_VILLAGE');
+    expect(insideSecond?.kind).toBe('BARBARIAN_VILLAGE');
+    expect(outside?.kind).toBe('fogged');
   });
 });

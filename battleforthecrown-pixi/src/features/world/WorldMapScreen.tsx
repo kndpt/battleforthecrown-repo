@@ -26,14 +26,15 @@ import { useGameStore } from '@/stores/game';
 import { useAuthStore } from '@/stores/auth';
 import { useExpeditionsStore } from '@/stores/expeditions';
 import { useWorldMapStore } from '@/stores/worldMap';
-import { WATCHTOWER_VISION_LEVELS } from '@battleforthecrown/shared/village/buildings';
 import type { MapEntity } from '@/api/world-types';
+import type { VisionDisk } from '@battleforthecrown/shared/world';
 import {
   KingdomActivityHudBadges,
   type KingdomActivityTab,
 } from '@/features/design-system/components';
 
 const FALLBACK_GRID = { gridWidth: 500, gridHeight: 500 };
+const EMPTY_VISION_DISKS: readonly VisionDisk[] = [];
 
 export function WorldMapScreen() {
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ export function WorldMapScreen() {
   const openConquests = useOpenConquestsQuery(worldId);
   const openExpeditions = useOpenExpeditionsQuery(worldId);
   const worldDetails = useWorldDetailsQuery(worldId);
-  const { isWatchtowerBuilt, watchtowerLevel } = useBuildingsForLockCheck();
+  const { isWatchtowerBuilt } = useBuildingsForLockCheck();
   const unreadCount = useUnreadReportsCount();
   const expeditions = useExpeditionsStore((state) => state.byId);
 
@@ -59,15 +60,17 @@ export function WorldMapScreen() {
   const [kingdomActivityTab, setKingdomActivityTab] = useState<KingdomActivityTab>('expeditions');
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
   const canvasRef = useRef<WorldMapCanvasController | null>(null);
+  const visionDisks = worldEntities.data?.visionDisks ?? EMPTY_VISION_DISKS;
+  const fogOfWarEnabled = worldEntities.data?.fogOfWarEnabled ?? true;
 
   const allEntities: MapEntity[] = useMemo(
-    () => buildMapEntities(worldEntities.data ?? [], myVillages.data ?? [], userId),
-    [worldEntities.data, myVillages.data, userId],
+    () => buildMapEntities(worldEntities.data?.entities ?? [], myVillages.data ?? [], userId),
+    [worldEntities.data?.entities, myVillages.data, userId],
   );
 
   const visibleEntities: MapEntity[] = useMemo(
-    () => filterEntitiesByVision(allEntities, watchtowerLevel),
-    [allEntities, watchtowerLevel],
+    () => filterEntitiesByVision(allEntities, visionDisks, fogOfWarEnabled),
+    [allEntities, visionDisks, fogOfWarEnabled],
   );
   const expeditionSnapshots = useMemo(() => Object.values(expeditions), [expeditions]);
 
@@ -100,7 +103,7 @@ export function WorldMapScreen() {
     let raf = 0;
     const tick = () => {
       const pos = canvasRef.current?.worldToScreen(selectedEntity.x, selectedEntity.y);
-       
+
       if (pos) setTooltipPosition(pos);
       raf = requestAnimationFrame(tick);
     };
@@ -108,7 +111,8 @@ export function WorldMapScreen() {
     return () => cancelAnimationFrame(raf);
   }, [selectedEntity]);
 
-  if (!isWatchtowerBuilt) {
+  const canViewWorld = !fogOfWarEnabled || isWatchtowerBuilt || visionDisks.length > 0;
+  if (!worldEntities.isLoading && !canViewWorld) {
     return <WorldLockedScreen />;
   }
 
@@ -118,8 +122,6 @@ export function WorldMapScreen() {
         gridHeight: worldDetails.data.gridHeight ?? FALLBACK_GRID.gridHeight,
       }
     : FALLBACK_GRID;
-
-  const visibilityRadius = WATCHTOWER_VISION_LEVELS[watchtowerLevel]?.visibilityRadius ?? 0;
 
   const handleRecenter = () => {
     if (myVillage) {
@@ -150,7 +152,8 @@ export function WorldMapScreen() {
                 gridWidth={dims.gridWidth}
                 gridHeight={dims.gridHeight}
                 myVillage={myVillage}
-                visibilityRadius={visibilityRadius}
+                visionDisks={visionDisks}
+                fogOfWarEnabled={fogOfWarEnabled}
                 controllerRef={canvasRef}
               />
             )}
@@ -183,7 +186,7 @@ export function WorldMapScreen() {
                     entities={visibleEntities}
                     expeditions={expeditionSnapshots}
                     myVillage={myVillage}
-                    visibilityRadius={visibilityRadius}
+                    visionDisks={visionDisks}
                     cameraCenter={myVillage ?? { x: dims.gridWidth / 2, y: dims.gridHeight / 2 }}
                     viewportTiles={{ width: 30, height: 30 }}
                   />

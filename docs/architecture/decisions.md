@@ -175,7 +175,8 @@ Détail du payload blip — **chaque champ est volontaire**, ne pas "corriger" e
 Implémentation :
 - Un `VisionService` (NestJS) calcule les disques de vision finis du joueur (un par tour de guet). La Tour de guet suit `WATCHTOWER_VISION_LEVELS` : lvl 1 = 5 cases, +5 par niveau, lvl 10 = 50 cases.
 - `applyFogOfWar(entities, disks)` mappe chaque entité vers le payload visible ou un blip.
-- Appliqué dans `GET /world/:slug/entities` (le seul endpoint consommé par la WorldMap).
+- Appliqué dans `GET /world/:slug/entities` (le seul endpoint consommé par la WorldMap), qui renvoie `{ entities, visionDisks, fogOfWarEnabled }`.
+- `visionDisks` est la source autoritative des overlays Pixi : la carte principale, la mini-carte et le filtre client utilisent ces disques au lieu de recalculer un rayon depuis le village sélectionné.
 - Le controller récupère l'utilisateur via `@CurrentUser()` (auth globale, voir [`auth.md`](./auth.md)) — aucune fuite possible côté client (pas de query param userId).
 - Les expéditions sont **filtrées en amont** (omises si hors vision) : pas de blip pour elles, simplification volontaire.
 - Feature flag par monde : `world.config.fogOfWar.enabled` (suit le pattern `barbarianSeeding.enabled`). Default `true` dans `mergeWithDefaults` + seed.

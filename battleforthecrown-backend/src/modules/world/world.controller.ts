@@ -15,13 +15,23 @@ import { WorldConfigService } from './world-config.service';
 import { WorldEntitiesQueryService } from './world-entities-query.service';
 import { JoinWorldUseCase } from './join-world.use-case';
 import { ResetWorldUseCase } from './reset-world.use-case';
-import { VisionService } from './vision.service';
+import {
+  VisionService,
+  type FogResult,
+  type VisionDisk,
+} from './vision.service';
 import { joinWorldSchema, type JoinWorldDto } from './dto/join-world.dto';
 
 interface PositionedEntity {
   id: string;
   x: number;
   y: number;
+}
+
+interface WorldEntitiesPayload<T extends PositionedEntity> {
+  entities: Array<FogResult<T>>;
+  visionDisks: VisionDisk[];
+  fogOfWarEnabled: boolean;
 }
 
 @Controller('world')
@@ -78,7 +88,7 @@ export class WorldController {
           )
         : await this.worldEntities.getAllEntities(worldId, kindList);
 
-    return this.applyFogIfEnabled(worldId, user.id, entities);
+    return this.withVision(worldId, user.id, entities);
   }
 
   @Post(':worldId/join')
@@ -125,14 +135,20 @@ export class WorldController {
     return this.worldEntities.getAllVillages(worldId);
   }
 
-  private async applyFogIfEnabled<T extends PositionedEntity>(
+  private async withVision<T extends PositionedEntity>(
     worldId: string,
     userId: string,
     entities: T[],
-  ) {
+  ): Promise<WorldEntitiesPayload<T>> {
     const config = await this.worldConfigService.getConfig(worldId);
-    if (!config.fogOfWar?.enabled) return entities;
+    const fogOfWarEnabled = config.fogOfWar?.enabled === true;
     const disks = await this.visionService.getVisionDisks(userId, worldId);
-    return this.visionService.applyFogOfWar(entities, disks);
+    return {
+      entities: fogOfWarEnabled
+        ? this.visionService.applyFogOfWar(entities, disks)
+        : entities,
+      visionDisks: disks,
+      fogOfWarEnabled,
+    };
   }
 }

@@ -1,7 +1,7 @@
 # 58 — Vision multi-village : seuls les cercles du village sélectionné sont affichés
 
 **Sévérité** : 🟡 Majeure  
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ Résolu
 
 ## Symptôme
 
@@ -118,3 +118,10 @@ Vérifier `docs/architecture/` et documenter la décision technique retenue :
 - Tests backend couvrent l'union multi-village.
 - Tests frontend couvrent le passage de plusieurs disques jusqu'au rendu/filtre.
 - Documentation architecture mise à jour si une nouvelle surface API ou convention frontend/backend est introduite.
+
+## Résolution
+
+- `GET /world/:worldId/entities` renvoie maintenant `{ entities, visionDisks, fogOfWarEnabled }`.
+- `visionDisks` vient de `VisionService.getVisionDisks` et reste la source autoritative pour la carte Pixi, la mini-carte et le filtre client.
+- Le frontend ne recalcule plus un rayon local depuis le village sélectionné.
+- Smoke backend : 2 villages avec Watchtower produisent 2 disques et la fog utilise leur union.

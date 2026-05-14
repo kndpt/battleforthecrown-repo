@@ -25,7 +25,7 @@ import {
   type World,
   type WorldMembership,
 } from './types';
-import type { WorldEntityResponse } from './world-types';
+import type { WorldEntitiesResponse } from './world-types';
 import { useAuthStore } from '@/stores/auth';
 import { useExpeditionsStore } from '@/stores/expeditions';
 import { useGameStore } from '@/stores/game';
@@ -956,11 +956,17 @@ interface CancelContext {
 }
 
 export function useWorldEntitiesQuery(worldId: string | null) {
-  return useQuery<WorldEntityResponse[]>({
+  return useQuery<WorldEntitiesResponse>({
     queryKey: queryKeys.worldEntities(worldId),
     queryFn: () => {
-      if (!worldId) return Promise.resolve([] as WorldEntityResponse[]);
-      return apiClient.get<WorldEntityResponse[]>(`/world/${worldId}/entities`);
+      if (!worldId) {
+        return Promise.resolve({
+          entities: [],
+          visionDisks: [],
+          fogOfWarEnabled: true,
+        } satisfies WorldEntitiesResponse);
+      }
+      return apiClient.get<WorldEntitiesResponse>(`/world/${worldId}/entities`);
     },
     enabled: Boolean(worldId),
     staleTime: 30_000,

@@ -5,7 +5,6 @@ import {
   type WorldEntityResponse,
   type WorldVillageDto,
 } from '@/api/world-types';
-import { WATCHTOWER_VISION_LEVELS } from '@battleforthecrown/shared/village/buildings';
 import { isPointInAnyVisionDisk, type VisionDisk } from '@battleforthecrown/shared/world';
 
 /**
@@ -30,32 +29,23 @@ export function buildMapEntities(
 }
 
 /**
- * Restricts the visible entity feed to those within the watchtower's vision
- * radius from the player's own village. At level 0 the player only sees their
- * own villages; higher levels reveal finite disks around each owned village.
+ * Restricts the visible entity feed to the authoritative vision disks returned
+ * by the backend. At level 0 the player only sees their own villages.
  *
  * Always keeps `isMine` entities in the feed, even when out of range.
  */
 export function filterEntitiesByVision(
   entities: MapEntity[],
-  watchtowerLevel: number,
+  visionDisks: readonly VisionDisk[],
+  fogOfWarEnabled = true,
 ): MapEntity[] {
-  const vision = WATCHTOWER_VISION_LEVELS[watchtowerLevel];
-  // Watchtower not built or destroyed → only own villages are visible.
-  if (!vision || vision.visibilityRadius === 0) {
+  if (!fogOfWarEnabled) return entities;
+  if (visionDisks.length === 0) {
     return entities.filter((e) => e.isMine);
   }
 
-  const ownVillages = entities.filter((e) => e.isMine);
-  if (ownVillages.length === 0) return entities;
-
-  const disks: VisionDisk[] = ownVillages.map((mine) => ({
-    x: mine.x,
-    y: mine.y,
-    radius: vision.visibilityRadius,
-  }));
   // Fogged entities come pre-filtered by the server — never drop them here.
   return entities.filter(
-    (e) => e.isMine || e.kind === 'fogged' || isPointInAnyVisionDisk(e, disks),
+    (e) => e.isMine || e.kind === 'fogged' || isPointInAnyVisionDisk(e, visionDisks),
   );
 }
