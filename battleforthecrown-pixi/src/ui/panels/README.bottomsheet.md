@@ -8,6 +8,7 @@ Composant de base pour créer des panels qui slide depuis le bas de l'écran (st
 ✅ Animation slide up/down fluide  
 ✅ Séparation correcte des animations (évite le bug de l'overlay qui glisse)  
 ✅ Gestion automatique des pointer-events  
+✅ Fermeture par swipe-down depuis la zone haute du panel  
 ✅ Z-index configurable  
 ✅ Hauteur maximale personnalisable  
 ✅ Compatible avec tous les composants Panel  
@@ -65,6 +66,14 @@ function MyComponent() {
 | `maxHeight` | `string` | `'75vh'` | Hauteur maximale du panel (CSS) |
 | `zIndex` | `number` | `40` | Z-index du conteneur |
 | `className` | `string` | `''` | Classes CSS supplémentaires pour le panel container |
+
+---
+
+## Swipe de fermeture
+
+Le panel se ferme aussi par glissement vers le bas si le geste démarre dans la zone haute du sheet (environ 76px). Le contenu scrollable reste interactif : un drag commencé plus bas dans le panel n'est pas intercepté par la primitive.
+
+Le geste ferme le panel si la distance ou la vitesse du swipe dépasse le seuil interne. Sinon, le panel revient en position ouverte avec l'animation normale.
 
 ---
 

@@ -1,16 +1,14 @@
 import { useEffect } from 'react';
-import { Hammer, X, XCircle, Zap } from 'lucide-react';
+import { XCircle, Zap } from 'lucide-react';
 import {
   Badge,
   BottomSheet,
   Button,
   IconButton,
-  Panel,
-  PanelBody,
-  PanelHeader,
   ProgressBar,
   Tooltip,
 } from '@/ui';
+import { GameBottomSheetPanel } from '@/features/design-system/components';
 import {
   useBuildingQueueQuery,
   useCancelConstructionMutation,
@@ -58,28 +56,18 @@ export function QueueBottomSheet({ isOpen, onClose }: QueueBottomSheetProps) {
 
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} maxHeight="50vh" zIndex={40}>
-      <Panel variant="parchment" padding="none" className="rounded-t-2xl shadow-2xl">
-        <PanelHeader
-          variant="wood"
-          className="flex items-center justify-between sticky top-0 z-10 rounded-t-2xl"
-        >
-          <div className="flex items-center gap-2">
-            <Hammer size={18} className="text-white" />
-            <span className="font-bold">Constructions actives</span>
-            <Badge variant="warning" size="sm">
-              {buildingQueue.length} / 3
-            </Badge>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-black/10 rounded-full transition-colors"
-            aria-label="Fermer"
-          >
-            <X size={24} className="text-white" />
-          </button>
-        </PanelHeader>
-
-        <PanelBody className="p-4 space-y-3 overflow-y-auto">
+      <GameBottomSheetPanel
+        bodyClassName="space-y-3 p-4"
+        closeLabel="Fermer"
+        eyebrow="Panneau"
+        headerActions={(
+          <Badge variant="warning" size="sm">
+            {buildingQueue.length} / 3
+          </Badge>
+        )}
+        onClose={onClose}
+        title="Constructions actives"
+      >
           {visibleItems.map((queueItem, index) => {
             const startMs = Date.parse(queueItem.startTime);
             const endMs = Date.parse(queueItem.endTime);
@@ -183,8 +171,7 @@ export function QueueBottomSheet({ isOpen, onClose }: QueueBottomSheetProps) {
               Booster (bientôt disponible)
             </Button>
           </div>
-        </PanelBody>
-      </Panel>
+      </GameBottomSheetPanel>
     </BottomSheet>
   );
 }

@@ -1,7 +1,7 @@
 # 51 — Standardiser les bottom sheets sur le design `Activités du royaume`
 
 **Sévérité** : 🟠 Moyenne  
-**Statut** : 🆕 Ouvert  
+**Statut** : ✅ Résolu  
 **Décision UX** : le bottom sheet `Activités du royaume` devient la référence visuelle et structurelle des panneaux bas du jeu.
 
 ## Objectif

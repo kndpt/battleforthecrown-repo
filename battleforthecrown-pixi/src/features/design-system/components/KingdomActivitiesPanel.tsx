@@ -1,6 +1,7 @@
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { ArmyMovementRow, type ArmyMovementRowProps, type ArmyMovementTone } from './ArmyMovementRow';
+import { GameBottomSheetPanel } from './GameBottomSheetPanel';
 
 export type CaptureWindowState = 'open' | 'soon' | 'completed' | 'interrupted';
 export type CaptureTier = 'T1' | 'T2' | 'T3' | 'T4' | 'T5';
@@ -559,82 +560,58 @@ export function KingdomActivitiesPanel({
   ...props
 }: KingdomActivitiesPanelProps) {
   return (
-    <div
-      className={cn(
-        'flex max-h-full w-full flex-col overflow-hidden bg-[linear-gradient(180deg,#f5e6d3,#e8d4a8)]',
-        'min-w-0',
-        'border-t-[3px] border-t-[#3c2619] shadow-[0_-10px_28px_rgba(0,0,0,.45),inset_0_2px_0_rgba(255,255,255,.4)]',
-        embedded ? 'rounded-t-2xl' : 'rounded-2xl',
-        className,
+    <GameBottomSheetPanel
+      className={cn(embedded ? 'rounded-t-2xl' : 'rounded-2xl', className)}
+      closeLabel={labels.closeLabel}
+      eyebrow={labels.headerEyebrow}
+      onClose={onClose}
+      tabs={(
+        <>
+          <TabButton
+            active={activeTab === 'expeditions'}
+            badge={expeditionCount}
+            label={labels.expeditionsTab}
+            onClick={() => onTabChange('expeditions')}
+            tone="expeditions"
+          />
+          <TabButton
+            active={activeTab === 'captures'}
+            badge={captureCount}
+            label={labels.capturesTab}
+            onClick={() => onTabChange('captures')}
+            tone="captures"
+          />
+        </>
       )}
+      title={labels.headerTitle}
+      variant="tabbed"
       {...props}
     >
       <KingdomActivitiesAnimations />
-      <div className="flex justify-center pb-0.5 pt-2">
-        <div className="h-1 w-[38px] rounded-full bg-[rgba(60,38,25,.32)]" />
-      </div>
-
-      <div className="flex items-end justify-between gap-2 px-3.5 pb-2 pt-1">
-        <div>
-          <div className="font-game text-[9.5px] font-bold uppercase tracking-[.28em] text-[#6d5838]">{labels.headerEyebrow}</div>
-          <div className="font-game text-[17px] font-extrabold leading-[1.1] text-[#3d2f1f] [text-shadow:0_1px_0_rgba(255,255,255,.5)]">{labels.headerTitle}</div>
-        </div>
-        {onClose ? (
-          <button
-            aria-label={labels.closeLabel}
-            className="size-[30px] cursor-pointer rounded-lg border-2 border-[#5d4a32] bg-[linear-gradient(180deg,#b6a78a,#a67c52)] font-game text-sm font-extrabold text-white shadow-[inset_0_1px_0_rgba(255,255,255,.3),0_2px_0_rgba(0,0,0,.2)] [text-shadow:1px_1px_1px_rgba(0,0,0,.5)]"
-            onClick={onClose}
-            type="button"
-          >
-            ×
-          </button>
-        ) : null}
-      </div>
-
-      <div className="flex gap-1.5 border-b border-b-[rgba(60,38,25,.22)] px-3 pb-2">
-        <TabButton
-          active={activeTab === 'expeditions'}
-          badge={expeditionCount}
-          label={labels.expeditionsTab}
-          onClick={() => onTabChange('expeditions')}
-          tone="expeditions"
+      {activeTab === 'captures' ? (
+        <CaptureWindowList
+          emptyQuote={labels.captureEmptyQuote}
+          emptyTitle={labels.captureEmptyTitle}
+          errorLabel={labels.captureErrorLabel}
+          items={captures}
+          loadingLabel={labels.captureLoadingLabel}
+          onRetry={onRetryCaptures}
+          retryLabel={labels.captureRetryLabel}
+          state={captureState}
         />
-        <TabButton
-          active={activeTab === 'captures'}
-          badge={captureCount}
-          label={labels.capturesTab}
-          onClick={() => onTabChange('captures')}
-          tone="captures"
+      ) : (
+        <ExpeditionActivityList
+          emptyQuote={labels.expeditionEmptyQuote}
+          emptyTitle={labels.expeditionEmptyTitle}
+          errorLabel={labels.expeditionErrorLabel}
+          items={expeditions}
+          loadingLabel={labels.expeditionLoadingLabel}
+          onRetry={onRetryExpeditions}
+          retryLabel={labels.expeditionRetryLabel}
+          state={expeditionState}
         />
-        <div className="flex-1" />
-      </div>
-
-      <div className="min-h-0 flex-1 overflow-auto bg-[linear-gradient(180deg,#f5e6d3_0%,#f5e6d3_100%)]">
-        {activeTab === 'captures' ? (
-          <CaptureWindowList
-            emptyQuote={labels.captureEmptyQuote}
-            emptyTitle={labels.captureEmptyTitle}
-            errorLabel={labels.captureErrorLabel}
-            items={captures}
-            loadingLabel={labels.captureLoadingLabel}
-            onRetry={onRetryCaptures}
-            retryLabel={labels.captureRetryLabel}
-            state={captureState}
-          />
-        ) : (
-          <ExpeditionActivityList
-            emptyQuote={labels.expeditionEmptyQuote}
-            emptyTitle={labels.expeditionEmptyTitle}
-            errorLabel={labels.expeditionErrorLabel}
-            items={expeditions}
-            loadingLabel={labels.expeditionLoadingLabel}
-            onRetry={onRetryExpeditions}
-            retryLabel={labels.expeditionRetryLabel}
-            state={expeditionState}
-          />
-        )}
-      </div>
-    </div>
+      )}
+    </GameBottomSheetPanel>
   );
 }
 
