@@ -1,7 +1,7 @@
 # 59 — Smokes backend : flakies par ordering Jest
 
 **Sévérité** : 🟠 Moyen
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ DONE (2026-05-14)
 **Spec amont** : [`docs/architecture/local-ci.md` § Pourquoi sortir les smokes du hook](../docs/architecture/local-ci.md#pourquoi-sortir-les-smokes-du-hook)
 
 ## Symptôme
@@ -58,35 +58,30 @@ Hypothèses à confronter :
    - Documenter la nouvelle garantie d'ordre.
 4. Décider si les smokes peuvent revenir dans `pre-push` une fois fiables, ou si le coût (~60 s) reste une raison suffisante de les laisser dans `/run`. Acter explicitement.
 
-## Découvertes — tentative 1 (2026-05-14, revertée par `bcf63b1`)
+## Résolution (2026-05-14)
 
-**Hypothèse testée** : piste A seule (sequencer alphabétique stable via `@jest/test-sequencer`). Hypothèse de base : `--runInBand` + `maxWorkers: 1` étant déjà actifs, l'ordre des fichiers serait la seule source restante de non-déterminisme.
+**Fix retenu** : piste A seule (sequencer alphabétique). `--runInBand` + `maxWorkers: 1` étant déjà actifs, l'ordre des fichiers (par défaut `slowestFirst`, dépend du cache `.jest-cache`) était l'unique source restante de non-déterminisme.
 
-**Verdict** : **insuffisant**, voire pire. La fixation d'ordre expose systématiquement un état partagé que `slowestFirst` (heuristique cache) atténuait probabilistiquement.
+**Changements** :
+- `battleforthecrown-backend/test/jest-smoke-sequencer.js` : nouveau, étend `@jest/test-sequencer`, trie par `path.localeCompare`.
+- `battleforthecrown-backend/test/jest-smoke.json` : `"testSequencer": "<rootDir>/jest-smoke-sequencer.js"`.
+- `docs/architecture/local-ci.md` : section « Pourquoi sortir les smokes du hook » : retire le flake comme cause ; mention historique vers ce ticket archivé ; ajoute un warning sur la **concurrence CPU pendant smokes**.
 
-**Reproduction observée** :
-- Ordre alphabétique : `army-training-read.smoke.spec.ts` → `combat-conquest-hook.smoke.spec.ts` → …
-- `combat-conquest-hook` fait `waitFor timed out after 30000ms` sur le `PendingConquest` status `OPEN` (helpers.ts:143 via launchConquest:125).
-- 2 runs verts sur 5 (random luck dans `slowestFirst` non reproductible).
+**Décision pre-push** : smokes restent hors du hook. Coût ~2 min toujours rédhibitoire à chaque push, indépendamment du déterminisme.
 
-**Conclusion** : la piste C (vraie isolation d'état entre fichiers) est obligatoire. Piste A seule a été annulée. Pistes B (`--runInBand`) déjà appliquée.
+**Preuve** : 5 runs `yarn jest --config ./test/jest-smoke.json --testSequencer ... --runInBand --forceExit` consécutifs verts (`set -e` + `ALL DONE` final), durées 118-142 s, 36/36 tests à chaque run.
 
-**Pistes d'investigation pour piste C** :
-- `bootSmokeApp.close` fait `boss.stop({ timeout: 1_000 })` puis `DELETE FROM pgboss.job` — le timeout 1s peut couper du graceful shutdown, laissant des handlers pg-boss/Nest qui survivent.
-- `truncateAll` (helpers.ts) **ne purge pas** `pgboss.job`, `pgboss.archive`, `pgboss.schedule`, `pgboss.queue` au boot du fichier suivant — seul le close précédent l'a fait.
-- L'`OutboxWorker` et les workers (`production`, `construction`, `training`, `crown-production`, `return`) installent probablement des `setInterval` qui peuvent survivre à l'`app.close()` si non explicitement clearés.
-- pg-boss installe un superviseur (cf erreur `Boss.#monitor` vue dans les logs : `Cannot destructure property 'rows' of '(intermediate value)' as it is undefined` après les tests) — preuve que la connexion pg-boss survit ou est consultée après teardown.
+### Tentative 1 ratée (commit `5a4eb88`, revertée par `bcf63b1`)
 
-**Hypothèse forte** : entre `army-training-read.afterAll` et `combat-conquest-hook.beforeAll`, un timer pg-boss/Nest tourne encore et empêche le nouveau `Boss.start` de réquisitionner les jobs `expedition_arrival`/`combat_resolve`. Le 2e fichier boote OK mais ses workers n'attrapent jamais les jobs qu'il enqueue → `waitFor` timeout.
+Première tentative poussée prématurément en n'ayant que 2 runs verts sur 5 lus. Les runs 3 et 4 (background) avaient échoué — j'avais à tort interprété ces échecs comme une fuite d'état exposée par la fixation d'ordre (`combat-conquest-hook` après `army-training-read` → `waitFor` timeout sur `PendingConquest OPEN`).
 
-**Étapes suggérées pour la tentative 2** :
-1. Reproduire de manière minimale : `jest --testPathPattern='army-training-read|combat-conquest-hook' --runInBand` doit échouer ; inverser l'ordre via un sequencer custom temporaire pour confirmer asymétrie.
-2. Inspecter `bootSmokeApp.close` :
-   - Augmenter `boss.stop({ timeout: 10_000 })` ou retirer le timeout.
-   - Ajouter explicitement `await prisma.$disconnect()` ou vérifier que Nest le fait.
-3. Ajouter au `truncateAll` (ou un nouvel helper `resetSmokeQueues`) : `TRUNCATE pgboss.job, pgboss.archive RESTART IDENTITY CASCADE` avant le boot du fichier suivant — bretelle complémentaire au DELETE actuel.
-4. Auditer chaque worker pour confirmer que `OnModuleDestroy` clear les `setInterval`.
-5. Si point 4 montre une fuite : c'est probablement la vraie cause racine.
+**Vraie cause de ces échecs** : pendant que les smokes background tournaient, je lançais `yarn static-check` en parallèle (tsc + eslint, CPU lourd). Les smokes utilisent des timers réels et du polling pg-boss à 1 s ; sous contention CPU, les workers ratent leurs fenêtres et `waitFor` timeout. Pas de bug d'isolation — bug de protocole de validation.
+
+**Confirmé après revert** : 5 runs alphabétiques en série, sans charge concurrente, tous verts.
+
+### Note pour les futures investigations
+
+Sur 8 workers utilisant `boss.work(...)`, seul `OutboxWorker` implémente `OnModuleDestroy`. Les 7 autres (`CombatWorker`, `ConquestFinalizeWorker`, `ReturnWorker`, `ConstructionWorker`, `CrownProductionWorker`, `ProductionWorker`, `TrainingWorker`) laissent leurs handlers `boss.work` registrés à `app.close()`. Pas un problème observé aujourd'hui (Jest force-exit après `afterAll`), mais point de vigilance si on intègre un jour les smokes dans un harness long-vivant.
 
 ## Critères de succès
 
