@@ -53,7 +53,8 @@ Préflight commun :
 8. **Retest + static-check** — tests adaptés au scope, puis `yarn static-check`.
 8c. **Backprop SPEC** — ajouter §V/§B seulement si un invariant durable ou bug subtil/récurrent a été révélé.
 9. **Documentation** — décider l'impact doc via `.agents/rules/docs.md`; déléguer au doc writer si non trivial.
-10. **Archive + commit** — `DONE`, archive via `git mv`, maj `tasks/README.md`, commit unique EN `<type>(<scope>): <subject>`, pas de push, puis rapport final avec critères d'acceptance + preuves QA.
+10. **Archive + commit** — `DONE`, archive via `git mv`, maj `tasks/README.md`, commit unique EN `<type>(<scope>): <subject>`, pas de push.
+11. **Démarrage IG conditionnel** — seulement si le rapport final contient des `Tests IG à faire par le user` non vides : démarrer backend + frontend depuis le worktree courant en respectant `docs/architecture/worktree-dev.md`, puis inclure les URLs dans le rapport final.
 
 ## Mode Rapide
 
@@ -111,6 +112,12 @@ Les sub-agents doivent retourner un rapport structuré (`STATUS: success|partial
   - `Smokes ajoutés/modifiés` : fichiers + scénario couvert, ou `Aucun`, raison.
   - `QA fonctionnelle agent` : tests bout-en-bout manuels exécutés par l'agent quand pertinent (`server + curl`, REST, WebSocket, worker/job, ou `SELECT` DB), avec résultat observable. Si non fait, écrire `Non nécessaire` ou `Non exécuté` + raison précise.
   - `Tests IG à faire par le user` : seulement ce qui demande une appréciation gameplay/visuelle, un vrai navigateur humain, ou un scénario trop coûteux à automatiser ; formuler en checklist observable. Sinon `Aucun test IG nécessaire`, raison.
+- Démarrage IG : si `Tests IG à faire par le user` contient au moins un test réel, laisser les serveurs ouverts pour le user avant le rapport final.
+  - Ne pas utiliser le script root `yarn dev` en worktree si le port `5173` peut pointer vers un autre checkout.
+  - Suivre `docs/architecture/worktree-dev.md` : choisir un port front disponible (défaut worktree `5174`), aligner `FRONTEND_URL`, `VITE_API_BASE_URL`, `VITE_WS_URL`, `PORT`, `DATABASE_URL`, `JWT_ACCESS_SECRET`.
+  - Préparer la DB si nécessaire : `docker compose up -d`, `prisma migrate deploy`, `prisma generate`.
+  - Lancer backend et frontend en sessions séparées depuis la racine du worktree, puis vérifier au minimum `/health` et l'ouverture de l'app avant de donner les URLs.
+  - Si aucun test IG n'est nécessaire, ne pas démarrer de serveur et écrire la raison.
 
 ## Règles Inviolables
 
