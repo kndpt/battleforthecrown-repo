@@ -13,7 +13,42 @@ Quand on travaille dans un worktree parallèle, ne pas réutiliser forcément le
 
 Si le worktree utilise la DB principale `battleforthecrown`, arrêter les autres backends Nest lancés sur cette DB avant de tester les workers ou le realtime. Sinon un checkout ancien peut consommer un job `pg-boss` à la place du worktree courant et produire des événements websocket incomplets ou obsolètes.
 
-Pour garder le checkout principal ouvert en parallèle, utiliser une DB isolée pour le worktree. Dans ce cas les comptes et mondes sont séparés de la DB principale, sauf seed/import explicite.
+Pour garder le checkout principal ouvert en parallèle, utiliser une DB isolée pour le worktree. Le workflow recommandé est de créer une copie temporaire de `battleforthecrown`, tester dessus, puis la supprimer.
+
+## DB temporaire de worktree
+
+Nommer la DB avec le suffixe du worktree pour éviter toute confusion :
+
+```bash
+export WORKTREE_DB="battleforthecrown_c299"
+export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/$WORKTREE_DB"
+```
+
+Créer la DB temporaire depuis la DB principale :
+
+```bash
+cd battleforthecrown-backend && docker compose up -d
+cd ..
+
+docker exec battleforthecrown-postgres dropdb -U postgres --if-exists "$WORKTREE_DB" --force
+docker exec battleforthecrown-postgres createdb -U postgres "$WORKTREE_DB"
+docker exec battleforthecrown-postgres pg_dump -U postgres battleforthecrown \
+  | docker exec -i battleforthecrown-postgres psql -U postgres -d "$WORKTREE_DB"
+
+DATABASE_URL="$DATABASE_URL" \
+  yarn workspace battleforthecrown-backend prisma migrate deploy
+
+DATABASE_URL="$DATABASE_URL" \
+  yarn workspace battleforthecrown-backend prisma generate
+```
+
+Cette copie conserve les comptes et mondes de la DB principale, mais isole les tests destructifs, workers et jobs `pg-boss`.
+
+Après QA, supprimer la DB temporaire :
+
+```bash
+docker exec battleforthecrown-postgres dropdb -U postgres --if-exists "$WORKTREE_DB" --force
+```
 
 ## Lancement recommandé
 
@@ -22,20 +57,11 @@ Depuis la racine du worktree :
 ```bash
 yarn install
 
-cd battleforthecrown-backend && docker compose up -d
-cd ..
-
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/battleforthecrown" \
-  yarn workspace battleforthecrown-backend prisma migrate deploy
-
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/battleforthecrown" \
-  yarn workspace battleforthecrown-backend prisma generate
-
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/battleforthecrown" \
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/battleforthecrown_c299" \
 JWT_ACCESS_SECRET="dev-local-jwt-access-secret-32-bytes" \
 FRONTEND_URL="http://localhost:5174" \
 NODE_ENV=development \
-PORT=15001 \
+PORT=15002 \
   yarn workspace battleforthecrown-backend start:dev
 ```
 
@@ -44,8 +70,8 @@ PORT=15001 \
 Dans un second terminal :
 
 ```bash
-VITE_API_BASE_URL="http://localhost:15001" \
-VITE_WS_URL="http://localhost:15001" \
+VITE_API_BASE_URL="http://localhost:15002" \
+VITE_WS_URL="http://localhost:15002" \
   yarn workspace battleforthecrown-pixi dev --port 5174 --strictPort
 ```
 
@@ -53,7 +79,7 @@ Ouvrir ensuite dans le navigateur :
 
 - App : `http://localhost:5174/`
 - Design system : `http://localhost:5174/design-system`
-- Backend health : `http://localhost:15001/health`
+- Backend health : `http://localhost:15002/health`
 
 ## Si un port est déjà pris
 
@@ -75,6 +101,7 @@ Le port backend peut aussi changer si `15001` est pris, mais il faut alors mettr
 | Écran bleu / page vide | `VITE_API_BASE_URL` ou `VITE_WS_URL` absent | Redémarrer Vite avec les deux variables. |
 | Requêtes bloquées par CORS | `FRONTEND_URL` backend ne correspond pas au port Vite | Redémarrer le backend avec `FRONTEND_URL=http://localhost:<front-port>`. |
 | Backend compile mais ne démarre pas | `JWT_ACCESS_SECRET` absent | Ajouter un secret dev local explicite. |
+| Login connu renvoie `401 Invalid credentials` | Backend lancé sur une DB isolée vide ou non clonée depuis la principale | Recréer la DB temporaire via `pg_dump battleforthecrown | psql -d battleforthecrown_<worktree>`. |
 | Erreurs Prisma types manquants | Client Prisma pas généré dans le worktree | Lancer `prisma generate`. |
 | Jest/backend ne résout pas `@battleforthecrown/shared/*` après `yarn install` | `packages/shared/dist/` absent alors qu'un cache `tsconfig.tsbuildinfo` obsolète a fait croire à TypeScript que le build était à jour | Lancer `yarn workspace @battleforthecrown/shared clean && yarn workspace @battleforthecrown/shared build`. Le fichier `.tsbuildinfo` ne doit pas être tracké. |
 | Jobs workers ou realtime incohérents | Plusieurs backends consomment la même queue `pg-boss` sur la DB | Garder un seul backend sur cette DB, ou isoler la DB du worktree. |
