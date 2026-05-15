@@ -3,6 +3,7 @@ import type { EventOutbox } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { GameGateway } from './game.gateway';
 import { parseEventPayload } from './codecs';
+import { RetentionService } from '../retention/retention.service';
 import {
   EVENT_PAYLOAD_SCHEMAS,
   type EventKind,
@@ -42,6 +43,7 @@ export class EventOutboxService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly gateway: GameGateway,
+    private readonly retention: RetentionService,
   ) {}
 
   async dispatchPendingEvents() {
@@ -96,6 +98,11 @@ export class EventOutboxService {
       this.logger.warn(`Unknown event kind: ${event.kind}`);
       return;
     }
+    await this.retention.recordOutboxEvent(
+      event.id,
+      event.kind,
+      parseEventPayload(event.kind, event.payload),
+    );
     switch (event.kind) {
       case 'building.completed':
         await this.notifyBuildingCompleted(

@@ -53,6 +53,24 @@ enum VillageLabel {
   ECONOMIC
 }
 
+enum DailyCardStatus {
+  ACTIVE
+  CLAIMABLE
+  CLAIMED
+}
+
+enum DailyCardTaskType {
+  TRAIN_UNITS
+  COMPLETE_BUILDING
+  RAID_BARBARIAN
+  SCOUT_TARGET
+  SEND_REINFORCEMENT
+}
+
+enum DailyRewardType {
+  RESOURCES
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -288,6 +306,69 @@ model EventOutbox {
 
   @@index([dispatchedAt])
   @@map("event_outbox")
+}
+
+model DailyCard {
+  id              String          @id @default(cuid())
+  userId          String          @map("user_id")
+  worldId         String          @map("world_id")
+  dayKey          String          @map("day_key")
+  status          DailyCardStatus @default(ACTIVE)
+  rewardType      DailyRewardType @default(RESOURCES) @map("reward_type")
+  rewardWood      Int             @default(120) @map("reward_wood")
+  rewardStone     Int             @default(120) @map("reward_stone")
+  rewardIron      Int             @default(120) @map("reward_iron")
+  rewardVillageId String?         @map("reward_village_id")
+  claimedAt       DateTime?       @map("claimed_at")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  tasks DailyCardTask[]
+
+  @@unique([userId, worldId, dayKey])
+  @@index([userId, worldId, status])
+  @@index([worldId])
+  @@map("daily_card")
+}
+
+model DailyCardTask {
+  id          String            @id @default(cuid())
+  cardId      String            @map("card_id")
+  type        DailyCardTaskType
+  label       String
+  progress    Int               @default(0)
+  target      Int               @default(1)
+  completedAt DateTime?         @map("completed_at")
+  metadata    Json              @default("{}")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  card DailyCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@unique([cardId, type])
+  @@index([cardId])
+  @@map("daily_card_task")
+}
+
+model DailyCardProgressEvent {
+  eventOutboxId String   @id @map("event_outbox_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("daily_card_progress_event")
+}
+
+model DailyOyez {
+  id          String   @id @default(cuid())
+  worldId     String   @map("world_id")
+  title       String
+  description String
+  theme       String
+  startsAt    DateTime @map("starts_at")
+  endsAt      DateTime @map("ends_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([worldId, startsAt, endsAt])
+  @@map("daily_oyez")
 }
 
 model WorldMembership {

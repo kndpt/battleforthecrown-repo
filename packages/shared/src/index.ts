@@ -7,6 +7,7 @@ export * from './crowns';
 export * from './power';
 export * from './logic';
 export * from './events';
+export * from './retention';
 export * from './auth';
 export * from './time';
 export * from './utils';

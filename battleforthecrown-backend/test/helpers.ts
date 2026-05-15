@@ -36,6 +36,10 @@ export async function bootSmokeApp(): Promise<SmokeContext> {
 }
 
 const TABLES = [
+  'daily_card_task',
+  'daily_card_progress_event',
+  'daily_card',
+  'daily_oyez',
   'expedition',
   'scout_report',
   'combat_report',
