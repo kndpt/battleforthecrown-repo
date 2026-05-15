@@ -41,6 +41,11 @@ import type {
   OpenExpeditionDto,
   ScoutReportResponse,
 } from '@battleforthecrown/shared/combat';
+import type {
+  ClaimDailyCardRequest,
+  ClaimDailyCardResponse,
+  RetentionSummaryDto,
+} from '@battleforthecrown/shared/retention';
 
 export const queryKeys = {
   worlds: () => ['worlds'] as const,
@@ -67,6 +72,7 @@ export const queryKeys = {
   worldConfigFull: (worldId: string | null) => ['world-config-full', worldId] as const,
   worldEntities: (worldId: string | null) => ['world-entities', worldId] as const,
   worldConfig: (worldId: string | null) => ['world-config', worldId] as const,
+  retentionSummary: (userId: string | null, worldId: string | null) => ['retention', 'summary', userId, worldId] as const,
 };
 
 interface LoginInput {
@@ -983,6 +989,46 @@ export function useWorldDetailsQuery(worldId: string | null) {
     },
     enabled: Boolean(worldId),
     staleTime: 5 * 60_000,
+  });
+}
+
+export function useRetentionSummaryQuery(worldId: string | null) {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  return useQuery<RetentionSummaryDto>({
+    queryKey: queryKeys.retentionSummary(userId, worldId),
+    queryFn: () => {
+      if (!userId || !worldId) return Promise.reject(new Error('No world selected'));
+      return apiClient.get<RetentionSummaryDto>('/retention', { query: { worldId } });
+    },
+    enabled: Boolean(userId && worldId),
+    refetchInterval: (query) =>
+      query.state.data && query.state.data.cards.some((card) => card.status !== 'CLAIMED')
+        ? 30_000
+        : false,
+    staleTime: 10_000,
+  });
+}
+
+interface ClaimDailyCardInput {
+  cardId: string;
+  villageId: string;
+}
+
+export function useClaimDailyCardMutation() {
+  const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
+
+  return useMutation<ClaimDailyCardResponse, Error, ClaimDailyCardInput>({
+    mutationFn: ({ cardId, villageId }) =>
+      apiClient.post<ClaimDailyCardResponse>(`/retention/cards/${cardId}/claim`, {
+        villageId,
+      } satisfies ClaimDailyCardRequest),
+    onSettled: (_data, _err, { villageId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.retentionSummary(userId, worldId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.resources(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.myVillages(userId, worldId) });
+    },
   });
 }
 

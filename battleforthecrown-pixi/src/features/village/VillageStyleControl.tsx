@@ -86,7 +86,7 @@ export function VillageStyleControl({ buildings, villageId }: VillageStyleContro
 
   return (
     <>
-      <div className="fixed bottom-28 left-1/2 z-30 -translate-x-1/2">
+      <div className="fixed bottom-28 left-1/2 z-20 -translate-x-1/2">
         <VillageStyleTrigger currentStyleId={currentStyleId} onClick={() => setOpen(true)} options={options} />
       </div>
       <VillageStyleModal

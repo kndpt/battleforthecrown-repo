@@ -47,6 +47,9 @@ export type {
   DailyQuestOyez,
   DailyQuestReward,
   DailyQuestState,
+  DailyQuestClaimPanel,
+  DailyQuestTaskAction,
+  DailyQuestVillageOption,
 } from './DailyQuestModal';
 export { RoyalSeal } from './RoyalSeal';
 export type { RoyalSealProps, RoyalSealVariant } from './RoyalSeal';

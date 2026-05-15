@@ -154,10 +154,12 @@ describe('applyBuildingCompleted', () => {
       refreshToken: 'refresh',
       user: { id: 'user-1', email: 'user@example.test' },
     });
+    useGameStore.getState().setContext({ worldId: 'w1', villageId: 'v1' });
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.villageStrategy('v1'), { currentStrategy: 'BALANCED' });
     queryClient.setQueryData(queryKeys.villagePower('v1'), { total: 1 });
     queryClient.setQueryData(queryKeys.kingdomPower('user-1'), { kingdomPower: 1 });
+    queryClient.setQueryData(queryKeys.retentionSummary('user-1', 'w1'), { claimableCount: 0 });
     let invalidationCount = 0;
     const originalInvalidate = queryClient.invalidateQueries.bind(queryClient);
     queryClient.invalidateQueries = ((...args: Parameters<typeof originalInvalidate>) => {
@@ -175,10 +177,11 @@ describe('applyBuildingCompleted', () => {
       { queryClient },
     );
 
-    expect(invalidationCount).toBe(7);
+    expect(invalidationCount).toBe(8);
     expect(queryClient.getQueryState(queryKeys.villageStrategy('v1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.villagePower('v1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.kingdomPower('user-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.retentionSummary('user-1', 'w1'))?.isInvalidated).toBe(true);
     const toasts = useUiStore.getState().toasts;
     expect(toasts).toHaveLength(1);
     expect(toasts[0].tone).toBe('success');

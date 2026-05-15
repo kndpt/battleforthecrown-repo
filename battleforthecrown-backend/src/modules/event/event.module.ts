@@ -5,6 +5,7 @@ import { GameGateway } from './game.gateway';
 import { EventOutboxService } from './event-outbox.service';
 import { OutboxPublisher } from './outbox-publisher.service';
 import { ResourcesModule } from '../resources/resources.module';
+import { RetentionModule } from '../retention/retention.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ResourcesModule } from '../resources/resources.module';
       inject: [ConfigService],
     }),
     ResourcesModule,
+    RetentionModule,
   ],
   providers: [GameGateway, EventOutboxService, OutboxPublisher],
   exports: [GameGateway, EventOutboxService, OutboxPublisher],

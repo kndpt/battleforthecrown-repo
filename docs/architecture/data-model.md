@@ -85,6 +85,17 @@ Une conquête passe par `PendingConquest.OPEN → COMPLETED|INTERRUPTED`. La DB 
 | `Crown` | balance par user (`User.crownsBalance` parfois redondant — voir le schéma) |
 | `CrownTransaction` | historique gain/dépense, `delta`, `reason` |
 
+### Rétention quotidienne
+
+| Table | Rôle |
+|-------|------|
+| `DailyCard` | carte quotidienne par `userId × worldId × dayKey`, backlog non réclamé et récompense ressources modérée |
+| `DailyCardTask` | tâches de la carte, progressées depuis les facts gameplay Outbox (`unit.trained`, `building.completed`, etc.) |
+| `DailyCardProgressEvent` | ledger idempotent par `EventOutbox.id` pour éviter le double comptage si un event est rejoué |
+| `DailyOyez` | Oyez actif ou planifié par monde, exposé dans le résumé rétention |
+
+Le `dayKey` est calculé sur le reset `04:00 Europe/Paris`. Une carte réclamée peut cibler un village possédé ; le dernier `rewardVillageId` réclamé sert de défaut pour le claim suivant.
+
 ### Population
 
 Pas de table dédiée — la population est dérivée de la somme des `Building.population` des bâtiments du village vs `getFarmPopulationLimit(farmLevel)`.
@@ -110,8 +121,11 @@ L'`OutboxWorker` poll la table toutes les ~1 s. Détail dans [`realtime.md`](./r
 User ──< WorldMembership >── World
  │                              │
  │                              ├── WorldConfig (legacy → fusion en cours)
+ │                              ├── DailyOyez
  │                              │
  │                              └── BarbarianVillage
+ │
+ ├── DailyCard ──< DailyCardTask
  │
  └── Village ──< Building
       │
