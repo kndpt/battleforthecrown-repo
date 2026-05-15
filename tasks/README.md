@@ -4,6 +4,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
+- [63 — Les autres joueurs n'apparaissent jamais sur la carte](./63-foreign-players-invisible-on-world-map.md) — 🟡 Majeur. `WorldEntity` jamais écrite : `/world/:worldId/entities` ne renvoie que les barbares, les villages joueur étrangers sont invisibles.
 - [57 — Source canonique du lifecycle des bâtiments joueur](./57-player-village-building-lifecycle-roster.md) — 🟡 Majeur. Centraliser la politique join/conquête/backfill des bâtiments pour éviter les oublis à chaque nouveau bâtiment activé.
 - [51 — Standardiser les bottom sheets sur le design `Activités du royaume`](./51-bottom-sheet-design-system-base.md) — 🟠 Moyen. Faire du nouveau panneau la base design-system des bottom sheets actuels et futurs.
 
