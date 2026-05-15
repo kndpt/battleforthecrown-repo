@@ -23,10 +23,11 @@ Documentation gameplay consolidée. Vision design, mécaniques, formules d'équi
 16. [`16-notifications.md`](./16-notifications.md) — notifications push (attaque entrante, fin de capture, fin de construction) : doc en chantier, esquisse seulement.
 17. [`17-inbox-and-reports.md`](./17-inbox-and-reports.md) — inbox persistant des rapports (combat + scout au MVP) : contrat MVP livré (Phase 2 close).
 18. [`18-inactivity-and-abandonment.md`](./18-inactivity-and-abandonment.md) — abandon de compte (2 semaines sans login) : **post-MVP**, doc en chantier.
-19. [`19-world-lifecycle.md`](./19-world-lifecycle.md) — cycle de vie d'un monde : monde borné 120 j, fenêtre d'inscription 14 j, multi-mondes autorisés, wipe planifié à `endsAt`. **Spec MVP tranchée** (defaults paramétrables).
+19. [`19-world-lifecycle.md`](./19-world-lifecycle.md) — cycle de vie d'un monde : monde borné 60 j, fenêtre d'inscription 7 j, multi-mondes autorisés, wipe planifié à `endsAt`. **Spec MVP tranchée** (defaults paramétrables). Complète [`23`](./23-world-tempo-and-multipliers.md).
 20. [`20-defensive-friends.md`](./20-defensive-friends.md) — liste d'amis défensifs (renforts mutuels uniquement, cap 5) : candidate MVP minimaliste, doc en chantier.
 21. [`21-alliances-and-tribes.md`](./21-alliances-and-tribes.md) — système complet d'alliances / tribus (chat, diplomatie, guerre coordonnée) : **strictement post-MVP**, doc en chantier.
 22. [`22-village-roles-and-navigation.md`](./22-village-roles-and-navigation.md) — rôles privés et favoris de villages : navigation multi-village MVP légère, sans bonus mécanique.
+23. [`23-world-tempo-and-multipliers.md`](./23-world-tempo-and-multipliers.md) — **pivot compressed-async + tempo world-scoped**. Pourquoi BFTC n'est pas un slow-MMORTS, monde Standard 60 j, multipliers `WorldConfig.tempo` (global + overrides), garde-fous, impacts à recalibrer. **Pièce centrale du gameplay.**
 
 ### Laboratoire
 

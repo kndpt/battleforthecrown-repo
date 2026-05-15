@@ -248,6 +248,37 @@ Implémentation :
 
 ---
 
+## ADR-12 — Pivot compressed-async + tempo world-scoped via `WorldConfig.tempo`
+
+**Contexte (2026-05-15).** Audit de la vision de progression côté gameplay : le calage initial visait un slow-MMORTS façon Tribal Wars (timers de plusieurs heures, cycle de Seigneur en jours, monde de 120 j). Trois constats convergents montrent que ce calage n'est plus viable en 2026 :
+
+1. **Pas de pay-to-win** (contrat de design, cf. [`gameplay/01-overview.md`](../gameplay/01-overview.md)). Or, le segment slow-MMORTS mobile vit des accélérateurs payants — sans P2W, les timers longs deviennent du mur de frustration sans porte de sortie.
+2. **Attention mobile 2026** ≠ desktop 2010 : 6-12 sessions de 2-5 min/jour, pas 2-3 sessions de 30 min. Un upgrade de 6 h n'est plus « stratégique », il est « rien à faire ».
+3. **« Tout perdre après 3 semaines de grind »** est un repoussoir documenté. Compression du tempo = reconstruction en heures, pas en jours.
+
+Deux alternatives ont été écartées : full real-time façon Million Lords (autre jeu, autre tech, coût de réécriture massif) et P2W modéré (brise le contrat).
+
+**Décision.**
+
+1. **Pivot compressed-async.** L'archi technique reste 100 % async serveur-autoritaire (Outbox, fenêtres de capture, scout, styles, expéditions) — aucun changement de pattern. Les **timescales** sont compressées d'un facteur ~4-5× vs Tribal Wars classique pour aligner le rythme sur les attentes mobile 2026.
+2. **Monde MVP : Standard 60 j**, défini comme la référence de tempo (`tempo.global = 1.0`).
+3. **Mécanisme `WorldConfig.tempo`** — hybride : un multiplier `global` par monde + `overrides` granulaires optionnels par axe (construction, training, capture, régen, production, couronnes, etc.). Sémantique : `effectif = absolu × multiplier`. Une valeur < 1.0 accélère, > 1.0 ralentit.
+4. **Variantes post-MVP** (Speed 30-45 j, Classic 90 j, Hardcore) deviennent triviales à ajouter : elles jouent uniquement sur `tempo` + `worldDuration`, sans nouvelle mécanique.
+5. **Garde-fou strict** : les multipliers touchent **le tempo** (vitesses, durées, régens), jamais **l'équilibrage** (ratios attaque/défense, coûts pop, règle puissance ÷ 3, blueprint barbare, formules de puissance). Ces invariants restent absolus.
+6. Les chiffres absolus dans les autres specs gameplay restent valides — ils sont implicitement « à `tempo.global = 1.0` ». Une passe de recalibration dédiée alignera ces valeurs sur le rythme cible compressed (différée, pas dans cette session de design).
+
+**Conséquences.**
+
+- **Aucun rework d'archi.** Le pattern Outbox, le combat, le scout, les styles, l'inbox sont totalement préservés. La migration se réduit à exposer `tempo` dans `WorldConfig`, créer une couche d'accès `TempoService`, et brancher les use-cases concernés sur cette couche au lieu des constantes directes.
+- **Durée du monde 120 → 60 j** comme conséquence directe : avec un tempo compressé, l'endgame multi-village s'ouvre vers J+5-J+7, donc un monde de 60 j garantit ~50 j de pur endgame — sweet spot validé contre le risque de fatigue endgame de 90 ou 120 j.
+- **Faisabilité commerciale améliorée** : on sort de la compétition frontale avec les slow-MMORTS P2W (Tribal Wars / Kingsage), et on ne tente pas la compétition frontale avec les real-time purs (Million Lords). Niche claire : compressed-async sans P2W, reset cyclique court.
+- **Coût de design** : recalibrer ~15 sections de chiffres à travers les docs `02`/`03`/`06`/`10`/`13`/`14`/`15`/`19`. Mécanique mais conséquent. Liste exhaustive dans [`gameplay/23-world-tempo-and-multipliers.md` § 7](../gameplay/23-world-tempo-and-multipliers.md#7-impacts-à-recalibrer-dans-les-autres-docs).
+- **Nommage** : la mention historique de `gameSpeed.capture` (cf. [`gameplay/10-conquest.md`](../gameplay/10-conquest.md)) sera renommée en `tempo.captureWindow` lors de la migration code, avec alias rétro-compat le temps de la transition.
+
+**Spec détaillée.** [`docs/gameplay/23-world-tempo-and-multipliers.md`](../gameplay/23-world-tempo-and-multipliers.md) — pourquoi/quoi/comment + catalogue complet des multipliers + garde-fous + checklist d'impacts. Cycle de vie du monde (durée, fenêtres d'inscription) consolidé dans [`docs/gameplay/19-world-lifecycle.md`](../gameplay/19-world-lifecycle.md).
+
+---
+
 ## Maintenance de ce document
 
 - Une décision **structurante** (qui change la façon dont on pense le projet) → nouvelle entrée ADR.
