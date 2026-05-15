@@ -120,6 +120,14 @@ Il ne doit pas rendre les cartes obligatoires ni créer un avantage massif pour 
 
 ## UX attendue
 
+### Déclencheur
+
+- **Icône permanente HUD top** (sceau royal / parchemin), badge visible si ≥1 quête réclamable, ouvre la sheet quotidienne en modale plein écran.
+- **Pas de bâtiment dédié** : le devoir royal est inhérent au statut du joueur, pas un déblocage. Évite le gating artificiel proscrit en [Phase 10](../../tasks/00-mvp-roadmap.md#phase-10--rétention-quotidienne-mvp).
+- **Pas d'onglet bottom nav, pas d'entrée via Inbox** : les rapports passifs ([`17-inbox-and-reports.md`](./17-inbox-and-reports.md)) et les devoirs actifs ne se mélangent pas.
+
+### Écran
+
 Un seul écran compact :
 
 - bannière Oyez actif ;
