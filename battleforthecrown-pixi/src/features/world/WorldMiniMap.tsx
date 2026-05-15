@@ -21,7 +21,7 @@ const SIZE = 180;
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 const KIND_COLOR: Record<string, string> = {
-  PLAYER_VILLAGE: 'rgba(200, 150, 100, 0.9)',
+  PLAYER_VILLAGE: 'rgba(90, 123, 168, 0.95)',
   BARBARIAN_VILLAGE: 'rgba(208, 98, 92, 0.95)',
   OTHER: 'rgba(150, 150, 150, 0.7)',
 };

@@ -1,7 +1,7 @@
 # 65 — Distinguer mes villages des villages joueurs étrangers sur la WorldMap
 
 **Sévérité** : 🟠 Moyen
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ Résolu 2026-05-15
 **Spec amont** : Aucune (pure UX/UI). Contexte : [`archive/63-foreign-players-invisible-on-world-map.md`](./archive/63-foreign-players-invisible-on-world-map.md) — a rendu les villages joueurs étrangers visibles sans différenciation visuelle. [`archive/61-active-village-map-indicator.md`](./archive/61-active-village-map-indicator.md) — halo doré pulsé sur le **village actif** uniquement.
 
 ## Symptôme
@@ -98,3 +98,11 @@ Combiner la couleur dédiée (A) avec un label « Royaume de moi » toujours vis
 - **Daltonisme** : éviter rouge/vert pur. Combiner une différence luminance + teinte pour rester lisible.
 - **Halo actif vs ring étranger** : si la couleur étrangère est saturée, vérifier qu'elle ne « bat » pas visuellement le halo doré du village actif. Le halo doit rester le marqueur dominant à l'écran.
 - **Cohérence minimap** : la minimap fait déjà la différence côté data (`isMine` branche dédiée), mais utilise une couleur `KIND_COLOR.PLAYER_VILLAGE` à harmoniser éventuellement avec la nouvelle teinte de la grande carte.
+
+## Résolution
+
+- `WorldMapScene.styleFor` sépare les villages du joueur (`isMine`) des villages joueurs étrangers (`PLAYER_VILLAGE && !isMine`).
+- Les villages joueurs étrangers utilisent une palette bleue acier dédiée (`0x5a7ba8` / `0xb8d4f0`) avec tint du sprite et ring plus visible.
+- Les villages du joueur gardent la palette dorée existante ; le village actif garde le halo doré pulsé du ticket 61.
+- Les villages barbares restent sur leurs couleurs/sprites existants.
+- La mini-carte aligne `PLAYER_VILLAGE` sur la même teinte bleue pour garder la cohérence carte/minimap.

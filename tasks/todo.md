@@ -1,28 +1,27 @@
-# Ticket 63 - Foreign players invisible on world map
+# Ticket 65 - Own vs foreign villages map distinction
 
 ## Plan
 
-- [x] Preflight : Git clean, ticket 63 lu, rules/SPEC/specs chargees.
-- [x] Cartographie : verifier backend world entities, frontend mapping et invalidations WS.
-- [x] Implementation : lire les villages joueurs depuis `Village` dans `WorldEntitiesQueryService`.
-- [x] Tests : ajouter un smoke backend reel sur `GET /world/:worldId/entities`.
-- [x] Review : verifier diff, shape API, fog et absence de changement frontend inutile.
-- [x] Verification : lancer preflight smoke, smoke cible/backend requis et `yarn static-check`.
+- [x] Preflight : Git clean, ticket 65 lu, rules/SPEC/contextes charges.
+- [x] Cartographie : verifier `WorldMapScene`, `WorldMiniMap` et source fiable `isMine`.
+- [x] Implementation : separer le style Pixi des villages joueurs etrangers.
+- [x] Tests : lancer le filet adapte puis `yarn static-check`.
+- [x] Review : verifier diff, lisibilite ownership, absence de regression halo actif/barbares.
 - [x] Documentation : verifier impact docs et justifier.
 - [x] Archive : passer ticket en DONE, archiver, mettre a jour `tasks/README.md`, commit.
 
 ## Choix de scope
 
-- Inclus : `PLAYER_VILLAGE` dans le feed monde depuis la table `Village`, fog inclus.
-- Inclus : commentaire Prisma `WorldEntity` deprecated pour eviter de retablir l'ecriture miroir.
-- Exclu : suppression de la table `WorldEntity` et migration associee.
-- Exclu : changement frontend, deja compatible avec le shape `PLAYER_VILLAGE`.
+- Inclus : palette etrangere bleue acier sur la grande carte.
+- Inclus : harmonisation minimap avec la meme teinte.
+- Exclu : changement de contrat API, backend ou assets.
 
 ## Review
 
-- `WorldEntitiesQueryService` garde `Village` comme source canonique pour les villages joueurs et respecte le filtre `kinds` + bounds.
-- `PLAYER_VILLAGE` expose seulement `userId`, `name`, `villageId`; pas de fuite `label` / `isCapital`.
-- Le smoke `vision.smoke.spec.ts` prouve visible vs fogged pour deux villages joueurs.
-- `WorldEntity` reste en place mais marquee deprecated ; suppression suivie par le ticket 64.
-- Tests : preflight smoke, smoke cible, smokes backend complets et `yarn static-check` verts.
-- Docs : mise a jour `docs/architecture/worktree-dev.md` pour le probleme recurrent `packages/shared/dist` absent + `.tsbuildinfo` stale. Le contrat gameplay/API etait deja documente ; le changement restaure ce contrat. Un follow-up task couvre la dette schema.
+- `WorldMapScene.styleFor` separe maintenant `isMine` et `PLAYER_VILLAGE && !isMine`.
+- Les villages joueurs etrangers gardent le sprite village, mais recoivent une tint bleue acier + ring bleu clair.
+- Les villages du joueur gardent la palette doree existante ; le halo actif reste dessine separement au-dessus.
+- Les villages barbares ne changent pas.
+- La minimap utilise la meme teinte bleue pour les villages joueurs etrangers.
+- Tests : `yarn workspace battleforthecrown-pixi test buildMapEntities` vert ; `yarn static-check` vert apres `prisma generate` requis par le worktree.
+- Docs : aucun changement durable necessaire, convention UX locale au rendu WorldMap.
