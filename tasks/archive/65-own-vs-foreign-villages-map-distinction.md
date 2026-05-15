@@ -101,8 +101,8 @@ Combiner la couleur dédiée (A) avec un label « Royaume de moi » toujours vis
 
 ## Résolution
 
-- `WorldMapScene.styleFor` sépare les villages du joueur (`isMine`) des villages joueurs étrangers (`PLAYER_VILLAGE && !isMine`).
-- Les villages joueurs étrangers utilisent une palette bleue acier dédiée (`0x5a7ba8` / `0xb8d4f0`) avec tint du sprite et ring plus visible.
-- Les villages du joueur gardent la palette dorée existante ; le village actif garde le halo doré pulsé du ticket 61.
+- `WorldMapScene.styleFor` garde le rendu joueur standard pour tous les villages joueurs visibles.
+- Les villages joueurs étrangers utilisent le sprite et la palette dorée normale, sans tint dévalorisante.
+- Les villages du joueur gardent le sprite joueur standard mais reçoivent un marqueur d'ownership bleu ; le village actif garde le halo doré pulsé du ticket 61.
 - Les villages barbares restent sur leurs couleurs/sprites existants.
-- La mini-carte aligne `PLAYER_VILLAGE` sur la même teinte bleue pour garder la cohérence carte/minimap.
+- La mini-carte garde les villages joueurs étrangers en couleur joueur standard et distingue les villages du joueur en bleu.

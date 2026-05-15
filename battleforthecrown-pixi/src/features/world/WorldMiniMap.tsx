@@ -21,7 +21,7 @@ const SIZE = 180;
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 const KIND_COLOR: Record<string, string> = {
-  PLAYER_VILLAGE: 'rgba(90, 123, 168, 0.95)',
+  PLAYER_VILLAGE: 'rgba(200, 150, 100, 0.9)',
   BARBARIAN_VILLAGE: 'rgba(208, 98, 92, 0.95)',
   OTHER: 'rgba(150, 150, 150, 0.7)',
 };
@@ -136,8 +136,8 @@ export function WorldMiniMap({
     // Own villages (selected one brighter)
     for (const e of entities) {
       if (!e.isMine) continue;
-      ctx.fillStyle = e.id === myVillage?.id ? '#f6e7b1' : 'rgba(246, 231, 177, 0.72)';
-      ctx.strokeStyle = '#a07028';
+      ctx.fillStyle = e.id === myVillage?.id ? '#e6f7ff' : 'rgba(79, 179, 216, 0.85)';
+      ctx.strokeStyle = '#1f5288';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.arc(e.x * sx, e.y * sy, e.id === myVillage?.id ? 3.2 : 2.4, 0, Math.PI * 2);

@@ -48,8 +48,7 @@ const COLOR = {
   treeShadow: 0x29371a,
   myVillage: 0xf2d15c,
   myVillageStroke: 0xf6e7b1,
-  foreignPlayer: 0x5a7ba8,
-  foreignPlayerStroke: 0xb8d4f0,
+  ownVillageMarker: 0x4fb3d8,
   barbarianT1: 0xc69455,
   barbarianT2: 0xd0625c,
   barbarianT3: 0x9644a0,
@@ -368,11 +367,8 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
   let selectedId: string | null = null;
 
   const styleFor = (entity: MapEntity): { color: number; ringColor: number; radius: number; zIndex: number } => {
-    if (entity.isMine) {
-      return { color: COLOR.myVillage, ringColor: COLOR.myVillageStroke, radius: 14, zIndex: 10 };
-    }
     if (entity.kind === 'PLAYER_VILLAGE') {
-      return { color: COLOR.foreignPlayer, ringColor: COLOR.foreignPlayerStroke, radius: 12, zIndex: 9 };
+      return { color: COLOR.myVillage, ringColor: COLOR.myVillageStroke, radius: 14, zIndex: entity.isMine ? 10 : 9 };
     }
     if (entity.kind === 'BARBARIAN_VILLAGE') {
       const tier = entity.tier ?? 'T1';
@@ -398,14 +394,19 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     if (texture) {
       sprite.texture = texture;
       sprite.visible = true;
-      const size = isMine ? PLAYER_SPRITE_SIZE : SPRITE_SIZE;
+      const size = data.kind === 'PLAYER_VILLAGE' ? PLAYER_SPRITE_SIZE : SPRITE_SIZE;
       sprite.width = size;
       sprite.height = size;
-      sprite.tint = data.kind === 'PLAYER_VILLAGE' && !isMine ? color : 0xffffff;
+      sprite.tint = 0xffffff;
       // Subtle ring under the sprite for a halo effect.
       graphic
         .circle(0, 0, size * 0.55)
-        .fill({ color: ringColor, alpha: data.kind === 'PLAYER_VILLAGE' && !isMine ? 0.28 : 0.18 });
+        .fill({ color: ringColor, alpha: 0.18 });
+      if (isMine) {
+        graphic
+          .circle(0, 0, size * 0.62)
+          .stroke({ color: COLOR.ownVillageMarker, width: 3, alpha: 0.85 });
+      }
       if (isSelected) {
         graphic
           .circle(0, 0, size * 0.65)
