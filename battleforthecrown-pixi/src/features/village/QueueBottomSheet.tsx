@@ -1,14 +1,7 @@
 import { useEffect } from 'react';
-import { XCircle, Zap } from 'lucide-react';
-import {
-  Badge,
-  BottomSheet,
-  Button,
-  IconButton,
-  ProgressBar,
-  Tooltip,
-} from '@/ui';
-import { GameBottomSheetPanel } from '@/features/design-system/components';
+import { MAX_CONSTRUCTION_QUEUE } from '@battleforthecrown/shared/village/buildings';
+import { Badge, BottomSheet } from '@/ui';
+import { BuildQueueCard, GameBottomSheetPanel } from '@/features/design-system/components';
 import {
   useBuildingQueueQuery,
   useCancelConstructionMutation,
@@ -16,8 +9,7 @@ import {
 } from '@/api/queries';
 import { useGameStore } from '@/stores/game';
 import { useTickingNow } from '@/lib/useTickingNow';
-import { metaFor } from './buildingMeta';
-import { BuildingIcon } from './BuildingIcon';
+import { metaFor, type BuildingMeta } from './buildingMeta';
 
 interface QueueBottomSheetProps {
   isOpen: boolean;
@@ -26,9 +18,18 @@ interface QueueBottomSheetProps {
 
 function formatTime(milliseconds: number): string {
   const safeMs = Math.max(0, milliseconds);
-  const minutes = Math.floor(safeMs / 60000);
-  const seconds = Math.floor((safeMs % 60000) / 1000);
+  const totalSeconds = Math.floor(safeMs / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  if (hours > 0) {
+    return `${hours}h ${minutes.toString().padStart(2, '0')}m`;
+  }
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function rawIconFor(type: string, meta: BuildingMeta): string {
+  return meta.iconPath ? `/assets/${type.toLowerCase()}.png` : '/assets/lock.png';
 }
 
 export function QueueBottomSheet({ isOpen, onClose }: QueueBottomSheetProps) {
@@ -46,8 +47,8 @@ export function QueueBottomSheet({ isOpen, onClose }: QueueBottomSheetProps) {
 
   if (buildingQueue.length === 0) return null;
 
-  const visibleItems = buildingQueue.slice(0, 3);
-  const remainingCount = Math.max(0, buildingQueue.length - 3);
+  const visibleItems = buildingQueue.slice(0, MAX_CONSTRUCTION_QUEUE);
+  const idleSlots = Math.max(0, MAX_CONSTRUCTION_QUEUE - visibleItems.length);
 
   const handleCancel = (buildingId: string) => {
     if (!villageId) return;
@@ -57,120 +58,51 @@ export function QueueBottomSheet({ isOpen, onClose }: QueueBottomSheetProps) {
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose} maxHeight="50vh" zIndex={40}>
       <GameBottomSheetPanel
-        bodyClassName="space-y-3 p-4"
+        bodyClassName="flex flex-col gap-2 p-3"
         closeLabel="Fermer"
         eyebrow="Panneau"
         headerActions={(
           <Badge variant="warning" size="sm">
-            {buildingQueue.length} / 3
+            {visibleItems.length} / {MAX_CONSTRUCTION_QUEUE} actifs
           </Badge>
         )}
         onClose={onClose}
-        title="Constructions actives"
+        title="File de construction"
       >
-          {visibleItems.map((queueItem, index) => {
-            const startMs = Date.parse(queueItem.startTime);
-            const endMs = Date.parse(queueItem.endTime);
-            const isCurrentlyBuilding = index === 0;
-            const isCompleted = endMs <= now;
-            const timeRemaining = Math.max(0, endMs - now);
-            const totalTime = Math.max(1, endMs - startMs);
-            const elapsed = now - startMs;
-            const progress = isCompleted
-              ? 100
-              : Math.min((elapsed / totalTime) * 100, 100);
+        {visibleItems.map((queueItem) => {
+          const startMs = Date.parse(queueItem.startTime);
+          const endMs = Date.parse(queueItem.endTime);
+          const isCompleted = endMs <= now;
+          const timeRemaining = Math.max(0, endMs - now);
+          const totalTime = Math.max(1, endMs - startMs);
+          const elapsed = now - startMs;
+          const progress = isCompleted ? 100 : Math.min((elapsed / totalTime) * 100, 100);
 
-            const building = buildings.find((b) => b.id === queueItem.id);
-            const currentLevel = building?.level ?? queueItem.level - 1;
-            const meta = metaFor(queueItem.type);
+          const building = buildings.find((b) => b.id === queueItem.id);
+          const currentLevel = building?.level ?? queueItem.level - 1;
+          const meta = metaFor(queueItem.type);
 
-            return (
-              <div
-                key={`${queueItem.id}-${queueItem.startTime}`}
-                className={`border rounded-lg p-3 transition-all ${
-                  isCurrentlyBuilding
-                    ? 'border-kingdom-300 bg-kingdom-50'
-                    : 'border-gray-200 bg-gray-50'
-                } ${isCompleted ? 'opacity-75' : ''}`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="relative h-8 w-8 flex-shrink-0 rounded overflow-hidden flex items-center justify-center">
-                      <BuildingIcon
-                        iconPath={meta.iconPath}
-                        label={meta.label}
-                        emoji={meta.emoji}
-                        width={32}
-                        height={32}
-                        imageClassName="w-full h-full object-cover"
-                        fallbackClassName="text-2xl"
-                      />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm text-kingdom-800">
-                          {meta.label}
-                        </span>
-                        <Badge variant="success" size="sm">
-                          En cours
-                        </Badge>
-                      </div>
-                      <div className="text-xs text-kingdom-600">
-                        Niv. {currentLevel} → {currentLevel + 1}
-                      </div>
-                    </div>
-                  </div>
+          return (
+            <BuildQueueCard
+              key={`${queueItem.id}-${queueItem.startTime}`}
+              icon={rawIconFor(queueItem.type, meta)}
+              onCancel={isCompleted || cancel.isPending ? undefined : () => handleCancel(queueItem.id)}
+              progress={progress}
+              time={formatTime(timeRemaining)}
+              title={`${meta.label} → Niv. ${currentLevel + 1}`}
+              tone="build"
+            />
+          );
+        })}
 
-                  <div className="flex items-start gap-2">
-                    <div className="text-right">
-                      <div className="text-sm font-bold text-kingdom-700">
-                        {formatTime(timeRemaining)}
-                      </div>
-                      <div className="text-xs text-kingdom-500">{progress.toFixed(1)}%</div>
-                    </div>
-                    <Tooltip content="Annuler la construction" variant="error" position="left">
-                      <IconButton
-                        icon={XCircle}
-                        variant="danger"
-                        size="sm"
-                        label="Annuler la construction"
-                        disabled={isCompleted || cancel.isPending}
-                        onClick={() => handleCancel(queueItem.id)}
-                        className="shadow-lg"
-                      />
-                    </Tooltip>
-                  </div>
-                </div>
-
-                <ProgressBar
-                  value={progress}
-                  variant={isCompleted ? 'success' : 'warning'}
-                  size="sm"
-                  animated={!isCompleted}
-                />
-              </div>
-            );
-          })}
-
-          {remainingCount > 0 && (
-            <div className="text-center py-2">
-              <Badge variant="neutral" size="md">
-                +{remainingCount} construction{remainingCount > 1 ? 's' : ''} en attente
-              </Badge>
-            </div>
-          )}
-
-          <div className="flex justify-center pt-2">
-            <Button
-              variant="neutral"
-              size="sm"
-              disabled
-              className="opacity-50 cursor-not-allowed flex items-center gap-1"
-            >
-              <Zap size={14} />
-              Booster (bientôt disponible)
-            </Button>
-          </div>
+        {Array.from({ length: idleSlots }).map((_, index) => (
+          <BuildQueueCard
+            key={`idle-${index}`}
+            icon="/assets/lock.png"
+            title="Slot libre"
+            tone="idle"
+          />
+        ))}
       </GameBottomSheetPanel>
     </BottomSheet>
   );
