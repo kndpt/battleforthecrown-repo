@@ -4,6 +4,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
+- [68 — Renvoyer un renfort étranger ne produit aucun trajet retour sur la WorldMap](./68-send-back-foreign-reinforcement-no-return-trip.md) — 🟡 Majeur. `CombatService.initiateRecall` valide l'ownership sur l'origine ; pour Renvoyer un renfort étranger le pivot d'auth doit être l'hôte. Aucune Expedition créée → aucun trajet rendu.
 - [66 — Inbox combat : tag VICTOIRE/DÉFAITE faux dans la liste](./66-inbox-report-outcome-uses-losses-heuristic.md) — 🟡 Majeur. La liste de l'inbox calcule l'issue via une heuristique de pertes, divergente de la règle canonique utilisée par le modal.
 - [64 — Supprimer la table miroir `WorldEntity` devenue morte](./64-remove-deprecated-world-entity.md) — 🟠 Moyen. Nettoyer le modèle legacy maintenant que `/world/:worldId/entities` lit les villages depuis `Village`.
 - [57 — Source canonique du lifecycle des bâtiments joueur](./57-player-village-building-lifecycle-roster.md) — 🟡 Majeur. Centraliser la politique join/conquête/backfill des bâtiments pour éviter les oublis à chaque nouveau bâtiment activé.
