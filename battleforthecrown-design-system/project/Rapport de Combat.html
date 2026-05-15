@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Rapport de Combat · Battle for the Crown</title>
+<link rel="stylesheet" href="colors_and_type.css"/>
+<style>
+  html, body {
+    margin: 0; min-height: 100vh;
+    background: radial-gradient(ellipse at 50% 40%, #2a2f3d 0%, #14161f 70%);
+    color: #3d2f1f; font-family: var(--bftc-font-body);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px 16px;
+    box-sizing: border-box;
+  }
+  .stage {
+    display: flex; flex-direction: column; align-items: center; gap: 22px;
+    width: 100%;
+  }
+  .caption {
+    font-family: var(--bftc-font-display);
+    color: rgba(245,243,232,.78);
+    text-align: center;
+    letter-spacing: .04em;
+  }
+  .caption .eyebrow {
+    font-size: 11px; font-weight: 700; letter-spacing: .3em;
+    color: rgba(245,243,232,.55); text-transform: uppercase; margin-bottom: 6px;
+  }
+  .caption h1 {
+    margin: 0; font-size: 22px; font-weight: 800; color: #f5f3e8;
+    text-shadow: 0 1px 0 rgba(0,0,0,.45);
+  }
+  .caption p {
+    margin: 6px auto 0; max-width: 620px; font-size: 12.5px; line-height: 1.5;
+    color: rgba(245,243,232,.7);
+  }
+  .phones {
+    display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start;
+    justify-content: center;
+  }
+  .phone-wrap {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .phone-tag {
+    font-family: var(--bftc-font-display);
+    font-size: 10px; font-weight: 800; letter-spacing: .28em;
+    text-transform: uppercase;
+    color: rgba(245,243,232,.55);
+    padding: 4px 10px; border-radius: 999px;
+    border: 1px solid rgba(245,243,232,.18);
+  }
+  .phone-tag.win  { color: #b6e09a; border-color: rgba(126,199,78,.4); }
+  .phone-tag.lose { color: #f0b8b2; border-color: rgba(231,76,60,.4); }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script type="text/babel" src="bftc-primitives.jsx"></script>
+  <script type="text/babel" src="combat-report-modal.jsx"></script>
+  <script type="text/babel">
+    function App() {
+      return (
+        <div className="stage">
+          <div className="caption">
+            <div className="eyebrow">Messagerie · Rapport de combat</div>
+            <h1>Modal — Rapport de combat (Victoire / Défaite)</h1>
+            <p>Reprend la grammaire visuelle du Détail Troupe : modal parchemin doré dans un frame mobile 360×720, héros à gauche, bandeau « VS » géolocalisé, barres de bilan normalisées sur 100&nbsp;%, listes de pertes par unité et carte d'éclat « butin » ou « dégâts ». Le liseré et l'accent de la modale basculent vert/rouge selon l'issue.</p>
+          </div>
+          <div className="phones">
+            <div className="phone-wrap">
+              <span className="phone-tag win">Variante · Victoire (pillage)</span>
+              <PhoneCombatReport variant="win"/>
+            </div>
+            <div className="phone-wrap">
+              <span className="phone-tag lose">Variante · Défaite (défense)</span>
+              <PhoneCombatReport variant="lose"/>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  </script>
+</body>
+</html>
