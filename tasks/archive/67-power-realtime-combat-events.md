@@ -1,14 +1,14 @@
 # 67 — Réactivité temps réel de la puissance après combat
 
 **Sévérité** : 🟠 Moyen
-**Statut** : 🆕 Ouvert
-**Spec amont** : [`docs/gameplay/09-power-and-rankings.md`](../docs/gameplay/09-power-and-rankings.md) (réactivité WS actée par run 022).
+**Statut** : ✅ Résolu
+**Spec amont** : [`docs/gameplay/09-power-and-rankings.md`](../../docs/gameplay/09-power-and-rankings.md) (réactivité WS actée par run 022).
 
 ## Symptôme
 
 Quand le joueur attaque quelqu'un ou se fait attaquer, la puissance affichée dans le HUD top (`GameHeader`) et dans la modale `PowerBottomSheet` ne baisse pas — il faut **F5** pour voir la nouvelle valeur. La puissance backend est correcte (l'inventaire est bien décrémenté à la résolution combat), c'est uniquement le **wiring WS frontend** qui manque.
 
-Le pattern équivalent pour le **recrutement** (`unit.trained`) et la **construction** (`building.completed`) a déjà été câblé par le run archivé [`022-fix-power-realtime-reactivity`](./runs/archive/022-fix-power-realtime-reactivity.md). Ce ticket étend strictement le même pattern aux events combat.
+Le pattern équivalent pour le **recrutement** (`unit.trained`) et la **construction** (`building.completed`) a déjà été câblé par le run archivé [`022-fix-power-realtime-reactivity`](../runs/archive/022-fix-power-realtime-reactivity.md). Ce ticket étend strictement le même pattern aux events combat.
 
 ## Cause racine probable
 
@@ -41,7 +41,7 @@ Le pattern équivalent pour le **recrutement** (`unit.trained`) et la **construc
 
 ### Docs
 
-- Aucun changement attendu : le pattern realtime power est déjà documenté dans [`docs/architecture/realtime.md`](../docs/architecture/realtime.md) et [`docs/gameplay/09-power-and-rankings.md`](../docs/gameplay/09-power-and-rankings.md) par le run 022. À confirmer en fin de run.
+- Aucun changement attendu : le pattern realtime power est déjà documenté dans [`docs/architecture/realtime.md`](../../docs/architecture/realtime.md) et [`docs/gameplay/09-power-and-rankings.md`](../../docs/gameplay/09-power-and-rankings.md) par le run 022. À confirmer en fin de run.
 
 ## Points d'attention
 
@@ -59,4 +59,4 @@ Le pattern équivalent pour le **recrutement** (`unit.trained`) et la **construc
 
 ## Références
 
-- Précédent direct : [`tasks/runs/archive/022-fix-power-realtime-reactivity.md`](./runs/archive/022-fix-power-realtime-reactivity.md) — pattern source (training + building).
+- Précédent direct : [`tasks/runs/archive/022-fix-power-realtime-reactivity.md`](../runs/archive/022-fix-power-realtime-reactivity.md) — pattern source (training + building).

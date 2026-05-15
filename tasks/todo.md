@@ -1,28 +1,32 @@
-# Ticket 63 - Foreign players invisible on world map
+# Run 67 — power realtime combat events
 
-## Plan
-
-- [x] Preflight : Git clean, ticket 63 lu, rules/SPEC/specs chargees.
-- [x] Cartographie : verifier backend world entities, frontend mapping et invalidations WS.
-- [x] Implementation : lire les villages joueurs depuis `Village` dans `WorldEntitiesQueryService`.
-- [x] Tests : ajouter un smoke backend reel sur `GET /world/:worldId/entities`.
-- [x] Review : verifier diff, shape API, fog et absence de changement frontend inutile.
-- [x] Verification : lancer preflight smoke, smoke cible/backend requis et `yarn static-check`.
-- [x] Documentation : verifier impact docs et justifier.
-- [x] Archive : passer ticket en DONE, archiver, mettre a jour `tasks/README.md`, commit.
-
-## Choix de scope
-
-- Inclus : `PLAYER_VILLAGE` dans le feed monde depuis la table `Village`, fog inclus.
-- Inclus : commentaire Prisma `WorldEntity` deprecated pour eviter de retablir l'ecriture miroir.
-- Exclu : suppression de la table `WorldEntity` et migration associee.
-- Exclu : changement frontend, deja compatible avec le shape `PLAYER_VILLAGE`.
+- [x] Préflight : worktree clean, ticket lu, rules/spec/briefings chargés.
+- [x] Cartographie : WS bindings, tests, payloads partagés, workers combat/return/conquête.
+- [x] Implémenter les invalidations power sur events combat côté frontend.
+- [x] Ajouter les tests Vitest ciblés.
+- [x] Review diff 5 axes.
+- [x] Vérifier : test ciblé, `yarn test:pixi`, smokes backend, `yarn static-check`.
+- [x] Documentation impact + archive ticket prêts pour commit.
 
 ## Review
 
-- `WorldEntitiesQueryService` garde `Village` comme source canonique pour les villages joueurs et respecte le filtre `kinds` + bounds.
-- `PLAYER_VILLAGE` expose seulement `userId`, `name`, `villageId`; pas de fuite `label` / `isCapital`.
-- Le smoke `vision.smoke.spec.ts` prouve visible vs fogged pour deux villages joueurs.
-- `WorldEntity` reste en place mais marquee deprecated ; suppression suivie par le ticket 64.
-- Tests : preflight smoke, smoke cible, smokes backend complets et `yarn static-check` verts.
-- Docs : mise a jour `docs/architecture/worktree-dev.md` pour le probleme recurrent `packages/shared/dist` absent + `.tsbuildinfo` stale. Le contrat gameplay/API etait deja documente ; le changement restaure ce contrat. Un follow-up task couvre la dette schema.
+- Correctness : power invalidée sur pertes attaquant/défenseur, retour survivants, conquête nouveau + ancien propriétaire.
+- Readability : réutilisation du helper existant `invalidatePowerQueries`; pas de nouveau signal frontend.
+- Architecture : l'Outbox reste DB-first, `village.conquered` transporte le fait métier complet.
+- Security : pas de nouvelle exposition sensible, seulement les IDs déjà participants de l'event.
+- Performance : +2 invalidations TanStack par event concerné, borné aux événements combat existants.
+
+## Vérification
+
+- `VITE_API_BASE_URL=http://localhost:15001 VITE_WS_URL=http://localhost:15001 rtk yarn workspace battleforthecrown-pixi test src/api/ws-bindings.test.ts` : OK, 23 tests.
+- `VITE_API_BASE_URL=http://localhost:15001 VITE_WS_URL=http://localhost:15001 rtk yarn workspace battleforthecrown-pixi test` : OK, 25 files / 138 tests.
+- `rtk yarn test:smoke:preflight` : OK.
+- `rtk yarn test:smoke` : OK après `rtk yarn workspace battleforthecrown-backend prisma generate`, 22 suites / 43 tests.
+- `rtk yarn static-check` : OK.
+
+## Notes de cartographie
+
+- `battle.resolved` : pertes attaquant déjà persistées à la résolution, `villageId` disponible.
+- `village.attacked` : pertes défenseur persistées, `defenderVillageId` disponible.
+- `village.conquered` : event user-scoped au nouveau propriétaire via `newOwnerId`; ancien propriétaire non notifié par cet event.
+- `battle.returned` : pas no-op pour la puissance, le `ReturnWorker` réinsère les survivants dans `unitInventory`; la power backend lit `unitInventory`.

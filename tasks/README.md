@@ -4,7 +4,6 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-- [67 — Réactivité temps réel de la puissance après combat](./67-power-realtime-combat-events.md) — 🟠 Moyen. Câbler `invalidatePowerQueries` sur les events combat (`battle.resolved`, `village.attacked`, `village.conquered`) — extension du pattern run 022 (training/building) aux combats.
 - [66 — Inbox combat : tag VICTOIRE/DÉFAITE faux dans la liste](./66-inbox-report-outcome-uses-losses-heuristic.md) — 🟡 Majeur. La liste de l'inbox calcule l'issue via une heuristique de pertes, divergente de la règle canonique utilisée par le modal.
 - [65 — Distinguer mes villages des villages joueurs étrangers sur la WorldMap](./65-own-vs-foreign-villages-map-distinction.md) — 🟠 Moyen. Mes villages non-actifs et les villages joueurs étrangers partagent la même couleur dorée sur la grande carte ; introduire une palette dédiée aux étrangers.
 - [64 — Supprimer la table miroir `WorldEntity` devenue morte](./64-remove-deprecated-world-entity.md) — 🟠 Moyen. Nettoyer le modèle legacy maintenant que `/world/:worldId/entities` lit les villages depuis `Village`.
@@ -62,6 +61,7 @@ _(Aucun run actif.)_
 
 ## Archivés
 
+- [67 — Réactivité temps réel de la puissance après combat](./archive/67-power-realtime-combat-events.md) ✅ Résolu 2026-05-15 par $bftc-run @tasks/67-power-realtime-combat-events.md
 - [63 — Les autres joueurs n'apparaissent jamais sur la carte](./archive/63-foreign-players-invisible-on-world-map.md) ✅ Résolu 2026-05-15 par $bftc-run @tasks/63-foreign-players-invisible-on-world-map.md
 - [62 — Mini-carte interactive : sync bidirectionnel avec la carte principale](./archive/62-interactive-minimap-sync.md) ✅ Résolu 2026-05-14 par $bftc-run @tasks/62-interactive-minimap-sync.md
 - [61 — Indicateur visuel du village actif sur la WorldMap](./archive/61-active-village-map-indicator.md) ✅ Résolu 2026-05-14 par $bftc-run @tasks/61-active-village-map-indicator.md

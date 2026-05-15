@@ -472,6 +472,7 @@ export class ConquestService {
       villageId: targetVillageId,
       villageName: target.name,
       newOwnerId: attackerUserId,
+      previousOwnerId: target.userId,
       previousTier: target.tier,
       x: target.x,
       y: target.y,

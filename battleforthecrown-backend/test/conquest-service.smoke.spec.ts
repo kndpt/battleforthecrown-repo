@@ -94,5 +94,50 @@ describe('conquest service smoke', () => {
       { timeoutMs: 5_000 },
     );
     expect(event?.dispatchedAt).toBeTruthy();
+    expect(event?.payload).toMatchObject({
+      newOwnerId: user.userId,
+      previousOwnerId: null,
+    });
+  });
+
+  it('village.conquered payload keeps the previous owner for player villages', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const attacker = await registerUser(
+      ctx.server,
+      `conquer-attacker-${Date.now()}`,
+    );
+    const defender = await registerUser(
+      ctx.server,
+      `conquer-defender-${Date.now()}`,
+    );
+    const attackerJoin = await joinWorld(
+      ctx.server,
+      attacker.accessToken,
+      world.id,
+      'pvp-conqueror',
+    );
+    const defenderJoin = await joinWorld(
+      ctx.server,
+      defender.accessToken,
+      world.id,
+      'pvp-target',
+    );
+
+    const conquest = ctx.app.get(ConquestService);
+    await conquest.conquerVillage({
+      attackerVillageId: attackerJoin.village.id,
+      targetVillageId: defenderJoin.village.id,
+      attackerUserId: attacker.userId,
+    });
+
+    const event = await outboxDispatched(
+      ctx.prisma,
+      { kind: 'village.conquered', aggregateId: defenderJoin.village.id },
+      { timeoutMs: 5_000 },
+    );
+    expect(event?.payload).toMatchObject({
+      newOwnerId: attacker.userId,
+      previousOwnerId: defender.userId,
+    });
   });
 });

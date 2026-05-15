@@ -179,6 +179,7 @@ export function applyBattleResolved(payload: BattleResolvedPayload, ctx: Binding
   ctx.queryClient.invalidateQueries({ queryKey: ['resources', payload.villageId] });
   // Population freed for dead attacker units — see backend combat.worker:sumPopulationCost.
   ctx.queryClient.invalidateQueries({ queryKey: ['population', payload.villageId] });
+  invalidatePowerQueries(ctx, payload.villageId);
   invalidateCombatReports(ctx);
   invalidateOpenExpeditions(ctx);
   useUiStore.getState().pushToast({
@@ -196,6 +197,7 @@ export function applyBattleReturned(payload: BattleReturnedPayload, ctx: Binding
   }, RETURNED_TO_CLEANUP_DELAY_MS);
   ctx.queryClient.invalidateQueries({ queryKey: ['resources', payload.villageId] });
   ctx.queryClient.invalidateQueries({ queryKey: ['army', payload.villageId] });
+  invalidatePowerQueries(ctx, payload.villageId);
   invalidateOpenExpeditions(ctx);
 }
 
@@ -388,6 +390,7 @@ export function applyVillageAttacked(
   // Defender lost units → population was released server-side. Refresh the HUD.
   ctx.queryClient.invalidateQueries({ queryKey: ['population', payload.defenderVillageId] });
   ctx.queryClient.invalidateQueries({ queryKey: ['army', payload.defenderVillageId] });
+  invalidatePowerQueries(ctx, payload.defenderVillageId);
   invalidateCombatReports(ctx);
   useUiStore.getState().pushToast({
     tone: payload.isDefenseSuccessful ? 'success' : 'error',
@@ -422,21 +425,25 @@ function invalidatePowerQueries(ctx: BindingsContext, villageId: string): void {
 }
 
 export function applyVillageConquered(payload: VillageConqueredPayload, ctx: BindingsContext): void {
+  const userId = useAuthStore.getState().user?.id ?? null;
   ctx.queryClient.invalidateQueries({ queryKey: ['memberships'] });
   ctx.queryClient.invalidateQueries({ queryKey: ['villages'] });
   ctx.queryClient.invalidateQueries({ queryKey: ['world-entities'] });
+  invalidatePowerQueries(ctx, payload.villageId);
   invalidateOpenConquests(ctx);
   // Mark the entity as conquered on the map by simply removing it; the next
   // refetch will reinsert it under the new owner.
   useWorldMapStore.getState().removeEntity(payload.villageId);
-  useUiStore.getState().pushVictoryModal({
-    villageId: payload.villageId,
-    villageName: payload.villageName,
-    x: payload.x,
-    y: payload.y,
-    buildingsKept: payload.buildingsKept,
-    previousTier: payload.previousTier,
-  });
+  if (userId === payload.newOwnerId) {
+    useUiStore.getState().pushVictoryModal({
+      villageId: payload.villageId,
+      villageName: payload.villageName,
+      x: payload.x,
+      y: payload.y,
+      buildingsKept: payload.buildingsKept,
+      previousTier: payload.previousTier,
+    });
+  }
 }
 
 export function applyVillageCaptureWindowOpened(
