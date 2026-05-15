@@ -76,4 +76,5 @@ Le port backend peut aussi changer si `15001` est pris, mais il faut alors mettr
 | Requêtes bloquées par CORS | `FRONTEND_URL` backend ne correspond pas au port Vite | Redémarrer le backend avec `FRONTEND_URL=http://localhost:<front-port>`. |
 | Backend compile mais ne démarre pas | `JWT_ACCESS_SECRET` absent | Ajouter un secret dev local explicite. |
 | Erreurs Prisma types manquants | Client Prisma pas généré dans le worktree | Lancer `prisma generate`. |
+| Jest/backend ne résout pas `@battleforthecrown/shared/*` après `yarn install` | `packages/shared/dist/` absent alors qu'un cache `tsconfig.tsbuildinfo` obsolète a fait croire à TypeScript que le build était à jour | Lancer `yarn workspace @battleforthecrown/shared clean && yarn workspace @battleforthecrown/shared build`. Le fichier `.tsbuildinfo` ne doit pas être tracké. |
 | Jobs workers ou realtime incohérents | Plusieurs backends consomment la même queue `pg-boss` sur la DB | Garder un seul backend sur cette DB, ou isoler la DB du worktree. |

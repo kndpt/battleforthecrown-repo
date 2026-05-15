@@ -28,6 +28,23 @@ type BarbarianVillageEntity = {
   data: BarbarianVillageData;
 };
 
+const playerVillageDataSchema = z.object({
+  userId: z.string(),
+  name: z.string(),
+  villageId: z.string(),
+});
+
+type PlayerVillageData = z.infer<typeof playerVillageDataSchema>;
+
+type PlayerVillageEntity = {
+  id: string;
+  worldId: string;
+  kind: 'PLAYER_VILLAGE';
+  x: number;
+  y: number;
+  data: PlayerVillageData;
+};
+
 @Injectable()
 export class WorldEntitiesQueryService {
   constructor(private readonly prisma: PrismaService) {}
@@ -61,8 +78,17 @@ export class WorldEntitiesQueryService {
         minY,
         maxY,
       })) ?? [];
+    const playerVillages =
+      (await this.fetchPlayerVillages(worldId, kinds, {
+        minX,
+        maxX,
+        minY,
+        maxY,
+      })) ?? [];
 
-    return [...worldEntities, ...barbarianVillages].sort(byCoord);
+    return [...worldEntities, ...barbarianVillages, ...playerVillages].sort(
+      byCoord,
+    );
   }
 
   async getAllEntities(worldId: string, kinds?: string[]) {
@@ -76,8 +102,12 @@ export class WorldEntitiesQueryService {
 
     const barbarianVillages =
       (await this.fetchBarbarianVillages(worldId, kinds)) ?? [];
+    const playerVillages =
+      (await this.fetchPlayerVillages(worldId, kinds)) ?? [];
 
-    return [...worldEntities, ...barbarianVillages].sort(byCoord);
+    return [...worldEntities, ...barbarianVillages, ...playerVillages].sort(
+      byCoord,
+    );
   }
 
   async getVillagesInRadius(
@@ -175,6 +205,51 @@ export class WorldEntitiesQueryService {
         },
       };
     });
+  }
+
+  private async fetchPlayerVillages(
+    worldId: string,
+    kinds: string[] | undefined,
+    bounds?: { minX: number; maxX: number; minY: number; maxY: number },
+  ): Promise<PlayerVillageEntity[] | null> {
+    const shouldInclude =
+      !kinds || kinds.length === 0 || kinds.includes('PLAYER_VILLAGE');
+    if (!shouldInclude) return null;
+
+    const villages = await this.prisma.village.findMany({
+      where: {
+        worldId,
+        isBarbarian: false,
+        userId: { not: null },
+        ...(bounds
+          ? {
+              x: { gte: bounds.minX, lte: bounds.maxX },
+              y: { gte: bounds.minY, lte: bounds.maxY },
+            }
+          : {}),
+      },
+      select: {
+        id: true,
+        x: true,
+        y: true,
+        name: true,
+        userId: true,
+      },
+      orderBy: [{ y: 'asc' }, { x: 'asc' }],
+    });
+
+    return villages.map((village) => ({
+      id: village.id,
+      worldId,
+      kind: 'PLAYER_VILLAGE' as const,
+      x: village.x,
+      y: village.y,
+      data: playerVillageDataSchema.parse({
+        userId: village.userId,
+        name: village.name,
+        villageId: village.id,
+      }),
+    }));
   }
 }
 
