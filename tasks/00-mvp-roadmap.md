@@ -81,7 +81,7 @@ Critère de fin : une attaque entrante déclenche un push sur l'appareil cible a
 
 ### Phase 7 — Conquête PvP
 
-Spec : [`14-pvp-conquest.md`](../docs/gameplay/14-pvp-conquest.md) (en chantier — finaliser les questions ouvertes en début de phase).
+Spec : [`14-pvp-conquest.md`](../docs/gameplay/14-pvp-conquest.md) (tranchée MVP — toutes les décisions de design sont actées, diplomatie/réputation explicitement post-MVP).
 
 Pourquoi ici : cœur du end-game, mais s'appuie sur **toutes** les phases précédentes (combat, conquête barbare comme base, inbox, scout, notifications). Avant cette phase, le seul retravail serait absurde ; ici on récolte.
 

@@ -200,10 +200,15 @@ Mécanique d'onboarding pour combler l'angle mort du `puissance ÷ 3` : deux nou
 
 ### Diplomatie et conséquences sociales
 
-Post-MVP probablement, mais à noter :
-- Les **alliances / tribus** auront un rôle (les alliés peuvent défendre).
-- La **réputation** du conquérant pourrait être tracée (post-MVP).
-- Les **classements** (cf. [`09-power-and-rankings.md`](./09-power-and-rankings.md)) reflètent les conquêtes ?
+**Décidé (MVP)** : aucun signal social ou classement spécifique aux conquêtes au MVP. Le seul reflet est **mécanique** : un village conquis augmente la puissance bâtiments du conquérant, qui remonte naturellement le classement de puissance existant (cf. [`09-power-and-rankings.md`](./09-power-and-rankings.md)). Pas de double signal, pas de compteur dédié, pas de classement parallèle au MVP.
+
+| Élément | MVP | Post-MVP (référence) |
+| --- | :---: | --- |
+| **Classement séparé des conqu​êtes** (compteur, leaderboard saisonnier) | ❌ | À ré-ouvrir après playtest si un besoin de prestige émerge. |
+| **Alliances / tribus** (alliés qui défendent la fenêtre, diplomatie) | ❌ | Couvert par [`21-alliances-and-tribes.md`](./21-alliances-and-tribes.md) (post-MVP strict). |
+| **Réputation** du conquérant tracée sur le profil | ❌ | Post-MVP, dépend du système d'alliances. |
+
+🎯 **Lecture design** : tout reflet social au MVP serait une complexité ajoutée pour un gain incertain. La puissance suffit comme signal de progression dans cette phase. Les axes diplomatie/réputation sont volontairement gardés ouverts post-MVP — leur design dépend de la mécanique d'alliances, qui n'existe pas avant la spec 21.
 
 ## Pistes envisagées, non retenues au MVP
 
