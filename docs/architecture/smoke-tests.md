@@ -11,7 +11,7 @@ battleforthecrown-backend/test/
 ├── helpers.ts                # bootSmokeApp, truncateAll, registerUser, joinWorld, waitFor, outboxDispatched
 ├── jest-smoke.json           # config Jest dédiée (testRegex smoke.spec.ts$, runInBand)
 ├── jest-smoke-setup.ts       # env vars (DATABASE_URL smoke, JWT secrets de test)
-└── fixtures/smoke-world-config.ts   # WorldConfig avec gameSpeed élevé
+└── fixtures/smoke-world-config.ts   # WorldConfig avec tempo ultra-petit (timing compressé pour tests rapides)
 ```
 
 ## Comment lancer
@@ -54,7 +54,7 @@ Pré-requis : la base `battleforthecrown_smoke` doit exister + migrations appliq
 
 1. Dans `smoke.spec.ts`, ajouter un `it()` dans le `describe` global.
 2. Pattern : `seedSmokeWorld → registerUser → joinWorld → mutation → waitFor(state DB) → outboxDispatched(...)`.
-3. Pour les flows de longue durée (combat, training), ajuster `gameSpeed.travel` ou `gameSpeed.training` dans la fixture si le timing est trop lent — `construction`/`training` sont déjà clampés à 1s minimum côté shared.
+3. Pour les flows de longue durée (combat, training), ajuster `tempo.overrides.travelSpeed` ou `tempo.overrides.unitTrainingSpeed` dans la fixture si le timing est trop lent — `construction`/`training` sont déjà clampés à 1 s minimum côté shared. Sémantique : `tempo` plus petit = flux plus court (cf. [`docs/gameplay/23-world-tempo-and-multipliers.md` § 5.1.1](../gameplay/23-world-tempo-and-multipliers.md#511-sémantique-du-multiplier--règle-unique)).
 4. Pour un nouveau `kind` Outbox : retrouver l'`aggregateId` réel dans le publisher (`outbox-publisher.service.ts`) ou le worker — c'est lui qu'on filtre.
 
 ## Anti-patterns

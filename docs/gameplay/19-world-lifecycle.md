@@ -121,7 +121,7 @@ Cette spec **débloque ou impacte** plusieurs autres docs.
 
 | Question | Position de réflexion actuelle |
 | --- | --- |
-| **Annonce du wipe** | Compte-à-rebours visible côté joueur dès J+14 ? Ou seulement à T-7 j de `ENDED` pour ne pas démotiver le late-game ? Probablement compte-à-rebours permanent (transparence > suspense). |
+| **Annonce du wipe** | Compte-à-rebours visible côté joueur dès `LOCKED` (J+10) ? Ou seulement à T-7 j de `ENDED` pour ne pas démotiver le late-game ? Probablement compte-à-rebours permanent (transparence > suspense). |
 | **Phase `ENDED` interactive** | Mode lecture seule pure, ou possibilité de "tournoi final" (genre 7 j de baroud final sans nouvelle inscription) ? Au MVP : lecture seule pure. |
 | **Migration des comptes-zombies** | Que fait-on des joueurs inactifs en fin de monde ? Probablement rien (purge avec le wipe), couvert par la spec [`18-inactivity-and-abandonment.md`](./18-inactivity-and-abandonment.md). |
 | **Récompenses cosmétiques** | Catalogue précis (titre seul, bannière, badge ?) à définir avec le travail UI/UX. Pas bloquant. |

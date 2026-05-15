@@ -15,11 +15,13 @@
 
 | Table | Rôle |
 |-------|------|
-| `World` | un monde = un serveur de jeu indépendant. `slug` unique, `config` JSON (gameSpeed, economy, combat, etc.) |
+| `World` | un monde = un serveur de jeu indépendant. `slug` unique, `config` JSON (`tempo`, combat, seeding barbares, etc.) |
 | `WorldMembership` | join `User × World` avec `role` (PLAYER / ADMIN), `eliminatedAt` |
 | `WorldConfig` *(legacy)* | en cours de fusion dans `World.config` |
 
-`World.config` (JSON) contient notamment : `gameSpeed.{construction,training,travel}` (diviseurs de temps — valeur > 1 ⇒ plus rapide), `economy.productionRate` (amplificateur du taux — valeur > 1 ⇒ plus de ressources/min), `combat.{attackBonus,defenseBonus,lootFactor}`, paramètres de seeding barbares.
+`World.config` (JSON) contient notamment : `tempo.{global, overrides?}` (multiplier unifié « < 1 = jeu plus rapide » — cf. [`docs/gameplay/23-world-tempo-and-multipliers.md`](../gameplay/23-world-tempo-and-multipliers.md)), `combat.{attackBonus,defenseBonus,lootFactor}`, paramètres de seeding barbares.
+
+> ⚠️ **Migration en cours** : les anciens champs `gameSpeed.{construction,training,travel,capture}` (sémantique inverse : « > 1 = plus rapide ») et `economy.productionRate` sont **supprimés clean cut** au profit de `tempo`. Voir [`decisions.md` § ADR-12](./decisions.md#adr-12--pivot-compressed-async--tempo-world-scoped-via-worldconfigtempo).
 
 **Cycle de vie player ↔ monde** : `JoinWorldUseCase` crée le tuple `(WorldMembership, Village, Building rows, ResourceStock, Population, CrownBalance, UnitInventory skeleton, VillageStrategyConfig)`. `ResetWorldUseCase` (`DELETE /world/:worldId/me`) effectue l'opération inverse — full wipe par `(userId, worldId)`, suppression des `ScoutReport` du joueur et anonymisation des `CombatReport` côté défenseur. Aucun event Outbox émis. Le joueur peut re-join immédiatement comme un nouveau joueur. Code : `src/modules/world/{join,reset}-world.use-case.ts`.
 

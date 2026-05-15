@@ -22,7 +22,7 @@ Hub de la mécanique de **conquête**. Cette doc consolide les **règles commune
 | Effet de la capture | Si non-attaqué pendant la fenêtre → conquête réussie, le village change de propriétaire |
 | Sacrifice du Seigneur | Le Seigneur s'installe et **devient le Seigneur du village conquis**. Il n'est plus disponible pour une autre conquête. |
 
-Les durées indiquées dans les sub-docs sont les durées de base du monde. Au runtime, elles sont divisées par `gameSpeed.capture` et figées dans `PendingConquest.captureUntil` au moment où la fenêtre s'ouvre ; une capture déjà ouverte n'est pas recalculée si la config monde change.
+Les durées indiquées dans les sub-docs sont les durées de base du monde, exprimées à `tempo = 1.0` (cf. [`23-world-tempo-and-multipliers.md`](./23-world-tempo-and-multipliers.md)). Au runtime, elles sont multipliées par `tempo.captureWindow` (axe durée — `< 1.0` = fenêtre plus courte) et figées dans `PendingConquest.captureUntil` au moment où la fenêtre s'ouvre ; une capture déjà ouverte n'est pas recalculée si la config monde change.
 
 Mécanique détaillée du combat de pré-conquête : [`04-combat.md` § Conquête](./04-combat.md#conquête).
 

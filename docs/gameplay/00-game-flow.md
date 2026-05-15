@@ -6,7 +6,7 @@
 
 ## TL;DR
 
-Un monde Battle for the Crown dure **~4 mois** ([19](./19-world-lifecycle.md)). 14 j d'inscriptions massives + 7 j de retardataires + 99 j en cohorte verrouillée. Pendant ces 120 j, chaque joueur fait tourner 4 boucles (économie, militaire, exploration, conquête, cf. [01](./01-overview.md#boucles-de-gameplay)) en sessions courtes mobile (2-5 min, plusieurs fois/jour), avec des cartes quotidiennes personnelles et des Oyez qui donnent un contexte monde léger ([05](./05-daily-cards-and-oyez.md)). À `endsAt` : wipe complet, seuls les cosmétiques restent. Le serveur enchaîne les saisons en parallèle, un nouveau monde toutes les ~7 j.
+Un monde Battle for the Crown dure **~2 mois (60 j)** ([19](./19-world-lifecycle.md)) en **tempo compressé-async** (~4-5× plus rapide qu'un slow-MMORTS classique, cf. [23](./23-world-tempo-and-multipliers.md)). 7 j d'inscriptions massives + 3 j de retardataires + ~50 j en cohorte verrouillée. Pendant ces 60 j, chaque joueur fait tourner 4 boucles (économie, militaire, exploration, conquête, cf. [01](./01-overview.md#boucles-de-gameplay)) en sessions courtes mobile (2-5 min, plusieurs fois/jour), avec des cartes quotidiennes personnelles et des Oyez qui donnent un contexte monde léger ([05](./05-daily-cards-and-oyez.md)). À `endsAt` : wipe complet, seuls les cosmétiques restent. Le serveur enchaîne les saisons en parallèle, un nouveau monde toutes les ~7 j.
 
 ---
 
@@ -14,9 +14,9 @@ Un monde Battle for the Crown dure **~4 mois** ([19](./19-world-lifecycle.md)). 
 
 Le monde est créé (admin ou cron). Status `PLANNED`, **invisible** dans la liste des mondes joignables. Aucun joueur, aucun barbare. Cf. [`19` § PLANNED → OPEN](./19-world-lifecycle.md#planned--open).
 
-## 2. J0 — Ouverture (`OPEN` / cohorte principale, 14 j)
+## 2. J0 — Ouverture (`OPEN` / cohorte principale, 7 j)
 
-`world.startedAt = now()`, `world.endsAt = startedAt + 120 j`. Le monde apparaît dans la liste publique.
+`world.startedAt = now()`, `world.endsAt = startedAt + 60 j`. Le monde apparaît dans la liste publique.
 
 **Ce qu'un joueur fait à l'inscription** :
 
@@ -27,19 +27,19 @@ Le monde est créé (admin ou cron). Status `PLANNED`, **invisible** dans la lis
 5. Lance le **tuto guidé** (5 étapes scriptées : 1ᵉʳ upgrade éco → 1ᵉʳ raid barbare T1 → 1ᵉʳ Watchtower → 1ᵉʳ scout → TBD, cf. [`15`](./15-onboarding.md)).
 6. Voit le **seeding barbare adaptatif** se générer autour de lui (T1 proches faciles, T2-T5 plus loin et plus dangereux, cf. [`07`](./07-barbarian-spawning.md)).
 
-À l'échelle du monde : **pic d'arrivée Day 0**, queue d'inscriptions sur 14 j. Cette cohorte jouera ensemble jusqu'à `ENDED`.
+À l'échelle du monde : **pic d'arrivée Day 0**, queue d'inscriptions sur 7 j. Cette cohorte jouera ensemble jusqu'à `ENDED`.
 
-## 3. J+14 → J+21 — Retardataires (`OPEN` / `inscriptionPhase = late`)
+## 3. J+7 → J+10 — Retardataires (`OPEN` / `inscriptionPhase = late`)
 
 Status techniquement inchangé. La liste de mondes affiche un avertissement (« lancé il y a {N} j ») et propose un monde frais à côté. Sas de rattrapage pour les inscriptions juste après le pic. Détail : [`19` § Bascule cohorte → retardataires](./19-world-lifecycle.md#bascule-cohorte-principale--retardataires).
 
-## 4. J+21 — Verrouillage (`LOCKED`, ~99 j)
+## 4. J+10 — Verrouillage (`LOCKED`, ~50 j)
 
 Job planifié → le monde **disparaît** de la liste publique. `JoinWorldUseCase` rejette tout nouvel arrivant ([`19` § OPEN → LOCKED](./19-world-lifecycle.md#open--locked)). Plus aucun latecomer. Les inscrits continuent normalement.
 
-C'est ici que **commence le vrai jeu long** : 99 jours entre joueurs déjà connus, snowball borné par la fin programmée.
+C'est ici que **commence le vrai jeu long** : ~50 jours entre joueurs déjà connus, snowball borné par la fin programmée et accéléré par le tempo compressé (la première conquête arrive typiquement vers J+5-J+7, l'endgame multi-village s'étale donc sur la quasi-totalité de la phase `LOCKED`).
 
-## 5. Entre J0 et J+120 — ce que les joueurs **font** réellement
+## 5. Entre J0 et J+60 — ce que les joueurs **font** réellement
 
 4 boucles imbriquées qui tournent en parallèle, en sessions courtes mobile.
 
@@ -85,7 +85,7 @@ Château 6 → débloque **Salle du Trône** → recrute un **Seigneur** (5 000 
 - **Notifications push** (attaque entrante, fin de capture, fin de construction) — esquisse MVP ([`16`](./16-notifications.md)).
 - **Rôles privés de villages** (`Favori`, `Raid`, `Défense`, etc.) — navigation multi-village sans bonus mécanique ([`22`](./22-village-roles-and-navigation.md)).
 
-## 6. J+120 — Fin (`LOCKED → ENDED`)
+## 6. J+60 — Fin (`LOCKED → ENDED`)
 
 Job planifié à `endsAt` :
 
@@ -96,7 +96,7 @@ Job planifié à `endsAt` :
 
 Détail : [`19` § Wipe et récompenses](./19-world-lifecycle.md#wipe-et-récompenses-fin-de-monde).
 
-## 7. J+127 — Archivage
+## 7. J+67 — Archivage
 
 Le monde reste consultable 7 j en `ENDED` puis sort de l'UI. Données conservées pour stats globales.
 
@@ -123,7 +123,7 @@ Un nouveau monde `PLANNED → OPEN` toutes les ~7 j ([`19` § Paramètres MVP](.
 Ordre chronologique de lecture pour comprendre le jeu de bout en bout :
 
 1. [`01-overview.md`](./01-overview.md) — vision, principes, boucles.
-2. [`19-world-lifecycle.md`](./19-world-lifecycle.md) — cycle de vie du monde (spec).
+2. [`19-world-lifecycle.md`](./19-world-lifecycle.md) + [`23-world-tempo-and-multipliers.md`](./23-world-tempo-and-multipliers.md) — cycle de vie du monde (durée 60 j, fenêtres) + tempo compressé-async (multipliers `WorldConfig.tempo`).
 3. [`02-economy-and-progression.md`](./02-economy-and-progression.md) — ressources, pop, couronnes.
 4. [`03-buildings.md`](./03-buildings.md) — catalogue bâtiments.
 5. [`08-units.md`](./08-units.md) + [`04-combat.md`](./04-combat.md) — troupes et résolution.

@@ -95,12 +95,29 @@ WorldConfig.tempo = {
 }
 ```
 
-**Sémantique du multiplier** : `effectif = absolu × multiplier`.
-- `1.0` = vitesse de référence (= ce qui est écrit dans les autres docs).
-- `< 1.0` = plus rapide (durées plus courtes, productions plus rapides).
-- `> 1.0` = plus lent.
+### 5.1.1 Sémantique du multiplier — règle unique
 
-**Règle de résolution** : un override granulaire prend la priorité sur `global`. Si `tempo.overrides.captureWindow = 0.8` et `tempo.global = 1.0`, la fenêtre de capture est à ×0.8. Sans override, elle prend la valeur du global.
+**Convention retenue : "tempo"** — un multiplier unifié où **petit = jeu plus rapide**, partout, sans exception. Une seule règle mentale.
+
+| Valeur | Effet ressenti |
+|---|---|
+| `1.0` | Vitesse de référence (= chiffres écrits dans les autres docs) |
+| `0.5` | Jeu **2× plus rapide** (durées de moitié, productions doublées) |
+| `0.25` | Jeu **4× plus rapide** (durées au quart, productions ×4) |
+| `2.0` | Jeu 2× plus lent (durées doublées, productions de moitié) |
+
+**Le code applique l'opérateur selon la nature de l'axe** — c'est invisible côté config :
+
+| Nature de l'axe | Formule appliquée | Exemple à `tempo = 0.25` |
+|---|---|---|
+| **Durée** (construction, training, travel, captureWindow) | `effectif = absolu × tempo` | Construction Wood lvl 5 : 1280 s × 0.25 = **320 s** (4× plus court) |
+| **Débit / régen / yield** (resourceProduction, crownsYield, barbarianRegen) | `effectif = absolu / tempo` | Production Wood lvl 5 : 190/h ÷ 0.25 = **760/h** (4× plus rapide). Couronnes : `puissance × 0.05 / tempo` = 4× plus de couronnes/h. |
+
+🎯 **Pourquoi cette convention** : on lit "tempo" comme "fraction de temps" — `0.25` = "1/4 du temps" = "4× plus rapide". C'est aligné avec l'intuition d'un game speed slider compressed. **Le code shared expose un `TempoService` qui encapsule la décision `× ou ÷` selon l'axe** — les use-cases ne manipulent jamais l'opérateur directement.
+
+> ⚠️ **Différence vs l'ancien `WorldConfig.gameSpeed`** : l'ancien schéma utilisait la convention inverse (« > 1 = plus rapide ») et divisait les durées. Le nouveau `tempo` adopte la convention « < 1 = plus rapide » et le code applique l'opérateur correct par axe. **Migration clean cut, pas d'alias rétro-compat** — voir § 8.
+
+**Règle de résolution** : un override granulaire prend la priorité sur `global`. Si `tempo.overrides.captureWindow = 0.8` et `tempo.global = 1.0`, la fenêtre de capture est à tempo `0.8` (durée × 0.8 = 20 % plus courte). Sans override, l'axe prend la valeur du `global`.
 
 ### 5.2 Catalogue des multipliers
 
@@ -113,7 +130,7 @@ WorldConfig.tempo = {
 | `captureWindow` | Durée de la fenêtre de capture (barbare et PvP) | [`13` § Période de capture](./13-barbarian-conquest.md#période-de-capture-variable-par-tier), [`14` § Période de capture](./14-pvp-conquest.md#période-de-capture-variable-selon-le-niveau-du-château) | 0.3 → 2.0 |
 | `barbarianRegen` | Régénération troupes ET ressources des villages barbares (% / h) | [`06` § Régénération](./06-barbarians.md#régénération) | 0.3 → 3.0 |
 | `resourceProduction` | Production passive des mines (bois/pierre/fer) | [`02` § Production](./02-economy-and-progression.md#production-de-ressources) + [`03`](./03-buildings.md) tableaux Production / heure | 0.3 → 3.0 |
-| `crownsYield` | Taux de conversion puissance → couronnes/h | [`02` § Couronnes](./02-economy-and-progression.md#couronnes) (formule `puissance × 0.05`) | 0.3 → 3.0 |
+| `crownsYield` | Taux de conversion puissance → couronnes/h. Constante absolue `0.05` dans `packages/shared/src/crowns/` ; la formule effective devient `puissance × 0.05 / tempo` (axe débit, cf. § 5.1.1). | [`02` § Couronnes](./02-economy-and-progression.md#couronnes) | 0.3 → 3.0 |
 
 > 💡 La régen barbare et la production de ressources peuvent monter au-delà de ×2 (jusqu'à ×3) pour des modes Speed/Blitz où l'économie doit suivre la consommation de troupes.
 
@@ -145,8 +162,22 @@ Le tempo module la **vitesse**, pas l'**équilibre**. Les invariants suivants re
 | Diversité du blueprint barbare par tier | [`06` § Blueprint d'armée](./06-barbarians.md#blueprint-darmée) | Identité narrative et difficulté progressive. |
 | Bonus / malus des styles de village | [`12`](./12-village-styles.md) | Choix stratégique. |
 | Formules de puissance | [`09`](./09-power-and-rankings.md) | Lisibilité du classement. |
+| Mobilité des unités (`speed` par unité dans [`08`](./08-units.md)) | [`08`](./08-units.md) | Ratio entre unités (cavalier > infanterie > siège). Le scaling se fait via `tempo.travelSpeed` qui multiplie l'ensemble, sans toucher aux ratios. |
+| Vision Watchtower (en cases) | [`03` § Tour de guet](./03-buildings.md#tour-de-guet-watchtower) | Distance géométrique, pas une durée. |
 
-🎯 **Règle d'or** : si une constante définit **« combien de temps »** ou **« combien par heure »**, elle est candidate au tempo. Si elle définit **« combien d'unités »**, **« combien de pop »**, **« quel ratio »** ou **« quel seuil »**, elle est intouchable.
+### 6.1 Invariants **wall-clock humain** (NE scalent pas non plus)
+
+Mécaniques exprimées en temps réel humain — elles structurent l'expérience de découverte ou de répétition d'un joueur, indépendamment du rythme de jeu.
+
+| Invariant | Spec source | Valeur | Pourquoi NE scale PAS |
+|---|---|---|---|
+| Bouclier débutant | [`14` § Bouclier débutant](./14-pvp-conquest.md#3-bouclier-débutant--48-h-à-larrivée-sur-le-monde) | 48 h | « Deux soirs d'onboarding » — c'est un rythme humain, pas un temps de jeu. Un monde Speed n'a pas vocation à punir un joueur qui découvre. |
+| Cooldown changement de style | [`12` § Cadre](./12-village-styles.md#cadre) | 24 h | Anti-abuse tactique (changer en boucle pour annuler un malus). C'est une cadence humaine (« une fois par jour max »), pas un timer de jeu. |
+| Reset cartes quotidiennes / Oyez | [`05`](./05-daily-cards-and-oyez.md) | 04:00 Europe/Paris | Wall-clock fixe par design (rythme journalier). |
+| Seuil d'abandon de compte | [`18`](./18-inactivity-and-abandonment.md) | 14 j (post-MVP, à recalibrer pour 60 j) | Mesure d'inactivité humaine. À recalibrer en jours-réels, pas en jours-tempo. |
+| Reset hebdo des classements (post-MVP) | [`09` § Classements](./09-power-and-rankings.md#classements) | Lundi 00:00 UTC | Wall-clock fixe. |
+
+🎯 **Règle d'or** : si une constante définit **« combien de temps de jeu »** ou **« combien par heure de jeu »**, elle est candidate au tempo. Si elle définit **« combien d'unités »**, **« combien de pop »**, **« quel ratio »**, **« quel seuil »**, ou **« combien de temps réel humain »**, elle est intouchable.
 
 ## 7. Impacts à recalibrer dans les autres docs
 
@@ -166,19 +197,19 @@ Suite au pivot 120 → 60 j et à la compression ~4-5×, les sections suivantes 
   - Les % horaires deviennent « à ×1.0 » et sont multipliés par `tempo.barbarianRegen`.
 - [ ] [`10-conquest.md`](./10-conquest.md)
   - § Coût de recrutement — temps d'entraînement Seigneur (8 h) à compresser.
-  - Mention de `gameSpeed.capture` à harmoniser avec le nouveau nom `tempo.captureWindow`.
+  - ✅ Mention `gameSpeed.capture` → `tempo.captureWindow` déjà harmonisée dans cette session.
 - [ ] [`13-barbarian-conquest.md`](./13-barbarian-conquest.md)
   - § Période de capture — courbe 2 / 4 / 6 / 9 / 12 h à recalibrer (cible compressed : 30 min / 1 h / 1 h 30 / 2 h / 3 h ?).
   - § Calage avec les temps existants — réécrire en fonction des nouvelles durées de Château.
 - [ ] [`14-pvp-conquest.md`](./14-pvp-conquest.md)
   - § Période de capture variable selon le niveau du Château — courbe 4 / 6 / 9 / 12 / 18 h à recalibrer.
-  - § Bouclier débutant — 48 h à reconfirmer ou ajuster (24 h ? 36 h ?). Probablement garder 48 h car c'est temps réel humain, pas temps de jeu.
+  - § Bouclier débutant — 48 h à confirmer **wall-clock** (cf. § 6.1), pas de scaling tempo.
 - [ ] [`15-onboarding.md`](./15-onboarding.md)
   - Cible « 5 étapes en ≤ 10 min » à reconfirmer (probablement encore plus court en compressed).
-- [ ] [`19-world-lifecycle.md`](./19-world-lifecycle.md)
-  - § Vue d'ensemble — durée 120 j → 60 j.
-  - § Paramètres MVP — durée totale 120 → 60, fenêtre cohorte principale 14 → 7-10 ?, fenêtre retardataires 7 → 3-5 ?
-  - § Articulation avec autres mécaniques — recalculer les ratios (abandon 14 j sur 60 j = 23 %, faut-il descendre à 7 j ?).
+- [x] [`19-world-lifecycle.md`](./19-world-lifecycle.md)
+  - ✅ Durée totale 120 → 60 j, fenêtre cohorte 14 → 7 j, retardataires 7 → 3 j déjà appliqués dans cette session. Articulation avec abandon 14 j à reprendre quand [`18`](./18-inactivity-and-abandonment.md) sortira du chantier.
+- [x] [`00-game-flow.md`](./00-game-flow.md)
+  - ✅ Durées et phases narratives recalibrées dans cette session (60 j, J+7, J+10, ~50 j, J+60, J+67) + ajout référence au tempo compressé.
 - [ ] [`07-barbarian-spawning.md`](./07-barbarian-spawning.md)
   - Si la consommation joueur de barbares est plus rapide en compressed, l'algo de spawn / catchup peut nécessiter une révision de densité. À vérifier.
 
@@ -194,26 +225,26 @@ Suite au pivot 120 → 60 j et à la compression ~4-5×, les sections suivantes 
 
 Cette section liste **ce qu'il faudra faire**, pas **comment**. La spec d'implémentation arrivera dans une fiche de run dédiée.
 
-1. **Étendre `WorldConfig`** avec le sous-objet `tempo` (global + overrides optionnels).
-2. **Créer une couche d'accès** côté backend (`TempoService` ou helper dans `WorldConfigService`) qui résout `effectif = absolu × multiplier` pour chaque axe, avec fallback sur `global` si pas d'override.
-3. **Recalibrer les valeurs absolues** dans les seeds / configs partagées (`packages/shared/`) pour qu'elles correspondent au Standard MVP (`tempo.global = 1.0`).
-4. **Brancher chaque axe** : remplacer les usages directs des constantes par des appels au `TempoService` dans les use-cases concernés (construction, training, expéditions, fenêtre de capture, régen barbare, production, couronnes).
-5. **Renommer `gameSpeed.capture` → `tempo.captureWindow`** pour cohérence (ou garder un alias rétro-compat le temps de la migration).
-6. **Adapter le frontend** pour afficher les durées effectives (déjà côté serveur — le front consomme l'effectif).
-7. **Tests** : un test BFTC par axe vérifiant que `tempo.overrides` surcharge bien `global`, et qu'à `global = 1.0` sans override on retombe sur les valeurs absolues historiques (non-régression).
+1. **Remplacer `WorldConfig.gameSpeed` et `WorldConfig.economy.productionRate` par `WorldConfig.tempo`** (global + overrides optionnels). **Clean cut, pas d'alias rétro-compat** — aucun monde n'est en prod, on ne traîne pas deux conventions inverses (l'ancienne avait « > 1 = plus rapide » + diviseurs sur durées, la nouvelle a « < 1 = plus rapide » + opérateur géré par axe). Suppression nette des champs obsolètes.
+2. **Créer un `TempoService`** côté backend (ou helper dans `WorldConfigService`) qui expose une API de résolution par axe : `applyDuration(absolute, axis)` (multiplie) et `applyRate(absolute, axis)` (divise). Les use-cases ne manipulent jamais l'opérateur directement. Fallback sur `global` si pas d'override sur l'axe.
+3. **Recalibrer les valeurs absolues** dans les seeds / configs partagées (`packages/shared/`) pour qu'elles correspondent au Standard MVP (`tempo.global = 1.0`). Cf. § 7.
+4. **Brancher chaque axe** : remplacer les usages directs des constantes par des appels au `TempoService` dans les use-cases concernés (construction, training, expéditions, fenêtre de capture, régen barbare, production, couronnes). Localiser au passage la régen barbare (probablement dans `BarbarianRuntimeService` — non identifiée à la rédaction de cette spec, à confirmer en début de run).
+5. **Adapter le frontend** pour afficher les durées effectives (déjà côté serveur — le front consomme l'effectif).
+6. **Tests** : un test BFTC par axe vérifiant que `tempo.overrides` surcharge bien `global`, qu'à `global = 1.0` sans override on retombe sur les valeurs absolues post-recalibrage (snapshot du Standard MVP), et qu'à `global = 0.5` on observe bien des durées de moitié et des débits doublés.
+7. **Smoke fixtures** : mettre à jour `battleforthecrown-backend/test/fixtures/smoke-world-config.ts` pour utiliser `tempo` au lieu de `gameSpeed`. Les valeurs ultra-compressées du smoke (gameSpeed 100/1000) se traduisent en `tempo` ultra-petit (~0.01).
 
-🎯 **Lecture design** : la migration touche surtout la **plomberie** (résolution `absolu × multiplier`), pas l'archi. Aucun impact sur le pattern Outbox, le combat, le scout, les styles, l'inbox.
+🎯 **Lecture design** : la migration touche surtout la **plomberie** (résolution par axe via `TempoService`), pas l'archi. Aucun impact sur le pattern Outbox, le combat, le scout, les styles, l'inbox. Le clean cut est possible parce que rien n'est en prod — on ne se l'autorisera plus après le go-live.
 
 ## 9. Questions ouvertes (à trancher en playtest, pas bloquantes pour cette spec)
 
 | Question | Position de réflexion actuelle |
 |---|---|
-| Valeur exacte du compressor pour le Standard MVP | Cible : ×0.20-0.25 vs Tribal Wars classique (= 4-5× plus rapide). À calibrer en playtest sur la session « 60 j ressentis comme 60 j », pas comme 30 ou 120. |
+| Valeur exacte du compressor pour le Standard MVP | Cible : `tempo ≈ 0.20-0.25` vs Tribal Wars classique (= 4-5× plus rapide). À calibrer en playtest sur la session « 60 j ressentis comme 60 j », pas comme 30 ou 120. |
 | Faut-il splitter `barbarianRegen` en `barbarianRegenTroops` / `barbarianRegenResources` ? | Pas au MVP. Garder un seul axe. Si playtest montre besoin de découpler (ex : Speed avec ressources rapides mais troupes normales), on splittera post-MVP. |
-| Le bouclier débutant (48 h) doit-il scaler avec `tempo` ? | **Non** au MVP. C'est du temps réel humain (« deux soirs »), pas du temps de jeu. Une compression du tempo ne change pas le rythme de découverte d'un nouveau joueur. |
-| Faut-il recalibrer la durée d'abandon (14 j) ? | À vérifier en post-MVP. 14 j sur 60 j = 23 % — sans doute à descendre à 7 j sur Standard. Mais c'est lié à [`18`](./18-inactivity-and-abandonment.md), post-MVP. |
+| Faut-il recalibrer la durée d'abandon (14 j) ? | À vérifier en post-MVP. 14 j sur 60 j = 23 % — sans doute à descendre à 7 j sur Standard. Reste **wall-clock** dans tous les cas (cf. § 6.1). |
 | UX joueur : afficher le `tempo.global` du monde dans la liste des mondes ? | Probablement oui post-MVP (« Standard », « Speed ×1.5 » comme label). Pas critique au MVP (un seul type de monde). |
-| Les fenêtres `OPEN main` / `OPEN late` doivent-elles scaler avec la durée du monde ou rester en absolu ? | À trancher dans la passe de recalibration de [`19`](./19-world-lifecycle.md). Hypothèse : ratio ~25 % de la durée totale (15 j sur 60 j → cohorte 10 j + retardataires 5 j). |
+| Les fenêtres `OPEN main` / `OPEN late` doivent-elles scaler avec la durée du monde ou rester en absolu ? | À trancher dans la passe de recalibration de [`19`](./19-world-lifecycle.md). Hypothèse : ratio ~15-20 % de la durée totale (déjà 7 + 3 = 10 j sur 60 j Standard MVP). |
+| Bonus de classement post-MVP avec durée fixe (ex : Architectes +5 % prod pendant 7 j) | À cadrer quand [`09`](./09-power-and-rankings.md) sortira du chantier. Hypothèse : les durées de bonus sont **wall-clock** (rythme hebdomadaire, comme le reset des classements), pas tempo. |
 | Les 4 multipliers économiques (`resourceProduction`, `crownsYield`, `barbarianRegen`, `unitTrainingSpeed`) doivent-ils suivre une règle de cohérence (ex : si `resourceProduction` augmente, `crownsYield` doit suivre) ? | Pas de couplage forcé au MVP. Documenter les couples « cohérents » et laisser au designer de monde. |
 
 ## 10. Rappel : ce que cette spec ne fait pas
