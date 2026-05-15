@@ -1,0 +1,104 @@
+import { describe, expect, it } from 'vitest';
+import type { CombatReportDto } from '@/api/queries';
+import {
+  buildCombatReportModalProps,
+  combatReportOutcome,
+} from './combatReportView';
+
+const report: CombatReportDto = {
+  id: 'abcdef123456',
+  worldId: 'world-1',
+  attackerVillageId: 'v-attacker',
+  attackerUserId: 'u-attacker',
+  defenderVillageId: 'v-defender',
+  defenderUserId: 'u-defender',
+  targetKind: 'PLAYER_VILLAGE',
+  targetX: 12,
+  targetY: 34,
+  loot: {
+    remainingResources: { iron: 0, stone: 50, wood: 100 },
+    resources: { iron: 0, stone: 25, wood: 75 },
+  },
+  totalUnitsAttacker: { ARCHER: 10, WARRIOR: 20 },
+  totalUnitsDefender: { MILITIA: 15 },
+  lossesAttacker: { ARCHER: 2, WARRIOR: 20 },
+  lossesDefender: { MILITIA: 15 },
+  details: { targetTier: null },
+  isRead: false,
+  isAttacker: true,
+  timestamp: '2026-05-12T10:00:00.000Z',
+  createdAt: '2026-05-12T10:00:00.000Z',
+};
+
+describe('combatReportView', () => {
+  it('maps attacker reports to the design-system combat modal props', () => {
+    const props = buildCombatReportModalProps(report, [
+      { id: 'close', label: 'Fermer', tone: 'neutral' },
+    ]);
+
+    expect(props.battleId).toBe('#ABCDEF');
+    expect(props.banner).toBe('VICTOIRE');
+    expect(props.outcome).toBe('win');
+    expect(props.roleLabel).toBe('Attaquant');
+    expect(props.type).toBe('Pillage offensif');
+    expect(props.attacker).toEqual({
+      coord: '—',
+      name: 'Vous',
+      place: 'Votre village',
+    });
+    expect(props.defender).toEqual({
+      coord: '12|34',
+      name: 'Village joueur',
+      place: 'Village joueur',
+    });
+    expect(props.attackerUnits).toEqual([
+      expect.objectContaining({ lost: 2, name: 'Archers', sent: 10 }),
+      expect.objectContaining({ lost: 20, name: 'Guerriers', sent: 20 }),
+    ]);
+    expect(props.defenderUnits).toEqual([
+      expect.objectContaining({ lost: 15, name: 'Milices de paysans', sent: 15 }),
+    ]);
+    expect(props.highlight).toEqual(
+      expect.objectContaining({
+        kind: 'loot',
+        title: 'Butin ramené',
+        chips: [
+          expect.objectContaining({ remainingValue: '175', value: '75' }),
+          expect.objectContaining({ remainingValue: '75', value: '25' }),
+        ],
+      }),
+    );
+  });
+
+  it('flips the outcome for defense reports', () => {
+    const defenseReport: CombatReportDto = {
+      ...report,
+      isAttacker: false,
+      lossesAttacker: { ARCHER: 10, WARRIOR: 20 },
+      lossesDefender: { MILITIA: 4 },
+      targetKind: 'BARBARIAN_VILLAGE',
+      details: { targetTier: 'T2' },
+    };
+
+    expect(combatReportOutcome(defenseReport)).toEqual({
+      isVictory: true,
+      outcome: 'win',
+    });
+
+    const props = buildCombatReportModalProps(defenseReport, []);
+
+    expect(props.roleLabel).toBe('Défenseur');
+    expect(props.type).toBe('Défense du village');
+    expect(props.defender).toEqual({
+      coord: '12|34',
+      name: 'Vous',
+      place: 'Village barbare T2',
+    });
+    expect(props.highlight).toEqual(
+      expect.objectContaining({
+        kind: 'lootLost',
+        title: 'Ressources pillées',
+      }),
+    );
+  });
+});
