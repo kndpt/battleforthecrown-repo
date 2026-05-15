@@ -233,7 +233,6 @@ function CombatReportDetail({
                 { id: 'close', label: 'Fermer', tone: 'neutral' },
               ],
               handleAction,
-              onClose,
             )}
           />
         )}

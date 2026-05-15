@@ -135,16 +135,12 @@ const troopDetailFixture = {
 
 const combatReportLabels = {
   attackerTitle: 'Attaquant',
-  close: 'Fermer',
   defenderTitle: 'Défenseur',
-  eyebrow: 'Messagerie · Rapport de combat',
   lossesTitle: 'Pertes sur le champ',
   reportPrefix: 'Rapport',
-  titleLose: 'Défaite au combat',
-  titleWin: 'Victoire au combat',
 };
 
-const combatReportWin: Omit<CombatReportModalProps, 'actions' | 'labels' | 'onAction' | 'onClose'> = {
+const combatReportWin: Omit<CombatReportModalProps, 'actions' | 'labels' | 'onAction'> = {
   attacker: { coord: '234|612', name: 'Vous', place: 'Castelnef' },
   attackerUnits: [
     { icon: '/assets/army/squire.png', lost: 18, name: 'Squires', sent: 120 },
@@ -175,7 +171,7 @@ const combatReportWin: Omit<CombatReportModalProps, 'actions' | 'labels' | 'onAc
   when: 'Il y a 12 min',
 };
 
-const combatReportLose: Omit<CombatReportModalProps, 'actions' | 'labels' | 'onAction' | 'onClose'> = {
+const combatReportLose: Omit<CombatReportModalProps, 'actions' | 'labels' | 'onAction'> = {
   attacker: { coord: '198|580', name: 'Dame_Aliénor', place: 'Tours-Hautes' },
   attackerUnits: [
     { icon: '/assets/army/savage.png', lost: 22, name: 'Sauvages', sent: 180 },
@@ -1795,7 +1791,6 @@ export function DesignSystemPreview() {
                   ]}
                   labels={combatReportLabels}
                   onAction={(action) => setCombatReportAction(`Victoire: ${action.label}`)}
-                  onClose={() => setCombatReportAction('Fermeture victoire')}
                 />
               </CombatReportPhoneFrame>
             </div>
@@ -1812,7 +1807,6 @@ export function DesignSystemPreview() {
                   ]}
                   labels={combatReportLabels}
                   onAction={(action) => setCombatReportAction(`Défaite: ${action.label}`)}
-                  onClose={() => setCombatReportAction('Fermeture défaite')}
                 />
               </CombatReportPhoneFrame>
             </div>

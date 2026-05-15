@@ -42,13 +42,9 @@ export interface CombatReportAction {
 
 export interface CombatReportModalLabels {
   attackerTitle: string;
-  close: string;
   defenderTitle: string;
-  eyebrow: string;
   lossesTitle: string;
   reportPrefix: string;
-  titleLose: string;
-  titleWin: string;
 }
 
 export interface CombatReportModalProps {
@@ -66,7 +62,6 @@ export interface CombatReportModalProps {
   maxHeight?: number | string;
   motto: string;
   onAction?: (action: CombatReportAction) => void;
-  onClose?: () => void;
   outcome: CombatReportOutcome;
   roleLabel: string;
   type: string;
@@ -353,7 +348,6 @@ export function CombatReportModal({
   maxHeight = 680,
   motto,
   onAction,
-  onClose,
   outcome,
   roleLabel,
   type,
@@ -383,21 +377,9 @@ export function CombatReportModal({
     <BaseModal
       bodyClassName="flex min-h-0 flex-1 flex-col p-0"
       className={className}
-      closeLabel={labels.close}
       footer={footer}
       footerClassName="flex flex-col gap-[9px]"
       maxHeight={maxHeight}
-      onClose={onClose}
-      title={
-        <div>
-          <div className="font-game text-[9.5px] font-bold uppercase tracking-[.3em] text-[#6d5838]">
-            {labels.eyebrow}
-          </div>
-          <div className="font-game text-base font-extrabold tracking-[.02em] text-[#3d2f1f] [text-shadow:0_1px_0_rgba(255,255,255,.5)]">
-            {outcome === 'win' ? labels.titleWin : labels.titleLose}
-          </div>
-        </div>
-      }
       tone={outcomeTone[outcome].accent}
       width={width}
     >

@@ -14,13 +14,9 @@ import type {
 
 export const combatReportLabels: CombatReportModalLabels = {
   attackerTitle: 'Attaquant',
-  close: 'Fermer',
   defenderTitle: 'Défenseur',
-  eyebrow: 'Messagerie · Rapport de combat',
   lossesTitle: 'Pertes sur le champ',
   reportPrefix: 'Rapport',
-  titleLose: 'Défaite au combat',
-  titleWin: 'Victoire au combat',
 };
 
 const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
@@ -138,7 +134,6 @@ export function buildCombatReportModalProps(
   report: CombatReportDto,
   actions: CombatReportAction[],
   onAction?: (action: CombatReportAction) => void,
-  onClose?: () => void,
 ): CombatReportModalProps {
   const { isVictory, outcome } = combatReportOutcome(report);
   const target = targetLabel(report);
@@ -176,7 +171,6 @@ export function buildCombatReportModalProps(
       ? '« Le champ de bataille vous appartient. »'
       : '« Le rapport consigne vos pertes. »',
     onAction,
-    onClose,
     outcome,
     roleLabel: report.isAttacker ? 'Attaquant' : 'Défenseur',
     type,
