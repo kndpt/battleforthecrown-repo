@@ -151,7 +151,7 @@ function ModalShell({
 }) {
   return (
     <div
-      className="relative flex h-[calc(100dvh-32px)] max-h-[760px] w-[calc(100vw-32px)] max-w-[430px] flex-col overflow-hidden rounded-2xl border-4 border-[#3c2619] bg-[linear-gradient(to_bottom,#fef9f0,#e8d4a8)] shadow-[0_0_0_2px_var(--modal-accent),0_12px_32px_rgba(0,0,0,.6),inset_0_2px_0_rgba(255,255,255,.55)]"
+      className="relative flex max-h-[calc(100dvh-32px)] w-[calc(100vw-32px)] max-w-[430px] flex-col overflow-hidden rounded-2xl border-4 border-[#3c2619] bg-[linear-gradient(to_bottom,#fef9f0,#e8d4a8)] shadow-[0_0_0_2px_var(--modal-accent),0_12px_32px_rgba(0,0,0,.6),inset_0_2px_0_rgba(255,255,255,.55)]"
       style={{ '--modal-accent': accent } as CSSProperties}
     >
       <div
@@ -376,7 +376,9 @@ export function VillageStyleModal({
           body={
             <>
               <div className="relative px-3.5 pt-3">
-                <VillageStyleHeroCard current={current} index={index} option={option} total={options.length} />
+                <div className="animate-fade-in" key={option.id}>
+                  <VillageStyleHeroCard current={current} index={index} option={option} total={options.length} />
+                </div>
                 <button
                   aria-label="Voie précédente"
                   className="absolute left-[-2px] top-1/2 z-[2] size-auto h-11 w-8 -translate-y-1/2 cursor-pointer rounded-[10px] border-2 border-[#3c2619] bg-[linear-gradient(to_bottom,#a67c52,#5d4a32)] font-game text-lg font-black text-white shadow-[inset_0_1px_0_rgba(255,255,255,.3),0_2px_0_rgba(0,0,0,.25)] [text-shadow:1px_1px_1px_rgba(0,0,0,.5)]"

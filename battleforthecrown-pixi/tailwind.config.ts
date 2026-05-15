@@ -40,9 +40,14 @@ const config: Config = {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(100%)' },
         },
+        'fade-in': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
       },
       animation: {
         shimmer: 'shimmer 2s infinite',
+        'fade-in': 'fade-in 180ms ease-out',
       },
     },
   },
