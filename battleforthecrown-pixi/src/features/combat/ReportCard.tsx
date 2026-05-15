@@ -1,5 +1,6 @@
 import { Badge, Card } from '@/ui';
 import type { CombatReportDto } from '@/api/queries';
+import { combatReportOutcome } from './combatReportView';
 
 interface ReportCardProps {
   report: CombatReportDto;
@@ -37,9 +38,7 @@ export function ReportCard({ report, onClick }: ReportCardProps) {
     (report.loot?.resources?.stone ?? 0) +
     (report.loot?.resources?.iron ?? 0);
 
-  const isVictory = report.isAttacker
-    ? defenderLosses >= attackerLosses
-    : attackerLosses >= defenderLosses;
+  const { isVictory } = combatReportOutcome(report);
   const lossesForPlayer = report.isAttacker ? attackerLosses : defenderLosses;
   const typeIcon = report.isAttacker ? '⚔️' : '🛡️';
   const typeLabel = report.isAttacker ? 'Attaque' : 'Défense';

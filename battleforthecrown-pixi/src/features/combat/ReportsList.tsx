@@ -13,6 +13,7 @@ import {
   scoutReportTitle,
   scoutReportUnitTotal,
 } from './scoutReportView';
+import { combatReportOutcome } from './combatReportView';
 
 export type InboxReportSummary =
   | { kind: 'combat'; report: CombatReportDto }
@@ -37,20 +38,12 @@ function formatDate(value: string): string {
   });
 }
 
-function totalQty(map: Record<string, number> | undefined): number {
-  return Object.values(map ?? {}).reduce((sum, value) => sum + value, 0);
-}
-
 function combatInboxItem(report: CombatReportDto) {
-  const attackerLosses = totalQty(report.lossesAttacker);
-  const defenderLosses = totalQty(report.lossesDefender);
   const totalLoot =
     (report.loot?.resources?.wood ?? 0) +
     (report.loot?.resources?.stone ?? 0) +
     (report.loot?.resources?.iron ?? 0);
-  const isVictory = report.isAttacker
-    ? defenderLosses >= attackerLosses
-    : attackerLosses >= defenderLosses;
+  const { isVictory } = combatReportOutcome(report);
 
   return {
     icon: report.isAttacker ? '/assets/hand-red.png' : '/assets/hand-silver.png',

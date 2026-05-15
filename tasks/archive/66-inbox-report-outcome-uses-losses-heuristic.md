@@ -1,7 +1,7 @@
 # 66 — Inbox combat : tag VICTOIRE/DÉFAITE faux dans la liste
 
 **Sévérité** : 🟡 Majeur
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ DONE
 **Spec amont** : Aucune (logique canonique : `packages/shared/src/combat/utils.ts` — `isVictoryForAttacker`)
 
 ## Symptôme
@@ -53,8 +53,14 @@ Le modal, lui, passe par `combatReportOutcome()` (`features/combat/combatReportV
 
 ## Critères de succès
 
-- [ ] Inbox : un rapport « attaquant wipe » s'affiche `DÉFAITE` côté attaquant et `VICTOIRE` côté défenseur.
-- [ ] Inbox et modal toujours cohérents pour le même rapport.
-- [ ] Heuristique locale supprimée des deux composants liste (plus aucun `defenderLosses >= attackerLosses` dans `features/combat/`).
-- [ ] Test unit couvrant le cas wipe attaquant vert.
-- [ ] `yarn static-check` vert.
+- [x] Inbox : un rapport « attaquant wipe » s'affiche `DÉFAITE` côté attaquant et `VICTOIRE` côté défenseur.
+- [x] Inbox et modal toujours cohérents pour le même rapport.
+- [x] Heuristique locale supprimée des deux composants liste (plus aucun `defenderLosses >= attackerLosses` dans `features/combat/`).
+- [x] Test unit couvrant le cas wipe attaquant vert.
+- [x] `yarn static-check` vert.
+
+## Résolution
+
+- `ReportsList.tsx` et `ReportCard.tsx` réutilisent `combatReportOutcome(report).isVictory`, la même source que le modal.
+- `combatReportView.test.ts` couvre le cas attaquant wipe et le cas attaquant survivant malgré des pertes lourdes.
+- Vérifié par `yarn workspace battleforthecrown-pixi test src/features/combat/combatReportView.test.ts` et `yarn static-check`.

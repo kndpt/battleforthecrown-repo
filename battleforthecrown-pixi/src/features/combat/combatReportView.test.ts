@@ -101,4 +101,38 @@ describe('combatReportView', () => {
       }),
     );
   });
+
+  it('marks attacker wipe as defeat for attacker and victory for defender', () => {
+    const attackerWipeReport: CombatReportDto = {
+      ...report,
+      totalUnitsAttacker: { ARCHER: 16, WARRIOR: 20 },
+      totalUnitsDefender: { ARCHER: 146 },
+      lossesAttacker: { ARCHER: 16, WARRIOR: 20 },
+      lossesDefender: { ARCHER: 49 },
+    };
+
+    expect(combatReportOutcome(attackerWipeReport)).toEqual({
+      isVictory: false,
+      outcome: 'lose',
+    });
+    expect(combatReportOutcome({ ...attackerWipeReport, isAttacker: false })).toEqual({
+      isVictory: true,
+      outcome: 'win',
+    });
+  });
+
+  it('marks attacker survival as victory even with heavier attacker losses', () => {
+    const costlyVictoryReport: CombatReportDto = {
+      ...report,
+      totalUnitsAttacker: { ARCHER: 20, WARRIOR: 20 },
+      totalUnitsDefender: { MILITIA: 10 },
+      lossesAttacker: { ARCHER: 19, WARRIOR: 20 },
+      lossesDefender: { MILITIA: 10 },
+    };
+
+    expect(combatReportOutcome(costlyVictoryReport)).toEqual({
+      isVictory: true,
+      outcome: 'win',
+    });
+  });
 });
