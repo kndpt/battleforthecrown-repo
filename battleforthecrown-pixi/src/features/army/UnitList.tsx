@@ -9,11 +9,12 @@ interface UnitListProps {
   trainings: ArmyTrainingDto[];
   barracksLevel: number;
   onUnitClick: (unit: ArmyUnitDto) => void;
+  onUpgradeBarracks?: () => void;
 }
 
 const UNIT_ORDER = Object.values(UNIT_TYPES) as string[];
 
-export function UnitList({ units, trainings, barracksLevel, onUnitClick }: UnitListProps) {
+export function UnitList({ units, trainings, barracksLevel, onUnitClick, onUpgradeBarracks }: UnitListProps) {
   const sorted = units.filter((unit) => unit.type !== UNIT_TYPES.NOBLE).sort((a, b) => {
     const ai = UNIT_ORDER.indexOf(a.type);
     const bi = UNIT_ORDER.indexOf(b.type);
@@ -121,6 +122,7 @@ export function UnitList({ units, trainings, barracksLevel, onUnitClick }: UnitL
                 barracksLevel={barracksLevel}
                 training={undefined}
                 onClick={onUnitClick}
+                onUpgradeBarracks={onUpgradeBarracks}
               />
             ))}
           </div>

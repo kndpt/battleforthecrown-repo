@@ -18,6 +18,7 @@ import {
 import { useGameStore } from '@/stores/game';
 import type { ArmyUnitDto } from '@/api/queries';
 import type { KingdomActivityTab } from '@/features/design-system/components';
+import { BuildingDetailModal } from '@/features/village/BuildingDetailModal';
 import { unitMetaFor } from './unitConfig';
 import { UnitList } from './UnitList';
 import { UnitDetailModal } from './UnitDetailModal';
@@ -57,6 +58,7 @@ export function ArmyScreen() {
   const recallReinforcement = useRecallReinforcementMutation();
 
   const [selectedUnit, setSelectedUnit] = useState<ArmyUnitDto | null>(null);
+  const [isBarracksModalOpen, setIsBarracksModalOpen] = useState(false);
   const [isPowerSheetOpen, setIsPowerSheetOpen] = useState(false);
   const [isExpeditionsOpen, setIsExpeditionsOpen] = useState(false);
   const [kingdomActivityTab, setKingdomActivityTab] = useState<KingdomActivityTab>('expeditions');
@@ -158,6 +160,7 @@ export function ArmyScreen() {
               trainings={trainings}
               barracksLevel={barracksLevel}
               onUnitClick={(u) => setSelectedUnit(u)}
+              onUpgradeBarracks={barracks ? () => setIsBarracksModalOpen(true) : undefined}
             />
           )}
 
@@ -348,6 +351,14 @@ export function ArmyScreen() {
         <UnitDetailModal
           unit={selectedUnit}
           onClose={() => setSelectedUnit(null)}
+        />
+      )}
+
+      {isBarracksModalOpen && barracks && villageId && (
+        <BuildingDetailModal
+          villageId={villageId}
+          building={barracks}
+          onClose={() => setIsBarracksModalOpen(false)}
         />
       )}
 

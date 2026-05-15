@@ -37,6 +37,7 @@ interface UnitCardProps {
   barracksLevel: number;
   training: ArmyTrainingDto | undefined;
   onClick: (unit: ArmyUnitDto) => void;
+  onUpgradeBarracks?: () => void;
 }
 
 function formatProgressTime(ms: number): string {
@@ -63,6 +64,7 @@ export function UnitCard({
   barracksLevel,
   training,
   onClick,
+  onUpgradeBarracks,
 }: UnitCardProps) {
   const villageId = useGameStore((state) => state.villageId);
   const worldId = useGameStore((state) => state.worldId);
@@ -391,14 +393,18 @@ export function UnitCard({
             </Button>
           ) : isLocked ? (
             <Button
-              variant="neutral"
+              variant="warning"
               size="sm"
-              className="w-full opacity-60"
-              disabled
+              className="w-full font-bold"
+              onClick={(event) => {
+                event.stopPropagation();
+                onUpgradeBarracks?.();
+              }}
+              disabled={!onUpgradeBarracks}
             >
               <div className="flex items-center justify-center gap-1.5 text-xs">
-                <Lock size={14} />
-                <span>Verrouillé</span>
+                <Lock size={16} />
+                <span>Monter la caserne</span>
               </div>
             </Button>
           ) : (
