@@ -29,7 +29,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ### Runs actifs
 
-_(Aucun run actif.)_
+- [025 — Puissance armée rattachée au village d'origine](./runs/025-fix-origin-anchored-army-power.md) — 📋 `PLANNED`. Revoir le calcul power pour compter les troupes par origine réelle plutôt que par présence physique.
 
 ### Runs archivés
 
