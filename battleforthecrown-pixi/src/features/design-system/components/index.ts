@@ -22,6 +22,20 @@ export { CinzelDisplaySample } from './CinzelDisplaySample';
 export type { CinzelDisplayLine, CinzelDisplayLineVariant, CinzelDisplaySampleProps } from './CinzelDisplaySample';
 export { ColorSwatchTile } from './ColorSwatchTile';
 export type { ColorSwatchTileProps } from './ColorSwatchTile';
+export { CombatReportModal, CombatReportPhoneFrame } from './CombatReportModal';
+export type {
+  CombatReportAction,
+  CombatReportActionId,
+  CombatReportHighlight,
+  CombatReportHighlightChip,
+  CombatReportHighlightKind,
+  CombatReportModalLabels,
+  CombatReportModalProps,
+  CombatReportOutcome,
+  CombatReportParticipant,
+  CombatReportUnit,
+  CombatReportUnitSide,
+} from './CombatReportModal';
 export { CostPill, CostRow } from './CostRow';
 export type { CostPillProps, CostPillSize, CostRowProps } from './CostRow';
 export { EmptyState } from './EmptyState';

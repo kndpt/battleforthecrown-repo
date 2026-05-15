@@ -17,6 +17,8 @@ import {
   ChatPanel,
   CinzelDisplaySample,
   ColorSwatchTile,
+  CombatReportModal,
+  CombatReportPhoneFrame,
   CostPill,
   CostRow,
   DarkSegmentedStage,
@@ -62,6 +64,7 @@ import {
   VillageStyleTrigger,
   type CaptureWindowCardProps,
   type ChatMessage,
+  type CombatReportModalProps,
   type ExpeditionActivityCardProps,
   type KingdomActivitiesPanelLabels,
   type KingdomActivityTab,
@@ -128,6 +131,79 @@ const troopDetailFixture = {
   tagline: '« Frappe d’abord. Dort sous les armes. »',
   tierBadge: 'II',
   trainingTime: '1 m 35 s',
+};
+
+const combatReportLabels = {
+  attackerTitle: 'Attaquant',
+  close: 'Fermer',
+  defenderTitle: 'Défenseur',
+  eyebrow: 'Messagerie · Rapport de combat',
+  lossesTitle: 'Pertes sur le champ',
+  reportPrefix: 'Rapport',
+  titleLose: 'Défaite au combat',
+  titleWin: 'Victoire au combat',
+};
+
+const combatReportWin: Omit<CombatReportModalProps, 'actions' | 'labels' | 'onAction' | 'onClose'> = {
+  attacker: { coord: '234|612', name: 'Vous', place: 'Castelnef' },
+  attackerUnits: [
+    { icon: '/assets/army/squire.png', lost: 18, name: 'Squires', sent: 120 },
+    { icon: '/assets/army/archer.png', lost: 4, name: 'Archers', sent: 60 },
+  ],
+  battleId: '#7421-A',
+  banner: 'VICTOIRE',
+  defender: { coord: '238|617', name: 'Sire_Robert', place: "Roc-d'Acier" },
+  defenderUnits: [
+    { icon: '/assets/army/militia.png', lost: 80, name: 'Miliciens', sent: 80 },
+    { icon: '/assets/army/templar.png', lost: 5, name: 'Templiers', sent: 5 },
+  ],
+  highlight: {
+    chips: [
+      { icon: '/assets/resources/wood.png', remainingValue: '8.760', value: '1.240' },
+      { icon: '/assets/resources/stone.png', remainingValue: '4.180', value: '820' },
+      { icon: '/assets/resources/iron.png', remainingValue: '2.160', value: '340' },
+      { icon: '/assets/casual-icons/coin.png', remainingValue: '6.800', value: '1.200' },
+    ],
+    kind: 'loot',
+    title: 'Butin ramené',
+  },
+  isPlayerAttacker: true,
+  motto: '« Les corbeaux suivent vos étendards. »',
+  outcome: 'win',
+  roleLabel: 'Attaquant',
+  type: 'Pillage offensif',
+  when: 'Il y a 12 min',
+};
+
+const combatReportLose: Omit<CombatReportModalProps, 'actions' | 'labels' | 'onAction' | 'onClose'> = {
+  attacker: { coord: '198|580', name: 'Dame_Aliénor', place: 'Tours-Hautes' },
+  attackerUnits: [
+    { icon: '/assets/army/savage.png', lost: 22, name: 'Sauvages', sent: 180 },
+    { icon: '/assets/army/templar.png', lost: 6, name: 'Templiers', sent: 40 },
+  ],
+  battleId: '#7424-D',
+  banner: 'DÉFAITE',
+  defender: { coord: '234|612', name: 'Vous', place: 'Castelnef' },
+  defenderUnits: [
+    { icon: '/assets/army/militia.png', lost: 160, name: 'Miliciens', sent: 160 },
+    { icon: '/assets/army/squire.png', lost: 60, name: 'Squires', sent: 80 },
+  ],
+  highlight: {
+    chips: [
+      { icon: '/assets/resources/wood.png', remainingValue: '7.880', value: '1.120' },
+      { icon: '/assets/resources/stone.png', remainingValue: '3.360', value: '640' },
+      { icon: '/assets/resources/iron.png', remainingValue: '1.580', value: '420' },
+      { icon: '/assets/casual-icons/coin.png', remainingValue: '2.900', value: '1.300' },
+    ],
+    kind: 'lootLost',
+    title: 'Butin perdu',
+  },
+  isPlayerAttacker: false,
+  motto: '« Les murs ont tenu — vos hommes, non. »',
+  outcome: 'lose',
+  roleLabel: 'Défenseur',
+  type: 'Défense du village',
+  when: 'Il y a 1h 04',
 };
 
 const kingdomActivityLabels: KingdomActivitiesPanelLabels = {
@@ -318,6 +394,7 @@ export function DesignSystemPreview() {
   const [villageStyleOpen, setVillageStyleOpen] = useState(true);
   const [villageStyle, setVillageStyle] = useState<VillageStyleId>('RAIDERS');
   const [victoryModalOpen, setVictoryModalOpen] = useState(false);
+  const [combatReportAction, setCombatReportAction] = useState('Aucune action');
 
   return (
     <main className="min-h-full overflow-y-auto bg-[#f5e6d3] p-[18px] text-[#1f2937]">
@@ -1694,6 +1771,51 @@ export function DesignSystemPreview() {
               state="locked"
               title="Améliorer le château au niv. 5"
             />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="font-game text-2xl font-bold text-[#1f2937]">CombatReportModal</h2>
+            <span className="font-mono text-[10px] text-[#5d4a32]">
+              messagerie · rapport de combat · dernière action: {combatReportAction}
+            </span>
+          </div>
+          <div className="flex w-full flex-wrap items-start justify-center gap-7">
+            <div className="flex flex-col items-center gap-2.5">
+              <span className="rounded-full border border-[rgba(126,199,78,.4)] px-2.5 py-1 font-game text-[10px] font-extrabold uppercase tracking-[.28em] text-[#3a6c1f]">
+                Variante · Victoire (pillage)
+              </span>
+              <CombatReportPhoneFrame outcome="win">
+                <CombatReportModal
+                  {...combatReportWin}
+                  actions={[
+                    { id: 'details', label: 'Détails', tone: 'neutral' },
+                    { id: 'share', label: 'Partager', tone: 'success' },
+                  ]}
+                  labels={combatReportLabels}
+                  onAction={(action) => setCombatReportAction(`Victoire: ${action.label}`)}
+                  onClose={() => setCombatReportAction('Fermeture victoire')}
+                />
+              </CombatReportPhoneFrame>
+            </div>
+            <div className="flex flex-col items-center gap-2.5">
+              <span className="rounded-full border border-[rgba(231,76,60,.4)] px-2.5 py-1 font-game text-[10px] font-extrabold uppercase tracking-[.28em] text-[#a93226]">
+                Variante · Défaite (défense)
+              </span>
+              <CombatReportPhoneFrame outcome="lose">
+                <CombatReportModal
+                  {...combatReportLose}
+                  actions={[
+                    { id: 'details', label: 'Détails', tone: 'neutral' },
+                    { id: 'retaliate', label: 'Riposter', tone: 'danger' },
+                  ]}
+                  labels={combatReportLabels}
+                  onAction={(action) => setCombatReportAction(`Défaite: ${action.label}`)}
+                  onClose={() => setCombatReportAction('Fermeture défaite')}
+                />
+              </CombatReportPhoneFrame>
+            </div>
           </div>
         </section>
 
