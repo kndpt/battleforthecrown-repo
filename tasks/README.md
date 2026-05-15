@@ -4,6 +4,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
+- [65 — Distinguer mes villages des villages joueurs étrangers sur la WorldMap](./65-own-vs-foreign-villages-map-distinction.md) — 🟠 Moyen. Mes villages non-actifs et les villages joueurs étrangers partagent la même couleur dorée sur la grande carte ; introduire une palette dédiée aux étrangers.
 - [64 — Supprimer la table miroir `WorldEntity` devenue morte](./64-remove-deprecated-world-entity.md) — 🟠 Moyen. Nettoyer le modèle legacy maintenant que `/world/:worldId/entities` lit les villages depuis `Village`.
 - [57 — Source canonique du lifecycle des bâtiments joueur](./57-player-village-building-lifecycle-roster.md) — 🟡 Majeur. Centraliser la politique join/conquête/backfill des bâtiments pour éviter les oublis à chaque nouveau bâtiment activé.
 - [51 — Standardiser les bottom sheets sur le design `Activités du royaume`](./51-bottom-sheet-design-system-base.md) — 🟠 Moyen. Faire du nouveau panneau la base design-system des bottom sheets actuels et futurs.
