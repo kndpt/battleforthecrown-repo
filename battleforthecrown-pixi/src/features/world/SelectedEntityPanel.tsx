@@ -1,7 +1,6 @@
 import { MapEntityCallout } from '@/features/design-system/components';
 import { useArmyInventoryQuery, useGarrisonQuery } from '@/api/queries';
 import type { MapEntity } from '@/api/world-types';
-import { getBarbarianCaptureDurationLabel } from './barbarianConquest';
 import { buildTroopsSection, summarizePresentTroops } from './selectedEntityTroops';
 
 interface SelectedEntityPanelProps {
@@ -108,10 +107,7 @@ export function SelectedEntityPanel({
     <MapEntityCallout
       actions={actions}
       coordinates={`${entity.x}|${entity.y}`}
-      sections={[
-        ...(isBarbarian ? captureSectionsFor(entity) : []),
-        ...(troopSection ? [troopSection] : []),
-      ]}
+      sections={troopSection ? [troopSection] : []}
       subtitle={subtitleFor(entity)}
       tier={entity.tier ? { label: `★ ${entity.tier}` } : undefined}
       title={entity.name}
@@ -123,23 +119,6 @@ export function SelectedEntityPanel({
 function subtitleFor(entity: MapEntity): string {
   if (entity.kind === 'BARBARIAN_VILLAGE') return 'Inhabité · pillable';
   return typeLabel(entity);
-}
-
-function captureSectionsFor(entity: MapEntity) {
-  const duration = getBarbarianCaptureDurationLabel(entity.tier);
-  if (!duration) return [];
-
-  return [
-    {
-      title: 'Capture',
-      rows: [
-        { label: 'Durée de conquête', value: duration },
-        ...(entity.captureWindow
-          ? [{ label: 'Statut', value: 'Capture en cours' }]
-          : []),
-      ],
-    },
-  ];
 }
 
 function troopsSectionFor(
