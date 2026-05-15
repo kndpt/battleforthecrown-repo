@@ -30,10 +30,10 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 ### Runs actifs
 
 - [025 — Puissance armée rattachée au village d'origine](./runs/025-fix-origin-anchored-army-power.md) — 📋 `PLANNED`. Revoir le calcul power pour compter les troupes par origine réelle plutôt que par présence physique.
-- [027 — Cartes quotidiennes & Oyez frontend/HUD](./runs/027-feature-daily-cards-oyez-frontend-hud.md) — 📋 `PLANNED`. Brancher le HUD top, la sheet quotidienne, l'Oyez visible et le claim côté Pixi.
 
 ### Runs archivés
 
+- [027 — Cartes quotidiennes & Oyez frontend/HUD](./runs/archive/027-feature-daily-cards-oyez-frontend-hud.md) — ✅ `DONE` (2026-05-15). HUD top permanent, sheet quotidienne/Oyez, claim village, invalidations retention et test Pixi.
 - [026 — Cartes quotidiennes & Oyez backend/shared](./runs/archive/026-feature-daily-cards-oyez-backend-shared.md) — ✅ `DONE` (2026-05-15). Socle runtime Phase 10 : modèles daily/Oyez, API retention, projection idempotente des events Outbox, claim ressources et smoke backend.
 - [023 — Runtime toasts migrés sur le design-system](./runs/archive/023-migrate-runtime-toasts-design-system.md) — ✅ `DONE` (2026-05-14). `ToastStack` rend le toast design-system, mapping `error -> danger`, close/TTL testés et labels runtime localisés.
 - [024 — Modal Victoire de conquête](./runs/archive/024-feature-conquest-victory-modal.md) — ✅ `DONE` (2026-05-14). Payload `village.conquered` enrichi de `villageName`, store UI étendu avec queue FIFO de modaux victoire, composant `VictoryModal` porté du design-system, host singleton dans `App.tsx`, CTA "Voir le village" qui recentre la WorldMap via `pendingFocus`, tests unit ajoutés.

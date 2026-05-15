@@ -98,6 +98,7 @@ export function applyBuildingCompleted(
   ctx.queryClient.invalidateQueries({ queryKey: ['resources', payload.villageId] });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.villageStrategy(payload.villageId) });
   invalidatePowerQueries(ctx, payload.villageId);
+  invalidateRetentionSummary(ctx);
   useUiStore.getState().pushToast({
     tone: 'success',
     title: 'Construction terminée',
@@ -114,6 +115,7 @@ export function applyUnitTrained(
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
   invalidatePowerQueries(ctx, payload.villageId);
+  invalidateRetentionSummary(ctx);
 }
 
 export function applyUnitTrainingCompleted(
@@ -182,6 +184,7 @@ export function applyBattleResolved(payload: BattleResolvedPayload, ctx: Binding
   invalidatePowerQueries(ctx, payload.villageId);
   invalidateCombatReports(ctx);
   invalidateOpenExpeditions(ctx);
+  invalidateRetentionSummary(ctx);
   useUiStore.getState().pushToast({
     tone: payload.isVictory ? 'success' : 'error',
     title: payload.isVictory ? 'Victoire' : 'Défaite',
@@ -239,6 +242,7 @@ export function applyScoutReported(
   }, RESOLVED_TO_RETURNING_DELAY_MS);
   invalidateCombatReports(ctx);
   invalidateOpenExpeditions(ctx);
+  invalidateRetentionSummary(ctx);
 }
 
 export function applyScoutReturned(
@@ -320,6 +324,7 @@ export function applyReinforcementSent(
   useExpeditionsStore.getState().add(snapshot);
   invalidateReinforcementQueries(ctx, payload.villageId, payload.targetVillageId);
   invalidateOpenExpeditions(ctx);
+  invalidateRetentionSummary(ctx);
 }
 
 export function applyReinforcementRecalled(
@@ -368,6 +373,7 @@ export function applyReinforcementReturned(
     getString(payload, 'targetVillageId'),
   );
   invalidateOpenExpeditions(ctx);
+  invalidateRetentionSummary(ctx);
 }
 
 export function applyGarrisonAdded(
@@ -422,6 +428,12 @@ function invalidatePowerQueries(ctx: BindingsContext, villageId: string): void {
   const userId = useAuthStore.getState().user?.id ?? null;
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.villagePower(villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.kingdomPower(userId) });
+}
+
+function invalidateRetentionSummary(ctx: BindingsContext): void {
+  const userId = useAuthStore.getState().user?.id ?? null;
+  const worldId = useGameStore.getState().worldId;
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.retentionSummary(userId, worldId) });
 }
 
 export function applyVillageConquered(payload: VillageConqueredPayload, ctx: BindingsContext): void {

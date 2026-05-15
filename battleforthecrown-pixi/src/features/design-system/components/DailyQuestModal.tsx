@@ -11,7 +11,13 @@ export interface DailyQuestReward {
   value: string;
 }
 
+export interface DailyQuestTaskAction {
+  label: string;
+  onAction: () => void;
+}
+
 export interface DailyQuestItem {
+  action?: DailyQuestTaskAction;
   have?: number;
   icon: string;
   id: string;
@@ -25,7 +31,7 @@ export interface DailyQuestItem {
 }
 
 export interface DailyQuestChapter {
-  body: string;
+  body?: string;
   description?: string;
   eyebrow: string;
   expiresIn: string;
@@ -37,6 +43,11 @@ export interface DailyQuestChapter {
 
 export interface DailyQuestBacklog {
   badgeLabel: string;
+  cards?: Array<{
+    id: string;
+    statusLabel: string;
+    title: string;
+  }>;
   hint: string;
   title: string;
 }
@@ -48,9 +59,27 @@ export interface DailyQuestOyez {
   title: string;
 }
 
+export interface DailyQuestVillageOption {
+  id: string;
+  label: string;
+}
+
+export interface DailyQuestClaimPanel {
+  claimLabel: string;
+  disabled?: boolean;
+  isClaiming?: boolean;
+  onVillageChange: (villageId: string) => void;
+  rewardLabel: string;
+  rewards: DailyQuestReward[];
+  selectedVillageId: string;
+  villageLabel: string;
+  villages: DailyQuestVillageOption[];
+}
+
 export interface DailyQuestModalProps {
-  backlog: DailyQuestBacklog;
+  backlog?: DailyQuestBacklog;
   chapter?: DailyQuestChapter;
+  claimPanel?: DailyQuestClaimPanel;
   claimRowLabel: string;
   className?: string;
   closeLabel: string;
@@ -64,6 +93,7 @@ export interface DailyQuestModalProps {
   onClose?: () => void;
   onPrimaryAction?: () => void;
   oyez?: DailyQuestOyez;
+  primaryActionDisabled?: boolean;
   primaryActionLabel: string;
   primaryActionVariant?: BftcButtonVariant;
   questsTodayLabel: string;
@@ -124,29 +154,35 @@ function ChapterFeaturedCard({
           <span className="font-game text-[9px] font-extrabold uppercase tracking-[.22em] text-[#704c0a]">
             {chapter.eyebrow}
           </span>
-          <span className="font-game text-[9.5px] font-bold tracking-[.06em] text-[#704c0a]">
-            {chapter.expiresIn}
-          </span>
+          {chapter.expiresIn ? (
+            <span className="font-game text-[9.5px] font-bold tracking-[.06em] text-[#704c0a]">
+              {chapter.expiresIn}
+            </span>
+          ) : null}
         </div>
         <div className="font-game text-[15px] font-black leading-[1.15] tracking-[.01em] text-[#3a2a00]">
           {chapter.title}
         </div>
-        <div className="font-game text-[11px] leading-[1.35] text-[#5a4400]">
-          {chapter.body}
-        </div>
-        <div className="mt-[5px] flex flex-wrap items-center gap-[5px]">
-          <span className="mr-0.5 font-game text-[9px] font-extrabold uppercase tracking-[.18em] text-[#704c0a]">
+        {chapter.body ? (
+          <div className="font-game text-[11px] leading-[1.35] text-[#5a4400]">
+            {chapter.body}
+          </div>
+        ) : null}
+        <div className="mt-[5px] flex flex-col items-start gap-[5px]">
+          <span className="font-game text-[9px] font-extrabold uppercase tracking-[.18em] text-[#704c0a]">
             {rewardLabel}
           </span>
-          {chapter.rewards.map((reward, i) => (
-            <span
-              className="inline-flex items-center gap-[3px] rounded-full border-[1.5px] border-[#704c0a] bg-[rgba(255,255,255,.45)] py-0.5 pl-[3px] pr-2 font-game text-[11px] font-extrabold tabular-nums text-[#3a2a00]"
-              key={`${reward.icon}-${reward.value}-${i}`}
-            >
-              <img alt="" className="size-[15px]" src={publicAsset(reward.icon)} />
-              {reward.value}
-            </span>
-          ))}
+          <div className="flex flex-wrap items-center gap-[5px]">
+            {chapter.rewards.map((reward, i) => (
+              <span
+                className="inline-flex items-center gap-[3px] rounded-full border-[1.5px] border-[#704c0a] bg-[rgba(255,255,255,.45)] py-0.5 pl-[3px] pr-2 font-game text-[11px] font-extrabold tabular-nums text-[#3a2a00]"
+                key={`${reward.icon}-${reward.value}-${i}`}
+              >
+                <img alt="" className="size-[15px]" src={publicAsset(reward.icon)} />
+                {reward.value}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -262,6 +298,15 @@ function QuestRow({
           >
             {claimLabel}
           </BftcButton>
+        ) : quest.action && !isDone && !isLocked ? (
+          <BftcButton
+            className="px-2.5 py-1 text-[10.5px]"
+            onClick={quest.action.onAction}
+            size="xs"
+            variant="info"
+          >
+            {quest.action.label}
+          </BftcButton>
         ) : null}
       </div>
     </div>
@@ -328,16 +373,65 @@ function OyezBanner({ oyez }: { oyez: DailyQuestOyez }) {
 
 function BacklogStrip({ backlog }: { backlog: DailyQuestBacklog }) {
   return (
-    <div className="my-0.5 flex items-center gap-2 rounded-[10px] border-[1.5px] border-dashed border-[rgba(60,38,25,.35)] bg-[rgba(255,255,255,.25)] px-2.5 py-2">
-      <span className="inline-flex size-[22px] items-center justify-center rounded-[6px] border-[1.5px] border-[#3c2619] bg-[linear-gradient(to_bottom,#8b6f47,#5d4a32)] font-game text-[11px] font-black text-[#f0e0c0]">
-        {backlog.badgeLabel}
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="font-game text-[10.5px] font-extrabold tracking-[.04em] text-[#3d2f1f]">
-          {backlog.title}
+    <div className="my-0.5 rounded-[10px] border-[1.5px] border-dashed border-[rgba(60,38,25,.35)] bg-[rgba(255,255,255,.25)] px-2.5 py-2">
+      <div className="flex items-center gap-2">
+        <span className="inline-flex size-[22px] items-center justify-center rounded-[6px] border-[1.5px] border-[#3c2619] bg-[linear-gradient(to_bottom,#8b6f47,#5d4a32)] font-game text-[11px] font-black text-[#f0e0c0]">
+          {backlog.badgeLabel}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="font-game text-[10.5px] font-extrabold tracking-[.04em] text-[#3d2f1f]">
+            {backlog.title}
+          </div>
+          <div className="font-game text-[10px] italic text-[#6d5838]">{backlog.hint}</div>
         </div>
-        <div className="font-game text-[10px] italic text-[#6d5838]">{backlog.hint}</div>
       </div>
+      {backlog.cards && backlog.cards.length > 0 ? (
+        <div className="mt-2 grid gap-1.5">
+          {backlog.cards.map((card) => (
+            <div
+              className="flex items-center justify-between gap-2 rounded-[7px] border border-[rgba(60,38,25,.18)] bg-[rgba(255,255,255,.24)] px-2 py-1"
+              key={card.id}
+            >
+              <span className="truncate font-game text-[10px] font-bold text-[#3d2f1f]">
+                {card.title}
+              </span>
+              <span className="shrink-0 font-game text-[9px] font-extrabold uppercase tracking-[.12em] text-[#6d5838]">
+                {card.statusLabel}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ClaimPanel({ panel }: { panel: DailyQuestClaimPanel }) {
+  return (
+    <div className="rounded-[10px] border-2 border-[#9e7b0d] bg-[linear-gradient(to_bottom,rgba(254,240,198,.78),rgba(232,200,120,.54))] px-2.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,.35)]">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="font-game text-[9px] font-extrabold uppercase tracking-[.18em] text-[#704c0a]">
+          {panel.rewardLabel}
+        </span>
+        {panel.rewards.map((reward, i) => (
+          <RewardPill key={`${reward.icon}-${reward.value}-${i}`} {...reward} />
+        ))}
+      </div>
+      <label className="mt-2 flex flex-col gap-1 font-game text-[10px] font-extrabold uppercase tracking-[.14em] text-[#704c0a]">
+        {panel.villageLabel}
+        <select
+          className="min-h-9 rounded-lg border-2 border-[#5d4a32] bg-[#fef9f0] px-2 font-game text-[12px] font-bold normal-case tracking-normal text-[#3d2f1f]"
+          disabled={panel.disabled || panel.villages.length === 0}
+          onChange={(event) => panel.onVillageChange(event.target.value)}
+          value={panel.selectedVillageId}
+        >
+          {panel.villages.map((village) => (
+            <option key={village.id} value={village.id}>
+              {village.label}
+            </option>
+          ))}
+        </select>
+      </label>
     </div>
   );
 }
@@ -357,6 +451,7 @@ function Divider({ label }: { label: string }) {
 export function DailyQuestModal({
   backlog,
   chapter,
+  claimPanel,
   claimRowLabel,
   className,
   closeLabel,
@@ -370,6 +465,7 @@ export function DailyQuestModal({
   onClose,
   onPrimaryAction,
   oyez,
+  primaryActionDisabled,
   primaryActionLabel,
   primaryActionVariant = 'success',
   questsTodayLabel,
@@ -390,12 +486,13 @@ export function DailyQuestModal({
           <BftcButton
             className="flex-1 justify-center py-2 text-sm"
             onClick={onClose}
-            variant="neutral"
+            variant="info"
           >
             {closeLabel}
           </BftcButton>
           <BftcButton
             className="flex-1 justify-center py-2 text-sm"
+            disabled={primaryActionDisabled}
             onClick={onPrimaryAction}
             variant={primaryActionVariant}
           >
@@ -446,7 +543,9 @@ export function DailyQuestModal({
           ))}
         </div>
 
-        <BacklogStrip backlog={backlog} />
+        {claimPanel ? <ClaimPanel panel={claimPanel} /> : null}
+
+        {backlog ? <BacklogStrip backlog={backlog} /> : null}
       </div>
     </BaseModal>
   );

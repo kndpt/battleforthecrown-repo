@@ -43,7 +43,7 @@ const TASK_TEMPLATES: Array<{
 }> = [
   { type: 'TRAIN_UNITS', label: 'Former une unité', target: 1 },
   { type: 'COMPLETE_BUILDING', label: 'Terminer une construction', target: 1 },
-  { type: 'RAID_BARBARIAN', label: 'Réussir un raid barbare', target: 1 },
+  { type: 'RAID_BARBARIAN', label: 'Vaincre un village barbare', target: 1 },
   { type: 'SCOUT_TARGET', label: 'Obtenir un rapport scout', target: 1 },
   { type: 'SEND_REINFORCEMENT', label: 'Envoyer un renfort', target: 1 },
 ];
@@ -378,7 +378,7 @@ export class RetentionService {
   }
 }
 
-function getTaskProjection<K extends EventKind>(
+export function getTaskProjection<K extends EventKind>(
   kind: K,
   payload: PayloadForKind<K>,
 ): { villageId: string; type: DailyCardTaskType } | null {

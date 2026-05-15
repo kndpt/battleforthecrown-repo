@@ -11,11 +11,17 @@ import { BuildingDetailModal } from '@/features/village/BuildingDetailModal';
 import { QueueFloatingButton } from '@/features/village/QueueFloatingButton';
 import { QueueBottomSheet } from '@/features/village/QueueBottomSheet';
 import { VillageStyleControl } from '@/features/village/VillageStyleControl';
+import { DailyRetentionWidget } from '@/features/retention/DailyRetentionWidget';
 import { metaFor } from '@/features/village/buildingMeta';
 import { KingdomActivitiesBottomSheet } from '@/features/combat/KingdomActivitiesBottomSheet';
 import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
 import { PowerBottomSheet } from '@/features/power/PowerBottomSheet';
-import { useVillageBuildingsQuery } from '@/api/queries';
+import {
+  useClaimDailyCardMutation,
+  useMyVillagesQuery,
+  useRetentionSummaryQuery,
+  useVillageBuildingsQuery,
+} from '@/api/queries';
 import { useGameStore } from '@/stores/game';
 import type { BuildingDto } from '@/api';
 import type { KingdomActivityTab } from '@/features/design-system/components';
@@ -45,6 +51,9 @@ export function VillageView() {
   const villageId = useGameStore((state) => state.villageId);
   const worldId = useGameStore((state) => state.worldId);
   const buildingsQuery = useVillageBuildingsQuery(villageId);
+  const myVillages = useMyVillagesQuery(worldId);
+  const retentionSummary = useRetentionSummaryQuery(worldId);
+  const claimDailyCard = useClaimDailyCardMutation();
 
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingDto | null>(null);
   const [isBuildingPanelOpen, setIsBuildingPanelOpen] = useState(false);
@@ -71,7 +80,7 @@ export function VillageView() {
   };
 
   return (
-    <div className="h-screen w-full flex flex-col overflow-hidden bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
+    <div className="relative h-screen w-full flex flex-col overflow-hidden bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
     <div className="flex-shrink">
       <GameHeader onPowerClick={() => setIsPowerSheetOpen(true)} />
     </div>
@@ -114,6 +123,18 @@ export function VillageView() {
         <QueueFloatingButton
           isOpen={isQueueOpen}
           onToggle={() => setIsQueueOpen((prev) => !prev)}
+        />
+      </div>
+
+      <div className="fixed right-4 top-[132px] z-30">
+        <DailyRetentionWidget
+          activeVillageId={villageId}
+          isClaiming={claimDailyCard.isPending}
+          isLoading={retentionSummary.isLoading}
+          onClaim={(input) => claimDailyCard.mutate(input)}
+          onNavigate={navigate}
+          summary={retentionSummary.data}
+          villages={myVillages.data ?? []}
         />
       </div>
 

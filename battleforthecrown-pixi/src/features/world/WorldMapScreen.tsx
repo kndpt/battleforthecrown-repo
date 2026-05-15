@@ -13,12 +13,15 @@ import { buildMapEntities, filterEntitiesByVision } from './buildMapEntities';
 import { AttackDetailModal } from '@/features/combat/AttackDetailModal';
 import { KingdomActivitiesBottomSheet } from '@/features/combat/KingdomActivitiesBottomSheet';
 import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
+import { DailyRetentionWidget } from '@/features/retention/DailyRetentionWidget';
 import { BottomNavigationBar } from '@/features/layout/BottomNavigationBar';
 import { useBuildingsForLockCheck } from '@/features/layout/useBuildingsForLockCheck';
 import {
+  useClaimDailyCardMutation,
   useMyVillagesQuery,
   useOpenConquestsQuery,
   useOpenExpeditionsQuery,
+  useRetentionSummaryQuery,
   useWorldDetailsQuery,
   useWorldEntitiesQuery,
 } from '@/api/queries';
@@ -45,6 +48,8 @@ export function WorldMapScreen() {
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const worldEntities = useWorldEntitiesQuery(worldId);
   const myVillages = useMyVillagesQuery(worldId);
+  const retentionSummary = useRetentionSummaryQuery(worldId);
+  const claimDailyCard = useClaimDailyCardMutation();
   const openConquests = useOpenConquestsQuery(worldId);
   const openExpeditions = useOpenExpeditionsQuery(worldId);
   const worldDetails = useWorldDetailsQuery(worldId);
@@ -227,7 +232,7 @@ export function WorldMapScreen() {
                 />
               </div>
 
-              <div className="pointer-events-auto absolute right-3 top-3 flex flex-col items-end gap-2">
+              <div className="pointer-events-auto absolute right-3 top-[160px] flex flex-col items-end gap-2">
                 {isMiniMapVisible && (
                   <WorldMiniMap
                     gridWidth={dims.gridWidth}
@@ -301,6 +306,18 @@ export function WorldMapScreen() {
         onMessagesClick={() => navigate('/game/messages')}
         unreadCount={unreadCount}
       />
+
+      <div className="fixed right-4 top-[132px] z-30">
+        <DailyRetentionWidget
+          activeVillageId={currentVillageId}
+          isClaiming={claimDailyCard.isPending}
+          isLoading={retentionSummary.isLoading}
+          onClaim={(input) => claimDailyCard.mutate(input)}
+          onNavigate={navigate}
+          summary={retentionSummary.data}
+          villages={myVillages.data ?? []}
+        />
+      </div>
 
       {attackTarget && myVillage && (
         <AttackDetailModal

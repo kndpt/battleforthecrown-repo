@@ -1,4 +1,9 @@
-import type { CSSProperties } from 'react';
+import type {
+  CSSProperties,
+  FocusEventHandler,
+  MouseEventHandler,
+  PointerEventHandler,
+} from 'react';
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
 
@@ -10,8 +15,17 @@ export interface RoyalSealProps {
   badgeCount?: number | null;
   className?: string;
   halo?: boolean;
+  onBlur?: FocusEventHandler<HTMLButtonElement>;
   onClick?: () => void;
+  onFocus?: FocusEventHandler<HTMLButtonElement>;
+  onMouseDown?: MouseEventHandler<HTMLButtonElement>;
+  onMouseUp?: MouseEventHandler<HTMLButtonElement>;
+  onPointerCancel?: PointerEventHandler<HTMLButtonElement>;
+  onPointerDown?: PointerEventHandler<HTMLButtonElement>;
+  onPointerLeave?: PointerEventHandler<HTMLButtonElement>;
+  onPointerUp?: PointerEventHandler<HTMLButtonElement>;
   pressed?: boolean;
+  softShadow?: boolean;
   size?: number;
   style?: CSSProperties;
   variant?: RoyalSealVariant;
@@ -36,7 +50,15 @@ function SealBadge({ count, size }: { count: number | null | undefined; size: nu
   );
 }
 
-function WaxFace({ size, pressed }: { size: number; pressed: boolean }) {
+function WaxFace({
+  size,
+  pressed,
+  softShadow,
+}: {
+  size: number;
+  pressed: boolean;
+  softShadow: boolean;
+}) {
   const inner = Math.round(size * 0.56);
   return (
     <div
@@ -44,7 +66,9 @@ function WaxFace({ size, pressed }: { size: number; pressed: boolean }) {
         'relative z-[1] flex items-center justify-center rounded-full border-[2.5px] border-[#4a2f06] bg-[radial-gradient(circle_at_32%_26%,#fff3b0_0%,#f1c40f_32%,#b67e0a_72%,#6e4a08_100%)] transition-[transform,filter] duration-100',
         pressed
           ? 'translate-y-px shadow-[inset_0_3px_6px_rgba(0,0,0,.55),0_1px_0_rgba(0,0,0,.2)]'
-          : 'shadow-[inset_0_1px_0_rgba(255,255,255,.55),0_3px_0_rgba(0,0,0,.28),0_6px_14px_rgba(74,47,6,.35)]',
+          : softShadow
+            ? 'shadow-[inset_0_1px_0_rgba(255,255,255,.5),0_2px_0_rgba(0,0,0,.2),0_3px_8px_rgba(74,47,6,.18)]'
+            : 'shadow-[inset_0_1px_0_rgba(255,255,255,.55),0_3px_0_rgba(0,0,0,.28),0_6px_14px_rgba(74,47,6,.35)]',
       )}
       style={{ width: size, height: size }}
     >
@@ -102,8 +126,17 @@ export function RoyalSeal({
   className,
   halo = false,
   onClick,
+  onBlur,
+  onFocus,
+  onMouseDown,
+  onMouseUp,
+  onPointerCancel,
+  onPointerDown,
+  onPointerLeave,
+  onPointerUp,
   pressed = false,
   size = 44,
+  softShadow = false,
   style,
   variant = 'wax',
 }: RoyalSealProps) {
@@ -121,7 +154,7 @@ export function RoyalSeal({
       {variant === 'parchment' ? (
         <ParchmentFace pressed={pressed} size={size} />
       ) : (
-        <WaxFace pressed={pressed} size={size} />
+        <WaxFace pressed={pressed} size={size} softShadow={softShadow} />
       )}
       {badge ? <SealBadge count={badgeCount} size={size} /> : null}
     </>
@@ -132,7 +165,15 @@ export function RoyalSeal({
       <button
         aria-label={ariaLabel ?? 'Sceau royal'}
         className={cn('relative shrink-0 cursor-pointer border-none bg-transparent p-0', className)}
+        onBlur={onBlur}
         onClick={onClick}
+        onFocus={onFocus}
+        onMouseDown={onMouseDown}
+        onMouseUp={onMouseUp}
+        onPointerCancel={onPointerCancel}
+        onPointerDown={onPointerDown}
+        onPointerLeave={onPointerLeave}
+        onPointerUp={onPointerUp}
         style={containerStyle}
         type="button"
       >
