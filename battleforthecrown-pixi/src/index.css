@@ -64,3 +64,15 @@ canvas {
       0 0 16px rgba(241, 196, 15, 0.55);
   }
 }
+
+@keyframes bftc-seal-halo {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.08);
+  }
+}

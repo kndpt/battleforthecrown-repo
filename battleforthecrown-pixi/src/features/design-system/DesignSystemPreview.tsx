@@ -21,6 +21,8 @@ import {
   CombatReportPhoneFrame,
   CostPill,
   CostRow,
+  DailyQuestModal,
+  DailyQuestPhoneFrame,
   DarkSegmentedStage,
   DigitTimer,
   EmptyState,
@@ -47,6 +49,7 @@ import {
   RadiusTile,
   RequirementChip,
   ResourceIconTile,
+  RoyalSeal,
   ScoutReportCard,
   SegmentedControl,
   SemanticColorRow,
@@ -65,6 +68,8 @@ import {
   type CaptureWindowCardProps,
   type ChatMessage,
   type CombatReportModalProps,
+  type DailyQuestItem,
+  type DailyQuestOyez,
   type ExpeditionActivityCardProps,
   type KingdomActivitiesPanelLabels,
   type KingdomActivityTab,
@@ -369,6 +374,84 @@ const expeditionActivities: ExpeditionActivityCardProps[] = [
     title: 'Camp de conquête T4',
   },
 ];
+
+const dailyQuestOyez: DailyQuestOyez = {
+  effect: 'Construction légèrement favorisée',
+  eyebrow: 'Oyez · en cours',
+  icon: '/assets/casual-icons/card-gold.png',
+  title: 'Jour des bâtisseurs',
+};
+
+const dailyQuestItems: DailyQuestItem[] = [
+  {
+    have: 1500,
+    icon: '/assets/resources/wood.png',
+    id: 'eco-wood',
+    loopLabel: 'Économie',
+    name: 'Récolter 1.500 bois',
+    need: 1500,
+    rewards: [{ icon: '/assets/casual-icons/coin.png', value: '200' }],
+    state: 'claimable' as const,
+  },
+  {
+    have: 8,
+    icon: '/assets/army/squire.png',
+    id: 'mil-squires',
+    loopLabel: 'Militaire',
+    name: 'Recruter 12 squires',
+    need: 12,
+    rewards: [{ icon: '/assets/resources/iron.png', value: '80' }],
+    state: 'progress' as const,
+  },
+  {
+    have: 0,
+    icon: '/assets/lupa.png',
+    id: 'expl-scout',
+    loopLabel: 'Exploration',
+    name: 'Espionner 1 voisin',
+    need: 1,
+    rewards: [{ icon: '/assets/resources/iron.png', value: '120' }],
+    state: 'progress' as const,
+  },
+  {
+    have: 0,
+    icon: '/assets/hand-silver.png',
+    id: 'def-reinforce',
+    loopLabel: 'Défense',
+    name: 'Renforcer un village allié',
+    need: 1,
+    rewards: [{ icon: '/assets/resources/stone.png', value: '150' }],
+    state: 'progress' as const,
+  },
+  {
+    have: 0,
+    icon: '/assets/hand-red.png',
+    id: 'conq-battle',
+    loopLabel: 'Conquête',
+    name: 'Gagner 1 bataille',
+    need: 1,
+    rewards: [
+      { icon: '/assets/resources/wood.png', value: '500' },
+      { icon: '/assets/resources/stone.png', value: '500' },
+    ],
+    state: 'progress' as const,
+  },
+  {
+    icon: '/assets/lock.png',
+    id: 'eco-producer',
+    lockedHint: 'Débloque quand un producteur atteint le niv. 4.',
+    loopLabel: 'Économie',
+    name: 'Améliorer un producteur au niv. 5',
+    rewards: [{ icon: '/assets/casual-icons/coin.png', value: '250' }],
+    state: 'locked' as const,
+  },
+];
+
+const dailyQuestBacklog = {
+  badgeLabel: '1/3',
+  hint: 'Prochaine carte délivrée demain · 04h.',
+  title: 'Carte 1 de 3',
+};
 
 export function DesignSystemPreview() {
   const [inputValue, setInputValue] = useState('');
@@ -1767,6 +1850,92 @@ export function DesignSystemPreview() {
               state="locked"
               title="Améliorer le château au niv. 5"
             />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="font-game text-2xl font-bold text-[#1f2937]">RoyalSeal</h2>
+            <span className="font-mono text-[10px] text-[#5d4a32]">hud · sceau royal · variantes & états</span>
+          </div>
+          <div className="flex flex-col gap-5 rounded-2xl border-2 border-[#c9a882] bg-[linear-gradient(180deg,#fef9f0,#e8d4a8)] px-[22px] py-6 shadow-[inset_0_1px_0_rgba(255,255,255,.6),0_4px_0_rgba(0,0,0,.1)]">
+            <div className="flex flex-wrap items-end justify-around gap-x-7 gap-y-5">
+              {[
+                { label: 'Repos', badge: false, halo: false },
+                { label: '≥1 réclamable', badge: true, halo: true },
+                { label: 'Avec total', badge: true, halo: true, count: 2 },
+                { label: 'Pressé', badge: true, halo: false, pressed: true },
+              ].map((sample) => (
+                <div className="flex flex-col items-center gap-2" key={`wax-${sample.label}`}>
+                  <RoyalSeal
+                    badge={sample.badge}
+                    badgeCount={sample.count ?? null}
+                    halo={sample.halo}
+                    pressed={sample.pressed ?? false}
+                    size={56}
+                  />
+                  <span className="font-game text-[10px] font-extrabold uppercase tracking-[.18em] text-[#6d5838]">
+                    {sample.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="h-px bg-[rgba(93,74,50,.25)]" />
+            <div className="flex flex-wrap items-end justify-around gap-x-7 gap-y-5">
+              {[
+                { label: 'Parchemin', badge: false, halo: false },
+                { label: 'Avec dot', badge: true, halo: false },
+                { label: 'Avec total', badge: true, halo: true, count: 3 },
+                { label: 'Pressé', badge: false, halo: false, pressed: true },
+              ].map((sample) => (
+                <div className="flex flex-col items-center gap-2" key={`parch-${sample.label}`}>
+                  <RoyalSeal
+                    badge={sample.badge}
+                    badgeCount={sample.count ?? null}
+                    halo={sample.halo}
+                    pressed={sample.pressed ?? false}
+                    size={56}
+                    variant="parchment"
+                  />
+                  <span className="font-game text-[10px] font-extrabold uppercase tracking-[.18em] text-[#6d5838]">
+                    {sample.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="font-game text-2xl font-bold text-[#1f2937]">DailyQuestModal</h2>
+            <span className="font-mono text-[10px] text-[#5d4a32]">messagerie · devoirs royaux · modal</span>
+          </div>
+          <div className="flex w-full justify-center">
+            <DailyQuestPhoneFrame>
+              <DailyQuestModal
+                backlog={dailyQuestBacklog}
+                claimRowLabel="Réclamer"
+                closeLabel="Fermer"
+                completedLabel="accomplie"
+                completedSummary="1 / 6"
+                eyebrow="Devoir Royal · jour 1"
+                expiresInLabel="Prochain reset"
+                expiresInValue="04h00"
+                onClaim={() => undefined}
+                onClose={() => undefined}
+                onPrimaryAction={() => undefined}
+                oyez={dailyQuestOyez}
+                primaryActionLabel="Tout · 1"
+                primaryActionVariant="success"
+                quests={dailyQuestItems}
+                questsTodayLabel="Tâches du jour"
+                rewardLabel="Récompense"
+                tasksDividerLabel="Tâches du Roi"
+                taskDoneLabel="✓ Tâche accomplie"
+                title="Devoirs Royaux"
+              />
+            </DailyQuestPhoneFrame>
           </div>
         </section>
 
