@@ -29,6 +29,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ### Runs actifs
 
+- [028 — Mobile WorldMap minimap UX](./runs/028-mobile-worldmap-minimap-ux.md) — 📋 `PLANNED`. Repenser l'UX mobile de la mini-carte et des contrôles flottants WorldMap après l'ajout du RoyalSeal daily.
 - [025 — Puissance armée rattachée au village d'origine](./runs/025-fix-origin-anchored-army-power.md) — 📋 `PLANNED`. Revoir le calcul power pour compter les troupes par origine réelle plutôt que par présence physique.
 
 ### Runs archivés
