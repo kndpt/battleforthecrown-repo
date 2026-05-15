@@ -31,6 +31,8 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 ### Runs actifs
 
 - [028 — Mobile WorldMap minimap UX](./runs/028-mobile-worldmap-minimap-ux.md) — 📋 `PLANNED`. Repenser l'UX mobile de la mini-carte et des contrôles flottants WorldMap après l'ajout du RoyalSeal daily.
+- [027 — Tempo monde : recalibration des constantes MVP](./runs/027-world-tempo-recalibrate-mvp-constants.md) — 📋 `PLANNED`. Aligner les chiffres absolus de `02/03/06/07/10/13/14/15` et des constantes shared au Standard MVP (`tempo.global = 1.0`, compression ~4-5×). Dépend du run 026.
+- [026 — Tempo monde : plomberie + clean cut](./runs/026-world-tempo-plumbing-clean-cut.md) — 📋 `PLANNED`. Remplacer `gameSpeed` + `economy.productionRate` par `WorldConfig.tempo` (global + overrides) et introduire un `TempoService` shared. Aucune recalibration de valeur absolue.
 - [025 — Puissance armée rattachée au village d'origine](./runs/025-fix-origin-anchored-army-power.md) — 📋 `PLANNED`. Revoir le calcul power pour compter les troupes par origine réelle plutôt que par présence physique.
 
 ### Runs archivés
