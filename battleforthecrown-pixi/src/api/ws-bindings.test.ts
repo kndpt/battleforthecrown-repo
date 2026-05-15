@@ -68,6 +68,24 @@ function expectReinforcementQueriesInvalidated(queryClient: QueryClient, village
   expect(queryClient.getQueryState(queryKeys.armyInventory(villageId))?.isInvalidated).toBe(true);
 }
 
+function seedPowerQueries(
+  queryClient: QueryClient,
+  villageId: string,
+  userId = 'user-1',
+): void {
+  queryClient.setQueryData(queryKeys.villagePower(villageId), { total: 1 });
+  queryClient.setQueryData(queryKeys.kingdomPower(userId), { kingdomPower: 1 });
+}
+
+function expectPowerQueriesInvalidated(
+  queryClient: QueryClient,
+  villageId: string,
+  userId = 'user-1',
+): void {
+  expect(queryClient.getQueryState(queryKeys.villagePower(villageId))?.isInvalidated).toBe(true);
+  expect(queryClient.getQueryState(queryKeys.kingdomPower(userId))?.isInvalidated).toBe(true);
+}
+
 describe('applyResourcesChanged', () => {
   it('writes the snapshot to the resources store keyed by villageId', () => {
     applyResourcesChanged({
@@ -343,6 +361,34 @@ describe('applyBattleResolved', () => {
     expect(queryClient.getQueryState(queryKeys.combatReports('user-1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.scoutReports('user-1'))?.isInvalidated).toBe(true);
   });
+
+  it('invalidates village and kingdom power for the attacking village', () => {
+    setCurrentWorldSession();
+    const queryClient = new QueryClient();
+    seedPowerQueries(queryClient, 'v1');
+
+    applyBattleResolved(
+      {
+        expeditionId: 'e1',
+        reportId: 'r1',
+        villageId: 'v1',
+        villageName: 'Capital',
+        targetKind: 'BARBARIAN_VILLAGE',
+        targetName: 'Camp',
+        targetX: 1,
+        targetY: 1,
+        isVictory: true,
+        loot: { resources: { wood: 0, stone: 0, iron: 0 } },
+        lossesAttacker: { MILITIA: 1 },
+        casualtyRate: 0.5,
+        survivingUnits: {},
+        returnAt: null,
+      },
+      { queryClient },
+    );
+
+    expectPowerQueriesInvalidated(queryClient, 'v1');
+  });
 });
 
 describe('applyVillageConquered', () => {
@@ -365,12 +411,14 @@ describe('applyVillageConquered', () => {
     queryClient.setQueryData(['villages'], []);
     queryClient.setQueryData(['world-entities'], []);
     queryClient.setQueryData(queryKeys.openConquests('user-1', 'world-1'), []);
+    seedPowerQueries(queryClient, 'v-target');
 
     applyVillageConquered(
       {
         villageId: 'v-target',
         villageName: 'Cravia',
         newOwnerId: 'user-1',
+        previousOwnerId: null,
         previousTier: 'T2',
         x: 42,
         y: 88,
@@ -394,6 +442,54 @@ describe('applyVillageConquered', () => {
     expect(useWorldMapStore.getState().entities['v-target']).toBeUndefined();
     expect(queryClient.getQueryState(['villages'])?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(['world-entities'])?.isInvalidated).toBe(true);
+    expectPowerQueriesInvalidated(queryClient, 'v-target');
+  });
+
+  it('refreshes the previous owner without pushing a victory modal', () => {
+    useAuthStore.getState().setSession({
+      accessToken: 'access',
+      refreshToken: 'refresh',
+      user: { id: 'previous-owner', email: 'previous@example.test' },
+    });
+    useGameStore.getState().setContext({ worldId: 'world-1', villageId: 'v-old' });
+    useWorldMapStore.getState().setEntities([
+      {
+        id: 'v-target',
+        kind: 'PLAYER_VILLAGE',
+        ownerId: 'previous-owner',
+        isMine: true,
+        x: 42,
+        y: 88,
+        name: 'Cravia',
+        tier: null,
+      },
+    ]);
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(['memberships'], []);
+    queryClient.setQueryData(['villages'], []);
+    queryClient.setQueryData(['world-entities'], []);
+    queryClient.setQueryData(queryKeys.openConquests('previous-owner', 'world-1'), []);
+    seedPowerQueries(queryClient, 'v-target', 'previous-owner');
+
+    applyVillageConquered(
+      {
+        villageId: 'v-target',
+        villageName: 'Cravia',
+        newOwnerId: 'user-1',
+        previousOwnerId: 'previous-owner',
+        previousTier: null,
+        x: 42,
+        y: 88,
+        buildingsKept: 6,
+      },
+      { queryClient },
+    );
+
+    expect(useUiStore.getState().victoryModals).toHaveLength(0);
+    expect(useWorldMapStore.getState().entities['v-target']).toBeUndefined();
+    expect(queryClient.getQueryState(['villages'])?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(['world-entities'])?.isInvalidated).toBe(true);
+    expectPowerQueriesInvalidated(queryClient, 'v-target', 'previous-owner');
   });
 });
 
@@ -407,6 +503,7 @@ describe('applyVillageAttacked', () => {
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.combatReports('defender-1'), []);
     queryClient.setQueryData(queryKeys.scoutReports('defender-1'), []);
+    seedPowerQueries(queryClient, 'v-def', 'defender-1');
 
     applyVillageAttacked(
       {
@@ -427,6 +524,7 @@ describe('applyVillageAttacked', () => {
 
     expect(queryClient.getQueryState(queryKeys.combatReports('defender-1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.scoutReports('defender-1'))?.isInvalidated).toBe(true);
+    expectPowerQueriesInvalidated(queryClient, 'v-def', 'defender-1');
   });
 });
 
@@ -538,6 +636,7 @@ describe('applyBattleReturned', () => {
   afterEach(() => vi.useRealTimers());
 
   it('removes the snapshot after the configured delay', () => {
+    setCurrentWorldSession();
     useExpeditionsStore.getState().add({
       expeditionId: 'e2',
       villageId: 'v1',
@@ -549,6 +648,9 @@ describe('applyBattleReturned', () => {
       returnAt: 2000,
     });
 
+    const queryClient = new QueryClient();
+    seedPowerQueries(queryClient, 'v1');
+
     applyBattleReturned(
       {
         expeditionId: 'e2',
@@ -557,10 +659,11 @@ describe('applyBattleReturned', () => {
         survivingUnits: {},
         loot: { resources: { wood: 0, stone: 0, iron: 0 } },
       },
-      { queryClient: new QueryClient() },
+      { queryClient },
     );
 
     expect(useExpeditionsStore.getState().byId['e2'].phase).toBe('RETURNED');
+    expectPowerQueriesInvalidated(queryClient, 'v1');
     vi.advanceTimersByTime(RETURNED_TO_CLEANUP_DELAY_MS);
     expect(useExpeditionsStore.getState().byId['e2']).toBeUndefined();
   });

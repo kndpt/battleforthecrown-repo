@@ -63,6 +63,7 @@ La puissance affichée côté HUD se rafraîchit par invalidation REST après le
 
 - `unit.trained` à chaque unité fabriquée rafraîchit la puissance village et royaume pendant un training en cours.
 - `building.completed` rafraîchit la puissance village et royaume à la fin d'un upgrade.
+- Les events combat qui mutent l'inventaire ou la propriété (`battle.resolved`, `battle.returned`, `village.attacked`, `village.conquered`) rafraîchissent aussi la puissance village et royaume sans F5.
 
 ## Classements
 

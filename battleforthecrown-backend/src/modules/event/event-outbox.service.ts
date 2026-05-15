@@ -396,25 +396,40 @@ export class EventOutboxService {
   }
 
   private notifyVillageConquered(payload: VillageConqueredPayload) {
-    const userId = payload.newOwnerId;
-    if (!userId) return;
-
     this.logger.log(`🏰 [Outbox] Envoi WebSocket village.conquered:`, {
-      userId,
+      newOwnerId: payload.newOwnerId,
+      previousOwnerId: payload.previousOwnerId,
       villageId: payload.villageId,
       x: payload.x,
       y: payload.y,
     });
 
-    this.gateway.notifyUser(userId, 'village.conquered', {
+    const payloadForClient = {
       villageId: payload.villageId,
       villageName: payload.villageName,
       newOwnerId: payload.newOwnerId,
+      previousOwnerId: payload.previousOwnerId,
       previousTier: payload.previousTier,
       x: payload.x,
       y: payload.y,
       buildingsKept: payload.buildingsKept,
-    });
+    };
+
+    this.gateway.notifyUser(
+      payload.newOwnerId,
+      'village.conquered',
+      payloadForClient,
+    );
+    if (
+      payload.previousOwnerId &&
+      payload.previousOwnerId !== payload.newOwnerId
+    ) {
+      this.gateway.notifyUser(
+        payload.previousOwnerId,
+        'village.conquered',
+        payloadForClient,
+      );
+    }
   }
 
   private async notifyVillageCaptureWindowOpened(

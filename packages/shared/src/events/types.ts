@@ -104,6 +104,7 @@ export interface VillageConqueredPayload {
   villageId: string;
   villageName: string;
   newOwnerId: string;
+  previousOwnerId: string | null;
   previousTier: string | null;
   x: number;
   y: number;
