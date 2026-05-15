@@ -1,7 +1,7 @@
 # 63 — Les autres joueurs n'apparaissent jamais sur la carte
 
 **Sévérité** : 🟡 Majeure
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ Résolu 2026-05-15
 **Spec amont** : `archive/58-multi-village-vision-disks-missing.md` (contrat `{ entities, visionDisks, fogOfWarEnabled }`) · `archive/09-fog-of-war-coordinate-leak.md` (payload `fogged`) · `docs/gameplay/01-overview.md` § Exploration & brouillard de guerre
 
 ## Symptôme
@@ -101,3 +101,11 @@ Ajouter `fetchPlayerVillages(worldId, kinds, bounds?)` calqué sur `fetchBarbari
 - Coût query : `getAllEntities` fait maintenant 2 queries `Village` (barbares + joueurs). Possibilité d'unifier en une seule `findMany` + split en mémoire si perf devient un sujet (pas un blocker MVP).
 - Exposition `label` / `isCapital` aux autres joueurs : trancher avec user au moment du run.
 - Le `WorldEntity` deprecated mérite un commentaire dans `schema.prisma` pour éviter qu'un futur agent ne tente de l'écrire à nouveau.
+
+## Résolution
+
+- `WorldEntitiesQueryService` ajoute les villages joueurs depuis `Village` (`isBarbarian: false`, `userId != null`) au feed `/world/:worldId/entities`.
+- Le payload public `PLAYER_VILLAGE` expose `userId`, `name` et `villageId`; `label` et `isCapital` ne sont pas exposés aux autres joueurs.
+- Le fog existant s'applique aux villages joueurs : payload complet dans la vision, `{ kind: 'fogged', id, x, y }` hors vision.
+- `WorldEntity` est annotée deprecated dans `schema.prisma`; la suppression complète est suivie par `tasks/64-remove-deprecated-world-entity.md`.
+- Smoke ajouté : `vision.smoke.spec.ts` couvre deux villages joueurs étrangers, l'un visible et l'autre fogged.

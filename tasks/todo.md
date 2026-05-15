@@ -1,25 +1,28 @@
-# Ticket 62 - Interactive minimap sync
+# Ticket 63 - Foreign players invisible on world map
 
 ## Plan
 
-- [x] Préflight : Git clean, ticket 62 lu, rules/SPEC chargés.
-- [x] Cartographie : inspecter WorldMapScene, WorldMapCanvas, WorldMapScreen, WorldMiniMap.
-- [x] Implémentation : exposer camera subscription, relayer au controller, brancher minimap tap/drag.
-- [x] Tests : vérifier selon policy Pixi/front et lancer les commandes adaptées.
-- [x] Review : contrôler diff, performance rAF, cleanup listeners et absence de boucle.
-- [x] Documentation : vérifier impact doc et justifier.
-- [x] Archive : passer ticket en DONE, archiver, mettre à jour tasks/README.md, commit.
+- [x] Preflight : Git clean, ticket 63 lu, rules/SPEC/specs chargees.
+- [x] Cartographie : verifier backend world entities, frontend mapping et invalidations WS.
+- [x] Implementation : lire les villages joueurs depuis `Village` dans `WorldEntitiesQueryService`.
+- [x] Tests : ajouter un smoke backend reel sur `GET /world/:worldId/entities`.
+- [x] Review : verifier diff, shape API, fog et absence de changement frontend inutile.
+- [x] Verification : lancer preflight smoke, smoke cible/backend requis et `yarn static-check`.
+- [x] Documentation : verifier impact docs et justifier.
+- [x] Archive : passer ticket en DONE, archiver, mettre a jour `tasks/README.md`, commit.
 
 ## Choix de scope
 
-- Inclus : sync bidirectionnelle mini-carte <-> caméra principale.
-- Exclu : tests unitaires Pixi/canvas, peu utiles ici selon `bftc-tests-policy`.
+- Inclus : `PLAYER_VILLAGE` dans le feed monde depuis la table `Village`, fog inclus.
+- Inclus : commentaire Prisma `WorldEntity` deprecated pour eviter de retablir l'ecriture miroir.
+- Exclu : suppression de la table `WorldEntity` et migration associee.
+- Exclu : changement frontend, deja compatible avec le shape `PLAYER_VILLAGE`.
 
 ## Review
 
-- `WorldMapScene` expose `onCameraChange` avec snapshot centre/taille visible, écoute `moved` + `zoomed` + resize, et coalesce les émissions en `requestAnimationFrame`.
-- `WorldMapCanvas` relaie le hook via controller et prop, avec cleanup explicite au destroy.
-- `WorldMapScreen` garde la dernière caméra en ref et ne re-render pour le viewbox que lorsque la mini-carte est visible.
-- `WorldMiniMap` supporte tap + drag pointer capturé, avec conversion canvas -> tile clampée et curseur grab/grabbing.
-- Tests : Pixi type-check, Pixi lint, Pixi Vitest avec env Vite, `yarn static-check` racine.
-- Docs : aucun changement nécessaire, UX pure sans invariant gameplay/architecture durable.
+- `WorldEntitiesQueryService` garde `Village` comme source canonique pour les villages joueurs et respecte le filtre `kinds` + bounds.
+- `PLAYER_VILLAGE` expose seulement `userId`, `name`, `villageId`; pas de fuite `label` / `isCapital`.
+- Le smoke `vision.smoke.spec.ts` prouve visible vs fogged pour deux villages joueurs.
+- `WorldEntity` reste en place mais marquee deprecated ; suppression suivie par le ticket 64.
+- Tests : preflight smoke, smoke cible, smokes backend complets et `yarn static-check` verts.
+- Docs : mise a jour `docs/architecture/worktree-dev.md` pour le probleme recurrent `packages/shared/dist` absent + `.tsbuildinfo` stale. Le contrat gameplay/API etait deja documente ; le changement restaure ce contrat. Un follow-up task couvre la dette schema.

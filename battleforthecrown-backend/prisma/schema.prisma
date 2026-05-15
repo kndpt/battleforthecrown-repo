@@ -232,6 +232,8 @@ model UnitTraining {
   @@map("unit_training")
 }
 
+/// Deprecated mirror table. Villages are now exposed on the world map from
+/// Village in WorldEntitiesQueryService; do not add lifecycle writes here.
 model WorldEntity {
   id      String @id @default(cuid())
   worldId String @map("world_id")
