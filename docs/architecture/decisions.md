@@ -269,7 +269,7 @@ Deux alternatives ont été écartées : full real-time façon Million Lords (au
 
 **Conséquences.**
 
-- **Aucun rework d'archi.** Le pattern Outbox, le combat, le scout, les styles, l'inbox sont totalement préservés. La migration se réduit à exposer `tempo` dans `WorldConfig`, créer une couche d'accès `TempoService`, et brancher les use-cases concernés sur cette couche au lieu des constantes directes.
+- **Aucun rework d'archi.** Le pattern Outbox, le combat, le scout, les styles, l'inbox sont totalement préservés. La migration se réduit à exposer `tempo` dans `WorldConfig`, créer une couche d'accès shared `TempoService`, et brancher les use-cases concernés sur cette couche au lieu des constantes directes.
 - **Durée du monde 120 → 60 j** comme conséquence directe : avec un tempo compressé, l'endgame multi-village s'ouvre vers J+5-J+7, donc un monde de 60 j garantit ~50 j de pur endgame — sweet spot validé contre le risque de fatigue endgame de 90 ou 120 j.
 - **Faisabilité commerciale améliorée** : on sort de la compétition frontale avec les slow-MMORTS P2W (Tribal Wars / Kingsage), et on ne tente pas la compétition frontale avec les real-time purs (Million Lords). Niche claire : compressed-async sans P2W, reset cyclique court.
 - **Coût de design** : recalibrer ~15 sections de chiffres à travers les docs `02`/`03`/`06`/`10`/`13`/`14`/`15`/`19`. Mécanique mais conséquent. Liste exhaustive dans [`gameplay/23-world-tempo-and-multipliers.md` § 7](../gameplay/23-world-tempo-and-multipliers.md#7-impacts-à-recalibrer-dans-les-autres-docs).

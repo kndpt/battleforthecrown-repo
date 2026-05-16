@@ -16,6 +16,7 @@ import {
   Tooltip,
 } from "@/ui";
 import { UNIT_COSTS } from "@battleforthecrown/shared/army";
+import { TempoService } from "@battleforthecrown/shared/world";
 import { ApiError } from "@/api";
 import type { ArmyTrainingDto, ArmyUnitDto } from "@/api/queries";
 import {
@@ -72,8 +73,7 @@ export function UnitCard({
   const train = useTrainUnitsMutation();
   const pushToast = useUiStore((state) => state.pushToast);
   const now = useTickingNow(1_000);
-  const trainingMultiplier =
-    useWorldConfigQuery(worldId).data?.gameSpeed.training;
+  const worldTempo = useWorldConfigQuery(worldId).data?.tempo;
   const queryClient = useQueryClient();
 
   // Bridge the gap between extrapolated visual completion and the WS event:
@@ -119,8 +119,8 @@ export function UnitCard({
 
   const totalCost = useMemo(() => {
     if (!cost) return null;
-    const perUnitSeconds = trainingMultiplier
-      ? cost.time / trainingMultiplier
+    const perUnitSeconds = worldTempo
+      ? TempoService.applyDuration(cost.time, worldTempo, 'unitTrainingSpeed')
       : cost.time;
     return {
       wood: cost.wood * quantity,
@@ -129,7 +129,7 @@ export function UnitCard({
       population: cost.population * quantity,
       timeSeconds: perUnitSeconds * quantity,
     };
-  }, [cost, quantity, trainingMultiplier]);
+  }, [cost, quantity, worldTempo]);
 
   const canAfford = useMemo(() => {
     if (!totalCost || !display) return false;

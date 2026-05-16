@@ -10,6 +10,7 @@ import {
   Spinner,
 } from '@/ui';
 import { UNIT_STATS, UNIT_TYPES } from '@battleforthecrown/shared/army';
+import { TempoService } from '@battleforthecrown/shared/world';
 import {
   calculateDistance,
   calculateTravelTime,
@@ -83,11 +84,17 @@ export function AttackDetailModal({
 
   const travelMs = useMemo(() => {
     if (totalSelected === 0) return 0;
-    const travelSpeed = worldConfig.data?.gameSpeed.travel;
-    if (travelSpeed === undefined) return 0;
+    const tempo = worldConfig.data?.tempo;
+    if (!tempo) return 0;
     const slowest = findSlowestUnitSpeed(effectiveUnits, UNIT_STATS);
     if (slowest === 0) return 0;
-    return calculateTravelTime(distance, slowest, travelSpeed);
+    return Math.round(
+      TempoService.applyDuration(
+        calculateTravelTime(distance, slowest, 1),
+        tempo,
+        'travelSpeed',
+      ),
+    );
   }, [effectiveUnits, totalSelected, distance, worldConfig.data]);
 
   const totalCarryCapacity = useMemo(() => {

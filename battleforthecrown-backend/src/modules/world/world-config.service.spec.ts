@@ -17,14 +17,13 @@ describe('WorldConfigService', () => {
   };
 
   const mockWorldConfig: WorldConfig = {
-    gameSpeed: {
-      construction: 2,
-      training: 3,
-      travel: 1,
-      capture: 1,
-    },
-    economy: {
-      productionRate: 1.5,
+    tempo: {
+      global: 1,
+      overrides: {
+        constructionSpeed: 0.5,
+        unitTrainingSpeed: 1 / 3,
+        resourceProduction: 1 / 1.5,
+      },
     },
     combat: {
       attackBonus: 1.0,
@@ -67,13 +66,14 @@ describe('WorldConfigService', () => {
 
       const result = await service.getConfig('world-1');
 
-      expect(result.gameSpeed).toEqual({
-        construction: 2,
-        training: 3,
-        travel: 1,
-        capture: 1,
+      expect(result.tempo).toEqual({
+        global: 1,
+        overrides: {
+          constructionSpeed: 0.5,
+          unitTrainingSpeed: 1 / 3,
+          resourceProduction: 1 / 1.5,
+        },
       });
-      expect(result.economy).toEqual({ productionRate: 1.5 });
       expect(result.fogOfWar.enabled).toBe(true);
     });
 
@@ -119,24 +119,6 @@ describe('WorldConfigService', () => {
         /invalid config/,
       );
     });
-
-    it('defaults capture speed for legacy configs', async () => {
-      mockPrismaService.world.findUnique.mockResolvedValue({
-        id: 'world-1',
-        config: {
-          ...mockWorldConfig,
-          gameSpeed: {
-            construction: 2,
-            training: 3,
-            travel: 1,
-          },
-        },
-      });
-
-      const result = await service.getConfig('world-1');
-
-      expect(result.gameSpeed.capture).toBe(1);
-    });
   });
 
   describe('getCost', () => {
@@ -162,11 +144,13 @@ describe('WorldConfigService', () => {
 
     it('enforces a minimum time of 1000ms', async () => {
       mockWorld({
-        gameSpeed: {
-          construction: 1000000,
-          training: 1,
-          travel: 1,
-          capture: 1,
+        tempo: {
+          global: 1,
+          overrides: {
+            constructionSpeed: 0.000001,
+            unitTrainingSpeed: 1,
+            resourceProduction: 1,
+          },
         },
       });
 
@@ -199,7 +183,10 @@ describe('WorldConfigService', () => {
 
     it('respects a custom production multiplier', async () => {
       mockWorld({
-        economy: { productionRate: 2 },
+        tempo: {
+          global: 1,
+          overrides: { resourceProduction: 0.5 },
+        },
       });
 
       const result = await service.getProductionRate('world-1', 'WOOD', 1);
@@ -254,11 +241,14 @@ describe('WorldConfigService', () => {
 
     it('applies the world travel speed multiplier', async () => {
       mockWorld({
-        gameSpeed: {
-          construction: 2,
-          training: 3,
-          travel: 2,
-          capture: 1,
+        tempo: {
+          global: 1,
+          overrides: {
+            constructionSpeed: 0.5,
+            unitTrainingSpeed: 1 / 3,
+            travelSpeed: 0.5,
+            resourceProduction: 1 / 1.5,
+          },
         },
       });
 

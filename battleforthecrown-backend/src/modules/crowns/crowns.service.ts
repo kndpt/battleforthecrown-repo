@@ -5,8 +5,10 @@ import { PrismaClientOrTx } from 'src/common/prisma.types';
 import { getBuildingPowerWeight } from '@battleforthecrown/shared/power';
 import { DEFAULT_CROWNS } from '@battleforthecrown/shared/crowns';
 import { MS_PER_HOUR } from '@battleforthecrown/shared/time';
+import { TempoService } from '@battleforthecrown/shared/world';
 import { PRODUCTION_CATCHUP_THRESHOLD_MS } from '../resources/resources.constants';
 import { createOutboxEvent } from '../event/event.utils';
+import { WorldConfigService } from '../world/world-config.service';
 
 @Injectable()
 export class CrownsService {
@@ -15,6 +17,7 @@ export class CrownsService {
   constructor(
     private prisma: PrismaService,
     private ownership: OwnershipService,
+    private worldConfig: WorldConfigService,
   ) {}
 
   /**
@@ -42,8 +45,12 @@ export class CrownsService {
     // Get conversion rate from world config
     const conversionRate = DEFAULT_CROWNS.conversionRate;
 
-    // Calculate crowns per hour
-    return totalBuildingPower * conversionRate;
+    const config = await this.worldConfig.getConfig(worldId);
+    return TempoService.applyRate(
+      totalBuildingPower * conversionRate,
+      config.tempo,
+      'crownsYield',
+    );
   }
 
   /**

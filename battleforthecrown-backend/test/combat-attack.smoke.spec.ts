@@ -86,7 +86,13 @@ describe('combat attack smoke', () => {
       data: {
         config: {
           ...SMOKE_WORLD_CONFIG,
-          gameSpeed: { ...SMOKE_WORLD_CONFIG.gameSpeed, travel: 1_000_000 },
+          tempo: {
+            ...SMOKE_WORLD_CONFIG.tempo,
+            overrides: {
+              ...SMOKE_WORLD_CONFIG.tempo.overrides,
+              travelSpeed: 0.000001,
+            },
+          },
         },
       },
     });
@@ -203,7 +209,13 @@ describe('combat attack smoke', () => {
       data: {
         config: {
           ...SMOKE_WORLD_CONFIG,
-          gameSpeed: { ...SMOKE_WORLD_CONFIG.gameSpeed, travel: 1_000_000 },
+          tempo: {
+            ...SMOKE_WORLD_CONFIG.tempo,
+            overrides: {
+              ...SMOKE_WORLD_CONFIG.tempo.overrides,
+              travelSpeed: 0.000001,
+            },
+          },
         },
       },
     });
@@ -288,7 +300,13 @@ describe('combat attack smoke', () => {
       data: {
         config: {
           ...SMOKE_WORLD_CONFIG,
-          gameSpeed: { ...SMOKE_WORLD_CONFIG.gameSpeed, travel: 1_000_000 },
+          tempo: {
+            ...SMOKE_WORLD_CONFIG.tempo,
+            overrides: {
+              ...SMOKE_WORLD_CONFIG.tempo.overrides,
+              travelSpeed: 0.000001,
+            },
+          },
         },
       },
     });

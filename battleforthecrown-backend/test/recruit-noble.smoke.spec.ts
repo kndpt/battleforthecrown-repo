@@ -72,7 +72,13 @@ describe('recruit noble smoke', () => {
       data: {
         config: {
           ...SMOKE_WORLD_CONFIG,
-          gameSpeed: { ...SMOKE_WORLD_CONFIG.gameSpeed, training: 1 },
+          tempo: {
+            ...SMOKE_WORLD_CONFIG.tempo,
+            overrides: {
+              ...SMOKE_WORLD_CONFIG.tempo.overrides,
+              lordTrainingSpeed: 1,
+            },
+          },
         },
       },
     });
@@ -185,7 +191,13 @@ describe('recruit noble smoke', () => {
       data: {
         config: {
           ...SMOKE_WORLD_CONFIG,
-          gameSpeed: { ...SMOKE_WORLD_CONFIG.gameSpeed, training: 1_000_000 },
+          tempo: {
+            ...SMOKE_WORLD_CONFIG.tempo,
+            overrides: {
+              ...SMOKE_WORLD_CONFIG.tempo.overrides,
+              lordTrainingSpeed: 0.000001,
+            },
+          },
         },
       },
     });

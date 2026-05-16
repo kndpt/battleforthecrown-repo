@@ -22,6 +22,7 @@ import {
 import { parseUnitMap, encodeUnitMap, encodeLootResult } from './codecs';
 import { getStrategyBonusValue } from '@battleforthecrown/shared/village';
 import { calculateDistance } from '@battleforthecrown/shared/logic';
+import { TempoService, type WorldTempo } from '@battleforthecrown/shared/world';
 import {
   UNIT_COSTS,
   UNIT_TYPES,
@@ -381,7 +382,7 @@ export class CombatWorker implements OnModuleInit {
                 Date.now() +
                   this.getCaptureDurationMs(
                     defenderVillage,
-                    context.config.gameSpeed.capture,
+                    context.config.tempo,
                   ),
               );
               pendingConquest = await this.conquest.openCaptureWindowInTx(tx, {
@@ -582,7 +583,11 @@ export class CombatWorker implements OnModuleInit {
 
     const defender =
       expedition.targetKind === 'BARBARIAN_VILLAGE'
-        ? await this.buildBarbarianDefender(tx, expedition.targetRefId)
+        ? await this.buildBarbarianDefender(
+            tx,
+            expedition.targetRefId,
+            config.tempo,
+          )
         : await this.buildPlayerDefender(tx, expedition.targetRefId);
 
     // Bonus de défense du défenseur (seulement pour les villages joueurs)
@@ -633,6 +638,7 @@ export class CombatWorker implements OnModuleInit {
   private async buildBarbarianDefender(
     tx: PrismaClientOrTx,
     villageId: string,
+    tempo: WorldTempo,
   ) {
     const village = await tx.village.findUniqueOrThrow({
       where: { id: villageId },
@@ -642,6 +648,7 @@ export class CombatWorker implements OnModuleInit {
     const { units, resources } = await this.barbarianRuntime.catchUpVillage(
       tx,
       villageId,
+      tempo,
     );
 
     const garrisons = await tx.garrison.findMany({
@@ -868,7 +875,7 @@ export class CombatWorker implements OnModuleInit {
     targetVillage: Prisma.VillageGetPayload<{
       include: { resourceStock: true; buildings: true };
     }>,
-    captureSpeed: number,
+    tempo: WorldTempo,
   ): number {
     let baseDurationMs: number;
 
@@ -889,7 +896,9 @@ export class CombatWorker implements OnModuleInit {
 
     return Math.max(
       MIN_CAPTURE_DURATION_MS,
-      Math.round(baseDurationMs / captureSpeed),
+      Math.round(
+        TempoService.applyDuration(baseDurationMs, tempo, 'captureWindow'),
+      ),
     );
   }
 
@@ -1017,7 +1026,11 @@ export class CombatWorker implements OnModuleInit {
 
     const snapshot =
       expedition.targetKind === 'BARBARIAN_VILLAGE'
-        ? await this.barbarianRuntime.catchUpVillage(tx, expedition.targetRefId)
+        ? await this.barbarianRuntime.catchUpVillage(
+            tx,
+            expedition.targetRefId,
+            (await this.worldConfig.getConfig(expedition.worldId)).tempo,
+          )
         : {
             units: Object.fromEntries(
               targetVillage.unitInventory.map((unit) => [

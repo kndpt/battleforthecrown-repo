@@ -47,7 +47,7 @@ export function calculateDistance(
  *
  * @param distance - Distance en cases
  * @param armySpeed - Vitesse de l'armée (= speed de l'unité la plus lente du groupe)
- * @param worldTravelSpeed - Multiplicateur global de vitesse du monde (config.gameSpeed.travel)
+ * @param worldTravelSpeed - Multiplicateur de vitesse legacy utilisé par les estimations locales
  * @returns Temps de trajet en millisecondes
  */
 export function calculateTravelTime(

@@ -2,14 +2,18 @@
 -- @battleforthecrown/shared/world (strict — extra keys are rejected).
 UPDATE world
 SET config = '{
-  "gameSpeed": {
-    "construction": 1,
-    "training": 1,
-    "travel": 1,
-    "capture": 1
-  },
-  "economy": {
-    "productionRate": 1
+  "tempo": {
+    "global": 1,
+    "overrides": {
+      "constructionSpeed": 1,
+      "unitTrainingSpeed": 1,
+      "lordTrainingSpeed": 1,
+      "travelSpeed": 1,
+      "captureWindow": 1,
+      "barbarianRegen": 1,
+      "resourceProduction": 1,
+      "crownsYield": 1
+    }
   },
   "combat": {
     "attackBonus": 1.0,
