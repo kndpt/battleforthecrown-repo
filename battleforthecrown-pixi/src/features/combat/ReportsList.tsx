@@ -44,15 +44,16 @@ function combatInboxItem(report: CombatReportDto) {
     (report.loot?.resources?.stone ?? 0) +
     (report.loot?.resources?.iron ?? 0);
   const { isVictory } = combatReportOutcome(report);
+  const tagTone: 'report' | 'attack' = isVictory ? 'report' : 'attack';
 
   return {
-    icon: report.isAttacker ? '/assets/hand-red.png' : '/assets/hand-silver.png',
+    icon: report.isAttacker ? '/assets/attack.png' : '/assets/defense.png',
     preview: totalLoot > 0
       ? `Butin ramené : ${NUMBER_FORMATTER.format(totalLoot)} ressources.`
       : 'Aucun butin ramené.',
     sender: report.isAttacker ? 'Attaque' : 'Défense',
     subject: `${isVictory ? 'Victoire' : 'Défaite'} · (${report.targetX}, ${report.targetY})`,
-    tag: { label: isVictory ? 'VICTOIRE' : 'DÉFAITE', tone: 'report' as const },
+    tag: { label: isVictory ? 'VICTOIRE' : 'DÉFAITE', tone: tagTone },
     tone: report.isAttacker ? 'attack' as const : 'report' as const,
   };
 }

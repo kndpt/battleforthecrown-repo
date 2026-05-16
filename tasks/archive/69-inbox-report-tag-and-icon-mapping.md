@@ -1,7 +1,7 @@
 # 69 — Inbox combat : couleur du badge VICTOIRE/DÉFAITE et icônes de carte
 
 **Sévérité** : 🟠 Moyen
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ DONE
 **Spec amont** : Aucune
 
 ## Symptôme
@@ -51,13 +51,19 @@ Piste unique retenue après échange préalable :
 
 ## Critères de succès
 
-- [ ] Badge `VICTOIRE` rendu en vert, badge `DÉFAITE` rendu en rouge dans la liste inbox.
-- [ ] Cohérence attaquant / défenseur sur le même combat (le défenseur d'un combat où l'attaquant a wipe voit `VICTOIRE` vert ; l'attaquant voit `DÉFAITE` rouge).
-- [ ] Icônes `defense.png` / `attack.png` rendues correctement dans le slot 38×38 px du `MailInboxItem` (pas de glitch d'aspect — sinon ajuster via CSS dans le composant ou rester sur les poings).
-- [ ] Aucune référence à `hand-red.png` / `hand-silver.png` ne subsiste dans `ReportsList.tsx`.
-- [ ] Ne **pas** toucher `kingdomActivitiesViewModel.ts:41-42` qui réutilise les poings pour les activités du royaume (cadre différent, panneau temps réel).
-- [ ] Ne **pas** toucher `CombatReportModal` (modal détail) : bandeau + versus-strip déjà cohérents.
-- [ ] `yarn static-check` vert.
+- [x] Badge `VICTOIRE` rendu en vert, badge `DÉFAITE` rendu en rouge dans la liste inbox.
+- [x] Cohérence attaquant / défenseur sur le même combat (le défenseur d'un combat où l'attaquant a wipe voit `VICTOIRE` vert ; l'attaquant voit `DÉFAITE` rouge).
+- [x] Icônes `defense.png` / `attack.png` rendues correctement dans le slot 38×38 px du `MailInboxItem` (pas de glitch d'aspect — sinon ajuster via CSS dans le composant ou rester sur les poings).
+- [x] Aucune référence à `hand-red.png` / `hand-silver.png` ne subsiste dans `ReportsList.tsx`.
+- [x] Ne **pas** toucher `kingdomActivitiesViewModel.ts:41-42` qui réutilise les poings pour les activités du royaume (cadre différent, panneau temps réel).
+- [x] Ne **pas** toucher `CombatReportModal` (modal détail) : bandeau + versus-strip déjà cohérents.
+- [x] `yarn static-check` vert.
+
+## Résolution
+
+- `ReportsList.tsx` utilise désormais les assets sémantiques `/assets/attack.png` et `/assets/defense.png` pour les rapports combat.
+- Le badge suit l'issue calculée par `combatReportOutcome(report)` : `VICTOIRE` en tone `report`, `DÉFAITE` en tone `attack`.
+- Vérifié par `yarn static-check`.
 
 ## Connexe
 
