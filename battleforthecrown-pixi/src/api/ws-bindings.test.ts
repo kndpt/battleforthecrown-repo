@@ -507,6 +507,7 @@ describe('applyVillageAttacked', () => {
     queryClient.setQueryData(queryKeys.combatReports('defender-1'), []);
     queryClient.setQueryData(queryKeys.scoutReports('defender-1'), []);
     seedPowerQueries(queryClient, 'v-def', 'defender-1');
+    seedPowerQueries(queryClient, 'v-origin', 'defender-1');
 
     applyVillageAttacked(
       {
@@ -518,6 +519,7 @@ describe('applyVillageAttacked', () => {
         defenderVillageName: 'Defender',
         isDefenseSuccessful: false,
         losses: {},
+        reinforcementOriginVillageIds: ['v-origin'],
         casualtyRate: 0,
         resourcesLost: { wood: 0, stone: 0, iron: 0 },
         timestamp: '2026-05-04T22:00:00.000Z',
@@ -528,6 +530,7 @@ describe('applyVillageAttacked', () => {
     expect(queryClient.getQueryState(queryKeys.combatReports('defender-1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.scoutReports('defender-1'))?.isInvalidated).toBe(true);
     expectPowerQueriesInvalidated(queryClient, 'v-def', 'defender-1');
+    expectPowerQueriesInvalidated(queryClient, 'v-origin', 'defender-1');
   });
 });
 

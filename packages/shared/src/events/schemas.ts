@@ -97,6 +97,7 @@ const VillageAttackedPayloadSchema = z.object({
   defenderVillageName: z.string(),
   isDefenseSuccessful: z.boolean(),
   losses: UnitMapSchema,
+  reinforcementOriginVillageIds: z.array(z.string()).optional(),
   casualtyRate: z.number(),
   resourcesLost: LootResourcesSchema,
   timestamp: z.string(),

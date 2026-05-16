@@ -10,6 +10,19 @@ import {
 } from './helpers';
 import { SMOKE_WORLD_CONFIG } from './fixtures/smoke-world-config';
 
+async function getVillagePower(
+  server: SmokeContext['server'],
+  accessToken: string,
+  villageId: string,
+): Promise<{ army: number; total: number }> {
+  const res = await request(server)
+    .get('/power')
+    .query({ villageId })
+    .set('Authorization', `Bearer ${accessToken}`);
+  expect(res.status).toBe(200);
+  return res.body as { army: number; total: number };
+}
+
 describe('combat attack smoke', () => {
   let ctx: SmokeContext;
 
@@ -61,6 +74,13 @@ describe('combat attack smoke', () => {
       data: { level: 1 },
     });
 
+    const powerBefore = await getVillagePower(
+      ctx.server,
+      user.accessToken,
+      attackerId,
+    );
+    expect(powerBefore.army).toBe(200);
+
     const res = await request(ctx.server)
       .post('/combat/attack')
       .set('Authorization', `Bearer ${user.accessToken}`)
@@ -73,6 +93,13 @@ describe('combat attack smoke', () => {
         units: { MILITIA: 100 },
       });
     expect(res.status).toBeLessThan(300);
+
+    const powerAfterDispatch = await getVillagePower(
+      ctx.server,
+      user.accessToken,
+      attackerId,
+    );
+    expect(powerAfterDispatch.army).toBe(powerBefore.army);
 
     const outbound = await ctx.prisma.expedition.findFirstOrThrow({
       where: { attackerVillageId: attackerId, status: 'EN_ROUTE' },
@@ -97,6 +124,13 @@ describe('combat attack smoke', () => {
       { timeoutMs: 15_000 },
     );
     expect(resolved?.dispatchedAt).toBeTruthy();
+
+    const powerAfterLosses = await getVillagePower(
+      ctx.server,
+      user.accessToken,
+      attackerId,
+    );
+    expect(powerAfterLosses.army).toBe(180);
 
     const returning = await ctx.prisma.expedition.findUniqueOrThrow({
       where: { id: outbound.id },
@@ -129,6 +163,13 @@ describe('combat attack smoke', () => {
       { timeoutMs: 15_000 },
     );
     expect(returned?.dispatchedAt).toBeTruthy();
+
+    const powerAfterReturn = await getVillagePower(
+      ctx.server,
+      user.accessToken,
+      attackerId,
+    );
+    expect(powerAfterReturn.army).toBe(powerAfterLosses.army);
 
     const defenderInventory = await ctx.prisma.unitInventory.findUniqueOrThrow({
       where: {

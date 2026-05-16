@@ -11,3 +11,19 @@
 
 - Décision gameplay : la puissance armée est rattachée au village d'origine, pas à la position physique.
 - Merge sur `main` en cours depuis `87284ff`.
+## Run 025 — fix origin-anchored army power
+
+- [x] Préflight : worktree clean, fiche `PLANNED`, règles/specs lues.
+- [x] Cartographie : `PowerService` ne comptait que `UnitInventory`; renforts et expéditions actifs absents du calcul.
+- [x] Implémenter calcul de puissance armée par village d'origine.
+- [x] Ajouter la réactivité front pour pertes de renforts d'origine distante.
+- [x] Ajouter smokes backend ciblés.
+- [x] Mettre à jour docs/run, archiver, vérifier et commit.
+
+### Review
+
+- Correctness : calcul origin-anchored couvert par smokes attaque/scout/renfort.
+- Readability : helpers locaux dans `PowerService`, pas de changement de modèle.
+- Architecture : backend server-authoritative ; event Outbox enrichi sans publication directe.
+- Security : aucun nouveau secret ni endpoint public élargi.
+- Performance : agrégation batchée par liste de villages pour kingdom/leaderboard.

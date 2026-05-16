@@ -1,8 +1,8 @@
 # Run #025 — fix-origin-anchored-army-power
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-05-16
+> **Terminé** : 2026-05-16
 
 ## Cible
 
@@ -84,24 +84,44 @@ Conséquences :
 
 ## Progress (rempli pendant le run)
 
-_(Vide au démarrage. Mis à jour à chaque transition d'étape ou de tâche.)_
+- [x] Préflight : worktree clean, règles/specs/briefings lus.
+- [x] Cartographie : `PowerService` comptait uniquement `UnitInventory`; `Expedition` et `Garrison` manquaient.
+- [x] Backend : calcul power origin-anchored ajouté pour village, royaume et leaderboard.
+- [x] Realtime : `village.attacked` transporte les origines de renforts impactées par des pertes.
+- [x] Tests : smokes attaque/scout/renfort enrichis + test WS front.
+- [x] Docs/SPEC : contrat gameplay clarifié et invariant durable ajouté.
 
 ## Décisions prises
 
-_(Vide au démarrage. Décisions archi non triviales, dérogations lead, findings de review, refus de sub-agents.)_
+- La puissance armée agrège `UnitInventory`, `Garrison.originVillageId` et `Expedition` active/retour par origine réelle.
+- En `RETURNING`, une expédition compte `survivingUnits` sauf rappel (`recalled`), qui compte l'envoi initial encore en route vers l'origine.
+- La force présente locale reste hors `PowerService`; elle demeure calculée par les stratégies combat/scout.
+- Dérogation environnement : le préflight smoke officiel exige `battleforthecrown-postgres` sur `localhost:5432`, mais ce port était déjà occupé par un autre container. Les smokes ciblés ont été lancés sur un Postgres BFTC isolé en `localhost:15432`.
 
 ## Rapport final
 
-_(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tickets ouverts, méta-évaluation si applicable.)_
+- `PowerService` calcule désormais l'armée par village d'origine pour les endpoints village, royaume, public royaume et leaderboard.
+- Les pertes de renforts en défense exposent `reinforcementOriginVillageIds` dans `village.attacked`; le front invalide aussi la puissance des villages d'origine.
+- `docs/gameplay/09-power-and-rankings.md` clarifie origine vs présence locale ; `SPEC.md` garde l'invariant pour les futurs runs.
 
 ### Acceptance & QA
 
 - **Critères d'acceptance vérifiés** :
-  - [ ] Envoyer une attaque/scout/renfort ne baisse pas la puissance — preuve : smoke/API/SELECT.
-  - [ ] Les pertes baissent la puissance du village d'origine — preuve : smoke combat.
-  - [ ] Les renforts stationnés/perdus sont comptés à l'origine — preuve : smoke renfort/garnison.
-- **Tests automatisés** : commandes exactes + résultat synthétique.
-- **Smokes lancés** : `yarn test:smoke` obligatoire si backend touché.
-- **Smokes ajoutés/modifiés** : fichiers + scénario couvert, ou `Aucun`, raison.
-- **QA fonctionnelle agent** : REST/worker/job/SELECT si pertinent.
-- **Tests IG à faire par le user** : checklist observable si la validation HUD/PowerBottomSheet reste nécessaire.
+  - [x] Envoyer une attaque/scout/renfort ne baisse pas la puissance — preuve : smokes `combat-attack`, `scouting`, `reinforcements` via `GET /power`.
+  - [x] Les pertes attaquantes baissent la puissance du village d'origine — preuve : `combat-attack.smoke.spec.ts` attend 200 → 180 puis retour stable.
+  - [x] Le retour des survivants ne modifie pas la puissance — preuve : `combat-attack.smoke.spec.ts` compare après pertes vs après retour.
+  - [x] Les renforts stationnés/perdus sont comptés à l'origine — preuve : `reinforcements.smoke.spec.ts` attend origine 200, hôte 0, puis origine 80 après pertes.
+  - [x] Visibilité publique préservée — preuve : pas de changement du endpoint village public ; `getPublicKingdomPower` conserve le contrat total existant.
+- **Tests automatisés** :
+  - `yarn workspace battleforthecrown-backend test power` — PASS, 2 suites / 8 tests.
+  - `VITE_API_BASE_URL=http://localhost:15001 VITE_WS_URL=http://localhost:15001 yarn workspace battleforthecrown-pixi test ws-bindings.test.ts` — PASS, 23 tests.
+  - `yarn static-check` — PASS.
+- **Smokes lancés** :
+  - `SMOKE_DATABASE_URL=postgresql://postgres:postgres@localhost:15432/battleforthecrown_smoke yarn workspace battleforthecrown-backend test:smoke:run combat-attack.smoke.spec.ts reinforcements.smoke.spec.ts scouting.smoke.spec.ts --runInBand` — PASS, 3 suites / 6 tests.
+  - `yarn test:smoke:preflight` — BLOQUÉ environnement : `localhost:5432` déjà occupé par un autre container Postgres, donc le container officiel `battleforthecrown-postgres` ne peut pas binder le port.
+- **Smokes ajoutés/modifiés** :
+  - `battleforthecrown-backend/test/combat-attack.smoke.spec.ts` — départ attaque sans baisse, pertes 200→180, retour stable.
+  - `battleforthecrown-backend/test/scouting.smoke.spec.ts` — départ scout sans baisse.
+  - `battleforthecrown-backend/test/reinforcements.smoke.spec.ts` — renfort en trajet/stationné compté à l'origine, hôte à 0, pertes origine, payload `reinforcementOriginVillageIds`.
+- **QA fonctionnelle agent** : smokes REST/worker/Outbox ci-dessus avec Postgres isolé ; aucune QA navigateur requise.
+- **Tests IG à faire par le user** : Aucun test IG nécessaire, raison : correction logique backend + invalidation cache front couverte par test WS.

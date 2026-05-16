@@ -10,6 +10,19 @@ import {
   type SmokeContext,
 } from './helpers';
 
+async function getVillagePower(
+  server: SmokeContext['server'],
+  accessToken: string,
+  villageId: string,
+): Promise<{ army: number }> {
+  const res = await request(server)
+    .get('/power')
+    .query({ villageId })
+    .set('Authorization', `Bearer ${accessToken}`);
+  expect(res.status).toBe(200);
+  return res.body as { army: number };
+}
+
 describe('reinforcements smoke', () => {
   let ctx: SmokeContext;
 
@@ -55,6 +68,13 @@ describe('reinforcements smoke', () => {
       data: { used: 100, max: 200 }, // 100 militia = 100 pop
     });
 
+    const powerBeforeReinforce = await getVillagePower(
+      ctx.server,
+      userA.accessToken,
+      villageAId,
+    );
+    expect(powerBeforeReinforce.army).toBe(200);
+
     // 4. Player A reinforces Player B
     // Fix: Make village B owned by user A for the "inter-villages" rule
     await ctx.prisma.village.update({
@@ -72,6 +92,13 @@ describe('reinforcements smoke', () => {
       });
     expect(reinforceRes.status).toBeLessThan(300);
 
+    const powerAfterReinforceDispatch = await getVillagePower(
+      ctx.server,
+      userA.accessToken,
+      villageAId,
+    );
+    expect(powerAfterReinforceDispatch.army).toBe(powerBeforeReinforce.army);
+
     // 5. Wait for arrival at village B
     await waitFor(
       () =>
@@ -84,6 +111,19 @@ describe('reinforcements smoke', () => {
         }),
       { timeoutMs: 30_000 },
     );
+
+    const powerAfterStationing = await getVillagePower(
+      ctx.server,
+      userA.accessToken,
+      villageAId,
+    );
+    expect(powerAfterStationing.army).toBe(powerBeforeReinforce.army);
+    const hostPowerAfterStationing = await getVillagePower(
+      ctx.server,
+      userA.accessToken,
+      villageBId,
+    );
+    expect(hostPowerAfterStationing.army).toBe(0);
 
     // 6. Setup Player C (Attacker) to attack village B
     const userC = await registerUser(ctx.server, 'c' + Date.now());
@@ -129,6 +169,15 @@ describe('reinforcements smoke', () => {
       { timeoutMs: 30_000 },
     );
 
+    const attackedEvent = await ctx.prisma.eventOutbox.findFirstOrThrow({
+      where: { kind: 'village.attacked', aggregateId: villageBId },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(
+      (attackedEvent.payload as { reinforcementOriginVillageIds?: string[] })
+        .reinforcementOriginVillageIds,
+    ).toContain(villageAId);
+
     // 8. Verify losses distributed to Garrison
     const garrisonAfter = await ctx.prisma.garrison.findFirst({
       where: { villageId: villageBId, originVillageId: villageAId },
@@ -140,6 +189,13 @@ describe('reinforcements smoke', () => {
       where: { villageId: villageAId },
     });
     expect(popA.used).toBe(40);
+
+    const powerAfterReinforcementLosses = await getVillagePower(
+      ctx.server,
+      userA.accessToken,
+      villageAId,
+    );
+    expect(powerAfterReinforcementLosses.army).toBe(80);
 
     // 10. Test Recall (send some more units first)
     await ctx.prisma.garrison.update({
