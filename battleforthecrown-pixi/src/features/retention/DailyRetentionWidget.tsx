@@ -281,7 +281,7 @@ export function DailyRetentionWidget({
 
       {isOpen && summary ? (
         <div
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/65 p-3"
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/65 p-3 pb-[calc(env(safe-area-inset-bottom)+96px)]"
           data-testid="daily-retention-backdrop"
           onMouseDown={handleBackdropMouseDown}
         >
@@ -296,7 +296,7 @@ export function DailyRetentionWidget({
             eyebrow={undefined}
             expiresInLabel="Reset à"
             expiresInValue="04h00"
-            maxHeight="min(680px, calc(100dvh - 18px))"
+            maxHeight="min(680px, calc(100dvh - env(safe-area-inset-bottom) - 108px))"
             onClose={() => setIsOpen(false)}
             onPrimaryAction={handlePrimaryAction}
             oyez={mapOyez(summary)}
