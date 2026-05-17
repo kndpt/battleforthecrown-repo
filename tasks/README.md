@@ -29,7 +29,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ### Runs actifs
 
-- [028 — Mobile WorldMap minimap UX](./runs/028-mobile-worldmap-minimap-ux.md) — 📋 `PLANNED`. Repenser l'UX mobile de la mini-carte et des contrôles flottants WorldMap après l'ajout du RoyalSeal daily.
+_(Aucun run actif.)_
 
 ### Runs archivés
 
