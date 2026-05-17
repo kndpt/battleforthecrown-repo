@@ -2,6 +2,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import {
   WorldConfigSchema,
+  TempoService,
   type WorldConfig,
 } from '@battleforthecrown/shared/world';
 import type { VillageStrategyType } from '@battleforthecrown/shared/village';
@@ -18,6 +19,7 @@ import {
   findSlowestUnitSpeed,
   REFERENCE_SPEED,
 } from '@battleforthecrown/shared/logic';
+import { MS_PER_SECOND } from '@battleforthecrown/shared/time';
 
 @Injectable()
 export class WorldConfigService {
@@ -52,13 +54,26 @@ export class WorldConfigService {
   ) {
     const config = await this.getConfig(worldId);
 
-    return calculateBuildingCost(
+    const cost = calculateBuildingCost(
       buildingType,
       level,
       castleLevel,
-      config.gameSpeed.construction,
+      1,
       strategy,
     );
+    return {
+      ...cost,
+      time: Math.max(
+        MS_PER_SECOND,
+        Math.round(
+          TempoService.applyDuration(
+            cost.time,
+            config.tempo,
+            'constructionSpeed',
+          ),
+        ),
+      ),
+    };
   }
 
   async getProductionRate(
@@ -69,11 +84,11 @@ export class WorldConfigService {
   ): Promise<number> {
     const config = await this.getConfig(worldId);
 
-    return calculateProductionRate(
-      type,
-      level,
-      config.economy.productionRate,
-      strategy,
+    const absoluteRate = calculateProductionRate(type, level, 1, strategy);
+    return TempoService.applyRate(
+      absoluteRate,
+      config.tempo,
+      'resourceProduction',
     );
   }
 
@@ -109,11 +124,18 @@ export class WorldConfigService {
 
     // Pas d'armée : on utilise la vitesse de référence (1 minute / tuile au
     // multiplicateur monde près).
-    return calculateTravelTime(
+    const absoluteTravelTime = calculateTravelTime(
       distance,
-      config.gameSpeed.travel,
+      1,
       REFERENCE_SPEED,
       attackerStrategy,
+    );
+    return Math.round(
+      TempoService.applyDuration(
+        absoluteTravelTime,
+        config.tempo,
+        'travelSpeed',
+      ),
     );
   }
 
@@ -136,11 +158,18 @@ export class WorldConfigService {
     let slowestSpeed = findSlowestUnitSpeed(units, UNIT_CATALOG.stats);
     if (slowestSpeed === 0) slowestSpeed = REFERENCE_SPEED;
 
-    return calculateTravelTime(
+    const absoluteTravelTime = calculateTravelTime(
       distance,
-      config.gameSpeed.travel,
+      1,
       slowestSpeed,
       attackerStrategy,
+    );
+    return Math.round(
+      TempoService.applyDuration(
+        absoluteTravelTime,
+        config.tempo,
+        'travelSpeed',
+      ),
     );
   }
 

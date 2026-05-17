@@ -1,5 +1,6 @@
 export * from './types';
 export * from './schemas';
+export * from './tempo';
 export * from './world';
 export * from './dtos';
 export * from './barbarian-templates';

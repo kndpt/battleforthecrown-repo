@@ -1,13 +1,22 @@
-# Run 025 - origin-anchored army power
+# Run 026 - world tempo plumbing clean cut
 
-- [x] Préflight `$bftc-plan` : git clean, conventions tasks/runs lues.
-- [x] Scan tickets/runs liés : 067, 029, 010/033, 011, 054/018.
-- [x] Draft validé par user : artefact run, ID 025.
-- [x] Fiche créée : `tasks/runs/025-fix-origin-anchored-army-power.md`.
-- [x] Index mis à jour : `tasks/README.md`.
-- [x] Commit worktree créé : `87284ff docs(tasks): plan origin-anchored army power run`.
+- [x] Préflight : git clean, fiche run, rules, SPEC et spec 23 lus.
+- [x] Cartographie : callsites `gameSpeed` / `economy.productionRate` / régen barbare / couronnes localisés.
+- [x] Contrat shared : `WorldConfig.tempo` + `TempoService` + tests pure-logic.
+- [x] Backend : brancher construction, training, travel, capture, régen barbare, production ressources, couronnes.
+- [x] Fixtures/migration : config smoke, seed SQL, migration JSON clean cut.
+- [x] Vérification : unit backend ciblé vert ; smokes backend, tests Pixi et static-check verts.
+- [x] Archive run + index.
 
 ## Notes
 
-- Décision gameplay : la puissance armée est rattachée au village d'origine, pas à la position physique.
-- Merge sur `main` en cours depuis `87284ff`.
+- Scope volontairement limité à la plomberie tempo. Les valeurs absolues docs/shared restent pour le run 027.
+- Callsite régen barbare confirmé : `BarbarianRuntimeService.catchUpVillage` et `catchUpResources`.
+
+## Review
+
+- Correctness : opérateur tempo centralisé dans `TempoService`; callsites backend branchés par axe.
+- Readability : clean cut schema/config, pas d'alias legacy.
+- Architecture : server-authoritative conservé ; frontend seulement estimations d'affichage.
+- Security : aucun secret, aucune surface auth modifiée.
+- Performance : impact négligeable, calculs locaux O(1).

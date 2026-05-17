@@ -15,6 +15,7 @@ import {
   UNIT_TYPES,
   type UnitType,
 } from '@battleforthecrown/shared/army';
+import { TempoService } from '@battleforthecrown/shared/world';
 import { unitMetaFor } from './unitConfig';
 
 interface UnitDetailModalProps {
@@ -67,7 +68,7 @@ export function UnitDetailModal({ onClose, unit }: UnitDetailModalProps) {
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const { display } = useDisplayResources(villageId);
   const { balance: crownsBalance } = useDisplayCrowns(userId, worldId);
-  const trainingMultiplier = useWorldConfigQuery(worldId).data?.gameSpeed.training;
+  const worldTempo = useWorldConfigQuery(worldId).data?.tempo;
 
   if (!unitType || !stats || !cost) return null;
 
@@ -85,7 +86,9 @@ export function UnitDetailModal({ onClose, unit }: UnitDetailModalProps) {
     wood: display?.wood ?? 0,
   };
   const role = roleFor(unitType, stats);
-  const perUnitSeconds = trainingMultiplier ? cost.time / trainingMultiplier : cost.time;
+  const perUnitSeconds = worldTempo
+    ? TempoService.applyDuration(cost.time, worldTempo, 'unitTrainingSpeed')
+    : cost.time;
 
   return (
     <div

@@ -18,6 +18,8 @@ import {
   UNIT_TYPES,
 } from '@battleforthecrown/shared/army';
 import { calculateTrainingTime } from '@battleforthecrown/shared/logic';
+import { MS_PER_SECOND } from '@battleforthecrown/shared/time';
+import { TempoService } from '@battleforthecrown/shared/world';
 
 @Injectable()
 export class RecruitNobleUseCase {
@@ -126,10 +128,15 @@ export class RecruitNobleUseCase {
         typeof strategyBonus?.trainingSpeedBonus === 'number'
           ? strategyBonus.trainingSpeedBonus
           : 1;
-      const timePerUnitMs = calculateTrainingTime(
-        unitCost.time,
-        config.gameSpeed.training,
-        trainingSpeedBonus,
+      const timePerUnitMs = Math.max(
+        MS_PER_SECOND,
+        Math.round(
+          TempoService.applyDuration(
+            calculateTrainingTime(unitCost.time, 1, trainingSpeedBonus),
+            config.tempo,
+            'lordTrainingSpeed',
+          ),
+        ),
       );
       const now = new Date();
       const nextUnitEta = new Date(now.getTime() + timePerUnitMs);

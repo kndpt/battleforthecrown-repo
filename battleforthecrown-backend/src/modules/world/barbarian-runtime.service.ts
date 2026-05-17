@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import type { UnitMap, UnitType } from '@battleforthecrown/shared/army';
 import { MS_PER_HOUR } from '@battleforthecrown/shared/time';
+import { TempoService, type WorldTempo } from '@battleforthecrown/shared/world';
 import {
   calculateBarbarianUnitRegen,
   getBarbarianRegenRates,
@@ -13,6 +14,7 @@ export class BarbarianRuntimeService {
   async catchUpVillage(
     tx: PrismaClientOrTx,
     villageId: string,
+    tempo: WorldTempo,
     now = new Date(),
   ): Promise<{
     units: UnitMap;
@@ -47,7 +49,11 @@ export class BarbarianRuntimeService {
     const unitRegen = calculateBarbarianUnitRegen({
       tier,
       currentUnits,
-      elapsedHours: troopElapsedHours,
+      elapsedHours: TempoService.applyRate(
+        troopElapsedHours,
+        tempo,
+        'barbarianRegen',
+      ),
     });
 
     for (const [unitType, quantity] of Object.entries(unitRegen)) {
@@ -81,7 +87,7 @@ export class BarbarianRuntimeService {
     }
 
     const resources = village.resourceStock
-      ? await this.catchUpResources(tx, village.resourceStock, tier, now)
+      ? await this.catchUpResources(tx, village.resourceStock, tier, tempo, now)
       : { wood: 0, stone: 0, iron: 0 };
 
     return { units: currentUnits, resources };
@@ -98,6 +104,7 @@ export class BarbarianRuntimeService {
       lastUpdateTs: Date;
     },
     tier: string,
+    tempo: WorldTempo,
     now: Date,
   ) {
     const elapsedHours = Math.max(
@@ -106,7 +113,9 @@ export class BarbarianRuntimeService {
     );
     const { resourceRatePerHour } = getBarbarianRegenRates(tier);
     const gain = Math.floor(
-      stock.maxPerType * resourceRatePerHour * elapsedHours,
+      stock.maxPerType *
+        TempoService.applyRate(resourceRatePerHour, tempo, 'barbarianRegen') *
+        elapsedHours,
     );
     const resources = {
       wood: Math.min(stock.maxPerType, stock.wood + gain),

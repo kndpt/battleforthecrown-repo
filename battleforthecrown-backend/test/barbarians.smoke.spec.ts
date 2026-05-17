@@ -108,7 +108,7 @@ describe('barbarians smoke', () => {
     });
 
     const caughtUp = await ctx.prisma.$transaction((tx) =>
-      runtime.catchUpVillage(tx, barbarian.id),
+      runtime.catchUpVillage(tx, barbarian.id, SMOKE_WORLD_CONFIG.tempo),
     );
 
     expect(caughtUp.units).toEqual({ MILITIA: 15 });

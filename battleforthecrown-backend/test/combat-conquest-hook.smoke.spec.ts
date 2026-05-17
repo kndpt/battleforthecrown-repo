@@ -238,10 +238,16 @@ describe('combat conquest hook smoke', () => {
     });
   }, 45_000);
 
-  it('applies world capture speed and keeps legacy config fallback at normal duration', async () => {
+  it('applies world capture tempo and keeps reference tempo at normal duration', async () => {
     const acceleratedWorld = await seedWorld({
       ...SMOKE_WORLD_CONFIG,
-      gameSpeed: { ...SMOKE_WORLD_CONFIG.gameSpeed, capture: 10 },
+      tempo: {
+        ...SMOKE_WORLD_CONFIG.tempo,
+        overrides: {
+          ...SMOKE_WORLD_CONFIG.tempo.overrides,
+          captureWindow: 0.1,
+        },
+      },
     });
     const accelerated = await launchConquest(
       acceleratedWorld.id,
@@ -250,20 +256,13 @@ describe('combat conquest hook smoke', () => {
 
     expectCaptureDuration(accelerated.pending, T1_CAPTURE_DURATION_MS / 10);
 
-    const legacyWorld = await seedWorld({
-      ...SMOKE_WORLD_CONFIG,
-      gameSpeed: {
-        construction: SMOKE_WORLD_CONFIG.gameSpeed.construction,
-        training: SMOKE_WORLD_CONFIG.gameSpeed.training,
-        travel: SMOKE_WORLD_CONFIG.gameSpeed.travel,
-      },
-    });
-    const legacy = await launchConquest(
-      legacyWorld.id,
-      `capture-legacy-${Date.now()}`,
+    const referenceWorld = await seedWorld(SMOKE_WORLD_CONFIG);
+    const reference = await launchConquest(
+      referenceWorld.id,
+      `capture-reference-${Date.now()}`,
     );
 
-    expectCaptureDuration(legacy.pending, T1_CAPTURE_DURATION_MS);
+    expectCaptureDuration(reference.pending, T1_CAPTURE_DURATION_MS);
   }, 60_000);
 
   it('interrupts an open capture window when a hostile attack kills the immobilized noble', async () => {

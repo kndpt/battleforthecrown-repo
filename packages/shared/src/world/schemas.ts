@@ -1,18 +1,19 @@
 import { z } from 'zod';
 
-// Speed multipliers: a value > 1 means "faster" (time is divided by it).
-// Production is split off because its semantic is inverted — see EconomySchema.
-const GameSpeedSchema = z.strictObject({
-  construction: z.number().positive(),
-  training: z.number().positive(),
-  travel: z.number().positive(),
-  capture: z.number().positive().default(1),
+const TempoOverridesSchema = z.strictObject({
+  constructionSpeed: z.number().positive().optional(),
+  unitTrainingSpeed: z.number().positive().optional(),
+  lordTrainingSpeed: z.number().positive().optional(),
+  travelSpeed: z.number().positive().optional(),
+  captureWindow: z.number().positive().optional(),
+  barbarianRegen: z.number().positive().optional(),
+  resourceProduction: z.number().positive().optional(),
+  crownsYield: z.number().positive().optional(),
 });
 
-// productionRate amplifies the resource yield (rate × productionRate).
-// A value > 1 means "more resources per minute" — opposite of GameSpeed dividers.
-const EconomySchema = z.strictObject({
-  productionRate: z.number().positive(),
+const TempoSchema = z.strictObject({
+  global: z.number().positive(),
+  overrides: TempoOverridesSchema.optional(),
 });
 
 const CombatRulesSchema = z.strictObject({
@@ -75,8 +76,7 @@ const FogOfWarSettingsSchema = z.strictObject({
 });
 
 export const WorldConfigSchema = z.strictObject({
-  gameSpeed: GameSpeedSchema,
-  economy: EconomySchema,
+  tempo: TempoSchema,
   combat: CombatRulesSchema,
   barbarianSeeding: BarbarianSeedingPlanSchema,
   playerVillagePlacement: PlayerVillagePlacementPlanSchema,
@@ -84,6 +84,8 @@ export const WorldConfigSchema = z.strictObject({
 });
 
 export type WorldConfig = z.infer<typeof WorldConfigSchema>;
+export type WorldTempo = z.infer<typeof TempoSchema>;
+export type WorldTempoOverrides = z.infer<typeof TempoOverridesSchema>;
 export type BarbarianSeedingPlan = z.infer<typeof BarbarianSeedingPlanSchema>;
 export type BarbarianSeedingConfig = BarbarianSeedingPlan;
 export type TierWindow = z.infer<typeof TierWindowSchema>;

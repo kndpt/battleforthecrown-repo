@@ -30,6 +30,7 @@ import {
 } from '@battleforthecrown/shared/village/buildings';
 import { UNIT_COSTS, UNIT_TYPES } from '@battleforthecrown/shared/army';
 import { calculateBuildingCost } from '@battleforthecrown/shared/logic';
+import { TempoService } from '@battleforthecrown/shared/world';
 import { BuildingHeader } from './BuildingDetailModal/BuildingHeader';
 import { ConstructionProgress } from './BuildingDetailModal/ConstructionProgress';
 import { CostSection } from './BuildingDetailModal/CostSection';
@@ -86,17 +87,18 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
   const lockState = getBuildingLockState(building, castleLevel);
   const isMaxLevel = lockState.state === 'max';
   const isUnbuiltLocked = lockState.state === 'unbuilt-locked';
-  const constructionMultiplier =
-    worldConfigQuery.data?.gameSpeed.construction;
+  const worldTempo = worldConfigQuery.data?.tempo;
 
   const effectiveTimeMs =
-    nextCost && constructionMultiplier !== undefined
-      ? calculateBuildingCost(
-          building.type,
-          nextLevel,
-          castleLevel,
-          constructionMultiplier,
-        ).time
+    nextCost && worldTempo
+      ? Math.round(
+          TempoService.applyDuration(
+            calculateBuildingCost(building.type, nextLevel, castleLevel, 1)
+              .time,
+            worldTempo,
+            'constructionSpeed',
+          ),
+        )
       : null;
 
   const canAfford =
@@ -114,7 +116,11 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
   );
   const nobleInTraining = Boolean(nobleTraining);
   const nobleTimeMs = Math.round(
-    (nobleCost.time / (worldConfigQuery.data?.gameSpeed.training ?? 1)) * 1000,
+    TempoService.applyDuration(
+      nobleCost.time * 1000,
+      worldTempo ?? { global: 1 },
+      'lordTrainingSpeed',
+    ),
   );
   const canAffordNoble =
     building.type === 'THRONE_HALL' &&
