@@ -8,7 +8,6 @@ import {
   outboxDispatched,
   registerUser,
   seedSmokeWorld,
-  truncateAll,
   type SmokeContext,
 } from './helpers';
 import { ConquestService } from '../src/modules/combat/conquest.service';
@@ -18,7 +17,6 @@ describe('conquest service smoke', () => {
 
   beforeAll(async () => {
     ctx = await bootSmokeApp();
-    await truncateAll(ctx.prisma);
     await ctx.app.listen(0);
   });
 

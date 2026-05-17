@@ -4,7 +4,6 @@ import {
   outboxDispatched,
   registerUser,
   seedSmokeWorld,
-  truncateAll,
   waitFor,
   type SmokeContext,
 } from './helpers';
@@ -58,7 +57,6 @@ describe('conquest finalize smoke', () => {
 
   beforeAll(async () => {
     ctx = await bootSmokeApp();
-    await truncateAll(ctx.prisma);
     await ctx.app.listen(0);
   });
 

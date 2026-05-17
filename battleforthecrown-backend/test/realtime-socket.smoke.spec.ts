@@ -5,7 +5,6 @@ import {
   joinWorld,
   registerUser,
   seedSmokeWorld,
-  truncateAll,
   type SmokeContext,
 } from './helpers';
 
@@ -15,7 +14,6 @@ describe('realtime socket smoke', () => {
 
   beforeAll(async () => {
     ctx = await bootSmokeApp();
-    await truncateAll(ctx.prisma);
     await ctx.app.listen(0);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     port = (ctx.server.address() as { port: number }).port;

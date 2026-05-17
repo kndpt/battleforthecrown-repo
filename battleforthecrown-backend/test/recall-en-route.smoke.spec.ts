@@ -3,7 +3,6 @@ import {
   bootSmokeApp,
   joinWorld,
   registerUser,
-  truncateAll,
   waitFor,
   type SmokeContext,
 } from './helpers';
@@ -14,7 +13,6 @@ describe('recall en-route smoke', () => {
 
   beforeAll(async () => {
     ctx = await bootSmokeApp();
-    await truncateAll(ctx.prisma);
     await ctx.app.listen(0);
   });
 

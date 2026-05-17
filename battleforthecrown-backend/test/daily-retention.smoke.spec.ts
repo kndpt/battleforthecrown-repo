@@ -6,7 +6,6 @@ import {
   joinWorld,
   registerUser,
   seedSmokeWorld,
-  truncateAll,
   type SmokeContext,
 } from './helpers';
 
@@ -15,7 +14,6 @@ describe('daily retention smoke', () => {
 
   beforeAll(async () => {
     ctx = await bootSmokeApp();
-    await truncateAll(ctx.prisma);
     await ctx.app.listen(0);
   });
 

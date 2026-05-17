@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
 import request from 'supertest';
 import type PgBoss from 'pg-boss';
 import { AppModule } from '../src/app.module';
@@ -13,7 +14,14 @@ export interface SmokeContext {
   server: ReturnType<INestApplication['getHttpServer']>;
 }
 
+// Truncation runs through a transient client BEFORE Nest boots. Doing it after
+// boot raced with OutboxWorker / ProductionTickWorker / leftover transactions
+// from the previous spec file in the same Jest worker, and deadlocked on
+// `user` ↔ `session` (AuthService.register holds user→session, TRUNCATE holds
+// session→user). Pre-boot truncation eliminates the concurrent holder.
 export async function bootSmokeApp(): Promise<SmokeContext> {
+  await resetDatabaseBeforeBoot();
+
   const moduleFixture = await Test.createTestingModule({
     imports: [AppModule],
   }).compile();
@@ -24,7 +32,6 @@ export async function bootSmokeApp(): Promise<SmokeContext> {
   const closeApp = app.close.bind(app);
   app.close = async () => {
     await boss.stop({ graceful: true, wait: true, timeout: 1_000 });
-    await prisma.$executeRawUnsafe('DELETE FROM pgboss.job');
     await closeApp();
   };
   return {
@@ -63,10 +70,18 @@ const TABLES = [
   '"user"',
 ];
 
-export async function truncateAll(prisma: PrismaService): Promise<void> {
-  await prisma.$executeRawUnsafe(
-    `TRUNCATE TABLE ${TABLES.join(', ')} RESTART IDENTITY CASCADE`,
-  );
+async function resetDatabaseBeforeBoot(): Promise<void> {
+  const client = new PrismaClient();
+  try {
+    // pg-boss schema survives between spec files in the same worker; dropping
+    // it lets the next boot recreate a clean queue without job residue.
+    await client.$executeRawUnsafe('DROP SCHEMA IF EXISTS pgboss CASCADE');
+    await client.$executeRawUnsafe(
+      `TRUNCATE TABLE ${TABLES.join(', ')} RESTART IDENTITY CASCADE`,
+    );
+  } finally {
+    await client.$disconnect();
+  }
 }
 
 export async function seedSmokeWorld(

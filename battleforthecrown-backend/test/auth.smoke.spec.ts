@@ -2,7 +2,6 @@ import request from 'supertest';
 import {
   bootSmokeApp,
   registerUser,
-  truncateAll,
   type SmokeContext,
 } from './helpers';
 
@@ -11,7 +10,6 @@ describe('auth smoke', () => {
 
   beforeAll(async () => {
     ctx = await bootSmokeApp();
-    await truncateAll(ctx.prisma);
     await ctx.app.listen(0);
   });
 

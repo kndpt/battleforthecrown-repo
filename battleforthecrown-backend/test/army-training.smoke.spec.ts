@@ -6,7 +6,6 @@ import {
   outboxDispatched,
   registerUser,
   seedSmokeWorld,
-  truncateAll,
   waitFor,
   type SmokeContext,
 } from './helpers';
@@ -16,7 +15,6 @@ describe('army training smoke', () => {
 
   beforeAll(async () => {
     ctx = await bootSmokeApp();
-    await truncateAll(ctx.prisma);
     await ctx.app.listen(0);
   });
 

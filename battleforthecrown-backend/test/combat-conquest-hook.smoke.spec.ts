@@ -4,7 +4,6 @@ import {
   joinWorld,
   outboxDispatched,
   registerUser,
-  truncateAll,
   waitFor,
   type SmokeContext,
 } from './helpers';
@@ -17,7 +16,6 @@ describe('combat conquest hook smoke', () => {
 
   beforeAll(async () => {
     ctx = await bootSmokeApp();
-    await truncateAll(ctx.prisma);
     await ctx.app.listen(0);
   });
 

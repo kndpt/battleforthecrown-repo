@@ -5,7 +5,6 @@ import {
   outboxDispatched,
   registerUser,
   seedSmokeWorld,
-  truncateAll,
   type SmokeContext,
 } from './helpers';
 
@@ -14,7 +13,6 @@ describe('crowns smoke', () => {
 
   beforeAll(async () => {
     ctx = await bootSmokeApp();
-    await truncateAll(ctx.prisma);
     await ctx.app.listen(0);
   });
 

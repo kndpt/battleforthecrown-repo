@@ -2,7 +2,6 @@ import {
   bootSmokeApp,
   registerUser,
   seedSmokeWorld,
-  truncateAll,
   type SmokeContext,
 } from './helpers';
 import { SMOKE_WORLD_CONFIG } from './fixtures/smoke-world-config';
@@ -15,7 +14,6 @@ describe('barbarians smoke', () => {
 
   beforeAll(async () => {
     ctx = await bootSmokeApp();
-    await truncateAll(ctx.prisma);
     await ctx.app.listen(0);
   });
 
