@@ -61,16 +61,6 @@ export class WorldEntitiesQueryService {
     const minY = Math.max(centerY - radius, 0);
     const maxY = Math.min(centerY + radius, 499);
 
-    const worldEntities = await this.prisma.worldEntity.findMany({
-      where: {
-        worldId,
-        x: { gte: minX, lte: maxX },
-        y: { gte: minY, lte: maxY },
-        ...(kinds && kinds.length > 0 ? { kind: { in: kinds } } : {}),
-      },
-      orderBy: [{ y: 'asc' }, { x: 'asc' }],
-    });
-
     const barbarianVillages =
       (await this.fetchBarbarianVillages(worldId, kinds, {
         minX,
@@ -86,28 +76,16 @@ export class WorldEntitiesQueryService {
         maxY,
       })) ?? [];
 
-    return [...worldEntities, ...barbarianVillages, ...playerVillages].sort(
-      byCoord,
-    );
+    return [...barbarianVillages, ...playerVillages].sort(byCoord);
   }
 
   async getAllEntities(worldId: string, kinds?: string[]) {
-    const worldEntities = await this.prisma.worldEntity.findMany({
-      where: {
-        worldId,
-        ...(kinds && kinds.length > 0 ? { kind: { in: kinds } } : {}),
-      },
-      orderBy: [{ y: 'asc' }, { x: 'asc' }],
-    });
-
     const barbarianVillages =
       (await this.fetchBarbarianVillages(worldId, kinds)) ?? [];
     const playerVillages =
       (await this.fetchPlayerVillages(worldId, kinds)) ?? [];
 
-    return [...worldEntities, ...barbarianVillages, ...playerVillages].sort(
-      byCoord,
-    );
+    return [...barbarianVillages, ...playerVillages].sort(byCoord);
   }
 
   async getVillagesInRadius(

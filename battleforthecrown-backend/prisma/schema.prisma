@@ -112,12 +112,11 @@ model World {
   endsAt           DateTime?   @map("ends_at")
   createdAt        DateTime    @default(now()) @map("created_at")
 
-  villages      Village[]
-  worldEntities WorldEntity[]
-  memberships   WorldMembership[]
-  seedStates    WorldSeedState[]
-  chunkStates   ChunkSpawnState[]
-  zoneCapacities ZoneCapacity[]
+  villages        Village[]
+  memberships     WorldMembership[]
+  seedStates      WorldSeedState[]
+  chunkStates     ChunkSpawnState[]
+  zoneCapacities  ZoneCapacity[]
   pendingConquests PendingConquest[]
 
   @@map("world")
@@ -248,23 +247,6 @@ model UnitTraining {
   @@unique([villageId, building])
   @@index([villageId])
   @@map("unit_training")
-}
-
-/// Deprecated mirror table. Villages are now exposed on the world map from
-/// Village in WorldEntitiesQueryService; do not add lifecycle writes here.
-model WorldEntity {
-  id      String @id @default(cuid())
-  worldId String @map("world_id")
-  kind    String
-  x       Int
-  y       Int
-  data    Json
-
-  world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
-
-  @@unique([worldId, x, y])
-  @@index([worldId, kind])
-  @@map("world_entity")
 }
 
 model WorldSeedState {

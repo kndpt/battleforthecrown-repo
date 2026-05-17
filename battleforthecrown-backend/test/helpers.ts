@@ -62,7 +62,6 @@ const TABLES = [
   'zone_capacity',
   'chunk_spawn_state',
   'world_seed_state',
-  'world_entity',
   'crown_balance',
   'world_membership',
   'world',
