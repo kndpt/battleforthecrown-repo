@@ -1,9 +1,5 @@
 import request from 'supertest';
-import {
-  bootSmokeApp,
-  registerUser,
-  type SmokeContext,
-} from './helpers';
+import { bootSmokeApp, registerUser, type SmokeContext } from './helpers';
 
 describe('auth smoke', () => {
   let ctx: SmokeContext;
