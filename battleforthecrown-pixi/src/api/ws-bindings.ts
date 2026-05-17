@@ -397,6 +397,9 @@ export function applyVillageAttacked(
   ctx.queryClient.invalidateQueries({ queryKey: ['population', payload.defenderVillageId] });
   ctx.queryClient.invalidateQueries({ queryKey: ['army', payload.defenderVillageId] });
   invalidatePowerQueries(ctx, payload.defenderVillageId);
+  for (const originVillageId of payload.reinforcementOriginVillageIds ?? []) {
+    invalidatePowerQueries(ctx, originVillageId);
+  }
   invalidateCombatReports(ctx);
   useUiStore.getState().pushToast({
     tone: payload.isDefenseSuccessful ? 'success' : 'error',

@@ -9,6 +9,19 @@ import {
   type SmokeContext,
 } from './helpers';
 
+async function getVillagePower(
+  server: SmokeContext['server'],
+  accessToken: string,
+  villageId: string,
+): Promise<{ army: number }> {
+  const res = await request(server)
+    .get('/power')
+    .query({ villageId })
+    .set('Authorization', `Bearer ${accessToken}`);
+  expect(res.status).toBe(200);
+  return res.body as { army: number };
+}
+
 describe('scouting smoke', () => {
   let ctx: SmokeContext;
 
@@ -84,6 +97,13 @@ describe('scouting smoke', () => {
       { timeoutMs: 10_000 },
     );
 
+    const powerBeforeScout = await getVillagePower(
+      ctx.server,
+      attacker.accessToken,
+      attackerId,
+    );
+    expect(powerBeforeScout.army).toBe(20);
+
     const barbarian = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
@@ -156,6 +176,13 @@ describe('scouting smoke', () => {
       });
     expect(scoutBarb.status).toBeLessThan(300);
     const barbExpeditionId = (scoutBarb.body as { id: string }).id;
+
+    const powerAfterScoutDispatch = await getVillagePower(
+      ctx.server,
+      attacker.accessToken,
+      attackerId,
+    );
+    expect(powerAfterScoutDispatch.army).toBe(powerBeforeScout.army);
 
     await waitFor(
       async () => {

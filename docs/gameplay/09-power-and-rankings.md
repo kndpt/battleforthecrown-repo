@@ -19,6 +19,15 @@ Puissance Bâtiments = Σ (POIDS_BÂTIMENT × niveau)
 Puissance Armée    = Σ (POIDS_UNITÉ × quantité)
 ```
 
+La **Puissance Armée** est rattachée au **village d'origine des troupes**, pas à leur position physique :
+
+- les unités dans l'inventaire local comptent pour leur village ;
+- les attaques, scouts, retours et rappels en trajet comptent encore pour le village d'origine ;
+- les renforts stationnés chez un autre village comptent pour le village d'origine, pas pour le village hôte ;
+- les pertes diminuent la puissance du village d'origine au moment où les unités meurent.
+
+La **force présente locale** d'un village reste séparée : c'est la somme des troupes locales + renforts hébergés utilisée par combat/scout pour évaluer la défense effective à un instant T.
+
 **Puissance d'un royaume** = somme des puissances de tous les villages possédés.
 
 ### Visibilité

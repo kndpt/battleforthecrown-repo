@@ -95,6 +95,7 @@ export interface VillageAttackedPayload {
   defenderVillageName: string;
   isDefenseSuccessful: boolean;
   losses: UnitMap;
+  reinforcementOriginVillageIds?: string[];
   casualtyRate: number;
   resourcesLost: LootResources;
   timestamp: string;

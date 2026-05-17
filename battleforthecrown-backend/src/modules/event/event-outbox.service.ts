@@ -396,6 +396,7 @@ export class EventOutboxService {
       defenderVillageName: payload.defenderVillageName,
       isDefenseSuccessful: payload.isDefenseSuccessful,
       losses: payload.losses,
+      reinforcementOriginVillageIds: payload.reinforcementOriginVillageIds,
       casualtyRate: payload.casualtyRate,
       resourcesLost: payload.resourcesLost,
       timestamp: payload.timestamp,

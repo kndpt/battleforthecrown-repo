@@ -164,6 +164,7 @@ export class CombatWorker implements OnModuleInit {
             attackerUserId: string;
             attackerVillageId: string;
           } | null = null;
+          const reinforcementOriginVillageIds = new Set<string>();
 
           if (expedition.targetKind === 'BARBARIAN_VILLAGE') {
             // For barbarians: deduct from Village.resourceStock (same as player villages)
@@ -202,12 +203,15 @@ export class CombatWorker implements OnModuleInit {
             }
 
             if (defenderVillage) {
-              await this.applyDefenderLosses(
+              const affectedOrigins = await this.applyDefenderLosses(
                 tx,
                 defenderVillage,
                 context.defender.participants,
                 context.defender.units || {},
                 resolution.lossesDefender || {},
+              );
+              affectedOrigins.forEach((villageId) =>
+                reinforcementOriginVillageIds.add(villageId),
               );
             }
           } else {
@@ -239,12 +243,15 @@ export class CombatWorker implements OnModuleInit {
                 await this.outbox.resourcesChanged(defenderVillage.id, tx);
               }
 
-              await this.applyDefenderLosses(
+              const affectedOrigins = await this.applyDefenderLosses(
                 tx,
                 defenderVillage,
                 context.defender.participants,
                 context.defender.units || {},
                 resolution.lossesDefender || {},
+              );
+              affectedOrigins.forEach((villageId) =>
+                reinforcementOriginVillageIds.add(villageId),
               );
             }
           }
@@ -313,6 +320,9 @@ export class CombatWorker implements OnModuleInit {
                   lossesDefender,
                 ),
                 losses: lossesDefender,
+                reinforcementOriginVillageIds: [
+                  ...reinforcementOriginVillageIds,
+                ],
                 casualtyRate: defenderStats.casualtyRate,
                 resourcesLost: lootedResources,
                 timestamp: new Date().toISOString(),
@@ -773,7 +783,8 @@ export class CombatWorker implements OnModuleInit {
     participants: CombatParticipant[],
     totalDefenderUnits: UnitMap,
     lossesDefender: UnitMap,
-  ) {
+  ): Promise<string[]> {
+    const affectedReinforcementOrigins = new Set<string>();
     const pending = await tx.pendingConquest.findFirst({
       where: { targetVillageId: defenderVillage.id, status: 'OPEN' },
       select: { attackerVillageId: true },
@@ -784,6 +795,9 @@ export class CombatWorker implements OnModuleInit {
         lossesDefender,
         totalDefenderUnits,
         participant.units,
+      );
+      const hasParticipantLosses = Object.values(participantLosses).some(
+        (losses) => losses > 0,
       );
 
       if (participant.villageId === defenderVillage.id) {
@@ -810,6 +824,10 @@ export class CombatWorker implements OnModuleInit {
           });
         }
         continue;
+      }
+
+      if (hasParticipantLosses) {
+        affectedReinforcementOrigins.add(participant.villageId);
       }
 
       for (const [unitType, losses] of Object.entries(participantLosses)) {
@@ -869,6 +887,8 @@ export class CombatWorker implements OnModuleInit {
         }
       }
     }
+
+    return [...affectedReinforcementOrigins];
   }
 
   private getCaptureDurationMs(
