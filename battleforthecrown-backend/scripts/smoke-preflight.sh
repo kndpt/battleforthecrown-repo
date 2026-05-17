@@ -31,7 +31,7 @@ if ! docker exec battleforthecrown-postgres psql -U postgres -lqt \
   exit 1
 fi
 
-if ! output=$(DATABASE_URL="${TEMPLATE_URL}" yarn -s prisma migrate status 2>&1); then
+if ! output=$(DATABASE_URL="${TEMPLATE_URL}" yarn --silent workspace battleforthecrown-backend prisma migrate status 2>&1); then
   echo "[smoke-preflight] Template migrations are not up to date."
   echo "${output}"
   echo "[smoke-preflight] Fix: DATABASE_URL=\"${TEMPLATE_URL}\" yarn workspace battleforthecrown-backend prisma migrate deploy"
