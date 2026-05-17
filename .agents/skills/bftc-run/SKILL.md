@@ -17,7 +17,8 @@ Noms d'agents selon harness :
 | Tests écrits | `test_writer` | `test-writer` |
 | Tests lancés | `test_runner` | `test-runner` |
 | Documentation | `doc_writer` | `doc-writer` |
-| Review optionnelle | `default` | agent généraliste disponible |
+| Review indépendante (conditionnelle) | `reviewer` | `reviewer` |
+| Review 5 axes par défaut | lead direct | lead direct |
 
 ## Routage
 
@@ -48,8 +49,8 @@ Préflight commun :
 3. **Refinement** — découper en tâches chirurgicales ≤ 5 fichiers, citer tout §V/§B applicable de `SPEC.md`.
 4. **Coding** — lead direct seulement pour cas A ; sinon spawn implementer.
 5. **Tests écrits** — avant tout test, use `bftc-tests-policy`; lead direct seulement si trivial.
-6. **Review 5 axes** — correctness, readability, architecture, security, performance. Skip seulement si diff < 30 lignes, 1 fichier, aucune logique métier.
-7. **Fix findings** — bloquants/majeurs obligatoires, 1 tâche par finding, cap 3 cycles.
+6. **Review 5 axes** — correctness, readability, architecture, security, performance. Skip seulement si diff < 30 lignes, 1 fichier, aucune logique métier. **Review indépendante obligatoire** (spawn sub-agent `reviewer`) si l'un des critères est vrai : (a) touche backend ET frontend, (b) modifie `SPEC.md` (backprop §V/§B faite à l'étape 8c ou prévue), (c) diff > 100 lignes, (d) introduit un invariant durable. Le reviewer reçoit la fiche + la range git diff + la spec source, et ne lit jamais `Décisions prises` ni `Rapport final`. Son `VERDICT: BLOCK` interdit le passage à l'étape 8c/10 tant que findings bloquants/majeurs non fixés.
+7. **Fix findings** — bloquants/majeurs obligatoires (review lead **et** reviewer indépendant cumulés), 1 tâche par finding, cap 3 cycles.
 8. **Retest + static-check** — tests adaptés au scope, puis `yarn static-check`.
 8c. **Backprop SPEC** — ajouter §V/§B seulement si un invariant durable ou bug subtil/récurrent a été révélé.
 9. **Documentation** — décider l'impact doc via `.agents/rules/docs.md`; déléguer au doc writer si non trivial.
@@ -105,8 +106,10 @@ Les sub-agents doivent retourner un rapport structuré (`STATUS: success|partial
 - Migrations Prisma : suivre `bftc-prisma`; destructif = accord user explicite; `prisma migrate reset` interdit.
 - Smokes backend : **obligatoires** dès que le diff touche `battleforthecrown-backend/src/`. Lancer `yarn test:smoke:preflight` puis `yarn test:smoke`. Tout vert exigé avant commit final. Exception : diff strictement hors `src/` (docs, scripts hors boot, fixtures isolées) — justifier dans le rapport.
 - `yarn static-check` obligatoire avant commit final.
+- **Review indépendante** : si la fiche run porte `REVIEW_INDÉPENDANT_REQUIS: oui` (cf. `bftc-plan`) **ou** si l'un des critères de l'étape 6 devient vrai en cours de run, spawn `reviewer` est obligatoire avant l'étape 8c. Verdict `BLOCK` → fix findings (cap 3 cycles) → re-spawn `reviewer`. Pas de bypass lead sans escalade user explicite.
 - Rapport final : inclure une section `Acceptance & QA` obligatoire avec :
-  - `Critères d'acceptance vérifiés` : checklist binaire des comportements attendus, avec preuve courte pour chaque item.
+  - `Critères d'acceptance vérifiés` : checklist binaire, **commande exécutable obligatoire si automatisable** (curl, SQL via `bftc-db`, test auto, smoke, grep, script). Preuve textuelle uniquement si le critère est purement visuel/gameplay/UX (sinon = manquement). Format imposé par item : `- [x] <critère> — \`<commande ou "visuel">\` → <résultat observé>`. Si la commande est trop longue pour une ligne, la mettre dans un bloc code sous l'item et garder une référence courte sur la ligne.
+  - `Review indépendante` : `Déclenchée (raison: <critère>)` avec verdict `GO` ou `BLOCK + findings résolus`, ou `Non déclenchée (aucun critère vrai)`. Obligatoire — jamais omettre cette ligne.
   - `Tests automatisés` : commandes exactes + résultat synthétique.
   - `Smokes lancés` : commande exacte (`yarn test:smoke`) + résultat synthétique si backend touché, sinon `Non applicable, raison : <…>`.
   - `Smokes ajoutés/modifiés` : fichiers + scénario couvert, ou `Aucun`, raison.

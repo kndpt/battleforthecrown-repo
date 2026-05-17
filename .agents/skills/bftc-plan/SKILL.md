@@ -69,6 +69,8 @@ Spawn the **run planner** (`run_planner` côté Codex, `run-planner` côté Clau
   2. Confirmer ou enrichir la liste `LIENS_DETECTÉS` (peut requalifier un `connexe` en `avant` après lecture code).
   3. Émettre un draft structuré.
   4. Émettre un **verdict d'artefact** explicite : `ARTEFACT: ticket` ou `ARTEFACT: run`, avec justification basée sur les critères ci-dessous.
+  5. Si `ARTEFACT: run`, déterminer `REVIEW_INDÉPENDANT_REQUIS: oui | non` selon les critères review (a/b/c/d cités dans le template). Si `ARTEFACT: ticket`, écrire `REVIEW_INDÉPENDANT_REQUIS: non` (les tickets sont en mode rapide, hors scope review indépendante).
+  6. Pour chaque critère d'acceptance, signaler s'il est **automatisable** (curl/SQL/test/smoke/grep) ou **visuel/gameplay** — info reprise par `bftc-run` étape 10.
 
 Le draft doit contenir :
 
@@ -98,7 +100,9 @@ LIENS_DETECTÉS:
   - Déjà résolu (archive): <[id-slug](path) — raison>, ou `Aucun`
   - Keywords scannés: [k1, k2, ...]
 DÉCOMPOSITION_INITIALE: <si run, sous-tâches chirurgicales ≤ 5 fichiers>
-CRITÈRES_ACCEPTANCE: <checklist observable et binaire>
+CRITÈRES_ACCEPTANCE: <checklist observable et binaire ; pour chaque item, précise si automatisable (curl/SQL/test/smoke/grep) ou purement visuel/gameplay>
+REVIEW_INDÉPENDANT_REQUIS: oui | non
+RAISON_REVIEW: <si oui, citer le(s) critère(s) déclencheur(s) parmi : (a) back+front, (b) modifie SPEC.md, (c) diff estimé > 100 lignes, (d) invariant durable ; si non, "Aucun critère déclencheur">
 POINTS_D_ATTENTION: <pièges, dérives possibles, dépendances cachées>
 ESTIMATION_SCOPE: small | medium | large
 NOTES: <reste libre>

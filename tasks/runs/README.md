@@ -25,7 +25,7 @@ Même source de vérité dans les deux harnesses, conventions de nommage des sub
 | 3 | Refinement (raisonnement, décomposition chirurgicale) | Lead | TaskList + maj fiche |
 | 4 | Coding | Lead (< 10 lignes, 1 fichier) **ou** sub-agent `implementer` | Diff + `=== RAPPORT EXEC ===` |
 | 5 | Testing (création/modif tests selon `bftc-tests-policy`) | Lead (< 10 lignes) **ou** sub-agent `test-writer` | Diff + rapport |
-| 6 | Review 5 axes | Lead ou agent généraliste disponible dans le harness. | Findings |
+| 6 | Review 5 axes (lead) + **review indépendante** si back+front / SPEC.md modifié / diff > 100 lignes / invariant durable | Lead + sub-agent `reviewer` (conditionnel) | Findings + verdict `GO`/`BLOCK` |
 | 7 | Fix des findings (1 finding = 1 tâche chirurgicale) | Sub-agent `implementer` | Diff + rapport |
 | 8 | Re-test | Sub-agent `test-runner` | `=== RUN TESTS ===` |
 | 8c | Backprop SPEC (promo §V/§B si savoir transverse révélé) | Lead | Diff SPEC.md (hard gate) |
@@ -48,7 +48,7 @@ Rôles identiques d'un côté à l'autre :
 - `test-writer` — écrit/modifie tests selon `bftc-tests-policy` (refus anti-patterns).
 - `test-runner` — lance suite, retourne uniquement les fails.
 - `doc-writer` — crée/maj docs + références croisées (refus duplication).
-- Review 5 axes : lead par défaut, ou agent généraliste disponible (`default` côté Codex).
+- `reviewer` — review 5 axes indépendante du lead. Déclenchée par `bftc-run` étape 6 si back+front, `SPEC.md` modifié, diff > 100 lignes, ou invariant durable. Lit fiche + diff + spec, ignore les `Décisions prises`, retourne findings classés + verdict `GO`/`BLOCK`.
 
 ## Skills workspace
 
@@ -145,8 +145,9 @@ _(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tick
 
 ### Acceptance & QA
 
-- **Critères d'acceptance vérifiés** :
-  - [ ] <comportement attendu observable> — preuve : <test auto / smoke / curl / SELECT / capture>
+- **Critères d'acceptance vérifiés** (commande exécutable obligatoire si automatisable, preuve textuelle uniquement si visuel/gameplay/UX) :
+  - [ ] <critère> — `<commande curl/SQL/test/smoke/grep ou "visuel">` → <résultat observé>
+- **Review indépendante** : `Déclenchée (raison: <critère a/b/c/d>)` avec verdict `GO` ou `BLOCK + findings résolus`, ou `Non déclenchée (aucun critère vrai)`.
 - **Tests automatisés** : commandes exactes + résultat synthétique.
 - **Smokes ajoutés/modifiés** : fichiers + scénario couvert, ou `Aucun`, raison.
 - **QA fonctionnelle agent** : tests bout-en-bout manuels exécutés par l'agent quand pertinent (`server + curl`, REST, WebSocket, worker/job, ou `SELECT` DB), avec résultat observable. Si non fait, `Non nécessaire` ou `Non exécuté` + raison précise.
