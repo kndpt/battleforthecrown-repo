@@ -4,7 +4,7 @@ export interface CrownsSettings {
 }
 
 export const DEFAULT_CROWNS: CrownsSettings = {
-  conversionRate: 0.05,
+  conversionRate: 0.2,
   enabled: true,
 };
 

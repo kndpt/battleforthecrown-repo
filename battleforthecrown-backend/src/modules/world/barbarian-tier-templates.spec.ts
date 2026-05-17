@@ -86,9 +86,9 @@ describe('barbarian-tier-templates', () => {
   });
 
   it.each([
-    ['T1', 0.005, 0.01],
-    ['T3', 0.0075, 0.015],
-    ['T5', 0.01, 0.02],
+    ['T1', 0.02, 0.04],
+    ['T3', 0.03, 0.06],
+    ['T5', 0.04, 0.08],
   ] as const)(
     'getBarbarianRegenRates(%s) follows the spec anchors',
     (tier, troopRate, resourceRate) => {

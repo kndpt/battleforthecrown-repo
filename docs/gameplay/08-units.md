@@ -8,16 +8,16 @@ Chaque unité a un **coût**, un **temps d'entraînement** et des **stats de com
 
 | Unité | Rôle | Bois | Pierre | Fer | Pop | Temps | Caserne | Attaque | Déf. inf. | Déf. cav. | Déf. arch. | Capacité | Mobilité | Poids |
 | --- | --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 🗡️ **MILICE** | Infanterie de base | 50 | 30 | 10 | 1 | 30 s | 1 | 5 | 5 | 5 | 5 | 25 | 10 | 2 |
-| 🛡️ **ÉCUYER** | Infanterie avancée | 80 | 50 | 30 | 1 | 60 s | 2 | 10 | 10 | 10 | 10 | 50 | 15 | 8 |
-| ⚔️ **GUERRIER** | Infanterie offensive | 120 | 80 | 50 | 2 | 180 s | 3 | 20 | 5 | 5 | 5 | 35 | 20 | 12 |
-| ✝️ **TEMPLIER** | Chevalier lourd | 80 | 150 | 120 | 2 | 180 s | 4 | 5 | 15 | 15 | 15 | 40 | 10 | 12 |
-| 🏹 **ARCHER** | Tir à distance | 60 | 40 | 30 | 1 | 90 s | 3 | 12 | 6 | 20 | 6 | 20 | 12 | 6 |
-| 🐴 **CAVALIER** | Cavalerie | 200 | 100 | 150 | 3 | 240 s | 5 | 15 | 8 | 8 | 8 | 100 | 35 | 15 |
-| 🕵️ **ESPION** | Reconnaissance | 50 | 50 | 20 | 1 | 90 s | 3 | 8 | 2 | 2 | 2 | 0 | 100 | 10 |
-| 🪨 **BÉLIER** | Siège | 300 | 400 | 200 | 4 | 360 s | 7 | 50 | 10 | 10 | 10 | 0 | 5 | 30 |
-| 🎯 **CATAPULTE** | Siège | 400 | 600 | 300 | 5 | 480 s | 8 | 80 | 5 | 5 | 5 | 0 | 3 | 40 |
-| 👑 **SEIGNEUR** | Conquête (unique) | 5 000 | 5 000 | 5 000 | 15 | 8 h | — ⚠️ | 500 | 500 | 500 | 500 | 0 | 5 | 100 |
+| 🗡️ **MILICE** | Infanterie de base | 50 | 30 | 10 | 1 | 10 s | 1 | 5 | 5 | 5 | 5 | 25 | 10 | 2 |
+| 🛡️ **ÉCUYER** | Infanterie avancée | 80 | 50 | 30 | 1 | 15 s | 2 | 10 | 10 | 10 | 10 | 50 | 15 | 8 |
+| ⚔️ **GUERRIER** | Infanterie offensive | 120 | 80 | 50 | 2 | 45 s | 3 | 20 | 5 | 5 | 5 | 35 | 20 | 12 |
+| ✝️ **TEMPLIER** | Chevalier lourd | 80 | 150 | 120 | 2 | 45 s | 4 | 5 | 15 | 15 | 15 | 40 | 10 | 12 |
+| 🏹 **ARCHER** | Tir à distance | 60 | 40 | 30 | 1 | 25 s | 3 | 12 | 6 | 20 | 6 | 20 | 12 | 6 |
+| 🐴 **CAVALIER** | Cavalerie | 200 | 100 | 150 | 3 | 60 s | 5 | 15 | 8 | 8 | 8 | 100 | 35 | 15 |
+| 🕵️ **ESPION** | Reconnaissance | 50 | 50 | 20 | 1 | 25 s | 3 | 8 | 2 | 2 | 2 | 0 | 100 | 10 |
+| 🪨 **BÉLIER** | Siège | 300 | 400 | 200 | 4 | 90 s | 7 | 50 | 10 | 10 | 10 | 0 | 5 | 30 |
+| 🎯 **CATAPULTE** | Siège | 400 | 600 | 300 | 5 | 120 s | 8 | 80 | 5 | 5 | 5 | 0 | 3 | 40 |
+| 👑 **SEIGNEUR** | Conquête (unique) | 5 000 | 5 000 | 5 000 | 15 | 2 h | — ⚠️ | 500 | 500 | 500 | 500 | 0 | 5 | 100 |
 
 ### Légende
 

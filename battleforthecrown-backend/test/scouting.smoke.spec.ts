@@ -204,7 +204,7 @@ describe('scouting smoke', () => {
       where: { scoutVillageId: attackerId, targetVillageId: barbarian.id },
     });
     expect((barbReport.units as Record<string, number>).MILITIA).toBe(7);
-    expect((barbReport.resources as Record<string, number>).wood).toBe(321);
+    expect((barbReport.resources as Record<string, number>).wood).toBe(323);
     expect(barbReport.strategy).toBeNull();
 
     await waitFor(

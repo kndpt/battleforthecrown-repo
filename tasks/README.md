@@ -30,11 +30,11 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 ### Runs actifs
 
 - [028 — Mobile WorldMap minimap UX](./runs/028-mobile-worldmap-minimap-ux.md) — 📋 `PLANNED`. Repenser l'UX mobile de la mini-carte et des contrôles flottants WorldMap après l'ajout du RoyalSeal daily.
-- [027 — Tempo monde : recalibration des constantes MVP](./runs/027-world-tempo-recalibrate-mvp-constants.md) — 📋 `PLANNED`. Aligner les chiffres absolus de `02/03/06/07/10/13/14/15` et des constantes shared au Standard MVP (`tempo.global = 1.0`, compression ~4-5×). Dépend du run 026.
 
 ### Runs archivés
 
 - [026 — Tempo monde : plomberie + clean cut](./runs/archive/026-world-tempo-plumbing-clean-cut.md) — ✅ `DONE` (2026-05-16). `WorldConfig.tempo` remplace `gameSpeed`/`economy.productionRate`, `TempoService` shared centralise durées/débits, callsites backend + estimations Pixi + smokes migrés.
+- [027 — Tempo monde : recalibration des constantes MVP](./runs/archive/027-world-tempo-recalibrate-mvp-constants.md) — ✅ `DONE` (2026-05-17). Valeurs absolues Standard MVP compressées : durées bâtiments/unités/capture `÷4`, production/couronnes/régen `×4`, docs gameplay `02/03/06/07/08/10/13/14/15/23` et constantes shared alignées.
 - [025 — Puissance armée rattachée au village d'origine](./runs/archive/025-fix-origin-anchored-army-power.md) — ✅ `DONE` (2026-05-16). Calcul power origin-anchored : inventaire + expéditions + garnisons par origine réelle, invalidation power des origines de renforts touchées, smokes attaque/scout/renfort.
 - [027 — Cartes quotidiennes & Oyez frontend/HUD](./runs/archive/027-feature-daily-cards-oyez-frontend-hud.md) — ✅ `DONE` (2026-05-15). HUD top permanent, sheet quotidienne/Oyez, claim village, invalidations retention et test Pixi.
 - [026 — Cartes quotidiennes & Oyez backend/shared](./runs/archive/026-feature-daily-cards-oyez-backend-shared.md) — ✅ `DONE` (2026-05-15). Socle runtime Phase 10 : modèles daily/Oyez, API retention, projection idempotente des events Outbox, claim ressources et smoke backend.

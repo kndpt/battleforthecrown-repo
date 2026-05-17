@@ -35,7 +35,7 @@ Spec consolidée du Seigneur. **Source unique** pour le recrutement, les coûts,
 Le Seigneur n'est **pas** recruté à la Caserne. Il est recruté à la **Salle du Trône**, bâtiment dédié débloqué à **Château 6** — c'est l'**entrée du end-game**.
 
 - 1 seul niveau au MVP, mono-construction par village.
-- Coût bâtiment : 1 600 bois / 2 400 pierre / 1 200 fer / 6 pop / 6 h.
+- Coût bâtiment : 1 600 bois / 2 400 pierre / 1 200 fer / 6 pop / 1 h 30.
 - Aucun bonus passif au MVP (les bonus annoncés dans la roadmap — vitesse d'entraînement, vitesse de noblage — arriveront avec les niveaux 2+ post-MVP).
 
 Détail bâtiment : [`03-buildings.md` § Salle du Trône](./03-buildings.md#salle-du-trône).
@@ -49,9 +49,9 @@ Détail bâtiment : [`03-buildings.md` § Salle du Trône](./03-buildings.md#sal
 | Fer | **5 000** |
 | Couronnes | **5 000** |
 | Population | **15** |
-| Temps d'entraînement | **8 h** |
+| Temps d'entraînement | **2 h** |
 
-🎯 **Lecture design** : recruter un Seigneur doit marquer une vraie décision stratégique — *« j'arrête d'agrandir mon village pour tout mettre dans le Seigneur »*. Le coût total dépasse **3 upgrades de fin de jeu cumulés**. Les 5 000 couronnes représentent **~3 jours** de production pour un joueur mid-game (Château 6, Salle du Trône fraîche), ~1-2 jours en late-game multi-villages — détail dans [`02-economy-and-progression.md` § Couronnes](./02-economy-and-progression.md#couronnes). Les 15 pop sont une ponction comparable à 7-8 Béliers.
+🎯 **Lecture design** : recruter un Seigneur doit marquer une vraie décision stratégique — *« j'arrête d'agrandir mon village pour tout mettre dans le Seigneur »*. Le coût total dépasse **3 upgrades de fin de jeu cumulés**. Les 5 000 couronnes représentent **~18 h** de production pour un joueur mid-game (Château 6, Salle du Trône fraîche), quelques heures en late-game multi-villages — détail dans [`02-economy-and-progression.md` § Couronnes](./02-economy-and-progression.md#couronnes). Les 15 pop sont une ponction comparable à 7-8 Béliers.
 
 C'est le **prix de l'expansion**. La récompense (un nouveau village = un emplacement supplémentaire, cf. [`13-barbarian-conquest.md`](./13-barbarian-conquest.md)) justifie le risque de sous-développer son village pour cet investissement.
 

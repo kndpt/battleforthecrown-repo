@@ -54,7 +54,7 @@ Bien que le plafond soit identique, **deux villages du même tier ne sont jamais
 
 - **Stock initial de troupes et de ressources** rollé à la création dans une fourchette du max/cap (un T3 fraîchement né peut être presque plein, à moitié, ou faible).
 - **Historique de pillage** : combien d'unités ont été tuées et combien de ressources volées par d'autres joueurs depuis sa création.
-- **Phase de régénération courante** : un village récemment vidé est mou pendant plusieurs jours.
+- **Phase de régénération courante** : un village récemment vidé est mou pendant plusieurs heures à quelques jours selon le flux (ressources plus rapides que troupes).
 
 🎯 **Intention** : la variabilité vient de l'**état actuel**, pas du **plafond théorique**. Le scout reste utile pour photographier la cible au moment T, et le tier reste un indicateur fiable de difficulté maximale.
 
@@ -110,13 +110,13 @@ Deux flux indépendants : **troupes** et **ressources**.
 
 | Tier | Régen / h |
 | --- | --- |
-| T1 | 0,5 % |
-| T2 | ~0,6 % |
-| T3 | ~0,75 % |
-| T4 | ~0,9 % |
-| T5 | 1 % |
+| T1 | 2 % |
+| T2 | ~2,5 % |
+| T3 | ~3 % |
+| T4 | ~3,5 % |
+| T5 | 4 % |
 
-> 💡 Les chiffres intermédiaires (T2-T4) sont indicatifs. La courbe doit rester **minime** pour qu'un village barbare ne soit jamais "constamment plein", sinon le pillage perd toute friction. Ordre de grandeur : entre 100 h et 200 h pour repasser de 0 à plein.
+> 💡 Les chiffres intermédiaires (T2-T4) sont indicatifs. La courbe doit rester **minime** pour qu'un village barbare ne soit jamais "constamment plein", sinon le pillage perd toute friction. Ordre de grandeur : entre 25 h et 50 h pour repasser de 0 à plein côté armée.
 
 ### Ressources — % horaire du cap stockage du tier
 
@@ -124,15 +124,15 @@ Deux flux indépendants : **troupes** et **ressources**.
 
 | Tier | Régen ressources / h | Temps cap vide → plein |
 | --- | --- | --- |
-| T1 | 1 % | ~100 h (~4 j) |
-| T2 | ~1,25 % | ~80 h (~3,3 j) |
-| T3 | ~1,5 % | ~67 h (~2,8 j) |
-| T4 | ~1,75 % | ~57 h (~2,4 j) |
-| T5 | 2 % | ~50 h (~2 j) |
+| T1 | 4 % | ~25 h |
+| T2 | ~5 % | ~20 h |
+| T3 | ~6 % | ~17 h |
+| T4 | ~7 % | ~14 h |
+| T5 | 8 % | ~12 h 30 |
 
-🎯 **Intention** : créer une rotation vivante de cibles. Le joueur peut revenir tirer du loot sur un village dont il a vidé l'armée, sans que la cible redevienne immédiatement menaçante. Sur un T5 vidé, le loot redevient pleinement intéressant en ~2 jours alors que l'armée met ~4 jours à revenir.
+🎯 **Intention** : créer une rotation vivante de cibles. Le joueur peut revenir tirer du loot sur un village dont il a vidé l'armée, sans que la cible redevienne immédiatement menaçante. Sur un T5 vidé, le loot redevient pleinement intéressant en ~12 h 30 alors que l'armée met ~25 h à revenir.
 
-> 💡 Les chiffres intermédiaires (T2-T4) sont indicatifs et seront affinés à la simulation. Les bornes T1 = 1 %/h et T5 = 2 %/h sont les ancres design.
+> 💡 Les chiffres intermédiaires (T2-T4) sont indicatifs et seront affinés à la simulation. Les bornes T1 = 4 %/h et T5 = 8 %/h sont les ancres design.
 
 ### Vidage total
 

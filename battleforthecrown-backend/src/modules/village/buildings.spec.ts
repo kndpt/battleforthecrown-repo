@@ -42,7 +42,7 @@ describe('COUNCIL_HALL', () => {
       stone: 200,
       iron: 100,
       population: 4,
-      timeSeconds: 1000,
+      timeSeconds: 250,
     });
   });
 
@@ -74,7 +74,7 @@ describe('THRONE_HALL', () => {
       stone: 2400,
       iron: 1200,
       population: 6,
-      timeSeconds: 21600,
+      timeSeconds: 5400,
     });
   });
 

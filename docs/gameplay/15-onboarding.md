@@ -10,7 +10,7 @@ L'`01-overview.md` listait initialement la « Campagne solo » comme extension *
 
 ## Cible MVP — esquisse
 
-5 étapes scriptées, chaînées dès la création du premier village. Cible : couvrir une session ≤ 10 min qui fait passer le joueur par les 4 boucles principales (cf. [`01-overview.md` § Boucles de gameplay](./01-overview.md#boucles-de-gameplay)).
+5 étapes scriptées, chaînées dès la création du premier village. Cible confirmée après recalibration tempo : couvrir une session ≤ 10 min qui fait passer le joueur par les 4 boucles principales (cf. [`01-overview.md` § Boucles de gameplay](./01-overview.md#boucles-de-gameplay)). Les timers compressés rendent cette cible atteignable sans raccourci spécial, à condition de pré-sélectionner une cible barbare proche et des upgrades courts.
 
 | # | Étape | Boucle exercée |
 | ---: | --- | --- |

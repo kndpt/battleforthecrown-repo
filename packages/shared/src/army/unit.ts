@@ -8,7 +8,7 @@ export const UNIT_COSTS: Record<UnitType, UnitCost> = {
     stone: 30,
     iron: 10,
     population: 1,
-    time: seconds(30),
+    time: seconds(10),
     requiredBarracksLevel: 1,
   },
   [UNIT_TYPES.SQUIRE]: {
@@ -16,7 +16,7 @@ export const UNIT_COSTS: Record<UnitType, UnitCost> = {
     stone: 50,
     iron: 30,
     population: 1,
-    time: seconds(60),
+    time: seconds(15),
     requiredBarracksLevel: 2,
   },
   [UNIT_TYPES.WARRIOR]: {
@@ -24,7 +24,7 @@ export const UNIT_COSTS: Record<UnitType, UnitCost> = {
     stone: 80,
     iron: 50,
     population: 2,
-    time: seconds(180),
+    time: seconds(45),
     requiredBarracksLevel: 3,
   },
   [UNIT_TYPES.ARCHER]: {
@@ -32,7 +32,7 @@ export const UNIT_COSTS: Record<UnitType, UnitCost> = {
     stone: 40,
     iron: 30,
     population: 1,
-    time: seconds(90),
+    time: seconds(25),
     requiredBarracksLevel: 3,
   },
   [UNIT_TYPES.TEMPLAR]: {
@@ -40,7 +40,7 @@ export const UNIT_COSTS: Record<UnitType, UnitCost> = {
     stone: 150,
     iron: 120,
     population: 2,
-    time: seconds(180),
+    time: seconds(45),
     requiredBarracksLevel: 4,
   },
   [UNIT_TYPES.CAVALRY]: {
@@ -48,7 +48,7 @@ export const UNIT_COSTS: Record<UnitType, UnitCost> = {
     stone: 100,
     iron: 150,
     population: 3,
-    time: seconds(240),
+    time: seconds(60),
     requiredBarracksLevel: 5,
   },
   [UNIT_TYPES.SPY]: {
@@ -56,7 +56,7 @@ export const UNIT_COSTS: Record<UnitType, UnitCost> = {
     stone: 50,
     iron: 20,
     population: 1,
-    time: seconds(90),
+    time: seconds(25),
     requiredBarracksLevel: 3,
   },
   [UNIT_TYPES.RAM]: {
@@ -64,7 +64,7 @@ export const UNIT_COSTS: Record<UnitType, UnitCost> = {
     stone: 400,
     iron: 200,
     population: 4,
-    time: seconds(360),
+    time: seconds(90),
     requiredBarracksLevel: 99, // désactivé MVP
   },
   [UNIT_TYPES.CATAPULT]: {
@@ -72,7 +72,7 @@ export const UNIT_COSTS: Record<UnitType, UnitCost> = {
     stone: 600,
     iron: 300,
     population: 5,
-    time: seconds(480),
+    time: seconds(120),
     requiredBarracksLevel: 99, // désactivé MVP
   },
   [UNIT_TYPES.NOBLE]: {
@@ -81,7 +81,7 @@ export const UNIT_COSTS: Record<UnitType, UnitCost> = {
     iron: 5000,
     crowns: 5000,
     population: 15,
-    time: seconds(28800), // 8h
+    time: seconds(7200), // 2h
     requiredBarracksLevel: 99, // sentinel — NOBLE est gated par requiredThroneHallLevel (run 006)
     requiredThroneHallLevel: 1, // Salle du Trône mono-niveau (spec 10) — le déblocage Château 6 vit dans BUILDING_UNLOCK_REQUIREMENTS
   },

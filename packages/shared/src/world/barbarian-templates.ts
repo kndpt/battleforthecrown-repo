@@ -133,8 +133,8 @@ export function getBarbarianRegenRates(tier: string): BarbarianRegenRates {
   const tierIndex = Number(normalizedTier.slice(1)) - 1;
 
   return {
-    troopRatePerHour: 0.005 + tierIndex * 0.00125,
-    resourceRatePerHour: 0.01 + tierIndex * 0.0025,
+    troopRatePerHour: 0.02 + tierIndex * 0.005,
+    resourceRatePerHour: 0.04 + tierIndex * 0.01,
   };
 }
 

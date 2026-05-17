@@ -1,39 +1,23 @@
-# Run 026 - world tempo plumbing clean cut
+# Run 027 - world tempo recalibrate MVP constants
 
-- [x] Préflight : git clean, fiche run, rules, SPEC et spec 23 lus.
-- [x] Cartographie : callsites `gameSpeed` / `economy.productionRate` / régen barbare / couronnes localisés.
-- [x] Contrat shared : `WorldConfig.tempo` + `TempoService` + tests pure-logic.
-- [x] Backend : brancher construction, training, travel, capture, régen barbare, production ressources, couronnes.
-- [x] Fixtures/migration : config smoke, seed SQL, migration JSON clean cut.
-- [x] Vérification : unit backend ciblé vert ; smokes backend, tests Pixi et static-check verts.
-- [x] Archive run + index.
+- [x] Preflight: git clean, fiche run, rules, SPEC, run 026 et spec tempo lus.
+- [x] Cartographie: docs gameplay et constantes shared contenant des durees/debits a recalibrer.
+- [x] Recalibrer les specs gameplay `02/03/06/07/10/13/14/15` au Standard MVP `tempo.global = 1.0`.
+- [x] Aligner les constantes shared de duree/debit avec les docs.
+- [x] Review 5 axes + audit `rg` des durees legacy.
+- [x] Verification: tests adaptes + `yarn static-check`.
+- [x] Archive run + `tasks/README.md` + commit.
 
 ## Notes
 
-- Scope volontairement limité à la plomberie tempo. Les valeurs absolues docs/shared restent pour le run 027.
-- Callsite régen barbare confirmé : `BarbarianRuntimeService.catchUpVillage` et `catchUpResources`.
+- Scope strict: valeurs absolues docs/shared uniquement.
+- Hors scope: aucune formule, aucun `TempoService`, aucune logique backend/frontend.
+- Invariants wall-clock intouchables: bouclier 48 h, cooldown style 24 h, reset quotidien 04:00, abandon 14 j.
 
 ## Review
 
-- Correctness : opérateur tempo centralisé dans `TempoService`; callsites backend branchés par axe.
-- Readability : clean cut schema/config, pas d'alias legacy.
-- Architecture : server-authoritative conservé ; frontend seulement estimations d'affichage.
-- Security : aucun secret, aucune surface auth modifiée.
-- Performance : impact négligeable, calculs locaux O(1).
-
-## Run 025 — fix origin-anchored army power
-
-- [x] Préflight : worktree clean, fiche `PLANNED`, règles/specs lues.
-- [x] Cartographie : `PowerService` ne comptait que `UnitInventory`; renforts et expéditions actifs absents du calcul.
-- [x] Implémenter calcul de puissance armée par village d'origine.
-- [x] Ajouter la réactivité front pour pertes de renforts d'origine distante.
-- [x] Ajouter smokes backend ciblés.
-- [x] Mettre à jour docs/run, archiver, vérifier et commit.
-
-### Review
-
-- Correctness : calcul origin-anchored couvert par smokes attaque/scout/renfort.
-- Readability : helpers locaux dans `PowerService`, pas de changement de modèle.
-- Architecture : backend server-authoritative ; event Outbox enrichi sans publication directe.
-- Security : aucun nouveau secret ni endpoint public élargi.
-- Performance : agrégation batchée par liste de villages pour kingdom/leaderboard.
+- Correctness: docs gameplay et constantes shared alignées sur compression `÷4` pour durées et `×4` pour débits; tests de contrat et smoke scout ajustés.
+- Readability: valeurs arrondies au multiple de 5 s quand nécessaire; sources de vérité gameplay gardées dans `docs/gameplay`.
+- Architecture: aucune formule ni logique `TempoService` modifiée; uniquement valeurs absolues à `tempo.global = 1.0`.
+- Security: aucun endpoint, auth ou secret touché.
+- Performance: impact runtime neutre hors constantes de durée/débit attendues.

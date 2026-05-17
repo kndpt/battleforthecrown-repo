@@ -78,19 +78,19 @@ Le Seigneur s'installe pendant une fenêtre **dépendante du tier conquis**. Con
 
 | Tier conquis | Période de capture |
 | ---: | ---: |
-| T1 | 2 h |
-| T2 | 4 h |
-| T3 | 6 h |
-| T4 | 9 h |
-| T5 | 12 h |
+| T1 | 30 min |
+| T2 | 1 h |
+| T3 | 1 h 30 |
+| T4 | 2 h 15 |
+| T5 | 3 h |
 
 🎯 **Lecture design** : trois objectifs poursuivis par cette courbe.
 
 1. **Faire payer la valeur du village** : conquérir un T5 = vrai investissement, conquérir un T1 = découverte rapide.
-2. **Créer une vraie fenêtre PvP** : un Seigneur immobilisé 12 h près d'une zone disputée devient une cible. Sur 6 h la fenêtre est trop courte pour qu'un voisin réagisse (rallye d'attaque).
+2. **Créer une vraie fenêtre PvP** : un Seigneur immobilisé 3 h près d'une zone disputée devient une cible. Sous 1 h 30 la fenêtre est trop courte pour qu'un voisin réagisse (rallye d'attaque).
 3. **Cohérence narrative** : un campement primitif (T1) se rallie en quelques heures ; une garnison (T5) demande de vraies négociations.
 
-**Calage avec les temps existants** : T5 = 12 h ≈ Château lvl 9 (12 h 48). Cap volontaire à 12 h pour rester mobile-friendly (« une nuit »), au-delà le Seigneur immobilisé devient trop punitif.
+**Calage avec les temps existants** : T5 = 3 h ≈ Château lvl 9 compressé (3 h 10). Cap volontaire à 3 h pour rester mobile-friendly (« une grosse session + retour plus tard »), au-delà le Seigneur immobilisé devient trop punitif dans le Standard MVP compressé.
 
 **Conséquences pratiques** :
 - Le Seigneur reste **immobilisé** toute la fenêtre, pas dispo ailleurs — vraie contrainte tactique qui s'aggrave avec le tier.

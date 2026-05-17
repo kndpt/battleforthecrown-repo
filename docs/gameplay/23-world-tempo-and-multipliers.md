@@ -111,7 +111,7 @@ WorldConfig.tempo = {
 | Nature de l'axe | Formule appliquée | Exemple à `tempo = 0.25` |
 |---|---|---|
 | **Durée** (construction, training, travel, captureWindow) | `effectif = absolu × tempo` | Construction Wood lvl 5 : 1280 s × 0.25 = **320 s** (4× plus court) |
-| **Débit / régen / yield** (resourceProduction, crownsYield, barbarianRegen) | `effectif = absolu / tempo` | Production Wood lvl 5 : 190/h ÷ 0.25 = **760/h** (4× plus rapide). Couronnes : `puissance × 0.05 / tempo` = 4× plus de couronnes/h. |
+| **Débit / régen / yield** (resourceProduction, crownsYield, barbarianRegen) | `effectif = absolu / tempo` | Production Wood lvl 5 : 760/h ÷ 0.25 = **3 040/h** (4× plus rapide). Couronnes : `puissance × 0.20 / tempo` = 4× plus de couronnes/h. |
 
 🎯 **Pourquoi cette convention** : on lit "tempo" comme "fraction de temps" — `0.25` = "1/4 du temps" = "4× plus rapide". C'est aligné avec l'intuition d'un game speed slider compressed. **Le code shared expose un `TempoService` qui encapsule la décision `× ou ÷` selon l'axe** — les use-cases ne manipulent jamais l'opérateur directement.
 
@@ -125,12 +125,12 @@ WorldConfig.tempo = {
 |---|---|---|---|
 | `constructionSpeed` | Temps de construction de tous les bâtiments | [`03`](./03-buildings.md) — colonne « Temps (s) » de chaque tableau | 0.3 → 2.0 |
 | `unitTrainingSpeed` | Temps d'entraînement de toutes les unités (hors Seigneur) | [`08`](./08-units.md) | 0.3 → 2.0 |
-| `lordTrainingSpeed` | Temps d'entraînement du Seigneur (8 h actuellement) | [`10` § Coût de recrutement](./10-conquest.md#coût-de-recrutement-du-seigneur) | 0.3 → 2.0 |
+| `lordTrainingSpeed` | Temps d'entraînement du Seigneur (2 h au Standard MVP) | [`10` § Coût de recrutement](./10-conquest.md#coût-de-recrutement-du-seigneur) | 0.3 → 2.0 |
 | `travelSpeed` | Vitesse de déplacement des expéditions (raid, conquête, scout, renfort, retour) | [`04` § Mécanique générale](./04-combat.md#mécanique-générale) (mobilité par unité dans [`08`](./08-units.md)) | 0.3 → 2.0 |
 | `captureWindow` | Durée de la fenêtre de capture (barbare et PvP) | [`13` § Période de capture](./13-barbarian-conquest.md#période-de-capture-variable-par-tier), [`14` § Période de capture](./14-pvp-conquest.md#période-de-capture-variable-selon-le-niveau-du-château) | 0.3 → 2.0 |
 | `barbarianRegen` | Régénération troupes ET ressources des villages barbares (% / h) | [`06` § Régénération](./06-barbarians.md#régénération) | 0.3 → 3.0 |
 | `resourceProduction` | Production passive des mines (bois/pierre/fer) | [`02` § Production](./02-economy-and-progression.md#production-de-ressources) + [`03`](./03-buildings.md) tableaux Production / heure | 0.3 → 3.0 |
-| `crownsYield` | Taux de conversion puissance → couronnes/h. Constante absolue `0.05` dans `packages/shared/src/crowns/` ; la formule effective devient `puissance × 0.05 / tempo` (axe débit, cf. § 5.1.1). | [`02` § Couronnes](./02-economy-and-progression.md#couronnes) | 0.3 → 3.0 |
+| `crownsYield` | Taux de conversion puissance → couronnes/h. Constante absolue `0.20` dans `packages/shared/src/crowns/` ; la formule effective devient `puissance × 0.20 / tempo` (axe débit, cf. § 5.1.1). | [`02` § Couronnes](./02-economy-and-progression.md#couronnes) | 0.3 → 3.0 |
 
 > 💡 La régen barbare et la production de ressources peuvent monter au-delà de ×2 (jusqu'à ×3) pour des modes Speed/Blitz où l'économie doit suivre la consommation de troupes.
 
@@ -141,11 +141,11 @@ Ces paramètres existent déjà dans `WorldConfig` ([`19` § Paramètres MVP](./
 | Clé | Rôle | Standard MVP |
 |---|---|---|
 | `worldDuration` | Durée totale `OPEN + LOCKED` | 60 j |
-| `inscriptionMainDays` | Cohorte principale | 14 j (à recalibrer pour 60 j — voir § 7) |
-| `inscriptionLateDays` | Sas retardataires | 7 j (à recalibrer pour 60 j — voir § 7) |
+| `inscriptionMainDays` | Cohorte principale | 7 j |
+| `inscriptionLateDays` | Sas retardataires | 3 j |
 | `newWorldEverydays` | Délai entre créations de mondes | 7 j |
 | `gridWidth × gridHeight` | Taille de la carte | 500 × 500 (inchangé) |
-| `newbieShieldHours` | Bouclier débutant | 48 h (à recalibrer pour 60 j — voir § 7) |
+| `newbieShieldHours` | Bouclier débutant | 48 h wall-clock (ne scale pas) |
 
 **Pourquoi pas dans `tempo`** : la durée du monde et la fenêtre d'inscription sont des **bornes**, pas des **vitesses**. Un mode « Standard 60 j à tempo lent » garde les mêmes bornes calendaires mais ralentit le rythme intérieur. Garder les deux notions séparées évite la confusion.
 
@@ -185,41 +185,38 @@ Suite au pivot 120 → 60 j et à la compression ~4-5×, les sections suivantes 
 
 ### Checklist de repérage (à attaquer dans une seconde passe)
 
-- [ ] [`02-economy-and-progression.md`](./02-economy-and-progression.md)
-  - § Phases de progression — temps de construction par phase (« quelques minutes à 1 heure », « 2-6 h », « 8-24 h ») à compresser.
-  - § Cibles de progression — « ~1 mois pour maxer un village » à recalibrer (cible compressed = ~10-15 j ?).
-  - § Validation économique — exemple de progression Semaine 1/2/3/4 à refaire.
-  - § Couronnes — « ~3 jours de revenu pour 5 000 couronnes » à recalibrer.
-- [ ] [`03-buildings.md`](./03-buildings.md)
-  - Toutes les colonnes « Temps (s) » de tous les bâtiments. Soit on garde les valeurs absolues comme « valeurs à `tempo.global = 1.0` » et on documente clairement que ces valeurs sont déjà compressées vs Tribal Wars classique, soit on réécrit. **Choix retenu : les valeurs ABSOLUES dans `03` deviennent les valeurs « à ×1.0 » du Standard MVP**, donc on recalibre une fois et on ne touche plus.
-- [ ] [`06-barbarians.md`](./06-barbarians.md)
-  - § Régénération — temps « cap vide → plein » de 50-100 h à compresser.
-  - Les % horaires deviennent « à ×1.0 » et sont multipliés par `tempo.barbarianRegen`.
-- [ ] [`10-conquest.md`](./10-conquest.md)
-  - § Coût de recrutement — temps d'entraînement Seigneur (8 h) à compresser.
+- [x] [`02-economy-and-progression.md`](./02-economy-and-progression.md)
+  - ✅ Phases de progression, cible village max, validation économique et couronnes recalibrées au Standard MVP compressé.
+- [x] [`03-buildings.md`](./03-buildings.md)
+  - ✅ Toutes les colonnes « Temps (s) » sont recalibrées comme valeurs absolues à `tempo.global = 1.0` du Standard MVP.
+- [x] [`06-barbarians.md`](./06-barbarians.md)
+  - ✅ § Régénération compressé : ressources ~12 h 30 → 25 h, troupes ~25 h → 50 h selon tier.
+  - ✅ Les % horaires deviennent les valeurs de base à `tempo.global = 1.0` et restent multipliés par `tempo.barbarianRegen`.
+- [x] [`10-conquest.md`](./10-conquest.md)
+  - ✅ § Coût de recrutement — temps d'entraînement Seigneur 8 h → 2 h.
   - ✅ Mention `gameSpeed.capture` → `tempo.captureWindow` déjà harmonisée dans cette session.
-- [ ] [`13-barbarian-conquest.md`](./13-barbarian-conquest.md)
-  - § Période de capture — courbe 2 / 4 / 6 / 9 / 12 h à recalibrer (cible compressed : 30 min / 1 h / 1 h 30 / 2 h / 3 h ?).
-  - § Calage avec les temps existants — réécrire en fonction des nouvelles durées de Château.
-- [ ] [`14-pvp-conquest.md`](./14-pvp-conquest.md)
-  - § Période de capture variable selon le niveau du Château — courbe 4 / 6 / 9 / 12 / 18 h à recalibrer.
-  - § Bouclier débutant — 48 h à confirmer **wall-clock** (cf. § 6.1), pas de scaling tempo.
-- [ ] [`15-onboarding.md`](./15-onboarding.md)
-  - Cible « 5 étapes en ≤ 10 min » à reconfirmer (probablement encore plus court en compressed).
+- [x] [`13-barbarian-conquest.md`](./13-barbarian-conquest.md)
+  - ✅ § Période de capture — courbe 2 / 4 / 6 / 9 / 12 h → 30 min / 1 h / 1 h 30 / 2 h 15 / 3 h.
+  - ✅ § Calage avec les temps existants réécrit avec les durées de Château compressées.
+- [x] [`14-pvp-conquest.md`](./14-pvp-conquest.md)
+  - ✅ § Période de capture variable selon le niveau du Château — courbe 4 / 6 / 9 / 12 / 18 h → 1 h / 1 h 30 / 2 h 15 / 3 h / 4 h 30.
+  - ✅ Bouclier débutant 48 h confirmé **wall-clock** (cf. § 6.1), pas de scaling tempo.
+- [x] [`15-onboarding.md`](./15-onboarding.md)
+  - ✅ Cible « 5 étapes en ≤ 10 min » reconfirmée.
 - [x] [`19-world-lifecycle.md`](./19-world-lifecycle.md)
   - ✅ Durée totale 120 → 60 j, fenêtre cohorte 14 → 7 j, retardataires 7 → 3 j déjà appliqués dans cette session. Articulation avec abandon 14 j à reprendre quand [`18`](./18-inactivity-and-abandonment.md) sortira du chantier.
 - [x] [`00-game-flow.md`](./00-game-flow.md)
   - ✅ Durées et phases narratives recalibrées dans cette session (60 j, J+7, J+10, ~50 j, J+60, J+67) + ajout référence au tempo compressé.
-- [ ] [`07-barbarian-spawning.md`](./07-barbarian-spawning.md)
-  - Si la consommation joueur de barbares est plus rapide en compressed, l'algo de spawn / catchup peut nécessiter une révision de densité. À vérifier.
+- [x] [`07-barbarian-spawning.md`](./07-barbarian-spawning.md)
+  - ✅ Densité de spawn / catchup vérifiée : pas de changement MVP, rotation couverte par la régen compressée + raréfaction progressive volontaire.
 
 ### Constantes côté code (`packages/shared/`)
 
 À traiter dans la même fiche de run :
 
-- `DEFAULT_CROWNS.conversionRate` (pointe vers la formule `× 0.05`)
-- Toutes les constantes de durée dans les configs bâtiments / unités
-- `WATCHTOWER_VISION_LEVELS` (probablement non concerné — c'est une distance, pas un temps)
+- `DEFAULT_CROWNS.conversionRate` (formule recalibrée `× 0.20`)
+- Toutes les constantes de durée dans les configs bâtiments / unités (compressées `÷4`, arrondies au multiple de 5 s)
+- `WATCHTOWER_VISION_LEVELS` (non concerné — c'est une distance, pas un temps)
 
 ## 8. Migration MVP — cadre
 

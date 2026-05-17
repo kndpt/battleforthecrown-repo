@@ -83,21 +83,21 @@ Monnaie stratégique principale. La [puissance](./09-power-and-rankings.md) des 
 ### Formule de revenu
 
 ```
-couronnes/h = puissance_bâtiments_cumulée × 0.05
+couronnes/h = puissance_bâtiments_cumulée × 0.20
 ```
 
 Sommée sur **tous les villages possédés** par le joueur. Implémenté dans `packages/shared/src/crowns/index.ts` (`DEFAULT_CROWNS.conversionRate`) + `crowns.service.ts:calculateProductionRate`.
 
 ### Gains de référence par phase
 
-Calibrage cible : un Seigneur (5 000 couronnes, cf. [`10-conquest.md` § Coût de recrutement](./10-conquest.md#coût-de-recrutement-du-seigneur)) doit représenter ~3 jours de revenu pour un joueur **mid-game** qui vient de construire sa Salle du Trône.
+Calibrage cible : un Seigneur (5 000 couronnes, cf. [`10-conquest.md` § Coût de recrutement](./10-conquest.md#coût-de-recrutement-du-seigneur)) doit représenter ~18 h de revenu pour un joueur **mid-game** qui vient de construire sa Salle du Trône.
 
 | Phase | Puissance bât. typique | Revenu | Temps pour 5 000 cour. (Seigneur) |
 | --- | ---: | ---: | --- |
-| Early game (Château 2-3) | ~360 | ~18 / h | ~12 jours (Seigneur inaccessible — Château 6 requis) |
-| **Mid game (Château 6, Trône frais)** | **~1 400** | **~70 / h** | **~3 jours** ← **cible de calage** |
-| Late game (Château 10, 1 village max) | ~2 600 | ~130 / h | ~1.5 jour |
-| Late game (3 villages max) | ~7 900 | ~395 / h | ~13 h |
+| Early game (Château 2-3) | ~360 | ~72 / h | ~3 jours (Seigneur inaccessible — Château 6 requis) |
+| **Mid game (Château 6, Trône frais)** | **~1 400** | **~280 / h** | **~18 h** ← **cible de calage** |
+| Late game (Château 10, 1 village max) | ~2 600 | ~520 / h | ~10 h |
+| Late game (3 villages max) | ~7 900 | ~1 580 / h | ~3 h |
 
 > 💡 La rapidité en late-game est volontaire : un joueur multi-village doit pouvoir alimenter l'expansion en Seigneurs successifs.
 
@@ -127,32 +127,32 @@ Progression non linéaire, inspirée Clash of Clans, avec trois phases :
 ### Early game (niveaux 1–3) — Découverte
 
 - **Objectif** : hook rapide, apprentissage des mécaniques.
-- **Temps de construction** : quelques minutes à 1 heure.
-- **Production** : ~200 ressources / h (6 mines niveau 2–3).
+- **Temps de construction** : quelques minutes à 15 minutes.
+- **Production** : ~1 000 ressources / h (3 mines niveau 2–3).
 - **Gameplay** : construction rapide, premiers raids, découverte du monde.
 
 ### Mid game (niveaux 4–7) — Développement
 
 - **Objectif** : compréhension profonde, stratégie émergente.
-- **Temps de construction** : 2–6 heures par upgrade.
-- **Production** : ~800 ressources / h (6 mines niveau 5–6).
+- **Temps de construction** : 30–90 minutes par upgrade.
+- **Production** : ~2 500 ressources / h (3 mines niveau 5–6).
 - **Gameplay** : pillage devient rentable (+50 % ressources), gestion population, choix stratégiques.
 
 ### Late game (niveaux 8–10) — Prestige
 
 - **Objectif** : grind, optimisation, conquête.
-- **Temps de construction** : 8–24 heures par upgrade.
-- **Production** : ~2 000 ressources / h (6 mines niveau 8–10).
+- **Temps de construction** : 2–6 heures par upgrade.
+- **Production** : ~9 000 ressources / h (3 mines niveau 8–10).
 - **Gameplay** : pillage **nécessaire** (+100 % ressources), multi-village, domination.
 
 ## Cibles de progression
 
 | Cible | Valeur |
 | --- | --- |
-| **Durée pour maxer** | ~1 mois (30 jours) pour un village niveau 10 complet |
+| **Durée pour maxer** | ~10–15 jours pour un village niveau 10 complet |
 | **Sessions de jeu** | 2–5 min (début) → sessions plus longues (multi-village) |
 | **Connexions quotidiennes** | 2–4 fois/jour (début) → plus fréquent (late game) |
-| **Temps effectif total** | ~100 heures sur 30 jours ≈ 3–4 h/jour |
+| **Temps effectif total** | ~35–50 heures sur 10–15 jours ≈ 3–4 h/jour |
 
 ## Économie équilibrée : production vs pillage
 
@@ -160,30 +160,30 @@ Principe fondamental : **production passive et pillage sur un pied d'égalité (
 
 | Source | Contribution / jour | Impact |
 | --- | --- | --- |
-| **Production passive** | ~54 000 ressources | Baseline, progression constante |
-| **Pillage actif** | ~54 000 ressources | Double la vitesse de progression |
+| **Production passive** | ~216 000 ressources | Baseline, progression constante |
+| **Pillage actif** | ~216 000 ressources | Double la vitesse de progression |
 | **Raids barbares défensifs** | bonus légers | Récompenses si défense réussie |
 | **Cartes quotidiennes** | Valeur modérée, à plafonner | Bonus de confort / rattrapage, pas troisième pilier économique |
 
-> 💡 Un joueur qui pille activement (10–15 raids/jour) progresse **2× plus vite** qu'un joueur passif.
+> 💡 Un joueur qui pille activement progresse **2× plus vite** qu'un joueur passif. En Standard MVP compressé, ce volume peut venir de 10–15 raids bien choisis sur des cibles riches, ou de davantage de micro-raids courts selon la zone.
 
-**Stratégie de pillage optimal** : 20 Cavaliers + 10 Écuyers ≈ 2 500 capacité de loot/raid. 10 raids/jour ≈ +25 000 ressources supplémentaires.
+**Stratégie de pillage optimal** : 20 Cavaliers + 10 Écuyers ≈ 2 500 capacité de loot/raid. La compression tempo rend surtout le trajet et la rotation plus fréquents ; le cap de loot par raid reste porté par la capacité de transport et le stock réel de la cible.
 
 ## Formules de progression
 
 ### Production de ressources (Bois / Pierre / Fer)
 
 ```
-Production_niveau_n = 50 × (1.4 ^ (n-1))
+Production_niveau_n = 200 × (1.4 ^ (n-1))
 ```
 
 | Niveau | Production / h | Production / jour |
 | --- | --- | --- |
-| 1 | 50 | 1 200 |
-| 3 | 100 | 2 400 |
-| 5 | 190 | 4 560 |
-| 7 | 375 | 9 000 |
-| 10 | 1 030 | 24 720 |
+| 1 | 200 | 4 800 |
+| 3 | 400 | 9 600 |
+| 5 | 760 | 18 240 |
+| 7 | 1 500 | 36 000 |
+| 10 | 4 120 | 98 880 |
 
 ### Coûts d'upgrade des bâtiments
 
@@ -223,11 +223,11 @@ Temps_niveau_n = Temps_base × (multiplicateur ^ (n-1)) × Bonus_château
 
 | Catégorie | Temps base | Multiplicateur |
 | --- | --- | --- |
-| Château | 180 s | 2.0 |
-| Production | 120 s | 1.8 |
-| Militaire | 600 s | 1.7 |
-| Stockage | 300 s | 1.6 |
-| Stratégique | 400–500 s | 1.7–1.8 |
+| Château | 45 s | 2.0 |
+| Production | 30 s | 1.8 |
+| Militaire | 150 s | 1.7 |
+| Stockage | 75 s | 1.6 |
+| Stratégique | 100–125 s | 1.7–1.8 |
 
 **Bonus Château** : réduction de 4 % par niveau ajouté (au-delà du niveau 1), soit 9 paliers × 4 % = **−36 % à niveau 10**. Détail dans [`03-buildings.md`](./03-buildings.md).
 
@@ -247,30 +247,30 @@ Le niveau du Château détermine l'accès aux autres bâtiments, créant des obj
 
 ## Validation économique : exemple de progression
 
-Joueur type — 1 mois pour maxer un village :
+Joueur type — 10 à 15 jours pour maxer un village :
 
-### Semaine 1 (Early game, niveaux 1–3)
+### Jours 1–2 (Early game, niveaux 1–3)
 
-- Production : ~200 ressources / h.
-- Temps construction : 10–60 min/upgrade.
+- Production : ~1 000 ressources / h.
+- Temps construction : 3–15 min/upgrade.
 - Objectif : débloquer Caserne, premiers raids.
-- **Temps effectif : 15–20 heures**.
+- **Temps effectif : 6–8 heures**.
 
-### Semaines 2–3 (Mid game, niveaux 4–7)
+### Jours 3–7 (Mid game, niveaux 4–7)
 
-- Production : ~800 ressources / h.
-- Temps construction : 2–6 h/upgrade.
+- Production : ~2 500 ressources / h.
+- Temps construction : 30–90 min/upgrade.
 - Pillage : +50 % ressources.
-- **Temps effectif : 30–40 heures**.
+- **Temps effectif : 12–18 heures**.
 
-### Semaine 4 (Late game, niveaux 8–10)
+### Jours 8–15 (Late game, niveaux 8–10)
 
-- Production : ~2 000 ressources / h.
-- Temps construction : 8–24 h/upgrade.
+- Production : ~9 000 ressources / h.
+- Temps construction : 2–6 h/upgrade.
 - Pillage : +100 % ressources (nécessaire).
-- **Temps effectif : 40–50 heures**.
+- **Temps effectif : 18–24 heures**.
 
-**Total ≈ 100 heures / 30 jours = 3–4 h/jour** ✅
+**Total ≈ 35–50 heures / 10–15 jours = 3–4 h/jour** ✅
 
 ## Principes d'équilibrage
 

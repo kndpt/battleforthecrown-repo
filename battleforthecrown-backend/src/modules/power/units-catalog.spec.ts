@@ -52,13 +52,13 @@ describe('units catalog — pure logic (run 003 regression)', () => {
     }
   });
 
-  it('UNIT_COSTS[WARRIOR] aligne la spec (wood 120, stone 80, iron 50, pop 2, time 180s, barracks 3, pas de throneHall)', () => {
+  it('UNIT_COSTS[WARRIOR] aligne la spec (wood 120, stone 80, iron 50, pop 2, time 45s, barracks 3, pas de throneHall)', () => {
     const cost = UNIT_COSTS[UNIT_TYPES.WARRIOR];
     expect(cost.wood).toBe(120);
     expect(cost.stone).toBe(80);
     expect(cost.iron).toBe(50);
     expect(cost.population).toBe(2);
-    expect(cost.time).toBe(180);
+    expect(cost.time).toBe(45);
     expect(cost.requiredBarracksLevel).toBe(3);
     expect(cost.requiredThroneHallLevel).toBeUndefined();
   });
@@ -69,18 +69,18 @@ describe('units catalog — pure logic (run 003 regression)', () => {
     expect(cost.stone).toBe(400);
     expect(cost.iron).toBe(200);
     expect(cost.population).toBe(4);
-    expect(cost.time).toBe(360);
+    expect(cost.time).toBe(90);
     expect(cost.requiredBarracksLevel).toBe(99);
   });
 
-  it('UNIT_COSTS[NOBLE] aligne spec 10 (5000×3 + 5000 crowns + 15 pop + 8h + Throne Hall L1)', () => {
+  it('UNIT_COSTS[NOBLE] aligne spec 10 (5000×3 + 5000 crowns + 15 pop + 2h + Throne Hall L1)', () => {
     const cost = UNIT_COSTS[UNIT_TYPES.NOBLE];
     expect(cost.wood).toBe(5000);
     expect(cost.stone).toBe(5000);
     expect(cost.iron).toBe(5000);
     expect(cost.crowns).toBe(5000);
     expect(cost.population).toBe(15);
-    expect(cost.time).toBe(28800);
+    expect(cost.time).toBe(7200);
     expect(cost.requiredThroneHallLevel).toBe(1);
     expect(cost.requiredBarracksLevel).toBe(99); // sentinel — gating réel via Throne Hall
   });

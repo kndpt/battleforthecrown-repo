@@ -22,7 +22,7 @@ Repris depuis [`10-conquest.md`](./10-conquest.md) :
 | --- | --- |
 | Outil | [Seigneur](./10-conquest.md#le-seigneur--recrutement-et-règles) — unité unique sacrificielle, coût détaillé dans 10-conquest |
 | Pré-requis | Toutes les troupes ennemies vaincues + Seigneur survivant |
-| Période de capture | **Variable selon le niveau du Château de la cible** (4 / 6 / 9 / 12 / 18 h par paliers). Voir § Période de capture ci-dessous. |
+| Période de capture | **Variable selon le niveau du Château de la cible** (1 h / 1 h 30 / 2 h 15 / 3 h / 4 h 30 par paliers). Voir § Période de capture ci-dessous. |
 
 ## Questions à trancher
 
@@ -80,13 +80,13 @@ Logique : conquérir un nouveau joueur (Château bas) doit être rapide et peu p
 
 | Niveau Château cible | Période de capture | Équivalent barbare |
 | ---: | ---: | :---: |
-| 1-2 | 4 h | ≈ T2 |
-| 3-4 | 6 h | ≈ T3 |
-| 5-6 | 9 h | ≈ T4 |
-| 7-8 | 12 h | ≈ T5 |
-| 9-10 | 18 h | (au-delà) |
+| 1-2 | 1 h | ≈ T2 |
+| 3-4 | 1 h 30 | ≈ T3 |
+| 5-6 | 2 h 15 | ≈ T4 |
+| 7-8 | 3 h | ≈ T5 |
+| 9-10 | 4 h 30 | (au-delà) |
 
-Rationale du palier 9-10 = 18 h : Château royal = effort de plusieurs semaines, mérite une fenêtre supérieure au plus haut tier barbare. Cap à 18 h (et pas 24 h+) = reste « une nuit + un peu », jouable sur mobile.
+Rationale du palier 9-10 = 4 h 30 : Château royal = effort de plusieurs jours, mérite une fenêtre supérieure au plus haut tier barbare. Cap à 4 h 30 = reste lisible sur mobile sans recréer une attente slow-MMORTS.
 
 **Snapshot du niveau Château** : **figé au moment de l'installation du Seigneur** (= juste après le combat de pré-conquête victorieux). Le défenseur ne peut donc pas raccourcir la fenêtre en downgradant son Château pendant la capture. Plus simple à coder, impossible à exploiter.
 
@@ -116,7 +116,7 @@ La **garnison d'occupation** qui défend la fenêtre = **les survivants de l'esc
 
 **Tension stratégique** :
 - **Trop peu d'escorte** → Seigneur fragile face aux attaques tiers/défenseur → conquête ratée, investissement perdu.
-- **Trop d'escorte** → village d'origine dégarni pendant 4-18 h → cible facile pour des raids opportunistes sur **toi**.
+- **Trop d'escorte** → village d'origine dégarni pendant 1 h à 4 h 30 → cible facile pour des raids opportunistes sur **toi**.
 
 L'attaquant peut continuer à opérer ailleurs avec ses **autres villages** pendant la fenêtre (raids classiques, défense de son propre village). On n'empêche pas l'activité parallèle — on interdit juste de toucher à la garnison du village en cours de capture.
 
