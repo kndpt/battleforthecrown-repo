@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState, type MouseEvent } from 'react';
+import { createPortal } from 'react-dom';
 import type {
   DailyCardDto,
   DailyCardTaskDto,
@@ -279,44 +280,47 @@ export function DailyRetentionWidget({
         variant="wax"
       />
 
-      {isOpen && summary ? (
-        <div
-          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/65 p-3 pb-[calc(env(safe-area-inset-bottom)+96px)]"
-          data-testid="daily-retention-backdrop"
-          onMouseDown={handleBackdropMouseDown}
-        >
-          <DailyQuestModal
-            backlog={backlog}
-            chapter={chapter}
-            claimPanel={claimPanel}
-            claimRowLabel="Réclamer"
-            closeLabel="Fermer"
-            completedLabel="accomplies"
-            completedSummary={`${completedCount} / ${quests.length}`}
-            eyebrow={undefined}
-            expiresInLabel="Reset à"
-            expiresInValue="04h00"
-            maxHeight="min(680px, calc(100dvh - env(safe-area-inset-bottom) - 108px))"
-            onClose={() => setIsOpen(false)}
-            onPrimaryAction={handlePrimaryAction}
-            oyez={mapOyez(summary)}
-            primaryActionDisabled={
-              focusCard?.status !== 'CLAIMABLE' || !canClaim || isClaiming
-            }
-            primaryActionLabel={
-              isClaiming ? 'Récupération...' : 'Récupérer'
-            }
-            primaryActionVariant={focusCard?.status === 'CLAIMABLE' ? 'success' : 'neutral'}
-            quests={quests}
-            questsTodayLabel="Tâches du jour"
-            rewardLabel="Récompense"
-            tasksDividerLabel="Tâches du Roi"
-            taskDoneLabel="Tâche accomplie"
-            title="Devoir royal"
-            width="min(360px, calc(100vw - 24px))"
-          />
-        </div>
-      ) : null}
+      {isOpen && summary
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-[80] flex items-center justify-center bg-black/65 p-3"
+              data-testid="daily-retention-backdrop"
+              onMouseDown={handleBackdropMouseDown}
+            >
+              <DailyQuestModal
+                backlog={backlog}
+                chapter={chapter}
+                claimPanel={claimPanel}
+                claimRowLabel="Réclamer"
+                closeLabel="Fermer"
+                completedLabel="accomplies"
+                completedSummary={`${completedCount} / ${quests.length}`}
+                eyebrow={undefined}
+                expiresInLabel="Reset à"
+                expiresInValue="04h00"
+                maxHeight="min(680px, calc(100dvh - 18px))"
+                onClose={() => setIsOpen(false)}
+                onPrimaryAction={handlePrimaryAction}
+                oyez={mapOyez(summary)}
+                primaryActionDisabled={
+                  focusCard?.status !== 'CLAIMABLE' || !canClaim || isClaiming
+                }
+                primaryActionLabel={
+                  isClaiming ? 'Récupération...' : 'Récupérer'
+                }
+                primaryActionVariant={focusCard?.status === 'CLAIMABLE' ? 'success' : 'neutral'}
+                quests={quests}
+                questsTodayLabel="Tâches du jour"
+                rewardLabel="Récompense"
+                tasksDividerLabel="Tâches du Roi"
+                taskDoneLabel="Tâche accomplie"
+                title="Devoir royal"
+                width="min(360px, calc(100vw - 24px))"
+              />
+            </div>,
+            document.body,
+          )
+        : null}
     </>
   );
 }
