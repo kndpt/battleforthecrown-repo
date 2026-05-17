@@ -4,7 +4,7 @@
  * Attention: La config du world n'est pas bonne par defaut. Dans ce cas, il prendre celle d'un world existant.
  *
  * Usage:
- *   npm run test:village-placement
+ *   yarn workspace battleforthecrown-backend test:village-placement
  *   or
  *   ts-node scripts/test-village-placement-100.ts
  */
@@ -31,7 +31,6 @@ async function main() {
     // 1. Clean up previous test data
     console.log('🧹 Cleaning up previous test data...');
     await prisma.village.deleteMany({ where: { worldId: WORLD_ID } });
-    await prisma.worldEntity.deleteMany({ where: { worldId: WORLD_ID } });
     await prisma.worldMembership.deleteMany({ where: { worldId: WORLD_ID } });
     await prisma.zoneCapacity.deleteMany({ where: { worldId: WORLD_ID } });
     await prisma.chunkSpawnState.deleteMany({ where: { worldId: WORLD_ID } });
@@ -195,8 +194,9 @@ async function main() {
       include: { user: { select: { email: true } } },
     });
 
-    const barbarianVillages = await prisma.worldEntity.findMany({
-      where: { worldId: WORLD_ID, kind: 'BARBARIAN_VILLAGE' },
+    const barbarianVillages = await prisma.village.findMany({
+      where: { worldId: WORLD_ID, isBarbarian: true },
+      select: { x: true, y: true, tier: true },
     });
 
     const zoneStats = await villagePlacementService.getZoneStatistics(WORLD_ID);
@@ -261,7 +261,7 @@ async function main() {
     // Barbarian tier distribution
     const tierCounts: Record<string, number> = {};
     barbarianVillages.forEach((bv) => {
-      const tier = (bv.data as any)?.tier || 'unknown';
+      const tier = bv.tier || 'unknown';
       tierCounts[tier] = (tierCounts[tier] || 0) + 1;
     });
 
@@ -333,7 +333,7 @@ async function main() {
       barbarianVillages: barbarianVillages.map((bv) => ({
         x: bv.x,
         y: bv.y,
-        tier: (bv.data as any)?.tier,
+        tier: bv.tier,
       })),
       statistics: {
         totalPlayers: villages.length,

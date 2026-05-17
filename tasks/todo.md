@@ -1,23 +1,33 @@
-# Run 027 - world tempo recalibrate MVP constants
+# Ticket 64 - remove deprecated WorldEntity
 
-- [x] Preflight: git clean, fiche run, rules, SPEC, run 026 et spec tempo lus.
-- [x] Cartographie: docs gameplay et constantes shared contenant des durees/debits a recalibrer.
-- [x] Recalibrer les specs gameplay `02/03/06/07/10/13/14/15` au Standard MVP `tempo.global = 1.0`.
-- [x] Aligner les constantes shared de duree/debit avec les docs.
-- [x] Review 5 axes + audit `rg` des durees legacy.
-- [x] Verification: tests adaptes + `yarn static-check`.
-- [x] Archive run + `tasks/README.md` + commit.
+- [x] Preflight: git clean, ticket, source 63, rules, SPEC, backend briefing, Prisma/test skills lus.
+- [x] Cartographie: usages `WorldEntity` / `world_entity` dans runtime, scripts, smokes, docs.
+- [x] Implémenter le retrait runtime/Prisma sans migration destructive non approuvée.
+- [x] Mettre à jour les docs et helpers impactés.
+- [x] Vérifier Prisma generate, smokes vision/world map, static-check.
+- [x] Review 5 axes + archive ticket + `tasks/README.md` + commit.
 
 ## Notes
 
-- Scope strict: valeurs absolues docs/shared uniquement.
-- Hors scope: aucune formule, aucun `TempoService`, aucune logique backend/frontend.
-- Invariants wall-clock intouchables: bouclier 48 h, cooldown style 24 h, reset quotidien 04:00, abandon 14 j.
+- Scope strict: `WorldEntitiesQueryService` doit consommer uniquement `Village`.
+- Migration: pas de `DROP TABLE` sans accord user explicite (`SPEC.md §C`). Le schéma Prisma peut oublier la table pendant que la table physique legacy reste non gérée.
+- Hors scope: recalibrage vision/fog, changement de payload frontend, reset DB.
 
 ## Review
 
-- Correctness: docs gameplay et constantes shared alignées sur compression `÷4` pour durées et `×4` pour débits; tests de contrat et smoke scout ajustés.
-- Readability: valeurs arrondies au multiple de 5 s quand nécessaire; sources de vérité gameplay gardées dans `docs/gameplay`.
-- Architecture: aucune formule ni logique `TempoService` modifiée; uniquement valeurs absolues à `tempo.global = 1.0`.
-- Security: aucun endpoint, auth ou secret touché.
-- Performance: impact runtime neutre hors constantes de durée/débit attendues.
+- Correctness: `WorldEntitiesQueryService` ne lit plus `prisma.worldEntity`; villages joueurs/barbares restent projetés depuis `Village`.
+- Readability: retrait net du modèle Prisma et du script legacy, sans alias de compatibilité.
+- Architecture: source canonique unique `Village`; pas de migration destructive générée.
+- Security: aucun endpoint/auth/secret modifié.
+- Performance: une requête legacy supprimée dans `getAllEntities` et `getEntitiesInRadius`.
+- Review indépendante: GO. Mineur schema comment traité.
+
+## Verification
+
+- `yarn workspace battleforthecrown-backend prisma:generate` OK.
+- `DATABASE_URL="postgresql://postgres:postgres@localhost:5432/battleforthecrown" yarn workspace battleforthecrown-backend prisma validate` OK.
+- `yarn test:smoke:preflight` OK.
+- `yarn workspace battleforthecrown-backend test:smoke:run --runInBand` : 22/23 suites OK, `reinforcements.smoke.spec.ts` timeout.
+- `yarn workspace battleforthecrown-backend test:smoke:run reinforcements.smoke.spec.ts --runInBand` OK.
+- `yarn static-check` OK.
+- SQL local : `SELECT count(*) FROM world_entity;` = 0 sur `battleforthecrown` et `battleforthecrown_smoke`.

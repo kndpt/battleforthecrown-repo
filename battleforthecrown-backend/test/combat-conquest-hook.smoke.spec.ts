@@ -83,7 +83,7 @@ describe('combat conquest hook smoke', () => {
         isBarbarian: true,
         tier: 'T1',
         resourceStock: {
-          create: { wood: 100, stone: 100, iron: 100, maxPerType: 100_000 },
+          create: { wood: 100, stone: 100, iron: 100, maxPerType: 100 },
         },
         buildings: {
           create: [{ type: 'CASTLE', level: 1 }],

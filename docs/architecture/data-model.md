@@ -49,6 +49,7 @@ Spécificités runtime :
 - `BarbarianRuntimeService.catchUpVillage()` applique la régénération lazy avant les lectures runtime actuelles (combat et scout).
 - `Population.used` reste à 0 tant que le village est barbare : les troupes barbares ne donnent pas de puissance joueur avant conquête.
 - Seedés procéduralement par `BarbarianSeedingService` (qui délègue à `BarbarianVillageFactory`) au join d'un joueur dans le monde ; le `BarbarianSeedingCatchupWorker` (cron quotidien) rattrape les chunks que le seeding sync n'a pas eu le temps de couvrir pour les joueurs créés < 1 h (cf. [`docs/gameplay/07-barbarian-spawning.md` § Catchup d'arrivée différée](../gameplay/07-barbarian-spawning.md)).
+- Le feed carte `/world/:worldId/entities` projette les villages joueurs et barbares depuis `Village`; l'ancienne table miroir `world_entity` n'est plus un modèle Prisma ni une source runtime.
 
 ### Armée
 
@@ -154,7 +155,6 @@ User ──< WorldMembership >── World
   - `EventOutbox.payload` → registre `EVENT_PAYLOAD_SCHEMAS` par `EventKind` (shared `events/schemas.ts`), parsé runtime par `parseEventPayload` côté backend (`event/codecs/payload.codec.ts`) au moment du dispatch.
   - `Expedition.units`, `Expedition.survivingUnits`, `CombatReport.{lossesAttacker, lossesDefender, totalUnitsAttacker, totalUnitsDefender}`, `ScoutReport.units` → `UnitMapSchema` (shared `army/unit-map.ts`), parsés via `parseUnitMap` (backend `combat/codecs/unit-map.codec.ts`).
   - `Expedition.loot`, `CombatReport.loot` → `LootResultSchema` / `CombatLootSchema` (shared `combat/schemas.ts`), parsés via `parseLootResult` ou `parseCombatLoot` (backend `combat/codecs/loot.codec.ts`).
-  - `WorldEntity.data` → schema discriminé par `kind` (actuellement BarbarianVillage), typé localement dans `world/world-entities-query.service.ts`.
   - **Règle** : toute lecture/écriture d'une colonne JSON Prisma passe par un codec ; le seul cast frontière `as unknown as Prisma.InputJsonValue` est isolé dans les codecs eux-mêmes.
 
 ## Migrations
