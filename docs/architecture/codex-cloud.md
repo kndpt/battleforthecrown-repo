@@ -9,10 +9,10 @@ Dans l'écran Codex `Environments`, mettre seulement :
 
 ```bash
 cd "$CODEX_WORKTREE_PATH"
-bash scripts/codex-cloud-setup.sh
+. scripts/codex-cloud-setup.sh
 ```
 
-Ne pas maintenir de logique longue dans `.codex/environments/environment.toml` : il est généré par l'UI Codex. Si ce fichier est versionné, il doit rester un simple appel à `scripts/codex-cloud-setup.sh`.
+Ne pas maintenir de logique longue dans `.codex/environments/environment.toml` : il est généré par l'UI Codex. Si ce fichier est versionné, il doit rester un simple appel sourcé à `scripts/codex-cloud-setup.sh`, sinon les variables exportées ne sont pas capturées pour la phase agent.
 
 ## Ce que le script prépare
 

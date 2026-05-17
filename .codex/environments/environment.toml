@@ -5,7 +5,7 @@ name = "battleforthecrown-repo"
 [setup]
 script = '''
 cd "$CODEX_WORKTREE_PATH"
-bash scripts/codex-cloud-setup.sh
+. scripts/codex-cloud-setup.sh
 '''
 
 [cleanup]
