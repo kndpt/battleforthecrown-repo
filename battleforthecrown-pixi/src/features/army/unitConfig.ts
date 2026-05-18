@@ -65,7 +65,7 @@ export const UNIT_META: Record<UnitType, UnitMeta> = {
     name: 'Espion',
     pluralName: 'Espions',
     description: "Agent furtif spécialisé dans l'espionnage et la reconnaissance ennemie.",
-    iconPath: null,
+    iconPath: '/assets/army/spy.png',
     emoji: '🕵️',
   },
   RAM: {

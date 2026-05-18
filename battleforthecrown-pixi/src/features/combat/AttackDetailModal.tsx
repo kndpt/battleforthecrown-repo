@@ -283,10 +283,7 @@ export function AttackDetailModal({
               {heldUnits.map((unit) => {
                 const meta = unitMetaFor(unit.type);
                 const value = selectedUnits[unit.type] ?? 0;
-                const unitIconPath =
-                  activeMode === 'scout' && unit.type === UNIT_TYPES.SPY
-                    ? '/assets/lupa.png'
-                    : meta.iconPath;
+                const unitIconPath = meta.iconPath;
                 return (
                   <div key={unit.type} className="space-y-2">
                     <div className="flex items-center gap-3 justify-between">
