@@ -347,26 +347,30 @@ export class CombatService {
     this.logger.log(`Recall initiated by user ${userId}`, { dto });
 
     return this.prisma.$transaction(async (tx) => {
-      // 1. Verify ownership of destination village (A)
-      const originVillage = await tx.village.findFirst({
-        where: { id: dto.originVillageId, userId },
-      });
+      // 1. Verify both villages and allow either recall-from-origin or send-back-from-host.
+      const [originVillage, currentVillage] = await Promise.all([
+        tx.village.findUnique({
+          where: { id: dto.originVillageId },
+        }),
+        tx.village.findUnique({
+          where: { id: dto.villageId },
+        }),
+      ]);
 
       if (!originVillage) {
-        throw new NotFoundException(
-          'Origin village (destination) not found or not owned',
-        );
+        throw new BadRequestException('Origin village not found');
       }
 
       const worldId = originVillage.worldId;
 
-      // 2. Verify current village (B) exists
-      const currentVillage = await tx.village.findUnique({
-        where: { id: dto.villageId },
-      });
-
       if (!currentVillage || currentVillage.worldId !== worldId) {
         throw new BadRequestException('Current village not found');
+      }
+
+      if (originVillage.userId !== userId && currentVillage.userId !== userId) {
+        throw new ForbiddenException(
+          'Cannot recall reinforcement from villages not owned by user',
+        );
       }
 
       // 3. Verify units in Garrison

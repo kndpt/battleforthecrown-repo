@@ -236,4 +236,109 @@ describe('reinforcements smoke', () => {
     });
     expect(finalGarrison?.quantity).toBe(0);
   }, 60_000);
+
+  it('send-back foreign reinforcement from host creates return expedition', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+
+    const hostUser = await registerUser(ctx.server, 'host' + Date.now());
+    const hostJoin = await joinWorld(
+      ctx.server,
+      hostUser.accessToken,
+      world.id,
+      'host-village',
+    );
+    const hostVillageId = hostJoin.village.id;
+
+    const originUser = await registerUser(ctx.server, 'origin' + Date.now());
+    const originJoin = await joinWorld(
+      ctx.server,
+      originUser.accessToken,
+      world.id,
+      'origin-village',
+    );
+    const originVillageId = originJoin.village.id;
+
+    await ctx.prisma.village.update({
+      where: { id: hostVillageId },
+      data: { x: originJoin.village.x + 1, y: originJoin.village.y },
+    });
+
+    await ctx.prisma.garrison.create({
+      data: {
+        villageId: hostVillageId,
+        originVillageId,
+        unitType: 'MILITIA',
+        quantity: 25,
+      },
+    });
+
+    const sendBackRes = await request(ctx.server)
+      .post('/combat/recall')
+      .set('Authorization', `Bearer ${hostUser.accessToken}`)
+      .send({
+        villageId: hostVillageId,
+        originVillageId,
+        units: { MILITIA: 25 },
+      });
+    expect(sendBackRes.status).toBeLessThan(300);
+
+    const expedition = await ctx.prisma.expedition.findFirstOrThrow({
+      where: {
+        attackerVillageId: hostVillageId,
+        reinforcementOriginVillageId: originVillageId,
+        kind: 'REINFORCE',
+        targetRefId: originVillageId,
+      },
+    });
+    expect(expedition.status).toBe('EN_ROUTE');
+    expect(expedition.targetX).toBe(originJoin.village.x);
+    expect(expedition.targetY).toBe(originJoin.village.y);
+
+    const recalled = await outboxDispatched(
+      ctx.prisma,
+      { kind: 'reinforcement.recalled', aggregateId: hostVillageId },
+      { timeoutMs: 30_000 },
+    );
+    expect((recalled.payload as { expeditionId?: string }).expeditionId).toBe(
+      expedition.id,
+    );
+
+    const hostGarrison = await ctx.prisma.garrison.findUnique({
+      where: {
+        villageId_originVillageId_unitType: {
+          villageId: hostVillageId,
+          originVillageId,
+          unitType: 'MILITIA',
+        },
+      },
+    });
+    expect(hostGarrison?.quantity).toBe(0);
+
+    await outboxDispatched(
+      ctx.prisma,
+      { kind: 'reinforcement.returned', aggregateId: originVillageId },
+      { timeoutMs: 30_000 },
+    );
+
+    const returnedInventory = await ctx.prisma.unitInventory.findUniqueOrThrow({
+      where: {
+        villageId_unitType: {
+          villageId: originVillageId,
+          unitType: 'MILITIA',
+        },
+      },
+    });
+    expect(returnedInventory.quantity).toBe(25);
+
+    const intruder = await registerUser(ctx.server, 'intruder' + Date.now());
+    const forbiddenRes = await request(ctx.server)
+      .post('/combat/recall')
+      .set('Authorization', `Bearer ${intruder.accessToken}`)
+      .send({
+        villageId: hostVillageId,
+        originVillageId,
+        units: { MILITIA: 1 },
+      });
+    expect(forbiddenRes.status).toBe(403);
+  }, 60_000);
 });

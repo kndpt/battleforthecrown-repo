@@ -1,7 +1,7 @@
 # 68 — Renvoyer un renfort étranger ne produit aucun trajet retour sur la WorldMap
 
 **Sévérité** : 🟡 Majeur
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ Résolu
 **Spec amont** : [`docs/gameplay/04-combat.md`](../docs/gameplay/04-combat.md) § Renforts entre ses propres villages — la spec décrit `Rappeler` (depuis l'origine) et `Renvoyer` (depuis l'hôte) comme déclenchant tous deux un trajet retour visible vers le village d'origine.
 
 ## Symptôme
