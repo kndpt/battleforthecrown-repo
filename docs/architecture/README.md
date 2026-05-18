@@ -13,6 +13,7 @@ Documentation technique de référence (humaine) pour les agents et les contribu
 - [`codex-cloud.md`](./codex-cloud.md) — setup Codex Cloud pour `bftc-run`, DB dev, smokes et QA `curl`.
 - [`worktree-dev.md`](./worktree-dev.md) — lancement backend/frontend depuis un worktree parallèle, ports dédiés, variables Vite/CORS.
 - [`smoke-tests.md`](./smoke-tests.md) — stratégie smokes orchestration/I/O : flows couverts, comment ajouter, anti-patterns.
+- [`balance-and-tempo.md`](./balance-and-tempo.md) — guide ops : où vivent les constantes de durées/coûts/productions, comment éditer le seed `world.config`, workflow rebuild.
 
 ## À lire avant tout travail backend
 
