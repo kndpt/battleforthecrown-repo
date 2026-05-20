@@ -74,17 +74,17 @@ L'algorithme de génération doit donc s'adapter à **deux variables vivantes** 
 
 ### Cap stockage par tier
 
-Aligné sur le **niveau modeste des bâtiments barbares**. Un village barbare est narrativement **primitif** (campement de gens pas très organisés) — ses bâtiments internes restent bas niveau, et le cap stockage suit. Le mapping reprend les capacités de l'Entrepôt joueur (cf. [`03-buildings.md` § Entrepôt](./03-buildings.md#entrepôt-warehouse)) à des niveaux faibles :
+Aligné sur le **niveau modeste des bâtiments barbares**. Un village barbare est narrativement **primitif** (campement de gens pas très organisés) — ses bâtiments internes restent bas niveau, et le cap stockage suit. Le mapping reprend les capacités de l'Entrepôt joueur (cf. [`03-buildings.md` § Entrepôt](./03-buildings.md#entrepôt-warehouse), valeurs absolues dans `WAREHOUSE_STORAGE_LIMITS` de `packages/shared/src/resources/storage.ts`) à des niveaux faibles :
 
-| Tier | Niveau Entrepôt équivalent | Capacité / ressource |
-| --- | --- | --- |
-| T1 | 1 | 3 000 |
-| T2 | 1 | 3 000 |
-| T3 | 2 | 3 450 |
-| T4 | 3 | 3 970 |
-| T5 | 4 | 4 565 |
+| Tier | Niveau Entrepôt équivalent |
+| --- | --- |
+| T1 | 1 |
+| T2 | 1 |
+| T3 | 2 |
+| T4 | 3 |
+| T5 | 4 |
 
-> 💡 Pente T5/T1 ≈ ×1,5 sur le stockage, contre ×10 sur les troupes. Loot max d'un T5 ≈ 13 700 cumulés. Cohérent narrativement : les barbares sont des guerriers primitifs, pas des marchands ; leur village vaut surtout par son armée et l'**emplacement** qu'il représente une fois conquis.
+> 💡 La pente du stockage barbare suit celle de l'Entrepôt joueur sur ses 4 premiers niveaux — beaucoup plus douce que la pente des troupes (≈ ×10 entre T1 et T5). Cohérent narrativement : les barbares sont des guerriers primitifs, pas des marchands ; leur village vaut surtout par son armée et l'**emplacement** qu'il représente une fois conquis.
 
 Ce mapping est **le même** que celui utilisé pour la matérialisation des bâtiments à la conquête (cf. [`13-barbarian-conquest.md`](./13-barbarian-conquest.md)) — un barbare conserve ses bâtiments à leur niveau primitif quand il bascule en village joueur.
 

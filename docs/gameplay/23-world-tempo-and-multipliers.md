@@ -111,7 +111,7 @@ WorldConfig.tempo = {
 | Nature de l'axe | Formule appliquée | Exemple à `tempo = 0.25` |
 |---|---|---|
 | **Durée** (construction, training, travel, captureWindow) | `effectif = absolu × tempo` | Construction Wood lvl 5 : 1280 s × 0.25 = **320 s** (4× plus court) |
-| **Débit / régen / yield** (resourceProduction, crownsYield, barbarianRegen) | `effectif = absolu / tempo` | Production Wood lvl 5 : 760/h ÷ 0.25 = **3 040/h** (4× plus rapide). Couronnes : `puissance × 0.20 / tempo` = 4× plus de couronnes/h. |
+| **Débit / régen / yield** (resourceProduction, crownsYield, barbarianRegen) | `effectif = absolu / tempo` | Production Wood lvl 5 (valeur absolue dans `RESOURCE_PRODUCTION_PER_HOUR` de shared) ÷ 0.25 = **4× plus rapide**. Couronnes : `puissance × 0.20 / tempo` = 4× plus de couronnes/h. |
 
 🎯 **Pourquoi cette convention** : on lit "tempo" comme "fraction de temps" — `0.25` = "1/4 du temps" = "4× plus rapide". C'est aligné avec l'intuition d'un game speed slider compressed. **Le code shared expose un `TempoService` qui encapsule la décision `× ou ÷` selon l'axe** — les use-cases ne manipulent jamais l'opérateur directement.
 
@@ -188,7 +188,8 @@ Suite au pivot 120 → 60 j et à la compression ~4-5×, les sections suivantes 
 - [x] [`02-economy-and-progression.md`](./02-economy-and-progression.md)
   - ✅ Phases de progression, cible village max, validation économique et couronnes recalibrées au Standard MVP compressé.
 - [x] [`03-buildings.md`](./03-buildings.md)
-  - ✅ Toutes les colonnes « Temps (s) » sont recalibrées comme valeurs absolues à `tempo.global = 1.0` du Standard MVP.
+  - ✅ Refonte : la doc ne duplique plus aucune valeur numérique (coûts, temps, pop, capacités, productions, vision, bonus). Source de vérité unique = `packages/shared/src/village/buildings.ts`. Cf. [ADR-14](../architecture/decisions.md#adr-14--niveau-max--10-pour-tous-les-bâtiments-vs-courbe--façon-century-).
+  - ✅ Courbe walled-v1 appliquée dans `BUILDING_DEFINITIONS` : early L1-L5 ultra-rapide (s → min), walls L7 / L10, tryhard full L10 ≈ 14 j wall-clock à `tempo.global = 1.0`.
 - [x] [`06-barbarians.md`](./06-barbarians.md)
   - ✅ § Régénération compressé : ressources ~12 h 30 → 25 h, troupes ~25 h → 50 h selon tier.
   - ✅ Les % horaires deviennent les valeurs de base à `tempo.global = 1.0` et restent multipliés par `tempo.barbarianRegen`.

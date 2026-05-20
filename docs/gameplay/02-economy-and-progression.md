@@ -122,114 +122,72 @@ Calibrage cible : un Seigneur (5 000 couronnes, cf. [`10-conquest.md` § Coût d
 
 ## Phases de progression
 
-Progression non linéaire, inspirée Clash of Clans, avec trois phases :
+Progression non linéaire, inspirée Clash of Clans, avec trois phases caractéristiques (chiffres absolus dans `packages/shared/`, vus en wall-clock dans `scripts/build-simulator.js`) :
 
 ### Early game (niveaux 1–3) — Découverte
 
 - **Objectif** : hook rapide, apprentissage des mécaniques.
-- **Temps de construction** : quelques minutes à 15 minutes.
-- **Production** : ~1 000 ressources / h (3 mines niveau 2–3).
-- **Gameplay** : construction rapide, premiers raids, découverte du monde.
+- **Temps de construction** : secondes à minutes — onboarding mobile compressé.
+- **Production** : modeste, le starting stock (`*_STARTING_AMOUNT` dans `.env`) couvre les premiers upgrades.
+- **Gameplay** : construction quasi-instantanée, premiers raids barbares T1, découverte du monde.
 
 ### Mid game (niveaux 4–7) — Développement
 
 - **Objectif** : compréhension profonde, stratégie émergente.
-- **Temps de construction** : 30–90 minutes par upgrade.
-- **Production** : ~2 500 ressources / h (3 mines niveau 5–6).
-- **Gameplay** : pillage devient rentable (+50 % ressources), gestion population, choix stratégiques.
+- **Temps de construction** : minutes → heures. Premier wall sensible à L7.
+- **Production** : passe en mode "tu dois prioriser tes mines" — l'idle ressources devient palpable si tu rush.
+- **Gameplay** : pillage devient rentable, gestion population, choix stratégiques (rush Castle vs investir mines vs préparer armée).
 
 ### Late game (niveaux 8–10) — Prestige
 
-- **Objectif** : grind, optimisation, conquête.
-- **Temps de construction** : 2–6 heures par upgrade.
-- **Production** : ~9 000 ressources / h (3 mines niveau 8–10).
-- **Gameplay** : pillage **nécessaire** (+100 % ressources), multi-village, domination.
-
-## Cibles de progression
-
-| Cible | Valeur |
-| --- | --- |
-| **Durée pour maxer** | ~10–15 jours pour un village niveau 10 complet |
-| **Sessions de jeu** | 2–5 min (début) → sessions plus longues (multi-village) |
-| **Connexions quotidiennes** | 2–4 fois/jour (début) → plus fréquent (late game) |
-| **Temps effectif total** | ~35–50 heures sur 10–15 jours ≈ 3–4 h/jour |
+- **Objectif** : grind, optimisation, conquête multi-village.
+- **Temps de construction** : heures → jours. Wall final L10 = trophée.
+- **Production** : late game très généreuse (×40 vs L1), warehouse devient le facteur limitant si pas dépensé.
+- **Gameplay** : pillage **fortement encouragé**, multi-village, domination du leaderboard.
 
 ## Économie équilibrée : production vs pillage
 
 Principe fondamental : **production passive et pillage sur un pied d'égalité (50/50)**.
 
-| Source | Contribution / jour | Impact |
-| --- | --- | --- |
-| **Production passive** | ~216 000 ressources | Baseline, progression constante |
-| **Pillage actif** | ~216 000 ressources | Double la vitesse de progression |
-| **Raids barbares défensifs** | bonus légers | Récompenses si défense réussie |
-| **Cartes quotidiennes** | Valeur modérée, à plafonner | Bonus de confort / rattrapage, pas troisième pilier économique |
+| Source | Impact |
+| --- | --- |
+| **Production passive** | Baseline, progression constante. Cap fixé par l'Entrepôt. |
+| **Pillage actif** | Double la vitesse de progression d'un joueur engagé vs un passif. |
+| **Raids barbares défensifs** | Bonus légers — récompenses si défense réussie. |
+| **Cartes quotidiennes** | Valeur modérée, à plafonner. Bonus de confort / rattrapage, pas troisième pilier économique. |
 
-> 💡 Un joueur qui pille activement progresse **2× plus vite** qu'un joueur passif. En Standard MVP compressé, ce volume peut venir de 10–15 raids bien choisis sur des cibles riches, ou de davantage de micro-raids courts selon la zone.
+> 💡 Un joueur qui pille activement progresse **~2× plus vite** qu'un joueur passif. En Standard MVP compressé, ce volume vient typiquement de 10–15 raids bien choisis sur des cibles riches, ou de davantage de micro-raids courts selon la zone.
 
-**Stratégie de pillage optimal** : 20 Cavaliers + 10 Écuyers ≈ 2 500 capacité de loot/raid. La compression tempo rend surtout le trajet et la rotation plus fréquents ; le cap de loot par raid reste porté par la capacité de transport et le stock réel de la cible.
+**Stratégie de pillage optimal** : 20 Cavaliers + 10 Écuyers ≈ 2 500 capacité de loot/raid (cf. mobilité unités dans [`08-units.md`](./08-units.md)). La compression tempo rend surtout le trajet et la rotation plus fréquents ; le cap de loot par raid reste porté par la capacité de transport et le stock réel de la cible.
 
-## Formules de progression
+## Courbes de progression
 
-### Production de ressources (Bois / Pierre / Fer)
+> 📌 **Valeurs absolues dans `packages/shared/src/`** — source de vérité unique (cf. [AGENTS.md § docs](../../AGENTS.md)) :
+> - **Coûts + temps d'upgrade** : `village/buildings.ts` → `BUILDING_DEFINITIONS[type].levels[n]` (`wood`, `stone`, `iron`, `population`, `timeSeconds`).
+> - **Production passive** des mines : `resources/production.ts` → `RESOURCE_PRODUCTION_PER_HOUR[level]`.
+> - **Capacité Entrepôt** : `resources/storage.ts` → `WAREHOUSE_STORAGE_LIMITS[level]`.
+> - **Bonus vitesse construction du Château** : `village/buildings.ts` → `CASTLE_CONSTRUCTION_SPEED_BONUS[level]`.
+> - **Population du Moulin** : `village/population.ts` → `FARM_POPULATION_LIMITS[level]`.
+> - **Vision Watchtower** : `village/buildings.ts` → `WATCHTOWER_VISION_LEVELS[level]`.
 
-```
-Production_niveau_n = 200 × (1.4 ^ (n-1))
-```
+### Caractéristiques de la courbe (shape)
 
-| Niveau | Production / h | Production / jour |
-| --- | --- | --- |
-| 1 | 200 | 4 800 |
-| 3 | 400 | 9 600 |
-| 5 | 760 | 18 240 |
-| 7 | 1 500 | 36 000 |
-| 10 | 4 120 | 98 880 |
+- **Production de ressources** : progression non-linéaire, ratio par niveau croissant (~×1.4 early → ~×1.6 late), avec walls sensibles à L7 et L10 alignés avec les walls de temps de construction. Cf. [ADR-14](../architecture/decisions.md#adr-14--niveau-max--10-pour-tous-les-bâtiments-vs-courbe--façon-century-).
+- **Temps de construction** : early L1-L5 ultra-rapide (secondes → minutes), walls L7 / L10 (heures → jours). Détail courbe walled-v1.1 dans [`23-world-tempo-and-multipliers.md`](./23-world-tempo-and-multipliers.md).
+- **Capacité Entrepôt** : suit la production (×1.4 → ×1.5 par niveau) pour éviter l'overflow au mid/late game.
+- **Bonus Château** : −4 % temps de construction par niveau au-delà du L1, soit −36 % à L10.
 
-### Coûts d'upgrade des bâtiments
+### Distribution thématique des coûts
 
-Progression exponentielle adaptée à la catégorie :
+Chaque bâtiment consomme **plus** de sa ressource thématique (créant un équilibre naturel : produire bois exige du bois) :
 
-| Catégorie | Formule de base | Multiplicateur |
-| --- | --- | --- |
-| **Château** | 250 × (1.17 ^ (n-1)) | 1.17 |
-| **Production (Mines)** | 150 × (1.20 ^ (n-1)) | 1.20 |
-| **Militaire (Caserne)** | 400 × (1.18 ^ (n-1)) | 1.18 |
-| **Stockage (Entrepôt)** | 150 × (1.15 ^ (n-1)) | 1.15 |
-| **Stratégique (Farm/Tour)** | 180–350 × (1.18–1.19 ^ (n-1)) | 1.18–1.19 |
-| **Défense (Wall)** | 2 000 × (1.25 ^ (n-1)) | 1.25 |
-| **Espionnage (Hideout)** | 300 × (1.30 ^ (n-1)) | 1.30 |
+- **Château / Tour / Wall** : pierre dominante (fondations).
+- **Caserne** : fer dominant (armes).
+- **Mine de Bois / Pierre / Fer** : ressource éponyme dominante (auto-cohérence).
+- **Moulin / Entrepôt** : bois dominant (charpenterie).
+- **Hideout (post-MVP)** : équilibré.
 
-### Distribution des ressources par bâtiment
-
-Chaque bâtiment consomme selon sa spécialisation :
-
-| Type | Bois | Pierre | Fer |
-| --- | --- | --- | --- |
-| **Château / Défense / Tour** | 25 % | 50 % | 25 % |
-| **Militaire (Caserne)** | 30 % | 30 % | 40 % |
-| **Production Bois** | 50 % | 30 % | 20 % |
-| **Production Pierre** | 30 % | 50 % | 20 % |
-| **Production Fer** | 25 % | 25 % | 50 % |
-| **Économique (Farm/Entrepôt)** | 40 % | 35 % | 25 % |
-| **Espionnage (Hideout)** | 35 % | 35 % | 30 % |
-
-> 💡 Chaque mine coûte plus cher dans la ressource qu'elle produit, créant un équilibre naturel.
-
-### Temps de construction
-
-```
-Temps_niveau_n = Temps_base × (multiplicateur ^ (n-1)) × Bonus_château
-```
-
-| Catégorie | Temps base | Multiplicateur |
-| --- | --- | --- |
-| Château | 45 s | 2.0 |
-| Production | 30 s | 1.8 |
-| Militaire | 150 s | 1.7 |
-| Stockage | 75 s | 1.6 |
-| Stratégique | 100–125 s | 1.7–1.8 |
-
-**Bonus Château** : réduction de 4 % par niveau ajouté (au-delà du niveau 1), soit 9 paliers × 4 % = **−36 % à niveau 10**. Détail dans [`03-buildings.md`](./03-buildings.md).
+Détail des coûts exacts par niveau dans `BUILDING_DEFINITIONS`.
 
 ## Paliers de déblocage (Château)
 
@@ -245,32 +203,21 @@ Le niveau du Château détermine l'accès aux autres bâtiments, créant des obj
 | **6** | **Salle du Trône** (entrée end-game — recrutement [Seigneur](./10-conquest.md#le-seigneur--recrutement-et-règles)) |
 | **7** | _(palier libre au MVP)_ |
 
-## Validation économique : exemple de progression
+## Validation économique : rythme de progression
 
-Joueur type — 10 à 15 jours pour maxer un village :
+Cibles design pour le Standard MVP (tempo 1.0, courbes walled-v1.1 + production B) :
 
-### Jours 1–2 (Early game, niveaux 1–3)
+- **Tryhard** (engagement maximal, no sleep) : village full L10 atteint en ~**14 j wall-clock**. Conquête éligible (Château 6 + Salle du Trône) à **J+0.5** (~16h en construction pure, plus le temps de monter armée + Seigneur, cf. [`10-conquest.md`](./10-conquest.md#coût-de-recrutement-du-seigneur)).
+- **Joueur mobile actif** (sommeil normal, check ~1h) : village full L10 à ~**15-16 j**, conquête éligible **J+1** (~20h en construction pure).
+- **Joueur casual** (1-2 sessions/jour, 5-10 min) : non simulé — la durée sera plus longue (probablement 20-25 j pour full max), à valider en playtest.
 
-- Production : ~1 000 ressources / h.
-- Temps construction : 3–15 min/upgrade.
-- Objectif : débloquer Caserne, premiers raids.
-- **Temps effectif : 6–8 heures**.
+Numbers générés par `scripts/build-simulator.js`. Le simulateur ne modélise que la **construction + ressources passives** — armée, Seigneur, combat de conquête et trajet ne sont **pas** dans le scope. Première conquête réelle = éligibilité + ~24-48h de buildup militaire pour un joueur normal, soit **J+2 à J+4** réaliste (compressed-async, cf. [`00-game-flow.md`](./00-game-flow.md)).
 
-### Jours 3–7 (Mid game, niveaux 4–7)
+### Indices de bon équilibrage
 
-- Production : ~2 500 ressources / h.
-- Temps construction : 30–90 min/upgrade.
-- Pillage : +50 % ressources.
-- **Temps effectif : 12–18 heures**.
-
-### Jours 8–15 (Late game, niveaux 8–10)
-
-- Production : ~9 000 ressources / h.
-- Temps construction : 2–6 h/upgrade.
-- Pillage : +100 % ressources (nécessaire).
-- **Temps effectif : 18–24 heures**.
-
-**Total ≈ 35–50 heures / 10–15 jours = 3–4 h/jour** ✅
+- **Idle ressources < 5 %** pour un joueur normal mobile (le sommeil laisse les mines accumuler).
+- **Idle ressources jusqu'à ~50 %** possible pour un tryhard rush conquête — c'est volontaire : crée la tension "rush Castle vs monter mines d'abord", levier d'indécision stratégique (cf. ADR-14, profils tall / wide / army-focused).
+- **Walls construction** sensibles à L7 (heures) et L10 (jours) — alignés avec walls production pour récompenser l'investissement temps.
 
 ## Principes d'équilibrage
 

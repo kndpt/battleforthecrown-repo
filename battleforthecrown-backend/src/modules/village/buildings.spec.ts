@@ -42,7 +42,7 @@ describe('COUNCIL_HALL', () => {
       stone: 200,
       iron: 100,
       population: 4,
-      timeSeconds: 250,
+      timeSeconds: 900,
     });
   });
 
@@ -74,7 +74,7 @@ describe('THRONE_HALL', () => {
       stone: 2400,
       iron: 1200,
       population: 6,
-      timeSeconds: 5400,
+      timeSeconds: 21600,
     });
   });
 
@@ -93,16 +93,16 @@ describe('warehouse storage', () => {
 
   it('returns correct limits for level 5', () => {
     const limits = getWarehouseStorageLimit(5);
-    expect(limits.wood).toBe(5250);
-    expect(limits.stone).toBe(5250);
-    expect(limits.iron).toBe(5250);
+    expect(limits.wood).toBe(12000);
+    expect(limits.stone).toBe(12000);
+    expect(limits.iron).toBe(12000);
   });
 
   it('returns correct limits for level 10', () => {
     const limits = getWarehouseStorageLimit(10);
-    expect(limits.wood).toBe(10570);
-    expect(limits.stone).toBe(10570);
-    expect(limits.iron).toBe(10570);
+    expect(limits.wood).toBe(87000);
+    expect(limits.stone).toBe(87000);
+    expect(limits.iron).toBe(87000);
   });
 
   it('falls back to level 1 limits for level 0 (out of range)', () => {

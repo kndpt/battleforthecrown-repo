@@ -132,14 +132,14 @@ describe('WorldConfigService', () => {
         stone: 145,
         iron: 75,
         population: 0,
-        time: 45000, // 90s * 1.0 castle bonus / 2 speed = 45s
+        time: 7500, // 15s * 1.0 castle bonus * 0.5 world speed = 7.5s
       });
     });
 
     it('applies the castle bonus to construction time', async () => {
       const result = await service.getCost('world-1', 'CASTLE', 2, 2);
 
-      expect(result.time).toBe(43200); // 90s * 0.96 / 2 = 43.2s
+      expect(result.time).toBe(7200); // 15s * 0.96 * 0.5 = 7.2s
     });
 
     it('enforces a minimum time of 1000ms', async () => {
@@ -197,7 +197,7 @@ describe('WorldConfigService', () => {
 
   describe('getStorageLimit', () => {
     it('returns the storage limit for a warehouse level', () => {
-      expect(service.getStorageLimit('world-1', 5)).toBe(5250);
+      expect(service.getStorageLimit('world-1', 5)).toBe(12000);
     });
 
     it('falls back to level 1 when the level is not found', () => {

@@ -279,6 +279,28 @@ Deux alternatives ont été écartées : full real-time façon Million Lords (au
 
 ---
 
+## ADR-14 — Niveau max = 10 pour tous les bâtiments (vs courbe « façon Century »)
+
+**Contexte (2026-05-19).** Audit comparatif de la courbe BFTC vs les références mobiles MMORTS du moment (Whiteout Survival, Kingshot — Century Games). Les références utilisent jusqu'à **30+ niveaux par bâtiment** (HQ jusqu'à L30 puis TG/FC 1-10 = L40 équivalent) avec une courbe exponentielle dont les paliers de friction sont placés à L15-L16 (heures → jours), L21-L22 (jours+), L29-L30 (~40 j de construction brute en F2P).
+
+Question posée : faut-il aligner BFTC sur cette granularité (passer à 30 levels) pour bénéficier de la même richesse de progression et des mêmes paliers narratifs ?
+
+**Décision.** **Garder le niveau max à 10 pour tous les bâtiments** (déjà l'état actuel — décision documentée ici pour ancrer le **pourquoi**, qui ne se déduit ni du code ni du `git log`). Trois raisons convergentes :
+
+1. **Different game, different vertical.** Century mise sur le **grind vertical** (un seul HQ qui monte 30 levels lentement) parce qu'il monétise les **speedups payants** — leur courbe brute est volontairement infaisable F2P (40 j pour HQ30), désamorcée uniquement par achat. BFTC mise sur la **conquête horizontale** (multi-village × multi-bâtiment × PvP) avec une boutique cosmétique uniquement (cf. [`gameplay/01-overview.md` § Philosophie mobile](../gameplay/01-overview.md#philosophie-mobile) et [ADR-12 « Pivot compressed-async »](#adr-12--pivot-compressed-async--tempo-world-scoped-via-worldconfigtempo)). Le scope de progression BFTC = 10 villages × 12 bâtiments × 10 levels × N conquêtes — déjà gigantesque sans étendre verticalement.
+2. **Sans speedups payants, pas de wall infaisable possible.** Si on transposait 30 levels en compressed-async sans paywall, soit on compresse tellement que chaque level perd son poids narratif, soit on accepte qu'au-delà de L15-L20 personne n'aille — 10-20 levels mort-nés. Aucun des deux n'est satisfaisant.
+3. **Coût × bénéfice asymétrique.** Conserver 10 levels avec des **paliers de friction bien placés** (rythme Century transposé : early sec→min, mid min→heure, late heures→jour) capte ~80 % du bénéfice narratif (sensation d'« âges » du jeu) pour ~30 % du coût (120 entrées à balancer vs 360+).
+
+**Conséquences.**
+
+- Toute proposition de calibration de courbe se fait **sur 10 paliers**, en empruntant la **logique de placement** des walls Century (paliers marqués vers L7 et L10) mais pas la granularité.
+- Les `unlockCastleLevel` restent les seules contraintes de prérequis (pas de cap « non-Château ≤ Château ») — voir [`gameplay/03-buildings.md`](../gameplay/03-buildings.md).
+- Le ranking et la puissance s'expriment sur ce barème 10 levels, étendu par le nombre de villages et de conquêtes. Si un futur playtest révèle un plafond ressenti dès J+30, **on ajoute des bâtiments ou des mécaniques transverses** (alliances, classements hebdo, zones d'influence), **pas des levels**.
+- L'invariant « 10 levels max » est ancré dans `packages/shared/src/village/buildings.ts` (table `BUILDING_DEFINITIONS`) et dans [`gameplay/03-buildings.md`](../gameplay/03-buildings.md) (« Niveau max = **10** pour tous »). Ces deux sources et cet ADR doivent rester en cohérence.
+- Un simulateur (`scripts/build-simulator.py`) permet de tester l'impact d'une nouvelle courbe sur la wall-clock d'un joueur (tempo + profil sommeil + queue 3 slots + bonus Château).
+
+---
+
 ## Maintenance de ce document
 
 - Une décision **structurante** (qui change la façon dont on pense le projet) → nouvelle entrée ADR.
