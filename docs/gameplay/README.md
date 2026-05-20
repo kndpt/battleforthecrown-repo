@@ -7,7 +7,7 @@ Documentation gameplay consolidée. Vision design, mécaniques, formules d'équi
 0. [`00-game-flow.md`](./00-game-flow.md) — **vue narrative end-to-end**, du lancement d'un monde au wipe. Point d'entrée pour comprendre à quoi ressemble le jeu vécu. Doc vivante, mise à jour quand une mécanique change.
 1. [`01-overview.md`](./01-overview.md) — vision, boucles de gameplay, monde persistant, philosophie mobile, extensions post-MVP.
 2. [`02-economy-and-progression.md`](./02-economy-and-progression.md) — ressources, population, couronnes, formules de progression, équilibrage économique (production vs pillage).
-3. [`03-buildings.md`](./03-buildings.md) — catalogue des bâtiments MVP (Castle, Wood, Stone, Iron, Warehouse, Farm, Barracks, Watchtower, Salle du Conseil) avec coûts, temps et bonus passifs par niveau. Wall et Hideout sont prévus mais **désactivés MVP**.
+3. [`03-buildings.md`](./03-buildings.md) — catalogue des bâtiments MVP (Castle, Wood, Stone, Iron, Warehouse, Quarter, Barracks, Watchtower, Salle du Conseil) avec coûts, temps et bonus passifs par niveau. Wall et Hideout sont prévus mais **désactivés MVP**.
 4. [`04-combat.md`](./04-combat.md) — résolution combat, conquête, styles stratégiques de village.
 5. [`05-daily-cards-and-oyez.md`](./05-daily-cards-and-oyez.md) — cartes quotidiennes et Oyez : rétention personnelle + contexte monde, sans pass ni bénédictions séparées.
 6. [`06-barbarians.md`](./06-barbarians.md) — villages barbares : tiers, génération, régénération, distribution carte, lisibilité joueur, questions ouvertes.

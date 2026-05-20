@@ -1,7 +1,11 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { publicAsset } from "@/lib/publicAsset";
-import { BaseModal } from "./BaseModal";
+import {
+  BASE_MODAL_DEFAULT_MAX_HEIGHT,
+  BASE_MODAL_DEFAULT_WIDTH,
+  BaseModal,
+} from "./BaseModal";
 import { ProgressBar, type ProgressBarTone } from "./ProgressBar";
 
 export type TroopDetailResource = "wood" | "stone" | "iron" | "crowns";
@@ -420,7 +424,7 @@ export function TroopDetailModal({
   cost,
   fieldMax,
   labels,
-  maxHeight = "min(720px, calc(100dvh - 24px))",
+  maxHeight = BASE_MODAL_DEFAULT_MAX_HEIGHT,
   name,
   onClose,
   populationCost,
@@ -433,7 +437,7 @@ export function TroopDetailModal({
   tagline,
   tierBadge,
   trainingTime,
-  width = 380,
+  width = BASE_MODAL_DEFAULT_WIDTH,
 }: TroopDetailModalProps) {
   const footer = (
     <div className="flex flex-col gap-[9px]">

@@ -20,7 +20,7 @@ Spec complète de la conquête de villages **barbares** par le joueur. Les règl
 | Carrière | ✅ | Extraction primitive de la pierre |
 | Mine de fer | ✅ | Extraction primitive du fer |
 | Entrepôt | ✅ | Réserves communautaires |
-| Moulin | ✅ | Subsistance |
+| Quartier | ✅ | Subsistance |
 | Caserne | ✅ | Camp de guerriers |
 | Tour de guet | ❌ | Organisation militaire avancée — joueur la construit |
 | Salle du Conseil | ❌ | Politique structurée — joueur la construit pour spécialiser |
@@ -44,8 +44,8 @@ Niveau modeste, aligné sur l'identité primitive des barbares. Tous les bâtime
 
 **T5 conquis** :
 - Château 4 → débloque la Salle du Conseil (pas matérialisée — joueur peut la construire ensuite).
-- Mines / Entrepôt / Farm / Caserne au niveau 4.
-- Pop max dérivée du Moulin niveau 4 ; pop occupée = somme des coûts de pop des bâtiments matérialisés à leur niveau hérité ; le reste est disponible pour recruter. Calcul standard, sans bonus ni malus.
+- Mines / Entrepôt / Quartier / Caserne au niveau 4.
+- Pop max dérivée du Quartier niveau 4 ; pop occupée = somme des coûts de pop des bâtiments matérialisés à leur niveau hérité ; le reste est disponible pour recruter. Calcul standard, sans bonus ni malus.
 
 **T1 conquis** :
 - Tout en niveau 1. Quasi-vide. Le village est le cadeau, le contenu est minime.
@@ -58,7 +58,7 @@ La **Tour de guet n'est jamais matérialisée** à la conquête, quel que soit l
 - Si le village conquis sort du rayon des Watchtowers existantes du joueur (ex : conquête éloignée de la capitale), il devient une **tâche aveugle** sur la carte.
 - Pour récupérer la vision, le joueur doit **construire une Tour de guet de niveau 1** (~15 min). Aucun rayon par défaut, aucune Watchtower offerte — règle stricte assumée, alignée sur la mécanique générale (vision = union des disques Watchtower, cf. [`01-overview.md` § Brouillard de guerre](./01-overview.md#exploration--brouillard-de-guerre)).
 
-🎯 **Lecture design** : la conquête est un **emplacement + un socle**, pas un cadeau-vision. Le joueur arbitre entre développement éco (mines, farm) et infrastructure militaire (Watchtower) sur la nouvelle base.
+🎯 **Lecture design** : la conquête est un **emplacement + un socle**, pas un cadeau-vision. Le joueur arbitre entre développement éco (mines, quartier) et infrastructure militaire (Watchtower) sur la nouvelle base.
 
 🎯 **Lecture design** : le joueur reçoit un **emplacement + un socle**. Il doit investir pour faire monter le village. Pas broken, pas frustrant — boucle "conquête → développement" claire.
 
@@ -69,7 +69,7 @@ La **Tour de guet n'est jamais matérialisée** à la conquête, quel que soit l
 | Élément | Valeur à la conquête |
 | --- | --- |
 | **Ressources** | **Reset complet** (0 bois / 0 pierre / 0 fer). Le joueur a déjà eu le loot du combat précédent ; pas de double récompense. |
-| **Population** | Dérivée mécaniquement du Moulin matérialisé. Identique au calcul pour un village joueur. |
+| **Population** | Dérivée mécaniquement du Quartier matérialisé. Identique au calcul pour un village joueur. |
 | **Armée résidente** | 0 — toutes les troupes barbares ont été vaincues lors du combat de pré-conquête. |
 
 ## Période de capture variable par tier

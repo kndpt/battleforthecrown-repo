@@ -45,7 +45,7 @@ C'est ici que **commence le vrai jeu long** : ~50 jours entre joueurs déjà con
 
 ### Boucle économique
 
-Production passive de **Bois / Pierre / Fer** par les bâtiments producteurs ; **Population** générée par le Moulin (par village, pas de pool global) ; **Couronnes** générées par la puissance bâtiments cumulée. L'**Entrepôt** plafonne le stock — plein → la production stagne. Courbe `1.4^n` par niveau de bâtiment. Détails : [`02`](./02-economy-and-progression.md), [`03`](./03-buildings.md).
+Production passive de **Bois / Pierre / Fer** par les bâtiments producteurs ; **Population** générée par le Quartier (par village, pas de pool global) ; **Couronnes** générées par la puissance bâtiments cumulée. L'**Entrepôt** plafonne le stock — plein → la production stagne. Courbe `1.4^n` par niveau de bâtiment. Détails : [`02`](./02-economy-and-progression.md), [`03`](./03-buildings.md).
 
 ### Boucle militaire
 
@@ -62,7 +62,7 @@ Château 6 → débloque **Salle du Trône** → recrute un **Seigneur** (5 000 
 1. **Combat de pré-conquête**. Si toutes les troupes ennemies tombent et le Seigneur survit → installation.
 2. **Période de capture variable** : 4 h (T2 / Château 1-2) → 18 h (Château 9-10), cf. [`14` § Période de capture](./14-pvp-conquest.md#période-de-capture-variable-selon-le-niveau-du-château) et [`13`](./13-barbarian-conquest.md).
 3. **Fenêtre vulnérable** : défenseur d'origine + tiers opportunistes peuvent attaquer pour tuer la garnison.
-4. **Survit la fenêtre** → village transféré, ressources reset, bâtiments + Moulin hérités tels quels, Seigneur sacrifié (devient Seigneur du village conquis, plus dispo pour une autre conquête).
+4. **Survit la fenêtre** → village transféré, ressources reset, bâtiments + Quartier hérités tels quels, Seigneur sacrifié (devient Seigneur du village conquis, plus dispo pour une autre conquête).
 
 ### Rétention mobile superposée
 

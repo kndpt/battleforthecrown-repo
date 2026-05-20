@@ -38,7 +38,7 @@ export const PLAYER_VILLAGE_BUILDING_LIFECYCLE = [
     barbarianConquest: 'tier-level',
   },
   {
-    type: BUILDING_TYPES.FARM,
+    type: BUILDING_TYPES.QUARTER,
     initialPlayerLevel: 0,
     barbarianConquest: 'tier-level',
   },

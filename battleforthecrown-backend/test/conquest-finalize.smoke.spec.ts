@@ -17,14 +17,14 @@ import {
   BUILDING_TYPES,
   isBuildingEnabled,
   getBuildingLevelValues,
-  getFarmPopulationLimit,
+  getQuarterPopulationLimit,
   type BuildingType,
 } from '@battleforthecrown/shared/village';
 
 const EXPECTED_MATERIALIZED_BUILDINGS = [
   BUILDING_TYPES.BARRACKS,
   BUILDING_TYPES.CASTLE,
-  BUILDING_TYPES.FARM,
+  BUILDING_TYPES.QUARTER,
   BUILDING_TYPES.IRON,
   BUILDING_TYPES.STONE,
   BUILDING_TYPES.WAREHOUSE,
@@ -197,7 +197,7 @@ describe('conquest finalize smoke', () => {
     expect(population.used).toBe(
       EXPECTED_T2_BUILDING_POPULATION + noblePopulation,
     );
-    expect(population.max).toBe(getFarmPopulationLimit(EXPECTED_T2_LEVEL));
+    expect(population.max).toBe(getQuarterPopulationLimit(EXPECTED_T2_LEVEL));
 
     await outboxDispatched(
       ctx.prisma,

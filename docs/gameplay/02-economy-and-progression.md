@@ -7,7 +7,7 @@
 | **Bois** | Construction, unités de base | Camp de bûcherons (Wood Camp) |
 | **Pierre** | Construction défensive | Carrière (Stone Quarry) |
 | **Fer** | Unités avancées | Mine de fer (Iron Mine) |
-| **Population** | Ressource humaine limitée (workforce) | Moulin (Farm) |
+| **Population** | Ressource humaine limitée (workforce) | Quartier (Quarter) |
 | **Couronnes** | Ressource stratégique principale (taxes, seigneurs, stratégie) | Gains via villages possédés |
 
 ### Production de ressources
@@ -22,9 +22,9 @@
 Quand un village est **conquis** :
 
 - **Ressources stockées** : reset complet (0 bois / 0 pierre / 0 fer). Spec barbare : [`13-barbarian-conquest.md` § Stock ressources et population](./13-barbarian-conquest.md#stock-ressources-et-population). Spec PvP : [`14-pvp-conquest.md` § Stock ressources](./14-pvp-conquest.md#stock-ressources).
-- **Population** : **pas de reset** — la pop max du village conquis est **recalculée à partir du Moulin hérité**, la pop occupée reste celle des bâtiments hérités. Conquérir un village avec Moulin lvl 4 (~260 pop max) **ajoute un nouveau pool de pop au royaume** du conquérant — propre à ce village, **non transférable** vers ses autres villages (cohérent avec le principe « pop par village » ci-dessous).
+- **Population** : **pas de reset** — la pop max du village conquis est **recalculée à partir du Quartier hérité**, la pop occupée reste celle des bâtiments hérités. Conquérir un village avec Quartier lvl 4 (~260 pop max) **ajoute un nouveau pool de pop au royaume** du conquérant — propre à ce village, **non transférable** vers ses autres villages (cohérent avec le principe « pop par village » ci-dessous).
 
-🎯 **Effet snowball maîtrisé** : oui, posséder plus de villages = plus de pop totale (somme des pops max de chaque village). Mais cette pop reste **localisée** par village : elle n'aide pas le village d'origine à recruter plus, et chaque village reste limité par son propre Moulin. La snowball est le reward attendu de la conquête, pas un bug d'économie.
+🎯 **Effet snowball maîtrisé** : oui, posséder plus de villages = plus de pop totale (somme des pops max de chaque village). Mais cette pop reste **localisée** par village : elle n'aide pas le village d'origine à recruter plus, et chaque village reste limité par son propre Quartier. La snowball est le reward attendu de la conquête, pas un bug d'économie.
 
 ### Contraintes
 
@@ -42,17 +42,17 @@ La **population** est une **ressource finie et permanente** qui représente les 
 
 | Élément | Description |
 | --- | --- |
-| **Population max** | **Par village** : déterminée par le niveau du Moulin **de ce village**. Pas de pool global mutualisé entre les villages d'un joueur. |
-| **Source** | **Moulin** : chaque niveau ajouté augmente la population disponible **du village qui l'héberge** (cf. [`03-buildings.md` § Moulin](./03-buildings.md#moulin-farm)). |
+| **Population max** | **Par village** : déterminée par le niveau du Quartier **de ce village**. Pas de pool global mutualisé entre les villages d'un joueur. |
+| **Source** | **Quartier** : chaque niveau ajouté augmente la population disponible **du village qui l'héberge** (cf. [`03-buildings.md` § Quartier](./03-buildings.md#quartier-quarter)). |
 | **Coût** | Chaque bâtiment et chaque unité **du village** consomme la population **de ce village** (définitivement). |
 | **Libération** | Seulement si un bâtiment est détruit ou une unité meurt (la pop libérée retourne au pool **du village d'origine** — y compris pour des troupes mortes en renfort dans un autre village, cf. [`04-combat.md` § Renforts](./04-combat.md#renforts-entre-ses-propres-villages)). |
 
-> 💡 Population max d'un village = somme des bonus du Moulin de ce village (ex : Moulin niveau 3 = pop lvl 1 + lvl 2 + lvl 3). Implémentation côté Prisma : table `Population` indexée par `villageId` (1 ligne par village).
+> 💡 Population max d'un village = somme des bonus du Quartier de ce village (ex : Quartier niveau 3 = pop lvl 1 + lvl 2 + lvl 3). Implémentation côté Prisma : table `Population` indexée par `villageId` (1 ligne par village).
 
 ### Mécanique de consommation
 
 ```
-Population disponible (village V) = Population max (Moulin de V)
+Population disponible (village V) = Population max (Quartier de V)
                                   − Σ(Pop bâtiments de V)
                                   − Σ(Pop unités recrutées par V)
 ```
@@ -167,7 +167,7 @@ Principe fondamental : **production passive et pillage sur un pied d'égalité (
 > - **Production passive** des mines : `resources/production.ts` → `RESOURCE_PRODUCTION_PER_HOUR[level]`.
 > - **Capacité Entrepôt** : `resources/storage.ts` → `WAREHOUSE_STORAGE_LIMITS[level]`.
 > - **Bonus vitesse construction du Château** : `village/buildings.ts` → `CASTLE_CONSTRUCTION_SPEED_BONUS[level]`.
-> - **Population du Moulin** : `village/population.ts` → `FARM_POPULATION_LIMITS[level]`.
+> - **Population du Quartier** : `village/population.ts` → `QUARTER_POPULATION_LIMITS[level]`.
 > - **Vision Watchtower** : `village/buildings.ts` → `WATCHTOWER_VISION_LEVELS[level]`.
 
 ### Caractéristiques de la courbe (shape)
@@ -184,7 +184,7 @@ Chaque bâtiment consomme **plus** de sa ressource thématique (créant un équi
 - **Château / Tour / Wall** : pierre dominante (fondations).
 - **Caserne** : fer dominant (armes).
 - **Mine de Bois / Pierre / Fer** : ressource éponyme dominante (auto-cohérence).
-- **Moulin / Entrepôt** : bois dominant (charpenterie).
+- **Quartier / Entrepôt** : bois dominant (charpenterie).
 - **Hideout (post-MVP)** : équilibré.
 
 Détail des coûts exacts par niveau dans `BUILDING_DEFINITIONS`.
@@ -195,7 +195,7 @@ Le niveau du Château détermine l'accès aux autres bâtiments, créant des obj
 
 | Niveau Château | Déblocage |
 | --- | --- |
-| **1** | Mines (Bois, Pierre, Fer), Entrepôt, Farm |
+| **1** | Mines (Bois, Pierre, Fer), Entrepôt, Quartier |
 | **2** | **Caserne** (militaire de base) |
 | **3** | **Tour de guet** (exploration carte) |
 | **4** | **Salle du Conseil** (choix de [style stratégique](./12-village-styles.md)) — _Hideout prévu post-MVP_ |

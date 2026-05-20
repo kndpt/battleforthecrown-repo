@@ -6,7 +6,7 @@ import {
   type WorldConfig,
 } from '@battleforthecrown/shared/world';
 import type { VillageStrategyType } from '@battleforthecrown/shared/village';
-import { getFarmPopulationLimit } from '@battleforthecrown/shared/village';
+import { getQuarterPopulationLimit } from '@battleforthecrown/shared/village';
 import {
   ResourceBuildingType,
   getWarehouseStorageLimit,
@@ -97,12 +97,12 @@ export class WorldConfigService {
     return limits.wood;
   }
 
-  getPopulationLimit(_worldId: string, farmLevel: number): number {
-    return getFarmPopulationLimit(farmLevel);
+  getPopulationLimit(_worldId: string, quarterLevel: number): number {
+    return getQuarterPopulationLimit(quarterLevel);
   }
 
-  createInitialPopulation(worldId: string, farmLevel: number = 1) {
-    const maxPop = this.getPopulationLimit(worldId, farmLevel);
+  createInitialPopulation(worldId: string, quarterLevel: number = 1) {
+    const maxPop = this.getPopulationLimit(worldId, quarterLevel);
     return {
       used: 17, // Used by initial buildings
       max: maxPop,

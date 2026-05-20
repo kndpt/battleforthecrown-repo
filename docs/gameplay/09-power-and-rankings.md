@@ -54,7 +54,7 @@ Poids = (Coût_cumulé_level_10 / 500) × Multiplicateur_stratégique
 | Tour de guet | 30 | ×1.3 | Vision stratégique |
 | Hideout | 28 | ×1.2 | Renseignement (post-MVP) |
 | Salle du Conseil | 25 | ×1.0 | Choix de [style stratégique](./12-village-styles.md) — bâtiment 1 niveau, poids unique |
-| Farm | 25 | ×1.0 | Population = stratégique |
+| Quartier | 25 | ×1.0 | Population = stratégique |
 | Entrepôt | 20 | ×1.0 | Support économique |
 | Mines (Bois/Pierre/Fer) | 15 | ×1.0 | Production basique |
 

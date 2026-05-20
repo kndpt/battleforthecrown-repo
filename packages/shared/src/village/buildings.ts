@@ -5,7 +5,7 @@ export const BUILDING_TYPES = {
   IRON: "IRON",
   WAREHOUSE: "WAREHOUSE",
   HIDEOUT: "HIDEOUT",
-  FARM: "FARM",
+  QUARTER: "QUARTER",
   BARRACKS: "BARRACKS",
   WATCHTOWER: "WATCHTOWER",
   COUNCIL_HALL: "COUNCIL_HALL",
@@ -220,7 +220,7 @@ export const BUILDING_DEFINITIONS: Record<BuildingType, BuildingDefinition> = {
       },
     },
   },
-  FARM: {
+  QUARTER: {
     enabled: ENABLED,
     unlockCastleLevel: 1,
     levels: {

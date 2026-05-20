@@ -21,7 +21,7 @@ const COLOR_BY_TYPE: Record<string, number> = {
   STONE: 0x8a8276,
   IRON: 0x6e7783,
   WAREHOUSE: 0x9c6f2e,
-  FARM: 0xc7a64e,
+  QUARTER: 0xc7a64e,
   BARRACKS: 0x7a3b2a,
   WATCHTOWER: 0x4a4a55,
   WALL: 0x6b6155,
@@ -31,7 +31,7 @@ const COLOR_BY_TYPE: Record<string, number> = {
 const SIZE_BY_TYPE: Record<string, number> = {
   CASTLE: 220,
   WAREHOUSE: 160,
-  FARM: 150,
+  QUARTER: 150,
   BARRACKS: 160,
   WATCHTOWER: 110,
   WALL: 200,
@@ -47,7 +47,7 @@ const ALIAS_BY_TYPE: Record<string, string> = {
   STONE: 'stone',
   IRON: 'iron',
   WAREHOUSE: 'warehouse',
-  FARM: 'farm',
+  QUARTER: 'quarter',
   BARRACKS: 'barracks',
   WATCHTOWER: 'watchtower',
 };

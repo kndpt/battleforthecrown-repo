@@ -19,7 +19,7 @@ import {
 import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
 import {
   getBuildingLevelValues,
-  getFarmPopulationLimit,
+  getQuarterPopulationLimit,
   type BuildingType,
 } from '@battleforthecrown/shared/village';
 import { getBarbarianConquestVillageBuildings } from '../village/player-village-building-lifecycle';
@@ -411,7 +411,7 @@ export class ConquestService {
       const usedPopulation = calculateBuildingPopulationUsed(
         materializedBuildings,
       );
-      const maxPopulation = getFarmPopulationLimit(materializedLevel);
+      const maxPopulation = getQuarterPopulationLimit(materializedLevel);
 
       await tx.unitInventory.deleteMany({
         where: { villageId: targetVillageId },

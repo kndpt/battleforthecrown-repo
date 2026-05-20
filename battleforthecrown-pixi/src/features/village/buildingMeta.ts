@@ -61,12 +61,12 @@ export const BUILDING_META: Record<string, BuildingMeta> = {
     cardVariant: 'wood',
     sortKey: 4,
   },
-  FARM: {
-    label: 'Moulin',
+  QUARTER: {
+    label: 'Quartier',
     description:
-      'Augmente la population de villageois disponibles pour vos constructions et armées.',
-    iconPath: publicAsset('/assets/farm.png'),
-    emoji: '🌾',
+      "Extension du tissu urbain du village. Augmente la population disponible pour vos constructions et armées.",
+    iconPath: publicAsset('/assets/quarter.png'),
+    emoji: '🏘️',
     cardVariant: 'parchment',
     sortKey: 5,
   },

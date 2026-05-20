@@ -3,7 +3,12 @@ import { cn } from '@/lib/cn';
 
 export type BaseModalTone = 'blue' | 'brown' | 'gold' | 'gray' | 'green' | 'red';
 
+export const BASE_MODAL_DEFAULT_MAX_HEIGHT = 'min(720px, calc(100dvh - 24px))';
+export const BASE_MODAL_DEFAULT_WIDTH = 360;
+
 export interface BaseModalProps {
+  accentColor?: string;
+  accentLightColor?: string;
   bodyClassName?: string;
   children?: ReactNode;
   className?: string;
@@ -37,6 +42,8 @@ const toneRingClass: Record<BaseModalTone, string> = {
 };
 
 export function BaseModal({
+  accentColor,
+  accentLightColor,
   bodyClassName,
   children,
   className,
@@ -44,13 +51,27 @@ export function BaseModal({
   footer,
   footerClassName,
   headerClassName,
-  maxHeight = 'min(720px, calc(100dvh - 24px))',
+  maxHeight = BASE_MODAL_DEFAULT_MAX_HEIGHT,
   onClose,
   title,
   tone = 'brown',
-  width = 360,
+  width = BASE_MODAL_DEFAULT_WIDTH,
 }: BaseModalProps) {
   const hasHeader = Boolean(title || onClose);
+  const accentStyle =
+    accentColor && accentLightColor
+      ? {
+          background: `linear-gradient(to right, ${accentLightColor}, ${accentColor})`,
+        }
+      : undefined;
+  const shellStyle =
+    accentColor && accentLightColor
+      ? {
+          boxShadow: `0 0 0 2px ${accentColor}, 0 12px 32px rgba(0,0,0,.6), inset 0 2px 0 rgba(255,255,255,.55)`,
+          maxHeight,
+          width,
+        }
+      : { maxHeight, width };
 
   return (
     <section
@@ -59,9 +80,9 @@ export function BaseModal({
         toneRingClass[tone],
         className,
       )}
-      style={{ maxHeight, width }}
+      style={shellStyle}
     >
-      <div className={cn('h-2 shrink-0 border-b border-[rgba(0,0,0,.25)]', toneBarClass[tone])} />
+      <div className={cn('h-2 shrink-0 border-b border-[rgba(0,0,0,.25)]', toneBarClass[tone])} style={accentStyle} />
 
       {hasHeader ? (
         <>

@@ -52,7 +52,7 @@ Si la DB ne répond pas : `docker ps --filter name=battleforthecrown-postgres` d
 | Monde | `world` | id, name, status (`PLANNED/OPEN/LOCKED/ENDED`), config JSON, started_at, ends_at |
 | Adhésion à un monde | `world_membership` | (user_id, world_id) PK, role, last_login_at |
 | Village joueur ou barbare | `village` | is_barbarian, tier, x/y unique par world. `user_id` NULL ⇒ barbare |
-| Bâtiments | `building` | type (CASTLE/FARM/WOOD/STONE/IRON/...), level, start_time/end_time = chantier en cours |
+| Bâtiments | `building` | type (CASTLE/QUARTER/WOOD/STONE/IRON/...), level, start_time/end_time = chantier en cours |
 | Stocks ressources | `resource_stock` | wood/stone/iron + max_per_type, last_update_ts (snapshot, le front interpole) |
 | Population | `population` | used / max |
 | Inventaire troupes | `unit_inventory` | (village_id, unit_type) PK, quantity |

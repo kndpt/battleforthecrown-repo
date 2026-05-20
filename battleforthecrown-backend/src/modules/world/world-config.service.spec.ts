@@ -206,7 +206,7 @@ describe('WorldConfigService', () => {
   });
 
   describe('getPopulationLimit', () => {
-    it('returns the population limit for a farm level', () => {
+    it('returns the population limit for a quarter level', () => {
       expect(service.getPopulationLimit('world-1', 2)).toBe(279);
     });
 
@@ -222,7 +222,7 @@ describe('WorldConfigService', () => {
       expect(result).toEqual({ used: 17, max: 250 });
     });
 
-    it('uses the provided farm level', () => {
+    it('uses the provided quarter level', () => {
       const result = service.createInitialPopulation('world-1', 5);
 
       expect(result.max).toBe(385);

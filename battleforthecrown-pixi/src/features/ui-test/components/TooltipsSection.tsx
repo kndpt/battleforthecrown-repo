@@ -180,14 +180,14 @@ export function TooltipsSection() {
                 </div>
               </Tooltip>
 
-              <Tooltip 
-                content="Ferme Niv.8 - Production max!"
+              <Tooltip
+                content="Quartier Niv.8 - Population max!"
                 position="top"
                 variant="success"
               >
                 <div className="cursor-help bg-white border-2 border-game-green-border rounded-lg p-3 text-center">
-                  <div className="text-3xl mb-1">🌾</div>
-                  <div className="text-xs font-game">Ferme</div>
+                  <div className="text-3xl mb-1">🏘️</div>
+                  <div className="text-xs font-game">Quartier</div>
                 </div>
               </Tooltip>
             </div>

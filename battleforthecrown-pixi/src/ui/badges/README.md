@@ -126,7 +126,7 @@ import { Badge } from '@/ui';
     <Badge variant="warning">Niv. 5</Badge>
   </li>
   <li className="flex items-center justify-between">
-    <span>🌾 Ferme</span>
+    <span>🏘️ Quartier</span>
     <Badge variant="success">MAX</Badge>
   </li>
 </ul>

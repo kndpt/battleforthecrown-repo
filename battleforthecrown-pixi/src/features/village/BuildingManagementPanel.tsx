@@ -63,7 +63,7 @@ export function BuildingManagementPanel({
   const infrastructureBuildings = availableBuildings.filter(
     ({ building }) =>
       building.type === 'WAREHOUSE' ||
-      building.type === 'FARM' ||
+      building.type === 'QUARTER' ||
       building.type === 'COUNCIL_HALL',
   );
   const explorationBuildings = availableBuildings.filter(

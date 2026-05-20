@@ -66,7 +66,7 @@ async function main() {
           { villageId: village.id, type: 'STONE', level: 1 },
           { villageId: village.id, type: 'IRON', level: 1 },
           { villageId: village.id, type: 'WAREHOUSE', level: 1 },
-          { villageId: village.id, type: 'FARM', level: 1 },
+          { villageId: village.id, type: 'QUARTER', level: 1 },
         ],
       });
 

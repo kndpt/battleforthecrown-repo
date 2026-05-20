@@ -224,7 +224,7 @@ import { Panel, PanelHeader, PanelBody, PanelFooter, Button } from '@/ui';
         <span className="text-sm">Niveau 5</span>
       </li>
       <li className="flex justify-between items-center p-2 bg-white/10 rounded">
-        <span>🌾 Ferme</span>
+        <span>🏘️ Quartier</span>
         <span className="text-sm">Niveau 8</span>
       </li>
     </ul>

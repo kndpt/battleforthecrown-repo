@@ -73,6 +73,6 @@ Vérifications :
 - `grep -rn forwardRef src/modules` → 0 résultat.
 - Test unitaire filet `gameplay/upgrade-building.use-case.spec.ts` (6 cas, vert).
 - `construction.worker.spec.ts` et `training.worker.spec.ts` mis à jour pour mocker `OutboxPublisher` (vert).
-- QA backend : upgrade WOOD, cancel-construction FARM, recruit + cancel-recruitment MILITIA — stock/population/Outbox cohérents en DB.
+- QA backend : upgrade WOOD, cancel-construction QUARTER, recruit + cancel-recruitment MILITIA — stock/population/Outbox cohérents en DB.
 
 Effet de bord positif : `cancel-construction` et `cancel-recruitment` publient désormais `resources.changed` (le code historique l'oubliait).

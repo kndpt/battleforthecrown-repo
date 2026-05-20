@@ -9,7 +9,7 @@ import {
   getBuildingProduction,
   getWarehouseStorageLimit,
 } from '@battleforthecrown/shared/resources';
-import { getFarmPopulationLimit } from '@battleforthecrown/shared/village';
+import { getQuarterPopulationLimit } from '@battleforthecrown/shared/village';
 
 interface BuildingBonus {
   label: string;
@@ -53,9 +53,9 @@ function bonusFor(type: string, level: number): BuildingBonus | null {
     };
   }
 
-  if (t === 'FARM') {
-    const current = level > 0 ? getFarmPopulationLimit(level) : 0;
-    const upcoming = getFarmPopulationLimit(next);
+  if (t === 'QUARTER') {
+    const current = level > 0 ? getQuarterPopulationLimit(level) : 0;
+    const upcoming = getQuarterPopulationLimit(next);
     return {
       label: 'Population maximale',
       iconType: 'population',

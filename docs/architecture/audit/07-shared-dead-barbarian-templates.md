@@ -31,7 +31,7 @@ Types référencés dans les templates mais **non définis** :
 
 À comparer avec les enums maîtres :
 
-- `packages/shared/src/village/buildings.ts:1-12` — `BUILDING_TYPES` = `CASTLE | WOOD | STONE | IRON | WAREHOUSE | HIDEOUT | FARM | BARRACKS | WATCHTOWER | WALL`.
+- `packages/shared/src/village/buildings.ts:1-12` — `BUILDING_TYPES` = `CASTLE | WOOD | STONE | IRON | WAREHOUSE | HIDEOUT | QUARTER | BARRACKS | WATCHTOWER | WALL`.
 - `packages/shared/src/army/types.ts:1-10` — `UNIT_TYPES` = `MILITIA | SQUIRE | ARCHER | CAVALRY | TEMPLAR | CATAPULT | SPY | NOBLE`.
 
 Aucun chevauchement.

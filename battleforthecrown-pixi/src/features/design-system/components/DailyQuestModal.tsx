@@ -574,7 +574,7 @@ export function DailyQuestPhoneFrame({ children }: { children: ReactNode }) {
         <img
           alt=""
           className="absolute left-[130px] top-[520px] w-[130px] opacity-[.65]"
-          src={publicAsset('/assets/farm.png')}
+          src={publicAsset('/assets/quarter.png')}
         />
         <div className="absolute inset-x-0 bottom-0 h-16 border-t-2 border-[#8b7355] bg-[linear-gradient(to_top,rgba(60,38,25,.95),rgba(78,56,34,.9))]" />
         <div className="absolute inset-0 bg-[rgba(0,0,0,.55)] [backdrop-filter:blur(2px)]" />

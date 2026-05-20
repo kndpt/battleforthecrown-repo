@@ -104,7 +104,7 @@ export function CheckboxesRadiosSection({ acceptTerms, setAcceptTerms, difficult
               <div className="space-y-2">
                 <Radio label="🏰 Château" name="building-type" value="castle" variant="parchment" />
                 <Radio label="⚔️ Caserne" name="building-type" value="barracks" variant="parchment" defaultChecked />
-                <Radio label="🌾 Ferme" name="building-type" value="farm" variant="parchment" />
+                <Radio label="🏘️ Quartier" name="building-type" value="quarter" variant="parchment" />
                 <Radio label="📦 Entrepôt" name="building-type" value="warehouse" variant="parchment" />
               </div>
               <InputHelperText variant="default">

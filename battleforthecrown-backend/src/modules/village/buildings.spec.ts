@@ -128,7 +128,7 @@ describe('BUILDING_TYPES catalogue', () => {
       'STONE',
       'IRON',
       'WAREHOUSE',
-      'FARM',
+      'QUARTER',
       'BARRACKS',
       'WATCHTOWER',
       'COUNCIL_HALL',

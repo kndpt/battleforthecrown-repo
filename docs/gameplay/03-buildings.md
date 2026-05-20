@@ -13,7 +13,7 @@ Catalogue des 12 bâtiments du village — **rôle, mécaniques, déblocages, ef
 | ⛏️ [**Carrière**](#carrière-stone) | Produit de la pierre | +production pierre | 15 | ✅ Actif |
 | ⚒️ [**Mine de fer**](#mine-de-fer-iron) | Produit du fer | +production fer | 15 | ✅ Actif |
 | 🏣 [**Entrepôt**](#entrepôt-warehouse) | Stockage | +capacité max ressources | 20 | ✅ Actif |
-| 🌾 [**Moulin**](#moulin-farm) | Population | +population max | 25 | ✅ Actif |
+| 🏘️ [**Quartier**](#quartier-quarter) | Population | +population max | 25 | ✅ Actif |
 | ⚔️ [**Caserne**](#caserne-barracks) | Entraînement unités | +vitesse entraînement, débloque unités | 35 | ✅ Actif |
 | 🔭 [**Tour de guet**](#tour-de-guet-watchtower) | Vision carte | +rayon visibilité monde | 30 | ✅ Actif |
 | 🕯️ [**Salle du Conseil**](#salle-du-conseil) | Choix de [style stratégique de village](./12-village-styles.md) | (1 niveau, débloque le choix) | 25 | ✅ Actif |
@@ -49,7 +49,7 @@ Cette stratification crée naturellement les profils joueur **tall / wide / army
 
 | Niveau Château | Bâtiments déverrouillés |
 | --- | --- |
-| 1 | Mines (Bois, Pierre, Fer), Entrepôt, Farm |
+| 1 | Mines (Bois, Pierre, Fer), Entrepôt, Quartier |
 | 2 | +Caserne |
 | 3 | +Tour de guet |
 | 4 | +Salle du Conseil _(Hideout prévu post-MVP)_ |
@@ -79,9 +79,9 @@ Cette stratification crée naturellement les profils joueur **tall / wide / army
 
 ---
 
-## Moulin (Farm)
+## Quartier (Quarter)
 
-**Limite de population** du village — workforce pour bâtiments et armée. Niveau requis : Château 1.
+**Limite de population** du village — workforce pour bâtiments et armée. Niveau requis : Château 1. Représente l'extension du tissu urbain (foyers, habitations) du village.
 
 > 💡 Pop partagée entre **bâtiments** (occupation permanente, récupérée si annulé/détruit) et **unités** (consommation à l'entraînement, libérée à la mort). Cf. [`02-economy-and-progression.md` § Population](./02-economy-and-progression.md#population).
 

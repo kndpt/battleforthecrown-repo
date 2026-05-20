@@ -471,7 +471,7 @@ export class VillageStrategyService {
       ECONOMIC: {
         displayName: strategyConfig.strategies.ECONOMIC.displayName,
         description: strategyConfig.strategies.ECONOMIC.description,
-        recommendedBuildings: ['WOOD', 'STONE', 'IRON', 'FARM', 'WAREHOUSE'],
+        recommendedBuildings: ['WOOD', 'STONE', 'IRON', 'QUARTER', 'WAREHOUSE'],
         keyBonuses: {
           'Production Bonus': '+20% (all resources)',
           'Population Bonus': '+10%',

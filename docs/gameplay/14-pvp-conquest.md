@@ -8,7 +8,7 @@ La conquête entre joueurs est la **boucle de PvP la plus profonde** du jeu. Ell
 
 - Un village joueur a de **vrais bâtiments** à des niveaux variables (pas un mapping uniforme par tier).
 - Il a un **stock de ressources réel** (pas une fourchette générée).
-- Il a une **pop dérivée du Moulin existant** (pas à recalculer).
+- Il a une **pop dérivée du Quartier existant** (pas à recalculer).
 - Il a potentiellement des **alliés** ou des **voisins opportunistes** qui peuvent défendre/intervenir pendant la capture.
 - Le joueur défenseur a investi du temps réel — la conquête a un **poids émotionnel** absent du barbare.
 
@@ -57,11 +57,11 @@ Repris depuis [`10-conquest.md`](./10-conquest.md) :
 
 ### Population
 
-**Décidé : héritée du Moulin existant**.
+**Décidé : héritée du Quartier existant**.
 
-- Pop max recalculée à partir du niveau du Moulin du village conquis (formule identique à un village joueur normal — cf. [`03-buildings.md` § Moulin](./03-buildings.md#moulin-farm)).
+- Pop max recalculée à partir du niveau du Quartier du village conquis (formule identique à un village joueur normal — cf. [`03-buildings.md` § Quartier](./03-buildings.md#quartier-quarter)).
 - **Pop occupée par les bâtiments hérités** (mines, Caserne, Tour de guet, etc.) reste occupée comme dans n'importe quel village joueur.
-- Pop **disponible** à la conquête = `(Pop max Moulin) − (Pop occupée par bâtiments hérités)`. Pas de magie, pas de bonus de bienvenue.
+- Pop **disponible** à la conquête = `(Pop max Quartier) − (Pop occupée par bâtiments hérités)`. Pas de magie, pas de bonus de bienvenue.
 - Cohérent avec la spec barbare ([`13-barbarian-conquest.md` § Stock ressources et population](./13-barbarian-conquest.md#stock-ressources-et-population)).
 
 ### Vision

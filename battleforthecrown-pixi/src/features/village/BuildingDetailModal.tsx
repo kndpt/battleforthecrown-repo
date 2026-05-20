@@ -39,6 +39,7 @@ import { BuildingUnlockPreview } from './BuildingDetailModal/BuildingUnlockPrevi
 import { getBuildingLockState } from './buildingLockState';
 import { computeUnitTrainingProgress } from '@/features/army/trainingProgress';
 import type { ArmyTrainingDto } from '@/api/queries';
+import { getResourceBuildingKey, ResourceBuildingDetailModal } from './ResourceBuildingDetailModal';
 
 interface BuildingDetailModalProps {
   villageId: string;
@@ -200,6 +201,32 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
       },
     );
   };
+
+  if (getResourceBuildingKey(building.type)) {
+    return (
+      <ResourceBuildingDetailModal
+        building={building}
+        canAfford={canAfford}
+        cancelPending={cancel.isPending}
+        crownsBalance={crownsBalance}
+        displayResources={displayResources}
+        effectiveTimeMs={effectiveTimeMs}
+        error={error}
+        isMaxLevel={isMaxLevel}
+        isQueueFull={isQueueFull}
+        lockState={lockState}
+        name={meta.label}
+        nextCost={nextCost}
+        onCancelConstruction={handleCancel}
+        onClose={onClose}
+        onUpgrade={handleUpgrade}
+        population={populationQuery.data}
+        progress={progress}
+        queueLength={buildingQueue.length}
+        upgradePending={upgrade.isPending}
+      />
+    );
+  }
 
   return (
     <Modal isOpen onClose={onClose} size="lg" variant="default">

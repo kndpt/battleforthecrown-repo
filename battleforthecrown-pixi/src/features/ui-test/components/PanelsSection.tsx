@@ -242,7 +242,7 @@ export function PanelsSection() {
                     <span className="text-xs font-bold">Niv. 5</span>
                   </li>
                   <li className="flex justify-between items-center p-2 bg-white/20 rounded">
-                    <span className="text-sm">🌾 Ferme</span>
+                    <span className="text-sm">🏘️ Quartier</span>
                     <span className="text-xs font-bold">Niv. 8</span>
                   </li>
                 </ul>

@@ -6,7 +6,7 @@ import { OutboxPublisher } from '../modules/event/outbox-publisher.service';
 import PgBoss from 'pg-boss';
 import {
   BUILDING_TYPES,
-  getFarmPopulationLimit,
+  getQuarterPopulationLimit,
 } from '@battleforthecrown/shared/village';
 
 interface ConstructionJob {
@@ -127,10 +127,10 @@ export class ConstructionWorker implements OnModuleInit {
           },
         });
 
-        if (completedBuilding.type === BUILDING_TYPES.FARM) {
+        if (completedBuilding.type === BUILDING_TYPES.QUARTER) {
           await tx.population.update({
             where: { villageId: completedBuilding.villageId },
-            data: { max: getFarmPopulationLimit(completedBuilding.level) },
+            data: { max: getQuarterPopulationLimit(completedBuilding.level) },
           });
         }
 

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { publicAsset } from '@/lib/publicAsset';
-import { BaseModal } from './BaseModal';
+import { BASE_MODAL_DEFAULT_MAX_HEIGHT, BASE_MODAL_DEFAULT_WIDTH, BaseModal } from './BaseModal';
 
 export type CombatReportOutcome = 'lose' | 'win';
 export type CombatReportActionId = 'details' | 'retaliate' | 'share' | string;
@@ -345,14 +345,14 @@ export function CombatReportModal({
   highlight,
   isPlayerAttacker,
   labels,
-  maxHeight = 680,
+  maxHeight = BASE_MODAL_DEFAULT_MAX_HEIGHT,
   motto,
   onAction,
   outcome,
   roleLabel,
   type,
   when,
-  width = 334,
+  width = BASE_MODAL_DEFAULT_WIDTH,
 }: CombatReportModalProps) {
   const them = isPlayerAttacker ? defender : attacker;
   const footer = (

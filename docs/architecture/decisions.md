@@ -212,7 +212,7 @@ Implémentation :
 - Tickets connexes 03 (dual-path `resources.changed`) et 06 (god services) en partie purgés : `ResourcesService` ne sait plus rien des mutations, `VillageService` est devenu pur read-model, et les workers (`ConstructionWorker`, `TrainingWorker`) consomment `OutboxPublisher` plutôt que de manipuler `tx.eventOutbox` à la main.
 - Convention pour le futur : **toute nouvelle mutation transverse doit vivre dans `gameplay/` en tant que use case**. Les services de domaine restent des read-models + helpers de calcul.
 
-**Vérifié en QA backend (2026-05-06).** Upgrade WOOD, cancel-construction FARM, recruit + cancel-recruitment MILITIA, validés via curl + DB read-only : stock débité/refundé, population corrigée, events `resources.changed` créés dans la même transaction que la mutation, dispatch via Socket.IO confirmé (`event_outbox.dispatched_at` non NULL).
+**Vérifié en QA backend (2026-05-06).** Upgrade WOOD, cancel-construction QUARTER, recruit + cancel-recruitment MILITIA, validés via curl + DB read-only : stock débité/refundé, population corrigée, events `resources.changed` créés dans la même transaction que la mutation, dispatch via Socket.IO confirmé (`event_outbox.dispatched_at` non NULL).
 
 ---
 

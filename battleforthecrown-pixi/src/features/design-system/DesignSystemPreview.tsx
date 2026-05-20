@@ -1,6 +1,9 @@
 import { useState } from 'react';
+import { BUILDING_DEFINITIONS, BUILDING_TYPES, type BuildingType } from '@battleforthecrown/shared/village/buildings';
+import { RESOURCE_PRODUCTION_PER_HOUR } from '@battleforthecrown/shared/resources';
 import { Button } from '@/ui/buttons/Button';
 import { VictoryModal } from '@/ui/modals/VictoryModal';
+import { cn } from '@/lib/cn';
 import {
   ArmyMovementList,
   Avatar,
@@ -48,6 +51,8 @@ import {
   QuestMissionCard,
   RadiusTile,
   RequirementChip,
+  ResourceBuildingModal,
+  ResourceBuildingPhoneFrame,
   ResourceIconTile,
   RoyalSeal,
   ScoutReportCard,
@@ -73,6 +78,9 @@ import {
   type ExpeditionActivityCardProps,
   type KingdomActivitiesPanelLabels,
   type KingdomActivityTab,
+  type ResourceBuildingKey,
+  type ResourceBuildingLinkVariant,
+  type ResourceBuildingModalProps,
   type VillageStyleId,
 } from './components';
 
@@ -375,6 +383,121 @@ const expeditionActivities: ExpeditionActivityCardProps[] = [
   },
 ];
 
+const resourceBuildingStock = { crowns: 142, iron: 1500, stone: 3200, wood: 8500 };
+
+const resourceStoragePreview: Record<ResourceBuildingKey, Record<number, number>> = {
+  quarter: { 1: 80, 2: 140, 3: 200, 4: 280, 5: 380 },
+  iron: { 1: 1000, 2: 2500, 3: 5000, 4: 8000, 5: 12000 },
+  stone: { 1: 1500, 2: 3500, 3: 8000, 4: 12000, 5: 18000 },
+  wood: { 1: 1500, 2: 3500, 3: 8000, 4: 12000, 5: 18000 },
+};
+
+function getResourceBuildingLevelStats(key: ResourceBuildingKey): ResourceBuildingModalProps['levelStats'] {
+  if (key === 'quarter') {
+    return Object.fromEntries(
+      Object.entries(resourceStoragePreview.quarter).map(([level, value]) => [
+        Number(level),
+        { production: value, storage: value },
+      ]),
+    );
+  }
+
+  return Object.fromEntries(
+    Object.entries(RESOURCE_PRODUCTION_PER_HOUR).slice(0, 5).map(([level, production]) => [
+      Number(level),
+      {
+        production,
+        storage: resourceStoragePreview[key][Number(level)] ?? 0,
+      },
+    ]),
+  );
+}
+
+function formatPreviewDuration(seconds: number) {
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
+}
+
+function getSharedUpgradePreview(buildingType: BuildingType, level: number) {
+  const nextLevel = Math.min(level + 1, 5);
+  const sharedLevel = BUILDING_DEFINITIONS[buildingType]?.levels[nextLevel];
+
+  return {
+    cost: {
+      crowns: 0,
+      iron: sharedLevel?.iron ?? 0,
+      stone: sharedLevel?.stone ?? 0,
+      wood: sharedLevel?.wood ?? 0,
+    },
+    time: formatPreviewDuration(sharedLevel?.timeSeconds ?? 0),
+  };
+}
+
+type ResourceBuildingPreviewFixture = Omit<
+  ResourceBuildingModalProps,
+  'cost' | 'level' | 'levelStats' | 'linkVariant' | 'onAction' | 'onClose' | 'onUpgrade' | 'upgradeTime'
+> & {
+  buildingType: BuildingType;
+};
+
+const resourceBuildingFixtures: Record<ResourceBuildingKey, ResourceBuildingPreviewFixture> = {
+  wood: {
+    accent: { border: '#2d6b16', dark: '#3a8a1f', haloTint: 'rgba(126,199,78,.35)', light: '#7ec74e' },
+    buildingIcon: '/assets/wood.png',
+    buildingType: BUILDING_TYPES.WOOD,
+    eyebrow: 'Production · Bois',
+    name: 'Camp de bûcherons',
+    requirementLabel: 'Château niv. 3',
+    resourceIcon: '/assets/resources/wood.png',
+    resourceLabel: 'bois',
+    stock: resourceBuildingStock,
+    stockNow: 6420,
+    tagline: '« Que les forêts bruissent sous nos haches. »',
+  },
+  stone: {
+    accent: { border: '#5d6d6e', dark: '#7f8c8d', haloTint: 'rgba(176,184,192,.35)', light: '#b0b8c0' },
+    buildingIcon: '/assets/stone.png',
+    buildingType: BUILDING_TYPES.STONE,
+    eyebrow: 'Production · Pierre',
+    name: 'Carrière',
+    requirementLabel: 'Château niv. 3',
+    resourceIcon: '/assets/resources/stone.png',
+    resourceLabel: 'pierre',
+    stock: resourceBuildingStock,
+    stockNow: 3200,
+    tagline: '« Pierre par pierre, le royaume tient debout. »',
+  },
+  iron: {
+    accent: { border: '#1f5288', dark: '#2e75b6', haloTint: 'rgba(91,155,213,.38)', light: '#5b9bd5' },
+    buildingIcon: '/assets/iron.png',
+    buildingType: BUILDING_TYPES.IRON,
+    eyebrow: 'Production · Fer',
+    name: 'Mine de fer',
+    requirementLabel: 'Château niv. 4',
+    resourceIcon: '/assets/resources/iron.png',
+    resourceLabel: 'fer',
+    stock: resourceBuildingStock,
+    stockNow: 1500,
+    tagline: '« De la roche au fer, du fer à la lame. »',
+  },
+  quarter: {
+    accent: { border: '#9e7b0d', dark: '#d4a017', haloTint: 'rgba(241,196,15,.4)', light: '#f1c40f' },
+    buildingIcon: '/assets/quarter.png',
+    buildingType: BUILDING_TYPES.QUARTER,
+    eyebrow: 'Production · Population',
+    isPopulation: true,
+    name: 'Quartier',
+    requirementLabel: 'Château niv. 3',
+    resourceIcon: '/assets/resources/population.png',
+    resourceLabel: 'villageois',
+    stock: resourceBuildingStock,
+    stockNow: 120,
+    tagline: '« Sans pain, point de soldats. »',
+  },
+};
+
 const dailyQuestOyez: DailyQuestOyez = {
   effect: 'Construction légèrement favorisée',
   eyebrow: 'Oyez · en cours',
@@ -470,10 +593,18 @@ export function DesignSystemPreview() {
   const [kingdomActivityTab, setKingdomActivityTab] = useState<KingdomActivityTab>('captures');
   const [stepperValue, setStepperValue] = useState(125);
   const [troopQuantity, setTroopQuantity] = useState(24);
+  const [resourceBuildingKey, setResourceBuildingKey] = useState<ResourceBuildingKey>('wood');
+  const [resourceBuildingLevel, setResourceBuildingLevel] = useState(3);
+  const [resourceBuildingLink, setResourceBuildingLink] = useState<ResourceBuildingLinkVariant>('chevron');
+  const [resourceBuildingConstructing, setResourceBuildingConstructing] = useState(false);
+  const [resourceBuildingAction, setResourceBuildingAction] = useState('Aucune action');
   const [villageStyleOpen, setVillageStyleOpen] = useState(true);
   const [villageStyle, setVillageStyle] = useState<VillageStyleId>('RAIDERS');
   const [victoryModalOpen, setVictoryModalOpen] = useState(false);
   const [combatReportAction, setCombatReportAction] = useState('Aucune action');
+  const resourceBuildingFixture = resourceBuildingFixtures[resourceBuildingKey];
+  const { buildingType: resourceBuildingType, ...resourceBuildingModalFixture } = resourceBuildingFixture;
+  const resourceBuildingUpgrade = getSharedUpgradePreview(resourceBuildingType, resourceBuildingLevel);
 
   return (
     <main className="min-h-full overflow-y-auto bg-[#f5e6d3] p-[18px] text-[#1f2937]">
@@ -623,7 +754,7 @@ export function DesignSystemPreview() {
           <div className="flex w-full flex-wrap items-center justify-center gap-[14px] bg-[#5b8f3a] p-[18px]">
             <BuildingIconTile icon="/assets/castle.png" label="Château" />
             <BuildingIconTile icon="/assets/barracks.png" label="Caserne" />
-            <BuildingIconTile icon="/assets/farm.png" label="Ferme" />
+            <BuildingIconTile icon="/assets/quarter.png" label="Quartier" />
             <BuildingIconTile icon="/assets/warehouse.png" label="Entrepôt" />
             <BuildingIconTile icon="/assets/watchtower.png" label="Tour de guet" />
             <BuildingIconTile icon="/assets/wood.png" label="Bûcherons" />
@@ -806,7 +937,7 @@ export function DesignSystemPreview() {
                 </div>
                 <img alt="" className="absolute left-[70px] top-[200px] w-[130px] opacity-85" src="/assets/castle.png" />
                 <img alt="" className="absolute left-[200px] top-[380px] w-[100px] opacity-85" src="/assets/warehouse.png" />
-                <img alt="" className="absolute left-[30px] top-[430px] w-[110px] opacity-85" src="/assets/farm.png" />
+                <img alt="" className="absolute left-[30px] top-[430px] w-[110px] opacity-85" src="/assets/quarter.png" />
                 <div className="absolute inset-x-0 bottom-0 h-16 border-t-2 border-[#8b7355] bg-[linear-gradient(to_top,rgba(60,38,25,.95),rgba(78,56,34,.9))]" />
               </div>
               <div className="absolute inset-x-0 bottom-[86px] flex justify-center">
@@ -966,7 +1097,7 @@ export function DesignSystemPreview() {
           <h2 className="font-game text-2xl font-bold text-[#1f2937]">Activités du royaume</h2>
           <div className="min-w-0 overflow-hidden rounded-[14px] border-2 border-[#3c2619] bg-[#5b8f3a] shadow-[0_8px_24px_rgba(0,0,0,.28)]">
             <div className="relative flex min-h-[720px] min-w-0 max-w-[390px] flex-col overflow-hidden bg-[linear-gradient(180deg,#7eab57_0%,#5b8f3a_58%,#3d6e1f_100%)]">
-              <div className="absolute inset-0 opacity-[.35] blur-[2px] [background-image:url('/assets/castle.png'),url('/assets/farm.png'),url('/assets/barracks.png')] [background-position:50%_22%,12%_48%,78%_56%] [background-repeat:no-repeat] [background-size:38%,30%,28%]" />
+              <div className="absolute inset-0 opacity-[.35] blur-[2px] [background-image:url('/assets/castle.png'),url('/assets/quarter.png'),url('/assets/barracks.png')] [background-position:50%_22%,12%_48%,78%_56%] [background-repeat:no-repeat] [background-size:38%,30%,28%]" />
               <div className="absolute inset-0 bg-[rgba(60,38,25,.32)] backdrop-blur-[1px]" />
               <div className="relative z-[2] bg-[#3c2619] p-3.5">
                 <HeaderBar
@@ -1936,6 +2067,93 @@ export function DesignSystemPreview() {
                 title="Devoirs Royaux"
               />
             </DailyQuestPhoneFrame>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="font-game text-2xl font-bold text-[#1f2937]">ResourceBuildingModal</h2>
+            <span className="font-mono text-[10px] text-[#5d4a32]">
+              village · bâtiment de ressource · dernière action: {resourceBuildingAction}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {(['wood', 'stone', 'iron', 'quarter'] as ResourceBuildingKey[]).map((key) => (
+              <button
+                className={cn(
+                  'rounded-full border px-3 py-1 font-game text-[10px] font-extrabold uppercase tracking-[.16em]',
+                  resourceBuildingKey === key
+                    ? 'border-[#5d4a32] bg-[#3d2f1f] text-[#fef9f0]'
+                    : 'border-[rgba(93,74,50,.3)] bg-[rgba(255,255,255,.35)] text-[#5d4a32]',
+                )}
+                key={key}
+                onClick={() => setResourceBuildingKey(key)}
+                type="button"
+              >
+                {resourceBuildingFixtures[key].resourceLabel}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-3 font-game text-[11px] font-bold uppercase tracking-[.14em] text-[#5d4a32]">
+            <label className="flex items-center gap-2">
+              Niveau
+              <input
+                className="w-32 accent-[#5d4a32]"
+                max={5}
+                min={1}
+                onChange={(event) => setResourceBuildingLevel(Number(event.target.value))}
+                step={1}
+                type="range"
+                value={resourceBuildingLevel}
+              />
+              <span>{resourceBuildingLevel >= 5 ? 'max.' : `${resourceBuildingLevel} → ${resourceBuildingLevel + 1}`}</span>
+            </label>
+            <select
+              className="rounded-lg border border-[rgba(93,74,50,.35)] bg-[#fef9f0] px-2 py-1 text-[#3d2f1f]"
+              onChange={(event) => setResourceBuildingLink(event.target.value as ResourceBuildingLinkVariant)}
+              value={resourceBuildingLink}
+            >
+              <option value="chevron">Chevron</option>
+              <option value="arrow-pill">Pastille</option>
+              <option value="rule">Règle +N</option>
+              <option value="rail">Rail</option>
+              <option value="none">Aucun</option>
+            </select>
+            <label className="flex items-center gap-2">
+              <input
+                checked={resourceBuildingConstructing}
+                className="accent-[#5d4a32]"
+                onChange={(event) => setResourceBuildingConstructing(event.target.checked)}
+                type="checkbox"
+              />
+              Construction
+            </label>
+          </div>
+          <div className="flex w-full justify-center">
+            <ResourceBuildingPhoneFrame buildingIcon={resourceBuildingFixtures[resourceBuildingKey].buildingIcon}>
+              <ResourceBuildingModal
+                {...resourceBuildingModalFixture}
+                construction={
+                  resourceBuildingConstructing
+                    ? {
+                        cancelLabel: 'Annuler la construction',
+                        state: {
+                          progressPercent: 99,
+                          remainingLabel: '19s restant',
+                        },
+                      }
+                    : undefined
+                }
+                cost={resourceBuildingUpgrade.cost}
+                level={resourceBuildingLevel}
+                levelStats={getResourceBuildingLevelStats(resourceBuildingKey)}
+                linkVariant={resourceBuildingLink}
+                onAction={(action) => setResourceBuildingAction(action.label)}
+                onClose={() => undefined}
+                onUpgrade={() => undefined}
+                upgradeTime={resourceBuildingUpgrade.time}
+              />
+            </ResourceBuildingPhoneFrame>
           </div>
         </section>
 

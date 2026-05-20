@@ -4,7 +4,7 @@ export { Avatar, AvatarProfileLine, AvatarStack } from './Avatar';
 export type { AvatarProfileLineProps, AvatarProps, AvatarSize, AvatarStackItem, AvatarStackProps, AvatarStatus, AvatarTone } from './Avatar';
 export { ArmyMovementList, ArmyMovementRow } from './ArmyMovementRow';
 export type { ArmyMovementListProps, ArmyMovementRowProps, ArmyMovementSurface, ArmyMovementTone } from './ArmyMovementRow';
-export { BaseModal } from './BaseModal';
+export { BASE_MODAL_DEFAULT_MAX_HEIGHT, BASE_MODAL_DEFAULT_WIDTH, BaseModal } from './BaseModal';
 export type { BaseModalProps, BaseModalTone } from './BaseModal';
 export { BftcButton } from './BftcButton';
 export type { BftcButtonProps, BftcButtonSize, BftcButtonState, BftcButtonVariant } from './BftcButton';
@@ -12,6 +12,18 @@ export { BorderStrokeTile } from './BorderStrokeTile';
 export type { BorderStrokeTileProps, BorderStrokeTone } from './BorderStrokeTile';
 export { BuildingCard } from './BuildingCard';
 export type { BuildingCardActionTone, BuildingCardProps, BuildingCardSurface } from './BuildingCard';
+export { BuildingModal, BuildingModalActionButton, BuildingModalConstructionPanel, BuildingModalHero } from './BuildingModal';
+export type {
+  BuildingModalAccent,
+  BuildingModalAction,
+  BuildingModalActionTone,
+  BuildingModalBadge,
+  BuildingModalConstruction,
+  BuildingModalLabels,
+  BuildingModalNotice,
+  BuildingModalNoticeTone,
+  BuildingModalProps,
+} from './BuildingModal';
 export { BuildingIconTile } from './BuildingIconTile';
 export type { BuildingIconTileProps } from './BuildingIconTile';
 export { BuildQueueCard } from './BuildQueueCard';
@@ -115,6 +127,20 @@ export { RadiusTile } from './RadiusTile';
 export type { RadiusTileProps, RadiusTileTone } from './RadiusTile';
 export { RequirementChip } from './RequirementChip';
 export type { RequirementChipProps, RequirementChipState } from './RequirementChip';
+export { ResourceBuildingModal, ResourceBuildingPhoneFrame } from './ResourceBuildingModal';
+export type {
+  ResourceBuildingAccent,
+  ResourceBuildingActionTone,
+  ResourceBuildingCost,
+  ResourceBuildingKey,
+  ResourceBuildingLabels,
+  ResourceBuildingLevelStats,
+  ResourceBuildingLinkVariant,
+  ResourceBuildingModalAction,
+  ResourceBuildingModalProps,
+  ResourceBuildingPhoneFrameProps,
+  ResourceBuildingStock,
+} from './ResourceBuildingModal';
 export { ResourceIconTile } from './ResourceIconTile';
 export type { ResourceIconTileProps, ResourceIconTileTone } from './ResourceIconTile';
 export { DarkSegmentedStage, SegmentedControl } from './SegmentedControl';

@@ -143,8 +143,8 @@ export function BadgesSection() {
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl">🌾</span>
-                  <span className="font-game">Ferme</span>
+                  <span className="text-2xl">🏘️</span>
+                  <span className="font-game">Quartier</span>
                 </div>
                 <Badge variant="success" size="lg">MAX</Badge>
               </div>

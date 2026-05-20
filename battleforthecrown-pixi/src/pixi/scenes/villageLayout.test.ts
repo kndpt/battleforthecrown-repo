@@ -24,7 +24,7 @@ describe('villageLayout', () => {
       'STONE',
       'IRON',
       'WAREHOUSE',
-      'FARM',
+      'QUARTER',
       'BARRACKS',
       'WATCHTOWER',
       'WALL',

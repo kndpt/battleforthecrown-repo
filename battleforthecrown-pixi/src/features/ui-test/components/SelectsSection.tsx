@@ -25,7 +25,7 @@ export function SelectsSection({ selectedBuilding, setSelectedBuilding, selected
                 options={[
                   { value: 'castle', label: 'Château' },
                   { value: 'barracks', label: 'Caserne' },
-                  { value: 'farm', label: 'Ferme' },
+                  { value: 'quarter', label: 'Quartier' },
                   { value: 'warehouse', label: 'Entrepôt' },
                 ]}
                 placeholder="Sélectionner un bâtiment"
@@ -137,7 +137,7 @@ export function SelectsSection({ selectedBuilding, setSelectedBuilding, selected
                 options={[
                   { value: 'castle', label: '🏰 Château' },
                   { value: 'barracks', label: '⚔️ Caserne' },
-                  { value: 'farm', label: '🌾 Ferme' },
+                  { value: 'quarter', label: '🏘️ Quartier' },
                   { value: 'warehouse', label: '📦 Entrepôt' },
                   { value: 'mine', label: '⛏️ Mine' },
                 ]}

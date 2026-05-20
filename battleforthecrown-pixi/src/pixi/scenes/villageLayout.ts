@@ -16,7 +16,7 @@ export const VILLAGE_LAYOUT: BuildingPlacement[] = [
   { type: 'CASTLE', x: 750, y: 800, zIndex: 30 },
   { type: 'BARRACKS', x: 350, y: 1000, zIndex: 20 },
   { type: 'WAREHOUSE', x: 1150, y: 1000, zIndex: 20 },
-  { type: 'FARM', x: 750, y: 1300, zIndex: 18 },
+  { type: 'QUARTER', x: 750, y: 1300, zIndex: 18 },
   { type: 'WOOD', x: 350, y: 1500, zIndex: 15 },
   { type: 'STONE', x: 1150, y: 1500, zIndex: 15 },
   { type: 'IRON', x: 750, y: 1700, zIndex: 15 },

@@ -16,7 +16,7 @@ Chaque village peut avoir 1 trait naturel :
 - Veine de fer : bonus fer léger.
 - Colline : bonus vision Watchtower.
 - Plaine : départ d'armée légèrement plus rapide.
-- Terre fertile : bonus population Moulin.
+- Terre fertile : bonus population Quartier.
 
 ## Bénéfice joueur
 

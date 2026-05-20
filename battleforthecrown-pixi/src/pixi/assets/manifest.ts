@@ -7,7 +7,7 @@ export const BUILDING_TEXTURE_KEYS = [
   'stone',
   'iron',
   'warehouse',
-  'farm',
+  'quarter',
   'barracks',
   'watchtower',
 ] as const;
@@ -22,7 +22,7 @@ export const VILLAGE_BUNDLE: AssetsBundle = {
     { alias: 'stone', src: publicAsset('/assets/stone.png') },
     { alias: 'iron', src: publicAsset('/assets/iron.png') },
     { alias: 'warehouse', src: publicAsset('/assets/warehouse.png') },
-    { alias: 'farm', src: publicAsset('/assets/farm.png') },
+    { alias: 'quarter', src: publicAsset('/assets/quarter.png') },
     { alias: 'barracks', src: publicAsset('/assets/barracks.png') },
     { alias: 'watchtower', src: publicAsset('/assets/watchtower.png') },
   ],

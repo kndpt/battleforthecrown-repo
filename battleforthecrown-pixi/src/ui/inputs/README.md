@@ -223,7 +223,7 @@ import { Radio, InputLabel, InputHelperText } from '@/ui';
   <div className="space-y-1">
     <Radio label="Château" name="building" value="castle" variant="parchment" />
     <Radio label="Caserne" name="building" value="barracks" variant="parchment" />
-    <Radio label="Ferme" name="building" value="farm" variant="parchment" />
+    <Radio label="Quartier" name="building" value="quarter" variant="parchment" />
   </div>
   <InputHelperText variant="default">
     Choisissez le type de bâtiment à construire

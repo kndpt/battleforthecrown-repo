@@ -27,7 +27,7 @@ import { Select } from '@/ui';
 const buildingOptions = [
   { value: 'castle', label: 'Château' },
   { value: 'barracks', label: 'Caserne' },
-  { value: 'farm', label: 'Ferme' },
+  { value: 'quarter', label: 'Quartier' },
 ];
 
 <Select
@@ -51,7 +51,7 @@ export default function BuildingSelector() {
   const options = [
     { value: 'castle', label: 'Château' },
     { value: 'barracks', label: 'Caserne' },
-    { value: 'farm', label: 'Ferme' },
+    { value: 'quarter', label: 'Quartier' },
     { value: 'warehouse', label: 'Entrepôt' },
   ];
 
