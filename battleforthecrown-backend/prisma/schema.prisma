@@ -75,7 +75,7 @@ model User {
   id        String   @id @default(cuid())
   email     String   @unique
   password  String
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   sessions          Session[]
   villages          Village[]
@@ -90,8 +90,8 @@ model Session {
   id           String   @id @default(cuid())
   userId       String   @map("user_id")
   refreshToken String   @map("refresh_token_hash")
-  expiresAt    DateTime @map("expires_at")
-  createdAt    DateTime @default(now()) @map("created_at")
+  expiresAt    DateTime @map("expires_at") @db.Timestamptz(3)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -108,9 +108,9 @@ model World {
   gridHeight       Int         @default(500)
   continentWidth   Int         @default(100) @map("continent_width")
   continentHeight  Int         @default(100) @map("continent_height")
-  startedAt        DateTime?   @map("started_at")
-  endsAt           DateTime?   @map("ends_at")
-  createdAt        DateTime    @default(now()) @map("created_at")
+  startedAt        DateTime?   @map("started_at") @db.Timestamptz(3)
+  endsAt           DateTime?   @map("ends_at") @db.Timestamptz(3)
+  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
 
   villages        Village[]
   memberships     WorldMembership[]
@@ -132,9 +132,9 @@ model Village {
   isBarbarian Boolean   @default(false) @map("is_barbarian")
   tier        String?
   label       VillageLabel?
-  barbarianTroopsLastRegenTs DateTime? @map("barbarian_troops_last_regen_ts")
-  conqueredAt DateTime? @map("conquered_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
+  barbarianTroopsLastRegenTs DateTime? @map("barbarian_troops_last_regen_ts") @db.Timestamptz(3)
+  conqueredAt DateTime? @map("conquered_at") @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
 
   world         World            @relation(fields: [worldId], references: [id], onDelete: Cascade)
   user          User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -163,10 +163,10 @@ model Building {
   villageId String    @map("village_id")
   type      String
   level     Int       @default(1)
-  startTime DateTime? @map("start_time")
-  endTime   DateTime? @map("end_time")
+  startTime DateTime? @map("start_time") @db.Timestamptz(3)
+  endTime   DateTime? @map("end_time") @db.Timestamptz(3)
   version   Int       @default(0)
-  createdAt DateTime  @default(now()) @map("created_at")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
 
   village Village @relation(fields: [villageId], references: [id], onDelete: Cascade)
 
@@ -180,7 +180,7 @@ model ResourceStock {
   stone         Int      @default(0)
   iron          Int      @default(0)
   maxPerType    Int      @default(1000) @map("max_per_type")
-  lastUpdateTs  DateTime @default(now()) @map("last_update_ts")
+  lastUpdateTs  DateTime @default(now()) @map("last_update_ts") @db.Timestamptz(3)
 
   village Village @relation(fields: [villageId], references: [id], onDelete: Cascade)
 
@@ -215,8 +215,8 @@ model PendingConquest {
   attackerNobleId   String?                 @map("attacker_noble_id")
   targetVillageId   String                  @map("target_village_id")
   worldId           String                  @map("world_id")
-  openedAt          DateTime                @default(now()) @map("opened_at")
-  captureUntil      DateTime                @map("capture_until")
+  openedAt          DateTime                @default(now()) @map("opened_at") @db.Timestamptz(3)
+  captureUntil      DateTime                @map("capture_until") @db.Timestamptz(3)
   status            PendingConquestStatus   @default(OPEN)
   finalizeJobId     String?                 @map("finalize_job_id")
 
@@ -238,9 +238,9 @@ model UnitTraining {
   totalQty      Int      @map("total_qty")
   completedQty  Int      @default(0) @map("completed_qty")
   timePerUnitMs Int      @map("time_per_unit_ms")
-  nextUnitEta   DateTime @map("next_unit_eta_ts")
+  nextUnitEta   DateTime @map("next_unit_eta_ts") @db.Timestamptz(3)
   version       Int      @default(0)
-  createdAt     DateTime @default(now()) @map("created_at")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   village Village @relation(fields: [villageId], references: [id], onDelete: Cascade)
 
@@ -253,7 +253,7 @@ model WorldSeedState {
   userId   String    @map("user_id")
   worldId  String    @map("world_id")
   seeded   Boolean   @default(false)
-  seededAt DateTime? @map("seeded_at")
+  seededAt DateTime? @map("seeded_at") @db.Timestamptz(3)
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
@@ -266,10 +266,10 @@ model ChunkSpawnState {
   worldId       String    @map("world_id")
   cx            Int
   cy            Int
-  lastSeededAt  DateTime? @map("last_seeded_at")
+  lastSeededAt  DateTime? @map("last_seeded_at") @db.Timestamptz(3)
   seedVersion   Int       @default(1) @map("seed_version")
   existingCount Int       @default(0) @map("existing_count")
-  createdAt     DateTime  @default(now()) @map("created_at")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
 
   world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
 
@@ -283,8 +283,8 @@ model EventOutbox {
   kind         String
   aggregateId  String    @map("aggregate_id")
   payload      Json
-  createdAt    DateTime  @default(now()) @map("created_at")
-  dispatchedAt DateTime? @map("dispatched_at")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  dispatchedAt DateTime? @map("dispatched_at") @db.Timestamptz(3)
 
   @@index([dispatchedAt])
   @@map("event_outbox")
@@ -301,9 +301,9 @@ model DailyCard {
   rewardStone     Int             @default(120) @map("reward_stone")
   rewardIron      Int             @default(120) @map("reward_iron")
   rewardVillageId String?         @map("reward_village_id")
-  claimedAt       DateTime?       @map("claimed_at")
-  createdAt       DateTime        @default(now()) @map("created_at")
-  updatedAt       DateTime        @updatedAt @map("updated_at")
+  claimedAt       DateTime?       @map("claimed_at") @db.Timestamptz(3)
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   tasks DailyCardTask[]
 
@@ -320,10 +320,10 @@ model DailyCardTask {
   label       String
   progress    Int               @default(0)
   target      Int               @default(1)
-  completedAt DateTime?         @map("completed_at")
+  completedAt DateTime?         @map("completed_at") @db.Timestamptz(3)
   metadata    Json              @default("{}")
-  createdAt   DateTime          @default(now()) @map("created_at")
-  updatedAt   DateTime          @updatedAt @map("updated_at")
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   card DailyCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
@@ -334,7 +334,7 @@ model DailyCardTask {
 
 model DailyCardProgressEvent {
   eventOutboxId String   @id @map("event_outbox_id")
-  createdAt     DateTime @default(now()) @map("created_at")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   @@map("daily_card_progress_event")
 }
@@ -345,9 +345,9 @@ model DailyOyez {
   title       String
   description String
   theme       String
-  startsAt    DateTime @map("starts_at")
-  endsAt      DateTime @map("ends_at")
-  createdAt   DateTime @default(now()) @map("created_at")
+  startsAt    DateTime @map("starts_at") @db.Timestamptz(3)
+  endsAt      DateTime @map("ends_at") @db.Timestamptz(3)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   @@index([worldId, startsAt, endsAt])
   @@map("daily_oyez")
@@ -357,8 +357,8 @@ model WorldMembership {
   userId      String    @map("user_id")
   worldId     String    @map("world_id")
   role        WorldRole @default(PLAYER)
-  joinedAt    DateTime  @default(now()) @map("joined_at")
-  lastLoginAt DateTime? @map("last_login_at")
+  joinedAt    DateTime  @default(now()) @map("joined_at") @db.Timestamptz(3)
+  lastLoginAt DateTime? @map("last_login_at") @db.Timestamptz(3)
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
@@ -372,7 +372,7 @@ model ZoneCapacity {
   worldId      String @map("world_id")
   zoneIndex    Int    @map("zone_index")
   villageCount Int    @default(0) @map("village_count")
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
 
@@ -385,8 +385,8 @@ model CrownBalance {
   userId       String   @map("user_id")
   worldId      String   @map("world_id")
   balance      Int      @default(0)
-  lastUpdateTs DateTime @default(now()) @map("last_update_ts")
-  createdAt    DateTime @default(now()) @map("created_at")
+  lastUpdateTs DateTime @default(now()) @map("last_update_ts") @db.Timestamptz(3)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -408,16 +408,16 @@ model Expedition {
   targetY           Int              @map("target_y")
   units             Json
   status            ExpeditionStatus @default(EN_ROUTE)
-  departAt          DateTime         @map("depart_at")
-  arrivalAt         DateTime         @map("arrival_at")
+  departAt          DateTime         @map("depart_at") @db.Timestamptz(3)
+  arrivalAt         DateTime         @map("arrival_at") @db.Timestamptz(3)
   outboundTravelMs  Int              @map("outbound_travel_ms")
-  returnAt          DateTime?        @map("return_at")
+  returnAt          DateTime?        @map("return_at") @db.Timestamptz(3)
   recalled          Boolean          @default(false)
   reportId          String?          @unique @map("report_id")
   scoutReportId     String?          @unique @map("scout_report_id")
   survivingUnits    Json?            @map("surviving_units")
   loot              Json?            @map("loot")
-  createdAt         DateTime         @default(now()) @map("created_at")
+  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
 
   report      CombatReport? @relation(fields: [reportId], references: [id], onDelete: SetNull)
   scoutReport ScoutReport?  @relation(fields: [scoutReportId], references: [id], onDelete: SetNull)
@@ -454,8 +454,8 @@ model CombatReport {
   hiddenByAttacker  Boolean   @default(false) @map("hidden_by_attacker")
   hiddenByDefender  Boolean   @default(false) @map("hidden_by_defender")
   
-  timestamp         DateTime  @default(now())
-  createdAt         DateTime  @default(now()) @map("created_at")
+  timestamp         DateTime  @default(now()) @db.Timestamptz(3)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
   details           Json
   
   expedition        Expedition?
@@ -483,8 +483,8 @@ model ScoutReport {
   strategy       VillageStrategy?
   isRead         Boolean         @default(false) @map("is_read")
   hidden         Boolean         @default(false)
-  timestamp      DateTime        @default(now())
-  createdAt      DateTime        @default(now()) @map("created_at")
+  timestamp      DateTime        @default(now()) @db.Timestamptz(3)
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
   details        Json
 
   expedition Expedition?
@@ -506,11 +506,11 @@ model VillageStrategyConfig {
   id                  String         @id @default(cuid())
   villageId           String         @unique @map("village_id")
   strategy            VillageStrategy
-  lastChangedAt       DateTime       @default(now()) @map("last_changed_at")
+  lastChangedAt       DateTime       @default(now()) @map("last_changed_at") @db.Timestamptz(3)
   changeCost          Int            @default(0) @map("change_cost")
-  cooldownEndsAt      DateTime?      @map("cooldown_ends_at")
-  createdAt           DateTime       @default(now()) @map("created_at")
-  updatedAt           DateTime       @updatedAt @map("updated_at")
+  cooldownEndsAt      DateTime?      @map("cooldown_ends_at") @db.Timestamptz(3)
+  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   village Village @relation(fields: [villageId], references: [id], onDelete: Cascade)
 
