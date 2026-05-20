@@ -19,7 +19,7 @@ export const TROOP_DETAIL_LABELS_FR: TroopDetailLabels = {
   defenseCavalry: 'vs Cavalerie',
   defenseGroup: 'Défense',
   defenseInfantry: 'vs Infanterie',
-  population: 'Population',
+  population: 'Villageois',
   speed: 'Vitesse',
   tiers: {
     correct: 'Correct',

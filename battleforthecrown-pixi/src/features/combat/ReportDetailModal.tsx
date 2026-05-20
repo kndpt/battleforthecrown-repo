@@ -206,7 +206,12 @@ function CombatReportDetail({
             headerClassName="px-4 py-4"
             maxHeight="min(90dvh, 760px)"
             onClose={onClose}
-            title="Rapport de combat"
+            title={
+              <span className="flex items-center gap-3 uppercase tracking-[.08em] text-[#3d2f1f]">
+                <img alt="" className="size-[26px]" src={publicAsset('/assets/army/cavalry.png')} />
+                Rapport de combat
+              </span>
+            }
             tone="red"
             width={360}
           >

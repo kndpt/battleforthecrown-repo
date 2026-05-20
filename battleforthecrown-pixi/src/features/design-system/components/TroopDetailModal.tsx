@@ -205,13 +205,13 @@ function DefenseGroup({
     <div className="relative ml-[9px] flex flex-col gap-[7px] border-l-2 border-[rgba(60,38,25,.22)] pl-2">
       <div className="absolute -left-2.5 -top-0.5 inline-flex items-center gap-1.5 py-px pl-0 pr-1.5 font-game text-[11px] font-extrabold uppercase tracking-[.16em] text-[#3d2f1f]">
         <span className="inline-flex size-[20px] items-center justify-center">
-          <AssetIcon src="/assets/defense.png" />
+          <AssetIcon src="/assets/army/stats/defense.png" />
         </span>
         {labels.defenseGroup}
       </div>
       <div className="h-3.5" />
       <StatBar
-        icon="🛡"
+        icon={<AssetIcon src="/assets/army/stats/defense-infantry.png" />}
         indent
         label={labels.defenseInfantry}
         max={max.defenseInfantry}
@@ -219,7 +219,7 @@ function DefenseGroup({
         value={stats.defenseInfantry}
       />
       <StatBar
-        icon="🐎"
+        icon={<AssetIcon src="/assets/army/stats/defense-cavalry.png" />}
         indent
         label={labels.defenseCavalry}
         max={max.defenseCavalry}
@@ -227,7 +227,7 @@ function DefenseGroup({
         value={stats.defenseCavalry}
       />
       <StatBar
-        icon="🏹"
+        icon={<AssetIcon src="/assets/army/stats/defense-archery.png" />}
         indent
         label={labels.defenseArcher}
         max={max.defenseArcher}
@@ -498,7 +498,7 @@ export function TroopDetailModal({
             value={stats.speed}
           />
           <StatBar
-            icon="📦"
+            icon={<AssetIcon src="/assets/resources/resources.png" />}
             label={labels.carryCapacity}
             max={fieldMax.carryCapacity}
             tierLabels={labels.tiers}

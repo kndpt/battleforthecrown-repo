@@ -44,7 +44,7 @@ export const UNIT_META: Record<UnitType, UnitMeta> = {
     name: 'Cavalerie',
     pluralName: 'Cavalerie',
     description: 'Unité rapide et mobile. Excellente pour les raids éclair.',
-    iconPath: null,
+    iconPath: '/assets/army/cavalry.png',
     emoji: '🐎',
   },
   TEMPLAR: {
