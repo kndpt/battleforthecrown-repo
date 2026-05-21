@@ -303,6 +303,7 @@ export function BuildingModal({
   name,
   notice,
   onAction,
+  onClose,
   summaryBadges,
   summaryLabel,
   tagline,
@@ -343,6 +344,7 @@ export function BuildingModal({
       }
       footerClassName={footerClassName}
       maxHeight={maxHeight}
+      onClose={onClose}
       width={width}
     >
       <BuildingModalHero
