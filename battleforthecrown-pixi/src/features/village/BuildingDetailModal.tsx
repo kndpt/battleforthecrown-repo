@@ -48,19 +48,24 @@ interface BuildingDetailModalProps {
   onClose: () => void;
 }
 
-export function BuildingDetailModal({ villageId, building, onClose }: BuildingDetailModalProps) {
-  const meta = metaFor(building.type);
-  const now = useTickingNow(1_000);
-  const progress = computeConstructionProgress(
-    { startTime: building.startTime, endTime: building.endTime },
-    now,
-  );
+export function BuildingDetailModal({ villageId, building: initialBuilding, onClose }: BuildingDetailModalProps) {
   const upgrade = useUpgradeBuildingMutation();
   const cancel = useCancelConstructionMutation();
   const cancelTraining = useCancelTrainingMutation();
   const recruitNoble = useRecruitNobleMutation();
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
+
+  const buildingsQuery = useVillageBuildingsQuery(villageId);
+  const building =
+    buildingsQuery.data?.find((b) => b.id === initialBuilding.id) ?? initialBuilding;
+
+  const meta = metaFor(building.type);
+  const now = useTickingNow(1_000);
+  const progress = computeConstructionProgress(
+    { startTime: building.startTime, endTime: building.endTime },
+    now,
+  );
 
   const isUnderConstruction = progress.inProgress;
   const nextLevel = building.level + 1;
@@ -75,7 +80,6 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const worldId = useGameStore((state) => state.worldId);
   const { balance: crownsBalance } = useDisplayCrowns(userId, worldId);
-  const buildingsQuery = useVillageBuildingsQuery(villageId);
   const worldConfigQuery = useWorldConfigQuery(worldId);
   const { data: buildingQueue = [] } = useBuildingQueueQuery(villageId);
   const armyInventory = useArmyInventoryQuery(villageId);
@@ -157,7 +161,6 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
     upgrade.mutate(
       { villageId, buildingType: building.type },
       {
-        onSuccess: () => onClose(),
         onError: (err) => {
           setError(err instanceof ApiError ? err.message : "Échec de l'amélioration");
         },
@@ -170,7 +173,6 @@ export function BuildingDetailModal({ villageId, building, onClose }: BuildingDe
     cancel.mutate(
       { villageId, buildingId: building.id },
       {
-        onSuccess: () => onClose(),
         onError: (err) => {
           setError(err instanceof ApiError ? err.message : "Échec de l'annulation");
         },
