@@ -97,12 +97,12 @@ export function buildScoutReportCardProps(
 
   const sections: ScoutReportSection[] = [
     {
-      title: 'Espions — pertes',
+      title: 'Espions',
       items: [
         {
           icon: scoutMeta.iconPath ?? '/assets/lupa.png',
           label: scoutMeta.name,
-          lossValue: scoutLosses > 0 ? `-${NUMBER_FORMATTER.format(scoutLosses)}` : '0',
+          troopBar: { lost: scoutLosses, sent: scoutUnits },
           value: NUMBER_FORMATTER.format(scoutUnits),
         },
       ],

@@ -148,13 +148,15 @@ export type { SegmentedControlOption, SegmentedControlProps, SegmentedControlSiz
 export { SemanticColorRow } from './SemanticColorRow';
 export type { SemanticColorRowProps, SemanticColorSegment } from './SemanticColorRow';
 export { ScoutReportCard } from './ScoutReportCard';
-export type { ScoutReportAction, ScoutReportCardProps, ScoutReportSection, ScoutReportStat, ScoutReportVerdict, ScoutReportVerdictTone } from './ScoutReportCard';
+export type { ScoutReportAction, ScoutReportCardProps, ScoutReportSection, ScoutReportStat, ScoutReportTroopBar, ScoutReportVerdict, ScoutReportVerdictTone } from './ScoutReportCard';
 export { ShadowDepthTile } from './ShadowDepthTile';
 export type { ShadowDepthTileProps, ShadowDepthTone } from './ShadowDepthTile';
 export { SurfaceTile } from './SurfaceTile';
 export type { SurfaceTileProps, SurfaceTileTone } from './SurfaceTile';
 export { ToastPreview } from './ToastPreview';
 export type { ToastPreviewProps, ToastTone } from './ToastPreview';
+export { TroopBar } from './TroopBar';
+export type { TroopBarProps } from './TroopBar';
 export { TroopRow } from './TroopRow';
 export type { TroopRowProps, TroopStat } from './TroopRow';
 export { TROOP_DETAIL_FIELD_MAX, TROOP_DETAIL_LABELS_FR } from './TroopDetailModal.constants';

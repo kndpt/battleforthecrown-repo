@@ -47,9 +47,31 @@ describe('scoutReportView', () => {
     expect(props.villageLabel).toBe('Village joueur · 12|34');
     expect(props.sections[0]).toEqual(
       expect.objectContaining({
-        title: 'Espions — pertes',
-        items: [expect.objectContaining({ label: 'Espion', lossValue: '0', value: '20' })],
+        title: 'Espions',
+        items: [expect.objectContaining({ label: 'Espion', troopBar: { sent: 20, lost: 0 } })],
       }),
+    );
+  });
+
+  it('exposes scout losses through the troopBar payload (partial losses)', () => {
+    const wounded: ScoutReportDto = {
+      ...report,
+      details: { scoutLosses: { SPY: 7 }, scoutUnits: { SPY: 20 }, wallLevel: 6 },
+    };
+    const props = buildScoutReportCardProps(wounded, undefined, false);
+    expect(props.sections[0].items[0]).toEqual(
+      expect.objectContaining({ label: 'Espion', troopBar: { sent: 20, lost: 7 } }),
+    );
+  });
+
+  it('exposes scout losses through the troopBar payload (wiped)', () => {
+    const wiped: ScoutReportDto = {
+      ...report,
+      details: { scoutLosses: { SPY: 20 }, scoutUnits: { SPY: 20 }, wallLevel: 6 },
+    };
+    const props = buildScoutReportCardProps(wiped, undefined, false);
+    expect(props.sections[0].items[0]).toEqual(
+      expect.objectContaining({ label: 'Espion', troopBar: { sent: 20, lost: 20 } }),
     );
     expect(props.sections[1].items).toEqual([
       expect.objectContaining({ label: 'Milice de paysans', value: '12' }),

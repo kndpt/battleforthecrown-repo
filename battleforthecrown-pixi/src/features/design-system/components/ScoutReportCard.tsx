@@ -2,6 +2,7 @@ import type { ButtonHTMLAttributes } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { publicAsset } from '@/lib/publicAsset';
+import { TroopBar } from './TroopBar';
 
 export type ScoutReportVerdictTone = 'default' | 'danger';
 
@@ -11,11 +12,17 @@ export interface ScoutReportVerdict {
   value: string;
 }
 
+export interface ScoutReportTroopBar {
+  lost: number;
+  sent: number;
+}
+
 export interface ScoutReportStat {
   hidden?: boolean;
   icon: string;
   label: string;
   lossValue?: string;
+  troopBar?: ScoutReportTroopBar;
   value: string;
 }
 
@@ -139,22 +146,37 @@ export function ScoutReportCard({
             {section.title}
           </div>
           <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5">
-            {section.items.map((item) => (
-              <div className="flex items-center gap-2 font-game text-[13px] tabular-nums text-[#3d2f1f]" key={`${section.title}-${item.label}`}>
-                <img alt="" className="size-[22px] flex-none object-contain" src={publicAsset(item.icon)} />
-                <span className="flex-1 text-[11px] text-[#6d5838]">{item.label}</span>
-                {item.lossValue ? (
-                  <span className="flex items-baseline gap-2">
-                    <b className="text-sm font-extrabold">{item.value}</b>
-                    <span className="text-sm font-extrabold text-[#6d5838]">→</span>
-                    <b className="text-sm font-extrabold text-[#a93226]">{item.lossValue}</b>
-                  </span>
-                ) : (
-                  <b className={cn('text-sm font-extrabold', item.hidden ? 'select-none text-[#7f8c8d] blur-[4px]' : '')}>{item.value}</b>
-                )}
-                {item.hidden ? <span className="text-[11px]">🔒</span> : null}
-              </div>
-            ))}
+            {section.items.map((item) => {
+              if (item.troopBar) {
+                return (
+                  <TroopBar
+                    className="col-span-2"
+                    icon={item.icon}
+                    key={`${section.title}-${item.label}`}
+                    lost={item.troopBar.lost}
+                    sent={item.troopBar.sent}
+                    unitName={item.label}
+                  />
+                );
+              }
+
+              return (
+                <div className="flex items-center gap-2 font-game text-[13px] tabular-nums text-[#3d2f1f]" key={`${section.title}-${item.label}`}>
+                  <img alt="" className="size-[22px] flex-none object-contain" src={publicAsset(item.icon)} />
+                  <span className="flex-1 text-[11px] text-[#6d5838]">{item.label}</span>
+                  {item.lossValue ? (
+                    <span className="flex items-baseline gap-2">
+                      <b className="text-sm font-extrabold">{item.value}</b>
+                      <span className="text-sm font-extrabold text-[#6d5838]">→</span>
+                      <b className="text-sm font-extrabold text-[#a93226]">{item.lossValue}</b>
+                    </span>
+                  ) : (
+                    <b className={cn('text-sm font-extrabold', item.hidden ? 'select-none text-[#7f8c8d] blur-[4px]' : '')}>{item.value}</b>
+                  )}
+                  {item.hidden ? <span className="text-[11px]">🔒</span> : null}
+                </div>
+              );
+            })}
           </div>
         </section>
       ))}
