@@ -31,6 +31,7 @@ export interface VillageStyleOption {
   id: VillageStyleId;
   maluses: VillageStyleEffect[];
   name: string;
+  shield: string;
   tagline: string;
 }
 
@@ -205,14 +206,14 @@ function VillageStyleHeroCard({
       className="relative min-h-[275px] overflow-hidden rounded-[14px] border-[3px] border-[var(--village-style-border)] bg-[linear-gradient(160deg,var(--village-style-light)_0%,var(--village-style-dark)_100%)] p-[14px_14px_12px] shadow-[inset_0_1px_0_rgba(255,255,255,.35),0_6px_14px_rgba(0,0,0,.35)]"
       style={getStyleVars(option)}
     >
-      <div className="pointer-events-none absolute -right-[18px] -top-[18px] select-none font-game text-[200px] font-black leading-none text-[rgba(255,255,255,.10)]">
-        {option.glyph}
-      </div>
-      <div className="relative flex items-center gap-2.5">
-        <div className="flex size-[46px] shrink-0 items-center justify-center rounded-xl border-2 border-[rgba(255,255,255,.4)] bg-[rgba(0,0,0,.28)] shadow-[inset_0_1px_0_rgba(255,255,255,.35)]">
-          <Glyph>{option.glyph}</Glyph>
-        </div>
-        <div className={cn('min-w-0 flex-1', current ? 'pr-[78px]' : '')}>
+      <div className="relative flex items-center gap-3">
+        <img
+          alt=""
+          aria-hidden="true"
+          className="size-14 shrink-0 select-none object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,.5)]"
+          src={publicAsset(option.shield)}
+        />
+        <div className={cn('min-w-0 flex-1', current ? 'pr-[68px]' : '')}>
           <div className="font-game text-[9.5px] font-bold uppercase tracking-[.22em] text-[rgba(255,255,255,.7)]">
             Voie {index + 1} / {total}
           </div>

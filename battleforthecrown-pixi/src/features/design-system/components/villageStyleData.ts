@@ -12,6 +12,7 @@ export const villageStyleOptions: VillageStyleOption[] = [
     id: 'FORTRESS',
     maluses: [{ label: 'Vitesse de déplacement', value: '−20%' }],
     name: 'Forteresse',
+    shield: '/assets/village-style/fortress.png',
     tagline: 'Murs hauts, portes lourdes.',
   },
   {
@@ -25,6 +26,7 @@ export const villageStyleOptions: VillageStyleOption[] = [
     id: 'RAIDERS',
     maluses: [{ label: 'Défense', value: '−10%' }],
     name: 'Raiders',
+    shield: '/assets/village-style/raiders.png',
     tagline: 'Légers, rapides, sans pitié.',
   },
   {
@@ -41,6 +43,7 @@ export const villageStyleOptions: VillageStyleOption[] = [
       { label: 'Défense', value: '−10%' },
     ],
     name: 'Économique',
+    shield: '/assets/village-style/economic.png',
     tagline: 'Plus de bras, plus de récolte.',
   },
   {
@@ -51,6 +54,7 @@ export const villageStyleOptions: VillageStyleOption[] = [
     id: 'BALANCED',
     maluses: [],
     name: 'Équilibré',
+    shield: '/assets/village-style/balanced.png',
     tagline: 'Aucun engagement. Aucune faveur.',
   },
 ];
