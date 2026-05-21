@@ -27,7 +27,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ### Runs actifs
 
-_(Aucun run actif.)_
+- [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés
 
