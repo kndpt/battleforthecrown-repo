@@ -13,7 +13,7 @@ export type ResourceBuildingKey = 'quarter' | 'iron' | 'stone' | 'wood';
 export type ResourceBuildingLinkVariant = 'arrow-pill' | 'chevron' | 'none' | 'rail' | 'rule';
 export type ResourceBuildingActionTone = 'danger' | 'neutral' | 'success' | 'warning';
 
-export interface ResourceBuildingAccent extends BuildingModalAccent {}
+export type ResourceBuildingAccent = BuildingModalAccent;
 
 export interface ResourceBuildingLevelStats {
   production: number;
@@ -27,7 +27,7 @@ export interface ResourceBuildingCost {
   wood: number;
 }
 
-export interface ResourceBuildingStock extends ResourceBuildingCost {}
+export type ResourceBuildingStock = ResourceBuildingCost;
 
 export interface ResourceBuildingLabels {
   actionClose: string;

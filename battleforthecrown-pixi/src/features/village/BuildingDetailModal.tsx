@@ -39,7 +39,8 @@ import { BuildingUnlockPreview } from './BuildingDetailModal/BuildingUnlockPrevi
 import { getBuildingLockState } from './buildingLockState';
 import { computeUnitTrainingProgress } from '@/features/army/trainingProgress';
 import type { ArmyTrainingDto } from '@/api/queries';
-import { getResourceBuildingKey, ResourceBuildingDetailModal } from './ResourceBuildingDetailModal';
+import { ResourceBuildingDetailModal } from './ResourceBuildingDetailModal';
+import { getResourceBuildingKey } from './resourceBuildingKey';
 
 interface BuildingDetailModalProps {
   villageId: string;

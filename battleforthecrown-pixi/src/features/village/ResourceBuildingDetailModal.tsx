@@ -8,11 +8,10 @@ import {
 } from '@/features/design-system/components';
 import { formatRemaining } from './constructionProgress';
 import type { getBuildingLockState } from './buildingLockState';
+import { getResourceBuildingKey } from './resourceBuildingKey';
 import {
-  BUILDING_TYPES,
   MAX_CONSTRUCTION_QUEUE,
   type BuildingLevelDefinition,
-  type BuildingType,
 } from '@battleforthecrown/shared/village/buildings';
 import { getQuarterPopulationLimit } from '@battleforthecrown/shared/village';
 import { RESOURCE_PRODUCTION_PER_HOUR } from '@battleforthecrown/shared/resources';
@@ -38,13 +37,6 @@ interface ResourceBuildingDetailModalProps {
   queueLength: number;
   upgradePending: boolean;
 }
-
-const RESOURCE_BUILDING_KEYS: Partial<Record<BuildingType, ResourceBuildingKey>> = {
-  [BUILDING_TYPES.QUARTER]: 'quarter',
-  [BUILDING_TYPES.IRON]: 'iron',
-  [BUILDING_TYPES.STONE]: 'stone',
-  [BUILDING_TYPES.WOOD]: 'wood',
-};
 
 const RESOURCE_BUILDING_ACCENTS: Record<ResourceBuildingKey, ResourceBuildingAccent> = {
   quarter: { border: '#9e7b0d', dark: '#d4a017', haloTint: 'rgba(241,196,15,.4)', light: '#f1c40f' },
@@ -86,10 +78,6 @@ const RESOURCE_BUILDING_META: Record<ResourceBuildingKey, {
     tagline: '« Que les forêts bruissent sous nos haches. »',
   },
 };
-
-export function getResourceBuildingKey(buildingType: string): ResourceBuildingKey | null {
-  return RESOURCE_BUILDING_KEYS[buildingType as BuildingType] ?? null;
-}
 
 function getResourceBuildingLevelStats(
   key: ResourceBuildingKey,
