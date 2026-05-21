@@ -16,9 +16,10 @@ const integerFormatter = new Intl.NumberFormat('fr-FR', { maximumFractionDigits:
 
 interface GameHeaderProps {
   onPowerClick?: () => void;
+  onResourceClick?: (resource: 'iron' | 'stone' | 'wood') => void;
 }
 
-export function GameHeader({ onPowerClick }: GameHeaderProps = {}) {
+export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = {}) {
   const villageId = useGameStore((state) => state.villageId);
   const worldId = useGameStore((state) => state.worldId);
   const setVillage = useGameStore((state) => state.setVillage);
@@ -75,21 +76,24 @@ export function GameHeader({ onPowerClick }: GameHeaderProps = {}) {
         label: 'Bois',
         value: formatResourceAmount(woodCurrent),
         fillRatio: ratio(woodCurrent),
+        onClick: onResourceClick ? () => onResourceClick('wood') : undefined,
       },
       {
         icon: '/assets/resources/stone.png',
         label: 'Pierre',
         value: formatResourceAmount(stoneCurrent),
         fillRatio: ratio(stoneCurrent),
+        onClick: onResourceClick ? () => onResourceClick('stone') : undefined,
       },
       {
         icon: '/assets/resources/iron.png',
         label: 'Fer',
         value: formatResourceAmount(ironCurrent),
         fillRatio: ratio(ironCurrent),
+        onClick: onResourceClick ? () => onResourceClick('iron') : undefined,
       },
     ];
-  }, [hasSnapshot, display]);
+  }, [hasSnapshot, display, onResourceClick]);
 
   const populationStat = useMemo<HeaderBarStat>(() => {
     const used = population.data?.used ?? 0;

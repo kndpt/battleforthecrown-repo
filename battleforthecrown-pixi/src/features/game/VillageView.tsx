@@ -25,6 +25,13 @@ import {
 import { useGameStore } from '@/stores/game';
 import type { BuildingDto } from '@/api';
 import type { KingdomActivityTab } from '@/features/design-system/components';
+import { BUILDING_TYPES, type BuildingType } from '@battleforthecrown/shared/village/buildings';
+
+const RESOURCE_BUILDING_BY_HEADER_RESOURCE: Record<'iron' | 'stone' | 'wood', BuildingType> = {
+  iron: BUILDING_TYPES.IRON,
+  stone: BUILDING_TYPES.STONE,
+  wood: BUILDING_TYPES.WOOD,
+};
 
 function VillageCanvasFrame({
   villageId,
@@ -75,6 +82,12 @@ export function VillageView() {
     setSelectedBuilding(building);
   };
 
+  const handleSelectResourceBuilding = (resource: 'iron' | 'stone' | 'wood') => {
+    const buildingType = RESOURCE_BUILDING_BY_HEADER_RESOURCE[resource];
+    const building = buildings.find((candidate) => candidate.type === buildingType);
+    if (building) setSelectedBuilding(building);
+  };
+
   const handleCloseDetail = () => {
     setSelectedBuilding(null);
   };
@@ -82,7 +95,10 @@ export function VillageView() {
   return (
     <div className="relative h-screen w-full flex flex-col overflow-hidden bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
     <div className="flex-shrink">
-      <GameHeader onPowerClick={() => setIsPowerSheetOpen(true)} />
+      <GameHeader
+        onPowerClick={() => setIsPowerSheetOpen(true)}
+        onResourceClick={handleSelectResourceBuilding}
+      />
     </div>
 
     <div className="flex-1 overflow-hidden pb-20">
