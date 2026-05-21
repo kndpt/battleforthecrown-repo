@@ -435,6 +435,25 @@ export const CASTLE_CONSTRUCTION_SPEED_BONUS: Record<number, number> = {
   10: 0.64,
 };
 
+export const BARRACKS_TRAINING_SPEED_MULTIPLIER: Record<number, number> = {
+  1: 1.0,
+  2: 1.04,
+  3: 1.08,
+  4: 1.12,
+  5: 1.16,
+  6: 1.2,
+  7: 1.24,
+  8: 1.28,
+  9: 1.32,
+  10: 1.36,
+};
+
+export const getBarracksTrainingSpeedMultiplier = (level: number): number => {
+  const normalizedLevel = Number.isFinite(level) ? Math.floor(level) : 1;
+  const clampedLevel = Math.max(1, Math.min(10, normalizedLevel));
+  return BARRACKS_TRAINING_SPEED_MULTIPLIER[clampedLevel] ?? 1;
+};
+
 export interface WatchtowerVisionLevel {
   isWorldUnlocked: boolean;
   visibilityRadius: number;

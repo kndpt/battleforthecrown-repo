@@ -15,10 +15,11 @@ import {
   UNIT_TYPES,
   type UnitType,
 } from '@battleforthecrown/shared/army';
-import { TempoService } from '@battleforthecrown/shared/world';
 import { unitMetaFor } from './unitConfig';
+import { getEffectiveUnitTrainingDurationSeconds } from './trainingDuration';
 
 interface UnitDetailModalProps {
+  barracksLevel: number;
   onClose: () => void;
   unit: ArmyUnitDto;
 }
@@ -58,7 +59,11 @@ function roleFor(type: UnitType, stats: typeof UNIT_STATS[UnitType]): { archetyp
   return { archetype: 'Infanterie · Frappe rapide', label: 'Offensif', tone: 'danger' };
 }
 
-export function UnitDetailModal({ onClose, unit }: UnitDetailModalProps) {
+export function UnitDetailModal({
+  barracksLevel,
+  onClose,
+  unit,
+}: UnitDetailModalProps) {
   const unitType = isUnitType(unit.type) ? unit.type : null;
   const meta = unitMetaFor(unit.type);
   const stats = unitType ? UNIT_STATS[unitType] : null;
@@ -86,9 +91,11 @@ export function UnitDetailModal({ onClose, unit }: UnitDetailModalProps) {
     wood: display?.wood ?? 0,
   };
   const role = roleFor(unitType, stats);
-  const perUnitSeconds = worldTempo
-    ? TempoService.applyDuration(cost.time, worldTempo, 'unitTrainingSpeed')
-    : cost.time;
+  const perUnitSeconds = getEffectiveUnitTrainingDurationSeconds({
+    unitTimeSeconds: cost.time,
+    worldTempo,
+    barracksLevel: unitType === UNIT_TYPES.NOBLE ? 1 : barracksLevel,
+  });
 
   return (
     <div

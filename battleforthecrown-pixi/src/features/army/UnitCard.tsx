@@ -16,7 +16,6 @@ import {
   Tooltip,
 } from "@/ui";
 import { UNIT_COSTS } from "@battleforthecrown/shared/army";
-import { TempoService } from "@battleforthecrown/shared/world";
 import { ApiError } from "@/api";
 import type { ArmyTrainingDto, ArmyUnitDto } from "@/api/queries";
 import {
@@ -32,6 +31,7 @@ import { useUiStore } from "@/stores/ui";
 import { useTickingNow } from "@/lib/useTickingNow";
 import { unitMetaFor } from "./unitConfig";
 import { computeUnitTrainingProgress } from "./trainingProgress";
+import { getEffectiveUnitTrainingDurationSeconds } from "./trainingDuration";
 
 interface UnitCardProps {
   unit: ArmyUnitDto;
@@ -119,9 +119,11 @@ export function UnitCard({
 
   const totalCost = useMemo(() => {
     if (!cost) return null;
-    const perUnitSeconds = worldTempo
-      ? TempoService.applyDuration(cost.time, worldTempo, 'unitTrainingSpeed')
-      : cost.time;
+    const perUnitSeconds = getEffectiveUnitTrainingDurationSeconds({
+      unitTimeSeconds: cost.time,
+      worldTempo,
+      barracksLevel,
+    });
     return {
       wood: cost.wood * quantity,
       stone: cost.stone * quantity,
@@ -129,7 +131,7 @@ export function UnitCard({
       population: cost.population * quantity,
       timeSeconds: perUnitSeconds * quantity,
     };
-  }, [cost, quantity, worldTempo]);
+  }, [barracksLevel, cost, quantity, worldTempo]);
 
   const canAfford = useMemo(() => {
     if (!totalCost || !display) return false;

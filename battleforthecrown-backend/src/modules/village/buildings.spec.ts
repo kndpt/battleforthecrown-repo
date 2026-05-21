@@ -6,6 +6,7 @@ import {
   getBuildingUnlockRequirement,
   isBuildingEnabled,
   getBuildingLevelValues,
+  getBarracksTrainingSpeedMultiplier,
 } from '@battleforthecrown/shared/village';
 import type {
   BuildingDefinition,
@@ -117,6 +118,30 @@ describe('warehouse storage', () => {
     expect(limits.wood).toBe(3000);
     expect(limits.stone).toBe(3000);
     expect(limits.iron).toBe(3000);
+  });
+});
+
+describe('barracks training speed multiplier', () => {
+  it('returns the expected multiplier at level 1 and level 10', () => {
+    expect(getBarracksTrainingSpeedMultiplier(1)).toBe(1.0);
+    expect(getBarracksTrainingSpeedMultiplier(10)).toBe(1.36);
+  });
+
+  it('strictly increases from level 1 to level 10', () => {
+    const multipliers = Array.from({ length: 10 }, (_, index) =>
+      getBarracksTrainingSpeedMultiplier(index + 1),
+    );
+
+    for (let index = 1; index < multipliers.length; index += 1) {
+      expect(multipliers[index]).toBeGreaterThan(multipliers[index - 1]);
+    }
+  });
+
+  it('falls back or clamps invalid levels to supported multipliers', () => {
+    expect(getBarracksTrainingSpeedMultiplier(0)).toBe(1.0);
+    expect(getBarracksTrainingSpeedMultiplier(-1)).toBe(1.0);
+    expect(getBarracksTrainingSpeedMultiplier(Number.NaN)).toBe(1.0);
+    expect(getBarracksTrainingSpeedMultiplier(99)).toBe(1.36);
   });
 });
 

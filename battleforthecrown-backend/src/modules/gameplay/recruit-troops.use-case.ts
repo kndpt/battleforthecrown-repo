@@ -19,6 +19,7 @@ import {
 } from '@battleforthecrown/shared/army';
 import { calculateTrainingTime } from '@battleforthecrown/shared/logic';
 import { MS_PER_SECOND } from '@battleforthecrown/shared/time';
+import { getBarracksTrainingSpeedMultiplier } from '@battleforthecrown/shared/village/buildings';
 import { TempoService } from '@battleforthecrown/shared/world';
 
 @Injectable()
@@ -141,11 +142,19 @@ export class RecruitTroopsUseCase {
         typeof strategyBonus?.trainingSpeedBonus === 'number'
           ? strategyBonus.trainingSpeedBonus
           : 1;
+      const barracksTrainingSpeedMultiplier =
+        getBarracksTrainingSpeedMultiplier(barracks.level);
+      const effectiveTrainingSpeedBonus =
+        trainingSpeedBonus * barracksTrainingSpeedMultiplier;
       const timePerUnitMs = Math.max(
         MS_PER_SECOND,
         Math.round(
           TempoService.applyDuration(
-            calculateTrainingTime(unitCost.time, 1, trainingSpeedBonus),
+            calculateTrainingTime(
+              unitCost.time,
+              1,
+              effectiveTrainingSpeedBonus,
+            ),
             config.tempo,
             'unitTrainingSpeed',
           ),

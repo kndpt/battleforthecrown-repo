@@ -1,5 +1,6 @@
 import request from 'supertest';
 import { UNIT_TYPES } from '@battleforthecrown/shared/army';
+import type { WorldConfig } from '@battleforthecrown/shared/world';
 import {
   bootSmokeApp,
   joinWorld,
@@ -9,6 +10,7 @@ import {
   waitFor,
   type SmokeContext,
 } from './helpers';
+import { SMOKE_WORLD_CONFIG } from './fixtures/smoke-world-config';
 
 describe('army training smoke', () => {
   let ctx: SmokeContext;
@@ -142,5 +144,92 @@ describe('army training smoke', () => {
     await expect(
       ctx.prisma.population.findUniqueOrThrow({ where: { villageId } }),
     ).resolves.toMatchObject({ used: 252, max: 250 });
+  });
+
+  it('training: applies barracks level speed bonus to UnitTraining.timePerUnitMs', async () => {
+    const config: WorldConfig = {
+      ...SMOKE_WORLD_CONFIG,
+      tempo: {
+        ...SMOKE_WORLD_CONFIG.tempo,
+        overrides: {
+          ...SMOKE_WORLD_CONFIG.tempo.overrides,
+          unitTrainingSpeed: 1,
+        },
+      },
+    };
+    const world = await ctx.prisma.world.create({
+      data: {
+        id: `train-barracks-speed-${Date.now()}`,
+        name: 'train-barracks-speed',
+        status: 'OPEN',
+        config: config as object,
+      },
+    });
+    const levelOneUser = await registerUser(ctx.server, 'train-barracks-l1');
+    const levelFiveUser = await registerUser(ctx.server, 'train-barracks-l5');
+    const levelOneJoin = await joinWorld(
+      ctx.server,
+      levelOneUser.accessToken,
+      world.id,
+      'train-barracks-l1-village',
+    );
+    const levelFiveJoin = await joinWorld(
+      ctx.server,
+      levelFiveUser.accessToken,
+      world.id,
+      'train-barracks-l5-village',
+    );
+    const levelOneVillageId = levelOneJoin.village.id;
+    const levelFiveVillageId = levelFiveJoin.village.id;
+
+    await ctx.prisma.building.updateMany({
+      where: { villageId: levelOneVillageId, type: 'BARRACKS' },
+      data: { level: 1 },
+    });
+    await ctx.prisma.building.updateMany({
+      where: { villageId: levelFiveVillageId, type: 'BARRACKS' },
+      data: { level: 5 },
+    });
+    await ctx.prisma.resourceStock.updateMany({
+      where: { villageId: { in: [levelOneVillageId, levelFiveVillageId] } },
+      data: {
+        wood: 100_000,
+        stone: 100_000,
+        iron: 100_000,
+        maxPerType: 1_000_000,
+      },
+    });
+    await ctx.prisma.population.updateMany({
+      where: { villageId: { in: [levelOneVillageId, levelFiveVillageId] } },
+      data: { used: 0, max: 1000 },
+    });
+
+    const levelOneRes = await request(ctx.server)
+      .post(`/army/${levelOneVillageId}/train`)
+      .set('Authorization', `Bearer ${levelOneUser.accessToken}`)
+      .send({ unitType: UNIT_TYPES.MILITIA, quantity: 1 });
+    const levelFiveRes = await request(ctx.server)
+      .post(`/army/${levelFiveVillageId}/train`)
+      .set('Authorization', `Bearer ${levelFiveUser.accessToken}`)
+      .send({ unitType: UNIT_TYPES.MILITIA, quantity: 1 });
+
+    expect(levelOneRes.status).toBeLessThan(300);
+    expect(levelFiveRes.status).toBeLessThan(300);
+
+    const [levelOneTraining, levelFiveTraining] = await Promise.all([
+      ctx.prisma.unitTraining.findFirstOrThrow({
+        where: { villageId: levelOneVillageId, unitType: UNIT_TYPES.MILITIA },
+      }),
+      ctx.prisma.unitTraining.findFirstOrThrow({
+        where: { villageId: levelFiveVillageId, unitType: UNIT_TYPES.MILITIA },
+      }),
+    ]);
+
+    expect(levelFiveTraining.timePerUnitMs).toBeLessThan(
+      levelOneTraining.timePerUnitMs,
+    );
+    expect(levelFiveTraining.timePerUnitMs).not.toBe(
+      levelOneTraining.timePerUnitMs,
+    );
   });
 });
