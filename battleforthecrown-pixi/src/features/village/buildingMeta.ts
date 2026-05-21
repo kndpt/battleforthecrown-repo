@@ -91,7 +91,7 @@ export const BUILDING_META: Record<string, BuildingMeta> = {
     label: 'Salle du Conseil',
     description:
       'Débloque les styles stratégiques du village et permet de choisir une voie spécialisée.',
-    iconPath: null,
+    iconPath: publicAsset('/assets/council-hall.png'),
     emoji: '🧑‍⚖️',
     cardVariant: 'parchment',
     sortKey: 8,
@@ -100,7 +100,7 @@ export const BUILDING_META: Record<string, BuildingMeta> = {
     label: 'Salle du Trône',
     description:
       'Permet de recruter un Seigneur pour lancer des conquêtes.',
-    iconPath: null,
+    iconPath: publicAsset('/assets/throne-hall.png'),
     emoji: '👑',
     cardVariant: 'parchment',
     sortKey: 9,

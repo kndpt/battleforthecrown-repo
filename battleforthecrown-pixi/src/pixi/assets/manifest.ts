@@ -10,6 +10,8 @@ export const BUILDING_TEXTURE_KEYS = [
   'quarter',
   'barracks',
   'watchtower',
+  'council-hall',
+  'throne-hall',
 ] as const;
 
 export type BuildingTextureKey = (typeof BUILDING_TEXTURE_KEYS)[number];
@@ -18,13 +20,15 @@ export const VILLAGE_BUNDLE: AssetsBundle = {
   name: 'village',
   assets: [
     { alias: 'castle', src: publicAsset('/assets/castle.png') },
-    { alias: 'wood', src: publicAsset('/assets/resources/wood.png') },
+    { alias: 'wood', src: publicAsset('/assets/wood.png') },
     { alias: 'stone', src: publicAsset('/assets/stone.png') },
     { alias: 'iron', src: publicAsset('/assets/iron.png') },
     { alias: 'warehouse', src: publicAsset('/assets/warehouse.png') },
     { alias: 'quarter', src: publicAsset('/assets/quarter.png') },
     { alias: 'barracks', src: publicAsset('/assets/barracks.png') },
     { alias: 'watchtower', src: publicAsset('/assets/watchtower.png') },
+    { alias: 'council-hall', src: publicAsset('/assets/council-hall.png') },
+    { alias: 'throne-hall', src: publicAsset('/assets/throne-hall.png') },
   ],
 };
 

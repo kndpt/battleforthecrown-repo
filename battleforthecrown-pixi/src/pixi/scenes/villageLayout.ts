@@ -14,6 +14,8 @@ export const VILLAGE_BOUNDS = { width: 1500, height: 2000 };
 
 export const VILLAGE_LAYOUT: BuildingPlacement[] = [
   { type: 'CASTLE', x: 750, y: 800, zIndex: 30 },
+  { type: 'COUNCIL_HALL', x: 400, y: 700, zIndex: 22 },
+  { type: 'THRONE_HALL', x: 1100, y: 700, zIndex: 22 },
   { type: 'BARRACKS', x: 350, y: 1000, zIndex: 20 },
   { type: 'WAREHOUSE', x: 1150, y: 1000, zIndex: 20 },
   { type: 'QUARTER', x: 750, y: 1300, zIndex: 18 },

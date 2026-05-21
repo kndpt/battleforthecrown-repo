@@ -1,7 +1,7 @@
-import { Assets, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
-import type { BuildingDto } from '@/api';
-import { metaFor } from '@/features/village/buildingMeta';
-import { computeConstructionProgress } from '@/features/village/constructionProgress';
+import { Assets, Container, Graphics, Sprite, Text, Texture } from "pixi.js";
+import type { BuildingDto } from "@/api";
+import { metaFor } from "@/features/village/buildingMeta";
+import { computeConstructionProgress } from "@/features/village/constructionProgress";
 
 const COLOR = {
   idle: 0x6b4d2c,
@@ -30,26 +30,30 @@ const COLOR_BY_TYPE: Record<string, number> = {
 
 const SIZE_BY_TYPE: Record<string, number> = {
   CASTLE: 220,
-  WAREHOUSE: 160,
-  QUARTER: 150,
-  BARRACKS: 160,
-  WATCHTOWER: 110,
+  WAREHOUSE: 170,
+  QUARTER: 170,
+  BARRACKS: 170,
+  WATCHTOWER: 170,
   WALL: 200,
-  WOOD: 130,
-  STONE: 130,
-  IRON: 130,
-  HIDEOUT: 120,
+  WOOD: 170,
+  STONE: 170,
+  IRON: 170,
+  HIDEOUT: 170,
+  COUNCIL_HALL: 170,
+  THRONE_HALL: 170,
 };
 
 const ALIAS_BY_TYPE: Record<string, string> = {
-  CASTLE: 'castle',
-  WOOD: 'wood',
-  STONE: 'stone',
-  IRON: 'iron',
-  WAREHOUSE: 'warehouse',
-  QUARTER: 'quarter',
-  BARRACKS: 'barracks',
-  WATCHTOWER: 'watchtower',
+  CASTLE: "castle",
+  WOOD: "wood",
+  STONE: "stone",
+  IRON: "iron",
+  WAREHOUSE: "warehouse",
+  QUARTER: "quarter",
+  BARRACKS: "barracks",
+  WATCHTOWER: "watchtower",
+  COUNCIL_HALL: "council-hall",
+  THRONE_HALL: "throne-hall",
 };
 
 function resolveTexture(type: string): Texture | null {
@@ -77,12 +81,14 @@ export interface BuildingSpriteOptions {
   onHover?: (buildingId: string | null) => void;
 }
 
-export function createBuildingSprite(options: BuildingSpriteOptions): BuildingSpriteHandle {
+export function createBuildingSprite(
+  options: BuildingSpriteOptions,
+): BuildingSpriteHandle {
   const { onClick, onHover } = options;
 
   const container = new Container();
-  container.eventMode = 'static';
-  container.cursor = 'pointer';
+  container.eventMode = "static";
+  container.cursor = "pointer";
 
   const haloGraphic = new Graphics();
   haloGraphic.alpha = 0;
@@ -104,9 +110,9 @@ export function createBuildingSprite(options: BuildingSpriteOptions): BuildingSp
   const fallbackText = new Text({
     text: meta.emoji,
     style: {
-      fontFamily: 'Apple Color Emoji, Segoe UI Emoji, Cinzel, serif',
+      fontFamily: "Apple Color Emoji, Segoe UI Emoji, Cinzel, serif",
       fontSize: 56,
-      align: 'center',
+      align: "center",
     },
   });
   fallbackText.anchor.set(0.5);
@@ -116,10 +122,10 @@ export function createBuildingSprite(options: BuildingSpriteOptions): BuildingSp
   const levelText = new Text({
     text: `Niv. ${options.building.level}`,
     style: {
-      fontFamily: 'Cinzel, Georgia, serif',
+      fontFamily: "Cinzel, Georgia, serif",
       fontSize: 22,
       fill: 0xf1c40f,
-      align: 'center',
+      align: "center",
       dropShadow: {
         alpha: 0.7,
         color: COLOR.textShadow,
@@ -210,7 +216,8 @@ export function createBuildingSprite(options: BuildingSpriteOptions): BuildingSp
       .roundRect(-half, -half, size, size, 14)
       .fill({ color: COLOR.flash, alpha: 1 });
 
-    levelText.text = current.level >= current.maxLevel ? 'Niv. MAX' : `Niv. ${current.level}`;
+    levelText.text =
+      current.level >= current.maxLevel ? "Niv. MAX" : `Niv. ${current.level}`;
     levelText.position.set(0, half + 6);
 
     progressContainer.visible = inConstruction;
@@ -253,12 +260,12 @@ export function createBuildingSprite(options: BuildingSpriteOptions): BuildingSp
     }
   };
 
-  container.on('pointertap', (event) => {
+  container.on("pointertap", (event) => {
     event.stopPropagation();
     onClick?.(current.id);
   });
-  container.on('pointerover', () => onHover?.(current.id));
-  container.on('pointerout', () => onHover?.(null));
+  container.on("pointerover", () => onHover?.(current.id));
+  container.on("pointerout", () => onHover?.(null));
 
   draw();
 

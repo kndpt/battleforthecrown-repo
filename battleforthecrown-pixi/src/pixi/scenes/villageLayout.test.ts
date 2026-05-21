@@ -29,6 +29,8 @@ describe('villageLayout', () => {
       'WATCHTOWER',
       'WALL',
       'HIDEOUT',
+      'COUNCIL_HALL',
+      'THRONE_HALL',
     ];
     for (const type of expectedTypes) {
       expect(VILLAGE_LAYOUT.find((p) => p.type === type)).toBeDefined();
