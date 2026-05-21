@@ -13,6 +13,7 @@ import { formatResourceAmount } from '@/lib/resourceConfig';
 import { VILLAGE_LABEL_DISPLAY } from '@battleforthecrown/shared/village';
 
 const integerFormatter = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
+const dateFormatter = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: 'short' });
 
 interface GameHeaderProps {
   onPowerClick?: () => void;
@@ -114,6 +115,31 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
     setIsVillageMenuOpen(false);
   };
 
+  const villageInsights = useMemo(() => {
+    return villages
+      .map((village) => {
+        const foundedAt = village.createdAt ? new Date(village.createdAt) : null;
+        const hasFoundedDate = foundedAt && !Number.isNaN(foundedAt.getTime());
+        const distanceFromActive = activeVillage
+          ? Math.round(Math.hypot(village.x - activeVillage.x, village.y - activeVillage.y))
+          : null;
+
+        return {
+          village,
+          foundedLabel: hasFoundedDate ? dateFormatter.format(foundedAt) : null,
+          distanceFromActive,
+          isActive: village.id === activeVillage?.id,
+        };
+      })
+      .sort((a, b) => {
+        if (a.isActive) return -1;
+        if (b.isActive) return 1;
+        if (a.village.isCapital) return -1;
+        if (b.village.isCapital) return 1;
+        return a.village.name.localeCompare(b.village.name, 'fr-FR');
+      });
+  }, [activeVillage, villages]);
+
   return (
     <div className="flex flex-col bg-[#3c2619]">
       <div className="px-1.5 pt-1.5 pb-1">
@@ -175,29 +201,82 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
           </button>
 
           {isVillageMenuOpen && villages.length > 1 && (
-            <div className="absolute left-1/2 top-full z-50 mt-1 w-[min(21rem,calc(100vw-2rem))] -translate-x-1/2 overflow-hidden rounded border-2 border-game-gold-border bg-parchment shadow-xl">
-              {villages.map((village) => (
-                <button
-                  type="button"
-                  key={village.id}
-                  onClick={() => {
-                    setVillage(village.id);
-                    setIsVillageMenuOpen(false);
-                  }}
-                  className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left font-game text-sm font-bold text-kingdom-900 ${
-                    village.id === activeVillage.id ? 'bg-game-gold/25' : 'hover:bg-kingdom-100'
-                  }`}
-                >
-                  <span className="truncate">{village.name}</span>
-                  <span className="shrink-0 text-[10px] uppercase text-kingdom-700">
-                    {village.isCapital
-                      ? 'Capitale'
-                      : village.label
-                        ? VILLAGE_LABEL_DISPLAY[village.label]
-                        : ''}
-                  </span>
-                </button>
-              ))}
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 sm:p-6" role="presentation">
+              <button
+                type="button"
+                className="absolute inset-0 cursor-default"
+                aria-label="Fermer la gestion multi-village"
+                onClick={() => setIsVillageMenuOpen(false)}
+              />
+
+              <section
+                role="dialog"
+                aria-modal="true"
+                aria-label="Gestion multi-village"
+                className="relative z-10 flex w-full max-w-[52rem] flex-col overflow-hidden rounded-2xl border-2 border-game-gold-border bg-[#f8edd2] shadow-[0_20px_40px_rgba(0,0,0,0.45)]"
+              >
+                <header className="border-b border-[#b88f4f] bg-[linear-gradient(180deg,#5b3e24_0%,#3d2717_100%)] px-5 py-4 text-parchment">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="font-game text-[11px] uppercase tracking-[0.18em] text-game-gold">Gestion du royaume</p>
+                      <h2 className="font-game text-xl font-bold uppercase tracking-wide">Choix du village actif</h2>
+                      <p className="mt-1 text-xs text-parchment/80">Sélection rapide et vue claire de tes positions clés.</p>
+                    </div>
+                    <button
+                      type="button"
+                      className="rounded-lg border border-game-gold/40 px-2 py-1 text-xs font-bold uppercase text-parchment transition hover:bg-white/10"
+                      onClick={() => setIsVillageMenuOpen(false)}
+                    >
+                      Fermer
+                    </button>
+                  </div>
+                </header>
+
+                <div className="grid gap-3 p-4 sm:grid-cols-2">
+                  {villageInsights.map(({ village, foundedLabel, distanceFromActive, isActive }) => (
+                    <button
+                      type="button"
+                      key={village.id}
+                      onClick={() => {
+                        setVillage(village.id);
+                        setIsVillageMenuOpen(false);
+                      }}
+                      className={`rounded-xl border-2 p-3 text-left transition ${
+                        isActive
+                          ? 'border-game-gold-border bg-game-gold/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]'
+                          : 'border-[#d9be8a] bg-[#fff8ea] hover:border-[#c59a55] hover:bg-[#fff1d6]'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="truncate font-game text-base font-bold uppercase tracking-wide text-kingdom-900">{village.name}</p>
+                        {isActive && <span className="rounded-full bg-game-green/20 px-2 py-0.5 text-[10px] font-bold uppercase text-game-green">Actif</span>}
+                      </div>
+                      <p className="mt-1 font-game text-[11px] uppercase tracking-wide text-kingdom-700">
+                        {village.isCapital
+                          ? 'Capitale'
+                          : village.label
+                            ? VILLAGE_LABEL_DISPLAY[village.label]
+                            : 'Village'}
+                        {' · '}
+                        {village.x}|{village.y}
+                      </p>
+
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] text-kingdom-800">
+                        <div className="rounded-lg border border-[#d9be8a] bg-white/75 px-2 py-1">
+                          <p className="font-semibold uppercase text-kingdom-600">Distance</p>
+                          <p className="font-game font-bold">
+                            {distanceFromActive === null || isActive ? '—' : `${distanceFromActive} cases`}
+                          </p>
+                        </div>
+                        <div className="rounded-lg border border-[#d9be8a] bg-white/75 px-2 py-1">
+                          <p className="font-semibold uppercase text-kingdom-600">Fondé le</p>
+                          <p className="font-game font-bold">{foundedLabel ?? 'Inconnu'}</p>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </section>
             </div>
           )}
         </div>
