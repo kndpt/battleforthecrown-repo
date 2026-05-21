@@ -421,7 +421,9 @@ export function VillageStyleModal({
               <div className="flex flex-col gap-2 rounded-xl border-2 border-[#3c2619] bg-[linear-gradient(to_bottom,rgba(60,38,25,.96),rgba(78,56,34,.96))] px-2.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,.15),0_2px_0_rgba(0,0,0,.2)]">
                 <div className="flex items-center justify-between">
                   <span className="font-game text-[9.5px] font-bold uppercase tracking-[.18em] text-[#f0e0c0]">Coût · Château {castleLevel}</span>
-                  <span className="font-game text-[9px] font-bold tracking-[.14em] text-[#cdb88a]">×{multiplier}</span>
+                  {scaleCosts ? (
+                    <span className="font-game text-[9px] font-bold tracking-[.14em] text-[#cdb88a]">×{multiplier}</span>
+                  ) : null}
                 </div>
                 <div className="flex flex-wrap gap-[5px]">
                   <CostChip ok={stock.wood >= cost.wood} resource="wood" value={cost.wood} />

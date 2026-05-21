@@ -1,4 +1,4 @@
-import { Clock, Crown, XCircle } from 'lucide-react';
+import { Clock, XCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { ArmyTrainingDto } from '@/api/queries';
 import type { BuildingDto } from '@/api';
@@ -200,7 +200,7 @@ function UpgradeCostStrip({
       <div className="flex items-center justify-between">
         <span className="font-game text-[9.5px] font-bold uppercase tracking-[.18em] text-[#f0e0c0]">{label}</span>
         <span className="inline-flex items-center gap-1 font-game text-[9px] font-bold tracking-[.14em] text-[#cdb88a]">
-          <Clock size={11} />
+          <img alt="" className="size-3 object-contain" src={publicAsset('/assets/clock.png')} />
           {time}
         </span>
       </div>
@@ -298,18 +298,35 @@ function BarracksContent({ accent, level }: { accent: BuildingModalAccent; level
           return (
             <div className={active
               ? 'rounded-[12px] border border-[#3a6c1f] bg-[rgba(110,191,73,.16)] p-2.5'
-              : 'rounded-[12px] border border-[rgba(60,38,25,.22)] bg-[rgba(255,255,255,.42)] p-2.5 opacity-80'}
+              : 'relative overflow-hidden rounded-[12px] border border-[#b7aa92] bg-[linear-gradient(135deg,rgba(205,197,176,.42),rgba(255,255,255,.38))] p-2.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,.35)]'}
               key={group.level}
             >
-              <div className="mb-1 font-game text-[9px] font-extrabold uppercase tracking-[.2em] text-[#6d5838]">
+              {!active ? (
+                <>
+                  <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(-45deg,rgba(84,75,63,.08)_0,rgba(84,75,63,.08)_8px,transparent_8px,transparent_16px)]" />
+                  <img
+                    alt=""
+                    className="absolute right-5 top-1/2 size-12 -translate-y-1/2 object-contain opacity-85 drop-shadow-[0_2px_1px_rgba(0,0,0,.25)]"
+                    src={publicAsset('/assets/lock.png')}
+                  />
+                </>
+              ) : null}
+              <div className={active
+                ? 'relative mb-1 font-game text-[9px] font-extrabold uppercase tracking-[.2em] text-[#6d5838]'
+                : 'relative mb-1 pr-9 font-game text-[9px] font-extrabold uppercase tracking-[.2em] text-[#8b7a61]'}
+              >
                 Caserne niv. {group.level}
               </div>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="relative flex flex-wrap gap-1.5">
                 {group.units.map((unit) => {
                   const meta = unitMetaFor(unit);
                   return (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-[rgba(60,38,25,.24)] bg-[rgba(255,255,255,.58)] px-2 py-1 font-game text-[10px] font-bold text-[#3d2f1f]" key={unit}>
-                      {meta.iconPath ? <img alt="" className="size-4 object-contain" src={publicAsset(meta.iconPath)} /> : meta.emoji}
+                    <span className={active
+                      ? 'inline-flex items-center gap-1 rounded-full border border-[rgba(60,38,25,.24)] bg-[rgba(255,255,255,.58)] px-2 py-1 font-game text-[10px] font-bold text-[#3d2f1f]'
+                      : 'inline-flex items-center gap-1 rounded-full border border-[#c9bea9] bg-[rgba(247,241,226,.6)] px-2 py-1 font-game text-[10px] font-bold text-[#6f624f] grayscale'}
+                      key={unit}
+                    >
+                      {meta.iconPath ? <img alt="" className={active ? 'size-4 object-contain' : 'size-4 object-contain opacity-55'} src={publicAsset(meta.iconPath)} /> : meta.emoji}
                       {meta.name}
                     </span>
                   );
@@ -398,8 +415,8 @@ function ThroneHallContent({
           <CostChip current={displayResources?.wood ?? 0} icon={<ResourceIcon resource="wood" size={14} />} value={nobleCost.wood} />
           <CostChip current={displayResources?.stone ?? 0} icon={<ResourceIcon resource="stone" size={14} />} value={nobleCost.stone} />
           <CostChip current={displayResources?.iron ?? 0} icon={<ResourceIcon resource="iron" size={14} />} value={nobleCost.iron} />
-          <CostChip current={crownsBalance ?? 0} icon={<Crown size={14} />} value={nobleCost.crowns ?? 0} />
-          <CostChip current={availablePopulation} icon={<span className="text-[12px] leading-none">👥</span>} value={nobleCost.population} />
+          <CostChip current={crownsBalance ?? 0} icon={<img alt="" className="size-4 object-contain" src={publicAsset('/assets/crown.png')} />} value={nobleCost.crowns ?? 0} />
+          <CostChip current={availablePopulation} icon={<img alt="" className="size-4 object-contain" src={publicAsset('/assets/resources/population.png')} />} value={nobleCost.population} />
         </div>
         {nobleTraining ? (
           <NobleTrainingProgress
@@ -533,27 +550,27 @@ export function SpecializedBuildingDetailModal(props: SpecializedBuildingDetailM
   const canUpgrade = !isLockedByCastle && !isMaxLevel && !isQueueFull && canAfford && !upgradePending && nextCost !== null && lockState.state !== 'in-progress';
   const actions: BuildingModalAction[] = [
     { id: 'close', label: 'Fermer', tone: 'neutral' },
-    lockState.state === 'in-progress'
-      ? {
+    ...(lockState.state === 'in-progress'
+      ? [{
           disabled: cancelConstructionPending,
           id: 'cancel-construction',
           label: cancelConstructionPending ? 'Annulation...' : 'Annuler la construction',
-          tone: 'danger',
-        }
-      : {
-          disabled: !canUpgrade,
-          id: 'upgrade',
-          label: isMaxLevel
-            ? 'Niveau maximal'
-            : isLockedByCastle
+          tone: 'danger' as const,
+        }]
+      : isMaxLevel
+        ? []
+        : [{
+            disabled: !canUpgrade,
+            id: 'upgrade',
+            label: isLockedByCastle
               ? `Château niv. ${lockState.requiredCastleLevel} requis`
               : isQueueFull
                 ? `File pleine (${queueLength}/${MAX_CONSTRUCTION_QUEUE})`
                 : upgradePending
                   ? 'Amélioration...'
-                  : `Améliorer · Niv. ${building.level + 1}`,
-          tone: isMaxLevel ? 'warning' : 'success',
-        },
+                  : 'Améliorer',
+            tone: 'success' as const,
+          }]),
   ];
   const notice = isLockedByCastle
     ? {
