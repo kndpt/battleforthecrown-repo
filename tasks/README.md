@@ -27,7 +27,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ### Runs actifs
 
-_(Aucun run actif.)_
+- [028 — Bonus de vitesse d'entraînement de la Caserne](./runs/028-barracks-training-speed-bonus.md) — 📋 `PLANNED`. Implémenter le bonus de vitesse par niveau de Caserne côté shared, backend et affichage Pixi.
 
 ### Runs archivés
 
