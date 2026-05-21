@@ -22,23 +22,23 @@ export function TroopBar({ className, icon, lost, sent, unitName }: TroopBarProp
   const isIntact = safeLost === 0 && safeSent > 0;
 
   const statusLabel = isIntact
-    ? 'Aucune perte'
+    ? 'aucune perte'
     : isWiped
-      ? 'Anéantis'
+      ? 'anéantis'
       : `${NUMBER_FORMATTER.format(safeLost)} perte${safeLost > 1 ? 's' : ''}`;
 
-  const statusToneClass = isIntact
+  const ratioToneClass = isIntact
     ? 'text-[#4a8c2a]'
     : isWiped
       ? 'text-[#a93226]'
-      : 'text-[#a06a18]';
+      : 'text-[#3d2f1f]';
 
   return (
-    <div className={cn('flex w-full flex-col gap-1', className)}>
+    <div className={cn('flex w-full flex-col gap-1', className)} title={statusLabel}>
       <div className="flex items-center gap-2 font-game text-[13px] text-[#3d2f1f]">
         <img alt="" className="size-[22px] flex-none object-contain" src={publicAsset(icon)} />
-        <span className="flex-1 text-[11px] text-[#6d5838]">{unitName}</span>
-        <b className="text-sm font-extrabold tabular-nums">
+        <span className="flex-1 truncate text-[11px] text-[#6d5838]">{unitName}</span>
+        <b className={cn('text-sm font-extrabold tabular-nums', ratioToneClass)}>
           {NUMBER_FORMATTER.format(survivors)}
           <span className="text-[#6d5838]">/</span>
           {NUMBER_FORMATTER.format(safeSent)}
@@ -58,9 +58,6 @@ export function TroopBar({ className, icon, lost, sent, unitName }: TroopBarProp
           />
         ) : null}
       </div>
-      <span className={cn('font-game text-[10.5px] font-semibold uppercase tracking-[.08em]', statusToneClass)}>
-        {statusLabel}
-      </span>
     </div>
   );
 }

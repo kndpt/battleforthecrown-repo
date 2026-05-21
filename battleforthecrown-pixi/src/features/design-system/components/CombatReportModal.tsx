@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { publicAsset } from '@/lib/publicAsset';
 import { BASE_MODAL_DEFAULT_MAX_HEIGHT, BASE_MODAL_DEFAULT_WIDTH, BaseModal } from './BaseModal';
+import { TroopBar } from './TroopBar';
 
 export type CombatReportOutcome = 'lose' | 'win';
 export type CombatReportActionId = 'details' | 'retaliate' | 'share' | string;
@@ -106,8 +107,6 @@ const actionClass: Record<CombatReportAction['tone'], string> = {
   success:
     'border-[#3a6c1f] bg-[linear-gradient(to_bottom,#6ebf49,#4a8c2a)] text-white [text-shadow:1px_1px_2px_rgba(0,0,0,.6)]',
 };
-
-const formatCount = (value: number) => value.toLocaleString('fr-FR');
 
 function PixelActionButton({
   action,
@@ -256,24 +255,18 @@ function UnitColumn({
   units: CombatReportUnit[];
 }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1.5">
+    <div className="flex min-w-0 flex-col gap-2">
       <div className="font-game text-[9.5px] font-extrabold uppercase tracking-[.18em] text-[#6d5838]">
         {title}
       </div>
       {units.map((unit) => (
-        <div
-          className="flex items-center gap-1.5 font-game text-xs text-[#3d2f1f] tabular-nums"
+        <TroopBar
+          icon={unit.icon}
           key={`${unit.name}-${unit.sent}-${unit.lost}`}
-        >
-          <img
-            alt=""
-            className="size-[22px] object-contain drop-shadow-[0_1px_1px_rgba(0,0,0,.35)]"
-            src={publicAsset(unit.icon)}
-          />
-          <span className="font-bold">{formatCount(unit.sent)}</span>
-          <span className="text-[#6d5838]">→</span>
-          <span className="font-extrabold text-[#a93226]">−{formatCount(unit.lost)}</span>
-        </div>
+          lost={unit.lost}
+          sent={unit.sent}
+          unitName={unit.name}
+        />
       ))}
     </div>
   );
