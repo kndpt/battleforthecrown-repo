@@ -4,3 +4,4 @@
 - [Pattern dette frontend post-audit](pattern_frontend_debt_post_audit.md) — runs UI dédiés après audit catalogue ; type=fix, helper pur partagé Panel+Modal+Pixi, choix UX en POINTS_D_ATTENTION
 - [Pattern fix — découpler worker d'une relation optionnelle supprimable](pattern_fix_decouple_worker_from_optional_relation.md) — dénormaliser sur l'entité worker-owned + smoke "delete relation in-flight"
 - [Pattern table de projection orpheline](pattern_orphan_entity_table.md) — grep `prisma.<table>.(create|upsert)` sur src/ ; si 0 hit, préférer lire la source métier directe plutôt que re-câbler N points d'écriture
+- [Pattern WorldMap visual tier propagation](pattern_world_map_visual_tier_propagation.md) — chaîne shared DTO → backend query → MapEntity → `aliasFor` Pixi ; trade-off join runtime vs dénormalisation pour les feeds carte
