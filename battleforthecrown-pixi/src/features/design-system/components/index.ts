@@ -109,6 +109,21 @@ export type {
 } from './KingdomActivitiesPanel';
 export { MapEntityCallout } from './MapEntityCallout';
 export type { MapEntityCalloutAction, MapEntityCalloutActionTone, MapEntityCalloutProps, MapEntityCalloutSection, MapEntityCalloutSectionRow, MapEntityCalloutStat, MapEntityCalloutTier } from './MapEntityCallout';
+export { MultiVillageBottomSheet, MultiVillagePhoneFrame } from './MultiVillageBottomSheet';
+export type {
+  MultiVillageActivityKind,
+  MultiVillageAlert,
+  MultiVillageAlertKind,
+  MultiVillageBottomSheetLabels,
+  MultiVillageBottomSheetProps,
+  MultiVillageBuildActivity,
+  MultiVillageFilter,
+  MultiVillageItem,
+  MultiVillageLordActivity,
+  MultiVillageResource,
+  MultiVillageResourceKind,
+  MultiVillageTroopActivity,
+} from './MultiVillageBottomSheet';
 export { LeaderboardHeader, LeaderboardRow } from './LeaderboardRow';
 export type { LeaderboardDelta, LeaderboardDeltaTone, LeaderboardHeaderProps, LeaderboardRankTone, LeaderboardRowProps } from './LeaderboardRow';
 export { DigitTimer, Timer } from './Timer';

@@ -44,6 +44,8 @@ import {
   LevelChip,
   MailInboxItem,
   MapEntityCallout,
+  MultiVillageBottomSheet,
+  MultiVillagePhoneFrame,
   NumberStepper,
   PipRating,
   PlayerProfileCard,
@@ -79,6 +81,8 @@ import {
   type ExpeditionActivityCardProps,
   type KingdomActivitiesPanelLabels,
   type KingdomActivityTab,
+  type MultiVillageFilter,
+  type MultiVillageItem,
   type PlayerProfileSheetTab,
   type PlayerProfileSheetProps,
   type ResourceBuildingKey,
@@ -633,6 +637,87 @@ const playerProfileSheetFixture = {
   world: { day: 18, name: 'Avalon-3', total: 60 },
 } satisfies Pick<PlayerProfileSheetProps, 'icons' | 'labels' | 'player' | 'settings' | 'stats' | 'villages' | 'world'>;
 
+const multiVillageLabels = {
+  activeFilter: 'Actifs',
+  alertsFilter: 'Alertes',
+  allFilter: 'Tous',
+  buildActivity: 'Chantier',
+  close: 'Fermer',
+  empty: 'Aucun domaine ne correspond à ce filtre.',
+  eyebrow: 'Domaines du royaume',
+  levelPrefix: 'Niv.',
+  lordActivity: 'Seigneur',
+  noActivity: 'Aucune activité en cours',
+  sort: 'Trier',
+  title: 'Mes villages',
+  troopsActivity: 'Formation',
+};
+
+const multiVillageFixture: MultiVillageItem[] = [
+  {
+    active: true,
+    alert: { eta: '2:15', kind: 'attack', msg: 'Attaque entrante' },
+    builds: [
+      { eta: '1:23', name: 'Camp pierre', progress: 0.62, target: 'stone', to: 4 },
+      { eta: '12:40', name: 'Caserne', progress: 0.04, target: 'barracks', to: 3 },
+    ],
+    capitale: true,
+    coords: '(7,12)',
+    id: 'v1',
+    level: 5,
+    lords: [],
+    name: 'Kelvinor',
+    power: '2 480',
+    resources: {
+      iron: { max: 6000, n: 5550 },
+      pop: { max: 300, n: 174 },
+      stone: { max: 8000, n: 4300 },
+      wood: { max: 8000, n: 4500 },
+    },
+    strategy: 'FORTRESS',
+    troops: [
+      { count: 25, eta: '0:45', label: 'Milicien', progress: 0.45, unit: 'militia' },
+      { count: 10, eta: '3:20', label: 'Archer', progress: 0.02, unit: 'archer' },
+    ],
+  },
+  {
+    alert: null,
+    builds: [{ eta: '8:30', name: 'Bûcherons', progress: 0.18, target: 'wood', to: 4 }],
+    coords: '(11,4)',
+    id: 'v2',
+    level: 3,
+    lords: [{ eta: '6:12', name: 'Sieur Aldred', progress: 0.55 }],
+    name: "Vald'Or",
+    power: '980',
+    resources: {
+      iron: { max: 3000, n: 980 },
+      pop: { max: 180, n: 92 },
+      stone: { max: 4000, n: 1850 },
+      wood: { max: 4000, n: 2200 },
+    },
+    strategy: 'ECONOMIC',
+    troops: [],
+  },
+  {
+    alert: { eta: '0:50', kind: 'attack', msg: 'Attaque entrante' },
+    builds: [],
+    coords: '(2,18)',
+    id: 'v3',
+    level: 3,
+    lords: [],
+    name: 'Pierre-Noire',
+    power: '790',
+    resources: {
+      iron: { max: 3000, n: 1450 },
+      pop: { max: 180, n: 168 },
+      stone: { max: 4000, n: 2700 },
+      wood: { max: 4000, n: 1100 },
+    },
+    strategy: 'RAIDERS',
+    troops: [{ count: 6, eta: '4:50', label: 'Écuyer', progress: 0.72, unit: 'squire' }],
+  },
+];
+
 export function DesignSystemPreview() {
   const [inputValue, setInputValue] = useState('');
   const [lordName, setLordName] = useState('');
@@ -646,6 +731,7 @@ export function DesignSystemPreview() {
   const [segmentReports, setSegmentReports] = useState('mine');
   const [segmentRange, setSegmentRange] = useState('1h');
   const [segmentWorld, setSegmentWorld] = useState('world');
+  const [multiVillageFilter, setMultiVillageFilter] = useState<MultiVillageFilter>('all');
   const [inboxTab, setInboxTab] = useState('all');
   const [kingdomActivityTab, setKingdomActivityTab] = useState<KingdomActivityTab>('captures');
   const [stepperValue, setStepperValue] = useState(125);
@@ -1262,6 +1348,27 @@ export function DesignSystemPreview() {
                 onTabChange={() => undefined}
               />
             </div>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="font-game text-2xl font-bold text-[#1f2937]">MultiVillageBottomSheet</h2>
+            <span className="font-mono text-[10px] text-[#5d4a32]">monde · navigation multi-village · bottom sheet</span>
+          </div>
+          <div className="flex w-full flex-wrap items-start justify-center gap-6">
+            <MultiVillagePhoneFrame>
+              <MultiVillageBottomSheet
+                capacity={7}
+                filter={multiVillageFilter}
+                labels={multiVillageLabels}
+                onClose={() => undefined}
+                onFilterChange={setMultiVillageFilter}
+                onSelectVillage={() => undefined}
+                onSort={() => undefined}
+                villages={multiVillageFixture}
+              />
+            </MultiVillagePhoneFrame>
           </div>
         </section>
 
