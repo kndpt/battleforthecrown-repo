@@ -534,7 +534,6 @@ export function MultiVillageBottomSheet({
   className,
   filter,
   labels,
-  onClose,
   onFilterChange,
   onSelectVillage,
   onSort,
@@ -573,16 +572,6 @@ export function MultiVillageBottomSheet({
             </span>
           </div>
         </div>
-        {onClose ? (
-          <button
-            aria-label={labels.close}
-            className="size-7 cursor-pointer rounded-lg border-2 border-[#5d4a32] bg-[linear-gradient(180deg,#b6a78a,#8b7355)] font-game text-sm font-extrabold leading-none text-white shadow-[inset_0_1px_0_rgba(255,255,255,.3),0_2px_0_rgba(0,0,0,.2)] [text-shadow:1px_1px_1px_rgba(0,0,0,.5)]"
-            onClick={onClose}
-            type="button"
-          >
-            ×
-          </button>
-        ) : null}
       </div>
       {filters.length > 1 || onSort ? (
         <div className="mx-3.5 mb-2.5 mt-2 flex items-stretch gap-1.5">

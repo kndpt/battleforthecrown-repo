@@ -1,4 +1,3 @@
-import { X } from 'lucide-react';
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
 import { SegmentedControl } from './SegmentedControl';
@@ -410,7 +409,6 @@ export function PlayerProfileSheet({
   className,
   icons,
   labels,
-  onClose,
   onLogout,
   onTabChange,
   onVillageSelect,
@@ -447,16 +445,6 @@ export function PlayerProfileSheet({
               </span>
             </div>
           </div>
-          {onClose ? (
-            <button
-              aria-label={labels.close}
-              className="flex size-7 cursor-pointer items-center justify-center rounded-lg border-2 border-[#5d4a32] bg-[linear-gradient(to_bottom,#b6a78a,#8b7355)] font-game text-sm font-extrabold leading-none text-white shadow-[inset_0_1px_0_rgba(255,255,255,.3),0_2px_0_rgba(0,0,0,.2)] [text-shadow:1px_1px_1px_rgba(0,0,0,.5)]"
-              onClick={onClose}
-              type="button"
-            >
-              <X aria-hidden className="size-[15px] stroke-[3]" />
-            </button>
-          ) : null}
         </header>
 
         <SegmentedControl

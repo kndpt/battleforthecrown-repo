@@ -1,5 +1,4 @@
 import type { HTMLAttributes, ReactNode } from 'react';
-import { X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
 export type GameBottomSheetPanelVariant = 'default' | 'compact' | 'tabbed';
@@ -27,17 +26,17 @@ export function GameBottomSheetPanel({
   bodyClassName,
   children,
   className,
-  closeLabel = 'Fermer',
+  closeLabel: _closeLabel,
   eyebrow,
   headerActions,
-  onClose,
+  onClose: _onClose,
   scrollable = true,
   tabs,
   title,
   variant = tabs ? 'tabbed' : 'default',
   ...props
 }: GameBottomSheetPanelProps) {
-  const hasHeader = Boolean(eyebrow || title || headerActions || onClose);
+  const hasHeader = Boolean(eyebrow || title || headerActions);
 
   return (
     <div
@@ -70,16 +69,6 @@ export function GameBottomSheetPanel({
 
           <div className="flex shrink-0 items-center gap-2">
             {headerActions}
-            {onClose ? (
-              <button
-                aria-label={closeLabel}
-                className="inline-flex size-[30px] cursor-pointer items-center justify-center rounded-lg border-2 border-[#5d4a32] bg-[linear-gradient(180deg,#b6a78a,#a67c52)] text-white shadow-[inset_0_1px_0_rgba(255,255,255,.3),0_2px_0_rgba(0,0,0,.2)] transition-transform active:translate-y-px"
-                onClick={onClose}
-                type="button"
-              >
-                <X aria-hidden className="size-[17px] stroke-[3]" />
-              </button>
-            ) : null}
           </div>
         </div>
       ) : null}
