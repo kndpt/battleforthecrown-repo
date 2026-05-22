@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQueries } from '@tanstack/react-query';
 import { ChevronDown } from 'lucide-react';
 import { HeaderBar, type HeaderBarStat } from '@/features/design-system/components/HeaderBar';
 import {
@@ -12,7 +13,12 @@ import {
   useKingdomPowerQuery,
   useMyVillagesQuery,
   usePopulationQuery,
+  queryKeys,
+  type ArmyTrainingDto,
+  type ResourcesPayload,
+  type VillageStrategyInfoDto,
 } from '@/api/queries';
+import { apiClient, type BuildingDto, type PopulationDto, type QueueEntryDto } from '@/api';
 import { formatResourceAmount } from '@/lib/resourceConfig';
 import { BottomSheet } from '@/ui';
 import {
@@ -22,6 +28,18 @@ import {
 } from './multiVillageSheet';
 
 const integerFormatter = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
+
+function toResultMap<T>(
+  ids: string[],
+  results: readonly { data?: T }[],
+): ReadonlyMap<string, T> {
+  return new Map(
+    ids.flatMap((id, index) => {
+      const data = results[index]?.data;
+      return data === undefined ? [] : [[id, data] as const];
+    }),
+  );
+}
 
 interface GameHeaderProps {
   onPowerClick?: () => void;
@@ -51,6 +69,55 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
   const activeVillageIndex = activeVillage
     ? villages.findIndex((village) => village.id === activeVillage.id)
     : -1;
+  const villageIds = useMemo(() => villages.map((village) => village.id), [villages]);
+  const villageResources = useQueries({
+    queries: villageIds.map((id) => ({
+      enabled: isVillageSheetOpen,
+      queryFn: () => apiClient.get<ResourcesPayload>(`/resources/${id}`),
+      queryKey: queryKeys.resources(id),
+      staleTime: 5_000,
+    })),
+  });
+  const villagePopulation = useQueries({
+    queries: villageIds.map((id) => ({
+      enabled: isVillageSheetOpen,
+      queryFn: () => apiClient.get<PopulationDto>('/population', { query: { villageId: id } }),
+      queryKey: queryKeys.population(id),
+      staleTime: 5_000,
+    })),
+  });
+  const villageBuildings = useQueries({
+    queries: villageIds.map((id) => ({
+      enabled: isVillageSheetOpen,
+      queryFn: () => apiClient.get<BuildingDto[]>('/village/buildings', { query: { villageId: id } }),
+      queryKey: queryKeys.buildings(id),
+      staleTime: 5_000,
+    })),
+  });
+  const villageQueue = useQueries({
+    queries: villageIds.map((id) => ({
+      enabled: isVillageSheetOpen,
+      queryFn: () => apiClient.get<QueueEntryDto[]>('/village/queue', { query: { villageId: id } }),
+      queryKey: queryKeys.queue(id),
+      staleTime: 5_000,
+    })),
+  });
+  const villageStrategy = useQueries({
+    queries: villageIds.map((id) => ({
+      enabled: isVillageSheetOpen,
+      queryFn: () => apiClient.get<VillageStrategyInfoDto>('/village/strategy', { query: { villageId: id } }),
+      queryKey: queryKeys.villageStrategy(id),
+      staleTime: 5_000,
+    })),
+  });
+  const villageTraining = useQueries({
+    queries: villageIds.map((id) => ({
+      enabled: isVillageSheetOpen,
+      queryFn: () => apiClient.get<ArmyTrainingDto[]>(`/army/${id}/training`),
+      queryKey: queryKeys.armyTraining(id),
+      staleTime: 2_000,
+    })),
+  });
   const powerByVillageId = useMemo(
     () =>
       new Map(
@@ -61,15 +128,59 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
       ),
     [kingdomPower.data?.villages],
   );
+  const resourcesByVillageId = useMemo(
+    () => toResultMap(villageIds, villageResources),
+    [villageIds, villageResources],
+  );
+  const populationByVillageId = useMemo(
+    () => toResultMap(villageIds, villagePopulation),
+    [villageIds, villagePopulation],
+  );
+  const buildingsByVillageId = useMemo(
+    () => toResultMap(villageIds, villageBuildings),
+    [villageIds, villageBuildings],
+  );
+  const queueByVillageId = useMemo(
+    () => toResultMap(villageIds, villageQueue),
+    [villageIds, villageQueue],
+  );
+  const strategyByVillageId = useMemo(
+    () => toResultMap(villageIds, villageStrategy),
+    [villageIds, villageStrategy],
+  );
+  const trainingByVillageId = useMemo(
+    () => toResultMap(villageIds, villageTraining),
+    [villageIds, villageTraining],
+  );
   const villageSheetItems = useMemo(
     () =>
-      buildMultiVillageSheetItems(villages, activeVillage?.id ?? villageId, powerByVillageId)
+      buildMultiVillageSheetItems(villages, activeVillage?.id ?? villageId, {
+        buildingsByVillageId,
+        populationByVillageId,
+        powerByVillageId,
+        queueByVillageId,
+        resourcesByVillageId,
+        strategyByVillageId,
+        trainingByVillageId,
+      })
         .toSorted((a, b) =>
           sortAscending
             ? a.name.localeCompare(b.name, 'fr')
             : b.name.localeCompare(a.name, 'fr'),
         ),
-    [activeVillage?.id, powerByVillageId, sortAscending, villageId, villages],
+    [
+      activeVillage?.id,
+      buildingsByVillageId,
+      populationByVillageId,
+      powerByVillageId,
+      queueByVillageId,
+      resourcesByVillageId,
+      sortAscending,
+      strategyByVillageId,
+      trainingByVillageId,
+      villageId,
+      villages,
+    ],
   );
 
   useEffect(() => {

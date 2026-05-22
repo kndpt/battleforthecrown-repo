@@ -37,9 +37,98 @@ function makeQueryClient() {
 }
 
 function mockApi() {
-  vi.spyOn(apiClient, 'get').mockImplementation(async (path) => {
+  const now = Date.now();
+  const inOneMinute = new Date(now + 60_000).toISOString();
+  const inTwoMinutes = new Date(now + 120_000).toISOString();
+
+  vi.spyOn(apiClient, 'get').mockImplementation(async (path, options) => {
     if (path === '/village') return villages;
-    if (path === '/population') return { max: 120, used: 42 };
+    if (path === '/population') {
+      const id = (options as { query?: { villageId?: string } } | undefined)?.query?.villageId;
+      return id === 'v2' ? { available: 88, max: 180, used: 92 } : { available: 78, max: 120, used: 42 };
+    }
+    if (path === '/resources/v1') {
+      return {
+        iron: 3200,
+        lastUpdateTs: new Date(now).toISOString(),
+        maxPerType: 5000,
+        productionRates: { iron: 10, stone: 10, wood: 10 },
+        stone: 2500,
+        wood: 4500,
+      };
+    }
+    if (path === '/resources/v2') {
+      return {
+        iron: 1400,
+        lastUpdateTs: new Date(now).toISOString(),
+        maxPerType: 3000,
+        productionRates: { iron: 10, stone: 10, wood: 10 },
+        stone: 1850,
+        wood: 2200,
+      };
+    }
+    if (path === '/village/buildings') {
+      const id = (options as { query?: { villageId?: string } } | undefined)?.query?.villageId;
+      return [
+        {
+          endTime: null,
+          id: `castle-${id}`,
+          isUnderConstruction: false,
+          level: id === 'v2' ? 3 : 5,
+          maxLevel: 10,
+          populationCost: 0,
+          startTime: null,
+          type: 'CASTLE',
+        },
+      ];
+    }
+    if (path === '/village/queue') {
+      const id = (options as { query?: { villageId?: string } } | undefined)?.query?.villageId;
+      return id === 'v1'
+        ? [{ endTime: inOneMinute, id: 'queue-1', level: 4, startTime: new Date(now - 60_000).toISOString(), type: 'WOOD' }]
+        : [];
+    }
+    if (path === '/village/strategy') {
+      const id = (options as { query?: { villageId?: string } } | undefined)?.query?.villageId;
+      return {
+        canChange: true,
+        changeCost: 0,
+        changeCosts: {},
+        cooldownEndsAt: null,
+        currentStrategy: id === 'v2' ? 'ECONOMIC' : 'FORTRESS',
+        hasCouncilHall: true,
+        lastChangedAt: new Date(now).toISOString(),
+        strategies: {},
+      };
+    }
+    if (path === '/army/v1/training') {
+      return [
+        {
+          completedQty: 0,
+          createdAt: new Date(now - 60_000).toISOString(),
+          id: 'training-1',
+          nextUnitEta: inTwoMinutes,
+          timePerUnitMs: 180_000,
+          totalQty: 3,
+          unitType: 'MILITIA',
+          villageId: 'v1',
+        },
+      ];
+    }
+    if (path === '/army/v2/training') {
+      return [
+        {
+          completedQty: 0,
+          createdAt: new Date(now - 60_000).toISOString(),
+          id: 'training-2',
+          nextUnitEta: inTwoMinutes,
+          timePerUnitMs: 180_000,
+          totalQty: 1,
+          unitType: 'NOBLE',
+          villageId: 'v2',
+        },
+      ];
+    }
     if (path === '/power/kingdom') {
       return {
         kingdomPower: 320,
@@ -105,10 +194,14 @@ describe('GameHeader multi-village selector', () => {
     expect(screen.getByText('Marche Nord')).toBeInTheDocument();
     expect(screen.getByText('Capitale')).toBeInTheDocument();
     expect(screen.getByText('Défensif')).toBeInTheDocument();
-    expect(screen.getByText('10:12')).toBeInTheDocument();
-    expect(screen.getByText('220')).toBeInTheDocument();
+    expect(await screen.findByText('10:12')).toBeInTheDocument();
+    expect(await screen.findByText('220')).toBeInTheDocument();
+    expect(await screen.findByText('4.5K')).toBeInTheDocument();
+    expect(await screen.findByText('42')).toBeInTheDocument();
+    expect(await screen.findByTitle('Forteresse')).toBeInTheDocument();
+    expect(await screen.findByTitle(/Chantier · 1:00/)).toBeInTheDocument();
+    expect(await screen.findByTitle(/Formation · 8:00/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Trier' })).toBeInTheDocument();
-    expect(screen.queryByText('Construction')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /Marche Nord/i }));
 

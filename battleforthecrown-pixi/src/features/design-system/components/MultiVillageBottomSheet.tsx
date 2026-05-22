@@ -256,7 +256,7 @@ function StrategyIcon({ strategy }: StrategyIconProps) {
 }
 
 function ResourceChip({ compact = false, kind, max, n }: ResourceChipProps) {
-  const ratio = Math.max(0, Math.min(1, n / max));
+  const ratio = max > 0 ? Math.max(0, Math.min(1, n / max)) : 0;
   const nearFull = ratio >= 0.9;
   const meta = resourceMeta[kind];
   const title = `${meta.label} · ${n.toLocaleString('fr-FR')} / ${max.toLocaleString('fr-FR')}`;
