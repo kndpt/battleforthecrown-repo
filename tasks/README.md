@@ -27,6 +27,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ### Runs actifs
 
+- [030 — Sélecteur multi-village en bottom sheet](./runs/030-feature-multi-village-bottom-sheet-selector.md) — 📋 `PLANNED`. Brancher le nouveau bottom sheet multi-village sur le clic du nom de village IG sans inventer les données runtime manquantes.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés
