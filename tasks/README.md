@@ -7,6 +7,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 - [66 — Inbox combat : tag VICTOIRE/DÉFAITE faux dans la liste](./66-inbox-report-outcome-uses-losses-heuristic.md) — 🟡 Majeur. La liste de l'inbox calcule l'issue via une heuristique de pertes, divergente de la règle canonique utilisée par le modal.
 - [57 — Source canonique du lifecycle des bâtiments joueur](./57-player-village-building-lifecycle-roster.md) — 🟡 Majeur. Centraliser la politique join/conquête/backfill des bâtiments pour éviter les oublis à chaque nouveau bâtiment activé.
 - [51 — Standardiser les bottom sheets sur le design `Activités du royaume`](./51-bottom-sheet-design-system-base.md) — 🟠 Moyen. Faire du nouveau panneau la base design-system des bottom sheets actuels et futurs.
+- [70 — Ouvrir la fiche joueur depuis l'avatar IG](./70-integrate-player-profile-sheet.md) — 🟠 Moyen. Brancher `PlayerProfileSheet` sur l'avatar de la top bar IG avec données disponibles et placeholders documentés.
 
 ## Tickets découpés
 
