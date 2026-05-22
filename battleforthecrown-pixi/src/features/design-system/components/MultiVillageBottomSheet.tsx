@@ -45,17 +45,18 @@ export interface MultiVillageAlert {
 export interface MultiVillageItem {
   active?: boolean;
   alert?: MultiVillageAlert | null;
-  builds: MultiVillageBuildActivity[];
+  badge?: string | null;
+  builds?: MultiVillageBuildActivity[];
   capitale?: boolean;
   coords: string;
   id: string;
-  level: number;
-  lords: MultiVillageLordActivity[];
+  level?: number;
+  lords?: MultiVillageLordActivity[];
   name: string;
-  power: string;
-  resources: Record<MultiVillageResourceKind, MultiVillageResource>;
-  strategy: VillageStrategyType;
-  troops: MultiVillageTroopActivity[];
+  power?: string;
+  resources?: Record<MultiVillageResourceKind, MultiVillageResource>;
+  strategy?: VillageStrategyType;
+  troops?: MultiVillageTroopActivity[];
 }
 
 export interface MultiVillageBottomSheetLabels {
@@ -79,7 +80,9 @@ export interface MultiVillageBottomSheetProps {
   className?: string;
   filter: MultiVillageFilter;
   labels: MultiVillageBottomSheetLabels;
+  availableFilters?: MultiVillageFilter[];
   onClose?: () => void;
+  onActivitySelect?: (village: MultiVillageItem, kind: MultiVillageActivityKind) => void;
   onFilterChange: (filter: MultiVillageFilter) => void;
   onSelectVillage?: (village: MultiVillageItem) => void;
   onSort?: () => void;
@@ -91,6 +94,7 @@ interface ActivityChipProps {
   eta?: string;
   kind: MultiVillageActivityKind;
   labels: Pick<MultiVillageBottomSheetLabels, 'buildActivity' | 'lordActivity' | 'troopsActivity'>;
+  onClick?: () => void;
 }
 
 interface AlertPillProps {
@@ -99,6 +103,7 @@ interface AlertPillProps {
 }
 
 interface FilterSegProps {
+  availableFilters?: MultiVillageFilter[];
   labels: Pick<MultiVillageBottomSheetLabels, 'activeFilter' | 'allFilter' | 'alertsFilter'>;
   onChange: (filter: MultiVillageFilter) => void;
   value: MultiVillageFilter;
@@ -112,7 +117,7 @@ interface ResourceChipProps {
 }
 
 interface ResourceRowProps {
-  resources: Record<MultiVillageResourceKind, MultiVillageResource>;
+  resources?: Record<MultiVillageResourceKind, MultiVillageResource>;
 }
 
 interface StrategyIconProps {
@@ -124,6 +129,7 @@ interface VillageCardProps {
     MultiVillageBottomSheetLabels,
     'buildActivity' | 'levelPrefix' | 'lordActivity' | 'troopsActivity'
   >;
+  onActivitySelect?: (village: MultiVillageItem, kind: MultiVillageActivityKind) => void;
   onSelect?: (village: MultiVillageItem) => void;
   village: MultiVillageItem;
 }
@@ -253,7 +259,7 @@ function StrategyIcon({ strategy }: StrategyIconProps) {
 }
 
 function ResourceChip({ compact = false, kind, max, n }: ResourceChipProps) {
-  const ratio = Math.max(0, Math.min(1, n / max));
+  const ratio = max > 0 ? Math.max(0, Math.min(1, n / max)) : 0;
   const nearFull = ratio >= 0.9;
   const meta = resourceMeta[kind];
   const title = `${meta.label} · ${n.toLocaleString('fr-FR')} / ${max.toLocaleString('fr-FR')}`;
@@ -301,7 +307,37 @@ function ResourceChip({ compact = false, kind, max, n }: ResourceChipProps) {
   );
 }
 
+function UnavailableResourceChip({ compact = false, kind }: { compact?: boolean; kind: MultiVillageResourceKind }) {
+  const meta = resourceMeta[kind];
+
+  return (
+    <div
+      className={cn(
+        'flex min-w-0 items-center gap-1.5 rounded-[9px] border border-[rgba(166,124,82,.22)] bg-[rgba(255,255,255,.2)] px-2 py-[7px] opacity-75 shadow-[inset_0_1px_0_rgba(255,255,255,.25)]',
+        compact ? 'shrink-0' : 'flex-1',
+      )}
+      title={`${meta.label} : donnée non disponible`}
+    >
+      <img alt="" className="size-4 shrink-0 opacity-70 drop-shadow-[0_1px_1px_rgba(0,0,0,.2)]" src={publicAsset(meta.icon)} />
+      <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-right font-game text-[12px] font-extrabold leading-none text-[#6d5838]">
+        —
+      </span>
+    </div>
+  );
+}
+
 function ResourceRow({ resources }: ResourceRowProps) {
+  if (!resources) {
+    return (
+      <div className="flex items-stretch gap-1.5">
+        <UnavailableResourceChip kind="wood" />
+        <UnavailableResourceChip kind="stone" />
+        <UnavailableResourceChip kind="iron" />
+        <UnavailableResourceChip compact kind="pop" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-stretch gap-1.5">
       <ResourceChip kind="wood" max={resources.wood.max} n={resources.wood.n} />
@@ -312,7 +348,7 @@ function ResourceRow({ resources }: ResourceRowProps) {
   );
 }
 
-function ActivityChip({ eta, kind, labels }: ActivityChipProps) {
+function ActivityChip({ eta, kind, labels, onClick }: ActivityChipProps) {
   const empty = !eta;
   const palette: Record<MultiVillageActivityKind, { glyph: ReactNode; label: string }> = {
     build: { glyph: <HammerGlyph color="#3d2f1f" size={11} />, label: labels.buildActivity },
@@ -320,15 +356,9 @@ function ActivityChip({ eta, kind, labels }: ActivityChipProps) {
     troops: { glyph: <SwordsGlyph color="#3d2f1f" size={11} />, label: labels.troopsActivity },
   };
   const meta = palette[kind];
-
-  return (
-    <div
-      className={cn(
-        'flex h-[22px] min-w-0 flex-1 items-center gap-1 rounded-full border pb-0.5 pl-1 pr-2 pt-0.5',
-        empty ? 'border-[rgba(166,124,82,.22)] bg-[rgba(255,255,255,.18)]' : 'border-[rgba(166,124,82,.36)] bg-[linear-gradient(180deg,rgba(254,249,240,.56),rgba(235,217,175,.34))] shadow-[inset_0_1px_0_rgba(255,255,255,.38)]',
-      )}
-      title={empty ? `${meta.label} : aucune` : `${meta.label} · ${eta}`}
-    >
+  const interactive = Boolean(!empty && onClick);
+  const content = (
+    <>
       <span
         className={cn(
           'flex size-4 shrink-0 items-center justify-center rounded-full border',
@@ -340,7 +370,24 @@ function ActivityChip({ eta, kind, labels }: ActivityChipProps) {
       <span className={cn('min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-game text-[11.5px] font-extrabold leading-none tracking-[.02em] tabular-nums', empty ? 'text-left text-[#6d5838]' : 'text-right text-[#3d2f1f] [text-shadow:0_1px_0_rgba(255,255,255,.4)]')}>
         {empty ? '—' : eta}
       </span>
-    </div>
+    </>
+  );
+
+  return (
+    <button
+      aria-label={empty ? `${meta.label} : aucune` : `${meta.label} · ${eta}`}
+      className={cn(
+        'flex h-[22px] min-w-0 flex-1 items-center gap-1 rounded-full border pb-0.5 pl-1 pr-2 pt-0.5',
+        empty ? 'border-[rgba(166,124,82,.22)] bg-[rgba(255,255,255,.18)]' : 'border-[rgba(166,124,82,.36)] bg-[linear-gradient(180deg,rgba(254,249,240,.56),rgba(235,217,175,.34))] shadow-[inset_0_1px_0_rgba(255,255,255,.38)]',
+        interactive ? 'cursor-pointer transition-transform active:translate-y-px' : 'cursor-default',
+      )}
+      disabled={!interactive}
+      onClick={onClick}
+      title={empty ? `${meta.label} : aucune` : `${meta.label} · ${eta}`}
+      type="button"
+    >
+      {content}
+    </button>
   );
 }
 
@@ -368,7 +415,8 @@ function AlertPill({ alert, dense = false }: AlertPillProps) {
 }
 
 function VillageIdentity({ levelPrefix, village }: VillageIdentityProps) {
-  const tier = tierFromPower(village.power);
+  const tier = village.power ? tierFromPower(village.power) : 1;
+  const hasDetails = village.level !== undefined || Boolean(village.power) || Boolean(village.coords);
 
   return (
     <div className="flex min-w-0 items-center gap-2.5">
@@ -393,62 +441,88 @@ function VillageIdentity({ levelPrefix, village }: VillageIdentityProps) {
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-center gap-[7px]">
           <span className="min-w-0 flex-1 truncate font-game text-[15px] font-extrabold tracking-[.01em] text-[#3d2f1f]">{village.name}</span>
-          <StrategyIcon strategy={village.strategy} />
+          {village.badge ? (
+            <span className="shrink-0 rounded-full border border-[rgba(158,123,13,.4)] bg-[rgba(241,196,15,.18)] px-2 py-0.5 font-game text-[9px] font-extrabold uppercase tracking-[.08em] text-[#7a4d05]">
+              {village.badge}
+            </span>
+          ) : null}
+          {village.strategy ? <StrategyIcon strategy={village.strategy} /> : null}
         </div>
-        <div className="mt-0.5 flex flex-wrap items-center gap-[7px] font-game text-[11.5px] text-[#6d5838]">
-          <span className="whitespace-nowrap">
-            {levelPrefix} <b className="text-[#3d2f1f]">{village.level}</b>
-          </span>
-          <span className="opacity-40">·</span>
-          <span className="inline-flex items-center gap-[3px] whitespace-nowrap">
-            <img alt="" className="w-[11px]" src={publicAsset('/assets/army-power.png')} />
-            <b className="text-[#3d2f1f] tabular-nums">{village.power.replace(/\s/g, '\u00a0')}</b>
-          </span>
-          <span className="opacity-40">·</span>
-          <span className="inline-flex items-center gap-[3px] whitespace-nowrap tabular-nums">
-            <img alt="" className="w-2.5 opacity-[.65]" src={publicAsset('/assets/position.png')} />
-            {village.coords}
-          </span>
-        </div>
+        {hasDetails ? (
+          <div className="mt-0.5 flex flex-wrap items-center gap-[7px] font-game text-[11.5px] text-[#6d5838]">
+            {village.level !== undefined ? (
+              <>
+                <span className="whitespace-nowrap">
+                  {levelPrefix} <b className="text-[#3d2f1f]">{village.level}</b>
+                </span>
+                <span className="opacity-40">·</span>
+              </>
+            ) : null}
+            {village.power ? (
+              <>
+                <span className="inline-flex items-center gap-[3px] whitespace-nowrap">
+                  <img alt="" className="w-[11px]" src={publicAsset('/assets/army-power.png')} />
+                  <b className="text-[#3d2f1f] tabular-nums">{village.power.replace(/\s/g, '\u00a0')}</b>
+                </span>
+                <span className="opacity-40">·</span>
+              </>
+            ) : null}
+            <span className="inline-flex items-center gap-[3px] whitespace-nowrap tabular-nums">
+              <img alt="" className="w-2.5 opacity-[.65]" src={publicAsset('/assets/position.png')} />
+              {village.coords}
+            </span>
+          </div>
+        ) : null}
       </div>
     </div>
   );
 }
 
-function VillageCard({ labels, onSelect, village }: VillageCardProps) {
+function VillageCard({ labels, onActivitySelect, onSelect, village }: VillageCardProps) {
+  const builds = village.builds ?? [];
+  const troops = village.troops ?? [];
+  const lords = village.lords ?? [];
+
   return (
-    <button
+    <div
       className={cn(
         'relative flex w-full cursor-pointer flex-col gap-2 border-0 border-b border-[rgba(93,74,50,.28)] py-3.5 pl-3.5 pr-9 text-left',
         'bg-[linear-gradient(90deg,rgba(254,249,240,.78),rgba(235,217,175,.55))]',
         village.active ? 'shadow-[inset_3px_0_0_rgba(158,123,13,.9),inset_0_1px_0_rgba(255,255,255,.45)]' : 'shadow-[inset_0_1px_0_rgba(255,255,255,.35)]',
       )}
-      onClick={() => onSelect?.(village)}
-      type="button"
     >
-      <div className="min-w-0">
+      <button className="min-w-0 text-left" onClick={() => onSelect?.(village)} type="button">
         <VillageIdentity levelPrefix={labels.levelPrefix} village={village} />
-      </div>
-      <ResourceRow resources={village.resources} />
+      </button>
+      <button className="text-left" onClick={() => onSelect?.(village)} type="button">
+        <ResourceRow resources={village.resources} />
+      </button>
       <div className="flex gap-1">
-        <ActivityChip eta={village.builds[0]?.eta} kind="build" labels={labels} />
-        <ActivityChip eta={village.troops[0]?.eta} kind="troops" labels={labels} />
-        <ActivityChip eta={village.lords[0]?.eta} kind="lords" labels={labels} />
+        <ActivityChip eta={builds[0]?.eta} kind="build" labels={labels} onClick={() => onActivitySelect?.(village, 'build')} />
+        <ActivityChip eta={troops[0]?.eta} kind="troops" labels={labels} onClick={() => onActivitySelect?.(village, 'troops')} />
+        <ActivityChip eta={lords[0]?.eta} kind="lords" labels={labels} onClick={() => onActivitySelect?.(village, 'lords')} />
       </div>
       {village.alert ? <AlertPill alert={village.alert} dense /> : null}
-      <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 font-game text-[26px] font-extrabold leading-none text-[#6d5838] opacity-60">
+      <button
+        aria-label={`Ouvrir ${village.name}`}
+        className="absolute inset-y-0 right-0 w-9 font-game text-[26px] font-extrabold leading-none text-[#6d5838] opacity-60"
+        onClick={() => onSelect?.(village)}
+        type="button"
+      >
         ›
-      </span>
-    </button>
+      </button>
+    </div>
   );
 }
 
-function FilterSeg({ labels, onChange, value }: FilterSegProps) {
-  const options: { id: MultiVillageFilter; label: string }[] = [
+function FilterSeg({ availableFilters, labels, onChange, value }: FilterSegProps) {
+  const allowed = new Set(availableFilters ?? ['all', 'active', 'alerts']);
+  const allOptions = [
     { id: 'all', label: labels.allFilter },
     { id: 'active', label: labels.activeFilter },
     { id: 'alerts', label: labels.alertsFilter },
-  ];
+  ] satisfies { id: MultiVillageFilter; label: string }[];
+  const options = allOptions.filter((option) => allowed.has(option.id));
 
   return (
     <div className="flex flex-1 gap-0.5 rounded-[9px] border-2 border-[#3c2619] bg-[linear-gradient(180deg,rgba(60,38,25,.92),rgba(78,56,34,.92))] p-[3px] shadow-[inset_0_1px_0_rgba(255,255,255,.15)]">
@@ -474,11 +548,12 @@ function FilterSeg({ labels, onChange, value }: FilterSegProps) {
 }
 
 export function MultiVillageBottomSheet({
+  availableFilters,
   capacity,
   className,
   filter,
   labels,
-  onClose,
+  onActivitySelect,
   onFilterChange,
   onSelectVillage,
   onSort,
@@ -486,11 +561,12 @@ export function MultiVillageBottomSheet({
   villages,
 }: MultiVillageBottomSheetProps) {
   const visible = villages.filter((village) => {
-    if (filter === 'active') return village.builds.length + village.troops.length + village.lords.length > 0;
+    if (filter === 'active') return village.active || (village.builds?.length ?? 0) + (village.troops?.length ?? 0) + (village.lords?.length ?? 0) > 0;
     if (filter === 'alerts') return Boolean(village.alert);
     return true;
   });
   const count = totalCount ?? villages.length;
+  const filters = availableFilters ?? ['all', 'active', 'alerts'];
 
   return (
     <section
@@ -516,32 +592,34 @@ export function MultiVillageBottomSheet({
             </span>
           </div>
         </div>
-        {onClose ? (
-          <button
-            aria-label={labels.close}
-            className="size-7 cursor-pointer rounded-lg border-2 border-[#5d4a32] bg-[linear-gradient(180deg,#b6a78a,#8b7355)] font-game text-sm font-extrabold leading-none text-white shadow-[inset_0_1px_0_rgba(255,255,255,.3),0_2px_0_rgba(0,0,0,.2)] [text-shadow:1px_1px_1px_rgba(0,0,0,.5)]"
-            onClick={onClose}
-            type="button"
-          >
-            ×
-          </button>
-        ) : null}
       </div>
-      <div className="mx-3.5 mb-2.5 mt-2 flex items-stretch gap-1.5">
-        <FilterSeg labels={labels} onChange={onFilterChange} value={filter} />
-        <button
-          aria-label={labels.sort}
-          className="flex w-[34px] cursor-pointer items-center justify-center rounded-lg border-2 border-[#5d4a32] bg-[linear-gradient(180deg,#fef9f0,#d9c896)] p-0 font-game text-[13px] font-extrabold text-[#3d2f1f] shadow-[inset_0_1px_0_rgba(255,255,255,.45),0_2px_0_rgba(0,0,0,.18)]"
-          onClick={onSort}
-          title={labels.sort}
-          type="button"
-        >
-          <SortGlyph />
-        </button>
-      </div>
+      {filters.length > 1 || onSort ? (
+        <div className="mx-3.5 mb-2.5 mt-2 flex items-stretch gap-1.5">
+          {filters.length > 1 ? (
+            <FilterSeg availableFilters={filters} labels={labels} onChange={onFilterChange} value={filter} />
+          ) : null}
+          {onSort ? (
+            <button
+              aria-label={labels.sort}
+              className="flex w-[34px] cursor-pointer items-center justify-center rounded-lg border-2 border-[#5d4a32] bg-[linear-gradient(180deg,#fef9f0,#d9c896)] p-0 font-game text-[13px] font-extrabold text-[#3d2f1f] shadow-[inset_0_1px_0_rgba(255,255,255,.45),0_2px_0_rgba(0,0,0,.18)]"
+              onClick={onSort}
+              title={labels.sort}
+              type="button"
+            >
+              <SortGlyph />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
         {visible.map((village) => (
-          <VillageCard key={village.id} labels={labels} onSelect={onSelectVillage} village={village} />
+          <VillageCard
+            key={village.id}
+            labels={labels}
+            onActivitySelect={onActivitySelect}
+            onSelect={onSelectVillage}
+            village={village}
+          />
         ))}
         {visible.length === 0 ? (
           <div className="px-4 py-[30px] text-center font-game text-xs italic text-[#6d5838]">{labels.empty}</div>

@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQueries } from '@tanstack/react-query';
 import { ChevronDown } from 'lucide-react';
+import { useNavigate } from 'react-router';
 import { HeaderBar, type HeaderBarStat } from '@/features/design-system/components/HeaderBar';
+import {
+  MultiVillageBottomSheet,
+  type MultiVillageActivityKind,
+  type MultiVillageFilter,
+  type MultiVillageItem,
+} from '@/features/design-system/components/MultiVillageBottomSheet';
 import { useDisplayResources, useDisplayCrowns } from '@/features/resources/useDisplayResources';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
@@ -8,11 +16,33 @@ import {
   useKingdomPowerQuery,
   useMyVillagesQuery,
   usePopulationQuery,
+  queryKeys,
+  type ArmyTrainingDto,
+  type ResourcesPayload,
+  type VillageStrategyInfoDto,
 } from '@/api/queries';
+import { apiClient, type BuildingDto, type PopulationDto, type QueueEntryDto } from '@/api';
 import { formatResourceAmount } from '@/lib/resourceConfig';
-import { VILLAGE_LABEL_DISPLAY } from '@battleforthecrown/shared/village';
+import { BottomSheet } from '@/ui';
+import {
+  buildMultiVillageSheetItems,
+  getVillageSelectorLabel,
+  multiVillageBottomSheetLabels,
+} from './multiVillageSheet';
 
 const integerFormatter = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
+
+function toResultMap<T>(
+  ids: string[],
+  results: readonly { data?: T }[],
+): ReadonlyMap<string, T> {
+  return new Map(
+    ids.flatMap((id, index) => {
+      const data = results[index]?.data;
+      return data === undefined ? [] : [[id, data] as const];
+    }),
+  );
+}
 
 interface GameHeaderProps {
   onPowerClick?: () => void;
@@ -20,6 +50,7 @@ interface GameHeaderProps {
 }
 
 export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = {}) {
+  const navigate = useNavigate();
   const villageId = useGameStore((state) => state.villageId);
   const worldId = useGameStore((state) => state.worldId);
   const setVillage = useGameStore((state) => state.setVillage);
@@ -29,7 +60,9 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
   const myVillages = useMyVillagesQuery(worldId);
   const { display, hasSnapshot } = useDisplayResources(villageId);
   const { balance: crownBalance } = useDisplayCrowns(userId, worldId);
-  const [isVillageMenuOpen, setIsVillageMenuOpen] = useState(false);
+  const [isVillageSheetOpen, setIsVillageSheetOpen] = useState(false);
+  const [villageFilter, setVillageFilter] = useState<MultiVillageFilter>('all');
+  const [sortAscending, setSortAscending] = useState(true);
 
   const villages = myVillages.data ?? [];
   const fallbackVillageId = villages.find((village) => village.isCapital)?.id
@@ -40,6 +73,119 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
   const activeVillageIndex = activeVillage
     ? villages.findIndex((village) => village.id === activeVillage.id)
     : -1;
+  const villageIds = useMemo(() => villages.map((village) => village.id), [villages]);
+  const villageResources = useQueries({
+    queries: villageIds.map((id) => ({
+      enabled: isVillageSheetOpen,
+      queryFn: () => apiClient.get<ResourcesPayload>(`/resources/${id}`),
+      queryKey: queryKeys.resources(id),
+      staleTime: 5_000,
+    })),
+  });
+  const villagePopulation = useQueries({
+    queries: villageIds.map((id) => ({
+      enabled: isVillageSheetOpen,
+      queryFn: () => apiClient.get<PopulationDto>('/population', { query: { villageId: id } }),
+      queryKey: queryKeys.population(id),
+      staleTime: 5_000,
+    })),
+  });
+  const villageBuildings = useQueries({
+    queries: villageIds.map((id) => ({
+      enabled: isVillageSheetOpen,
+      queryFn: () => apiClient.get<BuildingDto[]>('/village/buildings', { query: { villageId: id } }),
+      queryKey: queryKeys.buildings(id),
+      staleTime: 5_000,
+    })),
+  });
+  const villageQueue = useQueries({
+    queries: villageIds.map((id) => ({
+      enabled: isVillageSheetOpen,
+      queryFn: () => apiClient.get<QueueEntryDto[]>('/village/queue', { query: { villageId: id } }),
+      queryKey: queryKeys.queue(id),
+      staleTime: 5_000,
+    })),
+  });
+  const villageStrategy = useQueries({
+    queries: villageIds.map((id) => ({
+      enabled: isVillageSheetOpen,
+      queryFn: () => apiClient.get<VillageStrategyInfoDto>('/village/strategy', { query: { villageId: id } }),
+      queryKey: queryKeys.villageStrategy(id),
+      staleTime: 5_000,
+    })),
+  });
+  const villageTraining = useQueries({
+    queries: villageIds.map((id) => ({
+      enabled: isVillageSheetOpen,
+      queryFn: () => apiClient.get<ArmyTrainingDto[]>(`/army/${id}/training`),
+      queryKey: queryKeys.armyTraining(id),
+      staleTime: 2_000,
+    })),
+  });
+  const powerByVillageId = useMemo(
+    () =>
+      new Map(
+        (kingdomPower.data?.villages ?? []).map((village) => [
+          village.villageId,
+          village.total,
+        ]),
+      ),
+    [kingdomPower.data?.villages],
+  );
+  const resourcesByVillageId = useMemo(
+    () => toResultMap(villageIds, villageResources),
+    [villageIds, villageResources],
+  );
+  const populationByVillageId = useMemo(
+    () => toResultMap(villageIds, villagePopulation),
+    [villageIds, villagePopulation],
+  );
+  const buildingsByVillageId = useMemo(
+    () => toResultMap(villageIds, villageBuildings),
+    [villageIds, villageBuildings],
+  );
+  const queueByVillageId = useMemo(
+    () => toResultMap(villageIds, villageQueue),
+    [villageIds, villageQueue],
+  );
+  const strategyByVillageId = useMemo(
+    () => toResultMap(villageIds, villageStrategy),
+    [villageIds, villageStrategy],
+  );
+  const trainingByVillageId = useMemo(
+    () => toResultMap(villageIds, villageTraining),
+    [villageIds, villageTraining],
+  );
+  const villageSheetItems = useMemo(
+    () =>
+      buildMultiVillageSheetItems(villages, activeVillage?.id ?? villageId, {
+        buildingsByVillageId,
+        populationByVillageId,
+        powerByVillageId,
+        queueByVillageId,
+        resourcesByVillageId,
+        strategyByVillageId,
+        trainingByVillageId,
+      })
+        .toSorted((a, b) =>
+          sortAscending
+            ? a.name.localeCompare(b.name, 'fr')
+            : b.name.localeCompare(a.name, 'fr'),
+        ),
+    [
+      activeVillage?.id,
+      buildingsByVillageId,
+      populationByVillageId,
+      powerByVillageId,
+      queueByVillageId,
+      resourcesByVillageId,
+      sortAscending,
+      strategyByVillageId,
+      trainingByVillageId,
+      villageId,
+      villages,
+    ],
+  );
 
   useEffect(() => {
     if (
@@ -111,7 +257,16 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
     const index = activeVillageIndex >= 0 ? activeVillageIndex : 0;
     const nextIndex = (index + direction + villages.length) % villages.length;
     setVillage(villages[nextIndex].id);
-    setIsVillageMenuOpen(false);
+    setIsVillageSheetOpen(false);
+  };
+
+  const openVillageActivity = (
+    village: MultiVillageItem,
+    activity: MultiVillageActivityKind,
+  ) => {
+    setVillage(village.id);
+    setIsVillageSheetOpen(false);
+    navigate(activity === 'build' ? '/game' : '/game/army');
   };
 
   return (
@@ -143,19 +298,16 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
 
           <button
             type="button"
-            onClick={() => setIsVillageMenuOpen((open) => !open)}
-            className="mx-10 flex min-w-0 max-w-[18rem] items-center gap-1 text-center font-game text-sm font-bold uppercase tracking-wide text-parchment"
-            aria-expanded={isVillageMenuOpen}
+            onClick={() => {
+              if (villages.length > 1) setIsVillageSheetOpen(true);
+            }}
+            disabled={villages.length <= 1}
+            className="mx-10 flex min-w-0 max-w-[18rem] items-center gap-1 text-center font-game text-sm font-bold uppercase tracking-wide text-parchment disabled:cursor-default"
+            aria-expanded={isVillageSheetOpen}
             aria-label="Choisir le village actif"
           >
             <span className="truncate">
-              {activeVillage.isCapital
-                ? 'Capitale'
-                : activeVillage.label
-                  ? VILLAGE_LABEL_DISPLAY[activeVillage.label]
-                  : 'Village'}
-              {' — '}
-              {activeVillage.name}
+              {getVillageSelectorLabel(activeVillage)}
             </span>
             {villages.length > 1 && <ChevronDown size={16} className="shrink-0" />}
           </button>
@@ -174,32 +326,30 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
             />
           </button>
 
-          {isVillageMenuOpen && villages.length > 1 && (
-            <div className="absolute left-1/2 top-full z-50 mt-1 w-[min(21rem,calc(100vw-2rem))] -translate-x-1/2 overflow-hidden rounded border-2 border-game-gold-border bg-parchment shadow-xl">
-              {villages.map((village) => (
-                <button
-                  type="button"
-                  key={village.id}
-                  onClick={() => {
-                    setVillage(village.id);
-                    setIsVillageMenuOpen(false);
-                  }}
-                  className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left font-game text-sm font-bold text-kingdom-900 ${
-                    village.id === activeVillage.id ? 'bg-game-gold/25' : 'hover:bg-kingdom-100'
-                  }`}
-                >
-                  <span className="truncate">{village.name}</span>
-                  <span className="shrink-0 text-[10px] uppercase text-kingdom-700">
-                    {village.isCapital
-                      ? 'Capitale'
-                      : village.label
-                        ? VILLAGE_LABEL_DISPLAY[village.label]
-                        : ''}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
+          <BottomSheet
+            className="mx-auto h-[86vh] max-w-[32rem]"
+            isOpen={isVillageSheetOpen}
+            maxHeight="86vh"
+            onClose={() => setIsVillageSheetOpen(false)}
+            zIndex={50}
+          >
+              <MultiVillageBottomSheet
+                availableFilters={['all', 'active']}
+                className="relative h-full max-h-full"
+                filter={villageFilter}
+                labels={multiVillageBottomSheetLabels}
+                onActivitySelect={openVillageActivity}
+                onClose={() => setIsVillageSheetOpen(false)}
+                onFilterChange={setVillageFilter}
+                onSelectVillage={(village) => {
+                  setVillage(village.id);
+                  setIsVillageSheetOpen(false);
+                }}
+                onSort={() => setSortAscending((value) => !value)}
+                totalCount={villages.length}
+                villages={villageSheetItems}
+              />
+          </BottomSheet>
         </div>
       )}
     </div>
