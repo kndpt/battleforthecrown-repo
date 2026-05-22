@@ -17,6 +17,14 @@ export class VillageService {
   async getVillages(worldId: string, userId: string) {
     const villages = await this.prisma.village.findMany({
       where: { worldId, userId },
+      include: {
+        buildings: {
+          where: { type: 'CASTLE' },
+          select: { level: true },
+          orderBy: [{ level: 'desc' }, { createdAt: 'asc' }],
+          take: 1,
+        },
+      },
       orderBy: [{ conqueredAt: 'asc' }, { createdAt: 'asc' }],
     });
     const capitalVillageId = this.getCapitalVillageId(villages);
@@ -28,6 +36,7 @@ export class VillageService {
       x: v.x,
       y: v.y,
       userId: v.userId ?? undefined,
+      castleLevel: v.buildings[0]?.level ?? 1,
       createdAt: v.createdAt,
       conqueredAt: v.conqueredAt,
       label: v.label,

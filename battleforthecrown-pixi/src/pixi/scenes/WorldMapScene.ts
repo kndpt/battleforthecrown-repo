@@ -1,7 +1,7 @@
 import { Assets, Container, Graphics, Sprite, Text, Texture, type Application, type FederatedPointerEvent } from 'pixi.js';
 import { Viewport } from 'pixi-viewport';
 import type { PixiScene } from './SceneManager';
-import type { MapEntity } from '@/api/world-types';
+import { villageSpriteAliasForEntity, type MapEntity } from '@/api/world-types';
 import type { ExpeditionSnapshot } from '@/stores/expeditions';
 import type { VisionDisk } from '@battleforthecrown/shared/world';
 import { createExpeditionVisual, type ExpeditionVisualHandle } from '@/pixi/entities/ExpeditionVisual';
@@ -85,7 +85,7 @@ interface EntityVisual {
 
 function aliasFor(entity: MapEntity): string | null {
   if (entity.isMine || entity.kind === 'PLAYER_VILLAGE') {
-    return 'world.village.t1';
+    return villageSpriteAliasForEntity(entity);
   }
   if (entity.kind === 'BARBARIAN_VILLAGE') {
     const tier = entity.tier ?? 'T1';

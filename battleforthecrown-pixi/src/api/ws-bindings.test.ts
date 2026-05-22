@@ -188,6 +188,30 @@ describe('applyBuildingCompleted', () => {
     expect(toasts[0].title).toContain('Construction');
     expect(toasts[0].description).toBe('Camp de bûcherons niveau 3');
   });
+
+  it('invalidates village visual feeds when the castle level changes', () => {
+    setCurrentWorldSession();
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.myVillages('user-1', 'world-1'), []);
+    queryClient.setQueryData(queryKeys.worldEntities('world-1'), {
+      entities: [],
+      visionDisks: [],
+      fogOfWarEnabled: true,
+    });
+
+    applyBuildingCompleted(
+      {
+        buildingId: 'castle-1',
+        villageId: 'v-att',
+        buildingType: 'CASTLE',
+        level: 10,
+      },
+      { queryClient },
+    );
+
+    expect(queryClient.getQueryState(queryKeys.myVillages('user-1', 'world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.worldEntities('world-1'))?.isInvalidated).toBe(true);
+  });
 });
 
 describe('applyUnitTrainingCompleted', () => {

@@ -1,8 +1,8 @@
 # Run #030 — feature-world-map-village-sprites-by-castle-level
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-05-22 14:35 CEST
+> **Terminé** : 2026-05-22 14:49 CEST
 
 ## Cible
 
@@ -64,31 +64,57 @@
 
 ## Décomposition initiale (rempli par le lead à l'étape 3)
 
-_(Vide au démarrage. Tâches chirurgicales : ≤ 5 fichiers chacune, scope précis, critère de succès observable.)_
+- [x] Shared : ajouter `villageVisualTierFromCastleLevel(level): 1..6`, l'exporter et couvrir le mapping Piste A depuis un test consommateur.
+- [x] Backend : enrichir les DTO villages joueurs avec `castleLevel` depuis la relation `Village.buildings` filtrée sur `CASTLE`, sans requête par village.
+- [x] Front Pixi : propager `castleLevel` dans `MapEntity`, résoudre l'alias `world.village.tN`, préserver la reconciliation existante.
+- [x] Realtime/cache : invalider `myVillages` + `worldEntities` quand une construction `CASTLE` se termine.
+- [x] Vérifications finales : review indépendante, smokes backend, `yarn static-check`, archive + commit.
 
 ## Progress (rempli pendant le run)
 
-_(Vide au démarrage. Mis à jour à chaque transition d'étape ou de tâche.)_
+- [x] Préflight : `git status` clean, fiche run lue, règles repo + `SPEC.md` + doc Château lues.
+- [x] Cartographie : `WorldEntitiesQueryService`, `VillageService`, `world-types`, `WorldMapScene`, manifest et tests existants inspectés.
+- [x] Implémentation : shared/backend/frontend modifiés.
+- [x] Tests ciblés : shared build, tests Pixi ciblés, preflight smoke, type-check backend, type-check Pixi après correction.
+- [x] Review indépendante : premier verdict `BLOCK` (fichiers non trackés + `orderBy` CASTLE), corrections appliquées, re-review `GO`.
+- [x] Hard gates finaux : `static-check` vert, smoke backend complet vert.
 
 ## Décisions prises
 
-_(Vide au démarrage. Décisions archi non triviales, dérogations lead, findings de review, refus de sub-agents.)_
+- Mapping retenu : Piste A (`1,1,2,2,3,3,4,5,6,6`) pour rester aligné avec la courbe Château L1-L10 et réserver T6 au late game.
+- Backend : expose `castleLevel` brut uniquement ; le mapping visuel reste dans `packages/shared`.
+- Propagation level-up : pas de nouvel event WS. L'event existant `building.completed` invalide les feeds carte quand `buildingType === 'CASTLE'`.
+- Review : ajout d'un `orderBy` défensif sur la relation `buildings` CASTLE (`level desc`, `createdAt asc`) pour éviter une sélection arbitraire si des doublons DB existent.
 
 ## Rapport final
 
-_(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tickets ouverts, méta-évaluation si applicable.)_
+Livré :
+
+- Helper shared `villageVisualTierFromCastleLevel(level): 1..6`, exporté depuis `@battleforthecrown/shared/world`, mapping Piste A.
+- DTO villages joueurs enrichis avec `castleLevel` depuis la relation `Village.buildings` filtrée sur `CASTLE`, sans requête par village.
+- Front Pixi : `MapEntity.castleLevel`, résolution `world.village.tN`, swap de texture par reconciliation existante.
+- Cache/realtime : `building.completed` et mutation upgrade Château invalident `myVillages` + `worldEntities`.
+- Tests : mapping helper, propagation `castleLevel`, invalidation Château, smoke `vision` enrichi.
+
+Docs : aucun changement nécessaire, raison : la mécanique gameplay Château existe déjà dans `docs/gameplay/03-buildings.md`; ce run ajoute un mapping visuel d'implémentation dont la source durable est le helper shared + la fiche archivée.
 
 ### Acceptance & QA
 
 - **Critères d'acceptance vérifiés** (commande exécutable obligatoire si automatisable, preuve textuelle uniquement si visuel/gameplay/UX) :
-  - [ ] Helper shared testé — `yarn workspace @bftc/shared test` (ou équivalent) → résultat à reporter.
-  - [ ] DTO entities expose `castleLevel` — `curl http://localhost:15001/world/<worldId>/entities` (avec JWT) → vérifier présence du champ.
-  - [ ] `yarn static-check` vert.
-  - [ ] Sprite correct sur WorldMapScene — visuel/gameplay (QA IG).
-- **Review indépendante** : `Déclenchée (raison: a — back+front simultané, contrat DTO traversant shared)` — verdict à reporter.
-- **Tests automatisés** : commandes exactes + résultat synthétique.
-- **Smokes ajoutés/modifiés** : à statuer (probablement aucun — feature visuelle).
-- **QA fonctionnelle agent** : `curl` sur l'endpoint entities pour vérifier la présence de `castleLevel` ; lecture SQL via `bftc-db` pour confirmer un upgrade Château se reflète dans la query.
+  - [x] Helper shared testé — `rtk yarn workspace battleforthecrown-pixi test --run src/features/world/villageVisuals.test.ts src/features/world/buildMapEntities.test.ts src/api/ws-bindings.test.ts src/pixi/assets/manifest.test.ts` → 4 fichiers, 39 tests passés.
+  - [x] DTO entities expose `castleLevel` — `rtk yarn workspace battleforthecrown-backend test:smoke:run vision.smoke.spec.ts` → smoke enrichi vérifie `castleLevel: 10` sur un village joueur visible.
+  - [x] `yarn static-check` vert — `rtk yarn static-check` → OK.
+  - [x] Sprite correct sur WorldMapScene — `visuel` → résolution `castleLevel 10 -> world.village.t6` couverte par test helper ; rendu final à confirmer IG.
+- **Review indépendante** : `Déclenchée (raison: a — back+front simultané, contrat DTO traversant shared)` — premier verdict `BLOCK`, findings résolus ; re-review `GO`.
+- **Tests automatisés** :
+  - `rtk yarn workspace @battleforthecrown/shared build` → OK.
+  - `rtk yarn workspace battleforthecrown-pixi type-check` → OK.
+  - `rtk yarn workspace battleforthecrown-backend type-check` → OK.
+  - `rtk yarn workspace battleforthecrown-pixi test --run src/features/world/villageVisuals.test.ts src/features/world/buildMapEntities.test.ts src/api/ws-bindings.test.ts src/pixi/assets/manifest.test.ts` → 39 tests passés.
+  - `rtk yarn static-check` → OK.
+- **Smokes lancés** : `rtk yarn test:smoke` → 23 suites, 46 tests passés.
+- **Smokes ajoutés/modifiés** : `battleforthecrown-backend/test/vision.smoke.spec.ts` — scénario player village visible enrichi pour vérifier `castleLevel`.
+- **QA fonctionnelle agent** : smoke REST réel via `vision.smoke.spec.ts` ; vérification SQL/log Prisma dédiée N+1 non lancée, mais la query utilise un `findMany` avec relation filtrée et le smoke confirme le payload.
 - **Tests IG à faire par le user** :
   - Ouvrir la WorldMap sur un compte avec un village Château 1 → confirmer affichage `village-tier1.png`.
   - Upgrader le Château jusqu'à un palier qui change de tier (selon mapping retenu) → confirmer swap visible.

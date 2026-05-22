@@ -99,6 +99,9 @@ export function applyBuildingCompleted(
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.villageStrategy(payload.villageId) });
   invalidatePowerQueries(ctx, payload.villageId);
   invalidateRetentionSummary(ctx);
+  if (payload.buildingType === 'CASTLE') {
+    invalidateVillageVisualQueries(ctx);
+  }
   useUiStore.getState().pushToast({
     tone: 'success',
     title: 'Construction terminée',
@@ -437,6 +440,13 @@ function invalidateRetentionSummary(ctx: BindingsContext): void {
   const userId = useAuthStore.getState().user?.id ?? null;
   const worldId = useGameStore.getState().worldId;
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.retentionSummary(userId, worldId) });
+}
+
+function invalidateVillageVisualQueries(ctx: BindingsContext): void {
+  const userId = useAuthStore.getState().user?.id ?? null;
+  const worldId = useGameStore.getState().worldId;
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.myVillages(userId, worldId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.worldEntities(worldId) });
 }
 
 export function applyVillageConquered(payload: VillageConqueredPayload, ctx: BindingsContext): void {

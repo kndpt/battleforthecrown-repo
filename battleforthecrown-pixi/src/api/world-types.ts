@@ -1,5 +1,6 @@
 import {
   normalizeTier,
+  villageVisualTierFromCastleLevel,
   type WorldTier,
   type WorldEntityFogged,
   type WorldEntityResponse,
@@ -35,6 +36,7 @@ export interface MapEntity {
   y: number;
   name: string;
   tier: WorldTier | null;
+  castleLevel?: number | null;
   label?: VillageLabel | null;
   isCapital?: boolean;
   captureWindow?: {
@@ -68,6 +70,7 @@ export function entityFromWorldDto(
     name:
       typeof dto.data.name === "string" ? dto.data.name : dto.id.slice(0, 6),
     tier: normalizeTier(dto.data.tier),
+    castleLevel: normalizeCastleLevel(dto.data.castleLevel),
     label: ownerId === myUserId ? normalizeVillageLabel(dto.data.label) : undefined,
     isCapital: ownerId === myUserId ? dto.data.isCapital === true : undefined,
     captureWindow: normalizeCaptureWindow(dto.data.captureWindow),
@@ -83,6 +86,7 @@ export function entityFromFoggedDto(dto: WorldEntityFogged): MapEntity {
     y: dto.y,
     name: "",
     tier: null,
+    castleLevel: null,
   };
 }
 
@@ -99,9 +103,15 @@ export function entityFromMyVillage(
     y: dto.y,
     name: dto.name,
     tier: null,
+    castleLevel: normalizeCastleLevel(dto.castleLevel),
     label: dto.label ?? null,
     isCapital: dto.isCapital ?? false,
   };
+}
+
+export function villageSpriteAliasForEntity(entity: MapEntity): string {
+  const tier = villageVisualTierFromCastleLevel(entity.castleLevel ?? 1);
+  return `world.village.t${tier}`;
 }
 
 function normalizeCaptureWindow(value: unknown): MapEntity["captureWindow"] {
@@ -128,4 +138,9 @@ function normalizeVillageLabel(value: unknown): VillageLabel | null {
   return typeof value === "string" && value in VILLAGE_LABEL_DISPLAY
     ? (value as VillageLabel)
     : null;
+}
+
+function normalizeCastleLevel(value: unknown): number | null {
+  if (!Number.isFinite(value)) return null;
+  return Math.max(1, Math.min(10, Math.floor(value as number)));
 }

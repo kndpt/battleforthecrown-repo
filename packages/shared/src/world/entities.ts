@@ -18,6 +18,7 @@ export interface WorldEntityDto {
     name?: string;
     villageId?: string;
     userId?: string;
+    castleLevel?: number;
     captureWindow?: {
       status: 'OPEN';
       pendingConquestId: string;
@@ -57,6 +58,7 @@ export interface WorldVillageDto {
   y: number;
   isBarbarian?: boolean;
   tier?: string | null;
+  castleLevel?: number;
   createdAt?: string;
   label?: VillageLabel | null;
   isCapital?: boolean;

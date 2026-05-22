@@ -907,6 +907,8 @@ interface UpgradeContext {
 
 export function useUpgradeBuildingMutation() {
   const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
   return useMutation<UpgradeResponseDto, Error, UpgradeBuildingInput, UpgradeContext>({
     mutationFn: ({ villageId, buildingType }) =>
       apiClient.post<UpgradeResponseDto>(`/village/${villageId}/upgrade`, { buildingType }),
@@ -943,11 +945,15 @@ export function useUpgradeBuildingMutation() {
         queryClient.setQueryData(queryKeys.resources(villageId), context.previousResources);
       }
     },
-    onSettled: (_data, _err, { villageId }) => {
+    onSettled: (_data, _err, { villageId, buildingType }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.queue(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.buildings(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.resources(villageId) });
+      if (buildingType === 'CASTLE') {
+        queryClient.invalidateQueries({ queryKey: queryKeys.myVillages(userId, worldId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.worldEntities(worldId) });
+      }
     },
   });
 }
