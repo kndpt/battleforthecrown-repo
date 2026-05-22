@@ -61,7 +61,6 @@ export interface BuildingModalProps {
   name: string;
   notice?: BuildingModalNotice;
   onAction?: (action: BuildingModalAction) => void;
-  onClose?: () => void;
   summaryBadges?: BuildingModalBadge[];
   summaryLabel?: string;
   tagline?: string;
@@ -303,7 +302,6 @@ export function BuildingModal({
   name,
   notice,
   onAction,
-  onClose,
   summaryBadges,
   summaryLabel,
   tagline,
@@ -344,7 +342,6 @@ export function BuildingModal({
       }
       footerClassName={footerClassName}
       maxHeight={maxHeight}
-      onClose={onClose}
       width={width}
     >
       <BuildingModalHero

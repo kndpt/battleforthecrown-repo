@@ -619,7 +619,6 @@ export function SpecializedBuildingDetailModal(props: SpecializedBuildingDetailM
           name={meta.label}
           notice={notice}
           onAction={handleAction}
-          onClose={onClose}
           summaryBadges={[buildingBadge(building.type)]}
           summaryLabel={isMaxLevel ? 'Niveau maximal' : undefined}
           tagline={meta.description}

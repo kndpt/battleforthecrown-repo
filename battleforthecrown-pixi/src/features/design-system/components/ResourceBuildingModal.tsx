@@ -452,7 +452,6 @@ export function ResourceBuildingModal({
       construction={construction?.state}
       notice={notice}
       onAction={handleAction}
-      onClose={() => handleAction({ id: 'close', label: labels.actionClose, tone: 'neutral' })}
       summaryBadges={[{ icon: resourceIcon, label: resourceLabel }]}
       summaryLabel={labels.economyLoop}
       tagline={tagline}
