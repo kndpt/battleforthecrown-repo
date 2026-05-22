@@ -47,6 +47,7 @@ import {
   NumberStepper,
   PipRating,
   PlayerProfileCard,
+  PlayerProfileSheet,
   ProgressBar,
   QuestMissionCard,
   RadiusTile,
@@ -78,6 +79,8 @@ import {
   type ExpeditionActivityCardProps,
   type KingdomActivitiesPanelLabels,
   type KingdomActivityTab,
+  type PlayerProfileSheetTab,
+  type PlayerProfileSheetProps,
   type ResourceBuildingKey,
   type ResourceBuildingLinkVariant,
   type ResourceBuildingModalProps,
@@ -576,6 +579,60 @@ const dailyQuestBacklog = {
   title: 'Carte 1 de 3',
 };
 
+const playerProfileSheetFixture = {
+  icons: {
+    armyPower: '/assets/army-power.png',
+    castle: '/assets/castle.png',
+    crown: '/assets/casual-icons/crown.png',
+    defense: '/assets/hand-silver.png',
+    position: '/assets/position.png',
+    raids: '/assets/hand-red.png',
+  },
+  labels: {
+    close: 'Fermer',
+    history: 'Historique',
+    logout: 'Quitter la session',
+    phase: 'Phase verrouillée',
+    tabs: {
+      profile: 'Profil',
+      settings: 'Réglages',
+      villages: 'Villages',
+    },
+    villageHint: 'Encore trop de place libre ? Le monde ne va pas se conquérir tout seul.',
+    world: 'Monde',
+  },
+  player: {
+    initials: 'SK',
+    level: 12,
+    name: 'Sire Kelvin',
+    online: true,
+    tribe: { cap: 30, members: 14, name: 'Les Lames du Nord', role: 'Duc', tag: 'BFC' },
+  },
+  settings: [
+    { icon: '🔔', id: 'notifications', label: 'Notifications', value: 'Activées' },
+    { icon: '🔊', id: 'sound', label: 'Son et musique', value: 'Activés' },
+    { icon: '🌐', id: 'language', label: 'Langue', value: 'Français' },
+    { icon: '❓', id: 'help', label: 'Aide et support' },
+    { icon: '📋', id: 'terms', label: 'Conditions' },
+  ],
+  stats: {
+    crowns: '28 410',
+    defenses: 11,
+    points: '62.480',
+    power: '4 250',
+    raidsWon: 28,
+    rank: 47,
+    rankTotal: 312,
+    villages: 3,
+  },
+  villages: [
+    { capital: true, coords: '(7,12)', id: 'v1', level: 5, name: 'Kelvinor', power: '2 480', style: { id: 'FORTRESS', label: 'Forteresse' } },
+    { coords: '(11,4)', id: 'v2', level: 3, name: "Vald'Or", power: '980', style: { id: 'ECONOMIC', label: 'Économique' } },
+    { coords: '(2,18)', id: 'v3', level: 3, name: 'Pierre-Noire', power: '790', style: { id: 'RAIDERS', label: 'Raiders' } },
+  ],
+  world: { day: 18, name: 'Avalon-3', total: 60 },
+} satisfies Pick<PlayerProfileSheetProps, 'icons' | 'labels' | 'player' | 'settings' | 'stats' | 'villages' | 'world'>;
+
 export function DesignSystemPreview() {
   const [inputValue, setInputValue] = useState('');
   const [lordName, setLordName] = useState('');
@@ -602,6 +659,7 @@ export function DesignSystemPreview() {
   const [villageStyle, setVillageStyle] = useState<VillageStyleId>('RAIDERS');
   const [victoryModalOpen, setVictoryModalOpen] = useState(false);
   const [combatReportAction, setCombatReportAction] = useState('Aucune action');
+  const [playerProfileSheetTab, setPlayerProfileSheetTab] = useState<PlayerProfileSheetTab>('profile');
   const resourceBuildingFixture = resourceBuildingFixtures[resourceBuildingKey];
   const { buildingType: resourceBuildingType, ...resourceBuildingModalFixture } = resourceBuildingFixture;
   const resourceBuildingUpgrade = getSharedUpgradePreview(resourceBuildingType, resourceBuildingLevel);
@@ -1852,7 +1910,28 @@ export function DesignSystemPreview() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Player profile card</h2>
+          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Player profile sheet</h2>
+          <div className="flex w-full justify-center">
+            <div className="relative h-[640px] w-full max-w-[390px] overflow-hidden rounded-2xl border-2 border-[#3c2619] bg-[radial-gradient(circle_at_50%_10%,#5d8a39,#2f5125_45%,#1a1a2e)] shadow-[0_12px_28px_rgba(60,38,25,.22)]">
+              <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,.08),rgba(0,0,0,.28))]" />
+              <div className="absolute inset-0 bg-[rgba(0,0,0,.55)] backdrop-blur-[2px]" />
+              <PlayerProfileSheet
+                activeTab={playerProfileSheetTab}
+                icons={playerProfileSheetFixture.icons}
+                labels={playerProfileSheetFixture.labels}
+                onClose={() => undefined}
+                onLogout={() => undefined}
+                onTabChange={setPlayerProfileSheetTab}
+                onVillageSelect={() => undefined}
+                player={playerProfileSheetFixture.player}
+                settings={playerProfileSheetFixture.settings}
+                stats={playerProfileSheetFixture.stats}
+                villages={playerProfileSheetFixture.villages}
+                world={playerProfileSheetFixture.world}
+              />
+            </div>
+          </div>
+          <h3 className="font-game text-xl font-bold text-[#1f2937]">Player profile card</h3>
           <div className="grid w-full gap-3 sm:grid-cols-2">
             <PlayerProfileCard
               avatarIcon="/assets/crown.png"
