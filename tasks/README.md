@@ -28,6 +28,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 ### Runs actifs
 
 - [030 — Sprites de villages joueurs selon le niveau du Château](./runs/030-feature-world-map-village-sprites-by-castle-level.md) — 📋 `PLANNED`. Mapper `castleLevel` (1..10) → 6 sprites `village-tierN.png` via helper shared, exposer le champ sur le DTO entities et rendre côté WorldMapScene.
+- [031 — Sélecteur multi-village en bottom sheet](./runs/031-feature-multi-village-bottom-sheet-selector.md) — 📋 `PLANNED`. Brancher le nouveau bottom sheet multi-village sur le clic du nom de village IG sans inventer les données runtime manquantes.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés
