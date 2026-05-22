@@ -14,6 +14,7 @@ import {
   usePopulationQuery,
 } from '@/api/queries';
 import { formatResourceAmount } from '@/lib/resourceConfig';
+import { BottomSheet } from '@/ui';
 import {
   buildMultiVillageSheetItems,
   getVillageSelectorLabel,
@@ -201,17 +202,16 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
             />
           </button>
 
-          {isVillageSheetOpen && (
-            <div className="fixed inset-0 z-50">
-              <button
-                aria-label="Fermer le sélecteur de village"
-                className="absolute inset-0 cursor-default bg-black/55 backdrop-blur-[2px]"
-                onClick={() => setIsVillageSheetOpen(false)}
-                type="button"
-              />
+          <BottomSheet
+            className="mx-auto h-[86vh] max-w-[32rem]"
+            isOpen={isVillageSheetOpen}
+            maxHeight="86vh"
+            onClose={() => setIsVillageSheetOpen(false)}
+            zIndex={50}
+          >
               <MultiVillageBottomSheet
                 availableFilters={['all', 'active']}
-                className="z-10 mx-auto max-w-[32rem]"
+                className="relative h-full max-h-full"
                 filter={villageFilter}
                 labels={multiVillageBottomSheetLabels}
                 onClose={() => setIsVillageSheetOpen(false)}
@@ -224,8 +224,7 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
                 totalCount={villages.length}
                 villages={villageSheetItems}
               />
-            </div>
-          )}
+          </BottomSheet>
         </div>
       )}
     </div>

@@ -97,7 +97,8 @@ describe('GameHeader multi-village selector', () => {
   it('opens the bottom sheet from the village name and selects a village without rendering the old inline menu', async () => {
     renderHeader();
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Choisir le village actif' }));
+    const selector = await screen.findByRole('button', { name: 'Choisir le village actif' });
+    fireEvent.click(selector);
 
     expect(screen.getByText('Mes villages')).toBeInTheDocument();
     expect(screen.getByText('Haute Cour')).toBeInTheDocument();
@@ -114,24 +115,27 @@ describe('GameHeader multi-village selector', () => {
     await waitFor(() => {
       expect(useGameStore.getState().villageId).toBe('v2');
     });
-    expect(screen.queryByText('Mes villages')).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(selector).toHaveAttribute('aria-expanded', 'false');
+    });
   });
 
   it('keeps arrows as direct village switches and does not open the bottom sheet', async () => {
     renderHeader();
 
+    const selector = await screen.findByRole('button', { name: 'Choisir le village actif' });
     fireEvent.click(await screen.findByRole('button', { name: 'Village suivant' }));
 
     await waitFor(() => {
       expect(useGameStore.getState().villageId).toBe('v2');
     });
-    expect(screen.queryByText('Mes villages')).not.toBeInTheDocument();
+    expect(selector).toHaveAttribute('aria-expanded', 'false');
 
     fireEvent.click(screen.getByRole('button', { name: 'Village précédent' }));
 
     await waitFor(() => {
       expect(useGameStore.getState().villageId).toBe('v1');
     });
-    expect(screen.queryByText('Mes villages')).not.toBeInTheDocument();
+    expect(selector).toHaveAttribute('aria-expanded', 'false');
   });
 });
