@@ -117,6 +117,20 @@ export { NumberStepper } from './NumberStepper';
 export type { NumberStepperControl, NumberStepperProps, NumberStepperSize } from './NumberStepper';
 export { PlayerProfileCard } from './PlayerProfileCard';
 export type { PlayerProfileAction, PlayerProfileAvatarTone, PlayerProfileCardProps, PlayerProfileRelation, PlayerProfileStat, PlayerProfileTribe, PlayerProfileTribeTone, PlayerProfileVariant } from './PlayerProfileCard';
+export { PlayerProfileSheet } from './PlayerProfileSheet';
+export type {
+  PlayerProfileSheetIcons,
+  PlayerProfileSheetLabels,
+  PlayerProfileSheetPlayer,
+  PlayerProfileSheetProps,
+  PlayerProfileSheetSetting,
+  PlayerProfileSheetStats,
+  PlayerProfileSheetTab,
+  PlayerProfileSheetTribe,
+  PlayerProfileSheetVillage,
+  PlayerProfileSheetVillageStyle,
+  PlayerProfileSheetWorld,
+} from './PlayerProfileSheet';
 export { BuildingLevelRow, LevelChip, PipRating } from './PipRating';
 export type { BuildingLevelRowProps, LevelChipProps, PipRatingProps, PipRatingSize, PipRatingTone, PipRatingVariant } from './PipRating';
 export { ProgressBar } from './ProgressBar';
