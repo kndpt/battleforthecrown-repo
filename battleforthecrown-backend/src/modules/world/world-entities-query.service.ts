@@ -32,6 +32,7 @@ const playerVillageDataSchema = z.object({
   userId: z.string(),
   name: z.string(),
   villageId: z.string(),
+  castleLevel: z.number().int().min(1).max(10),
 });
 
 type PlayerVillageData = z.infer<typeof playerVillageDataSchema>;
@@ -212,22 +213,33 @@ export class WorldEntitiesQueryService {
         y: true,
         name: true,
         userId: true,
+        buildings: {
+          where: { type: 'CASTLE' },
+          select: { level: true },
+          orderBy: [{ level: 'desc' }, { createdAt: 'asc' }],
+          take: 1,
+        },
       },
       orderBy: [{ y: 'asc' }, { x: 'asc' }],
     });
 
-    return villages.map((village) => ({
-      id: village.id,
-      worldId,
-      kind: 'PLAYER_VILLAGE' as const,
-      x: village.x,
-      y: village.y,
-      data: playerVillageDataSchema.parse({
-        userId: village.userId,
-        name: village.name,
-        villageId: village.id,
-      }),
-    }));
+    return villages.map((village) => {
+      const castleLevel = village.buildings[0]?.level ?? 1;
+
+      return {
+        id: village.id,
+        worldId,
+        kind: 'PLAYER_VILLAGE' as const,
+        x: village.x,
+        y: village.y,
+        data: playerVillageDataSchema.parse({
+          userId: village.userId,
+          name: village.name,
+          villageId: village.id,
+          castleLevel,
+        }),
+      };
+    });
   }
 }
 

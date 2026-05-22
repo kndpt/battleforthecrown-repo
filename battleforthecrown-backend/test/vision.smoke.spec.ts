@@ -150,6 +150,9 @@ describe('vision smoke', () => {
         name: 'visible-player-village',
         x: 109,
         y: 100,
+        buildings: {
+          create: { type: 'CASTLE', level: 10 },
+        },
       },
     });
     const hiddenVillage = await ctx.prisma.village.create({
@@ -175,7 +178,12 @@ describe('vision smoke', () => {
         x: number;
         y: number;
         worldId?: string;
-        data?: { userId?: string; name?: string; villageId?: string };
+        data?: {
+          userId?: string;
+          name?: string;
+          villageId?: string;
+          castleLevel?: number;
+        };
       }>;
       visionDisks: Array<{ x: number; y: number; radius: number }>;
       fogOfWarEnabled: boolean;
@@ -197,6 +205,7 @@ describe('vision smoke', () => {
         userId: visibleOwner.userId,
         name: 'visible-player-village',
         villageId: visibleVillage.id,
+        castleLevel: 10,
       },
     });
 

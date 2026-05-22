@@ -23,3 +23,8 @@ export {
   isPointInAnyVisionDisk,
   type VisionDisk,
 } from './vision';
+
+export {
+  villageVisualTierFromCastleLevel,
+  type VillageVisualTier,
+} from './village-visuals';

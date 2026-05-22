@@ -17,7 +17,7 @@ const playerEntity: WorldEntityDto = {
   kind: 'PLAYER_VILLAGE',
   x: 240,
   y: 250,
-  data: { name: 'Other Player', userId: 'other-user', villageId: 'p1' },
+  data: { name: 'Other Player', userId: 'other-user', villageId: 'p1', castleLevel: 8 },
 };
 
 const myVillage: WorldVillageDto = {
@@ -27,6 +27,7 @@ const myVillage: WorldVillageDto = {
   userId: 'me',
   x: 233,
   y: 247,
+  castleLevel: 10,
 };
 
 describe('buildMapEntities', () => {
@@ -42,6 +43,7 @@ describe('buildMapEntities', () => {
     expect(other?.kind).toBe('PLAYER_VILLAGE');
     expect(other?.isMine).toBe(false);
     expect(other?.ownerId).toBe('other-user');
+    expect(other?.castleLevel).toBe(8);
   });
 
   it('maps an open capture window from public entity data', () => {
@@ -94,6 +96,7 @@ describe('buildMapEntities', () => {
     expect(entry?.name).toBe('Royaume de Kelvin');
     expect(entry?.x).toBe(233);
     expect(entry?.y).toBe(247);
+    expect(entry?.castleLevel).toBe(10);
   });
 
   it('returns empty when both feeds are empty', () => {

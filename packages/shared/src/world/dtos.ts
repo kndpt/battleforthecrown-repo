@@ -20,6 +20,7 @@ export interface JoinedVillage {
   createdAt?: string;
   isBarbarian?: boolean;
   tier?: string | null;
+  castleLevel?: number;
   conqueredAt?: string | null;
   label?: VillageLabel | null;
   isCapital?: boolean;
