@@ -67,6 +67,7 @@ export function VillageView() {
   const [isQueueOpen, setIsQueueOpen] = useState(false);
   const [isPowerSheetOpen, setIsPowerSheetOpen] = useState(false);
   const [isExpeditionsOpen, setIsExpeditionsOpen] = useState(false);
+  const [isVillageStyleOpen, setIsVillageStyleOpen] = useState(false);
   const [kingdomActivityTab, setKingdomActivityTab] =
     useState<KingdomActivityTab>('expeditions');
   const unreadCount = useUnreadReportsCount();
@@ -79,6 +80,13 @@ export function VillageView() {
   }, [buildingsQuery.data]);
 
   const handleSelectBuilding = (building: BuildingDto) => {
+    if (building.type === BUILDING_TYPES.COUNCIL_HALL && building.level >= 1 && !building.isUnderConstruction) {
+      setSelectedBuilding(null);
+      setIsBuildingPanelOpen(false);
+      setIsVillageStyleOpen(true);
+      return;
+    }
+    setIsVillageStyleOpen(false);
     setSelectedBuilding(building);
   };
 
@@ -154,7 +162,14 @@ export function VillageView() {
         />
       </div>
 
-      {villageId && <VillageStyleControl villageId={villageId} buildings={buildings} />}
+      {villageId && (
+        <VillageStyleControl
+          villageId={villageId}
+          buildings={buildings}
+          open={isVillageStyleOpen}
+          onOpenChange={setIsVillageStyleOpen}
+        />
+      )}
 
       <QueueBottomSheet
         isOpen={isQueueOpen && !isBuildingPanelOpen}

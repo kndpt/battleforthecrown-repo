@@ -17,11 +17,16 @@ import { useGameStore } from '@/stores/game';
 
 interface VillageStyleControlProps {
   buildings: BuildingDto[];
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  showTrigger?: boolean;
   villageId: string;
 }
 
 function isCouncilHallBuilt(buildings: BuildingDto[]): boolean {
-  return buildings.some((building) => building.type === 'COUNCIL_HALL' && building.level >= 1);
+  return buildings.some(
+    (building) => building.type === 'COUNCIL_HALL' && building.level >= 1 && !building.isUnderConstruction,
+  );
 }
 
 function strategyErrorMessage(error: Error | null): string | null {
@@ -35,8 +40,19 @@ function strategyErrorMessage(error: Error | null): string | null {
   return message || 'Changement impossible';
 }
 
-export function VillageStyleControl({ buildings, villageId }: VillageStyleControlProps) {
-  const [open, setOpen] = useState(false);
+export function VillageStyleControl({
+  buildings,
+  onOpenChange,
+  open,
+  showTrigger = true,
+  villageId,
+}: VillageStyleControlProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = open ?? internalOpen;
+  const setOpen = (nextOpen: boolean) => {
+    if (open === undefined) setInternalOpen(nextOpen);
+    onOpenChange?.(nextOpen);
+  };
   const worldId = useGameStore((state) => state.worldId);
   const hasCouncilHall = isCouncilHallBuilt(buildings);
   const strategyQuery = useVillageStrategyQuery(villageId, hasCouncilHall);
@@ -86,9 +102,11 @@ export function VillageStyleControl({ buildings, villageId }: VillageStyleContro
 
   return (
     <>
-      <div className="fixed bottom-28 left-1/2 z-20 -translate-x-1/2">
-        <VillageStyleTrigger currentStyleId={currentStyleId} onClick={() => setOpen(true)} options={options} />
-      </div>
+      {showTrigger ? (
+        <div className="fixed bottom-28 left-1/2 z-20 -translate-x-1/2">
+          <VillageStyleTrigger currentStyleId={currentStyleId} onClick={() => setOpen(true)} options={options} />
+        </div>
+      ) : null}
       <VillageStyleModal
         canChange={Boolean(strategyQuery.data?.canChange)}
         cooldownEndsAt={strategyQuery.data?.cooldownEndsAt ?? null}
@@ -99,7 +117,7 @@ export function VillageStyleControl({ buildings, villageId }: VillageStyleContro
         isSubmitting={changeStrategy.isPending}
         onAdopt={handleAdopt}
         onClose={() => setOpen(false)}
-        open={open}
+        open={isOpen}
         options={options}
         scaleCosts={false}
         stock={stock ?? { crowns: 0, iron: 0, stone: 0, wood: 0 }}

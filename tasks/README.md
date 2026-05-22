@@ -31,6 +31,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ### Runs archivés
 
+- [029 — Migration design-system des modales bâtiment restantes](./runs/archive/029-migrate-building-modals-design-system.md) — ✅ `DONE` (2026-05-21). Modales bâtiment restantes migrées vers le design-system, contenus métier spécialisés et Salle du Conseil routée vers Voie du village.
 - [028 — Bonus de vitesse d'entraînement de la Caserne](./runs/archive/028-barracks-training-speed-bonus.md) — ✅ `DONE` (2026-05-21). Bonus de vitesse Caserne partagé, appliqué aux nouvelles formations backend et reflété dans l'UI armée Pixi.
 - [026 — Tempo monde : plomberie + clean cut](./runs/archive/026-world-tempo-plumbing-clean-cut.md) — ✅ `DONE` (2026-05-16). `WorldConfig.tempo` remplace `gameSpeed`/`economy.productionRate`, `TempoService` shared centralise durées/débits, callsites backend + estimations Pixi + smokes migrés.
 - [027 — Tempo monde : recalibration des constantes MVP](./runs/archive/027-world-tempo-recalibrate-mvp-constants.md) — ✅ `DONE` (2026-05-17). Valeurs absolues Standard MVP compressées : durées bâtiments/unités/capture `÷4`, production/couronnes/régen `×4`, docs gameplay `02/03/06/07/08/10/13/14/15/23` et constantes shared alignées.
