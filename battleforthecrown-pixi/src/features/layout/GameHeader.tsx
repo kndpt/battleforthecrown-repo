@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { ChevronDown } from 'lucide-react';
+import { useNavigate } from 'react-router';
 import { HeaderBar, type HeaderBarStat } from '@/features/design-system/components/HeaderBar';
 import {
   MultiVillageBottomSheet,
+  type MultiVillageActivityKind,
   type MultiVillageFilter,
+  type MultiVillageItem,
 } from '@/features/design-system/components/MultiVillageBottomSheet';
 import { useDisplayResources, useDisplayCrowns } from '@/features/resources/useDisplayResources';
 import { useAuthStore } from '@/stores/auth';
@@ -47,6 +50,7 @@ interface GameHeaderProps {
 }
 
 export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = {}) {
+  const navigate = useNavigate();
   const villageId = useGameStore((state) => state.villageId);
   const worldId = useGameStore((state) => state.worldId);
   const setVillage = useGameStore((state) => state.setVillage);
@@ -256,6 +260,15 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
     setIsVillageSheetOpen(false);
   };
 
+  const openVillageActivity = (
+    village: MultiVillageItem,
+    activity: MultiVillageActivityKind,
+  ) => {
+    setVillage(village.id);
+    setIsVillageSheetOpen(false);
+    navigate(activity === 'build' ? '/game' : '/game/army');
+  };
+
   return (
     <div className="flex flex-col bg-[#3c2619]">
       <div className="px-1.5 pt-1.5 pb-1">
@@ -325,6 +338,7 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
                 className="relative h-full max-h-full"
                 filter={villageFilter}
                 labels={multiVillageBottomSheetLabels}
+                onActivitySelect={openVillageActivity}
                 onClose={() => setIsVillageSheetOpen(false)}
                 onFilterChange={setVillageFilter}
                 onSelectVillage={(village) => {

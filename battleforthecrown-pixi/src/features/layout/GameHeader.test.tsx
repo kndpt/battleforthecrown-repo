@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter, useLocation } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiClient, type JoinedVillage } from '@/api';
 import { useAuthStore } from '@/stores/auth';
@@ -158,11 +159,20 @@ function mockApi() {
   });
 }
 
-function renderHeader() {
+function LocationProbe() {
+  const location = useLocation();
+
+  return <div data-testid="location-path">{location.pathname}</div>;
+}
+
+function renderHeader(initialPath = '/game') {
   return render(
-    <QueryClientProvider client={makeQueryClient()}>
-      <GameHeader />
-    </QueryClientProvider>,
+    <MemoryRouter initialEntries={[initialPath]}>
+      <QueryClientProvider client={makeQueryClient()}>
+        <GameHeader />
+        <LocationProbe />
+      </QueryClientProvider>
+    </MemoryRouter>,
   );
 }
 
@@ -192,7 +202,7 @@ describe('GameHeader multi-village selector', () => {
     expect(screen.getByText('Mes villages')).toBeInTheDocument();
     expect(screen.getByText('Haute Cour')).toBeInTheDocument();
     expect(screen.getByText('Marche Nord')).toBeInTheDocument();
-    expect(screen.getByText('Capitale')).toBeInTheDocument();
+    expect(screen.queryByText('Capitale')).not.toBeInTheDocument();
     expect(screen.getByText('Défensif')).toBeInTheDocument();
     expect(await screen.findByText('10:12')).toBeInTheDocument();
     expect(await screen.findByText('220')).toBeInTheDocument();
@@ -203,7 +213,7 @@ describe('GameHeader multi-village selector', () => {
     expect(await screen.findByTitle(/Formation · 8:00/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Trier' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /Marche Nord/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ouvrir Marche Nord' }));
 
     await waitFor(() => {
       expect(useGameStore.getState().villageId).toBe('v2');
@@ -230,5 +240,29 @@ describe('GameHeader multi-village selector', () => {
       expect(useGameStore.getState().villageId).toBe('v1');
     });
     expect(selector).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('opens the matching view when an activity timer is clicked', async () => {
+    renderHeader('/game/army');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Choisir le village actif' }));
+    fireEvent.click(await screen.findByRole('button', { name: /Chantier · 1:00/ }));
+
+    await waitFor(() => {
+      expect(useGameStore.getState().villageId).toBe('v1');
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('location-path')).toHaveTextContent('/game');
+    });
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Choisir le village actif' }));
+    fireEvent.click(await screen.findByRole('button', { name: /Seigneur · 2:00/ }));
+
+    await waitFor(() => {
+      expect(useGameStore.getState().villageId).toBe('v2');
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('location-path')).toHaveTextContent('/game/army');
+    });
   });
 });

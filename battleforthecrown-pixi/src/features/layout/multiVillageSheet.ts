@@ -59,9 +59,7 @@ export function buildMultiVillageSheetItems(
 
   return villages.map((village) => ({
     active: village.id === activeVillageId,
-    badge: village.isCapital
-      ? 'Capitale'
-      : village.label
+    badge: village.label
         ? VILLAGE_LABEL_DISPLAY[village.label]
         : null,
     builds: mapBuildActivities(runtime.queueByVillageId?.get(village.id), now),
