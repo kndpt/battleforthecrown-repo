@@ -29,11 +29,11 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 ### Runs actifs
 
 - [030 — Sprites de villages joueurs selon le niveau du Château](./runs/030-feature-world-map-village-sprites-by-castle-level.md) — 📋 `PLANNED`. Mapper `castleLevel` (1..10) → 6 sprites `village-tierN.png` via helper shared, exposer le champ sur le DTO entities et rendre côté WorldMapScene.
-- [031 — Sélecteur multi-village en bottom sheet](./runs/031-feature-multi-village-bottom-sheet-selector.md) — 📋 `PLANNED`. Brancher le nouveau bottom sheet multi-village sur le clic du nom de village IG sans inventer les données runtime manquantes.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés
 
+- [031 — Sélecteur multi-village en bottom sheet](./runs/archive/031-feature-multi-village-bottom-sheet-selector.md) — ✅ `DONE` (2026-05-22). Header IG branché sur le `MultiVillageBottomSheet` design-system, flèches directes préservées, données indisponibles neutralisées sans valeurs fictives, tri alphabétique et test Pixi ciblé.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/archive/029-migrate-building-modals-design-system.md) — ✅ `DONE` (2026-05-21). Modales bâtiment restantes migrées vers le design-system, contenus métier spécialisés et Salle du Conseil routée vers Voie du village.
 - [028 — Bonus de vitesse d'entraînement de la Caserne](./runs/archive/028-barracks-training-speed-bonus.md) — ✅ `DONE` (2026-05-21). Bonus de vitesse Caserne partagé, appliqué aux nouvelles formations backend et reflété dans l'UI armée Pixi.
 - [026 — Tempo monde : plomberie + clean cut](./runs/archive/026-world-tempo-plumbing-clean-cut.md) — ✅ `DONE` (2026-05-16). `WorldConfig.tempo` remplace `gameSpeed`/`economy.productionRate`, `TempoService` shared centralise durées/débits, callsites backend + estimations Pixi + smokes migrés.

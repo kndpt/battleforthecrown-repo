@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { HeaderBar, type HeaderBarStat } from '@/features/design-system/components/HeaderBar';
+import {
+  MultiVillageBottomSheet,
+  type MultiVillageFilter,
+} from '@/features/design-system/components/MultiVillageBottomSheet';
 import { useDisplayResources, useDisplayCrowns } from '@/features/resources/useDisplayResources';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
@@ -10,7 +14,11 @@ import {
   usePopulationQuery,
 } from '@/api/queries';
 import { formatResourceAmount } from '@/lib/resourceConfig';
-import { VILLAGE_LABEL_DISPLAY } from '@battleforthecrown/shared/village';
+import {
+  buildMultiVillageSheetItems,
+  getVillageSelectorLabel,
+  multiVillageBottomSheetLabels,
+} from './multiVillageSheet';
 
 const integerFormatter = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 
@@ -29,7 +37,9 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
   const myVillages = useMyVillagesQuery(worldId);
   const { display, hasSnapshot } = useDisplayResources(villageId);
   const { balance: crownBalance } = useDisplayCrowns(userId, worldId);
-  const [isVillageMenuOpen, setIsVillageMenuOpen] = useState(false);
+  const [isVillageSheetOpen, setIsVillageSheetOpen] = useState(false);
+  const [villageFilter, setVillageFilter] = useState<MultiVillageFilter>('all');
+  const [sortAscending, setSortAscending] = useState(true);
 
   const villages = myVillages.data ?? [];
   const fallbackVillageId = villages.find((village) => village.isCapital)?.id
@@ -40,6 +50,26 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
   const activeVillageIndex = activeVillage
     ? villages.findIndex((village) => village.id === activeVillage.id)
     : -1;
+  const powerByVillageId = useMemo(
+    () =>
+      new Map(
+        (kingdomPower.data?.villages ?? []).map((village) => [
+          village.villageId,
+          village.total,
+        ]),
+      ),
+    [kingdomPower.data?.villages],
+  );
+  const villageSheetItems = useMemo(
+    () =>
+      buildMultiVillageSheetItems(villages, activeVillage?.id ?? villageId, powerByVillageId)
+        .toSorted((a, b) =>
+          sortAscending
+            ? a.name.localeCompare(b.name, 'fr')
+            : b.name.localeCompare(a.name, 'fr'),
+        ),
+    [activeVillage?.id, powerByVillageId, sortAscending, villageId, villages],
+  );
 
   useEffect(() => {
     if (
@@ -111,7 +141,7 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
     const index = activeVillageIndex >= 0 ? activeVillageIndex : 0;
     const nextIndex = (index + direction + villages.length) % villages.length;
     setVillage(villages[nextIndex].id);
-    setIsVillageMenuOpen(false);
+    setIsVillageSheetOpen(false);
   };
 
   return (
@@ -143,19 +173,16 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
 
           <button
             type="button"
-            onClick={() => setIsVillageMenuOpen((open) => !open)}
-            className="mx-10 flex min-w-0 max-w-[18rem] items-center gap-1 text-center font-game text-sm font-bold uppercase tracking-wide text-parchment"
-            aria-expanded={isVillageMenuOpen}
+            onClick={() => {
+              if (villages.length > 1) setIsVillageSheetOpen(true);
+            }}
+            disabled={villages.length <= 1}
+            className="mx-10 flex min-w-0 max-w-[18rem] items-center gap-1 text-center font-game text-sm font-bold uppercase tracking-wide text-parchment disabled:cursor-default"
+            aria-expanded={isVillageSheetOpen}
             aria-label="Choisir le village actif"
           >
             <span className="truncate">
-              {activeVillage.isCapital
-                ? 'Capitale'
-                : activeVillage.label
-                  ? VILLAGE_LABEL_DISPLAY[activeVillage.label]
-                  : 'Village'}
-              {' — '}
-              {activeVillage.name}
+              {getVillageSelectorLabel(activeVillage)}
             </span>
             {villages.length > 1 && <ChevronDown size={16} className="shrink-0" />}
           </button>
@@ -174,30 +201,29 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
             />
           </button>
 
-          {isVillageMenuOpen && villages.length > 1 && (
-            <div className="absolute left-1/2 top-full z-50 mt-1 w-[min(21rem,calc(100vw-2rem))] -translate-x-1/2 overflow-hidden rounded border-2 border-game-gold-border bg-parchment shadow-xl">
-              {villages.map((village) => (
-                <button
-                  type="button"
-                  key={village.id}
-                  onClick={() => {
-                    setVillage(village.id);
-                    setIsVillageMenuOpen(false);
-                  }}
-                  className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left font-game text-sm font-bold text-kingdom-900 ${
-                    village.id === activeVillage.id ? 'bg-game-gold/25' : 'hover:bg-kingdom-100'
-                  }`}
-                >
-                  <span className="truncate">{village.name}</span>
-                  <span className="shrink-0 text-[10px] uppercase text-kingdom-700">
-                    {village.isCapital
-                      ? 'Capitale'
-                      : village.label
-                        ? VILLAGE_LABEL_DISPLAY[village.label]
-                        : ''}
-                  </span>
-                </button>
-              ))}
+          {isVillageSheetOpen && (
+            <div className="fixed inset-0 z-50">
+              <button
+                aria-label="Fermer le sélecteur de village"
+                className="absolute inset-0 cursor-default bg-black/55 backdrop-blur-[2px]"
+                onClick={() => setIsVillageSheetOpen(false)}
+                type="button"
+              />
+              <MultiVillageBottomSheet
+                availableFilters={['all', 'active']}
+                className="z-10 mx-auto max-w-[32rem]"
+                filter={villageFilter}
+                labels={multiVillageBottomSheetLabels}
+                onClose={() => setIsVillageSheetOpen(false)}
+                onFilterChange={setVillageFilter}
+                onSelectVillage={(village) => {
+                  setVillage(village.id);
+                  setIsVillageSheetOpen(false);
+                }}
+                onSort={() => setSortAscending((value) => !value)}
+                totalCount={villages.length}
+                villages={villageSheetItems}
+              />
             </div>
           )}
         </div>
