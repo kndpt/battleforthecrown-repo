@@ -28,6 +28,8 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ### Runs actifs
 
+- [033 — Écran sélection royaumes Pixi](./runs/033-feature-worlds-selection-screen.md) — 📋 `PLANNED`. Écran sélection (onglets Inscription/Bientôt/Verrouillés, cards royaume, CTAs Rejoindre / Me prévenir / Inscription close). **Bloqué par #032.**
+- [032 — Lifecycle backend foundation + identité monde](./runs/032-world-lifecycle-foundation-and-identity.md) — 📋 `PLANNED`. Params `WorldConfig.lifecycle` + identité (`displayName`, `tagline`, `sigil`, `themeColor`, `tier`) + workers transition `PLANNED→OPEN→LOCKED→ENDED` + endpoint public enrichi.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés
