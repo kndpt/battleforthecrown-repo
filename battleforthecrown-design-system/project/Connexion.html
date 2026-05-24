@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Connexion · Battle for the Crown</title>
+<link rel="stylesheet" href="colors_and_type.css"/>
+<style>
+  html, body { margin: 0; background: #f0eee9; color: #3d2f1f; font-family: var(--bftc-font-body); }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="bftc-primitives.jsx"></script>
+  <script type="text/babel" src="auth-views.jsx"></script>
+  <script type="text/babel">
+    function App() {
+      return (
+        <DesignCanvas
+          title="Connexion / Inscription"
+          subtitle="Onboarding mobile 360 × 720. Quatre étapes : landing héraldique, formulaire de connexion, inscription avec jauge de sceau, choix du blason. Parchemin, banderole bois, sceaux dorés — vocabulaire seigneurial."
+        >
+          <DCSection
+            id="auth-landing"
+            title="Landing — Reprendre ou forger"
+            subtitle="Trois traitements explorés pour la première vue. A1 : crest impérial sobre (couronne en disque + wordmark sur parchemin). A2 : aube sur le château, scène crépusculaire avec silhouettes de bâtiments. A3 : sceau royal, grand écu héraldique + tablette de bois gravée."
+          >
+            <DCArtboard id="auth-a1" label="A1 · Crest impérial" width={360} height={720}>
+              <AuthArtboardA1/>
+            </DCArtboard>
+            <DCArtboard id="auth-a2" label="A2 · Aube sur le château" width={360} height={720}>
+              <AuthArtboardA2/>
+            </DCArtboard>
+            <DCArtboard id="auth-a3" label="A3 · Sceau royal" width={360} height={720}>
+              <AuthArtboardA3/>
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="auth-login-register"
+            title="Connexion & Inscription"
+            subtitle="Champs parchemin à bord de 3px (style 'plume sur vélin'). Le seigneur 'voit' son sceau via un toggle Voir/Cacher. SSO Google + Apple en repli. Création de royaume avec jauge de robustesse du sceau."
+          >
+            <DCArtboard id="auth-b" label="B · Connexion" width={360} height={720}>
+              <AuthArtboardB/>
+            </DCArtboard>
+            <DCArtboard id="auth-c" label="C · Inscription" width={360} height={720}>
+              <AuthArtboardC/>
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="auth-banner"
+            title="Création du seigneur — Blason"
+            subtitle="Étape 2 de l'inscription : nom + choix d'écu héraldique parmi 6 (rouge, azur, sinople, sable, pourpre, argent). Le blason choisi suit le seigneur dans tout le jeu (banderole HUD, marqueur sur la carte du monde)."
+          >
+            <DCArtboard id="auth-d" label="D · Forger l'étendard" width={360} height={720}>
+              <AuthArtboardD/>
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  </script>
+</body>
+</html>

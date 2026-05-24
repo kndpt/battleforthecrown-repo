@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Vue Armée · Battle for the Crown</title>
+<link rel="stylesheet" href="colors_and_type.css"/>
+<style>
+  html, body { margin: 0; background: #f0eee9; color: #3d2f1f;
+    font-family: var(--bftc-font-body); }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="bftc-primitives.jsx"></script>
+  <script type="text/babel" src="army-chrome.jsx"></script>
+  <script type="text/babel" src="army-view.jsx"></script>
+  <script type="text/babel" src="recruit-popup.jsx"></script>
+  <script type="text/babel">
+    function App() {
+      return (
+        <DesignCanvas
+          title="Vue Armée · drag → popup de recrutement"
+          subtitle={`Flow complet : on saisit une troupe dans la rangée "Caserne", on la glisse vers la file (drop zone qui pulse), et un bottom-sheet de recrutement s'ouvre. UX une-main : steppers ±1/±10 en zone pouce, slider 1 → max, raccourcis 10/50/100/500/MAX, jauges de ressources live, gros CTA "Entraîner ×N". Mobile 360×720.`}
+        >
+          <DCSection
+            id="army-direction"
+            title="Vue Armée — État stable"
+            subtitle="Garnison unifiée (mien + renforts alliés visibles via badge bleu) · filtres en haut · bottom-sheet Caserne avec file d'entraînement"
+          >
+            <DCArtboard id="variant-d" label="Vue Armée" width={360} height={720}>
+              <ArmyView/>
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="recruit-flow"
+            title="Drag → Popup de recrutement"
+            subtitle="Deux temps du flow : (1) la troupe est en train d'être glissée vers la zone de drop, (2) le popup s'ouvre et on choisit la quantité (steppers en zone pouce, curseur, raccourcis, jauges live alignées sur le HUD)."
+          >
+            <DCArtboard id="drag-active" label="1 · Drag actif" width={360} height={720}>
+              <ArmyViewDragging troopId="squire"/>
+            </DCArtboard>
+            <DCArtboard id="popup-25" label="2 · Popup de recrutement" width={360} height={720}>
+              <ArmyViewWithRecruitPopup troopId="squire" initialQty={25} label="Vue Armée · popup recrutement"/>
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  </script>
+</body>
+</html>

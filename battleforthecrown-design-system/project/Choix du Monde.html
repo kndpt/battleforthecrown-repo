@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Choix du Monde · Battle for the Crown</title>
+<link rel="stylesheet" href="colors_and_type.css"/>
+<style>
+  html, body { margin: 0; background: #f0eee9; color: #3d2f1f; font-family: var(--bftc-font-body); }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="bftc-primitives.jsx"></script>
+  <script type="text/babel" src="world-views.jsx"></script>
+  <script type="text/babel">
+    function App() {
+      return (
+        <DesignCanvas
+          title="Choix du Monde"
+          subtitle="Le seigneur choisit son royaume (= serveur, à la Tribal Wars). Chaque monde a sa vitesse (x1/x2/x5), sa saison, ses règles. Trois traitements explorés : recommandation en majesté, cartes héraldiques empilées, vue détaillée avec mini-carte du serveur. Mobile 360 × 720."
+        >
+          <DCSection
+            id="world-list"
+            title="A · Liste compacte avec monde conseillé"
+            subtitle="Une recommandation en grand (parchemin + crest + stats riches), puis 4 autres mondes en lignes compactes. Filtres en haut (Tous, Débutants, Sprint x5, Classés, Nouveaux). Le marqueur d'état est explicite : Conseillé, Vétérans, Plein, Nouveau, Ouvre dans 2j, Légende."
+          >
+            <DCArtboard id="world-a" label="A · Liste + Conseillé" width={360} height={720}>
+              <WorldArtboardA/>
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="world-heraldic"
+            title="B · Bannières héraldiques (light + cycle de vie)"
+            subtitle="Cartes parchemin claires aux couleurs du royaume. La densité brute (PopBar) est remplacée par une barre de cycle de vie sur 60j : PLANNED → OPEN main (7j) → OPEN late (3j) → LOCKED (~50j) → ENDED. Tap sur une bannière → vue détail scrollable centrée sur les trois axes de la doc : fenêtre temporelle (lifecycle), tempo intérieur (compressed-async, multipliers par axe) et garde-fous wall-clock. Le ruban de statut s'adapte (Conseillé / Tardif / Plein / À venir / Saison close)."
+          >
+            <DCArtboard id="world-b" label="B · Bannières héraldiques" width={360} height={720}>
+              <WorldArtboardB/>
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection
+            id="world-detail"
+            title="C · Détail d'un monde sélectionné"
+            subtitle="Vue ouverte après tap : bandeau aux couleurs du royaume, mini-carte SVG du serveur avec villages en points lumineux (vert = vassaux, or = capitales), édits listés sous forme de table (PvP, coalitions, pillage), CTA Rejoindre + favori."
+          >
+            <DCArtboard id="world-c" label="C · Détail Aubeforge" width={360} height={720}>
+              <WorldArtboardC/>
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+  </script>
+</body>
+</html>
