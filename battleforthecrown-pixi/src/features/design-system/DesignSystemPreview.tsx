@@ -1223,7 +1223,7 @@ export function DesignSystemPreview() {
             <HeaderBar
               avatarInitials="SK"
               level={12}
-              population={{ icon: '/assets/resources/population.png', label: 'Population', value: '120/200' }}
+              population={{ icon: '/assets/resources/population.png', label: 'Population', value: '120' }}
               primaryStats={[
                 { icon: '/assets/army-power.png', label: 'Puissance', value: '2 480' },
                 { icon: '/assets/crown.png', label: 'Couronnes', value: '28' },
@@ -1247,7 +1247,7 @@ export function DesignSystemPreview() {
                 <HeaderBar
                   avatarInitials="SK"
                   level={12}
-                  population={{ icon: '/assets/resources/population.png', label: 'Population', value: '120/200' }}
+                  population={{ icon: '/assets/resources/population.png', label: 'Population', value: '120' }}
                   primaryStats={[
                     { icon: '/assets/army-power.png', label: 'Puissance', value: '2 480' },
                     { icon: '/assets/crown.png', label: 'Couronnes', value: '28' },

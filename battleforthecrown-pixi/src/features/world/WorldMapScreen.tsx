@@ -188,6 +188,18 @@ export function WorldMapScreen() {
       </div>
 
       <div className="relative flex-1 overflow-hidden">
+        <div className="absolute right-4 top-4 z-30">
+          <DailyRetentionWidget
+            activeVillageId={currentVillageId}
+            isClaiming={claimDailyCard.isPending}
+            isLoading={retentionSummary.isLoading}
+            onClaim={(input) => claimDailyCard.mutate(input)}
+            onNavigate={navigate}
+            summary={retentionSummary.data}
+            villages={myVillages.data ?? []}
+          />
+        </div>
+
         <div className="mx-auto h-full w-full max-w-6xl">
           <main className="relative h-full overflow-hidden border-y-2 border-game-gold-border bg-[#0d0f17]">
             {worldEntities.isLoading || myVillages.isLoading ? (
@@ -306,18 +318,6 @@ export function WorldMapScreen() {
         onMessagesClick={() => navigate('/game/messages')}
         unreadCount={unreadCount}
       />
-
-      <div className="fixed right-4 top-[132px] z-30">
-        <DailyRetentionWidget
-          activeVillageId={currentVillageId}
-          isClaiming={claimDailyCard.isPending}
-          isLoading={retentionSummary.isLoading}
-          onClaim={(input) => claimDailyCard.mutate(input)}
-          onNavigate={navigate}
-          summary={retentionSummary.data}
-          villages={myVillages.data ?? []}
-        />
-      </div>
 
       {attackTarget && myVillage && (
         <AttackDetailModal

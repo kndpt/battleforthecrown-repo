@@ -109,7 +109,19 @@ export function VillageView() {
       />
     </div>
 
-    <div className="flex-1 overflow-hidden pb-20">
+    <div className="relative flex-1 overflow-hidden pb-20">
+        <div className="absolute right-4 top-4 z-30">
+          <DailyRetentionWidget
+            activeVillageId={villageId}
+            isClaiming={claimDailyCard.isPending}
+            isLoading={retentionSummary.isLoading}
+            onClaim={(input) => claimDailyCard.mutate(input)}
+            onNavigate={navigate}
+            summary={retentionSummary.data}
+            villages={myVillages.data ?? []}
+          />
+        </div>
+
         {!villageId ? (
           <div className="h-full flex items-center justify-center text-kingdom-700 font-game text-sm">
             Pas de village actif.
@@ -147,18 +159,6 @@ export function VillageView() {
         <QueueFloatingButton
           isOpen={isQueueOpen}
           onToggle={() => setIsQueueOpen((prev) => !prev)}
-        />
-      </div>
-
-      <div className="fixed right-4 top-[132px] z-30">
-        <DailyRetentionWidget
-          activeVillageId={villageId}
-          isClaiming={claimDailyCard.isPending}
-          isLoading={retentionSummary.isLoading}
-          onClaim={(input) => claimDailyCard.mutate(input)}
-          onNavigate={navigate}
-          summary={retentionSummary.data}
-          villages={myVillages.data ?? []}
         />
       </div>
 

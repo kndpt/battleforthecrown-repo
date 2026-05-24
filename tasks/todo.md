@@ -1,14 +1,14 @@
-# Bottom sheet multi-villages - timers navigation
+# Header HUD resources
 
-- [x] Cartographier le rendu capitale/timers et les callbacks de navigation village/vue.
-- [x] Retirer le badge `CAPITALE` du bottom sheet multi-villages.
-- [x] Rendre les timers cliquables: sélectionner le bon village puis ouvrir la vue métier associée.
-- [x] Ajouter/adapter les tests ciblés.
-- [x] Lancer les vérifications frontend pertinentes puis `yarn static-check`.
-- [x] Review finale, docs impact, commit.
+- [x] Cartographier `GameHeader` et `HeaderBar` pour identifier le format des stats.
+- [x] Ajuster le layout de la rangée ressources pour garder les progressbars visibles.
+- [x] Afficher la population sans le max.
+- [x] Vérifier le rendu par tests/checks ciblés.
+- [x] Review finale et impact docs.
 
 ## Review
 
-- Correctness: le badge texte `Capitale` n'est plus mappé dans les cards; le statut capitale reste visible par le visuel couronné.
-- UX: les timers présents sont des boutons dédiés; chantier ouvre `/game`, formation et seigneur ouvrent `/game/army` après sélection du village.
-- Tests: `GameHeader.test.tsx` couvre absence du badge et navigation par timers.
+- Correctness: le header affiche la population utilisée seule, sans capacité max.
+- UX: les ressources gardent une jauge de stock visible en bas de pilule sans recouvrir tout le fond.
+- Tests: `GameHeader.test.tsx`, `yarn workspace battleforthecrown-pixi type-check`, preview `/design-system`.
+- Docs: aucun changement nécessaire.

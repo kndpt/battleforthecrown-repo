@@ -193,6 +193,13 @@ afterEach(() => {
 });
 
 describe('GameHeader multi-village selector', () => {
+  it('renders population as used only in the header', async () => {
+    renderHeader();
+
+    expect(await screen.findByLabelText('Population 42')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Population 42/120')).not.toBeInTheDocument();
+  });
+
   it('opens the bottom sheet from the village name and selects a village without rendering the old inline menu', async () => {
     renderHeader();
 
@@ -200,14 +207,14 @@ describe('GameHeader multi-village selector', () => {
     fireEvent.click(selector);
 
     expect(screen.getByText('Mes villages')).toBeInTheDocument();
-    expect(screen.getByText('Haute Cour')).toBeInTheDocument();
+    expect(screen.getAllByText('Haute Cour').length).toBeGreaterThan(0);
     expect(screen.getByText('Marche Nord')).toBeInTheDocument();
-    expect(screen.queryByText('Capitale')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Ouvrir Capitale' })).not.toBeInTheDocument();
     expect(screen.getByText('Défensif')).toBeInTheDocument();
     expect(await screen.findByText('10:12')).toBeInTheDocument();
     expect(await screen.findByText('220')).toBeInTheDocument();
     expect(await screen.findByText('4.5K')).toBeInTheDocument();
-    expect(await screen.findByText('42')).toBeInTheDocument();
+    expect((await screen.findAllByText('42')).length).toBeGreaterThan(0);
     expect(await screen.findByTitle('Forteresse')).toBeInTheDocument();
     expect(await screen.findByTitle(/Chantier · 1:00/)).toBeInTheDocument();
     expect(await screen.findByTitle(/Formation · 8:00/)).toBeInTheDocument();

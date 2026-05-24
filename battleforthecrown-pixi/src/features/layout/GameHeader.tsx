@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { HeaderBar, type HeaderBarStat } from '@/features/design-system/components/HeaderBar';
 import {
@@ -26,7 +26,6 @@ import { formatResourceAmount } from '@/lib/resourceConfig';
 import { BottomSheet } from '@/ui';
 import {
   buildMultiVillageSheetItems,
-  getVillageSelectorLabel,
   multiVillageBottomSheetLabels,
 } from './multiVillageSheet';
 
@@ -243,12 +242,10 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
 
   const populationStat = useMemo<HeaderBarStat>(() => {
     const used = population.data?.used ?? 0;
-    const max = population.data?.max ?? 0;
     return {
       icon: '/assets/resources/population.png',
       label: 'Population',
-      value: max > 0 ? `${formatResourceAmount(used)}/${formatResourceAmount(max)}` : formatResourceAmount(used),
-      fillRatio: max > 0 ? used / max : undefined,
+      value: formatResourceAmount(used),
     };
   }, [population.data]);
 
@@ -270,87 +267,89 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
   };
 
   return (
-    <div className="flex flex-col bg-[#3c2619]">
-      <div className="px-1.5 pt-1.5 pb-1">
-        <HeaderBar
-          avatarInitials="SK"
-          level={12}
-          population={populationStat}
-          primaryStats={primaryStats}
-          resources={resources}
-        />
+    <div className="flex flex-col overflow-hidden bg-[#442918]">
+      <div className="h-[136px] overflow-hidden">
+        <div className="w-[calc(100vw/0.44)] origin-top-left scale-[.44]">
+          <HeaderBar
+            avatarInitials="SK"
+            className="w-full"
+            level={12}
+            population={populationStat}
+            primaryStats={primaryStats}
+            resources={resources}
+          />
+          {activeVillage && (
+            <div className="relative flex h-[136px] items-start justify-center border-t-4 border-[#8b7355] bg-[#442918] px-0 pt-5">
+              <button
+                type="button"
+                onClick={() => switchVillage(-1)}
+                disabled={villages.length <= 1}
+                className="absolute left-[20px] top-[31px] inline-flex size-[70px] items-center justify-center rounded-[18px] border-4 border-[#255f94] bg-[linear-gradient(to_bottom,#77b6ef,#2f7fc3)] text-white shadow-[0_5px_0_rgba(0,0,0,.35)] disabled:opacity-35"
+                aria-label="Village précédent"
+              >
+                <ChevronLeft aria-hidden="true" className="size-12 stroke-[5]" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (villages.length > 1) setIsVillageSheetOpen(true);
+                }}
+                disabled={villages.length <= 1}
+                className="mx-[98px] flex min-w-0 max-w-[600px] flex-col items-center text-center font-game uppercase text-parchment disabled:cursor-default"
+                aria-expanded={isVillageSheetOpen}
+                aria-label="Choisir le village actif"
+              >
+                <span className="text-[20px] font-bold leading-none tracking-[.34em] text-[#d9c08d]">Village</span>
+                <span className="mt-2 flex w-full min-w-0 items-center justify-center gap-2 text-[28px] font-bold leading-none tracking-normal text-white [text-shadow:2px_2px_0_rgba(0,0,0,.55)]">
+                  <span className="min-w-0 truncate">{activeVillage.name}</span>
+                  {villages.length > 1 && <ChevronDown aria-hidden="true" className="size-8 shrink-0 stroke-[4]" />}
+                </span>
+                {activeVillage.isCapital && (
+                  <span className="mt-1 font-serif text-[23px] italic leading-none normal-case text-[#e9d9ae] [text-shadow:1px_1px_0_rgba(0,0,0,.45)]">
+                    Capitale
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => switchVillage(1)}
+                disabled={villages.length <= 1}
+                className="absolute right-[20px] top-[31px] inline-flex size-[70px] items-center justify-center rounded-[18px] border-4 border-[#255f94] bg-[linear-gradient(to_bottom,#77b6ef,#2f7fc3)] text-white shadow-[0_5px_0_rgba(0,0,0,.35)] disabled:opacity-35"
+                aria-label="Village suivant"
+              >
+                <ChevronRight aria-hidden="true" className="size-12 stroke-[5]" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
       {activeVillage && (
-        <div className="relative flex h-8 items-center justify-center border-t border-[#3d2f1f]/35 bg-[#4b3826]/35 px-3">
-          <button
-            type="button"
-            onClick={() => switchVillage(-1)}
-            disabled={villages.length <= 1}
-            className="absolute left-3 inline-flex size-7 items-center justify-center rounded-full text-parchment disabled:opacity-35"
-            aria-label="Village précédent"
-          >
-            <img
-              src="/assets/arrow-top.png"
-              alt=""
-              className="size-6 -rotate-90 object-contain"
+        <BottomSheet
+          className="mx-auto h-[86vh] max-w-[32rem]"
+          isOpen={isVillageSheetOpen}
+          maxHeight="86vh"
+          onClose={() => setIsVillageSheetOpen(false)}
+          zIndex={50}
+        >
+            <MultiVillageBottomSheet
+              availableFilters={['all', 'active']}
+              className="relative h-full max-h-full"
+              filter={villageFilter}
+              labels={multiVillageBottomSheetLabels}
+              onActivitySelect={openVillageActivity}
+              onClose={() => setIsVillageSheetOpen(false)}
+              onFilterChange={setVillageFilter}
+              onSelectVillage={(village) => {
+                setVillage(village.id);
+                setIsVillageSheetOpen(false);
+              }}
+              onSort={() => setSortAscending((value) => !value)}
+              totalCount={villages.length}
+              villages={villageSheetItems}
             />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              if (villages.length > 1) setIsVillageSheetOpen(true);
-            }}
-            disabled={villages.length <= 1}
-            className="mx-10 flex min-w-0 max-w-[18rem] items-center gap-1 text-center font-game text-sm font-bold uppercase tracking-wide text-parchment disabled:cursor-default"
-            aria-expanded={isVillageSheetOpen}
-            aria-label="Choisir le village actif"
-          >
-            <span className="truncate">
-              {getVillageSelectorLabel(activeVillage)}
-            </span>
-            {villages.length > 1 && <ChevronDown size={16} className="shrink-0" />}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => switchVillage(1)}
-            disabled={villages.length <= 1}
-            className="absolute right-3 inline-flex size-7 items-center justify-center rounded-full text-parchment disabled:opacity-35"
-            aria-label="Village suivant"
-          >
-            <img
-              src="/assets/arrow-top.png"
-              alt=""
-              className="size-6 rotate-90 object-contain"
-            />
-          </button>
-
-          <BottomSheet
-            className="mx-auto h-[86vh] max-w-[32rem]"
-            isOpen={isVillageSheetOpen}
-            maxHeight="86vh"
-            onClose={() => setIsVillageSheetOpen(false)}
-            zIndex={50}
-          >
-              <MultiVillageBottomSheet
-                availableFilters={['all', 'active']}
-                className="relative h-full max-h-full"
-                filter={villageFilter}
-                labels={multiVillageBottomSheetLabels}
-                onActivitySelect={openVillageActivity}
-                onClose={() => setIsVillageSheetOpen(false)}
-                onFilterChange={setVillageFilter}
-                onSelectVillage={(village) => {
-                  setVillage(village.id);
-                  setIsVillageSheetOpen(false);
-                }}
-                onSort={() => setSortAscending((value) => !value)}
-                totalCount={villages.length}
-                villages={villageSheetItems}
-              />
-          </BottomSheet>
-        </div>
+        </BottomSheet>
       )}
     </div>
   );
