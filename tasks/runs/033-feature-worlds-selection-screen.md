@@ -24,6 +24,21 @@ Run #032 livre :
 
 Ce run livre l'**UI consommatrice** : un écran de sélection conforme aux 3 mockups validés.
 
+### Source design-system (PRÉ-REQUIS migration)
+
+Avant toute écriture React/Tailwind, **invoquer le skill `bftc-design-system-migration`** pour porter les prototypes :
+
+- HTML source : [`battleforthecrown-design-system/project/Choix du Monde.html`](../../battleforthecrown-design-system/project/Choix%20du%20Monde.html) — 3 artboards mobile 360×720 (A liste + conseillé, B bannières héraldiques, C détail monde).
+- JSX source : [`battleforthecrown-design-system/project/world-views.jsx`](../../battleforthecrown-design-system/project/world-views.jsx) — `WorldArtboardA/B/C` + données `WORLDS`.
+- Tokens & primitives : `colors_and_type.css`, `bftc-primitives.jsx`, `design-canvas.jsx`.
+
+Mapping cible (cf. règles `bftc-design-system-migration`) :
+- Drafts dans `battleforthecrown-pixi/src/features/design-system/` puis exposés via `/design-system` pour QA visuelle avant intégration.
+- Primitives stables (`PixelBtn`, `Pill`, `Glyph`, crest, lifecycle bar) promues dans `battleforthecrown-pixi/src/ui/` si réutilisables.
+- Shell stateful (`WorldsSelectionScreen`) promu dans `battleforthecrown-pixi/src/features/worlds/`.
+
+Choix de la variante à porter en priorité : **B (bannières héraldiques)** — la plus alignée avec les mockups validés (lifecycle bar, status ribbon, identité serveur). Garder A/C en preview design-system pour itérations futures, ne pas câbler sur l'API.
+
 Choix produit tranchés en clarification :
 - **Pas d'indicateur d'activité** — retiré du design (les chips CALME/NAISSANT/TENDU/SATURÉ du mockup ne sont pas implémentées).
 - Variantes Standard / Speed / Hardcore : Standard sélectionnable, autres affichées en pill « BIENTÔT » désactivées.
@@ -37,12 +52,21 @@ Choix produit tranchés en clarification :
 
 ## Critère de fin (acceptance)
 
+### Migration design-system (étape 1, obligatoire avant câblage)
+
+- [ ] Skill `bftc-design-system-migration` invoqué avec source `project/Choix du Monde.html` + `project/world-views.jsx`.
+- [ ] Ports React/Tailwind créés sous `battleforthecrown-pixi/src/features/design-system/worlds/` reproduisant fidèlement les artboards (au minimum B, idéalement A et C aussi).
+- [ ] Exemples ajoutés à `DesignSystemPreview.tsx` (`/design-system`) avec fixtures identiques au prototype (mondes Aubeforge, Bois-Doux, etc.).
+- [ ] Composants exposent `Props` typées (pas de fixture hardcodée dans le composant final), contrat « Production-Ready » respecté (CTA = `<button>`, callbacks `onJoin`, `onNotify`, `onSelect`, etc.).
+- [ ] Tokens couleur (`themeColor`) et sigils mappés via design-system, pas via hex en dur dans le screen.
+
 ### Composants
 
 - [ ] Nouveau composant `WorldsSelectionScreen` (route `/worlds` ou équivalent) avec :
   - Header : « Retour », titre « ROYAUMES », compteur total (« 7 ROYAUMES »), tagline (« Choisissez votre saison… »).
   - Section **Variantes de saison** : 3 chips (Standard / Speed / Hardcore). Standard active, autres `disabled` avec pill « BIENTÔT ».
   - Onglets **Inscription / Bientôt / Verrouillés** avec badge compteur. Filtre client-side sur la liste reçue.
+- [ ] Depuis le bottom sheet profil actuel : appui sur l'information de monde (ex. bloc « MONDE / Default World » visible dans le profil joueur) → navigation vers l'écran des mondes.
 - [ ] Composant `WorldCard` :
   - Bannière colorée selon `identity.themeColor`, sigil selon `identity.sigil`, `displayName`, `tagline` (ellipsé).
   - Pill `tempoProfile` (« STANDARD »).
@@ -88,7 +112,7 @@ Choix produit tranchés en clarification :
 - Tests : skill `bftc-tests-policy`
 - QA : skill `bftc-qa`
 - React/Zustand/TanStack : skill `bftc-react-hud`
-- Design-system migration : skill `bftc-design-system-migration` si composants à porter
+- **Design-system migration : skill `bftc-design-system-migration` — OBLIGATOIRE, étape 1 du run.** Sources : `battleforthecrown-design-system/project/Choix du Monde.html` + `battleforthecrown-design-system/project/world-views.jsx`.
 
 ## Décomposition initiale (rempli par le lead à l'étape 3)
 
