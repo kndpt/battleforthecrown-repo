@@ -44,6 +44,18 @@ function mockApi() {
 
   vi.spyOn(apiClient, 'get').mockImplementation(async (path, options) => {
     if (path === '/village') return villages;
+    if (path === '/world/me/memberships') {
+      return [
+        {
+          joinedAt: new Date(now - 3_600_000).toISOString(),
+          lastLoginAt: new Date(now).toISOString(),
+          role: 'PLAYER',
+          villageCount: 2,
+          worldId: 'w1',
+          worldName: 'Avalon Test',
+        },
+      ];
+    }
     if (path === '/population') {
       const id = (options as { query?: { villageId?: string } } | undefined)?.query?.villageId;
       return id === 'v2' ? { available: 88, max: 180, used: 92 } : { available: 78, max: 120, used: 42 };
@@ -263,6 +275,71 @@ describe('GameHeader multi-village selector', () => {
     });
     await waitFor(() => {
       expect(screen.getByTestId('location-path')).toHaveTextContent('/game/army');
+    });
+  });
+});
+
+describe('GameHeader player profile sheet', () => {
+  it('opens and closes the player profile from the avatar without changing route or active village', async () => {
+    const { container } = renderHeader('/game/army');
+
+    const profileButton = await screen.findByRole('button', { name: 'Profil joueur' });
+
+    expect(profileButton).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(profileButton);
+
+    await waitFor(() => {
+      expect(profileButton).toHaveAttribute('aria-expanded', 'true');
+    });
+    expect(await screen.findByText('u@example.test')).toBeInTheDocument();
+    expect(await screen.findByText('Avalon Test')).toBeInTheDocument();
+    expect(await screen.findByText((_content, element) =>
+      element?.tagName.toLowerCase() === 'span'
+        && (element.textContent?.includes('Sans tribu') ?? false),
+    )).toBeInTheDocument();
+    expect(screen.getAllByText('À venir').length).toBeGreaterThan(0);
+    expect(apiClient.get).not.toHaveBeenCalledWith('/village/buildings', expect.anything());
+
+    const overlays = container.querySelectorAll('.fixed > .absolute.inset-0.bg-black');
+    fireEvent.click(overlays[overlays.length - 1] as Element);
+
+    await waitFor(() => {
+      expect(profileButton).toHaveAttribute('aria-expanded', 'false');
+    });
+    expect(useGameStore.getState().villageId).toBe('v1');
+    expect(screen.getByTestId('location-path')).toHaveTextContent('/game/army');
+  });
+
+  it('selects an owned village from the profile villages tab', async () => {
+    renderHeader();
+
+    const profileButton = await screen.findByRole('button', { name: 'Profil joueur' });
+    fireEvent.click(profileButton);
+    fireEvent.click(await screen.findByRole('button', { name: 'Villages' }));
+    const marcheNord = await screen.findByRole('button', { name: 'Sélectionner Marche Nord' });
+
+    expect(marcheNord).toHaveTextContent('Défensif');
+    fireEvent.click(marcheNord);
+
+    await waitFor(() => {
+      expect(useGameStore.getState().villageId).toBe('v2');
+    });
+    await waitFor(() => {
+      expect(profileButton).toHaveAttribute('aria-expanded', 'false');
+    });
+  });
+
+  it('logs out from the profile settings using the existing session cleanup', async () => {
+    renderHeader();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Profil joueur' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Réglages' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Quitter la session' }));
+
+    await waitFor(() => {
+      expect(useAuthStore.getState().user).toBeNull();
+      expect(useGameStore.getState().worldId).toBeNull();
+      expect(useGameStore.getState().villageId).toBeNull();
     });
   });
 });

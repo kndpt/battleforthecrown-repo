@@ -28,6 +28,7 @@ export interface PlayerProfileSheetVillage {
   capital?: boolean;
   coords: string;
   id: string;
+  label?: string;
   level: number | string;
   name: string;
   power: string;
@@ -273,6 +274,7 @@ function VillageRow({
 
   return (
     <button
+      aria-label={`Sélectionner ${village.name}`}
       className={cn(
         'flex w-full cursor-pointer items-center gap-2.5 rounded-[11px] border-2 px-2.5 py-2 text-left shadow-[inset_0_1px_0_rgba(255,255,255,.5),0_2px_0_rgba(0,0,0,.12)]',
         village.capital
@@ -305,6 +307,11 @@ function VillageRow({
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="font-game text-[13px] font-extrabold text-[#3d2f1f]">{village.name}</span>
+          {village.label ? (
+            <span className="whitespace-nowrap rounded-full border-[1.5px] border-[#9e7b0d] bg-[rgba(241,196,15,.18)] px-1.5 py-px font-game text-[8.5px] font-extrabold uppercase tracking-[.12em] text-[#7a4d05]">
+              {village.label}
+            </span>
+          ) : null}
           {village.style ? <StyleTag label={village.style.label} size="sm" styleId={village.style.id} /> : null}
         </div>
         <div className="mt-0.5 flex gap-2 font-game text-[10px] text-[#6d5838]">
@@ -391,19 +398,6 @@ function SettingsPane({
   );
 }
 
-function PlayerProfileSheetAnimation() {
-  return (
-    <style>
-      {`
-        @keyframes playerProfileSheetUp {
-          from { transform: translateY(100%); }
-          to { transform: translateY(0); }
-        }
-      `}
-    </style>
-  );
-}
-
 export function PlayerProfileSheet({
   activeTab,
   className,
@@ -419,11 +413,9 @@ export function PlayerProfileSheet({
   world,
 }: PlayerProfileSheetProps) {
   return (
-    <>
-      <PlayerProfileSheetAnimation />
       <section
         className={cn(
-          'absolute inset-x-0 bottom-0 flex h-[78%] min-h-0 flex-col overflow-hidden rounded-t-[20px] border-t-4 border-[#3c2619] bg-[linear-gradient(to_bottom,#fef9f0,#e8d4a8)] shadow-[0_-10px_30px_rgba(0,0,0,.5),inset_0_2px_0_rgba(255,255,255,.55)] [animation:playerProfileSheetUp_.25s_cubic-bezier(.2,.7,.3,1.2)]',
+          'absolute inset-x-0 bottom-0 flex h-full min-h-0 flex-col overflow-hidden rounded-t-[20px] border-t-4 border-[#3c2619] bg-[linear-gradient(to_bottom,#fef9f0,#e8d4a8)] shadow-[0_-10px_30px_rgba(0,0,0,.5),inset_0_2px_0_rgba(255,255,255,.55)]',
           className,
         )}
       >
@@ -449,10 +441,10 @@ export function PlayerProfileSheet({
 
         <SegmentedControl
           ariaLabel="Sections du profil"
-          className="mx-3.5 flex border-[#3c2619] bg-[linear-gradient(to_bottom,rgba(60,38,25,.92),rgba(78,56,34,.92))] [&>button]:flex-1 [&>button]:justify-center [&>button]:uppercase [&>button]:tracking-[.1em]"
+          className="mx-3.5 flex border-[#3c2619] bg-[linear-gradient(to_bottom,rgba(60,38,25,.92),rgba(78,56,34,.92))] [&>button]:flex-1 [&>button]:justify-center [&>button]:px-2 [&>button]:py-1.5 [&>button]:text-[11px] [&>button]:uppercase [&>button]:tracking-[.06em]"
           onChange={(tab) => onTabChange(tab as PlayerProfileSheetTab)}
           options={tabs.map((tab) => ({ label: labels.tabs[tab], value: tab }))}
-          size="tabs"
+          size="compact"
           tone="dark"
           value={activeTab}
         />
@@ -463,6 +455,5 @@ export function PlayerProfileSheet({
           {activeTab === 'settings' ? <SettingsPane labels={labels} onLogout={onLogout} settings={settings} /> : null}
         </div>
       </section>
-    </>
   );
 }

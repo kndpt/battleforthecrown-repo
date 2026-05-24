@@ -14,6 +14,7 @@ export interface HeaderBarProps extends HTMLAttributes<HTMLElement> {
   avatarInitials: string;
   level: string | number;
   onProfileClick?: () => void;
+  profileExpanded?: boolean;
   population: HeaderBarStat;
   primaryStats: [HeaderBarStat, HeaderBarStat];
   resources: [HeaderBarStat, HeaderBarStat, HeaderBarStat];
@@ -90,6 +91,7 @@ export function HeaderBar({
   className,
   level,
   onProfileClick,
+  profileExpanded,
   population,
   primaryStats,
   resources,
@@ -113,7 +115,13 @@ export function HeaderBar({
       {...props}
     >
       {onProfileClick ? (
-        <button aria-label="Profil joueur" className="shrink-0" onClick={onProfileClick} type="button">
+        <button
+          aria-expanded={profileExpanded}
+          aria-label="Profil joueur"
+          className="shrink-0"
+          onClick={onProfileClick}
+          type="button"
+        >
           {avatar}
         </button>
       ) : avatar}

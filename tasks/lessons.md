@@ -30,3 +30,4 @@
 - Sur la WorldMap, ne pas dévaloriser visuellement les villages joueurs étrangers pour signaler l'ownership. Le rendu "village joueur normal" doit rester valorisant pour tous les joueurs ; distinguer plutôt les villages du joueur courant avec un marqueur propriétaire additionnel.
 - Pour une tâche quotidienne, aligner le libellé sur le trigger exact de progression : si le backend attend `battle.resolved` victorieux, écrire "Vaincre", pas "Attaquer".
 - Quand un bouton flottant daily/retention ouvre une boucle qui concerne aussi la carte, vérifier la parité d'emplacement entre `VillageView` et `WorldMapScreen`, puis déplacer les contrôles carte secondaires si le slot est occupé.
+- Ne jamais passer `relative` dans `BottomSheet.className` : cette classe s'ajoute au wrapper animé qui possède déjà `absolute bottom-0`; elle casse le positionnement/translate fermé-ouvert et laisse la sheet visible en bas.
