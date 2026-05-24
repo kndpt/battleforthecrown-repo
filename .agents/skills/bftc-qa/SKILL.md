@@ -1,6 +1,6 @@
 ---
 name: bftc-qa
-description: Use when finishing a BFTC task to choose QA: playable checklist, curl/SQL/logs, smokes, static checks, and docs impact.
+description: "Use when finishing a BFTC task to choose QA: playable checklist, curl/SQL/logs, smokes, static checks, and docs impact."
 ---
 
 # BFTC QA

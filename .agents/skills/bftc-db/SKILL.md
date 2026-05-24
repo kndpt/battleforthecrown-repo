@@ -1,6 +1,6 @@
 ---
 name: bftc-db
-description: Utiliser pour toute opération SQL BFTC locale: lecture/écriture DB, schéma, joueurs, villages, Outbox, combats, jobs.
+description: "Utiliser pour toute opération SQL BFTC locale: lecture/écriture DB, schéma, joueurs, villages, Outbox, combats, jobs."
 ---
 
 # bftc-db — Accès DB Battle for the Crown

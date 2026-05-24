@@ -1,6 +1,6 @@
 ---
 name: bftc-pixi-scene
-description: Use for BFTC Pixi canvas work: src/pixi, scenes, viewport/camera, coordinates, input handlers, tile maps, overlays, assets.
+description: "Use for BFTC Pixi canvas work: src/pixi, scenes, viewport/camera, coordinates, input handlers, tile maps, overlays, assets."
 ---
 
 # BFTC Pixi Scene
