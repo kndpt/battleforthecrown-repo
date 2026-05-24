@@ -201,6 +201,31 @@ FROM "CrownBalance"
 WHERE "userId" = '<user-id>';
 ```
 
+## Garbage collection des DBs éphémères
+
+Les runs smokes et agents créent des DBs `battleforthecrown_*` (clones smoke `_w1…_wN`, hashes, runs). Sans nettoyage, elles s'accumulent dans Postgres.
+
+Un GC local tourne **toutes les heures** via launchd et drop les DBs éphémères dont :
+- le nom matche `battleforthecrown_*` (la DB canonique `battleforthecrown` est protégée par nom),
+- le répertoire `base/<oid>` n'a pas été modifié depuis ≥ 24 h (proxy d'inactivité — WAL/checkpoints touchent le dossier en continu sur une DB active),
+- aucune connexion active dans `pg_stat_activity`.
+
+**Script** : [`battleforthecrown-backend/scripts/db-gc.sh`](../../battleforthecrown-backend/scripts/db-gc.sh).
+**Schedule** : `~/Library/LaunchAgents/com.bftc.db-gc.plist` (`StartInterval=3600`, `RunAtLoad=true`).
+**Logs** : `/tmp/bftc-db-gc.log`.
+
+```bash
+# Run manuel (threshold par défaut = 24 h)
+battleforthecrown-backend/scripts/db-gc.sh
+
+# Forcer un threshold différent (debug / cleanup ponctuel)
+BFTC_DB_GC_HOURS=0 battleforthecrown-backend/scripts/db-gc.sh
+
+# Re/charger l'agent launchd
+launchctl unload ~/Library/LaunchAgents/com.bftc.db-gc.plist
+launchctl load ~/Library/LaunchAgents/com.bftc.db-gc.plist
+```
+
 ## Reset complet (nuclear)
 
 > ⚠️ **Détruit toutes les données.** Confirmer avec le user avant.
