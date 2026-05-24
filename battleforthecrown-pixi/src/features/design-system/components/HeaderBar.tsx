@@ -24,17 +24,17 @@ type PillVariant = 'resource' | 'primary-brown' | 'primary-gold';
 
 const PILL_VARIANT_CLASS: Record<PillVariant, string> = {
   resource:
-    'gap-[5px] rounded-full border-2 border-[rgba(255,255,255,.15)] bg-[rgba(0,0,0,.35)] px-2 py-0.5 text-[11px] text-white [text-shadow:1px_1px_2px_rgba(0,0,0,.6)]',
+    'gap-3 rounded-[16px] border-4 border-[rgba(255,255,255,.12)] bg-[rgba(0,0,0,.34)] px-5 text-[28px] text-white [text-shadow:2px_2px_3px_rgba(0,0,0,.65)]',
   'primary-brown':
-    'gap-1.5 rounded-full border border-[#3d2f1f] bg-[linear-gradient(to_bottom,#7a5a3a,#4e3826)] px-2.5 py-0.5 text-[12px] text-white [text-shadow:1px_1px_2px_rgba(0,0,0,.65)]',
+    'gap-3 rounded-full border-4 border-[rgba(255,255,255,.12)] bg-[linear-gradient(to_bottom,#8b7248,#6e5736)] px-5 text-[28px] text-white [text-shadow:2px_2px_3px_rgba(0,0,0,.65)]',
   'primary-gold':
-    'gap-1.5 rounded-full border border-[#8a6a14] bg-[linear-gradient(to_bottom,#f6d57b,#c59e3f)] px-2.5 py-0.5 text-[12px] text-[#3a2a00]',
+    'gap-3 rounded-full border-4 border-[#b38e09] bg-[linear-gradient(to_bottom,#ffef7c,#d1a321)] px-5 text-[28px] text-[#3a2a00] [box-shadow:inset_0_2px_0_rgba(255,255,255,.38)]',
 };
 
 const PILL_ICON_CLASS: Record<PillVariant, string> = {
-  resource: 'size-3.5',
-  'primary-brown': 'size-4',
-  'primary-gold': 'size-4',
+  resource: 'size-9',
+  'primary-brown': 'size-9',
+  'primary-gold': 'size-9',
 };
 
 function HeaderPill({
@@ -60,10 +60,10 @@ function HeaderPill({
         <span
           aria-hidden="true"
           className={cn(
-            'pointer-events-none absolute inset-y-0 left-0 transition-[width] duration-300',
+            'pointer-events-none absolute bottom-0 left-0 h-[6px] rounded-full transition-[width] duration-300',
             isAtCapacity
-              ? 'bg-gradient-to-r from-red-500/35 to-red-400/45'
-              : 'bg-gradient-to-r from-white/25 to-white/10',
+              ? 'bg-gradient-to-r from-[#f2b84b] to-[#f06f4a]'
+              : 'bg-gradient-to-r from-[#f0c04e] to-[#fff1a5]',
           )}
           style={{ width: `${ratio * 100}%` }}
         />
@@ -98,9 +98,9 @@ export function HeaderBar({
   ...props
 }: HeaderBarProps) {
   const avatar = (
-    <span className="relative flex size-[42px] shrink-0 items-center justify-center rounded-full border-2 border-[#5d4a32] bg-[linear-gradient(to_bottom,#8b6f47,#6d5838)] font-game text-[13px] font-bold text-white [text-shadow:1px_1px_2px_rgba(0,0,0,.6)]">
+    <span className="relative flex size-[100px] shrink-0 items-center justify-center rounded-full border-4 border-[#5d4a32] bg-[linear-gradient(to_bottom,#8b6f47,#6d5838)] font-game text-[32px] font-bold text-white [text-shadow:2px_2px_3px_rgba(0,0,0,.65)]">
       {avatarInitials}
-      <span className="absolute -bottom-1 -right-1 flex size-[18px] items-center justify-center rounded-full border-2 border-[#9e7b0d] bg-[linear-gradient(to_bottom,#f6d57b,#c59e3f)] font-game text-[9px] font-bold text-[#3a2a00]">
+      <span className="absolute -bottom-1 -right-2 flex size-[48px] items-center justify-center rounded-full border-4 border-[#9e7b0d] bg-[linear-gradient(to_bottom,#ffef7c,#cfa11f)] font-game text-[21px] font-bold text-[#3a2a00] [box-shadow:0_3px_0_rgba(0,0,0,.28)]">
         {level}
       </span>
     </span>
@@ -109,7 +109,7 @@ export function HeaderBar({
   return (
     <header
       className={cn(
-        'flex w-full items-center gap-2 rounded-[10px] border-2 border-[#8b7355] bg-[linear-gradient(to_bottom,rgba(60,38,25,.85),rgba(78,56,34,.85))] p-2',
+        'flex h-[172px] w-[850px] shrink-0 items-center gap-5 bg-[#442918] px-4',
         className,
       )}
       {...props}
@@ -125,16 +125,16 @@ export function HeaderBar({
           {avatar}
         </button>
       ) : avatar}
-      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <div className="flex min-w-0 items-center justify-start gap-2">
-          <HeaderPill key={primaryStats[0].label} variant="primary-brown" {...primaryStats[0]} />
-          <HeaderPill key={primaryStats[1].label} variant="primary-gold" {...primaryStats[1]} />
+      <div className="flex min-w-0 flex-1 flex-col gap-3">
+        <div className="flex min-w-0 items-center justify-start gap-5">
+          <HeaderPill className="h-[58px] min-w-[140px]" key={primaryStats[0].label} variant="primary-brown" {...primaryStats[0]} />
+          <HeaderPill className="h-[58px] min-w-[180px]" key={primaryStats[1].label} variant="primary-gold" {...primaryStats[1]} />
         </div>
-        <div className="grid min-w-0 grid-cols-[repeat(4,minmax(0,1fr))] gap-1.5">
+        <div className="flex min-w-0 items-center gap-4">
           {resources.map((stat) => (
-            <HeaderPill className="px-1.5" key={stat.label} {...stat} />
+            <HeaderPill className="h-[58px] w-[165px] shrink-0" key={stat.label} {...stat} />
           ))}
-          <HeaderPill className="px-1.5" {...population} />
+          <HeaderPill className="h-[58px] w-[165px] shrink-0" {...population} />
         </div>
       </div>
     </header>
