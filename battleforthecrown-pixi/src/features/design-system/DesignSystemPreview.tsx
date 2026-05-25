@@ -18,6 +18,10 @@ import {
 } from '@/features/worlds/worldsViewModel';
 import {
   ArmyMovementList,
+  AuthBannerScreen,
+  AuthLandingScreen,
+  AuthLoginScreen,
+  AuthRegisterScreen,
   Avatar,
   AvatarProfileLine,
   AvatarStack,
@@ -91,6 +95,7 @@ import {
   type DailyQuestItem,
   type DailyQuestOyez,
   type ExpeditionActivityCardProps,
+  type AuthHeraldShield,
   type KingdomActivitiesPanelLabels,
   type KingdomActivityTab,
   type MultiVillageFilter,
@@ -141,6 +146,28 @@ const chatMessages: ChatMessage[] = [
     message: '⚔ Sire_Robert a déclaré la guerre — il y a 4 min',
     type: 'system',
   },
+];
+
+const authStatus = {
+  batteryLabel: '100%',
+  networkLabel: '5G',
+  timeLabel: '9:41',
+};
+
+const authTitleLines = ['Battle for', 'the Crown'];
+
+const authSecondaryActions = [
+  { id: 'magic-link', label: 'Lien magique' },
+  { id: 'visitor', label: 'Entrer en visiteur' },
+];
+
+const authShields: AuthHeraldShield[] = [
+  { accent: '#f6d57b', field: ['#c0392b', '#7d1e15'], id: 'blood-gold', label: 'Or & Sang', symbol: '♕' },
+  { accent: '#f6d57b', field: ['#3a72b8', '#1f4d85'], id: 'royal-blue', label: 'Azur Royal', symbol: '✦' },
+  { accent: '#f6d57b', field: ['#5a8f3a', '#2f5b1c'], id: 'sinople', label: 'Sinople', symbol: '♘' },
+  { accent: '#f6d57b', field: ['#2c2520', '#0c0a08'], id: 'sable-gold', label: 'Sable & Or', symbol: '♔' },
+  { accent: '#f6d57b', field: ['#7a3a7d', '#43204a'], id: 'purple', label: 'Pourpre', symbol: '✠' },
+  { accent: '#3c2619', field: ['#b5b8be', '#7c8088'], id: 'silver', label: 'Argent', symbol: '⚜' },
 ];
 
 const troopDetailFixture = {
@@ -740,6 +767,17 @@ const multiVillageFixture: MultiVillageItem[] = [
 export function DesignSystemPreview() {
   const [inputValue, setInputValue] = useState('');
   const [lordName, setLordName] = useState('');
+  const [authLoginLord, setAuthLoginLord] = useState('SireKelvin');
+  const [authLoginPassword, setAuthLoginPassword] = useState('motdepasse');
+  const [authLoginPasswordVisible, setAuthLoginPasswordVisible] = useState(false);
+  const [authRemember, setAuthRemember] = useState(true);
+  const [authRegisterLord, setAuthRegisterLord] = useState('');
+  const [authRegisterEmail, setAuthRegisterEmail] = useState('');
+  const [authRegisterPassword, setAuthRegisterPassword] = useState('forge2025');
+  const [authRegisterPasswordVisible, setAuthRegisterPasswordVisible] = useState(false);
+  const [authTermsAccepted, setAuthTermsAccepted] = useState(true);
+  const [authBannerLord, setAuthBannerLord] = useState('Sire Kelvin');
+  const [authSelectedShield, setAuthSelectedShield] = useState('royal-blue');
   const [kingdomName, setKingdomName] = useState('Le Grand Nord');
   const [passwordValue, setPasswordValue] = useState('......');
   const [messages, setMessages] = useState(chatMessages);
@@ -879,6 +917,218 @@ export function DesignSystemPreview() {
               { text: '« À ceux qui osent, le royaume offre gloire et richesses. »', variant: 'quote' },
             ]}
           />
+        </section>
+
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="font-game text-2xl font-bold text-[#1f2937]">Connexion / Inscription</h2>
+            <span className="font-mono text-[10px] text-[#5d4a32]">
+              auth · 6 artboards · source project/Connexion.html
+            </span>
+          </div>
+          <div className="flex w-full flex-col items-center gap-5">
+            <div className="flex flex-wrap items-start justify-center gap-5">
+              <div className="flex flex-col items-center gap-2">
+                <span className="rounded-full border border-[rgba(93,74,50,.35)] px-2.5 py-1 font-game text-[10px] font-extrabold uppercase tracking-[.24em] text-[#5d4a32]">
+                  A1 · Crest impérial
+                </span>
+                <AuthLandingScreen
+                  actions={[
+                    { id: 'resume', label: "Reprendre l'aventure", variant: 'success', size: 'lg' },
+                    { id: 'new', label: 'Forger un nouveau royaume', variant: 'wood', size: 'md' },
+                  ]}
+                  castleIcon="/assets/castle.png"
+                  crownIcon="/assets/crown.png"
+                  eyebrow="· Chronique du royaume ·"
+                  secondaryActions={authSecondaryActions}
+                  status={authStatus}
+                  tagline="« Forgez votre royaume. »"
+                  titleLines={authTitleLines}
+                  variant="crest"
+                />
+              </div>
+
+              <div className="flex flex-col items-center gap-2">
+                <span className="rounded-full border border-[rgba(93,74,50,.35)] px-2.5 py-1 font-game text-[10px] font-extrabold uppercase tracking-[.24em] text-[#5d4a32]">
+                  A2 · Aube sur le château
+                </span>
+                <AuthLandingScreen
+                  actions={[
+                    { id: 'resume', label: "Reprendre l'aventure", variant: 'warning', size: 'lg' },
+                    { id: 'new', label: 'Forger un nouveau royaume', variant: 'wood', size: 'md' },
+                  ]}
+                  castleIcon="/assets/castle.png"
+                  crownIcon="/assets/crown.png"
+                  eyebrow=""
+                  status={authStatus}
+                  tagline="« Quand le soleil se lève, le royaume s'éveille. »"
+                  titleLines={authTitleLines}
+                  variant="dawn"
+                  warehouseIcon="/assets/warehouse.png"
+                  watchtowerIcon="/assets/watchtower.png"
+                />
+              </div>
+
+              <div className="flex flex-col items-center gap-2">
+                <span className="rounded-full border border-[rgba(93,74,50,.35)] px-2.5 py-1 font-game text-[10px] font-extrabold uppercase tracking-[.24em] text-[#5d4a32]">
+                  A3 · Sceau royal
+                </span>
+                <AuthLandingScreen
+                  actions={[
+                    { id: 'resume', label: "Reprendre l'aventure", variant: 'success', size: 'lg' },
+                    { id: 'new', label: 'Forger un nouveau royaume', variant: 'wood', size: 'md' },
+                  ]}
+                  castleIcon="/assets/castle.png"
+                  crownIcon="/assets/crown.png"
+                  eyebrow="· Anno regni ·"
+                  secondaryActions={authSecondaryActions}
+                  status={authStatus}
+                  tagline="« Trois lis, une couronne, mille batailles. »"
+                  titleLines={authTitleLines}
+                  variant="seal"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-start justify-center gap-5">
+              <div className="flex flex-col items-center gap-2">
+                <span className="rounded-full border border-[rgba(93,74,50,.35)] px-2.5 py-1 font-game text-[10px] font-extrabold uppercase tracking-[.24em] text-[#5d4a32]">
+                  B · Connexion
+                </span>
+                <AuthLoginScreen
+                  backLabel="Retour"
+                  crownIcon="/assets/crown.png"
+                  dividerLabel="ou"
+                  fields={{
+                    lord: {
+                      id: 'auth-preview-login-lord',
+                      icon: '✦',
+                      label: 'Nom de seigneur',
+                      onChange: setAuthLoginLord,
+                      placeholder: 'ex. SireKelvin',
+                      value: authLoginLord,
+                    },
+                    password: {
+                      id: 'auth-preview-login-password',
+                      icon: '✶',
+                      label: 'Sceau secret',
+                      onChange: setAuthLoginPassword,
+                      onPasswordVisibleChange: setAuthLoginPasswordVisible,
+                      passwordVisible: authLoginPasswordVisible,
+                      placeholder: '•••••••',
+                      secure: true,
+                      value: authLoginPassword,
+                    },
+                  }}
+                  forgotAction={{ id: 'forgot', label: 'Sceau oublié ?' }}
+                  footerAction={{ id: 'register', label: 'En forger un →' }}
+                  footerPrompt="Pas encore de royaume ?"
+                  remember={{
+                    checked: authRemember,
+                    label: 'Se souvenir',
+                    onChange: setAuthRemember,
+                  }}
+                  ssoActions={[
+                    { id: 'google', kind: 'google', label: 'Google' },
+                    { id: 'apple', kind: 'apple', label: 'Apple' },
+                  ]}
+                  status={authStatus}
+                  stepLabel="Connexion · 1/1"
+                  submitAction={{ id: 'submit-login', label: 'Entrer dans le royaume', variant: 'success', size: 'lg' }}
+                  subtitle="Le royaume vous attend, Sire."
+                  title="Reprendre l'aventure"
+                />
+              </div>
+
+              <div className="flex flex-col items-center gap-2">
+                <span className="rounded-full border border-[rgba(93,74,50,.35)] px-2.5 py-1 font-game text-[10px] font-extrabold uppercase tracking-[.24em] text-[#5d4a32]">
+                  C · Inscription
+                </span>
+                <AuthRegisterScreen
+                  backLabel="Retour"
+                  badgeIcon="/assets/casual-icons/crown.png"
+                  badgeLabel="Fonder un royaume"
+                  fields={{
+                    email: {
+                      id: 'auth-preview-register-email',
+                      icon: '✉',
+                      label: 'Plis royaux',
+                      onChange: setAuthRegisterEmail,
+                      placeholder: 'seigneur@royaume.fr',
+                      type: 'email',
+                      value: authRegisterEmail,
+                    },
+                    lord: {
+                      hint: '3 à 16 caractères, sans espace',
+                      id: 'auth-preview-register-lord',
+                      icon: '✦',
+                      label: 'Nom de seigneur',
+                      onChange: setAuthRegisterLord,
+                      placeholder: 'ex. SireKelvin',
+                      value: authRegisterLord,
+                    },
+                    password: {
+                      id: 'auth-preview-register-password',
+                      icon: '✶',
+                      label: 'Sceau secret',
+                      onChange: setAuthRegisterPassword,
+                      onPasswordVisibleChange: setAuthRegisterPasswordVisible,
+                      passwordVisible: authRegisterPasswordVisible,
+                      placeholder: '•••••••',
+                      secure: true,
+                      value: authRegisterPassword,
+                    },
+                  }}
+                  footerAction={{ id: 'login', label: 'Reprendre →' }}
+                  footerPrompt="Déjà un royaume ?"
+                  status={authStatus}
+                  stepLabel="Inscription · 1/2"
+                  strength={{
+                    labels: ['Faible', 'Moyen', 'Bon', 'Robuste'],
+                    score: 3,
+                    titlePrefix: 'Sceau',
+                  }}
+                  submitAction={{ id: 'submit-register', label: 'Forger mon royaume', variant: 'warning', size: 'lg' }}
+                  terms={{
+                    checked: authTermsAccepted,
+                    firstLinkLabel: 'Édits du Royaume',
+                    firstText: 'Je jure allégeance aux',
+                    onChange: setAuthTermsAccepted,
+                    secondLinkLabel: 'Charte de discrétion',
+                    secondText: 'et reconnais la',
+                    suffix: '.',
+                  }}
+                  titleLines={['Que la couronne', 'vous distingue']}
+                />
+              </div>
+
+              <div className="flex flex-col items-center gap-2">
+                <span className="rounded-full border border-[rgba(93,74,50,.35)] px-2.5 py-1 font-game text-[10px] font-extrabold uppercase tracking-[.24em] text-[#5d4a32]">
+                  D · Forger l'étendard
+                </span>
+                <AuthBannerScreen
+                  backLabel="Retour"
+                  field={{
+                    id: 'auth-preview-banner-lord',
+                    icon: '✦',
+                    label: 'Nom du seigneur',
+                    onChange: setAuthBannerLord,
+                    value: authBannerLord,
+                  }}
+                  onShieldChange={setAuthSelectedShield}
+                  quote="« On reconnaît le seigneur à ses couleurs, pas à ses paroles. »"
+                  selectedShieldId={authSelectedShield}
+                  shieldLabel="Blason"
+                  shields={authShields}
+                  status={authStatus}
+                  stepLabel="Inscription · 2/2"
+                  submitAction={{ id: 'submit-banner', label: "Lever l'étendard", variant: 'warning', size: 'lg' }}
+                  subtitle="« Que vos couleurs guident vos vassaux. »"
+                  title="Forgez votre étendard"
+                />
+              </div>
+            </div>
+          </div>
         </section>
 
         <section className="space-y-4">

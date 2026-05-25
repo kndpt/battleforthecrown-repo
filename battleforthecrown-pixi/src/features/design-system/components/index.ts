@@ -2,6 +2,48 @@ export { Badge } from './Badge';
 export type { BadgeProps, BadgeSize, BadgeTone } from './Badge';
 export { Avatar, AvatarProfileLine, AvatarStack } from './Avatar';
 export type { AvatarProfileLineProps, AvatarProps, AvatarSize, AvatarStackItem, AvatarStackProps, AvatarStatus, AvatarTone } from './Avatar';
+export {
+  AuthBackButton,
+  AuthBannerScreen,
+  AuthButton,
+  AuthCrownSigil,
+  AuthDivider,
+  AuthField,
+  AuthHeraldShieldButton,
+  AuthLandingScreen,
+  AuthLoginScreen,
+  AuthPhoneFrame,
+  AuthRegisterScreen,
+  AuthSsoChip,
+  AuthStatusBar,
+  AuthStrengthMeter,
+  AuthWordmark,
+} from './AuthScreens';
+export type {
+  AuthAction,
+  AuthBackButtonProps,
+  AuthBannerScreenProps,
+  AuthButtonProps,
+  AuthButtonSize,
+  AuthButtonVariant,
+  AuthCrownSigilProps,
+  AuthDividerProps,
+  AuthFieldProps,
+  AuthHeraldShield,
+  AuthHeraldShieldButtonProps,
+  AuthLandingScreenProps,
+  AuthLoginScreenProps,
+  AuthPhoneFrameProps,
+  AuthRegisterScreenProps,
+  AuthRememberControl,
+  AuthSsoAction,
+  AuthSsoChipProps,
+  AuthStatusBarProps,
+  AuthStrengthMeterProps,
+  AuthTermsControl,
+  AuthTextAction,
+  AuthWordmarkProps,
+} from './AuthScreens';
 export { ArmyMovementList, ArmyMovementRow } from './ArmyMovementRow';
 export type { ArmyMovementListProps, ArmyMovementRowProps, ArmyMovementSurface, ArmyMovementTone } from './ArmyMovementRow';
 export { BASE_MODAL_DEFAULT_MAX_HEIGHT, BASE_MODAL_DEFAULT_WIDTH, BaseModal } from './BaseModal';
