@@ -1,6 +1,7 @@
 import {
   determineTier,
   adjustCapacityForPlayerPresence,
+  findReachableBarbarianSeedPosition,
   getChunksInRings,
   samplePositions,
   type ChunkBounds,
@@ -275,5 +276,51 @@ describe('samplePositions', () => {
     });
 
     expect(result).toEqual([]);
+  });
+});
+
+describe('findReachableBarbarianSeedPosition', () => {
+  it('returns a valid deterministic position inside the reachable T1 ring', () => {
+    const position = findReachableBarbarianSeedPosition({
+      centerX: 50,
+      centerY: 50,
+      worldWidth: 100,
+      worldHeight: 100,
+      minDistance: 8,
+      maxDistance: 10,
+      minSpacing: 6,
+      playerExclusion: 2,
+      existingPositions: [{ x: 50, y: 50 }],
+      playerVillages: [{ x: 50, y: 50 }],
+    });
+
+    expect(position).toEqual({ x: 50, y: 42 });
+    expect(
+      determineTier(position as Position, 50, 50, MINIMAL_TIERS_CONFIG),
+    ).toBe('T1');
+  });
+
+  it('returns null when every reachable candidate violates spacing', () => {
+    const existingPositions: Position[] = [];
+    for (let x = 40; x <= 60; x += 1) {
+      for (let y = 40; y <= 60; y += 1) {
+        existingPositions.push({ x, y });
+      }
+    }
+
+    const position = findReachableBarbarianSeedPosition({
+      centerX: 50,
+      centerY: 50,
+      worldWidth: 100,
+      worldHeight: 100,
+      minDistance: 8,
+      maxDistance: 10,
+      minSpacing: 6,
+      playerExclusion: 2,
+      existingPositions,
+      playerVillages: [{ x: 50, y: 50 }],
+    });
+
+    expect(position).toBeNull();
   });
 });

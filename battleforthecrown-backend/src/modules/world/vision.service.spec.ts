@@ -32,8 +32,8 @@ describe('VisionService', () => {
       const disks = await service.getVisionDisks('user-1', 'world-1');
 
       expect(disks).toEqual([
-        { x: 10, y: 20, radius: 15 },
-        { x: 50, y: 60, radius: 25 },
+        { x: 10, y: 20, radius: 20 },
+        { x: 50, y: 60, radius: 30 },
       ]);
     });
 
@@ -46,7 +46,7 @@ describe('VisionService', () => {
       const disks = await service.getVisionDisks('user-1', 'world-1');
 
       expect(disks).toHaveLength(1);
-      expect(disks[0]).toEqual({ x: 10, y: 20, radius: 15 });
+      expect(disks[0]).toEqual({ x: 10, y: 20, radius: 20 });
     });
 
     it('returns a finite radius for watchtower level 10', async () => {
@@ -56,7 +56,7 @@ describe('VisionService', () => {
 
       const disks = await service.getVisionDisks('user-1', 'world-1');
 
-      expect(disks).toEqual([{ x: 0, y: 0, radius: 50 }]);
+      expect(disks).toEqual([{ x: 0, y: 0, radius: 55 }]);
     });
 
     it('skips watchtower level 0 (world locked)', async () => {
@@ -95,8 +95,8 @@ describe('VisionService', () => {
     });
 
     it('returns false outside a max-level watchtower radius', () => {
-      const disks: VisionDisk[] = [{ x: 0, y: 0, radius: 50 }];
-      expect(service.isInVision({ x: 51, y: 0 }, disks)).toBe(false);
+      const disks: VisionDisk[] = [{ x: 0, y: 0, radius: 55 }];
+      expect(service.isInVision({ x: 56, y: 0 }, disks)).toBe(false);
     });
 
     it('returns false on empty disks list', () => {
@@ -129,7 +129,7 @@ describe('VisionService', () => {
     });
 
     it('fogs entities outside a max-level watchtower radius', () => {
-      const disks: VisionDisk[] = [{ x: 0, y: 0, radius: 50 }];
+      const disks: VisionDisk[] = [{ x: 0, y: 0, radius: 55 }];
       const result = service.applyFogOfWar(entities, disks);
 
       expect(result).toEqual([

@@ -191,7 +191,7 @@ describe('vision smoke', () => {
 
     expect(body.fogOfWarEnabled).toBe(true);
     expect(body.visionDisks).toEqual([
-      { x: viewerVillage.x, y: viewerVillage.y, radius: 10 },
+      { x: viewerVillage.x, y: viewerVillage.y, radius: 15 },
     ]);
 
     const visible = body.entities.find((e) => e.id === visibleVillage.id);
@@ -298,8 +298,8 @@ describe('vision smoke', () => {
     expect(body.fogOfWarEnabled).toBe(true);
     expect(body.visionDisks).toEqual(
       expect.arrayContaining([
-        { x: join.village.x, y: join.village.y, radius: 10 },
-        { x: secondX, y: secondY, radius: 20 },
+        { x: join.village.x, y: join.village.y, radius: 15 },
+        { x: secondX, y: secondY, radius: 25 },
       ]),
     );
 

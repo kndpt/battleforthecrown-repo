@@ -1,11 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { WATCHTOWER_VISION_LEVELS } from '@battleforthecrown/shared/village';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WorldConfigService } from './world-config.service';
 import { BarbarianVillageFactory } from './barbarian-village.factory';
 import {
   adjustCapacityForPlayerPresence,
   determineTier,
+  findReachableBarbarianSeedPosition,
   getChunkBounds,
   getChunksInRings,
   samplePositions,
@@ -80,6 +82,14 @@ export class BarbarianSeedingService {
         anchorVillageId,
       });
     }
+
+    totalCreated += await this.ensureReachableTierOne({
+      worldId,
+      centerX: villageX,
+      centerY: villageY,
+      world,
+      config: seedingConfig,
+    });
 
     this.logger.log(
       `Seeded ${totalCreated} BVs in ${toProcess} chunks around village at (${villageX}, ${villageY})`,
@@ -212,6 +222,119 @@ export class BarbarianSeedingService {
       });
 
       return created;
+    });
+  }
+
+  private async ensureReachableTierOne(params: {
+    worldId: string;
+    centerX: number;
+    centerY: number;
+    world: { gridWidth: number; gridHeight: number };
+    config: BarbarianSeedingPlan;
+  }): Promise<number> {
+    const { worldId, centerX, centerY, world, config } = params;
+    const watchtowerLevelOneRadius =
+      WATCHTOWER_VISION_LEVELS[1]?.visibilityRadius ?? 0;
+    const tierOneRange = config.tierRanges.find((range) => range.tier === 'T1');
+    const minDistance = Math.max(config.rMin, tierOneRange?.minDistance ?? 0);
+    const maxDistance = Math.min(
+      watchtowerLevelOneRadius,
+      tierOneRange?.maxDistance ?? watchtowerLevelOneRadius,
+    );
+
+    if (maxDistance < minDistance) return 0;
+
+    return this.prisma.$transaction(async (tx) => {
+      const existingTierOne = await tx.village.findMany({
+        where: {
+          worldId,
+          isBarbarian: true,
+          tier: 'T1',
+          x: {
+            gte: Math.floor(centerX - watchtowerLevelOneRadius),
+            lte: Math.ceil(centerX + watchtowerLevelOneRadius),
+          },
+          y: {
+            gte: Math.floor(centerY - watchtowerLevelOneRadius),
+            lte: Math.ceil(centerY + watchtowerLevelOneRadius),
+          },
+        },
+        select: { x: true, y: true },
+      });
+
+      const alreadyReachable = existingTierOne.some(
+        (village) =>
+          Math.hypot(village.x - centerX, village.y - centerY) <=
+          watchtowerLevelOneRadius,
+      );
+      if (alreadyReachable) return 0;
+
+      const halo = watchtowerLevelOneRadius + config.minSpacing;
+      const nearbyVillages = await tx.village.findMany({
+        where: {
+          worldId,
+          x: {
+            gte: Math.floor(centerX - halo),
+            lte: Math.ceil(centerX + halo),
+          },
+          y: {
+            gte: Math.floor(centerY - halo),
+            lte: Math.ceil(centerY + halo),
+          },
+        },
+        select: { x: true, y: true, isBarbarian: true },
+      });
+
+      const position = findReachableBarbarianSeedPosition({
+        centerX,
+        centerY,
+        worldWidth: world.gridWidth,
+        worldHeight: world.gridHeight,
+        minDistance,
+        maxDistance,
+        minSpacing: config.minSpacing,
+        playerExclusion: config.playerExclusion,
+        existingPositions: nearbyVillages.map(({ x, y }) => ({ x, y })),
+        playerVillages: nearbyVillages
+          .filter((village) => !village.isBarbarian)
+          .map(({ x, y }) => ({ x, y })),
+      });
+
+      if (!position) {
+        this.logger.warn(
+          `Could not guarantee a reachable T1 barbarian near (${centerX}, ${centerY}) in world ${worldId}`,
+        );
+        return 0;
+      }
+
+      const tier = determineTier(position, centerX, centerY, config);
+      if (tier !== 'T1') {
+        this.logger.warn(
+          `Reachable barbarian guarantee candidate at (${position.x}, ${position.y}) resolved to ${tier}, skipping`,
+        );
+        return 0;
+      }
+
+      try {
+        await this.factory.create(tx, {
+          worldId,
+          tier: 'T1',
+          x: position.x,
+          y: position.y,
+        });
+        return 1;
+      } catch (error) {
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002'
+        ) {
+          this.logger.debug(
+            `Skipping duplicate reachable T1 at (${position.x}, ${position.y})`,
+          );
+          return 0;
+        }
+        throw error;
+      }
     });
   }
 }
