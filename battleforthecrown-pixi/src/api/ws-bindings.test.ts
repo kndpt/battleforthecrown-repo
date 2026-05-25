@@ -382,7 +382,7 @@ describe('applyBattleResolved', () => {
     expect(useExpeditionsStore.getState().byId['e1']).toBeUndefined();
   });
 
-  it('invalidates the signed-in player reports query for the unread badge', () => {
+  it('invalidates the signed-in player reports queries across worlds for the unread badge', () => {
     setCurrentWorldSession();
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.combatReports('user-1', 'world-1'), []);
@@ -412,14 +412,15 @@ describe('applyBattleResolved', () => {
 
     expect(queryClient.getQueryState(queryKeys.combatReports('user-1', 'world-1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.scoutReports('user-1', 'world-1'))?.isInvalidated).toBe(true);
-    expect(queryClient.getQueryState(queryKeys.combatReports('user-1', 'world-old'))?.isInvalidated).toBe(false);
-    expect(queryClient.getQueryState(queryKeys.scoutReports('user-1', 'world-old'))?.isInvalidated).toBe(false);
+    expect(queryClient.getQueryState(queryKeys.combatReports('user-1', 'world-old'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.scoutReports('user-1', 'world-old'))?.isInvalidated).toBe(true);
   });
 
-  it('invalidates village and kingdom power for the attacking village', () => {
+  it('invalidates village power and all signed-in kingdom power caches for the attacking village', () => {
     setCurrentWorldSession();
     const queryClient = new QueryClient();
     seedPowerQueries(queryClient, 'v1');
+    queryClient.setQueryData(queryKeys.kingdomPower('user-1', 'world-old'), { kingdomPower: 1 });
 
     applyBattleResolved(
       {
@@ -442,6 +443,7 @@ describe('applyBattleResolved', () => {
     );
 
     expectPowerQueriesInvalidated(queryClient, 'v1');
+    expect(queryClient.getQueryState(queryKeys.kingdomPower('user-1', 'world-old'))?.isInvalidated).toBe(true);
   });
 });
 
@@ -548,7 +550,7 @@ describe('applyVillageConquered', () => {
 });
 
 describe('applyVillageAttacked', () => {
-  it('invalidates the signed-in defender reports query for the unread badge', () => {
+  it('invalidates the signed-in defender reports queries across worlds for the unread badge', () => {
     useAuthStore.getState().setSession({
       accessToken: 'access',
       refreshToken: 'refresh',
@@ -558,8 +560,11 @@ describe('applyVillageAttacked', () => {
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.combatReports('defender-1', 'world-1'), []);
     queryClient.setQueryData(queryKeys.scoutReports('defender-1', 'world-1'), []);
+    queryClient.setQueryData(queryKeys.combatReports('defender-1', 'world-old'), []);
+    queryClient.setQueryData(queryKeys.scoutReports('defender-1', 'world-old'), []);
     seedPowerQueries(queryClient, 'v-def', 'defender-1');
     seedPowerQueries(queryClient, 'v-origin', 'defender-1');
+    queryClient.setQueryData(queryKeys.kingdomPower('defender-1', 'world-old'), { kingdomPower: 1 });
 
     applyVillageAttacked(
       {
@@ -581,8 +586,11 @@ describe('applyVillageAttacked', () => {
 
     expect(queryClient.getQueryState(queryKeys.combatReports('defender-1', 'world-1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.scoutReports('defender-1', 'world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.combatReports('defender-1', 'world-old'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.scoutReports('defender-1', 'world-old'))?.isInvalidated).toBe(true);
     expectPowerQueriesInvalidated(queryClient, 'v-def', 'defender-1');
     expectPowerQueriesInvalidated(queryClient, 'v-origin', 'defender-1');
+    expect(queryClient.getQueryState(queryKeys.kingdomPower('defender-1', 'world-old'))?.isInvalidated).toBe(true);
   });
 });
 

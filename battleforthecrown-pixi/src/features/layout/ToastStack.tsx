@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { GAME_SOUND_URLS, playGameSound } from '@/features/audio/gameSounds';
 import { useUiStore } from '@/stores/ui';
 import type { ToastTone } from '@/features/design-system/components/ToastPreview';
 import { ToastPreview } from '@/features/design-system/components/ToastPreview';
@@ -20,6 +21,15 @@ const ICON_MAP: Record<ToastTone, string> = {
 export function ToastStack() {
   const toasts = useUiStore((state) => state.toasts);
   const dismiss = useUiStore((state) => state.dismissToast);
+  const playedToastIds = useRef(new Set<string>());
+
+  useEffect(() => {
+    for (const toast of toasts) {
+      if (playedToastIds.current.has(toast.id)) continue;
+      playedToastIds.current.add(toast.id);
+      playGameSound(GAME_SOUND_URLS.notificationReceived, 0.55);
+    }
+  }, [toasts]);
 
   useEffect(() => {
     if (toasts.length === 0) return;

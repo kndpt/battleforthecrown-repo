@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { queryKeys } from '@/api/queries';
 import { useGameStore } from '@/stores/game';
 import { GameEntryTransition } from './GameEntryTransition';
@@ -55,7 +55,9 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   useGameStore.getState().clear();
+  vi.unstubAllGlobals();
 });
 
 describe('GameEntryTransition', () => {
@@ -71,5 +73,25 @@ describe('GameEntryTransition', () => {
     renderTransition('/worlds');
 
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('plays the world entry sound when the animation completes', () => {
+    vi.useFakeTimers();
+    const play = vi.fn().mockResolvedValue(undefined);
+    const AudioMock = vi.fn(function Audio(this: { play: typeof play; volume: number }) {
+      this.play = play;
+      this.volume = 0;
+    });
+    vi.stubGlobal('Audio', AudioMock);
+    window.Audio = AudioMock as unknown as typeof Audio;
+
+    renderTransition('/game');
+
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(AudioMock).toHaveBeenCalledWith('/assets/sounds/world-entry-complete.mp3');
+    expect(play).toHaveBeenCalledTimes(1);
   });
 });

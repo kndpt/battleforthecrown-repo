@@ -427,9 +427,8 @@ export function applyVillageAttacked(
 
 function invalidateCombatReports(ctx: BindingsContext): void {
   const userId = useAuthStore.getState().user?.id ?? null;
-  const worldId = useGameStore.getState().worldId;
-  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.combatReports(userId, worldId) });
-  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.scoutReports(userId, worldId) });
+  ctx.queryClient.invalidateQueries({ queryKey: ['combat', 'reports', userId] });
+  ctx.queryClient.invalidateQueries({ queryKey: ['combat', 'scout-reports', userId] });
 }
 
 function invalidateOpenConquests(ctx: BindingsContext): void {
@@ -446,9 +445,8 @@ function invalidateOpenExpeditions(ctx: BindingsContext): void {
 
 function invalidatePowerQueries(ctx: BindingsContext, villageId: string): void {
   const userId = useAuthStore.getState().user?.id ?? null;
-  const worldId = useGameStore.getState().worldId;
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.villagePower(villageId) });
-  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.kingdomPower(userId, worldId) });
+  ctx.queryClient.invalidateQueries({ queryKey: ['power', 'kingdom', userId] });
 }
 
 function invalidateRetentionSummary(ctx: BindingsContext): void {

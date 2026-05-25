@@ -1,16 +1,18 @@
-# Entrée animée dans le monde
+# Son d'entrée et commentaires PR
 
-- [x] Vérifier l’état réel du worktree et les composants concernés.
-- [x] Déplacer l’animation d’entrée côté arrivée `/game`.
-- [x] Garantir un affichage minimum de 2 secondes, y compris au reload.
-- [x] Garder le blason complet dans le rond de l’overlay.
+- [x] Vérifier les points d'intégration du loader, des assets audio et des events WS.
+- [x] Ranger le son d'entrée avec un nom durable dans un dossier audio adapté.
+- [x] Jouer le son à la fin du chargement d'entrée dans le monde.
+- [x] Ranger et jouer le son de notification pour les toasts.
+- [x] Corriger les invalidations world-scoped signalées par la review.
 - [x] Adapter les tests ciblés.
-- [x] Vérifier tests, static-check et rendu browser.
+- [x] Vérifier static-check/tests ciblés et impact docs.
 
 ## Review
 
-- L’animation est montée à l’arrivée sur `/game`, donc elle se joue aussi au reload et après navigation depuis `/worlds`.
-- Le loader dure 2 secondes via CSS, sans timer React susceptible de rester bloqué.
-- Le fond est opaque : le village ne transparaît plus pendant le chargement.
-- Le halo, le rond et le blason sont centrés ensemble.
-- Tests ciblés, static-check et vérification browser verts.
+- Son déplacé dans `public/assets/sounds/world-entry-complete.mp3`.
+- Son de notification déplacé dans `public/assets/sounds/notification-received.mp3` et joué une fois par nouveau toast.
+- Le son d'entrée est déclenché à la fin des 2 secondes du loader `/game`; les refus autoplay navigateur sont ignorés sans casser l'écran.
+- Les invalidations WS des rapports et de la power royaume couvrent maintenant toutes les caches du joueur, pas seulement le monde affiché.
+- Tests ciblés et static-check verts.
+- Docs : aucun changement nécessaire.

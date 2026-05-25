@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router';
 import { usePublicWorldsQuery } from '@/api/queries';
+import { GAME_SOUND_URLS, playGameSound } from '@/features/audio/gameSounds';
 import { WorldEntryOverlay } from '@/features/design-system/worlds/WorldsSelectionDesign';
 import { useGameStore } from '@/stores/game';
 import {
@@ -9,6 +10,8 @@ import {
   WORLD_THEME_TOKENS,
   type WorldCardViewModel,
 } from './worldsViewModel';
+
+const WORLD_ENTRY_DURATION_MS = 2000;
 
 function isGameRoute(pathname: string): boolean {
   return pathname === '/game' || pathname.startsWith('/game/');
@@ -50,6 +53,16 @@ export function GameEntryTransition() {
       ? toWorldCardViewModel(activePublicWorld, new Set([activePublicWorld.id]))
       : fallbackWorldEntryModel(worldId);
   }, [publicWorlds.data, worldId]);
+
+  useEffect(() => {
+    if (!routeIsGame) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      playGameSound(GAME_SOUND_URLS.worldEntryComplete);
+    }, WORLD_ENTRY_DURATION_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [location.key, routeIsGame, worldId]);
 
   if (!routeIsGame) return null;
 
