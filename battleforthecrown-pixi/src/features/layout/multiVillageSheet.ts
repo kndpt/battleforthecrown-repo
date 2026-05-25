@@ -91,7 +91,7 @@ function mapResources(
 
   return {
     iron: { max: resources?.maxPerType ?? 0, n: Math.floor(resources?.iron ?? 0) },
-    pop: { max: population?.max ?? 0, n: population?.used ?? 0 },
+    pop: { max: population?.max ?? 0, n: population?.available ?? 0 },
     stone: { max: resources?.maxPerType ?? 0, n: Math.floor(resources?.stone ?? 0) },
     wood: { max: resources?.maxPerType ?? 0, n: Math.floor(resources?.wood ?? 0) },
   };

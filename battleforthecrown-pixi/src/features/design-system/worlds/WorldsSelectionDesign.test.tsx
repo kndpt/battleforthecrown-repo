@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { WorldCardViewModel } from '@/features/worlds/worldsViewModel';
 import { WorldCard, WorldsSelectionDesign } from './WorldsSelectionDesign';
@@ -92,6 +92,26 @@ describe('WorldCard', () => {
     expect(screen.queryByText('late')).not.toBeInTheDocument();
     expect(screen.queryByText('closed')).not.toBeInTheDocument();
   });
+
+  it('lets an already joined world enter the game instead of disabling the CTA', () => {
+    const onJoin = vi.fn();
+    render(
+      <WorldCard
+        onJoin={onJoin}
+        onNotify={() => undefined}
+        world={makeCard({
+          ctaKind: 'joined',
+          ctaLabel: 'Entrer dans le royaume',
+          isJoined: true,
+        })}
+      />,
+    );
+
+    const button = screen.getByRole('button', { name: 'Entrer dans le royaume' });
+    expect(button).not.toBeDisabled();
+    fireEvent.click(button);
+    expect(onJoin).toHaveBeenCalledWith(expect.objectContaining({ id: 'world-open' }));
+  });
 });
 
 describe('WorldsSelectionDesign', () => {
@@ -116,4 +136,3 @@ describe('WorldsSelectionDesign', () => {
     expect(screen.getByRole('button', { name: 'Rejoindre le royaume' })).toBeInTheDocument();
   });
 });
-

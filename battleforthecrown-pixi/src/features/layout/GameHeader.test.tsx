@@ -205,10 +205,10 @@ afterEach(() => {
 });
 
 describe('GameHeader multi-village selector', () => {
-  it('renders population as used only in the header', async () => {
+  it('renders population as available in the header', async () => {
     renderHeader();
 
-    expect(await screen.findByLabelText('Population 42')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Population 78')).toBeInTheDocument();
     expect(screen.queryByLabelText('Population 42/120')).not.toBeInTheDocument();
   });
 
@@ -226,7 +226,7 @@ describe('GameHeader multi-village selector', () => {
     expect(await screen.findByText('10:12')).toBeInTheDocument();
     expect(await screen.findByText('220')).toBeInTheDocument();
     expect(await screen.findByText('4.5K')).toBeInTheDocument();
-    expect((await screen.findAllByText('42')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('78')).length).toBeGreaterThan(0);
     expect(await screen.findByTitle('Forteresse')).toBeInTheDocument();
     expect(await screen.findByTitle(/Chantier · 1:00/)).toBeInTheDocument();
     expect(await screen.findByTitle(/Formation · 8:00/)).toBeInTheDocument();

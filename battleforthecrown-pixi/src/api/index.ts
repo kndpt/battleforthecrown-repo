@@ -15,7 +15,10 @@ export const apiClient = new ApiClient({
       useAuthStore.getState().setTokens(tokens);
       gameSocket.updateToken(tokens.accessToken);
     },
-    clearTokens: () => useAuthStore.getState().clearSession(),
+    clearTokens: () => {
+      useAuthStore.getState().clearSession();
+      useGameStore.getState().clear();
+    },
   },
   gameContext: {
     getWorldId: () => useGameStore.getState().worldId,

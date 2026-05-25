@@ -8,6 +8,7 @@ import {
 import { defaultSeasonVariants, worldsSelectionLabels } from '@/features/design-system/worlds/worldsSelectionConfig';
 import { ToastStack } from '@/features/layout/ToastStack';
 import { useAuthStore } from '@/stores/auth';
+import { useGameStore } from '@/stores/game';
 import { useUiStore } from '@/stores/ui';
 import {
   buildWorldTabCounts,
@@ -29,6 +30,7 @@ export function WorldSelector() {
   const memberships = useMyMembershipsQuery();
   const join = useJoinWorldMutation();
   const userEmail = useAuthStore((state) => state.user?.email);
+  const currentWorldId = useGameStore((state) => state.worldId);
   const pushToast = useUiStore((state) => state.pushToast);
   const [activeTab, setActiveTab] = useState<WorldsTab>('open');
   const [error, setError] = useState<string | null>(null);
@@ -78,7 +80,7 @@ export function WorldSelector() {
         isLoading={worlds.isLoading || memberships.isLoading}
         labels={worldsSelectionLabels}
         noticeMessage={error}
-        onBack={() => navigate('/my-worlds')}
+        onBack={() => navigate(currentWorldId ? '/game' : '/')}
         onJoin={onJoin}
         onNotify={onNotify}
         onTabChange={setActiveTab}

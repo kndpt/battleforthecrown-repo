@@ -117,9 +117,9 @@ export class JoinWorldUseCase {
     await tx.resourceStock.create({
       data: {
         villageId: village.id,
-        wood: numericEnv('WOOD_STARTING_AMOUNT'),
-        stone: numericEnv('STONE_STARTING_AMOUNT'),
-        iron: numericEnv('IRON_STARTING_AMOUNT'),
+        wood: startingResourceAmount('WOOD_STARTING_AMOUNT'),
+        stone: startingResourceAmount('STONE_STARTING_AMOUNT'),
+        iron: startingResourceAmount('IRON_STARTING_AMOUNT'),
         maxPerType: storageLimit,
       },
     });
@@ -162,7 +162,17 @@ export class JoinWorldUseCase {
   }
 }
 
-function numericEnv(key: string): number {
+export const DEFAULT_STARTING_RESOURCE_AMOUNT = 1000;
+
+export function startingResourceAmount(key: string): number {
   const raw = process.env[key];
-  return raw ? Number(raw) : 0;
+  if (raw === undefined || raw.trim() === '') {
+    return DEFAULT_STARTING_RESOURCE_AMOUNT;
+  }
+
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value < 0) {
+    throw new Error(`Invalid ${key}: expected a non-negative number`);
+  }
+  return value;
 }

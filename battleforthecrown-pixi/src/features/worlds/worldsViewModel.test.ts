@@ -101,7 +101,27 @@ describe('worldsViewModel', () => {
     expect(model.tab).toBe('open');
     expect(model.isJoined).toBe(true);
     expect(model.ctaKind).toBe('joined');
-    expect(model.ctaLabel).toBe('Déjà rejoint');
+    expect(model.ctaLabel).toBe('Entrer dans le royaume');
+  });
+
+  it('keeps legacy OPEN worlds explicit when lifecycle start dates are missing', () => {
+    const model = toWorldCardViewModel(
+      makeWorld({
+        lifecycle: {
+          day: null,
+          endsAt: null,
+          inscriptionPhase: 'closed',
+          plannedOpenAt: null,
+          startedAt: null,
+          totalDays: 60,
+        },
+      }),
+      new Set<string>(),
+      now,
+    );
+
+    expect(model.dayLabel).toBe('J. ? / 60');
+    expect(model.lifecycleDay).toBeNull();
   });
 
   it('builds tab counts and filters from client-side derived status groups', () => {
@@ -118,4 +138,3 @@ describe('worldsViewModel', () => {
     expect(filterWorldsByTab(models, 'locked').map((world) => world.id)).toEqual(['locked-1']);
   });
 });
-

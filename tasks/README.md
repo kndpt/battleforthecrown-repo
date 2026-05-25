@@ -27,6 +27,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ### Runs actifs
 
+- [034 — Isolation multi-monde des données joueur](./runs/034-fix-world-scoped-player-data.md) — 📋 `PLANNED`. Scoper puissance, rapports et caches front au monde courant, avec audit global des surfaces user-scoped visibles.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés
@@ -70,6 +71,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ## Archivés
 
+- [71 — Stock initial absent sur inscription monde](./archive/71-fix-starting-resources-defaults.md) ✅ Résolu 2026-05-25 par correction directe Codex.
 - [70 — Ouvrir la fiche joueur depuis l'avatar IG](./archive/70-integrate-player-profile-sheet.md) ✅ Résolu 2026-05-24 par $bftc-run @tasks/70-integrate-player-profile-sheet.md
 - [68 — Renvoyer un renfort étranger ne produit aucun trajet retour sur la WorldMap](./archive/68-send-back-foreign-reinforcement-no-return-trip.md) ✅ Résolu 2026-05-18 par $bftc-run @tasks/68-send-back-foreign-reinforcement-no-return-trip.md
 - [64 — Supprimer la table miroir `WorldEntity` devenue morte](./archive/64-remove-deprecated-world-entity.md) ✅ Résolu 2026-05-17 par $bftc-run @tasks/64-remove-deprecated-world-entity.md

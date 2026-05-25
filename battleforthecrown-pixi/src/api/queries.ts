@@ -14,6 +14,7 @@ import type {
   VillageStrategyType,
 } from '@battleforthecrown/shared/village';
 import { apiClient } from './index';
+import { gameSocket } from './ws';
 import {
   toAuthSession,
   type AuthSession,
@@ -1086,6 +1087,7 @@ export function useLogout() {
   return () => {
     clearSession();
     clearGame();
+    gameSocket.disconnect();
     queryClient.clear();
   };
 }

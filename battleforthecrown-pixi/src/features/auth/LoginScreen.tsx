@@ -33,7 +33,7 @@ export function LoginScreen() {
     if (!data) return;
 
     login.mutate(data, {
-      onSuccess: () => navigate('/my-worlds'),
+      onSuccess: () => navigate('/game'),
       onError: (err) => {
         if (err instanceof ApiError) {
           setSubmitError(err.message || 'Identifiants invalides');

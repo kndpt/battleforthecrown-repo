@@ -159,7 +159,7 @@ function CtaButton({
   onNotify: (world: WorldCardViewModel) => void;
   world: WorldCardViewModel;
 }) {
-  const disabled = world.ctaKind === 'locked' || world.ctaKind === 'joined';
+  const disabled = world.ctaKind === 'locked';
   const tone = world.ctaKind === 'notify'
     ? 'border-[#1f5288] bg-[linear-gradient(to_bottom,#5b9bd5,#2e75b6)]'
     : world.ctaKind === 'join'
@@ -177,7 +177,7 @@ function CtaButton({
       disabled={disabled}
       onClick={() => {
         if (world.ctaKind === 'notify') onNotify(world);
-        if (world.ctaKind === 'join') onJoin(world);
+        if (world.ctaKind === 'join' || world.ctaKind === 'joined') onJoin(world);
       }}
       type="button"
     >

@@ -8,9 +8,8 @@ import { LoginScreen } from '@/features/auth/LoginScreen';
 import { RegisterScreen } from '@/features/auth/RegisterScreen';
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute';
 import { WorldSelector } from '@/features/worlds/WorldSelector';
-import { MyWorldsScreen } from '@/features/worlds/MyWorldsScreen';
+import { WorldSessionGate } from '@/features/worlds/WorldSessionGate';
 import { Spinner } from '@/ui/spinners';
-import { useGameStore } from '@/stores/game';
 import { AuthenticatedShell } from '@/features/layout/AuthenticatedShell';
 import { DebugOverlay } from '@/features/layout/DebugOverlay';
 import { VictoryModalHost } from '@/ui/modals/VictoryModalHost';
@@ -45,50 +44,42 @@ function GameLoader() {
 }
 
 function GameGuard() {
-  const worldId = useGameStore((state) => state.worldId);
-  if (!worldId) {
-    return <Navigate to="/my-worlds" replace />;
-  }
   return (
-    <Suspense fallback={<GameLoader />}>
-      <VillageView />
-    </Suspense>
+    <WorldSessionGate>
+      <Suspense fallback={<GameLoader />}>
+        <VillageView />
+      </Suspense>
+    </WorldSessionGate>
   );
 }
 
 function WorldMapGuard() {
-  const worldId = useGameStore((state) => state.worldId);
-  if (!worldId) {
-    return <Navigate to="/my-worlds" replace />;
-  }
   return (
-    <Suspense fallback={<GameLoader />}>
-      <WorldMapScreen />
-    </Suspense>
+    <WorldSessionGate>
+      <Suspense fallback={<GameLoader />}>
+        <WorldMapScreen />
+      </Suspense>
+    </WorldSessionGate>
   );
 }
 
 function ArmyGuard() {
-  const worldId = useGameStore((state) => state.worldId);
-  if (!worldId) {
-    return <Navigate to="/my-worlds" replace />;
-  }
   return (
-    <Suspense fallback={<GameLoader />}>
-      <ArmyScreen />
-    </Suspense>
+    <WorldSessionGate>
+      <Suspense fallback={<GameLoader />}>
+        <ArmyScreen />
+      </Suspense>
+    </WorldSessionGate>
   );
 }
 
 function MessagesGuard() {
-  const worldId = useGameStore((state) => state.worldId);
-  if (!worldId) {
-    return <Navigate to="/my-worlds" replace />;
-  }
   return (
-    <Suspense fallback={<GameLoader />}>
-      <MessagesScreen />
-    </Suspense>
+    <WorldSessionGate>
+      <Suspense fallback={<GameLoader />}>
+        <MessagesScreen />
+      </Suspense>
+    </WorldSessionGate>
   );
 }
 
@@ -120,7 +111,7 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<AuthenticatedShell />}>
               <Route path="/worlds" element={<WorldSelector />} />
-              <Route path="/my-worlds" element={<MyWorldsScreen />} />
+              <Route path="/my-worlds" element={<Navigate to="/game" replace />} />
               <Route path="/game" element={<GameGuard />} />
               <Route path="/game/world" element={<WorldMapGuard />} />
               <Route path="/game/army" element={<ArmyGuard />} />

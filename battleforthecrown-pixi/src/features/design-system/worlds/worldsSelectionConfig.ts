@@ -15,7 +15,6 @@ export const worldsSelectionLabels: WorldsSelectionLabels = {
   },
   seasonVariants: 'Variantes de saison',
   subtitle: 'Choisissez votre saison — chaque royaume, son tempo',
-  tempoHint: 'tempo = rythme global',
+  tempoHint: '',
   title: 'ROYAUMES',
 };
-
