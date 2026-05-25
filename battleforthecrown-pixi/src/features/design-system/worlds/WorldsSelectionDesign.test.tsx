@@ -134,6 +134,10 @@ describe('WorldCard', () => {
     );
 
     expect(screen.getByText('2 villages')).toBeInTheDocument();
+    expect(screen.getByText('Votre royaume')).toBeInTheDocument();
+    expect(screen.queryByText('Présent')).not.toBeInTheDocument();
+    expect(screen.queryByText('Villages')).not.toBeInTheDocument();
+    expect(screen.getByText('Puissance')).toBeInTheDocument();
     expect(normalizedText(container)).toContain('1 234 567');
     expect(container.querySelector('img')?.getAttribute('src')).toBe('/assets/army-power.png');
 
@@ -146,6 +150,7 @@ describe('WorldCard', () => {
     );
 
     expect(screen.queryByText('2 villages')).not.toBeInTheDocument();
+    expect(screen.queryByText('Votre royaume')).not.toBeInTheDocument();
     expect(normalizedText(container)).not.toContain('1 234 567');
     expect(container.querySelector('img[src="/assets/army-power.png"]')).not.toBeInTheDocument();
   });
