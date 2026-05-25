@@ -17,6 +17,7 @@ function makeCard(overrides: Partial<WorldCardViewModel> = {}): WorldCardViewMod
     lifecycleDay: 5,
     lifecycleTotalDays: 60,
     opensInLabel: null,
+    personalStats: null,
     sigilGlyph: '♔',
     statusLabel: 'INSCRIPTION LIBRE',
     tab: 'open',
@@ -27,6 +28,10 @@ function makeCard(overrides: Partial<WorldCardViewModel> = {}): WorldCardViewMod
     tierLabel: 'DÉBUTANTS',
     ...overrides,
   };
+}
+
+function normalizedText(container: HTMLElement): string {
+  return container.textContent?.replace(/\s/g, ' ') ?? '';
 }
 
 describe('WorldCard', () => {
@@ -112,6 +117,37 @@ describe('WorldCard', () => {
     expect(button).not.toBeDisabled();
     fireEvent.click(button);
     expect(onJoin).toHaveBeenCalledWith(expect.objectContaining({ id: 'world-open' }));
+  });
+
+  it('renders personal stats and the canonical power asset only when provided', () => {
+    const { container, rerender } = render(
+      <WorldCard
+        onJoin={() => undefined}
+        onNotify={() => undefined}
+        world={makeCard({
+          personalStats: {
+            kingdomPowerLabel: '1 234 567',
+            villageCountLabel: '2 villages',
+          },
+        })}
+      />,
+    );
+
+    expect(screen.getByText('2 villages')).toBeInTheDocument();
+    expect(normalizedText(container)).toContain('1 234 567');
+    expect(container.querySelector('img')?.getAttribute('src')).toBe('/assets/army-power.png');
+
+    rerender(
+      <WorldCard
+        onJoin={() => undefined}
+        onNotify={() => undefined}
+        world={makeCard({ personalStats: null })}
+      />,
+    );
+
+    expect(screen.queryByText('2 villages')).not.toBeInTheDocument();
+    expect(normalizedText(container)).not.toContain('1 234 567');
+    expect(container.querySelector('img[src="/assets/army-power.png"]')).not.toBeInTheDocument();
   });
 
 });

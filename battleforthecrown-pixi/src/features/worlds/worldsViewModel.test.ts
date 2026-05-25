@@ -43,6 +43,7 @@ describe('worldsViewModel', () => {
     expect(model.ctaLabel).toBe('Rejoindre le royaume');
     expect(model.dayLabel).toBe('J. 5 / 60');
     expect(model.joinedCountLabel).toBe('8 420');
+    expect(model.personalStats).toBeNull();
     expect(model.tempoLabel).toBe('STANDARD');
     expect(model.tierLabel).toBe('DÉBUTANTS');
   });
@@ -102,6 +103,39 @@ describe('worldsViewModel', () => {
     expect(model.isJoined).toBe(true);
     expect(model.ctaKind).toBe('joined');
     expect(model.ctaLabel).toBe('Entrer dans le royaume');
+  });
+
+  it('formats personal stats only for joined worlds with loaded stats', () => {
+    const stats = new Map([
+      ['joined-world', { kingdomPower: 1234567, villageCount: 2 }],
+      ['other-world', { kingdomPower: 999, villageCount: 1 }],
+    ]);
+
+    const joined = toWorldCardViewModel(
+      makeWorld({ id: 'joined-world' }),
+      new Set(['joined-world']),
+      now,
+      stats,
+    );
+    const notJoined = toWorldCardViewModel(
+      makeWorld({ id: 'other-world' }),
+      new Set(['joined-world']),
+      now,
+      stats,
+    );
+    const loading = toWorldCardViewModel(
+      makeWorld({ id: 'loading-world' }),
+      new Set(['loading-world']),
+      now,
+      stats,
+    );
+
+    expect(joined.personalStats).toEqual({
+      kingdomPowerLabel: '1 234 567',
+      villageCountLabel: '2 villages',
+    });
+    expect(notJoined.personalStats).toBeNull();
+    expect(loading.personalStats).toBeNull();
   });
 
   it('keeps legacy OPEN worlds explicit when lifecycle start dates are missing', () => {

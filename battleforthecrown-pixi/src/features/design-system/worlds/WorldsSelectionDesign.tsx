@@ -1,5 +1,6 @@
 import { Bell, Check, ChevronLeft, Lock, ScrollText, Users } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import { publicAsset } from '@/lib/publicAsset';
 import type { WorldCardViewModel, WorldsTab, WorldThemeTokens } from '@/features/worlds/worldsViewModel';
 
 export interface SeasonVariant {
@@ -47,6 +48,7 @@ const variantTone: Record<SeasonVariant['id'], WorldThemeTokens> = {
   speed: { border: '#9e7b0d', dark: '#c59e3f', glow: 'rgba(246,213,123,.35)', light: '#f6d57b' },
   standard: { border: '#3a6c1f', dark: '#4a8c2a', glow: 'rgba(110,191,73,.35)', light: '#6ebf49' },
 };
+const KINGDOM_POWER_ICON = '/assets/army-power.png';
 
 function lifecycleToneFor(world: WorldCardViewModel): WorldThemeTokens {
   if (world.lifecycleDay === null) {
@@ -236,6 +238,19 @@ export function WorldCard({
             {world.tierLabel}
           </span>
         </div>
+        {world.personalStats ? (
+          <div className="flex items-center justify-between gap-1.5 rounded-[7px] border border-[rgba(158,123,13,.24)] bg-[rgba(246,213,123,.18)] px-2 py-1">
+            <span className="inline-flex min-w-0 items-center gap-1.5 font-game text-[10.5px] font-extrabold text-[#3d2f1f] tabular-nums">
+              <Users aria-hidden="true" className="size-[13px] shrink-0 text-[#6d5838]" />
+              {world.personalStats.villageCountLabel}
+            </span>
+            <span className="h-3.5 w-px bg-[rgba(60,38,25,.18)]" />
+            <span className="inline-flex min-w-0 items-center gap-1.5 font-game text-[10.5px] font-extrabold text-[#3d2f1f] tabular-nums">
+              <img alt="" className="size-[14px] shrink-0 object-contain" src={publicAsset(KINGDOM_POWER_ICON)} />
+              {world.personalStats.kingdomPowerLabel}
+            </span>
+          </div>
+        ) : null}
         <CtaButton onJoin={onJoin} onNotify={onNotify} world={world} />
       </div>
     </article>

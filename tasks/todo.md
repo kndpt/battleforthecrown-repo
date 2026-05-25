@@ -1,18 +1,17 @@
-# Son d'entrée et commentaires PR
+# 72 — Stats joueur sur les cartes royaumes
 
-- [x] Vérifier les points d'intégration du loader, des assets audio et des events WS.
-- [x] Ranger le son d'entrée avec un nom durable dans un dossier audio adapté.
-- [x] Jouer le son à la fin du chargement d'entrée dans le monde.
-- [x] Ranger et jouer le son de notification pour les toasts.
-- [x] Corriger les invalidations world-scoped signalées par la review.
-- [x] Adapter les tests ciblés.
-- [x] Vérifier static-check/tests ciblés et impact docs.
+- [x] Préflight : git clean, ticket, rules, SPEC, briefing Pixi et specs amont lus.
+- [x] Cartographier `WorldSelector`, `WorldCardViewModel`, design card, hooks/API power et memberships.
+- [x] Ajouter une stat personnelle optionnelle par `worldId` sans dépendre du `worldId` courant du store.
+- [x] Afficher villages + puissance avec l'asset canonique uniquement pour les mondes rejoints avec données chargées.
+- [x] Adapter les tests ciblés view-model et rendu design.
+- [x] Review 5 axes, tests ciblés, `yarn static-check`, impact docs.
+- [ ] Archiver le ticket, mettre à jour `tasks/README.md`, commit final.
 
 ## Review
 
-- Son déplacé dans `public/assets/sounds/world-entry-complete.mp3`.
-- Son de notification déplacé dans `public/assets/sounds/notification-received.mp3` et joué une fois par nouveau toast.
-- Le son d'entrée est déclenché à la fin des 2 secondes du loader `/game`; les refus autoplay navigateur sont ignorés sans casser l'écran.
-- Les invalidations WS des rapports et de la power royaume couvrent maintenant toutes les caches du joueur, pas seulement le monde affiché.
-- Tests ciblés et static-check verts.
-- Docs : aucun changement nécessaire.
+- Cartes `/worlds` enrichies avec des stats personnelles optionnelles uniquement pour les mondes rejoints.
+- Puissance chargée via endpoint public world-scoped par membership, sans dépendre du `worldId` courant.
+- Cache public `publicKingdomPower` séparé du cache complet `kingdomPower` après finding bloquant reviewer.
+- Tests Pixi ciblés et `yarn static-check` verts.
+- Docs : aucun changement nécessaire, raison : fonctionnalité conforme aux specs gameplay existantes et aucun nouveau contrat backend/shared.

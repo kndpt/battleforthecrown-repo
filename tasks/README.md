@@ -4,7 +4,6 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-- [72 — Stats joueur sur les cartes royaumes](./072-worlds-player-stats.md) — 🟠 Moyen. Afficher sur chaque royaume rejoint le nombre de villages du joueur et sa puissance monde avec l'asset canonique.
 - [73 — Format compact ressources et villageois dans le header](./073-compact-resource-population-header-format.md) — 🟠 Moyen. Afficher ressources et villageois en `1k`, `12k`, `120k`, `1m`, `13m` pour éviter la troncature dans le HUD.
 - [66 — Inbox combat : tag VICTOIRE/DÉFAITE faux dans la liste](./66-inbox-report-outcome-uses-losses-heuristic.md) — 🟡 Majeur. La liste de l'inbox calcule l'issue via une heuristique de pertes, divergente de la règle canonique utilisée par le modal.
 - [57 — Source canonique du lifecycle des bâtiments joueur](./57-player-village-building-lifecycle-roster.md) — 🟡 Majeur. Centraliser la politique join/conquête/backfill des bâtiments pour éviter les oublis à chaque nouveau bâtiment activé.
@@ -75,6 +74,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ## Archivés
 
+- [72 — Stats joueur sur les cartes royaumes](./archive/072-worlds-player-stats.md) ✅ Résolu 2026-05-25 par $bftc-run @tasks/072-worlds-player-stats.md
 - [71 — Stock initial absent sur inscription monde](./archive/71-fix-starting-resources-defaults.md) ✅ Résolu 2026-05-25 par correction directe Codex.
 - [70 — Ouvrir la fiche joueur depuis l'avatar IG](./archive/70-integrate-player-profile-sheet.md) ✅ Résolu 2026-05-24 par $bftc-run @tasks/70-integrate-player-profile-sheet.md
 - [68 — Renvoyer un renfort étranger ne produit aucun trajet retour sur la WorldMap](./archive/68-send-back-foreign-reinforcement-no-return-trip.md) ✅ Résolu 2026-05-18 par $bftc-run @tasks/68-send-back-foreign-reinforcement-no-return-trip.md
