@@ -1,11 +1,15 @@
+import request from 'supertest';
 import {
   bootSmokeApp,
+  joinWorld,
   registerUser,
   seedSmokeWorld,
+  waitFor,
   type SmokeContext,
 } from './helpers';
 import { SMOKE_WORLD_CONFIG } from './fixtures/smoke-world-config';
 import { BarbarianSeedingCatchupWorker } from '../src/modules/world/barbarian-seeding-catchup.worker';
+import { BarbarianSeedingService } from '../src/modules/world/barbarian-seeding.service';
 import { BarbarianRuntimeService } from '../src/modules/world/barbarian-runtime.service';
 import { BarbarianVillageFactory } from '../src/modules/world/barbarian-village.factory';
 
@@ -123,5 +127,104 @@ describe('barbarians smoke', () => {
       },
     });
     expect(persisted.quantity).toBe(15);
+  });
+
+  it('barbarian seeding: fresh join guarantees a visible T1 target attackable with Watchtower level 1', async () => {
+    const worldId = `smoke-bf-reach-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    await ctx.prisma.world.create({
+      data: {
+        id: worldId,
+        name: worldId,
+        status: 'OPEN',
+        config: {
+          ...SMOKE_WORLD_CONFIG,
+          barbarianSeeding: {
+            ...SMOKE_WORLD_CONFIG.barbarianSeeding,
+            enabled: true,
+            targetMin: 0,
+            targetMax: 0,
+          },
+        } as object,
+      },
+    });
+
+    const user = await registerUser(ctx.server);
+    const join = await joinWorld(
+      ctx.server,
+      user.accessToken,
+      worldId,
+      'reachable-t1-anchor',
+    );
+
+    await ctx.prisma.building.updateMany({
+      where: { villageId: join.village.id, type: 'WATCHTOWER' },
+      data: { level: 1 },
+    });
+
+    const reachableT1 = await waitFor(
+      () =>
+        ctx.prisma.village.findFirst({
+          where: { worldId, isBarbarian: true, tier: 'T1' },
+        }),
+      { timeoutMs: 5_000 },
+    );
+
+    expect(
+      Math.hypot(
+        reachableT1.x - join.village.x,
+        reachableT1.y - join.village.y,
+      ),
+    ).toBeLessThanOrEqual(10);
+
+    await ctx.app.get(BarbarianSeedingService).seedAroundVillage({
+      worldId,
+      villageX: join.village.x,
+      villageY: join.village.y,
+      anchorVillageId: join.village.id,
+    });
+
+    const reachableCount = (
+      await ctx.prisma.village.findMany({
+        where: { worldId, isBarbarian: true, tier: 'T1' },
+        select: { x: true, y: true },
+      })
+    ).filter(
+      (village) =>
+        Math.hypot(village.x - join.village.x, village.y - join.village.y) <=
+        10,
+    ).length;
+    expect(reachableCount).toBe(1);
+
+    const entitiesRes = await request(ctx.server)
+      .get(`/world/${worldId}/entities`)
+      .set('Authorization', `Bearer ${user.accessToken}`);
+    expect(entitiesRes.status).toBe(200);
+    const entitiesBody = entitiesRes.body as {
+      entities: Array<{ id: string; kind: string }>;
+      visionDisks: Array<{ x: number; y: number; radius: number }>;
+    };
+    expect(entitiesBody.visionDisks).toEqual([
+      { x: join.village.x, y: join.village.y, radius: 10 },
+    ]);
+    expect(
+      entitiesBody.entities.find((entity) => entity.id === reachableT1.id),
+    ).toMatchObject({ kind: 'BARBARIAN_VILLAGE' });
+
+    await ctx.prisma.unitInventory.create({
+      data: { villageId: join.village.id, unitType: 'MILITIA', quantity: 10 },
+    });
+
+    const attackRes = await request(ctx.server)
+      .post('/combat/attack')
+      .set('Authorization', `Bearer ${user.accessToken}`)
+      .send({
+        villageId: join.village.id,
+        targetX: reachableT1.x,
+        targetY: reachableT1.y,
+        targetKind: 'BARBARIAN_VILLAGE',
+        targetRefId: reachableT1.id,
+        units: { MILITIA: 10 },
+      });
+    expect(attackRes.status).toBeLessThan(300);
   });
 });

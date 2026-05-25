@@ -461,16 +461,16 @@ export interface WatchtowerVisionLevel {
 
 export const WATCHTOWER_VISION_LEVELS: Record<number, WatchtowerVisionLevel> = {
   0: { isWorldUnlocked: false, visibilityRadius: 0 },
-  1: { isWorldUnlocked: true, visibilityRadius: 5 },
-  2: { isWorldUnlocked: true, visibilityRadius: 10 },
-  3: { isWorldUnlocked: true, visibilityRadius: 15 },
-  4: { isWorldUnlocked: true, visibilityRadius: 20 },
-  5: { isWorldUnlocked: true, visibilityRadius: 25 },
-  6: { isWorldUnlocked: true, visibilityRadius: 30 },
-  7: { isWorldUnlocked: true, visibilityRadius: 35 },
-  8: { isWorldUnlocked: true, visibilityRadius: 40 },
-  9: { isWorldUnlocked: true, visibilityRadius: 45 },
-  10: { isWorldUnlocked: true, visibilityRadius: 50 },
+  1: { isWorldUnlocked: true, visibilityRadius: 10 },
+  2: { isWorldUnlocked: true, visibilityRadius: 15 },
+  3: { isWorldUnlocked: true, visibilityRadius: 20 },
+  4: { isWorldUnlocked: true, visibilityRadius: 25 },
+  5: { isWorldUnlocked: true, visibilityRadius: 30 },
+  6: { isWorldUnlocked: true, visibilityRadius: 35 },
+  7: { isWorldUnlocked: true, visibilityRadius: 40 },
+  8: { isWorldUnlocked: true, visibilityRadius: 45 },
+  9: { isWorldUnlocked: true, visibilityRadius: 50 },
+  10: { isWorldUnlocked: true, visibilityRadius: 55 },
 };
 
 const BUILDING_DEFINITION_ENTRIES = Object.entries(BUILDING_DEFINITIONS) as Array<

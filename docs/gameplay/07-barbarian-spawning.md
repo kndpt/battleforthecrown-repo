@@ -10,7 +10,7 @@ Les BV (cf. [`06-barbarians.md`](./06-barbarians.md)) sont **générés à l'arr
 
 - Pas de pool fixe au lancement du monde.
 - Pas de spawn déconnecté des joueurs.
-- Un joueur qui rejoint un monde **trouve toujours des cibles barbares à proximité**, même si le monde est ancien.
+- Un joueur qui rejoint un monde **trouve toujours des cibles barbares à proximité**, même si le monde est ancien. Au moins une cible T1 doit être dans le rayon de Watchtower niveau 1 du village initial pour rester visible et attaquable pendant l'onboarding.
 - **Mais** : pas de submersion à mesure que les arrivées s'accumulent (sinon la carte devient une mer de BV, le PvP se dilue, l'identité des zones disparaît).
 
 L'algorithme s'adapte donc à **deux variables vivantes** :
@@ -68,7 +68,7 @@ Conséquence runtime : un joueur qui crée son 1er village voit les BV proches a
 
 > 💡 La capacité d'un chunk est tirée une fois lors du premier seeding du chunk — pas de re-roll. Le `existingCount` (BV déjà présents) est soustrait de la capacité avant sampling : `need = max(0, capacity − existingCount)`. Ça garantit l'idempotence : un chunk déjà au-dessus de sa cible ne reçoit aucun nouveau BV.
 
-**Rationale** : 3-6 BV par chunk de 50×50 → **~9 BV en moyenne par anneau initial** (rayon ≤ rMax) côté nouveau joueur, ce qui donne 5-10 cibles tier 1-2 immédiates dans la zone de découverte (Watchtower lvl 1 = vision 5 tiles ; les BV proches deviennent visibles dès le premier upgrade Watchtower). Cohérent avec la boucle « première session a du contenu » (cf. [`15-onboarding.md`](./15-onboarding.md)). La recalibration tempo du Standard MVP augmente la consommation de cibles par joueur, mais ne change pas cette densité au MVP : la régénération compressée et le catchup d'arrivée couvrent la rotation initiale, tandis que la raréfaction progressive reste volontaire.
+**Rationale** : 3-6 BV par chunk de 50×50 → **~9 BV en moyenne par anneau initial** (rayon ≤ rMax) côté nouveau joueur, ce qui donne 5-10 cibles tier 1-2 immédiates dans la zone de découverte. La Watchtower niveau 1 révèle 10 tiles : elle couvre donc le début de l'anneau T1 (`rMin=8`) sans révéler toute la carte. Cohérent avec la boucle « première session a du contenu » (cf. [`15-onboarding.md`](./15-onboarding.md)). La recalibration tempo du Standard MVP augmente la consommation de cibles par joueur, mais ne change pas cette densité au MVP : la régénération compressée et le catchup d'arrivée couvrent la rotation initiale, tandis que la raréfaction progressive reste volontaire.
 
 ## Rayon et placement
 
@@ -92,6 +92,17 @@ L'anneau est calculé via `getChunksInRings(centerX, centerY, rMin, rMax, chunkS
 `playerExclusion = 2` tiles. Aucun BV n'est positionné à moins de 2 tiles d'un village joueur existant. Anti-aggro injuste, anti-collision visuelle.
 
 > 💡 La fonction `samplePositions` lit les villages présents dans le **chunk + halo `minSpacing`** (en lecture directe DB, transactionnelle) avant de proposer une position. Pas de rolling : si la position échoue les contraintes, on retire jusqu'à `need × 20` tentatives, puis on s'arrête.
+
+### Garantie T1 atteignable Watchtower L1
+
+Après le seeding normal des chunks proches, le backend vérifie si un village barbare T1 existe déjà dans le rayon de Watchtower niveau 1 du village joueur. Si aucun T1 n'est visible, il crée **au plus une** cible T1 dans l'anneau atteignable `[rMin, radius Watchtower L1]`, en respectant :
+
+- collisions et unicité `(worldId, x, y)` ;
+- `playerExclusion` autour des villages joueurs ;
+- `minSpacing` vis-à-vis des villages déjà présents ;
+- idempotence : relancer le seeding ne crée rien si un T1 atteignable existe déjà.
+
+Cette garantie ne remplace pas l'anti-submersion par chunk pour la distribution normale : elle borne seulement la première cible jouable nécessaire à l'onboarding.
 
 ## Distribution des tiers
 

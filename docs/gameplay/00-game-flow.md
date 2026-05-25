@@ -53,7 +53,7 @@ Recrutement à la **Caserne** (file unique par village, consomme Pop), envoi d'*
 
 ### Boucle d'exploration
 
-**Watchtower** (vision = union de disques de toutes mes tours, lvl 1 = 5 cases, lvl 10 = 50 cases). Aucune tour ne révèle tout le monde seule : voir loin exige de conquérir ou développer des villages à des positions stratégiques. Hors vision : *blip* gris anonyme pour les villages, **rien** pour les expéditions. Filtré server-side, pas seulement UI ([`01` § Exploration](./01-overview.md#exploration--brouillard-de-guerre)). **Espionnage** via l'unité ESPION pour révéler une cible spécifique ([`11`](./11-scouting.md)). Le MVP garde ensuite une dernière intel connue privée par cible et affiche une menace estimée non exacte avant attaque.
+**Watchtower** (vision = union de disques de toutes mes tours, lvl 1 = 10 cases, lvl 10 = 55 cases). Aucune tour ne révèle tout le monde seule : voir loin exige de conquérir ou développer des villages à des positions stratégiques. Hors vision : *blip* gris anonyme pour les villages, **rien** pour les expéditions. Filtré server-side, pas seulement UI ([`01` § Exploration](./01-overview.md#exploration--brouillard-de-guerre)). **Espionnage** via l'unité ESPION pour révéler une cible spécifique ([`11`](./11-scouting.md)). Le MVP garde ensuite une dernière intel connue privée par cible et affiche une menace estimée non exacte avant attaque.
 
 ### Boucle de conquête (end-game)
 

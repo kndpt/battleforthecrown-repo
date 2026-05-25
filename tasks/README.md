@@ -30,11 +30,11 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 ### Runs actifs
 
 - [036 — Onboarding scripté runtime](./runs/036-feature-scripted-onboarding-runtime.md) — 📋 `PLANNED`. Créer le tutoriel server-authoritative, dépendant du run 035 pour garantir une cible barbare T1 atteignable.
-- [035 — Portée initiale Watchtower et T1 barbare atteignable](./runs/035-fix-early-barbarian-reachability.md) — 📋 `PLANNED`. Corriger l'invariant de première session : Watchtower niveau 1 doit révéler au moins un village barbare T1 attaquable.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés
 
+- [035 — Portée initiale Watchtower et T1 barbare atteignable](./runs/archive/035-fix-early-barbarian-reachability.md) — ✅ `DONE` (2026-05-25). Watchtower L1 portée à 10 cases, garantie idempotente d'un T1 visible au join, docs gameplay alignées et smoke join/vision/attaque.
 - [034 — Isolation multi-monde des données joueur](./runs/archive/034-fix-world-scoped-player-data.md) — ✅ `DONE` (2026-05-25). Puissance, rapports combat/scout et caches Pixi scoppés au monde courant, endpoints publics power explicitement par monde, invariant SPEC V3 ajouté et smoke multi-world.
 - [033 — Écran sélection royaumes Pixi](./runs/archive/033-feature-worlds-selection-screen.md) — ✅ `DONE` (2026-05-25). Écran `/worlds` branché sur `GET /worlds/public`, variante B bannières héraldiques portée dans le design-system, onglets Inscription/Bientôt/Verrouillés, CTA Rejoindre / Me prévenir / Inscription close, navigation depuis profil et tests Pixi.
 - [032 — Lifecycle backend foundation + identité monde](./runs/archive/032-world-lifecycle-foundation-and-identity.md) — ✅ `DONE` (2026-05-25). `WorldConfig.lifecycle` + identité monde, `plannedOpenAt`, endpoint public `/worlds/public`, worker transitions `PLANNED→OPEN→LOCKED→ENDED`, event `world.status.changed`, binding Pixi et docs.

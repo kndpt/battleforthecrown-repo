@@ -7,6 +7,7 @@ import {
   isBuildingEnabled,
   getBuildingLevelValues,
   getBarracksTrainingSpeedMultiplier,
+  WATCHTOWER_VISION_LEVELS,
 } from '@battleforthecrown/shared/village';
 import type {
   BuildingDefinition,
@@ -142,6 +143,30 @@ describe('barracks training speed multiplier', () => {
     expect(getBarracksTrainingSpeedMultiplier(-1)).toBe(1.0);
     expect(getBarracksTrainingSpeedMultiplier(Number.NaN)).toBe(1.0);
     expect(getBarracksTrainingSpeedMultiplier(99)).toBe(1.36);
+  });
+});
+
+describe('WATCHTOWER_VISION_LEVELS', () => {
+  it('makes level 1 reach the first T1 barbarian ring while keeping vision finite', () => {
+    expect(WATCHTOWER_VISION_LEVELS[1]).toEqual({
+      isWorldUnlocked: true,
+      visibilityRadius: 10,
+    });
+    expect(WATCHTOWER_VISION_LEVELS[10]).toEqual({
+      isWorldUnlocked: true,
+      visibilityRadius: 55,
+    });
+  });
+
+  it('strictly increases after world vision unlock', () => {
+    const radii = Array.from(
+      { length: 10 },
+      (_, index) => WATCHTOWER_VISION_LEVELS[index + 1].visibilityRadius,
+    );
+
+    for (let index = 1; index < radii.length; index += 1) {
+      expect(radii[index]).toBeGreaterThan(radii[index - 1]);
+    }
   });
 });
 
