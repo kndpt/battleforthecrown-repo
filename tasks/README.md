@@ -27,11 +27,12 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ### Runs actifs
 
-- [033 — Écran sélection royaumes Pixi](./runs/033-feature-worlds-selection-screen.md) — 📋 `PLANNED`. Écran sélection (onglets Inscription/Bientôt/Verrouillés, cards royaume, CTAs Rejoindre / Me prévenir / Inscription close). **Débloqué par #032.**
+- [034 — Isolation multi-monde des données joueur](./runs/034-fix-world-scoped-player-data.md) — 📋 `PLANNED`. Scoper puissance, rapports et caches front au monde courant, avec audit global des surfaces user-scoped visibles.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés
 
+- [033 — Écran sélection royaumes Pixi](./runs/archive/033-feature-worlds-selection-screen.md) — ✅ `DONE` (2026-05-25). Écran `/worlds` branché sur `GET /worlds/public`, variante B bannières héraldiques portée dans le design-system, onglets Inscription/Bientôt/Verrouillés, CTA Rejoindre / Me prévenir / Inscription close, navigation depuis profil et tests Pixi.
 - [032 — Lifecycle backend foundation + identité monde](./runs/archive/032-world-lifecycle-foundation-and-identity.md) — ✅ `DONE` (2026-05-25). `WorldConfig.lifecycle` + identité monde, `plannedOpenAt`, endpoint public `/worlds/public`, worker transitions `PLANNED→OPEN→LOCKED→ENDED`, event `world.status.changed`, binding Pixi et docs.
 - [030 — Sprites de villages joueurs selon le niveau du Château](./runs/archive/030-feature-world-map-village-sprites-by-castle-level.md) — ✅ `DONE` (2026-05-22). `castleLevel` exposé sur les villages joueurs, mapping shared Château → tiers visuels, rendu Pixi `village-tier1..6` et invalidation realtime sur Château terminé.
 - [031 — Sélecteur multi-village en bottom sheet](./runs/archive/031-feature-multi-village-bottom-sheet-selector.md) — ✅ `DONE` (2026-05-22). Header IG branché sur le `MultiVillageBottomSheet` design-system, flèches directes préservées, données indisponibles neutralisées sans valeurs fictives, tri alphabétique et test Pixi ciblé.
@@ -70,6 +71,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ## Archivés
 
+- [71 — Stock initial absent sur inscription monde](./archive/71-fix-starting-resources-defaults.md) ✅ Résolu 2026-05-25 par correction directe Codex.
 - [70 — Ouvrir la fiche joueur depuis l'avatar IG](./archive/70-integrate-player-profile-sheet.md) ✅ Résolu 2026-05-24 par $bftc-run @tasks/70-integrate-player-profile-sheet.md
 - [68 — Renvoyer un renfort étranger ne produit aucun trajet retour sur la WorldMap](./archive/68-send-back-foreign-reinforcement-no-return-trip.md) ✅ Résolu 2026-05-18 par $bftc-run @tasks/68-send-back-foreign-reinforcement-no-return-trip.md
 - [64 — Supprimer la table miroir `WorldEntity` devenue morte](./archive/64-remove-deprecated-world-entity.md) ✅ Résolu 2026-05-17 par $bftc-run @tasks/64-remove-deprecated-world-entity.md

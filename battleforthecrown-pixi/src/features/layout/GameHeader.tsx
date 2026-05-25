@@ -355,11 +355,11 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
   }, [hasSnapshot, display, onResourceClick]);
 
   const populationStat = useMemo<HeaderBarStat>(() => {
-    const used = population.data?.used ?? 0;
+    const available = population.data?.available ?? 0;
     return {
       icon: '/assets/resources/population.png',
       label: 'Population',
-      value: formatResourceAmount(used),
+      value: formatResourceAmount(available),
     };
   }, [population.data]);
 
@@ -495,6 +495,10 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
           onVillageSelect={(village) => {
             setVillage(village.id);
             closeProfile();
+          }}
+          onWorldSelect={() => {
+            closeProfile();
+            navigate('/worlds');
           }}
           player={profileSheetData.player}
           settings={profileSheetSettings}

@@ -33,7 +33,7 @@ export function LandingScreen() {
 
         <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
           {accessToken ? (
-            <Link to="/my-worlds">
+            <Link to="/game">
               <Button variant="success" size="lg">
                 Reprendre l&apos;aventure
               </Button>
