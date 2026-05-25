@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Controller,
   Get,
+  Headers,
   Param,
   Query,
 } from '@nestjs/common';
@@ -35,7 +36,11 @@ export class PowerController {
 
   @Public()
   @Get('leaderboard')
-  getLeaderboard(@Query('type') type = 'total', @Query('limit') limit = '20') {
+  getLeaderboard(
+    @Query('type') type = 'total',
+    @Query('limit') limit = '20',
+    @Query('worldId') worldId?: string,
+  ) {
     const parsed = leaderboardTypeSchema.safeParse(type);
     if (!parsed.success) {
       throw new BadRequestException('Invalid leaderboard type');
@@ -44,17 +49,37 @@ export class PowerController {
     return this.powerService.getLeaderboard(
       safeType,
       parseInt(limit, 10) || 20,
+      this.requireWorldId(worldId),
     );
   }
 
   @Get('kingdom')
-  getKingdomPower(@CurrentUser() user: AuthenticatedUser) {
-    return this.powerService.getKingdomPower(user.id);
+  getKingdomPower(
+    @CurrentUser() user: AuthenticatedUser,
+    @Headers('x-world-id') worldId?: string,
+  ) {
+    return this.powerService.getKingdomPower(
+      user.id,
+      this.requireWorldId(worldId),
+    );
   }
 
   @Public()
   @Get('kingdom/:userId/public')
-  getPublicKingdomPower(@Param('userId') userId: string) {
-    return this.powerService.getPublicKingdomPower(userId);
+  getPublicKingdomPower(
+    @Param('userId') userId: string,
+    @Query('worldId') worldId?: string,
+  ) {
+    return this.powerService.getPublicKingdomPower(
+      userId,
+      this.requireWorldId(worldId),
+    );
+  }
+
+  private requireWorldId(worldId?: string) {
+    if (!worldId) {
+      throw new BadRequestException('worldId is required');
+    }
+    return worldId;
   }
 }

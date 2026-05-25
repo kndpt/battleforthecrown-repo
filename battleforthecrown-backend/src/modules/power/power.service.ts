@@ -46,8 +46,9 @@ export class PowerService {
     return { villageId, buildings };
   }
 
-  async getLeaderboard(type: LeaderboardType, limit = 20) {
+  async getLeaderboard(type: LeaderboardType, limit = 20, worldId: string) {
     const villages = await this.prisma.village.findMany({
+      where: { worldId },
       include: { buildings: true, user: true },
     });
     const armyPowerByVillage = await this.getArmyPowerByOriginVillage(
@@ -94,9 +95,14 @@ export class PowerService {
    * Get total power for all villages of a player (Kingdom Power)
    * Kingdom Power = Σ(Village_Power) as defined in documentation
    */
-  async getKingdomPower(userId: string) {
+  async getKingdomPower(userId: string, worldId: string) {
+    await this.ownership.assertWorldMember(worldId, userId);
+    return this.getKingdomPowerForUser(userId, worldId);
+  }
+
+  private async getKingdomPowerForUser(userId: string, worldId: string) {
     const villages = await this.prisma.village.findMany({
-      where: { userId },
+      where: { userId, worldId },
       include: { buildings: true },
     });
 
@@ -143,8 +149,8 @@ export class PowerService {
     };
   }
 
-  async getPublicKingdomPower(userId: string) {
-    const kingdom = await this.getKingdomPower(userId);
+  async getPublicKingdomPower(userId: string, worldId: string) {
+    const kingdom = await this.getKingdomPowerForUser(userId, worldId);
     return {
       userId: kingdom.userId,
       kingdomPower: kingdom.kingdomPower,

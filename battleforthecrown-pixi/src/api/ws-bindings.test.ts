@@ -73,18 +73,20 @@ function seedPowerQueries(
   queryClient: QueryClient,
   villageId: string,
   userId = 'user-1',
+  worldId = 'world-1',
 ): void {
   queryClient.setQueryData(queryKeys.villagePower(villageId), { total: 1 });
-  queryClient.setQueryData(queryKeys.kingdomPower(userId), { kingdomPower: 1 });
+  queryClient.setQueryData(queryKeys.kingdomPower(userId, worldId), { kingdomPower: 1 });
 }
 
 function expectPowerQueriesInvalidated(
   queryClient: QueryClient,
   villageId: string,
   userId = 'user-1',
+  worldId = 'world-1',
 ): void {
   expect(queryClient.getQueryState(queryKeys.villagePower(villageId))?.isInvalidated).toBe(true);
-  expect(queryClient.getQueryState(queryKeys.kingdomPower(userId))?.isInvalidated).toBe(true);
+  expect(queryClient.getQueryState(queryKeys.kingdomPower(userId, worldId))?.isInvalidated).toBe(true);
 }
 
 describe('applyResourcesChanged', () => {
@@ -187,7 +189,7 @@ describe('applyBuildingCompleted', () => {
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.villageStrategy('v1'), { currentStrategy: 'BALANCED' });
     queryClient.setQueryData(queryKeys.villagePower('v1'), { total: 1 });
-    queryClient.setQueryData(queryKeys.kingdomPower('user-1'), { kingdomPower: 1 });
+    queryClient.setQueryData(queryKeys.kingdomPower('user-1', 'w1'), { kingdomPower: 1 });
     queryClient.setQueryData(queryKeys.retentionSummary('user-1', 'w1'), { claimableCount: 0 });
     let invalidationCount = 0;
     const originalInvalidate = queryClient.invalidateQueries.bind(queryClient);
@@ -209,7 +211,7 @@ describe('applyBuildingCompleted', () => {
     expect(invalidationCount).toBe(8);
     expect(queryClient.getQueryState(queryKeys.villageStrategy('v1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.villagePower('v1'))?.isInvalidated).toBe(true);
-    expect(queryClient.getQueryState(queryKeys.kingdomPower('user-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.kingdomPower('user-1', 'w1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.retentionSummary('user-1', 'w1'))?.isInvalidated).toBe(true);
     const toasts = useUiStore.getState().toasts;
     expect(toasts).toHaveLength(1);
@@ -276,17 +278,13 @@ describe('applyUnitTrainingCompleted', () => {
 
 describe('applyUnitTrained', () => {
   it('invalidates training, inventory, population and power queries without pushing a toast', () => {
-    useAuthStore.getState().setSession({
-      accessToken: 'access',
-      refreshToken: 'refresh',
-      user: { id: 'user-1', email: 'user@example.test' },
-    });
+    setCurrentWorldSession();
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.armyTraining('v1'), []);
     queryClient.setQueryData(queryKeys.armyInventory('v1'), []);
     queryClient.setQueryData(queryKeys.population('v1'), { used: 1, max: 10, available: 9 });
     queryClient.setQueryData(queryKeys.villagePower('v1'), { total: 1 });
-    queryClient.setQueryData(queryKeys.kingdomPower('user-1'), { kingdomPower: 1 });
+    queryClient.setQueryData(queryKeys.kingdomPower('user-1', 'world-1'), { kingdomPower: 1 });
 
     applyUnitTrained(
       {
@@ -303,7 +301,7 @@ describe('applyUnitTrained', () => {
     expect(queryClient.getQueryState(queryKeys.armyInventory('v1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.population('v1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.villagePower('v1'))?.isInvalidated).toBe(true);
-    expect(queryClient.getQueryState(queryKeys.kingdomPower('user-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.kingdomPower('user-1', 'world-1'))?.isInvalidated).toBe(true);
     expect(useUiStore.getState().toasts).toHaveLength(0);
   });
 });
@@ -385,14 +383,12 @@ describe('applyBattleResolved', () => {
   });
 
   it('invalidates the signed-in player reports query for the unread badge', () => {
-    useAuthStore.getState().setSession({
-      accessToken: 'access',
-      refreshToken: 'refresh',
-      user: { id: 'user-1', email: 'u@example.test' },
-    });
+    setCurrentWorldSession();
     const queryClient = new QueryClient();
-    queryClient.setQueryData(queryKeys.combatReports('user-1'), []);
-    queryClient.setQueryData(queryKeys.scoutReports('user-1'), []);
+    queryClient.setQueryData(queryKeys.combatReports('user-1', 'world-1'), []);
+    queryClient.setQueryData(queryKeys.scoutReports('user-1', 'world-1'), []);
+    queryClient.setQueryData(queryKeys.combatReports('user-1', 'world-old'), []);
+    queryClient.setQueryData(queryKeys.scoutReports('user-1', 'world-old'), []);
 
     applyBattleResolved(
       {
@@ -414,8 +410,10 @@ describe('applyBattleResolved', () => {
       { queryClient },
     );
 
-    expect(queryClient.getQueryState(queryKeys.combatReports('user-1'))?.isInvalidated).toBe(true);
-    expect(queryClient.getQueryState(queryKeys.scoutReports('user-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.combatReports('user-1', 'world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.scoutReports('user-1', 'world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.combatReports('user-1', 'world-old'))?.isInvalidated).toBe(false);
+    expect(queryClient.getQueryState(queryKeys.scoutReports('user-1', 'world-old'))?.isInvalidated).toBe(false);
   });
 
   it('invalidates village and kingdom power for the attacking village', () => {
@@ -556,9 +554,10 @@ describe('applyVillageAttacked', () => {
       refreshToken: 'refresh',
       user: { id: 'defender-1', email: 'd@example.test' },
     });
+    useGameStore.getState().setContext({ worldId: 'world-1', villageId: 'v-def' });
     const queryClient = new QueryClient();
-    queryClient.setQueryData(queryKeys.combatReports('defender-1'), []);
-    queryClient.setQueryData(queryKeys.scoutReports('defender-1'), []);
+    queryClient.setQueryData(queryKeys.combatReports('defender-1', 'world-1'), []);
+    queryClient.setQueryData(queryKeys.scoutReports('defender-1', 'world-1'), []);
     seedPowerQueries(queryClient, 'v-def', 'defender-1');
     seedPowerQueries(queryClient, 'v-origin', 'defender-1');
 
@@ -580,8 +579,8 @@ describe('applyVillageAttacked', () => {
       { queryClient },
     );
 
-    expect(queryClient.getQueryState(queryKeys.combatReports('defender-1'))?.isInvalidated).toBe(true);
-    expect(queryClient.getQueryState(queryKeys.scoutReports('defender-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.combatReports('defender-1', 'world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.scoutReports('defender-1', 'world-1'))?.isInvalidated).toBe(true);
     expectPowerQueriesInvalidated(queryClient, 'v-def', 'defender-1');
     expectPowerQueriesInvalidated(queryClient, 'v-origin', 'defender-1');
   });

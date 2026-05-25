@@ -1,20 +1,19 @@
-# 071 starting resources + population display
+# 034 fix world-scoped player data
 
-- [x] Confirmer le sens population: `used` consomme, `available = max - used`.
-- [x] Corriger le stock initial quand `.env` ne définit pas `*_STARTING_AMOUNT`.
-- [x] Afficher la population disponible dans le header et les listes village.
-- [x] Ajouter le filet de regression cible.
-- [x] Verifier tests/static-check et impact docs.
+- [x] Preflight: git clean, fiche run, rules, SPEC, docs source.
+- [x] Cartographier les surfaces user-scoped visibles joueur backend et Pixi.
+- [x] Raffiner les corrections world-scoped power/reports/cache.
+- [x] Implémenter backend: power + combat/scout reports scoppés au monde courant.
+- [x] Implémenter Pixi: query keys et invalidations scoppées au monde courant.
+- [x] Ajouter/adapter le filet de regression backend/Pixi.
+- [x] Review lead 5 axes + review indépendante obligatoire.
+- [x] Retest: smokes backend, tests ciblés, static-check.
+- [x] Vérifier impact docs/SPEC, archiver la fiche, mettre à jour tasks/README.
 
 ## Review
 
-- Stock initial sans env: 1000 bois/pierre/fer par defaut.
-- Overrides env conserves; env invalide refuse.
-- Header/listes villages affichent population disponible: `available = max - used`.
-- Fiche 71 ecrite puis archivee dans `tasks/archive/71-fix-starting-resources-defaults.md`.
-- DB locale `battleforthecrown_9244_worlds`: village `fresh-open` existant repare de `13/13/13` a `1000/1000/1000`.
-- QA API: nouveau join `fresh-open` cree directement `1000/1000/1000`, population `17/250`.
-- Tests cibles backend + Pixi OK.
-- `yarn static-check`: OK.
-- Smokes backend: 24 suites / 48 tests OK.
-- Docs: fiche task archivee; docs gameplay inchanges car deja conformes.
+- Power kingdom, leaderboard public et kingdom public sont scoppés par monde.
+- Combat/scout reports listes, détails, read et delete refusent le cross-world.
+- Query keys Pixi reports/power incluent `worldId`; les invalidations WS ciblent le monde courant.
+- Smoke ciblé et smoke backend complet verts; static-check vert.
+- Docs architecture + SPEC V3 mis à jour.

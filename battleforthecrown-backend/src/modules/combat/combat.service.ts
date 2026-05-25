@@ -26,6 +26,7 @@ import { createOutboxEvent } from '../event/event.utils';
 import { PrismaClientOrTx } from '../../common/prisma.types';
 import { presentCombatReport } from './combat-report.presenter';
 import { presentScoutReport } from './scout-report.presenter';
+import { OwnershipService } from '../../common/auth';
 
 export interface GarrisonLineDto {
   villageId: string;
@@ -47,6 +48,7 @@ export class CombatService {
     private readonly prisma: PrismaService,
     private readonly worldConfig: WorldConfigService,
     private readonly visionService: VisionService,
+    private readonly ownership: OwnershipService,
     @Inject('PG_BOSS') private readonly boss: PgBoss,
   ) {}
 
@@ -893,9 +895,11 @@ export class CombatService {
     return null;
   }
 
-  async getAllReports(userId: string) {
+  async getAllReports(userId: string, worldId: string) {
+    await this.ownership.assertWorldMember(worldId, userId);
     const reports = await this.prisma.combatReport.findMany({
       where: {
+        worldId,
         OR: [
           { attackerUserId: userId, hiddenByAttacker: false },
           { defenderUserId: userId, hiddenByDefender: false },
@@ -907,18 +911,20 @@ export class CombatService {
     return reports.map((report) => presentCombatReport(report, userId));
   }
 
-  async getAllScoutReports(userId: string) {
+  async getAllScoutReports(userId: string, worldId: string) {
+    await this.ownership.assertWorldMember(worldId, userId);
     const reports = await this.prisma.scoutReport.findMany({
-      where: { scoutUserId: userId, hidden: false },
+      where: { worldId, scoutUserId: userId, hidden: false },
       orderBy: { timestamp: 'desc' },
     });
 
     return reports.map((report) => presentScoutReport(report));
   }
 
-  async getScoutReport(userId: string, reportId: string) {
-    const report = await this.prisma.scoutReport.findUnique({
-      where: { id: reportId },
+  async getScoutReport(userId: string, reportId: string, worldId: string) {
+    await this.ownership.assertWorldMember(worldId, userId);
+    const report = await this.prisma.scoutReport.findFirst({
+      where: { id: reportId, worldId },
     });
 
     if (!report) {
@@ -932,9 +938,14 @@ export class CombatService {
     return presentScoutReport(report);
   }
 
-  async markScoutReportAsRead(userId: string, reportId: string) {
-    const report = await this.prisma.scoutReport.findUnique({
-      where: { id: reportId },
+  async markScoutReportAsRead(
+    userId: string,
+    reportId: string,
+    worldId: string,
+  ) {
+    await this.ownership.assertWorldMember(worldId, userId);
+    const report = await this.prisma.scoutReport.findFirst({
+      where: { id: reportId, worldId },
     });
 
     if (!report) {
@@ -955,9 +966,10 @@ export class CombatService {
     return presentScoutReport(updated);
   }
 
-  async deleteScoutReport(userId: string, reportId: string) {
-    const report = await this.prisma.scoutReport.findUnique({
-      where: { id: reportId },
+  async deleteScoutReport(userId: string, reportId: string, worldId: string) {
+    await this.ownership.assertWorldMember(worldId, userId);
+    const report = await this.prisma.scoutReport.findFirst({
+      where: { id: reportId, worldId },
     });
 
     if (!report) {
@@ -978,9 +990,10 @@ export class CombatService {
     return { message: 'Scout report deleted successfully' };
   }
 
-  async getReport(userId: string, reportId: string) {
-    const report = await this.prisma.combatReport.findUnique({
-      where: { id: reportId },
+  async getReport(userId: string, reportId: string, worldId: string) {
+    await this.ownership.assertWorldMember(worldId, userId);
+    const report = await this.prisma.combatReport.findFirst({
+      where: { id: reportId, worldId },
     });
 
     if (!report) {
@@ -994,9 +1007,10 @@ export class CombatService {
     return presentCombatReport(report, userId);
   }
 
-  async deleteReport(userId: string, reportId: string) {
-    const report = await this.prisma.combatReport.findUnique({
-      where: { id: reportId },
+  async deleteReport(userId: string, reportId: string, worldId: string) {
+    await this.ownership.assertWorldMember(worldId, userId);
+    const report = await this.prisma.combatReport.findFirst({
+      where: { id: reportId, worldId },
     });
 
     if (!report) {
@@ -1037,9 +1051,10 @@ export class CombatService {
     return { message: 'Report deleted successfully' };
   }
 
-  async markReportAsRead(userId: string, reportId: string) {
-    const report = await this.prisma.combatReport.findUnique({
-      where: { id: reportId },
+  async markReportAsRead(userId: string, reportId: string, worldId: string) {
+    await this.ownership.assertWorldMember(worldId, userId);
+    const report = await this.prisma.combatReport.findFirst({
+      where: { id: reportId, worldId },
     });
 
     if (!report) {

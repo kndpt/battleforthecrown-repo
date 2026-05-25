@@ -345,7 +345,8 @@ describe('combat conquest hook smoke', () => {
 
     const reportsRes = await request(ctx.server)
       .get('/combat/reports')
-      .set('Authorization', `Bearer ${conquest.user.accessToken}`);
+      .set('Authorization', `Bearer ${conquest.user.accessToken}`)
+      .set('x-world-id', world.id);
     expect(reportsRes.status).toBe(200);
     const occupationDefenseReport = (
       reportsRes.body as Array<{
@@ -369,12 +370,14 @@ describe('combat conquest hook smoke', () => {
 
     const deleteRes = await request(ctx.server)
       .delete(`/combat/report/${occupationDefenseReport!.id}`)
-      .set('Authorization', `Bearer ${conquest.user.accessToken}`);
+      .set('Authorization', `Bearer ${conquest.user.accessToken}`)
+      .set('x-world-id', world.id);
     expect(deleteRes.status).toBeLessThan(300);
 
     const afterDeleteRes = await request(ctx.server)
       .get('/combat/reports')
-      .set('Authorization', `Bearer ${conquest.user.accessToken}`);
+      .set('Authorization', `Bearer ${conquest.user.accessToken}`)
+      .set('x-world-id', world.id);
     expect(afterDeleteRes.status).toBe(200);
     expect(
       (
@@ -436,7 +439,8 @@ describe('combat conquest hook smoke', () => {
 
     const reportsRes = await request(ctx.server)
       .get('/combat/reports')
-      .set('Authorization', `Bearer ${conquest.user.accessToken}`);
+      .set('Authorization', `Bearer ${conquest.user.accessToken}`)
+      .set('x-world-id', world.id);
     expect(reportsRes.status).toBe(200);
     const occupationDefenseReport = (
       reportsRes.body as Array<{

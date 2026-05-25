@@ -33,6 +33,7 @@ Format : `V<n> | <invariant actionnable> | source: <path>`
 
 V1 | Un retour de raid doit réutiliser la durée aller figée au dispatch (`Expedition.outboundTravelMs`), jamais recalculer avec la config monde ou la stratégie courante au moment de la résolution. | source: tasks/archive/35-return-travel-time-recomputed-vs-spec.md
 V2 | La puissance armée d'un village est rattachée au village d'origine des troupes : compter `UnitInventory`, `Expedition` active/retour et `Garrison` par origine réelle, jamais seulement par présence locale. | source: tasks/runs/archive/025-fix-origin-anchored-army-power.md
+V3 | Toute donnée visible joueur dépendante d'un monde doit être filtrée par `worldId` côté backend et keyée par `worldId` côté frontend ; `userId` seul ne suffit pas pour power, reports, inbox, HUD ou profils. | source: tasks/runs/archive/034-fix-world-scoped-player-data.md
 
 ## §B — Bugs récurrents / anti-patterns
 

@@ -62,17 +62,17 @@ export const queryKeys = {
   crowns: (userId: string | null, worldId: string | null) => ['crowns', userId, worldId] as const,
   villageStrategy: (villageId: string | null) => ['village-strategy', villageId] as const,
   villagePower: (villageId: string | null) => ['power', 'village', villageId] as const,
-  kingdomPower: (userId: string | null) => ['power', 'kingdom', userId] as const,
+  kingdomPower: (userId: string | null, worldId: string | null) => ['power', 'kingdom', userId, worldId] as const,
   armyInventory: (villageId: string | null) => ['army', 'inventory', villageId] as const,
   armyTraining: (villageId: string | null) => ['army', 'training', villageId] as const,
   activeExpeditions: (villageId: string | null) => ['combat', 'active', villageId] as const,
   openConquests: (userId: string | null, worldId: string | null) => ['combat', 'conquests', 'open', userId, worldId] as const,
   openExpeditions: (userId: string | null, worldId: string | null) => ['combat', 'expeditions', 'open', userId, worldId] as const,
   garrison: (villageId: string | null) => ['combat', 'garrison', villageId] as const,
-  combatReports: (userId: string | null) => ['combat', 'reports', userId] as const,
-  combatReport: (reportId: string | null) => ['combat', 'report', reportId] as const,
-  scoutReports: (userId: string | null) => ['combat', 'scout-reports', userId] as const,
-  scoutReport: (reportId: string | null) => ['combat', 'scout-report', reportId] as const,
+  combatReports: (userId: string | null, worldId: string | null) => ['combat', 'reports', userId, worldId] as const,
+  combatReport: (reportId: string | null, worldId: string | null) => ['combat', 'report', reportId, worldId] as const,
+  scoutReports: (userId: string | null, worldId: string | null) => ['combat', 'scout-reports', userId, worldId] as const,
+  scoutReport: (reportId: string | null, worldId: string | null) => ['combat', 'scout-report', reportId, worldId] as const,
   worldConfigFull: (worldId: string | null) => ['world-config-full', worldId] as const,
   worldEntities: (worldId: string | null) => ['world-entities', worldId] as const,
   worldConfig: (worldId: string | null) => ['world-config', worldId] as const,
@@ -404,13 +404,14 @@ export function useVillagePowerQuery(villageId: string | null) {
 
 export function useKingdomPowerQuery() {
   const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
   return useQuery<KingdomPowerDto>({
-    queryKey: queryKeys.kingdomPower(userId),
+    queryKey: queryKeys.kingdomPower(userId, worldId),
     queryFn: () => {
-      if (!userId) return Promise.reject(new Error('No user'));
+      if (!userId || !worldId) return Promise.reject(new Error('No world selected'));
       return apiClient.get<KingdomPowerDto>('/power/kingdom');
     },
-    enabled: Boolean(userId),
+    enabled: Boolean(userId && worldId),
     staleTime: 30_000,
   });
 }
@@ -651,26 +652,28 @@ export interface CombatReportDto {
 
 export function useCombatReportsQuery() {
   const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
   return useQuery<CombatReportDto[]>({
-    queryKey: queryKeys.combatReports(userId),
+    queryKey: queryKeys.combatReports(userId, worldId),
     queryFn: () => {
-      if (!userId) return Promise.resolve([] as CombatReportDto[]);
+      if (!userId || !worldId) return Promise.resolve([] as CombatReportDto[]);
       return apiClient.get<CombatReportDto[]>('/combat/reports');
     },
-    enabled: Boolean(userId),
+    enabled: Boolean(userId && worldId),
     staleTime: 10_000,
   });
 }
 
 export function useCombatReportQuery(reportId: string | null) {
   const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
   return useQuery<CombatReportDto>({
-    queryKey: queryKeys.combatReport(reportId),
+    queryKey: queryKeys.combatReport(reportId, worldId),
     queryFn: () => {
-      if (!reportId) return Promise.reject(new Error('Missing report'));
+      if (!reportId || !worldId) return Promise.reject(new Error('Missing report'));
       return apiClient.get<CombatReportDto>(`/combat/report/${reportId}`);
     },
-    enabled: Boolean(reportId && userId),
+    enabled: Boolean(reportId && userId && worldId),
     staleTime: 60_000,
   });
 }
@@ -679,26 +682,28 @@ export type ScoutReportDto = ScoutReportResponse;
 
 export function useScoutReportsQuery() {
   const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
   return useQuery<ScoutReportDto[]>({
-    queryKey: queryKeys.scoutReports(userId),
+    queryKey: queryKeys.scoutReports(userId, worldId),
     queryFn: () => {
-      if (!userId) return Promise.resolve([] as ScoutReportDto[]);
+      if (!userId || !worldId) return Promise.resolve([] as ScoutReportDto[]);
       return apiClient.get<ScoutReportDto[]>('/combat/scout-reports');
     },
-    enabled: Boolean(userId),
+    enabled: Boolean(userId && worldId),
     staleTime: 10_000,
   });
 }
 
 export function useScoutReportQuery(reportId: string | null) {
   const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
   return useQuery<ScoutReportDto>({
-    queryKey: queryKeys.scoutReport(reportId),
+    queryKey: queryKeys.scoutReport(reportId, worldId),
     queryFn: () => {
-      if (!reportId) return Promise.reject(new Error('Missing scout report'));
+      if (!reportId || !worldId) return Promise.reject(new Error('Missing scout report'));
       return apiClient.get<ScoutReportDto>(`/combat/scout-report/${reportId}`);
     },
-    enabled: Boolean(reportId && userId),
+    enabled: Boolean(reportId && userId && worldId),
     staleTime: 60_000,
   });
 }
@@ -710,12 +715,13 @@ interface MarkReportReadInput {
 export function useMarkReportReadMutation() {
   const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
   return useMutation<CombatReportDto, Error, MarkReportReadInput>({
     mutationFn: ({ reportId }) =>
       apiClient.patch<CombatReportDto>(`/combat/report/${reportId}/read`),
     onSettled: (_data, _err, { reportId }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.combatReports(userId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.combatReport(reportId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.combatReports(userId, worldId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.combatReport(reportId, worldId) });
     },
   });
 }
@@ -723,12 +729,13 @@ export function useMarkReportReadMutation() {
 export function useMarkScoutReportReadMutation() {
   const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
   return useMutation<ScoutReportDto, Error, MarkReportReadInput>({
     mutationFn: ({ reportId }) =>
       apiClient.patch<ScoutReportDto>(`/combat/scout-report/${reportId}/read`),
     onSettled: (_data, _err, { reportId }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.scoutReports(userId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.scoutReport(reportId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.scoutReports(userId, worldId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.scoutReport(reportId, worldId) });
     },
   });
 }
@@ -740,11 +747,12 @@ interface DeleteReportInput {
 export function useDeleteReportMutation() {
   const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
   return useMutation<unknown, Error, DeleteReportInput>({
     mutationFn: ({ reportId }) =>
       apiClient.delete<unknown>(`/combat/report/${reportId}`),
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.combatReports(userId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.combatReports(userId, worldId) });
     },
   });
 }
@@ -752,11 +760,12 @@ export function useDeleteReportMutation() {
 export function useDeleteScoutReportMutation() {
   const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
   return useMutation<unknown, Error, DeleteReportInput>({
     mutationFn: ({ reportId }) =>
       apiClient.delete<unknown>(`/combat/scout-report/${reportId}`),
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.scoutReports(userId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.scoutReports(userId, worldId) });
     },
   });
 }

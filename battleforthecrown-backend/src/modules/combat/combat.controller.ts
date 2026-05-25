@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Post,
   Get,
@@ -7,6 +8,7 @@ import {
   Param,
   Delete,
   Query,
+  Headers,
 } from '@nestjs/common';
 import { CombatService } from './combat.service';
 import {
@@ -106,60 +108,109 @@ export class CombatController {
   }
 
   @Get('reports')
-  async getAllReports(@CurrentUser() user: AuthenticatedUser) {
-    return this.combatService.getAllReports(user.id);
+  async getAllReports(
+    @CurrentUser() user: AuthenticatedUser,
+    @Headers('x-world-id') worldId?: string,
+  ) {
+    return this.combatService.getAllReports(
+      user.id,
+      this.requireWorldId(worldId),
+    );
   }
 
   @Get('scout-reports')
-  async getAllScoutReports(@CurrentUser() user: AuthenticatedUser) {
-    return this.combatService.getAllScoutReports(user.id);
+  async getAllScoutReports(
+    @CurrentUser() user: AuthenticatedUser,
+    @Headers('x-world-id') worldId?: string,
+  ) {
+    return this.combatService.getAllScoutReports(
+      user.id,
+      this.requireWorldId(worldId),
+    );
   }
 
   @Get('scout-report/:reportId')
   async getScoutReport(
     @CurrentUser() user: AuthenticatedUser,
     @Param('reportId') reportId: string,
+    @Headers('x-world-id') worldId?: string,
   ) {
-    return this.combatService.getScoutReport(user.id, reportId);
+    return this.combatService.getScoutReport(
+      user.id,
+      reportId,
+      this.requireWorldId(worldId),
+    );
   }
 
   @Patch('scout-report/:reportId/read')
   async markScoutReportAsRead(
     @CurrentUser() user: AuthenticatedUser,
     @Param('reportId') reportId: string,
+    @Headers('x-world-id') worldId?: string,
   ) {
-    return this.combatService.markScoutReportAsRead(user.id, reportId);
+    return this.combatService.markScoutReportAsRead(
+      user.id,
+      reportId,
+      this.requireWorldId(worldId),
+    );
   }
 
   @Delete('scout-report/:reportId')
   async deleteScoutReport(
     @CurrentUser() user: AuthenticatedUser,
     @Param('reportId') reportId: string,
+    @Headers('x-world-id') worldId?: string,
   ) {
-    return this.combatService.deleteScoutReport(user.id, reportId);
+    return this.combatService.deleteScoutReport(
+      user.id,
+      reportId,
+      this.requireWorldId(worldId),
+    );
   }
 
   @Get('report/:reportId')
   async getReport(
     @CurrentUser() user: AuthenticatedUser,
     @Param('reportId') reportId: string,
+    @Headers('x-world-id') worldId?: string,
   ) {
-    return this.combatService.getReport(user.id, reportId);
+    return this.combatService.getReport(
+      user.id,
+      reportId,
+      this.requireWorldId(worldId),
+    );
   }
 
   @Patch('report/:reportId/read')
   async markReportAsRead(
     @CurrentUser() user: AuthenticatedUser,
     @Param('reportId') reportId: string,
+    @Headers('x-world-id') worldId?: string,
   ) {
-    return this.combatService.markReportAsRead(user.id, reportId);
+    return this.combatService.markReportAsRead(
+      user.id,
+      reportId,
+      this.requireWorldId(worldId),
+    );
   }
 
   @Delete('report/:reportId')
   async deleteReport(
     @CurrentUser() user: AuthenticatedUser,
     @Param('reportId') reportId: string,
+    @Headers('x-world-id') worldId?: string,
   ) {
-    return this.combatService.deleteReport(user.id, reportId);
+    return this.combatService.deleteReport(
+      user.id,
+      reportId,
+      this.requireWorldId(worldId),
+    );
+  }
+
+  private requireWorldId(worldId?: string) {
+    if (!worldId) {
+      throw new BadRequestException('worldId is required');
+    }
+    return worldId;
   }
 }

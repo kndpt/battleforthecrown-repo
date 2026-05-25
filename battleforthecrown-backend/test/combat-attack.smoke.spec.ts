@@ -443,7 +443,8 @@ describe('combat attack smoke', () => {
 
     const deleteRes = await request(ctx.server)
       .delete(`/combat/report/${report.id}`)
-      .set('Authorization', `Bearer ${user.accessToken}`);
+      .set('Authorization', `Bearer ${user.accessToken}`)
+      .set('x-world-id', world.id);
     expect(deleteRes.status).toBeLessThan(300);
 
     const returned = await outboxDispatched(
