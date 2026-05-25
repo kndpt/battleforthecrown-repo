@@ -87,7 +87,7 @@ export function CostSection({
           label="Pop."
           required={cost.population}
           current={availablePopulation}
-          icon={<span className="text-2xl leading-none">👥</span>}
+          icon={<ResourceIcon resource="population" size={28} />}
         />
       </div>
     </div>

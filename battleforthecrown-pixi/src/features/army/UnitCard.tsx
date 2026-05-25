@@ -358,7 +358,7 @@ export function UnitCard({
                           : "bg-game-red-light/20 border-game-red-border/30 text-game-red-dark"
                       }`}
                     >
-                      <span aria-hidden>👥</span>
+                      <ResourceIcon resource="population" size={14} />
                       <span>{totalCost.population}</span>
                     </div>
                   )}

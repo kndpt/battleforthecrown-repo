@@ -208,7 +208,7 @@ function UpgradeCostStrip({
         <CostChip current={displayResources?.wood ?? 0} icon={<ResourceIcon resource="wood" size={14} />} value={cost.wood} />
         <CostChip current={displayResources?.stone ?? 0} icon={<ResourceIcon resource="stone" size={14} />} value={cost.stone} />
         <CostChip current={displayResources?.iron ?? 0} icon={<ResourceIcon resource="iron" size={14} />} value={cost.iron} />
-        <CostChip current={availablePopulation} icon={<span className="text-[12px] leading-none">👥</span>} value={cost.population} />
+        <CostChip current={availablePopulation} icon={<ResourceIcon resource="population" size={14} />} value={cost.population} />
       </div>
     </div>
   );
