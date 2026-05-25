@@ -85,6 +85,7 @@ describe('WorldCard', () => {
     );
 
     expect(screen.getByText('Aubeforge')).toBeInTheDocument();
+    expect(screen.getByText('♔')).toBeInTheDocument();
     expect(screen.getByText(scenario.expectedStatus)).toBeInTheDocument();
     expect(screen.getByText(scenario.expectedDay)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: scenario.expectedButton })).toBeInTheDocument();

@@ -41,6 +41,13 @@ export interface PlayerProfileSheetVillage {
 export interface PlayerProfileSheetWorld {
   day: number | string;
   name: string;
+  phase: string;
+  sigilGlyph: string;
+  theme: {
+    border: string;
+    dark: string;
+    light: string;
+  };
   total: number | string;
 }
 
@@ -221,11 +228,10 @@ function VillageTierAsset({ tier }: { tier: number }) {
 }
 
 function WorldPanel({
-  icons,
   labels,
   onWorldSelect,
   world,
-}: Pick<PlayerProfileSheetProps, 'icons' | 'labels' | 'onWorldSelect' | 'world'>) {
+}: Pick<PlayerProfileSheetProps, 'labels' | 'onWorldSelect' | 'world'>) {
   return (
     <button
       aria-label={`Voir les royaumes depuis ${world.name}`}
@@ -233,7 +239,18 @@ function WorldPanel({
       onClick={onWorldSelect}
       type="button"
     >
-      <img alt="" className="size-4 brightness-[1.9] drop-shadow-[0_1px_1px_rgba(0,0,0,.5)]" src={asset(icons.position)} />
+      <div className="relative h-[36px] w-[32px] shrink-0 drop-shadow-[0_2px_3px_rgba(0,0,0,.45)]" aria-hidden="true">
+        <div
+          className="absolute inset-0 border-2 shadow-[inset_0_2px_0_rgba(255,255,255,.25),inset_0_-8px_12px_rgba(0,0,0,.25)] [clip-path:polygon(50%_100%,0%_75%,0%_8%,8%_0%,92%_0%,100%_8%,100%_75%)]"
+          style={{
+            background: `linear-gradient(to bottom, ${world.theme.light}, ${world.theme.dark})`,
+            borderColor: world.theme.border,
+          }}
+        />
+        <div className="absolute inset-0 flex items-center justify-center pb-1 font-game text-[15px] font-black leading-none text-white [text-shadow:0_1px_2px_rgba(0,0,0,.6)]">
+          {world.sigilGlyph}
+        </div>
+      </div>
       <div className="min-w-0 flex-1">
         <div className="font-game text-[8.5px] font-bold uppercase leading-none tracking-[.3em] text-[#cdb88a]">{labels.world}</div>
         <div className="mt-0.5 font-game text-[13px] font-extrabold tracking-[.03em] text-[#fef9f0] [text-shadow:1px_1px_1px_rgba(0,0,0,.5)]">{world.name}</div>
@@ -242,7 +259,7 @@ function WorldPanel({
         <div className="font-game text-xs font-extrabold text-[#fef9f0] tabular-nums [text-shadow:1px_1px_1px_rgba(0,0,0,.5)]">
           J+{world.day}<span className="font-bold opacity-[.55]"> / {world.total}</span>
         </div>
-        <div className="mt-px font-game text-[9px] text-[#cdb88a]">{labels.phase}</div>
+        <div className="mt-px font-game text-[9px] text-[#cdb88a]">{world.phase}</div>
       </div>
     </button>
   );
@@ -257,7 +274,7 @@ function ProfilePane({
 }: Pick<PlayerProfileSheetProps, 'icons' | 'labels' | 'onWorldSelect' | 'stats' | 'world'>) {
   return (
     <div className="flex flex-col gap-2.5">
-      <WorldPanel icons={icons} labels={labels} onWorldSelect={onWorldSelect} world={world} />
+      <WorldPanel labels={labels} onWorldSelect={onWorldSelect} world={world} />
       <div className="flex gap-1.5">
         <StatTile icon={icons.armyPower} label="Puissance" value={stats.power} />
         <StatTile icon={icons.crown} label="Couronnes" value={stats.crowns} />

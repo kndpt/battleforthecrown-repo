@@ -9,7 +9,13 @@ import {
 } from './worlds/WorldsSelectionDesign';
 import { defaultSeasonVariants, worldsSelectionLabels } from './worlds/worldsSelectionConfig';
 import { worldPreviewModels } from './worlds/worldsPreviewFixtures';
-import { buildWorldTabCounts, filterWorldsByTab, type WorldsTab } from '@/features/worlds/worldsViewModel';
+import {
+  buildWorldTabCounts,
+  filterWorldsByTab,
+  WORLD_SIGIL_GLYPHS,
+  WORLD_THEME_TOKENS,
+  type WorldsTab,
+} from '@/features/worlds/worldsViewModel';
 import {
   ArmyMovementList,
   Avatar,
@@ -640,7 +646,14 @@ const playerProfileSheetFixture = {
     { coords: '(11,4)', id: 'v2', level: 3, name: "Vald'Or", power: '980', style: { id: 'ECONOMIC', label: 'Économique' } },
     { coords: '(2,18)', id: 'v3', level: 3, name: 'Pierre-Noire', power: '790', style: { id: 'RAIDERS', label: 'Raiders' } },
   ],
-  world: { day: 18, name: 'Avalon-3', total: 60 },
+  world: {
+    day: 18,
+    name: 'Avalon-3',
+    phase: 'Verrouillé',
+    sigilGlyph: WORLD_SIGIL_GLYPHS.tower,
+    theme: WORLD_THEME_TOKENS.azure,
+    total: 60,
+  },
 } satisfies Pick<PlayerProfileSheetProps, 'icons' | 'labels' | 'player' | 'settings' | 'stats' | 'villages' | 'world'>;
 
 const multiVillageLabels = {

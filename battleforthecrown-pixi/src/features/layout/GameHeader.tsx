@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
+import type { PublicWorld } from '@battleforthecrown/shared/world';
 import { VILLAGE_LABEL_DISPLAY } from '@battleforthecrown/shared/village';
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router';
@@ -30,10 +31,12 @@ import {
   type ArmyTrainingDto,
   type ResourcesPayload,
   type VillageStrategyInfoDto,
+  usePublicWorldsQuery,
 } from '@/api/queries';
 import { apiClient, type BuildingDto, type PopulationDto, type QueueEntryDto } from '@/api';
 import { formatResourceAmount } from '@/lib/resourceConfig';
 import { BottomSheet } from '@/ui';
+import { WORLD_SIGIL_GLYPHS, WORLD_THEME_TOKENS } from '@/features/worlds/worldsViewModel';
 import {
   buildMultiVillageSheetItems,
   multiVillageBottomSheetLabels,
@@ -94,6 +97,15 @@ function getPlayerInitials(email: string | null | undefined) {
   return letters.toUpperCase();
 }
 
+function formatWorldPhase(world: PublicWorld | undefined): string {
+  if (!world) return '—';
+  if (world.status === 'PLANNED') return 'Planifié';
+  if (world.status === 'LOCKED') return 'Verrouillé';
+  if (world.lifecycle.inscriptionPhase === 'main') return 'Inscription ouverte';
+  if (world.lifecycle.inscriptionPhase === 'late') return 'Retardataires';
+  return 'Inscriptions closes';
+}
+
 interface GameHeaderProps {
   onPowerClick?: () => void;
   onResourceClick?: (resource: 'iron' | 'stone' | 'wood') => void;
@@ -109,6 +121,7 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
   const logout = useLogout();
   const population = usePopulationQuery(villageId);
   const kingdomPower = useKingdomPowerQuery();
+  const publicWorlds = usePublicWorldsQuery();
   const memberships = useMyMembershipsQuery();
   const myVillages = useMyVillagesQuery(worldId);
   const { display, hasSnapshot } = useDisplayResources(villageId);
@@ -121,6 +134,7 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
 
   const villages = myVillages.data ?? [];
   const activeMembership = memberships.data?.find((membership) => membership.worldId === worldId);
+  const activePublicWorld = publicWorlds.data?.find((world) => world.id === worldId);
   const shouldLoadProfileVillages = isProfileOpen && profileTab === 'villages';
   const fallbackVillageId = villages.find((village) => village.isCapital)?.id
     ?? villages[0]?.id
@@ -293,12 +307,19 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
         villages: villages.length,
       },
       world: {
-        day: '—',
-        name: activeMembership?.worldName ?? worldId ?? 'À venir',
-        total: '—',
+        day: activePublicWorld?.lifecycle.day ?? '—',
+        name: activePublicWorld?.identity.displayName ?? activeMembership?.worldName ?? worldId ?? 'À venir',
+        phase: formatWorldPhase(activePublicWorld),
+        sigilGlyph: activePublicWorld
+          ? WORLD_SIGIL_GLYPHS[activePublicWorld.identity.sigil]
+          : WORLD_SIGIL_GLYPHS.crown,
+        theme: activePublicWorld
+          ? WORLD_THEME_TOKENS[activePublicWorld.identity.themeColor]
+          : WORLD_THEME_TOKENS.green,
+        total: activePublicWorld?.lifecycle.totalDays ?? '—',
       },
     };
-  }, [activeMembership?.worldName, crownBalance, kingdomPower.data, user, villages.length, worldId]);
+  }, [activeMembership?.worldName, activePublicWorld, crownBalance, kingdomPower.data, user, villages.length, worldId]);
 
   useEffect(() => {
     if (

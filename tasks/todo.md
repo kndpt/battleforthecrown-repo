@@ -1,19 +1,13 @@
-# 034 fix world-scoped player data
+# Profil joueur : infos monde
 
-- [x] Preflight: git clean, fiche run, rules, SPEC, docs source.
-- [x] Cartographier les surfaces user-scoped visibles joueur backend et Pixi.
-- [x] Raffiner les corrections world-scoped power/reports/cache.
-- [x] Implémenter backend: power + combat/scout reports scoppés au monde courant.
-- [x] Implémenter Pixi: query keys et invalidations scoppées au monde courant.
-- [x] Ajouter/adapter le filet de regression backend/Pixi.
-- [x] Review lead 5 axes + review indépendante obligatoire.
-- [x] Retest: smokes backend, tests ciblés, static-check.
-- [x] Vérifier impact docs/SPEC, archiver la fiche, mettre à jour tasks/README.
+- [x] Vérifier l’état réel du worktree et les composants concernés.
+- [x] Brancher la fiche profil sur le monde public courant pour le jour, la phase et le drapeau.
+- [x] Adapter les fixtures/tests UI.
+- [x] Vérifier tests ciblés, static-check et rendu browser.
 
 ## Review
 
-- Power kingdom, leaderboard public et kingdom public sont scoppés par monde.
-- Combat/scout reports listes, détails, read et delete refusent le cross-world.
-- Query keys Pixi reports/power incluent `worldId`; les invalidations WS ciblent le monde courant.
-- Smoke ciblé et smoke backend complet verts; static-check vert.
-- Docs architecture + SPEC V3 mis à jour.
+- La fiche profil lit le `PublicWorld` actif pour nom, J+/durée, phase et drapeau.
+- Le drapeau reprend le même mapping `sigil`/theme que les cartes de royaumes.
+- Tests ciblés Pixi, static-check et vérification browser verts.
+- Docs : aucun changement nécessaire, raison : affichage UI d’une donnée monde déjà exposée.

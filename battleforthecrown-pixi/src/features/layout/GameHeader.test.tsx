@@ -56,6 +56,31 @@ function mockApi() {
         },
       ];
     }
+    if (path === '/worlds/public') {
+      return [
+        {
+          id: 'w1',
+          identity: {
+            displayName: 'Solstice',
+            sigil: 'star',
+            tagline: 'Le royaume vient d’ouvrir ses portes.',
+            themeColor: 'azure',
+            tier: 'DEBUTANTS',
+          },
+          joinedCount: 1,
+          lifecycle: {
+            day: 1,
+            endsAt: new Date(now + 60 * 86_400_000).toISOString(),
+            inscriptionPhase: 'main',
+            plannedOpenAt: null,
+            startedAt: new Date(now - 3_600_000).toISOString(),
+            totalDays: 60,
+          },
+          status: 'OPEN',
+          tempoProfile: 'standard',
+        },
+      ];
+    }
     if (path === '/population') {
       const id = (options as { query?: { villageId?: string } } | undefined)?.query?.villageId;
       return id === 'v2' ? { available: 88, max: 180, used: 92 } : { available: 78, max: 120, used: 42 };
@@ -299,7 +324,12 @@ describe('GameHeader player profile sheet', () => {
       expect(profileButton).toHaveAttribute('aria-expanded', 'true');
     });
     expect(await screen.findByText('u@example.test')).toBeInTheDocument();
-    expect(await screen.findByText('Avalon Test')).toBeInTheDocument();
+    expect(await screen.findByText('Solstice')).toBeInTheDocument();
+    expect(await screen.findByText('Inscription ouverte')).toBeInTheDocument();
+    expect(await screen.findByText('✦')).toBeInTheDocument();
+    expect(await screen.findByText((_content, element) =>
+      element?.textContent === 'J+1 / 60',
+    )).toBeInTheDocument();
     expect(await screen.findByText((_content, element) =>
       element?.tagName.toLowerCase() === 'span'
         && (element.textContent?.includes('Sans tribu') ?? false),
@@ -341,7 +371,7 @@ describe('GameHeader player profile sheet', () => {
 
     const profileButton = await screen.findByRole('button', { name: 'Profil joueur' });
     fireEvent.click(profileButton);
-    fireEvent.click(await screen.findByRole('button', { name: 'Voir les royaumes depuis Avalon Test' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Voir les royaumes depuis Solstice' }));
 
     await waitFor(() => {
       expect(screen.getByTestId('location-path')).toHaveTextContent('/worlds');
