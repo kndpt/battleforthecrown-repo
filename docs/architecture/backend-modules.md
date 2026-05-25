@@ -45,6 +45,7 @@ src/
     ├── construction.worker.ts
     ├── training.worker.ts
     ├── crown-production.worker.ts
+    ├── world-lifecycle.worker.ts
     └── outbox.worker.ts
 ```
 
@@ -53,7 +54,7 @@ src/
 | Module | Endpoints clés | Workers | Notes |
 |--------|----------------|---------|-------|
 | **auth** | `POST /auth/login`, `/register`, `/refresh` | — | JWT + refresh tokens, sessions DB |
-| **world** | `GET /world/:slug/details`, `/entities` | `BarbarianSeedingCatchupWorker` | Seeding procédural des villages barbares + placement joueur ; catchup d'arrivée différée (cron quotidien) |
+| **world** | `GET /world`, `GET /worlds/public`, `GET /world/:worldId/details`, `/entities` | `BarbarianSeedingCatchupWorker`, `WorldLifecycleWorker` | Seeding procédural des villages barbares + placement joueur ; cycle `PLANNED → OPEN → LOCKED → ENDED` |
 | **village** | `GET /village/:id/buildings`, `/queue` | — | Lectures village + bâtiments. Les mutations (upgrade/cancel) délégées à `gameplay/` |
 | **resources** | `GET /resources/:villageId` | `ProductionWorker` | Production passive bois/pierre/fer, capé par warehouse. Pas de publication d'event (déléguée à `OutboxPublisher`) |
 | **army** | `GET /army/:villageId/inventory`, `/training`, `POST /army/:villageId/throne/recruit-noble` | — | Lectures inventaire + entraînements. Mutations (train/cancel/recruit noble) déléguées à `gameplay/` |
@@ -103,6 +104,7 @@ Lectures et contrôle de garnison :
 ```
 world/
 ├── world.controller.ts
+├── public-worlds.controller.ts
 ├── world.service.ts
 ├── world-config.service.ts          # Lecture/merge de world.config (JSON)
 ├── barbarian-seeding.service.ts     # Génération procédurale (Voronoi-like, density par zone)
@@ -111,7 +113,7 @@ world/
 └── barbarian-seeding-catchup.worker.ts  # Catchup d'arrivée différée (chunks non couverts par le seeding sync)
 ```
 
-`WorldConfigService` est central : la migration d'`common/constants.ts` vers la config par-monde est en cours (objectif : permettre des serveurs à vitesses différentes sans redéploiement).
+`WorldConfigService` est central : la migration d'`common/constants.ts` vers la config par-monde est en cours (objectif : permettre des serveurs à vitesses différentes sans redéploiement). `GET /worlds/public` expose les mondes planifiés/joignables/verrouillés avec identité, phase d'inscription dérivée, compteur de jour, `plannedOpenAt` et nombre de joueurs.
 
 ### Event
 

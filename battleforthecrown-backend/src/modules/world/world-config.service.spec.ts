@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   DEFAULT_BARBARIAN_SEEDING_PLAN,
+  DEFAULT_WORLD_IDENTITY_CONFIG,
+  DEFAULT_WORLD_LIFECYCLE_CONFIG,
   DEFAULT_PLAYER_VILLAGE_PLACEMENT_PLAN,
   type WorldConfig,
 } from '@battleforthecrown/shared/world';
@@ -25,6 +27,8 @@ describe('WorldConfigService', () => {
         resourceProduction: 1 / 1.5,
       },
     },
+    lifecycle: DEFAULT_WORLD_LIFECYCLE_CONFIG,
+    identity: DEFAULT_WORLD_IDENTITY_CONFIG,
     combat: {
       attackBonus: 1.0,
       defenseBonus: 1.0,

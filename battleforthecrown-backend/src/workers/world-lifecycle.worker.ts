@@ -1,0 +1,179 @@
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import type { World, WorldStatus } from '@prisma/client';
+import PgBoss from 'pg-boss';
+import { PrismaService } from '../infra/prisma/prisma.service';
+import { createOutboxEvent } from '../modules/event/event.utils';
+import {
+  WorldConfigSchema,
+  resolveWorldLifecycleConfig,
+} from '@battleforthecrown/shared/world';
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const WORLD_LIFECYCLE_QUEUE = 'world:lifecycle';
+const WORLD_LIFECYCLE_CRON = '*/5 * * * *';
+
+@Injectable()
+export class WorldLifecycleWorker implements OnModuleInit {
+  private readonly logger = new Logger(WorldLifecycleWorker.name);
+
+  constructor(
+    @Inject('PG_BOSS') private readonly boss: PgBoss,
+    private readonly prisma: PrismaService,
+  ) {}
+
+  async onModuleInit() {
+    try {
+      await this.boss.createQueue(WORLD_LIFECYCLE_QUEUE);
+      await this.boss.work(WORLD_LIFECYCLE_QUEUE, async () => {
+        await this.handleLifecycleTick();
+      });
+      await this.boss.schedule(
+        WORLD_LIFECYCLE_QUEUE,
+        WORLD_LIFECYCLE_CRON,
+        {},
+        {
+          tz: 'UTC',
+        },
+      );
+
+      this.logger.log(
+        `World lifecycle worker initialized (${WORLD_LIFECYCLE_CRON})`,
+      );
+    } catch (error) {
+      this.logger.error('Failed to initialize world lifecycle worker:', error);
+      throw error;
+    }
+  }
+
+  async handleLifecycleTick(now = new Date()): Promise<{
+    plannedToOpen: number;
+    openToLocked: number;
+    lockedToEnded: number;
+  }> {
+    const plannedToOpen = await this.openPlannedWorlds(now);
+    const openToLocked = await this.lockExpiredRegistrationWindows(now);
+    const lockedToEnded = await this.endExpiredWorlds(now);
+
+    if (plannedToOpen + openToLocked + lockedToEnded > 0) {
+      this.logger.log(
+        `World lifecycle transitions: plannedToOpen=${plannedToOpen}, openToLocked=${openToLocked}, lockedToEnded=${lockedToEnded}`,
+      );
+    }
+
+    return { plannedToOpen, openToLocked, lockedToEnded };
+  }
+
+  private async openPlannedWorlds(now: Date): Promise<number> {
+    const worlds = await this.prisma.world.findMany({
+      where: {
+        status: 'PLANNED',
+        plannedOpenAt: { lte: now },
+      },
+      orderBy: { plannedOpenAt: 'asc' },
+    });
+
+    let transitions = 0;
+    for (const world of worlds) {
+      const lifecycle = this.getLifecycle(world);
+      const startedAt = now;
+      const endsAt = addDays(startedAt, lifecycle.worldDuration);
+      transitions += await this.transitionWorld(world.id, 'PLANNED', 'OPEN', {
+        startedAt,
+        endsAt,
+        at: now,
+      });
+    }
+    return transitions;
+  }
+
+  private async lockExpiredRegistrationWindows(now: Date): Promise<number> {
+    const worlds = await this.prisma.world.findMany({
+      where: {
+        status: 'OPEN',
+        startedAt: { not: null },
+      },
+      orderBy: { startedAt: 'asc' },
+    });
+
+    let transitions = 0;
+    for (const world of worlds) {
+      if (!world.startedAt) continue;
+
+      const lifecycle = this.getLifecycle(world);
+      const lockAt = addDays(
+        world.startedAt,
+        lifecycle.inscriptionMainDays + lifecycle.inscriptionLateDays,
+      );
+      if (lockAt > now) continue;
+
+      transitions += await this.transitionWorld(world.id, 'OPEN', 'LOCKED', {
+        at: now,
+      });
+    }
+    return transitions;
+  }
+
+  private async endExpiredWorlds(now: Date): Promise<number> {
+    const worlds = await this.prisma.world.findMany({
+      where: {
+        status: 'LOCKED',
+        endsAt: { lte: now },
+      },
+      orderBy: { endsAt: 'asc' },
+    });
+
+    let transitions = 0;
+    for (const world of worlds) {
+      transitions += await this.transitionWorld(world.id, 'LOCKED', 'ENDED', {
+        at: now,
+      });
+    }
+    return transitions;
+  }
+
+  private async transitionWorld(
+    worldId: string,
+    from: WorldStatus,
+    to: WorldStatus,
+    params: { at: Date; startedAt?: Date; endsAt?: Date },
+  ): Promise<number> {
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.world.updateMany({
+        where: { id: worldId, status: from },
+        data: {
+          status: to,
+          startedAt: params.startedAt,
+          endsAt: params.endsAt,
+          plannedOpenAt: to === 'OPEN' ? null : undefined,
+        },
+      });
+
+      if (updated.count !== 1) {
+        return 0;
+      }
+
+      await createOutboxEvent(tx, 'world.status.changed', worldId, {
+        worldId,
+        from,
+        to,
+        at: params.at.toISOString(),
+      });
+
+      return 1;
+    });
+  }
+
+  private getLifecycle(world: Pick<World, 'id' | 'config'>) {
+    const parsed = WorldConfigSchema.safeParse(world.config);
+    if (!parsed.success) {
+      throw new Error(
+        `World ${world.id} has an invalid config: ${parsed.error.message}`,
+      );
+    }
+    return resolveWorldLifecycleConfig(parsed.data.lifecycle);
+  }
+}
+
+function addDays(date: Date, days: number): Date {
+  return new Date(date.getTime() + days * MS_PER_DAY);
+}

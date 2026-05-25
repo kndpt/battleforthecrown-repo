@@ -77,7 +77,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.to(`user:${userId}`).emit(event, data);
   }
 
-  notifyWorld(worldId: string, event: string, data: Record<string, unknown>) {
+  notifyWorld<K extends EventKind>(
+    worldId: string,
+    event: K,
+    data: PayloadForKind<K>,
+  ) {
     this.server.to(`world:${worldId}`).emit(event, data);
   }
 }

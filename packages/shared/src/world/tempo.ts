@@ -1,4 +1,5 @@
 import type { WorldTempo } from './schemas';
+import type { WorldTempoProfile } from './dtos';
 
 export type TempoDurationAxis =
   | 'constructionSpeed'
@@ -33,5 +34,9 @@ export class TempoService {
     axis: TempoRateAxis,
   ): number {
     return absolute / TempoService.resolve(tempo, axis);
+  }
+
+  static deriveProfile(tempo: WorldTempo): WorldTempoProfile {
+    return tempo.global === 1 ? 'standard' : 'custom';
   }
 }

@@ -110,6 +110,7 @@ model World {
   continentHeight  Int         @default(100) @map("continent_height")
   startedAt        DateTime?   @map("started_at") @db.Timestamptz(3)
   endsAt           DateTime?   @map("ends_at") @db.Timestamptz(3)
+  plannedOpenAt    DateTime?   @map("planned_open_at") @db.Timestamptz(3)
   createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
 
   villages        Village[]
@@ -119,6 +120,9 @@ model World {
   zoneCapacities  ZoneCapacity[]
   pendingConquests PendingConquest[]
 
+  @@index([status, plannedOpenAt])
+  @@index([status, startedAt])
+  @@index([status, endsAt])
   @@map("world")
 }
 

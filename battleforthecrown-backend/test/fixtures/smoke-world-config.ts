@@ -19,6 +19,20 @@ export const SMOKE_WORLD_CONFIG: WorldConfig = {
       crownsYield: 1,
     },
   },
+  lifecycle: {
+    worldDuration: 60,
+    inscriptionMainDays: 7,
+    inscriptionLateDays: 3,
+    newWorldEverydays: 7,
+    newbieShieldHours: 48,
+  },
+  identity: {
+    displayName: 'Smoke World',
+    tagline: 'Un royaume de test pour les smokes.',
+    sigil: 'crown',
+    themeColor: 'green',
+    tier: 'DEBUTANTS',
+  },
   combat: { attackBonus: 1, defenseBonus: 1, lootFactor: 0.5 },
   barbarianSeeding: {
     enabled: false,

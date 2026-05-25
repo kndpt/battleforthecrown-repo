@@ -20,6 +20,7 @@ import type {
   VillageCaptureWindowInterruptedPayload,
   VillageCaptureWindowOpenedPayload,
   VillageConqueredPayload,
+  WorldStatusChangedPayload,
 } from './ws-types';
 import { useResourcesStore } from '@/stores/resources';
 import { useCrownsStore } from '@/stores/crowns';
@@ -86,6 +87,18 @@ export function applyCrownsChanged(
     productionRate: payload.productionRate,
     lastUpdateTs: Date.parse(payload.lastUpdateTs),
   });
+}
+
+export function applyWorldStatusChanged(
+  payload: WorldStatusChangedPayload,
+  ctx: BindingsContext,
+): void {
+  const userId = useAuthStore.getState().user?.id ?? null;
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.publicWorlds() });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.worlds() });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.myMemberships(userId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.worldConfig(payload.worldId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.worldConfigFull(payload.worldId) });
 }
 
 export function applyBuildingCompleted(
@@ -614,6 +627,7 @@ function invalidateReinforcementQueries(
 const bindings: ServerEventBindings = {
   'resources.changed': applyResourcesChanged,
   'crowns.changed': applyCrownsChanged,
+  'world.status.changed': applyWorldStatusChanged,
   'building.completed': applyBuildingCompleted,
   'unit.training.completed': applyUnitTrainingCompleted,
   'unit.trained': applyUnitTrained,

@@ -1,6 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WorldConfigService } from './world-config.service';
+import {
+  WorldConfigSchema,
+  InscriptionPhase,
+  deriveInscriptionPhase,
+  deriveWorldDayCounter,
+  PublicWorldStatusSchema,
+  TempoService,
+  type PublicWorld,
+  type WorldConfig,
+} from '@battleforthecrown/shared/world';
 
 @Injectable()
 export class WorldService {
@@ -49,6 +59,61 @@ export class WorldService {
     return this.worldConfigService.getConfig(worldId);
   }
 
+  async getPublicWorlds(now = new Date()): Promise<PublicWorld[]> {
+    const worlds = await this.prisma.world.findMany({
+      where: { status: { in: ['PLANNED', 'OPEN', 'LOCKED'] } },
+      orderBy: [{ plannedOpenAt: 'asc' }, { createdAt: 'desc' }],
+      include: { _count: { select: { memberships: true } } },
+    });
+
+    return worlds.map((world) => {
+      const config = this.parseWorldConfig(world.id, world.config);
+      const dayCounter = deriveWorldDayCounter(
+        {
+          startedAt: world.startedAt,
+          endsAt: world.endsAt,
+          config,
+        },
+        now,
+      );
+      const inscriptionPhase =
+        world.status === 'OPEN'
+          ? deriveInscriptionPhase(
+              {
+                startedAt: world.startedAt,
+                endsAt: world.endsAt,
+                config,
+              },
+              now,
+            )
+          : InscriptionPhase.CLOSED;
+
+      const status = PublicWorldStatusSchema.parse(world.status);
+
+      return {
+        id: world.id,
+        status,
+        identity: config.identity,
+        lifecycle: {
+          day:
+            world.status === 'PLANNED' || !world.startedAt
+              ? null
+              : dayCounter.day,
+          totalDays: dayCounter.totalDays,
+          inscriptionPhase,
+          startedAt: toIsoString(world.startedAt),
+          endsAt: toIsoString(world.endsAt),
+          plannedOpenAt:
+            world.status === 'PLANNED'
+              ? toIsoString(world.plannedOpenAt)
+              : null,
+        },
+        tempoProfile: TempoService.deriveProfile(config.tempo),
+        joinedCount: world._count.memberships,
+      };
+    });
+  }
+
   async getWorldIdFromVillage(villageId: string): Promise<string> {
     const village = await this.prisma.village.findUnique({
       where: { id: villageId },
@@ -90,4 +155,18 @@ export class WorldService {
       villageCount: countByWorld.get(m.worldId) ?? 0,
     }));
   }
+
+  private parseWorldConfig(worldId: string, config: unknown): WorldConfig {
+    const parsed = WorldConfigSchema.safeParse(config);
+    if (!parsed.success) {
+      throw new Error(
+        `World ${worldId} has an invalid config: ${parsed.error.message}`,
+      );
+    }
+    return parsed.data;
+  }
+}
+
+function toIsoString(value: Date | null): string | null {
+  return value ? value.toISOString() : null;
 }

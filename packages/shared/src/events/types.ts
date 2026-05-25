@@ -200,6 +200,13 @@ export interface CrownsChangedPayload {
   lastUpdateTs: string;
 }
 
+export interface WorldStatusChangedPayload {
+  worldId: string;
+  from: 'PLANNED' | 'OPEN' | 'LOCKED' | 'ENDED';
+  to: 'PLANNED' | 'OPEN' | 'LOCKED' | 'ENDED';
+  at: string;
+}
+
 export type OutboxEventPayload =
   | { kind: 'building.completed'; payload: BuildingCompletedPayload }
   | { kind: 'unit.training.completed'; payload: UnitTrainingCompletedPayload }
@@ -232,7 +239,8 @@ export type OutboxEventPayload =
   | { kind: 'expedition.returned'; payload: ExpeditionReturnedPayload }
   | { kind: 'garrison.added'; payload: GarrisonAddedPayload }
   | { kind: 'resources.changed'; payload: ResourcesChangedPayload }
-  | { kind: 'crowns.changed'; payload: CrownsChangedPayload };
+  | { kind: 'crowns.changed'; payload: CrownsChangedPayload }
+  | { kind: 'world.status.changed'; payload: WorldStatusChangedPayload };
 
 export type EventKind = OutboxEventPayload['kind'];
 
@@ -264,7 +272,8 @@ export type AnyEventPayload =
   | ExpeditionReturnedPayload
   | GarrisonAddedPayload
   | ResourcesChangedPayload
-  | CrownsChangedPayload;
+  | CrownsChangedPayload
+  | WorldStatusChangedPayload;
 
 export interface ServerEvents {
   'resources.changed': ResourcesChangedPayload;
@@ -290,6 +299,7 @@ export interface ServerEvents {
   'expedition.recalled': ExpeditionRecalledPayload;
   'expedition.returned': ExpeditionReturnedPayload;
   'garrison.added': GarrisonAddedPayload;
+  'world.status.changed': WorldStatusChangedPayload;
 }
 
 export type ServerEventName = keyof ServerEvents;

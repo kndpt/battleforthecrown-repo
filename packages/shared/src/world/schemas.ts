@@ -16,6 +16,82 @@ const TempoSchema = z.strictObject({
   overrides: TempoOverridesSchema.optional(),
 });
 
+export const DEFAULT_WORLD_LIFECYCLE_CONFIG = {
+  worldDuration: 60,
+  inscriptionMainDays: 7,
+  inscriptionLateDays: 3,
+  newWorldEverydays: 7,
+  newbieShieldHours: 48,
+} as const;
+
+export const WorldLifecycleSchema = z.strictObject({
+  worldDuration: z.number().int().positive().default(
+    DEFAULT_WORLD_LIFECYCLE_CONFIG.worldDuration,
+  ),
+  inscriptionMainDays: z.number().int().positive().default(
+    DEFAULT_WORLD_LIFECYCLE_CONFIG.inscriptionMainDays,
+  ),
+  inscriptionLateDays: z.number().int().nonnegative().default(
+    DEFAULT_WORLD_LIFECYCLE_CONFIG.inscriptionLateDays,
+  ),
+  newWorldEverydays: z.number().int().positive().default(
+    DEFAULT_WORLD_LIFECYCLE_CONFIG.newWorldEverydays,
+  ),
+  newbieShieldHours: z.number().int().positive().default(
+    DEFAULT_WORLD_LIFECYCLE_CONFIG.newbieShieldHours,
+  ),
+});
+
+export const WorldSigilSchema = z.enum([
+  'crown',
+  'tree',
+  'star',
+  'cross',
+  'flame',
+  'fleur',
+  'lion',
+  'tower',
+]);
+
+export const WorldThemeColorSchema = z.enum([
+  'green',
+  'teal',
+  'crimson',
+  'purple',
+  'gold',
+  'azure',
+  'silver',
+  'onyx',
+]);
+
+export const WorldIdentityTierSchema = z.enum(['DEBUTANTS', 'CLASSED']);
+
+export const DEFAULT_WORLD_IDENTITY_CONFIG = {
+  displayName: 'Aubeforge',
+  tagline: 'Un royaume pour apprendre et conquerir.',
+  sigil: 'crown',
+  themeColor: 'green',
+  tier: 'DEBUTANTS',
+} as const;
+
+export const WorldIdentitySchema = z.strictObject({
+  displayName: z
+    .string()
+    .trim()
+    .min(1)
+    .default(DEFAULT_WORLD_IDENTITY_CONFIG.displayName),
+  tagline: z
+    .string()
+    .trim()
+    .max(80)
+    .default(DEFAULT_WORLD_IDENTITY_CONFIG.tagline),
+  sigil: WorldSigilSchema.default(DEFAULT_WORLD_IDENTITY_CONFIG.sigil),
+  themeColor: WorldThemeColorSchema.default(
+    DEFAULT_WORLD_IDENTITY_CONFIG.themeColor,
+  ),
+  tier: WorldIdentityTierSchema.default(DEFAULT_WORLD_IDENTITY_CONFIG.tier),
+});
+
 const CombatRulesSchema = z.strictObject({
   attackBonus: z.number().nonnegative(),
   defenseBonus: z.number().nonnegative(),
@@ -77,6 +153,8 @@ const FogOfWarSettingsSchema = z.strictObject({
 
 export const WorldConfigSchema = z.strictObject({
   tempo: TempoSchema,
+  lifecycle: WorldLifecycleSchema.default(DEFAULT_WORLD_LIFECYCLE_CONFIG),
+  identity: WorldIdentitySchema.default(DEFAULT_WORLD_IDENTITY_CONFIG),
   combat: CombatRulesSchema,
   barbarianSeeding: BarbarianSeedingPlanSchema,
   playerVillagePlacement: PlayerVillagePlacementPlanSchema,
@@ -86,6 +164,11 @@ export const WorldConfigSchema = z.strictObject({
 export type WorldConfig = z.infer<typeof WorldConfigSchema>;
 export type WorldTempo = z.infer<typeof TempoSchema>;
 export type WorldTempoOverrides = z.infer<typeof TempoOverridesSchema>;
+export type WorldLifecycleConfig = z.infer<typeof WorldLifecycleSchema>;
+export type WorldIdentityConfig = z.infer<typeof WorldIdentitySchema>;
+export type WorldSigil = z.infer<typeof WorldSigilSchema>;
+export type WorldThemeColor = z.infer<typeof WorldThemeColorSchema>;
+export type WorldIdentityTier = z.infer<typeof WorldIdentityTierSchema>;
 export type BarbarianSeedingPlan = z.infer<typeof BarbarianSeedingPlanSchema>;
 export type BarbarianSeedingConfig = BarbarianSeedingPlan;
 export type TierWindow = z.infer<typeof TierWindowSchema>;

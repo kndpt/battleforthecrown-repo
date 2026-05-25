@@ -30,6 +30,7 @@ import {
   type GarrisonAddedPayload,
   type ResourcesChangedPayload,
   type CrownsChangedPayload,
+  type WorldStatusChangedPayload,
 } from './event-types';
 
 function isEventKind(kind: string): kind is EventKind {
@@ -214,6 +215,11 @@ export class EventOutboxService {
         break;
       case 'crowns.changed':
         this.notifyCrownsChanged(parseEventPayload(event.kind, event.payload));
+        break;
+      case 'world.status.changed':
+        this.notifyWorldStatusChanged(
+          parseEventPayload(event.kind, event.payload),
+        );
         break;
       default: {
         const exhaustiveCheck: never = event.kind;
@@ -497,6 +503,10 @@ export class EventOutboxService {
       productionRate: payload.productionRate,
       lastUpdateTs: payload.lastUpdateTs,
     });
+  }
+
+  private notifyWorldStatusChanged(payload: WorldStatusChangedPayload) {
+    this.gateway.notifyWorld(payload.worldId, 'world.status.changed', payload);
   }
 
   private async notifyReinforcementSent(payload: ReinforcementSentPayload) {

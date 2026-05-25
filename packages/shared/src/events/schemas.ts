@@ -202,6 +202,13 @@ const CrownsChangedPayloadSchema = z.object({
   lastUpdateTs: z.string(),
 });
 
+const WorldStatusChangedPayloadSchema = z.object({
+  worldId: z.string(),
+  from: z.enum(['PLANNED', 'OPEN', 'LOCKED', 'ENDED']),
+  to: z.enum(['PLANNED', 'OPEN', 'LOCKED', 'ENDED']),
+  at: z.string().datetime(),
+});
+
 export const EVENT_PAYLOAD_SCHEMAS = {
   'building.completed': BuildingCompletedPayloadSchema,
   'unit.training.completed': UnitTrainingCompletedPayloadSchema,
@@ -226,6 +233,7 @@ export const EVENT_PAYLOAD_SCHEMAS = {
   'garrison.added': GarrisonAddedPayloadSchema,
   'resources.changed': ResourcesChangedPayloadSchema,
   'crowns.changed': CrownsChangedPayloadSchema,
+  'world.status.changed': WorldStatusChangedPayloadSchema,
 } as const satisfies Record<EventKind, z.ZodType>;
 
 export type EventPayloadSchema<K extends EventKind> = z.ZodType<

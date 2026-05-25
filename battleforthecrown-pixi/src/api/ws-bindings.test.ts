@@ -19,6 +19,7 @@ import {
   applyVillageCaptureWindowOpened,
   applyVillageAttacked,
   applyVillageConquered,
+  applyWorldStatusChanged,
 } from './ws-bindings';
 import { queryKeys } from './queries';
 import { useResourcesStore } from '@/stores/resources';
@@ -144,6 +145,34 @@ describe('applyCrownsChanged', () => {
       productionRate: 3,
       lastUpdateTs: Date.parse('2026-05-04T22:00:00.000Z'),
     });
+  });
+});
+
+describe('applyWorldStatusChanged', () => {
+  it('invalidates world selection and current world config queries', () => {
+    setCurrentWorldSession();
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.publicWorlds(), []);
+    queryClient.setQueryData(queryKeys.worlds(), []);
+    queryClient.setQueryData(queryKeys.myMemberships('user-1'), []);
+    queryClient.setQueryData(queryKeys.worldConfig('world-1'), {});
+    queryClient.setQueryData(queryKeys.worldConfigFull('world-1'), {});
+
+    applyWorldStatusChanged(
+      {
+        worldId: 'world-1',
+        from: 'OPEN',
+        to: 'LOCKED',
+        at: '2026-05-25T10:00:00.000Z',
+      },
+      { queryClient },
+    );
+
+    expect(queryClient.getQueryState(queryKeys.publicWorlds())?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.worlds())?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.myMemberships('user-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.worldConfig('world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.worldConfigFull('world-1'))?.isInvalidated).toBe(true);
   });
 });
 

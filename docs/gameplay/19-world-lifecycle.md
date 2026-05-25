@@ -137,4 +137,4 @@ Cette spec **débloque ou impacte** plusieurs autres docs.
 - [`09-power-and-rankings.md`](./09-power-and-rankings.md) — classements (post-MVP) et leaderboard final.
 - [`14-pvp-conquest.md` § Bouclier débutant](./14-pvp-conquest.md#3-bouclier-débutant--48-h-à-larrivée-sur-le-monde) — protection 48 h, indépendante du cycle de monde mais activée à chaque arrivée.
 - [`18-inactivity-and-abandonment.md`](./18-inactivity-and-abandonment.md) — abandon 14 j, à recalibrer si nécessaire post-MVP.
-- Backend : `world.controller.ts` + `join-world.use-case.ts` — déjà câblés pour rejeter `LOCKED`/`ENDED`. Champs `world.startedAt` / `world.endsAt` / `world.status` déjà en schéma.
+- Backend : `world.controller.ts` + `join-world.use-case.ts` — déjà câblés pour rejeter `LOCKED`/`ENDED`. Champs `world.startedAt` / `world.endsAt` / `world.status` / `world.plannedOpenAt` en schéma. `GET /worlds/public` expose l'identité, le lifecycle dérivé et les mondes `PLANNED | OPEN | LOCKED` pour l'écran de sélection.

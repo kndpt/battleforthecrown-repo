@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  PublicWorldsResponseSchema,
   WorldConfigSchema,
+  type PublicWorld,
   type WorldConfig,
 } from '@battleforthecrown/shared/world';
 import type {
@@ -49,6 +51,7 @@ import type {
 
 export const queryKeys = {
   worlds: () => ['worlds'] as const,
+  publicWorlds: () => ['worlds', 'public'] as const,
   myMemberships: (userId: string | null) => ['memberships', userId] as const,
   myVillages: (userId: string | null, worldId: string | null) => ['villages', userId, worldId] as const,
   buildings: (villageId: string | null) => ['buildings', villageId] as const,
@@ -112,6 +115,18 @@ export function useWorldsQuery() {
   return useQuery<World[]>({
     queryKey: queryKeys.worlds(),
     queryFn: () => apiClient.get<World[]>('/world'),
+  });
+}
+
+export function usePublicWorldsQuery() {
+  return useQuery<PublicWorld[]>({
+    queryKey: queryKeys.publicWorlds(),
+    queryFn: async () => {
+      const raw = await apiClient.get<unknown>('/worlds/public', {
+        skipAuth: true,
+      });
+      return PublicWorldsResponseSchema.parse(raw);
+    },
   });
 }
 

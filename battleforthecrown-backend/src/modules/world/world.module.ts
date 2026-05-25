@@ -3,6 +3,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from '../../infra/prisma/prisma.module';
 import { AuthContextModule } from '../../common/auth';
 import { WorldController } from './world.controller';
+import { PublicWorldsController } from './public-worlds.controller';
 import { WorldService } from './world.service';
 import { WorldConfigService } from './world-config.service';
 import { WorldEntitiesQueryService } from './world-entities-query.service';
@@ -17,7 +18,7 @@ import { VisionService } from './vision.service';
 
 @Module({
   imports: [PrismaModule, ScheduleModule.forRoot(), AuthContextModule],
-  controllers: [WorldController],
+  controllers: [WorldController, PublicWorldsController],
   providers: [
     WorldService,
     WorldConfigService,

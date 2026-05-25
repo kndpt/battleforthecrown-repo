@@ -1,8 +1,8 @@
 # Run #032 — world-lifecycle-foundation-and-identity
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-05-25
+> **Terminé** : 2026-05-25
 
 ## Cible
 
@@ -114,29 +114,65 @@ Choix produit tranchés en clarification :
 
 ## Décomposition initiale (rempli par le lead à l'étape 3)
 
-_(Vide au démarrage.)_
+- Shared contract : lifecycle/identity dans `WorldConfigSchema`, helpers purs, DTO public exporté.
+- Data layer : champ nullable `World.plannedOpenAt`, migration non destructive, rétrofit JSON config, seed + fixtures smoke.
+- Backend world : endpoint public enrichi, mapping identité/lifecycle, count memberships sans N+1.
+- Lifecycle worker : transitions idempotentes `PLANNED → OPEN → LOCKED → ENDED` et event outbox `world.status.changed`.
+- Regression net : tests pure-logic, smoke `worlds-public`, smokes backend existants + `static-check`.
 
 ## Progress (rempli pendant le run)
 
-_(Vide au démarrage.)_
+- 2026-05-25 : Préflight terminé, worktree clean au démarrage, rules/specs/skills chargés.
+- 2026-05-25 : Shared lifecycle/identity + DTO public, migrations, endpoint, worker lifecycle, event Outbox et binding Pixi implémentés.
+- 2026-05-25 : Review indépendante initiale `BLOCK`; findings bloquants/majeurs corrigés puis re-review `GO`.
 
 ## Décisions prises
 
-_(Vide au démarrage.)_
+- `GET /worlds/public` est exposé sous un controller public dédié `PublicWorldsController`.
+- `tempoProfile` reste un profil partagé minimal (`standard | custom`) dérivé de `tempo.global`; l'UI détaillée des variantes reste post-MVP.
+- `plannedOpenAt` est uniquement renvoyé pour les mondes `PLANNED` et est remis à `null` lors de la transition vers `OPEN`.
+- `WorldLifecycleWorker` est vérifié par smoke backend avec effets DB réels et EventOutbox, conformément à `bftc-tests-policy` pour l'orchestration Prisma/pg-boss.
+- La première délégation shared a été fermée sans rapport après timeout ; le lead a repris et audité les fichiers modifiés.
 
 ## Rapport final
 
-_(Vide au démarrage.)_
+Run livré.
+
+Changements principaux :
+- Contrat shared `WorldConfig.lifecycle`, `WorldConfig.identity`, helpers `deriveInscriptionPhase` / `deriveWorldDayCounter`, DTO Zod `PublicWorld`.
+- Prisma : `World.plannedOpenAt`, rétrofit JSON config lifecycle/identity, seed/fixtures smoke, index lifecycle non destructifs.
+- Backend : `GET /worlds/public`, `WorldLifecycleWorker`, event Outbox `world.status.changed`.
+- Pixi : hook `usePublicWorldsQuery`, binding WS qui invalide la sélection de mondes et la config courante.
+- Docs : `data-model.md`, `backend-modules.md`, `realtime.md`, spec gameplay lifecycle.
+
+Review lead 5 axes :
+- Correctness : payload public validé par Zod, transitions idempotentes, `plannedOpenAt` limité aux mondes `PLANNED`, `ENDED` exclus.
+- Readability : logique lifecycle isolée dans shared + worker dédié ; controller public mince.
+- Architecture : mutation statut + EventOutbox dans la même transaction ; frontend ne calcule rien d'autoritatif.
+- Security : endpoint public expose uniquement métadonnées monde et count memberships, aucun user data.
+- Performance : counts via `_count`, index lifecycle, pas de limite arbitraire `take: 100` sur les transitions dues.
 
 ### Acceptance & QA
 
 - **Critères d'acceptance vérifiés** :
-  - [ ] _(à remplir)_
-- **Review indépendante** : à déclencher (back+front via DTO partagé, modifie le contrat public d'un domaine MVP).
-- **Tests automatisés** : à remplir.
-- **Smokes ajoutés/modifiés** : à remplir.
-- **QA fonctionnelle agent** : à remplir (à minima : `curl GET /worlds/public` sur 3 mondes en états distincts seedés).
-- **Tests IG à faire par le user** : aucun (pas d'UI livrée par ce run).
+  - [x] `WorldConfigSchema` expose `lifecycle` + `identity` — `rtk yarn workspace @battleforthecrown/shared build` → OK.
+  - [x] Helpers purs `deriveInscriptionPhase` et `deriveWorldDayCounter` — `rtk yarn workspace battleforthecrown-backend test -- world-lifecycle.spec.ts` → 13 tests passés.
+  - [x] Migration `plannedOpenAt` + rétrofit JSON + index lifecycle — `DATABASE_URL="postgresql://postgres:postgres@localhost:5432/battleforthecrown_smoke" rtk yarn workspace battleforthecrown-backend prisma migrate deploy` → 2 migrations appliquées.
+  - [x] Seed + fixture smoke alignés avec la nouvelle shape — `rtk yarn workspace battleforthecrown-backend test:smoke:run worlds-public.smoke.spec.ts --runInBand` → 2 tests passés.
+  - [x] Transitions `PLANNED → OPEN → LOCKED → ENDED` + idempotence + EventOutbox — `rtk yarn workspace battleforthecrown-backend test:smoke:run worlds-public.smoke.spec.ts --runInBand` → DB statuses + 3 events `world.status.changed` vérifiés.
+  - [x] `GET /worlds/public` retourne `PLANNED`, `OPEN main`, `OPEN late`, `LOCKED`, exclut `ENDED`, expose identity/lifecycle/tempoProfile/joinedCount — `rtk yarn workspace battleforthecrown-backend test:smoke:run worlds-public.smoke.spec.ts --runInBand` → payload validé par `PublicWorldsResponseSchema`.
+  - [x] Binding Pixi sur `world.status.changed` — `VITE_API_BASE_URL=http://localhost:15001 VITE_WS_URL=http://localhost:15001 rtk yarn workspace battleforthecrown-pixi test --run src/api/ws-bindings.test.ts` → 25 tests passés.
+- **Review indépendante** : Déclenchée (raison: backend + frontend via DTO partagé, diff > 100 lignes, contrat public). Verdict initial `BLOCK` ; findings corrigés (`plannedOpenAt`, `tempoProfile`, starvation worker, index lifecycle) ; re-review `GO`.
+- **Tests automatisés** :
+  - `rtk yarn workspace @battleforthecrown/shared build` → OK.
+  - `rtk yarn workspace battleforthecrown-backend test -- world-lifecycle.spec.ts` → 1 suite, 13 tests passés.
+  - `rtk yarn workspace battleforthecrown-backend test` → 19 suites, 222 tests passés.
+  - `VITE_API_BASE_URL=http://localhost:15001 VITE_WS_URL=http://localhost:15001 rtk yarn workspace battleforthecrown-pixi test --run src/api/ws-bindings.test.ts` → 1 suite, 25 tests passés.
+  - `rtk yarn static-check` → OK.
+- **Smokes lancés** : `rtk yarn test:smoke` → 24 suites, 48 tests passés. Bruit de log Prisma/pg-boss pendant `--forceExit` observé, sans échec de suite.
+- **Smokes ajoutés/modifiés** : `battleforthecrown-backend/test/worlds-public.smoke.spec.ts` couvre payload `/worlds/public`, transitions worker, idempotence et EventOutbox.
+- **QA fonctionnelle agent** : `rtk yarn workspace battleforthecrown-backend test:smoke:run worlds-public.smoke.spec.ts --runInBand` remplace un curl manuel avec une QA REST/DB/worker réelle : worlds seedés en états distincts, endpoint appelé via HTTP, DB relue après tick worker.
+- **Tests IG à faire par le user** : Aucun test IG nécessaire, raison : ce run ne livre aucun écran ; Run #033 consommera l'endpoint public côté UI.
 
 ## Points d'attention
 

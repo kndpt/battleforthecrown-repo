@@ -15,6 +15,20 @@ SET config = '{
       "crownsYield": 1
     }
   },
+  "lifecycle": {
+    "worldDuration": 60,
+    "inscriptionMainDays": 7,
+    "inscriptionLateDays": 3,
+    "newWorldEverydays": 7,
+    "newbieShieldHours": 48
+  },
+  "identity": {
+    "displayName": "Aubeforge",
+    "tagline": "Un royaume neuf attend sa couronne.",
+    "sigil": "crown",
+    "themeColor": "green",
+    "tier": "DEBUTANTS"
+  },
   "combat": {
     "attackBonus": 1.0,
     "defenseBonus": 1.0,

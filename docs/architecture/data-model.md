@@ -15,15 +15,17 @@
 
 | Table | Rôle |
 |-------|------|
-| `World` | un monde = un serveur de jeu indépendant. `slug` unique, `config` JSON (`tempo`, combat, seeding barbares, etc.) |
-| `WorldMembership` | join `User × World` avec `role` (PLAYER / ADMIN), `eliminatedAt` |
+| `World` | un monde = un serveur de jeu indépendant. `status`, `startedAt`, `endsAt`, `plannedOpenAt` et `config` JSON (`tempo`, lifecycle, identity, combat, seeding barbares, etc.) |
+| `WorldMembership` | join `User × World` avec `role` (PLAYER / MOD), `joinedAt`, `lastLoginAt` |
 | `WorldConfig` *(legacy)* | en cours de fusion dans `World.config` |
 
-`World.config` (JSON) contient notamment : `tempo.{global, overrides?}` (multiplier unifié « < 1 = jeu plus rapide » — cf. [`docs/gameplay/23-world-tempo-and-multipliers.md`](../gameplay/23-world-tempo-and-multipliers.md)), `combat.{attackBonus,defenseBonus,lootFactor}`, paramètres de seeding barbares.
+`World.config` (JSON) contient notamment : `tempo.{global, overrides?}` (multiplier unifié « < 1 = jeu plus rapide » — cf. [`docs/gameplay/23-world-tempo-and-multipliers.md`](../gameplay/23-world-tempo-and-multipliers.md)), `lifecycle.{worldDuration,inscriptionMainDays,inscriptionLateDays,newWorldEverydays,newbieShieldHours}`, `identity.{displayName,tagline,sigil,themeColor,tier}`, `combat.{attackBonus,defenseBonus,lootFactor}`, paramètres de seeding barbares.
 
 > ⚠️ **Migration en cours** : les anciens champs `gameSpeed.{construction,training,travel,capture}` (sémantique inverse : « > 1 = plus rapide ») et `economy.productionRate` sont **supprimés clean cut** au profit de `tempo`. Voir [`decisions.md` § ADR-12](./decisions.md#adr-12--pivot-compressed-async--tempo-world-scoped-via-worldconfigtempo).
 
 **Cycle de vie player ↔ monde** : `JoinWorldUseCase` crée le tuple `(WorldMembership, Village, Building rows, ResourceStock, Population, CrownBalance, UnitInventory skeleton, VillageStrategyConfig)`. `ResetWorldUseCase` (`DELETE /world/:worldId/me`) effectue l'opération inverse — full wipe par `(userId, worldId)`, suppression des `ScoutReport` du joueur et anonymisation des `CombatReport` côté défenseur. Aucun event Outbox émis. Le joueur peut re-join immédiatement comme un nouveau joueur. Code : `src/modules/world/{join,reset}-world.use-case.ts`.
+
+**Cycle de vie du monde** : `WorldLifecycleWorker` ouvre les mondes `PLANNED` quand `plannedOpenAt <= now`, calcule `startedAt`/`endsAt` depuis `WorldConfig.lifecycle.worldDuration`, verrouille les inscriptions après `inscriptionMainDays + inscriptionLateDays`, puis termine le monde à `endsAt`. Chaque transition écrit `world.status.changed` dans `EventOutbox`.
 
 **Invariant ajout bâtiment joueur** : tout nouveau `BUILDING_TYPES.*` activé pour les villages joueurs doit recevoir une entrée explicite dans `PLAYER_VILLAGE_BUILDING_LIFECYCLE` (`battleforthecrown-backend/src/modules/village/player-village-building-lifecycle.ts`). Cette source canonique fixe le niveau initial d'un nouveau village joueur et la politique après conquête d'un village barbare (`tier-level` ou `unbuilt`). `JoinWorldUseCase` et `ConquestService` doivent consommer ce roster plutôt que maintenir des listes séparées. `GET /village/buildings` expose les rows DB réelles et ne synthétise pas de bâtiments manquants pour masquer une donnée ancienne. Si des villages existants doivent recevoir le nouveau bâtiment, choisir explicitement entre reset utilisateur, migration/backfill non destructif, ou laisser l'ancien état inchangé.
 

@@ -8,6 +8,7 @@ import { TrainingWorker } from './training.worker';
 import { OutboxWorker } from './outbox.worker';
 import { ProductionWorker } from './production.worker';
 import { CrownProductionWorker } from './crown-production.worker';
+import { WorldLifecycleWorker } from './world-lifecycle.worker';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { CrownProductionWorker } from './crown-production.worker';
     OutboxWorker,
     ProductionWorker,
     CrownProductionWorker,
+    WorldLifecycleWorker,
   ],
   exports: [
     ConstructionWorker,
@@ -29,6 +31,7 @@ import { CrownProductionWorker } from './crown-production.worker';
     OutboxWorker,
     ProductionWorker,
     CrownProductionWorker,
+    WorldLifecycleWorker,
   ],
 })
 export class WorkersModule {}
