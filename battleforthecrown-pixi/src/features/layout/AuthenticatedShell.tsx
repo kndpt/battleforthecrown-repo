@@ -7,6 +7,7 @@ import { useResourcesStore } from '@/stores/resources';
 import { useCrownsStore } from '@/stores/crowns';
 import { useExpeditionsStore } from '@/stores/expeditions';
 import { useWorldMapStore } from '@/stores/worldMap';
+import { GameEntryTransition } from '@/features/worlds/GameEntryTransition';
 import { gameSocket } from '@/api/ws';
 import { bindServerEvents } from '@/api/ws-bindings';
 import {
@@ -143,5 +144,10 @@ export function AuthenticatedShell() {
     });
   }, [activeExpeditionsQuery.data, villageOrigins]);
 
-  return <Outlet />;
+  return (
+    <>
+      <GameEntryTransition />
+      <Outlet />
+    </>
+  );
 }

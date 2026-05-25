@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { WorldCardViewModel } from '@/features/worlds/worldsViewModel';
-import { WorldCard, WorldsSelectionDesign } from './WorldsSelectionDesign';
+import { WorldCard, WorldEntryOverlay, WorldsSelectionDesign } from './WorldsSelectionDesign';
 import { defaultSeasonVariants, worldsSelectionLabels } from './worldsSelectionConfig';
 
 function makeCard(overrides: Partial<WorldCardViewModel> = {}): WorldCardViewModel {
@@ -113,6 +113,7 @@ describe('WorldCard', () => {
     fireEvent.click(button);
     expect(onJoin).toHaveBeenCalledWith(expect.objectContaining({ id: 'world-open' }));
   });
+
 });
 
 describe('WorldsSelectionDesign', () => {
@@ -135,5 +136,14 @@ describe('WorldsSelectionDesign', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Inscription au monde impossible');
     expect(screen.getByText('Aubeforge')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Rejoindre le royaume' })).toBeInTheDocument();
+  });
+
+  it('renders the full-screen entry transition for a world', () => {
+    const world = makeCard({ displayName: 'Solstice', sigilGlyph: '✦' });
+
+    render(<WorldEntryOverlay world={world} />);
+
+    expect(screen.getByRole('status')).toHaveTextContent('Entrée dans');
+    expect(screen.getByRole('status')).toHaveTextContent('Solstice');
   });
 });

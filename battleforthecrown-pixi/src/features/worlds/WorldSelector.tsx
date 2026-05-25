@@ -50,6 +50,7 @@ export function WorldSelector() {
   );
 
   const onJoin = (world: WorldCardViewModel) => {
+    if (join.isPending) return;
     setError(null);
     join.mutate(
       { worldId: world.id, villageName: defaultVillageName(userEmail) },

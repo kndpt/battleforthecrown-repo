@@ -176,6 +176,7 @@ function CtaButton({
       )}
       disabled={disabled}
       onClick={() => {
+        if (disabled) return;
         if (world.ctaKind === 'notify') onNotify(world);
         if (world.ctaKind === 'join' || world.ctaKind === 'joined') onJoin(world);
       }}
@@ -238,6 +239,40 @@ export function WorldCard({
         <CtaButton onJoin={onJoin} onNotify={onNotify} world={world} />
       </div>
     </article>
+  );
+}
+
+export function WorldEntryOverlay({ world }: { world: WorldCardViewModel }) {
+  return (
+    <div
+      aria-live="polite"
+      className="fixed inset-0 z-[90] flex items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_50%_42%,#635f31_0%,#3c2d19_44%,#160f08_100%)] px-6 text-center animate-[bftc-world-entry-overlay_2000ms_ease-in-out_forwards]"
+      role="status"
+    >
+      <div className="absolute inset-y-0 left-1/2 w-[35vw] max-w-[190px] -translate-x-1/2 bg-[linear-gradient(to_bottom,#7b4e2d,#bd9450_32%,#3a2115_100%)] opacity-55" />
+      <div className="relative flex max-w-[300px] flex-col items-center gap-4">
+        <div className="relative flex size-[180px] items-center justify-center">
+          <div className="absolute inset-0 rounded-full border border-[rgba(246,213,123,.28)] bg-[radial-gradient(circle_at_center,rgba(246,213,123,.22),rgba(246,213,123,.08)_44%,transparent_66%)] shadow-[0_0_55px_rgba(246,213,123,.32)] animate-[bftc-world-entry-rings_2000ms_ease-out_forwards]" />
+          <div
+            className="relative flex size-[108px] items-center justify-center rounded-full border-[3px] border-[#f6d57b] bg-[radial-gradient(circle_at_35%_20%,rgba(255,255,255,.55),transparent_24%),linear-gradient(to_bottom,#fef9f0,#cdb88a)] shadow-[inset_0_2px_0_rgba(255,255,255,.55),inset_0_-14px_20px_rgba(60,38,25,.28),0_0_34px_rgba(246,213,123,.45)] animate-[bftc-world-entry-crest_2000ms_cubic-bezier(.2,.8,.2,1)_forwards]"
+            style={{ color: world.theme.dark }}
+          >
+            <div className="scale-[1.7]">
+              <Crest glyph={world.sigilGlyph} theme={world.theme} />
+            </div>
+          </div>
+        </div>
+        <div className="font-game text-[12px] font-extrabold uppercase tracking-[.18em] text-[#f6d57b] [text-shadow:1px_1px_2px_rgba(0,0,0,.65)]">
+          Entrée dans
+        </div>
+        <div className="font-game text-3xl font-black leading-none text-[#fef9f0] [text-shadow:0_2px_3px_rgba(0,0,0,.72)]">
+          {world.displayName}
+        </div>
+        <div className="h-1.5 w-40 overflow-hidden rounded-full border border-[rgba(246,213,123,.45)] bg-[rgba(12,10,8,.45)]">
+          <div className="h-full w-full origin-left bg-[linear-gradient(to_right,#5b9bd5,#f6d57b,#6ebf49)] animate-[bftc-world-entry-progress_2000ms_ease-out_forwards]" />
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -1,13 +1,16 @@
-# Profil joueur : infos monde
+# Entrée animée dans le monde
 
 - [x] Vérifier l’état réel du worktree et les composants concernés.
-- [x] Brancher la fiche profil sur le monde public courant pour le jour, la phase et le drapeau.
-- [x] Adapter les fixtures/tests UI.
-- [x] Vérifier tests ciblés, static-check et rendu browser.
+- [x] Déplacer l’animation d’entrée côté arrivée `/game`.
+- [x] Garantir un affichage minimum de 2 secondes, y compris au reload.
+- [x] Garder le blason complet dans le rond de l’overlay.
+- [x] Adapter les tests ciblés.
+- [x] Vérifier tests, static-check et rendu browser.
 
 ## Review
 
-- La fiche profil lit le `PublicWorld` actif pour nom, J+/durée, phase et drapeau.
-- Le drapeau reprend le même mapping `sigil`/theme que les cartes de royaumes.
-- Tests ciblés Pixi, static-check et vérification browser verts.
-- Docs : aucun changement nécessaire, raison : affichage UI d’une donnée monde déjà exposée.
+- L’animation est montée à l’arrivée sur `/game`, donc elle se joue aussi au reload et après navigation depuis `/worlds`.
+- Le loader dure 2 secondes via CSS, sans timer React susceptible de rester bloqué.
+- Le fond est opaque : le village ne transparaît plus pendant le chargement.
+- Le halo, le rond et le blason sont centrés ensemble.
+- Tests ciblés, static-check et vérification browser verts.
