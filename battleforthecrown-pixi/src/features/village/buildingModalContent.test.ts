@@ -25,7 +25,8 @@ describe('building modal content helpers', () => {
     expect(getBarracksTrainingSpeedComparison(3)).toEqual({ current: 1.08, next: 1.12 });
     expect(getWarehouseStorageComparison(2)).toEqual({ current: 4200, next: 5900 });
     expect(getWarehouseStorageComparison(10)).toEqual({ current: 87000, next: null });
-    expect(getWatchtowerVisionComparison(4)).toEqual({ current: 20, next: 25 });
+    expect(getWatchtowerVisionComparison(4)).toEqual({ current: 25, next: 30 });
+    expect(getWatchtowerVisionComparison(10)).toEqual({ current: 55, next: null });
   });
 
   it('groups future castle unlocks without disabled placeholder buildings', () => {
