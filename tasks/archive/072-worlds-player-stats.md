@@ -1,7 +1,7 @@
 # 72 — Stats joueur sur les cartes royaumes
 
 **Sévérité** : 🟠 Moyen
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ Résolu 2026-05-25
 **Spec amont** : [`docs/gameplay/19-world-lifecycle.md`](../docs/gameplay/19-world-lifecycle.md) pour l'appartenance multi-monde ; [`docs/gameplay/09-power-and-rankings.md`](../docs/gameplay/09-power-and-rankings.md) pour la puissance royaume.
 
 ## Symptôme | Problème
@@ -100,10 +100,24 @@ Si l'implémentation confirme qu'un nouveau contrat backend/shared est nécessai
 
 ## Critères de succès
 
-- [ ] Un monde dont `isJoined=false` ne rend aucune stat personnelle de villages ni puissance.
-- [ ] Un monde rejoint avec stats chargées rend le nombre de villages du joueur pour ce `worldId`.
-- [ ] Un monde rejoint avec stats chargées rend la puissance royaume du joueur pour ce `worldId`, formatée en `fr-FR`.
-- [ ] L'asset de puissance utilisé est `/assets/army-power.png` ou la constante canonique déjà utilisée par `GameHeader`.
-- [ ] La récupération de puissance ne dépend pas du `worldId` courant du store pour afficher une autre carte monde.
-- [ ] Les cartes non rejointes gardent le rendu actuel.
-- [ ] Les tests Pixi ciblés passent pour le view-model/rendu modifié.
+- [x] Un monde dont `isJoined=false` ne rend aucune stat personnelle de villages ni puissance.
+- [x] Un monde rejoint avec stats chargées rend le nombre de villages du joueur pour ce `worldId`.
+- [x] Un monde rejoint avec stats chargées rend la puissance royaume du joueur pour ce `worldId`, formatée en `fr-FR`.
+- [x] L'asset de puissance utilisé est `/assets/army-power.png` ou la constante canonique déjà utilisée par `GameHeader`.
+- [x] La récupération de puissance ne dépend pas du `worldId` courant du store pour afficher une autre carte monde.
+- [x] Les cartes non rejointes gardent le rendu actuel.
+- [x] Les tests Pixi ciblés passent pour le view-model/rendu modifié.
+
+## Résolution
+
+- Les cartes monde ont désormais une stat personnelle optionnelle `personalStats`, construite uniquement pour les mondes rejoints et uniquement après chargement de la puissance.
+- `WorldSelector` récupère la puissance publique par `worldId` depuis les memberships, sans dépendre du monde courant du store.
+- La query key publique `publicKingdomPower` est séparée de `kingdomPower` pour ne pas polluer le cache complet utilisé par le HUD/profil.
+- `WorldCard` affiche une ligne compacte villages + puissance avec `/assets/army-power.png` seulement quand `personalStats` est disponible.
+
+## QA
+
+- Tests Pixi ciblés : `yarn workspace battleforthecrown-pixi test src/features/worlds/GameEntryTransition.test.tsx src/features/worlds/worldsViewModel.test.ts src/features/design-system/worlds/WorldsSelectionDesign.test.tsx` → 3 fichiers / 18 tests OK.
+- `yarn static-check` → OK.
+- Review indépendante : `BLOCK` initial sur collision de cache `kingdomPower`, corrigé par `publicKingdomPower`, puis re-review `GO`.
+- Smokes backend : non applicables, raison : aucun fichier backend touché.

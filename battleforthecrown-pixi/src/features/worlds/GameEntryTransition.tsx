@@ -30,6 +30,7 @@ function fallbackWorldEntryModel(worldId: string | null): WorldCardViewModel {
     lifecycleDay: null,
     lifecycleTotalDays: 60,
     opensInLabel: null,
+    personalStats: null,
     sigilGlyph: WORLD_SIGIL_GLYPHS.crown,
     statusLabel: 'INSCRIPTION LIBRE',
     tab: 'open',

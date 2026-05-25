@@ -10,6 +10,16 @@ export interface WorldThemeTokens {
   light: string;
 }
 
+export interface WorldPersonalStatsInput {
+  kingdomPower: number;
+  villageCount: number;
+}
+
+export interface WorldPersonalStatsViewModel {
+  kingdomPowerLabel: string;
+  villageCountLabel: string;
+}
+
 export interface WorldCardViewModel {
   ctaKind: WorldCtaKind;
   ctaLabel: string;
@@ -22,6 +32,7 @@ export interface WorldCardViewModel {
   lifecycleDay: number | null;
   lifecycleTotalDays: number;
   opensInLabel: string | null;
+  personalStats: WorldPersonalStatsViewModel | null;
   sigilGlyph: string;
   statusLabel: string;
   tab: WorldsTab;
@@ -72,6 +83,7 @@ const tierLabels: Record<PublicWorld['identity']['tier'], string> = {
 };
 
 const formatter = new Intl.NumberFormat('fr-FR');
+const EMPTY_PERSONAL_STATS = new Map<string, WorldPersonalStatsInput>();
 
 function formatCountdown(plannedOpenAt: string | null, nowMs: number): string | null {
   if (!plannedOpenAt) return null;
@@ -91,15 +103,21 @@ function ctaFor(world: PublicWorld, isJoined: boolean): Pick<WorldCardViewModel,
   return { ctaKind: 'join', ctaLabel: 'Rejoindre le royaume' };
 }
 
+function formatVillageCount(count: number): string {
+  return `${formatter.format(count)} village${count > 1 ? 's' : ''}`;
+}
+
 export function toWorldCardViewModel(
   world: PublicWorld,
   joinedWorldIds: ReadonlySet<string>,
   nowMs = Date.now(),
+  personalStatsByWorldId: ReadonlyMap<string, WorldPersonalStatsInput> = EMPTY_PERSONAL_STATS,
 ): WorldCardViewModel {
   const isJoined = joinedWorldIds.has(world.id);
   const cta = ctaFor(world, isJoined);
   const opensIn = formatCountdown(world.lifecycle.plannedOpenAt, nowMs);
   const day = world.status === 'PLANNED' ? null : world.lifecycle.day;
+  const personalStats = isJoined ? personalStatsByWorldId.get(world.id) : undefined;
 
   return {
     ...cta,
@@ -118,6 +136,12 @@ export function toWorldCardViewModel(
     lifecycleDay: day,
     lifecycleTotalDays: world.lifecycle.totalDays,
     opensInLabel: opensIn,
+    personalStats: personalStats
+      ? {
+          kingdomPowerLabel: formatter.format(personalStats.kingdomPower),
+          villageCountLabel: formatVillageCount(personalStats.villageCount),
+        }
+      : null,
     sigilGlyph: WORLD_SIGIL_GLYPHS[world.identity.sigil],
     statusLabel: statusLabels[world.status],
     tab: tabByStatus[world.status],

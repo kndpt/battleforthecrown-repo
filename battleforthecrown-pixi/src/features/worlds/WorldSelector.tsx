@@ -1,7 +1,13 @@
 import { useMemo, useState } from 'react';
+import { useQueries } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
-import { ApiError } from '@/api';
-import { useJoinWorldMutation, useMyMembershipsQuery, usePublicWorldsQuery } from '@/api/queries';
+import { ApiError, apiClient } from '@/api';
+import {
+  queryKeys,
+  useJoinWorldMutation,
+  useMyMembershipsQuery,
+  usePublicWorldsQuery,
+} from '@/api/queries';
 import {
   WorldsSelectionDesign,
 } from '@/features/design-system/worlds/WorldsSelectionDesign';
@@ -24,24 +30,69 @@ function defaultVillageName(email?: string): string {
   return `Royaume de ${handle}`;
 }
 
+interface PublicKingdomPowerDto {
+  userId: string;
+  kingdomPower: number;
+}
+
 export function WorldSelector() {
   const navigate = useNavigate();
   const worlds = usePublicWorldsQuery();
   const memberships = useMyMembershipsQuery();
   const join = useJoinWorldMutation();
-  const userEmail = useAuthStore((state) => state.user?.email);
+  const user = useAuthStore((state) => state.user);
+  const userEmail = user?.email;
+  const userId = user?.id ?? null;
   const currentWorldId = useGameStore((state) => state.worldId);
   const pushToast = useUiStore((state) => state.pushToast);
   const [activeTab, setActiveTab] = useState<WorldsTab>('open');
   const [error, setError] = useState<string | null>(null);
 
+  const joinedMemberships = useMemo(() => memberships.data ?? [], [memberships.data]);
+  const joinedWorldIdsForPower = useMemo(
+    () => joinedMemberships.map((membership) => membership.worldId),
+    [joinedMemberships],
+  );
+  const kingdomPowerByWorld = useQueries({
+    queries: joinedWorldIdsForPower.map((worldId) => ({
+      enabled: Boolean(userId),
+      queryFn: () => {
+        if (!userId) return Promise.reject(new Error('No user selected'));
+        return apiClient.get<PublicKingdomPowerDto>(`/power/kingdom/${userId}/public`, {
+          query: { worldId },
+          skipAuth: true,
+        });
+      },
+      queryKey: queryKeys.publicKingdomPower(userId, worldId),
+      staleTime: 30_000,
+    })),
+  });
   const joinedWorldIds = useMemo(
-    () => new Set(memberships.data?.map((membership) => membership.worldId) ?? []),
-    [memberships.data],
+    () => new Set(joinedMemberships.map((membership) => membership.worldId)),
+    [joinedMemberships],
+  );
+  const personalStatsByWorldId = useMemo(
+    () =>
+      new Map(
+        joinedMemberships.flatMap((membership, index) => {
+          const power = kingdomPowerByWorld[index]?.data;
+          if (!power) return [];
+          return [[membership.worldId, {
+            kingdomPower: power.kingdomPower,
+            villageCount: membership.villageCount,
+          }] as const];
+        }),
+      ),
+    [joinedMemberships, kingdomPowerByWorld],
   );
   const worldModels = useMemo(
-    () => (worlds.data ?? []).map((world) => toWorldCardViewModel(world, joinedWorldIds)),
-    [joinedWorldIds, worlds.data],
+    () => (worlds.data ?? []).map((world) => toWorldCardViewModel(
+      world,
+      joinedWorldIds,
+      undefined,
+      personalStatsByWorldId,
+    )),
+    [joinedWorldIds, personalStatsByWorldId, worlds.data],
   );
   const counts = useMemo(() => buildWorldTabCounts(worldModels), [worldModels]);
   const filteredWorlds = useMemo(

@@ -63,6 +63,8 @@ export const queryKeys = {
   villageStrategy: (villageId: string | null) => ['village-strategy', villageId] as const,
   villagePower: (villageId: string | null) => ['power', 'village', villageId] as const,
   kingdomPower: (userId: string | null, worldId: string | null) => ['power', 'kingdom', userId, worldId] as const,
+  publicKingdomPower: (userId: string | null, worldId: string | null) =>
+    ['power', 'kingdom', 'public', userId, worldId] as const,
   armyInventory: (villageId: string | null) => ['army', 'inventory', villageId] as const,
   armyTraining: (villageId: string | null) => ['army', 'training', villageId] as const,
   activeExpeditions: (villageId: string | null) => ['combat', 'active', villageId] as const,
