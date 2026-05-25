@@ -496,6 +496,10 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
             setVillage(village.id);
             closeProfile();
           }}
+          onWorldSelect={() => {
+            closeProfile();
+            navigate('/worlds');
+          }}
           player={profileSheetData.player}
           settings={profileSheetSettings}
           stats={profileSheetData.stats}

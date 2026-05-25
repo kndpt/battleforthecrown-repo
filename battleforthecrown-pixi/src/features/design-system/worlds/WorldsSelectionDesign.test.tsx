@@ -1,0 +1,119 @@
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import type { WorldCardViewModel } from '@/features/worlds/worldsViewModel';
+import { WorldCard, WorldsSelectionDesign } from './WorldsSelectionDesign';
+import { defaultSeasonVariants, worldsSelectionLabels } from './worldsSelectionConfig';
+
+function makeCard(overrides: Partial<WorldCardViewModel> = {}): WorldCardViewModel {
+  return {
+    ctaKind: 'join',
+    ctaLabel: 'Rejoindre le royaume',
+    dayLabel: 'J. 5 / 60',
+    displayName: 'Aubeforge',
+    id: 'world-open',
+    inscriptionPhase: 'main',
+    isJoined: false,
+    joinedCountLabel: '8 420',
+    lifecycleDay: 5,
+    lifecycleTotalDays: 60,
+    opensInLabel: null,
+    sigilGlyph: '♔',
+    statusLabel: 'INSCRIPTION LIBRE',
+    tab: 'open',
+    tagline: 'Où les vassaux bâtissent leur légende',
+    tempoLabel: 'STANDARD',
+    theme: { border: '#3a6c1f', dark: '#2f5b1c', glow: 'rgba(110,191,73,.45)', light: '#5a8f3a' },
+    themeColor: 'green',
+    tierLabel: 'DÉBUTANTS',
+    ...overrides,
+  };
+}
+
+describe('WorldCard', () => {
+  it.each([
+    {
+      expectedButton: 'Rejoindre le royaume',
+      expectedDay: 'J. 5 / 60',
+      expectedStatus: 'INSCRIPTION LIBRE',
+      phase: 'main' as const,
+      title: 'OPEN main',
+    },
+    {
+      expectedButton: 'Rejoindre le royaume',
+      expectedDay: 'J. 8 / 60',
+      expectedStatus: 'INSCRIPTION LIBRE',
+      phase: 'late' as const,
+      title: 'OPEN late',
+    },
+    {
+      expectedButton: "Me prévenir à l'ouverture",
+      expectedDay: 'Ouvre dans 1j 14h',
+      expectedStatus: 'PLANIFIÉ',
+      phase: 'closed' as const,
+      title: 'PLANNED',
+    },
+    {
+      expectedButton: 'Inscription close',
+      expectedDay: 'J. 28 / 60',
+      expectedStatus: 'INSCRIPTION CLOSE',
+      phase: 'closed' as const,
+      title: 'LOCKED',
+    },
+  ])('renders the $title state without exposing raw inscriptionPhase', (scenario) => {
+    render(
+      <WorldCard
+        onJoin={() => undefined}
+        onNotify={() => undefined}
+        world={makeCard({
+          ctaKind: scenario.expectedButton === "Me prévenir à l'ouverture"
+            ? 'notify'
+            : scenario.expectedButton === 'Inscription close'
+              ? 'locked'
+              : 'join',
+          ctaLabel: scenario.expectedButton,
+          dayLabel: scenario.expectedDay,
+          inscriptionPhase: scenario.phase,
+          lifecycleDay: scenario.expectedStatus === 'PLANIFIÉ' ? null : 5,
+          statusLabel: scenario.expectedStatus,
+          tab: scenario.expectedStatus === 'PLANIFIÉ'
+            ? 'planned'
+            : scenario.expectedStatus === 'INSCRIPTION CLOSE'
+              ? 'locked'
+              : 'open',
+        })}
+      />,
+    );
+
+    expect(screen.getByText('Aubeforge')).toBeInTheDocument();
+    expect(screen.getByText(scenario.expectedStatus)).toBeInTheDocument();
+    expect(screen.getByText(scenario.expectedDay)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: scenario.expectedButton })).toBeInTheDocument();
+    expect(screen.queryByText('main')).not.toBeInTheDocument();
+    expect(screen.queryByText('late')).not.toBeInTheDocument();
+    expect(screen.queryByText('closed')).not.toBeInTheDocument();
+  });
+});
+
+describe('WorldsSelectionDesign', () => {
+  it('keeps cards visible when a non-blocking notice is shown', () => {
+    render(
+      <WorldsSelectionDesign
+        activeTab="open"
+        counts={{ locked: 0, open: 1, planned: 0 }}
+        labels={worldsSelectionLabels}
+        noticeMessage="Inscription au monde impossible"
+        onJoin={vi.fn()}
+        onNotify={vi.fn()}
+        onTabChange={vi.fn()}
+        totalCount={1}
+        variants={defaultSeasonVariants}
+        worlds={[makeCard()]}
+      />,
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Inscription au monde impossible');
+    expect(screen.getByText('Aubeforge')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Rejoindre le royaume' })).toBeInTheDocument();
+  });
+});
+

@@ -27,11 +27,11 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ### Runs actifs
 
-- [033 — Écran sélection royaumes Pixi](./runs/033-feature-worlds-selection-screen.md) — 📋 `PLANNED`. Écran sélection (onglets Inscription/Bientôt/Verrouillés, cards royaume, CTAs Rejoindre / Me prévenir / Inscription close). **Débloqué par #032.**
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés
 
+- [033 — Écran sélection royaumes Pixi](./runs/archive/033-feature-worlds-selection-screen.md) — ✅ `DONE` (2026-05-25). Écran `/worlds` branché sur `GET /worlds/public`, variante B bannières héraldiques portée dans le design-system, onglets Inscription/Bientôt/Verrouillés, CTA Rejoindre / Me prévenir / Inscription close, navigation depuis profil et tests Pixi.
 - [032 — Lifecycle backend foundation + identité monde](./runs/archive/032-world-lifecycle-foundation-and-identity.md) — ✅ `DONE` (2026-05-25). `WorldConfig.lifecycle` + identité monde, `plannedOpenAt`, endpoint public `/worlds/public`, worker transitions `PLANNED→OPEN→LOCKED→ENDED`, event `world.status.changed`, binding Pixi et docs.
 - [030 — Sprites de villages joueurs selon le niveau du Château](./runs/archive/030-feature-world-map-village-sprites-by-castle-level.md) — ✅ `DONE` (2026-05-22). `castleLevel` exposé sur les villages joueurs, mapping shared Château → tiers visuels, rendu Pixi `village-tier1..6` et invalidation realtime sur Château terminé.
 - [031 — Sélecteur multi-village en bottom sheet](./runs/archive/031-feature-multi-village-bottom-sheet-selector.md) — ✅ `DONE` (2026-05-22). Header IG branché sur le `MultiVillageBottomSheet` design-system, flèches directes préservées, données indisponibles neutralisées sans valeurs fictives, tri alphabétique et test Pixi ciblé.

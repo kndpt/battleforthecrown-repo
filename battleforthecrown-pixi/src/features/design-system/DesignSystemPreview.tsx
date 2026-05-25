@@ -5,6 +5,12 @@ import { Button } from '@/ui/buttons/Button';
 import { VictoryModal } from '@/ui/modals/VictoryModal';
 import { cn } from '@/lib/cn';
 import {
+  WorldsSelectionDesign,
+} from './worlds/WorldsSelectionDesign';
+import { defaultSeasonVariants, worldsSelectionLabels } from './worlds/worldsSelectionConfig';
+import { worldPreviewModels } from './worlds/worldsPreviewFixtures';
+import { buildWorldTabCounts, filterWorldsByTab, type WorldsTab } from '@/features/worlds/worldsViewModel';
+import {
   ArmyMovementList,
   Avatar,
   AvatarProfileLine,
@@ -731,6 +737,7 @@ export function DesignSystemPreview() {
   const [segmentReports, setSegmentReports] = useState('mine');
   const [segmentRange, setSegmentRange] = useState('1h');
   const [segmentWorld, setSegmentWorld] = useState('world');
+  const [worldsPreviewTab, setWorldsPreviewTab] = useState<WorldsTab>('open');
   const [multiVillageFilter, setMultiVillageFilter] = useState<MultiVillageFilter>('all');
   const [inboxTab, setInboxTab] = useState('all');
   const [kingdomActivityTab, setKingdomActivityTab] = useState<KingdomActivityTab>('captures');
@@ -749,6 +756,8 @@ export function DesignSystemPreview() {
   const resourceBuildingFixture = resourceBuildingFixtures[resourceBuildingKey];
   const { buildingType: resourceBuildingType, ...resourceBuildingModalFixture } = resourceBuildingFixture;
   const resourceBuildingUpgrade = getSharedUpgradePreview(resourceBuildingType, resourceBuildingLevel);
+  const worldsPreviewCounts = buildWorldTabCounts(worldPreviewModels);
+  const filteredWorldPreviewModels = filterWorldsByTab(worldPreviewModels, worldsPreviewTab);
 
   return (
     <main className="min-h-full overflow-y-auto bg-[#f5e6d3] p-[18px] text-[#1f2937]">
@@ -857,6 +866,31 @@ export function DesignSystemPreview() {
               { text: '« À ceux qui osent, le royaume offre gloire et richesses. »', variant: 'quote' },
             ]}
           />
+        </section>
+
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="font-game text-2xl font-bold text-[#1f2937]">Choix du Monde · Variante B</h2>
+            <span className="font-mono text-[10px] text-[#5d4a32]">
+              worlds · bannières héraldiques · source project/Choix du Monde.html
+            </span>
+          </div>
+          <div className="flex w-full justify-center">
+            <div className="h-[720px] w-[360px] overflow-hidden rounded-[18px] border-[3px] border-[#3c2619] shadow-[0_10px_28px_rgba(60,38,25,.35)]">
+              <WorldsSelectionDesign
+                activeTab={worldsPreviewTab}
+                counts={worldsPreviewCounts}
+                labels={worldsSelectionLabels}
+                onBack={() => undefined}
+                onJoin={() => undefined}
+                onNotify={() => undefined}
+                onTabChange={setWorldsPreviewTab}
+                totalCount={worldPreviewModels.length}
+                variants={defaultSeasonVariants}
+                worlds={filteredWorldPreviewModels}
+              />
+            </div>
+          </div>
         </section>
 
         <section className="space-y-4">

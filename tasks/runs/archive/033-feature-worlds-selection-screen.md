@@ -1,8 +1,8 @@
 # Run #033 — feature-worlds-selection-screen
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-05-25
+> **Terminé** : 2026-05-25
 
 ## Cible
 
@@ -116,28 +116,60 @@ Choix produit tranchés en clarification :
 
 ## Décomposition initiale (rempli par le lead à l'étape 3)
 
-_(Vide au démarrage.)_
+- Porter la variante B du prototype en composants React/Tailwind typés sous `battleforthecrown-pixi/src/features/design-system/worlds/`.
+- Exposer la preview fidèle dans `/design-system` avec fixtures séparées.
+- Remplacer l'ancien écran `/worlds` par un écran branché sur `GET /worlds/public`, avec onglets client-side et CTA par statut.
+- Câbler le bloc monde du profil joueur vers `/worlds`.
+- Couvrir le mapping et le rendu par tests Vitest, puis valider par static-check, build et QA navigateur.
 
 ## Progress (rempli pendant le run)
 
-_(Vide au démarrage.)_
+- [x] Préflight, rules, specs, skills `bftc-design-system-migration`, `bftc-react-hud`, `bftc-tests-policy`, `bftc-qa`.
+- [x] Cartographie du prototype `Choix du Monde.html` / `world-views.jsx` et de l'existant Pixi worlds/profile.
+- [x] Composants `WorldsSelectionDesign`, `WorldCard`, fixtures preview et config variantes ajoutés au design-system.
+- [x] `WorldSelector` branché sur `usePublicWorldsQuery`, mutation join existante, toast notify placeholder et alerte join non bloquante.
+- [x] Profil joueur : le bloc monde navigue vers `/worlds`.
+- [x] Tests ajoutés pour view-model worlds, rendu `WorldCard` status × phase et navigation profil.
+- [x] Review indépendante initiale BLOCK, findings corrigés, re-review GO.
+- [x] Tests, static-check, build et QA navigateur réalisés.
 
 ## Décisions prises
 
-_(Vide au démarrage.)_
+- Mode complet : écran visible + migration design-system + route + tests, diff > 100 lignes.
+- Variante production prioritaire : B bannières héraldiques. A/C restent dans la source design-system pour itérations futures, non câblées API.
+- Le screen consomme directement le DTO public livré par Run #032 ; aucun changement backend/shared nécessaire.
+- `world.status.changed` invalidait déjà `queryKeys.publicWorlds()` via Run #032, donc pas de nouveau binding WS.
+- Une erreur de join est affichée en notice non bloquante pour garder les cartes et CTA visibles.
+- La card n'affiche pas l'`inscriptionPhase` brut (`main|late|closed`) ; seules les métriques joueurs + tier sont visibles.
+- Pas d'entrée SPEC : aucun invariant durable ou bug récurrent transversal nouveau.
 
 ## Rapport final
 
-_(Vide au démarrage.)_
+L'écran `/worlds` utilise maintenant les bannières héraldiques issues du prototype design-system, avec variantes Standard/Speed/Hardcore, onglets Inscription/Bientôt/Verrouillés, cards par statut, countdown PLANNED, CTA join/notify/locked et empty/loading/error states.
+
+Le bloc monde du profil joueur est cliquable et ouvre `/worlds`. Les tests couvrent le mapping public-worlds, les compteurs/filtres, le rendu `WorldCard` sur 4 combinaisons status × phase, la notice join non bloquante et la navigation depuis le profil.
+
+Docs : aucun changement nécessaire, raison : l'API/lifecycle/tempo sont déjà documentés par Run #032 et les specs `19`/`23`; ce run ajoute une UI consommatrice sans convention durable nouvelle.
 
 ### Acceptance & QA
 
 - **Critères d'acceptance vérifiés** :
-  - [ ] _(à remplir)_
-- **Review indépendante** : à déclencher (touche un écran d'onboarding visible, diff probablement > 100 lignes).
-- **Tests automatisés** : à remplir.
-- **Smokes ajoutés/modifiés** : à remplir.
-- **QA fonctionnelle agent** : non applicable (UI pure, QA visuelle user).
+  - [x] Skill `bftc-design-system-migration` invoqué et sources lues — `rtk read .agents/skills/bftc-design-system-migration/SKILL.md` + `rtk read battleforthecrown-design-system/project/Choix du Monde.html` + `rtk read battleforthecrown-design-system/project/world-views.jsx` → migration cadrée.
+  - [x] Ports React/Tailwind sous `src/features/design-system/worlds/` et preview `/design-system` — `rtk grep "Choix du Monde · Variante B" battleforthecrown-pixi/src/features/design-system/DesignSystemPreview.tsx` → preview ajoutée.
+  - [x] `/worlds` branché sur `GET /worlds/public` et filtre onglets client-side — `rtk grep "usePublicWorldsQuery\\|filterWorldsByTab" battleforthecrown-pixi/src/features/worlds` → hook public + dérivation locale.
+  - [x] CTA par statut et toast notify placeholder — `rtk grep "Me prévenir\\|Disponible bientôt\\|Inscription close" battleforthecrown-pixi/src/features` → labels/actions présents.
+  - [x] Navigation profil monde vers `/worlds` — `rtk yarn workspace battleforthecrown-pixi test src/features/layout/GameHeader.test.tsx` → test navigation vert.
+  - [x] `WorldCard` status × phase et compteurs/filtres — `rtk yarn workspace battleforthecrown-pixi test src/features/design-system/worlds/WorldsSelectionDesign.test.tsx src/features/worlds/worldsViewModel.test.ts` → tests verts.
+  - [x] QA navigateur preview onglets — `visuel` → `/design-system` affiche variante B; clics `Bientôt` puis `Verrouillés` montrent les cartes attendues.
+- **Review indépendante** : Déclenchée (raison: diff > 100 lignes + écran visible). Verdict initial `BLOCK`, findings corrigés, re-review `GO`.
+- **Tests automatisés** :
+  - `rtk yarn workspace battleforthecrown-pixi test src/features/design-system/worlds/WorldsSelectionDesign.test.tsx src/features/worlds/worldsViewModel.test.ts src/features/layout/GameHeader.test.tsx` → 3 fichiers, 18 tests passés.
+  - `rtk yarn workspace battleforthecrown-pixi test` → 32 fichiers, 174 tests passés. Note jsdom connue : `HTMLCanvasElement.getContext()` non implémenté, suite verte.
+  - `rtk yarn workspace battleforthecrown-pixi build` → build Vite OK.
+  - `rtk yarn static-check` → OK.
+- **Smokes lancés** : Non applicable, raison : aucun fichier `battleforthecrown-backend/src/` touché.
+- **Smokes ajoutés/modifiés** : Aucun, raison : UI frontend uniquement; couverture par Vitest + QA navigateur.
+- **QA fonctionnelle agent** : `/design-system` ouvert sur Vite port 5174 via navigateur; variante B visible, onglets `Inscription`, `Bientôt`, `Verrouillés` vérifiés par DOM/screenshot.
 - **Tests IG à faire par le user** :
   - [ ] Ouvrir l'écran Royaumes, vérifier les 3 onglets (Inscription / Bientôt / Verrouillés) et leur contenu.
   - [ ] Rejoindre un monde `OPEN` → flow nominal toujours fonctionnel.

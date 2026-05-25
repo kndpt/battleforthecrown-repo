@@ -88,6 +88,7 @@ export interface PlayerProfileSheetProps {
   onLogout?: () => void;
   onTabChange: (tab: PlayerProfileSheetTab) => void;
   onVillageSelect?: (village: PlayerProfileSheetVillage) => void;
+  onWorldSelect?: () => void;
   player: PlayerProfileSheetPlayer;
   settings: PlayerProfileSheetSetting[];
   stats: PlayerProfileSheetStats;
@@ -219,9 +220,19 @@ function VillageTierAsset({ tier }: { tier: number }) {
   );
 }
 
-function WorldPanel({ icons, labels, world }: Pick<PlayerProfileSheetProps, 'icons' | 'labels' | 'world'>) {
+function WorldPanel({
+  icons,
+  labels,
+  onWorldSelect,
+  world,
+}: Pick<PlayerProfileSheetProps, 'icons' | 'labels' | 'onWorldSelect' | 'world'>) {
   return (
-    <div className="flex items-center gap-[9px] rounded-[10px] border-2 border-[#3c2619] bg-[linear-gradient(to_bottom,rgba(60,38,25,.94),rgba(78,56,34,.94))] px-[11px] py-2 shadow-[inset_0_1px_0_rgba(255,255,255,.18),0_2px_0_rgba(0,0,0,.18)]">
+    <button
+      aria-label={`Voir les royaumes depuis ${world.name}`}
+      className="flex w-full cursor-pointer items-center gap-[9px] rounded-[10px] border-2 border-[#3c2619] bg-[linear-gradient(to_bottom,rgba(60,38,25,.94),rgba(78,56,34,.94))] px-[11px] py-2 text-left shadow-[inset_0_1px_0_rgba(255,255,255,.18),0_2px_0_rgba(0,0,0,.18)] active:translate-y-px"
+      onClick={onWorldSelect}
+      type="button"
+    >
       <img alt="" className="size-4 brightness-[1.9] drop-shadow-[0_1px_1px_rgba(0,0,0,.5)]" src={asset(icons.position)} />
       <div className="min-w-0 flex-1">
         <div className="font-game text-[8.5px] font-bold uppercase leading-none tracking-[.3em] text-[#cdb88a]">{labels.world}</div>
@@ -233,14 +244,20 @@ function WorldPanel({ icons, labels, world }: Pick<PlayerProfileSheetProps, 'ico
         </div>
         <div className="mt-px font-game text-[9px] text-[#cdb88a]">{labels.phase}</div>
       </div>
-    </div>
+    </button>
   );
 }
 
-function ProfilePane({ icons, labels, stats, world }: Pick<PlayerProfileSheetProps, 'icons' | 'labels' | 'stats' | 'world'>) {
+function ProfilePane({
+  icons,
+  labels,
+  onWorldSelect,
+  stats,
+  world,
+}: Pick<PlayerProfileSheetProps, 'icons' | 'labels' | 'onWorldSelect' | 'stats' | 'world'>) {
   return (
     <div className="flex flex-col gap-2.5">
-      <WorldPanel icons={icons} labels={labels} world={world} />
+      <WorldPanel icons={icons} labels={labels} onWorldSelect={onWorldSelect} world={world} />
       <div className="flex gap-1.5">
         <StatTile icon={icons.armyPower} label="Puissance" value={stats.power} />
         <StatTile icon={icons.crown} label="Couronnes" value={stats.crowns} />
@@ -406,6 +423,7 @@ export function PlayerProfileSheet({
   onLogout,
   onTabChange,
   onVillageSelect,
+  onWorldSelect,
   player,
   settings,
   stats,
@@ -450,7 +468,15 @@ export function PlayerProfileSheet({
         />
 
         <div className="min-h-0 flex-1 overflow-y-auto px-3.5 pb-3.5 pt-3" style={{ WebkitOverflowScrolling: 'touch' }}>
-          {activeTab === 'profile' ? <ProfilePane icons={icons} labels={labels} stats={stats} world={world} /> : null}
+          {activeTab === 'profile' ? (
+            <ProfilePane
+              icons={icons}
+              labels={labels}
+              onWorldSelect={onWorldSelect}
+              stats={stats}
+              world={world}
+            />
+          ) : null}
           {activeTab === 'villages' ? <VillagesPane icons={icons} labels={labels} onVillageSelect={onVillageSelect} villages={villages} /> : null}
           {activeTab === 'settings' ? <SettingsPane labels={labels} onLogout={onLogout} settings={settings} /> : null}
         </div>

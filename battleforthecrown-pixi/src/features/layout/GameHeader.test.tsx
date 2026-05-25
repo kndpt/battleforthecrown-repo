@@ -336,6 +336,21 @@ describe('GameHeader player profile sheet', () => {
     });
   });
 
+  it('opens the worlds selection screen from the profile world block', async () => {
+    renderHeader('/game');
+
+    const profileButton = await screen.findByRole('button', { name: 'Profil joueur' });
+    fireEvent.click(profileButton);
+    fireEvent.click(await screen.findByRole('button', { name: 'Voir les royaumes depuis Avalon Test' }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('location-path')).toHaveTextContent('/worlds');
+    });
+    await waitFor(() => {
+      expect(profileButton).toHaveAttribute('aria-expanded', 'false');
+    });
+  });
+
   it('logs out from the profile settings using the existing session cleanup', async () => {
     renderHeader();
 
