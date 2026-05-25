@@ -27,6 +27,8 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ### Runs actifs
 
+- [036 — Onboarding scripté runtime](./runs/036-feature-scripted-onboarding-runtime.md) — 📋 `PLANNED`. Créer le tutoriel server-authoritative, dépendant du run 035 pour garantir une cible barbare T1 atteignable.
+- [035 — Portée initiale Watchtower et T1 barbare atteignable](./runs/035-fix-early-barbarian-reachability.md) — 📋 `PLANNED`. Corriger l'invariant de première session : Watchtower niveau 1 doit révéler au moins un village barbare T1 attaquable.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés
