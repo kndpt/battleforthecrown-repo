@@ -4,6 +4,7 @@
 
 ## Done
 
+- 2026-05-25: Ticket 073 termine : formatter compact lowercase dedie au header Pixi pour ressources + `population.available`, sans toucher `formatResourceAmount` global ; test `GameHeader` + static-check verts.
 - 2026-05-11: Simplification multi-agent run/plan-run : `.agents/skills` devient la source unique, `.claude/commands` et `.gemini` supprimés, docs alignées sur `$bftc-run` / `$plan-run`.
 - 2026-05-11: Rules diet : tests/QA/Prisma/workers/React HUD/Pixi déplacés en skills à la demande, `nest-conventions.md` condensé, AGENTS/rules passés en bootstrap court.
 - 2026-05-11: Cleanup post-rules : docs actives repointées vers `.agents/{rules,skills}`, descriptions skills raccourcies, preflight smoke DB canonisé, `static-check` passé en ESLint `--quiet` + filtre du warning `baseline-browser-mapping`.

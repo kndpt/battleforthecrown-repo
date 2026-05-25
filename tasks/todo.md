@@ -1,18 +1,18 @@
-# Son d'entrée et commentaires PR
+# 073 - Format compact ressources et villageois dans le header
 
-- [x] Vérifier les points d'intégration du loader, des assets audio et des events WS.
-- [x] Ranger le son d'entrée avec un nom durable dans un dossier audio adapté.
-- [x] Jouer le son à la fin du chargement d'entrée dans le monde.
-- [x] Ranger et jouer le son de notification pour les toasts.
-- [x] Corriger les invalidations world-scoped signalées par la review.
-- [x] Adapter les tests ciblés.
-- [x] Vérifier static-check/tests ciblés et impact docs.
+- [x] Preflight : worktree clean, ticket, rules, SPEC et briefing Pixi lus.
+- [x] Cartographier `GameHeader`, `resourceConfig` et le test existant.
+- [x] Ajouter un formatter compact dedie au header.
+- [x] Brancher ce formatter uniquement sur ressources et population disponible.
+- [x] Adapter le test frontend cible.
+- [x] Lancer les verifications ciblees puis `yarn static-check`.
+- [x] Review 5 axes, impact docs, archive et commit.
 
 ## Review
 
-- Son déplacé dans `public/assets/sounds/world-entry-complete.mp3`.
-- Son de notification déplacé dans `public/assets/sounds/notification-received.mp3` et joué une fois par nouveau toast.
-- Le son d'entrée est déclenché à la fin des 2 secondes du loader `/game`; les refus autoplay navigateur sont ignorés sans casser l'écran.
-- Les invalidations WS des rapports et de la power royaume couvrent maintenant toutes les caches du joueur, pas seulement le monde affiché.
-- Tests ciblés et static-check verts.
-- Docs : aucun changement nécessaire.
+- Correctness : formatter dedie au header uniquement ; `formatResourceAmount` reste disponible pour combat/scout/details.
+- Readability : logique de formatage isolee dans `resourceConfig`, appel explicite depuis `GameHeader`.
+- Architecture : pas de changement backend/shared/API ; population conserve `population.available`.
+- Security/performance : aucun nouvel input utilisateur ni cout runtime significatif.
+- QA : test cible, type-check, lint, static-check et verification navigateur sur env worktree.
+- Docs : aucun changement documentaire durable necessaire, le ticket archive trace la decision locale.

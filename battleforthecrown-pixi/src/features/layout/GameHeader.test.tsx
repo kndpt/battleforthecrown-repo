@@ -1,10 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiClient, type JoinedVillage } from '@/api';
 import { useAuthStore } from '@/stores/auth';
+import { useCrownsStore } from '@/stores/crowns';
 import { useGameStore } from '@/stores/game';
+import { useResourcesStore } from '@/stores/resources';
 import { GameHeader } from './GameHeader';
 
 const villages: JoinedVillage[] = [
@@ -27,6 +30,11 @@ const villages: JoinedVillage[] = [
     y: 15,
   },
 ];
+const defaultPopulationByVillageId = {
+  v1: { available: 78, max: 120, used: 42 },
+  v2: { available: 88, max: 180, used: 92 },
+};
+let populationByVillageId: typeof defaultPopulationByVillageId;
 
 function makeQueryClient() {
   return new QueryClient({
@@ -83,7 +91,7 @@ function mockApi() {
     }
     if (path === '/population') {
       const id = (options as { query?: { villageId?: string } } | undefined)?.query?.villageId;
-      return id === 'v2' ? { available: 88, max: 180, used: 92 } : { available: 78, max: 120, used: 42 };
+      return id === 'v2' ? populationByVillageId.v2 : populationByVillageId.v1;
     }
     if (path === '/resources/v1') {
       return {
@@ -214,6 +222,10 @@ function renderHeader(initialPath = '/game') {
 }
 
 beforeEach(() => {
+  populationByVillageId = {
+    v1: { ...defaultPopulationByVillageId.v1 },
+    v2: { ...defaultPopulationByVillageId.v2 },
+  };
   mockApi();
   useAuthStore.getState().setSession({
     accessToken: 'access',
@@ -227,9 +239,56 @@ afterEach(() => {
   vi.restoreAllMocks();
   useAuthStore.getState().clearSession();
   useGameStore.getState().clear();
+  useCrownsStore.getState().clear();
+  useResourcesStore.getState().clear();
 });
 
 describe('GameHeader multi-village selector', () => {
+  it('renders header resources and available population with compact lowercase values', async () => {
+    const now = Date.now();
+    populationByVillageId.v1 = { available: 13000000, max: 15000000, used: 2000000 };
+    useCrownsStore.getState().setCrowns({
+      balance: 12000,
+      lastUpdateTs: now,
+      productionRate: 0,
+      userId: 'u1',
+      worldId: 'w1',
+    });
+    useResourcesStore.getState().setResources({
+      iron: 120000,
+      lastUpdateTs: now,
+      maxPerType: 200000,
+      productionRates: { iron: 0, stone: 0, wood: 0 },
+      stone: 12000,
+      villageId: 'v1',
+      wood: 1499,
+    });
+
+    renderHeader();
+
+    expect(await screen.findByLabelText('Bois 1k')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Pierre 12k')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Fer 120k')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Population 13m')).toBeInTheDocument();
+    expect(await screen.findByLabelText(/^Couronnes 12\s000$/u)).toBeInTheDocument();
+    expect(screen.queryByLabelText('Population 2m')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Population 15m')).not.toBeInTheDocument();
+
+    act(() => {
+      useResourcesStore.getState().setResources({
+        iron: 120000,
+        lastUpdateTs: now,
+        maxPerType: 2000000,
+        productionRates: { iron: 0, stone: 0, wood: 0 },
+        stone: 12000,
+        villageId: 'v1',
+        wood: 1000000,
+      });
+    });
+
+    expect(await screen.findByLabelText('Bois 1m')).toBeInTheDocument();
+  });
+
   it('renders population as available in the header', async () => {
     renderHeader();
 

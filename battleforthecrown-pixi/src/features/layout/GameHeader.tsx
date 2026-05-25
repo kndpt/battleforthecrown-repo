@@ -34,7 +34,7 @@ import {
   usePublicWorldsQuery,
 } from '@/api/queries';
 import { apiClient, type BuildingDto, type PopulationDto, type QueueEntryDto } from '@/api';
-import { formatResourceAmount } from '@/lib/resourceConfig';
+import { formatHeaderCompactAmount } from '@/lib/resourceConfig';
 import { BottomSheet } from '@/ui';
 import { WORLD_SIGIL_GLYPHS, WORLD_THEME_TOKENS } from '@/features/worlds/worldsViewModel';
 import {
@@ -354,21 +354,21 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
       {
         icon: '/assets/resources/wood.png',
         label: 'Bois',
-        value: formatResourceAmount(woodCurrent),
+        value: formatHeaderCompactAmount(woodCurrent),
         fillRatio: ratio(woodCurrent),
         onClick: onResourceClick ? () => onResourceClick('wood') : undefined,
       },
       {
         icon: '/assets/resources/stone.png',
         label: 'Pierre',
-        value: formatResourceAmount(stoneCurrent),
+        value: formatHeaderCompactAmount(stoneCurrent),
         fillRatio: ratio(stoneCurrent),
         onClick: onResourceClick ? () => onResourceClick('stone') : undefined,
       },
       {
         icon: '/assets/resources/iron.png',
         label: 'Fer',
-        value: formatResourceAmount(ironCurrent),
+        value: formatHeaderCompactAmount(ironCurrent),
         fillRatio: ratio(ironCurrent),
         onClick: onResourceClick ? () => onResourceClick('iron') : undefined,
       },
@@ -380,7 +380,7 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
     return {
       icon: '/assets/resources/population.png',
       label: 'Population',
-      value: formatResourceAmount(available),
+      value: formatHeaderCompactAmount(available),
     };
   }, [population.data]);
 

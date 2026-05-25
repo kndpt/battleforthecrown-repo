@@ -1,7 +1,7 @@
 # 073 — Format compact ressources et villageois dans le header
 
 **Sévérité** : 🟠 Moyen
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ Résolu 2026-05-25
 **Spec amont** : Aucune
 
 ## Symptôme | Problème
@@ -80,8 +80,21 @@ Aucun changement documentaire attendu sauf si l'exécution décide de faire de c
 - [ ] Les autres usages de `formatResourceAmount` sont conservés ou explicitement justifiés dans le rapport final.
 - [ ] Vérification visuelle ou screenshot : les pills ressources/population du header ne tronquent plus ces valeurs.
 
+## Résolution
+
+- Formatter compact dédié au header : lowercase, sans décimale, arrondi bas entier.
+- `GameHeader` utilise ce formatter uniquement pour bois, pierre, fer et `population.available`.
+- Puissance, couronnes et les autres surfaces qui utilisent `formatResourceAmount` conservent leur convention.
+
+## QA
+
+- Test Pixi ciblé : `yarn workspace battleforthecrown-pixi test GameHeader` OK.
+- Type-check Pixi : `yarn workspace battleforthecrown-pixi type-check` OK.
+- Lint Pixi : `yarn workspace battleforthecrown-pixi lint:check --quiet` OK.
+- Static check repo : `yarn static-check` OK.
+
 ## Liens détectés
 
-- Connexe : [`71 — Stock initial absent sur inscription monde`](./archive/71-fix-starting-resources-defaults.md) — même zone header ressources/population.
-- Connexe : [`Run 027 — Cartes quotidiennes & Oyez frontend/HUD`](./runs/archive/027-feature-daily-cards-oyez-frontend-hud.md) — contexte HUD compact mobile.
-- Connexe : [`08 — Combat worker : crash P2025 si défenseur n'a pas de ResourceStock`](./archive/08-combat-defender-resource-stock-guard.md) — contexte ressources/HUD après mutation, sans dépendance directe.
+- Connexe : [`71 — Stock initial absent sur inscription monde`](./71-fix-starting-resources-defaults.md) — même zone header ressources/population.
+- Connexe : [`Run 027 — Cartes quotidiennes & Oyez frontend/HUD`](../runs/archive/027-feature-daily-cards-oyez-frontend-hud.md) — contexte HUD compact mobile.
+- Connexe : [`08 — Combat worker : crash P2025 si défenseur n'a pas de ResourceStock`](./08-combat-defender-resource-stock-guard.md) — contexte ressources/HUD après mutation, sans dépendance directe.

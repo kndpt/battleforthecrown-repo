@@ -176,6 +176,18 @@ export const formatResourceAmount = (amount: number): string => {
   return Math.floor(amount).toString();
 };
 
+export const formatHeaderCompactAmount = (amount: number): string => {
+  const value = Number.isFinite(amount) ? Math.max(0, Math.floor(amount)) : 0;
+
+  if (value >= 1000000) {
+    return `${Math.floor(value / 1000000)}m`;
+  }
+  if (value >= 1000) {
+    return `${Math.floor(value / 1000)}k`;
+  }
+  return value.toString();
+};
+
 /**
  * Obtenir la couleur d'alerte selon le pourcentage de stockage
  */
