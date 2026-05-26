@@ -2,6 +2,8 @@
 
 Quand on travaille dans un worktree parallèle, ne pas réutiliser forcément le port frontend principal `5173`. Le navigateur doit pointer vers le serveur Vite lancé depuis le worktree courant, avec les variables d'environnement explicites.
 
+Pour les agents, le point d'entrée opérationnel est le skill `bftc-worktree-qa`. Cette page reste la référence humaine et la source de vérité détaillée du workflow.
+
 ## Pourquoi
 
 - `5173` peut déjà être occupé par le checkout principal ou une autre session.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "BFTC Worktree QA"
+  short_description: "Start BFTC QA servers from the current worktree"
+  default_prompt: "Start the BFTC game for QA from this worktree"
