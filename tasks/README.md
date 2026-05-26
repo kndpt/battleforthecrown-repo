@@ -27,6 +27,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ### Runs actifs
 
+- [040 — Recalibration de la vitesse de base des déplacements](./runs/040-recalibrate-base-travel-speed.md) — 📋 `PLANNED`. Abaisser `REFERENCE_SPEED` (100 → 6) pour ramener un trajet MILICE de 8 cases de 1h20 à ~5 min au tempo 1.0.
 - [039 — Intégration runtime de la vue Armée design-system](./runs/039-integrate-army-view-design-system.md) — 📋 `PLANNED`. Brancher la vue Armée design-system sur `/game/army` avec données réelles et vrai drag & drop vers le recrutement.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
