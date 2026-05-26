@@ -40,6 +40,7 @@ export interface ResourceBuildingLabels {
   nextLevel: string;
   requirementLabel: string;
   sectionHousing: string;
+  sectionCapacity: string;
   sectionProduction: string;
   sectionStorage: string;
   subtitle: string;
@@ -114,6 +115,7 @@ const defaultLabels: ResourceBuildingLabels = {
   nextLevel: 'Après amélioration',
   requirementLabel: 'Pré-requis',
   sectionHousing: 'Logement',
+  sectionCapacity: 'Capacité',
   sectionProduction: 'Production',
   sectionStorage: 'Entrepôt',
   subtitle: 'Bâtiment économique',
@@ -135,15 +137,19 @@ function replaceAlpha(rgba: string, alpha: string) {
 function ProductionCard({
   accent,
   icon,
+  isPopulation,
   label,
   level,
+  resourceLabel,
   stats,
   tone,
 }: {
   accent: ResourceBuildingAccent;
   icon: string;
+  isPopulation: boolean;
   label: string;
   level: number;
+  resourceLabel: string;
   stats: ResourceBuildingLevelStats;
   tone: 'current' | 'next';
 }) {
@@ -184,9 +190,11 @@ function ProductionCard({
       <div className="mb-[7px] flex items-baseline gap-1.5">
         <img alt="" className="size-[22px] self-center drop-shadow-[0_1px_1px_rgba(0,0,0,.35)]" src={publicAsset(icon)} />
         <span className="font-game text-2xl font-black leading-none tracking-[.01em] text-[#3d2f1f] tabular-nums [text-shadow:0_1px_0_rgba(255,255,255,.6)]">
-          +{fr(stats.production)}
+          {isPopulation ? fr(stats.production) : `+${fr(stats.production)}`}
         </span>
-        <span className="font-game text-[11px] font-bold tracking-[.08em] text-[#6d5838]">/ heure</span>
+        <span className="font-game text-[11px] font-bold tracking-[.08em] text-[#6d5838]">
+          {isPopulation ? resourceLabel : '/ heure'}
+        </span>
       </div>
 
     </div>
@@ -196,10 +204,14 @@ function ProductionCard({
 function LevelLink({
   accent,
   delta,
+  isPopulation,
+  resourceLabel,
   variant,
 }: {
   accent: ResourceBuildingAccent;
   delta: number;
+  isPopulation: boolean;
+  resourceLabel: string;
   variant: ResourceBuildingLinkVariant;
 }) {
   if (variant === 'none') return <div className="h-1.5" />;
@@ -235,7 +247,7 @@ function LevelLink({
       <div className="mx-1 my-1 flex items-center gap-2">
         <span className="h-px flex-1 bg-[rgba(60,38,25,.28)]" />
         <span className="inline-flex items-center gap-[3px] font-game text-[10px] font-extrabold tracking-[.06em] tabular-nums" style={{ color: accent.border }}>
-          <span className="text-[11px] leading-none">▾</span>+{fr(delta)} / h
+          <span className="text-[11px] leading-none">▾</span>+{fr(delta)} {isPopulation ? resourceLabel : '/ h'}
         </span>
         <span className="h-px flex-1 bg-[rgba(60,38,25,.28)]" />
       </div>
@@ -456,15 +468,15 @@ export function ResourceBuildingModal({
       summaryLabel={labels.economyLoop}
       tagline={tagline}
     >
-      <SectionRule label={labels.sectionProduction} />
+      <SectionRule label={isPopulation ? labels.sectionCapacity : labels.sectionProduction} />
       <div className="relative mx-3.5 flex flex-col gap-1">
-        <ProductionCard accent={accent} icon={resourceIcon} label={labels.currentLevel} level={level} stats={currentStats} tone="current" />
+        <ProductionCard accent={accent} icon={resourceIcon} isPopulation={isPopulation} label={labels.currentLevel} level={level} resourceLabel={resourceLabel} stats={currentStats} tone="current" />
         {isMaxed ? (
           <div className="mb-0.5 mt-1.5 self-center font-game text-[10px] font-extrabold uppercase tracking-[.2em] text-[#6d5838]">{labels.maxLevelReached}</div>
         ) : (
           <>
-            <LevelLink accent={accent} delta={delta} variant={linkVariant} />
-            <ProductionCard accent={accent} icon={resourceIcon} label={labels.nextLevel} level={next} stats={nextStats} tone="next" />
+            <LevelLink accent={accent} delta={delta} isPopulation={isPopulation} resourceLabel={resourceLabel} variant={linkVariant} />
+            <ProductionCard accent={accent} icon={resourceIcon} isPopulation={isPopulation} label={labels.nextLevel} level={next} resourceLabel={resourceLabel} stats={nextStats} tone="next" />
           </>
         )}
       </div>

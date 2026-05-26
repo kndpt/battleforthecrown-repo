@@ -53,7 +53,7 @@ const RESOURCE_BUILDING_META: Record<ResourceBuildingKey, {
   tagline: string;
 }> = {
   quarter: {
-    eyebrow: 'Production · Population',
+    eyebrow: 'Logement · Population',
     icon: '/assets/resources/population.png',
     isPopulation: true,
     label: 'villageois',
@@ -83,17 +83,19 @@ function getResourceBuildingLevelStats(
   key: ResourceBuildingKey,
   maxLevel: number,
   maxPerType: number,
+  currentLevel: number,
   currentPopulationMax: number | null,
 ): Record<number, ResourceBuildingLevelStats> {
   return Object.fromEntries(
     Array.from({ length: maxLevel }, (_, index) => {
       const level = index + 1;
       if (key === 'quarter') {
-        const populationLimit =
-          level > 5 && currentPopulationMax !== null
+        const populationLimit = getQuarterPopulationLimit(level);
+        const storageLimit =
+          level === currentLevel && currentPopulationMax !== null
             ? currentPopulationMax
-            : getQuarterPopulationLimit(level);
-        return [level, { production: populationLimit, storage: populationLimit }];
+            : populationLimit;
+        return [level, { production: populationLimit, storage: storageLimit }];
       }
 
       return [
@@ -161,9 +163,7 @@ export function ResourceBuildingDetailModal({
   if (!resourceKey) return null;
 
   const resourceMeta = RESOURCE_BUILDING_META[resourceKey];
-  const resourceMaxLevel = resourceKey === 'quarter'
-    ? Math.max(building.level + 1, Math.min(building.maxLevel, 5))
-    : building.maxLevel;
+  const resourceMaxLevel = building.maxLevel;
   const isLockedByCastle = lockState.state === 'unbuilt-locked' && lockState.requiredCastleLevel !== null;
   const storageMax = resourceKey === 'quarter'
     ? (population?.max ?? getQuarterPopulationLimit(Math.max(1, building.level)))
@@ -219,6 +219,7 @@ export function ResourceBuildingDetailModal({
             resourceKey,
             resourceMaxLevel,
             storageMax,
+            building.level,
             population?.max ?? null,
           )}
           linkVariant="rule"
