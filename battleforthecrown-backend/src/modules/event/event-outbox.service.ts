@@ -4,6 +4,7 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 import { GameGateway } from './game.gateway';
 import { parseEventPayload } from './codecs';
 import { RetentionService } from '../retention/retention.service';
+import { OnboardingService } from '../onboarding/onboarding.service';
 import {
   EVENT_PAYLOAD_SCHEMAS,
   type EventKind,
@@ -45,6 +46,7 @@ export class EventOutboxService {
     private readonly prisma: PrismaService,
     private readonly gateway: GameGateway,
     private readonly retention: RetentionService,
+    private readonly onboarding: OnboardingService,
   ) {}
 
   async dispatchPendingEvents() {
@@ -99,127 +101,97 @@ export class EventOutboxService {
       this.logger.warn(`Unknown event kind: ${event.kind}`);
       return;
     }
-    await this.retention.recordOutboxEvent(
-      event.id,
-      event.kind,
-      parseEventPayload(event.kind, event.payload),
-    );
+    const payload = parseEventPayload(event.kind, event.payload);
+    await this.retention.recordOutboxEvent(event.id, event.kind, payload);
+    await this.onboarding.recordOutboxEvent(event.id, event.kind, payload);
     switch (event.kind) {
       case 'building.completed':
-        await this.notifyBuildingCompleted(
-          parseEventPayload(event.kind, event.payload),
-        );
+        await this.notifyBuildingCompleted(payload as BuildingCompletedPayload);
         break;
       case 'unit.training.completed':
         await this.notifyUnitTrainingCompleted(
-          parseEventPayload(event.kind, event.payload),
+          payload as UnitTrainingCompletedPayload,
         );
         break;
       case 'unit.trained':
-        await this.notifyUnitTrained(
-          parseEventPayload(event.kind, event.payload),
-        );
+        await this.notifyUnitTrained(payload as UnitTrainedPayload);
         break;
       case 'battle.sent':
-        await this.notifyBattleSent(
-          parseEventPayload(event.kind, event.payload),
-        );
+        await this.notifyBattleSent(payload as BattleSentPayload);
         break;
       case 'battle.resolved':
-        await this.notifyBattleResolved(
-          parseEventPayload(event.kind, event.payload),
-        );
+        await this.notifyBattleResolved(payload as BattleResolvedPayload);
         break;
       case 'battle.returned':
-        await this.notifyBattleReturned(
-          parseEventPayload(event.kind, event.payload),
-        );
+        await this.notifyBattleReturned(payload as BattleReturnedPayload);
         break;
       case 'scout.sent':
-        await this.notifyScoutSent(
-          parseEventPayload(event.kind, event.payload),
-        );
+        await this.notifyScoutSent(payload as ScoutSentPayload);
         break;
       case 'scout.reported':
-        await this.notifyScoutReported(
-          parseEventPayload(event.kind, event.payload),
-        );
+        await this.notifyScoutReported(payload as ScoutReportedPayload);
         break;
       case 'scout.returned':
-        await this.notifyScoutReturned(
-          parseEventPayload(event.kind, event.payload),
-        );
+        await this.notifyScoutReturned(payload as ScoutReturnedPayload);
         break;
       case 'resources.changed':
-        await this.notifyResourcesChanged(
-          parseEventPayload(event.kind, event.payload),
-        );
+        await this.notifyResourcesChanged(payload as ResourcesChangedPayload);
         break;
       case 'village.attacked':
-        await this.notifyVillageAttacked(
-          parseEventPayload(event.kind, event.payload),
-        );
+        await this.notifyVillageAttacked(payload as VillageAttackedPayload);
         break;
       case 'village.conquered':
-        this.notifyVillageConquered(
-          parseEventPayload(event.kind, event.payload),
-        );
+        this.notifyVillageConquered(payload as VillageConqueredPayload);
         break;
       case 'village.capture-window-opened':
         await this.notifyVillageCaptureWindowOpened(
-          parseEventPayload(event.kind, event.payload),
+          payload as VillageCaptureWindowOpenedPayload,
         );
         break;
       case 'village.capture-window-completed':
         this.notifyVillageCaptureWindowCompleted(
-          parseEventPayload(event.kind, event.payload),
+          payload as VillageCaptureWindowCompletedPayload,
         );
         break;
       case 'village.capture-window-interrupted':
         await this.notifyVillageCaptureWindowInterrupted(
-          parseEventPayload(event.kind, event.payload),
+          payload as VillageCaptureWindowInterruptedPayload,
         );
         break;
       case 'noble.killed':
-        this.notifyNobleKilled(parseEventPayload(event.kind, event.payload));
+        this.notifyNobleKilled(payload as NobleKilledPayload);
         break;
       case 'reinforcement.sent':
-        await this.notifyReinforcementSent(
-          parseEventPayload(event.kind, event.payload),
-        );
+        await this.notifyReinforcementSent(payload as ReinforcementSentPayload);
         break;
       case 'reinforcement.recalled':
         await this.notifyReinforcementRecalled(
-          parseEventPayload(event.kind, event.payload),
+          payload as ReinforcementRecalledPayload,
         );
         break;
       case 'reinforcement.returned':
         await this.notifyReinforcementReturned(
-          parseEventPayload(event.kind, event.payload),
+          payload as ReinforcementReturnedPayload,
         );
         break;
       case 'expedition.recalled':
         await this.notifyExpeditionRecalled(
-          parseEventPayload(event.kind, event.payload),
+          payload as ExpeditionRecalledPayload,
         );
         break;
       case 'expedition.returned':
         await this.notifyExpeditionReturned(
-          parseEventPayload(event.kind, event.payload),
+          payload as ExpeditionReturnedPayload,
         );
         break;
       case 'garrison.added':
-        await this.notifyGarrisonAdded(
-          parseEventPayload(event.kind, event.payload),
-        );
+        await this.notifyGarrisonAdded(payload as GarrisonAddedPayload);
         break;
       case 'crowns.changed':
-        this.notifyCrownsChanged(parseEventPayload(event.kind, event.payload));
+        this.notifyCrownsChanged(payload as CrownsChangedPayload);
         break;
       case 'world.status.changed':
-        this.notifyWorldStatusChanged(
-          parseEventPayload(event.kind, event.payload),
-        );
+        this.notifyWorldStatusChanged(payload as WorldStatusChangedPayload);
         break;
       default: {
         const exhaustiveCheck: never = event.kind;

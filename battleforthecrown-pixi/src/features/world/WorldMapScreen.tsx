@@ -14,11 +14,14 @@ import { AttackDetailModal } from '@/features/combat/AttackDetailModal';
 import { KingdomActivitiesBottomSheet } from '@/features/combat/KingdomActivitiesBottomSheet';
 import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
 import { DailyRetentionWidget } from '@/features/retention/DailyRetentionWidget';
+import { OnboardingGuidance } from '@/features/onboarding/OnboardingGuidance';
+import { getOnboardingGuidance } from '@/features/onboarding/onboardingViewModel';
 import { BottomNavigationBar } from '@/features/layout/BottomNavigationBar';
 import { useBuildingsForLockCheck } from '@/features/layout/useBuildingsForLockCheck';
 import {
   useClaimDailyCardMutation,
   useMyVillagesQuery,
+  useOnboardingSummaryQuery,
   useOpenConquestsQuery,
   useOpenExpeditionsQuery,
   useRetentionSummaryQuery,
@@ -49,6 +52,7 @@ export function WorldMapScreen() {
   const worldEntities = useWorldEntitiesQuery(worldId);
   const myVillages = useMyVillagesQuery(worldId);
   const retentionSummary = useRetentionSummaryQuery(worldId);
+  const onboardingSummary = useOnboardingSummaryQuery(worldId);
   const claimDailyCard = useClaimDailyCardMutation();
   const openConquests = useOpenConquestsQuery(worldId);
   const openExpeditions = useOpenExpeditionsQuery(worldId);
@@ -95,6 +99,7 @@ export function WorldMapScreen() {
     [allEntities, visionDisks, fogOfWarEnabled],
   );
   const expeditionSnapshots = useMemo(() => Object.values(expeditions), [expeditions]);
+  const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data);
 
   useEffect(() => {
     setEntities(visibleEntities);
@@ -226,6 +231,11 @@ export function WorldMapScreen() {
 
             <div className="pointer-events-none absolute inset-0">
               <div className="pointer-events-auto absolute left-3 top-3 flex flex-col items-start gap-2">
+                <OnboardingGuidance
+                  guidance={onboardingGuidance}
+                  isLoading={onboardingSummary.isLoading}
+                  onNavigate={navigate}
+                />
                 <KingdomActivityHudBadges
                   badges={[
                     {

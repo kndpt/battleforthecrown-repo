@@ -19,7 +19,7 @@ Documentation gameplay consolidée. Vision design, mécaniques, formules d'équi
 12. [`12-village-styles.md`](./12-village-styles.md) — styles stratégiques de village (Forteresse / Raiders / Économique / Équilibré) : mécanique par village, débloqué par Salle du Conseil, caché par scout.
 13. [`13-barbarian-conquest.md`](./13-barbarian-conquest.md) — spec complète de la conquête barbare : matérialisation des bâtiments, niveaux par tier, stock et population.
 14. [`14-pvp-conquest.md`](./14-pvp-conquest.md) — conquête de villages joueurs en PvP : questions ouvertes (doc en chantier).
-15. [`15-onboarding.md`](./15-onboarding.md) — tuto guidé MVP (5 étapes scriptées) : doc en chantier, esquisse seulement.
+15. [`15-onboarding.md`](./15-onboarding.md) — tuto guidé MVP livré : état server-authoritative, récompense initiale unique, 5 étapes scriptées.
 16. [`16-notifications.md`](./16-notifications.md) — notifications push (attaque entrante, fin de capture, fin de construction) : doc en chantier, esquisse seulement.
 17. [`17-inbox-and-reports.md`](./17-inbox-and-reports.md) — inbox persistant des rapports (combat + scout au MVP) : contrat MVP livré (Phase 2 close).
 18. [`18-inactivity-and-abandonment.md`](./18-inactivity-and-abandonment.md) — abandon de compte (2 semaines sans login) : **post-MVP**, doc en chantier.

@@ -84,6 +84,9 @@ describe('world membership smoke', () => {
       villages: await ctx.prisma.village.count({ where: scope }),
       memberships: await ctx.prisma.worldMembership.count({ where: scope }),
       crowns: await ctx.prisma.crownBalance.count({ where: scope }),
+      onboardingStates: await ctx.prisma.onboardingState.count({
+        where: scope,
+      }),
       seedStates: await ctx.prisma.worldSeedState.count({ where: scope }),
       buildings: await ctx.prisma.building.count({
         where: { villageId: village1Id },
@@ -105,6 +108,7 @@ describe('world membership smoke', () => {
       villages: 0,
       memberships: 0,
       crowns: 0,
+      onboardingStates: 0,
       seedStates: 0,
       buildings: 0,
       resourceStock: 0,
@@ -142,5 +146,18 @@ describe('world membership smoke', () => {
       where: { villageId: join2.village.id, type: 'WOOD' },
     });
     expect(wood2?.level).toBe(1);
+    await expect(
+      ctx.prisma.onboardingState.count({ where: scope }),
+    ).resolves.toBe(1);
+    await expect(
+      ctx.prisma.resourceStock.findUniqueOrThrow({
+        where: { villageId: join2.village.id },
+      }),
+    ).resolves.toMatchObject({ wood: 1850, stone: 1850, iron: 1850 });
+    await expect(
+      ctx.prisma.crownBalance.findUniqueOrThrow({
+        where: { userId_worldId: scope },
+      }),
+    ).resolves.toMatchObject({ balance: 100 });
   });
 });

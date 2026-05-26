@@ -112,6 +112,7 @@ export function applyBuildingCompleted(
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.villageStrategy(payload.villageId) });
   invalidatePowerQueries(ctx, payload.villageId);
   invalidateRetentionSummary(ctx);
+  invalidateOnboardingSummary(ctx);
   if (payload.buildingType === 'CASTLE') {
     invalidateVillageVisualQueries(ctx);
   }
@@ -132,6 +133,7 @@ export function applyUnitTrained(
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
   invalidatePowerQueries(ctx, payload.villageId);
   invalidateRetentionSummary(ctx);
+  invalidateOnboardingSummary(ctx);
 }
 
 export function applyUnitTrainingCompleted(
@@ -201,6 +203,7 @@ export function applyBattleResolved(payload: BattleResolvedPayload, ctx: Binding
   invalidateCombatReports(ctx);
   invalidateOpenExpeditions(ctx);
   invalidateRetentionSummary(ctx);
+  invalidateOnboardingSummary(ctx);
   useUiStore.getState().pushToast({
     tone: payload.isVictory ? 'success' : 'error',
     title: payload.isVictory ? 'Victoire' : 'Défaite',
@@ -453,6 +456,12 @@ function invalidateRetentionSummary(ctx: BindingsContext): void {
   const userId = useAuthStore.getState().user?.id ?? null;
   const worldId = useGameStore.getState().worldId;
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.retentionSummary(userId, worldId) });
+}
+
+function invalidateOnboardingSummary(ctx: BindingsContext): void {
+  const userId = useAuthStore.getState().user?.id ?? null;
+  const worldId = useGameStore.getState().worldId;
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.onboardingSummary(userId, worldId) });
 }
 
 function invalidateVillageVisualQueries(ctx: BindingsContext): void {

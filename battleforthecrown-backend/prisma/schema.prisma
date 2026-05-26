@@ -71,6 +71,19 @@ enum DailyRewardType {
   RESOURCES
 }
 
+enum OnboardingStatus {
+  ACTIVE
+  COMPLETED
+}
+
+enum OnboardingStep {
+  UPGRADE_CASTLE_LEVEL_2
+  BUILD_BARRACKS
+  TRAIN_TROOPS
+  BUILD_WATCHTOWER
+  ATTACK_BARBARIAN
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -82,6 +95,7 @@ model User {
   worldSeeds        WorldSeedState[]
   worldMemberships  WorldMembership[]
   crownBalances     CrownBalance[]
+  onboardingStates  OnboardingState[]
 
   @@map("user")
 }
@@ -119,6 +133,7 @@ model World {
   chunkStates     ChunkSpawnState[]
   zoneCapacities  ZoneCapacity[]
   pendingConquests PendingConquest[]
+  onboardingStates OnboardingState[]
 
   @@index([status, plannedOpenAt])
   @@index([status, startedAt])
@@ -355,6 +370,50 @@ model DailyOyez {
 
   @@index([worldId, startsAt, endsAt])
   @@map("daily_oyez")
+}
+
+model OnboardingState {
+  id                   String           @id @default(cuid())
+  userId               String           @map("user_id")
+  worldId              String           @map("world_id")
+  firstVillageId       String           @map("first_village_id")
+  status               OnboardingStatus @default(ACTIVE)
+  currentStep          OnboardingStep   @default(UPGRADE_CASTLE_LEVEL_2) @map("current_step")
+  initialRewardApplied Boolean          @default(false) @map("initial_reward_applied")
+  initialRewardAppliedAt DateTime?      @map("initial_reward_applied_at") @db.Timestamptz(3)
+  completedAt          DateTime?        @map("completed_at") @db.Timestamptz(3)
+  createdAt            DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  steps OnboardingStepProgress[]
+
+  @@unique([userId, worldId])
+  @@index([worldId, status])
+  @@map("onboarding_state")
+}
+
+model OnboardingStepProgress {
+  id                String         @id @default(cuid())
+  onboardingStateId String         @map("onboarding_state_id")
+  step              OnboardingStep
+  eventOutboxId     String?        @map("event_outbox_id")
+  completedAt       DateTime       @default(now()) @map("completed_at") @db.Timestamptz(3)
+
+  onboardingState OnboardingState @relation(fields: [onboardingStateId], references: [id], onDelete: Cascade)
+
+  @@unique([onboardingStateId, step])
+  @@unique([eventOutboxId])
+  @@index([onboardingStateId])
+  @@map("onboarding_step_progress")
+}
+
+model OnboardingProgressEvent {
+  eventOutboxId String   @id @map("event_outbox_id")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@map("onboarding_progress_event")
 }
 
 model WorldMembership {

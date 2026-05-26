@@ -23,7 +23,7 @@
 
 > ⚠️ **Migration en cours** : les anciens champs `gameSpeed.{construction,training,travel,capture}` (sémantique inverse : « > 1 = plus rapide ») et `economy.productionRate` sont **supprimés clean cut** au profit de `tempo`. Voir [`decisions.md` § ADR-12](./decisions.md#adr-12--pivot-compressed-async--tempo-world-scoped-via-worldconfigtempo).
 
-**Cycle de vie player ↔ monde** : `JoinWorldUseCase` crée le tuple `(WorldMembership, Village, Building rows, ResourceStock, Population, CrownBalance, UnitInventory skeleton, VillageStrategyConfig)`. `ResetWorldUseCase` (`DELETE /world/:worldId/me`) effectue l'opération inverse — full wipe par `(userId, worldId)`, suppression des `ScoutReport` du joueur et anonymisation des `CombatReport` côté défenseur. Aucun event Outbox émis. Le joueur peut re-join immédiatement comme un nouveau joueur. Code : `src/modules/world/{join,reset}-world.use-case.ts`.
+**Cycle de vie player ↔ monde** : `JoinWorldUseCase` crée le tuple `(WorldMembership, Village, Building rows, ResourceStock, Population, CrownBalance, OnboardingState)`. Si c'est le premier village du joueur sur ce monde, l'onboarding applique une récompense initiale unique (`+850/+850/+850` ressources, `+100` couronnes). `ResetWorldUseCase` (`DELETE /world/:worldId/me`) effectue l'opération inverse — full wipe par `(userId, worldId)`, suppression des `ScoutReport` du joueur, suppression de l'état onboarding et anonymisation des `CombatReport` côté défenseur. Aucun event Outbox émis. Le joueur peut re-join immédiatement comme un nouveau joueur. Code : `src/modules/world/{join,reset}-world.use-case.ts`.
 
 **Cycle de vie du monde** : `WorldLifecycleWorker` ouvre les mondes `PLANNED` quand `plannedOpenAt <= now`, calcule `startedAt`/`endsAt` depuis `WorldConfig.lifecycle.worldDuration`, verrouille les inscriptions après `inscriptionMainDays + inscriptionLateDays`, puis termine le monde à `endsAt`. Chaque transition écrit `world.status.changed` dans `EventOutbox`.
 
@@ -99,6 +99,16 @@ Une conquête passe par `PendingConquest.OPEN → COMPLETED|INTERRUPTED`. La DB 
 
 Le `dayKey` est calculé sur le reset `04:00 Europe/Paris`. Une carte réclamée peut cibler un village possédé ; le dernier `rewardVillageId` réclamé sert de défaut pour le claim suivant.
 
+### Onboarding scripté
+
+| Table | Rôle |
+|-------|------|
+| `OnboardingState` | état tutoriel unique par `userId × worldId`, premier village, statut `ACTIVE|COMPLETED`, étape courante, récompense initiale appliquée |
+| `OnboardingStepProgress` | étapes complétées, une ligne par `state × step`, optionnellement liée à l'`EventOutbox.id` source |
+| `OnboardingProgressEvent` | ledger idempotent par `EventOutbox.id` pour éviter le double comptage si un event est rejoué |
+
+La progression est séquentielle et consomme des facts gameplay Outbox (`building.completed`, `unit.trained`, `battle.resolved`). Elle est volontairement séparée de `DailyCard*` pour ne pas confondre tutoriel de première session et rétention quotidienne.
+
 ### Population
 
 Pas de table dédiée — la population est dérivée de la somme des `Building.population` des bâtiments du village vs `getFarmPopulationLimit(farmLevel)`.
@@ -125,6 +135,7 @@ User ──< WorldMembership >── World
  │                              │
  │                              ├── WorldConfig (legacy → fusion en cours)
  │                              ├── DailyOyez
+ │                              ├── OnboardingState ──< OnboardingStepProgress
  │                              │
  │                              └── BarbarianVillage
  │

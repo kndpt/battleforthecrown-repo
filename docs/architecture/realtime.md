@@ -125,7 +125,9 @@ Quand un worker produit un fait gameplay réutilisable, l'event Outbox doit déc
 
 Ce choix garde le backend server-authoritative sans le coupler à TanStack Query. Un event signal-pur comme `power.changed` serait plus étroit, moins réutilisable, et obligerait à ajouter un second event le jour où une feature doit savoir qu'une unité a réellement été formée.
 
-Les cartes quotidiennes consomment désormais ces mêmes facts côté backend : `EventOutboxService` projette les events éligibles vers `DailyCardTask` avant le dispatch WebSocket. La projection est idempotente via `DailyCardProgressEvent.eventOutboxId`, donc un retry d'Outbox ne double pas la progression.
+Les cartes quotidiennes consomment ces mêmes facts côté backend : `EventOutboxService` projette les events éligibles vers `DailyCardTask` avant le dispatch WebSocket. La projection est idempotente via `DailyCardProgressEvent.eventOutboxId`, donc un retry d'Outbox ne double pas la progression.
+
+L'onboarding scripté consomme aussi ces facts, mais dans un état dédié : `OnboardingService.recordOutboxEvent` projette seulement l'étape courante (`building.completed` Château/Caserne/Watchtower, `unit.trained`, `battle.resolved` barbare victorieux). `OnboardingProgressEvent.eventOutboxId` et l'unicité `state × step` garantissent qu'un replay d'Outbox ne double ni progression ni statut.
 
 ## Exceptions au pattern Outbox
 

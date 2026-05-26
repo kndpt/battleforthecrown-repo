@@ -7,11 +7,14 @@ import { ToastStack } from '@/features/layout/ToastStack';
 import { BottomNavigationBar } from '@/features/layout/BottomNavigationBar';
 import { PowerBottomSheet } from '@/features/power/PowerBottomSheet';
 import { KingdomActivitiesBottomSheet } from '@/features/combat/KingdomActivitiesBottomSheet';
+import { OnboardingGuidance } from '@/features/onboarding/OnboardingGuidance';
+import { getOnboardingGuidance } from '@/features/onboarding/onboardingViewModel';
 import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
 import {
   useArmyInventoryQuery,
   useArmyTrainingQuery,
   useGarrisonQuery,
+  useOnboardingSummaryQuery,
   useRecallReinforcementMutation,
   useVillageBuildingsQuery,
 } from '@/api/queries';
@@ -55,6 +58,7 @@ export function ArmyScreen() {
   const inventory = useArmyInventoryQuery(villageId);
   const training = useArmyTrainingQuery(villageId);
   const garrison = useGarrisonQuery(villageId);
+  const onboardingSummary = useOnboardingSummaryQuery(worldId);
   const recallReinforcement = useRecallReinforcementMutation();
 
   const [selectedUnit, setSelectedUnit] = useState<ArmyUnitDto | null>(null);
@@ -87,6 +91,7 @@ export function ArmyScreen() {
   const incomingGarrison = garrisonLines.filter((line) => line.direction === 'INCOMING');
   const outgoingGarrison = garrisonLines.filter((line) => line.direction === 'OUTGOING');
   const hasGarrison = garrisonLines.length > 0;
+  const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data);
   const pendingRecallKey = recallReinforcement.variables
     ? `${recallReinforcement.variables.villageId}:${recallReinforcement.variables.originVillageId}:${Object.keys(recallReinforcement.variables.units)[0]}`
     : null;
@@ -102,6 +107,13 @@ export function ArmyScreen() {
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         <main className="container mx-auto px-3 py-4 max-w-4xl">
+          <div className="mb-4">
+            <OnboardingGuidance
+              guidance={onboardingGuidance}
+              isLoading={onboardingSummary.isLoading}
+              onNavigate={navigate}
+            />
+          </div>
           {heldUnits.length > 0 && (
             <div className="bg-gradient-to-br from-white/60 via-white/50 to-white/40 rounded-lg p-3 border-2 border-kingdom-300 mb-6 shadow-clay-md">
               <div className="flex items-center justify-between mb-2">

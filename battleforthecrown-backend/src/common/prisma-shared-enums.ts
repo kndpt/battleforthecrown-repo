@@ -1,5 +1,7 @@
 import type {
   ExpeditionStatus as PrismaExpeditionStatus,
+  OnboardingStatus as PrismaOnboardingStatus,
+  OnboardingStep as PrismaOnboardingStep,
   TargetKind as PrismaTargetKind,
   VillageStrategy as PrismaVillageStrategy,
 } from '@prisma/client';
@@ -8,6 +10,10 @@ import type {
   TargetKind,
 } from '@battleforthecrown/shared/combat';
 import type { VillageStrategyType } from '@battleforthecrown/shared/village';
+import type {
+  OnboardingStatus,
+  OnboardingStep,
+} from '@battleforthecrown/shared/onboarding';
 
 // Compile-time alignment between Prisma enums and shared unions.
 // Bidirectional Records: if either side adds, removes, or renames a variant,
@@ -56,4 +62,22 @@ export const _villageStrategyToPrisma: Record<
   RAIDERS: 'RAIDERS',
   ECONOMIC: 'ECONOMIC',
   BALANCED: 'BALANCED',
+};
+
+export const _onboardingStatusFromPrisma: Record<
+  PrismaOnboardingStatus,
+  OnboardingStatus
+> = {
+  ACTIVE: 'ACTIVE',
+  COMPLETED: 'COMPLETED',
+};
+export const _onboardingStepFromPrisma: Record<
+  PrismaOnboardingStep,
+  OnboardingStep
+> = {
+  UPGRADE_CASTLE_LEVEL_2: 'UPGRADE_CASTLE_LEVEL_2',
+  BUILD_BARRACKS: 'BUILD_BARRACKS',
+  TRAIN_TROOPS: 'TRAIN_TROOPS',
+  BUILD_WATCHTOWER: 'BUILD_WATCHTOWER',
+  ATTACK_BARBARIAN: 'ATTACK_BARBARIAN',
 };

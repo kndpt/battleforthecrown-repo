@@ -12,6 +12,8 @@ import { QueueFloatingButton } from '@/features/village/QueueFloatingButton';
 import { QueueBottomSheet } from '@/features/village/QueueBottomSheet';
 import { VillageStyleControl } from '@/features/village/VillageStyleControl';
 import { DailyRetentionWidget } from '@/features/retention/DailyRetentionWidget';
+import { OnboardingGuidance } from '@/features/onboarding/OnboardingGuidance';
+import { getOnboardingGuidance } from '@/features/onboarding/onboardingViewModel';
 import { metaFor } from '@/features/village/buildingMeta';
 import { KingdomActivitiesBottomSheet } from '@/features/combat/KingdomActivitiesBottomSheet';
 import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
@@ -19,6 +21,7 @@ import { PowerBottomSheet } from '@/features/power/PowerBottomSheet';
 import {
   useClaimDailyCardMutation,
   useMyVillagesQuery,
+  useOnboardingSummaryQuery,
   useRetentionSummaryQuery,
   useVillageBuildingsQuery,
 } from '@/api/queries';
@@ -60,6 +63,7 @@ export function VillageView() {
   const buildingsQuery = useVillageBuildingsQuery(villageId);
   const myVillages = useMyVillagesQuery(worldId);
   const retentionSummary = useRetentionSummaryQuery(worldId);
+  const onboardingSummary = useOnboardingSummaryQuery(worldId);
   const claimDailyCard = useClaimDailyCardMutation();
 
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingDto | null>(null);
@@ -78,6 +82,7 @@ export function VillageView() {
         metaFor(a.type).sortKey - metaFor(b.type).sortKey || a.type.localeCompare(b.type),
     );
   }, [buildingsQuery.data]);
+  const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data);
 
   const handleSelectBuilding = (building: BuildingDto) => {
     if (building.type === BUILDING_TYPES.COUNCIL_HALL && building.level >= 1 && !building.isUnderConstruction) {
@@ -119,6 +124,13 @@ export function VillageView() {
             onNavigate={navigate}
             summary={retentionSummary.data}
             villages={myVillages.data ?? []}
+          />
+        </div>
+        <div className="absolute left-3 top-3 z-30">
+          <OnboardingGuidance
+            guidance={onboardingGuidance}
+            isLoading={onboardingSummary.isLoading}
+            onNavigate={navigate}
           />
         </div>
 

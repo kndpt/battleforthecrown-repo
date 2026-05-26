@@ -15,9 +15,15 @@ import { BarbarianVillageFactory } from './barbarian-village.factory';
 import { BarbarianSeedingCatchupWorker } from './barbarian-seeding-catchup.worker';
 import { VillagePlacementService } from './village-placement.service';
 import { VisionService } from './vision.service';
+import { OnboardingModule } from '../onboarding/onboarding.module';
 
 @Module({
-  imports: [PrismaModule, ScheduleModule.forRoot(), AuthContextModule],
+  imports: [
+    PrismaModule,
+    ScheduleModule.forRoot(),
+    AuthContextModule,
+    OnboardingModule,
+  ],
   controllers: [WorldController, PublicWorldsController],
   providers: [
     WorldService,

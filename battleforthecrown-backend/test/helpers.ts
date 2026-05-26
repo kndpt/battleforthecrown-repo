@@ -43,6 +43,9 @@ export async function bootSmokeApp(): Promise<SmokeContext> {
 }
 
 const TABLES = [
+  'onboarding_step_progress',
+  'onboarding_progress_event',
+  'onboarding_state',
   'daily_card_task',
   'daily_card_progress_event',
   'daily_card',

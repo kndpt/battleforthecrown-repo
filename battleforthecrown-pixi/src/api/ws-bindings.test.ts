@@ -107,6 +107,32 @@ describe('applyResourcesChanged', () => {
     expect(stored.lastUpdateTs).toBe(Date.parse('2026-05-04T22:00:00.000Z'));
   });
 
+  it('does not refetch onboarding for high-frequency resource ticks', () => {
+    setCurrentWorldSession();
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.onboardingSummary('user-1', 'world-1'), {
+      status: 'ACTIVE',
+    });
+
+    applyResourcesChanged(
+      {
+        villageId: 'v1',
+        wood: 500,
+        stone: 200,
+        iron: 100,
+        maxPerType: 1000,
+        productionRates: { wood: 60, stone: 60, iron: 60 },
+        lastUpdateTs: '2026-05-04T22:00:00.000Z',
+      },
+      { queryClient },
+    );
+
+    expect(
+      queryClient.getQueryState(queryKeys.onboardingSummary('user-1', 'world-1'))
+        ?.isInvalidated,
+    ).toBe(false);
+  });
+
   it('overwrites the previous snapshot for the same villageId', () => {
     applyResourcesChanged({
       villageId: 'v1',
@@ -147,6 +173,30 @@ describe('applyCrownsChanged', () => {
       productionRate: 3,
       lastUpdateTs: Date.parse('2026-05-04T22:00:00.000Z'),
     });
+  });
+
+  it('does not refetch onboarding for high-frequency crown ticks', () => {
+    setCurrentWorldSession();
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.onboardingSummary('user-1', 'world-1'), {
+      status: 'ACTIVE',
+    });
+
+    applyCrownsChanged(
+      {
+        userId: 'user-1',
+        worldId: 'world-1',
+        balance: 7,
+        productionRate: 3,
+        lastUpdateTs: '2026-05-04T22:00:00.000Z',
+      },
+      { queryClient },
+    );
+
+    expect(
+      queryClient.getQueryState(queryKeys.onboardingSummary('user-1', 'world-1'))
+        ?.isInvalidated,
+    ).toBe(false);
   });
 });
 
@@ -191,6 +241,7 @@ describe('applyBuildingCompleted', () => {
     queryClient.setQueryData(queryKeys.villagePower('v1'), { total: 1 });
     queryClient.setQueryData(queryKeys.kingdomPower('user-1', 'w1'), { kingdomPower: 1 });
     queryClient.setQueryData(queryKeys.retentionSummary('user-1', 'w1'), { claimableCount: 0 });
+    queryClient.setQueryData(queryKeys.onboardingSummary('user-1', 'w1'), { status: 'ACTIVE' });
     let invalidationCount = 0;
     const originalInvalidate = queryClient.invalidateQueries.bind(queryClient);
     queryClient.invalidateQueries = ((...args: Parameters<typeof originalInvalidate>) => {
@@ -208,11 +259,12 @@ describe('applyBuildingCompleted', () => {
       { queryClient },
     );
 
-    expect(invalidationCount).toBe(8);
+    expect(invalidationCount).toBe(9);
     expect(queryClient.getQueryState(queryKeys.villageStrategy('v1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.villagePower('v1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.kingdomPower('user-1', 'w1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.retentionSummary('user-1', 'w1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.onboardingSummary('user-1', 'w1'))?.isInvalidated).toBe(true);
     const toasts = useUiStore.getState().toasts;
     expect(toasts).toHaveLength(1);
     expect(toasts[0].tone).toBe('success');

@@ -19,6 +19,7 @@ import { EventModule } from './modules/event/event.module';
 import { CombatModule } from './modules/combat/combat.module';
 import { CrownsModule } from './modules/crowns/crowns.module';
 import { RetentionModule } from './modules/retention/retention.module';
+import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { WorkersModule } from './workers/workers.module';
 import { HealthController } from './health.controller';
 import { RequestLoggerMiddleware } from './common/request-logger.middleware';
@@ -66,6 +67,7 @@ import { RequestLoggerMiddleware } from './common/request-logger.middleware';
     CombatModule,
     CrownsModule,
     RetentionModule,
+    OnboardingModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],

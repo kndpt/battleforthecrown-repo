@@ -10,6 +10,7 @@ import { WorldConfigService } from './world-config.service';
 import { BarbarianSeedingService } from './barbarian-seeding.service';
 import { VillagePlacementService } from './village-placement.service';
 import { getInitialPlayerVillageBuildings } from '../village/player-village-building-lifecycle';
+import { OnboardingService } from '../onboarding/onboarding.service';
 
 interface JoinWorldParams {
   userId: string;
@@ -26,6 +27,7 @@ export class JoinWorldUseCase {
     private readonly worldConfig: WorldConfigService,
     private readonly barbarianSeeding: BarbarianSeedingService,
     private readonly villagePlacement: VillagePlacementService,
+    private readonly onboarding: OnboardingService,
   ) {}
 
   async execute(params: JoinWorldParams) {
@@ -138,6 +140,12 @@ export class JoinWorldUseCase {
 
     await tx.crownBalance.create({
       data: { userId, worldId, balance: 0, lastUpdateTs: new Date() },
+    });
+
+    await this.onboarding.ensureForInitialVillage(tx, {
+      userId,
+      worldId,
+      villageId: village.id,
     });
 
     return village;

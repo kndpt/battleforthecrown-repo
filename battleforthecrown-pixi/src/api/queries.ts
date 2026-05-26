@@ -49,6 +49,7 @@ import type {
   ClaimDailyCardResponse,
   RetentionSummaryDto,
 } from '@battleforthecrown/shared/retention';
+import type { OnboardingSummaryDto } from '@battleforthecrown/shared/onboarding';
 
 export const queryKeys = {
   worlds: () => ['worlds'] as const,
@@ -79,6 +80,7 @@ export const queryKeys = {
   worldEntities: (worldId: string | null) => ['world-entities', worldId] as const,
   worldConfig: (worldId: string | null) => ['world-config', worldId] as const,
   retentionSummary: (userId: string | null, worldId: string | null) => ['retention', 'summary', userId, worldId] as const,
+  onboardingSummary: (userId: string | null, worldId: string | null) => ['onboarding', 'summary', userId, worldId] as const,
 };
 
 interface LoginInput {
@@ -164,6 +166,7 @@ export function useJoinWorldMutation() {
       setContext({ worldId: result.membership.worldId, villageId: result.village?.id ?? null });
       queryClient.invalidateQueries({ queryKey: ['memberships'] });
       queryClient.invalidateQueries({ queryKey: ['villages'] });
+      queryClient.invalidateQueries({ queryKey: ['onboarding'] });
     },
   });
 }
@@ -1038,6 +1041,19 @@ export function useRetentionSummaryQuery(worldId: string | null) {
       query.state.data && query.state.data.cards.some((card) => card.status !== 'CLAIMED')
         ? 30_000
         : false,
+    staleTime: 10_000,
+  });
+}
+
+export function useOnboardingSummaryQuery(worldId: string | null) {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  return useQuery<OnboardingSummaryDto>({
+    queryKey: queryKeys.onboardingSummary(userId, worldId),
+    queryFn: () => {
+      if (!userId || !worldId) return Promise.reject(new Error('No world selected'));
+      return apiClient.get<OnboardingSummaryDto>('/onboarding', { query: { worldId } });
+    },
+    enabled: Boolean(userId && worldId),
     staleTime: 10_000,
   });
 }

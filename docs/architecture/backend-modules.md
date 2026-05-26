@@ -33,6 +33,7 @@ src/
 │   ├── combat/
 │   ├── crowns/
 │   ├── retention/           # Cartes quotidiennes + Oyez, projection des facts Outbox
+│   ├── onboarding/          # Tutoriel scripté MVP, état dédié + projection des facts Outbox
 │   ├── population/
 │   ├── power/
 │   ├── strategy/            # VillageStrategyService partagé (cf. ADR-12)
@@ -63,6 +64,7 @@ src/
 | **combat** | `POST /combat/attack`, `POST /combat/scout`, `POST /combat/reinforce`, `POST /combat/recall`, `POST /combat/recall/:expeditionId`, `GET /combat/:villageId/active`, `GET /combat/:villageId/garrison`, `GET /combat/reports`, `GET /combat/scout-reports` | `CombatWorker`, `ReturnWorker` | Attaque, scout, renforts, garnison, conquête, butin, retour. Stratégies `Barbarian` / `Player` |
 | **crowns** | `GET /crowns/:userId` | `CrownProductionWorker` | Monnaie premium, production passive, transactions sécurisées |
 | **retention** | `GET /retention`, `POST /retention/cards/:cardId/claim` | — | Cartes quotidiennes Phase 10, Oyez actif, projection de progression depuis les events métier Outbox |
+| **onboarding** | `GET /onboarding?worldId=...` | — | Tutoriel scripté Phase 8, récompense initiale unique au premier village et projection séquentielle depuis les facts Outbox |
 | **population** | `GET /population/:villageId` | — | Population courante / max via `getFarmPopulationLimit` |
 | **power** | `GET /power?villageId=…`, `GET /power/village/:id/public`, `GET /power/kingdom`, `GET /power/kingdom/:userId/public?worldId=...`, `GET /power/leaderboard?worldId=...` | — | Calcul puissance bâtiments + armée d'un village (propriétaire), puissance bâtiments publique d'un village, puissance royaume world-scopée du joueur authentifié ou publique, leaderboard public par monde (post-MVP) |
 | **event** | WS `socket.io` | (consommé par `OutboxWorker`) | Gateway temps réel + `OutboxPublisher` (point unique de création d'events Outbox côté gameplay) |
