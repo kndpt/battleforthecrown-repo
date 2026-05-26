@@ -11,6 +11,7 @@
 - Design system React : un composant validé doit être production-ready hors preview : props nommées, fixtures sorties, callbacks contrôlés, primitives réutilisées.
 - Design system React : si un prototype ne correspond pas au futur usage produit, le retirer du sas plutôt que créer un faux standard.
 - Intégration frontend : inspecter `DesignSystemPreview.tsx` et les points d'entrée amont ; préserver la structure visuelle validée avec états neutralisés plutôt qu'une UI parallèle.
+- Intégration design-system runtime : ne jamais embarquer une phone-frame ou une status bar de prototype dans l'app IG ; adapter les primitives visuelles au shell runtime et vérifier explicitement l'absence de faux chrome.
 - Bottom sheets : chrome et hauteur runtime appartiennent au shell partagé ; vérifier `GameBottomSheetPanel` + sheets custom avant tout ajustement local.
 - Pour les rapports scout, ne pas traiter l'UI comme pure présentation : vérifier que le snapshot backend/shared transporte toutes les infos promises par le gameplay (ex. niveau de Rempart), sinon les anciens fallbacks masquent un trou de contrat.
 - Pour une conquête avec fenêtre de capture, ne jamais valider seulement "Seigneur immobilisé" : l'escorte survivante doit aussi rester en garnison d'occupation. Le smoke doit prouver que `battle.resolved.survivingUnits` ne retourne pas cette escorte et qu'une attaque hostile interrompt si le Seigneur meurt ou si l'escorte d'occupation est détruite.

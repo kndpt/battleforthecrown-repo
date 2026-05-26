@@ -40,9 +40,9 @@
 
 ## Décomposition initiale (rempli par le lead à l'étape 3)
 
-- [x] Remplacer `LandingScreen` par `AuthLandingScreen` en branchant les actions selon `accessToken`.
-- [x] Remplacer `LoginScreen` par `AuthLoginScreen` en conservant `loginSchema`, `useLoginMutation`, erreurs serveur et navigation `/game`.
-- [x] Remplacer `RegisterScreen` par `AuthRegisterScreen` en conservant `registerSchema`, confirmation locale et payload `{ email, password }` vers `/worlds`.
+- [x] Remplacer `LandingScreen` par une composition runtime issue des primitives auth design-system en branchant les actions selon `accessToken`.
+- [x] Remplacer `LoginScreen` par une composition runtime issue des primitives auth design-system en conservant `loginSchema`, `useLoginMutation`, erreurs serveur et navigation `/game`.
+- [x] Remplacer `RegisterScreen` par une composition runtime issue des primitives auth design-system en conservant `registerSchema`, confirmation locale et payload `{ email, password }` vers `/worlds`.
 - [x] Ajouter des tests Vitest ciblés sur landing/login/register runtime.
 - [x] Vérifier visuellement les routes auth en desktop/mobile.
 
@@ -56,17 +56,19 @@
 - 2026-05-26 11:02 CEST — QA navigateur Playwright sur Vite `5174` : `/`, `/auth/login`, `/auth/register` vérifiés en 390×844 et 1280×800, sans scroll horizontal.
 - 2026-05-26 11:07 CEST — Review indépendante `GO`; finding mineur `fields.lord` résolu en exposant `fields.email` côté login.
 - 2026-05-26 11:12 CEST — Frontend IG relancé sur `http://127.0.0.1:5174/` pour vérification user.
+- 2026-05-26 11:25 CEST — Correction après retour user : suppression des phone-frames prototype en runtime ; les routes composent les primitives design-system dans un shell plein écran app.
 
 ## Décisions prises
 
 - Contrat auth préservé : aucun changement backend/shared ; les mutations runtime envoient uniquement `{ email, password }`.
 - Les actions non supportées runtime restent visibles mais inertes : visiteur, mot de passe oublié, Google/Apple.
 - Review indépendante : `GO`, finding mineur de lisibilité `fields.lord` pour l'email résolu par `fields.email` optionnel dans `AuthLoginScreenProps`.
+- Retour user post-run : ne pas embarquer les écrans prototype 360×720 tels quels dans l'app ; le runtime doit adapter les primitives visuelles au contexte IG.
 - Docs : aucun changement durable nécessaire ; `docs/architecture/auth.md` décrit déjà le contrat serveur, et le run ne change ni API ni gameplay.
 
 ## Rapport final
 
-Migration terminée côté Pixi runtime : les routes `/`, `/auth/login` et `/auth/register` utilisent les écrans auth du design-system, avec un wrapper responsive dédié pour conserver le format 360×720 sans scroll horizontal.
+Migration terminée côté Pixi runtime : les routes `/`, `/auth/login` et `/auth/register` utilisent les primitives auth du design-system dans une composition plein écran adaptée au runtime IG, sans phone-frame prototype ni fausse status bar.
 
 Fichiers touchés :
 - `battleforthecrown-pixi/src/features/auth/LandingScreen.tsx`
@@ -81,14 +83,14 @@ Tickets ouverts : aucun.
 ### Acceptance & QA
 
 - **Critères d'acceptance vérifiés** (commande exécutable obligatoire si automatisable, preuve textuelle uniquement si visuel/gameplay/UX) :
-  - [x] Routes auth remplacées par les vues design-system — `rtk grep -n "AuthLandingScreen|AuthLoginScreen|AuthRegisterScreen" battleforthecrown-pixi/src/features/auth` → composants design-system branchés sur les trois écrans runtime.
+  - [x] Routes auth remplacées par les vues design-system adaptées runtime — `rtk grep -n "AuthButton|AuthField|AuthRuntimePanel" battleforthecrown-pixi/src/features/auth` → primitives design-system composées sur les trois écrans runtime.
   - [x] Payload login `{ email, password }` préservé — `rtk yarn workspace battleforthecrown-pixi test AuthScreensRuntime.test.tsx` → test `submits login with email and password only` passé.
   - [x] Payload register `{ email, password }` préservé — `rtk yarn workspace battleforthecrown-pixi test AuthScreensRuntime.test.tsx` → test `submits register with email and password only` passé, sans `confirmPassword` ni `lord`.
   - [x] Champs nom/blason/SSO hors payload auth — `rtk yarn workspace battleforthecrown-pixi test AuthScreensRuntime.test.tsx` → aucun champ seigneur/blason envoyé ; SSO disabled.
   - [x] Actions landing selon état auth — `rtk yarn workspace battleforthecrown-pixi test AuthScreensRuntime.test.tsx` → anonyme vers login, connecté vers `/game`.
   - [x] Contrôles non supportés restent inertes — `rtk yarn workspace battleforthecrown-pixi test AuthScreensRuntime.test.tsx` → visiteur, mot de passe oublié, Google et Apple disabled.
   - [x] Type-check/build/lint Pixi — `rtk yarn workspace battleforthecrown-pixi type-check && rtk yarn workspace battleforthecrown-pixi build && rtk yarn workspace battleforthecrown-pixi lint:check --quiet` → vert après correctif review.
-  - [x] QA visuelle mobile/desktop — `Playwright sur http://127.0.0.1:5174/` → `/`, `/auth/login`, `/auth/register` OK en 390×844 et 1280×800, `scrollWidth === clientWidth`.
+  - [x] QA visuelle mobile/desktop — `Playwright sur http://127.0.0.1:5174/` → `/`, `/auth/login`, `/auth/register` OK en 393×852 et 1280×800, `scrollWidth === clientWidth`, sans `09:41/LTE/100%` ni phone-frame.
 - **Review indépendante** : `Déclenchée (raison: critère c — diff > 100 lignes)` avec verdict `GO`; finding mineur résolu.
 - **Tests automatisés** :
   - `rtk yarn workspace battleforthecrown-pixi test AuthScreensRuntime.test.tsx` → 1 fichier, 6 tests passés.
@@ -99,7 +101,7 @@ Tickets ouverts : aucun.
   - `rtk yarn static-check` → vert.
 - **Smokes lancés** : non applicable, raison : aucun fichier `battleforthecrown-backend/src/` touché.
 - **Smokes ajoutés/modifiés** : aucun, raison : changement frontend auth runtime couvert par Vitest + QA navigateur.
-- **QA fonctionnelle agent** : Playwright headless sur Vite `5174`, routes `/`, `/auth/login`, `/auth/register`, viewports 390×844 et 1280×800 ; aucun scroll horizontal, champs email/password/confirmation présents, contrôles inertes disabled.
+- **QA fonctionnelle agent** : Playwright headless sur Vite `5174`, routes `/`, `/auth/login`, `/auth/register`, viewports 393×852 et 1280×800 ; aucun scroll horizontal, aucun faux status bar, aucun phone-frame, champs email/password/confirmation présents, contrôles inertes disabled.
 - **Tests IG à faire par le user** :
   - [ ] Ouvrir `http://127.0.0.1:5174/`, puis naviguer vers Connexion et Créer un compte.
   - [ ] Valider visuellement en mobile/desktop que les libellés email/password restent lisibles et que rien n'est tronqué.
