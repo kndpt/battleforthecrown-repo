@@ -46,6 +46,43 @@ export type {
 } from './AuthScreens';
 export { ArmyMovementList, ArmyMovementRow } from './ArmyMovementRow';
 export type { ArmyMovementListProps, ArmyMovementRowProps, ArmyMovementSurface, ArmyMovementTone } from './ArmyMovementRow';
+export {
+  ArmyDraggingOverlay,
+  ArmyPhoneFrame,
+  ArmyRecruitOverlay,
+  ArmyRecruitPopup,
+  ArmyViewDesign,
+} from './ArmyViewDesign';
+export {
+  computeArmyRecruitMax,
+  formatArmyTrainingDuration,
+  parseArmyTrainingTimeSeconds,
+} from './ArmyViewDesign.utils';
+export type {
+  ArmyBottomNavItem,
+  ArmyBottomNavProps,
+  ArmyDraggingOverlayProps,
+  ArmyFilterOption,
+  ArmyFilterTone,
+  ArmyHudProps,
+  ArmyNavTone,
+  ArmyOriginKind,
+  ArmyPhoneFrameProps,
+  ArmyQueueItem,
+  ArmyRecruitOverlayProps,
+  ArmyRecruitPopupLabels,
+  ArmyRecruitPopupProps,
+  ArmyRecruitQuickValue,
+  ArmyRecruitSheetProps,
+  ArmyRecruitStock,
+  ArmyResourceChip,
+  ArmySliderTone,
+  ArmyTroop,
+  ArmyTroopCategory,
+  ArmyTroopCost,
+  ArmyViewProps,
+  ArmyVillageBarProps,
+} from './ArmyViewDesign';
 export { BASE_MODAL_DEFAULT_MAX_HEIGHT, BASE_MODAL_DEFAULT_WIDTH, BaseModal } from './BaseModal';
 export type { BaseModalProps, BaseModalTone } from './BaseModal';
 export { BftcButton } from './BftcButton';

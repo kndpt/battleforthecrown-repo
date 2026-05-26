@@ -27,6 +27,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ### Runs actifs
 
+- [039 — Intégration runtime de la vue Armée design-system](./runs/039-integrate-army-view-design-system.md) — 📋 `PLANNED`. Brancher la vue Armée design-system sur `/game/army` avec données réelles et vrai drag & drop vers le recrutement.
 - [038 — Correction capacité Quartier et modal population](./runs/038-fix-quarter-population-scaling-modal.md) — 📋 `PLANNED`. Corriger la capacité villageois du Quartier 6-10 et retirer la sémantique horaire de sa modal.
 - [037 — Migration des vues auth vers le design-system](./runs/037-migrate-auth-views-design-system.md) — 📋 `PLANNED`. Remplacer les vues auth runtime legacy par les vues design-system en préservant le contrat `{ email, password }`.
 - [036 — Onboarding scripté runtime](./runs/036-feature-scripted-onboarding-runtime.md) — 📋 `PLANNED`. Créer le tutoriel server-authoritative, dépendant du run 035 pour garantir une cible barbare T1 atteignable.

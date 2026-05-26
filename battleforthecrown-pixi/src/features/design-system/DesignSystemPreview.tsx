@@ -18,6 +18,9 @@ import {
 } from '@/features/worlds/worldsViewModel';
 import {
   ArmyMovementList,
+  ArmyDraggingOverlay,
+  ArmyRecruitOverlay,
+  ArmyViewDesign,
   AuthBannerScreen,
   AuthLandingScreen,
   AuthLoginScreen,
@@ -89,6 +92,14 @@ import {
   TroopStepper,
   VillageStyleModal,
   VillageStyleTrigger,
+  computeArmyRecruitMax,
+  type ArmyFilterOption,
+  type ArmyRecruitPopupLabels,
+  type ArmyRecruitQuickValue,
+  type ArmyRecruitSheetProps,
+  type ArmyRecruitStock,
+  type ArmyTroop,
+  type ArmyViewProps,
   type CaptureWindowCardProps,
   type ChatMessage,
   type CombatReportModalProps,
@@ -169,6 +180,201 @@ const authShields: AuthHeraldShield[] = [
   { accent: '#f6d57b', field: ['#7a3a7d', '#43204a'], id: 'purple', label: 'Pourpre', symbol: '✠' },
   { accent: '#3c2619', field: ['#b5b8be', '#7c8088'], id: 'silver', label: 'Argent', symbol: '⚜' },
 ];
+
+const armyTroops: ArmyTroop[] = [
+  {
+    attack: 6,
+    category: 'Infanterie',
+    cost: { iron: 10, stone: 30, wood: 50 },
+    defense: 4,
+    icon: '/assets/army/militia.png',
+    id: 'militia',
+    inVillage: 29,
+    name: 'Milice de paysans',
+    pop: 1,
+    power: 3,
+    short: 'Milice',
+    supportingElsewhere: 0,
+    trainingTime: '18s',
+    unlocked: true,
+  },
+  {
+    attack: 10,
+    category: 'Infanterie',
+    cost: { iron: 30, stone: 50, wood: 80 },
+    defense: 12,
+    fromAllies: 12,
+    icon: '/assets/army/squire.png',
+    id: 'squire',
+    inVillage: 10,
+    name: 'Écuyer',
+    pop: 1,
+    power: 8,
+    short: 'Écuyer',
+    supportingElsewhere: 0,
+    trainingTime: '45s',
+    unlocked: true,
+  },
+  {
+    attack: 14,
+    category: 'Tireur',
+    cost: { iron: 60, stone: 20, wood: 100 },
+    defense: 4,
+    fromAllies: 0,
+    icon: '/assets/army/archer.png',
+    id: 'archer',
+    inVillage: 1,
+    name: 'Archer',
+    pop: 1,
+    power: 6,
+    short: 'Archer',
+    supportingElsewhere: 5,
+    trainingTime: '1m',
+    unlocked: true,
+  },
+  {
+    attack: 24,
+    category: 'Spécial',
+    cost: { iron: 120, stone: 50, wood: 200 },
+    defense: 8,
+    fromAllies: 0,
+    icon: '/assets/army/savage.png',
+    id: 'savage',
+    inVillage: 49,
+    name: 'Mercenaire',
+    pop: 2,
+    power: 14,
+    short: 'Mercen.',
+    supportingElsewhere: 0,
+    trainingTime: '2m 30s',
+    unlocked: true,
+  },
+  {
+    attack: 40,
+    category: 'Élite',
+    cost: { iron: 300, stone: 200, wood: 300 },
+    defense: 30,
+    fromAllies: 0,
+    icon: '/assets/army/templar.png',
+    id: 'templar',
+    inVillage: 0,
+    name: 'Templier',
+    pop: 3,
+    power: 32,
+    requiredLevel: 4,
+    requirementLabel: 'Caserne niv. 4 requis',
+    short: 'Templier',
+    supportingElsewhere: 0,
+    trainingTime: '5m',
+    unlocked: false,
+  },
+  {
+    attack: 56,
+    category: 'Cavalerie',
+    cost: { iron: 400, stone: 150, wood: 400 },
+    defense: 22,
+    emoji: '🐎',
+    id: 'cavalry',
+    inVillage: 0,
+    name: 'Cavalerie',
+    pop: 4,
+    power: 48,
+    requiredLevel: 5,
+    requirementLabel: 'Caserne niv. 5 requis',
+    short: 'Cav.',
+    trainingTime: '8m',
+    unlocked: false,
+  },
+  {
+    attack: 0,
+    category: 'Siège',
+    cost: { iron: 500, stone: 0, wood: 600 },
+    defense: 0,
+    emoji: '🪵',
+    id: 'ram',
+    inVillage: 0,
+    name: 'Bélier',
+    pop: 5,
+    power: 80,
+    requiredLevel: 8,
+    requirementLabel: 'Caserne niv. 8 requis',
+    short: 'Bélier',
+    trainingTime: '12m',
+    unlocked: false,
+  },
+  {
+    attack: 0,
+    category: 'Siège',
+    cost: { iron: 700, stone: 300, wood: 800 },
+    defense: 0,
+    emoji: '🪨',
+    id: 'catapult',
+    inVillage: 0,
+    name: 'Catapulte',
+    pop: 8,
+    power: 120,
+    requiredLevel: 10,
+    requirementLabel: 'Caserne niv. 10 requis',
+    short: 'Catap.',
+    trainingTime: '20m',
+    unlocked: false,
+  },
+];
+
+const armyFilters: ArmyFilterOption[] = [
+  { count: 89, id: 'all', label: 'Toutes' },
+  { count: 89, id: 'mine', label: 'Mien', tone: 'green' },
+  { count: 20, id: 'allies', label: 'Alliés', tone: 'blue' },
+  { count: 5, id: 'sent', label: 'Envoyés', tone: 'gold' },
+];
+
+const armyRecruitSheet: ArmyRecruitSheetProps = {
+  activeDropLabel: 'Lâcher ici',
+  dropIdleLabel: 'Glissez une troupe ici',
+  iconPath: 'M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6m-3 9 5-5m-4.5-1.5 5 5',
+  queue: [
+    { active: true, id: 'q-militia', progress: 0.7, quantity: 2, troopId: 'militia' },
+    { id: 'q-squire', quantity: 1, troopId: 'squire' },
+  ],
+  summaryLabel: '3 en formation · 1m 20s restant',
+  title: "Caserne · file d'attente",
+};
+
+const armyRecruitStock: ArmyRecruitStock = {
+  iron: 4600,
+  popMax: 220,
+  population: 175,
+  stone: 4400,
+  wood: 4500,
+};
+
+const armyRecruitQuickValues: ArmyRecruitQuickValue[] = [
+  { label: '10', value: 10 },
+  { label: '50', value: 50 },
+  { label: '100', value: 100 },
+  { label: '500', value: 500 },
+  { label: 'MAX', tone: 'gold', value: computeArmyRecruitMax(armyTroops[1], armyRecruitStock) },
+];
+
+const armyRecruitLabels: ArmyRecruitPopupLabels = {
+  cancel: 'Annuler',
+  max: 'Max',
+  population: 'Population',
+  recruit: 'Entraîner',
+  resourceIron: 'Fer',
+  resourceStone: 'Pierre',
+  resourceWood: 'Bois',
+};
+
+const armyBottomNav = {
+  activeId: 'army',
+  items: [
+    { iconPath: 'M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6m-3 9 5-5m-4.5-1.5 5 5', id: 'army', label: 'Armée' },
+    { iconPath: 'm15 12-7-7-5 5 7 7M12.5 6.5 17 11l4.5-4.5L17 2M2 22l8-8', id: 'build', label: 'Village' },
+    { badge: 3, iconPath: 'M22 6 12 13 2 6m20 0v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6m20 0a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2', id: 'messages', label: 'Messages' },
+    { iconPath: 'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z', id: 'world', label: 'Monde' },
+  ],
+};
 
 const troopDetailFixture = {
   archetype: 'Infanterie · Frappe rapide',
@@ -778,6 +984,8 @@ export function DesignSystemPreview() {
   const [authTermsAccepted, setAuthTermsAccepted] = useState(true);
   const [authBannerLord, setAuthBannerLord] = useState('Sire Kelvin');
   const [authSelectedShield, setAuthSelectedShield] = useState('royal-blue');
+  const [armyActiveFilter, setArmyActiveFilter] = useState('all');
+  const [armyRecruitQuantity, setArmyRecruitQuantity] = useState(25);
   const [kingdomName, setKingdomName] = useState('Le Grand Nord');
   const [passwordValue, setPasswordValue] = useState('......');
   const [messages, setMessages] = useState(chatMessages);
@@ -809,6 +1017,38 @@ export function DesignSystemPreview() {
   const resourceBuildingUpgrade = getSharedUpgradePreview(resourceBuildingType, resourceBuildingLevel);
   const worldsPreviewCounts = buildWorldTabCounts(worldPreviewModels);
   const filteredWorldPreviewModels = filterWorldsByTab(worldPreviewModels, worldsPreviewTab);
+  const armyRecruitTroop = armyTroops[1];
+  const armyRecruitMax = computeArmyRecruitMax(armyRecruitTroop, armyRecruitStock);
+  const armyPreviewBase: ArmyViewProps = {
+    activeFilterId: armyActiveFilter,
+    bottomNav: armyBottomNav,
+    filters: armyFilters,
+    hud: {
+      crowns: '263 481',
+      crownsIcon: '/assets/crown.png',
+      level: 12,
+      playerInitials: 'SK',
+      power: '4 642',
+      powerIcon: '/assets/army-power.png',
+      resources: [
+        { icon: '/assets/resources/wood.png', id: 'wood', label: 'Bois', sub: '+120/h', value: '4.5K' },
+        { icon: '/assets/resources/stone.png', id: 'stone', label: 'Pierre', sub: '+80/h', value: '4.4K' },
+        { icon: '/assets/resources/iron.png', id: 'iron', label: 'Fer', sub: '+50/h', value: '4.6K' },
+        { icon: '/assets/resources/population.png', id: 'population', label: 'Population', sub: 'villageois', value: '175/220' },
+      ],
+    },
+    onFilterChange: setArmyActiveFilter,
+    recruitSheet: armyRecruitSheet,
+    screenLabel: 'Vue Armée',
+    troops: armyTroops,
+    village: {
+      name: 'Cursed Village',
+      nextLabel: 'Village suivant',
+      previousLabel: 'Village précédent',
+      subtitle: 'Capitale',
+      titleLabel: 'Village',
+    },
+  };
 
   return (
     <main className="min-h-full overflow-y-auto bg-[#f5e6d3] p-[18px] text-[#1f2937]">
@@ -1151,6 +1391,55 @@ export function DesignSystemPreview() {
                 totalCount={worldPreviewModels.length}
                 variants={defaultSeasonVariants}
                 worlds={filteredWorldPreviewModels}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="font-game text-2xl font-bold text-[#1f2937]">Vue Armée · État stable</h2>
+            <span className="font-mono text-[10px] text-[#5d4a32]">
+              army · garnison · source project/Vue Armée.html
+            </span>
+          </div>
+          <div className="flex w-full justify-center">
+            <div className="h-[720px] w-[360px] overflow-hidden rounded-[18px] border-[3px] border-[#3c2619] shadow-[0_10px_28px_rgba(60,38,25,.35)]">
+              <ArmyViewDesign {...armyPreviewBase} />
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="font-game text-2xl font-bold text-[#1f2937]">Vue Armée · Drag et recrutement</h2>
+            <span className="font-mono text-[10px] text-[#5d4a32]">
+              army · drop zone active · bottom-sheet contrôlé
+            </span>
+          </div>
+          <div className="flex w-full flex-wrap justify-center gap-4">
+            <div className="h-[720px] w-[360px] overflow-hidden rounded-[18px] border-[3px] border-[#3c2619] shadow-[0_10px_28px_rgba(60,38,25,.35)]">
+              <ArmyDraggingOverlay
+                army={armyPreviewBase}
+                ghostLabel="Vue Armée · drag actif"
+                troopId="squire"
+              />
+            </div>
+            <div className="h-[720px] w-[360px] overflow-hidden rounded-[18px] border-[3px] border-[#3c2619] shadow-[0_10px_28px_rgba(60,38,25,.35)]">
+              <ArmyRecruitOverlay
+                army={armyPreviewBase}
+                popup={{
+                  labels: armyRecruitLabels,
+                  max: armyRecruitMax,
+                  onCancel: () => setArmyRecruitQuantity(1),
+                  onChange: setArmyRecruitQuantity,
+                  onRecruit: setArmyRecruitQuantity,
+                  quickValues: armyRecruitQuickValues,
+                  stock: armyRecruitStock,
+                  troop: armyRecruitTroop,
+                  value: armyRecruitQuantity,
+                }}
+                screenLabel="Vue Armée · popup recrutement"
               />
             </div>
           </div>
