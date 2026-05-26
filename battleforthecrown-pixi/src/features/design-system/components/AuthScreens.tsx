@@ -127,7 +127,8 @@ export interface AuthLoginScreenProps {
   crownIcon: string;
   dividerLabel: string;
   fields: {
-    lord: AuthFieldProps;
+    email?: AuthFieldProps;
+    lord?: AuthFieldProps;
     password: AuthFieldProps;
   };
   forgotAction: AuthTextAction;
@@ -139,6 +140,7 @@ export interface AuthLoginScreenProps {
   ssoActions: AuthSsoAction[];
   status: AuthStatusBarProps;
   stepLabel: string;
+  submitError?: string | null;
   submitAction: AuthAction;
   subtitle: string;
   title: string;
@@ -160,8 +162,9 @@ export interface AuthRegisterScreenProps {
   badgeLabel: string;
   divider?: ReactNode;
   fields: {
+    confirmPassword?: AuthFieldProps;
     email: AuthFieldProps;
-    lord: AuthFieldProps;
+    lord?: AuthFieldProps;
     password: AuthFieldProps;
   };
   footerAction: AuthTextAction;
@@ -171,6 +174,7 @@ export interface AuthRegisterScreenProps {
   status: AuthStatusBarProps;
   stepLabel: string;
   strength: AuthStrengthMeterProps;
+  submitError?: string | null;
   submitAction: AuthAction;
   terms: AuthTermsControl;
   titleLines: string[];
@@ -481,7 +485,10 @@ export function AuthSsoChip({ className, disabled, kind, label, onClick }: AuthS
       onClick={onClick}
       type="button"
     >
-      <span className="flex size-[22px] items-center justify-center rounded-full bg-[linear-gradient(to_bottom,#3d2f1f,#1a1208)] font-serif text-[13px] font-black leading-none text-[#f6e4b8] shadow-[inset_0_1px_0_rgba(255,255,255,.18)]">
+      <span
+        aria-hidden="true"
+        className="flex size-[22px] items-center justify-center rounded-full bg-[linear-gradient(to_bottom,#3d2f1f,#1a1208)] font-serif text-[13px] font-black leading-none text-[#f6e4b8] shadow-[inset_0_1px_0_rgba(255,255,255,.18)]"
+      >
         {monogram}
       </span>
       {label}
@@ -617,6 +624,7 @@ export function AuthLandingScreen({
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-[2] h-[22%] bg-[linear-gradient(to_bottom,rgba(184,93,46,.18)_0%,rgba(109,88,56,.18)_100%)]" />
         <div className="absolute bottom-[22px] left-5 right-5 z-[3] flex flex-col gap-2.5">
           {renderActions(actions)}
+          {secondaryActions?.length ? <AuthSecondaryActions actions={secondaryActions} /> : null}
         </div>
       </div>
     );
@@ -720,10 +728,13 @@ export function AuthLoginScreen({
   ssoActions,
   status,
   stepLabel,
+  submitError,
   submitAction,
   subtitle,
   title,
 }: AuthLoginScreenProps) {
+  const identityField = fields.email ?? fields.lord;
+
   return (
     <AuthPhoneFrame withCastle={false}>
       <AuthStatusBar {...status} />
@@ -740,8 +751,13 @@ export function AuthLoginScreen({
       </div>
       <form className="contents" noValidate onSubmit={onSubmit}>
         <div className="flex flex-col gap-3 px-[22px] pt-3">
-          <AuthField {...fields.lord} />
+          {identityField ? <AuthField {...identityField} /> : null}
           <AuthField {...fields.password} />
+          {submitError ? (
+            <div className="font-game text-[10.5px] font-semibold text-[#a13a2a]" role="alert">
+              {submitError}
+            </div>
+          ) : null}
           <div className="flex items-center justify-between font-game text-[11px] font-bold">
             <label className="inline-flex cursor-pointer items-center gap-1.5 text-[#6d5838]">
               <input
@@ -795,6 +811,7 @@ export function AuthRegisterScreen({
   status,
   stepLabel,
   strength,
+  submitError,
   submitAction,
   terms,
   titleLines,
@@ -822,7 +839,7 @@ export function AuthRegisterScreen({
       </div>
       <form className="contents" noValidate onSubmit={onSubmit}>
         <div className="flex flex-col gap-2.5 px-[22px] pt-2.5">
-          <AuthField {...fields.lord} />
+          {fields.lord ? <AuthField {...fields.lord} /> : null}
           <AuthField {...fields.email} />
           <div className="flex flex-col gap-1">
             <AuthField {...fields.password} />
@@ -830,6 +847,12 @@ export function AuthRegisterScreen({
               <AuthStrengthMeter {...strength} />
             </div>
           </div>
+          {fields.confirmPassword ? <AuthField {...fields.confirmPassword} /> : null}
+          {submitError ? (
+            <div className="font-game text-[10.5px] font-semibold text-[#a13a2a]" role="alert">
+              {submitError}
+            </div>
+          ) : null}
         </div>
         <div className="absolute bottom-[18px] left-[22px] right-[22px] flex flex-col gap-2.5">
           <label className="flex cursor-pointer items-start gap-2 font-game text-[10.5px] font-semibold leading-[1.35] text-[#6d5838]">

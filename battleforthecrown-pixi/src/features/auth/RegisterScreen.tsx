@@ -1,30 +1,33 @@
-import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router';
-import { Crown, Scroll, Shield } from 'lucide-react';
-import { z } from 'zod';
+import { useMemo, useState, type FormEvent } from 'react';
+import { useNavigate } from 'react-router';
 import { registerSchema } from '@battleforthecrown/shared/auth';
-import {
-  Button,
-  Card,
-  CardBanner,
-  CardBody,
-  CardFooter,
-  Input,
-  InputHelperText,
-  InputLabel,
-  Spinner,
-} from '@/ui';
-import { useRegisterMutation } from '@/api/queries';
+import { z } from 'zod';
 import { ApiError } from '@/api';
+import { useRegisterMutation } from '@/api/queries';
+import { AuthRegisterScreen } from '@/features/design-system/components';
 import { useZodForm } from '@/lib/useZodForm';
+import { AuthScreenViewport } from './AuthScreenViewport';
 
-// confirmPassword est purement front (pas envoyé au backend) → on étend le schema partagé localement.
 const registerFormSchema = registerSchema
   .extend({ confirmPassword: z.string() })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Les mots de passe ne correspondent pas',
     path: ['confirmPassword'],
   });
+
+const status = {
+  batteryLabel: '100%',
+  networkLabel: 'LTE',
+  timeLabel: '09:41',
+};
+
+function getPasswordStrength(password: string): number {
+  const hasLength = password.length >= 8;
+  const hasMixedCase = /[a-z]/.test(password) && /[A-Z]/.test(password);
+  const hasDigit = /\d/.test(password);
+  const hasSymbol = /[^A-Za-z0-9]/.test(password);
+  return Math.max(1, [hasLength, hasMixedCase, hasDigit, hasSymbol].filter(Boolean).length);
+}
 
 export function RegisterScreen() {
   const navigate = useNavigate();
@@ -34,7 +37,17 @@ export function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
+
+  const clearFormErrors = () => {
+    if (submitError) setSubmitError(null);
+    clearErrors();
+  };
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -48,137 +61,113 @@ export function RegisterScreen() {
       {
         onSuccess: () => navigate('/worlds'),
         onError: (err) => {
-          if (err instanceof ApiError) {
-            setSubmitError(err.message || "Échec de l'inscription");
-          } else {
-            setSubmitError('Inscription impossible. Réessayer.');
-          }
+          setSubmitError(
+            err instanceof ApiError
+              ? err.message || "Échec de l'inscription"
+              : 'Inscription impossible. Réessayer.',
+          );
         },
       },
     );
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#e8d5b7] via-[#f5e6d3] to-[#d4c094] flex items-center justify-center p-4">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <Shield className="absolute top-20 left-10 text-[#8b7355]/10" size={120} />
-        <Crown className="absolute bottom-20 right-10 text-[#8b7355]/10" size={140} />
-      </div>
-
-      <div className="relative w-full max-w-md">
-        <Card variant="parchment" size="fluid" className="shadow-2xl">
-          <CardBanner variant="warning">Serment au Royaume</CardBanner>
-
-          <CardBody className="pt-24 px-6 pb-6 space-y-4">
-            <div className="flex items-center justify-center gap-3 text-center">
-              <Crown size={24} className="text-game-gold-dark" />
-              <p className="text-sm text-gray-600 font-game">
-                Deviens citoyen du royaume et entame ton épopée
-              </p>
-              <Crown size={24} className="text-game-gold-dark" />
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="h-[2px] flex-1 bg-gradient-to-r from-transparent via-game-gold-border to-transparent" />
-              <Scroll size={16} className="text-game-gold-dark" />
-              <div className="h-[2px] flex-1 bg-gradient-to-r from-transparent via-game-gold-border to-transparent" />
-            </div>
-
-            <form
-              onSubmit={onSubmit}
-              className="space-y-4"
-              noValidate
-              onChange={() => {
-                if (submitError) setSubmitError(null);
-                clearErrors();
-              }}
-            >
-              <div className="space-y-1">
-                <InputLabel htmlFor="register-email">Email</InputLabel>
-                <Input
-                  id="register-email"
-                  type="email"
-                  variant="parchment"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={register.isPending}
-                  required
-                />
-                {errors.email && (
-                  <InputHelperText variant="error">{errors.email}</InputHelperText>
-                )}
-              </div>
-
-              <div className="space-y-1">
-                <InputLabel htmlFor="register-password">Mot de passe</InputLabel>
-                <Input
-                  id="register-password"
-                  type="password"
-                  variant="parchment"
-                  autoComplete="new-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={register.isPending}
-                  required
-                />
-                {errors.password && (
-                  <InputHelperText variant="error">{errors.password}</InputHelperText>
-                )}
-              </div>
-
-              <div className="space-y-1">
-                <InputLabel htmlFor="register-confirm">Confirmation</InputLabel>
-                <Input
-                  id="register-confirm"
-                  type="password"
-                  variant="parchment"
-                  autoComplete="new-password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  disabled={register.isPending}
-                  required
-                />
-                {errors.confirmPassword && (
-                  <InputHelperText variant="error">{errors.confirmPassword}</InputHelperText>
-                )}
-              </div>
-
-              {submitError && (
-                <div role="alert">
-                  <InputHelperText variant="error">{submitError}</InputHelperText>
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                variant="warning"
-                size="lg"
-                disabled={register.isPending}
-                className="w-full"
-              >
-                {register.isPending ? <Spinner size="sm" /> : 'Créer le compte'}
-              </Button>
-            </form>
-          </CardBody>
-
-          <CardFooter className="border-t-2 !py-2 border-[#d4c094] bg-[#e8d5b7]">
-            <p className="text-sm text-gray-700 font-game text-center w-full">
-              Déjà citoyen du royaume ?{' '}
-              <Link
-                to="/auth/login"
-                className="font-semibold text-game-gold-dark hover:text-game-gold-border transition-colors underline"
-              >
-                Entrer au château
-              </Link>
-            </p>
-          </CardFooter>
-        </Card>
-
-        <p className="mt-6 text-center text-sm text-gray-700 font-cinzel italic">
-          « À ceux qui osent, le royaume offre gloire et richesses. »
-        </p>
-      </div>
-    </div>
+    <AuthScreenViewport>
+      <AuthRegisterScreen
+        backLabel="Accueil"
+        badgeIcon="/assets/crown.png"
+        badgeLabel="Compte joueur"
+        fields={{
+          confirmPassword: {
+            autoComplete: 'new-password',
+            disabled: register.isPending,
+            error: errors.confirmPassword,
+            icon: '✓',
+            id: 'register-confirm-password',
+            label: 'Confirmation',
+            name: 'confirmPassword',
+            onChange: (value) => {
+              clearFormErrors();
+              setConfirmPassword(value);
+            },
+            onPasswordVisibleChange: setConfirmPasswordVisible,
+            passwordVisible: confirmPasswordVisible,
+            required: true,
+            secure: true,
+            value: confirmPassword,
+          },
+          email: {
+            autoComplete: 'email',
+            disabled: register.isPending,
+            error: errors.email,
+            icon: '@',
+            id: 'register-email',
+            label: 'Email',
+            name: 'email',
+            onChange: (value) => {
+              clearFormErrors();
+              setEmail(value);
+            },
+            placeholder: 'toi@royaume.test',
+            required: true,
+            type: 'email',
+            value: email,
+          },
+          password: {
+            autoComplete: 'new-password',
+            disabled: register.isPending,
+            error: errors.password,
+            icon: '•',
+            id: 'register-password',
+            label: 'Mot de passe',
+            name: 'password',
+            onChange: (value) => {
+              clearFormErrors();
+              setPassword(value);
+            },
+            onPasswordVisibleChange: setPasswordVisible,
+            passwordVisible,
+            required: true,
+            secure: true,
+            value: password,
+          },
+        }}
+        footerAction={{
+          disabled: register.isPending,
+          id: 'login',
+          label: 'Entrer au château',
+          onClick: () => navigate('/auth/login'),
+        }}
+        footerPrompt="Déjà citoyen du royaume ?"
+        onBack={() => navigate('/')}
+        onSubmit={onSubmit}
+        status={status}
+        stepLabel="Serment"
+        strength={{
+          labels: ['faible', 'correct', 'solide', 'royal'],
+          score: passwordStrength,
+          titlePrefix: 'Sécurité',
+        }}
+        submitError={submitError}
+        submitAction={{
+          disabled: register.isPending || !termsAccepted,
+          id: 'submit-register',
+          label: register.isPending ? 'Création...' : 'Créer le compte',
+          type: 'submit',
+          variant: 'warning',
+        }}
+        terms={{
+          checked: termsAccepted,
+          firstLinkLabel: 'conditions',
+          firstText: "J'accepte les",
+          onChange: setTermsAccepted,
+          secondLinkLabel: 'charte du royaume',
+          secondText: 'et la',
+          suffix: '.',
+        }}
+        titleLines={['Prêter', 'serment']}
+      />
+    </AuthScreenViewport>
   );
 }
+
