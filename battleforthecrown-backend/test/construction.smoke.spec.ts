@@ -1,5 +1,6 @@
 import request from 'supertest';
 import { getQuarterPopulationLimit } from '@battleforthecrown/shared/village';
+import { SMOKE_WORLD_CONFIG } from './fixtures/smoke-world-config';
 import {
   bootSmokeApp,
   joinWorld,
@@ -110,11 +111,26 @@ describe('construction smoke', () => {
     ).resolves.toMatchObject({ used: 275, max: 250 });
   });
 
-  it('construction: completing QUARTER refreshes max population', async () => {
+  it('construction: completing QUARTER 7 → 8 refreshes max population', async () => {
     const world = await seedSmokeWorld(
       ctx.prisma,
       `build-quarter-${Date.now()}`,
     );
+    await ctx.prisma.world.update({
+      where: { id: world.id },
+      data: {
+        config: {
+          ...SMOKE_WORLD_CONFIG,
+          tempo: {
+            ...SMOKE_WORLD_CONFIG.tempo,
+            overrides: {
+              ...SMOKE_WORLD_CONFIG.tempo.overrides,
+              constructionSpeed: 0.000001,
+            },
+          },
+        },
+      },
+    });
     const user = await registerUser(ctx.server, 'build-quarter');
     const join = await joinWorld(
       ctx.server,
@@ -126,7 +142,7 @@ describe('construction smoke', () => {
 
     await ctx.prisma.building.updateMany({
       where: { villageId, type: 'QUARTER' },
-      data: { level: 1, startTime: null, endTime: null },
+      data: { level: 7, startTime: null, endTime: null },
     });
     await ctx.prisma.resourceStock.update({
       where: { villageId },
@@ -139,7 +155,7 @@ describe('construction smoke', () => {
     });
     await ctx.prisma.population.update({
       where: { villageId },
-      data: { max: getQuarterPopulationLimit(1) },
+      data: { max: getQuarterPopulationLimit(7) },
     });
 
     const res = await request(ctx.server)
@@ -153,7 +169,7 @@ describe('construction smoke', () => {
         const population = await ctx.prisma.population.findUniqueOrThrow({
           where: { villageId },
         });
-        return population.max === getQuarterPopulationLimit(2)
+        return population.max === getQuarterPopulationLimit(8)
           ? population
           : null;
       },

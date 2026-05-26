@@ -13,7 +13,11 @@ import {
   MAX_CONSTRUCTION_QUEUE,
   type BuildingLevelDefinition,
 } from '@battleforthecrown/shared/village/buildings';
-import { getQuarterPopulationLimit } from '@battleforthecrown/shared/village';
+import {
+  BASE_VILLAGE_STRATEGY_BONUS,
+  DEFAULT_VILLAGE_STRATEGY,
+  getQuarterPopulationLimit,
+} from '@battleforthecrown/shared/village';
 import { RESOURCE_PRODUCTION_PER_HOUR } from '@battleforthecrown/shared/resources';
 
 interface ResourceBuildingDetailModalProps {
@@ -53,7 +57,7 @@ const RESOURCE_BUILDING_META: Record<ResourceBuildingKey, {
   tagline: string;
 }> = {
   quarter: {
-    eyebrow: 'Production · Population',
+    eyebrow: 'Logement · Population',
     icon: '/assets/resources/population.png',
     isPopulation: true,
     label: 'villageois',
@@ -79,21 +83,66 @@ const RESOURCE_BUILDING_META: Record<ResourceBuildingKey, {
   },
 };
 
+const POPULATION_BONUS_MULTIPLIERS = Array.from(
+  new Set([
+    BASE_VILLAGE_STRATEGY_BONUS.populationBonus,
+    ...Object.values(DEFAULT_VILLAGE_STRATEGY.strategies).map(
+      (strategy) => strategy.bonuses.populationBonus ?? BASE_VILLAGE_STRATEGY_BONUS.populationBonus,
+    ),
+  ]),
+);
+
+function getEffectiveQuarterPopulationLimit(level: number, multiplier: number): number {
+  return Math.floor(getQuarterPopulationLimit(level) * multiplier);
+}
+
+function inferPopulationCapacityMultiplier(
+  currentLevel: number,
+  currentPopulationMax: number | null,
+): number {
+  if (currentPopulationMax === null) return BASE_VILLAGE_STRATEGY_BONUS.populationBonus;
+
+  const baseLimit = getQuarterPopulationLimit(Math.max(1, currentLevel));
+  if (baseLimit <= 0) return BASE_VILLAGE_STRATEGY_BONUS.populationBonus;
+
+  const knownMultiplier = POPULATION_BONUS_MULTIPLIERS.find(
+    (multiplier) => getEffectiveQuarterPopulationLimit(currentLevel, multiplier) === currentPopulationMax,
+  );
+  if (knownMultiplier !== undefined) return knownMultiplier;
+
+  return currentPopulationMax / baseLimit;
+}
+
 function getResourceBuildingLevelStats(
   key: ResourceBuildingKey,
   maxLevel: number,
   maxPerType: number,
+  currentLevel: number,
   currentPopulationMax: number | null,
+  currentPopulationUsed: number | null,
 ): Record<number, ResourceBuildingLevelStats> {
+  const populationCapacityMultiplier = key === 'quarter'
+    ? inferPopulationCapacityMultiplier(currentLevel, currentPopulationMax)
+    : BASE_VILLAGE_STRATEGY_BONUS.populationBonus;
+  const currentPopulationLimit = getEffectiveQuarterPopulationLimit(currentLevel, populationCapacityMultiplier);
+  const currentPopulationAvailable =
+    currentPopulationMax !== null && currentPopulationUsed !== null
+      ? Math.max(0, currentPopulationMax - currentPopulationUsed)
+      : currentPopulationLimit;
+
   return Object.fromEntries(
     Array.from({ length: maxLevel }, (_, index) => {
       const level = index + 1;
       if (key === 'quarter') {
-        const populationLimit =
-          level > 5 && currentPopulationMax !== null
-            ? currentPopulationMax
-            : getQuarterPopulationLimit(level);
-        return [level, { production: populationLimit, storage: populationLimit }];
+        const populationLimit = getEffectiveQuarterPopulationLimit(level, populationCapacityMultiplier);
+        const populationGainFromCurrentLevel = populationLimit - currentPopulationLimit;
+        return [
+          level,
+          {
+            production: Math.max(0, currentPopulationAvailable + populationGainFromCurrentLevel),
+            storage: populationLimit,
+          },
+        ];
       }
 
       return [
@@ -110,9 +159,9 @@ function getResourceBuildingLevelStats(
 function getResourceBuildingStockNow(
   key: ResourceBuildingKey,
   displayResources: DisplayResources | null,
-  population: { used: number } | undefined,
+  population: { max: number; used: number } | undefined,
 ): number {
-  if (key === 'quarter') return population?.used ?? 0;
+  if (key === 'quarter') return population ? Math.max(0, population.max - population.used) : 0;
   return displayResources?.[key] ?? 0;
 }
 
@@ -161,9 +210,7 @@ export function ResourceBuildingDetailModal({
   if (!resourceKey) return null;
 
   const resourceMeta = RESOURCE_BUILDING_META[resourceKey];
-  const resourceMaxLevel = resourceKey === 'quarter'
-    ? Math.max(building.level + 1, Math.min(building.maxLevel, 5))
-    : building.maxLevel;
+  const resourceMaxLevel = building.maxLevel;
   const isLockedByCastle = lockState.state === 'unbuilt-locked' && lockState.requiredCastleLevel !== null;
   const storageMax = resourceKey === 'quarter'
     ? (population?.max ?? getQuarterPopulationLimit(Math.max(1, building.level)))
@@ -214,12 +261,15 @@ export function ResourceBuildingDetailModal({
               : undefined
           }
           isPopulation={resourceMeta.isPopulation}
+          labels={resourceKey === 'quarter' ? { sectionCapacity: 'Villageois disponibles' } : undefined}
           level={building.level}
           levelStats={getResourceBuildingLevelStats(
             resourceKey,
             resourceMaxLevel,
             storageMax,
+            building.level,
             population?.max ?? null,
+            population?.used ?? null,
           )}
           linkVariant="rule"
           maxLevel={resourceMaxLevel}

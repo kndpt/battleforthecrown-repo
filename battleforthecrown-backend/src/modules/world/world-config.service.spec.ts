@@ -214,8 +214,20 @@ describe('WorldConfigService', () => {
       expect(service.getPopulationLimit('world-1', 2)).toBe(279);
     });
 
-    it('returns the default 250 when the level is not found', () => {
-      expect(service.getPopulationLimit('world-1', 99)).toBe(250);
+    it('covers all effective Quarter levels with a non-zero late-game delta', () => {
+      expect(
+        Array.from({ length: 10 }, (_, index) =>
+          service.getPopulationLimit('world-1', index + 1),
+        ),
+      ).toEqual([250, 279, 310, 346, 385, 430, 480, 535, 595, 665]);
+      expect(service.getPopulationLimit('world-1', 8)).toBeGreaterThan(
+        service.getPopulationLimit('world-1', 7),
+      );
+    });
+
+    it('clamps unknown levels to the nearest defined population limit', () => {
+      expect(service.getPopulationLimit('world-1', 0)).toBe(250);
+      expect(service.getPopulationLimit('world-1', 99)).toBe(665);
     });
   });
 

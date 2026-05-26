@@ -28,13 +28,13 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 ### Runs actifs
 
 - [039 — Intégration runtime de la vue Armée design-system](./runs/039-integrate-army-view-design-system.md) — 📋 `PLANNED`. Brancher la vue Armée design-system sur `/game/army` avec données réelles et vrai drag & drop vers le recrutement.
-- [038 — Correction capacité Quartier et modal population](./runs/038-fix-quarter-population-scaling-modal.md) — 📋 `PLANNED`. Corriger la capacité villageois du Quartier 6-10 et retirer la sémantique horaire de sa modal.
 - [036 — Onboarding scripté runtime](./runs/036-feature-scripted-onboarding-runtime.md) — 📋 `PLANNED`. Créer le tutoriel server-authoritative, dépendant du run 035 pour garantir une cible barbare T1 atteignable.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés
 
 - [037 — Migration des vues auth vers le design-system](./runs/archive/037-migrate-auth-views-design-system.md) — ✅ `DONE` (2026-05-26). Routes `/`, `/auth/login`, `/auth/register` migrées vers les écrans auth design-system, contrat `{ email, password }` préservé, contrôles non supportés inertes et QA navigateur mobile/desktop.
+- [038 — Correction capacité Quartier et modal population](./runs/archive/038-fix-quarter-population-scaling-modal.md) — ✅ `DONE` (2026-05-26). Courbe Quartier 1-10 corrigée, modal population sans unité horaire, smoke upgrade 7→8 et correction DB locale non destructive.
 - [035 — Portée initiale Watchtower et T1 barbare atteignable](./runs/archive/035-fix-early-barbarian-reachability.md) — ✅ `DONE` (2026-05-25). Watchtower L1 portée à 10 cases, garantie idempotente d'un T1 visible au join, docs gameplay alignées et smoke join/vision/attaque.
 - [034 — Isolation multi-monde des données joueur](./runs/archive/034-fix-world-scoped-player-data.md) — ✅ `DONE` (2026-05-25). Puissance, rapports combat/scout et caches Pixi scoppés au monde courant, endpoints publics power explicitement par monde, invariant SPEC V3 ajouté et smoke multi-world.
 - [033 — Écran sélection royaumes Pixi](./runs/archive/033-feature-worlds-selection-screen.md) — ✅ `DONE` (2026-05-25). Écran `/worlds` branché sur `GET /worlds/public`, variante B bannières héraldiques portée dans le design-system, onglets Inscription/Bientôt/Verrouillés, CTA Rejoindre / Me prévenir / Inscription close, navigation depuis profil et tests Pixi.
