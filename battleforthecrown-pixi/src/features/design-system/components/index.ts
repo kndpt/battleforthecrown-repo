@@ -209,6 +209,8 @@ export { DigitTimer, Timer } from './Timer';
 export type { DigitTimerProps, TimerProps, TimerSize, TimerTone } from './Timer';
 export { NumberStepper } from './NumberStepper';
 export type { NumberStepperControl, NumberStepperProps, NumberStepperSize } from './NumberStepper';
+export { OnboardingFab } from './OnboardingFab';
+export type { OnboardingFabActionPayload, OnboardingFabPlacement, OnboardingFabProps } from './OnboardingFab';
 export { PlayerProfileCard } from './PlayerProfileCard';
 export type { PlayerProfileAction, PlayerProfileAvatarTone, PlayerProfileCardProps, PlayerProfileRelation, PlayerProfileStat, PlayerProfileTribe, PlayerProfileTribeTone, PlayerProfileVariant } from './PlayerProfileCard';
 export { PlayerProfileSheet } from './PlayerProfileSheet';

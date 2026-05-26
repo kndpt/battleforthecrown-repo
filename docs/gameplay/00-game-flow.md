@@ -24,7 +24,7 @@ Le monde est créé (admin ou cron). Status `PLANNED`, **invisible** dans la lis
 2. Choisit un monde dans la liste (les mondes en cohorte principale sont mis en avant).
 3. Rejoint avec un nom de village (`POST /world/:id/join`) → spawn d'un premier village.
 4. Bénéficie du **bouclier débutant 48 h** (intouchable PvP, cf. [`14` § Bouclier débutant](./14-pvp-conquest.md#3-bouclier-débutant--48-h-à-larrivée-sur-le-monde)).
-5. Lance le **tuto guidé** (5 étapes scriptées : 1ᵉʳ upgrade éco → 1ᵉʳ raid barbare T1 → 1ᵉʳ Watchtower → 1ᵉʳ scout → TBD, cf. [`15`](./15-onboarding.md)).
+5. Lance le **tuto guidé** (6 étapes scriptées : 1ᵉʳ upgrade éco → 1ᵉʳ raid barbare T1 → 1ᵉʳ Watchtower → 1ᵉʳ scout → TBD, cf. [`15`](./15-onboarding.md)).
 6. Voit le **seeding barbare adaptatif** se générer autour de lui (T1 proches faciles, T2-T5 plus loin et plus dangereux, cf. [`07`](./07-barbarian-spawning.md)).
 
 À l'échelle du monde : **pic d'arrivée Day 0**, queue d'inscriptions sur 7 j. Cette cohorte jouera ensemble jusqu'à `ENDED`.

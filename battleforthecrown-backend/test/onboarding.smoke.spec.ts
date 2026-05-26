@@ -11,6 +11,7 @@ import {
   UNIT_TYPES,
   WATCHTOWER_VISION_LEVELS,
 } from '@battleforthecrown/shared';
+import { ONBOARDING_TRAIN_TROOPS_TARGET } from '@battleforthecrown/shared/onboarding';
 import type { OnboardingSummaryDto } from '@battleforthecrown/shared/onboarding';
 import { EventOutboxService } from '../src/modules/event/event-outbox.service';
 import {
@@ -106,6 +107,8 @@ describe('scripted onboarding smoke', () => {
     expect(crownsAfterSecondJoin.balance).toBe(100);
 
     const now = new Date();
+    await setBuildingLevel(ctx, villageId, BUILDING_TYPES.CASTLE, 2);
+    await setBuildingLevel(ctx, villageId, BUILDING_TYPES.BARRACKS, 1);
     await ctx.prisma.eventOutbox.createMany({
       data: [
         {
@@ -135,8 +138,82 @@ describe('scripted onboarding smoke', () => {
             trainingId: 'onboarding-training',
             villageId,
             unitType: 'MILITIA',
-            completedQty: 1,
-            totalQty: 1,
+            completedQty: ONBOARDING_TRAIN_TROOPS_TARGET - 1,
+            totalQty: ONBOARDING_TRAIN_TROOPS_TARGET,
+          },
+        },
+      ],
+    });
+
+    await ctx.app.get(EventOutboxService).dispatchPendingEvents();
+    const summaryBeforeEnoughTroops = await request(ctx.server)
+      .get('/onboarding')
+      .query({ worldId: world.id })
+      .set('Authorization', `Bearer ${player.accessToken}`);
+    expect(summaryBeforeEnoughTroops.status).toBe(200);
+    expect(summaryBeforeEnoughTroops.body).toMatchObject({
+      status: 'ACTIVE',
+      currentStep: 'TRAIN_TROOPS',
+    });
+
+    await ctx.prisma.unitInventory.upsert({
+      where: {
+        villageId_unitType: { villageId, unitType: UNIT_TYPES.MILITIA },
+      },
+      create: {
+        villageId,
+        unitType: UNIT_TYPES.MILITIA,
+        quantity: ONBOARDING_TRAIN_TROOPS_TARGET,
+      },
+      update: { quantity: ONBOARDING_TRAIN_TROOPS_TARGET },
+    });
+    await ctx.prisma.eventOutbox.createMany({
+      data: [
+        {
+          kind: 'unit.trained',
+          aggregateId: 'onboarding-training-complete',
+          payload: {
+            trainingId: 'onboarding-training',
+            villageId,
+            unitType: 'MILITIA',
+            completedQty: ONBOARDING_TRAIN_TROOPS_TARGET,
+            totalQty: ONBOARDING_TRAIN_TROOPS_TARGET,
+          },
+        },
+      ],
+    });
+
+    await ctx.app.get(EventOutboxService).dispatchPendingEvents();
+    const summaryBeforeCastleLevel3 = await request(ctx.server)
+      .get('/onboarding')
+      .query({ worldId: world.id })
+      .set('Authorization', `Bearer ${player.accessToken}`);
+    expect(summaryBeforeCastleLevel3.status).toBe(200);
+    expect(summaryBeforeCastleLevel3.body).toMatchObject({
+      status: 'ACTIVE',
+      currentStep: 'UPGRADE_CASTLE_LEVEL_3',
+    });
+
+    await setBuildingLevel(ctx, villageId, BUILDING_TYPES.CASTLE, 3);
+    await setBuildingLevel(ctx, villageId, BUILDING_TYPES.WATCHTOWER, 1);
+    await createVictoriousBarbarianReport(
+      ctx,
+      world.id,
+      player.userId,
+      villageId,
+      join.village.x + 1,
+      join.village.y,
+    );
+    await ctx.prisma.eventOutbox.createMany({
+      data: [
+        {
+          kind: 'building.completed',
+          aggregateId: 'onboarding-castle-3',
+          payload: {
+            buildingId: 'onboarding-castle',
+            villageId,
+            buildingType: 'CASTLE',
+            level: 3,
           },
         },
         {
@@ -165,7 +242,7 @@ describe('scripted onboarding smoke', () => {
             loot: { resources: { wood: 10, stone: 0, iron: 0 } },
             lossesAttacker: {},
             casualtyRate: 0,
-            survivingUnits: { MILITIA: 1 },
+            survivingUnits: { MILITIA: ONBOARDING_TRAIN_TROOPS_TARGET },
             returnAt: new Date(now.getTime() + 60_000).toISOString(),
           },
         },
@@ -186,6 +263,7 @@ describe('scripted onboarding smoke', () => {
       'UPGRADE_CASTLE_LEVEL_2',
       'BUILD_BARRACKS',
       'TRAIN_TROOPS',
+      'UPGRADE_CASTLE_LEVEL_3',
       'BUILD_WATCHTOWER',
       'ATTACK_BARBARIAN',
     ]);
@@ -231,7 +309,108 @@ describe('scripted onboarding smoke', () => {
       }),
     ).toBe(1);
   });
+
+  it('catches up when onboarding facts were completed before the matching step became current', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const player = await registerUser(ctx.server, 'onboarding-catchup-player');
+    const join = await joinWorld(
+      ctx.server,
+      player.accessToken,
+      world.id,
+      'onboarding-catchup-home',
+    );
+    const villageId = join.village.id;
+
+    await setBuildingLevel(ctx, villageId, BUILDING_TYPES.CASTLE, 3);
+    await setBuildingLevel(ctx, villageId, BUILDING_TYPES.BARRACKS, 1);
+    await setBuildingLevel(ctx, villageId, BUILDING_TYPES.WATCHTOWER, 1);
+    await ctx.prisma.unitInventory.upsert({
+      where: {
+        villageId_unitType: { villageId, unitType: UNIT_TYPES.MILITIA },
+      },
+      create: {
+        villageId,
+        unitType: UNIT_TYPES.MILITIA,
+        quantity: ONBOARDING_TRAIN_TROOPS_TARGET,
+      },
+      update: { quantity: ONBOARDING_TRAIN_TROOPS_TARGET },
+    });
+    await createVictoriousBarbarianReport(
+      ctx,
+      world.id,
+      player.userId,
+      villageId,
+      join.village.x + 1,
+      join.village.y,
+    );
+
+    const summary = await request(ctx.server)
+      .get('/onboarding')
+      .query({ worldId: world.id })
+      .set('Authorization', `Bearer ${player.accessToken}`);
+
+    expect(summary.status).toBe(200);
+    const body = summary.body as OnboardingSummaryDto;
+    expect(body.status).toBe('COMPLETED');
+    expect(body.currentStep).toBeNull();
+    expect(body.completedSteps.map((step) => step.step)).toEqual([
+      'UPGRADE_CASTLE_LEVEL_2',
+      'BUILD_BARRACKS',
+      'TRAIN_TROOPS',
+      'UPGRADE_CASTLE_LEVEL_3',
+      'BUILD_WATCHTOWER',
+      'ATTACK_BARBARIAN',
+    ]);
+  });
 });
+
+async function setBuildingLevel(
+  ctx: SmokeContext,
+  villageId: string,
+  buildingType: string,
+  level: number,
+) {
+  const building = await ctx.prisma.building.findFirst({
+    where: { villageId, type: buildingType },
+    select: { id: true },
+  });
+
+  if (building) {
+    await ctx.prisma.building.update({
+      where: { id: building.id },
+      data: { level, startTime: null, endTime: null },
+    });
+    return;
+  }
+
+  await ctx.prisma.building.create({
+    data: { villageId, type: buildingType, level },
+  });
+}
+
+async function createVictoriousBarbarianReport(
+  ctx: SmokeContext,
+  worldId: string,
+  attackerUserId: string,
+  attackerVillageId: string,
+  targetX: number,
+  targetY: number,
+) {
+  await ctx.prisma.combatReport.create({
+    data: {
+      worldId,
+      attackerUserId,
+      attackerVillageId,
+      targetKind: 'BARBARIAN_VILLAGE',
+      targetX,
+      targetY,
+      loot: { resources: { wood: 10, stone: 0, iron: 0 } },
+      totalUnitsAttacker: { MILITIA: ONBOARDING_TRAIN_TROOPS_TARGET },
+      lossesAttacker: {},
+      details: {},
+    },
+  });
+}
 
 function getScriptedOnboardingCriticalPathMs(): number {
   const castle2 = buildingDurationMs(BUILDING_TYPES.CASTLE, 2, 1);
@@ -241,7 +420,7 @@ function getScriptedOnboardingCriticalPathMs(): number {
     2,
   );
   const barracks1 = buildingDurationMs(BUILDING_TYPES.BARRACKS, 1, 2);
-  const militia1 = trainingDurationMs();
+  const militia5 = trainingDurationMs(ONBOARDING_TRAIN_TROOPS_TARGET);
   const watchtower1 = buildingDurationMs(BUILDING_TYPES.WATCHTOWER, 1, 3);
   const attackTravel = TempoService.applyDuration(
     calculateTravelTime(
@@ -257,7 +436,7 @@ function getScriptedOnboardingCriticalPathMs(): number {
     castle2 +
     castle3UnlockForWatchtower +
     barracks1 +
-    militia1 +
+    militia5 +
     watchtower1 +
     attackTravel
   );
@@ -268,7 +447,10 @@ function getScriptedOnboardingRequiredResources() {
     calculateBuildingCost(BUILDING_TYPES.CASTLE, 2, 1),
     calculateBuildingCost(BUILDING_TYPES.CASTLE, 3, 2),
     calculateBuildingCost(BUILDING_TYPES.BARRACKS, 1, 2),
-    UNIT_CATALOG.costs[UNIT_TYPES.MILITIA],
+    multiplyCost(
+      UNIT_CATALOG.costs[UNIT_TYPES.MILITIA],
+      ONBOARDING_TRAIN_TROOPS_TARGET,
+    ),
     calculateBuildingCost(BUILDING_TYPES.WATCHTOWER, 1, 3),
   ];
 
@@ -299,14 +481,14 @@ function buildingDurationMs(
   );
 }
 
-function trainingDurationMs(): number {
+function trainingDurationMs(quantity: number): number {
   return Math.max(
     MS_PER_SECOND,
     Math.round(
       TempoService.applyDuration(
         calculateTrainingTime(
           UNIT_CATALOG.costs[UNIT_TYPES.MILITIA].time,
-          1,
+          quantity,
           getBarracksTrainingSpeedMultiplier(1),
         ),
         SMOKE_WORLD_CONFIG.tempo,
@@ -314,4 +496,15 @@ function trainingDurationMs(): number {
       ),
     ),
   );
+}
+
+function multiplyCost(
+  cost: { wood: number; stone: number; iron: number },
+  factor: number,
+) {
+  return {
+    wood: cost.wood * factor,
+    stone: cost.stone * factor,
+    iron: cost.iron * factor,
+  };
 }

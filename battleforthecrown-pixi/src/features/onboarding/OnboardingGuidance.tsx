@@ -1,43 +1,71 @@
-import { Button } from '@/ui';
+import { useEffect, useRef, useState } from 'react';
+import { OnboardingFab } from '@/features/design-system/components';
+import type { GameActionId } from '@/features/game-actions/gameActions';
 import type { OnboardingGuidance as OnboardingGuidanceModel } from './onboardingViewModel';
 
-interface OnboardingGuidanceProps {
+export interface OnboardingGuidanceProps {
   guidance: OnboardingGuidanceModel | null;
   isLoading?: boolean;
+  onAction?: (actionId: GameActionId) => void;
   onNavigate: (route: OnboardingGuidanceModel['route']) => void;
 }
 
 export function OnboardingGuidance({
   guidance,
   isLoading = false,
+  onAction,
   onNavigate,
 }: OnboardingGuidanceProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isAdvancing, setIsAdvancing] = useState(false);
+  const previousStepRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!guidance) {
+      previousStepRef.current = null;
+      return undefined;
+    }
+
+    const previousStep = previousStepRef.current;
+    previousStepRef.current = guidance.step;
+
+    if (previousStep === null || guidance.step <= previousStep) {
+      return undefined;
+    }
+
+    setIsAdvancing(true);
+    const timeout = window.setTimeout(() => setIsAdvancing(false), 900);
+    return () => window.clearTimeout(timeout);
+  }, [guidance?.step]);
+
   if (!guidance || isLoading) return null;
 
   return (
-    <aside className="pointer-events-auto w-[min(360px,calc(100vw-1.5rem))] rounded-lg border-2 border-game-gold-border bg-parchment/95 p-3 shadow-clay-lg">
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <span className="font-game text-[11px] font-bold uppercase tracking-normal text-game-gold-dark">
-          Tutoriel
-        </span>
-        <span className="rounded bg-kingdom-900 px-2 py-0.5 font-game text-[11px] font-bold text-white">
-          {guidance.progressLabel}
-        </span>
-      </div>
-      <h2 className="font-cinzel text-base font-bold leading-tight text-kingdom-900">
-        {guidance.title}
-      </h2>
-      <p className="mt-1 font-game text-sm leading-snug text-kingdom-700">
-        {guidance.description}
-      </p>
-      <Button
-        className="mt-3 w-full"
-        size="sm"
-        variant="success"
-        onClick={() => onNavigate(guidance.route)}
-      >
-        {guidance.ctaLabel}
-      </Button>
-    </aside>
+    <OnboardingFab
+      body={guidance.description}
+      closeLabel="Fermer le tutoriel"
+      ctaLabel={guidance.ctaLabel}
+      imageAlt={guidance.title}
+      imageBadgeLabel={guidance.imageBadgeLabel}
+      imageSrc={guidance.imageSrc}
+      isAdvancing={isAdvancing}
+      modalLabel={guidance.modalLabel}
+      onOpenChange={setIsOpen}
+      onPrimaryAction={() => {
+        setIsOpen(false);
+        if (onAction) {
+          onAction(guidance.gameActionId);
+          return;
+        }
+        onNavigate(guidance.route);
+      }}
+      onSecondaryAction={() => setIsOpen(false)}
+      open={isOpen}
+      pillLabel={guidance.pillLabel}
+      secondaryLabel={guidance.secondaryLabel}
+      step={guidance.step}
+      title={guidance.title}
+      total={guidance.total}
+    />
   );
 }

@@ -32,3 +32,10 @@
 - Pour un bottom nav fixe, ne pas se limiter au fond : vérifier aussi le padding haut après changement de bordure/background, sinon les icônes peuvent sembler collées au bord supérieur.
 - Quand une couleur/gradient apparaît autour d'un menu fixe, inspecter d'abord le wrapper parent visible dans DevTools avant de forcer le style du composant enfant.
 - Pour une bottom sheet gardée montée pour l'animation de fermeture, si une ombre reste visible, inspecter l'élément exact qui porte `shadow-[...]` et corriger le composant de panel source ; ne pas patcher le shell `BottomSheet` à l'aveugle.
+- Quand le user dit être "à jour avec main" sur un worktree détaché, comparer `HEAD`, `origin/main` et la branche locale `main` : des commits locaux non poussés peuvent exister hors remote.
+- Pour une étape onboarding quantitative, valider l'état serveur réel atteint (ex. inventaire `MILITIA >= 5`) plutôt que seulement l'event ponctuel qui signale une unité formée.
+- Si une étape onboarding quantitative reste bloquée alors que l'état serveur est atteint, inspecter aussi `event_outbox.dispatched_at` et les migrations de la DB active du worktree : l'event final peut être pending après une migration enum ajoutée serveur déjà lancé.
+- Pour l'onboarding scripté, ne pas confondre ordre d'affichage et source de validation : le backend doit avancer dans l'ordre, mais vérifier les faits serveur persistés pour rattraper les actions faites en avance.
+- Quand une étape onboarding demande une quantité, refléter cette quantité sur l'asset de la modale avec un badge dédié, pas seulement dans la description textuelle.
+- Pour les étapes onboarding qui ciblent une entité de jeu réelle, utiliser l'asset runtime de cette entité quand il existe plutôt qu'une icône générique.
+- Avant de figer une séquence onboarding, vérifier les prérequis de lock des bâtiments demandés ensuite ; si une étape future est verrouillée par un niveau de Château, ajouter l'upgrade dans le script.

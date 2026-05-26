@@ -10,7 +10,7 @@ L'`01-overview.md` listait initialement la « Campagne solo » comme extension *
 
 ## Cible MVP — runtime
 
-5 étapes scriptées sont chaînées dès la création du premier village d'un joueur sur un monde. Le runtime est **server-authoritative** : le frontend n'avance jamais une étape localement, il affiche seulement la guidance correspondant à l'état exposé par `GET /onboarding?worldId=...`.
+6 étapes scriptées sont chaînées dès la création du premier village d'un joueur sur un monde. Le runtime est **server-authoritative** : le frontend n'avance jamais une étape localement, il affiche seulement la guidance correspondant à l'état exposé par `GET /onboarding?worldId=...`.
 
 À la création du premier village `userId × worldId`, le backend crée un état onboarding unique et applique une récompense initiale unique :
 
@@ -27,9 +27,10 @@ Cible confirmée après recalibration tempo : couvrir une session ≤ 10 min qui
 | ---: | --- | --- |
 | 1 | Château niveau 2 terminé | Économie / vitesse de construction |
 | 2 | Caserne construite | Infrastructure militaire |
-| 3 | Première troupe formée | Militaire |
-| 4 | Tour de guet construite | Exploration |
-| 5 | Premier village barbare vaincu | Attaque PvE |
+| 3 | 5 Milices paysannes formées | Militaire |
+| 4 | Château niveau 3 terminé | Déblocage exploration |
+| 5 | Tour de guet construite | Exploration |
+| 6 | Premier village barbare vaincu | Attaque PvE |
 
 Hors scope MVP actuel : skip tutoriel, replay tutoriel, campagne solo narrative, récompenses intermédiaires par étape.
 
@@ -41,11 +42,12 @@ Le tutoriel doit écouter des faits gameplay server-side plutôt que des états 
 | --- | --- |
 | Château niveau 2 terminé | `building.completed` avec `buildingType=CASTLE`, `level>=2` |
 | Caserne construite | `building.completed` avec `buildingType=BARRACKS`, `level>=1` |
-| Première unité recrutée | `unit.trained` avec `completedQty>0` |
+| 5 Milices paysannes recrutées | `unit.trained` avec `unitType=MILITIA`, puis inventaire `MILITIA>=5` |
+| Château niveau 3 terminé | `building.completed` avec `buildingType=CASTLE`, `level>=3` |
 | Tour de guet construite | `building.completed` avec `buildingType=WATCHTOWER`, `level>=1` |
 | Premier raid barbare victorieux | `battle.resolved` avec `targetKind=BARBARIAN_VILLAGE`, `isVictory=true` |
 
-La projection est séquentielle : un event ne complète que l'étape courante. Si un joueur effectue une action plus tardive avant l'étape attendue, elle ne saute pas le script.
+La projection suit l'ordre du script, mais elle se réconcilie sur les faits serveur déjà atteints. Si un joueur effectue une action plus tardive avant l'étape attendue, le tutoriel rattrape automatiquement toutes les étapes satisfaites jusqu'à la première condition encore manquante.
 
 Idempotence :
 

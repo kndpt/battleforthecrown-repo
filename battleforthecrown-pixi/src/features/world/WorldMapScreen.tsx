@@ -16,6 +16,7 @@ import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
 import { DailyRetentionWidget } from '@/features/retention/DailyRetentionWidget';
 import { OnboardingGuidance } from '@/features/onboarding/OnboardingGuidance';
 import { getOnboardingGuidance } from '@/features/onboarding/onboardingViewModel';
+import { runGameAction, type GameActionId } from '@/features/game-actions/gameActions';
 import { BottomNavigationBar } from '@/features/layout/BottomNavigationBar';
 import { useBuildingsForLockCheck } from '@/features/layout/useBuildingsForLockCheck';
 import {
@@ -186,6 +187,10 @@ export function WorldMapScreen() {
     setIsKingdomActivitiesOpen(true);
   };
 
+  const runWorldAction = (actionId: GameActionId) => {
+    runGameAction(actionId, { navigate });
+  };
+
   return (
     <div className="h-screen w-full flex flex-col overflow-hidden bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
       <div className="flex-shrink">
@@ -199,6 +204,7 @@ export function WorldMapScreen() {
             isClaiming={claimDailyCard.isPending}
             isLoading={retentionSummary.isLoading}
             onClaim={(input) => claimDailyCard.mutate(input)}
+            onAction={runWorldAction}
             onNavigate={navigate}
             summary={retentionSummary.data}
             villages={myVillages.data ?? []}
@@ -230,12 +236,18 @@ export function WorldMapScreen() {
             )}
 
             <div className="pointer-events-none absolute inset-0">
+              <OnboardingGuidance
+                guidance={onboardingGuidance}
+                isLoading={
+                  onboardingSummary.isLoading ||
+                  worldEntities.isLoading ||
+                  myVillages.isLoading
+                }
+                onAction={runWorldAction}
+                onNavigate={navigate}
+              />
+
               <div className="pointer-events-auto absolute left-3 top-3 flex flex-col items-start gap-2">
-                <OnboardingGuidance
-                  guidance={onboardingGuidance}
-                  isLoading={onboardingSummary.isLoading}
-                  onNavigate={navigate}
-                />
                 <KingdomActivityHudBadges
                   badges={[
                     {

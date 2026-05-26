@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import { BUILDING_DEFINITIONS, BUILDING_TYPES, type BuildingType } from '@battleforthecrown/shared/village/buildings';
 import { RESOURCE_PRODUCTION_PER_HOUR } from '@battleforthecrown/shared/resources';
 import { Button } from '@/ui/buttons/Button';
@@ -66,6 +66,7 @@ import {
   MultiVillageBottomSheet,
   MultiVillagePhoneFrame,
   NumberStepper,
+  OnboardingFab,
   PipRating,
   PlayerProfileCard,
   PlayerProfileSheet,
@@ -970,6 +971,94 @@ const multiVillageFixture: MultiVillageItem[] = [
   },
 ];
 
+const onboardingPreviewStep = {
+  body: 'Entraîne 5 miliciens paysans depuis l’écran Armée.',
+  closeLabel: 'Fermer',
+  ctaLabel: 'Former',
+  imageAlt: 'Former la milice',
+  imageBadgeLabel: 'x5',
+  imageSrc: '/assets/army/militia.png',
+  modalLabel: 'TUTORIEL · Étape 3/6',
+  pillLabel: 'Tutoriel · 3/6',
+  secondaryLabel: 'Plus tard',
+  step: 3,
+  title: 'Former la milice',
+  total: 6,
+};
+
+function OnboardingPreviewPhoneFrame({
+  children,
+  label,
+}: {
+  children: ReactNode;
+  label: string;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <span className="rounded-full border border-[rgba(93,74,50,.35)] px-2.5 py-1 font-game text-[10px] font-extrabold uppercase tracking-[.24em] text-[#5d4a32]">
+        {label}
+      </span>
+      <div className="relative h-[720px] w-[360px] overflow-hidden rounded-[18px] border-[3px] border-[#3c2619] bg-[#5b8f3a] shadow-[0_10px_28px_rgba(60,38,25,.35)]">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function OnboardingPreviewScene({ children }: { children: ReactNode }) {
+  return (
+    <div
+      className="relative flex h-full flex-col overflow-hidden bg-[#5b8f3a] font-game text-[#fef9f0]"
+      style={{
+        '--bftc-bottom-nav-gap': '18px',
+        '--bftc-bottom-nav-height': '58px',
+      } as CSSProperties}
+    >
+      <div className="flex h-11 shrink-0 items-center justify-between border-b-2 border-[#3c2619] bg-[linear-gradient(to_bottom,#3c2619,#27170f)] px-3 text-[11px] font-black">
+        <span>DK</span>
+        <div className="flex items-center gap-1.5">
+          <span className="rounded-full bg-[#f1c40f] px-2 py-0.5 text-[#3c2619]">145</span>
+          <span>100</span>
+        </div>
+      </div>
+      <div className="grid h-[34px] shrink-0 grid-cols-4 border-b-2 border-[#3c2619] bg-[linear-gradient(to_bottom,#6b4b2b,#3c2619)] text-center text-[10px] font-bold">
+        {['1k', '1k', '1k', '233'].map((value, index) => (
+          <div className="flex items-center justify-center border-r border-[rgba(254,249,240,.18)] last:border-r-0" key={`${value}-${index}`}>
+            {value}
+          </div>
+        ))}
+      </div>
+      <div className="relative flex-1 overflow-hidden bg-[#5b8f3a]">
+        <div className="absolute left-1/2 top-7 w-[290px] -translate-x-1/2 rounded-xl border-2 border-[#3c2619] bg-[rgba(254,249,240,.86)] p-3 text-center text-[#3d2f1f] shadow-[0_6px_16px_rgba(0,0,0,.22)]">
+          <div className="text-[9px] font-extrabold uppercase tracking-[.24em] text-[#92400e]">Village</div>
+          <div className="mt-0.5 text-base font-black">ROYAUME DE DUPONT.KELVIN</div>
+          <div className="mt-1 text-[11px] font-bold text-[#6d5838]">Capitale · (7,12)</div>
+        </div>
+        <div className="absolute inset-x-0 bottom-20 grid grid-cols-3 gap-3 px-8">
+          {[
+            { icon: '/assets/castle.png', label: 'Château' },
+            { icon: '/assets/barracks.png', label: 'Caserne' },
+            { icon: '/assets/watchtower.png', label: 'Tour' },
+          ].map((building) => (
+            <div className="flex flex-col items-center gap-1 rounded-xl border-2 border-[#3c2619] bg-[rgba(254,249,240,.84)] p-2 shadow-[0_4px_10px_rgba(0,0,0,.24)]" key={building.label}>
+              <img alt="" className="h-12 w-12 object-contain drop-shadow-[0_3px_4px_rgba(0,0,0,.35)]" src={building.icon} />
+              <span className="text-[9px] font-bold text-[#3d2f1f]">{building.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="grid h-[58px] shrink-0 grid-cols-4 border-t-2 border-[#3c2619] bg-[linear-gradient(to_bottom,#6b4b2b,#3c2619)] text-center text-[9px] font-bold uppercase tracking-[.08em]">
+        {['Armée', 'Bâtiments', 'Messages', 'Monde'].map((item) => (
+          <div className="flex items-center justify-center border-r border-[rgba(254,249,240,.12)] last:border-r-0" key={item}>
+            {item}
+          </div>
+        ))}
+      </div>
+      {children}
+    </div>
+  );
+}
+
 export function DesignSystemPreview() {
   const [inputValue, setInputValue] = useState('');
   const [lordName, setLordName] = useState('');
@@ -1012,6 +1101,8 @@ export function DesignSystemPreview() {
   const [victoryModalOpen, setVictoryModalOpen] = useState(false);
   const [combatReportAction, setCombatReportAction] = useState('Aucune action');
   const [playerProfileSheetTab, setPlayerProfileSheetTab] = useState<PlayerProfileSheetTab>('profile');
+  const [onboardingPreviewOpen, setOnboardingPreviewOpen] = useState(true);
+  const [onboardingPreviewAction, setOnboardingPreviewAction] = useState('Aucune action');
   const resourceBuildingFixture = resourceBuildingFixtures[resourceBuildingKey];
   const { buildingType: resourceBuildingType, ...resourceBuildingModalFixture } = resourceBuildingFixture;
   const resourceBuildingUpgrade = getSharedUpgradePreview(resourceBuildingType, resourceBuildingLevel);
@@ -1157,6 +1248,51 @@ export function DesignSystemPreview() {
               { text: '« À ceux qui osent, le royaume offre gloire et richesses. »', variant: 'quote' },
             ]}
           />
+        </section>
+
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="font-game text-2xl font-bold text-[#1f2937]">Onboarding FAB</h2>
+            <span className="font-mono text-[10px] text-[#5d4a32]">
+              onboarding · source Onboarding.html · action: {onboardingPreviewAction}
+            </span>
+          </div>
+          <div className="flex w-full flex-wrap items-start justify-center gap-5">
+            <OnboardingPreviewPhoneFrame label="Pill fermé">
+              <OnboardingPreviewScene>
+                <OnboardingFab
+                  {...onboardingPreviewStep}
+                  onOpenChange={(open) => setOnboardingPreviewAction(open ? 'Ouverture depuis le pill' : 'Fermeture')}
+                  onPrimaryAction={(payload) => setOnboardingPreviewAction(`CTA ${payload.title}`)}
+                  onSecondaryAction={() => setOnboardingPreviewAction('Plus tard')}
+                  open={false}
+                  placement="container"
+                />
+              </OnboardingPreviewScene>
+            </OnboardingPreviewPhoneFrame>
+
+            <OnboardingPreviewPhoneFrame label="Modal ouvert">
+              <OnboardingPreviewScene>
+                <OnboardingFab
+                  {...onboardingPreviewStep}
+                  onOpenChange={(open) => {
+                    setOnboardingPreviewOpen(open);
+                    setOnboardingPreviewAction(open ? 'Ouverture modal' : 'Fermeture modal');
+                  }}
+                  onPrimaryAction={(payload) => {
+                    setOnboardingPreviewOpen(false);
+                    setOnboardingPreviewAction(`CTA ${payload.title}`);
+                  }}
+                  onSecondaryAction={() => {
+                    setOnboardingPreviewOpen(false);
+                    setOnboardingPreviewAction('Plus tard');
+                  }}
+                  open={onboardingPreviewOpen}
+                  placement="container"
+                />
+              </OnboardingPreviewScene>
+            </OnboardingPreviewPhoneFrame>
+          </div>
         </section>
 
         <section className="space-y-4">

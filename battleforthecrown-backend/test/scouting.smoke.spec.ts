@@ -111,7 +111,7 @@ describe('scouting smoke', () => {
         y: join.village.y,
         tier: 'T1',
         resourceStock: {
-          create: { wood: 321, stone: 222, iron: 123, maxPerType: 100_000 },
+          create: { wood: 321, stone: 222, iron: 123, maxPerType: 321 },
         },
       },
     });
@@ -202,7 +202,7 @@ describe('scouting smoke', () => {
       where: { scoutVillageId: attackerId, targetVillageId: barbarian.id },
     });
     expect((barbReport.units as Record<string, number>).MILITIA).toBe(7);
-    expect((barbReport.resources as Record<string, number>).wood).toBe(323);
+    expect((barbReport.resources as Record<string, number>).wood).toBe(321);
     expect(barbReport.strategy).toBeNull();
 
     await waitFor(

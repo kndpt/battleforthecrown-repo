@@ -5,10 +5,13 @@ export const ONBOARDING_STEPS = [
   'UPGRADE_CASTLE_LEVEL_2',
   'BUILD_BARRACKS',
   'TRAIN_TROOPS',
+  'UPGRADE_CASTLE_LEVEL_3',
   'BUILD_WATCHTOWER',
   'ATTACK_BARBARIAN',
 ] as const;
 export type OnboardingStep = (typeof ONBOARDING_STEPS)[number];
+
+export const ONBOARDING_TRAIN_TROOPS_TARGET = 5;
 
 export interface OnboardingRewardDto {
   wood: number;

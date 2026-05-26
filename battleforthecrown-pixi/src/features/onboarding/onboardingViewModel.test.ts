@@ -19,9 +19,40 @@ function summary(currentStep: OnboardingSummaryDto['currentStep']): OnboardingSu
 describe('getOnboardingGuidance', () => {
   it('maps the current scripted step to a CTA', () => {
     expect(getOnboardingGuidance(summary('TRAIN_TROOPS'))).toMatchObject({
-      title: 'Former des troupes',
+      title: 'Former la milice',
+      description: 'Entraîne 5 miliciens paysans depuis l’écran Armée.',
+      gameActionId: 'open-army-training',
+      imageBadgeLabel: 'x5',
       route: '/game/army',
-      progressLabel: '3 / 5',
+      progressLabel: '3 / 6',
+      imageSrc: '/assets/army/militia.png',
+      modalLabel: 'TUTORIEL · Étape 3/6',
+      pillLabel: 'Tutoriel · 3/6',
+      secondaryLabel: 'Plus tard',
+      step: 3,
+      total: 6,
+    });
+    expect(getOnboardingGuidance(summary('UPGRADE_CASTLE_LEVEL_3'))).toMatchObject({
+      title: 'Renforcer le Château',
+      description: 'Passe le Château au niveau 3 pour débloquer la Tour de guet.',
+      gameActionId: 'open-building-management',
+      route: '/game',
+      progressLabel: '4 / 6',
+      modalLabel: 'TUTORIEL · Étape 4/6',
+      pillLabel: 'Tutoriel · 4/6',
+      step: 4,
+      total: 6,
+    });
+    expect(getOnboardingGuidance(summary('ATTACK_BARBARIAN'))).toMatchObject({
+      title: 'Attaquer un village barbare',
+      gameActionId: 'open-world-map',
+      imageSrc: '/assets/world/entity/barbarian-village-tier1.png',
+      route: '/game/world',
+      progressLabel: '6 / 6',
+      modalLabel: 'TUTORIEL · Étape 6/6',
+      pillLabel: 'Tutoriel · 6/6',
+      step: 6,
+      total: 6,
     });
   });
 

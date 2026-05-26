@@ -12,6 +12,14 @@ describe('getOnboardingProjection', () => {
     ).toEqual({ villageId: 'v1', step: 'UPGRADE_CASTLE_LEVEL_2' });
     expect(
       getOnboardingProjection('building.completed', {
+        buildingId: 'castle',
+        villageId: 'v1',
+        buildingType: 'CASTLE',
+        level: 3,
+      }),
+    ).toEqual({ villageId: 'v1', step: 'UPGRADE_CASTLE_LEVEL_3' });
+    expect(
+      getOnboardingProjection('building.completed', {
         buildingId: 'barracks',
         villageId: 'v1',
         buildingType: 'BARRACKS',
@@ -27,6 +35,15 @@ describe('getOnboardingProjection', () => {
         totalQty: 1,
       }),
     ).toEqual({ villageId: 'v1', step: 'TRAIN_TROOPS' });
+    expect(
+      getOnboardingProjection('unit.trained', {
+        trainingId: 'training',
+        villageId: 'v1',
+        unitType: 'SQUIRE',
+        completedQty: 1,
+        totalQty: 1,
+      }),
+    ).toBeNull();
     expect(
       getOnboardingProjection('building.completed', {
         buildingId: 'watchtower',

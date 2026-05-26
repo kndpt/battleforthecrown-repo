@@ -14,6 +14,7 @@ import { VillageStyleControl } from '@/features/village/VillageStyleControl';
 import { DailyRetentionWidget } from '@/features/retention/DailyRetentionWidget';
 import { OnboardingGuidance } from '@/features/onboarding/OnboardingGuidance';
 import { getOnboardingGuidance } from '@/features/onboarding/onboardingViewModel';
+import { runGameAction, type GameActionId } from '@/features/game-actions/gameActions';
 import { metaFor } from '@/features/village/buildingMeta';
 import { KingdomActivitiesBottomSheet } from '@/features/combat/KingdomActivitiesBottomSheet';
 import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
@@ -105,6 +106,13 @@ export function VillageView() {
     setSelectedBuilding(null);
   };
 
+  const runVillageAction = (actionId: GameActionId) => {
+    runGameAction(actionId, {
+      navigate,
+      openBuildingManagement: () => setIsBuildingPanelOpen(true),
+    });
+  };
+
   return (
     <div className="relative h-screen w-full flex flex-col overflow-hidden">
     <div className="flex-shrink">
@@ -121,18 +129,18 @@ export function VillageView() {
             isClaiming={claimDailyCard.isPending}
             isLoading={retentionSummary.isLoading}
             onClaim={(input) => claimDailyCard.mutate(input)}
+            onAction={runVillageAction}
             onNavigate={navigate}
             summary={retentionSummary.data}
             villages={myVillages.data ?? []}
           />
         </div>
-        <div className="absolute left-3 top-3 z-30">
-          <OnboardingGuidance
-            guidance={onboardingGuidance}
-            isLoading={onboardingSummary.isLoading}
-            onNavigate={navigate}
-          />
-        </div>
+        <OnboardingGuidance
+          guidance={onboardingGuidance}
+          isLoading={onboardingSummary.isLoading || !villageId || buildingsQuery.isLoading}
+          onAction={runVillageAction}
+          onNavigate={navigate}
+        />
 
         {!villageId ? (
           <div className="h-full flex items-center justify-center text-kingdom-700 font-game text-sm">

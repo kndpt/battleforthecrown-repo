@@ -18,6 +18,11 @@ import {
   RoyalSeal,
 } from "@/features/design-system/components";
 import type { JoinedVillage } from "@/api";
+import {
+  GAME_ACTIONS,
+  getDailyTaskGameAction,
+  type GameActionId,
+} from "@/features/game-actions/gameActions";
 
 interface ClaimInput {
   cardId: string;
@@ -29,47 +34,12 @@ export interface DailyRetentionWidgetProps {
   className?: string;
   isClaiming?: boolean;
   isLoading?: boolean;
+  onAction?: (actionId: GameActionId) => void;
   onClaim: (input: ClaimInput) => void;
   onNavigate: (path: string) => void;
   summary?: RetentionSummaryDto;
   villages: JoinedVillage[];
 }
-
-const taskMeta: Record<
-  DailyCardTaskType,
-  { actionLabel: string; icon: string; loopLabel: string; path: string }
-> = {
-  TRAIN_UNITS: {
-    actionLabel: "Armée",
-    icon: "/assets/army-power.png",
-    loopLabel: "Armée",
-    path: "/game/army",
-  },
-  COMPLETE_BUILDING: {
-    actionLabel: "Village",
-    icon: "/assets/castle.png",
-    loopLabel: "Éco",
-    path: "/game",
-  },
-  RAID_BARBARIAN: {
-    actionLabel: "Carte",
-    icon: "/assets/attack.png",
-    loopLabel: "PVM",
-    path: "/game/world",
-  },
-  SCOUT_TARGET: {
-    actionLabel: "Carte",
-    icon: "/assets/lupa.png",
-    loopLabel: "Scout",
-    path: "/game/world",
-  },
-  SEND_REINFORCEMENT: {
-    actionLabel: "Carte",
-    icon: "/assets/defense.png",
-    loopLabel: "Défense",
-    path: "/game/world",
-  },
-};
 
 const statusLabel: Record<DailyCardDto["status"], string> = {
   ACTIVE: "En cours",
@@ -115,16 +85,16 @@ function formatCardTitle(card: DailyCardDto): string {
 
 function mapTask(
   task: DailyCardTaskDto,
-  onNavigate: (path: string) => void,
+  onAction: (actionId: GameActionId) => void,
 ): DailyQuestItem {
-  const meta = taskMeta[task.type];
+  const meta = getDailyTaskGameAction(task.type);
   const isDone = task.completedAt !== null || task.progress >= task.target;
   return {
     action: isDone
       ? undefined
       : {
           label: meta.actionLabel,
-          onAction: () => onNavigate(meta.path),
+          onAction: () => onAction(meta.gameActionId),
         },
     have: task.progress,
     icon: meta.icon,
@@ -172,6 +142,7 @@ export function DailyRetentionWidget({
   className,
   isClaiming = false,
   isLoading = false,
+  onAction,
   onClaim,
   onNavigate,
   summary,
@@ -201,17 +172,21 @@ export function DailyRetentionWidget({
     );
   }, [summary]);
 
-  const navigateAndClose = useCallback(
-    (path: string) => {
+  const runActionAndClose = useCallback(
+    (actionId: GameActionId) => {
       setIsOpen(false);
-      onNavigate(path);
+      if (onAction) {
+        onAction(actionId);
+        return;
+      }
+      onNavigate(GAME_ACTIONS[actionId].route);
     },
-    [onNavigate],
+    [onAction, onNavigate],
   );
 
   const quests = useMemo(
-    () => focusCard?.tasks.map((task) => mapTask(task, navigateAndClose)) ?? [],
-    [focusCard, navigateAndClose],
+    () => focusCard?.tasks.map((task) => mapTask(task, runActionAndClose)) ?? [],
+    [focusCard, runActionAndClose],
   );
 
   const chapter: DailyQuestChapter | undefined = focusCard

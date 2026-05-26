@@ -4,10 +4,13 @@ import {
   type OnboardingStep as PrismaOnboardingStep,
 } from '@prisma/client';
 import { BUILDING_TYPES } from '@battleforthecrown/shared/village';
+import { UNIT_TYPES, type UnitMap } from '@battleforthecrown/shared/army';
+import { isVictoryForAttacker } from '@battleforthecrown/shared/combat';
 import type {
   OnboardingStep,
   OnboardingSummaryDto,
 } from '@battleforthecrown/shared/onboarding';
+import { ONBOARDING_TRAIN_TROOPS_TARGET } from '@battleforthecrown/shared/onboarding';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import type {
@@ -29,6 +32,7 @@ const ONBOARDING_STEP_ORDER: readonly OnboardingStep[] = [
   'UPGRADE_CASTLE_LEVEL_2',
   'BUILD_BARRACKS',
   'TRAIN_TROOPS',
+  'UPGRADE_CASTLE_LEVEL_3',
   'BUILD_WATCHTOWER',
   'ATTACK_BARBARIAN',
 ];
@@ -65,6 +69,17 @@ export class OnboardingService {
         initialReward: ONBOARDING_INITIAL_REWARD,
         completedAt: null,
       };
+    }
+
+    if (state.status === 'ACTIVE') {
+      await this.reconcileActiveStateFromFacts(userId, worldId);
+      const reconciledState =
+        await this.prisma.onboardingState.findUniqueOrThrow({
+          where: { userId_worldId: { userId, worldId } },
+          include: { steps: { orderBy: { completedAt: 'asc' } } },
+        });
+
+      return mapOnboardingState(reconciledState);
     }
 
     return mapOnboardingState(state);
@@ -154,29 +169,22 @@ export class OnboardingService {
         include: { steps: true },
       });
       if (!state || state.status !== 'ACTIVE') return;
-      if (state.currentStep !== projection.step) return;
-
-      try {
-        await tx.onboardingProgressEvent.create({ data: { eventOutboxId } });
-        await tx.onboardingStepProgress.create({
-          data: {
-            onboardingStateId: state.id,
-            step: projection.step,
-            eventOutboxId,
-          },
-        });
-      } catch (error) {
-        if (isUniqueConstraintError(error)) return;
-        throw error;
-      }
-
-      const nextStep = getNextStep(projection.step);
-      await tx.onboardingState.update({
-        where: { id: state.id },
-        data: nextStep
-          ? { currentStep: nextStep }
-          : { status: 'COMPLETED', completedAt: new Date() },
+      await reconcileStateFromFacts(tx, state, {
+        eventOutboxId,
+        step: projection.step,
       });
+    });
+  }
+
+  private async reconcileActiveStateFromFacts(userId: string, worldId: string) {
+    await this.prisma.$transaction(async (tx) => {
+      const state = await tx.onboardingState.findUnique({
+        where: { userId_worldId: { userId, worldId } },
+        include: { steps: true },
+      });
+      if (!state || state.status !== 'ACTIVE') return;
+
+      await reconcileStateFromFacts(tx, state);
     });
   }
 }
@@ -188,6 +196,15 @@ export function getOnboardingProjection<K extends EventKind>(
   switch (kind) {
     case 'building.completed': {
       const eventPayload = payload as BuildingCompletedPayload;
+      if (
+        eventPayload.buildingType === BUILDING_TYPES.CASTLE &&
+        eventPayload.level >= 3
+      ) {
+        return {
+          villageId: eventPayload.villageId,
+          step: 'UPGRADE_CASTLE_LEVEL_3',
+        };
+      }
       if (
         eventPayload.buildingType === BUILDING_TYPES.CASTLE &&
         eventPayload.level >= 2
@@ -213,7 +230,8 @@ export function getOnboardingProjection<K extends EventKind>(
     }
     case 'unit.trained': {
       const eventPayload = payload as UnitTrainedPayload;
-      return eventPayload.completedQty > 0
+      return eventPayload.unitType === UNIT_TYPES.MILITIA &&
+        eventPayload.completedQty > 0
         ? { villageId: eventPayload.villageId, step: 'TRAIN_TROOPS' }
         : null;
     }
@@ -227,6 +245,129 @@ export function getOnboardingProjection<K extends EventKind>(
     default:
       return null;
   }
+}
+
+async function reconcileStateFromFacts(
+  tx: Tx,
+  state: {
+    id: string;
+    firstVillageId: string;
+    currentStep: OnboardingStep;
+  },
+  trigger?: { eventOutboxId: string; step: OnboardingStep },
+): Promise<void> {
+  let currentStep: OnboardingStep | null = state.currentStep;
+  let advanced = false;
+  let triggerWasRecorded = false;
+
+  while (
+    currentStep &&
+    (await isStepSatisfied(tx, state.firstVillageId, currentStep))
+  ) {
+    const eventOutboxId =
+      trigger?.step === currentStep && !triggerWasRecorded
+        ? trigger.eventOutboxId
+        : null;
+
+    try {
+      if (eventOutboxId) {
+        await tx.onboardingProgressEvent.create({ data: { eventOutboxId } });
+        triggerWasRecorded = true;
+      }
+      await tx.onboardingStepProgress.create({
+        data: {
+          onboardingStateId: state.id,
+          step: currentStep,
+          eventOutboxId,
+        },
+      });
+    } catch (error) {
+      if (!isUniqueConstraintError(error)) throw error;
+    }
+
+    advanced = true;
+    currentStep = getNextStep(currentStep);
+  }
+
+  if (!advanced) return;
+
+  await tx.onboardingState.update({
+    where: { id: state.id },
+    data: currentStep
+      ? { currentStep }
+      : { status: 'COMPLETED', completedAt: new Date() },
+  });
+}
+
+async function isStepSatisfied(
+  tx: Tx,
+  villageId: string,
+  step: OnboardingStep,
+): Promise<boolean> {
+  switch (step) {
+    case 'UPGRADE_CASTLE_LEVEL_2':
+      return hasBuildingLevel(tx, villageId, BUILDING_TYPES.CASTLE, 2);
+    case 'BUILD_BARRACKS':
+      return hasBuildingLevel(tx, villageId, BUILDING_TYPES.BARRACKS, 1);
+    case 'TRAIN_TROOPS':
+      return hasMilitiaTarget(tx, villageId);
+    case 'UPGRADE_CASTLE_LEVEL_3':
+      return hasBuildingLevel(tx, villageId, BUILDING_TYPES.CASTLE, 3);
+    case 'BUILD_WATCHTOWER':
+      return hasBuildingLevel(tx, villageId, BUILDING_TYPES.WATCHTOWER, 1);
+    case 'ATTACK_BARBARIAN':
+      return hasVictoriousBarbarianAttack(tx, villageId);
+  }
+}
+
+async function hasBuildingLevel(
+  tx: Tx,
+  villageId: string,
+  buildingType: string,
+  level: number,
+): Promise<boolean> {
+  const building = await tx.building.findFirst({
+    where: { villageId, type: buildingType, level: { gte: level } },
+    select: { id: true },
+  });
+
+  return Boolean(building);
+}
+
+async function hasMilitiaTarget(tx: Tx, villageId: string): Promise<boolean> {
+  const militia = await tx.unitInventory.findUnique({
+    where: {
+      villageId_unitType: {
+        villageId,
+        unitType: UNIT_TYPES.MILITIA,
+      },
+    },
+    select: { quantity: true },
+  });
+
+  return (militia?.quantity ?? 0) >= ONBOARDING_TRAIN_TROOPS_TARGET;
+}
+
+async function hasVictoriousBarbarianAttack(
+  tx: Tx,
+  villageId: string,
+): Promise<boolean> {
+  const reports = await tx.combatReport.findMany({
+    where: {
+      attackerVillageId: villageId,
+      targetKind: 'BARBARIAN_VILLAGE',
+    },
+    select: { totalUnitsAttacker: true, lossesAttacker: true },
+    orderBy: { createdAt: 'desc' },
+    take: 10,
+  });
+
+  return reports.some((report) =>
+    isVictoryForAttacker(
+      report.lossesAttacker as UnitMap,
+      report.totalUnitsAttacker as UnitMap,
+    ),
+  );
 }
 
 function getNextStep(step: OnboardingStep): PrismaOnboardingStep | null {

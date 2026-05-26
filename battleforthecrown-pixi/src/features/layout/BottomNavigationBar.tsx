@@ -1,8 +1,13 @@
+import { useLayoutEffect, useRef } from 'react';
 import { Globe, Hammer, Home, Lock, Mail, Swords } from 'lucide-react';
 import { Tooltip } from '@/ui';
 import { useBuildingsForLockCheck } from './useBuildingsForLockCheck';
 
 type Tab = 'army' | 'buildings' | 'world' | 'messages';
+
+export const BOTTOM_NAV_HEIGHT_VAR = '--bftc-bottom-nav-height';
+export const BOTTOM_NAV_GAP_VAR = '--bftc-bottom-nav-gap';
+const BOTTOM_NAV_GAP_PX = 18;
 
 interface BottomNavigationBarProps {
   onBuildingsClick: () => void;
@@ -24,9 +29,39 @@ export function BottomNavigationBar({
   density = 'compact',
   unreadCount = 0,
 }: BottomNavigationBarProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const { isBarracksBuilt, isWatchtowerBuilt } = useBuildingsForLockCheck();
 
   const isCompact = density === 'compact';
+
+  useLayoutEffect(() => {
+    const node = rootRef.current;
+    if (!node) return undefined;
+
+    const syncHeight = () => {
+      document.documentElement.style.setProperty(
+        BOTTOM_NAV_HEIGHT_VAR,
+        `${node.getBoundingClientRect().height}px`,
+      );
+      document.documentElement.style.setProperty(
+        BOTTOM_NAV_GAP_VAR,
+        `${BOTTOM_NAV_GAP_PX}px`,
+      );
+    };
+
+    syncHeight();
+    window.addEventListener('resize', syncHeight);
+    const observer =
+      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(syncHeight);
+    observer?.observe(node);
+
+    return () => {
+      window.removeEventListener('resize', syncHeight);
+      observer?.disconnect();
+      document.documentElement.style.removeProperty(BOTTOM_NAV_HEIGHT_VAR);
+      document.documentElement.style.removeProperty(BOTTOM_NAV_GAP_VAR);
+    };
+  }, [density]);
 
   const baseBar =
     'fixed bottom-0 left-0 right-0 z-40 border-t-2 border-[#2b1a10] ' +
@@ -63,7 +98,7 @@ export function BottomNavigationBar({
   const iconSize = isCompact ? 18 : 20;
 
   return (
-    <div className={baseBar}>
+    <div className={baseBar} ref={rootRef}>
       <div className={wrapper}>
         {/* Army */}
         <Tooltip

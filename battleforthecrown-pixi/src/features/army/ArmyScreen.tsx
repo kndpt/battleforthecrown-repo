@@ -9,6 +9,7 @@ import { PowerBottomSheet } from '@/features/power/PowerBottomSheet';
 import { KingdomActivitiesBottomSheet } from '@/features/combat/KingdomActivitiesBottomSheet';
 import { OnboardingGuidance } from '@/features/onboarding/OnboardingGuidance';
 import { getOnboardingGuidance } from '@/features/onboarding/onboardingViewModel';
+import { runGameAction, type GameActionId } from '@/features/game-actions/gameActions';
 import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
 import {
   useArmyInventoryQuery,
@@ -95,6 +96,9 @@ export function ArmyScreen() {
   const pendingRecallKey = recallReinforcement.variables
     ? `${recallReinforcement.variables.villageId}:${recallReinforcement.variables.originVillageId}:${Object.keys(recallReinforcement.variables.units)[0]}`
     : null;
+  const runArmyAction = (actionId: GameActionId) => {
+    runGameAction(actionId, { navigate });
+  };
 
   return (
     <div className="h-screen w-full flex flex-col overflow-hidden bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
@@ -107,13 +111,17 @@ export function ArmyScreen() {
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         <main className="container mx-auto px-3 py-4 max-w-4xl">
-          <div className="mb-4">
-            <OnboardingGuidance
-              guidance={onboardingGuidance}
-              isLoading={onboardingSummary.isLoading}
-              onNavigate={navigate}
-            />
-          </div>
+          <OnboardingGuidance
+            guidance={onboardingGuidance}
+            isLoading={
+              onboardingSummary.isLoading ||
+              inventory.isLoading ||
+              training.isLoading ||
+              garrison.isLoading
+            }
+            onAction={runArmyAction}
+            onNavigate={navigate}
+          />
           {heldUnits.length > 0 && (
             <div className="bg-gradient-to-br from-white/60 via-white/50 to-white/40 rounded-lg p-3 border-2 border-kingdom-300 mb-6 shadow-clay-md">
               <div className="flex items-center justify-between mb-2">
