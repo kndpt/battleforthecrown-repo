@@ -189,8 +189,8 @@ function ProductionCard({
 
       <div className="mb-[7px] flex items-baseline gap-1.5">
         <img alt="" className="size-[22px] self-center drop-shadow-[0_1px_1px_rgba(0,0,0,.35)]" src={publicAsset(icon)} />
-        <span className="font-game text-2xl font-black leading-none tracking-[.01em] text-[#3d2f1f] tabular-nums [text-shadow:0_1px_0_rgba(255,255,255,.6)]">
-          {isPopulation ? fr(stats.production) : `+${fr(stats.production)}`}
+        <span className="font-game text-[22px] font-black leading-none tracking-[.01em] text-[#3d2f1f] tabular-nums [text-shadow:0_1px_0_rgba(255,255,255,.6)]">
+          {isPopulation ? `${fr(stats.production)} / ${fr(stats.storage)}` : `+${fr(stats.production)}`}
         </span>
         <span className="font-game text-[11px] font-bold tracking-[.08em] text-[#6d5838]">
           {isPopulation ? resourceLabel : '/ heure'}

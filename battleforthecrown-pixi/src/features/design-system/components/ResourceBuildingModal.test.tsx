@@ -10,7 +10,7 @@ const accent = {
 };
 
 describe('ResourceBuildingModal', () => {
-  it('renders Quarter population as housing capacity without hourly production units', () => {
+  it('renders Quarter population as available housing ratios without hourly production units', () => {
     const { container } = render(
       <ResourceBuildingModal
         accent={accent}
@@ -20,8 +20,8 @@ describe('ResourceBuildingModal', () => {
         isPopulation
         level={7}
         levelStats={{
-          7: { production: 480, storage: 480 },
-          8: { production: 535, storage: 535 },
+          7: { production: 160, storage: 480 },
+          8: { production: 215, storage: 535 },
         }}
         linkVariant="rule"
         maxLevel={10}
@@ -38,10 +38,9 @@ describe('ResourceBuildingModal', () => {
 
     expect(container).toHaveTextContent('Capacité');
     expect(container).toHaveTextContent('Logement');
-    expect(container).toHaveTextContent('480');
-    expect(container).toHaveTextContent('535');
+    expect(container).toHaveTextContent('160 / 480');
+    expect(container).toHaveTextContent('215 / 535');
     expect(container).toHaveTextContent('+55 villageois');
-    expect(container).toHaveTextContent('320 / 480');
     expect(container).not.toHaveTextContent('/ heure');
     expect(container).not.toHaveTextContent('/ h');
   });

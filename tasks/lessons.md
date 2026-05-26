@@ -23,3 +23,4 @@
 - Ne jamais passer `relative` dans `BottomSheet.className` : cette classe s'ajoute au wrapper animé qui possède déjà `absolute bottom-0`; elle casse le positionnement/translate fermé-ouvert et laisse la sheet visible en bas.
 - Quand un bug de création de données est corrigé, ne pas s'arrêter au code : réparer ou signaler les lignes déjà créées avec l'ancien bug, puis prouver une nouvelle création via API/DB.
 - Quand un event WebSocket est envoyé sur `user:<id>` mais invalide une query scopée par monde, utiliser le `worldId` du payload si disponible ; sinon invalider toute la famille de clés du user, pas seulement le monde affiché.
+- Pour une modale joueur qui mélange capacité max et population consommée, afficher d'abord la ressource actionnable par le joueur (`disponible / max`) puis projeter `disponible + gain / prochain max`, plutôt que montrer une capacité brute isolée.
