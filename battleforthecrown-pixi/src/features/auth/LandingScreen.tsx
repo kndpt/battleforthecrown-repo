@@ -34,13 +34,6 @@ export function LandingScreen() {
               <AuthButton full onClick={() => navigate('/auth/register')} size="lg" variant="success">
                 Créer un compte
               </AuthButton>
-              <button
-                className="mx-auto w-fit cursor-not-allowed border-0 border-b border-dotted border-[rgba(246,228,184,.45)] bg-transparent p-0 pb-px font-game text-[11px] font-bold text-[rgba(246,228,184,.62)] disabled:opacity-[.72]"
-                disabled
-                type="button"
-              >
-                Visiteur indisponible
-              </button>
             </>
           )}
         </div>
@@ -48,4 +41,3 @@ export function LandingScreen() {
     </AuthScreenViewport>
   );
 }
-

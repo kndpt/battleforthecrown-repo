@@ -142,17 +142,24 @@ describe('auth design-system runtime screens', () => {
     });
   });
 
-  it('keeps unsupported visual controls inert', () => {
+  it('removes useless placeholders and keeps unsupported visual controls inert', () => {
     const { unmount } = renderAuthRoute('/');
 
-    expect(screen.getByRole('button', { name: 'Visiteur indisponible' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Visiteur indisponible' })).not.toBeInTheDocument();
     unmount();
 
-    renderAuthRoute('/auth/login');
+    const loginRender = renderAuthRoute('/auth/login');
 
+    expect(screen.queryByText('Entrée')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Mot de passe oublié' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Google' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Apple' })).toBeDisabled();
+
+    loginRender.unmount();
+
+    renderAuthRoute('/auth/register');
+
+    expect(screen.queryByText('Serment')).not.toBeInTheDocument();
   });
 
   it('blocks register when the local confirmation does not match', async () => {

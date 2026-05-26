@@ -57,13 +57,16 @@
 - 2026-05-26 11:07 CEST — Review indépendante `GO`; finding mineur `fields.lord` résolu en exposant `fields.email` côté login.
 - 2026-05-26 11:12 CEST — Frontend IG relancé sur `http://127.0.0.1:5174/` pour vérification user.
 - 2026-05-26 11:25 CEST — Correction après retour user : suppression des phone-frames prototype en runtime ; les routes composent les primitives design-system dans un shell plein écran app.
+- 2026-05-26 11:40 CEST — Correction après retour user : suppression des placeholders inutiles (visiteur, Entrée, Serment), ajout des assets Google/Apple réels sur boutons SSO grisés, diagnostic CORS local via `worktree-dev.md`.
 
 ## Décisions prises
 
 - Contrat auth préservé : aucun changement backend/shared ; les mutations runtime envoient uniquement `{ email, password }`.
-- Les actions non supportées runtime restent visibles mais inertes : visiteur, mot de passe oublié, Google/Apple.
+- Les actions non supportées runtime visibles restent inertes : mot de passe oublié, Google/Apple ; le placeholder visiteur a été retiré du runtime.
 - Review indépendante : `GO`, finding mineur de lisibilité `fields.lord` pour l'email résolu par `fields.email` optionnel dans `AuthLoginScreenProps`.
 - Retour user post-run : ne pas embarquer les écrans prototype 360×720 tels quels dans l'app ; le runtime doit adapter les primitives visuelles au contexte IG.
+- Retour user post-run : ne pas garder les placeholders inutiles du prototype ; les boutons SSO visibles doivent utiliser des assets réels même lorsqu'ils sont disabled.
+- Diagnostic local : `Connexion impossible. Réessayer.` venait d'un mismatch `127.0.0.1:5174` vs `FRONTEND_URL=http://localhost:5174`, à traiter par la procédure `docs/architecture/worktree-dev.md` plutôt que par un changement backend.
 - Docs : aucun changement durable nécessaire ; `docs/architecture/auth.md` décrit déjà le contrat serveur, et le run ne change ni API ni gameplay.
 
 ## Rapport final
@@ -76,6 +79,8 @@ Fichiers touchés :
 - `battleforthecrown-pixi/src/features/auth/RegisterScreen.tsx`
 - `battleforthecrown-pixi/src/features/auth/AuthScreenViewport.tsx`
 - `battleforthecrown-pixi/src/features/auth/AuthScreensRuntime.test.tsx`
+- `battleforthecrown-pixi/public/assets/auth/apple.svg`
+- `battleforthecrown-pixi/public/assets/auth/google.svg`
 - `battleforthecrown-pixi/src/features/design-system/components/AuthScreens.tsx`
 
 Tickets ouverts : aucun.
@@ -88,9 +93,10 @@ Tickets ouverts : aucun.
   - [x] Payload register `{ email, password }` préservé — `rtk yarn workspace battleforthecrown-pixi test AuthScreensRuntime.test.tsx` → test `submits register with email and password only` passé, sans `confirmPassword` ni `lord`.
   - [x] Champs nom/blason/SSO hors payload auth — `rtk yarn workspace battleforthecrown-pixi test AuthScreensRuntime.test.tsx` → aucun champ seigneur/blason envoyé ; SSO disabled.
   - [x] Actions landing selon état auth — `rtk yarn workspace battleforthecrown-pixi test AuthScreensRuntime.test.tsx` → anonyme vers login, connecté vers `/game`.
-  - [x] Contrôles non supportés restent inertes — `rtk yarn workspace battleforthecrown-pixi test AuthScreensRuntime.test.tsx` → visiteur, mot de passe oublié, Google et Apple disabled.
+  - [x] Contrôles non supportés restent inertes sans placeholder inutile — `rtk yarn workspace battleforthecrown-pixi test AuthScreensRuntime.test.tsx` → visiteur absent, mot de passe oublié, Google et Apple disabled.
   - [x] Type-check/build/lint Pixi — `rtk yarn workspace battleforthecrown-pixi type-check && rtk yarn workspace battleforthecrown-pixi build && rtk yarn workspace battleforthecrown-pixi lint:check --quiet` → vert après correctif review.
-  - [x] QA visuelle mobile/desktop — `Playwright sur http://127.0.0.1:5174/` → `/`, `/auth/login`, `/auth/register` OK en 393×852 et 1280×800, `scrollWidth === clientWidth`, sans `09:41/LTE/100%` ni phone-frame.
+  - [x] QA visuelle mobile/desktop — `Playwright sur http://localhost:5176/` → `/`, `/auth/login`, `/auth/register` OK en 393×852, `scrollWidth === clientWidth`, sans visiteur, sans Entrée/Serment décoratifs, Google/Apple disabled avec SVG chargés.
+  - [x] Erreur auth locale diagnostiquée — `fetch` depuis `http://localhost:5176/auth/login` vers `http://localhost:15004/auth/login` → réponse backend `401 Invalid credentials`, pas d'erreur réseau/CORS.
 - **Review indépendante** : `Déclenchée (raison: critère c — diff > 100 lignes)` avec verdict `GO`; finding mineur résolu.
 - **Tests automatisés** :
   - `rtk yarn workspace battleforthecrown-pixi test AuthScreensRuntime.test.tsx` → 1 fichier, 6 tests passés.
@@ -102,10 +108,11 @@ Tickets ouverts : aucun.
 - **Smokes lancés** : non applicable, raison : aucun fichier `battleforthecrown-backend/src/` touché.
 - **Smokes ajoutés/modifiés** : aucun, raison : changement frontend auth runtime couvert par Vitest + QA navigateur.
 - **QA fonctionnelle agent** : Playwright headless sur Vite `5174`, routes `/`, `/auth/login`, `/auth/register`, viewports 393×852 et 1280×800 ; aucun scroll horizontal, aucun faux status bar, aucun phone-frame, champs email/password/confirmation présents, contrôles inertes disabled.
+- **QA fonctionnelle agent post-review** : conformément à `docs/architecture/worktree-dev.md`, `5174` étant occupé par le worktree `9abe`, lancement de ce worktree sur `http://localhost:5176` avec backend `http://localhost:15004` et DB temporaire `battleforthecrown_179f`; Playwright vérifie landing/login/register, suppression des placeholders, SVG Google/Apple chargés, boutons SSO disabled et fetch login sans CORS.
 - **Tests IG à faire par le user** :
-  - [ ] Ouvrir `http://127.0.0.1:5174/`, puis naviguer vers Connexion et Créer un compte.
+  - [ ] Ouvrir `http://localhost:5174/`, puis naviguer vers Connexion et Créer un compte.
   - [ ] Valider visuellement en mobile/desktop que les libellés email/password restent lisibles et que rien n'est tronqué.
-  - [ ] Vérifier que les boutons Visiteur, Google, Apple et Mot de passe oublié semblent indisponibles.
+  - [ ] Vérifier que les boutons Google, Apple et Mot de passe oublié semblent indisponibles.
 
 ## Liens détectés
 

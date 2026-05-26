@@ -73,11 +73,8 @@ export function RegisterScreen() {
   return (
     <AuthScreenViewport>
       <AuthRuntimePanel>
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex items-center">
           <AuthBackButton label="Accueil" onClick={() => navigate('/')} />
-          <span className="font-game text-[10px] font-bold uppercase tracking-[.3em] text-[#6d5838]">
-            Serment
-          </span>
         </div>
 
         <div className="mb-4 text-center">
@@ -199,4 +196,3 @@ export function RegisterScreen() {
     </AuthScreenViewport>
   );
 }
-

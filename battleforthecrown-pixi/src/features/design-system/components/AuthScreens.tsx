@@ -473,12 +473,16 @@ export function AuthStrengthMeter({ labels, score, titlePrefix }: AuthStrengthMe
 }
 
 export function AuthSsoChip({ className, disabled, kind, label, onClick }: AuthSsoChipProps) {
-  const monogram = { apple: '', email: '✉', google: 'G' }[kind];
+  const icon = {
+    apple: publicAsset('/assets/auth/apple.svg'),
+    email: null,
+    google: publicAsset('/assets/auth/google.svg'),
+  }[kind];
 
   return (
     <button
       className={cn(
-        'inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-[10px] border-2 border-[#8b7355] bg-[linear-gradient(to_bottom,#fef9f0,#e8d4a8)] px-2 py-2.5 font-game text-[11.5px] font-bold tracking-[.04em] text-[#3d2f1f] shadow-[inset_0_1px_0_rgba(255,255,255,.5),0_2px_0_rgba(0,0,0,.18)] disabled:cursor-not-allowed disabled:opacity-[.55]',
+        'inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-[10px] border-2 border-[#8b7355] bg-[linear-gradient(to_bottom,#fef9f0,#e8d4a8)] px-2 py-2.5 font-game text-[11.5px] font-bold tracking-[.04em] text-[#3d2f1f] shadow-[inset_0_1px_0_rgba(255,255,255,.5),0_2px_0_rgba(0,0,0,.18)] disabled:cursor-not-allowed disabled:opacity-[.48] disabled:saturate-0',
         className,
       )}
       disabled={disabled}
@@ -487,9 +491,9 @@ export function AuthSsoChip({ className, disabled, kind, label, onClick }: AuthS
     >
       <span
         aria-hidden="true"
-        className="flex size-[22px] items-center justify-center rounded-full bg-[linear-gradient(to_bottom,#3d2f1f,#1a1208)] font-serif text-[13px] font-black leading-none text-[#f6e4b8] shadow-[inset_0_1px_0_rgba(255,255,255,.18)]"
+        className="flex size-[22px] items-center justify-center rounded-full border border-[rgba(61,47,31,.14)] bg-[rgba(255,255,255,.72)] font-serif text-[13px] font-black leading-none text-[#3d2f1f] shadow-[inset_0_1px_0_rgba(255,255,255,.65)]"
       >
-        {monogram}
+        {icon ? <img alt="" className="size-[15px] object-contain" src={icon} /> : '✉'}
       </span>
       {label}
     </button>

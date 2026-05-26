@@ -51,11 +51,8 @@ export function LoginScreen() {
   return (
     <AuthScreenViewport>
       <AuthRuntimePanel>
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex items-center">
           <AuthBackButton label="Accueil" onClick={() => navigate('/')} />
-          <span className="font-game text-[10px] font-bold uppercase tracking-[.3em] text-[#6d5838]">
-            Entrée
-          </span>
         </div>
 
         <div className="mb-5 text-center">
@@ -159,4 +156,3 @@ export function LoginScreen() {
     </AuthScreenViewport>
   );
 }
-
