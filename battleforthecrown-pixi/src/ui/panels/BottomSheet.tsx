@@ -19,6 +19,7 @@ export interface BottomSheetProps extends HTMLAttributes<HTMLDivElement> {
 const SWIPE_HANDLE_HEIGHT = 76;
 const SWIPE_CLOSE_DISTANCE = 96;
 const SWIPE_CLOSE_VELOCITY = 0.45;
+const CLOSED_SHEET_SHADOW_OFFSET = 40;
 const SWIPE_INTERACTIVE_SELECTOR = 'button, a, input, textarea, select, [role="button"], [data-bottom-sheet-no-drag]';
 
 interface DragStart {
@@ -128,7 +129,9 @@ export const BottomSheet = forwardRef<HTMLDivElement, BottomSheetProps>(
           onPointerUp={handlePointerEnd}
           style={{
             maxHeight,
-            transform: isOpen ? `translateY(${dragY}px)` : 'translateY(100%)',
+            transform: isOpen
+              ? `translateY(${dragY}px)`
+              : `translateY(calc(100% + ${CLOSED_SHEET_SHADOW_OFFSET}px))`,
           }}
         >
           {children}

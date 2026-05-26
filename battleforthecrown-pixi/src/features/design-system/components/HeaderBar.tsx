@@ -109,7 +109,7 @@ export function HeaderBar({
   return (
     <header
       className={cn(
-        'flex h-[172px] w-[850px] shrink-0 items-center gap-5 bg-[#442918] px-4',
+        'flex h-[172px] w-[850px] shrink-0 items-center gap-5 bg-[linear-gradient(180deg,#563a22_0%,#4f341f_58%,#442918_100%)] px-4',
         className,
       )}
       {...props}

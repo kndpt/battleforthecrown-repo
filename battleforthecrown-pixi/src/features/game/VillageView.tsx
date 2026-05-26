@@ -101,7 +101,7 @@ export function VillageView() {
   };
 
   return (
-    <div className="relative h-screen w-full flex flex-col overflow-hidden bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
+    <div className="relative h-screen w-full flex flex-col overflow-hidden">
     <div className="flex-shrink">
       <GameHeader
         onPowerClick={() => setIsPowerSheetOpen(true)}
@@ -109,7 +109,7 @@ export function VillageView() {
       />
     </div>
 
-    <div className="relative flex-1 overflow-hidden pb-20">
+    <div className="relative flex-1 overflow-hidden">
         <div className="absolute right-4 top-4 z-30">
           <DailyRetentionWidget
             activeVillageId={villageId}

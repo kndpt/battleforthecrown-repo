@@ -410,7 +410,7 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
   };
 
   return (
-    <div className="flex flex-col overflow-hidden bg-[#442918]">
+    <div className="flex flex-col overflow-hidden bg-[linear-gradient(180deg,#563a22_0%,#4f341f_48%,#3f2718_100%)]">
       <div className="h-[136px] overflow-hidden">
         <div className="w-[calc(100vw/0.44)] origin-top-left scale-[.44]">
           <HeaderBar
@@ -424,15 +424,15 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
             resources={resources}
           />
           {activeVillage && (
-            <div className="relative flex h-[136px] items-start justify-center border-t-4 border-[#8b7355] bg-[#442918] px-0 pt-5">
+            <div className="relative flex h-[136px] items-center justify-center border-t-[5px] border-[#2b1a10] bg-[linear-gradient(180deg,#523720_0%,#4a301e_54%,#3f2718_100%)] px-0">
               <button
                 type="button"
                 onClick={() => switchVillage(-1)}
                 disabled={villages.length <= 1}
-                className="absolute left-[20px] top-[31px] inline-flex size-[70px] items-center justify-center rounded-[18px] border-4 border-[#255f94] bg-[linear-gradient(to_bottom,#77b6ef,#2f7fc3)] text-white shadow-[0_5px_0_rgba(0,0,0,.35)] disabled:opacity-35"
+                className="absolute left-[18px] top-[28px] inline-flex size-[78px] items-center justify-center rounded-[19px] border-[5px] border-[#3b291a] bg-[linear-gradient(180deg,#716242_0%,#5a4f35_46%,#493f2c_100%)] text-[#ffe083] shadow-[0_2px_0_rgba(35,20,11,.34),0_3px_5px_rgba(20,12,7,.18),inset_0_2px_0_rgba(255,235,168,.16),inset_0_0_0_2px_rgba(255,255,255,.04)] disabled:opacity-35"
                 aria-label="Village précédent"
               >
-                <ChevronLeft aria-hidden="true" className="size-12 stroke-[5]" />
+                <ChevronLeft aria-hidden="true" className="size-9 stroke-[5] drop-shadow-[0_2px_1px_rgba(0,0,0,.45)]" />
               </button>
 
               <button
@@ -445,26 +445,23 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
                 aria-expanded={isVillageSheetOpen}
                 aria-label="Choisir le village actif"
               >
-                <span className="text-[20px] font-bold leading-none tracking-[.34em] text-[#d9c08d]">Village</span>
+                <span className="text-[20px] font-bold leading-none tracking-[.34em] text-[#d9c08d]">
+                  {activeVillage.isCapital ? 'Capitale' : 'Village'}
+                </span>
                 <span className="mt-2 flex w-full min-w-0 items-center justify-center gap-2 text-[28px] font-bold leading-none tracking-normal text-white [text-shadow:2px_2px_0_rgba(0,0,0,.55)]">
                   <span className="min-w-0 truncate">{activeVillage.name}</span>
                   {villages.length > 1 && <ChevronDown aria-hidden="true" className="size-8 shrink-0 stroke-[4]" />}
                 </span>
-                {activeVillage.isCapital && (
-                  <span className="mt-1 font-serif text-[23px] italic leading-none normal-case text-[#e9d9ae] [text-shadow:1px_1px_0_rgba(0,0,0,.45)]">
-                    Capitale
-                  </span>
-                )}
               </button>
 
               <button
                 type="button"
                 onClick={() => switchVillage(1)}
                 disabled={villages.length <= 1}
-                className="absolute right-[20px] top-[31px] inline-flex size-[70px] items-center justify-center rounded-[18px] border-4 border-[#255f94] bg-[linear-gradient(to_bottom,#77b6ef,#2f7fc3)] text-white shadow-[0_5px_0_rgba(0,0,0,.35)] disabled:opacity-35"
+                className="absolute right-[18px] top-[28px] inline-flex size-[78px] items-center justify-center rounded-[19px] border-[5px] border-[#3b291a] bg-[linear-gradient(180deg,#716242_0%,#5a4f35_46%,#493f2c_100%)] text-[#ffe083] shadow-[0_2px_0_rgba(35,20,11,.34),0_3px_5px_rgba(20,12,7,.18),inset_0_2px_0_rgba(255,235,168,.16),inset_0_0_0_2px_rgba(255,255,255,.04)] disabled:opacity-35"
                 aria-label="Village suivant"
               >
-                <ChevronRight aria-hidden="true" className="size-12 stroke-[5]" />
+                <ChevronRight aria-hidden="true" className="size-9 stroke-[5] drop-shadow-[0_2px_1px_rgba(0,0,0,.45)]" />
               </button>
             </div>
           )}

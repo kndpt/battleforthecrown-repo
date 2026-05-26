@@ -29,12 +29,11 @@ export function BottomNavigationBar({
   const isCompact = density === 'compact';
 
   const baseBar =
-    'fixed bottom-0 left-0 right-0 z-40 border-t-2 border-[#8b7355] ' +
-    'bg-gradient-to-t from-[#3c2619]/95 via-[#4e3822]/90 to-[#6b4b2b]/85 ' +
-    'backdrop-blur-md shadow-[0_-6px_18px_rgba(0,0,0,0.45)]';
+    'fixed bottom-0 left-0 right-0 z-40 border-t-2 border-[#2b1a10] ' +
+    'bg-[linear-gradient(180deg,#523720_0%,#4a301e_54%,#3f2718_100%)]';
 
   const wrapper = `max-w-screen-lg mx-auto flex justify-around
-    ${isCompact ? 'px-3 py-1.5' : 'px-4 py-2'}
+    ${isCompact ? 'px-3 pt-3' : 'px-4 pt-3.5'}
     pb-[max(env(safe-area-inset-bottom),8px)]
   `;
 

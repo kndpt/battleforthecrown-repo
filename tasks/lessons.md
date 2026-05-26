@@ -27,3 +27,8 @@
 - Quand un bug de création de données est corrigé, ne pas s'arrêter au code : réparer ou signaler les lignes déjà créées avec l'ancien bug, puis prouver une nouvelle création via API/DB.
 - Quand un event WebSocket est envoyé sur `user:<id>` mais invalide une query scopée par monde, utiliser le `worldId` du payload si disponible ; sinon invalider toute la famille de clés du user, pas seulement le monde affiché.
 - Pour une modale joueur qui mélange capacité max et population consommée, afficher d'abord la ressource actionnable par le joueur (`disponible / max`) puis projeter `disponible + gain / prochain max`, plutôt que montrer une capacité brute isolée.
+- Quand on aligne un élément HUD sur une référence visuelle fournie, calibrer les ombres aussi finement que les couleurs : éviter les ombres opaques et dures si la référence a un relief doux.
+- Pour un header HUD à hauteur fixe, éviter les lignes secondaires conditionnelles qui créent du vide ; préférer un bloc texte stable centre verticalement, avec un label textuel clair plutôt qu'une icône décorative isolée si elle nuit à la lisibilité.
+- Pour un bottom nav fixe, ne pas se limiter au fond : vérifier aussi le padding haut après changement de bordure/background, sinon les icônes peuvent sembler collées au bord supérieur.
+- Quand une couleur/gradient apparaît autour d'un menu fixe, inspecter d'abord le wrapper parent visible dans DevTools avant de forcer le style du composant enfant.
+- Pour une bottom sheet gardée montée pour l'animation de fermeture, si une ombre reste visible, inspecter l'élément exact qui porte `shadow-[...]` et corriger le composant de panel source ; ne pas patcher le shell `BottomSheet` à l'aveugle.
