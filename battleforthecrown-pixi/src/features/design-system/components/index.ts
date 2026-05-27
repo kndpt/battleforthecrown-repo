@@ -47,6 +47,7 @@ export type {
 export { ArmyMovementList, ArmyMovementRow } from './ArmyMovementRow';
 export type { ArmyMovementListProps, ArmyMovementRowProps, ArmyMovementSurface, ArmyMovementTone } from './ArmyMovementRow';
 export {
+  ArmyContentDesign,
   ArmyDraggingOverlay,
   ArmyPhoneFrame,
   ArmyRecruitOverlay,
@@ -61,6 +62,7 @@ export {
 export type {
   ArmyBottomNavItem,
   ArmyBottomNavProps,
+  ArmyContentDesignProps,
   ArmyDraggingOverlayProps,
   ArmyFilterOption,
   ArmyFilterTone,

@@ -1,31 +1,61 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { ArrowLeft, Lock } from 'lucide-react';
-import { Badge, BottomSheet, Button, Panel, Spinner } from '@/ui';
-import { GameHeader } from '@/features/layout/GameHeader';
-import { ToastStack } from '@/features/layout/ToastStack';
-import { BottomNavigationBar } from '@/features/layout/BottomNavigationBar';
-import { PowerBottomSheet } from '@/features/power/PowerBottomSheet';
-import { KingdomActivitiesBottomSheet } from '@/features/combat/KingdomActivitiesBottomSheet';
-import { OnboardingGuidance } from '@/features/onboarding/OnboardingGuidance';
-import { getOnboardingGuidance } from '@/features/onboarding/onboardingViewModel';
-import { runGameAction, type GameActionId } from '@/features/game-actions/gameActions';
-import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
+import { ApiError } from '@/api';
 import {
   useArmyInventoryQuery,
   useArmyTrainingQuery,
   useGarrisonQuery,
   useOnboardingSummaryQuery,
+  usePopulationQuery,
   useRecallReinforcementMutation,
+  useTrainUnitsMutation,
   useVillageBuildingsQuery,
+  useWorldConfigQuery,
 } from '@/api/queries';
-import { useGameStore } from '@/stores/game';
 import type { ArmyUnitDto } from '@/api/queries';
-import type { KingdomActivityTab } from '@/features/design-system/components';
-import { BuildingDetailModal } from '@/features/village/BuildingDetailModal';
-import { unitMetaFor } from './unitConfig';
-import { UnitList } from './UnitList';
+import { Badge, BottomSheet, Button, Panel, Spinner } from '@/ui';
+import { GameHeader } from '@/features/layout/GameHeader';
+import { ToastStack } from '@/features/layout/ToastStack';
+import { BottomNavigationBar } from '@/features/layout/BottomNavigationBar';
+import { PowerBottomSheet } from '@/features/power/PowerBottomSheet';
+import { OnboardingGuidance } from '@/features/onboarding/OnboardingGuidance';
+import { getOnboardingGuidance } from '@/features/onboarding/onboardingViewModel';
+import { runGameAction, type GameActionId } from '@/features/game-actions/gameActions';
+import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
+import {
+  ArmyContentDesign,
+  ArmyRecruitPopup,
+  computeArmyRecruitMax,
+  GameBottomSheetPanel,
+  type ArmyRecruitPopupLabels,
+  type ArmyTroop,
+} from '@/features/design-system/components';
+import { useDisplayResources } from '@/features/resources/useDisplayResources';
+import type { GarrisonLine } from '@/lib/types';
+import { useTickingNow } from '@/lib/useTickingNow';
+import { useGameStore } from '@/stores/game';
+import { useUiStore } from '@/stores/ui';
 import { UnitDetailModal } from './UnitDetailModal';
+import { unitMetaFor } from './unitConfig';
+import {
+  buildArmyRecruitQuickValues,
+  buildArmyViewModel,
+  findArmyUnitByTroopId,
+  type ArmyFilterId,
+} from './armyViewModel';
+
+const recruitLabels: ArmyRecruitPopupLabels = {
+  cancel: 'Annuler',
+  max: 'Max',
+  population: 'Population',
+  recruit: 'Entraîner',
+  resourceIron: 'Fer',
+  resourceStone: 'Pierre',
+  resourceWood: 'Bois',
+};
+
+const EMPTY_GARRISON_LINES: GarrisonLine[] = [];
 
 function NoBarracksScreen() {
   return (
@@ -51,6 +81,81 @@ function NoBarracksScreen() {
   );
 }
 
+function toDetailUnit(troop: ArmyTroop, units: ArmyUnitDto[]): ArmyUnitDto {
+  return findArmyUnitByTroopId(units, troop.id) ?? {
+    id: `virtual-${troop.id}`,
+    populationCost: troop.pop,
+    quantity:
+      troop.inVillage + (troop.fromAllies ?? 0) + (troop.supportingElsewhere ?? 0),
+    type: troop.id,
+  };
+}
+
+function GarrisonActions({
+  isPending,
+  lines,
+  onRecall,
+  pendingRecallKey,
+}: {
+  isPending: boolean;
+  lines: GarrisonLine[];
+  onRecall: (line: GarrisonLine) => void;
+  pendingRecallKey: string | null;
+}) {
+  return (
+    <div className="space-y-3 p-3">
+      {lines.map((line) => {
+        const meta = unitMetaFor(line.unitType);
+        const recallKey = `${line.villageId}:${line.originVillageId}:${line.unitType}`;
+        const pending = isPending && pendingRecallKey === recallKey;
+        const incoming = line.direction === 'INCOMING';
+
+        return (
+          <div
+            className="flex items-center justify-between gap-3 rounded-lg border border-[#5d4a32]/30 bg-white/35 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.45)]"
+            key={`${line.direction}-${recallKey}`}
+          >
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                {meta.iconPath ? (
+                  <img
+                    alt={meta.name}
+                    className="size-7 object-contain"
+                    src={meta.iconPath}
+                  />
+                ) : (
+                  <span aria-hidden className="text-xl">
+                    {meta.emoji}
+                  </span>
+                )}
+                <p className="truncate font-game text-sm font-bold text-[#3d2f1f]">
+                  {meta.name}
+                </p>
+                <Badge variant="success" size="sm">
+                  {line.quantity}
+                </Badge>
+              </div>
+              <p className="mt-1 font-game text-[11px] text-[#6d5838]">
+                {incoming
+                  ? `Origine : village ${line.originVillageId}`
+                  : `Hôte : village ${line.villageId}`}
+              </p>
+            </div>
+            <Button
+              disabled={pending}
+              onClick={() => onRecall(line)}
+              size="sm"
+              variant={incoming ? 'danger' : 'warning'}
+            >
+              {pending ? (incoming ? 'Renvoi...' : 'Rappel...') : incoming ? 'Renvoyer' : 'Rappeler'}
+            </Button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function ArmyScreen() {
   const navigate = useNavigate();
   const worldId = useGameStore((state) => state.worldId);
@@ -59,18 +164,76 @@ export function ArmyScreen() {
   const inventory = useArmyInventoryQuery(villageId);
   const training = useArmyTrainingQuery(villageId);
   const garrison = useGarrisonQuery(villageId);
+  const population = usePopulationQuery(villageId);
+  const worldConfig = useWorldConfigQuery(worldId);
   const onboardingSummary = useOnboardingSummaryQuery(worldId);
   const recallReinforcement = useRecallReinforcementMutation();
+  const train = useTrainUnitsMutation();
+  const pushToast = useUiStore((state) => state.pushToast);
+  const nowMs = useTickingNow(1_000);
+  const { display } = useDisplayResources(villageId);
 
+  const [activeFilterId, setActiveFilterId] = useState<ArmyFilterId>('all');
+  const [draggedTroopId, setDraggedTroopId] = useState<string | null>(null);
+  const [recruitTroopId, setRecruitTroopId] = useState<string | null>(null);
+  const [recruitValue, setRecruitValue] = useState(1);
+  const [selectedGarrisonTroopId, setSelectedGarrisonTroopId] = useState<string | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<ArmyUnitDto | null>(null);
-  const [isBarracksModalOpen, setIsBarracksModalOpen] = useState(false);
   const [isPowerSheetOpen, setIsPowerSheetOpen] = useState(false);
-  const [isExpeditionsOpen, setIsExpeditionsOpen] = useState(false);
-  const [kingdomActivityTab, setKingdomActivityTab] = useState<KingdomActivityTab>('expeditions');
   const unreadCount = useUnreadReportsCount();
 
   const barracks = buildings.data?.find((b) => b.type === 'BARRACKS');
   const barracksLevel = barracks?.level ?? 0;
+
+  const units = inventory.data ?? [];
+  const trainings = training.data ?? [];
+  const garrisonLines = garrison.data ?? EMPTY_GARRISON_LINES;
+  const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data);
+
+  const armyModel = useMemo(
+    () =>
+      buildArmyViewModel({
+        activeFilterId,
+        barracksLevel,
+        garrisonLines,
+        nowMs,
+        population: population.data,
+        resources: display,
+        trainings,
+        units,
+        worldTempo: worldConfig.data?.tempo,
+      }),
+    [
+      activeFilterId,
+      barracksLevel,
+      display,
+      garrisonLines,
+      nowMs,
+      population.data,
+      trainings,
+      units,
+      worldConfig.data?.tempo,
+    ],
+  );
+
+  const recruitTroop = recruitTroopId
+    ? armyModel.troops.find((troop) => troop.id === recruitTroopId) ?? null
+    : null;
+  const recruitMax = recruitTroop
+    ? computeArmyRecruitMax(recruitTroop, armyModel.stock)
+    : 0;
+  const boundedRecruitValue = recruitMax <= 0
+    ? 0
+    : Math.max(1, Math.min(recruitMax, recruitValue));
+  const selectedGarrisonLines = selectedGarrisonTroopId
+    ? garrisonLines.filter((line) => line.unitType === selectedGarrisonTroopId)
+    : [];
+  const selectedGarrisonTroop = selectedGarrisonTroopId
+    ? armyModel.troops.find((troop) => troop.id === selectedGarrisonTroopId) ?? null
+    : null;
+  const pendingRecallKey = recallReinforcement.variables
+    ? `${recallReinforcement.variables.villageId}:${recallReinforcement.variables.originVillageId}:${Object.keys(recallReinforcement.variables.units)[0]}`
+    : null;
 
   if (buildings.isLoading) {
     return (
@@ -84,20 +247,56 @@ export function ArmyScreen() {
     return <NoBarracksScreen />;
   }
 
-  const units = inventory.data ?? [];
-  const trainings = training.data ?? [];
-  const heldUnits = units.filter((u) => u.quantity > 0);
-  const totalQuantity = heldUnits.reduce((sum, u) => sum + u.quantity, 0);
-  const garrisonLines = garrison.data ?? [];
-  const incomingGarrison = garrisonLines.filter((line) => line.direction === 'INCOMING');
-  const outgoingGarrison = garrisonLines.filter((line) => line.direction === 'OUTGOING');
-  const hasGarrison = garrisonLines.length > 0;
-  const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data);
-  const pendingRecallKey = recallReinforcement.variables
-    ? `${recallReinforcement.variables.villageId}:${recallReinforcement.variables.originVillageId}:${Object.keys(recallReinforcement.variables.units)[0]}`
-    : null;
   const runArmyAction = (actionId: GameActionId) => {
     runGameAction(actionId, { navigate });
+  };
+
+  const handleDropTroop = (troopId: string) => {
+    const troop = armyModel.troops.find((candidate) => candidate.id === troopId);
+    setDraggedTroopId(null);
+    if (!troop?.unlocked) return;
+    setRecruitTroopId(troop.id);
+    setRecruitValue(1);
+  };
+
+  const handleRecruit = (quantity: number) => {
+    if (!villageId || !recruitTroop || quantity <= 0 || train.isPending) return;
+    train.mutate(
+      { villageId, unitType: recruitTroop.id, quantity },
+      {
+        onError: (err) => {
+          pushToast({
+            description:
+              err instanceof ApiError ? err.message : "Échec de l'entraînement",
+            title: 'Entraînement impossible',
+            tone: 'error',
+            ttlMs: 4000,
+          });
+        },
+        onSuccess: () => {
+          setRecruitTroopId(null);
+          setRecruitValue(1);
+        },
+      },
+    );
+  };
+
+  const handleTroopSelect = (troop: ArmyTroop) => {
+    const hasGarrisonActions =
+      (troop.fromAllies ?? 0) > 0 || (troop.supportingElsewhere ?? 0) > 0;
+    if (hasGarrisonActions) {
+      setSelectedGarrisonTroopId(troop.id);
+      return;
+    }
+    setSelectedUnit(toDetailUnit(troop, units));
+  };
+
+  const handleRecallLine = (line: GarrisonLine) => {
+    recallReinforcement.mutate({
+      originVillageId: line.originVillageId,
+      units: { [line.unitType]: line.quantity },
+      villageId: line.villageId,
+    });
   };
 
   return (
@@ -106,256 +305,42 @@ export function ArmyScreen() {
         <GameHeader onPowerClick={() => setIsPowerSheetOpen(true)} />
       </div>
 
-      <div
-        className="flex-1 overflow-y-auto pb-24 overscroll-contain"
-        style={{ WebkitOverflowScrolling: 'touch' }}
-      >
-        <main className="container mx-auto px-3 py-4 max-w-4xl">
-          <OnboardingGuidance
-            guidance={onboardingGuidance}
-            isLoading={
-              onboardingSummary.isLoading ||
-              inventory.isLoading ||
-              training.isLoading ||
-              garrison.isLoading
-            }
-            onAction={runArmyAction}
-            onNavigate={navigate}
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden pb-24">
+        <OnboardingGuidance
+          guidance={onboardingGuidance}
+          isLoading={
+            onboardingSummary.isLoading ||
+            inventory.isLoading ||
+            training.isLoading ||
+            garrison.isLoading
+          }
+          onAction={runArmyAction}
+          onNavigate={navigate}
+        />
+        {inventory.isLoading ? (
+          <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4">
+            <Spinner variant="warning" size="lg" />
+            <p className="text-kingdom-700 font-game text-sm">
+              Chargement des troupes...
+            </p>
+          </div>
+        ) : (
+          <ArmyContentDesign
+            activeFilterId={armyModel.activeFilterId}
+            className="min-h-0 flex-1"
+            filters={armyModel.filters}
+            onFilterChange={(id) => setActiveFilterId(id as ArmyFilterId)}
+            onTroopDragEnd={() => setDraggedTroopId(null)}
+            onTroopDragStart={(troop) => setDraggedTroopId(troop.id)}
+            onTroopSelect={handleTroopSelect}
+            recruitSheet={{
+              ...armyModel.recruitSheet,
+              isDragging: Boolean(draggedTroopId),
+              onDropTroop: handleDropTroop,
+            }}
+            troops={armyModel.visibleTroops}
           />
-          {heldUnits.length > 0 && (
-            <div className="bg-gradient-to-br from-white/60 via-white/50 to-white/40 rounded-lg p-3 border-2 border-kingdom-300 mb-6 shadow-clay-md">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="font-cinzel text-base font-bold text-kingdom-800">
-                  Vos troupes
-                </h2>
-                <Badge variant="success" size="sm">
-                  {totalQuantity}
-                </Badge>
-              </div>
-              <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
-                {heldUnits.map((unit) => {
-                  const meta = unitMetaFor(unit.type);
-                  return (
-                    <button
-                      key={unit.id}
-                      type="button"
-                      onClick={() => setSelectedUnit(unit)}
-                      className="relative flex flex-col items-center justify-center bg-game-blue-light/20 border border-game-blue-border/30 rounded-md p-1.5 hover:scale-105 transition-transform overflow-hidden"
-                    >
-                      <div className="w-7 h-7 mb-0.5 flex items-center justify-center">
-                        {meta.iconPath ? (
-                          <img
-                            src={meta.iconPath}
-                            alt={meta.name}
-                            width={28}
-                            height={28}
-                            className="object-contain"
-                          />
-                        ) : (
-                          <span aria-hidden className="text-xl">
-                            {meta.emoji}
-                          </span>
-                        )}
-                      </div>
-                      <Badge variant="info" size="sm">
-                        {unit.quantity}
-                      </Badge>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {inventory.isLoading ? (
-            <div className="flex flex-col items-center justify-center h-64 gap-4">
-              <Spinner variant="warning" size="lg" />
-              <p className="text-kingdom-700 font-game text-sm">
-                Chargement des troupes...
-              </p>
-            </div>
-          ) : (
-            <UnitList
-              units={units}
-              trainings={trainings}
-              barracksLevel={barracksLevel}
-              onUnitClick={(u) => setSelectedUnit(u)}
-              onUpgradeBarracks={barracks ? () => setIsBarracksModalOpen(true) : undefined}
-            />
-          )}
-
-          <Panel variant="stone" padding="md" className="mt-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-cinzel text-base font-bold text-white">
-                Garnison
-              </h2>
-              <Badge variant="info" size="sm">
-                {garrisonLines.length}
-              </Badge>
-            </div>
-
-            {garrison.isLoading ? (
-              <div className="flex items-center gap-3 py-4">
-                <Spinner variant="warning" size="sm" />
-                <p className="text-sm text-white/85">Chargement de la garnison...</p>
-              </div>
-            ) : !hasGarrison ? (
-              <p className="rounded-md border border-white/15 bg-white/10 px-3 py-4 text-sm text-white/85">
-                Aucun renfort stationné ou envoyé.
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {incomingGarrison.length > 0 && (
-                  <div>
-                    <h3 className="font-cinzel text-sm font-semibold text-white/90 mb-2">
-                      Stationnées ici
-                    </h3>
-                    <div className="space-y-2">
-                      {incomingGarrison.map((line) => {
-                        const meta = unitMetaFor(line.unitType);
-                        const recallKey = `${line.villageId}:${line.originVillageId}:${line.unitType}`;
-                        const isPending = recallReinforcement.isPending && pendingRecallKey === recallKey;
-
-                        return (
-                          <div
-                            key={`incoming-${recallKey}`}
-                            className="flex items-center justify-between gap-3 rounded-md border border-white/15 bg-white/10 p-3"
-                          >
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                {meta.iconPath ? (
-                                  <img
-                                    src={meta.iconPath}
-                                    alt={meta.name}
-                                    width={24}
-                                    height={24}
-                                    className="object-contain"
-                                  />
-                                ) : (
-                                  <span aria-hidden className="text-lg">
-                                    {meta.emoji}
-                                  </span>
-                                )}
-                                <p className="truncate text-sm font-semibold text-white">
-                                  {meta.name}
-                                </p>
-                                <Badge variant="success" size="sm">
-                                  {line.quantity}
-                                </Badge>
-                              </div>
-                              <p className="mt-1 text-xs text-white/70">
-                                Origine : village {line.originVillageId}
-                              </p>
-                            </div>
-                            <Button
-                              variant="danger"
-                              size="sm"
-                              disabled={isPending}
-                              onClick={() =>
-                                recallReinforcement.mutate({
-                                  villageId: line.villageId,
-                                  originVillageId: line.originVillageId,
-                                  units: { [line.unitType]: line.quantity },
-                                })
-                              }
-                            >
-                              {isPending ? 'Renvoi...' : 'Renvoyer'}
-                            </Button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {outgoingGarrison.length > 0 && (
-                  <div>
-                    <h3 className="font-cinzel text-sm font-semibold text-white/90 mb-2">
-                      En soutien ailleurs
-                    </h3>
-                    <div className="space-y-2">
-                      {outgoingGarrison.map((line) => {
-                        const meta = unitMetaFor(line.unitType);
-                        const recallKey = `${line.villageId}:${line.originVillageId}:${line.unitType}`;
-                        const isPending = recallReinforcement.isPending && pendingRecallKey === recallKey;
-
-                        return (
-                          <div
-                            key={`outgoing-${recallKey}`}
-                            className="flex items-center justify-between gap-3 rounded-md border border-white/15 bg-white/10 p-3"
-                          >
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2">
-                                {meta.iconPath ? (
-                                  <img
-                                    src={meta.iconPath}
-                                    alt={meta.name}
-                                    width={24}
-                                    height={24}
-                                    className="object-contain"
-                                  />
-                                ) : (
-                                  <span aria-hidden className="text-lg">
-                                    {meta.emoji}
-                                  </span>
-                                )}
-                                <p className="truncate text-sm font-semibold text-white">
-                                  {meta.name}
-                                </p>
-                                <Badge variant="success" size="sm">
-                                  {line.quantity}
-                                </Badge>
-                              </div>
-                              <p className="mt-1 text-xs text-white/70">
-                                Hôte : village {line.villageId}
-                              </p>
-                            </div>
-                            <Button
-                              variant="warning"
-                              size="sm"
-                              disabled={isPending}
-                              onClick={() =>
-                                recallReinforcement.mutate({
-                                  villageId: line.villageId,
-                                  originVillageId: line.originVillageId,
-                                  units: { [line.unitType]: line.quantity },
-                                })
-                              }
-                            >
-                              {isPending ? 'Rappel...' : 'Rappeler'}
-                            </Button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {recallReinforcement.isError && (
-              <p className="mt-3 rounded-md border border-red-200/40 bg-red-900/30 px-3 py-2 text-sm text-red-100">
-                Impossible de rappeler ce renfort pour le moment.
-              </p>
-            )}
-          </Panel>
-
-          <Panel variant="info" padding="md" className="flex items-start gap-3 mt-6">
-            <span className="text-2xl" aria-hidden>
-              💡
-            </span>
-            <div>
-              <p className="font-cinzel font-semibold text-sm text-game-blue-border mb-1">
-                Conseil Stratégique
-              </p>
-              <p className="text-xs text-white leading-relaxed">
-                Entraînez plusieurs types d&apos;unités pour constituer une armée
-                équilibrée. Améliorez la <span className="font-bold">Caserne</span>{' '}
-                pour débloquer des troupes plus puissantes&nbsp;!
-              </p>
-            </div>
-          </Panel>
-        </main>
+        )}
       </div>
 
       <BottomNavigationBar
@@ -375,31 +360,63 @@ export function ArmyScreen() {
         />
       )}
 
-      {isBarracksModalOpen && barracks && villageId && (
-        <BuildingDetailModal
-          villageId={villageId}
-          building={barracks}
-          onClose={() => setIsBarracksModalOpen(false)}
-        />
-      )}
+      <BottomSheet
+        isOpen={Boolean(recruitTroop)}
+        maxHeight="88vh"
+        onClose={() => setRecruitTroopId(null)}
+        zIndex={80}
+      >
+        <GameBottomSheetPanel bodyClassName="p-0" scrollable>
+          {recruitTroop ? (
+            <ArmyRecruitPopup
+              disabled={train.isPending}
+              embedded
+              labels={recruitLabels}
+              max={recruitMax}
+              onCancel={() => setRecruitTroopId(null)}
+              onChange={setRecruitValue}
+              onRecruit={handleRecruit}
+              quickValues={buildArmyRecruitQuickValues(recruitMax)}
+              showHandle={false}
+              stock={armyModel.stock}
+              troop={recruitTroop}
+              value={boundedRecruitValue}
+            />
+          ) : null}
+        </GameBottomSheetPanel>
+      </BottomSheet>
+
+      <BottomSheet
+        isOpen={Boolean(selectedGarrisonTroop && selectedGarrisonLines.length > 0)}
+        maxHeight="72vh"
+        onClose={() => setSelectedGarrisonTroopId(null)}
+        zIndex={80}
+      >
+        <GameBottomSheetPanel
+          eyebrow="Garnison"
+          title={selectedGarrisonTroop?.name}
+          scrollable
+        >
+          {selectedGarrisonLines.length > 0 ? (
+            <GarrisonActions
+              isPending={recallReinforcement.isPending}
+              lines={selectedGarrisonLines}
+              onRecall={handleRecallLine}
+              pendingRecallKey={pendingRecallKey}
+            />
+          ) : null}
+          {recallReinforcement.isError ? (
+            <p className="mx-3 mb-3 rounded-md border border-red-700/30 bg-red-900/20 px-3 py-2 text-sm text-red-900">
+              Impossible de rappeler ce renfort pour le moment.
+            </p>
+          ) : null}
+        </GameBottomSheetPanel>
+      </BottomSheet>
 
       <PowerBottomSheet
         isOpen={isPowerSheetOpen}
         onClose={() => setIsPowerSheetOpen(false)}
       />
-
-      <BottomSheet
-        isOpen={isExpeditionsOpen}
-        onClose={() => setIsExpeditionsOpen(false)}
-        maxHeight="82vh"
-      >
-        <KingdomActivitiesBottomSheet
-          activeTab={kingdomActivityTab}
-          onClose={() => setIsExpeditionsOpen(false)}
-          onTabChange={setKingdomActivityTab}
-          worldId={worldId}
-        />
-      </BottomSheet>
 
       <ToastStack />
     </div>

@@ -1,4 +1,8 @@
-import type { CSSProperties, ReactNode } from 'react';
+import type {
+  CSSProperties,
+  DragEvent,
+  ReactNode,
+} from 'react';
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
 
@@ -65,6 +69,7 @@ export interface ArmyTroop {
   category: ArmyTroopCategory;
   cost: ArmyTroopCost;
   defense: number;
+  draggable?: boolean;
   emoji?: string;
   fromAllies?: number;
   icon?: string;
@@ -94,6 +99,7 @@ export interface ArmyRecruitSheetProps {
   dropIdleLabel: string;
   iconPath: string;
   isDragging?: boolean;
+  onDropTroop?: (troopId: string) => void;
   queue: ArmyQueueItem[];
   summaryLabel: string;
   title: string;
@@ -105,11 +111,25 @@ export interface ArmyViewProps {
   filters: ArmyFilterOption[];
   hud: ArmyHudProps;
   onFilterChange?: (id: string) => void;
+  onTroopDragEnd?: (troop: ArmyTroop) => void;
+  onTroopDragStart?: (troop: ArmyTroop) => void;
   onTroopSelect?: (troop: ArmyTroop) => void;
   recruitSheet: ArmyRecruitSheetProps;
   screenLabel: string;
   troops: ArmyTroop[];
   village: ArmyVillageBarProps;
+}
+
+export interface ArmyContentDesignProps {
+  activeFilterId: string;
+  className?: string;
+  filters: ArmyFilterOption[];
+  onFilterChange?: (id: string) => void;
+  onTroopDragEnd?: (troop: ArmyTroop) => void;
+  onTroopDragStart?: (troop: ArmyTroop) => void;
+  onTroopSelect?: (troop: ArmyTroop) => void;
+  recruitSheet: ArmyRecruitSheetProps;
+  troops: ArmyTroop[];
 }
 
 export interface ArmyPhoneFrameProps {
@@ -142,12 +162,15 @@ export interface ArmyRecruitPopupLabels {
 }
 
 export interface ArmyRecruitPopupProps {
+  disabled?: boolean;
+  embedded?: boolean;
   labels: ArmyRecruitPopupLabels;
   max: number;
   onCancel?: () => void;
   onChange: (value: number) => void;
   onRecruit?: (value: number) => void;
   quickValues: ArmyRecruitQuickValue[];
+  showHandle?: boolean;
   stock: ArmyRecruitStock;
   troop: ArmyTroop;
   value: number;
@@ -229,10 +252,19 @@ function formatNumber(value: number): string {
 }
 
 function clampQuantity(value: number, max: number): number {
+  if (max <= 0) return 0;
   return Math.max(1, Math.min(max, Math.round(value)));
 }
 
-function ArmyTopBar({ crowns, crownsIcon, level, playerInitials, power, powerIcon, resources }: ArmyHudProps) {
+function ArmyTopBar({
+  crowns,
+  crownsIcon,
+  level,
+  playerInitials,
+  power,
+  powerIcon,
+  resources,
+}: ArmyHudProps) {
   return (
     <div className="relative z-50 flex w-full items-center gap-2 border-b-2 border-[var(--parchment-700)] bg-[linear-gradient(to_bottom,rgba(60,38,25,.95),rgba(78,56,34,.95))] px-2.5 py-2">
       <div className="relative flex size-10 shrink-0 items-center justify-center rounded-full border-2 border-[var(--wood-deeper)] bg-[linear-gradient(to_bottom,var(--wood),var(--wood-dark))] font-game text-xs font-bold text-white [text-shadow:1px_1px_1px_rgba(0,0,0,.5)]">
@@ -256,7 +288,15 @@ function ArmyTopBar({ crowns, crownsIcon, level, playerInitials, power, powerIco
   );
 }
 
-function SmallBadge({ gold = false, icon, label }: { gold?: boolean; icon: string; label: string }) {
+function SmallBadge({
+  gold = false,
+  icon,
+  label,
+}: {
+  gold?: boolean;
+  icon: string;
+  label: string;
+}) {
   return (
     <span
       className={cn(
@@ -283,7 +323,13 @@ function ResourceChip({ icon, label, value }: ArmyResourceChip) {
   );
 }
 
-function VillageBar({ name, nextLabel, previousLabel, subtitle, titleLabel }: ArmyVillageBarProps) {
+function VillageBar({
+  name,
+  nextLabel,
+  previousLabel,
+  subtitle,
+  titleLabel,
+}: ArmyVillageBarProps) {
   return (
     <div className="relative z-40 flex w-full items-center gap-2 border-b border-[rgba(0,0,0,.4)] bg-[linear-gradient(to_bottom,var(--wood-deep),var(--wood-bark))] px-2.5 py-2">
       <CarouselArrow direction="left" label={previousLabel} />
@@ -302,7 +348,13 @@ function VillageBar({ name, nextLabel, previousLabel, subtitle, titleLabel }: Ar
   );
 }
 
-function CarouselArrow({ direction, label }: { direction: 'left' | 'right'; label: string }) {
+function CarouselArrow({
+  direction,
+  label,
+}: {
+  direction: 'left' | 'right';
+  label: string;
+}) {
   return (
     <button
       aria-label={label}
@@ -431,13 +483,40 @@ function ArmyFilterButton({ active, filter, onClick }: { active: boolean; filter
   );
 }
 
-function PortraitTile({ onSelect, troop }: { onSelect?: (troop: ArmyTroop) => void; troop: ArmyTroop }) {
+const TROOP_DRAG_MIME = 'application/x-bftc-army-troop';
+
+function PortraitTile({
+  onDragEnd,
+  onDragStart,
+  onSelect,
+  troop,
+}: {
+  onDragEnd?: (troop: ArmyTroop) => void;
+  onDragStart?: (troop: ArmyTroop) => void;
+  onSelect?: (troop: ArmyTroop) => void;
+  troop: ArmyTroop;
+}) {
   const cat = CAT_COLOR[troop.category];
   const locked = !troop.unlocked;
   const total = troop.inVillage + (troop.fromAllies ?? 0);
+  const draggable = Boolean(troop.draggable && troop.unlocked);
+  const handleDragStart = (event: DragEvent<HTMLButtonElement>) => {
+    if (!draggable) return;
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData(TROOP_DRAG_MIME, troop.id);
+    event.dataTransfer.setData('text/plain', troop.id);
+    onDragStart?.(troop);
+  };
+  const handleDragEnd = () => {
+    if (draggable) onDragEnd?.(troop);
+  };
+
   return (
     <button
       className="relative flex aspect-[.82/1] cursor-pointer flex-col overflow-hidden rounded-[14px] p-0 text-left shadow-[var(--shadow-card-inner-light),0_2px_0_rgba(0,0,0,.18)]"
+      draggable={draggable}
+      onDragEnd={handleDragEnd}
+      onDragStart={handleDragStart}
       onClick={() => onSelect?.(troop)}
       style={{
         background: locked
@@ -465,6 +544,11 @@ function PortraitTile({ onSelect, troop }: { onSelect?: (troop: ArmyTroop) => vo
         {!locked && (troop.fromAllies ?? 0) > 0 ? (
           <div className="absolute right-[3px] top-[3px] inline-flex h-3.5 items-center gap-0.5 rounded-full border-[1.5px] border-[var(--game-blue-border)] bg-[linear-gradient(to_bottom,var(--game-blue-light),var(--game-blue-dark))] px-1 font-game text-[8.5px] font-extrabold tabular-nums text-white [text-shadow:1px_1px_1px_rgba(0,0,0,.4)]">
             +{troop.fromAllies}
+          </div>
+        ) : null}
+        {!locked && (troop.supportingElsewhere ?? 0) > 0 ? (
+          <div className="absolute left-[3px] top-[3px] inline-flex h-3.5 items-center gap-0.5 rounded-full border-[1.5px] border-[var(--game-gold-border)] bg-[linear-gradient(to_bottom,var(--game-gold-glow),var(--game-gold-dark))] px-1 font-game text-[8.5px] font-extrabold tabular-nums text-[#3a2a00]">
+            −{troop.supportingElsewhere}
           </div>
         ) : null}
       </div>
@@ -500,9 +584,37 @@ function PortraitTile({ onSelect, troop }: { onSelect?: (troop: ArmyTroop) => vo
   );
 }
 
-function RecruitSheet({ activeDropLabel, dropIdleLabel, iconPath, isDragging = false, queue, summaryLabel, title, troops }: ArmyRecruitSheetProps & { troops: ArmyTroop[] }) {
+function RecruitSheet({
+  activeDropLabel,
+  dropIdleLabel,
+  iconPath,
+  isDragging = false,
+  onDropTroop,
+  queue,
+  summaryLabel,
+  title,
+  troops,
+}: ArmyRecruitSheetProps & { troops: ArmyTroop[] }) {
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    if (!onDropTroop) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  };
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    if (!onDropTroop) return;
+    event.preventDefault();
+    const troopId =
+      event.dataTransfer.getData(TROOP_DRAG_MIME) ||
+      event.dataTransfer.getData('text/plain');
+    if (troopId) onDropTroop(troopId);
+  };
+
   return (
-    <div className="relative flex flex-col gap-[9px] border-t-[3px] border-[var(--game-gold-border)] bg-[linear-gradient(to_bottom,var(--wood-deep),var(--wood-bark))] px-2.5 pb-3 pt-2.5 shadow-[0_-6px_18px_rgba(0,0,0,.4)]">
+    <div
+      className="relative flex flex-col gap-[9px] border-t-[3px] border-[var(--game-gold-border)] bg-[linear-gradient(to_bottom,var(--wood-deep),var(--wood-bark))] px-2.5 pb-3 pt-2.5 shadow-[0_-6px_18px_rgba(0,0,0,.4)]"
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
       <div className="absolute left-1/2 top-1 h-1 w-9 -translate-x-1/2 rounded-full bg-[rgba(255,255,255,.35)]" />
       <div className="flex items-center gap-2 pt-1">
         <svg fill="none" height="14" stroke="var(--game-gold-glow)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" viewBox="0 0 24 24" width="14">
@@ -512,7 +624,7 @@ function RecruitSheet({ activeDropLabel, dropIdleLabel, iconPath, isDragging = f
         <span className="flex-1" />
         <span className="font-game text-[10px] font-bold text-[var(--parchment-300)]">{summaryLabel}</span>
       </div>
-      <div className="flex items-center gap-[5px] rounded-[10px] border-[1.5px] border-[rgba(0,0,0,.5)] bg-[rgba(0,0,0,.3)] px-2 py-1.5 shadow-[inset_0_2px_3px_rgba(0,0,0,.25)]">
+      <div className="flex min-h-[58px] items-center gap-[5px] rounded-[12px] border-[1.5px] border-[rgba(0,0,0,.5)] bg-[rgba(0,0,0,.3)] px-2 py-2.5 shadow-[inset_0_2px_3px_rgba(0,0,0,.25)]">
         {queue.map((item) => {
           const troop = troops.find((candidate) => candidate.id === item.troopId);
           return troop ? <QueueChip item={item} key={item.id} troop={troop} /> : null;
@@ -521,7 +633,7 @@ function RecruitSheet({ activeDropLabel, dropIdleLabel, iconPath, isDragging = f
           className={cn(
             'inline-flex flex-1 items-center justify-center gap-1.5 font-game text-[10px] italic text-[var(--parchment-400)]',
             isDragging
-              ? 'animate-[bftcDropPulse_1.4s_ease-in-out_infinite] rounded-[9px] border-2 border-dashed border-[var(--game-gold-glow)] bg-[rgba(250,224,120,.22)] font-extrabold uppercase tracking-[.18em] text-[var(--game-gold-glow)] [text-shadow:0_1px_1px_rgba(0,0,0,.5)]'
+              ? 'min-h-[42px] animate-[bftcDropPulse_1.4s_ease-in-out_infinite] rounded-[10px] border-2 border-dashed border-[var(--game-gold-glow)] bg-[rgba(250,224,120,.22)] font-extrabold uppercase tracking-[.18em] text-[var(--game-gold-glow)] [text-shadow:0_1px_1px_rgba(0,0,0,.5)]'
               : '',
           )}
         >
@@ -583,6 +695,8 @@ export function ArmyViewDesign({
   filters,
   hud,
   onFilterChange,
+  onTroopDragEnd,
+  onTroopDragStart,
   onTroopSelect,
   recruitSheet,
   screenLabel,
@@ -593,25 +707,68 @@ export function ArmyViewDesign({
     <ArmyPhoneFrame screenLabel={screenLabel}>
       <ArmyTopBar {...hud} />
       <VillageBar {...village} />
-      <div className="relative min-h-0 flex-1 overflow-hidden bg-[linear-gradient(180deg,var(--parchment-200),var(--parchment-400))]">
-        <div className="absolute inset-0 flex flex-col overflow-hidden">
-          <div className="flex items-center gap-1 border-b-[1.5px] border-[var(--parchment-600)] bg-[linear-gradient(to_bottom,var(--parchment-200),var(--parchment-300))] px-2.5 pb-1.5 pt-2">
-            {filters.map((filter) => (
-              <ArmyFilterButton active={filter.id === activeFilterId} filter={filter} key={filter.id} onClick={() => onFilterChange?.(filter.id)} />
-            ))}
-          </div>
-          <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2.5 pb-1.5 pt-2.5">
-            <div className="grid grid-cols-4 gap-2">
-              {troops.map((troop) => (
-                <PortraitTile key={troop.id} onSelect={onTroopSelect} troop={troop} />
-              ))}
-            </div>
-          </div>
-          <RecruitSheet {...recruitSheet} troops={troops} />
-        </div>
-      </div>
+      <ArmyContentDesign
+        activeFilterId={activeFilterId}
+        filters={filters}
+        onFilterChange={onFilterChange}
+        onTroopDragEnd={onTroopDragEnd}
+        onTroopDragStart={onTroopDragStart}
+        onTroopSelect={onTroopSelect}
+        recruitSheet={recruitSheet}
+        troops={troops}
+      />
       <ArmyBottomNav {...bottomNav} />
     </ArmyPhoneFrame>
+  );
+}
+
+export function ArmyContentDesign({
+  activeFilterId,
+  className,
+  filters,
+  onFilterChange,
+  onTroopDragEnd,
+  onTroopDragStart,
+  onTroopSelect,
+  recruitSheet,
+  troops,
+}: ArmyContentDesignProps) {
+  return (
+    <div
+      className={cn(
+        'relative min-h-0 flex-1 overflow-hidden bg-[linear-gradient(180deg,var(--parchment-200),var(--parchment-400))] font-game text-[var(--fg-on-parchment)]',
+        className,
+      )}
+      style={ARMY_CSS_VARIABLES}
+    >
+      <style>{`
+        @keyframes bftcDropPulse {
+          0%, 100% { box-shadow: 0 0 14px rgba(250,224,120,.5), inset 0 0 12px rgba(250,224,120,.3); }
+          50% { box-shadow: 0 0 24px rgba(250,224,120,.85), inset 0 0 18px rgba(250,224,120,.5); }
+        }
+      `}</style>
+      <div className="absolute inset-0 flex flex-col overflow-hidden">
+        <div className="flex items-center gap-1 border-b-[1.5px] border-[var(--parchment-600)] bg-[linear-gradient(to_bottom,var(--parchment-200),var(--parchment-300))] px-2.5 pb-1.5 pt-2">
+          {filters.map((filter) => (
+            <ArmyFilterButton active={filter.id === activeFilterId} filter={filter} key={filter.id} onClick={() => onFilterChange?.(filter.id)} />
+          ))}
+        </div>
+        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2.5 pb-1.5 pt-2.5">
+          <div className="grid grid-cols-4 gap-2">
+            {troops.map((troop) => (
+              <PortraitTile
+                key={troop.id}
+                onDragEnd={onTroopDragEnd}
+                onDragStart={onTroopDragStart}
+                onSelect={onTroopSelect}
+                troop={troop}
+              />
+            ))}
+          </div>
+        </div>
+        <RecruitSheet {...recruitSheet} troops={troops} />
+      </div>
+    </div>
   );
 }
 
@@ -685,7 +842,7 @@ function Slider({ max, onChange, value }: { max: number; onChange: (value: numbe
         <input
           className="absolute inset-0 m-0 size-full cursor-pointer p-0 opacity-0"
           max={max}
-          min={1}
+          min={max > 0 ? 1 : 0}
           onChange={(event) => onChange(Number(event.currentTarget.value))}
           type="range"
           value={value}
@@ -700,7 +857,7 @@ function Slider({ max, onChange, value }: { max: number; onChange: (value: numbe
 }
 
 function ResourceBar({ have, icon, label, tone, used }: { have: number; icon: string; label: string; tone: string; used: number }) {
-  const percent = Math.min(100, (used / have) * 100);
+  const percent = have > 0 ? Math.min(100, (used / have) * 100) : used > 0 ? 100 : 0;
   const tight = percent > 85;
   return (
     <div className="flex items-center gap-2">
@@ -722,17 +879,21 @@ function ResourceBar({ have, icon, label, tone, used }: { have: number; icon: st
 }
 
 export function ArmyRecruitPopup({
+  disabled = false,
+  embedded = false,
   labels,
   max,
   onCancel,
   onChange,
   onRecruit,
   quickValues,
+  showHandle = true,
   stock,
   troop,
   value,
 }: ArmyRecruitPopupProps) {
   const boundedValue = clampQuantity(value, max);
+  const canRecruit = boundedValue > 0 && max > 0;
   const cat = CAT_COLOR[troop.category];
   const cost = {
     iron: troop.cost.iron * boundedValue,
@@ -747,13 +908,21 @@ export function ArmyRecruitPopup({
 
   return (
     <div
-      className="relative flex flex-col gap-[9px] rounded-t-[22px] px-3.5 pb-3.5 pt-2 shadow-[0_-14px_36px_rgba(0,0,0,.55),inset_0_1px_0_rgba(255,255,255,.55)]"
+      className={cn(
+        'relative flex flex-col gap-[9px] px-3.5 pb-3.5',
+        embedded
+          ? 'pt-1 shadow-none'
+          : 'rounded-t-[22px] pt-2 shadow-[0_-14px_36px_rgba(0,0,0,.55),inset_0_1px_0_rgba(255,255,255,.55)]',
+      )}
       style={{
+        ...ARMY_CSS_VARIABLES,
         background: 'linear-gradient(180deg, var(--parchment-100) 0%, var(--parchment-200) 55%, var(--parchment-400) 100%)',
-        borderTop: `3px solid ${cat.border}`,
+        borderTop: embedded ? undefined : `3px solid ${cat.border}`,
       }}
     >
-      <div className="mx-auto h-[5px] w-11 rounded-full bg-[var(--wood-deeper)] opacity-[.32]" />
+      {showHandle ? (
+        <div className="mx-auto h-[5px] w-11 rounded-full bg-[var(--wood-deeper)] opacity-[.32]" />
+      ) : null}
       <div className="flex items-center gap-2.5">
         <div className="flex size-[50px] shrink-0 items-center justify-center rounded-[14px] border-2 shadow-[inset_0_1px_0_rgba(255,255,255,.3),0_2px_0_rgba(0,0,0,.2)]" style={{ background: `linear-gradient(180deg, ${cat.light}, ${cat.dark})`, borderColor: cat.border }}>
           <TroopIcon size={40} troop={troop} />
@@ -811,8 +980,11 @@ export function ArmyRecruitPopup({
           {labels.cancel}
         </button>
         <button
-          className="inline-flex flex-1 cursor-pointer items-center justify-center rounded-xl border-2 px-3 py-[13px] font-game font-extrabold shadow-[inset_0_1px_0_rgba(255,255,255,.32),0_3px_0_rgba(0,0,0,.26)]"
-          onClick={() => onRecruit?.(boundedValue)}
+          className="inline-flex flex-1 cursor-pointer items-center justify-center rounded-xl border-2 px-3 py-[13px] font-game font-extrabold shadow-[inset_0_1px_0_rgba(255,255,255,.32),0_3px_0_rgba(0,0,0,.26)] disabled:cursor-not-allowed disabled:opacity-[.55]"
+          disabled={!canRecruit || disabled}
+          onClick={() => {
+            if (canRecruit && !disabled) onRecruit?.(boundedValue);
+          }}
           style={{
             background: atMax
               ? 'linear-gradient(180deg, var(--game-gold-glow), var(--game-gold-dark))'

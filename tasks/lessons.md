@@ -12,6 +12,7 @@
 - Design system React : si un prototype ne correspond pas au futur usage produit, le retirer du sas plutôt que créer un faux standard.
 - Intégration frontend : inspecter `DesignSystemPreview.tsx` et les points d'entrée amont ; préserver la structure visuelle validée avec états neutralisés plutôt qu'une UI parallèle.
 - Intégration design-system runtime : ne jamais embarquer une phone-frame ou une status bar de prototype dans l'app IG ; adapter les primitives visuelles au shell runtime et vérifier explicitement l'absence de faux chrome.
+- Intégration design-system runtime : quand un écran possède déjà `GameHeader`/navigation/app shell, remplacer uniquement la zone de contenu demandée ; ne pas recréer top bar, village bar ou bottom nav depuis un prototype complet.
 - Intégration auth runtime : ne pas conserver de placeholder inutile du prototype (visiteur, labels décoratifs, faux monogrammes SSO) ; si un bouton SSO est visible mais inactif, utiliser un asset réel et le griser clairement.
 - Debug worktree frontend/backend : ne pas corriger dans le code un mismatch local `localhost`/`127.0.0.1` ; suivre `docs/architecture/worktree-dev.md` et aligner `FRONTEND_URL`, `VITE_API_BASE_URL`, `VITE_WS_URL` et l'URL navigateur.
 - Bottom sheets : chrome et hauteur runtime appartiennent au shell partagé ; vérifier `GameBottomSheetPanel` + sheets custom avant tout ajustement local.
