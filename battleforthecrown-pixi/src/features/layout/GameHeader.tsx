@@ -35,6 +35,7 @@ import {
 } from '@/api/queries';
 import { apiClient, type BuildingDto, type PopulationDto, type QueueEntryDto } from '@/api';
 import { formatHeaderCompactAmount } from '@/lib/resourceConfig';
+import { publicAsset } from '@/lib/publicAsset';
 import { BottomSheet } from '@/ui';
 import { WORLD_SIGIL_GLYPHS, WORLD_THEME_TOKENS } from '@/features/worlds/worldsViewModel';
 import {
@@ -203,6 +204,9 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
       ),
     [kingdomPower.data?.villages],
   );
+  const activeVillagePower = activeVillage
+    ? powerByVillageId.get(activeVillage.id) ?? 0
+    : 0;
   const resourcesByVillageId = useMemo(
     () => toResultMap(villageIds, villageResources),
     [villageIds, villageResources],
@@ -451,6 +455,10 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
                 <span className="mt-2 flex w-full min-w-0 items-center justify-center gap-2 text-[28px] font-bold leading-none tracking-normal text-white [text-shadow:2px_2px_0_rgba(0,0,0,.55)]">
                   <span className="min-w-0 truncate">{activeVillage.name}</span>
                   {villages.length > 1 && <ChevronDown aria-hidden="true" className="size-8 shrink-0 stroke-[4]" />}
+                </span>
+                <span className="mt-3 flex items-center justify-center gap-[6px] text-[22px] font-bold leading-none tracking-normal text-[#ffe083] [text-shadow:1px_1px_0_rgba(0,0,0,.5)]">
+                  <img alt="" className="size-[26px]" src={publicAsset('/assets/army-power.png')} />
+                  {integerFormatter.format(activeVillagePower)}
                 </span>
               </button>
 
