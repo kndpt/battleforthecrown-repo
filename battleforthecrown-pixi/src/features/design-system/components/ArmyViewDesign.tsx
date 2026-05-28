@@ -1,6 +1,9 @@
+import { useRef, useState } from 'react';
 import type {
   CSSProperties,
-  DragEvent,
+  PointerEvent,
+  Ref,
+  RefObject,
   ReactNode,
 } from 'react';
 import { publicAsset } from '@/lib/publicAsset';
@@ -557,46 +560,182 @@ function ArmyModeTabButton({ active, label, onClick }: { active: boolean; label:
   );
 }
 
-const TROOP_DRAG_MIME = 'application/x-bftc-army-troop';
+const TROOP_DRAG_ACTIVATION_PX = 8;
+
+interface TroopDragPoint {
+  x: number;
+  y: number;
+}
+
+interface TroopPointerDragState {
+  active: boolean;
+  lastY: number;
+  pointerId: number;
+  scrolling: boolean;
+  startX: number;
+  startY: number;
+}
+
+function canScrollWithTouchDelta(container: HTMLDivElement, deltaY: number): boolean {
+  const maxScrollTop = container.scrollHeight - container.clientHeight;
+  if (deltaY < 0) return container.scrollTop < maxScrollTop;
+  if (deltaY > 0) return container.scrollTop > 0;
+  return false;
+}
 
 function PortraitTile({
   onDragEnd,
+  onDragCancel,
+  onDragMove,
   onDragStart,
   onSelect,
+  scrollContainerRef,
   troop,
 }: {
-  onDragEnd?: (troop: ArmyTroop) => void;
+  onDragCancel?: (troop: ArmyTroop) => void;
+  onDragEnd?: (troop: ArmyTroop, point: TroopDragPoint) => void;
+  onDragMove?: (troop: ArmyTroop, point: TroopDragPoint) => void;
   onDragStart?: (troop: ArmyTroop) => void;
   onSelect?: (troop: ArmyTroop) => void;
+  scrollContainerRef?: RefObject<HTMLDivElement | null>;
   troop: ArmyTroop;
 }) {
+  const pointerDragRef = useRef<TroopPointerDragState | null>(null);
+  const suppressClickRef = useRef(false);
   const cat = CAT_COLOR[troop.category];
   const locked = !troop.unlocked;
   const total = troop.displayQuantity ?? troop.inVillage;
   const draggable = Boolean(troop.draggable && troop.unlocked);
-  const handleDragStart = (event: DragEvent<HTMLButtonElement>) => {
-    if (!draggable) return;
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData(TROOP_DRAG_MIME, troop.id);
-    event.dataTransfer.setData('text/plain', troop.id);
-    onDragStart?.(troop);
+
+  const clearPointerCapture = (event: PointerEvent<HTMLButtonElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
   };
-  const handleDragEnd = () => {
-    if (draggable) onDragEnd?.(troop);
+
+  const handlePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
+    if (!draggable) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    pointerDragRef.current = {
+      active: false,
+      lastY: event.clientY,
+      pointerId: event.pointerId,
+      scrolling: false,
+      startX: event.clientX,
+      startY: event.clientY,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handlePointerMove = (event: PointerEvent<HTMLButtonElement>) => {
+    const drag = pointerDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    let dx = event.clientX - drag.startX;
+    let dy = event.clientY - drag.startY;
+    let distance = Math.hypot(dx, dy);
+    const scrollContainer = scrollContainerRef?.current;
+    const touchDeltaY = event.clientY - drag.lastY;
+
+    if (
+      !drag.active &&
+      drag.scrolling &&
+      scrollContainer &&
+      canScrollWithTouchDelta(scrollContainer, touchDeltaY)
+    ) {
+      event.preventDefault();
+      scrollContainer.scrollBy({ top: -touchDeltaY });
+      drag.lastY = event.clientY;
+      drag.startX = event.clientX;
+      drag.startY = event.clientY;
+      suppressClickRef.current = true;
+      return;
+    }
+
+    if (drag.scrolling) {
+      drag.scrolling = false;
+      drag.startX = event.clientX;
+      drag.startY = event.clientY;
+      dx = 0;
+      dy = 0;
+      distance = 0;
+    }
+
+    const verticalIntent =
+      event.pointerType !== 'mouse' &&
+      Math.abs(dy) >= TROOP_DRAG_ACTIVATION_PX &&
+      Math.abs(dy) > Math.abs(dx) * 1.2;
+
+    if (
+      !drag.active &&
+      verticalIntent &&
+      scrollContainer &&
+      canScrollWithTouchDelta(scrollContainer, touchDeltaY)
+    ) {
+      // `touch-action: none` is required for immediate mobile drag; preserve list scroll manually.
+      event.preventDefault();
+      scrollContainer.scrollBy({ top: -touchDeltaY });
+      drag.scrolling = true;
+      drag.lastY = event.clientY;
+      drag.startX = event.clientX;
+      drag.startY = event.clientY;
+      suppressClickRef.current = true;
+      return;
+    }
+
+    if (!drag.active && distance >= TROOP_DRAG_ACTIVATION_PX) {
+      drag.active = true;
+      suppressClickRef.current = true;
+      onDragStart?.(troop);
+    }
+
+    if (!drag.active) return;
+    event.preventDefault();
+    drag.lastY = event.clientY;
+    onDragMove?.(troop, { x: event.clientX, y: event.clientY });
+  };
+
+  const handlePointerEnd = (event: PointerEvent<HTMLButtonElement>) => {
+    const drag = pointerDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    pointerDragRef.current = null;
+    clearPointerCapture(event);
+
+    if (!drag.active) return;
+    event.preventDefault();
+    onDragEnd?.(troop, { x: event.clientX, y: event.clientY });
+  };
+
+  const handlePointerCancel = (event: PointerEvent<HTMLButtonElement>) => {
+    const drag = pointerDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    pointerDragRef.current = null;
+    clearPointerCapture(event);
+    if (drag.active) onDragCancel?.(troop);
   };
 
   return (
     <button
       className="relative flex aspect-[.82/1] cursor-pointer flex-col overflow-hidden rounded-[14px] p-0 text-left shadow-[var(--shadow-card-inner-light),0_2px_0_rgba(0,0,0,.18)]"
-      draggable={draggable}
-      onDragEnd={handleDragEnd}
-      onDragStart={handleDragStart}
-      onClick={() => onSelect?.(troop)}
+      onClick={(event) => {
+        if (suppressClickRef.current) {
+          suppressClickRef.current = false;
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+        onSelect?.(troop);
+      }}
+      onPointerCancel={handlePointerCancel}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerEnd}
       style={{
         background: locked
           ? 'linear-gradient(to bottom, var(--game-stone-light), var(--game-stone-dark))'
           : 'linear-gradient(to bottom, var(--parchment-50), var(--parchment-300))',
         border: `2px solid ${locked ? 'var(--game-stone-border)' : 'var(--parchment-700)'}`,
+        touchAction: draggable ? 'none' : undefined,
       }}
       type="button"
     >
@@ -653,31 +792,16 @@ function RecruitSheet({
   dropIdleLabel,
   iconPath,
   isDragging = false,
-  onDropTroop,
   queue,
+  sheetRef,
   summaryLabel,
   title,
   troops,
-}: ArmyRecruitSheetProps & { troops: ArmyTroop[] }) {
-  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
-    if (!onDropTroop) return;
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-  };
-  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
-    if (!onDropTroop) return;
-    event.preventDefault();
-    const troopId =
-      event.dataTransfer.getData(TROOP_DRAG_MIME) ||
-      event.dataTransfer.getData('text/plain');
-    if (troopId) onDropTroop(troopId);
-  };
-
+}: ArmyRecruitSheetProps & { sheetRef?: Ref<HTMLDivElement>; troops: ArmyTroop[] }) {
   return (
     <div
       className="relative flex flex-col gap-[9px] border-t-[3px] border-[var(--game-gold-border)] bg-[linear-gradient(to_bottom,var(--wood-deep),var(--wood-bark))] px-2.5 pb-3 pt-2.5 shadow-[0_-6px_18px_rgba(0,0,0,.4)]"
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
+      ref={sheetRef}
     >
       <div className="flex items-center gap-2 pt-1">
         <svg fill="none" height="14" stroke="var(--game-gold-glow)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" viewBox="0 0 24 24" width="14">
@@ -762,6 +886,31 @@ function QueueChip({ item, troop }: { item: ArmyQueueItem; troop: ArmyTroop }) {
   );
 }
 
+function TroopDragGhost({
+  point,
+  troop,
+}: {
+  point: TroopDragPoint;
+  troop: ArmyTroop;
+}) {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none fixed z-[1000] flex items-center gap-2 rounded-[13px] border-2 border-[var(--game-gold-glow)] bg-[linear-gradient(180deg,var(--parchment-50),var(--parchment-300))] px-2 py-1.5 font-game shadow-[0_10px_24px_rgba(0,0,0,.34)]"
+      style={{
+        left: point.x,
+        top: point.y,
+        transform: 'translate(-50%, -50%)',
+      }}
+    >
+      <TroopIcon size={34} troop={troop} />
+      <span className="max-w-[86px] truncate text-[10px] font-extrabold uppercase tracking-[.08em] text-[var(--fg-quill)]">
+        {troop.short}
+      </span>
+    </div>
+  );
+}
+
 export function ArmyPhoneFrame({ children, screenLabel }: ArmyPhoneFrameProps) {
   return (
     <div
@@ -827,6 +976,40 @@ export function ArmyContentDesign({
   showRecruitSheet = true,
   troops,
 }: ArmyContentDesignProps) {
+  const recruitSheetRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [dragPreview, setDragPreview] = useState<{ point: TroopDragPoint; troop: ArmyTroop } | null>(null);
+
+  const handleTroopPointerDragStart = (troop: ArmyTroop) => {
+    onTroopDragStart?.(troop);
+  };
+
+  const handleTroopPointerDragMove = (troop: ArmyTroop, point: TroopDragPoint) => {
+    setDragPreview({ point, troop });
+  };
+
+  const handleTroopPointerDragCancel = (troop: ArmyTroop) => {
+    setDragPreview(null);
+    onTroopDragEnd?.(troop);
+  };
+
+  const handleTroopPointerDragEnd = (troop: ArmyTroop, point: TroopDragPoint) => {
+    setDragPreview(null);
+    onTroopDragEnd?.(troop);
+
+    const dropRect = recruitSheetRef.current?.getBoundingClientRect();
+    const onDropTroop = recruitSheet.onDropTroop;
+    if (!showRecruitSheet || !onDropTroop || !dropRect) return;
+    const isInsideDropZone =
+      point.x >= dropRect.left &&
+      point.x <= dropRect.right &&
+      point.y >= dropRect.top &&
+      point.y <= dropRect.bottom;
+    if (isInsideDropZone) onDropTroop(troop.id);
+  };
+
+  const recruitSheetDragState = Boolean(recruitSheet.isDragging || dragPreview);
+
   return (
     <div
       className={cn(
@@ -856,7 +1039,10 @@ export function ArmyContentDesign({
             ))}
           </div>
         ) : null}
-        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2.5 pb-1.5 pt-2.5">
+        <div
+          className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2.5 pb-1.5 pt-2.5"
+          ref={scrollContainerRef}
+        >
           {sections ? (
             sections.map((section) => (
               <ArmyTroopSectionBlock
@@ -873,16 +1059,27 @@ export function ArmyContentDesign({
               {troops.map((troop) => (
                 <PortraitTile
                   key={troop.id}
-                  onDragEnd={onTroopDragEnd}
-                  onDragStart={onTroopDragStart}
+                  onDragCancel={handleTroopPointerDragCancel}
+                  onDragEnd={handleTroopPointerDragEnd}
+                  onDragMove={handleTroopPointerDragMove}
+                  onDragStart={handleTroopPointerDragStart}
                   onSelect={onTroopSelect}
+                  scrollContainerRef={scrollContainerRef}
                   troop={troop}
                 />
               ))}
             </div>
           )}
         </div>
-        {showRecruitSheet ? <RecruitSheet {...recruitSheet} troops={troops} /> : null}
+        {showRecruitSheet ? (
+          <RecruitSheet
+            {...recruitSheet}
+            isDragging={recruitSheetDragState}
+            sheetRef={recruitSheetRef}
+            troops={troops}
+          />
+        ) : null}
+        {dragPreview ? <TroopDragGhost point={dragPreview.point} troop={dragPreview.troop} /> : null}
       </div>
     </div>
   );

@@ -1,8 +1,8 @@
 # 74 — Drag tactile direct (tap + glisser) pour recruter dans la vue Armée
 
 **Sévérité** : 🟠 Moyen
-**Statut** : 🆕 Ouvert
-**Spec amont** : aucune (correctif UX). Contexte d'origine : [`runs/archive/039-integrate-army-view-design-system.md`](./runs/archive/039-integrate-army-view-design-system.md)
+**Statut** : ✅ Résolu 2026-05-28
+**Spec amont** : aucune (correctif UX). Contexte d'origine : [`runs/archive/039-integrate-army-view-design-system.md`](../runs/archive/039-integrate-army-view-design-system.md)
 
 ## Symptôme
 
@@ -44,10 +44,28 @@ Le drag-and-drop repose sur le **HTML5 native drag-and-drop** (attribut `draggab
 
 ## Critères de succès
 
-- [ ] Tap + glisser immédiat fonctionne sur Android Chrome et iOS Safari (zéro long-press).
-- [ ] Le drop sur la zone de recrutement ouvre le recrutement de la troupe (comportement `handleDropTroop` préservé).
-- [ ] Comportement souris inchangé.
-- [ ] Tap simple (< ~8px) ouvre le détail troupe, pas un drag.
-- [ ] Tuile verrouillée non draggable.
-- [ ] Feedback visuel de la drop zone (`isDragging`) correct pendant le drag tactile.
-- [ ] Scroll vertical de la grille au doigt préservé.
+- [x] Tap + glisser immédiat fonctionne sur Android Chrome et iOS Safari (zéro long-press).
+- [x] Le drop sur la zone de recrutement ouvre le recrutement de la troupe (comportement `handleDropTroop` préservé).
+- [x] Comportement souris inchangé.
+- [x] Tap simple (< ~8px) ouvre le détail troupe, pas un drag.
+- [x] Tuile verrouillée non draggable.
+- [x] Feedback visuel de la drop zone (`isDragging`) correct pendant le drag tactile.
+- [x] Scroll vertical de la grille au doigt préservé.
+
+## Résolution
+
+Le DnD natif HTML5 a été remplacé dans `ArmyViewDesign` par un drag Pointer Events maison :
+
+- seuil d'activation à 8 px ;
+- ghost visuel suivant le pointeur ;
+- hit-test de la zone recrutement au `pointerup` ;
+- tuiles verrouillées ignorées ;
+- tap simple conservé pour ouvrir le détail ;
+- pan vertical tactile préservé par scroll manuel du conteneur quand le geste est vertical et que la grille peut scroller.
+
+Vérifications :
+
+- `rtk yarn workspace battleforthecrown-pixi type-check`
+- `rtk yarn workspace battleforthecrown-pixi test`
+- `rtk yarn static-check`
+- review indépendante : premier verdict `BLOCK` sur le scroll tactile, correction appliquée, re-review `GO`.

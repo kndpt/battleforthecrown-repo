@@ -4,7 +4,6 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-- [74 — Drag tactile direct (tap + glisser) pour recruter dans la vue Armée](./74-army-touch-drag-recruit.md) — 🟠 Moyen. Le DnD HTML5 natif exige un long-press sur tactile ; remplacer par Pointer Events pour un tap + glisser immédiat.
 - [66 — Inbox combat : tag VICTOIRE/DÉFAITE faux dans la liste](./66-inbox-report-outcome-uses-losses-heuristic.md) — 🟡 Majeur. La liste de l'inbox calcule l'issue via une heuristique de pertes, divergente de la règle canonique utilisée par le modal.
 - [57 — Source canonique du lifecycle des bâtiments joueur](./57-player-village-building-lifecycle-roster.md) — 🟡 Majeur. Centraliser la politique join/conquête/backfill des bâtiments pour éviter les oublis à chaque nouveau bâtiment activé.
 - [51 — Standardiser les bottom sheets sur le design `Activités du royaume`](./51-bottom-sheet-design-system-base.md) — 🟠 Moyen. Faire du nouveau panneau la base design-system des bottom sheets actuels et futurs.
@@ -78,6 +77,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ## Archivés
 
+- [74 — Drag tactile direct (tap + glisser) pour recruter dans la vue Armée](./archive/74-army-touch-drag-recruit.md) ✅ Résolu 2026-05-28 par $bftc-run @tasks/74-army-touch-drag-recruit.md
 - [72 — Stats joueur sur les cartes royaumes](./archive/072-worlds-player-stats.md) ✅ Résolu 2026-05-25 par $bftc-run @tasks/072-worlds-player-stats.md
 - [71 — Stock initial absent sur inscription monde](./archive/71-fix-starting-resources-defaults.md) ✅ Résolu 2026-05-25 par correction directe Codex.
 - [73 — Format compact ressources et villageois dans le header](./archive/073-compact-resource-population-header-format.md) ✅ Résolu 2026-05-25 par $bftc-run @tasks/073-compact-resource-population-header-format.md

@@ -1,5 +1,14 @@
 # Todo
 
+## 2026-05-28 — Ticket 74 drag tactile recrutement Armée
+
+- [x] Charger le ticket, règles repo, `SPEC.md`, briefing Pixi et skills frontend/tests/QA.
+- [x] Cartographier le DnD Armée existant (`ArmyViewDesign`, `ArmyScreen`) et la source run 039.
+- [x] Remplacer le DnD HTML5 par Pointer Events ciblés sur les tuiles déverrouillées.
+- [x] Préserver tap simple, scroll vertical, tuiles verrouillées et comportement souris.
+- [x] Vérifier type-check/tests/static-check et faire la review 5 axes.
+- [x] Archiver le ticket, mettre à jour `tasks/README.md` et commit final.
+
 ## 2026-05-28 — Run 040 recalibration vitesse trajet
 
 - [x] Charger la fiche run, règles repo, specs source, briefings backend/pixi et skill tests.
@@ -96,6 +105,9 @@
 
 ## Review
 
+- 2026-05-28 Ticket 74 drag tactile Armée : HTML5 DnD remplacé par Pointer Events avec seuil 8 px, ghost visuel, hit-test au `pointerup` et scroll vertical tactile préservé via pan manuel conditionné.
+- Review ticket 74 : premier verdict indépendant `BLOCK` sur capture du scroll tactile, correction appliquée (`scrollBy` + garde direction scrollable), re-review indépendante `GO`.
+- Vérification ticket 74 : `rtk yarn workspace battleforthecrown-pixi type-check`, `rtk yarn workspace battleforthecrown-pixi test`, `rtk yarn static-check`.
 - 2026-05-27 Run 039 armée : correction de scope après feedback user, shell runtime `/game/army` conservé (`GameHeader` + `BottomNavigationBar`), seule la zone contenu Army consomme le design-system.
 - Review run 039 : findings bloquants résolus, drag actif uniquement sur vrai `dragstart`, actions `Renvoyer`/`Rappeler` conservées via bottom sheet garnison, popup recrutement en mode `embedded` sans double top.
 - Vérification run 039 : `rtk yarn workspace battleforthecrown-pixi type-check`, `rtk yarn workspace battleforthecrown-pixi test -- armyViewModel`, `rtk yarn workspace battleforthecrown-pixi test`, `rtk yarn static-check`.
