@@ -27,11 +27,11 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ### Runs actifs
 
-- [040 — Recalibration de la vitesse de base des déplacements](./runs/040-recalibrate-base-travel-speed.md) — 📋 `PLANNED`. Abaisser `REFERENCE_SPEED` (100 → 6) pour ramener un trajet MILICE de 8 cases de 1h20 à ~5 min au tempo 1.0.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés
 
+- [040 — Recalibration de la vitesse de base des déplacements](./runs/archive/040-recalibrate-base-travel-speed.md) — ✅ `DONE` (2026-05-28). `REFERENCE_SPEED` abaissé de 100 à 6, ratios `UNIT_STATS.speed` préservés, tests/backend smokes/Pixi/static-check verts et docs mobilité alignées.
 - [039 — Intégration runtime de la vue Armée design-system](./runs/archive/039-integrate-army-view-design-system.md) — ✅ `DONE` (2026-05-27). Contenu Armée migré vers le design-system sous le shell runtime existant, données réelles, drag/drop recrutement, actions garnison et bottom sheet standard.
 - [038 — Correction capacité Quartier et modal population](./runs/archive/038-fix-quarter-population-scaling-modal.md) — ✅ `DONE` (2026-05-26). Courbe Quartier 1-10 corrigée, modal population sans unité horaire, smoke upgrade 7→8 et correction DB locale non destructive.
 - [037 — Migration des vues auth vers le design-system](./runs/archive/037-migrate-auth-views-design-system.md) — ✅ `DONE` (2026-05-26). Routes `/`, `/auth/login`, `/auth/register` migrées vers les écrans auth design-system, contrat `{ email, password }` préservé, contrôles non supportés inertes et QA navigateur mobile/desktop.

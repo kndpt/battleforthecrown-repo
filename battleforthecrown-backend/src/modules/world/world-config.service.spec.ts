@@ -7,6 +7,7 @@ import {
   type WorldConfig,
 } from '@battleforthecrown/shared/world';
 import type { UnitType } from '@battleforthecrown/shared/army';
+import { REFERENCE_SPEED } from '@battleforthecrown/shared/logic';
 import { WorldConfigService } from './world-config.service';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 
@@ -45,6 +46,15 @@ describe('WorldConfigService', () => {
       config: { ...mockWorldConfig, ...configOverride },
     });
   };
+
+  const expectedTravelMs = (
+    distance: number,
+    armySpeed = REFERENCE_SPEED,
+    speedMultiplier = 1,
+  ) =>
+    Math.round(
+      (distance * 60_000 * REFERENCE_SPEED) / (armySpeed * speedMultiplier),
+    );
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -251,8 +261,7 @@ describe('WorldConfigService', () => {
 
       const result = await service.getTravelTime('world-1', 10);
 
-      // 10 tiles × REFERENCE_SPEED / (REFERENCE_SPEED × 1) = 10 minutes
-      expect(result).toBe(600000);
+      expect(result).toBe(expectedTravelMs(10));
     });
 
     it('applies the world travel speed multiplier', async () => {
@@ -271,7 +280,7 @@ describe('WorldConfigService', () => {
       const result = await service.getTravelTime('world-1', 10);
 
       // 10 × 100 / (100 × 2) = 5 minutes
-      expect(result).toBe(300000);
+      expect(result).toBe(expectedTravelMs(10) * 0.5);
     });
 
     it('applies an army speed bonus from a strategy', async () => {
@@ -280,7 +289,7 @@ describe('WorldConfigService', () => {
       const ms = await service.getTravelTime('world-1', 10, 'RAIDERS');
 
       // 10 × 100 / (100 × 1.15) ≈ 8.696 minutes
-      expect(ms).toBe(521739);
+      expect(ms).toBe(expectedTravelMs(10, REFERENCE_SPEED, 1.15));
     });
   });
 
@@ -294,7 +303,7 @@ describe('WorldConfigService', () => {
       const result = await service.getTravelTimeForArmy('world-1', 10, units);
 
       // 10 × 100 / (10 × 1) = 100 minutes
-      expect(result).toBe(6000000);
+      expect(result).toBe(expectedTravelMs(10, 10));
     });
 
     it('ignores units with zero quantity', async () => {
@@ -302,7 +311,7 @@ describe('WorldConfigService', () => {
 
       const result = await service.getTravelTimeForArmy('world-1', 10, units);
 
-      expect(result).toBe(6000000);
+      expect(result).toBe(expectedTravelMs(10, 10));
     });
 
     it('falls back to the default speed when no valid unit is given', async () => {
@@ -312,13 +321,13 @@ describe('WorldConfigService', () => {
 
       const result = await service.getTravelTimeForArmy('world-1', 10, units);
 
-      expect(result).toBe(600000);
+      expect(result).toBe(expectedTravelMs(10));
     });
 
     it('handles an empty units object', async () => {
       const result = await service.getTravelTimeForArmy('world-1', 10, {});
 
-      expect(result).toBe(600000);
+      expect(result).toBe(expectedTravelMs(10));
     });
 
     it('applies a strategy army speed bonus', async () => {
@@ -332,7 +341,7 @@ describe('WorldConfigService', () => {
       );
 
       // 10 × 100 / (10 × 0.8) = 125 minutes
-      expect(ms).toBe(7500000);
+      expect(ms).toBe(expectedTravelMs(10, 10, 0.8));
     });
   });
 

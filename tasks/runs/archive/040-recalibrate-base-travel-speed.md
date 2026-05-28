@@ -1,8 +1,8 @@
 # Run #040 — recalibrate-base-travel-speed
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-05-28 13:27 CEST
+> **Terminé** : 2026-05-28 13:45 CEST
 
 ## Cible
 
@@ -71,39 +71,59 @@
 
 ## Décomposition initiale (rempli par le lead à l'étape 3)
 
-_(Vide au démarrage. Tâches chirurgicales : ≤ 5 fichiers chacune, scope précis, critère de succès observable.)_
-
-Pistes pour le lead `$bftc-run` :
-- **T1** — Shared : `travel-time.ts` (constante + docstring). Rebuild shared.
-- **T2** — Backend tests : `world-config.service.spec.ts` recalibré + refacto assertions magiques.
-- **T3** — Docs gameplay/spec : 08 + 23 + balance-and-tempo, formules et exemples.
-- **T4** — Audit grep exemples chiffrés dans 04/10/11/13/14, patcher le cas échéant.
-- **T5** — Vérif fixtures/seed (pas de double compression `tempo.travelSpeed`).
-- **T6** — Smokes + static-check + QA IG.
+- **T1** — Shared + commentaires frontend : `packages/shared/src/logic/travel-time.ts` passe `REFERENCE_SPEED` à 6 et les commentaires consommateurs restent alignés.
+- **T2** — Backend tests : `battleforthecrown-backend/src/modules/world/world-config.service.spec.ts` calcule les attentes via formules lisibles et couvre l’invariant `distance × 60_000` à `armySpeed = REFERENCE_SPEED`.
+- **T3** — Docs : `08-units.md`, `23-world-tempo-and-multipliers.md`, `balance-and-tempo.md` alignent la sémantique baseline vs ratios `UNIT_STATS.speed`.
+- **T4** — Audit docs/code : grep des exemples chiffrés dans `04/10/11/13/14`, des consommateurs `REFERENCE_SPEED` et des `travelSpeed` seed/fixtures.
+- **T5** — Vérifications : build shared, tests backend/pixi pertinents, smokes backend requis, `yarn static-check`, QA fonctionnelle agent si runtime disponible.
 
 ## Progress (rempli pendant le run)
 
-_(Vide au démarrage. Mis à jour à chaque transition d'étape ou de tâche.)_
+- 2026-05-28 13:27 CEST — Préflight OK : fiche `PLANNED`, worktree clean, règles/specs/briefings chargés.
+- 2026-05-28 13:27 CEST — Cartographie bornée : constante shared, `WorldConfigService`, estimation Pixi via shared, docs mobilité/tempo, fixtures `travelSpeed`.
+- 2026-05-28 13:31 CEST — Build shared, test backend ciblé, tests Pixi, préflight smoke, smokes backend complets et static-check verts.
+- 2026-05-28 13:38 CEST — QA worktree démarrée : DB temporaire `battleforthecrown_040`, backend `http://localhost:15002`, frontend `http://localhost:5174`, health OK.
+- 2026-05-28 13:45 CEST — Review indépendante re-run : `VERDICT: GO`, aucun finding restant.
 
 ## Décisions prises
 
 - Piste B (changer `REFERENCE_SPEED` de `100 → 6`) retenue à la planification — préserve table 08, ratios trivialement intacts, 1 constante shared modifiée. Source : décision user `$bftc-plan` 2026-05-26.
 - Sémantique reformulée explicitement dans 08-units.md et docstring shared (pas de fallback ni alias rétro-compat).
 
-_(Reste à compléter par le lead pendant le run.)_
+- Backprop `SPEC.md` non faite : l'invariant est déjà porté par les docs gameplay/architecture mises à jour, pas par un bug récurrent transversal nécessitant §V/§B.
 
 ## Rapport final
 
-_(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tickets ouverts, méta-évaluation si applicable.)_
+Recalibration appliquée : `REFERENCE_SPEED` passe de 100 à 6 dans shared, les ratios `UNIT_STATS.speed` restent inchangés, les assertions backend sont formulées à partir de `distance × 60_000 × REFERENCE_SPEED / armySpeed`, et les docs mobilité/tempo clarifient que la baseline de trajet est distincte des ratios d'unités.
 
 ### Acceptance & QA
 
-- **Critères d'acceptance vérifiés** : à remplir.
-- **Review indépendante** : `Déclenchée (raison : (a) back+front via ETA Pixi, (b) modifie SPEC.md sur 3 docs, (c) diff probable > 100 lignes, (d) invariant durable de baseline mobilité)` — verdict à reporter en étape 6.
-- **Tests automatisés** : à remplir avec commandes exactes.
-- **Smokes ajoutés/modifiés** : probablement aucun nouveau smoke (assertions relatives) — à confirmer.
-- **QA fonctionnelle agent** : couvrir au minimum un envoi MILICE/CAV via REST + check `Expedition.travelMs` en DB.
-- **Tests IG à faire par le user** : checklist 3 items (MILICE proche, ratio CAV, SEIGNEUR conquête) — voir § QA in-game ci-dessus.
+- **Critères d'acceptance vérifiés** :
+  - [x] `REFERENCE_SPEED = 6` et docstring reformulée — `rtk grep -n "REFERENCE_SPEED = 6" packages/shared/src/logic/travel-time.ts` → constante trouvée ligne 9.
+  - [x] `UNIT_STATS.*.speed` non modifiés — `rtk git diff -- packages/shared/src/army/unit.ts` → diff vide.
+  - [x] Invariant `armySpeed = REFERENCE_SPEED`, `tempo = 1`, `distance × 60_000` — `rtk yarn workspace battleforthecrown-backend test -- world-config.service.spec.ts` → 28 tests verts.
+  - [x] Symétrie aller/retour préservée — `rtk yarn workspace battleforthecrown-backend test:smoke` → `combat-attack`, `recall-en-route`, `reinforcements` verts, retour basé sur `outboundTravelMs` figé.
+  - [x] Assertions magiques recalibrées en formule lisible — `rtk yarn workspace battleforthecrown-backend test -- world-config.service.spec.ts` → 28 tests verts.
+  - [x] ETA Pixi passe par shared + tempo, sans override local — `rtk grep -n "calculateTravelTime\\|TempoService.applyDuration" battleforthecrown-pixi/src/features/combat/AttackDetailModal.tsx battleforthecrown-pixi/src/lib/combatHelpers.ts` → wrapper shared + application tempo confirmés.
+  - [x] Docs mobilité/tempo alignées — `rtk grep -n "REFERENCE_SPEED\\|mobilité 100\\|speed = 6" docs/gameplay/08-units.md docs/gameplay/11-scouting.md docs/gameplay/23-world-tempo-and-multipliers.md docs/architecture/balance-and-tempo.md` → ancienne sémantique remplacée.
+  - [x] Audit exemples chiffrés trajet `04/10/11/13/14` — `rtk grep -n "speed=100\\|1 tuile par minute\\|distance × 100\\|≈ instantané" docs/gameplay/04-combat.md docs/gameplay/10-conquest.md docs/gameplay/11-scouting.md docs/gameplay/13-barbarian-conquest.md docs/gameplay/14-pvp-conquest.md` → aucun reste bloquant.
+  - [x] Audit double compression `tempo.travelSpeed` — `rtk grep -n "travelSpeed" battleforthecrown-backend/prisma battleforthecrown-backend/scripts battleforthecrown-backend/test/fixtures` → seed à `1`, fixture smoke ultra-compressée explicite `0.001`, migrations historiques uniquement.
+  - [x] Wall-clock invariants non modifiés — `rtk git diff -- docs/gameplay/23-world-tempo-and-multipliers.md` → diff limité à la ligne mobilité §6, pas §6.1.
+- **Review indépendante** : Déclenchée (raison : back+front via ETA Pixi + docs gameplay/architecture + invariant durable de baseline mobilité). Premier verdict `BLOCK` uniquement parce que les preuves QA n'étaient pas encore reportées ; re-review `GO`, aucun finding restant.
+- **Tests automatisés** :
+  - `rtk yarn workspace @battleforthecrown/shared build` → vert.
+  - `rtk yarn workspace battleforthecrown-backend test -- world-config.service.spec.ts` → 1 suite, 28 tests verts.
+  - `rtk yarn workspace battleforthecrown-pixi test` → 41 fichiers, 211 tests verts. Warning jsdom canvas connu : `HTMLCanvasElement.getContext()` non implémenté.
+  - `rtk yarn static-check` → vert.
+- **Smokes lancés** :
+  - `rtk yarn test:smoke:preflight` → OK, template `battleforthecrown_smoke` migré, 8 clones fresh prêts.
+  - `rtk yarn workspace battleforthecrown-backend test:smoke` → 25 suites, 53 tests verts. Logs transitoires PgBoss/Prisma pendant arrêt worker observés, sans échec Jest.
+- **Smokes ajoutés/modifiés** : Aucun, raison : les smokes existants couvrent déjà combat, scout, conquête, recall, renforts avec assertions relatives / effets DB-Outbox.
+- **QA fonctionnelle agent** : Serveurs worktree démarrés depuis ce checkout avec DB temporaire clonée `battleforthecrown_040`. `curl -fsS http://localhost:15002/health` → database `up`; `curl -fsSI http://localhost:5174/` → `HTTP/1.1 200 OK`. URLs : app `http://localhost:5174/`, design system `http://localhost:5174/design-system`, backend health `http://localhost:15002/health`. Cleanup DB après QA : `docker exec battleforthecrown-postgres dropdb -U postgres --if-exists battleforthecrown_040 --force`.
+- **Tests IG à faire par le user** :
+  - [ ] Ouvrir `http://localhost:5174/`, monde tempo 1.0, `AttackDetailModal` sur un village barbare proche avec MILICE : ETA ≤ 6 min pour ≤ ~8 cases.
+  - [ ] Même cible avec CAVALIER : temps ≈ 3,5× plus rapide que MILICE.
+  - [ ] Envoi conquête avec SEIGNEUR + escorte : durée ≈ 2× celle d'une MILICE seule, lisible dans le modal puis dans l'expédition.
 
 ## Points d'attention
 

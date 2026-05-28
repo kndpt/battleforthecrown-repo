@@ -162,7 +162,7 @@ Le tempo module la **vitesse**, pas l'**équilibre**. Les invariants suivants re
 | Diversité du blueprint barbare par tier | [`06` § Blueprint d'armée](./06-barbarians.md#blueprint-darmée) | Identité narrative et difficulté progressive. |
 | Bonus / malus des styles de village | [`12`](./12-village-styles.md) | Choix stratégique. |
 | Formules de puissance | [`09`](./09-power-and-rankings.md) | Lisibilité du classement. |
-| Mobilité des unités (`speed` par unité dans [`08`](./08-units.md)) | [`08`](./08-units.md) | Ratio entre unités (cavalier > infanterie > siège). Le scaling se fait via `tempo.travelSpeed` qui multiplie l'ensemble, sans toucher aux ratios. |
+| Mobilité des unités (`speed` par unité dans [`08`](./08-units.md)) | [`08`](./08-units.md) | Ratio entre unités (cavalier > infanterie > siège). Ces valeurs restent intouchables. La constante `REFERENCE_SPEED` est seulement une baseline de calibration du temps de trajet, distincte des ratios, puis `tempo.travelSpeed` multiplie l'ensemble par monde. |
 | Vision Watchtower (en cases) | [`03` § Tour de guet](./03-buildings.md#tour-de-guet-watchtower) | Distance géométrique, pas une durée. |
 
 ### 6.1 Invariants **wall-clock humain** (NE scalent pas non plus)

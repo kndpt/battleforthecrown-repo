@@ -47,7 +47,7 @@ export function calculateDistance(
  *
  * @param distance - Distance en cases
  * @param armySpeed - Vitesse de l'armée (= speed de l'unité la plus lente du groupe)
- * @param worldTravelSpeed - Multiplicateur de vitesse legacy utilisé par les estimations locales
+ * @param worldTravelSpeed - Multiplicateur direct utilisé par la formule shared
  * @returns Temps de trajet en millisecondes
  */
 export function calculateTravelTime(
@@ -83,7 +83,7 @@ export function findSlowestUnitSpeed(
  * @param targetY - Coordonnée Y de la cible
  * @param selectedUnits - Record de types d'unités et quantités
  * @param unitStatsMap - Map de stats des unités (vitesse)
- * @param worldTravelSpeed - Config globale de vitesse de trajet
+ * @param worldTravelSpeed - Multiplicateur direct de vitesse de trajet
  * @returns Temps de trajet en ms, ou 0 si calcul impossible
  *
  * @example

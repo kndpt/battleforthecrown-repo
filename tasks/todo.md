@@ -1,5 +1,16 @@
 # Todo
 
+## 2026-05-28 — Run 040 recalibration vitesse trajet
+
+- [x] Charger la fiche run, règles repo, specs source, briefings backend/pixi et skill tests.
+- [x] Cartographier `travel-time.ts`, `WorldConfigService`, l’ETA Pixi et les docs mobilité/tempo.
+- [x] Recalibrer `REFERENCE_SPEED` à 6 et reformuler les commentaires liés.
+- [x] Recalibrer les assertions backend en formules lisibles.
+- [x] Aligner les docs 08/23/balance et auditer les exemples chiffrés de trajet.
+- [x] Vérifier fixtures/seeds pour éviter une double compression.
+- [x] Lancer build shared, tests backend/pixi, smokes requis et static-check.
+- [x] Faire review, archiver la run, mettre à jour `tasks/README.md` et commit final.
+
 ## 2026-05-27 — Run 039 design-system vue armée
 
 - [x] Charger la fiche run, règles repo, specs source et skills frontend/tests/QA.

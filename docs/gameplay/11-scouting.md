@@ -29,7 +29,7 @@ Le scout réutilise l'infrastructure combat existante (déplacement euclidien, m
 ```
 1. Joueur depuis la Caserne → action "Envoyer espion(s)"
 2. Choisit la cible (toute entité visible sur sa carte)
-3. ESPION(s) parcourt la distance à mobilité 100 (≈ instantané pour cibles proches)
+3. ESPION(s) parcourt la distance à mobilité 100 (≈ 3,6 s par tuile à tempo `travelSpeed = 1.0`)
 4. Arrive à destination :
    • MVP : succès auto, peu importe la cible
    • Post-MVP : résolution selon défense d'espionnage de la cible

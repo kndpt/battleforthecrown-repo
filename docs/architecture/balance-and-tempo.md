@@ -26,7 +26,7 @@ Source de vérité « à `tempo.global = 1.0` ». Ces chiffres sont **les valeur
 | Bonus Château décroissant (lvl 1 → 10) | `packages/shared/src/village/buildings.ts:425` | `CASTLE_CONSTRUCTION_SPEED_BONUS` | [`03-buildings.md`](../gameplay/03-buildings.md) |
 | Coût + temps de recrutement par unité | `packages/shared/src/army/unit.ts` | `UNIT_COSTS` (champ `time`) | [`08-units.md`](../gameplay/08-units.md) |
 | Mobilité par unité (échelle 10-100+, haut = rapide) | `packages/shared/src/army/unit.ts` | `UNIT_STATS` (champ `speed`) | [`08-units.md`](../gameplay/08-units.md) |
-| Vitesse de référence trajet (1 tuile/min à `speed = REFERENCE_SPEED`) | `packages/shared/src/logic/travel-time.ts` | `REFERENCE_SPEED` | [`04-combat.md`](../gameplay/04-combat.md) |
+| Vitesse de référence trajet (1 tuile/min à `speed = 6`) | `packages/shared/src/logic/travel-time.ts` | `REFERENCE_SPEED` | [`04-combat.md`](../gameplay/04-combat.md) / [`08-units.md`](../gameplay/08-units.md) |
 | Bonus stratégies de village | `packages/shared/src/village/strategy.ts` | `DEFAULT_VILLAGE_STRATEGY` | [`12-village-styles.md`](../gameplay/12-village-styles.md) |
 
 > ⚠️ **Garde-fous** : avant de modifier une constante, vérifie qu'elle n'est pas dans la liste des invariants intouchables ([doc 23 § 6](../gameplay/23-world-tempo-and-multipliers.md#6-garde-fous--ce-que-les-multipliers-ne-touchent-jamais)) : ratios attaque/défense, coûts pop, ratios mobilité entre unités, wall-clock humain (bouclier 48 h…).

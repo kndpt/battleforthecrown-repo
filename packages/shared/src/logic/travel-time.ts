@@ -2,11 +2,11 @@ import { getStrategyBonusValue, VillageStrategyType } from '../village/strategy'
 import type { UnitMap } from '../army/unit-map';
 
 /**
- * Référence de vitesse : à `speed = REFERENCE_SPEED` (= 100, valeur du SPY),
- * une unité parcourt 1 tuile en 1 minute (au multiplicateur monde près).
- * Échelle directe : `speed` plus haut = unité plus rapide.
+ * Référence de vitesse : à `speed = REFERENCE_SPEED` (= 6), une unité parcourt
+ * 1 tuile en 1 minute (au multiplicateur monde près). Une unité plus rapide,
+ * comme le SPY à speed 100, parcourt donc 1 tuile en environ 3.6 secondes.
  */
-export const REFERENCE_SPEED = 100;
+export const REFERENCE_SPEED = 6;
 
 export function calculateTravelTime(
   distance: number,
