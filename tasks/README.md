@@ -27,6 +27,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ### Runs actifs
 
+- [041 — Gestes navigateur mobile et bottom sheets](./runs/041-fix-mobile-browser-gestures-bottom-sheets.md) — 📋 `PLANNED`. Neutraliser pull-to-refresh/overscroll sur les routes de jeu et centraliser le swipe-to-close dans `BottomSheet`.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés
