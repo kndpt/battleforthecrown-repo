@@ -325,7 +325,9 @@ describe('GameHeader multi-village selector', () => {
     expect(screen.queryByRole('button', { name: 'Ouvrir Capitale' })).not.toBeInTheDocument();
     expect(screen.getByText('Défensif')).toBeInTheDocument();
     expect(await screen.findByText('10:12')).toBeInTheDocument();
-    expect(await screen.findByText('220')).toBeInTheDocument();
+    expect(await screen.findByText((content, element) =>
+      content === '220' && element?.tagName.toLowerCase() === 'b',
+    )).toBeInTheDocument();
     expect(await screen.findByText('4.5K')).toBeInTheDocument();
     expect((await screen.findAllByText('78')).length).toBeGreaterThan(0);
     expect(await screen.findByTitle('Forteresse')).toBeInTheDocument();
