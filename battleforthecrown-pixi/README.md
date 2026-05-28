@@ -25,6 +25,8 @@ VITE_WS_URL=http://localhost:15001 \
 
 En worktree ou si `5173` est déjà occupé, utiliser un port dédié et aligner aussi `FRONTEND_URL` côté backend. Voir [`../docs/architecture/worktree-dev.md`](../docs/architecture/worktree-dev.md).
 
+Tester sur un Android branché en USB (sans dépendre du wifi) : `adb reverse tcp:5173 tcp:5173 && adb reverse tcp:15001 tcp:15001`, puis ouvrir `http://localhost:5173` dans Chrome du téléphone (à relancer après chaque rebranchement du câble).
+
 ## Scripts
 
 | Script | Détail |
