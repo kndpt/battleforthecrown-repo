@@ -536,11 +536,6 @@ export function ArmyScreen() {
       >
         <GameBottomSheetPanel
           eyebrow="Garnison"
-          headerActions={
-            <PositionMapButton
-              label={`Voir ${selectedGarrisonTitle ?? 'la garnison'} sur la carte`}
-            />
-          }
           title={
             <GarrisonSheetTitle
               subtitle={selectedGarrisonSubtitle}
