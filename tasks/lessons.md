@@ -13,6 +13,19 @@
 - Intégration frontend : inspecter `DesignSystemPreview.tsx` et les points d'entrée amont ; préserver la structure visuelle validée avec états neutralisés plutôt qu'une UI parallèle.
 - Intégration design-system runtime : ne jamais embarquer une phone-frame ou une status bar de prototype dans l'app IG ; adapter les primitives visuelles au shell runtime et vérifier explicitement l'absence de faux chrome.
 - Intégration design-system runtime : quand un écran possède déjà `GameHeader`/navigation/app shell, remplacer uniquement la zone de contenu demandée ; ne pas recréer top bar, village bar ou bottom nav depuis un prototype complet.
+- Affordance bottom sheet : ne pas afficher de handle/swipe sur une section fixe non interactive ; conserver l'espacement par padding plutôt que par un faux indicateur.
+- Indicateurs compacts : préférer l'asset existant (`clock.png`, ressource, troupe) aux libellés longs quand l'information est répétitive et visuelle.
+- Recrutement : afficher la population en villageois disponibles (`available -> available - coût`) ; éviter de mélanger avec `used / max` dans le popup.
+- Vue armée : ne pas dupliquer l'information de présence en badges `+/-`; les tabs doivent définir la sémantique et le nombre principal de la carte.
+- Vue armée : `Stationnées ailleurs` doit se lire par destination de support, avec une ligne par village renforcé et les assets des unités concernées, pas comme une grille de cartes par type.
+- Vue armée : ne pas inventer une heure de stationnement si le contrat garnison ne fournit pas de timestamp ; afficher un placeholder explicite et garder le DTO prêt pour un vrai champ.
+- Vue armée : la section `Village` peut se lire par type de troupe, mais les actions de renvoi doivent rester alignées sur le contrat `villageId + originVillageId + units`; ne pas créer une action "renfort complet" depuis une ligne qui ne représente pas une origine unique.
+- Vue armée : dans une ligne inline, séparer clairement les zones de clic si elles ont des intentions différentes ; l'asset ouvre le détail troupe, le reste de la ligne ouvre l'action garnison.
+- Vue armée : les résumés de section `Village` / `Stationnées ailleurs` doivent afficher la puissance totale avec l'asset puissance, pas le nombre brut de troupes.
+- Vue armée : une ligne `Village` sans alliés ne doit pas ouvrir la modale détail ; seul l'asset de gauche ouvre le détail, et la ligne n'ouvre la garnison que si `Alliés > 0`.
+- Vue armée : éviter une barre de ratio si elle force le joueur à interpréter une proportion ; pour `Moi` / `Alliés`, deux badges colorés et explicites sont plus lisibles dans une ligne compacte.
+- Vue armée : ne pas réserver l'espace du bottom nav fixe avec un padding interne (`pb-24`) sur le wrapper de contenu ; utiliser une marge externe calée sur `--bftc-bottom-nav-height` pour éviter une bande visible entre contenu et navigation.
+- Vue armée : la sheet de garnison doit rester dans le langage visuel Armée/Caserne ; afficher village + joueur quand le contrat le fournit, et limiter le bouton `position.png` au design tant que la navigation carte n'est pas planifiée.
 - Intégration auth runtime : ne pas conserver de placeholder inutile du prototype (visiteur, labels décoratifs, faux monogrammes SSO) ; si un bouton SSO est visible mais inactif, utiliser un asset réel et le griser clairement.
 - Debug worktree frontend/backend : ne pas corriger dans le code un mismatch local `localhost`/`127.0.0.1` ; suivre `docs/architecture/worktree-dev.md` et aligner `FRONTEND_URL`, `VITE_API_BASE_URL`, `VITE_WS_URL` et l'URL navigateur.
 - Bottom sheets : chrome et hauteur runtime appartiennent au shell partagé ; vérifier `GameBottomSheetPanel` + sheets custom avant tout ajustement local.

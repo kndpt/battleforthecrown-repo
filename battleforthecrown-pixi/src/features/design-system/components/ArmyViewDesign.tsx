@@ -69,6 +69,7 @@ export interface ArmyTroop {
   category: ArmyTroopCategory;
   cost: ArmyTroopCost;
   defense: number;
+  displayQuantity?: number;
   draggable?: boolean;
   emoji?: string;
   fromAllies?: number;
@@ -105,6 +106,50 @@ export interface ArmyRecruitSheetProps {
   title: string;
 }
 
+export interface ArmyContentTab {
+  id: string;
+  label: string;
+}
+
+export interface ArmySupportUnitChip {
+  emoji?: string;
+  icon?: string;
+  id: string;
+  label: string;
+  quantity: number;
+}
+
+export interface ArmySupportRow {
+  id: string;
+  power: number;
+  subtitle?: string;
+  title: string;
+  totalQuantity: number;
+  units: ArmySupportUnitChip[];
+}
+
+export interface ArmyVillageRow {
+  alliedQuantity: number;
+  emoji?: string;
+  icon?: string;
+  id: string;
+  ownQuantity: number;
+  power: number;
+  title: string;
+  totalQuantity: number;
+}
+
+export interface ArmyTroopSection {
+  emptyLabel?: string;
+  id: string;
+  supportRows?: ArmySupportRow[];
+  summary?: string;
+  summaryIcon?: string;
+  title: string;
+  troops?: ArmyTroop[];
+  villageRows?: ArmyVillageRow[];
+}
+
 export interface ArmyViewProps {
   activeFilterId: string;
   bottomNav: ArmyBottomNavProps;
@@ -122,13 +167,22 @@ export interface ArmyViewProps {
 
 export interface ArmyContentDesignProps {
   activeFilterId: string;
+  activeTabId?: string;
   className?: string;
   filters: ArmyFilterOption[];
+  modeTabs?: ArmyContentTab[];
   onFilterChange?: (id: string) => void;
+  onSupportRowSelect?: (row: ArmySupportRow) => void;
+  onTabChange?: (id: string) => void;
   onTroopDragEnd?: (troop: ArmyTroop) => void;
   onTroopDragStart?: (troop: ArmyTroop) => void;
   onTroopSelect?: (troop: ArmyTroop) => void;
+  onVillageRowIconSelect?: (row: ArmyVillageRow) => void;
+  onVillageRowSelect?: (row: ArmyVillageRow) => void;
   recruitSheet: ArmyRecruitSheetProps;
+  sections?: ArmyTroopSection[];
+  showFilters?: boolean;
+  showRecruitSheet?: boolean;
   troops: ArmyTroop[];
 }
 
@@ -139,8 +193,7 @@ export interface ArmyPhoneFrameProps {
 
 export interface ArmyRecruitStock {
   iron: number;
-  popMax: number;
-  population: number;
+  populationAvailable: number;
   stone: number;
   wood: number;
 }
@@ -483,6 +536,27 @@ function ArmyFilterButton({ active, filter, onClick }: { active: boolean; filter
   );
 }
 
+function ArmyModeTabButton({ active, label, onClick }: { active: boolean; label: string; onClick?: () => void }) {
+  return (
+    <button
+      className="inline-flex flex-1 cursor-pointer items-center justify-center rounded-[10px] px-3 py-2 font-game text-[12px] font-extrabold uppercase tracking-[.16em]"
+      onClick={onClick}
+      style={{
+        background: active
+          ? 'linear-gradient(to bottom, var(--game-gold-glow), var(--game-gold-dark))'
+          : 'linear-gradient(180deg, rgba(255,255,255,.72), rgba(255,255,255,.45))',
+        border: `2px solid ${active ? 'var(--game-gold-border)' : 'var(--parchment-700)'}`,
+        boxShadow: active ? 'inset 0 1px 0 rgba(255,255,255,.35), 0 2px 0 rgba(0,0,0,.18)' : 'none',
+        color: active ? '#3a2a00' : 'var(--fg-muted-parch)',
+        textShadow: active ? '0 1px 0 rgba(255,255,255,.35)' : 'none',
+      }}
+      type="button"
+    >
+      {label}
+    </button>
+  );
+}
+
 const TROOP_DRAG_MIME = 'application/x-bftc-army-troop';
 
 function PortraitTile({
@@ -498,7 +572,7 @@ function PortraitTile({
 }) {
   const cat = CAT_COLOR[troop.category];
   const locked = !troop.unlocked;
-  const total = troop.inVillage + (troop.fromAllies ?? 0);
+  const total = troop.displayQuantity ?? troop.inVillage;
   const draggable = Boolean(troop.draggable && troop.unlocked);
   const handleDragStart = (event: DragEvent<HTMLButtonElement>) => {
     if (!draggable) return;
@@ -539,16 +613,6 @@ function PortraitTile({
         {locked ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <img alt="" className="size-4 opacity-[.8] drop-shadow-[0_1px_1px_rgba(0,0,0,.5)]" src={publicAsset('/assets/lock.png')} />
-          </div>
-        ) : null}
-        {!locked && (troop.fromAllies ?? 0) > 0 ? (
-          <div className="absolute right-[3px] top-[3px] inline-flex h-3.5 items-center gap-0.5 rounded-full border-[1.5px] border-[var(--game-blue-border)] bg-[linear-gradient(to_bottom,var(--game-blue-light),var(--game-blue-dark))] px-1 font-game text-[8.5px] font-extrabold tabular-nums text-white [text-shadow:1px_1px_1px_rgba(0,0,0,.4)]">
-            +{troop.fromAllies}
-          </div>
-        ) : null}
-        {!locked && (troop.supportingElsewhere ?? 0) > 0 ? (
-          <div className="absolute left-[3px] top-[3px] inline-flex h-3.5 items-center gap-0.5 rounded-full border-[1.5px] border-[var(--game-gold-border)] bg-[linear-gradient(to_bottom,var(--game-gold-glow),var(--game-gold-dark))] px-1 font-game text-[8.5px] font-extrabold tabular-nums text-[#3a2a00]">
-            −{troop.supportingElsewhere}
           </div>
         ) : null}
       </div>
@@ -615,14 +679,13 @@ function RecruitSheet({
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      <div className="absolute left-1/2 top-1 h-1 w-9 -translate-x-1/2 rounded-full bg-[rgba(255,255,255,.35)]" />
       <div className="flex items-center gap-2 pt-1">
         <svg fill="none" height="14" stroke="var(--game-gold-glow)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" viewBox="0 0 24 24" width="14">
           <path d={iconPath} />
         </svg>
         <span className="font-game text-xs font-extrabold uppercase tracking-[.22em] text-[var(--game-gold-glow)] [text-shadow:1px_1px_1px_rgba(0,0,0,.5)]">{title}</span>
         <span className="flex-1" />
-        <span className="font-game text-[10px] font-bold text-[var(--parchment-300)]">{summaryLabel}</span>
+        <RecruitSummary summaryLabel={summaryLabel} />
       </div>
       <div className="flex min-h-[58px] items-center gap-[5px] rounded-[12px] border-[1.5px] border-[rgba(0,0,0,.5)] bg-[rgba(0,0,0,.3)] px-2 py-2.5 shadow-[inset_0_2px_3px_rgba(0,0,0,.25)]">
         {queue.map((item) => {
@@ -644,6 +707,28 @@ function RecruitSheet({
         </div>
       </div>
     </div>
+  );
+}
+
+function RecruitSummary({ summaryLabel }: { summaryLabel: string }) {
+  const [quantityLabel, rawTimeLabel] = summaryLabel.split(' · ');
+  const timeLabel = rawTimeLabel?.replace(/\s+restant$/, '');
+
+  if (!timeLabel) {
+    return (
+      <span className="font-game text-[10px] font-bold text-[var(--parchment-300)]">
+        {summaryLabel}
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex flex-wrap items-center justify-end gap-x-1.5 gap-y-0.5 text-right font-game text-[10px] font-bold text-[var(--parchment-300)]">
+      <span>{quantityLabel}</span>
+      <span aria-hidden>·</span>
+      <img alt="" className="size-3.5 shrink-0 object-contain drop-shadow-[0_1px_1px_rgba(0,0,0,.35)]" src={publicAsset('/assets/clock.png')} />
+      <span>{timeLabel}</span>
+    </span>
   );
 }
 
@@ -724,13 +809,22 @@ export function ArmyViewDesign({
 
 export function ArmyContentDesign({
   activeFilterId,
+  activeTabId,
   className,
   filters,
+  modeTabs,
   onFilterChange,
+  onSupportRowSelect,
+  onTabChange,
   onTroopDragEnd,
   onTroopDragStart,
   onTroopSelect,
+  onVillageRowIconSelect,
+  onVillageRowSelect,
   recruitSheet,
+  sections,
+  showFilters = true,
+  showRecruitSheet = true,
   troops,
 }: ArmyContentDesignProps) {
   return (
@@ -748,25 +842,275 @@ export function ArmyContentDesign({
         }
       `}</style>
       <div className="absolute inset-0 flex flex-col overflow-hidden">
-        <div className="flex items-center gap-1 border-b-[1.5px] border-[var(--parchment-600)] bg-[linear-gradient(to_bottom,var(--parchment-200),var(--parchment-300))] px-2.5 pb-1.5 pt-2">
-          {filters.map((filter) => (
-            <ArmyFilterButton active={filter.id === activeFilterId} filter={filter} key={filter.id} onClick={() => onFilterChange?.(filter.id)} />
-          ))}
-        </div>
-        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2.5 pb-1.5 pt-2.5">
-          <div className="grid grid-cols-4 gap-2">
-            {troops.map((troop) => (
-              <PortraitTile
-                key={troop.id}
-                onDragEnd={onTroopDragEnd}
-                onDragStart={onTroopDragStart}
-                onSelect={onTroopSelect}
-                troop={troop}
-              />
+        {modeTabs && modeTabs.length > 0 ? (
+          <div className="flex items-center gap-2 border-b-[1.5px] border-[var(--parchment-600)] bg-[linear-gradient(to_bottom,var(--parchment-200),var(--parchment-300))] px-2.5 pb-2 pt-2">
+            {modeTabs.map((tab) => (
+              <ArmyModeTabButton active={tab.id === activeTabId} key={tab.id} label={tab.label} onClick={() => onTabChange?.(tab.id)} />
             ))}
           </div>
+        ) : null}
+        {showFilters && filters.length > 0 ? (
+          <div className="flex items-center gap-1 border-b-[1.5px] border-[var(--parchment-600)] bg-[linear-gradient(to_bottom,var(--parchment-200),var(--parchment-300))] px-2.5 pb-1.5 pt-2">
+            {filters.map((filter) => (
+              <ArmyFilterButton active={filter.id === activeFilterId} filter={filter} key={filter.id} onClick={() => onFilterChange?.(filter.id)} />
+            ))}
+          </div>
+        ) : null}
+        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2.5 pb-1.5 pt-2.5">
+          {sections ? (
+            sections.map((section) => (
+              <ArmyTroopSectionBlock
+                key={section.id}
+                onSupportRowSelect={onSupportRowSelect}
+                onTroopSelect={onTroopSelect}
+                onVillageRowIconSelect={onVillageRowIconSelect}
+                onVillageRowSelect={onVillageRowSelect}
+                section={section}
+              />
+            ))
+          ) : (
+            <div className="grid grid-cols-4 gap-2">
+              {troops.map((troop) => (
+                <PortraitTile
+                  key={troop.id}
+                  onDragEnd={onTroopDragEnd}
+                  onDragStart={onTroopDragStart}
+                  onSelect={onTroopSelect}
+                  troop={troop}
+                />
+              ))}
+            </div>
+          )}
         </div>
-        <RecruitSheet {...recruitSheet} troops={troops} />
+        {showRecruitSheet ? <RecruitSheet {...recruitSheet} troops={troops} /> : null}
+      </div>
+    </div>
+  );
+}
+
+function ArmyTroopSectionBlock({
+  onSupportRowSelect,
+  onTroopSelect,
+  onVillageRowIconSelect,
+  onVillageRowSelect,
+  section,
+}: {
+  onSupportRowSelect?: (row: ArmySupportRow) => void;
+  onTroopSelect?: (troop: ArmyTroop) => void;
+  onVillageRowIconSelect?: (row: ArmyVillageRow) => void;
+  onVillageRowSelect?: (row: ArmyVillageRow) => void;
+  section: ArmyTroopSection;
+}) {
+  const troops = section.troops ?? [];
+  const supportRows = section.supportRows ?? [];
+  const villageRows = section.villageRows ?? [];
+
+  return (
+    <section className={cn('space-y-2', supportRows.length > 0 ? 'pt-3' : '')}>
+      <div className="flex items-end gap-2">
+        <h2 className="font-game text-[12px] font-extrabold uppercase tracking-[.18em] text-[var(--fg-quill)]">
+          {section.title}
+        </h2>
+        <span className="flex-1" />
+        {section.summary ? (
+          <span className="inline-flex items-center gap-1 font-game text-[10px] font-bold tabular-nums text-[var(--fg-muted-parch)]">
+            {section.summaryIcon ? (
+              <img
+                alt=""
+                className="size-3.5 object-contain"
+                src={publicAsset(section.summaryIcon)}
+              />
+            ) : null}
+            {section.summary}
+          </span>
+        ) : null}
+      </div>
+      {villageRows.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          {villageRows.map((row) => (
+            <ArmyVillageRowButton
+              key={`${section.id}-${row.id}`}
+              onIconClick={() => onVillageRowIconSelect?.(row)}
+              onClick={() => onVillageRowSelect?.(row)}
+              row={row}
+            />
+          ))}
+        </div>
+      ) : supportRows.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          {supportRows.map((row) => (
+            <ArmySupportRowButton
+              key={`${section.id}-${row.id}`}
+              onClick={() => onSupportRowSelect?.(row)}
+              row={row}
+            />
+          ))}
+        </div>
+      ) : troops.length > 0 ? (
+        <div className="grid grid-cols-4 gap-2">
+          {troops.map((troop) => (
+            <PortraitTile
+              key={`${section.id}-${troop.id}`}
+              onSelect={onTroopSelect}
+              troop={troop}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-[12px] border-[1.5px] border-[var(--parchment-600)] bg-[rgba(255,255,255,.42)] px-3 py-4 text-center font-game text-[11px] font-bold text-[var(--fg-muted-parch)]">
+          {section.emptyLabel ?? 'Aucune troupe'}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ArmySupportRowButton({
+  onClick,
+  row,
+}: {
+  onClick?: () => void;
+  row: ArmySupportRow;
+}) {
+  const visibleUnits = row.units.slice(0, 4);
+  const overflow = Math.max(0, row.units.length - visibleUnits.length);
+
+  return (
+    <button
+      className="flex w-full cursor-pointer items-center gap-2 rounded-[13px] border-2 border-[var(--parchment-700)] bg-[linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.43))] px-2.5 py-2 text-left shadow-[var(--shadow-card-inner-light),0_2px_0_rgba(0,0,0,.14)]"
+      onClick={onClick}
+      type="button"
+    >
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate font-game text-[13px] font-extrabold leading-tight text-[var(--fg-quill)]">
+          {row.title}
+        </span>
+        {row.subtitle ? (
+          <span className="mt-0.5 truncate font-game text-[9.5px] font-bold uppercase tracking-[.08em] text-[var(--fg-muted-parch)]">
+            {row.subtitle}
+          </span>
+        ) : null}
+      </div>
+      <div className="flex shrink-0 items-center">
+        {visibleUnits.map((unit, index) => (
+          <span
+            className={cn(
+              'relative flex size-9 items-center justify-center rounded-full border-2 border-[var(--parchment-50)] bg-[linear-gradient(180deg,var(--parchment-300),var(--parchment-500))] shadow-[0_1px_2px_rgba(0,0,0,.28)]',
+              index > 0 ? '-ml-2' : '',
+            )}
+            key={unit.id}
+            title={`${unit.label} ×${formatNumber(unit.quantity)}`}
+            style={{ zIndex: visibleUnits.length - index }}
+          >
+            {unit.icon ? (
+              <img
+                alt=""
+                className="size-7 object-contain drop-shadow-[0_1px_1px_rgba(0,0,0,.3)]"
+                src={publicAsset(unit.icon)}
+              />
+            ) : (
+              <span aria-hidden="true" className="text-lg leading-none">
+                {unit.emoji}
+              </span>
+            )}
+          </span>
+        ))}
+        {overflow > 0 ? (
+          <span className="-ml-2 flex size-9 items-center justify-center rounded-full border-2 border-[var(--parchment-50)] bg-[linear-gradient(180deg,var(--wood),var(--wood-dark))] font-game text-[10px] font-extrabold text-white shadow-[0_1px_2px_rgba(0,0,0,.28)]">
+            +{overflow}
+          </span>
+        ) : null}
+      </div>
+      <div className="flex min-w-[72px] shrink-0 flex-col items-end gap-1">
+        <span className="font-game text-[17px] font-extrabold leading-none tabular-nums text-[var(--fg-quill)]">
+          ×{formatNumber(row.totalQuantity)}
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-full border border-[var(--parchment-700)] bg-[rgba(255,255,255,.42)] px-1.5 py-0.5 font-game text-[9px] font-extrabold tabular-nums text-[var(--fg-muted-parch)]">
+          <img alt="" className="size-3 object-contain" src={publicAsset('/assets/army-power.png')} />
+          {formatNumber(row.power)}
+        </span>
+      </div>
+    </button>
+  );
+}
+
+function ArmyVillageRowButton({
+  onIconClick,
+  onClick,
+  row,
+}: {
+  onIconClick?: () => void;
+  onClick?: () => void;
+  row: ArmyVillageRow;
+}) {
+  const hasAllies = row.alliedQuantity > 0;
+
+  return (
+    <div
+      aria-label={row.title}
+      className={cn(
+        'flex w-full items-center gap-2 rounded-[13px] border-2 border-[var(--parchment-700)] bg-[linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.43))] px-2.5 py-2 text-left shadow-[var(--shadow-card-inner-light),0_2px_0_rgba(0,0,0,.14)]',
+        hasAllies ? 'cursor-pointer' : 'cursor-default',
+      )}
+      onClick={hasAllies ? onClick : undefined}
+      onKeyDown={(event) => {
+        if (!hasAllies) return;
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        onClick?.();
+      }}
+      role={hasAllies ? 'button' : undefined}
+      tabIndex={hasAllies ? 0 : undefined}
+    >
+      <button
+        aria-label={`Détails ${row.title}`}
+        className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-[12px] border-2 border-[var(--parchment-700)] bg-[linear-gradient(180deg,var(--parchment-300),var(--parchment-500))] p-0 shadow-[inset_0_1px_0_rgba(255,255,255,.35),0_1px_2px_rgba(0,0,0,.22)]"
+        onClick={(event) => {
+          event.stopPropagation();
+          onIconClick?.();
+        }}
+        type="button"
+      >
+        {row.icon ? (
+          <img
+            alt=""
+            className="size-9 object-contain drop-shadow-[0_1px_1px_rgba(0,0,0,.3)]"
+            src={publicAsset(row.icon)}
+          />
+        ) : (
+          <span aria-hidden="true" className="text-2xl leading-none">
+            {row.emoji}
+          </span>
+        )}
+      </button>
+      <div className="min-w-0 flex-1">
+        <div className="truncate font-game text-[14px] font-extrabold leading-tight text-[var(--fg-quill)]">
+          {row.title}
+        </div>
+        <div className="mt-1.5 grid max-w-[240px] grid-cols-2 gap-1.5">
+          <span className="inline-flex min-w-0 items-center justify-center rounded-full border-[1.5px] border-[var(--game-blue-border)] bg-[linear-gradient(180deg,var(--game-blue-light),var(--game-blue-dark))] px-2 py-1 font-game text-[9.5px] font-extrabold uppercase tracking-[.08em] text-white [text-shadow:1px_1px_1px_rgba(0,0,0,.35)]">
+            Moi ×{formatNumber(row.ownQuantity)}
+          </span>
+          <span
+            className={cn(
+              'inline-flex min-w-0 items-center justify-center rounded-full border-[1.5px] px-2 py-1 font-game text-[9.5px] font-extrabold uppercase tracking-[.08em]',
+              hasAllies
+                ? 'border-[var(--game-green-border)] bg-[linear-gradient(180deg,var(--game-green-light),var(--game-green-dark))] text-white [text-shadow:1px_1px_1px_rgba(0,0,0,.35)]'
+                : 'border-[var(--parchment-600)] bg-[rgba(255,255,255,.32)] text-[var(--fg-muted-parch)]',
+            )}
+          >
+            Alliés ×{formatNumber(row.alliedQuantity)}
+          </span>
+        </div>
+      </div>
+      <div className="flex min-w-[72px] shrink-0 flex-col items-end gap-1">
+        <span className="font-game text-[17px] font-extrabold leading-none tabular-nums text-[var(--fg-quill)]">
+          ×{formatNumber(row.totalQuantity)}
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-full border border-[var(--parchment-700)] bg-[rgba(255,255,255,.42)] px-1.5 py-0.5 font-game text-[9px] font-extrabold tabular-nums text-[var(--fg-muted-parch)]">
+          <img alt="" className="size-3 object-contain" src={publicAsset('/assets/army-power.png')} />
+          {formatNumber(row.power)}
+        </span>
       </div>
     </div>
   );
@@ -901,8 +1245,8 @@ export function ArmyRecruitPopup({
     wood: troop.cost.wood * boundedValue,
   };
   const populationUsed = troop.pop * boundedValue;
-  const afterPopulation = stock.population + populationUsed;
-  const populationTight = afterPopulation > stock.popMax * 0.92;
+  const afterPopulation = Math.max(0, stock.populationAvailable - populationUsed);
+  const populationTight = afterPopulation === 0;
   const atMax = boundedValue >= max;
   const update = (nextValue: number) => onChange(clampQuantity(nextValue, max));
 
@@ -969,9 +1313,8 @@ export function ArmyRecruitPopup({
           <img alt="" className="size-5 drop-shadow-[0_1px_1px_rgba(0,0,0,.3)]" src={publicAsset('/assets/resources/population.png')} />
           <span className="flex-1 font-game text-[10px] font-bold uppercase tracking-[.08em] text-[var(--fg-muted-parch)]">{labels.population}</span>
           <span className="font-game text-[10px] font-bold tabular-nums">
-            <span className="text-[var(--fg-quill)]">{stock.population}</span>
+            <span className="text-[var(--fg-quill)]">{stock.populationAvailable}</span>
             <span className={populationTight ? 'text-[var(--game-red-dark)]' : 'text-[var(--game-green-dark)]'}> → {afterPopulation}</span>
-            <span className="text-[var(--fg-muted-parch)]"> / {stock.popMax}</span>
           </span>
         </div>
       </div>

@@ -14,7 +14,7 @@ import {
   useWorldConfigQuery,
 } from '@/api/queries';
 import type { ArmyUnitDto } from '@/api/queries';
-import { Badge, BottomSheet, Button, Panel, Spinner } from '@/ui';
+import { BottomSheet, Button, Panel, Spinner } from '@/ui';
 import { GameHeader } from '@/features/layout/GameHeader';
 import { ToastStack } from '@/features/layout/ToastStack';
 import { BottomNavigationBar } from '@/features/layout/BottomNavigationBar';
@@ -29,10 +29,13 @@ import {
   computeArmyRecruitMax,
   GameBottomSheetPanel,
   type ArmyRecruitPopupLabels,
+  type ArmySupportRow,
   type ArmyTroop,
+  type ArmyVillageRow,
 } from '@/features/design-system/components';
 import { useDisplayResources } from '@/features/resources/useDisplayResources';
 import type { GarrisonLine } from '@/lib/types';
+import { publicAsset } from '@/lib/publicAsset';
 import { useTickingNow } from '@/lib/useTickingNow';
 import { useGameStore } from '@/stores/game';
 import { useUiStore } from '@/stores/ui';
@@ -45,6 +48,8 @@ import {
   type ArmyFilterId,
 } from './armyViewModel';
 
+type ArmyRuntimeTab = 'barracks' | 'army';
+
 const recruitLabels: ArmyRecruitPopupLabels = {
   cancel: 'Annuler',
   max: 'Max',
@@ -56,6 +61,10 @@ const recruitLabels: ArmyRecruitPopupLabels = {
 };
 
 const EMPTY_GARRISON_LINES: GarrisonLine[] = [];
+const ARMY_RUNTIME_TABS = [
+  { id: 'barracks', label: 'Caserne' },
+  { id: 'army', label: 'Armée' },
+] as const;
 
 function NoBarracksScreen() {
   return (
@@ -103,57 +112,118 @@ function GarrisonActions({
   pendingRecallKey: string | null;
 }) {
   return (
-    <div className="space-y-3 p-3">
+    <div className="space-y-2.5 px-3 pb-3 pt-2">
       {lines.map((line) => {
         const meta = unitMetaFor(line.unitType);
         const recallKey = `${line.villageId}:${line.originVillageId}:${line.unitType}`;
         const pending = isPending && pendingRecallKey === recallKey;
         const incoming = line.direction === 'INCOMING';
+        const placeName = incoming
+          ? line.originVillageName ?? `Village ${line.originVillageId}`
+          : line.hostVillageName ?? `Village ${line.villageId}`;
+        const playerName = incoming ? line.originPlayerName : line.hostPlayerName;
 
         return (
           <div
-            className="flex items-center justify-between gap-3 rounded-lg border border-[#5d4a32]/30 bg-white/35 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.45)]"
+            className="flex items-center gap-2 rounded-[13px] border-2 border-[#8b7355] bg-[linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.43))] px-2.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,.55),0_2px_0_rgba(0,0,0,.14)]"
             key={`${line.direction}-${recallKey}`}
           >
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                {meta.iconPath ? (
-                  <img
-                    alt={meta.name}
-                    className="size-7 object-contain"
-                    src={meta.iconPath}
-                  />
-                ) : (
-                  <span aria-hidden className="text-xl">
-                    {meta.emoji}
-                  </span>
-                )}
-                <p className="truncate font-game text-sm font-bold text-[#3d2f1f]">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-[12px] border-2 border-[#8b7355] bg-[linear-gradient(180deg,#f5e6d3,#d4c094)] shadow-[inset_0_1px_0_rgba(255,255,255,.35),0_1px_2px_rgba(0,0,0,.22)]">
+              {meta.iconPath ? (
+                <img
+                  alt=""
+                  className="size-9 object-contain drop-shadow-[0_1px_1px_rgba(0,0,0,.3)]"
+                  src={publicAsset(meta.iconPath)}
+                />
+              ) : (
+                <span aria-hidden className="text-2xl leading-none">
+                  {meta.emoji}
+                </span>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 items-center gap-2">
+                <p className="truncate font-game text-[14px] font-extrabold text-[#3d2f1f]">
                   {meta.name}
                 </p>
-                <Badge variant="success" size="sm">
+                <span className="inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full border-2 border-[#3a6c1f] bg-[linear-gradient(180deg,#6ebf49,#4a8c2a)] px-1.5 font-game text-[10px] font-extrabold tabular-nums text-white [text-shadow:1px_1px_1px_rgba(0,0,0,.35)]">
                   {line.quantity}
-                </Badge>
+                </span>
               </div>
-              <p className="mt-1 font-game text-[11px] text-[#6d5838]">
-                {incoming
-                  ? `Origine : village ${line.originVillageId}`
-                  : `Hôte : village ${line.villageId}`}
+              <p className="mt-1 truncate font-game text-[10px] font-bold uppercase tracking-[.08em] text-[#4b5563]">
+                {placeName}
               </p>
+              {playerName ? (
+                <p className="mt-0.5 truncate font-game text-[10px] font-semibold text-[#6d5838]">
+                  {playerName}
+                </p>
+              ) : null}
             </div>
-            <Button
+            <PositionMapButton label={`Voir ${placeName} sur la carte`} />
+            <button
+              className="min-w-[82px] shrink-0 rounded-[12px] border-2 border-[#9e7b0d] bg-[linear-gradient(180deg,#f6d57b,#d4a017)] px-3 py-2.5 font-game text-[12px] font-extrabold text-[#3a2a00] shadow-[inset_0_1px_0_rgba(255,255,255,.35),0_2px_0_rgba(0,0,0,.2)] disabled:cursor-not-allowed disabled:opacity-60"
               disabled={pending}
               onClick={() => onRecall(line)}
-              size="sm"
-              variant={incoming ? 'danger' : 'warning'}
+              type="button"
             >
               {pending ? (incoming ? 'Renvoi...' : 'Rappel...') : incoming ? 'Renvoyer' : 'Rappeler'}
-            </Button>
+            </button>
           </div>
         );
       })}
     </div>
   );
+}
+
+function PositionMapButton({ label }: { label: string }) {
+  return (
+    <button
+      aria-label={label}
+      className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-[12px] border-2 border-[#8b7355] bg-[linear-gradient(180deg,rgba(255,255,255,.85),rgba(255,255,255,.55))] p-0 shadow-[inset_0_1px_0_rgba(255,255,255,.42),0_1px_0_rgba(0,0,0,.12)]"
+      title="Voir sur la carte (à venir)"
+      type="button"
+    >
+      <img alt="" className="size-6 object-contain" src={publicAsset('/assets/position.png')} />
+    </button>
+  );
+}
+
+function GarrisonSheetTitle({
+  subtitle,
+  title,
+}: {
+  subtitle?: string | null;
+  title?: string | null;
+}) {
+  return (
+    <div className="min-w-0">
+      <div className="truncate">{title}</div>
+      {subtitle ? (
+        <div className="mt-1 truncate font-game text-[10px] font-bold uppercase tracking-[.08em] text-[#6d5838]">
+          {subtitle}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function formatGarrisonOriginsSubtitle(lines: GarrisonLine[]): string | null {
+  const origins = new Map<string, { playerName: string | null; villageName: string }>();
+
+  for (const line of lines) {
+    origins.set(line.originVillageId, {
+      playerName: line.originPlayerName ?? null,
+      villageName: line.originVillageName ?? `Village ${line.originVillageId}`,
+    });
+  }
+
+  if (origins.size === 0) return null;
+  if (origins.size > 1) return `${origins.size} villages alliés`;
+
+  const origin = Array.from(origins.values())[0];
+  return origin.playerName
+    ? `${origin.villageName} · ${origin.playerName}`
+    : origin.villageName;
 }
 
 export function ArmyScreen() {
@@ -173,10 +243,13 @@ export function ArmyScreen() {
   const nowMs = useTickingNow(1_000);
   const { display } = useDisplayResources(villageId);
 
-  const [activeFilterId, setActiveFilterId] = useState<ArmyFilterId>('all');
+  const [activeFilterId, setActiveFilterId] = useState<ArmyFilterId>('mine');
+  const [activeRuntimeTab, setActiveRuntimeTab] = useState<ArmyRuntimeTab>('barracks');
   const [draggedTroopId, setDraggedTroopId] = useState<string | null>(null);
   const [recruitTroopId, setRecruitTroopId] = useState<string | null>(null);
   const [recruitValue, setRecruitValue] = useState(1);
+  const [selectedGarrisonVillageId, setSelectedGarrisonVillageId] = useState<string | null>(null);
+  const [selectedGarrisonDirection, setSelectedGarrisonDirection] = useState<GarrisonLine['direction'] | null>(null);
   const [selectedGarrisonTroopId, setSelectedGarrisonTroopId] = useState<string | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<ArmyUnitDto | null>(null);
   const [isPowerSheetOpen, setIsPowerSheetOpen] = useState(false);
@@ -225,12 +298,33 @@ export function ArmyScreen() {
   const boundedRecruitValue = recruitMax <= 0
     ? 0
     : Math.max(1, Math.min(recruitMax, recruitValue));
-  const selectedGarrisonLines = selectedGarrisonTroopId
-    ? garrisonLines.filter((line) => line.unitType === selectedGarrisonTroopId)
-    : [];
+  const selectedGarrisonLines = selectedGarrisonVillageId
+    ? garrisonLines.filter(
+      (line) =>
+        line.direction === 'OUTGOING' &&
+        line.villageId === selectedGarrisonVillageId,
+    )
+    : selectedGarrisonTroopId
+      ? garrisonLines.filter(
+        (line) =>
+          line.unitType === selectedGarrisonTroopId &&
+          (!selectedGarrisonDirection || line.direction === selectedGarrisonDirection),
+      )
+      : [];
   const selectedGarrisonTroop = selectedGarrisonTroopId
     ? armyModel.troops.find((troop) => troop.id === selectedGarrisonTroopId) ?? null
     : null;
+  const selectedGarrisonTitle =
+    selectedGarrisonVillageId
+      ? selectedGarrisonLines[0]?.hostVillageName ?? 'Stationnées ailleurs'
+      : selectedGarrisonDirection === 'INCOMING' && selectedGarrisonTroop
+        ? `${selectedGarrisonTroop.name} alliés`
+        : selectedGarrisonTroop?.name;
+  const selectedGarrisonSubtitle = selectedGarrisonVillageId
+    ? selectedGarrisonLines[0]?.hostPlayerName ?? null
+    : selectedGarrisonDirection === 'INCOMING'
+      ? formatGarrisonOriginsSubtitle(selectedGarrisonLines)
+      : null;
   const pendingRecallKey = recallReinforcement.variables
     ? `${recallReinforcement.variables.villageId}:${recallReinforcement.variables.originVillageId}:${Object.keys(recallReinforcement.variables.units)[0]}`
     : null;
@@ -282,12 +376,41 @@ export function ArmyScreen() {
   };
 
   const handleTroopSelect = (troop: ArmyTroop) => {
+    setSelectedGarrisonVillageId(null);
+    setSelectedGarrisonDirection(null);
+    if (activeRuntimeTab === 'barracks') {
+      setSelectedUnit(toDetailUnit(troop, units));
+      return;
+    }
     const hasGarrisonActions =
       (troop.fromAllies ?? 0) > 0 || (troop.supportingElsewhere ?? 0) > 0;
     if (hasGarrisonActions) {
       setSelectedGarrisonTroopId(troop.id);
       return;
     }
+    setSelectedUnit(toDetailUnit(troop, units));
+  };
+
+  const handleSupportRowSelect = (row: ArmySupportRow) => {
+    setSelectedGarrisonDirection(null);
+    setSelectedGarrisonTroopId(null);
+    setSelectedGarrisonVillageId(row.id);
+  };
+
+  const handleVillageRowSelect = (row: ArmyVillageRow) => {
+    setSelectedGarrisonVillageId(null);
+    if (row.alliedQuantity > 0) {
+      setSelectedGarrisonDirection('INCOMING');
+      setSelectedGarrisonTroopId(row.id);
+    }
+  };
+
+  const handleVillageRowIconSelect = (row: ArmyVillageRow) => {
+    const troop = armyModel.troops.find((candidate) => candidate.id === row.id);
+    if (!troop) return;
+    setSelectedGarrisonVillageId(null);
+    setSelectedGarrisonDirection(null);
+    setSelectedGarrisonTroopId(null);
     setSelectedUnit(toDetailUnit(troop, units));
   };
 
@@ -305,7 +428,13 @@ export function ArmyScreen() {
         <GameHeader onPowerClick={() => setIsPowerSheetOpen(true)} />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden pb-24">
+      <div
+        className={
+          activeRuntimeTab === 'barracks'
+            ? 'mb-[var(--bftc-bottom-nav-height,88px)] flex min-h-0 flex-1 flex-col overflow-hidden bg-[#2f1d12]'
+            : 'mb-[var(--bftc-bottom-nav-height,88px)] flex min-h-0 flex-1 flex-col overflow-hidden bg-[linear-gradient(180deg,#f5e6d3,#e8d4a8)]'
+        }
+      >
         <OnboardingGuidance
           guidance={onboardingGuidance}
           isLoading={
@@ -327,18 +456,27 @@ export function ArmyScreen() {
         ) : (
           <ArmyContentDesign
             activeFilterId={armyModel.activeFilterId}
+            activeTabId={activeRuntimeTab}
             className="min-h-0 flex-1"
             filters={armyModel.filters}
+            modeTabs={[...ARMY_RUNTIME_TABS]}
+            onTabChange={(id) => setActiveRuntimeTab(id as ArmyRuntimeTab)}
             onFilterChange={(id) => setActiveFilterId(id as ArmyFilterId)}
             onTroopDragEnd={() => setDraggedTroopId(null)}
             onTroopDragStart={(troop) => setDraggedTroopId(troop.id)}
+            onSupportRowSelect={handleSupportRowSelect}
             onTroopSelect={handleTroopSelect}
+            onVillageRowIconSelect={handleVillageRowIconSelect}
+            onVillageRowSelect={handleVillageRowSelect}
             recruitSheet={{
               ...armyModel.recruitSheet,
               isDragging: Boolean(draggedTroopId),
               onDropTroop: handleDropTroop,
             }}
-            troops={armyModel.visibleTroops}
+            sections={activeRuntimeTab === 'army' ? armyModel.armySections : undefined}
+            showFilters={false}
+            showRecruitSheet={activeRuntimeTab === 'barracks'}
+            troops={activeRuntimeTab === 'barracks' ? armyModel.barracksTroops : []}
           />
         )}
       </div>
@@ -387,14 +525,28 @@ export function ArmyScreen() {
       </BottomSheet>
 
       <BottomSheet
-        isOpen={Boolean(selectedGarrisonTroop && selectedGarrisonLines.length > 0)}
+        isOpen={Boolean(selectedGarrisonTitle && selectedGarrisonLines.length > 0)}
         maxHeight="72vh"
-        onClose={() => setSelectedGarrisonTroopId(null)}
+        onClose={() => {
+          setSelectedGarrisonVillageId(null);
+          setSelectedGarrisonDirection(null);
+          setSelectedGarrisonTroopId(null);
+        }}
         zIndex={80}
       >
         <GameBottomSheetPanel
           eyebrow="Garnison"
-          title={selectedGarrisonTroop?.name}
+          headerActions={
+            <PositionMapButton
+              label={`Voir ${selectedGarrisonTitle ?? 'la garnison'} sur la carte`}
+            />
+          }
+          title={
+            <GarrisonSheetTitle
+              subtitle={selectedGarrisonSubtitle}
+              title={selectedGarrisonTitle}
+            />
+          }
           scrollable
         >
           {selectedGarrisonLines.length > 0 ? (

@@ -10,6 +10,14 @@
 - [x] Lancer type-check/tests/static-check et QA visuelle.
 - [x] Archiver la run et commit final.
 
+## 2026-05-27 — Ajustement Armée stationnée ailleurs
+
+- [x] Relire le modèle de garnison et le rendu actuel Armée/Caserne.
+- [x] Grouper `Stationnées ailleurs` par village de destination.
+- [x] Adapter les tests ciblés du view-model.
+- [x] Vérifier type-check, test ciblé et rendu navigateur.
+- [x] Transformer `Village` en lignes par type avec split moi/alliés et actions alignées au contrat garnison.
+
 ## 2026-05-27 — Dev DB inaccessible depuis `yarn dev`
 
 - [x] Confirmer que le backend cible `postgresql://postgres:postgres@localhost:5432/battleforthecrown`.
@@ -80,6 +88,15 @@
 - 2026-05-27 Run 039 armée : correction de scope après feedback user, shell runtime `/game/army` conservé (`GameHeader` + `BottomNavigationBar`), seule la zone contenu Army consomme le design-system.
 - Review run 039 : findings bloquants résolus, drag actif uniquement sur vrai `dragstart`, actions `Renvoyer`/`Rappeler` conservées via bottom sheet garnison, popup recrutement en mode `embedded` sans double top.
 - Vérification run 039 : `rtk yarn workspace battleforthecrown-pixi type-check`, `rtk yarn workspace battleforthecrown-pixi test -- armyViewModel`, `rtk yarn workspace battleforthecrown-pixi test`, `rtk yarn static-check`.
+- Ajustement Armée stationnée ailleurs : les renforts sortants sont groupés par village de destination, avec ligne compacte par village, badges d'unités chevauchés, total de troupes et puissance estimée.
+- Ajustement visuel Armée : espacement augmenté avant `Stationnées ailleurs` et sous-titre remplacé par `Depuis : —` tant que le contrat garnison ne fournit pas d'heure réelle.
+- Ajustement Armée village : la section `Village` passe en lignes par type de troupe avec détail `Moi` / `Alliés`; le clic ouvre les lignes entrantes renvoyables uniquement quand des alliés sont présents.
+- Ajustement Armée résumés : les compteurs de section `Village` et `Stationnées ailleurs` affichent désormais la puissance totale avec l'asset puissance.
+- Ajustement Armée interaction : les lignes sans alliés ne déclenchent plus la modale détail ; seul l'asset de gauche ouvre le détail troupe.
+- Ajustement Armée répartition : retour à deux badges explicites `Moi` / `Alliés`, colorés et de largeur stable ; suppression de la barre de ratio jugée moins lisible.
+- Ajustement Armée bottom nav : suppression du `pb-24` interne au profit d'une marge externe basée sur `--bftc-bottom-nav-height`, pour éviter la bande visible entre contenu et navigation.
+- Ajustement Garnison : la bottom sheet adopte le style Armée, affiche village + joueur quand disponible et ajoute le bouton design `position.png` sans navigation carte.
+- Vérification ajustement Armée : `rtk yarn workspace battleforthecrown-pixi type-check`, `rtk yarn workspace battleforthecrown-pixi test -- armyViewModel`, inspection navigateur `/game/army` onglet `Armée`, ouverture de la garnison `Ruined Fort` et ouverture de `Écuyer alliés` depuis la section `Village`.
 - 2026-05-27 Dev DB : root cause = le conteneur `battleforthecrown-postgres` était healthy mais sans port host publié (`docker port` vide, `pg_isready localhost:5432` en échec), alors que Compose attend `5432:5432`.
 - Correction : `docker compose up -d --force-recreate postgres` depuis `battleforthecrown-backend/`, sans reset Prisma et sans suppression du volume `battleforthecrown-backend_postgres_data`.
 - Vérification : `pg_isready -h localhost -p 5432 -U postgres -d battleforthecrown`, `yarn workspace battleforthecrown-backend prisma migrate deploy`, `yarn dev`, `curl http://localhost:15001/health`, `curl -I http://localhost:5173/`.

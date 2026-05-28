@@ -154,8 +154,10 @@ export interface Expedition {
 export interface GarrisonLine {
   villageId: string;
   hostVillageName: string | null;
+  hostPlayerName?: string | null;
   originVillageId: string;
   originVillageName: string | null;
+  originPlayerName?: string | null;
   direction: 'INCOMING' | 'OUTGOING';
   unitType: UnitType;
   quantity: number;

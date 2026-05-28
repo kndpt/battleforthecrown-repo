@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { UNIT_COSTS } from '@battleforthecrown/shared/army';
+import { getUnitPowerWeight } from '@battleforthecrown/shared/power';
 import { computeArmyRecruitMax } from '@/features/design-system/components';
 import type { ArmyTrainingDto, ArmyUnitDto } from '@/api/queries';
 import type { GarrisonLine } from '@/lib/types';
@@ -30,11 +31,35 @@ const garrison: GarrisonLine[] = [
   {
     direction: 'OUTGOING',
     hostVillageName: 'Distant Keep',
+    hostPlayerName: 'ally@example.test',
     originVillageId: 'village-1',
     originVillageName: 'Capital',
+    originPlayerName: 'me@example.test',
     quantity: 3,
     unitType: 'SQUIRE',
     villageId: 'distant-1',
+  },
+  {
+    direction: 'OUTGOING',
+    hostVillageName: 'Distant Keep',
+    hostPlayerName: 'ally@example.test',
+    originVillageId: 'village-1',
+    originVillageName: 'Capital',
+    originPlayerName: 'me@example.test',
+    quantity: 5,
+    unitType: 'ARCHER',
+    villageId: 'distant-1',
+  },
+  {
+    direction: 'OUTGOING',
+    hostVillageName: 'Border Fort',
+    hostPlayerName: 'frontier@example.test',
+    originVillageId: 'village-1',
+    originVillageName: 'Capital',
+    originPlayerName: 'me@example.test',
+    quantity: 10,
+    unitType: 'MILITIA',
+    villageId: 'distant-2',
   },
 ];
 
@@ -87,8 +112,84 @@ describe('buildArmyViewModel', () => {
 
     expect(model.troops.find((troop) => troop.id === 'ARCHER')?.fromAllies).toBe(7);
     expect(model.troops.find((troop) => troop.id === 'SQUIRE')?.supportingElsewhere).toBe(3);
+    expect(model.filters.map((filter) => filter.label)).toEqual([
+      'Village',
+      'Alliés',
+      'Envoyés',
+      'Toutes',
+    ]);
+    expect(model.filters.find((filter) => filter.id === 'mine')?.count).toBe(12);
     expect(model.filters.find((filter) => filter.id === 'allies')?.count).toBe(7);
-    expect(model.filters.find((filter) => filter.id === 'sent')?.count).toBe(3);
+    expect(model.filters.find((filter) => filter.id === 'sent')?.count).toBe(18);
+    expect(model.filters.find((filter) => filter.id === 'all')?.count).toBe(19);
+    expect(model.barracksTroops.find((troop) => troop.id === 'SQUIRE')).toMatchObject({
+      displayQuantity: 3,
+    });
+    expect(model.barracksTroops.find((troop) => troop.id === 'ARCHER')).toMatchObject({
+      displayQuantity: 5,
+    });
+    const villagePower = (
+      12 * getUnitPowerWeight('MILITIA') +
+      7 * getUnitPowerWeight('ARCHER')
+    ).toLocaleString('fr-FR');
+    const awayPower = (
+      3 * getUnitPowerWeight('SQUIRE') +
+      5 * getUnitPowerWeight('ARCHER') +
+      10 * getUnitPowerWeight('MILITIA')
+    ).toLocaleString('fr-FR');
+
+    expect(model.armySections).toMatchObject([
+      {
+        id: 'village',
+        summary: villagePower,
+        summaryIcon: '/assets/army-power.png',
+        villageRows: expect.arrayContaining([
+          expect.objectContaining({
+            alliedQuantity: 0,
+            id: 'MILITIA',
+            ownQuantity: 12,
+            totalQuantity: 12,
+          }),
+          expect.objectContaining({
+            alliedQuantity: 7,
+            id: 'ARCHER',
+            ownQuantity: 0,
+            power: 7 * getUnitPowerWeight('ARCHER'),
+            totalQuantity: 7,
+          }),
+        ]),
+        troops: expect.arrayContaining([
+          expect.objectContaining({ displayQuantity: 12, id: 'MILITIA' }),
+          expect.objectContaining({ displayQuantity: 7, id: 'ARCHER' }),
+        ]),
+      },
+      {
+        id: 'away',
+        summary: awayPower,
+        summaryIcon: '/assets/army-power.png',
+        supportRows: expect.arrayContaining([
+          expect.objectContaining({
+            id: 'distant-1',
+            power:
+              3 * getUnitPowerWeight('SQUIRE') +
+              5 * getUnitPowerWeight('ARCHER'),
+            subtitle: 'ally@example.test · Depuis : —',
+            title: 'Distant Keep',
+            totalQuantity: 8,
+            units: expect.arrayContaining([
+              expect.objectContaining({ id: 'ARCHER', quantity: 5 }),
+              expect.objectContaining({ id: 'SQUIRE', quantity: 3 }),
+            ]),
+          }),
+          expect.objectContaining({
+            id: 'distant-2',
+            title: 'Border Fort',
+            totalQuantity: 10,
+            units: [expect.objectContaining({ id: 'MILITIA', quantity: 10 })],
+          }),
+        ]),
+      },
+    ]);
 
     const allies = buildArmyViewModel({
       activeFilterId: 'allies',
@@ -100,12 +201,32 @@ describe('buildArmyViewModel', () => {
       trainings: [],
       units,
     });
-    expect(allies.visibleTroops.map((troop) => troop.id)).toEqual(['ARCHER']);
+    expect(allies.visibleTroops).toMatchObject([
+      { displayQuantity: 7, id: 'ARCHER' },
+    ]);
+
+    const sent = buildArmyViewModel({
+      activeFilterId: 'sent',
+      barracksLevel: 5,
+      garrisonLines: garrison,
+      nowMs,
+      population: { available: 10, max: 30, used: 20 },
+      resources: { iron: 500, maxPerType: 2_000, stone: 500, wood: 500 },
+      trainings: [],
+      units,
+    });
+    expect(sent.visibleTroops).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ displayQuantity: 10, id: 'MILITIA' }),
+        expect.objectContaining({ displayQuantity: 3, id: 'SQUIRE' }),
+        expect.objectContaining({ displayQuantity: 5, id: 'ARCHER' }),
+      ]),
+    );
   });
 
   it('builds recruit stock and quick values from real resources and population', () => {
     const stock = buildArmyRecruitStock(
-      { iron: 99.9, maxPerType: 2_000, stone: 90.5, wood: 120.8 },
+      { iron: 500, maxPerType: 2_000, stone: 500, wood: 500 },
       { available: 4, max: 20, used: 16 },
     );
     const troop = buildArmyViewModel({
@@ -119,12 +240,12 @@ describe('buildArmyViewModel', () => {
       units,
     }).troops.find((candidate) => candidate.id === 'MILITIA');
 
-    expect(stock).toEqual({ iron: 99, popMax: 20, population: 16, stone: 90, wood: 120 });
-    expect(troop ? computeArmyRecruitMax(troop, stock) : null).toBe(2);
-    expect(buildArmyRecruitQuickValues(2).at(-1)).toEqual({
+    expect(stock).toEqual({ iron: 500, populationAvailable: 4, stone: 500, wood: 500 });
+    expect(troop ? computeArmyRecruitMax(troop, stock) : null).toBe(4);
+    expect(buildArmyRecruitQuickValues(4).at(-1)).toEqual({
       label: 'MAX',
       tone: 'gold',
-      value: 2,
+      value: 4,
     });
   });
 

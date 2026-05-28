@@ -343,8 +343,7 @@ const armyRecruitSheet: ArmyRecruitSheetProps = {
 
 const armyRecruitStock: ArmyRecruitStock = {
   iron: 4600,
-  popMax: 220,
-  population: 175,
+  populationAvailable: 45,
   stone: 4400,
   wood: 4500,
 };

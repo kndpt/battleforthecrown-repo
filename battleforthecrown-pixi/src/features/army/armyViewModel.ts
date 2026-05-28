@@ -14,8 +14,12 @@ import type {
   ArmyRecruitQuickValue,
   ArmyRecruitSheetProps,
   ArmyRecruitStock,
+  ArmySupportRow,
+  ArmySupportUnitChip,
   ArmyTroop,
   ArmyTroopCategory,
+  ArmyTroopSection,
+  ArmyVillageRow,
 } from '@/features/design-system/components';
 import { formatArmyTrainingDuration } from '@/features/design-system/components';
 import type { DisplayResources } from '@/lib/interpolation';
@@ -28,7 +32,7 @@ export type ArmyFilterId = 'all' | 'mine' | 'allies' | 'sent';
 const FILTER_LABELS: Record<ArmyFilterId, string> = {
   all: 'Toutes',
   allies: 'Alliés',
-  mine: 'Mien',
+  mine: 'Village',
   sent: 'Envoyés',
 };
 
@@ -66,6 +70,8 @@ export interface ArmyViewModelInput {
 export interface ArmyViewModel {
   activeFilterId: ArmyFilterId;
   filters: ArmyFilterOption[];
+  armySections: ArmyTroopSection[];
+  barracksTroops: ArmyTroop[];
   recruitSheet: ArmyRecruitSheetProps;
   stock: ArmyRecruitStock;
   troops: ArmyTroop[];
@@ -78,8 +84,7 @@ export function buildArmyRecruitStock(
 ): ArmyRecruitStock {
   return {
     iron: Math.max(0, Math.floor(resources?.iron ?? 0)),
-    popMax: Math.max(0, population?.max ?? 0),
-    population: Math.max(0, population?.used ?? 0),
+    populationAvailable: Math.max(0, population?.available ?? 0),
     stone: Math.max(0, Math.floor(resources?.stone ?? 0)),
     wood: Math.max(0, Math.floor(resources?.wood ?? 0)),
   };
@@ -156,9 +161,12 @@ export function buildArmyViewModel({
   const filters = buildArmyFilters(troops);
   const safeFilter = coerceArmyFilter(activeFilterId, filters);
   const { queue, summaryLabel } = buildArmyQueue(trainings, nowMs);
+  const barracksTroops = buildBarracksTroops(troops);
 
   return {
     activeFilterId: safeFilter,
+    armySections: buildArmySections(troops, garrisonLines),
+    barracksTroops,
     filters,
     recruitSheet: {
       activeDropLabel: 'Lâcher ici',
@@ -183,14 +191,9 @@ export function findArmyUnitByTroopId(
 
 function buildArmyFilters(troops: ArmyTroop[]): ArmyFilterOption[] {
   const count = (filterId: ArmyFilterId) =>
-    filterArmyTroops(troops, filterId).reduce((sum, troop) => {
-      if (filterId === 'mine') return sum + troop.inVillage;
-      if (filterId === 'allies') return sum + (troop.fromAllies ?? 0);
-      if (filterId === 'sent') return sum + (troop.supportingElsewhere ?? 0);
-      return sum + troop.inVillage + (troop.fromAllies ?? 0) + (troop.supportingElsewhere ?? 0);
-    }, 0);
+    troops.reduce((sum, troop) => sum + getDisplayQuantity(troop, filterId), 0);
 
-  return (['all', 'mine', 'allies', 'sent'] satisfies ArmyFilterId[]).map((id) => ({
+  return (['mine', 'allies', 'sent', 'all'] satisfies ArmyFilterId[]).map((id) => ({
     count: count(id),
     id,
     label: FILTER_LABELS[id],
@@ -199,10 +202,132 @@ function buildArmyFilters(troops: ArmyTroop[]): ArmyFilterOption[] {
 }
 
 function filterArmyTroops(troops: ArmyTroop[], filterId: ArmyFilterId): ArmyTroop[] {
-  if (filterId === 'mine') return troops.filter((troop) => troop.inVillage > 0);
-  if (filterId === 'allies') return troops.filter((troop) => (troop.fromAllies ?? 0) > 0);
-  if (filterId === 'sent') return troops.filter((troop) => (troop.supportingElsewhere ?? 0) > 0);
-  return troops;
+  return troops.flatMap((troop) => {
+    const quantity = getDisplayQuantity(troop, filterId);
+    return quantity > 0 ? [{ ...troop, displayQuantity: quantity }] : [];
+  });
+}
+
+function buildBarracksTroops(troops: ArmyTroop[]): ArmyTroop[] {
+  return troops.map((troop) => ({
+    ...troop,
+    displayQuantity: troop.inVillage + (troop.supportingElsewhere ?? 0),
+  }));
+}
+
+function buildArmySections(
+  troops: ArmyTroop[],
+  garrisonLines: GarrisonLine[],
+): ArmyTroopSection[] {
+  const villageTroops = troops.flatMap((troop) => {
+    const quantity = troop.inVillage + (troop.fromAllies ?? 0);
+    return quantity > 0
+      ? [{ ...troop, displayQuantity: quantity, draggable: false }]
+      : [];
+  });
+  const villageRows = buildVillageRows(troops);
+  const supportRows = buildOutgoingSupportRows(garrisonLines);
+
+  return [
+    {
+      emptyLabel: 'Aucune troupe stationnée dans ce village.',
+      id: 'village',
+      summary: formatPowerSummary(sumVillagePower(villageRows)),
+      summaryIcon: '/assets/army-power.png',
+      title: 'Village',
+      troops: villageTroops,
+      villageRows,
+    },
+    {
+      emptyLabel: 'Aucune troupe stationnée ailleurs.',
+      id: 'away',
+      summary: formatPowerSummary(sumSupportPower(supportRows)),
+      summaryIcon: '/assets/army-power.png',
+      supportRows,
+      title: 'Stationnées ailleurs',
+      troops: [],
+    },
+  ];
+}
+
+function buildVillageRows(troops: ArmyTroop[]): ArmyVillageRow[] {
+  return troops.flatMap((troop) => {
+    const ownQuantity = troop.inVillage;
+    const alliedQuantity = troop.fromAllies ?? 0;
+    const totalQuantity = ownQuantity + alliedQuantity;
+
+    if (totalQuantity <= 0) return [];
+
+    return [{
+      alliedQuantity,
+      emoji: troop.emoji,
+      icon: troop.icon,
+      id: troop.id,
+      ownQuantity,
+      power: totalQuantity * troop.power,
+      title: troop.name,
+      totalQuantity,
+    } satisfies ArmyVillageRow];
+  });
+}
+
+function buildOutgoingSupportRows(lines: GarrisonLine[]): ArmySupportRow[] {
+  const rowsByVillage = new Map<
+    string,
+    {
+      id: string;
+      subtitle: string;
+      title: string;
+      totalQuantity: number;
+      power: number;
+      unitsByType: Map<UnitType, ArmySupportUnitChip>;
+    }
+  >();
+
+  for (const line of lines) {
+    if (line.direction !== 'OUTGOING' || line.quantity <= 0) continue;
+
+    const row = rowsByVillage.get(line.villageId) ?? {
+      id: line.villageId,
+      power: 0,
+      subtitle: line.hostPlayerName
+        ? `${line.hostPlayerName} · Depuis : —`
+        : 'Depuis : —',
+      title: line.hostVillageName ?? `Village ${line.villageId}`,
+      totalQuantity: 0,
+      unitsByType: new Map<UnitType, ArmySupportUnitChip>(),
+    };
+    const meta = unitMetaFor(line.unitType);
+    const existingUnit = row.unitsByType.get(line.unitType);
+
+    row.totalQuantity += line.quantity;
+    row.power += line.quantity * getUnitPowerWeight(line.unitType);
+    row.unitsByType.set(line.unitType, {
+      emoji: meta.iconPath ? undefined : meta.emoji,
+      icon: meta.iconPath ?? undefined,
+      id: line.unitType,
+      label: meta.name,
+      quantity: (existingUnit?.quantity ?? 0) + line.quantity,
+    });
+    rowsByVillage.set(line.villageId, row);
+  }
+
+  return Array.from(rowsByVillage.values())
+    .map((row) => {
+      const units = Array.from(row.unitsByType.values()).sort(
+        (a, b) => b.quantity - a.quantity || a.label.localeCompare(b.label),
+      );
+
+      return {
+        id: row.id,
+        power: row.power,
+        subtitle: row.subtitle,
+        title: row.title,
+        totalQuantity: row.totalQuantity,
+        units,
+      } satisfies ArmySupportRow;
+    })
+    .sort((a, b) => b.totalQuantity - a.totalQuantity || a.title.localeCompare(b.title));
 }
 
 function coerceArmyFilter(
@@ -243,6 +368,25 @@ function buildArmyQueue(
     queue,
     summaryLabel: `${totalQuantity} en formation · ${formatArmyTrainingDuration(remainingMs / 1000)} restant`,
   };
+}
+
+function getDisplayQuantity(troop: ArmyTroop, filterId: ArmyFilterId): number {
+  if (filterId === 'mine') return troop.inVillage;
+  if (filterId === 'allies') return troop.fromAllies ?? 0;
+  if (filterId === 'sent') return troop.supportingElsewhere ?? 0;
+  return troop.inVillage + (troop.fromAllies ?? 0);
+}
+
+function formatPowerSummary(power: number): string {
+  return power.toLocaleString('fr-FR');
+}
+
+function sumVillagePower(rows: ArmyVillageRow[]): number {
+  return rows.reduce((sum, row) => sum + row.power, 0);
+}
+
+function sumSupportPower(rows: ArmySupportRow[]): number {
+  return rows.reduce((sum, row) => sum + row.power, 0);
 }
 
 function sumGarrisonByType(

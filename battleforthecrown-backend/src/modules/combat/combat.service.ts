@@ -31,8 +31,10 @@ import { OwnershipService } from '../../common/auth';
 export interface GarrisonLineDto {
   villageId: string;
   hostVillageName: string | null;
+  hostPlayerName: string | null;
   originVillageId: string;
   originVillageName: string | null;
+  originPlayerName: string | null;
   direction: 'INCOMING' | 'OUTGOING';
   unitType: string;
   quantity: number;
@@ -863,18 +865,27 @@ export class CombatService {
     const villages = villageIds.length
       ? await this.prisma.village.findMany({
           where: { id: { in: villageIds } },
-          select: { id: true, name: true },
+          select: {
+            id: true,
+            name: true,
+            user: { select: { email: true } },
+          },
         })
       : [];
     const villageNames = new Map(
       villages.map((village) => [village.id, village.name]),
     );
+    const playerNames = new Map(
+      villages.map((village) => [village.id, village.user?.email ?? null]),
+    );
 
     return garrisons.map((garrison) => ({
       villageId: garrison.villageId,
       hostVillageName: villageNames.get(garrison.villageId) ?? null,
+      hostPlayerName: playerNames.get(garrison.villageId) ?? null,
       originVillageId: garrison.originVillageId,
       originVillageName: villageNames.get(garrison.originVillageId) ?? null,
+      originPlayerName: playerNames.get(garrison.originVillageId) ?? null,
       direction: garrison.villageId === villageId ? 'INCOMING' : 'OUTGOING',
       unitType: garrison.unitType,
       quantity: garrison.quantity,

@@ -62,6 +62,7 @@ export {
 export type {
   ArmyBottomNavItem,
   ArmyBottomNavProps,
+  ArmyContentTab,
   ArmyContentDesignProps,
   ArmyDraggingOverlayProps,
   ArmyFilterOption,
@@ -79,10 +80,14 @@ export type {
   ArmyRecruitStock,
   ArmyResourceChip,
   ArmySliderTone,
+  ArmySupportRow,
+  ArmySupportUnitChip,
+  ArmyTroopSection,
   ArmyTroop,
   ArmyTroopCategory,
   ArmyTroopCost,
   ArmyViewProps,
+  ArmyVillageRow,
   ArmyVillageBarProps,
 } from './ArmyViewDesign';
 export { BASE_MODAL_DEFAULT_MAX_HEIGHT, BASE_MODAL_DEFAULT_WIDTH, BaseModal } from './BaseModal';
