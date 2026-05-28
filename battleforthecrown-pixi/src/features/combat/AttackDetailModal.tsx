@@ -116,6 +116,20 @@ export function AttackDetailModal({
     activeMode === 'attack' &&
     selectedNobleCount > 0;
   const captureDuration = getBarbarianCaptureDurationLabel(target.tier);
+  const missionAccentClass =
+    activeMode === 'reinforce'
+      ? 'from-game-green-light to-game-green-dark border-game-green-border'
+      : activeMode === 'scout'
+        ? 'from-game-blue-light to-game-blue-dark border-game-blue-border'
+        : 'from-game-red-light to-game-red-dark border-game-red-border';
+  const missionSummaryClass =
+    activeMode === 'reinforce'
+      ? 'bg-game-green-light/10 border-game-green-border/30'
+      : activeMode === 'scout'
+        ? 'bg-game-blue-light/10 border-game-blue-border/30'
+        : 'bg-game-red-light/10 border-game-red-border/30';
+  const primaryActionVariant =
+    activeMode === 'reinforce' ? 'success' : activeMode === 'scout' ? 'info' : 'danger';
 
   const handleUnitChange = (unitType: string, raw: number) => {
     const unit = heldUnits.find((u) => u.type === unitType);
@@ -211,13 +225,7 @@ export function AttackDetailModal({
         </button>
 
         <div
-          className={`relative h-32 bg-gradient-to-br border-b-4 flex-shrink-0 flex items-center justify-center ${
-            activeMode === 'reinforce'
-              ? 'from-game-blue-light to-game-blue-border border-game-blue-border'
-              : activeMode === 'scout'
-                ? 'from-game-blue-light to-game-blue-dark border-game-blue-border'
-              : 'from-game-red-light to-game-red-dark border-game-red-border'
-          }`}
+          className={`relative h-32 bg-gradient-to-br border-b-4 flex-shrink-0 flex items-center justify-center ${missionAccentClass}`}
         >
           <div className="text-center">
             {activeMode === 'scout' ? (
@@ -350,7 +358,7 @@ export function AttackDetailModal({
         </div>
 
         <div className="p-4 border-t-2 border-kingdom-200 bg-gradient-to-b from-kingdom-50 to-kingdom-100 flex-shrink-0 flex flex-col gap-2">
-          <div className="p-3 bg-game-blue-light/10 border-2 border-game-blue-border/30 rounded-lg space-y-1.5 text-sm">
+          <div className={`p-3 border-2 rounded-lg space-y-1.5 text-sm ${missionSummaryClass}`}>
             {activeMode === 'scout' ? (
               <>
                 <div className="flex justify-between">
@@ -397,7 +405,7 @@ export function AttackDetailModal({
               Annuler
             </Button>
             <Button
-              variant={activeMode === 'reinforce' ? 'neutral' : activeMode === 'scout' ? 'info' : 'danger'}
+              variant={primaryActionVariant}
               size="md"
               className="flex-1 font-bold shadow-clay-lg"
               onClick={handleSubmit}

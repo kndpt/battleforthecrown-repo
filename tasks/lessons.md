@@ -53,3 +53,4 @@
 - Quand une étape onboarding demande une quantité, refléter cette quantité sur l'asset de la modale avec un badge dédié, pas seulement dans la description textuelle.
 - Pour les étapes onboarding qui ciblent une entité de jeu réelle, utiliser l'asset runtime de cette entité quand il existe plutôt qu'une icône générique.
 - Avant de figer une séquence onboarding, vérifier les prérequis de lock des bâtiments demandés ensuite ; si une étape future est verrouillée par un niveau de Château, ajouter l'upgrade dans le script.
+- Dans la modale de préparation de mission, respecter la couleur sémantique par mode : attaque rouge, scout/espion bleu, renfort vert.
