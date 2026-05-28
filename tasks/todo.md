@@ -1,5 +1,18 @@
 # Todo
 
+## 2026-05-28 — Run 041 gestes mobile et bottom sheets
+
+- [x] Charger la fiche run, règles repo, `SPEC.md`, briefing Pixi et skills frontend/tests.
+- [x] Lire les sources ADR/mobile/UI bottom sheet et les tickets/runs connexes.
+- [x] Cartographier `BottomSheet`, `GameBottomSheetPanel`, CSS racine, auth et drag Armée.
+- [x] Appliquer le verrou mobile minimal au viewport sans casser les écrans auth.
+- [x] Renforcer `BottomSheet` : swipe zone haute, non-interception des contrôles, capture/reset robuste.
+- [x] Renforcer le body scrollable partagé des sheets.
+- [x] Ajouter filet Vitest ciblé et docs UI mobile.
+- [x] Ajouter filet Vitest de non-régression sur le drag tactile Armée après review indépendante.
+- [x] Corriger l’index `tasks/README.md` pour le ticket 51 déjà archivé.
+- [x] Lancer type-check/tests/static-check, review indépendante, QA, archive et commit.
+
 ## 2026-05-28 — Ticket 74 drag tactile recrutement Armée
 
 - [x] Charger le ticket, règles repo, `SPEC.md`, briefing Pixi et skills frontend/tests/QA.
@@ -105,6 +118,10 @@
 
 ## Review
 
+- 2026-05-28 Run 041 gestes mobile/bottom sheets : verrou global `html/body/#root`, scroll auth explicite, régions `data-bottom-sheet-drag-region`/`data-bottom-sheet-scrollable` et non-interception des contrôles dans `BottomSheet`.
+- Review run 041 : premier verdict indépendant `BLOCK` sur absence de preuve Armée ; ajout `ArmyViewDesign.test.tsx` pour drag tactile immédiat + scroll vertical ; re-review indépendante `GO`.
+- Vérification run 041 : `rtk yarn workspace battleforthecrown-pixi test BottomSheet.test.tsx`, `rtk yarn workspace battleforthecrown-pixi test ArmyViewDesign.test.tsx BottomSheet.test.tsx`, `rtk yarn workspace battleforthecrown-pixi test`, `rtk yarn workspace battleforthecrown-pixi type-check`, `rtk yarn static-check`.
+- QA worktree run 041 : DB temporaire `battleforthecrown_2e33`, backend `http://localhost:15002/health`, frontend `http://localhost:5174/`, `/design-system` et `/auth/login` HTTP 200 ; tests tactiles réels laissés au user.
 - 2026-05-28 Ticket 74 drag tactile Armée : HTML5 DnD remplacé par Pointer Events avec seuil 8 px, ghost visuel, hit-test au `pointerup` et scroll vertical tactile préservé via pan manuel conditionné.
 - Review ticket 74 : premier verdict indépendant `BLOCK` sur capture du scroll tactile, correction appliquée (`scrollBy` + garde direction scrollable), re-review indépendante `GO`.
 - Vérification ticket 74 : `rtk yarn workspace battleforthecrown-pixi type-check`, `rtk yarn workspace battleforthecrown-pixi test`, `rtk yarn static-check`.

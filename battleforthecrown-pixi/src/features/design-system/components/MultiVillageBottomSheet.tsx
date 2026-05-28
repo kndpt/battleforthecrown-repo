@@ -2,6 +2,7 @@ import type { HTMLAttributes, ReactNode } from 'react';
 import type { VillageStrategyType } from '@battleforthecrown/shared/village';
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
+import { GameBottomSheetPanel } from './GameBottomSheetPanel';
 import { villageStyleOptions } from './villageStyleData';
 
 export type MultiVillageFilter = 'all' | 'active' | 'alerts';
@@ -567,51 +568,43 @@ export function MultiVillageBottomSheet({
   });
   const count = totalCount ?? villages.length;
   const filters = availableFilters ?? ['all', 'active', 'alerts'];
+  const hasFilterTabs = filters.length > 1;
+  const title = (
+    <>
+      {labels.title}
+      <span className="ml-[7px] font-game text-xs font-bold tracking-[0] text-[#6d5838]">
+        {count}/{capacity ?? count}
+      </span>
+    </>
+  );
+  const filterTabs = hasFilterTabs ? (
+    <div className="flex min-w-0 flex-1 items-stretch">
+      <FilterSeg availableFilters={filters} labels={labels} onChange={onFilterChange} value={filter} />
+    </div>
+  ) : undefined;
+  const headerActions = onSort ? (
+    <button
+      aria-label={labels.sort}
+      className="flex size-[34px] cursor-pointer items-center justify-center rounded-lg border-2 border-[#5d4a32] bg-[linear-gradient(180deg,#fef9f0,#d9c896)] p-0 font-game text-[13px] font-extrabold text-[#3d2f1f] shadow-[inset_0_1px_0_rgba(255,255,255,.45),0_2px_0_rgba(0,0,0,.18)]"
+      onClick={onSort}
+      title={labels.sort}
+      type="button"
+    >
+      <SortGlyph />
+    </button>
+  ) : undefined;
 
   return (
-    <section
-      className={cn(
-        'absolute bottom-0 left-0 right-0 flex max-h-[86%] flex-col overflow-hidden rounded-t-[20px] border-t-4 border-[#3c2619]',
-        'bg-[linear-gradient(180deg,#fef9f0,#e8d4a8)] shadow-[0_-10px_30px_rgba(0,0,0,.5),inset_0_2px_0_rgba(255,255,255,.55)]',
-        className,
-      )}
+    <GameBottomSheetPanel
+      bodyClassName="p-0"
+      className={className}
+      eyebrow={labels.eyebrow}
+      headerActions={headerActions}
+      tabs={filterTabs}
+      title={title}
+      variant={hasFilterTabs ? 'tabbed' : 'default'}
     >
-      <div className="h-1.5 bg-[linear-gradient(90deg,#f1c40f,#d4a017)]" />
-      <div className="flex justify-center pb-0 pt-1.5">
-        <div className="h-1 w-10 rounded bg-[rgba(93,74,50,.35)]" />
-      </div>
-      <div className="flex items-center gap-2.5 px-3.5 pb-1.5 pt-2">
-        <div className="min-w-0 flex-1">
-          <div className="font-game text-[9px] font-bold uppercase leading-none tracking-[.3em] text-[#6d5838]">
-            {labels.eyebrow}
-          </div>
-          <div className="mt-0.5 font-game text-lg font-extrabold tracking-[.02em] text-[#3d2f1f] [text-shadow:0_1px_0_rgba(255,255,255,.5)]">
-            {labels.title}
-            <span className="ml-[7px] font-game text-xs font-bold tracking-[0] text-[#6d5838]">
-              {count}/{capacity ?? count}
-            </span>
-          </div>
-        </div>
-      </div>
-      {filters.length > 1 || onSort ? (
-        <div className="mx-3.5 mb-2.5 mt-2 flex items-stretch gap-1.5">
-          {filters.length > 1 ? (
-            <FilterSeg availableFilters={filters} labels={labels} onChange={onFilterChange} value={filter} />
-          ) : null}
-          {onSort ? (
-            <button
-              aria-label={labels.sort}
-              className="flex w-[34px] cursor-pointer items-center justify-center rounded-lg border-2 border-[#5d4a32] bg-[linear-gradient(180deg,#fef9f0,#d9c896)] p-0 font-game text-[13px] font-extrabold text-[#3d2f1f] shadow-[inset_0_1px_0_rgba(255,255,255,.45),0_2px_0_rgba(0,0,0,.18)]"
-              onClick={onSort}
-              title={labels.sort}
-              type="button"
-            >
-              <SortGlyph />
-            </button>
-          ) : null}
-        </div>
-      ) : null}
-      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="flex min-h-full flex-col">
         {visible.map((village) => (
           <VillageCard
             key={village.id}
@@ -625,7 +618,7 @@ export function MultiVillageBottomSheet({
           <div className="px-4 py-[30px] text-center font-game text-xs italic text-[#6d5838]">{labels.empty}</div>
         ) : null}
       </div>
-    </section>
+    </GameBottomSheetPanel>
   );
 }
 

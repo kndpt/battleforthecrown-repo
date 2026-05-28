@@ -21,6 +21,8 @@ const SWIPE_CLOSE_DISTANCE = 96;
 const SWIPE_CLOSE_VELOCITY = 0.45;
 const CLOSED_SHEET_SHADOW_OFFSET = 40;
 const SWIPE_INTERACTIVE_SELECTOR = 'button, a, input, textarea, select, [role="button"], [data-bottom-sheet-no-drag]';
+const SWIPE_DRAG_REGION_SELECTOR = '[data-bottom-sheet-drag-region]';
+const SWIPE_SCROLL_REGION_SELECTOR = '[data-bottom-sheet-scrollable]';
 
 interface DragStart {
   pointerId: number;
@@ -55,18 +57,29 @@ export const BottomSheet = forwardRef<HTMLDivElement, BottomSheetProps>(
 
     useImperativeHandle(ref, () => rootRef.current as HTMLDivElement);
 
-    const resetDrag = () => {
+    const releasePointerCapture = (element: HTMLDivElement, pointerId: number) => {
+      if (!element.hasPointerCapture(pointerId)) return;
+      element.releasePointerCapture(pointerId);
+    };
+
+    const resetDrag = (element?: HTMLDivElement) => {
+      const start = dragStartRef.current;
+      if (element && start) releasePointerCapture(element, start.pointerId);
       dragStartRef.current = null;
       setDragY(0);
     };
 
     const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
       if (!isOpen || (event.pointerType === 'mouse' && event.button !== 0)) return;
-      if (event.target instanceof Element && event.target.closest(SWIPE_INTERACTIVE_SELECTOR)) return;
+
+      const target = event.target instanceof Element ? event.target : null;
+      if (target?.closest(SWIPE_INTERACTIVE_SELECTOR)) return;
+      const startsInDragRegion = Boolean(target?.closest(SWIPE_DRAG_REGION_SELECTOR));
+      if (!startsInDragRegion && target?.closest(SWIPE_SCROLL_REGION_SELECTOR)) return;
 
       const rect = event.currentTarget.getBoundingClientRect();
       const localY = event.clientY - rect.top;
-      if (localY > SWIPE_HANDLE_HEIGHT) return;
+      if (!startsInDragRegion && localY > SWIPE_HANDLE_HEIGHT) return;
 
       dragStartRef.current = {
         pointerId: event.pointerId,
@@ -81,6 +94,7 @@ export const BottomSheet = forwardRef<HTMLDivElement, BottomSheetProps>(
       const start = dragStartRef.current;
       if (!start || start.pointerId !== event.pointerId) return;
 
+      event.preventDefault();
       setDragY(Math.max(0, event.clientY - start.y));
     };
 
@@ -91,7 +105,7 @@ export const BottomSheet = forwardRef<HTMLDivElement, BottomSheetProps>(
       const distance = Math.max(0, event.clientY - start.y);
       const elapsed = Math.max(1, performance.now() - start.time);
       const velocity = distance / elapsed;
-      resetDrag();
+      resetDrag(event.currentTarget);
 
       if (distance >= SWIPE_CLOSE_DISTANCE || velocity >= SWIPE_CLOSE_VELOCITY) {
         onClose();
@@ -123,7 +137,7 @@ export const BottomSheet = forwardRef<HTMLDivElement, BottomSheetProps>(
           className={`absolute bottom-0 left-0 right-0 z-10 touch-pan-y select-none transform transition-transform ${
             isDragging ? 'duration-0' : 'duration-300'
           } ${className}`}
-          onPointerCancel={resetDrag}
+          onPointerCancel={(event) => resetDrag(event.currentTarget)}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerEnd}

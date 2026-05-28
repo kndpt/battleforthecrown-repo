@@ -8,6 +8,7 @@ export interface GameBottomSheetPanelProps extends Omit<HTMLAttributes<HTMLDivEl
   children: ReactNode;
   closeLabel?: string;
   eyebrow?: ReactNode;
+  headerContent?: ReactNode;
   headerActions?: ReactNode;
   onClose?: () => void;
   scrollable?: boolean;
@@ -28,6 +29,7 @@ export function GameBottomSheetPanel({
   className,
   closeLabel: _closeLabel,
   eyebrow,
+  headerContent,
   headerActions,
   onClose: _onClose,
   scrollable = true,
@@ -36,7 +38,7 @@ export function GameBottomSheetPanel({
   variant = tabs ? 'tabbed' : 'default',
   ...props
 }: GameBottomSheetPanelProps) {
-  const hasHeader = Boolean(eyebrow || title || headerActions);
+  const hasHeader = Boolean(headerContent || eyebrow || title || headerActions);
 
   return (
     <div
@@ -48,24 +50,34 @@ export function GameBottomSheetPanel({
       )}
       {...props}
     >
-      <div className="flex justify-center pb-0.5 pt-2">
+      <div className="flex touch-none justify-center pb-0.5 pt-2" data-bottom-sheet-drag-region>
         <div className="h-1 w-[38px] rounded-full bg-[rgba(60,38,25,.32)]" />
       </div>
 
       {hasHeader ? (
-        <div className="flex items-end justify-between gap-2 px-3.5 pb-2 pt-1">
-          <div className="min-w-0">
-            {eyebrow ? (
-              <div className="font-game text-[9.5px] font-bold uppercase tracking-[.28em] text-[#6d5838]">
-                {eyebrow}
-              </div>
-            ) : null}
-            {title ? (
-              <div className="truncate font-game text-[17px] font-extrabold leading-[1.1] text-[#3d2f1f] [text-shadow:0_1px_0_rgba(255,255,255,.5)]">
-                {title}
-              </div>
-            ) : null}
-          </div>
+        <div
+          className={cn(
+            'flex touch-none justify-between gap-2 px-3.5 pb-2 pt-1',
+            headerContent ? 'items-center' : 'items-end',
+          )}
+          data-bottom-sheet-drag-region
+        >
+          {headerContent ? (
+            <div className="min-w-0 flex-1">{headerContent}</div>
+          ) : (
+            <div className="min-w-0">
+              {eyebrow ? (
+                <div className="font-game text-[9.5px] font-bold uppercase tracking-[.28em] text-[#6d5838]">
+                  {eyebrow}
+                </div>
+              ) : null}
+              {title ? (
+                <div className="truncate font-game text-[17px] font-extrabold leading-[1.1] text-[#3d2f1f] [text-shadow:0_1px_0_rgba(255,255,255,.5)]">
+                  {title}
+                </div>
+              ) : null}
+            </div>
+          )}
 
           <div className="flex shrink-0 items-center gap-2">
             {headerActions}
@@ -83,9 +95,10 @@ export function GameBottomSheetPanel({
       <div
         className={cn(
           'min-h-0 flex-1 bg-[linear-gradient(180deg,#f5e6d3_0%,#f5e6d3_100%)]',
-          scrollable ? 'overflow-auto overscroll-contain' : 'overflow-hidden',
+          scrollable ? 'touch-pan-y overflow-x-hidden overflow-y-auto overscroll-contain' : 'overflow-hidden',
           bodyClassName,
         )}
+        data-bottom-sheet-scrollable={scrollable ? true : undefined}
         style={{ WebkitOverflowScrolling: scrollable ? 'touch' : undefined }}
       >
         {children}
