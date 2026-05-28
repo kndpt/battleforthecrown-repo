@@ -62,6 +62,17 @@ Chaque dossier contient un `README.md` détaillé (variants, tailles, props, exe
 | **BottomSheet** | `panels/`             | —                                                          | Slide depuis le bas, mobile-first                |
 | **Toast**       | `toasts/`             | `default`, `success`, `error`, `warning`, `info`          | + `ToastProvider`, hook `useToast`               |
 
+### Contrat mobile des bottom sheets
+
+Le root de l'app bloque l'overscroll navigateur pour les routes de jeu ; tout scroll mobile doit donc vivre dans une zone interne explicite. Les bottom sheets partagées utilisent `BottomSheet` pour l'overlay/animation/swipe et `GameBottomSheetPanel` pour le chrome + body scrollable.
+
+Règles :
+
+- swipe-to-close uniquement depuis la poignée/header (`data-bottom-sheet-drag-region`) ;
+- contenu long dans un body `data-bottom-sheet-scrollable` avec `overscroll-contain` et inertie tactile ;
+- contrôles interactifs (`button`, inputs, keypad, tabs, liens) exclus du drag ;
+- pas de `touch-action: none` global : seulement sur la zone de drag ou les gestes custom ciblés comme le drag Armée.
+
 ### Layout HUD (transversal stateful)
 
 Composants qui lisent les stores Zustand pour afficher l'état du joueur. Vivent dans `src/ui/layout/` parce qu'ils sont **transverses au shell** de l'app, mais ne sont **pas** des primitives "idiotes" — ils peuvent évoluer vers `src/features/layout/` si la frontière devient floue (cf. `react-hud.md` § UI primitives).

@@ -75,6 +75,16 @@ Le panel se ferme aussi par glissement vers le bas si le geste démarre dans la 
 
 Le geste ferme le panel si la distance ou la vitesse du swipe dépasse le seuil interne. Sinon, le panel revient en position ouverte avec l'animation normale.
 
+## Invariant mobile
+
+Le viewport applicatif est verrouillé contre le pull-to-refresh/overscroll du navigateur. Les bottom sheets doivent donc déclarer explicitement leurs zones :
+
+- `data-bottom-sheet-drag-region` sur la poignée et le header qui peuvent fermer le sheet par swipe-down ;
+- `data-bottom-sheet-scrollable` sur le body scrollable interne ;
+- `button`, `a`, `input`, `textarea`, `select`, `[role="button"]` et `[data-bottom-sheet-no-drag]` ne démarrent jamais le swipe-to-close.
+
+`GameBottomSheetPanel` pose ces attributs par défaut. Un bottom sheet custom doit respecter le même contrat pour éviter de fermer le panel pendant un scroll ou une interaction.
+
 ---
 
 ## Anatomie de l'animation

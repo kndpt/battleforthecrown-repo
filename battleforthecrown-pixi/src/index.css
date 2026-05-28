@@ -14,9 +14,22 @@ body,
   text-rendering: optimizeLegibility;
 }
 
+html,
+body {
+  overscroll-behavior: none;
+  overflow: hidden;
+  width: 100%;
+}
+
+body {
+  touch-action: manipulation;
+}
+
 #root {
   display: flex;
   flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
   position: relative;
 }
 

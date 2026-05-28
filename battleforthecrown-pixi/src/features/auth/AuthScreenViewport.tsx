@@ -11,7 +11,7 @@ export function AuthScreenViewport({ children, className }: AuthScreenViewportPr
   return (
     <main
       className={cn(
-        'relative flex min-h-dvh w-full items-center justify-center overflow-x-hidden bg-[#24180f] px-4 py-5 font-game text-[#3d2f1f] sm:px-6',
+        'relative flex h-dvh min-h-dvh w-full items-center justify-center overflow-x-hidden overflow-y-auto overscroll-contain bg-[#24180f] px-4 py-5 font-game text-[#3d2f1f] sm:px-6',
         className,
       )}
     >
@@ -63,4 +63,3 @@ export function AuthCastleStage() {
     </div>
   );
 }
-

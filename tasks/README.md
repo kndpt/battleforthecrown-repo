@@ -6,7 +6,6 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 - [66 — Inbox combat : tag VICTOIRE/DÉFAITE faux dans la liste](./66-inbox-report-outcome-uses-losses-heuristic.md) — 🟡 Majeur. La liste de l'inbox calcule l'issue via une heuristique de pertes, divergente de la règle canonique utilisée par le modal.
 - [57 — Source canonique du lifecycle des bâtiments joueur](./57-player-village-building-lifecycle-roster.md) — 🟡 Majeur. Centraliser la politique join/conquête/backfill des bâtiments pour éviter les oublis à chaque nouveau bâtiment activé.
-- [51 — Standardiser les bottom sheets sur le design `Activités du royaume`](./51-bottom-sheet-design-system-base.md) — 🟠 Moyen. Faire du nouveau panneau la base design-system des bottom sheets actuels et futurs.
 
 ## Tickets découpés
 
@@ -29,11 +28,11 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 - [043 — Layout shell du jeu](./runs/043-refactor-game-shell-layout.md) — 📋 `PLANNED`. Centraliser topbar, bottom nav et toasts dans un layout jeu propre, avec contrat URL borné pour le panneau Bâtiments et QA onboarding/quêtes.
 - [042 — Détail d'un royaume](./runs/042-feature-world-detail-page.md) — 📋 `PLANNED`. Ajouter un bouton `Détails` sur les cartes royaumes et livrer une page détail branchée uniquement sur des données publiques contractées.
-- [041 — Gestes navigateur mobile et bottom sheets](./runs/041-fix-mobile-browser-gestures-bottom-sheets.md) — 📋 `PLANNED`. Neutraliser pull-to-refresh/overscroll sur les routes de jeu et centraliser le swipe-to-close dans `BottomSheet`.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés
 
+- [041 — Gestes navigateur mobile et bottom sheets](./runs/archive/041-fix-mobile-browser-gestures-bottom-sheets.md) — ✅ `DONE` (2026-05-28). Pull-to-refresh/overscroll neutralisé, contrat `BottomSheet` zones drag/scroll documenté, auth scroll préservé et filets Vitest bottom sheet + drag Armée.
 - [040 — Recalibration de la vitesse de base des déplacements](./runs/archive/040-recalibrate-base-travel-speed.md) — ✅ `DONE` (2026-05-28). `REFERENCE_SPEED` abaissé de 100 à 6, ratios `UNIT_STATS.speed` préservés, tests/backend smokes/Pixi/static-check verts et docs mobilité alignées.
 - [039 — Intégration runtime de la vue Armée design-system](./runs/archive/039-integrate-army-view-design-system.md) — ✅ `DONE` (2026-05-27). Contenu Armée migré vers le design-system sous le shell runtime existant, données réelles, drag/drop recrutement, actions garnison et bottom sheet standard.
 - [038 — Correction capacité Quartier et modal population](./runs/archive/038-fix-quarter-population-scaling-modal.md) — ✅ `DONE` (2026-05-26). Courbe Quartier 1-10 corrigée, modal population sans unité horaire, smoke upgrade 7→8 et correction DB locale non destructive.
