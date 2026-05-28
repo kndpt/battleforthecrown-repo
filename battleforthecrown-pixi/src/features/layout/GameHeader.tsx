@@ -469,9 +469,9 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
       </div>
       {activeVillage && (
         <BottomSheet
-          className="mx-auto h-[86vh] max-w-[32rem]"
+          className="mx-auto h-[68vh] max-w-[32rem]"
           isOpen={isVillageSheetOpen}
-          maxHeight="86vh"
+          maxHeight="68vh"
           onClose={() => setIsVillageSheetOpen(false)}
           zIndex={50}
         >
@@ -494,9 +494,9 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
         </BottomSheet>
       )}
       <BottomSheet
-        className="mx-auto h-[86vh] max-w-[32rem]"
+        className="mx-auto h-[64vh] max-w-[32rem]"
         isOpen={isProfileOpen}
-        maxHeight="86vh"
+        maxHeight="64vh"
         onClose={closeProfile}
         zIndex={60}
       >

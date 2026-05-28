@@ -1457,14 +1457,16 @@ export function ArmyRecruitPopup({
       )}
       style={{
         ...ARMY_CSS_VARIABLES,
-        background: 'linear-gradient(180deg, var(--parchment-100) 0%, var(--parchment-200) 55%, var(--parchment-400) 100%)',
+        background: embedded
+          ? 'transparent'
+          : 'linear-gradient(180deg, var(--parchment-100) 0%, var(--parchment-200) 55%, var(--parchment-400) 100%)',
         borderTop: embedded ? undefined : `3px solid ${cat.border}`,
       }}
     >
       {showHandle ? (
         <div className="mx-auto h-[5px] w-11 rounded-full bg-[var(--wood-deeper)] opacity-[.32]" />
       ) : null}
-      <div className="flex items-center gap-2.5">
+      <div className="flex touch-none items-center gap-2.5" data-bottom-sheet-drag-region={embedded ? true : undefined}>
         <div className="flex size-[50px] shrink-0 items-center justify-center rounded-[14px] border-2 shadow-[inset_0_1px_0_rgba(255,255,255,.3),0_2px_0_rgba(0,0,0,.2)]" style={{ background: `linear-gradient(180deg, ${cat.light}, ${cat.dark})`, borderColor: cat.border }}>
           <TroopIcon size={40} troop={troop} />
         </div>

@@ -1,5 +1,6 @@
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
+import { GameBottomSheetPanel } from './GameBottomSheetPanel';
 import { SegmentedControl } from './SegmentedControl';
 
 export type PlayerProfileSheetTab = 'profile' | 'villages' | 'settings';
@@ -448,21 +449,14 @@ export function PlayerProfileSheet({
   world,
 }: PlayerProfileSheetProps) {
   return (
-      <section
-        className={cn(
-          'absolute inset-x-0 bottom-0 flex h-full min-h-0 flex-col overflow-hidden rounded-t-[20px] border-t-4 border-[#3c2619] bg-[linear-gradient(to_bottom,#fef9f0,#e8d4a8)] shadow-[0_-10px_30px_rgba(0,0,0,.5),inset_0_2px_0_rgba(255,255,255,.55)]',
-          className,
-        )}
-      >
-        <div className="h-1.5 bg-[linear-gradient(to_right,#f1c40f,#d4a017)]" />
-        <div className="flex justify-center pt-1.5">
-          <div className="h-1 w-10 rounded bg-[rgba(93,74,50,.35)]" />
-        </div>
-
-        <header className="flex items-center gap-3 px-3.5 pb-2 pt-2.5">
+    <GameBottomSheetPanel
+      bodyClassName="px-3.5 pb-3.5 pt-3"
+      className={cn('h-full max-h-full', className)}
+      headerContent={
+        <div className="flex items-center gap-3">
           <Medallion crownIcon={icons.crown} initials={player.initials} level={player.level} online={player.online} />
           <div className="min-w-0 flex-1">
-            <div className="font-game text-[15px] font-extrabold tracking-[.02em] text-[#3d2f1f] [text-shadow:0_1px_0_rgba(255,255,255,.4)]">{player.name}</div>
+            <div className="truncate font-game text-[15px] font-extrabold tracking-[.02em] text-[#3d2f1f] [text-shadow:0_1px_0_rgba(255,255,255,.4)]">{player.name}</div>
             <div className="mt-0.5 flex items-center gap-[5px]">
               <span className="rounded-full border-[1.5px] border-[#9e7b0d] bg-[linear-gradient(to_bottom,#f1c40f,#d4a017)] px-1.5 py-px font-game text-[9.5px] font-extrabold tracking-[.1em] text-[#3a2a00]">
                 {player.tribe.tag}
@@ -472,31 +466,32 @@ export function PlayerProfileSheet({
               </span>
             </div>
           </div>
-        </header>
-
+        </div>
+      }
+      scrollable
+      tabs={
         <SegmentedControl
           ariaLabel="Sections du profil"
-          className="mx-3.5 flex border-[#3c2619] bg-[linear-gradient(to_bottom,rgba(60,38,25,.92),rgba(78,56,34,.92))] [&>button]:flex-1 [&>button]:justify-center [&>button]:px-2 [&>button]:py-1.5 [&>button]:text-[11px] [&>button]:uppercase [&>button]:tracking-[.06em]"
+          className="flex flex-1 border-[#3c2619] bg-[linear-gradient(to_bottom,rgba(60,38,25,.92),rgba(78,56,34,.92))] [&>button]:flex-1 [&>button]:justify-center [&>button]:px-2 [&>button]:py-1.5 [&>button]:text-[11px] [&>button]:uppercase [&>button]:tracking-[.06em]"
           onChange={(tab) => onTabChange(tab as PlayerProfileSheetTab)}
           options={tabs.map((tab) => ({ label: labels.tabs[tab], value: tab }))}
           size="compact"
           tone="dark"
           value={activeTab}
         />
-
-        <div className="min-h-0 flex-1 overflow-y-auto px-3.5 pb-3.5 pt-3" style={{ WebkitOverflowScrolling: 'touch' }}>
-          {activeTab === 'profile' ? (
-            <ProfilePane
-              icons={icons}
-              labels={labels}
-              onWorldSelect={onWorldSelect}
-              stats={stats}
-              world={world}
-            />
-          ) : null}
-          {activeTab === 'villages' ? <VillagesPane icons={icons} labels={labels} onVillageSelect={onVillageSelect} villages={villages} /> : null}
-          {activeTab === 'settings' ? <SettingsPane labels={labels} onLogout={onLogout} settings={settings} /> : null}
-        </div>
-      </section>
+      }
+    >
+      {activeTab === 'profile' ? (
+        <ProfilePane
+          icons={icons}
+          labels={labels}
+          onWorldSelect={onWorldSelect}
+          stats={stats}
+          world={world}
+        />
+      ) : null}
+      {activeTab === 'villages' ? <VillagesPane icons={icons} labels={labels} onVillageSelect={onVillageSelect} villages={villages} /> : null}
+      {activeTab === 'settings' ? <SettingsPane labels={labels} onLogout={onLogout} settings={settings} /> : null}
+    </GameBottomSheetPanel>
   );
 }

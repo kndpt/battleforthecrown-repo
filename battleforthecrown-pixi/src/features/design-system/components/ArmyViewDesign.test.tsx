@@ -2,7 +2,10 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   ArmyContentDesign,
+  ArmyRecruitPopup,
+  type ArmyRecruitPopupLabels,
   type ArmyRecruitSheetProps,
+  type ArmyRecruitStock,
   type ArmyTroop,
 } from './ArmyViewDesign';
 
@@ -29,6 +32,23 @@ const recruitSheet: ArmyRecruitSheetProps = {
   queue: [],
   summaryLabel: '0 en file',
   title: 'Recruter',
+};
+
+const recruitLabels: ArmyRecruitPopupLabels = {
+  cancel: 'Annuler',
+  max: 'Max',
+  population: 'Population',
+  recruit: 'Entraîner',
+  resourceIron: 'Fer',
+  resourceStone: 'Pierre',
+  resourceWood: 'Bois',
+};
+
+const recruitStock: ArmyRecruitStock = {
+  iron: 4_620,
+  populationAvailable: 230,
+  stone: 4_620,
+  wood: 4_620,
 };
 
 function installPointerCaptureStubs() {
@@ -108,5 +128,28 @@ describe('ArmyViewDesign mobile troop drag', () => {
     expect(scrollBy).toHaveBeenCalledWith({ top: -12 });
     expect(onTroopDragStart).not.toHaveBeenCalled();
     expect(onTroopDragEnd).not.toHaveBeenCalled();
+  });
+});
+
+describe('ArmyRecruitPopup embedded sheet content', () => {
+  it('lets the shared bottom sheet own the surface and swipe header', () => {
+    const { container } = render(
+      <ArmyRecruitPopup
+        embedded
+        labels={recruitLabels}
+        max={100}
+        onChange={vi.fn()}
+        quickValues={[{ label: '10', value: 10 }]}
+        showHandle={false}
+        stock={recruitStock}
+        troop={militia}
+        value={1}
+      />,
+    );
+
+    const dragRegion = container.querySelector('[data-bottom-sheet-drag-region]');
+    expect(container.firstElementChild).toHaveStyle({ background: 'transparent' });
+    expect(dragRegion).toHaveTextContent('Milice');
+    expect(dragRegion).toHaveClass('touch-none');
   });
 });

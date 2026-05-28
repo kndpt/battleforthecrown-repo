@@ -221,7 +221,23 @@ function renderHeader(initialPath = '/game') {
   );
 }
 
+function installPointerCaptureStubs() {
+  Object.defineProperty(HTMLElement.prototype, 'setPointerCapture', {
+    configurable: true,
+    value: vi.fn(),
+  });
+  Object.defineProperty(HTMLElement.prototype, 'hasPointerCapture', {
+    configurable: true,
+    value: vi.fn(() => true),
+  });
+  Object.defineProperty(HTMLElement.prototype, 'releasePointerCapture', {
+    configurable: true,
+    value: vi.fn(),
+  });
+}
+
 beforeEach(() => {
+  installPointerCaptureStubs();
   populationByVillageId = {
     v1: { ...defaultPopulationByVillageId.v1 },
     v2: { ...defaultPopulationByVillageId.v2 },
@@ -297,12 +313,13 @@ describe('GameHeader multi-village selector', () => {
   });
 
   it('opens the bottom sheet from the village name and selects a village without rendering the old inline menu', async () => {
-    renderHeader();
+    const { container } = renderHeader();
 
     const selector = await screen.findByRole('button', { name: 'Choisir le village actif' });
     fireEvent.click(selector);
 
     expect(screen.getByText('Mes villages')).toBeInTheDocument();
+    expect(container.querySelector('[style*="max-height: 68vh"]')).toBeInTheDocument();
     expect(screen.getAllByText('Haute Cour').length).toBeGreaterThan(0);
     expect(screen.getByText('Marche Nord')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Ouvrir Capitale' })).not.toBeInTheDocument();
@@ -321,6 +338,22 @@ describe('GameHeader multi-village selector', () => {
     await waitFor(() => {
       expect(useGameStore.getState().villageId).toBe('v2');
     });
+    await waitFor(() => {
+      expect(selector).toHaveAttribute('aria-expanded', 'false');
+    });
+  });
+
+  it('closes the multi-village sheet from a swipe on its header', async () => {
+    renderHeader();
+
+    const selector = await screen.findByRole('button', { name: 'Choisir le village actif' });
+    fireEvent.click(selector);
+
+    const dragRegion = await screen.findByText('Domaines du royaume');
+    fireEvent.pointerDown(dragRegion, { clientY: 20, pointerId: 1, pointerType: 'touch' });
+    fireEvent.pointerMove(dragRegion, { clientY: 150, pointerId: 1, pointerType: 'touch' });
+    fireEvent.pointerUp(dragRegion, { clientY: 150, pointerId: 1, pointerType: 'touch' });
+
     await waitFor(() => {
       expect(selector).toHaveAttribute('aria-expanded', 'false');
     });
@@ -382,6 +415,7 @@ describe('GameHeader player profile sheet', () => {
     await waitFor(() => {
       expect(profileButton).toHaveAttribute('aria-expanded', 'true');
     });
+    expect(container.querySelector('[style*="max-height: 64vh"]')).toBeInTheDocument();
     expect(await screen.findByText('u@example.test')).toBeInTheDocument();
     expect(await screen.findByText('Solstice')).toBeInTheDocument();
     expect(await screen.findByText('Inscription ouverte')).toBeInTheDocument();
@@ -404,6 +438,22 @@ describe('GameHeader player profile sheet', () => {
     });
     expect(useGameStore.getState().villageId).toBe('v1');
     expect(screen.getByTestId('location-path')).toHaveTextContent('/game/army');
+  });
+
+  it('closes the player profile sheet from a swipe on its header', async () => {
+    renderHeader();
+
+    const profileButton = await screen.findByRole('button', { name: 'Profil joueur' });
+    fireEvent.click(profileButton);
+
+    const dragRegion = await screen.findByText('u@example.test');
+    fireEvent.pointerDown(dragRegion, { clientY: 20, pointerId: 1, pointerType: 'touch' });
+    fireEvent.pointerMove(dragRegion, { clientY: 150, pointerId: 1, pointerType: 'touch' });
+    fireEvent.pointerUp(dragRegion, { clientY: 150, pointerId: 1, pointerType: 'touch' });
+
+    await waitFor(() => {
+      expect(profileButton).toHaveAttribute('aria-expanded', 'false');
+    });
   });
 
   it('selects an owned village from the profile villages tab', async () => {

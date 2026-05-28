@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { NumericKeypad, type NumericKeypadProps } from './NumericKeypad';
+import { NumericKeypadSheet } from './NumericKeypadSheet';
 
 function Harness(initialProps: Partial<NumericKeypadProps> = {}) {
   const [value, setValue] = useState(initialProps.value ?? 0);
@@ -22,6 +23,21 @@ const clickBackspace = () => fireEvent.click(screen.getByRole('button', { name: 
 const clickMax = () => fireEvent.click(screen.getByRole('button', { name: 'MAX' }));
 const displayedValue = () => screen.getByTestId('keypad-value').textContent ?? '';
 const fr = (n: number) => n.toLocaleString('fr-FR');
+
+function installPointerCaptureStubs() {
+  Object.defineProperty(HTMLElement.prototype, 'setPointerCapture', {
+    configurable: true,
+    value: vi.fn(),
+  });
+  Object.defineProperty(HTMLElement.prototype, 'hasPointerCapture', {
+    configurable: true,
+    value: vi.fn(() => true),
+  });
+  Object.defineProperty(HTMLElement.prototype, 'releasePointerCapture', {
+    configurable: true,
+    value: vi.fn(),
+  });
+}
 
 describe('NumericKeypad', () => {
   it('appends digits left-to-right', () => {
@@ -120,5 +136,32 @@ describe('NumericKeypad', () => {
     render(<Harness value={42} max={9999} />);
     clickDigit(7);
     expect(displayedValue()).toBe('427');
+  });
+});
+
+describe('NumericKeypadSheet', () => {
+  it('uses a compact bottom sheet with drag and scroll regions', () => {
+    installPointerCaptureStubs();
+    const onClose = vi.fn();
+    const { container } = render(
+      <NumericKeypadSheet
+        max={100}
+        onClose={onClose}
+        onConfirm={vi.fn()}
+        open
+        title="Milice"
+        value={12}
+      />,
+    );
+
+    expect(container.querySelector('[style*="max-height: 56vh"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-bottom-sheet-scrollable]')).toBeInTheDocument();
+
+    const dragRegion = screen.getByText('Milice');
+    fireEvent.pointerDown(dragRegion, { clientY: 20, pointerId: 1, pointerType: 'touch' });
+    fireEvent.pointerMove(dragRegion, { clientY: 150, pointerId: 1, pointerType: 'touch' });
+    fireEvent.pointerUp(dragRegion, { clientY: 150, pointerId: 1, pointerType: 'touch' });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

@@ -80,7 +80,7 @@ export function BuildingManagementPanel({
     <>
       <BottomSheet isOpen={isOpen} onClose={onClose} maxHeight="85vh" zIndex={50}>
         <GameBottomSheetPanel
-          bodyClassName="max-h-[calc(85vh-92px)] p-3"
+          bodyClassName="p-3"
           closeLabel="Fermer"
           eyebrow="Panneau"
           headerActions={(
