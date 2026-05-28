@@ -27,6 +27,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ### Runs actifs
 
+- [044 — Rapports persistants de renforts](./runs/044-feature-reinforcement-reports.md) — 📋 `PLANNED`. Créer des rapports de renfort typés et une couche inbox par destinataire, sans fragiliser `CombatReport` ni transformer l'Outbox en archive métier.
 - [043 — Layout shell du jeu](./runs/043-refactor-game-shell-layout.md) — 📋 `PLANNED`. Centraliser topbar, bottom nav et toasts dans un layout jeu propre, avec contrat URL borné pour le panneau Bâtiments et QA onboarding/quêtes.
 - [042 — Détail d'un royaume](./runs/042-feature-world-detail-page.md) — 📋 `PLANNED`. Ajouter un bouton `Détails` sur les cartes royaumes et livrer une page détail branchée uniquement sur des données publiques contractées.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
