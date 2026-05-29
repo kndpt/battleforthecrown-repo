@@ -18,6 +18,16 @@ This backlog tracks bounded existing-debt candidates for `bftc-debt-gardener`.
 
 ## Candidates
 
+- status: proposed
+  area: `battleforthecrown-backend/src/modules/event/game.gateway.ts`
+  branch: claude/bftc-debt-gardener-EGUH6
+  title: "fix(backend/event): type verifyAsync with JwtPayload in GameGateway"
+  note: >
+    `verifyAsync(token)` returned untyped `unknown`, forcing an eslint-disable for `.sub` access.
+    `JwtPayload` with `sub: string` already existed in `src/common/auth`. Fix: use
+    `verifyAsync<JwtPayload>(token)`, import the type, remove the eslint-disable.
+  verification: yarn static-check ✓
+
 - status: candidate
   area: `battleforthecrown-pixi/src/api/queries.ts`
   note: Prior audits flagged this as a high-value contract/API surface; reverify before editing.
@@ -44,3 +54,4 @@ This backlog tracks bounded existing-debt candidates for `bftc-debt-gardener`.
 
 - 2026-05-29: initialized with known high-value candidate areas; outcome: baseline-only.
 - 2026-05-29: selected `world-entities-query.service.ts` — barbarian schema parse symmetry; PR on `claude/bftc-debt-gardener-EGUH6`.
+- 2026-05-29: selected `game.gateway.ts` — type verifyAsync with JwtPayload; same branch.
