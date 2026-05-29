@@ -8,6 +8,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import type { JwtPayload } from '../../common/auth';
 import type { EventKind, PayloadForKind } from './event-types';
 
 interface AuthSocket extends Socket {
@@ -35,8 +36,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
-      const payload = await this.jwtService.verifyAsync(token);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
       client.userId = payload.sub;
       client.join(`user:${client.userId}`);
 
