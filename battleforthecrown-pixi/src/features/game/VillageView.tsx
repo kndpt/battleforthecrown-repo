@@ -88,7 +88,6 @@ export function VillageView() {
   const handleSelectBuilding = (building: BuildingDto) => {
     if (building.type === BUILDING_TYPES.COUNCIL_HALL && building.level >= 1 && !building.isUnderConstruction) {
       setSelectedBuilding(null);
-      setIsBuildingPanelOpen(false);
       setIsVillageStyleOpen(true);
       return;
     }

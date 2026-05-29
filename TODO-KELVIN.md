@@ -1,1 +1,0 @@
-- Front: je ne vois pas comment "annuler" une attaque

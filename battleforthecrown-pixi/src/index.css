@@ -43,6 +43,18 @@ canvas {
   }
 }
 
+@keyframes bftc-building-new-pulse {
+  0%,
+  100% {
+    border-color: var(--game-blue-border, #1f5288);
+    box-shadow: 0 0 0 rgba(91, 155, 213, 0);
+  }
+  50% {
+    border-color: var(--game-blue-light, #5b9bd5);
+    box-shadow: 0 0 0 2px rgba(91, 155, 213, 0.18);
+  }
+}
+
 @keyframes bftc-army-flash {
   50% {
     filter: brightness(1.18) saturate(1.2);

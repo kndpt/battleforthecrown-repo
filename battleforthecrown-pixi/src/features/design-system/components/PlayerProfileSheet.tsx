@@ -472,14 +472,14 @@ export function PlayerProfileSheet({
       tabs={
         <SegmentedControl
           ariaLabel="Sections du profil"
-          className="flex flex-1 border-[#3c2619] bg-[linear-gradient(to_bottom,rgba(60,38,25,.92),rgba(78,56,34,.92))] [&>button]:flex-1 [&>button]:justify-center [&>button]:px-2 [&>button]:py-1.5 [&>button]:text-[11px] [&>button]:uppercase [&>button]:tracking-[.06em]"
+          className="flex w-full [&>button]:min-w-0 [&>button]:flex-1 [&>button]:justify-center [&>button]:px-2 [&>button]:py-1.5 [&>button]:text-[11px] [&>button]:uppercase [&>button]:tracking-[.06em]"
           onChange={(tab) => onTabChange(tab as PlayerProfileSheetTab)}
           options={tabs.map((tab) => ({ label: labels.tabs[tab], value: tab }))}
           size="compact"
-          tone="dark"
           value={activeTab}
         />
       }
+      tabsFullWidth
     >
       {activeTab === 'profile' ? (
         <ProfilePane

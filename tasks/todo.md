@@ -1,5 +1,29 @@
 # Todo
 
+## 2026-05-29 — Cards bâtiments mobile
+
+- [x] Revenir au layout dense 3 colonnes des cards bâtiments.
+- [x] Grossir uniquement les informations internes sans agrandir les cards.
+- [x] Passer chaque type de bâtiment en rail horizontal avec 2,5 cards visibles.
+- [x] Ajouter le temps de construction avec l'asset horloge.
+- [x] Aligner les villageois à gauche et le temps à droite.
+- [x] Retirer la croix du tray et fermer via clic hors card.
+- [x] Uniformiser la hauteur de card quel que soit le statut.
+- [x] Déplacer le timer en overlay bas-droite de l'asset et retirer les indicateurs haut-droite.
+- [x] Rendre les cards verrouillées en fond rayé avec l'asset cadenas.
+- [x] Recaler les cards verrouillées : cadenas centré, badge requis rouge en bas-centre, sans opacité globale.
+- [x] Réduire l'espace nom/ressources et redonner de l'espace vertical aux assets.
+- [x] Nettoyer les styles de card pour retirer les lignes claires et shadows superposées.
+- [x] Garder le padding bas pour éviter le recouvrement par le tray.
+- [x] Vérifier type-check Pixi et impact docs.
+
+## 2026-05-28 — Ajustement bottom sheet bâtiments
+
+- [x] Confirmer que `GameBottomSheetPanel` est utilisé dans la vue.
+- [x] Réduire et centrer la carte centrale de bâtiment.
+- [x] Vérifier le type-check Pixi ciblé.
+- [x] Documenter le résultat et l'impact docs.
+
 ## 2026-05-28 — Run 041 gestes mobile et bottom sheets
 
 - [x] Charger la fiche run, règles repo, `SPEC.md`, briefing Pixi et skills frontend/tests.
@@ -118,6 +142,15 @@
 
 ## Review
 
+- Cards bâtiments mobile : chaque section de bâtiments devient un rail horizontal, avec largeur de card calculée pour afficher environ 2,5 cards ; coûts, libellés et temps de construction sont plus lisibles.
+- Interaction tray bâtiments : suppression de la croix ; un clic dans le contenant hors card ferme le tray, les cards stoppent la propagation.
+- Stabilité visuelle cards : hauteur minimale partagée pour éviter que les états `Max`/en cours/sans coût changent la taille de la card.
+- Statuts cards bâtiments : suppression des flèches/cadenas haut-droite ; le temps est désormais en bas-droite de l'image et les verrouillés utilisent un fond rayé + `lock.png`.
+- Ajustement final cards : zone asset augmentée, ressources rapprochées du nom ; verrouillées avec cadenas centré et niveau requis rouge en bas-centre.
+- Nettoyage visuel cards : styles centralisés, suppression des outer/inset shadows sur les cards et retrait du drop-shadow des assets de card.
+- Vérification cards bâtiments mobile : `rtk yarn workspace battleforthecrown-pixi type-check`.
+- Ajustement bottom sheet bâtiments : `GameBottomSheetPanel` confirmé dans le rendu de `BuildingManagementPanel`; hero card centrée et limitée à `310px` sur mobile, avec image/typos réduites.
+- Vérification ajustement bottom sheet bâtiments : `rtk yarn workspace battleforthecrown-pixi type-check`; QA worktree selon `docs/architecture/worktree-dev.md` avec DB `battleforthecrown_bottomsheet`, backend `http://localhost:15002/health`, frontend `http://localhost:5175/`; mesure navigateur mobile 390px : carte `left=40`, `width=310`, `right=350`.
 - 2026-05-28 Run 041 gestes mobile/bottom sheets : verrou global `html/body/#root`, scroll auth explicite, régions `data-bottom-sheet-drag-region`/`data-bottom-sheet-scrollable` et non-interception des contrôles dans `BottomSheet`.
 - Review run 041 : premier verdict indépendant `BLOCK` sur absence de preuve Armée ; ajout `ArmyViewDesign.test.tsx` pour drag tactile immédiat + scroll vertical ; re-review indépendante `GO`.
 - Vérification run 041 : `rtk yarn workspace battleforthecrown-pixi test BottomSheet.test.tsx`, `rtk yarn workspace battleforthecrown-pixi test ArmyViewDesign.test.tsx BottomSheet.test.tsx`, `rtk yarn workspace battleforthecrown-pixi test`, `rtk yarn workspace battleforthecrown-pixi type-check`, `rtk yarn static-check`.

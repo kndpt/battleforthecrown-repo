@@ -3,6 +3,7 @@ import type { VillageStrategyType } from '@battleforthecrown/shared/village';
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
 import { GameBottomSheetPanel } from './GameBottomSheetPanel';
+import { SegmentedControl } from './SegmentedControl';
 import { villageStyleOptions } from './villageStyleData';
 
 export type MultiVillageFilter = 'all' | 'active' | 'alerts';
@@ -526,25 +527,14 @@ function FilterSeg({ availableFilters, labels, onChange, value }: FilterSegProps
   const options = allOptions.filter((option) => allowed.has(option.id));
 
   return (
-    <div className="flex flex-1 gap-0.5 rounded-[9px] border-2 border-[#3c2619] bg-[linear-gradient(180deg,rgba(60,38,25,.92),rgba(78,56,34,.92))] p-[3px] shadow-[inset_0_1px_0_rgba(255,255,255,.15)]">
-      {options.map((option) => {
-        const active = option.id === value;
-
-        return (
-          <button
-            className={cn(
-              'flex-1 cursor-pointer rounded-md border-0 px-0 py-[5px] font-game text-[10px] font-extrabold uppercase tracking-[.12em]',
-              active ? 'bg-[linear-gradient(180deg,#f1c40f,#d4a017)] text-[#3a2a00] shadow-[inset_0_1px_0_rgba(255,255,255,.4)] [text-shadow:0_1px_0_rgba(255,255,255,.35)]' : 'bg-transparent text-[#e6cf95] [text-shadow:1px_1px_1px_rgba(0,0,0,.4)]',
-            )}
-            key={option.id}
-            onClick={() => onChange(option.id)}
-            type="button"
-          >
-            {option.label}
-          </button>
-        );
-      })}
-    </div>
+    <SegmentedControl
+      ariaLabel="Filtrer les villages"
+      className="flex w-full [&>button]:min-w-0 [&>button]:flex-1 [&>button]:justify-center [&>button]:px-1.5 [&>button]:py-1 [&>button]:text-[10.5px] [&>button]:uppercase [&>button]:tracking-[.05em]"
+      onChange={(next) => onChange(next as MultiVillageFilter)}
+      options={options.map((option) => ({ label: option.label, value: option.id }))}
+      size="compact"
+      value={value}
+    />
   );
 }
 
@@ -601,6 +591,7 @@ export function MultiVillageBottomSheet({
       eyebrow={labels.eyebrow}
       headerActions={headerActions}
       tabs={filterTabs}
+      tabsFullWidth
       title={title}
       variant={hasFilterTabs ? 'tabbed' : 'default'}
     >

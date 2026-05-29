@@ -859,7 +859,7 @@ function RecruitSummary({ summaryLabel }: { summaryLabel: string }) {
 function QueueChip({ item, troop }: { item: ArmyQueueItem; troop: ArmyTroop }) {
   return (
     <div
-      className="relative inline-flex items-center gap-1 overflow-hidden rounded-full border-[1.5px] py-[3px] pl-1 pr-[7px] shadow-[inset_0_1px_0_rgba(255,255,255,.25)]"
+      className="relative inline-flex min-h-[34px] items-center gap-1.5 rounded-[15px] border-[1.5px] pb-[8px] pl-[6px] pr-2 pt-[5px] shadow-[inset_0_1px_0_rgba(255,255,255,.25)]"
       style={{
         background: item.active
           ? 'linear-gradient(to bottom, var(--game-gold-glow), var(--game-gold-dark))'
@@ -867,9 +867,9 @@ function QueueChip({ item, troop }: { item: ArmyQueueItem; troop: ArmyTroop }) {
         borderColor: item.active ? 'var(--game-gold-border)' : 'var(--wood-deep)',
       }}
     >
-      <TroopIcon size={18} troop={troop} />
+      <TroopIcon size={22} troop={troop} />
       <span
-        className="font-game text-[11px] font-extrabold tabular-nums"
+        className="font-game text-[12px] font-extrabold leading-none tabular-nums"
         style={{
           color: item.active ? '#3a2a00' : '#fff',
           textShadow: item.active ? 'none' : '1px 1px 1px rgba(0,0,0,.4)',
@@ -878,7 +878,7 @@ function QueueChip({ item, troop }: { item: ArmyQueueItem; troop: ArmyTroop }) {
         ×{item.quantity}
       </span>
       {item.progress != null ? (
-        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[rgba(0,0,0,.3)]">
+        <div className="absolute bottom-1 left-[6px] right-[6px] h-[3px] overflow-hidden rounded-full bg-[rgba(0,0,0,.3)]">
           <div className="h-full bg-white shadow-[0_0_4px_rgba(255,255,255,.7)]" style={{ width: `${item.progress * 100}%` }} />
         </div>
       ) : null}

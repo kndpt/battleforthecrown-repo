@@ -13,6 +13,7 @@ export interface GameBottomSheetPanelProps extends Omit<HTMLAttributes<HTMLDivEl
   onClose?: () => void;
   scrollable?: boolean;
   tabs?: ReactNode;
+  tabsFullWidth?: boolean;
   title?: ReactNode;
   variant?: GameBottomSheetPanelVariant;
 }
@@ -34,6 +35,7 @@ export function GameBottomSheetPanel({
   onClose: _onClose,
   scrollable = true,
   tabs,
+  tabsFullWidth = false,
   title,
   variant = tabs ? 'tabbed' : 'default',
   ...props
@@ -88,7 +90,7 @@ export function GameBottomSheetPanel({
       {tabs ? (
         <div className="flex gap-1.5 border-b border-b-[rgba(60,38,25,.22)] px-3 pb-2">
           {tabs}
-          <div className="flex-1" />
+          {tabsFullWidth ? null : <div className="flex-1" />}
         </div>
       ) : null}
 
