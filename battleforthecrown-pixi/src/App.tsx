@@ -1,6 +1,5 @@
 import { lazy, Suspense } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { queryClient } from '@/api/query-client';
 import { LandingScreen } from '@/features/auth/LandingScreen';
@@ -11,7 +10,6 @@ import { WorldSelector } from '@/features/worlds/WorldSelector';
 import { WorldSessionGate } from '@/features/worlds/WorldSessionGate';
 import { Spinner } from '@/ui/spinners';
 import { AuthenticatedShell } from '@/features/layout/AuthenticatedShell';
-import { DebugOverlay } from '@/features/layout/DebugOverlay';
 import { VictoryModalHost } from '@/ui/modals/VictoryModalHost';
 
 const VillageView = lazy(() =>
@@ -123,12 +121,6 @@ export default function App() {
         </Routes>
         <VictoryModalHost />
       </BrowserRouter>
-      {import.meta.env.DEV && (
-        <>
-          <DebugOverlay />
-          <ReactQueryDevtools initialIsOpen={false} />
-        </>
-      )}
     </QueryClientProvider>
   );
 }
