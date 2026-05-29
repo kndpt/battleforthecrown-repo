@@ -36,19 +36,32 @@ This backlog tracks bounded existing-debt candidates for `bftc-debt-gardener`.
   area: `battleforthecrown-pixi/src/pixi/scenes/WorldMapScene.ts`
   note: Prior audits flagged this as a high-value Pixi scene surface; prefer small rendering/input cleanup only.
 
-- status: proposed
+- status: fixed
   area: `battleforthecrown-backend/src/modules/world/world-entities-query.service.ts`
   branch: claude/bftc-debt-gardener-EGUH6
   title: "fix(backend/world): parse barbarian village data with Zod schema"
-  note: >
-    `barbarianVillageDataSchema` was defined but never called (suppressed with eslint-disable).
-    Meanwhile `playerVillageDataSchema.parse()` was used symmetrically. Fix: call `.parse()`
-    on the assembled barbarian data, mirror the player village pattern, remove eslint-disable.
-  verification: yarn static-check ✓ · yarn test:world (114 tests) ✓
+  note: Merged PR #4.
 
 - status: candidate
   area: `battleforthecrown-backend/src/workers/production.worker.ts`
   note: Prior audits flagged this as a high-value worker surface; preserve Outbox/server-authoritative invariants.
+
+- status: proposed
+  area: >
+    battleforthecrown-backend/src/modules/combat/loot/providers/resource-loot.provider.ts,
+    battleforthecrown-backend/src/common/prisma-shared-enums.ts,
+    battleforthecrown-backend/src/modules/world/world.service.ts,
+    battleforthecrown-backend/src/modules/combat/loot/loot.manager.spec.ts,
+    battleforthecrown-backend/src/modules/army/army.service.ts
+  branch: claude/bftc-debt-gardener-multi-QxoLH
+  title: "refactor(backend): remove 5 eslint-disable/any debt items"
+  items:
+    - resource-loot.provider: drop async (no await), return Promise.resolve() — removes eslint-disable require-await
+    - prisma-shared-enums: export _targetKindFromPrisma — removes eslint-disable no-unused-vars
+    - world.service: Prisma select in getWorldDetails to skip config field — removes eslint-disable no-unused-vars
+    - loot.manager.spec: as any → as unknown as T for Expedition and CombatConfig
+    - army.service: explicit Promise<UnitTraining[]> return type on getTraining
+  verification: yarn static-check ✓ · 232 backend tests ✓ · 222 pixi tests ✓
 
 ## Runs
 
