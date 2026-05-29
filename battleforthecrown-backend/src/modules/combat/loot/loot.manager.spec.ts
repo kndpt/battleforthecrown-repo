@@ -1,7 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LootManager } from './loot.manager';
 import { ResourceLootProvider } from './providers/resource-loot.provider';
-import { CombatContext } from '../interfaces/combat-context.interface';
+import {
+  CombatContext,
+  CombatConfig,
+} from '../interfaces/combat-context.interface';
+import type { Expedition } from '@prisma/client';
 import type { UnitMap } from '@battleforthecrown/shared/army';
 
 // Carry capacity is read from UNIT_STATS (shared) via getUnitStats().
@@ -14,7 +18,7 @@ const buildContext = (overrides: {
 }): CombatContext =>
   ({
     worldId: 'world-1',
-    expedition: {} as any,
+    expedition: {} as unknown as Expedition,
     attacker: {
       village: {
         id: 'v1',
@@ -47,7 +51,7 @@ const buildContext = (overrides: {
       },
       _distance: 14,
       _travelTime: 14000,
-    } as any,
+    } as unknown as CombatConfig,
   }) as CombatContext;
 
 describe('LootManager', () => {

@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import type { UnitTraining } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import {
@@ -64,7 +65,10 @@ export class ArmyService {
     });
   }
 
-  async getTraining(villageId: string, userId: string) {
+  async getTraining(
+    villageId: string,
+    userId: string,
+  ): Promise<UnitTraining[]> {
     await this.ownership.assertVillageOwnedBy(villageId, userId);
     const village = await this.prisma.village.findUnique({
       where: { id: villageId },

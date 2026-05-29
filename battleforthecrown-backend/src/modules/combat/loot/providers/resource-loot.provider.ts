@@ -7,8 +7,7 @@ import { CombatContext } from '../../interfaces/combat-context.interface';
 export class ResourceLootProvider implements LootResolver {
   private readonly logger = new Logger(ResourceLootProvider.name);
 
-  // eslint-disable-next-line @typescript-eslint/require-await
-  async resolveLoot(
+  resolveLoot(
     context: CombatContext,
     remainingCapacity: number,
   ): Promise<Partial<LootResult>> {
@@ -20,14 +19,14 @@ export class ResourceLootProvider implements LootResolver {
 
     if (!defender.resources) {
       this.logger.warn('No defender resources found - returning zero loot');
-      return {
+      return Promise.resolve({
         resources: { wood: 0, stone: 0, iron: 0 },
         metadata: {
           totalCapacityUsed: 0,
           totalCapacityAvailable: remainingCapacity,
           cappedByCapacity: false,
         },
-      };
+      });
     }
 
     // Facteur de pillage (% max des ressources volables)
@@ -74,7 +73,7 @@ export class ResourceLootProvider implements LootResolver {
       iron: defender.resources.iron - actualLoot.iron,
     };
 
-    return {
+    return Promise.resolve({
       resources: actualLoot,
       remainingResources: remaining,
       metadata: {
@@ -82,6 +81,6 @@ export class ResourceLootProvider implements LootResolver {
         totalCapacityAvailable: remainingCapacity,
         cappedByCapacity,
       },
-    };
+    });
   }
 }
