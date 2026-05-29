@@ -71,10 +71,13 @@ yarn workspace battleforthecrown-backend test:smoke
 
 Le container Postgres doit autoriser ≥ 300 connections (8 workers × Nest + pg-boss ≈ 200) — configuré dans `docker-compose.yml` via `command: postgres -c max_connections=300`. Recréer le container après changement (`docker compose up -d --force-recreate postgres`).
 
+Le préflight (`scripts/smoke-preflight.sh`) détecte automatiquement le backend Postgres : container Docker `battleforthecrown-postgres` (dev local) ou serveur Postgres natif sur `localhost:5432` (env Claude Code web, sans daemon Docker). Aucune commande à changer.
+
 Overrides :
 - `SMOKE_DATABASE_URL` : bypass complet, force une URL spécifique (debug d'un test précis).
 - `SMOKE_TEMPLATE_DB` : change le nom du template (défaut `battleforthecrown_smoke`).
 - `SMOKE_WORKERS` : change le nombre de clones générés par le préflight (défaut `8`).
+- `SMOKE_PG_CONTAINER` : change le nom du container Docker ciblé (défaut `battleforthecrown-postgres`).
 
 ### Scaler quand la suite grossit
 
