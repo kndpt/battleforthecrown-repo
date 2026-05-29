@@ -23,8 +23,6 @@ export interface BuildingLevelDefinition {
   timeSeconds: number;
 }
 
-export type BuildingLevelCost = BuildingLevelDefinition;
-
 export interface BuildingDefinition {
   enabled: boolean;
   unlockCastleLevel?: number;
@@ -511,7 +509,7 @@ export const getBuildingLevelValues = (
 export const getBuildingLevelCost = (
   buildingType: string,
   level: number
-): BuildingLevelCost | null => {
+): BuildingLevelDefinition | null => {
   return getBuildingLevelValues(buildingType, level);
 };
 

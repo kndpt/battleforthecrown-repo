@@ -10,6 +10,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { cva, type VariantProps } from "class-variance-authority";
+import { clamp } from "@/lib/math";
 
 const tooltipVariants = cva(
   [
@@ -133,11 +134,6 @@ const ARROW_SIZE = 6;
 const SHOW_DELAY = 200;
 const HIDE_DELAY = 2000;
 
-const clamp = (value: number, min: number, max: number) => {
-  if (value < min) return min;
-  if (value > max) return max;
-  return value;
-};
 
 const calculatePosition = (
   triggerRect: DOMRect,

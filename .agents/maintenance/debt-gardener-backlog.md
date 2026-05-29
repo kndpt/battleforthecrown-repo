@@ -28,6 +28,57 @@ This backlog tracks bounded existing-debt candidates for `bftc-debt-gardener`.
     `verifyAsync<JwtPayload>(token)`, import the type, remove the eslint-disable.
   verification: yarn static-check ✓
 
+- status: proposed
+  area: >
+    battleforthecrown-pixi/src/lib/math.ts (new),
+    battleforthecrown-pixi/src/lib/pathGeometry.ts (new),
+    battleforthecrown-pixi/src/pixi/entities/expeditionMath.ts,
+    battleforthecrown-pixi/src/lib/expeditionRecall.ts,
+    battleforthecrown-pixi/src/ui/tooltips/Tooltip.tsx,
+    battleforthecrown-pixi/src/features/world/WorldMiniMap.tsx,
+    packages/shared/src/world/lifecycle.ts,
+    packages/shared/src/village/buildings.ts,
+    battleforthecrown-backend/src/modules/combat/strategies/combat-strategy.interface.ts
+  branch: claude/bftc-debt-gardener-config-gAL5a
+  title: "refactor: dedupe math/path helpers and drop dead exports (multi-item)"
+  note: >
+    Multi-item run (user asked to fix a maximum of distinct debt in one PR). Themes:
+    (1) pixi: extracted duplicated clamp01/clamp into lib/math.ts and Point2/pathControl/pathPointAt
+        into lib/pathGeometry.ts; expeditionMath + expeditionRecall now share them (respects pixi→lib
+        layering, not the reverse); Tooltip + WorldMiniMap reuse clamp; NumericKeypad clamp left (domain 1-arg).
+    (2) shared/world/lifecycle: import MS_PER_DAY from ../time instead of redefining the same value.
+    (3) shared/village/buildings: removed dead public type alias BuildingLevelCost (= BuildingLevelDefinition),
+        inlined at its single internal call site.
+    (4) backend/combat: collapsed duplicate CombatResolution import + re-export into one import.
+  verification: yarn static-check ✓ · backend 232 tests ✓ · pixi 228 tests ✓ (incl. new lib/math.test.ts)
+
+- status: rejected
+  area: `battleforthecrown-backend/src/modules/combat/codecs/loot.codec.ts`
+  note: >
+    Audit flagged encodeLootResult `as unknown as` as inconsistent with encodeCombatLoot's direct cast.
+    False positive: LootResult has no index signature and does not overlap Prisma.InputJsonValue, so the
+    double cast is required (tsc TS2352). The asymmetry is type-driven, not debt. Leave as-is.
+
+- status: rejected
+  area: `battleforthecrown-backend/src/modules/world/world-entities-query.service.ts` (getVillagesInRadius)
+  note: >
+    Audit flagged missing Math.min(..., 499) clamp on maxX/maxY vs sibling getEntitiesInRadius.
+    No functional effect: coordinate space is bounded and no entities exist beyond the edge, so the
+    `lte` upper bound returns identical rows. Adding it is a no-op that duplicates a magic literal; skipped.
+
+- status: candidate
+  area: shared level normalization duplication (`village/buildings.ts:449` getBarracksTrainingSpeedMultiplier, `world/village-visuals.ts:18` villageVisualTierFromCastleLevel)
+  note: >
+    Both repeat `Number.isFinite(level) ? Math.floor(level) : 1` + `Math.max(1, Math.min(10, n))`.
+    Genuine but a 2-line idiom; extracting would couple world→village for marginal gain. Revisit if a
+    third call site appears or a shared MAX_BUILDING_LEVEL constant lands.
+
+- status: candidate
+  area: `packages/shared/src/village/strategy.ts:190-205` getStrategyBonusValue
+  note: >
+    `as unknown as NonNullable<StrategyBonus[K]>` casts compensate for TS not narrowing the generic key.
+    Real type smell but fixing safely needs careful discriminated handling; defer to a dedicated run.
+
 - status: candidate
   area: `battleforthecrown-pixi/src/api/queries.ts`
   note: Prior audits flagged this as a high-value contract/API surface; reverify before editing.
@@ -68,3 +119,7 @@ This backlog tracks bounded existing-debt candidates for `bftc-debt-gardener`.
 - 2026-05-29: initialized with known high-value candidate areas; outcome: baseline-only.
 - 2026-05-29: selected `world-entities-query.service.ts` — barbarian schema parse symmetry; PR on `claude/bftc-debt-gardener-EGUH6`.
 - 2026-05-29: selected `game.gateway.ts` — type verifyAsync with JwtPayload; same branch.
+- 2026-05-29: multi-item run (user-requested max debt in one PR) on `claude/bftc-debt-gardener-config-gAL5a` —
+  deduped math/path helpers (lib/math.ts + lib/pathGeometry.ts), MS_PER_DAY import, dead BuildingLevelCost
+  alias, duplicate CombatResolution import. Rejected loot.codec cast (type-required) and getVillagesInRadius
+  clamp (no-op). static-check ✓ · backend 232 ✓ · pixi 228 ✓.
