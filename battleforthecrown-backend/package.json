@@ -28,6 +28,7 @@
     "test:smoke": "yarn test:smoke:preflight && yarn test:smoke:run",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "test:village-placement": "ts-node scripts/test-village-placement-100.ts"
   },
