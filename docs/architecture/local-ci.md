@@ -76,11 +76,21 @@ Réservé à :
 
 À traiter comme l'exception. Pas la règle. Sans demande user explicite, l'agent ne bypass jamais.
 
-## Cible long terme : CI cloud
+## CI cloud — GitHub Actions
 
-Si un des triggers ci-dessous saute, migrer vers un workflow GitHub Actions qui rejoue le hook + les smokes sur PR :
+Workflow actif : `.github/workflows/ci.yml`. Deux jobs requis pour merger sur `main` (à configurer via branch protection rules dans les settings GitHub) :
 
-- Un autre contributeur rejoint le projet.
-- Le jeu sort de phase dev (joueurs réels).
-- Les smokes deviennent invérifiables localement (DB trop lourde, environnement particulier).
-- L'agent skip régulièrement les smokes malgré la règle `/run`.
+| Job | Contenu | DB | Durée estimée |
+|---|---|---|---|
+| `unit` | `static-check` + `test:backend` + `test:pixi` | Aucune | ~3 min |
+| `smokes` | `prisma migrate deploy` + preflight + smoke suite | Postgres 16 natif | ~5-8 min |
+
+**Détails smokes CI :**
+- `SMOKE_WORKERS=4` (vs 8 en local) pour rester sous les 100 connexions Postgres par défaut du runner 2 CPU.
+- `smoke-preflight.sh` détecte automatiquement `PG_MODE=native` via `pg_isready` — pas de Docker.
+- `--maxWorkers=4` passé à Jest au moment du run pour aligner avec les 4 clones DB créés.
+
+**Branch protection à activer :**
+Dans GitHub → Settings → Branches → protection rule pour `main` :
+- [x] Require status checks to pass : `Static check & unit tests`, `Smoke tests`
+- [x] Require branches to be up to date before merging
