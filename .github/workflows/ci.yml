@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - "claude/**"
+  pull_request:
+    branches:
+      - main
+
+# Cancel in-progress runs on the same branch when a new push arrives.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Job 1: static analysis + unit tests (no DB) ───────────────────────────
+  # Mirrors the pre-push hook exactly: tsc + eslint + jest:backend + vitest:pixi
+  unit:
+    name: Static check & unit tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "yarn"
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build shared package
+        run: yarn workspace @battleforthecrown/shared build
+
+      - name: Generate Prisma client
+        run: yarn workspace battleforthecrown-backend prisma:generate
+
+      - name: Static check (tsc + eslint)
+        run: yarn static-check
+
+      - name: Unit tests — backend
+        run: yarn test:backend
+
+      - name: Unit tests — pixi
+        run: yarn test:pixi
+
+  # ── Job 2: smoke tests (requires PostgreSQL) ──────────────────────────────
+  # Boots a native Postgres 16 service (same version as docker-compose.yml).
+  # smoke-preflight.sh detects PG_MODE=native via pg_isready, so Docker is not
+  # needed. SMOKE_WORKERS=4 (vs 8 local) keeps connections well under the
+  # Postgres default of 100 on the 2-CPU CI runner.
+  smokes:
+    name: Smoke tests
+    needs: unit
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: battleforthecrown_smoke
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/battleforthecrown_smoke
+      PGPASSWORD: postgres
+      SMOKE_TEMPLATE_DB: battleforthecrown_smoke
+      SMOKE_WORKERS: "4"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "yarn"
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build shared package
+        run: yarn workspace @battleforthecrown/shared build
+
+      - name: Generate Prisma client
+        run: yarn workspace battleforthecrown-backend prisma:generate
+
+      - name: Apply migrations to smoke template DB
+        run: yarn workspace battleforthecrown-backend prisma:migrate:deploy
+
+      - name: Preflight — create 4 worker DB clones
+        run: yarn workspace battleforthecrown-backend test:smoke:preflight
+
+      - name: Run smoke tests (4 workers)
+        run: yarn workspace battleforthecrown-backend test:smoke:run -- --maxWorkers=4
