@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { z } from 'zod';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const barbarianVillageDataSchema = z.object({
   tier: z.string().nullable(),
   name: z.string(),
@@ -167,7 +166,7 @@ export class WorldEntitiesQueryService {
         kind: 'BARBARIAN_VILLAGE' as const,
         x: b.x,
         y: b.y,
-        data: {
+        data: barbarianVillageDataSchema.parse({
           tier: b.tier,
           name: b.name,
           villageId: b.id,
@@ -181,7 +180,7 @@ export class WorldEntitiesQueryService {
                 },
               }
             : {}),
-        },
+        }),
       };
     });
   }
