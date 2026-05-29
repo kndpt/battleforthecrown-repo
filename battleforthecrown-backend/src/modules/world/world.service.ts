@@ -41,6 +41,19 @@ export class WorldService {
   async getWorldDetails(worldId: string) {
     const world = await this.prisma.world.findUnique({
       where: { id: worldId },
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        gridWidth: true,
+        gridHeight: true,
+        continentWidth: true,
+        continentHeight: true,
+        startedAt: true,
+        endsAt: true,
+        plannedOpenAt: true,
+        createdAt: true,
+      },
     });
     if (!world) {
       throw new NotFoundException(`World ${worldId} not found`);
@@ -50,9 +63,7 @@ export class WorldService {
       where: { worldId },
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { config: _config, ...summary } = world;
-    return { ...summary, playerCount };
+    return { ...world, playerCount };
   }
 
   async getWorldConfig(worldId: string) {

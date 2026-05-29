@@ -36,14 +36,12 @@ export const _expeditionStatusToPrisma: Record<
   RETURNING: 'RETURNING',
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _targetKindFromPrisma: Record<PrismaTargetKind, TargetKind> = {
+export const _targetKindFromPrisma: Record<PrismaTargetKind, TargetKind> = {
   PLAYER_VILLAGE: 'PLAYER_VILLAGE',
   BARBARIAN_VILLAGE: 'BARBARIAN_VILLAGE',
 };
 
-// No bidirectional mapping for TargetKind anymore as they started to diverge
-// between Prisma and Shared.
+// No reverse mapping: shared TargetKind may diverge from Prisma in future variants.
 
 export const _villageStrategyFromPrisma: Record<
   PrismaVillageStrategy,
