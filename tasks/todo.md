@@ -1,5 +1,13 @@
 # Todo
 
+## 2026-05-29 — Skills maintenance autonome BFTC
+
+- [x] Lire les patterns existants de skills BFTC et les règles docs/git.
+- [x] Créer `bftc-daily-diff-maintenance` avec suivi par curseur Git, arrêt si PR existante, et PR unique.
+- [x] Créer `bftc-debt-gardener` pour corriger une zone de dette générale bornée.
+- [x] Ajouter les fichiers de suivi durables nécessaires hors `tasks/`.
+- [x] Valider la structure des skills et documenter l'impact docs.
+
 ## 2026-05-29 — Cards bâtiments mobile
 
 - [x] Revenir au layout dense 3 colonnes des cards bâtiments.
@@ -141,6 +149,11 @@
 - [x] Documenter le resultat et l'impact docs.
 
 ## Review
+
+- Skills maintenance autonome : création de `bftc-daily-diff-maintenance` pour traiter les commits `main` non revus via curseur SHA et PR unique, avec arrêt si une PR existante est ouverte.
+- Skills maintenance autonome : création de `bftc-debt-gardener` pour sélectionner une dette existante bornée, la corriger, vérifier et proposer une PR draft.
+- Suivi durable : ajout de `.agents/maintenance/daily-diff-ledger.md` et `.agents/maintenance/debt-gardener-backlog.md`, hors `tasks/`.
+- Vérification skills maintenance : validation YAML/frontmatter via Ruby ; le validateur officiel `quick_validate.py` est bloqué localement par l'absence du module Python `yaml`.
 
 - Cards bâtiments mobile : chaque section de bâtiments devient un rail horizontal, avec largeur de card calculée pour afficher environ 2,5 cards ; coûts, libellés et temps de construction sont plus lisibles.
 - Interaction tray bâtiments : suppression de la croix ; un clic dans le contenant hors card ferme le tray, les cards stoppent la propagation.
