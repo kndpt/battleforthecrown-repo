@@ -1,13 +1,18 @@
 ---
-name: bftc-code-quality-backend
-description: Use when auditing or refactoring NestJS backend code quality — bad patterns, poor maintainability, coupling, anti-patterns in battleforthecrown-backend.
+name: bftc-refactor-backend
+description: Deep code quality audit + structural refactor of battleforthecrown-backend. Two phases: annotated findings report, then one scoped PR ready for review. Runs weekly Saturday night via Routine.
 ---
 
-# BFTC Code Quality — Backend
+# BFTC Refactor — Backend
 
 Deep code quality pass on `battleforthecrown-backend/`. Two phases: **Audit** (annotated findings) then **Refactor** (one scoped PR, ready for review).
 
-Unlike `bftc-debt-gardener`, this skill embraces larger refactors and structural issues, not just bounded quick fixes. The 5-file cap does not apply.
+Unlike `bftc-maint-debt`, this skill embraces larger refactors and structural issues, not just bounded quick fixes. The 5-file cap does not apply.
+
+## When to trigger
+
+**Routine** — weekly, Saturday night, see `.agents/maintenance/trigger-strategy.md` for setup.
+**Manual** — after a large backend feature lands, or when `bftc-maint-debt` keeps surfacing the same module.
 
 ---
 
@@ -16,15 +21,16 @@ Unlike `bftc-debt-gardener`, this skill embraces larger refactors and structural
 - Run both phases unless called with `--audit-only`.
 - Produce exactly one PR per run, ready for review (not draft).
 - The PR addresses one coherent refactor theme derived from the audit.
-- Update `.agents/maintenance/code-quality-backend-report.md` with the full findings.
+- Update `.agents/maintenance/refactor-backend-report.md` with the full findings.
 
 ---
 
 ## Preflight
 
 1. Read `battleforthecrown-backend/AGENTS.md`, `.agents/rules/{conventions,docs,git}.md`.
-2. Verify clean worktree: `git status --short`.
-3. Check for an open PR with label/branch `bftc-code-quality-backend`. If found, stop and report its URL.
+2. Read `.agents/maintenance/refactor-backend-report.md` — mark prior findings `RESOLVED` or `STILL OPEN` before starting Phase 1.
+3. Verify clean worktree: `git status --short`.
+4. Check for an open PR with branch prefix `claude/bftc-refactor-backend`. If found, stop and report its URL.
 
 ---
 
@@ -95,7 +101,6 @@ Form a 1-paragraph mental model of the backend's module structure before proceed
 
 ### Findings format
 
-For each finding write:
 ```
 [ID] [Category] file:line — description — recommendation
 Severity: Critical | High | Medium | Low
@@ -104,7 +109,7 @@ Effort: S (< 1h) | M (half-day) | L (1-2 days)
 
 Group by theme. Aim for 20-50 concrete findings. No padding.
 
-Required section: **"Looks bad but is actually fine"** — patterns you investigated and ruled out. If empty, the audit was shallow.
+Required section: **"Looks bad but is actually fine"** — patterns investigated and ruled out. If empty, the audit was shallow.
 
 ---
 
@@ -148,21 +153,19 @@ Run smoke expectations from `bftc-run` if any `src/` module changed.
 
 ## Report update
 
-Write findings to `.agents/maintenance/code-quality-backend-report.md`:
+Write findings to `.agents/maintenance/refactor-backend-report.md`:
 
 - **Date** + **Commit SHA** of the scan
-- Full findings table (all phases)
+- Full findings table (mark prior entries `RESOLVED` / `STILL OPEN` / `NEW`)
 - Selected theme + rationale
 - Rejected themes + reason
 - Verification results
-
-This file is the audit history. On next run, read it first and mark `RESOLVED` / `NEW` findings.
 
 ---
 
 ## PR
 
-Branch: `claude/bftc-code-quality-backend-<short-topic>`
+Branch: `claude/bftc-refactor-backend-<short-topic>`
 
 Commit format:
 ```

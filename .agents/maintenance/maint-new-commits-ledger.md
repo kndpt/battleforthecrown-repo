@@ -1,13 +1,13 @@
-# BFTC Daily Diff Maintenance Ledger
+# BFTC Maint — New Commits Ledger
 
 last_analyzed_main_sha: fae357642a6fdb02d2a6d023a64e67d84a96eaff
 
 ## Rules
 
-- This ledger tracks the last `origin/main` commit reviewed by `bftc-daily-diff-maintenance`.
+- This ledger tracks the last `origin/main` commit reviewed by `bftc-maint-new-commits`.
 - The cursor is commit-based, not time-based.
 - The cursor must advance only through a PR that is merged into `main`.
-- If an open `bftc-daily-diff-maintenance` PR exists, do not start another run.
+- If an open `bftc-maint-new-commits` PR exists, do not start another run.
 
 ## Runs
 

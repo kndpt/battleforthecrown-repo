@@ -1,38 +1,41 @@
 ---
-name: bftc-debt-gardener
-description: Use when reducing existing BFTC debt by fixing one bounded repo-wide item and proposing a verified draft PR.
+name: bftc-maint-debt
+description: Sweeps the existing BFTC codebase for one bounded debt item, fixes it, and proposes a verified PR. Runs twice nightly via Routine. If a PR is already open, reads it and picks a different candidate not already covered.
 ---
 
-# BFTC Debt Gardener
+# BFTC Maint — Existing Debt
 
-Reduce existing BFTC debt one small PR at a time. This skill is not tied to recent commits; use `bftc-daily-diff-maintenance` for new-code hygiene.
+Reduce existing BFTC debt one small PR at a time. This skill is not tied to recent commits; use `bftc-maint-new-commits` for new-code hygiene.
+
+## When to trigger
+
+**Routine** — twice nightly at 00:00 and 04:00 (local time), see `.agents/maintenance/trigger-strategy.md` for setup.
+**Manual** — invoke any time to reduce debt on demand.
 
 ## Contract
 
 - Select exactly one debt item from the current repo.
 - Prefer durable, verified improvements over broad refactors.
-- Produce at most one PR.
-- Stop if an open PR for this skill already exists.
-- Update `.agents/maintenance/debt-gardener-backlog.md` with the candidate outcome.
+- Produce at most one PR per run.
+- **If an open PR for this skill already exists**: read it carefully to understand what was already analyzed and fixed. Then pick a candidate **not covered** by that open PR. If every strong candidate is already in progress, stop and report.
+- Update `.agents/maintenance/maint-debt-backlog.md` with the candidate outcome.
 
 ## Preflight
 
 1. Read root `AGENTS.md`, `.agents/rules/{conventions,docs,git}.md`, and:
-   - `.agents/maintenance/debt-gardener-backlog.md`
+   - `.agents/maintenance/maint-debt-backlog.md`
 2. Ensure the worktree is clean:
-   - `rtk git status --short`
-3. Check for an existing open PR for this skill. Prefer the GitHub app when available; otherwise use `gh pr list` and search for:
-   - branch prefix `codex/bftc-debt-gardener`
-   - title/body token `bftc-debt-gardener`
-4. If any matching open PR exists, stop and report its URL.
+   - `git status --short`
+3. Check for existing open PRs for this skill (branch prefix `claude/bftc-maint-debt`, body token `bftc-maint-debt`).
+4. If matching open PRs exist: read each one to extract already-covered candidates and areas. Continue the run, selecting a candidate not already addressed.
 
 ## Candidate Discovery
 
 Use a bounded scan, not a full audit. Good inputs:
 
-- existing backlog candidates in `.agents/maintenance/debt-gardener-backlog.md`;
-- high-churn files from `rtk git log --stat --since="3 months ago"`;
-- large files from `rtk find` plus line counts;
+- existing backlog candidates in `.agents/maintenance/maint-debt-backlog.md`;
+- high-churn files from `git log --stat --since="3 months ago"`;
+- large files from `find` plus line counts;
 - repeated `TODO`, `as any`, `eslint-disable`, duplicated helpers, skipped tests;
 - stale docs around active mechanics;
 - failing or weak tests on critical paths.
@@ -51,7 +54,8 @@ Choose a candidate only if:
 - the issue is grounded in concrete files/lines;
 - the fix can be explained in one sentence;
 - the expected diff is small enough to review;
-- verification is clear before editing.
+- verification is clear before editing;
+- the candidate is **not already addressed** by an existing open PR for this skill.
 
 Reject candidates that require:
 
@@ -61,7 +65,7 @@ Reject candidates that require:
 - broad formatting churn;
 - speculative cleanup without a testable benefit.
 
-If no candidate meets the bar, update the backlog with `no-safe-candidate` in a PR only if the run needs durable traceability; otherwise stop without changes.
+If no remaining candidate meets the bar, update the backlog with `no-safe-candidate` and stop.
 
 ## Implementation Limits
 
@@ -79,33 +83,26 @@ If no candidate meets the bar, update the backlog with `no-safe-candidate` in a 
 
 ## Backlog Update
 
-Update `.agents/maintenance/debt-gardener-backlog.md`:
+Update `.agents/maintenance/maint-debt-backlog.md`:
 
 - add new candidates discovered but not selected;
 - mark the selected candidate `proposed` with PR branch/title;
 - mark rejected candidates with a short reason;
 - after fixing, include verification commands.
 
-Do not use `tasks/todo.md` as durable memory for this skill.
-
 ## Verification
 
 - Always run targeted tests for the touched area.
-- Always run `rtk yarn static-check` before finalizing a code PR.
+- Always run `yarn static-check` before finalizing a code PR.
 - If backend `src/` changed, follow `bftc-run` smoke expectations unless a documented exception applies.
 - Check documentation impact via `.agents/rules/docs.md` and update docs if code, gameplay, API, data model, workflow, or architecture changed.
 
 ## PR Output
 
-Create a branch named:
+Branch: `claude/bftc-maint-debt-<short-topic>`
 
-```text
-codex/bftc-debt-gardener-<short-topic>
+Commit in English:
 ```
-
-Use an English commit message matching the actual change, for example:
-
-```text
 refactor(shared): remove duplicated travel time helper
 test(backend): cover combat return report linkage
 docs(gameplay): align scout report wording
@@ -114,10 +111,8 @@ docs(gameplay): align scout report wording
 Open a draft PR. Include:
 
 - selected debt item and evidence;
-- why this item was chosen over alternatives;
+- why this item was chosen over alternatives (including any existing open PRs that were already covering other items);
 - files changed;
 - verification commands and results;
 - docs impact;
 - backlog update summary.
-
-If GitHub access is unavailable, leave the branch, commit, and PR body ready, then report the blocker.

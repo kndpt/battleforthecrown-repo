@@ -1,13 +1,18 @@
 ---
-name: bftc-code-quality-shared
-description: Use when auditing or refactoring shared package code quality — bad patterns, type contracts, duplication, coupling between packages/shared and workspaces.
+name: bftc-refactor-shared
+description: Deep code quality audit + structural refactor of packages/shared — contracts, pure formulas, duplication across workspaces. Two phases: annotated findings report, then one scoped PR ready for review. Runs weekly Saturday night via Routine.
 ---
 
-# BFTC Code Quality — Shared Package
+# BFTC Refactor — Shared Package
 
 Deep code quality pass on `packages/shared/`. Two phases: **Audit** (annotated findings) then **Refactor** (one scoped PR, ready for review).
 
-`packages/shared/` is read-only from the perspective of frontend and backend consumers. Its quality directly sets the quality ceiling of the entire codebase: bad contracts here propagate everywhere.
+`packages/shared/` is read-only from the perspective of consumers. Its quality directly sets the quality ceiling of the entire codebase — bad contracts here propagate everywhere.
+
+## When to trigger
+
+**Routine** — weekly, Saturday night (offset by 2h from `bftc-refactor-backend`), see `.agents/maintenance/trigger-strategy.md` for setup.
+**Manual** — when `bftc-maint-debt` surfaces duplication between backend and frontend that should be extracted.
 
 ---
 
@@ -16,15 +21,16 @@ Deep code quality pass on `packages/shared/`. Two phases: **Audit** (annotated f
 - Run both phases unless called with `--audit-only`.
 - Produce exactly one PR per run, ready for review (not draft).
 - The PR addresses one coherent refactor theme derived from the audit.
-- Update `.agents/maintenance/code-quality-shared-report.md` with the full findings.
+- Update `.agents/maintenance/refactor-shared-report.md` with the full findings.
 
 ---
 
 ## Preflight
 
 1. Read root `AGENTS.md`, `.agents/rules/{conventions,docs,git}.md`.
-2. Verify clean worktree: `git status --short`.
-3. Check for an open PR with label/branch `bftc-code-quality-shared`. If found, stop and report its URL.
+2. Read `.agents/maintenance/refactor-shared-report.md` — mark prior findings `RESOLVED` or `STILL OPEN` before starting Phase 1.
+3. Verify clean worktree: `git status --short`.
+4. Check for an open PR with branch prefix `claude/bftc-refactor-shared`. If found, stop and report its URL.
 
 ---
 
@@ -70,7 +76,6 @@ Form a 1-paragraph mental model of the shared package's role before proceeding.
 - Deprecated aliases kept "for compatibility" with nothing to be compatible with
 
 ```bash
-# Quick dead export check
 npx knip --workspace packages/shared 2>/dev/null || grep -r "export" packages/shared/src --include="*.ts" -l
 ```
 
@@ -111,7 +116,7 @@ Effort: S (< 1h) | M (half-day) | L (1-2 days)
 
 Group by theme. Aim for 10-30 concrete findings (shared is smaller than the workspaces). No padding.
 
-Required section: **"Looks bad but is actually fine"** — patterns you investigated and ruled out. If empty, the audit was shallow.
+Required section: **"Looks bad but is actually fine"** — patterns investigated and ruled out. If empty, the audit was shallow.
 
 ---
 
@@ -157,21 +162,19 @@ yarn test:pixi
 
 ## Report update
 
-Write findings to `.agents/maintenance/code-quality-shared-report.md`:
+Write findings to `.agents/maintenance/refactor-shared-report.md`:
 
 - **Date** + **Commit SHA** of the scan
-- Full findings table
+- Full findings table (mark prior entries `RESOLVED` / `STILL OPEN` / `NEW`)
 - Selected theme + rationale
 - Rejected themes + reason
 - Verification results
-
-On next run, read this file first and mark `RESOLVED` / `NEW`.
 
 ---
 
 ## PR
 
-Branch: `claude/bftc-code-quality-shared-<short-topic>`
+Branch: `claude/bftc-refactor-shared-<short-topic>`
 
 Commit format:
 ```

@@ -1,4 +1,0 @@
-interface:
-  display_name: "BFTC Daily Diff Maintenance"
-  short_description: "Review new main commits and propose one bounded maintenance PR."
-  default_prompt: "Use bftc-daily-diff-maintenance to inspect unreviewed main commits, fix one low-risk debt item, verify it, and prepare a draft PR."
