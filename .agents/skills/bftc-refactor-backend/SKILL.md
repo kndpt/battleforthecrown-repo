@@ -36,6 +36,8 @@ Unlike `bftc-maint-debt`, this skill embraces larger refactors and structural is
 
 ## Phase 1 — Audit
 
+> **L'agent lead fait l'audit lui-même.** Ne pas déléguer à un sub-agent (code-mapper, Explore, ou autre) — un modèle moins capable rate les patterns architecturaux subtils (couplage modules NestJS, race conditions Outbox, dette de type). Lire les fichiers directement avec Read/Grep/Bash.
+
 ### Orientation (do not skip)
 
 ```bash
