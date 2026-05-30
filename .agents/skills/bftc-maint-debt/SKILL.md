@@ -16,7 +16,7 @@ Reduce existing BFTC debt one small PR at a time. This skill is not tied to rece
 
 - Select exactly one debt item from the current repo.
 - Prefer durable, verified improvements over broad refactors.
-- Produce at most one PR per run.
+- Produce at most one PR per run, **ready for review** (not draft).
 - **If an open PR for this skill already exists**: read it carefully to understand what was already analyzed and fixed. Then pick a candidate **not covered** by that open PR. If every strong candidate is already in progress, stop and report.
 - Update `.agents/maintenance/maint-debt-backlog.md` with the candidate outcome.
 
@@ -108,7 +108,7 @@ test(backend): cover combat return report linkage
 docs(gameplay): align scout report wording
 ```
 
-Open a draft PR. Include:
+Open a **ready-for-review PR** (not draft). Include:
 
 - selected debt item and evidence;
 - why this item was chosen over alternatives (including any existing open PRs that were already covering other items);

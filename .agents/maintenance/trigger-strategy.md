@@ -9,8 +9,8 @@ escalation logic for overlapping work.
 
 | Skill | Type | Frequency | Output |
 |---|---|---|---|
-| `bftc-maint-new-commits` | Reactive (tracks main cursor) | Each session start + Routine | Draft PR |
-| `bftc-maint-debt` | Proactive (sweeps existing debt) | Twice nightly: 00h + 04h | Draft PR |
+| `bftc-maint-new-commits` | Reactive (tracks main cursor) | Each session start + Routine | Ready PR |
+| `bftc-maint-debt` | Proactive (sweeps existing debt) | Twice nightly: 00h + 04h | Ready PR |
 | `bftc-refactor-backend` | Deep structural | Weekly, Saturday night 01:00 | Ready PR |
 | `bftc-refactor-pixi` | Deep structural | Weekly, Saturday night 02:00 | Ready PR |
 | `bftc-refactor-shared` | Deep structural | Weekly, Saturday night 03:00 | Ready PR |

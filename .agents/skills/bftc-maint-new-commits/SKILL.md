@@ -22,6 +22,7 @@ Inspect only the unreviewed `main` commit range tracked in `.agents/maintenance/
 - Fix at most one low-to-medium risk debt item introduced or revealed by that range.
 - Advance the cursor only through a PR that changes `.agents/maintenance/maint-new-commits-ledger.md`.
 - If the range has no actionable debt, open a ledger-only PR marking the range reviewed.
+- All PRs are **ready for review** (not draft).
 
 ## Preflight
 
@@ -108,7 +109,7 @@ Commit in English:
 chore(maintenance): review new main commits
 ```
 
-Open a draft PR. Include:
+Open a **ready-for-review PR** (not draft). Include:
 
 - reviewed range and commits;
 - candidate chosen and why;
