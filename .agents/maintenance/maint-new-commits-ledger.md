@@ -1,6 +1,6 @@
 # BFTC Maint — New Commits Ledger
 
-last_analyzed_main_sha: fae357642a6fdb02d2a6d023a64e67d84a96eaff
+last_analyzed_main_sha: ad58a6ac8f65fff96cef84bac9e756dff06a35c1
 
 ## Rules
 
@@ -24,4 +24,10 @@ last_analyzed_main_sha: fae357642a6fdb02d2a6d023a64e67d84a96eaff
   - verification: git range confirmed (`107bf0a..fae3576`); `barbarians` + `combat-conquest-hook` smokes green (8/8) exercising the `#4` parse on native clones.
   - branch/title: `claude/bftc-daily-diff-maintenance-4tYyp` / `chore(maintenance): review new main commits`.
   - outcome: reviewed-no-action.
+  - status: proposed.
+- 2026-05-30: range `fae357642a6fdb02d2a6d023a64e67d84a96eaff..ad58a6ac8f65fff96cef84bac9e756dff06a35c1` (9 commits: `b51f41a` JwtPayload fix, `21d6104` new-commits ledger, `ae23945` backend eslint-disable cleanup, `c0d9c5d` CI prisma script, `5c9b77d` math/path dedup, `f6e401f` level/clamp/strategy dedup, `c38fd69` CI update, `ce5f7c2` maintenance skills consolidation, `ad58a6a` army cleanup PR #15).
+  - candidate: PR #15 fixed `summaryLabel` countdown (replaced `formatArmyTrainingDuration(remainingMs/1000)` with `formatRemaining(remainingMs)`) but left `formatArmyTrainingDuration` as the formatter for per-unit `trainingTime` in `armyViewModel.ts`. The function lives in the design-system barrel — wrong abstraction level for a pure utility — with no other callers. Fix: replace with `formatRemaining(Math.floor(trainingSeconds) * 1000)` (preserves floor-rounding semantics), then delete `formatArmyTrainingDuration` from `ArmyViewDesign.utils.ts` and its re-export from `index.ts`.
+  - files: `battleforthecrown-pixi/src/features/army/armyViewModel.ts`, `battleforthecrown-pixi/src/features/design-system/components/ArmyViewDesign.utils.ts`, `battleforthecrown-pixi/src/features/design-system/components/index.ts`, `.agents/maintenance/maint-new-commits-ledger.md`.
+  - verification: `yarn workspace battleforthecrown-pixi test armyViewModel` 4/4 PASS; `yarn workspace battleforthecrown-pixi test` 229/229 PASS; `yarn static-check` PASS (tsc + eslint).
+  - branch/title: `claude/bftc-maint-new-commits-ad58a6a` / `chore(maintenance): review new main commits`.
   - status: proposed.

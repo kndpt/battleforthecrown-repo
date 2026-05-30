@@ -21,7 +21,6 @@ import type {
   ArmyTroopSection,
   ArmyVillageRow,
 } from '@/features/design-system/components';
-import { formatArmyTrainingDuration } from '@/features/design-system/components';
 import { formatRemaining } from '@/features/village/constructionProgress';
 import type { DisplayResources } from '@/lib/interpolation';
 import { unitMetaFor } from './unitConfig';
@@ -154,7 +153,7 @@ export function buildArmyViewModel({
       requirementLabel: `Caserne niv. ${requiredLevel} requis`,
       short: meta.name,
       supportingElsewhere: outgoingByType.get(unitType) ?? 0,
-      trainingTime: formatArmyTrainingDuration(trainingSeconds),
+      trainingTime: formatRemaining(Math.floor(trainingSeconds) * 1000),
       unlocked,
     } satisfies ArmyTroop;
   });
