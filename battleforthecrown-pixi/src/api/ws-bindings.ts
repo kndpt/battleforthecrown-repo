@@ -105,10 +105,10 @@ export function applyBuildingCompleted(
   payload: BuildingCompletedPayload,
   ctx: BindingsContext,
 ): void {
-  ctx.queryClient.invalidateQueries({ queryKey: ['buildings', payload.villageId] });
-  ctx.queryClient.invalidateQueries({ queryKey: ['queue', payload.villageId] });
-  ctx.queryClient.invalidateQueries({ queryKey: ['population', payload.villageId] });
-  ctx.queryClient.invalidateQueries({ queryKey: ['resources', payload.villageId] });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.buildings(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.queue(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.villageStrategy(payload.villageId) });
   invalidatePowerQueries(ctx, payload.villageId);
   invalidateRetentionSummary(ctx);
@@ -196,9 +196,9 @@ export function applyBattleResolved(payload: BattleResolvedPayload, ctx: Binding
     useExpeditionsStore.getState().remove(payload.expeditionId);
   }, RESOLVED_TO_RETURNING_DELAY_MS);
 
-  ctx.queryClient.invalidateQueries({ queryKey: ['resources', payload.villageId] });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.villageId) });
   // Population freed for dead attacker units — see backend combat.worker:sumPopulationCost.
-  ctx.queryClient.invalidateQueries({ queryKey: ['population', payload.villageId] });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
   invalidatePowerQueries(ctx, payload.villageId);
   invalidateCombatReports(ctx);
   invalidateOpenExpeditions(ctx);
@@ -217,8 +217,8 @@ export function applyBattleReturned(payload: BattleReturnedPayload, ctx: Binding
   scheduleTimeout(() => {
     useExpeditionsStore.getState().remove(payload.expeditionId);
   }, RETURNED_TO_CLEANUP_DELAY_MS);
-  ctx.queryClient.invalidateQueries({ queryKey: ['resources', payload.villageId] });
-  ctx.queryClient.invalidateQueries({ queryKey: ['army', payload.villageId] });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.villageId) });
   invalidatePowerQueries(ctx, payload.villageId);
   invalidateOpenExpeditions(ctx);
 }
@@ -272,7 +272,7 @@ export function applyScoutReturned(
   scheduleTimeout(() => {
     useExpeditionsStore.getState().remove(payload.expeditionId);
   }, RETURNED_TO_CLEANUP_DELAY_MS);
-  ctx.queryClient.invalidateQueries({ queryKey: ['army', payload.villageId] });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.villageId) });
   invalidateOpenExpeditions(ctx);
 }
 
@@ -311,8 +311,8 @@ export function applyExpeditionReturned(
   scheduleTimeout(() => {
     useExpeditionsStore.getState().remove(payload.expeditionId);
   }, RETURNED_TO_CLEANUP_DELAY_MS);
-  ctx.queryClient.invalidateQueries({ queryKey: ['army', payload.villageId] });
-  ctx.queryClient.invalidateQueries({ queryKey: ['resources', payload.villageId] });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.villageId) });
   invalidateOpenExpeditions(ctx);
 }
 
@@ -413,8 +413,8 @@ export function applyVillageAttacked(
   ctx: BindingsContext,
 ): void {
   // Defender lost units → population was released server-side. Refresh the HUD.
-  ctx.queryClient.invalidateQueries({ queryKey: ['population', payload.defenderVillageId] });
-  ctx.queryClient.invalidateQueries({ queryKey: ['army', payload.defenderVillageId] });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.defenderVillageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.defenderVillageId) });
   invalidatePowerQueries(ctx, payload.defenderVillageId);
   for (const originVillageId of payload.reinforcementOriginVillageIds ?? []) {
     invalidatePowerQueries(ctx, originVillageId);
