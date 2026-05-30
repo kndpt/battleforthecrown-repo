@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { clamp } from '@/lib/math';
 import type { MapEntity } from '@/api/world-types';
 import type { ExpeditionSnapshot } from '@/stores/expeditions';
 import type { VisionDisk } from '@battleforthecrown/shared/world';
@@ -18,7 +19,6 @@ interface WorldMiniMapProps {
 }
 
 const SIZE = 180;
-const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 const KIND_COLOR: Record<string, string> = {
   PLAYER_VILLAGE: 'rgba(200, 150, 100, 0.9)',

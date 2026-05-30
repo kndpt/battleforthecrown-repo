@@ -23,6 +23,10 @@ export interface BuildingLevelDefinition {
   timeSeconds: number;
 }
 
+/**
+ * @deprecated Use {@link BuildingLevelDefinition} directly. Kept as a zero-cost
+ * alias to preserve the public `@battleforthecrown/shared/village` type surface.
+ */
 export type BuildingLevelCost = BuildingLevelDefinition;
 
 export interface BuildingDefinition {
@@ -511,7 +515,7 @@ export const getBuildingLevelValues = (
 export const getBuildingLevelCost = (
   buildingType: string,
   level: number
-): BuildingLevelCost | null => {
+): BuildingLevelDefinition | null => {
   return getBuildingLevelValues(buildingType, level);
 };
 

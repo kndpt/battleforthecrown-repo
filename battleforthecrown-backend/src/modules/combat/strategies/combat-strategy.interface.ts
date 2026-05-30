@@ -1,8 +1,7 @@
 import type { CombatContext } from '../interfaces/combat-context.interface';
-
-export type { CombatResolution } from '@battleforthecrown/shared/combat';
-
 import type { CombatResolution } from '@battleforthecrown/shared/combat';
+
+export type { CombatResolution };
 
 export interface CombatStrategy {
   /**

@@ -1,9 +1,8 @@
+import { MS_PER_DAY } from '../time';
 import {
   DEFAULT_WORLD_LIFECYCLE_CONFIG,
   type WorldLifecycleConfig,
 } from './schemas';
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export const InscriptionPhase = {
   MAIN: 'main',
