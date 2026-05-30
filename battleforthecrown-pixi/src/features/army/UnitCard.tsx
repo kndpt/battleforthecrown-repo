@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Clock, Lock, Swords, XCircle } from "lucide-react";
+import { clamp } from "@/lib/math";
 import {
   Badge,
   Button,
@@ -175,8 +176,7 @@ export function UnitCard({
     );
   };
 
-  const clampQty = (n: number) =>
-    Math.max(1, Math.min(maxTrainable, Math.floor(n)));
+  const clampQty = (n: number) => clamp(Math.floor(n), 1, maxTrainable);
 
   const openModal = () => onClick(unit);
 

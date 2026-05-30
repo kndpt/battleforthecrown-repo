@@ -7,6 +7,7 @@ import {
   type WorldVillageDto,
 } from "@battleforthecrown/shared/world";
 import { VILLAGE_LABEL_DISPLAY, type VillageLabel } from "@battleforthecrown/shared/village";
+import { clampBuildingLevel } from "@battleforthecrown/shared/utils";
 
 export type {
   WorldEntityKind,
@@ -142,5 +143,5 @@ function normalizeVillageLabel(value: unknown): VillageLabel | null {
 
 function normalizeCastleLevel(value: unknown): number | null {
   if (!Number.isFinite(value)) return null;
-  return Math.max(1, Math.min(10, Math.floor(value as number)));
+  return clampBuildingLevel(value as number);
 }

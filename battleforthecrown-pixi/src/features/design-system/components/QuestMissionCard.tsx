@@ -1,6 +1,7 @@
 import { BftcButton, type BftcButtonVariant } from './BftcButton';
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
+import { clamp } from '@/lib/math';
 
 export interface QuestReward {
   icon: string;
@@ -116,7 +117,7 @@ export function QuestMissionCard({
   title,
 }: QuestMissionCardProps) {
   const locked = state === 'locked';
-  const boundedProgress = Math.max(0, Math.min(100, progressPercent ?? 0));
+  const boundedProgress = clamp(progressPercent ?? 0, 0, 100);
 
   return (
     <article

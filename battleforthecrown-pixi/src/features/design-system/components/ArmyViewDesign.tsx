@@ -8,6 +8,7 @@ import type {
 } from 'react';
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
+import { clamp } from '@/lib/math';
 
 export type ArmyFilterTone = 'wood' | 'green' | 'blue' | 'gold';
 export type ArmyNavTone = 'wood' | 'gold';
@@ -309,7 +310,7 @@ function formatNumber(value: number): string {
 
 function clampQuantity(value: number, max: number): number {
   if (max <= 0) return 0;
-  return Math.max(1, Math.min(max, Math.round(value)));
+  return clamp(Math.round(value), 1, max);
 }
 
 function ArmyTopBar({

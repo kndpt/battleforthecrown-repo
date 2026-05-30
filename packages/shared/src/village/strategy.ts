@@ -127,7 +127,7 @@ const mergeProductionBonus = (
   };
 };
 
-const mergeBonus = (bonus: StrategyBonus): StrategyBonus => ({
+const mergeBonus = (bonus: StrategyBonus): Required<StrategyBonus> => ({
   attackBonus: bonus.attackBonus ?? BASE_VILLAGE_STRATEGY_BONUS.attackBonus,
   defenseBonus: bonus.defenseBonus ?? BASE_VILLAGE_STRATEGY_BONUS.defenseBonus,
   lootBonus: bonus.lootBonus ?? BASE_VILLAGE_STRATEGY_BONUS.lootBonus,
@@ -182,7 +182,7 @@ export const getStrategyDefinition = (
 
 export const getStrategyBonuses = (
   strategy: VillageStrategyType,
-): StrategyBonus => {
+): Required<StrategyBonus> => {
   const definition = getStrategyDefinition(strategy);
   return mergeBonus(definition.bonuses ?? {});
 };
@@ -190,16 +190,6 @@ export const getStrategyBonuses = (
 export function getStrategyBonusValue<K extends keyof StrategyBonus>(
   strategy: VillageStrategyType,
   bonus: K,
-): NonNullable<StrategyBonus[K]> {
-  const bonuses = getStrategyBonuses(strategy);
-  if (bonus === "productionBonus") {
-    return (bonuses.productionBonus ??
-      BASE_VILLAGE_STRATEGY_BONUS.productionBonus) as unknown as NonNullable<
-      StrategyBonus[K]
-    >;
-  }
-  const value = bonuses[bonus];
-  return (typeof value === "number" ? value : 1) as unknown as NonNullable<
-    StrategyBonus[K]
-  >;
+): Required<StrategyBonus>[K] {
+  return getStrategyBonuses(strategy)[bonus];
 }

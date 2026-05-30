@@ -1,5 +1,6 @@
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
+import { clamp } from '@/lib/math';
 
 export type BuildQueueCardTone = 'build' | 'training' | 'idle';
 
@@ -33,7 +34,7 @@ export function BuildQueueCard({
   tone = 'build',
 }: BuildQueueCardProps) {
   const idle = tone === 'idle';
-  const boundedProgress = Math.max(0, Math.min(100, progress));
+  const boundedProgress = clamp(progress, 0, 100);
 
   return (
     <div

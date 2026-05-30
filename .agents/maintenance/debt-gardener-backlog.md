@@ -66,18 +66,40 @@ This backlog tracks bounded existing-debt candidates for `bftc-debt-gardener`.
     No functional effect: coordinate space is bounded and no entities exist beyond the edge, so the
     `lte` upper bound returns identical rows. Adding it is a no-op that duplicates a magic literal; skipped.
 
-- status: candidate
-  area: shared level normalization duplication (`village/buildings.ts:449` getBarracksTrainingSpeedMultiplier, `world/village-visuals.ts:18` villageVisualTierFromCastleLevel)
+- status: proposed
+  area: >
+    packages/shared/src/utils/level.ts (new),
+    packages/shared/src/village/buildings.ts,
+    packages/shared/src/world/village-visuals.ts,
+    battleforthecrown-pixi/src/api/world-types.ts,
+    battleforthecrown-pixi/src/features/world/villageVisuals.test.ts,
+    packages/shared/src/village/strategy.ts,
+    battleforthecrown-pixi/src/features/army/UnitCard.tsx,
+    battleforthecrown-pixi/src/features/design-system/components/{ProgressBar,QuestMissionCard,ArmyMovementRow,BuildQueueCard,KingdomActivitiesPanel,BuildingModal,ArmyViewDesign}.tsx
+  branch: claude/bftc-debt-gardener-iteration-l9mTt
+  title: "refactor: dedupe level/clamp helpers and drop strategy double-casts (multi-item)"
   note: >
-    Both repeat `Number.isFinite(level) ? Math.floor(level) : 1` + `Math.max(1, Math.min(10, n))`.
-    Genuine but a 2-line idiom; extracting would couple world→village for marginal gain. Revisit if a
-    third call site appears or a shared MAX_BUILDING_LEVEL constant lands.
+    Multi-item run (user asked to fix a maximum of distinct debt in one PR). Three themes:
+    (1) shared/strategy: getStrategyBonuses now returns Required<StrategyBonus> (mergeBonus already
+        fully populates every field), so getStrategyBonusValue collapses to a single return with no
+        `as unknown as` double-cast and no dead productionBonus/scalar fallback branches.
+    (2) shared level normalization: third call site appeared (pixi world-types.normalizeCastleLevel),
+        so the deferred extraction is now justified. New neutral helper clampBuildingLevel in
+        shared/utils/level.ts (+ MIN/MAX_BUILDING_LEVEL); buildings.ts, village-visuals.ts and pixi
+        world-types reuse it (utils home avoids world→village coupling). Added a fractional-floor
+        regression case to villageVisuals.test.ts.
+    (3) pixi clamp centralization: 8 inline `Math.max/Math.min` clamp idioms now route through the
+        existing-but-underused lib/math `clamp` (6 progress 0–100 sites + UnitCard.clampQty +
+        ArmyViewDesign.clampQuantity). NumericKeypad clamp left untouched (1-arg domain, optional max).
+  verification: yarn static-check ✓ · backend 232 tests ✓ · pixi 229 tests ✓ (incl. new floor case)
 
 - status: candidate
-  area: `packages/shared/src/village/strategy.ts:190-205` getStrategyBonusValue
+  area: pixi magic constants — `SECONDS_PER_HOUR` (3600) inlined in ~7 files; duplicate `formatDuration` in UnitCard.tsx + UnitDetailModal.tsx
   note: >
-    `as unknown as NonNullable<StrategyBonus[K]>` casts compensate for TS not narrowing the generic key.
-    Real type smell but fixing safely needs careful discriminated handling; defer to a dedicated run.
+    3600 repeats across army/village duration formatters; could import a shared MS_PER_HOUR or define
+    SECONDS_PER_HOUR in pixi lib. formatDuration is duplicated but the two copies differ in spacing
+    ("1h 30m" vs "1 h 30 m") — consolidating changes rendered UI text, so needs product intent, not a
+    blind dedupe. Defer.
 
 - status: candidate
   area: `battleforthecrown-pixi/src/api/queries.ts`
@@ -123,3 +145,9 @@ This backlog tracks bounded existing-debt candidates for `bftc-debt-gardener`.
   deduped math/path helpers (lib/math.ts + lib/pathGeometry.ts), MS_PER_DAY import, dead BuildingLevelCost
   alias, duplicate CombatResolution import. Rejected loot.codec cast (type-required) and getVillagesInRadius
   clamp (no-op). static-check ✓ · backend 232 ✓ · pixi 228 ✓.
+- 2026-05-30: multi-item run (user-requested max debt in one PR) on `claude/bftc-debt-gardener-iteration-l9mTt` —
+  (1) strategy.ts: Required<StrategyBonus> return kills the `as unknown as` double-casts + dead branches;
+  (2) new shared/utils/level.ts clampBuildingLevel reused by buildings.ts, village-visuals.ts, pixi
+  world-types (third call site unlocked the deferred extraction) + fractional-floor test;
+  (3) routed 8 inline clamp idioms through existing lib/math `clamp`. NumericKeypad clamp left (1-arg
+  domain). static-check ✓ · backend 232 ✓ · pixi 229 ✓.
