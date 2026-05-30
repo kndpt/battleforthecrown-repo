@@ -1,14 +1,5 @@
 import type { ArmyRecruitStock, ArmyTroop } from './ArmyViewDesign';
 
-export function parseArmyTrainingTimeSeconds(value: string): number {
-  const hours = value.match(/(\d+)h/);
-  const minutes = value.match(/(\d+)m/);
-  const seconds = value.match(/(\d+)s/);
-  return (hours ? Number(hours[1]) * 3600 : 0)
-    + (minutes ? Number(minutes[1]) * 60 : 0)
-    + (seconds ? Number(seconds[1]) : 0);
-}
-
 export function computeArmyRecruitMax(troop: ArmyTroop, stock: ArmyRecruitStock): number {
   const wood = troop.cost.wood ? Math.floor(stock.wood / troop.cost.wood) : Infinity;
   const stone = troop.cost.stone ? Math.floor(stock.stone / troop.cost.stone) : Infinity;

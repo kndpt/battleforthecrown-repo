@@ -267,5 +267,7 @@ describe('buildArmyViewModel', () => {
       { active: true, id: 'training-1', progress: 0.25, quantity: 2, troopId: 'MILITIA' },
     ]);
     expect(model.recruitSheet.summaryLabel).toContain('2 en formation');
+    // nowMs=T+30s, nextUnitEta=T+60s → currentRemaining=30s, totalRemaining=90s → '1m 30s'
+    expect(model.recruitSheet.summaryLabel).toContain('1m 30s restant');
   });
 });
