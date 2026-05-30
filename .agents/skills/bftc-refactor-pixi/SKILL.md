@@ -36,6 +36,8 @@ Unlike `bftc-maint-debt`, this skill tackles structural issues: server-authorita
 
 ## Phase 1 — Audit
 
+> **L'agent lead fait l'audit lui-même.** Ne pas déléguer à un sub-agent (code-mapper, Explore, ou autre) — un modèle moins capable rate les patterns architecturaux subtils (server-authoritative violations, race conditions WS, anti-patterns Zustand). Lire les fichiers directement avec Read/Grep/Bash.
+
 ### Orientation (do not skip)
 
 ```bash

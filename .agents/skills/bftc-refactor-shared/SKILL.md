@@ -36,6 +36,8 @@ Deep code quality pass on `packages/shared/`. Two phases: **Audit** (annotated f
 
 ## Phase 1 — Audit
 
+> **L'agent lead fait l'audit lui-même.** Ne pas déléguer à un sub-agent (code-mapper, Explore, ou autre) — un modèle moins capable rate les patterns subtils (duplication cross-workspace, contrats de type fragiles, couplage shared → workspace). Lire les fichiers directement avec Read/Grep/Bash.
+
 ### Orientation (do not skip)
 
 ```bash
