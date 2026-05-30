@@ -30,8 +30,12 @@ import {
 } from './types';
 import type { WorldEntitiesResponse } from './world-types';
 import { useAuthStore } from '@/stores/auth';
+import { useCrownsStore } from '@/stores/crowns';
 import { useExpeditionsStore } from '@/stores/expeditions';
 import { useGameStore } from '@/stores/game';
+import { useResourcesStore } from '@/stores/resources';
+import { useUiStore } from '@/stores/ui';
+import { useWorldMapStore } from '@/stores/worldMap';
 import { buildRecalledExpeditionPatch } from '@/lib/expeditionRecall';
 import type {
   Expedition,
@@ -250,8 +254,7 @@ export function useResourcesQuery(villageId: string | null) {
       return apiClient.get<ResourcesPayload>(`/resources/${villageId}`);
     },
     enabled: Boolean(villageId),
-    staleTime: 0,
-    refetchOnMount: 'always',
+    staleTime: 5_000,
   });
 }
 
@@ -1111,9 +1114,25 @@ export function useLogout() {
   const queryClient = useQueryClient();
   const clearSession = useAuthStore((state) => state.clearSession);
   const clearGame = useGameStore((state) => state.clear);
+  const clearResources = useResourcesStore((state) => state.clear);
+  const clearCrowns = useCrownsStore((state) => state.clear);
+  const clearExpeditions = useExpeditionsStore((state) => state.clear);
+  const clearWorldMap = useWorldMapStore((state) => state.clear);
+  const clearToasts = useUiStore((state) => state.clearToasts);
+  const clearVictoryModals = useUiStore((state) => state.clearVictoryModals);
+  const openModal = useUiStore((state) => state.openModal);
+  const openPanel = useUiStore((state) => state.openPanel);
   return () => {
     clearSession();
     clearGame();
+    clearResources();
+    clearCrowns();
+    clearExpeditions();
+    clearWorldMap();
+    clearToasts();
+    clearVictoryModals();
+    openModal(null);
+    openPanel(null);
     gameSocket.disconnect();
     queryClient.clear();
   };
