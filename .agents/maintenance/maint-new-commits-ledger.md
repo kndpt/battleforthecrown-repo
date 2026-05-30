@@ -1,6 +1,6 @@
 # BFTC Maint — New Commits Ledger
 
-last_analyzed_main_sha: fae357642a6fdb02d2a6d023a64e67d84a96eaff
+last_analyzed_main_sha: 8e0fa8ab2b5b226e22a0da8dc0607e32e3b0bc10
 
 ## Rules
 
@@ -24,4 +24,10 @@ last_analyzed_main_sha: fae357642a6fdb02d2a6d023a64e67d84a96eaff
   - verification: git range confirmed (`107bf0a..fae3576`); `barbarians` + `combat-conquest-hook` smokes green (8/8) exercising the `#4` parse on native clones.
   - branch/title: `claude/bftc-daily-diff-maintenance-4tYyp` / `chore(maintenance): review new main commits`.
   - outcome: reviewed-no-action.
+  - status: proposed.
+- 2026-05-30: range `fae357642a6fdb02d2a6d023a64e67d84a96eaff..8e0fa8ab2b5b226e22a0da8dc0607e32e3b0bc10` (10 commits: `b51f41a` JwtPayload fix #6, `21d6104` maintenance #7, `ae23945` eslint/any backend #9, `c0d9c5d` CI Prisma script #8, `5c9b77d` dedupe math/path helpers #10, `f6e401f` dedupe level/clamp + strategy casts #11, `c38fd69` update ci.yml, `ce5f7c2` consolidate maintenance skills #12, `ad58a6a` drop dead army formatter #15, `8e0fa8a` require lead audit in refactor skills #14).
+  - candidate: stale `as number` casts in `packages/shared/src/logic/building-cost.ts` (2 casts) and `packages/shared/src/logic/travel-time.ts` (1 cast) revealed by commit `f6e401f` — that PR made `getStrategyBonusValue` return `Required<StrategyBonus>[K]` (a concrete `number` for numeric keys) so the `as number` assertions are now provably redundant and clutter the diff against the new typed API.
+  - files: `packages/shared/src/logic/building-cost.ts`, `packages/shared/src/logic/travel-time.ts`, `.agents/maintenance/maint-new-commits-ledger.md`.
+  - verification: `yarn static-check` green, `yarn test:backend` green.
+  - branch/title: `claude/bftc-maint-new-commits-8e0fa8a` / `chore(maintenance): review new main commits`.
   - status: proposed.

@@ -15,7 +15,7 @@ export function calculateTravelTime(
   strategy?: VillageStrategyType
 ): number {
   const strategyMultiplier = strategy
-    ? (getStrategyBonusValue(strategy, 'armySpeedBonus') as number)
+    ? getStrategyBonusValue(strategy, 'armySpeedBonus')
     : 1.0;
 
   const finalSpeedMultiplier = speedMultiplier * strategyMultiplier;

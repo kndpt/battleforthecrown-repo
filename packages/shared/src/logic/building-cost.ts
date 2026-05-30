@@ -36,11 +36,11 @@ export function calculateBuildingCost(
     const buildingCostReduction = getStrategyBonusValue(
       strategy,
       'buildingCostReduction'
-    ) as number;
+    );
     const constructionSpeedBonus = getStrategyBonusValue(
       strategy,
       'constructionSpeedBonus'
-    ) as number;
+    );
 
     if (buildingCostReduction !== 1.0) {
       cost = {
