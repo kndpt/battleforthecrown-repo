@@ -1,4 +1,5 @@
 # BFTC Maintenance Skills — Trigger Strategy
+<!-- updated: 2026-05-30 -->
 
 This document defines when each maintenance skill runs, how to configure the Routines, and the
 escalation logic for overlapping work.
