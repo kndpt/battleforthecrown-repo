@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CombatController } from './combat.controller';
 import { CombatService } from './combat.service';
+import { CombatReportService } from './combat-report.service';
 import { CombatWorker } from './combat.worker';
 import { ConquestFinalizeWorker } from './conquest-finalize.worker';
 import { ReturnWorker } from './return.worker';
@@ -28,6 +29,7 @@ import { EventModule } from '../event/event.module';
   controllers: [CombatController],
   providers: [
     CombatService,
+    CombatReportService,
     CombatWorker,
     ConquestFinalizeWorker,
     ReturnWorker,
