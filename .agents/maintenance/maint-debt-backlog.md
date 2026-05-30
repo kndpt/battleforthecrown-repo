@@ -93,8 +93,23 @@ This backlog tracks bounded existing-debt candidates for `bftc-maint-debt`.
         ArmyViewDesign.clampQuantity). NumericKeypad clamp left untouched (1-arg domain, optional max).
   verification: yarn static-check ✓ · backend 232 tests ✓ · pixi 229 tests ✓ (incl. new floor case)
 
+- status: fixed
+  area: >
+    battleforthecrown-pixi/src/features/design-system/components/ArmyViewDesign.utils.ts,
+    battleforthecrown-pixi/src/features/design-system/components/index.ts,
+    battleforthecrown-pixi/src/features/army/armyViewModel.ts,
+    battleforthecrown-pixi/src/features/army/armyViewModel.test.ts
+  branch: claude/bftc-maint-debt-army-cleanup
+  title: "refactor(pixi/army): drop dead parseArmyTrainingTimeSeconds and fix countdown formatter"
+  note: >
+    parseArmyTrainingTimeSeconds had 0 callers and 0 tests — deleted + re-export removed.
+    summaryLabel countdown called formatArmyTrainingDuration(remainingMs/1000): replaced with
+    formatRemaining(remainingMs) — drops the /1000 conversion and uses Math.ceil (correct for
+    a countdown: never shows 0 while time remains). Added summaryLabel time assertion (was uncovered).
+  verification: yarn static-check ✓ · backend 232 tests ✓ · pixi 229 tests ✓
+
 - status: candidate
-  area: pixi magic constants — `SECONDS_PER_HOUR` (3600) inlined in ~7 files; duplicate `formatDuration` in UnitCard.tsx + UnitDetailModal.tsx
+  area: pixi magic constants — `SECONDS_PER_HOUR` (3600) inlined in ~6 files; duplicate `formatDuration` in UnitCard.tsx + UnitDetailModal.tsx
   note: >
     3600 repeats across army/village duration formatters; could import a shared MS_PER_HOUR or define
     SECONDS_PER_HOUR in pixi lib. formatDuration is duplicated but the two copies differ in spacing
@@ -151,3 +166,6 @@ This backlog tracks bounded existing-debt candidates for `bftc-maint-debt`.
   world-types (third call site unlocked the deferred extraction) + fractional-floor test;
   (3) routed 8 inline clamp idioms through existing lib/math `clamp`. NumericKeypad clamp left (1-arg
   domain). static-check ✓ · backend 232 ✓ · pixi 229 ✓.
+- 2026-05-30: selected `parseArmyTrainingTimeSeconds` dead export + summaryLabel countdown formatter on
+  `claude/bftc-maint-debt-army-cleanup` — deleted dead function, replaced formatArmyTrainingDuration(ms/1000)
+  with formatRemaining(ms), added summaryLabel time assertion. static-check ✓ · backend 232 ✓ · pixi 229 ✓.
