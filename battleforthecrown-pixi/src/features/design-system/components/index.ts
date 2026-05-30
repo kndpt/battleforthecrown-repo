@@ -57,7 +57,6 @@ export {
 export {
   computeArmyRecruitMax,
   formatArmyTrainingDuration,
-  parseArmyTrainingTimeSeconds,
 } from './ArmyViewDesign.utils';
 export type {
   ArmyBottomNavItem,

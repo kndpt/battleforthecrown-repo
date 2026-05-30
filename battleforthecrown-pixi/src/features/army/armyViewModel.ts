@@ -22,6 +22,7 @@ import type {
   ArmyVillageRow,
 } from '@/features/design-system/components';
 import { formatArmyTrainingDuration } from '@/features/design-system/components';
+import { formatRemaining } from '@/features/village/constructionProgress';
 import type { DisplayResources } from '@/lib/interpolation';
 import { unitMetaFor } from './unitConfig';
 import { computeUnitTrainingProgress } from './trainingProgress';
@@ -366,7 +367,7 @@ function buildArmyQueue(
 
   return {
     queue,
-    summaryLabel: `${totalQuantity} en formation · ${formatArmyTrainingDuration(remainingMs / 1000)} restant`,
+    summaryLabel: `${totalQuantity} en formation · ${formatRemaining(remainingMs)} restant`,
   };
 }
 
