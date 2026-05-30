@@ -1,5 +1,6 @@
 import type { HTMLAttributes } from 'react';
 import { cn } from '@/lib/cn';
+import { clamp } from '@/lib/math';
 
 export type ProgressBarTone = 'green' | 'gold' | 'red';
 
@@ -18,7 +19,7 @@ const toneClass: Record<ProgressBarTone, string> = {
 };
 
 export function ProgressBar({ animated = true, className, label, suffix, tone = 'green', value, ...props }: ProgressBarProps) {
-  const boundedValue = Math.max(0, Math.min(100, value));
+  const boundedValue = clamp(value, 0, 100);
 
   return (
     <div className={cn('flex w-full flex-col gap-1.5', className)} {...props}>

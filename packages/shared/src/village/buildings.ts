@@ -1,3 +1,5 @@
+import { clampBuildingLevel } from "../utils/level";
+
 export const BUILDING_TYPES = {
   CASTLE: "CASTLE",
   WOOD: "WOOD",
@@ -453,9 +455,7 @@ export const BARRACKS_TRAINING_SPEED_MULTIPLIER: Record<number, number> = {
 };
 
 export const getBarracksTrainingSpeedMultiplier = (level: number): number => {
-  const normalizedLevel = Number.isFinite(level) ? Math.floor(level) : 1;
-  const clampedLevel = Math.max(1, Math.min(10, normalizedLevel));
-  return BARRACKS_TRAINING_SPEED_MULTIPLIER[clampedLevel] ?? 1;
+  return BARRACKS_TRAINING_SPEED_MULTIPLIER[clampBuildingLevel(level)] ?? 1;
 };
 
 export interface WatchtowerVisionLevel {

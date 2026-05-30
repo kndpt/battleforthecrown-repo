@@ -18,6 +18,11 @@ describe('villageVisualTierFromCastleLevel', () => {
     expect(villageVisualTierFromCastleLevel(Number.POSITIVE_INFINITY)).toBe(1);
   });
 
+  it('floors fractional levels instead of rounding them', () => {
+    // 7.9 floors to 7 (tier 4); rounding would yield 8 (tier 5).
+    expect(villageVisualTierFromCastleLevel(7.9)).toBe(4);
+  });
+
   it('resolves the Pixi village sprite alias from castle level', () => {
     const entity: MapEntity = {
       id: 'v1',

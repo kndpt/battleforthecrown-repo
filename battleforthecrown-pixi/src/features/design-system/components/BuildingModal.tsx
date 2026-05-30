@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { BASE_MODAL_DEFAULT_MAX_HEIGHT, BASE_MODAL_DEFAULT_WIDTH, BaseModal } from './BaseModal';
 import { Timer } from './Timer';
 import { publicAsset } from '@/lib/publicAsset';
+import { clamp } from '@/lib/math';
 
 export type BuildingModalActionTone = 'danger' | 'neutral' | 'success' | 'warning';
 export type BuildingModalNoticeTone = 'danger' | 'info' | 'warning';
@@ -227,7 +228,7 @@ export function BuildingModalConstructionPanel({
   construction: BuildingModalConstruction;
   onAction?: (action: BuildingModalAction) => void;
 }) {
-  const progressPercent = Math.max(0, Math.min(100, construction.progressPercent));
+  const progressPercent = clamp(construction.progressPercent, 0, 100);
 
   return (
     <div className="rounded-xl border border-[rgba(241,196,15,.42)] bg-[linear-gradient(to_bottom,rgba(60,38,25,.78),rgba(38,24,16,.88))] px-2.5 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,.1),0_2px_0_rgba(0,0,0,.18)]">

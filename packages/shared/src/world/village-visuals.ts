@@ -1,3 +1,5 @@
+import { clampBuildingLevel } from "../utils/level";
+
 export type VillageVisualTier = 1 | 2 | 3 | 4 | 5 | 6;
 
 const CASTLE_LEVEL_TO_VILLAGE_TIER: Record<number, VillageVisualTier> = {
@@ -16,7 +18,5 @@ const CASTLE_LEVEL_TO_VILLAGE_TIER: Record<number, VillageVisualTier> = {
 export function villageVisualTierFromCastleLevel(
   level: number,
 ): VillageVisualTier {
-  const normalizedLevel = Number.isFinite(level) ? Math.floor(level) : 1;
-  const clampedLevel = Math.max(1, Math.min(10, normalizedLevel));
-  return CASTLE_LEVEL_TO_VILLAGE_TIER[clampedLevel];
+  return CASTLE_LEVEL_TO_VILLAGE_TIER[clampBuildingLevel(level)];
 }

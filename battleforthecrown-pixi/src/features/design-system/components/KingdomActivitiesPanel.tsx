@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
 import { cn } from '@/lib/cn';
+import { clamp } from '@/lib/math';
 import { ArmyMovementRow, type ArmyMovementRowProps, type ArmyMovementTone } from './ArmyMovementRow';
 import { GameBottomSheetPanel } from './GameBottomSheetPanel';
 
@@ -295,7 +296,7 @@ export function CaptureWindowCard({
   ...props
 }: CaptureWindowCardProps) {
   const style = captureStateStyle[state];
-  const clampedProgress = Math.max(0, Math.min(100, progress));
+  const clampedProgress = clamp(progress, 0, 100);
 
   return (
     <article

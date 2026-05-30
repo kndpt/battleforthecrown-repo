@@ -1,5 +1,6 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 import { cn } from '@/lib/cn';
+import { clamp } from '@/lib/math';
 import { publicAsset } from '@/lib/publicAsset';
 
 export type ArmyMovementSurface = 'dark' | 'parchment';
@@ -79,7 +80,7 @@ export function ArmyMovementRow({
   tone,
   ...props
 }: ArmyMovementRowProps) {
-  const clampedProgress = Math.max(0, Math.min(100, progress));
+  const clampedProgress = clamp(progress, 0, 100);
 
   if (surface === 'parchment') {
     return (
