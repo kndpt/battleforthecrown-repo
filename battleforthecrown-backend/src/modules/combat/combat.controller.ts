@@ -11,6 +11,7 @@ import {
   Headers,
 } from '@nestjs/common';
 import { CombatService } from './combat.service';
+import { ReportService } from './report.service';
 import {
   attackCommandSchema,
   type AttackCommandDto,
@@ -32,7 +33,10 @@ import { CurrentUser, type AuthenticatedUser } from '../../common/auth';
 
 @Controller('combat')
 export class CombatController {
-  constructor(private readonly combatService: CombatService) {}
+  constructor(
+    private readonly combatService: CombatService,
+    private readonly reportService: ReportService,
+  ) {}
 
   @Post('attack')
   attack(
@@ -112,7 +116,7 @@ export class CombatController {
     @CurrentUser() user: AuthenticatedUser,
     @Headers('x-world-id') worldId?: string,
   ) {
-    return this.combatService.getAllReports(
+    return this.reportService.getAllReports(
       user.id,
       this.requireWorldId(worldId),
     );
@@ -123,7 +127,7 @@ export class CombatController {
     @CurrentUser() user: AuthenticatedUser,
     @Headers('x-world-id') worldId?: string,
   ) {
-    return this.combatService.getAllScoutReports(
+    return this.reportService.getAllScoutReports(
       user.id,
       this.requireWorldId(worldId),
     );
@@ -135,7 +139,7 @@ export class CombatController {
     @Param('reportId') reportId: string,
     @Headers('x-world-id') worldId?: string,
   ) {
-    return this.combatService.getScoutReport(
+    return this.reportService.getScoutReport(
       user.id,
       reportId,
       this.requireWorldId(worldId),
@@ -148,7 +152,7 @@ export class CombatController {
     @Param('reportId') reportId: string,
     @Headers('x-world-id') worldId?: string,
   ) {
-    return this.combatService.markScoutReportAsRead(
+    return this.reportService.markScoutReportAsRead(
       user.id,
       reportId,
       this.requireWorldId(worldId),
@@ -161,7 +165,7 @@ export class CombatController {
     @Param('reportId') reportId: string,
     @Headers('x-world-id') worldId?: string,
   ) {
-    return this.combatService.deleteScoutReport(
+    return this.reportService.deleteScoutReport(
       user.id,
       reportId,
       this.requireWorldId(worldId),
@@ -174,7 +178,7 @@ export class CombatController {
     @Param('reportId') reportId: string,
     @Headers('x-world-id') worldId?: string,
   ) {
-    return this.combatService.getReport(
+    return this.reportService.getReport(
       user.id,
       reportId,
       this.requireWorldId(worldId),
@@ -187,7 +191,7 @@ export class CombatController {
     @Param('reportId') reportId: string,
     @Headers('x-world-id') worldId?: string,
   ) {
-    return this.combatService.markReportAsRead(
+    return this.reportService.markReportAsRead(
       user.id,
       reportId,
       this.requireWorldId(worldId),
@@ -200,7 +204,7 @@ export class CombatController {
     @Param('reportId') reportId: string,
     @Headers('x-world-id') worldId?: string,
   ) {
-    return this.combatService.deleteReport(
+    return this.reportService.deleteReport(
       user.id,
       reportId,
       this.requireWorldId(worldId),

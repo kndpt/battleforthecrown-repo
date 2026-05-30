@@ -5,6 +5,7 @@ import { CombatWorker } from './combat.worker';
 import { ConquestFinalizeWorker } from './conquest-finalize.worker';
 import { ReturnWorker } from './return.worker';
 import { ConquestService } from './conquest.service';
+import { ReportService } from './report.service';
 import { LootManager } from './loot/loot.manager';
 import { ResourceLootProvider } from './loot/providers/resource-loot.provider';
 import { BarbarianVillageStrategy } from './strategies/barbarian-village.strategy';
@@ -28,6 +29,7 @@ import { EventModule } from '../event/event.module';
   controllers: [CombatController],
   providers: [
     CombatService,
+    ReportService,
     CombatWorker,
     ConquestFinalizeWorker,
     ReturnWorker,
