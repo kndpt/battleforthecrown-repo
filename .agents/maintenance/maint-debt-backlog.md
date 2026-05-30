@@ -1,6 +1,6 @@
-# BFTC Debt Gardener Backlog
+# BFTC Maint — Debt Backlog
 
-This backlog tracks bounded existing-debt candidates for `bftc-debt-gardener`.
+This backlog tracks bounded existing-debt candidates for `bftc-maint-debt`.
 
 ## Candidate States
 

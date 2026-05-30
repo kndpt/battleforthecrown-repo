@@ -1,4 +1,0 @@
-interface:
-  display_name: "BFTC Debt Gardener"
-  short_description: "Select and fix one bounded existing debt item in BFTC."
-  default_prompt: "Use bftc-debt-gardener to inspect BFTC debt candidates, choose one bounded existing debt item, fix it, verify it, and prepare a draft PR."

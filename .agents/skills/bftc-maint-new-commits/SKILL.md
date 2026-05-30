@@ -1,11 +1,17 @@
 ---
-name: bftc-daily-diff-maintenance
-description: Use when reviewing unprocessed main commits to fix one bounded BFTC debt item and propose a verified draft PR.
+name: bftc-maint-new-commits
+description: Scans new commits on main since the last cursor, fixes one bounded debt item introduced by the diff, and proposes a verified PR. Auto-triggers at session start when unreviewed commits exist.
+invoke: auto
 ---
 
-# BFTC Daily Diff Maintenance
+# BFTC Maint — New Commits
 
-Inspect only the unreviewed `main` commit range tracked in `.agents/maintenance/daily-diff-ledger.md`. Produce at most one bounded maintenance PR, or stop cleanly.
+Inspect only the unreviewed `main` commit range tracked in `.agents/maintenance/maint-new-commits-ledger.md`. Produce at most one bounded maintenance PR, or stop cleanly.
+
+## When to trigger
+
+**Automatic** — invoked at session start when `git fetch` reveals commits beyond the ledger cursor.
+**Routine** — Anthropic Routine cron, see `.agents/maintenance/trigger-strategy.md` for setup.
 
 ## Contract
 
@@ -14,33 +20,32 @@ Inspect only the unreviewed `main` commit range tracked in `.agents/maintenance/
 - If no new commits exist after the cursor, stop without changes.
 - Analyze exactly `last_analyzed_main_sha..origin/main`.
 - Fix at most one low-to-medium risk debt item introduced or revealed by that range.
-- Advance the cursor only through a PR that changes `.agents/maintenance/daily-diff-ledger.md`.
+- Advance the cursor only through a PR that changes `.agents/maintenance/maint-new-commits-ledger.md`.
 - If the range has no actionable debt, open a ledger-only PR marking the range reviewed.
+- All PRs are **ready for review** (not draft).
 
 ## Preflight
 
-1. Read root `AGENTS.md`, `.agents/rules/{conventions,docs,git}.md`, and this ledger:
-   - `.agents/maintenance/daily-diff-ledger.md`
+1. Read root `AGENTS.md`, `.agents/rules/{conventions,docs,git}.md`, and:
+   - `.agents/maintenance/maint-new-commits-ledger.md`
 2. Ensure the worktree is clean:
-   - `rtk git status --short`
+   - `git status --short`
 3. Fetch the latest remote state:
-   - `rtk git fetch origin main`
-4. Check for an existing open PR for this skill. Prefer the GitHub app when available; otherwise use `gh pr list` and search for:
-   - branch prefix `codex/bftc-daily-diff-maintenance`
-   - title/body token `bftc-daily-diff-maintenance`
-5. If any matching open PR exists, stop and report its URL. Do not create a second PR.
+   - `git fetch origin main`
+4. Check for an existing open PR for this skill (branch prefix `claude/bftc-maint-new-commits`, body token `bftc-maint-new-commits`).
+5. If any matching open PR exists, stop and report its URL.
 
 ## Range Selection
 
 1. Read `last_analyzed_main_sha` from the ledger.
 2. Verify it is an ancestor of `origin/main`:
-   - `rtk git merge-base --is-ancestor <sha> origin/main`
-3. If it is not an ancestor, stop and report ledger drift. Do not guess a new cursor.
+   - `git merge-base --is-ancestor <sha> origin/main`
+3. If not an ancestor, stop and report ledger drift. Do not guess a new cursor.
 4. If `<sha> == origin/main`, stop: no new commits to review.
 5. Otherwise inspect:
-   - `rtk git log --oneline <sha>..origin/main`
-   - `rtk git diff --stat <sha>..origin/main`
-   - targeted `rtk git diff <sha>..origin/main -- <paths>` for changed hot paths.
+   - `git log --oneline <sha>..origin/main`
+   - `git diff --stat <sha>..origin/main`
+   - targeted `git diff <sha>..origin/main -- <paths>` for changed hot paths.
 
 ## Candidate Selection
 
@@ -80,14 +85,14 @@ If several candidates exist, prefer the smallest change with the highest verific
 
 Run the narrowest meaningful verification first, then the repo gate appropriate to the touched area.
 
-- Always run `rtk yarn static-check` before finalizing a code PR.
+- Always run `yarn static-check` before finalizing a code PR.
 - If Pixi/frontend code changed, run the targeted Pixi test/type-check command relevant to the files.
-- If backend `src/` changed, follow `bftc-run` smoke expectations: `rtk yarn workspace battleforthecrown-backend test:smoke:preflight` then `rtk yarn workspace battleforthecrown-backend test:smoke`, unless the change is strictly non-runtime and the exception is documented.
+- If backend `src/` changed, follow `bftc-run` smoke expectations unless the change is strictly non-runtime and the exception is documented.
 - If only the ledger changes, no code tests are required; verify git range and ledger formatting.
 
 ## Ledger Update
 
-Update `.agents/maintenance/daily-diff-ledger.md` in the PR:
+Update `.agents/maintenance/maint-new-commits-ledger.md` in the PR:
 
 - set `last_analyzed_main_sha` to the reviewed `origin/main` SHA;
 - add one run entry with range, selected candidate, PR branch/title, verification, and status `proposed`;
@@ -97,25 +102,18 @@ The ledger update must be part of the PR. The cursor becomes authoritative only 
 
 ## PR Output
 
-Create a branch named:
-
-```text
-codex/bftc-daily-diff-maintenance-<short-sha>
-```
+Branch: `claude/bftc-maint-new-commits-<short-sha>`
 
 Commit in English:
-
-```text
+```
 chore(maintenance): review new main commits
 ```
 
-Open a draft PR. Include:
+Open a **ready-for-review PR** (not draft). Include:
 
 - reviewed range and commits;
 - candidate chosen and why;
 - files changed;
 - verification commands and results;
 - docs impact;
-- explicit note that no second daily-diff PR should run until this PR is merged or closed.
-
-If GitHub access is unavailable, leave the branch, commit, and PR body ready, then report the blocker.
+- explicit note that no second new-commits PR should run until this PR is merged or closed.
