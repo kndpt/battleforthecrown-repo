@@ -1,8 +1,8 @@
 # 076 — Annuler une formation depuis la file Caserne
 
 **Sévérité** : 🟠 Moyen
-**Statut** : 🆕 Ouvert
-**Spec amont** : [`docs/gameplay/08-units.md`](../docs/gameplay/08-units.md) — entraînement des unités
+**Statut** : ✅ Résolu
+**Spec amont** : [`docs/gameplay/08-units.md`](../../docs/gameplay/08-units.md) — entraînement des unités
 
 ## Symptôme | Problème
 
@@ -72,11 +72,11 @@ Aucun changement attendu. Vérifier seulement que l'endpoint existant reste suff
 
 ## Liens détectés
 
-- Connexe : [`tasks/runs/archive/039-integrate-army-view-design-system.md`](./runs/archive/039-integrate-army-view-design-system.md) — source de la vue Armée runtime actuelle.
-- Connexe : [`tasks/archive/74-army-touch-drag-recruit.md`](./archive/74-army-touch-drag-recruit.md) — préserver les interactions tap/drag de la zone Armée.
-- Connexe : [`tasks/archive/47-noble-training-visual-queue-missing.md`](./archive/47-noble-training-visual-queue-missing.md) — ne pas étendre par erreur la queue Caserne au Noble.
-- Déjà résolu : [`tasks/archive/44-army-training-schema-drift.md`](./archive/44-army-training-schema-drift.md) — endpoints armée existants à préserver.
-- Déjà résolu : [`tasks/runs/archive/028-barracks-training-speed-bonus.md`](./runs/archive/028-barracks-training-speed-bonus.md) — progression et durées effectives à ne pas régresser.
+- Connexe : [`tasks/runs/archive/039-integrate-army-view-design-system.md`](../runs/archive/039-integrate-army-view-design-system.md) — source de la vue Armée runtime actuelle.
+- Connexe : [`tasks/archive/74-army-touch-drag-recruit.md`](./74-army-touch-drag-recruit.md) — préserver les interactions tap/drag de la zone Armée.
+- Connexe : [`tasks/archive/47-noble-training-visual-queue-missing.md`](./47-noble-training-visual-queue-missing.md) — ne pas étendre par erreur la queue Caserne au Noble.
+- Déjà résolu : [`tasks/archive/44-army-training-schema-drift.md`](./44-army-training-schema-drift.md) — endpoints armée existants à préserver.
+- Déjà résolu : [`tasks/runs/archive/028-barracks-training-speed-bonus.md`](../runs/archive/028-barracks-training-speed-bonus.md) — progression et durées effectives à ne pas régresser.
 
 ## Critères de succès
 

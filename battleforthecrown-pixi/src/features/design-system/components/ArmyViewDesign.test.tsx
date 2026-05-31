@@ -131,6 +131,33 @@ describe('ArmyViewDesign mobile troop drag', () => {
   });
 });
 
+
+describe('ArmyRecruitSheet queue cancellation', () => {
+  it('calls the queue cancel callback with the selected training item', () => {
+    const onCancelQueueItem = vi.fn();
+    const queueItem = {
+      active: true,
+      id: 'training-42',
+      progress: 0.35,
+      quantity: 18,
+      troopId: militia.id,
+    };
+
+    renderArmyContent({
+      recruitSheet: {
+        ...recruitSheet,
+        onCancelQueueItem,
+        queue: [queueItem],
+      },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Annuler la formation Milice ×18' }));
+
+    expect(onCancelQueueItem).toHaveBeenCalledTimes(1);
+    expect(onCancelQueueItem).toHaveBeenCalledWith(queueItem);
+  });
+});
+
 describe('ArmyRecruitPopup embedded sheet content', () => {
   it('lets the shared bottom sheet own the surface and swipe header', () => {
     const { container } = render(

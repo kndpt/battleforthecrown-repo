@@ -5,6 +5,7 @@ import { ApiError } from '@/api';
 import {
   useArmyInventoryQuery,
   useArmyTrainingQuery,
+  useCancelTrainingMutation,
   useGarrisonQuery,
   useOnboardingSummaryQuery,
   usePopulationQuery,
@@ -21,8 +22,11 @@ import { runGameAction, type GameActionId } from '@/features/game-actions/gameAc
 import {
   ArmyContentDesign,
   ArmyRecruitPopup,
+  BaseModal,
+  BftcButton,
   computeArmyRecruitMax,
   GameBottomSheetPanel,
+  type ArmyQueueItem,
   type ArmyRecruitPopupLabels,
   type ArmySupportRow,
   type ArmyTroop,
@@ -233,6 +237,7 @@ export function ArmyScreen() {
   const worldConfig = useWorldConfigQuery(worldId);
   const onboardingSummary = useOnboardingSummaryQuery(worldId);
   const recallReinforcement = useRecallReinforcementMutation();
+  const cancelTraining = useCancelTrainingMutation();
   const train = useTrainUnitsMutation();
   const pushToast = useUiStore((state) => state.pushToast);
   const nowMs = useTickingNow(1_000);
@@ -243,6 +248,7 @@ export function ArmyScreen() {
   const [draggedTroopId, setDraggedTroopId] = useState<string | null>(null);
   const [recruitTroopId, setRecruitTroopId] = useState<string | null>(null);
   const [recruitValue, setRecruitValue] = useState(1);
+  const [trainingCancelTarget, setTrainingCancelTarget] = useState<ArmyQueueItem | null>(null);
   const [selectedGarrisonVillageId, setSelectedGarrisonVillageId] = useState<string | null>(null);
   const [selectedGarrisonDirection, setSelectedGarrisonDirection] = useState<GarrisonLine['direction'] | null>(null);
   const [selectedGarrisonTroopId, setSelectedGarrisonTroopId] = useState<string | null>(null);
@@ -320,6 +326,12 @@ export function ArmyScreen() {
       : null;
   const pendingRecallKey = recallReinforcement.variables
     ? `${recallReinforcement.variables.villageId}:${recallReinforcement.variables.originVillageId}:${Object.keys(recallReinforcement.variables.units)[0]}`
+    : null;
+  const pendingCancelTrainingId = cancelTraining.isPending
+    ? cancelTraining.variables?.trainingId ?? null
+    : null;
+  const trainingCancelTroop = trainingCancelTarget
+    ? armyModel.troops.find((troop) => troop.id === trainingCancelTarget.troopId) ?? null
     : null;
 
   if (buildings.isLoading) {
@@ -415,6 +427,29 @@ export function ArmyScreen() {
     });
   };
 
+  const closeTrainingCancelConfirmation = () => {
+    if (!cancelTraining.isPending) setTrainingCancelTarget(null);
+  };
+
+  const handleConfirmTrainingCancel = () => {
+    if (!villageId || !trainingCancelTarget || cancelTraining.isPending) return;
+    cancelTraining.mutate(
+      { villageId, trainingId: trainingCancelTarget.id },
+      {
+        onError: (err) => {
+          pushToast({
+            description:
+              err instanceof ApiError ? err.message : "Échec de l'annulation de formation",
+            title: 'Annulation impossible',
+            tone: 'error',
+            ttlMs: 4000,
+          });
+        },
+        onSuccess: () => setTrainingCancelTarget(null),
+      },
+    );
+  };
+
   return (
     <div className="flex h-full w-full flex-col overflow-hidden bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
       <div
@@ -459,7 +494,9 @@ export function ArmyScreen() {
             onVillageRowSelect={handleVillageRowSelect}
             recruitSheet={{
               ...armyModel.recruitSheet,
+              cancelQueueItemId: pendingCancelTrainingId ?? undefined,
               isDragging: Boolean(draggedTroopId),
+              onCancelQueueItem: setTrainingCancelTarget,
               onDropTroop: handleDropTroop,
             }}
             sections={activeRuntimeTab === 'army' ? armyModel.armySections : undefined}
@@ -469,6 +506,52 @@ export function ArmyScreen() {
           />
         )}
       </div>
+
+      {trainingCancelTarget && trainingCancelTroop ? (
+        <div
+          aria-modal="true"
+          className="fixed inset-0 z-[90] grid place-items-center bg-[rgba(0,0,0,.62)] p-3 [backdrop-filter:blur(3px)]"
+          onClick={closeTrainingCancelConfirmation}
+          role="dialog"
+        >
+          <div className="flex w-full justify-center" onClick={(event) => event.stopPropagation()}>
+            <BaseModal
+              footer={
+                <div className="flex justify-end gap-2">
+                  <BftcButton
+                    disabled={cancelTraining.isPending}
+                    onClick={closeTrainingCancelConfirmation}
+                    size="xs"
+                    variant="neutral"
+                  >
+                    Annuler
+                  </BftcButton>
+                  <BftcButton
+                    disabled={cancelTraining.isPending}
+                    onClick={handleConfirmTrainingCancel}
+                    size="xs"
+                    variant="danger"
+                  >
+                    {cancelTraining.isPending ? 'Annulation…' : 'Annuler la formation'}
+                  </BftcButton>
+                </div>
+              }
+              onClose={closeTrainingCancelConfirmation}
+              title="Annuler cette formation ?"
+              tone="red"
+              width={360}
+            >
+              <p className="font-game text-sm leading-relaxed text-[#3d2f1f]">
+                Confirmer l'annulation de la formation de{' '}
+                <strong>{trainingCancelTroop.name}</strong> ×{trainingCancelTarget.quantity} ?
+              </p>
+              <p className="mt-2 font-game text-xs leading-relaxed text-[#6f5434]">
+                Les ressources et la population seront recalculées par le serveur après validation.
+              </p>
+            </BaseModal>
+          </div>
+        </div>
+      ) : null}
 
       {selectedUnit && (
         <UnitDetailModal
