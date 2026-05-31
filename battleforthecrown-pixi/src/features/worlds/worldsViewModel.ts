@@ -30,9 +30,13 @@ export interface WorldCardViewModel {
   isJoined: boolean;
   joinedCountLabel: string;
   lifecycleDay: number | null;
+  lifecycleInscriptionLateDays: number;
+  lifecycleInscriptionMainDays: number;
   lifecycleTotalDays: number;
+  mapSizeLabel: string;
   opensInLabel: string | null;
   personalStats: WorldPersonalStatsViewModel | null;
+  shieldLabel: string;
   sigilGlyph: string;
   statusLabel: string;
   tab: WorldsTab;
@@ -134,7 +138,10 @@ export function toWorldCardViewModel(
     isJoined,
     joinedCountLabel: formatter.format(world.joinedCount),
     lifecycleDay: day,
+    lifecycleInscriptionLateDays: world.lifecycle.inscriptionLateDays,
+    lifecycleInscriptionMainDays: world.lifecycle.inscriptionMainDays,
     lifecycleTotalDays: world.lifecycle.totalDays,
+    mapSizeLabel: `${formatter.format(world.map.width)} × ${formatter.format(world.map.height)}`,
     opensInLabel: opensIn,
     personalStats: personalStats
       ? {
@@ -142,6 +149,7 @@ export function toWorldCardViewModel(
           villageCountLabel: formatVillageCount(personalStats.villageCount),
         }
       : null,
+    shieldLabel: `${formatter.format(world.lifecycle.newbieShieldHours)} h`,
     sigilGlyph: WORLD_SIGIL_GLYPHS[world.identity.sigil],
     statusLabel: statusLabels[world.status],
     tab: tabByStatus[world.status],

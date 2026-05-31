@@ -7,6 +7,8 @@ import { cn } from '@/lib/cn';
 import {
   WorldsSelectionDesign,
 } from './worlds/WorldsSelectionDesign';
+import { WorldDetailDesign } from './worlds/WorldDetailDesign';
+import { worldDetailLabels } from './worlds/worldDetailConfig';
 import { defaultSeasonVariants, worldsSelectionLabels } from './worlds/worldsSelectionConfig';
 import { worldPreviewModels } from './worlds/worldsPreviewFixtures';
 import {
@@ -1520,12 +1522,40 @@ export function DesignSystemPreview() {
                 counts={worldsPreviewCounts}
                 labels={worldsSelectionLabels}
                 onBack={() => undefined}
+                onDetails={() => undefined}
                 onJoin={() => undefined}
                 onNotify={() => undefined}
                 onTabChange={setWorldsPreviewTab}
                 totalCount={worldPreviewModels.length}
                 variants={defaultSeasonVariants}
                 worlds={filteredWorldPreviewModels}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="font-game text-2xl font-bold text-[#1f2937]">Détail du Monde · Runtime</h2>
+            <span className="font-mono text-[10px] text-[#5d4a32]">
+              worlds · détail royaume · source project/world-views.jsx
+            </span>
+          </div>
+          <div className="flex w-full justify-center">
+            <div className="h-[720px] w-[360px] overflow-hidden rounded-[18px] border-[3px] border-[#3c2619] shadow-[0_10px_28px_rgba(60,38,25,.35)]">
+              <WorldDetailDesign
+                labels={worldDetailLabels}
+                onBack={() => undefined}
+                onJoin={() => undefined}
+                onNotify={() => undefined}
+                world={{
+                  ...worldPreviewModels[0]!,
+                  isJoined: true,
+                  personalStats: {
+                    kingdomPowerLabel: '48 210',
+                    villageCountLabel: '2 villages',
+                  },
+                }}
               />
             </div>
           </div>

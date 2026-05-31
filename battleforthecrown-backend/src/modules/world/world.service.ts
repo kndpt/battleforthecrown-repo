@@ -111,6 +111,9 @@ export class WorldService {
               ? null
               : dayCounter.day,
           totalDays: dayCounter.totalDays,
+          inscriptionMainDays: config.lifecycle.inscriptionMainDays,
+          inscriptionLateDays: config.lifecycle.inscriptionLateDays,
+          newbieShieldHours: config.lifecycle.newbieShieldHours,
           inscriptionPhase,
           startedAt: toIsoString(world.startedAt),
           endsAt: toIsoString(world.endsAt),
@@ -118,6 +121,10 @@ export class WorldService {
             world.status === 'PLANNED'
               ? toIsoString(world.plannedOpenAt)
               : null,
+        },
+        map: {
+          width: world.gridWidth,
+          height: world.gridHeight,
         },
         tempoProfile: TempoService.deriveProfile(config.tempo),
         joinedCount: world._count.memberships,

@@ -1,27 +1,32 @@
 # Todo
 
-## 2026-05-31 — Ticket 076 annulation formation Caserne
+## 2026-05-31 — PR 29 review follow-up
 
-- [x] Préflight : ticket, règles repo, `SPEC.md`, briefing Pixi, contexte mémoire et spec gameplay unités.
-- [x] Politique PR : ticket rapide, pas de PR demandée.
-- [x] Cartographier `ArmyViewDesign`, `ArmyScreen`, mutation d'annulation et tests existants.
-- [x] Ajouter l'affordance d'annulation sur chaque `QueueChip` sans casser drag/drop.
-- [x] Brancher confirmation explicite + mutation `useCancelTrainingMutation`.
-- [x] Ajouter les tests frontend ciblés.
-- [x] Lancer type-check Pixi, test ciblé et `yarn static-check`.
-- [x] Faire review 5 axes, décider docs/SPEC, archiver le ticket, mettre `tasks/README.md` à jour et commit final.
+- [x] Trier les commentaires PR : 3 pertinents, 2 stale à ignorer.
+- [x] Sourcer le bouclier débutant depuis `GET /worlds/public`.
+- [x] Valider avec Zod la puissance royaume publique consommée par `useWorldCardModels`.
+- [x] Gérer l'erreur memberships sur la page détail.
+- [x] Lancer tests ciblés, commit et push.
 
-### Review
+## 2026-05-31 — Run 042 page détail royaume
 
-- Changement : chaque `QueueChip` de la file Caserne expose une croix dédiée ; le clic ouvre une confirmation `BaseModal` et l'API n'est appelée qu'au bouton danger `Confirmer`.
-- Pending : la modale bloque les doubles confirmations et toutes les croix de queue sont désactivées pendant `useCancelTrainingMutation`.
-- Cache : l'annulation invalide aussi `population`, en plus de queue, inventaire et ressources, pour refléter le remboursement serveur.
-- Vérification : `rtk yarn workspace battleforthecrown-pixi test ArmyViewDesign.test.tsx` — 1 file / 4 tests passés.
-- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
-- Vérification : `rtk yarn static-check` — passé.
-- Review indépendante : première passe `BLOCK` sur preuve incomplète + mineur pending ; mineur corrigé ; re-review `GO`.
-- Docs : aucun changement nécessaire, comportement déjà couvert par `docs/gameplay/08-units.md` (annulation = remboursement complet).
-- QA IG restante : ouvrir `/game/army` onglet Caserne avec une formation en cours, cliquer la croix du chip, vérifier que fermer/Annuler ne change rien, puis confirmer et vérifier la disparition/refetch de la queue.
+- [x] Finaliser le préflight : branche `run/042-feature-world-detail-page`, règles, specs, briefings, politique PR.
+- [x] Appliquer `bftc-design-system-migration` sur le composant détail world générique, sans phone shell ni fixtures dans le composant.
+- [x] Cartographier le contrat public world actuel, décider `PublicWorld` suffisant ou DTO détail dédié.
+- [x] Brancher `/worlds/:worldId`, bouton `Détails`, retour liste et absence de mutation join.
+- [x] Afficher seulement les données sourcées : identity, status/lifecycle, tempoProfile, joinedCount, tier/sigil/theme, dimensions si contractées, stats personnelles conditionnelles.
+- [x] Ajouter/adapter les tests ciblés Pixi/backend selon `bftc-tests-policy`.
+- [x] Corriger review indépendante BLOCK : lifecycle phase days contractés, QA navigateur et preuves finales.
+- [x] Stopper la re-review à la demande explicite du user après validation QA navigateur.
+- [x] Vérifier type-check/tests/static-check, QA navigateur et impact docs.
+- [x] Archiver la run, mettre à jour `tasks/README.md`, commit, push et PR ready.
+
+### Review en cours
+
+- Review indépendante initiale : `BLOCK`.
+- Finding majeur confirmé : ne pas figer `inscriptionMainDays=7` / `inscriptionLateDays=3` dans la page détail ; exposer ou dériver proprement depuis le contrat public.
+- Résolution : `PublicWorld.lifecycle` expose maintenant `inscriptionMainDays` / `inscriptionLateDays`, et la page détail consomme ces valeurs contractées.
+- Dérogation validée : re-review stoppée sur demande user explicite, QA navigateur faite par le user et OK.
 
 ## 2026-05-31 — Run 043 layout shell jeu
 
