@@ -31,6 +31,8 @@ interface UiState {
   ) => string;
   dismissVictoryModal: (id: string) => void;
   clearVictoryModals: () => void;
+  /** Resets all transient UI state (toasts + queued modals) in one shot. */
+  clear: () => void;
 }
 
 let toastSeq = 0;
@@ -59,4 +61,5 @@ export const useUiStore = create<UiState>((set) => ({
       victoryModals: state.victoryModals.filter((m) => m.id !== id),
     })),
   clearVictoryModals: () => set({ victoryModals: [] }),
+  clear: () => set({ toasts: [], victoryModals: [] }),
 }));

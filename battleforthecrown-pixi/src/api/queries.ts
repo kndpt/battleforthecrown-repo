@@ -32,6 +32,7 @@ import type { WorldEntitiesResponse } from './world-types';
 import { useAuthStore } from '@/stores/auth';
 import { useExpeditionsStore } from '@/stores/expeditions';
 import { useGameStore } from '@/stores/game';
+import { resetGameSessionStores } from '@/stores/session';
 import { buildRecalledExpeditionPatch } from '@/lib/expeditionRecall';
 import type {
   Expedition,
@@ -1118,10 +1119,9 @@ export function useCancelConstructionMutation() {
 export function useLogout() {
   const queryClient = useQueryClient();
   const clearSession = useAuthStore((state) => state.clearSession);
-  const clearGame = useGameStore((state) => state.clear);
   return () => {
     clearSession();
-    clearGame();
+    resetGameSessionStores();
     gameSocket.disconnect();
     queryClient.clear();
   };
