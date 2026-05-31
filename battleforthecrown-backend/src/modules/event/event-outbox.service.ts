@@ -525,10 +525,14 @@ export class EventOutboxService {
   }
 
   private async notifyGarrisonAdded(payload: GarrisonAddedPayload) {
-    const userId = await this.getUserIdByVillage(payload.villageId);
-    if (!userId) return;
+    const recipientIds = await this.getUniqueUserIdsByVillages(
+      payload.villageId,
+      payload.originVillageId,
+    );
 
-    this.gateway.notifyUser(userId, 'garrison.added', payload);
+    for (const userId of recipientIds) {
+      this.gateway.notifyUser(userId, 'garrison.added', payload);
+    }
   }
 
   private async getUserIdByVillage(villageId: string): Promise<string | null> {
