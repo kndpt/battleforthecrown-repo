@@ -96,6 +96,9 @@ reviews:
         **Documentation (docs.md)**
         - If the change affects gameplay mechanics, API contracts, data model, or architecture decisions,
           a corresponding update in `docs/` is mandatory. Flag if missing.
+        - When existing `docs/` gameplay documentation defines the behavior touched by the PR,
+          verify that the implementation still matches that documented rule. Flag mismatches as
+          correctness issues, not documentation nitpicks.
 
     # ──────────────────────────────────────────────
     # BACKEND — NestJS + Prisma + pg-boss
