@@ -78,7 +78,7 @@ Populated by `/bftc-refactor-backend`. Each run appends a dated entry.
 
 ### Verification
 
-```
+```shell
 yarn static-check                                   → ✅ tsc (backend+pixi) + eslint --quiet, 0 errors
 yarn test (backend unit)                            → ✅ 232 passed, 21 suites
 yarn test:smoke:run (combat-attack, conquest-hook,  → ✅ 20 passed, 8 suites

@@ -257,7 +257,6 @@ export class CombatWorker implements OnModuleInit {
           await this.finalizeExpedition(tx, {
             expedition,
             resolution,
-            context,
             attackerVillage,
             defenderVillage,
             report,
@@ -638,7 +637,6 @@ export class CombatWorker implements OnModuleInit {
     args: {
       expedition: Expedition;
       resolution: CombatResolution;
-      context: CombatContext;
       attackerVillage: Village;
       defenderVillage: DefenderVillage | null;
       report: { id: string };
