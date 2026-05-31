@@ -1,6 +1,7 @@
 import { env } from '@/lib/env';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
+import { resetGameSessionStores } from '@/stores/session';
 import { ApiClient } from './client';
 import { gameSocket } from './ws';
 
@@ -17,7 +18,7 @@ export const apiClient = new ApiClient({
     },
     clearTokens: () => {
       useAuthStore.getState().clearSession();
-      useGameStore.getState().clear();
+      resetGameSessionStores();
     },
   },
   gameContext: {
