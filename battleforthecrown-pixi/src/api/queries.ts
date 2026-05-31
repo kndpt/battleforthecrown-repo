@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   PublicWorldsResponseSchema,
   WorldConfigSchema,
@@ -190,7 +190,6 @@ export function useResetWorldMutation() {
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.myMemberships(userId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.myVillages(userId, worldId) });
-      queryClient.invalidateQueries({ queryKey: ['villages'] });
     },
   });
 }
@@ -226,7 +225,6 @@ export function useUpdateVillageLabelMutation() {
       } satisfies UpdateVillageLabelRequest),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.myVillages(userId, worldId) });
-      queryClient.invalidateQueries({ queryKey: ['villages'] });
     },
   });
 }
@@ -240,23 +238,24 @@ export interface ResourcesPayload {
   productionRates: { wood: number; stone: number; iron: number };
 }
 
-export function useResourcesQuery(villageId: string | null) {
-  return useQuery<ResourcesPayload>({
+export const resourcesQueryOptions = (villageId: string | null) =>
+  queryOptions({
     queryKey: queryKeys.resources(villageId),
     queryFn: () => {
-      if (!villageId) {
-        return Promise.reject(new Error('No village selected'));
-      }
+      if (!villageId) return Promise.reject(new Error('No village selected'));
       return apiClient.get<ResourcesPayload>(`/resources/${villageId}`);
     },
     enabled: Boolean(villageId),
     staleTime: 0,
-    refetchOnMount: 'always',
+    refetchOnMount: 'always' as const,
   });
+
+export function useResourcesQuery(villageId: string | null) {
+  return useQuery(resourcesQueryOptions(villageId));
 }
 
-export function useVillageBuildingsQuery(villageId: string | null) {
-  return useQuery<BuildingDto[]>({
+export const buildingsQueryOptions = (villageId: string | null) =>
+  queryOptions({
     queryKey: queryKeys.buildings(villageId),
     queryFn: () => {
       if (!villageId) return Promise.resolve([] as BuildingDto[]);
@@ -265,10 +264,13 @@ export function useVillageBuildingsQuery(villageId: string | null) {
     enabled: Boolean(villageId),
     staleTime: 5_000,
   });
+
+export function useVillageBuildingsQuery(villageId: string | null) {
+  return useQuery(buildingsQueryOptions(villageId));
 }
 
-export function useBuildingQueueQuery(villageId: string | null) {
-  return useQuery<QueueEntryDto[]>({
+export const queueQueryOptions = (villageId: string | null) =>
+  queryOptions({
     queryKey: queryKeys.queue(villageId),
     queryFn: () => {
       if (!villageId) return Promise.resolve([] as QueueEntryDto[]);
@@ -277,6 +279,9 @@ export function useBuildingQueueQuery(villageId: string | null) {
     enabled: Boolean(villageId),
     staleTime: 5_000,
   });
+
+export function useBuildingQueueQuery(villageId: string | null) {
+  return useQuery(queueQueryOptions(villageId));
 }
 
 export interface CrownsBalanceDto {
@@ -321,18 +326,19 @@ export function useCrownsQuery(worldId: string | null) {
   });
 }
 
-export function useVillageStrategyQuery(villageId: string | null, enabled = true) {
-  return useQuery<VillageStrategyInfoDto>({
+export const villageStrategyQueryOptions = (villageId: string | null) =>
+  queryOptions({
     queryKey: queryKeys.villageStrategy(villageId),
     queryFn: () => {
-      if (!villageId) {
-        return Promise.reject(new Error('No village selected'));
-      }
+      if (!villageId) return Promise.reject(new Error('No village selected'));
       return apiClient.get<VillageStrategyInfoDto>('/village/strategy', { query: { villageId } });
     },
-    enabled: Boolean(villageId && enabled),
+    enabled: Boolean(villageId),
     staleTime: 5_000,
   });
+
+export function useVillageStrategyQuery(villageId: string | null, enabled = true) {
+  return useQuery({ ...villageStrategyQueryOptions(villageId), enabled: Boolean(villageId && enabled) });
 }
 
 interface ChangeVillageStrategyInput {
@@ -357,18 +363,19 @@ export function useChangeVillageStrategyMutation() {
   });
 }
 
-export function usePopulationQuery(villageId: string | null) {
-  return useQuery<PopulationDto>({
+export const populationQueryOptions = (villageId: string | null) =>
+  queryOptions({
     queryKey: queryKeys.population(villageId),
     queryFn: () => {
-      if (!villageId) {
-        return Promise.reject(new Error('No village selected'));
-      }
+      if (!villageId) return Promise.reject(new Error('No village selected'));
       return apiClient.get<PopulationDto>('/population', { query: { villageId } });
     },
     enabled: Boolean(villageId),
     staleTime: 5_000,
   });
+
+export function usePopulationQuery(villageId: string | null) {
+  return useQuery(populationQueryOptions(villageId));
 }
 
 export interface VillagePowerDto {
@@ -451,8 +458,8 @@ export function useArmyInventoryQuery(villageId: string | null) {
   });
 }
 
-export function useArmyTrainingQuery(villageId: string | null) {
-  return useQuery<ArmyTrainingDto[]>({
+export const armyTrainingQueryOptions = (villageId: string | null) =>
+  queryOptions({
     queryKey: queryKeys.armyTraining(villageId),
     queryFn: () => {
       if (!villageId) return Promise.resolve([] as ArmyTrainingDto[]);
@@ -461,6 +468,9 @@ export function useArmyTrainingQuery(villageId: string | null) {
     enabled: Boolean(villageId),
     staleTime: 2_000,
   });
+
+export function useArmyTrainingQuery(villageId: string | null) {
+  return useQuery(armyTrainingQueryOptions(villageId));
 }
 
 interface TrainUnitsInput {
