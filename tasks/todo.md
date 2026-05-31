@@ -1,5 +1,28 @@
 # Todo
 
+## 2026-05-31 — Ticket 076 annulation formation Caserne
+
+- [x] Préflight : ticket, règles repo, `SPEC.md`, briefing Pixi, contexte mémoire et spec gameplay unités.
+- [x] Politique PR : ticket rapide, pas de PR demandée.
+- [x] Cartographier `ArmyViewDesign`, `ArmyScreen`, mutation d'annulation et tests existants.
+- [x] Ajouter l'affordance d'annulation sur chaque `QueueChip` sans casser drag/drop.
+- [x] Brancher confirmation explicite + mutation `useCancelTrainingMutation`.
+- [x] Ajouter les tests frontend ciblés.
+- [x] Lancer type-check Pixi, test ciblé et `yarn static-check`.
+- [x] Faire review 5 axes, décider docs/SPEC, archiver le ticket, mettre `tasks/README.md` à jour et commit final.
+
+### Review
+
+- Changement : chaque `QueueChip` de la file Caserne expose une croix dédiée ; le clic ouvre une confirmation `BaseModal` et l'API n'est appelée qu'au bouton danger `Confirmer`.
+- Pending : la modale bloque les doubles confirmations et toutes les croix de queue sont désactivées pendant `useCancelTrainingMutation`.
+- Cache : l'annulation invalide aussi `population`, en plus de queue, inventaire et ressources, pour refléter le remboursement serveur.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test ArmyViewDesign.test.tsx` — 1 file / 4 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
+- Vérification : `rtk yarn static-check` — passé.
+- Review indépendante : première passe `BLOCK` sur preuve incomplète + mineur pending ; mineur corrigé ; re-review `GO`.
+- Docs : aucun changement nécessaire, comportement déjà couvert par `docs/gameplay/08-units.md` (annulation = remboursement complet).
+- QA IG restante : ouvrir `/game/army` onglet Caserne avec une formation en cours, cliquer la croix du chip, vérifier que fermer/Annuler ne change rien, puis confirmer et vérifier la disparition/refetch de la queue.
+
 ## 2026-05-31 — Run 043 layout shell jeu
 
 - [x] Préflight : fiche run, règles repo, `SPEC.md`, briefing Pixi, contexte mémoire et ADR ciblées.

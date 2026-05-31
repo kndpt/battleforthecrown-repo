@@ -4,6 +4,7 @@
 
 ## Done
 
+- 2026-05-31: Ticket 076 termine : annulation de formation depuis les `QueueChip` Caserne avec confirmation design-system, mutation existante branchee, pending global sur actions queue, test `ArmyViewDesign` + type-check Pixi + static-check verts.
 - 2026-05-31: Run 043 termine : `GameShellLayout` route-level centralise header/nav/toasts/power/unread pour `/game/*`; `VillageView` ouvre les bâtiments via `panel=buildings`; tests Pixi/static-check et QA navigateur verts.
 - 2026-05-31: Automations Codex BFTC creees : prompts commencent par `$bftc-maint-new-commits`, `$bftc-maint-debt`, `$bftc-refactor-{backend,pixi,shared}`; toutes actives en worktree aux horaires de `.agents/maintenance/trigger-strategy.md`.
 - 2026-05-31: Politique smokes agent mise a jour : local cible par fichiers `*.smoke.spec.ts`, full smoke porte par CI PR ; skills/docs/agents Codex+Claude alignes.
