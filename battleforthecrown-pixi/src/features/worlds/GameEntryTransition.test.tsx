@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, useNavigate } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { queryKeys } from '@/api/queries';
 import { useGameStore } from '@/stores/game';
@@ -41,13 +41,44 @@ function renderTransition(initialPath: string) {
     },
   ]);
 
-  return render(
+  let navigateTo: (path: string) => void | Promise<void> = (_path: string) => {
+    throw new Error('navigateTo called before router initialization');
+  };
+
+  function Harness() {
+    const navigate = useNavigate();
+    navigateTo = (path: string) => navigate(path);
+    return <GameEntryTransition />;
+  }
+
+  const view = render(
     <MemoryRouter initialEntries={[initialPath]}>
       <QueryClientProvider client={queryClient}>
-        <GameEntryTransition />
+        <Harness />
       </QueryClientProvider>
     </MemoryRouter>,
   );
+
+  return {
+    ...view,
+    navigateTo: (path: string) => {
+      act(() => {
+        navigateTo(path);
+      });
+    },
+  };
+}
+
+function stubAudio() {
+  vi.useFakeTimers();
+  const play = vi.fn().mockResolvedValue(undefined);
+  const AudioMock = vi.fn(function Audio(this: { play: typeof play; volume: number }) {
+    this.play = play;
+    this.volume = 0;
+  });
+  vi.stubGlobal('Audio', AudioMock);
+  window.Audio = AudioMock as unknown as typeof Audio;
+  return { AudioMock, play };
 }
 
 beforeEach(() => {
@@ -76,16 +107,9 @@ describe('GameEntryTransition', () => {
   });
 
   it('plays the world entry sound when the animation completes', () => {
-    vi.useFakeTimers();
-    const play = vi.fn().mockResolvedValue(undefined);
-    const AudioMock = vi.fn(function Audio(this: { play: typeof play; volume: number }) {
-      this.play = play;
-      this.volume = 0;
-    });
-    vi.stubGlobal('Audio', AudioMock);
-    window.Audio = AudioMock as unknown as typeof Audio;
+    const { AudioMock, play } = stubAudio();
 
-    renderTransition('/game');
+    renderTransition('/game/world');
 
     act(() => {
       vi.advanceTimersByTime(2000);
@@ -93,5 +117,65 @@ describe('GameEntryTransition', () => {
 
     expect(AudioMock).toHaveBeenCalledWith('/assets/sounds/world-entry-complete.mp3');
     expect(play).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('plays the transition once when entering game routes from outside the game', () => {
+    const { AudioMock } = stubAudio();
+    const { navigateTo } = renderTransition('/worlds');
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    navigateTo('/game');
+
+    expect(screen.getByRole('status')).toHaveTextContent('Solstice');
+
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(AudioMock).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('does not replay the transition on intra-game navigation', () => {
+    const { AudioMock } = stubAudio();
+    const { navigateTo } = renderTransition('/game');
+
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(AudioMock).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    navigateTo('/game/world');
+    navigateTo('/game/army');
+    navigateTo('/game/messages');
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(AudioMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('clears the active transition when navigating inside the game before it completes', () => {
+    const { AudioMock } = stubAudio();
+    const { navigateTo } = renderTransition('/game');
+
+    expect(screen.getByRole('status')).toHaveTextContent('Solstice');
+
+    navigateTo('/game/world');
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(AudioMock).not.toHaveBeenCalled();
   });
 });

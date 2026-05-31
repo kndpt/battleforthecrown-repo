@@ -5,7 +5,6 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 ## Tickets actifs
 
 - [76 — Annuler une formation depuis la file Caserne](./076-cancel-army-training-from-queue-chip.md) — 🟠 Moyen. Ajouter une action d'annulation confirmée sur les `QueueChip` de formation Caserne en réutilisant la mutation existante.
-- [75 — Transition d'entrée monde rejouée à chaque navigation jeu](./075-fix-world-entry-transition-on-game-navigation.md) — 🟠 Moyen. Empêcher `world-entry-complete.mp3` et l'overlay d'entrée monde de se relancer lors des navigations internes `/game/*`.
 - [66 — Inbox combat : tag VICTOIRE/DÉFAITE faux dans la liste](./66-inbox-report-outcome-uses-losses-heuristic.md) — 🟡 Majeur. La liste de l'inbox calcule l'issue via une heuristique de pertes, divergente de la règle canonique utilisée par le modal.
 - [57 — Source canonique du lifecycle des bâtiments joueur](./57-player-village-building-lifecycle-roster.md) — 🟡 Majeur. Centraliser la politique join/conquête/backfill des bâtiments pour éviter les oublis à chaque nouveau bâtiment activé.
 
@@ -82,6 +81,7 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ## Archivés
 
+- [75 — Transition d'entrée monde rejouée à chaque navigation jeu](./archive/075-fix-world-entry-transition-on-game-navigation.md) ✅ Résolu 2026-05-31 par $bftc-run @tasks/075-fix-world-entry-transition-on-game-navigation.md
 - [74 — Drag tactile direct (tap + glisser) pour recruter dans la vue Armée](./archive/74-army-touch-drag-recruit.md) ✅ Résolu 2026-05-28 par $bftc-run @tasks/74-army-touch-drag-recruit.md
 - [72 — Stats joueur sur les cartes royaumes](./archive/072-worlds-player-stats.md) ✅ Résolu 2026-05-25 par $bftc-run @tasks/072-worlds-player-stats.md
 - [71 — Stock initial absent sur inscription monde](./archive/71-fix-starting-resources-defaults.md) ✅ Résolu 2026-05-25 par correction directe Codex.

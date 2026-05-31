@@ -1,5 +1,14 @@
 # Todo
 
+## 2026-05-31 — Ticket 75 transition entrée monde
+
+- [x] Charger le ticket, règles repo, `SPEC.md`, briefing Pixi et skill React HUD.
+- [x] Cartographier `GameEntryTransition`, son montage shell et les tests existants.
+- [x] Corriger le déclenchement overlay/audio pour distinguer vraie entrée jeu et navigation intra-jeu.
+- [x] Ajouter/adapter les tests ciblés avec `bftc-tests-policy`.
+- [x] Lancer tests ciblés, test pixi pertinent et `yarn static-check`.
+- [x] Faire review 5 axes, décider docs/SPEC, archiver le ticket et commit final.
+
 ## 2026-05-29 — Skills maintenance autonome BFTC
 
 - [x] Lire les patterns existants de skills BFTC et les règles docs/git.

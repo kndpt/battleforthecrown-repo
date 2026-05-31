@@ -1,7 +1,7 @@
 # 75 — Transition d'entrée monde rejouée à chaque navigation jeu
 
 **Sévérité** : 🟠 Moyen
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ Résolu
 **Spec amont** : Aucune
 
 ## Symptôme
