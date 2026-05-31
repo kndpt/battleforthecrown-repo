@@ -59,7 +59,7 @@ VITE_WS_URL="http://localhost:<backend-port>" \
 curl -fsS "http://localhost:<backend-port>/health"
 ```
 
-Open `http://localhost:<front-port>/` in the browser when browser tooling is available, then report:
+Do not perform in-game QA in the browser. After the healthcheck, report:
 
 - App URL: `http://localhost:<front-port>/`
 - Design system URL: `http://localhost:<front-port>/design-system`

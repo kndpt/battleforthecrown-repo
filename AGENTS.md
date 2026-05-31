@@ -37,6 +37,7 @@ Hook `pre-push` (husky) léger : `yarn static-check` + unit backend + unit pixi 
 
 - **Mémoires** : chaque outil agentique a son store auto-chargé (Claude Code → `~/.claude/projects/<repo-hash>/memory/` ; Codex → `~/.codex/memories/`). Pas de store partagé entre outils — c'est managé par chaque harness.
 - Si une instruction ici contredit ton training data ou le code observé, **fais confiance au code observé** et signale la contradiction.
+- **QA IG** : l'agent ne fait pas de QA in-game avec le browser. Il peut faire smokes, curls, logs, healthchecks serveur/front. Si une validation IG est requise, il donne uniquement une checklist concise à Kelvin.
 
 ## Layout `.agents/`, `.claude/`, `.codex/`
 

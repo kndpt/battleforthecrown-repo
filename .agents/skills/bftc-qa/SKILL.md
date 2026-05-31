@@ -7,6 +7,10 @@ description: "Use when finishing a BFTC task to choose QA: playable checklist, c
 
 End every substantive task with one QA decision. Automated tests do not replace QA.
 
+## Non-negotiable IG boundary
+
+The agent must not perform in-game QA with the browser. It may run automated tests, smokes, curls, logs, DB reads, healthchecks, or frontend/server boot checks. If in-game validation is needed, give Kelvin only a concise French checklist and stop there.
+
 ## Smokes — ciblés localement, exhaustifs en CI
 
 Le hook `pre-push` ne lance pas les smokes. La CI GitHub lance la suite smoke complète sur PR. En local, l'agent doit lancer le plus petit périmètre smoke qui prouve le risque du diff.
@@ -41,7 +45,7 @@ yarn workspace battleforthecrown-backend test:smoke
 
 | Change | QA |
 |---|---|
-| Visible UI, HUD, Pixi, gameplay | User in-game checklist |
+| Visible UI, HUD, Pixi, gameplay | Kelvin in-game checklist only |
 | Backend-only endpoint, worker, DB, WS payload, logs | Agent backend QA |
 | Backend + visible UI impact | Both |
 | Docs, rules, skills, static typing only | `QA : pas de test runtime nécessaire, raison : ...` |
@@ -60,7 +64,7 @@ If a user checklist requires terminal, SQL, logs, DevTools, env vars, or code ed
 - [ ] Vérifier que <résultat visible>
 ```
 
-Keep it ≤ 5 checkboxes, chronological, French, no boot instructions.
+Keep it ≤ 5 checkboxes, chronological, French, no boot instructions, no browser automation.
 
 ## Agent backend QA
 
