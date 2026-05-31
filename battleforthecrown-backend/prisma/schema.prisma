@@ -465,6 +465,7 @@ model Expedition {
   worldId           String           @map("world_id")
   attackerVillageId String           @map("attacker_village_id")
   reinforcementOriginVillageId String? @map("reinforcement_origin_village_id")
+  reinforcementRecallActorUserId String? @map("reinforcement_recall_actor_user_id")
   kind              ExpeditionKind   @default(ATTACK)
   targetKind        TargetKind       @map("target_kind")
   targetRefId       String           @map("target_ref_id")
@@ -597,4 +598,60 @@ model Garrison {
   @@index([villageId])
   @@index([originVillageId])
   @@map("garrison")
+}
+
+enum ReinforcementReportType {
+  STATIONED
+  RETURNED
+}
+
+enum InboxKind {
+  REINFORCEMENT
+}
+
+/// Business fact for a reinforcement movement (arrival or homecoming).
+/// Carries no attacker/defender, no losses, no loot, no victory outcome.
+model ReinforcementReport {
+  id                String                  @id @default(cuid())
+  worldId           String                  @map("world_id")
+  type              ReinforcementReportType
+  originVillageId   String                  @map("origin_village_id")
+  originVillageName String?                 @map("origin_village_name")
+  originX           Int                     @map("origin_x")
+  originY           Int                     @map("origin_y")
+  hostVillageId     String                  @map("host_village_id")
+  hostVillageName   String?                 @map("host_village_name")
+  hostX             Int                     @map("host_x")
+  hostY             Int                     @map("host_y")
+  units             Json
+  actorUserId       String?                 @map("actor_user_id")
+  timestamp         DateTime                @default(now()) @db.Timestamptz(3)
+  createdAt         DateTime                @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  inboxEntries InboxEntry[]
+
+  @@index([worldId])
+  @@index([timestamp])
+  @@map("reinforcement_report")
+}
+
+/// Per-recipient inbox state. One row per distinct recipient of a report.
+/// Typed FK per domain (no polymorphic JSON `reportId`).
+model InboxEntry {
+  id                    String    @id @default(cuid())
+  userId                String    @map("user_id")
+  worldId               String    @map("world_id")
+  kind                  InboxKind
+  reinforcementReportId String?   @map("reinforcement_report_id")
+  isRead                Boolean   @default(false) @map("is_read")
+  hidden                Boolean   @default(false)
+  timestamp             DateTime  @default(now()) @db.Timestamptz(3)
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  reinforcementReport ReinforcementReport? @relation(fields: [reinforcementReportId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, reinforcementReportId])
+  @@index([userId, worldId])
+  @@index([timestamp])
+  @@map("inbox_entry")
 }

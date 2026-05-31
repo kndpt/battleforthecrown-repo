@@ -1169,6 +1169,7 @@ export class CombatWorker implements OnModuleInit {
           expeditionId: expedition.id,
           villageId: expedition.targetRefId,
           originVillageId: originVillageId,
+          hostVillageId: expedition.attackerVillageId,
           units,
         },
       );
@@ -1179,6 +1180,83 @@ export class CombatWorker implements OnModuleInit {
         units,
       });
     }
+
+    // 4. Create ReinforcementReport + InboxEntry per recipient
+    const reportType = isReturningHome ? 'RETURNED' : 'STATIONED';
+    const reportActorUserId = isReturningHome
+      ? (expedition.reinforcementRecallActorUserId ?? null)
+      : null;
+
+    // STATIONED: origin = originVillageId, host = targetRefId
+    // RETURNED:  origin = targetRefId (home), host = attackerVillageId (B)
+    const reportOriginVillageId = isReturningHome
+      ? expedition.targetRefId
+      : originVillageId;
+    const reportHostVillageId = isReturningHome
+      ? expedition.attackerVillageId
+      : expedition.targetRefId;
+
+    const [originVillageSnap, hostVillageSnap] = await Promise.all([
+      tx.village.findUnique({
+        where: { id: reportOriginVillageId },
+        select: { id: true, name: true, x: true, y: true, userId: true },
+      }),
+      tx.village.findUnique({
+        where: { id: reportHostVillageId },
+        select: { id: true, name: true, x: true, y: true, userId: true },
+      }),
+    ]);
+
+    if (!originVillageSnap) {
+      throw new Error(
+        `Reinforcement report origin village not found: originVillageId=${reportOriginVillageId}, worldId=${expedition.worldId}`,
+      );
+    }
+    if (!hostVillageSnap) {
+      throw new Error(
+        `Reinforcement report host village not found: hostVillageId=${reportHostVillageId}, worldId=${expedition.worldId}`,
+      );
+    }
+
+    const report = await tx.reinforcementReport.create({
+      data: {
+        worldId: expedition.worldId,
+        type: reportType,
+        originVillageId: reportOriginVillageId,
+        originVillageName: originVillageSnap.name,
+        originX: originVillageSnap.x,
+        originY: originVillageSnap.y,
+        hostVillageId: reportHostVillageId,
+        hostVillageName: hostVillageSnap.name,
+        hostX: hostVillageSnap.x,
+        hostY: hostVillageSnap.y,
+        units: encodeUnitMap(units),
+        actorUserId: reportActorUserId,
+      },
+    });
+
+    const recipientIds = [
+      ...new Set(
+        [originVillageSnap.userId, hostVillageSnap.userId].filter(
+          (id): id is string => Boolean(id),
+        ),
+      ),
+    ];
+
+    for (const recipientUserId of recipientIds) {
+      await tx.inboxEntry.create({
+        data: {
+          userId: recipientUserId,
+          worldId: expedition.worldId,
+          kind: 'REINFORCEMENT',
+          reinforcementReportId: report.id,
+        },
+      });
+    }
+
+    this.logger.log(
+      `ReinforcementReport ${report.id} (${reportType}) created, ${recipientIds.length} inbox entries for expedition ${expedition.id}`,
+    );
 
     this.logger.log(
       `Reinforcement ${isReturningHome ? 'returned' : 'stationed'}: ${expedition.id}`,

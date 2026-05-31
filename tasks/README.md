@@ -33,11 +33,11 @@ Politique PR `$bftc-run` :
 
 ### Runs actifs
 
-- [044 — Rapports persistants de renforts](./runs/044-feature-reinforcement-reports.md) — 📋 `PLANNED`. Créer des rapports de renfort typés et une couche inbox par destinataire, sans fragiliser `CombatReport` ni transformer l'Outbox en archive métier.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés
 
+- [044 — Rapports persistants de renforts](./runs/archive/044-feature-reinforcement-reports.md) — ✅ `DONE` (2026-05-31). Modèle métier `ReinforcementReport` (STATIONED/RETURNED) + inbox par destinataire `InboxEntry` (FK typée), REST scopé user+world, badge/invalidation WS via events existants, migration additive. Review indépendante GO, smokes + static-check verts.
 - [043 — Layout shell du jeu](./runs/archive/043-refactor-game-shell-layout.md) — ✅ `DONE` (2026-05-31). Chrome jeu centralisé dans un layout route-level, unread badge unique, contrat URL `panel=buildings`, tests Pixi/static-check et QA navigateur.
 - [042 — Détail d'un royaume](./runs/archive/042-feature-world-detail-page.md) — ✅ `DONE` (2026-05-31). Bouton `Détails`, route `/worlds/:worldId`, contrat public `PublicWorld` enrichi lifecycle/map, page détail sans données inventées et tests Pixi/backend/static-check verts.
 - [041 — Gestes navigateur mobile et bottom sheets](./runs/archive/041-fix-mobile-browser-gestures-bottom-sheets.md) — ✅ `DONE` (2026-05-28). Pull-to-refresh/overscroll neutralisé, contrat `BottomSheet` zones drag/scroll documenté, auth scroll préservé et filets Vitest bottom sheet + drag Armée.

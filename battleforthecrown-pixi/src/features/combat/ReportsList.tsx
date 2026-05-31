@@ -3,9 +3,10 @@ import { Panel, PanelBody, PanelHeader, Spinner } from '@/ui';
 import {
   useCombatReportsQuery,
   useScoutReportsQuery,
+  useReinforcementReportsQuery,
   type CombatReportDto,
 } from '@/api/queries';
-import type { ScoutReportResponse } from '@battleforthecrown/shared/combat';
+import type { ReinforcementReportResponse, ScoutReportResponse } from '@battleforthecrown/shared/combat';
 import { InboxTabs, MailInboxItem } from '@/features/design-system/components/MailInboxItem';
 import {
   scoutReportResourceTotal,
@@ -14,10 +15,15 @@ import {
   scoutReportUnitTotal,
 } from './scoutReportView';
 import { combatReportOutcome } from './combatReportView';
+import {
+  reinforcementReportPreview,
+  reinforcementReportSubject,
+} from './reinforcementReportView';
 
 export type InboxReportSummary =
   | { kind: 'combat'; report: CombatReportDto }
-  | { kind: 'scout'; report: ScoutReportResponse };
+  | { kind: 'scout'; report: ScoutReportResponse }
+  | { kind: 'reinforcement'; report: ReinforcementReportResponse };
 
 interface ReportsListProps {
   onReportClick: (report: InboxReportSummary) => void;
@@ -70,13 +76,26 @@ function scoutInboxItem(report: ScoutReportResponse) {
   };
 }
 
+function reinforcementInboxItem(report: ReinforcementReportResponse) {
+  return {
+    icon: '/assets/rapport.png',
+    preview: reinforcementReportPreview(report),
+    sender: '',
+    subject: reinforcementReportSubject(report),
+    tag: { label: report.type === 'STATIONED' ? 'SOUTIEN' : 'RETOUR', tone: 'system' as const },
+    tone: 'system' as const,
+  };
+}
+
 export function ReportsList({ onReportClick }: ReportsListProps) {
   const [tab, setTab] = useState('all');
   const combatReports = useCombatReportsQuery();
   const scoutReports = useScoutReportsQuery();
+  const reinforcementReports = useReinforcementReportsQuery();
   const allReports: InboxReportSummary[] = [
     ...(combatReports.data ?? []).map((report) => ({ kind: 'combat' as const, report })),
     ...(scoutReports.data ?? []).map((report) => ({ kind: 'scout' as const, report })),
+    ...(reinforcementReports.data ?? []).map((report) => ({ kind: 'reinforcement' as const, report })),
   ].sort((a, b) => Date.parse(b.report.timestamp) - Date.parse(a.report.timestamp));
   const reports = tab === 'scout'
     ? allReports.filter((report) => report.kind === 'scout')
@@ -87,7 +106,7 @@ export function ReportsList({ onReportClick }: ReportsListProps) {
   const unreadCombatCount = (combatReports.data ?? []).filter((report) => !report.isRead).length;
   const unreadScoutCount = (scoutReports.data ?? []).filter((report) => !report.isRead).length;
 
-  if (combatReports.isLoading || scoutReports.isLoading) {
+  if (combatReports.isLoading || scoutReports.isLoading || reinforcementReports.isLoading) {
     return (
       <Panel variant="parchment" padding="none">
         <PanelHeader variant="parchment" size="sm">
@@ -139,7 +158,9 @@ export function ReportsList({ onReportClick }: ReportsListProps) {
           key={`${report.kind}-${report.report.id}`}
           {...(report.kind === 'combat'
             ? combatInboxItem(report.report)
-            : scoutInboxItem(report.report))}
+            : report.kind === 'scout'
+              ? scoutInboxItem(report.report)
+              : reinforcementInboxItem(report.report))}
           alertLabel={report.report.isRead ? undefined : '!'}
           onClick={() => onReportClick(report)}
           time={formatDate(report.report.timestamp)}

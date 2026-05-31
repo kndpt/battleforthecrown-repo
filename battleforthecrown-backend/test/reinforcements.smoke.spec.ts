@@ -237,6 +237,209 @@ describe('reinforcements smoke', () => {
     expect(finalGarrison?.quantity).toBe(0);
   }, 60_000);
 
+  it('produces STATIONED/RETURNED reinforcement reports + inbox entries exposed per recipient via REST', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+
+    // 1. Setup userA, join → villageA
+    const userA = await registerUser(ctx.server, 'rpt-a' + Date.now());
+    const joinA = await joinWorld(
+      ctx.server,
+      userA.accessToken,
+      world.id,
+      'rpt-village-a',
+    );
+    const villageAId = joinA.village.id;
+
+    // 2. Join with a second slot to get villageB, then transfer ownership to userA
+    const userBTmp = await registerUser(ctx.server, 'rpt-b' + Date.now());
+    const joinB = await joinWorld(
+      ctx.server,
+      userBTmp.accessToken,
+      world.id,
+      'rpt-village-b',
+    );
+    const villageBId = joinB.village.id;
+    await ctx.prisma.village.update({
+      where: { id: villageBId },
+      data: { userId: userA.userId },
+    });
+
+    // 3. Give userA units + population on villageA
+    await ctx.prisma.unitInventory.create({
+      data: { villageId: villageAId, unitType: 'MILITIA', quantity: 30 },
+    });
+    await ctx.prisma.population.update({
+      where: { villageId: villageAId },
+      data: { used: 30, max: 200 },
+    });
+
+    // 4. POST /combat/reinforce A→B { MILITIA: 30 }
+    const reinforceRes = await request(ctx.server)
+      .post('/combat/reinforce')
+      .set('Authorization', `Bearer ${userA.accessToken}`)
+      .send({
+        villageId: villageAId,
+        targetVillageId: villageBId,
+        units: { MILITIA: 30 },
+      });
+    expect(reinforceRes.status).toBeLessThan(300);
+
+    // 5. Wait for garrison arrival at B
+    await waitFor(
+      () =>
+        ctx.prisma.garrison.findFirst({
+          where: {
+            villageId: villageBId,
+            originVillageId: villageAId,
+            quantity: 30,
+          },
+        }),
+      { timeoutMs: 30_000 },
+    );
+
+    // 6. Assert DB: STATIONED ReinforcementReport exists
+    const stationedReport =
+      await ctx.prisma.reinforcementReport.findFirstOrThrow({
+        where: {
+          worldId: world.id,
+          type: 'STATIONED',
+          originVillageId: villageAId,
+          hostVillageId: villageBId,
+        },
+      });
+
+    // 7. Assert DB: InboxEntry for userA exists, unread, not hidden
+    const stationedEntries = await ctx.prisma.inboxEntry.findMany({
+      where: {
+        userId: userA.userId,
+        reinforcementReportId: stationedReport.id,
+        kind: 'REINFORCEMENT',
+      },
+    });
+    expect(stationedEntries).toHaveLength(1);
+    const stationedEntry = stationedEntries[0];
+    expect(stationedEntry.isRead).toBe(false);
+    expect(stationedEntry.hidden).toBe(false);
+
+    // 8. Assert REST list: GET /combat/reinforcement-reports contains STATIONED report
+    const listRes = await request(ctx.server)
+      .get('/combat/reinforcement-reports')
+      .set('Authorization', `Bearer ${userA.accessToken}`)
+      .set('x-world-id', world.id);
+    expect(listRes.status).toBe(200);
+    const stationedInList = (
+      listRes.body as Array<{
+        type: string;
+        id: string;
+        isRead: boolean;
+        originVillageId: string;
+        hostVillageId: string;
+      }>
+    ).find((r) => r.id === stationedReport.id);
+    expect(stationedInList).toBeDefined();
+    expect(stationedInList!.type).toBe('STATIONED');
+    expect(stationedInList!.isRead).toBe(false);
+    expect(stationedInList!.originVillageId).toBe(villageAId);
+    expect(stationedInList!.hostVillageId).toBe(villageBId);
+
+    // 9. PATCH /combat/reinforcement-report/:id/read → mark as read
+    const readRes = await request(ctx.server)
+      .patch(`/combat/reinforcement-report/${stationedReport.id}/read`)
+      .set('Authorization', `Bearer ${userA.accessToken}`)
+      .set('x-world-id', world.id);
+    expect(readRes.status).toBeLessThan(300);
+
+    // 10. GET detail → isRead === true
+    const detailRes = await request(ctx.server)
+      .get(`/combat/reinforcement-report/${stationedReport.id}`)
+      .set('Authorization', `Bearer ${userA.accessToken}`)
+      .set('x-world-id', world.id);
+    expect(detailRes.status).toBe(200);
+    expect((detailRes.body as { isRead: boolean }).isRead).toBe(true);
+
+    // 11. Verify InboxEntry in DB is now isRead === true
+    const entryAfterRead = await ctx.prisma.inboxEntry.findUniqueOrThrow({
+      where: { id: stationedEntry.id },
+    });
+    expect(entryAfterRead.isRead).toBe(true);
+
+    // 12. Recall: POST /combat/recall B→A { MILITIA: 30 }
+    const recallRes = await request(ctx.server)
+      .post('/combat/recall')
+      .set('Authorization', `Bearer ${userA.accessToken}`)
+      .send({
+        villageId: villageBId,
+        originVillageId: villageAId,
+        units: { MILITIA: 30 },
+      });
+    expect(recallRes.status).toBeLessThan(300);
+
+    // 13. Wait for RETURNED report to appear
+    await waitFor(
+      () =>
+        ctx.prisma.reinforcementReport.findFirst({
+          where: {
+            worldId: world.id,
+            type: 'RETURNED',
+            originVillageId: villageAId,
+            hostVillageId: villageBId,
+          },
+        }),
+      { timeoutMs: 30_000 },
+    );
+
+    // 14. Assert RETURNED report + InboxEntry for userA
+    const returnedReport =
+      await ctx.prisma.reinforcementReport.findFirstOrThrow({
+        where: {
+          worldId: world.id,
+          type: 'RETURNED',
+          originVillageId: villageAId,
+          hostVillageId: villageBId,
+        },
+      });
+    expect(returnedReport.actorUserId).toBe(userA.userId);
+
+    const returnedEntry = await ctx.prisma.inboxEntry.findFirstOrThrow({
+      where: {
+        userId: userA.userId,
+        reinforcementReportId: returnedReport.id,
+        kind: 'REINFORCEMENT',
+      },
+    });
+    expect(returnedEntry.isRead).toBe(false);
+    expect(returnedEntry.hidden).toBe(false);
+
+    // 15. DELETE /combat/reinforcement-report/:stationedId → soft-delete (hidden)
+    const deleteRes = await request(ctx.server)
+      .delete(`/combat/reinforcement-report/${stationedReport.id}`)
+      .set('Authorization', `Bearer ${userA.accessToken}`)
+      .set('x-world-id', world.id);
+    expect(deleteRes.status).toBeLessThan(300);
+
+    // 16. Assert InboxEntry is now hidden, but ReinforcementReport still exists
+    const entryAfterDelete = await ctx.prisma.inboxEntry.findUniqueOrThrow({
+      where: { id: stationedEntry.id },
+    });
+    expect(entryAfterDelete.hidden).toBe(true);
+
+    const reportStillExists = await ctx.prisma.reinforcementReport.findUnique({
+      where: { id: stationedReport.id },
+    });
+    expect(reportStillExists).not.toBeNull();
+
+    // 17. GET list no longer contains the deleted STATIONED report
+    const listAfterDelete = await request(ctx.server)
+      .get('/combat/reinforcement-reports')
+      .set('Authorization', `Bearer ${userA.accessToken}`)
+      .set('x-world-id', world.id);
+    expect(listAfterDelete.status).toBe(200);
+    const stillPresent = (listAfterDelete.body as Array<{ id: string }>).find(
+      (r) => r.id === stationedReport.id,
+    );
+    expect(stillPresent).toBeUndefined();
+  }, 60_000);
+
   it('send-back foreign reinforcement from host creates return expedition', async () => {
     const world = await seedSmokeWorld(ctx.prisma);
 
@@ -319,6 +522,13 @@ describe('reinforcements smoke', () => {
       { kind: 'reinforcement.returned', aggregateId: originVillageId },
       { timeoutMs: 30_000 },
     );
+    const returnedEvent = await ctx.prisma.eventOutbox.findFirstOrThrow({
+      where: { kind: 'reinforcement.returned', aggregateId: originVillageId },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(
+      (returnedEvent.payload as { hostVillageId?: string }).hostVillageId,
+    ).toBe(hostVillageId);
 
     const returnedInventory = await ctx.prisma.unitInventory.findUniqueOrThrow({
       where: {

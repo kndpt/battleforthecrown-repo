@@ -73,8 +73,11 @@ Spécificités runtime :
 | `Expedition.kind` | `ATTACK`, `REINFORCE` ou `SCOUT`. Détermine le comportement à l'arrivée. |
 | `Expedition.recalled` | boolean — vrai si l'armée a fait demi-tour pendant l'aller (Recall). |
 | `Expedition.reinforcementOriginVillageId` | utilisé pour identifier le village d'origine lors d'un rappel (Recall) de renforts. |
+| `Expedition.reinforcementRecallActorUserId` | colonne additive nullable. Porte l'identité de l'acteur du Rappeler / Renvoyer depuis le service jusqu'au worker ; permet de créer le `ReinforcementReport` RETURNED avec le bon acteur à l'arrivée. |
 | `CombatReport` | rapport persistant d'un combat. L'accès est porté par `attackerUserId` / `defenderUserId`; l'état inbox est par participant (`readByAttacker` / `readByDefender`, `hiddenByAttacker` / `hiddenByDefender`). Sur un village barbare sous capture, `defenderUserId` peut représenter le joueur occupant la garnison de capture. |
 | `ScoutReport` | rapport persistant d'une mission scout. L'accès est porté par `scoutUserId`; snapshot de `units`, `resources` et `strategy` nullable au moment d'arrivée. L'état inbox est mono-participant (`isRead`, `hidden`). |
+| `ReinforcementReport` | fait métier persistant d'un mouvement de renfort. `type` : enum `ReinforcementReportType` (`STATIONED` — renfort arrivé en garnison ; `RETURNED` — renfort rentré à son village d'origine). Capture les villages d'origine et hôte (id, nom, coordonnées), le snapshot `units` (JSON), l'`actorUserId` (acteur du rappel/renvoi, RETURNED uniquement), `worldId` et `timestamp`. Pas de pertes, pas de loot, pas d'issue victoire/défaite. Archive permanente — ne disparaît pas quand un destinataire masque son `InboxEntry`. Source de vérité des champs exacts : [`prisma/schema.prisma`](../../battleforthecrown-backend/prisma/schema.prisma). |
+| `InboxEntry` | état inbox par destinataire pour les rapports de renfort. Champs clés : `userId`, `worldId`, `kind` (enum `InboxKind`, valeur `REINFORCEMENT` — extensible), `reinforcementReportId` (FK nullable, `onDelete Cascade`), `isRead`, `hidden`, `timestamp`. Une ligne par destinataire unique ; contrainte unique `(userId, reinforcementReportId)`. Dédoublonnée quand owner village d'origine == owner village hôte. L'état lu/masqué d'un joueur n'affecte pas le `ReinforcementReport` physique. Source de vérité des champs exacts : [`prisma/schema.prisma`](../../battleforthecrown-backend/prisma/schema.prisma). |
 | `PendingConquest` | fenêtre de capture ouverte après un pré-combat victorieux avec Seigneur survivant. Stocke `attackerVillageId`, `attackerUserId`, `targetVillageId`, `captureUntil`, `status` (`OPEN`/`COMPLETED`/`INTERRUPTED`) et le `finalizeJobId` pg-boss. |
 
 Un trajet passe généralement par les phases `EN_ROUTE → RESOLVED → RETURNING` (cf. `ExpeditionStatus`). Backend : un job pg-boss à `arrivalAt` (résolution), puis un autre à `returnAt` (retour) uniquement s'il reste des unités ou du loot à ramener. Si toute l'armée attaquante est détruite sans loot, l'expédition reste `RESOLVED` avec `returnAt = null`. Pour les retours de raids et scouts, `returnAt` est calculé avec `outboundTravelMs`, la durée aller figée au dispatch.
@@ -150,7 +153,9 @@ User ──< WorldMembership >── World
       ├── Expedition (origin)  ─→ Village ou BarbarianVillage (target)
       │     │
       │     ├── CombatReport (1:1 via reportId)
-      │     └── ScoutReport (1:1 via scoutReportId)
+      │     ├── ScoutReport (1:1 via scoutReportId)
+      │     └── ReinforcementReport (1:N via originVillageId/hostVillageId)
+      │           └── InboxEntry ──< (userId destinataire)
       │
       ├── PendingConquest (attacker)
       └── PendingConquest (target)

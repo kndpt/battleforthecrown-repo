@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { CombatService } from './combat.service';
 import { CombatReportService } from './combat-report.service';
+import { ReinforcementReportService } from './reinforcement-report.service';
 import {
   attackCommandSchema,
   type AttackCommandDto,
@@ -28,6 +29,7 @@ import {
   scoutCommandSchema,
   type ScoutCommandDto,
 } from './dto/scout-command.schema';
+import type { ReinforcementReportResponse } from '@battleforthecrown/shared/combat';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { CurrentUser, type AuthenticatedUser } from '../../common/auth';
 
@@ -36,6 +38,7 @@ export class CombatController {
   constructor(
     private readonly combatService: CombatService,
     private readonly reportService: CombatReportService,
+    private readonly reinforcementReportService: ReinforcementReportService,
   ) {}
 
   @Post('attack')
@@ -166,6 +169,56 @@ export class CombatController {
     @Headers('x-world-id') worldId?: string,
   ) {
     return this.reportService.deleteScoutReport(
+      user.id,
+      reportId,
+      this.requireWorldId(worldId),
+    );
+  }
+
+  @Get('reinforcement-reports')
+  async getAllReinforcementReports(
+    @CurrentUser() user: AuthenticatedUser,
+    @Headers('x-world-id') worldId?: string,
+  ): Promise<ReinforcementReportResponse[]> {
+    return this.reinforcementReportService.getAllReinforcementReports(
+      user.id,
+      this.requireWorldId(worldId),
+    );
+  }
+
+  @Get('reinforcement-report/:reportId')
+  async getReinforcementReport(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('reportId') reportId: string,
+    @Headers('x-world-id') worldId?: string,
+  ): Promise<ReinforcementReportResponse> {
+    return this.reinforcementReportService.getReinforcementReport(
+      user.id,
+      reportId,
+      this.requireWorldId(worldId),
+    );
+  }
+
+  @Patch('reinforcement-report/:reportId/read')
+  async markReinforcementReportAsRead(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('reportId') reportId: string,
+    @Headers('x-world-id') worldId?: string,
+  ): Promise<ReinforcementReportResponse> {
+    return this.reinforcementReportService.markReinforcementReportAsRead(
+      user.id,
+      reportId,
+      this.requireWorldId(worldId),
+    );
+  }
+
+  @Delete('reinforcement-report/:reportId')
+  async deleteReinforcementReport(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('reportId') reportId: string,
+    @Headers('x-world-id') worldId?: string,
+  ): Promise<{ message: string }> {
+    return this.reinforcementReportService.deleteReinforcementReport(
       user.id,
       reportId,
       this.requireWorldId(worldId),

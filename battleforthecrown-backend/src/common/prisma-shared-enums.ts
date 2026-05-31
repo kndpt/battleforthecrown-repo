@@ -2,11 +2,13 @@ import type {
   ExpeditionStatus as PrismaExpeditionStatus,
   OnboardingStatus as PrismaOnboardingStatus,
   OnboardingStep as PrismaOnboardingStep,
+  ReinforcementReportType as PrismaReinforcementReportType,
   TargetKind as PrismaTargetKind,
   VillageStrategy as PrismaVillageStrategy,
 } from '@prisma/client';
 import type {
   ExpeditionStatus,
+  ReinforcementReportType,
   TargetKind,
 } from '@battleforthecrown/shared/combat';
 import type { VillageStrategyType } from '@battleforthecrown/shared/village';
@@ -34,6 +36,21 @@ export const _expeditionStatusToPrisma: Record<
   EN_ROUTE: 'EN_ROUTE',
   RESOLVED: 'RESOLVED',
   RETURNING: 'RETURNING',
+};
+
+export const _reinforcementReportTypeFromPrisma: Record<
+  PrismaReinforcementReportType,
+  ReinforcementReportType
+> = {
+  STATIONED: 'STATIONED',
+  RETURNED: 'RETURNED',
+};
+export const _reinforcementReportTypeToPrisma: Record<
+  ReinforcementReportType,
+  PrismaReinforcementReportType
+> = {
+  STATIONED: 'STATIONED',
+  RETURNED: 'RETURNED',
 };
 
 export const _targetKindFromPrisma: Record<PrismaTargetKind, TargetKind> = {

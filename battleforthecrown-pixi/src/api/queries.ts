@@ -43,6 +43,7 @@ import type {
 import type {
   OpenConquestDto,
   OpenExpeditionDto,
+  ReinforcementReportResponse,
   ScoutReportResponse,
 } from '@battleforthecrown/shared/combat';
 import type {
@@ -77,6 +78,8 @@ export const queryKeys = {
   combatReport: (reportId: string | null, worldId: string | null) => ['combat', 'report', reportId, worldId] as const,
   scoutReports: (userId: string | null, worldId: string | null) => ['combat', 'scout-reports', userId, worldId] as const,
   scoutReport: (reportId: string | null, worldId: string | null) => ['combat', 'scout-report', reportId, worldId] as const,
+  reinforcementReports: (userId: string | null, worldId: string | null) => ['combat', 'reinforcement-reports', userId, worldId] as const,
+  reinforcementReport: (reportId: string | null, worldId: string | null) => ['combat', 'reinforcement-report', reportId, worldId] as const,
   worldConfigFull: (worldId: string | null) => ['world-config-full', worldId] as const,
   worldEntities: (worldId: string | null) => ['world-entities', worldId] as const,
   worldConfig: (worldId: string | null) => ['world-config', worldId] as const,
@@ -781,6 +784,61 @@ export function useDeleteScoutReportMutation() {
       apiClient.delete<unknown>(`/combat/scout-report/${reportId}`),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.scoutReports(userId, worldId) });
+    },
+  });
+}
+
+export function useReinforcementReportsQuery() {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
+  return useQuery<ReinforcementReportResponse[]>({
+    queryKey: queryKeys.reinforcementReports(userId, worldId),
+    queryFn: () => {
+      if (!userId || !worldId) return Promise.resolve([] as ReinforcementReportResponse[]);
+      return apiClient.get<ReinforcementReportResponse[]>('/combat/reinforcement-reports');
+    },
+    enabled: Boolean(userId && worldId),
+    staleTime: 10_000,
+  });
+}
+
+export function useReinforcementReportQuery(reportId: string | null) {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
+  return useQuery<ReinforcementReportResponse>({
+    queryKey: queryKeys.reinforcementReport(reportId, worldId),
+    queryFn: () => {
+      if (!reportId || !worldId) return Promise.reject(new Error('Missing reinforcement report'));
+      return apiClient.get<ReinforcementReportResponse>(`/combat/reinforcement-report/${reportId}`);
+    },
+    enabled: Boolean(reportId && userId && worldId),
+    staleTime: 60_000,
+  });
+}
+
+export function useMarkReinforcementReportReadMutation() {
+  const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
+  return useMutation<ReinforcementReportResponse, Error, MarkReportReadInput>({
+    mutationFn: ({ reportId }) =>
+      apiClient.patch<ReinforcementReportResponse>(`/combat/reinforcement-report/${reportId}/read`),
+    onSettled: (_data, _err, { reportId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.reinforcementReports(userId, worldId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.reinforcementReport(reportId, worldId) });
+    },
+  });
+}
+
+export function useDeleteReinforcementReportMutation() {
+  const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
+  return useMutation<unknown, Error, DeleteReportInput>({
+    mutationFn: ({ reportId }) =>
+      apiClient.delete<unknown>(`/combat/reinforcement-report/${reportId}`),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.reinforcementReports(userId, worldId) });
     },
   });
 }

@@ -389,10 +389,11 @@ export function applyReinforcementReturned(
     ctx,
     payload.villageId,
     getString(payload, 'originVillageId'),
-    getString(payload, 'targetVillageId'),
+    getString(payload, 'hostVillageId'),
   );
   invalidateOpenExpeditions(ctx);
   invalidateRetentionSummary(ctx);
+  invalidateReinforcementReports(ctx);
 }
 
 export function applyGarrisonAdded(
@@ -406,6 +407,7 @@ export function applyGarrisonAdded(
     getString(payload, 'targetVillageId'),
   );
   invalidateOpenExpeditions(ctx);
+  invalidateReinforcementReports(ctx);
 }
 
 export function applyVillageAttacked(
@@ -432,6 +434,11 @@ function invalidateCombatReports(ctx: BindingsContext): void {
   const userId = useAuthStore.getState().user?.id ?? null;
   ctx.queryClient.invalidateQueries({ queryKey: ['combat', 'reports', userId] });
   ctx.queryClient.invalidateQueries({ queryKey: ['combat', 'scout-reports', userId] });
+}
+
+function invalidateReinforcementReports(ctx: BindingsContext): void {
+  const userId = useAuthStore.getState().user?.id ?? null;
+  ctx.queryClient.invalidateQueries({ queryKey: ['combat', 'reinforcement-reports', userId] });
 }
 
 function invalidateOpenConquests(ctx: BindingsContext): void {

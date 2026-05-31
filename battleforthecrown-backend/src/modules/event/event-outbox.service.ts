@@ -500,10 +500,14 @@ export class EventOutboxService {
   private async notifyReinforcementReturned(
     payload: ReinforcementReturnedPayload,
   ) {
-    const userId = await this.getUserIdByVillage(payload.villageId);
-    if (!userId) return;
+    const recipientIds = await this.getUniqueUserIdsByVillages(
+      payload.villageId,
+      payload.hostVillageId,
+    );
 
-    this.gateway.notifyUser(userId, 'reinforcement.returned', payload);
+    for (const userId of recipientIds) {
+      this.gateway.notifyUser(userId, 'reinforcement.returned', payload);
+    }
   }
 
   private async notifyExpeditionRecalled(payload: ExpeditionRecalledPayload) {
@@ -533,5 +537,19 @@ export class EventOutboxService {
       select: { userId: true },
     });
     return village?.userId || null;
+  }
+
+  private async getUniqueUserIdsByVillages(
+    ...villageIds: Array<string | undefined>
+  ): Promise<string[]> {
+    const uniqueVillageIds = [
+      ...new Set(villageIds.filter(Boolean)),
+    ] as string[];
+    const userIds = await Promise.all(
+      uniqueVillageIds.map((villageId) => this.getUserIdByVillage(villageId)),
+    );
+    return [
+      ...new Set(userIds.filter((userId): userId is string => Boolean(userId))),
+    ];
   }
 }
