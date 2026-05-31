@@ -83,6 +83,7 @@ describe('public worlds smoke', () => {
         totalDays: 60,
         inscriptionMainDays: 7,
         inscriptionLateDays: 3,
+        newbieShieldHours: 48,
         inscriptionPhase: 'closed',
         plannedOpenAt: addDays(now, 2).toISOString(),
       },

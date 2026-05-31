@@ -41,6 +41,7 @@ function fallbackWorldEntryModel(worldId: string | null): WorldCardViewModel {
     mapSizeLabel: '',
     opensInLabel: null,
     personalStats: null,
+    shieldLabel: '48 h',
     sigilGlyph: WORLD_SIGIL_GLYPHS.crown,
     statusLabel: 'INSCRIPTION LIBRE',
     tab: 'open',

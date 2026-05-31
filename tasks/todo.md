@@ -1,5 +1,13 @@
 # Todo
 
+## 2026-05-31 — PR 29 review follow-up
+
+- [x] Trier les commentaires PR : 3 pertinents, 2 stale à ignorer.
+- [x] Sourcer le bouclier débutant depuis `GET /worlds/public`.
+- [x] Valider avec Zod la puissance royaume publique consommée par `useWorldCardModels`.
+- [x] Gérer l'erreur memberships sur la page détail.
+- [x] Lancer tests ciblés, commit et push.
+
 ## 2026-05-31 — Run 042 page détail royaume
 
 - [x] Finaliser le préflight : branche `run/042-feature-world-detail-page`, règles, specs, briefings, politique PR.

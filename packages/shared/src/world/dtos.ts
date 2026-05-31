@@ -18,6 +18,7 @@ export const PublicWorldLifecycleSchema = z.strictObject({
   totalDays: z.number().int().positive(),
   inscriptionMainDays: z.number().int().positive(),
   inscriptionLateDays: z.number().int().nonnegative(),
+  newbieShieldHours: z.number().int().positive(),
   inscriptionPhase: InscriptionPhaseSchema,
   startedAt: z.string().datetime().nullable(),
   endsAt: z.string().datetime().nullable(),

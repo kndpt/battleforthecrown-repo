@@ -113,6 +113,7 @@ export class WorldService {
           totalDays: dayCounter.totalDays,
           inscriptionMainDays: config.lifecycle.inscriptionMainDays,
           inscriptionLateDays: config.lifecycle.inscriptionLateDays,
+          newbieShieldHours: config.lifecycle.newbieShieldHours,
           inscriptionPhase,
           startedAt: toIsoString(world.startedAt),
           endsAt: toIsoString(world.endsAt),

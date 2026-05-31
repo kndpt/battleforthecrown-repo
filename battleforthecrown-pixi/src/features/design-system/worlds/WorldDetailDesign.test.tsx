@@ -21,6 +21,7 @@ function makeWorld(overrides: Partial<WorldCardViewModel> = {}): WorldCardViewMo
     mapSizeLabel: '500 × 500',
     opensInLabel: null,
     personalStats: null,
+    shieldLabel: '72 h',
     sigilGlyph: '♔',
     statusLabel: 'INSCRIPTION LIBRE',
     tab: 'open',
@@ -49,7 +50,7 @@ describe('WorldDetailDesign', () => {
     expect(screen.getByText('J. 5 / 60')).toBeInTheDocument();
     expect(screen.getByText('8 420')).toBeInTheDocument();
     expect(screen.getByText('500 × 500')).toBeInTheDocument();
-    expect(screen.getByText('48 h')).toBeInTheDocument();
+    expect(screen.getByText('72 h')).toBeInTheDocument();
     expect(screen.queryByText(/Seigneur fondateur/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/PvP/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Coalitions/i)).not.toBeInTheDocument();

@@ -50,7 +50,7 @@ export function WorldDetailScreen() {
     );
   }
 
-  if (worlds.isError || !world) {
+  if (worlds.isError || memberships.isError || !world) {
     return (
       <>
         <main className="min-h-screen bg-[#d4c094] px-4 py-8 font-game text-[#3d2f1f]">

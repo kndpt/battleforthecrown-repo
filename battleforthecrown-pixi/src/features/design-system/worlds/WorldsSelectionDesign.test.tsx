@@ -21,6 +21,7 @@ function makeCard(overrides: Partial<WorldCardViewModel> = {}): WorldCardViewMod
     mapSizeLabel: '500 × 500',
     opensInLabel: null,
     personalStats: null,
+    shieldLabel: '48 h',
     sigilGlyph: '♔',
     statusLabel: 'INSCRIPTION LIBRE',
     tab: 'open',

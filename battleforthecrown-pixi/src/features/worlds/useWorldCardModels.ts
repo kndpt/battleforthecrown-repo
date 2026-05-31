@@ -1,15 +1,16 @@
 import { useMemo } from 'react';
 import { useQueries } from '@tanstack/react-query';
+import { z } from 'zod';
 import { ApiError, apiClient } from '@/api';
 import { queryKeys, useJoinWorldMutation, useMyMembershipsQuery, usePublicWorldsQuery } from '@/api/queries';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
 import { toWorldCardViewModel } from './worldsViewModel';
 
-interface PublicKingdomPowerDto {
-  userId: string;
-  kingdomPower: number;
-}
+const PublicKingdomPowerSchema = z.strictObject({
+  userId: z.string(),
+  kingdomPower: z.number(),
+});
 
 function defaultVillageName(email?: string): string {
   if (!email) return 'Royaume du joueur';
@@ -34,12 +35,13 @@ export function useWorldCardModels() {
   const kingdomPowerByWorld = useQueries({
     queries: joinedWorldIdsForPower.map((worldId) => ({
       enabled: Boolean(userId),
-      queryFn: () => {
+      queryFn: async () => {
         if (!userId) return Promise.reject(new Error('No user selected'));
-        return apiClient.get<PublicKingdomPowerDto>(`/power/kingdom/${userId}/public`, {
+        const raw = await apiClient.get<unknown>(`/power/kingdom/${userId}/public`, {
           query: { worldId },
           skipAuth: true,
         });
+        return PublicKingdomPowerSchema.parse(raw);
       },
       queryKey: queryKeys.publicKingdomPower(userId, worldId),
       staleTime: 30_000,

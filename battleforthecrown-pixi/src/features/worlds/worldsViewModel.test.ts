@@ -24,6 +24,7 @@ function makeWorld(overrides: Partial<PublicWorld> = {}): PublicWorld {
       endsAt: '2026-07-19T12:00:00.000Z',
       inscriptionLateDays: 3,
       inscriptionMainDays: 7,
+      newbieShieldHours: 72,
       inscriptionPhase: 'main',
       plannedOpenAt: null,
       startedAt: '2026-05-20T12:00:00.000Z',
@@ -49,6 +50,7 @@ describe('worldsViewModel', () => {
     expect(model.lifecycleInscriptionMainDays).toBe(7);
     expect(model.lifecycleInscriptionLateDays).toBe(3);
     expect(model.mapSizeLabel).toBe('500 × 500');
+    expect(model.shieldLabel).toBe('72 h');
     expect(model.personalStats).toBeNull();
     expect(model.tempoLabel).toBe('STANDARD');
     expect(model.tierLabel).toBe('DÉBUTANTS');
@@ -63,6 +65,7 @@ describe('worldsViewModel', () => {
           endsAt: null,
           inscriptionLateDays: 3,
           inscriptionMainDays: 7,
+          newbieShieldHours: 48,
           inscriptionPhase: 'closed',
           plannedOpenAt: '2026-05-27T02:00:00.000Z',
           startedAt: null,
@@ -89,6 +92,7 @@ describe('worldsViewModel', () => {
           endsAt: '2026-06-26T12:00:00.000Z',
           inscriptionLateDays: 3,
           inscriptionMainDays: 7,
+          newbieShieldHours: 48,
           inscriptionPhase: 'closed',
           plannedOpenAt: null,
           startedAt: '2026-04-27T12:00:00.000Z',
@@ -156,6 +160,7 @@ describe('worldsViewModel', () => {
           endsAt: null,
           inscriptionLateDays: 3,
           inscriptionMainDays: 7,
+          newbieShieldHours: 48,
           inscriptionPhase: 'closed',
           plannedOpenAt: null,
           startedAt: null,

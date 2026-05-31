@@ -79,8 +79,9 @@ function mockApi() {
           lifecycle: {
             day: 1,
             endsAt: new Date(now + 60 * 86_400_000).toISOString(),
-            inscriptionLateDays: 3,
-            inscriptionMainDays: 7,
+      inscriptionLateDays: 3,
+      inscriptionMainDays: 7,
+      newbieShieldHours: 48,
             inscriptionPhase: 'main',
             plannedOpenAt: null,
             startedAt: new Date(now - 3_600_000).toISOString(),

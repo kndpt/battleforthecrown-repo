@@ -36,6 +36,7 @@ export interface WorldCardViewModel {
   mapSizeLabel: string;
   opensInLabel: string | null;
   personalStats: WorldPersonalStatsViewModel | null;
+  shieldLabel: string;
   sigilGlyph: string;
   statusLabel: string;
   tab: WorldsTab;
@@ -148,6 +149,7 @@ export function toWorldCardViewModel(
           villageCountLabel: formatVillageCount(personalStats.villageCount),
         }
       : null,
+    shieldLabel: `${formatter.format(world.lifecycle.newbieShieldHours)} h`,
     sigilGlyph: WORLD_SIGIL_GLYPHS[world.identity.sigil],
     statusLabel: statusLabels[world.status],
     tab: tabByStatus[world.status],

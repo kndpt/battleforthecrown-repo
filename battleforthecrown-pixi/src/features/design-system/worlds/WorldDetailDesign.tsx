@@ -265,7 +265,7 @@ export function WorldDetailDesign({
                   <FactRow icon={<Users aria-hidden="true" className="size-3.5 text-[#6d5838]" />} label={labels.vassals} value={world.joinedCountLabel} />
                   <FactRow icon={<Map aria-hidden="true" className="size-3.5 text-[#6d5838]" />} label={labels.map} value={world.mapSizeLabel} />
                   <FactRow icon={<Clock aria-hidden="true" className="size-3.5 text-[#6d5838]" />} label={labels.tempo} value={world.tempoLabel} />
-                  <FactRow icon={<Shield aria-hidden="true" className="size-3.5 text-[#6d5838]" />} label={labels.shield} value="48 h" />
+                  <FactRow icon={<Shield aria-hidden="true" className="size-3.5 text-[#6d5838]" />} label={labels.shield} value={world.shieldLabel} />
                 </div>
               </ParchmentCard>
 

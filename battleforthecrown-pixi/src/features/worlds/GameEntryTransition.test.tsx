@@ -35,8 +35,9 @@ function renderTransition(initialPath: string, options: { withGameContext?: bool
       lifecycle: {
         day: 1,
         endsAt: '2026-07-24T12:00:00.000Z',
-        inscriptionLateDays: 3,
-        inscriptionMainDays: 7,
+      inscriptionLateDays: 3,
+      inscriptionMainDays: 7,
+      newbieShieldHours: 48,
         inscriptionPhase: 'main',
         plannedOpenAt: null,
         startedAt: '2026-05-25T12:00:00.000Z',
