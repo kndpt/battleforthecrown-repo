@@ -44,10 +44,15 @@ Inspect only the unreviewed `main` commit range tracked in `.agents/maintenance/
 4. If `<sha> == origin/main`, stop: no new commits to review.
 5. Otherwise inspect:
    - `git log --oneline <sha>..origin/main`
+6. Filter code-relevant commits: keep only lines whose type is `feat`, `fix`, `perf`, `refactor`, `test`, or `wip`. Discard `chore`, `docs`, `style`, `ci`, and bare merge commits.
+7. If **no code-relevant commits remain**, open a ledger-only PR (outcome: `reviewed-no-action`) and stop — do not diff non-code ranges.
+8. For the code-relevant subset only:
    - `git diff --stat <sha>..origin/main`
    - targeted `git diff <sha>..origin/main -- <paths>` for changed hot paths.
 
 ## Candidate Selection
+
+**Scope rule**: only analyze code-relevant commits (`feat`, `fix`, `perf`, `refactor`, `test`, `wip`). Ranges containing only `chore`, `docs`, `style`, or `ci` commits are already handled in Range Selection — do not reach this step for them.
 
 Choose one candidate directly tied to the range. Good candidates:
 
