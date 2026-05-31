@@ -1,6 +1,7 @@
 # Lessons
 
 - Relire les leçons projet en début de session ; si le fichier n'existe pas, le créer avant de continuer.
+- Quand le user fournit une capture + une URL précise, limiter la correction à l'écran demandé avant de généraliser au domaine métier ; ne pas modifier la carte Pixi si la cible est `/worlds`.
 - Les PR autonomes de maintenance ne doivent pas réutiliser les familles `run/*` ou `task/*` : utiliser `maint/<scope>/...` et un titre `maint(<scope>): ...` pour les identifier sans ambiguïté.
 - CodeRabbit ne doit pas reviewer les mémoires/suivis volatiles ni poster de nitpicks linguistiques ; exclure `.context-memory/**`, `tasks/todo.md`, `tasks/lessons.md` et garder un seuil "impact réel seulement" dans `.coderabbit.yaml`.
 - Pour une automation Codex qui doit lancer un skill, vérifier le `name:` réel dans `.agents/skills/*/SKILL.md` puis commencer le prompt par `$skill-name`; ne pas se contenter d'une phrase "utilise le skill ...".
