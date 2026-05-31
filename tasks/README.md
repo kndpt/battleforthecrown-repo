@@ -35,12 +35,12 @@ Politique PR `$bftc-run` :
 ### Runs actifs
 
 - [044 — Rapports persistants de renforts](./runs/044-feature-reinforcement-reports.md) — 📋 `PLANNED`. Créer des rapports de renfort typés et une couche inbox par destinataire, sans fragiliser `CombatReport` ni transformer l'Outbox en archive métier.
-- [043 — Layout shell du jeu](./runs/043-refactor-game-shell-layout.md) — 📋 `PLANNED`. Centraliser topbar, bottom nav et toasts dans un layout jeu propre, avec contrat URL borné pour le panneau Bâtiments et QA onboarding/quêtes.
 - [042 — Détail d'un royaume](./runs/042-feature-world-detail-page.md) — 📋 `PLANNED`. Ajouter un bouton `Détails` sur les cartes royaumes et livrer une page détail branchée uniquement sur des données publiques contractées.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés
 
+- [043 — Layout shell du jeu](./runs/archive/043-refactor-game-shell-layout.md) — ✅ `DONE` (2026-05-31). Chrome jeu centralisé dans un layout route-level, unread badge unique, contrat URL `panel=buildings`, tests Pixi/static-check et QA navigateur.
 - [041 — Gestes navigateur mobile et bottom sheets](./runs/archive/041-fix-mobile-browser-gestures-bottom-sheets.md) — ✅ `DONE` (2026-05-28). Pull-to-refresh/overscroll neutralisé, contrat `BottomSheet` zones drag/scroll documenté, auth scroll préservé et filets Vitest bottom sheet + drag Armée.
 - [040 — Recalibration de la vitesse de base des déplacements](./runs/archive/040-recalibrate-base-travel-speed.md) — ✅ `DONE` (2026-05-28). `REFERENCE_SPEED` abaissé de 100 à 6, ratios `UNIT_STATS.speed` préservés, tests/backend smokes/Pixi/static-check verts et docs mobilité alignées.
 - [039 — Intégration runtime de la vue Armée design-system](./runs/archive/039-integrate-army-view-design-system.md) — ✅ `DONE` (2026-05-27). Contenu Armée migré vers le design-system sous le shell runtime existant, données réelles, drag/drop recrutement, actions garnison et bottom sheet standard.

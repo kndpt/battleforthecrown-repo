@@ -1,11 +1,9 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useCallback, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router';
 import { BottomSheet } from '@/ui';
 import { Spinner } from '@/ui/spinners';
-import { GameHeader } from '@/features/layout/GameHeader';
-import { ToastStack } from '@/features/layout/ToastStack';
 import { VillageCanvas } from '@/features/village/VillageCanvas';
-import { BottomNavigationBar } from '@/features/layout/BottomNavigationBar';
+import { useGameShellResourceClick } from '@/features/layout/GameShellLayoutContext';
 import { BuildingManagementPanel } from '@/features/village/BuildingManagementPanel';
 import { BuildingDetailModal } from '@/features/village/BuildingDetailModal';
 import { QueueFloatingButton } from '@/features/village/QueueFloatingButton';
@@ -15,10 +13,13 @@ import { DailyRetentionWidget } from '@/features/retention/DailyRetentionWidget'
 import { OnboardingGuidance } from '@/features/onboarding/OnboardingGuidance';
 import { getOnboardingGuidance } from '@/features/onboarding/onboardingViewModel';
 import { runGameAction, type GameActionId } from '@/features/game-actions/gameActions';
+import {
+  isBuildingsPanelSearchOpen,
+  withBuildingsPanelSearch,
+  withoutBuildingsPanelSearch,
+} from '@/features/game/gamePanelSearch';
 import { metaFor } from '@/features/village/buildingMeta';
 import { KingdomActivitiesBottomSheet } from '@/features/combat/KingdomActivitiesBottomSheet';
-import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
-import { PowerBottomSheet } from '@/features/power/PowerBottomSheet';
 import {
   useClaimDailyCardMutation,
   useMyVillagesQuery,
@@ -59,6 +60,7 @@ function VillageCanvasFrame({
 
 export function VillageView() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const villageId = useGameStore((state) => state.villageId);
   const worldId = useGameStore((state) => state.worldId);
   const buildingsQuery = useVillageBuildingsQuery(villageId);
@@ -68,14 +70,12 @@ export function VillageView() {
   const claimDailyCard = useClaimDailyCardMutation();
 
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingDto | null>(null);
-  const [isBuildingPanelOpen, setIsBuildingPanelOpen] = useState(false);
   const [isQueueOpen, setIsQueueOpen] = useState(false);
-  const [isPowerSheetOpen, setIsPowerSheetOpen] = useState(false);
   const [isExpeditionsOpen, setIsExpeditionsOpen] = useState(false);
   const [isVillageStyleOpen, setIsVillageStyleOpen] = useState(false);
   const [kingdomActivityTab, setKingdomActivityTab] =
     useState<KingdomActivityTab>('expeditions');
-  const unreadCount = useUnreadReportsCount();
+  const isBuildingPanelOpen = isBuildingsPanelSearchOpen(searchParams);
 
   const buildings = useMemo(() => {
     return [...(buildingsQuery.data ?? [])].sort(
@@ -95,11 +95,13 @@ export function VillageView() {
     setSelectedBuilding(building);
   };
 
-  const handleSelectResourceBuilding = (resource: 'iron' | 'stone' | 'wood') => {
+  const handleSelectResourceBuilding = useCallback((resource: 'iron' | 'stone' | 'wood') => {
     const buildingType = RESOURCE_BUILDING_BY_HEADER_RESOURCE[resource];
     const building = buildings.find((candidate) => candidate.type === buildingType);
     if (building) setSelectedBuilding(building);
-  };
+  }, [buildings]);
+
+  useGameShellResourceClick(handleSelectResourceBuilding);
 
   const handleCloseDetail = () => {
     setSelectedBuilding(null);
@@ -108,20 +110,15 @@ export function VillageView() {
   const runVillageAction = (actionId: GameActionId) => {
     runGameAction(actionId, {
       navigate,
-      openBuildingManagement: () => setIsBuildingPanelOpen(true),
+      openBuildingManagement: () => {
+        setSearchParams((current) => withBuildingsPanelSearch(current));
+      },
     });
   };
 
   return (
-    <div className="relative h-screen w-full flex flex-col overflow-hidden">
-    <div className="flex-shrink">
-      <GameHeader
-        onPowerClick={() => setIsPowerSheetOpen(true)}
-        onResourceClick={handleSelectResourceBuilding}
-      />
-    </div>
-
-    <div className="relative flex-1 overflow-hidden">
+    <div className="relative h-full w-full overflow-hidden">
+      <div className="relative h-full overflow-hidden">
         <div className="absolute right-4 top-4 z-30">
           <DailyRetentionWidget
             activeVillageId={villageId}
@@ -158,18 +155,11 @@ export function VillageView() {
         )}
       </div>
 
-      <BottomNavigationBar
-        activeTab="buildings"
-        onBuildingsClick={() => setIsBuildingPanelOpen(true)}
-        onArmyClick={() => navigate('/game/army')}
-        onWorldClick={() => navigate('/game/world')}
-        onMessagesClick={() => navigate('/game/messages')}
-        unreadCount={unreadCount}
-      />
-
       <BuildingManagementPanel
         isOpen={isBuildingPanelOpen}
-        onClose={() => setIsBuildingPanelOpen(false)}
+        onClose={() => {
+          setSearchParams((current) => withoutBuildingsPanelSearch(current), { replace: true });
+        }}
         buildings={buildings}
         onBuildingClick={handleSelectBuilding}
       />
@@ -203,11 +193,6 @@ export function VillageView() {
         />
       )}
 
-      <PowerBottomSheet
-        isOpen={isPowerSheetOpen}
-        onClose={() => setIsPowerSheetOpen(false)}
-      />
-
       <BottomSheet
         isOpen={isExpeditionsOpen}
         onClose={() => setIsExpeditionsOpen(false)}
@@ -220,8 +205,6 @@ export function VillageView() {
           worldId={worldId}
         />
       </BottomSheet>
-
-      <ToastStack />
     </div>
   );
 }

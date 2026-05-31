@@ -10,6 +10,7 @@ import { WorldSelector } from '@/features/worlds/WorldSelector';
 import { WorldSessionGate } from '@/features/worlds/WorldSessionGate';
 import { Spinner } from '@/ui/spinners';
 import { AuthenticatedShell } from '@/features/layout/AuthenticatedShell';
+import { GameShellLayout } from '@/features/layout/GameShellLayout';
 import { VictoryModalHost } from '@/ui/modals/VictoryModalHost';
 
 const VillageView = lazy(() =>
@@ -110,10 +111,12 @@ export default function App() {
             <Route element={<AuthenticatedShell />}>
               <Route path="/worlds" element={<WorldSelector />} />
               <Route path="/my-worlds" element={<Navigate to="/game" replace />} />
-              <Route path="/game" element={<GameGuard />} />
-              <Route path="/game/world" element={<WorldMapGuard />} />
-              <Route path="/game/army" element={<ArmyGuard />} />
-              <Route path="/game/messages" element={<MessagesGuard />} />
+              <Route element={<GameShellLayout />}>
+                <Route path="/game" element={<GameGuard />} />
+                <Route path="/game/world" element={<WorldMapGuard />} />
+                <Route path="/game/army" element={<ArmyGuard />} />
+                <Route path="/game/messages" element={<MessagesGuard />} />
+              </Route>
             </Route>
           </Route>
 

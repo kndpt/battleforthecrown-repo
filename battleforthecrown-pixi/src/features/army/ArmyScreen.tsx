@@ -15,14 +15,9 @@ import {
 } from '@/api/queries';
 import type { ArmyUnitDto } from '@/api/queries';
 import { BottomSheet, Button, Panel, Spinner } from '@/ui';
-import { GameHeader } from '@/features/layout/GameHeader';
-import { ToastStack } from '@/features/layout/ToastStack';
-import { BottomNavigationBar } from '@/features/layout/BottomNavigationBar';
-import { PowerBottomSheet } from '@/features/power/PowerBottomSheet';
 import { OnboardingGuidance } from '@/features/onboarding/OnboardingGuidance';
 import { getOnboardingGuidance } from '@/features/onboarding/onboardingViewModel';
 import { runGameAction, type GameActionId } from '@/features/game-actions/gameActions';
-import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
 import {
   ArmyContentDesign,
   ArmyRecruitPopup,
@@ -68,7 +63,7 @@ const ARMY_RUNTIME_TABS = [
 
 function NoBarracksScreen() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100 flex items-center justify-center p-4">
+    <div className="flex h-full items-center justify-center p-4 pb-24">
       <Panel variant="stone" padding="lg" className="text-center max-w-md shadow-2xl">
         <Lock className="h-16 w-16 text-white mx-auto mb-4" />
         <h2 className="font-cinzel text-2xl font-bold text-white mb-3">
@@ -252,8 +247,6 @@ export function ArmyScreen() {
   const [selectedGarrisonDirection, setSelectedGarrisonDirection] = useState<GarrisonLine['direction'] | null>(null);
   const [selectedGarrisonTroopId, setSelectedGarrisonTroopId] = useState<string | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<ArmyUnitDto | null>(null);
-  const [isPowerSheetOpen, setIsPowerSheetOpen] = useState(false);
-  const unreadCount = useUnreadReportsCount();
 
   const barracks = buildings.data?.find((b) => b.type === 'BARRACKS');
   const barracksLevel = barracks?.level ?? 0;
@@ -331,7 +324,7 @@ export function ArmyScreen() {
 
   if (buildings.isLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
+      <div className="flex h-full items-center justify-center">
         <Spinner size="lg" />
       </div>
     );
@@ -423,11 +416,7 @@ export function ArmyScreen() {
   };
 
   return (
-    <div className="h-screen w-full flex flex-col overflow-hidden bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
-      <div className="flex-shrink">
-        <GameHeader onPowerClick={() => setIsPowerSheetOpen(true)} />
-      </div>
-
+    <div className="flex h-full w-full flex-col overflow-hidden bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
       <div
         className={
           activeRuntimeTab === 'barracks'
@@ -480,15 +469,6 @@ export function ArmyScreen() {
           />
         )}
       </div>
-
-      <BottomNavigationBar
-        activeTab="army"
-        onBuildingsClick={() => navigate('/game')}
-        onArmyClick={() => undefined}
-        onWorldClick={() => navigate('/game/world')}
-        onMessagesClick={() => navigate('/game/messages')}
-        unreadCount={unreadCount}
-      />
 
       {selectedUnit && (
         <UnitDetailModal
@@ -559,13 +539,6 @@ export function ArmyScreen() {
           ) : null}
         </GameBottomSheetPanel>
       </BottomSheet>
-
-      <PowerBottomSheet
-        isOpen={isPowerSheetOpen}
-        onClose={() => setIsPowerSheetOpen(false)}
-      />
-
-      <ToastStack />
     </div>
   );
 }
