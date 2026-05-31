@@ -1,7 +1,7 @@
 # 076 — Annuler une formation depuis la file Caserne
 
 **Sévérité** : 🟠 Moyen
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ Résolu
 **Spec amont** : [`docs/gameplay/08-units.md`](../docs/gameplay/08-units.md) — entraînement des unités
 
 ## Symptôme | Problème

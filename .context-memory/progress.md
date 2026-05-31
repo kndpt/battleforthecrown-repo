@@ -4,6 +4,7 @@
 
 ## Done
 
+- 2026-05-31: Ticket 076 termine : annulation de formation depuis les `QueueChip` Caserne avec confirmation design-system, mutation existante branchee, pending global sur actions queue, test `ArmyViewDesign` + type-check Pixi + static-check verts.
 - 2026-05-31: Run 043 termine : `GameShellLayout` route-level centralise header/nav/toasts/power/unread pour `/game/*`; `VillageView` ouvre les bâtiments via `panel=buildings`; tests Pixi/static-check et QA navigateur verts.
 - 2026-05-31: Run 042 termine : page detail royaume `/worlds/:worldId` branchee sur `GET /worlds/public`, bouton `Details`, contrat public enrichi lifecycle days + map, tests Pixi/backend/static-check verts, QA navigateur validee par le user.
 - 2026-05-31: Automations Codex BFTC creees : prompts commencent par `$bftc-maint-new-commits`, `$bftc-maint-debt`, `$bftc-refactor-{backend,pixi,shared}`; toutes actives en worktree aux horaires de `.agents/maintenance/trigger-strategy.md`.

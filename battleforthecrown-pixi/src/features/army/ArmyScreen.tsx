@@ -5,6 +5,7 @@ import { ApiError } from '@/api';
 import {
   useArmyInventoryQuery,
   useArmyTrainingQuery,
+  useCancelTrainingMutation,
   useGarrisonQuery,
   useOnboardingSummaryQuery,
   usePopulationQuery,
@@ -13,7 +14,7 @@ import {
   useVillageBuildingsQuery,
   useWorldConfigQuery,
 } from '@/api/queries';
-import type { ArmyUnitDto } from '@/api/queries';
+import type { ArmyTrainingDto, ArmyUnitDto } from '@/api/queries';
 import { BottomSheet, Button, Panel, Spinner } from '@/ui';
 import { OnboardingGuidance } from '@/features/onboarding/OnboardingGuidance';
 import { getOnboardingGuidance } from '@/features/onboarding/onboardingViewModel';
@@ -21,8 +22,11 @@ import { runGameAction, type GameActionId } from '@/features/game-actions/gameAc
 import {
   ArmyContentDesign,
   ArmyRecruitPopup,
+  BaseModal,
+  BftcButton,
   computeArmyRecruitMax,
   GameBottomSheetPanel,
+  type ArmyQueueItem,
   type ArmyRecruitPopupLabels,
   type ArmySupportRow,
   type ArmyTroop,
@@ -170,6 +174,90 @@ function GarrisonActions({
   );
 }
 
+function TrainingCancelDialog({
+  isPending,
+  onClose,
+  onConfirm,
+  training,
+}: {
+  isPending: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  training: ArmyTrainingDto;
+}) {
+  const meta = unitMetaFor(training.unitType);
+  const remainingQuantity = Math.max(0, training.totalQty - training.completedQty);
+
+  return (
+    <div
+      aria-modal="true"
+      className="fixed inset-0 z-[90] grid place-items-center bg-[rgba(0,0,0,.62)] p-3 [backdrop-filter:blur(3px)]"
+      onClick={() => {
+        if (!isPending) onClose();
+      }}
+      role="dialog"
+    >
+      <div className="flex w-full justify-center" onClick={(event) => event.stopPropagation()}>
+        <BaseModal
+          bodyClassName="flex flex-col gap-3"
+          footer={
+            <div className="grid grid-cols-2 gap-2">
+              <BftcButton
+                className="justify-center"
+                disabled={isPending}
+                onClick={onClose}
+                size="md"
+                variant="neutral"
+              >
+                Annuler
+              </BftcButton>
+              <BftcButton
+                className="justify-center"
+                disabled={isPending}
+                onClick={onConfirm}
+                size="md"
+                variant="danger"
+              >
+                {isPending ? 'Annulation...' : 'Confirmer'}
+              </BftcButton>
+            </div>
+          }
+          maxHeight="min(90dvh, 520px)"
+          onClose={isPending ? undefined : onClose}
+          title="Annuler la formation"
+          tone="red"
+          width={340}
+        >
+          <div className="flex items-center gap-3 rounded-[14px] border-2 border-[#8b7355] bg-[linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.43))] px-3 py-2.5">
+            {meta.iconPath ? (
+              <img
+                alt=""
+                className="size-12 object-contain drop-shadow-[0_1px_1px_rgba(0,0,0,.3)]"
+                src={publicAsset(meta.iconPath)}
+              />
+            ) : (
+              <span aria-hidden className="text-3xl leading-none">
+                {meta.emoji}
+              </span>
+            )}
+            <div className="min-w-0">
+              <p className="truncate font-game text-[15px] font-extrabold text-[#3d2f1f]">
+                {meta.name}
+              </p>
+              <p className="mt-1 font-game text-[11px] font-bold uppercase tracking-[.08em] text-[#6d5838]">
+                ×{remainingQuantity} en formation
+              </p>
+            </div>
+          </div>
+          <p className="font-game text-[13px] font-semibold leading-relaxed text-[#3d2f1f]">
+            Confirmer rembourse les ressources et la population réservées pour cette formation.
+          </p>
+        </BaseModal>
+      </div>
+    </div>
+  );
+}
+
 function PositionMapButton({ label }: { label: string }) {
   return (
     <button
@@ -232,6 +320,7 @@ export function ArmyScreen() {
   const population = usePopulationQuery(villageId);
   const worldConfig = useWorldConfigQuery(worldId);
   const onboardingSummary = useOnboardingSummaryQuery(worldId);
+  const cancelTraining = useCancelTrainingMutation();
   const recallReinforcement = useRecallReinforcementMutation();
   const train = useTrainUnitsMutation();
   const pushToast = useUiStore((state) => state.pushToast);
@@ -243,6 +332,7 @@ export function ArmyScreen() {
   const [draggedTroopId, setDraggedTroopId] = useState<string | null>(null);
   const [recruitTroopId, setRecruitTroopId] = useState<string | null>(null);
   const [recruitValue, setRecruitValue] = useState(1);
+  const [cancelTrainingId, setCancelTrainingId] = useState<string | null>(null);
   const [selectedGarrisonVillageId, setSelectedGarrisonVillageId] = useState<string | null>(null);
   const [selectedGarrisonDirection, setSelectedGarrisonDirection] = useState<GarrisonLine['direction'] | null>(null);
   const [selectedGarrisonTroopId, setSelectedGarrisonTroopId] = useState<string | null>(null);
@@ -307,6 +397,9 @@ export function ArmyScreen() {
   const selectedGarrisonTroop = selectedGarrisonTroopId
     ? armyModel.troops.find((troop) => troop.id === selectedGarrisonTroopId) ?? null
     : null;
+  const selectedCancelTraining = cancelTrainingId
+    ? trainings.find((candidate) => candidate.id === cancelTrainingId) ?? null
+    : null;
   const selectedGarrisonTitle =
     selectedGarrisonVillageId
       ? selectedGarrisonLines[0]?.hostVillageName ?? 'Stationnées ailleurs'
@@ -320,6 +413,9 @@ export function ArmyScreen() {
       : null;
   const pendingRecallKey = recallReinforcement.variables
     ? `${recallReinforcement.variables.villageId}:${recallReinforcement.variables.originVillageId}:${Object.keys(recallReinforcement.variables.units)[0]}`
+    : null;
+  const pendingCancelTrainingId = cancelTraining.isPending
+    ? cancelTraining.variables?.trainingId ?? null
     : null;
 
   if (buildings.isLoading) {
@@ -363,6 +459,32 @@ export function ArmyScreen() {
         onSuccess: () => {
           setRecruitTroopId(null);
           setRecruitValue(1);
+        },
+      },
+    );
+  };
+
+  const handleCancelQueueItem = (item: ArmyQueueItem) => {
+    if (cancelTraining.isPending) return;
+    setCancelTrainingId(item.id);
+  };
+
+  const handleConfirmCancelTraining = () => {
+    if (!villageId || !selectedCancelTraining || cancelTraining.isPending) return;
+    cancelTraining.mutate(
+      { villageId, trainingId: selectedCancelTraining.id },
+      {
+        onError: (err) => {
+          pushToast({
+            description:
+              err instanceof ApiError ? err.message : "Échec de l'annulation",
+            title: 'Annulation impossible',
+            tone: 'error',
+            ttlMs: 4000,
+          });
+        },
+        onSuccess: () => {
+          setCancelTrainingId(null);
         },
       },
     );
@@ -459,7 +581,10 @@ export function ArmyScreen() {
             onVillageRowSelect={handleVillageRowSelect}
             recruitSheet={{
               ...armyModel.recruitSheet,
+              cancelQueueDisabled: cancelTraining.isPending,
+              cancelQueueItemId: pendingCancelTrainingId,
               isDragging: Boolean(draggedTroopId),
+              onCancelQueueItem: handleCancelQueueItem,
               onDropTroop: handleDropTroop,
             }}
             sections={activeRuntimeTab === 'army' ? armyModel.armySections : undefined}
@@ -477,6 +602,15 @@ export function ArmyScreen() {
           onClose={() => setSelectedUnit(null)}
         />
       )}
+
+      {selectedCancelTraining ? (
+        <TrainingCancelDialog
+          isPending={cancelTraining.isPending}
+          onClose={() => setCancelTrainingId(null)}
+          onConfirm={handleConfirmCancelTraining}
+          training={selectedCancelTraining}
+        />
+      ) : null}
 
       <BottomSheet
         isOpen={Boolean(recruitTroop)}

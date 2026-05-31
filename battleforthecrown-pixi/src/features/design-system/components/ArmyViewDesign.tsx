@@ -101,9 +101,12 @@ export interface ArmyQueueItem {
 
 export interface ArmyRecruitSheetProps {
   activeDropLabel: string;
+  cancelQueueDisabled?: boolean;
+  cancelQueueItemId?: string | null;
   dropIdleLabel: string;
   iconPath: string;
   isDragging?: boolean;
+  onCancelQueueItem?: (item: ArmyQueueItem) => void;
   onDropTroop?: (troopId: string) => void;
   queue: ArmyQueueItem[];
   summaryLabel: string;
@@ -790,9 +793,12 @@ function PortraitTile({
 
 function RecruitSheet({
   activeDropLabel,
+  cancelQueueDisabled = false,
+  cancelQueueItemId,
   dropIdleLabel,
   iconPath,
   isDragging = false,
+  onCancelQueueItem,
   queue,
   sheetRef,
   summaryLabel,
@@ -815,7 +821,15 @@ function RecruitSheet({
       <div className="flex min-h-[58px] items-center gap-[5px] rounded-[12px] border-[1.5px] border-[rgba(0,0,0,.5)] bg-[rgba(0,0,0,.3)] px-2 py-2.5 shadow-[inset_0_2px_3px_rgba(0,0,0,.25)]">
         {queue.map((item) => {
           const troop = troops.find((candidate) => candidate.id === item.troopId);
-          return troop ? <QueueChip item={item} key={item.id} troop={troop} /> : null;
+          return troop ? (
+            <QueueChip
+              cancelDisabled={cancelQueueDisabled || cancelQueueItemId === item.id}
+              item={item}
+              key={item.id}
+              onCancel={onCancelQueueItem}
+              troop={troop}
+            />
+          ) : null;
         })}
         <div
           className={cn(
@@ -857,10 +871,23 @@ function RecruitSummary({ summaryLabel }: { summaryLabel: string }) {
   );
 }
 
-function QueueChip({ item, troop }: { item: ArmyQueueItem; troop: ArmyTroop }) {
+function QueueChip({
+  cancelDisabled = false,
+  item,
+  onCancel,
+  troop,
+}: {
+  cancelDisabled?: boolean;
+  item: ArmyQueueItem;
+  onCancel?: (item: ArmyQueueItem) => void;
+  troop: ArmyTroop;
+}) {
   return (
     <div
-      className="relative inline-flex min-h-[34px] items-center gap-1.5 rounded-[15px] border-[1.5px] pb-[8px] pl-[6px] pr-2 pt-[5px] shadow-[inset_0_1px_0_rgba(255,255,255,.25)]"
+      className={cn(
+        'relative inline-flex min-h-[34px] items-center gap-1.5 rounded-[15px] border-[1.5px] pb-[8px] pl-[6px] pt-[5px] shadow-[inset_0_1px_0_rgba(255,255,255,.25)]',
+        onCancel ? 'pr-[26px]' : 'pr-2',
+      )}
       style={{
         background: item.active
           ? 'linear-gradient(to bottom, var(--game-gold-glow), var(--game-gold-dark))'
@@ -878,6 +905,21 @@ function QueueChip({ item, troop }: { item: ArmyQueueItem; troop: ArmyTroop }) {
       >
         ×{item.quantity}
       </span>
+      {onCancel ? (
+        <button
+          aria-label={`Annuler la formation ${troop.name} ×${item.quantity}`}
+          className="absolute right-[4px] top-[4px] flex size-[18px] items-center justify-center rounded-full border border-[rgba(0,0,0,.35)] bg-[rgba(60,38,25,.55)] pb-px font-game text-[13px] font-extrabold leading-none text-white shadow-[inset_0_1px_0_rgba(255,255,255,.24)] [text-shadow:1px_1px_1px_rgba(0,0,0,.45)] disabled:cursor-not-allowed disabled:opacity-45"
+          disabled={cancelDisabled}
+          onClick={(event) => {
+            event.stopPropagation();
+            onCancel(item);
+          }}
+          title="Annuler cette formation"
+          type="button"
+        >
+          ×
+        </button>
+      ) : null}
       {item.progress != null ? (
         <div className="absolute bottom-1 left-[6px] right-[6px] h-[3px] overflow-hidden rounded-full bg-[rgba(0,0,0,.3)]">
           <div className="h-full bg-white shadow-[0_0_4px_rgba(255,255,255,.7)]" style={{ width: `${item.progress * 100}%` }} />
