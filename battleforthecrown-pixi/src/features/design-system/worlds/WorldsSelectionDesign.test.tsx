@@ -1,8 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { WorldCardViewModel } from '@/features/worlds/worldsViewModel';
+import type { PublicWorld } from '@battleforthecrown/shared/world';
+import { toWorldDetailViewModel, type WorldCardViewModel } from '@/features/worlds/worldsViewModel';
+import { WorldDetailDesign } from './WorldDetailDesign';
 import { WorldCard, WorldEntryOverlay, WorldsSelectionDesign } from './WorldsSelectionDesign';
-import { defaultSeasonVariants, worldsSelectionLabels } from './worldsSelectionConfig';
+import { defaultSeasonVariants, worldDetailLabels, worldsSelectionLabels } from './worldsSelectionConfig';
 
 function makeCard(overrides: Partial<WorldCardViewModel> = {}): WorldCardViewModel {
   return {
@@ -67,6 +69,8 @@ describe('WorldCard', () => {
   ])('renders the $title state without exposing raw inscriptionPhase', (scenario) => {
     render(
       <WorldCard
+        detailsLabel="Détails"
+        onDetails={() => undefined}
         onJoin={() => undefined}
         onNotify={() => undefined}
         world={makeCard({
@@ -103,6 +107,8 @@ describe('WorldCard', () => {
     const onJoin = vi.fn();
     render(
       <WorldCard
+        detailsLabel="Détails"
+        onDetails={() => undefined}
         onJoin={onJoin}
         onNotify={() => undefined}
         world={makeCard({
@@ -122,6 +128,8 @@ describe('WorldCard', () => {
   it('renders personal stats and the canonical power asset only when provided', () => {
     const { container, rerender } = render(
       <WorldCard
+        detailsLabel="Détails"
+        onDetails={() => undefined}
         onJoin={() => undefined}
         onNotify={() => undefined}
         world={makeCard({
@@ -143,6 +151,8 @@ describe('WorldCard', () => {
 
     rerender(
       <WorldCard
+        detailsLabel="Détails"
+        onDetails={() => undefined}
         onJoin={() => undefined}
         onNotify={() => undefined}
         world={makeCard({ personalStats: null })}
@@ -155,6 +165,25 @@ describe('WorldCard', () => {
     expect(container.querySelector('img[src="/assets/army-power.png"]')).not.toBeInTheDocument();
   });
 
+  it('opens details without triggering the primary CTA', () => {
+    const onDetails = vi.fn();
+    const onJoin = vi.fn();
+    render(
+      <WorldCard
+        detailsLabel="Détails"
+        onDetails={onDetails}
+        onJoin={onJoin}
+        onNotify={() => undefined}
+        world={makeCard()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Détails' }));
+
+    expect(onDetails).toHaveBeenCalledWith(expect.objectContaining({ id: 'world-open' }));
+    expect(onJoin).not.toHaveBeenCalled();
+  });
+
 });
 
 describe('WorldsSelectionDesign', () => {
@@ -165,6 +194,7 @@ describe('WorldsSelectionDesign', () => {
         counts={{ locked: 0, open: 1, planned: 0 }}
         labels={worldsSelectionLabels}
         noticeMessage="Inscription au monde impossible"
+        onDetails={vi.fn()}
         onJoin={vi.fn()}
         onNotify={vi.fn()}
         onTabChange={vi.fn()}
@@ -186,5 +216,85 @@ describe('WorldsSelectionDesign', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent('Entrée dans');
     expect(screen.getByRole('status')).toHaveTextContent('Solstice');
+  });
+});
+
+function makePublicWorld(overrides: Partial<PublicWorld> = {}): PublicWorld {
+  return {
+    id: 'world-open',
+    identity: {
+      displayName: 'Aubeforge',
+      sigil: 'crown',
+      tagline: 'Où les vassaux bâtissent leur légende',
+      themeColor: 'green',
+      tier: 'DEBUTANTS',
+    },
+    joinedCount: 8420,
+    lifecycle: {
+      day: 5,
+      endsAt: '2026-07-19T12:00:00.000Z',
+      inscriptionPhase: 'main',
+      plannedOpenAt: null,
+      startedAt: '2026-05-20T12:00:00.000Z',
+      totalDays: 60,
+    },
+    map: {
+      gridHeight: 500,
+      gridWidth: 500,
+    },
+    status: 'OPEN',
+    tempoProfile: 'standard',
+    ...overrides,
+  };
+}
+
+describe('WorldDetailDesign', () => {
+  it('renders sourced public world details without prototype-only fixtures', () => {
+    const model = toWorldDetailViewModel(
+      makePublicWorld(),
+      new Set(['world-open']),
+      undefined,
+      new Map([['world-open', { kingdomPower: 1234567, villageCount: 2 }]]),
+    );
+    const { container } = render(
+      <WorldDetailDesign
+        labels={worldDetailLabels}
+        onBack={() => undefined}
+        onPrimaryAction={() => undefined}
+        world={model}
+      />,
+    );
+
+    expect(screen.getByText('Aubeforge')).toBeInTheDocument();
+    expect(normalizedText(container)).toContain('8 420');
+    expect(screen.getByText('500 × 500')).toBeInTheDocument();
+    expect(screen.getByText('2 villages')).toBeInTheDocument();
+    expect(normalizedText(container)).toContain('1 234 567');
+    expect(screen.queryByText(/Sire Aldric/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Coalitions/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Pillage/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Densité/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Vainqueur de/i)).not.toBeInTheDocument();
+  });
+
+  it('hides personal stats when they are not loaded', () => {
+    const model = toWorldDetailViewModel(
+      makePublicWorld(),
+      new Set(['world-open']),
+      undefined,
+      new Map(),
+    );
+
+    render(
+      <WorldDetailDesign
+        labels={worldDetailLabels}
+        onBack={() => undefined}
+        onPrimaryAction={() => undefined}
+        world={model}
+      />,
+    );
+
+    expect(screen.queryByText('Votre royaume')).not.toBeInTheDocument();
+    expect(screen.queryByText('0 village')).not.toBeInTheDocument();
   });
 });

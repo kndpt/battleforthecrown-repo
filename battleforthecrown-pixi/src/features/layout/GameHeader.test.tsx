@@ -84,6 +84,10 @@ function mockApi() {
             startedAt: new Date(now - 3_600_000).toISOString(),
             totalDays: 60,
           },
+          map: {
+            gridHeight: 500,
+            gridWidth: 500,
+          },
           status: 'OPEN',
           tempoProfile: 'standard',
         },

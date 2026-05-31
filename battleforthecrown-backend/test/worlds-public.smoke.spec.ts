@@ -84,6 +84,10 @@ describe('public worlds smoke', () => {
         inscriptionPhase: 'closed',
         plannedOpenAt: addDays(now, 2).toISOString(),
       },
+      map: {
+        gridWidth: 500,
+        gridHeight: 500,
+      },
       tempoProfile: 'standard',
       joinedCount: 0,
     });

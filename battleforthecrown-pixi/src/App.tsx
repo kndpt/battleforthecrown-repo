@@ -19,6 +19,9 @@ const VillageView = lazy(() =>
 const WorldMapScreen = lazy(() =>
   import('@/features/world/WorldMapScreen').then((m) => ({ default: m.WorldMapScreen })),
 );
+const WorldDetailScreen = lazy(() =>
+  import('@/features/worlds/WorldDetailScreen').then((m) => ({ default: m.WorldDetailScreen })),
+);
 const ArmyScreen = lazy(() =>
   import('@/features/army/ArmyScreen').then((m) => ({ default: m.ArmyScreen })),
 );
@@ -110,6 +113,14 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<AuthenticatedShell />}>
               <Route path="/worlds" element={<WorldSelector />} />
+              <Route
+                path="/worlds/:worldId"
+                element={
+                  <Suspense fallback={<GameLoader />}>
+                    <WorldDetailScreen />
+                  </Suspense>
+                }
+              />
               <Route path="/my-worlds" element={<Navigate to="/game" replace />} />
               <Route element={<GameShellLayout />}>
                 <Route path="/game" element={<GameGuard />} />

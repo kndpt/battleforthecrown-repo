@@ -6,6 +6,7 @@
 - Pour une automation Codex qui doit lancer un skill, vérifier le `name:` réel dans `.agents/skills/*/SKILL.md` puis commencer le prompt par `$skill-name`; ne pas se contenter d'une phrase "utilise le skill ...".
 - Ne pas attendre longtemps un sub-agent silencieux : faire un poll court, fermer l'agent bloqué, documenter la dérogation et reprendre avec une cartographie locale ciblée.
 - Si une commande `rtk` en parallèle semble bloquer, stopper le fan-out et reprendre avec une seule commande ciblée, bornée en sortie.
+- Si une review indépendante obligatoire timeout deux fois sans verdict, documenter les agents/timeouts dans la fiche, demander une dérogation user explicite, puis reprendre seulement après accord clair.
 - Ne pas utiliser `tasks/todo.md` comme livrable durable hors exécution `$bftc-run` : il est volatile et peut être réécrit par le pipeline. Pour une adaptation de règle/skill, préférer la modification du skill/rule + review en réponse finale.
 - Après un `$bftc-run`, le rapport final doit contenir `Acceptance & QA` : critères d'acceptance vérifiés, tests automatisés, smokes ajoutés/modifiés, QA fonctionnelle agent (`server + curl`, REST, worker/job, SELECT DB si pertinent), puis uniquement les tests IG qui restent réellement au user.
 - Ne jamais faire de QA in-game via browser côté agent : l'agent se limite aux tests automatisés, smokes, curls, logs, healthchecks ou boot checks ; si une QA IG est nécessaire, donner seulement une checklist ultra concise à Kelvin.

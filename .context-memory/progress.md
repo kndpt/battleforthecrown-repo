@@ -4,6 +4,7 @@
 
 ## Done
 
+- 2026-05-31: Run 042 termine : `/worlds/:worldId` detail monde via `PublicWorld.map`, bouton `Details` sans join sur cards royaumes, composant design-system props-first ; tests Pixi, smoke `worlds-public`, static-check et build Pixi verts. Review independante bypass user apres deux timeouts.
 - 2026-05-31: Run 043 termine : `GameShellLayout` route-level centralise header/nav/toasts/power/unread pour `/game/*`; `VillageView` ouvre les bâtiments via `panel=buildings`; tests Pixi/static-check et QA navigateur verts.
 - 2026-05-31: Automations Codex BFTC creees : prompts commencent par `$bftc-maint-new-commits`, `$bftc-maint-debt`, `$bftc-refactor-{backend,pixi,shared}`; toutes actives en worktree aux horaires de `.agents/maintenance/trigger-strategy.md`.
 - 2026-05-31: Politique smokes agent mise a jour : local cible par fichiers `*.smoke.spec.ts`, full smoke porte par CI PR ; skills/docs/agents Codex+Claude alignes.

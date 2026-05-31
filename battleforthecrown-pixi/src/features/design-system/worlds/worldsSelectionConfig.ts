@@ -1,3 +1,4 @@
+import type { WorldDetailLabels } from './WorldDetailDesign';
 import type { SeasonVariant, WorldsSelectionLabels } from './WorldsSelectionDesign';
 
 export const defaultSeasonVariants: SeasonVariant[] = [
@@ -8,6 +9,7 @@ export const defaultSeasonVariants: SeasonVariant[] = [
 
 export const worldsSelectionLabels: WorldsSelectionLabels = {
   back: 'Retour',
+  details: 'Détails',
   empty: {
     locked: 'Aucun royaume verrouillé.',
     open: 'Aucun royaume ouvert.',
@@ -17,4 +19,14 @@ export const worldsSelectionLabels: WorldsSelectionLabels = {
   subtitle: 'Choisissez votre saison — chaque royaume, son tempo',
   tempoHint: '',
   title: 'ROYAUMES',
+};
+
+export const worldDetailLabels: WorldDetailLabels = {
+  back: 'Royaumes',
+  guardrailsTitle: 'Garde-fous absolus',
+  joinedStatsTitle: 'Votre royaume',
+  lifecycleTitle: 'Cycle du royaume',
+  mapTitle: 'Carte',
+  notFound: 'Royaume introuvable.',
+  tempoTitle: 'Rythme du monde',
 };

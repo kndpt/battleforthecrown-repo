@@ -20,6 +20,11 @@ export interface WorldPersonalStatsViewModel {
   villageCountLabel: string;
 }
 
+export interface WorldDetailMetricViewModel {
+  label: string;
+  value: string;
+}
+
 export interface WorldCardViewModel {
   ctaKind: WorldCtaKind;
   ctaLabel: string;
@@ -41,6 +46,13 @@ export interface WorldCardViewModel {
   theme: WorldThemeTokens;
   themeColor: PublicWorld['identity']['themeColor'];
   tierLabel: string;
+}
+
+export interface WorldDetailViewModel extends WorldCardViewModel {
+  guardrails: WorldDetailMetricViewModel[];
+  lifecycleRows: WorldDetailMetricViewModel[];
+  mapLabel: string;
+  tempoRows: WorldDetailMetricViewModel[];
 }
 
 export const WORLD_THEME_TOKENS: Record<PublicWorld['identity']['themeColor'], WorldThemeTokens> = {
@@ -81,6 +93,14 @@ const tierLabels: Record<PublicWorld['identity']['tier'], string> = {
   CLASSED: 'CLASSÉ',
   DEBUTANTS: 'DÉBUTANTS',
 };
+
+const guardrails: WorldDetailMetricViewModel[] = [
+  { label: 'Bouclier débutant', value: '48 h temps réel' },
+  { label: 'Ratios attaque / défense', value: 'Fixes' },
+  { label: 'Coûts en population', value: 'Fixes' },
+  { label: 'Règle puissance ÷ 3', value: 'Anti-snowball' },
+  { label: 'Bonus / malus de style', value: 'Identiques' },
+];
 
 const formatter = new Intl.NumberFormat('fr-FR');
 const EMPTY_PERSONAL_STATS = new Map<string, WorldPersonalStatsInput>();
@@ -166,4 +186,44 @@ export function filterWorldsByTab(
   tab: WorldsTab,
 ): WorldCardViewModel[] {
   return worlds.filter((world) => world.tab === tab);
+}
+
+export function toWorldDetailViewModel(
+  world: PublicWorld,
+  joinedWorldIds: ReadonlySet<string>,
+  nowMs = Date.now(),
+  personalStatsByWorldId: ReadonlyMap<string, WorldPersonalStatsInput> = EMPTY_PERSONAL_STATS,
+): WorldDetailViewModel {
+  const card = toWorldCardViewModel(world, joinedWorldIds, nowMs, personalStatsByWorldId);
+  const openedLabel = world.lifecycle.startedAt
+    ? new Date(world.lifecycle.startedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+    : world.lifecycle.plannedOpenAt
+      ? `Ouverture ${new Date(world.lifecycle.plannedOpenAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}`
+      : 'Ouverture planifiée';
+  const endsLabel = world.lifecycle.endsAt
+    ? new Date(world.lifecycle.endsAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+    : 'À venir';
+
+  return {
+    ...card,
+    guardrails,
+    lifecycleRows: [
+      { label: 'Cycle', value: card.dayLabel },
+      { label: 'Vassaux', value: card.joinedCountLabel },
+      { label: 'Ouverture', value: openedLabel },
+      { label: 'Fin prévue', value: endsLabel },
+      { label: 'Inscriptions', value: card.statusLabel },
+    ],
+    mapLabel: `${formatter.format(world.map.gridWidth)} × ${formatter.format(world.map.gridHeight)}`,
+    tempoRows: [
+      {
+        label: 'Profil',
+        value: card.tempoLabel,
+      },
+      {
+        label: 'Type',
+        value: world.tempoProfile === 'standard' ? 'Standard MVP' : 'Configuration personnalisée',
+      },
+    ],
+  };
 }

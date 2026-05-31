@@ -123,6 +123,10 @@ export function WorldSelector() {
     });
   };
 
+  const onDetails = (world: WorldCardViewModel) => {
+    navigate(`/worlds/${world.id}`);
+  };
+
   return (
     <>
       <WorldsSelectionDesign
@@ -133,6 +137,7 @@ export function WorldSelector() {
         labels={worldsSelectionLabels}
         noticeMessage={error}
         onBack={() => navigate(currentWorldId ? '/game' : '/')}
+        onDetails={onDetails}
         onJoin={onJoin}
         onNotify={onNotify}
         onTabChange={setActiveTab}

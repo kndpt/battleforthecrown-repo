@@ -4,6 +4,7 @@ import {
   buildWorldTabCounts,
   filterWorldsByTab,
   toWorldCardViewModel,
+  toWorldDetailViewModel,
 } from './worldsViewModel';
 
 const now = Date.parse('2026-05-25T12:00:00.000Z');
@@ -26,6 +27,10 @@ function makeWorld(overrides: Partial<PublicWorld> = {}): PublicWorld {
       plannedOpenAt: null,
       startedAt: '2026-05-20T12:00:00.000Z',
       totalDays: 60,
+    },
+    map: {
+      gridHeight: 500,
+      gridWidth: 500,
     },
     status: 'OPEN',
     tempoProfile: 'standard',
@@ -170,5 +175,31 @@ describe('worldsViewModel', () => {
     expect(filterWorldsByTab(models, 'open').map((world) => world.id)).toEqual(['open-1', 'open-2']);
     expect(filterWorldsByTab(models, 'planned').map((world) => world.id)).toEqual(['planned-1']);
     expect(filterWorldsByTab(models, 'locked').map((world) => world.id)).toEqual(['locked-1']);
+  });
+
+  it('maps world detail data from public contract only', () => {
+    const model = toWorldDetailViewModel(
+      makeWorld(),
+      new Set(['world-open']),
+      now,
+      new Map([['world-open', { kingdomPower: 1234567, villageCount: 2 }]]),
+    );
+
+    expect(model.mapLabel).toBe('500 × 500');
+    expect(model.lifecycleRows.map((row) => row.label)).toEqual([
+      'Cycle',
+      'Vassaux',
+      'Ouverture',
+      'Fin prévue',
+      'Inscriptions',
+    ]);
+    expect(model.tempoRows).toEqual([
+      { label: 'Profil', value: 'STANDARD' },
+      { label: 'Type', value: 'Standard MVP' },
+    ]);
+    expect(model.personalStats).toEqual({
+      kingdomPowerLabel: '1 234 567',
+      villageCountLabel: '2 villages',
+    });
   });
 });

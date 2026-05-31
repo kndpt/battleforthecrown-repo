@@ -22,6 +22,10 @@ export const publicWorldPreviewFixtures: PublicWorld[] = [
       startedAt: '2026-05-20T12:00:00.000Z',
       totalDays: 60,
     },
+    map: {
+      gridHeight: 500,
+      gridWidth: 500,
+    },
     status: 'OPEN',
     tempoProfile: 'standard',
   },
@@ -42,6 +46,10 @@ export const publicWorldPreviewFixtures: PublicWorld[] = [
       plannedOpenAt: null,
       startedAt: '2026-05-17T12:00:00.000Z',
       totalDays: 60,
+    },
+    map: {
+      gridHeight: 500,
+      gridWidth: 500,
     },
     status: 'OPEN',
     tempoProfile: 'standard',
@@ -64,6 +72,10 @@ export const publicWorldPreviewFixtures: PublicWorld[] = [
       startedAt: null,
       totalDays: 60,
     },
+    map: {
+      gridHeight: 500,
+      gridWidth: 500,
+    },
     status: 'PLANNED',
     tempoProfile: 'standard',
   },
@@ -85,6 +97,10 @@ export const publicWorldPreviewFixtures: PublicWorld[] = [
       startedAt: '2026-04-27T12:00:00.000Z',
       totalDays: 60,
     },
+    map: {
+      gridHeight: 500,
+      gridWidth: 500,
+    },
     status: 'LOCKED',
     tempoProfile: 'standard',
   },
@@ -93,4 +109,3 @@ export const publicWorldPreviewFixtures: PublicWorld[] = [
 export const worldPreviewModels = publicWorldPreviewFixtures.map((world) =>
   toWorldCardViewModel(world, new Set<string>(), previewNow),
 );
-

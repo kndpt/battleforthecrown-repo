@@ -40,6 +40,10 @@ function renderTransition(initialPath: string, options: { withGameContext?: bool
         startedAt: '2026-05-25T12:00:00.000Z',
         totalDays: 60,
       },
+      map: {
+        gridHeight: 500,
+        gridWidth: 500,
+      },
       status: 'OPEN',
       tempoProfile: 'standard',
     },

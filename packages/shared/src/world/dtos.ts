@@ -22,11 +22,17 @@ export const PublicWorldLifecycleSchema = z.strictObject({
   plannedOpenAt: z.string().datetime().nullable(),
 });
 
+export const PublicWorldMapSchema = z.strictObject({
+  gridWidth: z.number().int().positive(),
+  gridHeight: z.number().int().positive(),
+});
+
 export const PublicWorldSchema = z.strictObject({
   id: z.string().min(1),
   status: PublicWorldStatusSchema,
   identity: WorldIdentitySchema,
   lifecycle: PublicWorldLifecycleSchema,
+  map: PublicWorldMapSchema,
   tempoProfile: WorldTempoProfileSchema,
   joinedCount: z.number().int().nonnegative(),
 });
@@ -36,6 +42,7 @@ export const PublicWorldsResponseSchema = z.array(PublicWorldSchema);
 export type PublicWorldStatus = z.infer<typeof PublicWorldStatusSchema>;
 export type WorldTempoProfile = z.infer<typeof WorldTempoProfileSchema>;
 export type PublicWorldLifecycle = z.infer<typeof PublicWorldLifecycleSchema>;
+export type PublicWorldMap = z.infer<typeof PublicWorldMapSchema>;
 export type PublicWorld = z.infer<typeof PublicWorldSchema>;
 export type PublicWorldsResponse = z.infer<typeof PublicWorldsResponseSchema>;
 

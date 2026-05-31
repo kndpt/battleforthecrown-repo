@@ -119,6 +119,10 @@ export class WorldService {
               ? toIsoString(world.plannedOpenAt)
               : null,
         },
+        map: {
+          gridWidth: world.gridWidth,
+          gridHeight: world.gridHeight,
+        },
         tempoProfile: TempoService.deriveProfile(config.tempo),
         joinedCount: world._count.memberships,
       };

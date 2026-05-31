@@ -13,6 +13,7 @@ export interface SeasonVariant {
 
 export interface WorldsSelectionLabels {
   back: string;
+  details: string;
   empty: Record<WorldsTab, string>;
   seasonVariants: string;
   subtitle: string;
@@ -29,6 +30,7 @@ export interface WorldsSelectionDesignProps {
   labels: WorldsSelectionLabels;
   noticeMessage?: string | null;
   onBack?: () => void;
+  onDetails: (world: WorldCardViewModel) => void;
   onJoin: (world: WorldCardViewModel) => void;
   onNotify: (world: WorldCardViewModel) => void;
   onTabChange: (tab: WorldsTab) => void;
@@ -191,10 +193,14 @@ function CtaButton({
 }
 
 export function WorldCard({
+  detailsLabel,
+  onDetails,
   onJoin,
   onNotify,
   world,
 }: {
+  detailsLabel: string;
+  onDetails: (world: WorldCardViewModel) => void;
   onJoin: (world: WorldCardViewModel) => void;
   onNotify: (world: WorldCardViewModel) => void;
   world: WorldCardViewModel;
@@ -257,7 +263,17 @@ export function WorldCard({
             </div>
           </div>
         ) : null}
-        <CtaButton onJoin={onJoin} onNotify={onNotify} world={world} />
+        <div className="grid grid-cols-[minmax(92px,.42fr)_minmax(0,1fr)] gap-1.5">
+          <button
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border-2 border-[#5d4a32] bg-[linear-gradient(to_bottom,#b0b8c0,#7f8c8d)] px-2 font-game text-[10.5px] font-extrabold uppercase tracking-[.08em] text-white shadow-[inset_0_1px_0_rgba(255,255,255,.28),0_3px_0_rgba(0,0,0,.18)] [text-shadow:1px_1px_1px_rgba(0,0,0,.45)] active:translate-y-px"
+            onClick={() => onDetails(world)}
+            type="button"
+          >
+            <ScrollText aria-hidden="true" className="size-3.5 stroke-[2.4]" />
+            {detailsLabel}
+          </button>
+          <CtaButton onJoin={onJoin} onNotify={onNotify} world={world} />
+        </div>
       </div>
     </article>
   );
@@ -270,7 +286,7 @@ export function WorldEntryOverlay({ world }: { world: WorldCardViewModel }) {
       className="fixed inset-0 z-[90] flex items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_50%_42%,#635f31_0%,#3c2d19_44%,#160f08_100%)] px-6 text-center animate-[bftc-world-entry-overlay_2000ms_ease-in-out_forwards]"
       role="status"
     >
-      <div className="absolute inset-y-0 left-1/2 w-[35vw] max-w-[190px] -translate-x-1/2 bg-[linear-gradient(to_bottom,#7b4e2d,#bd9450_32%,#3a2115_100%)] opacity-55" />
+      <div className="absolute inset-y-0 left-1/2 w-[35vw] max-w-[190px] -translate-x-1/2 bg-[linear-gradient(to_bottom,#7b4e2d,#bd9450_32%,#3a2115_100%)] opacity-[.55]" />
       <div className="relative flex max-w-[300px] flex-col items-center gap-4">
         <div className="relative flex size-[180px] items-center justify-center">
           <div className="absolute inset-0 rounded-full border border-[rgba(246,213,123,.28)] bg-[radial-gradient(circle_at_center,rgba(246,213,123,.22),rgba(246,213,123,.08)_44%,transparent_66%)] shadow-[0_0_55px_rgba(246,213,123,.32)] animate-[bftc-world-entry-rings_2000ms_ease-out_forwards]" />
@@ -319,6 +335,7 @@ export function WorldsSelectionDesign({
   labels,
   noticeMessage,
   onBack,
+  onDetails,
   onJoin,
   onNotify,
   onTabChange,
@@ -451,7 +468,14 @@ export function WorldsSelectionDesign({
               ) : (
                 <div className="flex flex-col gap-2">
                   {worlds.map((world) => (
-                    <WorldCard key={world.id} onJoin={onJoin} onNotify={onNotify} world={world} />
+                    <WorldCard
+                      detailsLabel={labels.details}
+                      key={world.id}
+                      onDetails={onDetails}
+                      onJoin={onJoin}
+                      onNotify={onNotify}
+                      world={world}
+                    />
                   ))}
                   <div className="sticky -bottom-3 h-[30px] shrink-0 bg-[linear-gradient(to_bottom,transparent,#d4c094)]" />
                 </div>
