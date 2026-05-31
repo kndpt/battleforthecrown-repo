@@ -18,9 +18,9 @@ describe('Pixi asset manifest', () => {
     }
   });
 
-  it('world-map bundle covers tiers 1-3 barbarians and 1-6 villages', () => {
+  it('world-map bundle covers tiers 1-5 barbarians and 1-6 villages', () => {
     const aliases = bundleAliases(WORLD_MAP_BUNDLE);
-    for (let t = 1; t <= 3; t += 1) {
+    for (let t = 1; t <= 5; t += 1) {
       expect(aliases).toContain(`world.barbarian.t${t}`);
     }
     for (let t = 1; t <= 6; t += 1) {
