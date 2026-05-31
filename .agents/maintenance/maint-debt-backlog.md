@@ -18,7 +18,7 @@ This backlog tracks bounded existing-debt candidates for `bftc-maint-debt`.
 
 ## Candidates
 
-- status: proposed
+- status: fixed
   area: >
     battleforthecrown-pixi/src/api/queries.ts,
     battleforthecrown-pixi/src/features/combat/scoutReportView.ts,
