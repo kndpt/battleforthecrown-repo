@@ -16,10 +16,17 @@ export const InscriptionPhaseSchema = z.enum([
 export const PublicWorldLifecycleSchema = z.strictObject({
   day: z.number().int().positive().nullable(),
   totalDays: z.number().int().positive(),
+  inscriptionMainDays: z.number().int().positive(),
+  inscriptionLateDays: z.number().int().nonnegative(),
   inscriptionPhase: InscriptionPhaseSchema,
   startedAt: z.string().datetime().nullable(),
   endsAt: z.string().datetime().nullable(),
   plannedOpenAt: z.string().datetime().nullable(),
+});
+
+export const PublicWorldMapSchema = z.strictObject({
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
 });
 
 export const PublicWorldSchema = z.strictObject({
@@ -27,6 +34,7 @@ export const PublicWorldSchema = z.strictObject({
   status: PublicWorldStatusSchema,
   identity: WorldIdentitySchema,
   lifecycle: PublicWorldLifecycleSchema,
+  map: PublicWorldMapSchema,
   tempoProfile: WorldTempoProfileSchema,
   joinedCount: z.number().int().nonnegative(),
 });
@@ -36,6 +44,7 @@ export const PublicWorldsResponseSchema = z.array(PublicWorldSchema);
 export type PublicWorldStatus = z.infer<typeof PublicWorldStatusSchema>;
 export type WorldTempoProfile = z.infer<typeof WorldTempoProfileSchema>;
 export type PublicWorldLifecycle = z.infer<typeof PublicWorldLifecycleSchema>;
+export type PublicWorldMap = z.infer<typeof PublicWorldMapSchema>;
 export type PublicWorld = z.infer<typeof PublicWorldSchema>;
 export type PublicWorldsResponse = z.infer<typeof PublicWorldsResponseSchema>;
 

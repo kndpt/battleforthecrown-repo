@@ -1,5 +1,25 @@
 # Todo
 
+## 2026-05-31 — Run 042 page détail royaume
+
+- [x] Finaliser le préflight : branche `run/042-feature-world-detail-page`, règles, specs, briefings, politique PR.
+- [x] Appliquer `bftc-design-system-migration` sur le composant détail world générique, sans phone shell ni fixtures dans le composant.
+- [x] Cartographier le contrat public world actuel, décider `PublicWorld` suffisant ou DTO détail dédié.
+- [x] Brancher `/worlds/:worldId`, bouton `Détails`, retour liste et absence de mutation join.
+- [x] Afficher seulement les données sourcées : identity, status/lifecycle, tempoProfile, joinedCount, tier/sigil/theme, dimensions si contractées, stats personnelles conditionnelles.
+- [x] Ajouter/adapter les tests ciblés Pixi/backend selon `bftc-tests-policy`.
+- [x] Corriger review indépendante BLOCK : lifecycle phase days contractés, QA navigateur et preuves finales.
+- [x] Stopper la re-review à la demande explicite du user après validation QA navigateur.
+- [x] Vérifier type-check/tests/static-check, QA navigateur et impact docs.
+- [x] Archiver la run, mettre à jour `tasks/README.md`, commit, push et PR ready.
+
+### Review en cours
+
+- Review indépendante initiale : `BLOCK`.
+- Finding majeur confirmé : ne pas figer `inscriptionMainDays=7` / `inscriptionLateDays=3` dans la page détail ; exposer ou dériver proprement depuis le contrat public.
+- Résolution : `PublicWorld.lifecycle` expose maintenant `inscriptionMainDays` / `inscriptionLateDays`, et la page détail consomme ces valeurs contractées.
+- Dérogation validée : re-review stoppée sur demande user explicite, QA navigateur faite par le user et OK.
+
 ## 2026-05-31 — Run 043 layout shell jeu
 
 - [x] Préflight : fiche run, règles repo, `SPEC.md`, briefing Pixi, contexte mémoire et ADR ciblées.

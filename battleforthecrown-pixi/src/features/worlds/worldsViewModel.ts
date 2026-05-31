@@ -30,7 +30,10 @@ export interface WorldCardViewModel {
   isJoined: boolean;
   joinedCountLabel: string;
   lifecycleDay: number | null;
+  lifecycleInscriptionLateDays: number;
+  lifecycleInscriptionMainDays: number;
   lifecycleTotalDays: number;
+  mapSizeLabel: string;
   opensInLabel: string | null;
   personalStats: WorldPersonalStatsViewModel | null;
   sigilGlyph: string;
@@ -134,7 +137,10 @@ export function toWorldCardViewModel(
     isJoined,
     joinedCountLabel: formatter.format(world.joinedCount),
     lifecycleDay: day,
+    lifecycleInscriptionLateDays: world.lifecycle.inscriptionLateDays,
+    lifecycleInscriptionMainDays: world.lifecycle.inscriptionMainDays,
     lifecycleTotalDays: world.lifecycle.totalDays,
+    mapSizeLabel: `${formatter.format(world.map.width)} × ${formatter.format(world.map.height)}`,
     opensInLabel: opensIn,
     personalStats: personalStats
       ? {
