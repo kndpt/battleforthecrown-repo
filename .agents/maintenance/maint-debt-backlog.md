@@ -131,11 +131,6 @@ This backlog tracks bounded existing-debt candidates for `bftc-maint-debt`.
     ("1h 30m" vs "1 h 30 m") — consolidating changes rendered UI text, so needs product intent, not a
     blind dedupe. Defer.
 
-- status: fixed
-  area: `battleforthecrown-pixi/src/api/queries.ts`
-  branch: claude/bftc-maint-debt-scout-report-dto
-  note: ScoutReportDto alias removed; callers updated to use ScoutReportResponse from @battleforthecrown/shared/combat.
-
 - status: candidate
   area: `battleforthecrown-pixi/src/pixi/scenes/WorldMapScene.ts`
   note: Prior audits flagged this as a high-value Pixi scene surface; prefer small rendering/input cleanup only.
