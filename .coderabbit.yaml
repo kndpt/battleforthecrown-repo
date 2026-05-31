@@ -1,0 +1,270 @@
+# CodeRabbit configuration — Battle for the Crown
+# Profile: assertive. Zero tolerance for technical debt.
+# Every rule maps to a concrete audit dimension in .agents/skills/bftc-refactor-{backend,pixi} or conventions.md.
+
+language: "en-US"
+
+tone_instructions: |
+  Be direct and uncompromising. Cite file:line for every finding.
+  No softening language ("consider", "maybe", "you might want to"). State the violation and the required fix.
+  Request changes on Critical and High findings. Never praise code unless it fixes a prior violation.
+
+reviews:
+  profile: "assertive"
+  request_changes_workflow: true
+  high_level_summary: true
+  high_level_summary_placeholder: "@coderabbitai summary"
+  high_level_summary_in_walkthrough: false
+  auto_title_placeholder: "@coderabbitai"
+  high_level_summary_instructions: |
+    Generate a concise bullet-point summary (max 8 bullets).
+    Format: `<type>(<scope>): <what changed and why>`.
+    Flag if the PR: touches critical paths (combat, resources, economy) without tests,
+    bypasses the Outbox pattern, or introduces server-authoritative violations.
+  poem: false
+  review_status: true
+  review_details: true
+  commit_status: true
+  fail_commit_status: true
+  collapse_walkthrough: false
+  changed_files_summary: true
+  sequence_diagrams: false
+  estimate_review_effort: true
+  assess_linked_issues: false
+  related_issues: false
+  related_prs: false
+  suggested_labels: false
+  auto_apply_labels: false
+  suggested_reviewers: false
+  auto_assign_reviewers: false
+  abort_on_close: true
+  disable_cache: false
+
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false
+    ignore_title_keywords:
+      - "WIP"
+      - "wip"
+      - "[skip review]"
+
+  path_filters:
+    - "!node_modules/**"
+    - "!dist/**"
+    - "!build/**"
+    - "!.yarn/**"
+    - "!yarn.lock"
+    - "!coverage/**"
+    - "!.prisma/**"
+    - "!**/generated/**"
+
+  path_instructions:
+    # ──────────────────────────────────────────────
+    # GLOBAL — applies to all TypeScript files
+    # ──────────────────────────────────────────────
+    - path: "**/*.ts"
+      instructions: |
+        **TypeScript strict (conventions.md)**
+        - BLOCK `as any` and `: any` parameter types. Require proper typing (generics, narrowing, type guards).
+        - BLOCK untyped return values on public methods/functions.
+        - BLOCK `eslint-disable` comments without an inline justification comment explaining why and when it can be removed.
+        - BLOCK `npm` references; this project uses `yarn` exclusively.
+
+        **Dead code**
+        - FLAG unused imports, unused variables, commented-out code blocks.
+
+        **Magic values**
+        - FLAG magic numbers and hardcoded strings (URLs, event names, timeouts, limits) that lack a named constant.
+
+        **Tests**
+        - Any new function computing a formula, applying a rule, or transforming data requires a test.
+        - FLAG new files in `services/`, `stores/`, `lib/`, `view-model*/` with zero co-located tests.
+
+        **Documentation (docs.md)**
+        - If the change affects gameplay mechanics, API contracts, data model, or architecture decisions,
+          a corresponding update in `docs/` is mandatory. Flag if missing.
+
+    # ──────────────────────────────────────────────
+    # BACKEND — NestJS + Prisma + pg-boss
+    # ──────────────────────────────────────────────
+    - path: "battleforthecrown-backend/src/**/*.ts"
+      instructions: |
+        **Layering (CRITICAL — bftc-refactor-backend dim.1)**
+        - Controllers must ONLY: validate input via DTO + call one service method + return.
+          Business logic (if/else rules, domain object construction, multi-step orchestration) in a
+          controller is a BLOCKING violation.
+        - `this.prisma.*` in `*.controller.ts` or `*.gateway.ts` is a BLOCKING violation.
+        - Flag circular module dependencies (A imports B which imports A).
+
+        **God services (HIGH — dim.2)**
+        - Flag service files > 400 LOC or > 8 public methods. They must be split by domain.
+        - Flag a single service managing unrelated domains (e.g., combat AND resources).
+
+        **Outbox pattern (CRITICAL — dim.4 + conventions.md)**
+        - Every write that produces a domain event MUST create an `EventOutbox` record in the SAME
+          `prisma.$transaction(...)`. Flag any transaction that writes domain data but omits the outbox entry.
+        - Flag `this.server.emit(...)` or `socket.emit(...)` called directly from services/workers.
+          All socket events must flow through OutboxWorker, never emitted directly.
+
+        **Prisma / DB (HIGH — dim.3)**
+        - Flag N+1 patterns: a loop containing `.findUnique()`, `.findFirst()`, or `.findMany()`
+          without batching via `include`, `Promise.all`, or a single scoped query.
+        - Flag multi-table writes outside `prisma.$transaction(...)`.
+        - Flag `$queryRaw` / `$executeRaw` where a typed Prisma query is feasible.
+
+        **Error handling (HIGH — dim.5)**
+        - BLOCK empty catch: `catch (e) {}`.
+        - BLOCK catch that only logs without rethrowing or wrapping: `catch (e) { console.error(e) }`.
+        - All HTTP errors must use NestJS `HttpException` subclasses or a typed exception filter.
+        - All controller inputs must use a DTO class with class-validator decorators.
+
+        **Type debt (HIGH — dim.6)**
+        - Public service methods must have explicit return types (including `Promise<void>`).
+        - `process.env.*` outside ConfigModule/ConfigService is a violation. Use `configService.get<T>('KEY')`.
+
+        **Workers (HIGH — bftc-workers-outbox)**
+        - pg-boss job handlers must be idempotent: running the same job twice must not produce duplicate side effects.
+        - Workers must not contain business logic — they orchestrate, services compute.
+
+        **Tests (HIGH — dim.8)**
+        - New service methods touching combat calculations, resource production, population, economy, or
+          crown balance require a unit test.
+        - Flag `it.skip` / `xit` without a `// TODO: reason` comment.
+        - Tests must assert behavior (output given input), not implementation (mock call chain verification).
+
+    - path: "battleforthecrown-backend/src/**/*.controller.ts"
+      instructions: |
+        Thin controller rule: validate input via DTO + call one service method + return.
+        Flag any method > 20 LOC, any direct Prisma call, any business if/else rule.
+
+    - path: "battleforthecrown-backend/src/**/*.service.ts"
+      instructions: |
+        Flag: (1) direct Socket.IO `emit` — use Outbox, (2) multi-table writes outside `$transaction`,
+        (3) swallowed exceptions in catch blocks, (4) public methods without explicit return types.
+
+    # ──────────────────────────────────────────────
+    # PIXI FRONTEND — React 19 + Zustand + TanStack Query + PixiJS v8
+    # ──────────────────────────────────────────────
+    - path: "battleforthecrown-pixi/src/**/*.ts"
+      instructions: |
+        **Server-authoritative (CRITICAL — bftc-refactor-pixi dim.1 + conventions.md)**
+        - The frontend NEVER computes authoritative state. Resource balances, troop counts, crown balances,
+          combat results must come from the server (REST response or WebSocket event).
+        - Display interpolation (e.g., resources/hour smooth progress) is allowed but the interpolated value
+          MUST NOT be written back to a store as authoritative truth.
+        - Flag mutations that update a Zustand store directly without going through
+          REST → TanStack Query invalidation.
+
+        **TanStack Query (HIGH — dim.4)**
+        - Raw `fetch()` or `axios.*` outside `src/api/` is a violation.
+        - Mutations must invalidate relevant query keys in `onSuccess` or `onSettled`.
+        - Frequently-read queries missing `staleTime` or `gcTime` are a performance violation.
+        - `useEffect` used to trigger data fetching is a violation — use `enabled` conditions.
+
+        **Type debt (HIGH — dim.7)**
+        - API response shapes at the trust boundary must be validated with Zod.
+        - Types must be imported from `packages/shared/`, NOT from `battleforthecrown-backend/`.
+        - No untyped WebSocket message handlers.
+
+        **API layer (HIGH — dim.8)**
+        - All HTTP calls must go through `src/api/client.ts`. Flag raw `fetch()` elsewhere.
+        - Non-standard call sites that bypass `ApiClient.tryRefresh` are a 401-handling violation.
+
+    - path: "battleforthecrown-pixi/src/**/*.tsx"
+      instructions: |
+        **Server-authoritative (CRITICAL — dim.1)**
+        Same as `*.ts` above: no authoritative local computation, no direct store mutations bypassing REST/WS.
+
+        **Optimistic UI (HIGH — dim.2 + conventions.md)**
+        - Optimistic updates only when: (1) backend typically < 500ms, (2) rollback trivial, (3) WS re-syncs state.
+        - Every optimistic mutation MUST implement all three: `onMutate` (snapshot + local update),
+          `onError` (rollback via context), `onSettled` (invalidate related keys).
+        - Flag any optimistic pattern missing one of the three handlers.
+
+        **Zustand stores (HIGH — dim.3)**
+        - Flag god stores managing more than one domain in the same store slice.
+        - Derived state must NOT be stored in the store — use selectors or view-models.
+        - Direct `.setState()` calls from outside the store module are a violation.
+        - Flag stores missing a reset action for logout/disconnect.
+        - Flag state duplicated between a Zustand store and a TanStack Query cache.
+
+        **Component design (HIGH — dim.5)**
+        - Business logic (derivations, rule checks, calculations) must not appear in JSX.
+          It belongs in view-models, custom hooks, or stores.
+        - A component with > 2 clear responsibilities must be split.
+        - Prop drilling > 2 levels where a store or context is appropriate is a violation.
+        - Async panels and the Pixi canvas must be wrapped in error boundaries.
+
+        **TanStack Query — same as .ts above.**
+
+    - path: "battleforthecrown-pixi/src/pixi/**/*.ts"
+      instructions: |
+        **Pixi scene architecture (HIGH — bftc-refactor-pixi dim.6 + bftc-pixi-scene)**
+        - Scenes must NOT mix rendering + input handling + game state. Each concern belongs in a dedicated class.
+        - Direct Zustand store reads inside Pixi tick loops (`app.ticker.add(...)`) are a violation.
+          Pass snapshots to the tick callback.
+        - Asset loading inside `update()` or ticker callbacks is a violation. Load in the preload/init phase.
+        - Scene `destroy()` MUST clean up: remove all event listeners, stop tickers, release textures.
+          Flag any `destroy()` that is empty or missing.
+
+    # ──────────────────────────────────────────────
+    # SHARED PACKAGE — pure types + pure formulas
+    # ──────────────────────────────────────────────
+    - path: "packages/shared/**/*.ts"
+      instructions: |
+        **Shared package rules**
+        - NO imports from `battleforthecrown-backend/` or `battleforthecrown-pixi/`.
+          Shared is read-only from consumers; it must not depend on either workspace.
+        - NO side effects: no `console.log`, no `fetch`, no DOM access, no Node.js APIs.
+        - All exported functions must be pure (same input → same output, no mutation of arguments).
+        - All formulas encoding a game rule (resource production, combat power, travel time, population caps)
+          require a matching test in a co-located `*.spec.ts` or `__tests__/` directory.
+        - Explicit return types mandatory on all exported functions.
+
+    # ──────────────────────────────────────────────
+    # TESTS
+    # ──────────────────────────────────────────────
+    - path: "**/*.spec.ts"
+      instructions: |
+        **Test quality (bftc-tests-policy)**
+        - Tests must assert behavior (output given input), NOT implementation (mock call chain order).
+        - BLOCK `it.skip` or `xit` without a `// TODO: reason — <ticket or issue>` comment.
+        - No `as any` to silence TypeScript — type fixtures properly.
+        - No mocking of Prisma, pg-boss, or `setInterval` in unit tests.
+          If infrastructure is required, it's an integration test and must be labeled as such.
+        - Test descriptions must be specific enough to diagnose a failure without reading the test body.
+          Flag generic descriptions like `"works correctly"`, `"handles the case"`.
+
+    # ──────────────────────────────────────────────
+    # PRISMA SCHEMA
+    # ──────────────────────────────────────────────
+    - path: "prisma/schema.prisma"
+      instructions: |
+        **Prisma schema rules (bftc-prisma)**
+        - Schema changes MUST have a matching migration file. Flag schema edits without a new migration.
+        - NEVER use `migrate reset` or destructive seed overwrites.
+        - New models and fields must be documented in `docs/architecture/data-model.md`.
+        - Flag: missing `@@index` on foreign key fields, nullable fields that should be non-nullable,
+          enum values without a corresponding TypeScript type in `packages/shared/`.
+
+    # ──────────────────────────────────────────────
+    # AGENT SKILLS & RULES — governance files
+    # ──────────────────────────────────────────────
+    - path: ".agents/**"
+      instructions: |
+        Agent skills are project governance — review with extra care.
+        Flag: hardcoded file paths that may have drifted, rules contradicting `docs/architecture/decisions.md`,
+        skill `description` fields > 160 characters (they load on every agent context window — keep them tight).
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: auto
+  issues:
+    scope: auto
+  pull_requests:
+    scope: auto
