@@ -119,6 +119,17 @@ Chaque payload est validé runtime par `parseEventPayload(kind, raw)` (backend `
 
 Pour les renforts, la forme exacte des payloads reste dérivée des schémas partagés (`packages/shared/src/events/{schemas,types}.ts`). Cette table ne liste que les champs discriminants utiles pour lire le flux fonctionnel.
 
+### Invalidation inbox renfort — aucun nouvel event kind
+
+L'inbox renfort (`InboxEntry` / `ReinforcementReport`) se rafraîchit côté frontend via les events **existants** :
+
+- `garrison.added` → déclenché à l'arrivée d'un renfort stationné (`STATIONED`), scopé `userId` owner hôte. Le frontend invalide la query `/combat/reinforcement-reports`.
+- `reinforcement.returned` → déclenché au retour vers le village d'origine (`RETURNED`), scopé `userId` owner origine. Le frontend invalide la query `/combat/reinforcement-reports`.
+
+**Pas de nouvel event kind** pour l'inbox renfort. Justification : `initiateReinforce` est aujourd'hui mono-joueur (renfort inter-joueurs interdit), donc ces deux events couvrent exactement les destinataires de l'`InboxEntry`. Si le renfort inter-joueurs est activé à l'avenir, un event dédié (ex. `reinforcement.report.created`) sera nécessaire pour notifier le joueur hôte indépendamment de l'origine.
+
+**Frontière EventOutbox / archive** : `EventOutbox` reste un canal temps réel, jamais une archive métier. L'historique persistant des mouvements de renfort vit dans `ReinforcementReport` ; l'état lu/masqué par joueur vit dans `InboxEntry`. Voir [`docs/architecture/data-model.md`](./data-model.md) et [`docs/gameplay/17-inbox-and-reports.md`](../gameplay/17-inbox-and-reports.md).
+
 ## Event métier consommé par plusieurs invalidations
 
 Quand un worker produit un fait gameplay réutilisable, l'event Outbox doit décrire ce fait métier plutôt qu'une consigne d'invalidation frontend. Exemple canonique : `TrainingWorker` émet `unit.trained` à chaque unité fabriquée. Le frontend s'en sert aujourd'hui pour rafraîchir `armyInventory`, `population`, `power.village.*` et `power.kingdom.*`; demain, le même event pourra alimenter les cartes quotidiennes, l'onboarding, les achievements ou les statistiques.

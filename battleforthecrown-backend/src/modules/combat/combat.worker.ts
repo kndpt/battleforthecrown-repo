@@ -1180,6 +1180,72 @@ export class CombatWorker implements OnModuleInit {
       });
     }
 
+    // 4. Create ReinforcementReport + InboxEntry per recipient
+    const reportType = isReturningHome ? 'RETURNED' : 'STATIONED';
+    const reportActorUserId = isReturningHome
+      ? (expedition.reinforcementRecallActorUserId ?? null)
+      : null;
+
+    // STATIONED: origin = originVillageId, host = targetRefId
+    // RETURNED:  origin = targetRefId (home), host = attackerVillageId (B)
+    const reportOriginVillageId = isReturningHome
+      ? expedition.targetRefId
+      : originVillageId;
+    const reportHostVillageId = isReturningHome
+      ? expedition.attackerVillageId
+      : expedition.targetRefId;
+
+    const [originVillageSnap, hostVillageSnap] = await Promise.all([
+      tx.village.findUnique({
+        where: { id: reportOriginVillageId },
+        select: { id: true, name: true, x: true, y: true, userId: true },
+      }),
+      tx.village.findUnique({
+        where: { id: reportHostVillageId },
+        select: { id: true, name: true, x: true, y: true, userId: true },
+      }),
+    ]);
+
+    const report = await tx.reinforcementReport.create({
+      data: {
+        worldId: expedition.worldId,
+        type: reportType,
+        originVillageId: reportOriginVillageId,
+        originVillageName: originVillageSnap?.name ?? null,
+        originX: originVillageSnap?.x ?? 0,
+        originY: originVillageSnap?.y ?? 0,
+        hostVillageId: reportHostVillageId,
+        hostVillageName: hostVillageSnap?.name ?? null,
+        hostX: hostVillageSnap?.x ?? 0,
+        hostY: hostVillageSnap?.y ?? 0,
+        units: encodeUnitMap(units),
+        actorUserId: reportActorUserId,
+      },
+    });
+
+    const recipientIds = [
+      ...new Set(
+        [originVillageSnap?.userId, hostVillageSnap?.userId].filter(
+          (id): id is string => Boolean(id),
+        ),
+      ),
+    ];
+
+    for (const recipientUserId of recipientIds) {
+      await tx.inboxEntry.create({
+        data: {
+          userId: recipientUserId,
+          worldId: expedition.worldId,
+          kind: 'REINFORCEMENT',
+          reinforcementReportId: report.id,
+        },
+      });
+    }
+
+    this.logger.log(
+      `ReinforcementReport ${report.id} (${reportType}) created, ${recipientIds.length} inbox entries for expedition ${expedition.id}`,
+    );
+
     this.logger.log(
       `Reinforcement ${isReturningHome ? 'returned' : 'stationed'}: ${expedition.id}`,
     );

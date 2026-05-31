@@ -93,6 +93,36 @@ export interface ScoutReportResponse {
   timestamp: string;
 }
 
+export type ReinforcementReportType = 'STATIONED' | 'RETURNED';
+
+export const REINFORCEMENT_REPORT_TYPES = {
+  STATIONED: 'STATIONED',
+  RETURNED: 'RETURNED',
+} as const;
+
+/**
+ * A reinforcement movement report (arrival or homecoming) as seen by one
+ * recipient. `isRead` reflects the connected player's own inbox entry.
+ * No attacker/defender, no losses, no loot, no victory outcome.
+ */
+export interface ReinforcementReportResponse {
+  id: string;
+  worldId: string;
+  type: ReinforcementReportType;
+  originVillageId: string;
+  originVillageName?: string | null;
+  originX: number;
+  originY: number;
+  hostVillageId: string;
+  hostVillageName?: string | null;
+  hostX: number;
+  hostY: number;
+  units: UnitMap;
+  actorUserId?: string | null;
+  isRead: boolean;
+  timestamp: string;
+}
+
 export interface ExpeditionResponse {
   id: string;
   attackerVillageId: string;

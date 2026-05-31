@@ -446,6 +446,7 @@ export class CombatService {
           departAt: now,
           arrivalAt: arrivalAtOrigin,
           outboundTravelMs: travelTimeMs,
+          reinforcementRecallActorUserId: userId,
         },
       });
 
