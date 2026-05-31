@@ -15,7 +15,11 @@ function makeQueryClient() {
   });
 }
 
-function renderTransition(initialPath: string) {
+function renderTransition(initialPath: string, options: { withGameContext?: boolean } = {}) {
+  if (options.withGameContext !== false) {
+    useGameStore.getState().setContext({ worldId: 'w1', villageId: 'v1' });
+  }
+
   const queryClient = makeQueryClient();
   queryClient.setQueryData(queryKeys.publicWorlds(), [
     {
@@ -82,7 +86,7 @@ function stubAudio() {
 }
 
 beforeEach(() => {
-  useGameStore.getState().setContext({ worldId: 'w1', villageId: 'v1' });
+  useGameStore.getState().clear();
 });
 
 afterEach(() => {
@@ -127,6 +131,33 @@ describe('GameEntryTransition', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
 
     navigateTo('/game');
+
+    expect(screen.getByRole('status')).toHaveTextContent('Solstice');
+
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(AudioMock).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('waits for game context before starting the entry animation on direct game loads', () => {
+    const { AudioMock } = stubAudio();
+
+    renderTransition('/game', { withGameContext: false });
+
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(AudioMock).not.toHaveBeenCalled();
+
+    act(() => {
+      useGameStore.getState().setContext({ worldId: 'w1', villageId: 'v1' });
+    });
 
     expect(screen.getByRole('status')).toHaveTextContent('Solstice');
 

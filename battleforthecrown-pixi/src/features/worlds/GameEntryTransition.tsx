@@ -16,7 +16,7 @@ const WORLD_ENTRY_DURATION_MS = 2000;
 interface EntryTransitionState {
   isVisible: boolean;
   pathname: string;
-  routeIsGame: boolean;
+  canShowGameEntry: boolean;
   sequence: number;
 }
 
@@ -52,29 +52,34 @@ function fallbackWorldEntryModel(worldId: string | null): WorldCardViewModel {
 export function GameEntryTransition() {
   const location = useLocation();
   const worldId = useGameStore((state) => state.worldId);
+  const villageId = useGameStore((state) => state.villageId);
   const publicWorlds = usePublicWorldsQuery();
   const routeIsGame = isGameRoute(location.pathname);
+  const canShowGameEntry = routeIsGame && Boolean(worldId && villageId);
   const [entryTransition, setEntryTransition] = useState<EntryTransitionState>(() => ({
-    isVisible: routeIsGame,
+    isVisible: canShowGameEntry,
     pathname: location.pathname,
-    routeIsGame,
-    sequence: routeIsGame ? 1 : 0,
+    canShowGameEntry,
+    sequence: canShowGameEntry ? 1 : 0,
   }));
 
   const gamePathChangedDuringTransition =
-    routeIsGame && entryTransition.routeIsGame && entryTransition.isVisible && entryTransition.pathname !== location.pathname;
+    canShowGameEntry &&
+    entryTransition.canShowGameEntry &&
+    entryTransition.isVisible &&
+    entryTransition.pathname !== location.pathname;
 
-  if (entryTransition.routeIsGame !== routeIsGame || gamePathChangedDuringTransition) {
-    const enteredGame = routeIsGame && !entryTransition.routeIsGame;
+  if (entryTransition.canShowGameEntry !== canShowGameEntry || gamePathChangedDuringTransition) {
+    const enteredGame = canShowGameEntry && !entryTransition.canShowGameEntry;
     setEntryTransition({
       isVisible: enteredGame,
       pathname: location.pathname,
-      routeIsGame,
+      canShowGameEntry,
       sequence: enteredGame ? entryTransition.sequence + 1 : entryTransition.sequence,
     });
   }
 
-  const showEntryTransition = routeIsGame && entryTransition.isVisible;
+  const showEntryTransition = canShowGameEntry && entryTransition.isVisible;
 
   const world = useMemo(() => {
     const activePublicWorld = publicWorlds.data?.find((candidate) => candidate.id === worldId);
