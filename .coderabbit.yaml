@@ -76,6 +76,15 @@ reviews:
         formatting, line wrapping, minor naming/style consistency, or wording tone unless it
         creates a real user-facing ambiguity or contradicts an executable process.
         If the finding would be labeled Nitpick, Trivial, Low value, or cosmetic, do not post it.
+        If the PR source branch starts with `task/` or `run/`, treat the matching active
+        implementation ticket as the product contract:
+        - `task/*` branches should be checked against the corresponding active `tasks/*.md` file.
+        - `run/*` branches should be checked against the corresponding active `tasks/runs/*.md` file.
+        - Prefer the concrete active ticket/run file over `tasks/README.md`, which may be stale.
+        - Flag implementation gaps, scope drift, missing acceptance criteria, missing required tests,
+          or missing required docs as correctness issues.
+        - Do not comment if no corresponding ticket/run file can be confidently identified from
+          the branch name, PR title, PR body, or changed files.
 
     # ──────────────────────────────────────────────
     # GLOBAL — applies to all TypeScript files
