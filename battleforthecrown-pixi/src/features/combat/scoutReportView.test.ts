@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ScoutReportDto } from '@/api/queries';
+import type { ScoutReportResponse } from '@battleforthecrown/shared/combat';
 import {
   buildScoutReportCardProps,
   scoutReportResourceTotal,
@@ -9,7 +9,7 @@ import {
   scoutReportUnitTotal,
 } from './scoutReportView';
 
-const report: ScoutReportDto = {
+const report: ScoutReportResponse = {
   id: 'sr1',
   scoutVillageId: 'v1',
   targetVillageId: 'target-1',
@@ -54,7 +54,7 @@ describe('scoutReportView', () => {
   });
 
   it('exposes scout losses through the troopBar payload (partial losses)', () => {
-    const wounded: ScoutReportDto = {
+    const wounded: ScoutReportResponse = {
       ...report,
       details: { scoutLosses: { SPY: 7 }, scoutUnits: { SPY: 20 }, wallLevel: 6 },
     };
@@ -65,7 +65,7 @@ describe('scoutReportView', () => {
   });
 
   it('exposes scout losses through the troopBar payload (wiped)', () => {
-    const wiped: ScoutReportDto = {
+    const wiped: ScoutReportResponse = {
       ...report,
       details: { scoutLosses: { SPY: 20 }, scoutUnits: { SPY: 20 }, wallLevel: 6 },
     };
@@ -83,7 +83,7 @@ describe('scoutReportView', () => {
   });
 
   it('keeps barbarian tier visible in the target label', () => {
-    const barbarianReport: ScoutReportDto = {
+    const barbarianReport: ScoutReportResponse = {
       ...report,
       targetKind: 'BARBARIAN_VILLAGE',
       targetName: null,

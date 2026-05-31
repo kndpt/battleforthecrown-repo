@@ -4,8 +4,8 @@ import {
   useCombatReportsQuery,
   useScoutReportsQuery,
   type CombatReportDto,
-  type ScoutReportDto,
 } from '@/api/queries';
+import type { ScoutReportResponse } from '@battleforthecrown/shared/combat';
 import { InboxTabs, MailInboxItem } from '@/features/design-system/components/MailInboxItem';
 import {
   scoutReportResourceTotal,
@@ -17,7 +17,7 @@ import { combatReportOutcome } from './combatReportView';
 
 export type InboxReportSummary =
   | { kind: 'combat'; report: CombatReportDto }
-  | { kind: 'scout'; report: ScoutReportDto };
+  | { kind: 'scout'; report: ScoutReportResponse };
 
 interface ReportsListProps {
   onReportClick: (report: InboxReportSummary) => void;
@@ -59,7 +59,7 @@ function combatInboxItem(report: CombatReportDto) {
   };
 }
 
-function scoutInboxItem(report: ScoutReportDto) {
+function scoutInboxItem(report: ScoutReportResponse) {
   return {
     icon: '/assets/lupa.png',
     preview: `${NUMBER_FORMATTER.format(scoutReportUnitTotal(report))} unités · ${NUMBER_FORMATTER.format(scoutReportResourceTotal(report))} ressources visibles.`,
