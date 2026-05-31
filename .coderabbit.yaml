@@ -1,13 +1,10 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 # CodeRabbit configuration — Battle for the Crown
-# Profile: assertive. Zero tolerance for technical debt.
 # Every rule maps to a concrete audit dimension in .agents/skills/bftc-refactor-{backend,pixi} or conventions.md.
 
 language: "en-US"
 
-tone_instructions: |
-  Be direct and uncompromising. Cite file:line for every finding.
-  No softening language ("consider", "maybe", "you might want to"). State the violation and the required fix.
-  Request changes on Critical and High findings. Never praise code unless it fixes a prior violation.
+tone_instructions: "Be direct. Cite file:line for every finding. No softening language. State the violation and the required fix. Request changes on Critical and High findings."
 
 reviews:
   profile: "assertive"
