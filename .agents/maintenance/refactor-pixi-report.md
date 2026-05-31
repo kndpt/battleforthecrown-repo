@@ -182,7 +182,7 @@ Frontend bien stratifié et discipliné. Vérifié cette passe :
 
 ### Verification
 
-```
+```text
 yarn static-check   → green (tsc --noEmit backend + pixi, ESLint backend + pixi --quiet)
 yarn test:pixi      → 46 test files, 230 tests passed (+1 session.test.ts)
 ```
