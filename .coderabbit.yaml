@@ -55,6 +55,10 @@ reviews:
     - "!coverage/**"
     - "!.prisma/**"
     - "!**/generated/**"
+    # Skill-generated audit artefacts — machine-written, not human-reviewed.
+    - "!.agents/maintenance/*-report.md"
+    - "!.agents/maintenance/*-ledger.md"
+    - "!.agents/maintenance/*-backlog.md"
 
   path_instructions:
     # ──────────────────────────────────────────────
@@ -71,12 +75,16 @@ reviews:
         **Dead code**
         - FLAG unused imports, unused variables, commented-out code blocks.
 
-        **Magic values**
-        - FLAG magic numbers and hardcoded strings (URLs, event names, timeouts, limits) that lack a named constant.
+        **Magic values (production code only)**
+        - In non-test source files, FLAG magic numbers and hardcoded strings (URLs, event names,
+          timeouts, limits) that lack a named constant.
+        - Do NOT apply this rule to `*.test.*` / `*.spec.*` files. Inline literal fixtures and seed
+          values are expected in tests — readability there comes from locality, not extraction.
 
         **Tests**
         - Any new function computing a formula, applying a rule, or transforming data requires a test.
-        - FLAG new files in `services/`, `stores/`, `lib/`, `view-model*/` with zero co-located tests.
+        - FLAG new non-test source files in `services/`, `stores/`, `lib/`, `view-model*/` with zero
+          co-located tests (a `*.test.*` / `*.spec.*` file does not itself need its own test).
 
         **Documentation (docs.md)**
         - If the change affects gameplay mechanics, API contracts, data model, or architecture decisions,
@@ -222,9 +230,11 @@ reviews:
     # ──────────────────────────────────────────────
     # TESTS
     # ──────────────────────────────────────────────
-    - path: "**/*.spec.ts"
+    - path: "**/*.{spec,test}.{ts,tsx}"
       instructions: |
         **Test quality (bftc-tests-policy)**
+        - Inline literal fixtures and seed values (resource amounts, ids, coords, names) are EXPECTED.
+          Do NOT flag magic numbers / hardcoded strings or request named constants in test files.
         - Tests must assert behavior (output given input), NOT implementation (mock call chain order).
         - BLOCK `it.skip` or `xit` without a `// TODO: reason — <ticket or issue>` comment.
         - No `as any` to silence TypeScript — type fixtures properly.
