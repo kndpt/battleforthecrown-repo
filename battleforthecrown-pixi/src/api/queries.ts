@@ -555,6 +555,7 @@ export function useCancelTrainingMutation() {
       queryClient.invalidateQueries({ queryKey: queryKeys.armyTraining(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.resources(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
     },
   });
 }

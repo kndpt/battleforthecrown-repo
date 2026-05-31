@@ -1,4 +1,4 @@
-import { Bell, Castle, Check, ChevronLeft, Lock, ScrollText, Users } from 'lucide-react';
+import { Bell, Check, ChevronLeft, Lock, ScrollText, Users } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { publicAsset } from '@/lib/publicAsset';
 import type { WorldCardViewModel, WorldsTab, WorldThemeTokens } from '@/features/worlds/worldsViewModel';
@@ -50,6 +50,7 @@ const variantTone: Record<SeasonVariant['id'], WorldThemeTokens> = {
   standard: { border: '#3a6c1f', dark: '#4a8c2a', glow: 'rgba(110,191,73,.35)', light: '#6ebf49' },
 };
 const KINGDOM_POWER_ICON = '/assets/army-power.png';
+const VILLAGE_ICON = '/assets/castle.png';
 
 function lifecycleToneFor(world: WorldCardViewModel): WorldThemeTokens {
   if (world.lifecycleDay === null) {
@@ -248,7 +249,7 @@ export function WorldCard({
             </div>
             <div className="mt-1 flex items-center justify-between gap-2">
               <span className="inline-flex min-w-0 items-center gap-1.5 font-game text-[10.5px] font-extrabold text-[#3d2f1f] tabular-nums">
-                <Castle aria-hidden="true" className="size-[14px] shrink-0 text-[#6d5838]" />
+                <img alt="" className="size-[14px] shrink-0 object-contain" src={publicAsset(VILLAGE_ICON)} />
                 {world.personalStats.villageCountLabel}
               </span>
               <span className="h-3.5 w-px bg-[rgba(60,38,25,.18)]" />

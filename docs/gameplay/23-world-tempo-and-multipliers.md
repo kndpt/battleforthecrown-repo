@@ -54,11 +54,11 @@ Cible cible expérientielle pour un joueur moyen sur un monde Standard. Repère,
 |---|---|---|---|
 | **Découverte** | J+0 → J+1 | Tuto guidé ([`15`](./15-onboarding.md)), premier village monté, premier raid barbare T1, premier scout, première Watchtower. | Économique, militaire, exploration. |
 | **Mid-game** | J+1 → J+5 | Caserne 3+, Watchtower agrandie, Salle du Conseil construite et premier style choisi, raids T2-T3 réguliers, premières frictions PvP avec les voisins (sortie du bouclier débutant). | + spécialisation, + diplomatie émergente. |
-| **Première conquête** | J+5 → J+10 | Château 6, Salle du Trône, premier Seigneur, première conquête barbare (T1-T2 typiquement), gestion du W-shape post-conquête (vision = 0, escorte coincée — cf. [`13`](./13-barbarian-conquest.md)). | + conquête, + multi-village. |
+| **Première conquête** | J+5 → J+10 | Château 6, Salle du Trône, premier Seigneur, première conquête barbare (T1-T2 typiquement). Cette fenêtre suppose un joueur qui pille pour accélérer l'économie ; en passif pur, l'éligibilité arrive plutôt vers J+8. Gestion du W-shape post-conquête (vision = 0, escorte coincée — cf. [`13`](./13-barbarian-conquest.md)). | + conquête, + multi-village. |
 | **Endgame multi-village** | J+10 → J+45 | Cycle de conquêtes barbares + premières conquêtes PvP, snowball partagé, vendettas, méta vautour autour des fenêtres de capture, premières chutes et respawns rapides. | Toutes les boucles, en parallèle. |
 | **Sprint final** | J+45 → J+60 | Pression maximum, raréfaction des barbares, course au leaderboard, dernières conquêtes opportunistes. | Idem + tension de fin. |
 
-🎯 **Lecture design** : le **cap "première conquête" est franchi vers J+5-J+7**, pas J+14. Ça veut dire que les **50 derniers jours** d'un monde Standard sont du **pur endgame multi-village**. C'est la garantie qu'il n'y a pas de plateau interminable.
+🎯 **Lecture design** : le **cap "première conquête" est franchi vers J+5-J+7 par un joueur actif qui pille**, pas J+14. En passif pur, il glisse plutôt vers J+9-J+11. Ça garantit que l'endgame multi-village reste le cœur du monde Standard, tout en rendant le pillage vraiment rentable.
 
 ## 4. Catalogue des mondes
 
@@ -129,7 +129,7 @@ WorldConfig.tempo = {
 | `travelSpeed` | Vitesse de déplacement des expéditions (raid, conquête, scout, renfort, retour) | [`04` § Mécanique générale](./04-combat.md#mécanique-générale) (mobilité par unité dans [`08`](./08-units.md)) | 0.3 → 2.0 |
 | `captureWindow` | Durée de la fenêtre de capture (barbare et PvP) | [`13` § Période de capture](./13-barbarian-conquest.md#période-de-capture-variable-par-tier), [`14` § Période de capture](./14-pvp-conquest.md#période-de-capture-variable-selon-le-niveau-du-château) | 0.3 → 2.0 |
 | `barbarianRegen` | Régénération troupes ET ressources des villages barbares (% / h) | [`06` § Régénération](./06-barbarians.md#régénération) | 0.3 → 3.0 |
-| `resourceProduction` | Production passive des mines (bois/pierre/fer) | [`02` § Production](./02-economy-and-progression.md#production-de-ressources) + [`03`](./03-buildings.md) tableaux Production / heure | 0.3 → 3.0 |
+| `resourceProduction` | Production passive des mines (bois/pierre/fer) | [`02` § Production](./02-economy-and-progression.md#production-de-ressources) + source `packages/shared/src/resources/production.ts` | 0.3 → 3.0 |
 | `crownsYield` | Taux de conversion puissance → couronnes/h. Constante absolue `0.20` dans `packages/shared/src/crowns/` ; la formule effective devient `puissance × 0.20 / tempo` (axe débit, cf. § 5.1.1). | [`02` § Couronnes](./02-economy-and-progression.md#couronnes) | 0.3 → 3.0 |
 
 > 💡 La régen barbare et la production de ressources peuvent monter au-delà de ×2 (jusqu'à ×3) pour des modes Speed/Blitz où l'économie doit suivre la consommation de troupes.
@@ -157,7 +157,7 @@ Le tempo module la **vitesse**, pas l'**équilibre**. Les invariants suivants re
 |---|---|---|
 | Ratios attaque / défense des unités | [`08`](./08-units.md) | Équilibrage core. Modifier ces ratios = changer le jeu, pas son tempo. |
 | Coûts en pop par bâtiment / unité | [`02` § Population](./02-economy-and-progression.md#population), [`03`](./03-buildings.md), [`08`](./08-units.md) | Le trade-off armée vs infrastructure est le cœur stratégique. |
-| Coûts en ressources des bâtiments / unités | [`03`](./03-buildings.md), [`08`](./08-units.md) | Modifier les coûts = casser l'équilibre 50/50 production/pillage. |
+| Coûts en ressources des bâtiments / unités | [`03`](./03-buildings.md), [`08`](./08-units.md) | Modifier les coûts = changer l'économie production passive / pillage, pas seulement le tempo. |
 | Règle puissance ÷ 3 (garde-fou anti-snowball) | [`14` § Garde-fous](./14-pvp-conquest.md#garde-fous-anti-snowball) | Garde-fou structurel, pas une vitesse. |
 | Diversité du blueprint barbare par tier | [`06` § Blueprint d'armée](./06-barbarians.md#blueprint-darmée) | Identité narrative et difficulté progressive. |
 | Bonus / malus des styles de village | [`12`](./12-village-styles.md) | Choix stratégique. |

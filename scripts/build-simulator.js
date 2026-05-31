@@ -61,9 +61,20 @@ const SECONDS_PER_DAY = 86_400;
 // Ordre de priorité pour départager les égalités du round-robin.
 // Économie d'abord, militaire ensuite.
 const PRIORITY_ORDER = [
-  "WOOD", "STONE", "IRON", "FARM", "WAREHOUSE",
+  "WOOD", "STONE", "IRON", "QUARTER", "WAREHOUSE",
   "BARRACKS", "WATCHTOWER", "COUNCIL_HALL", "THRONE_HALL",
 ];
+
+// Courbe de bonus Château. Par défaut = constante shared (source de vérité).
+// Override pour tester une courbe alternative sans rebuild shared :
+//   BFTC_CASTLE_BONUS="1.0,0.92,0.82,0.70,0.55,0.42,0.31,0.23,0.15,0.12" (niv1→niv10)
+const CASTLE_BONUS = (() => {
+  const raw = process.env.BFTC_CASTLE_BONUS;
+  if (!raw) return CASTLE_CONSTRUCTION_SPEED_BONUS;
+  const curve = {};
+  raw.split(",").forEach((s, i) => { curve[i + 1] = parseFloat(s.trim()); });
+  return curve;
+})();
 
 // On ne simule que les bâtiments enabled (les DISABLED comme HIDEOUT/WALL sont ignorés).
 const ENABLED_BUILDINGS = Object.entries(BUILDING_DEFINITIONS)
@@ -75,7 +86,7 @@ const ENABLED_BUILDINGS = Object.entries(BUILDING_DEFINITIONS)
 // à L1 ; Farm/Caserne/Watchtower/Conseil/Trône à L0 (à construire).
 const INITIAL_BUILDING_LEVELS = {
   CASTLE: 1, WOOD: 1, STONE: 1, IRON: 1, WAREHOUSE: 1,
-  FARM: 0, BARRACKS: 0, WATCHTOWER: 0, COUNCIL_HALL: 0, THRONE_HALL: 0,
+  QUARTER: 0, BARRACKS: 0, WATCHTOWER: 0, COUNCIL_HALL: 0, THRONE_HALL: 0,
 };
 
 // Stock de départ aligné avec `.env` du backend (WOOD/STONE/IRON_STARTING_AMOUNT=1000).
@@ -200,7 +211,7 @@ function simulate(plan, tempo, profile, startingStock = DEFAULT_STARTING_STOCK) 
   const timeOf = (b, lvl, castleLvl) =>
     BUILDING_DEFINITIONS[b].levels[lvl].timeSeconds *
     tempo *
-    CASTLE_CONSTRUCTION_SPEED_BONUS[castleLvl];
+    CASTLE_BONUS[castleLvl];
 
   // Production par seconde, **par ressource**. Chaque mine produit
   // exclusivement sa propre ressource (WOOD mine → bois uniquement, etc.).

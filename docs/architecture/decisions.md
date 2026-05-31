@@ -297,7 +297,69 @@ Question posée : faut-il aligner BFTC sur cette granularité (passer à 30 leve
 - Les `unlockCastleLevel` restent les seules contraintes de prérequis (pas de cap « non-Château ≤ Château ») — voir [`gameplay/03-buildings.md`](../gameplay/03-buildings.md).
 - Le ranking et la puissance s'expriment sur ce barème 10 levels, étendu par le nombre de villages et de conquêtes. Si un futur playtest révèle un plafond ressenti dès J+30, **on ajoute des bâtiments ou des mécaniques transverses** (alliances, classements hebdo, zones d'influence), **pas des levels**.
 - L'invariant « 10 levels max » est ancré dans `packages/shared/src/village/buildings.ts` (table `BUILDING_DEFINITIONS`) et dans [`gameplay/03-buildings.md`](../gameplay/03-buildings.md) (« Niveau max = **10** pour tous »). Ces deux sources et cet ADR doivent rester en cohérence.
-- Un simulateur (`scripts/build-simulator.py`) permet de tester l'impact d'une nouvelle courbe sur la wall-clock d'un joueur (tempo + profil sommeil + queue 3 slots + bonus Château).
+- Un simulateur (`scripts/build-simulator.js`) permet de tester l'impact d'une nouvelle courbe sur la wall-clock d'un joueur (tempo + profil sommeil + queue 3 slots + bonus Château + ressources/entrepôt).
+
+---
+
+## ADR-15 — Recalibration courbe construction : max-village ~7-8 j via bonus Château renforcé
+
+> Mise à jour ADR-17 (2026-05-31) : la cible ~7-8 j décrit désormais la capacité de construction hors contrainte économique. Après recalibration de la production passive, le simulateur complet ressources passives seules donne ~35-36 j, avec pillage attendu pour accélérer.
+
+**Contexte (2026-05-31).** Playtest du panneau d'amélioration : le dernier palier du Château (niv 9→10) affichait **81 h 36** (`timeSeconds` 432000 × bonus niv9 0.68 × tempo 1.0). Ressenti « pas possible » pour un seul up, même si le wall-clock *global* (≈14-15 j max-village) respectait la cible ADR-14. Deux constats à l'analyse :
+
+1. Le `120 h` brut du Château niv10 était une valeur **héritée du calage slow-MMORTS pré-pivot**, jamais repassée — exactement la dette de recalibration parquée par [ADR-12 « compressed-async »](#adr-12--pivot-compressed-async--tempo-world-scoped-via-worldconfigtempo).
+2. Le bonus Château historique était trop faible (×1.00 → ×1.56) pour « justifier » l'investissement vertical dans le Château.
+
+**Décision.**
+
+1. **Renforcer `CASTLE_CONSTRUCTION_SPEED_BONUS`** sur une courbe géométrique `1.0 → 0.25` : le multiplicateur ressenti passe de **×1.0 (niv1) à ×4.0 (niv10)** (avant : ×1.56 max). Le Château devient le **levier central de vitesse de construction** du village — comme le bonus s'applique à *toutes* les constructions (`building-cost.ts`), le monter accélère tout le reste.
+2. **Réduire `BUILDING_DEFINITIONS.CASTLE.levels[10].timeSeconds`** de `432000 → 223000` pour ramener le dernier palier à **~18 h** une fois le bonus niv9 (0.29) appliqué, sans dépendre d'un bonus extrême qui écraserait le global.
+3. **Cible recalibrée construction pure : max-village ~7-8 j wall-clock** (profil sommeil 23h-7h, file 3 slots), contre ~14 j auparavant. Cette cible ignore volontairement la friction économique ajoutée ensuite par ADR-16/17.
+
+**Conséquences.**
+
+- Ne modifie **que** la vitesse de construction. Aucun invariant d'équilibrage touché (ratios atk/déf, coûts pop, puissance) — cf. garde-fous [doc 23 § 6](../gameplay/23-world-tempo-and-multipliers.md). Le bonus Château et les `timeSeconds` sont des constantes Niveau 1 explicitement calibrables ([`balance-and-tempo.md`](./balance-and-tempo.md)).
+- `build-simulator.js` fiabilisé en parallèle : bug `FARM`→`QUARTER` corrigé (le Quartier était absent du plan, wall-clock sous-estimé), + override `BFTC_CASTLE_BONUS` pour tester une courbe sans rebuild shared.
+- Test mis à jour : `world-config.service.spec.ts` (bonus niv2 0.96→0.86).
+- La cible « ~14 j » de [ADR-14](#adr-14--niveau-max--10-pour-tous-les-bâtiments-vs-courbe--façon-century) devient « ~7-8 j » pour la capacité de construction pure. Le temps vécu en ressources passives seules est recalé par ADR-17.
+- Valeurs absolues (courbe complète, `timeSeconds`) : source de vérité unique dans `packages/shared/src/village/buildings.ts` — non dupliquées ici.
+
+---
+
+## ADR-16 — Coûts bâtiments ancrés sur la capacité d'Entrepôt
+
+**Contexte (2026-05-31).** Après la recalibration des durées, le playtest a révélé une incohérence inverse côté ressources : les coûts d'amélioration étaient restés sur l'ancienne échelle early-game. Exemple typique : les derniers niveaux coûtaient quelques centaines de ressources alors que l'Entrepôt monte jusqu'à 87k par ressource. Résultat : la difficulté venait surtout du timer, pas d'un vrai arbitrage économique.
+
+**Décision.**
+
+1. **Rebaser les coûts ressources de tous les bâtiments actifs** sur une fraction de la capacité d'Entrepôt du palier concerné : plus le plafond de stockage augmente, plus le coût maximal d'un upgrade doit occuper une part visible de ce plafond.
+2. **Conserver le rôle économique de chaque bâtiment** via des profils de ratios : Château plus pierre, mines orientées vers leur ressource, Caserne plus fer, Tour de guet plus pierre, Entrepôt/Quartier plus équilibrés.
+3. **Garder les coûts stockables** : aucun coût ressource d'un bâtiment actif ne doit dépasser la capacité d'Entrepôt de référence pour son palier. Les bâtiments à un seul niveau utilisent leur palier de déblocage comme référence.
+
+**Conséquences.**
+
+- Le frein de progression devient mixte : temps + accumulation de ressources + gestion de stockage.
+- L'Entrepôt reprend son rôle de bâtiment structurant au lieu d'être un plafond très au-dessus des coûts réels.
+- Un test d'invariant dans `buildings.spec.ts` empêche de réintroduire une courbe trop basse ou impossible à stocker.
+- Les bâtiments désactivés MVP (`HIDEOUT`, `WALL`) ne sont pas recalibrés dans cette décision.
+
+---
+
+## ADR-17 — Production passive contenue et pillage accélérateur
+
+**Contexte (2026-05-31).** Après ADR-16, les coûts d'upgrade sont enfin proportionnels à l'Entrepôt, mais la production passive des mines n'avait pas été recalibrée. À 8 200/h au niveau 10, une mine produisait 196 800 ressources/jour : cela permettait de financer quotidiennement plusieurs upgrades L10, ce qui annulait l'intérêt du pillage.
+
+**Décision.**
+
+1. **Réduire `RESOURCE_PRODUCTION_PER_HOUR`** sur une courbe `60 → 1 350/h`.
+2. **Caler le niveau 10 sur le Château L10** : coût pierre `46 980 / 1 350 ≈ 34,8 h` de production passive. Le dernier palier reste atteignable sans pillage, mais le pillage devient le levier naturel pour accélérer.
+3. **Conserver une production identique bois/pierre/fer** : aucune ressource ne devient rare structurellement ; les différences viennent des coûts thématiques des bâtiments et des cibles pillées.
+
+**Conséquences.**
+
+- En passif pur, `build-simulator.js` donne ~35-36 j pour maxer un village et ~8 j pour l'éligibilité conquête. C'est volontairement plus lent que la capacité de construction pure.
+- Un joueur actif doit réduire ce délai par pillage. Le design cible reste qu'un joueur qui pille efficacement progresse environ 2× plus vite qu'un joueur passif.
+- Le test `building resource costs` couvre maintenant aussi l'invariant Château L10 ≈35 h de production passive sur la ressource limitante.
 
 ---
 

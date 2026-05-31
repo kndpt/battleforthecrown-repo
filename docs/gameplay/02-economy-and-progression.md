@@ -142,21 +142,21 @@ Progression non linéaire, inspirée Clash of Clans, avec trois phases caractér
 
 - **Objectif** : grind, optimisation, conquête multi-village.
 - **Temps de construction** : heures → jours. Wall final L10 = trophée.
-- **Production** : late game très généreuse (×40 vs L1), warehouse devient le facteur limitant si pas dépensé.
+- **Production** : late game volontairement contenue. Un bâtiment L10 produit 1 350/h ; le Château L10 demande donc ~35 h de production passive sur sa ressource limitante.
 - **Gameplay** : pillage **fortement encouragé**, multi-village, domination du leaderboard.
 
 ## Économie équilibrée : production vs pillage
 
-Principe fondamental : **production passive et pillage sur un pied d'égalité (50/50)**.
+Principe fondamental : **production passive comme baseline, pillage comme accélérateur majeur**.
 
 | Source | Impact |
 | --- | --- |
-| **Production passive** | Baseline, progression constante. Cap fixé par l'Entrepôt. |
-| **Pillage actif** | Double la vitesse de progression d'un joueur engagé vs un passif. |
+| **Production passive** | Baseline, progression constante. Cap fixé par l'Entrepôt. Ne finance pas seule un rush confortable des L10. |
+| **Pillage actif** | Apporte idéalement un volume comparable à la production passive d'un joueur engagé, jusqu'à ~2× la vitesse d'un passif. |
 | **Raids barbares défensifs** | Bonus légers — récompenses si défense réussie. |
 | **Cartes quotidiennes** | Valeur modérée, à plafonner. Bonus de confort / rattrapage, pas troisième pilier économique. |
 
-> 💡 Un joueur qui pille activement progresse **~2× plus vite** qu'un joueur passif. En Standard MVP compressé, ce volume vient typiquement de 10–15 raids bien choisis sur des cibles riches, ou de davantage de micro-raids courts selon la zone.
+> 💡 Un joueur qui pille activement progresse **jusqu'à ~2× plus vite** qu'un joueur passif. En Standard MVP compressé, ce volume vient typiquement de 10–15 raids bien choisis sur des cibles riches, ou de davantage de micro-raids courts selon la zone.
 
 **Stratégie de pillage optimal** : 20 Cavaliers + 10 Écuyers ≈ 2 500 capacité de loot/raid (cf. mobilité unités dans [`08-units.md`](./08-units.md)). La compression tempo rend surtout le trajet et la rotation plus fréquents ; le cap de loot par raid reste porté par la capacité de transport et le stock réel de la cible.
 
@@ -172,10 +172,10 @@ Principe fondamental : **production passive et pillage sur un pied d'égalité (
 
 ### Caractéristiques de la courbe (shape)
 
-- **Production de ressources** : progression non-linéaire, ratio par niveau croissant (~×1.4 early → ~×1.6 late), avec walls sensibles à L7 et L10 alignés avec les walls de temps de construction. Cf. [ADR-14](../architecture/decisions.md#adr-14--niveau-max--10-pour-tous-les-bâtiments-vs-courbe--façon-century-).
-- **Temps de construction** : early L1-L5 ultra-rapide (secondes → minutes), walls L7 / L10 (heures → jours). Détail courbe walled-v1.1 dans [`23-world-tempo-and-multipliers.md`](./23-world-tempo-and-multipliers.md).
+- **Production de ressources** : progression non-linéaire de 60/h à 1 350/h. Les niveaux hauts restent utiles, mais ne permettent pas de financer tous les L10 quotidiennement sans pillage. Cf. [ADR-17](../architecture/decisions.md#adr-17--production-passive-contenue-et-pillage-accélérateur).
+- **Temps de construction** : early L1-L5 ultra-rapide (secondes → minutes), walls L7 / L10 (heures → jours). Détail de la recalibration dans [ADR-15](../architecture/decisions.md#adr-15--recalibration-courbe-construction--max-village-78-j-via-bonus-château-renforcé).
 - **Capacité Entrepôt** : suit la production (×1.4 → ×1.5 par niveau) pour éviter l'overflow au mid/late game.
-- **Bonus Château** : −4 % temps de construction par niveau au-delà du L1, soit −36 % à L10.
+- **Bonus Château** : courbe renforcée jusqu'à ×4 de vitesse ressentie à L10 (cf. `CASTLE_CONSTRUCTION_SPEED_BONUS`).
 
 ### Distribution thématique des coûts
 
@@ -205,18 +205,19 @@ Le niveau du Château détermine l'accès aux autres bâtiments, créant des obj
 
 ## Validation économique : rythme de progression
 
-Cibles design pour le Standard MVP (tempo 1.0, courbes walled-v1.1 + production B) :
+Cibles design pour le Standard MVP (tempo 1.0, courbes coûts Entrepôt + production pillage-first) :
 
-- **Tryhard** (engagement maximal, no sleep) : village full L10 atteint en ~**14 j wall-clock**. Conquête éligible (Château 6 + Salle du Trône) à **J+0.5** (~16h en construction pure, plus le temps de monter armée + Seigneur, cf. [`10-conquest.md`](./10-conquest.md#coût-de-recrutement-du-seigneur)).
-- **Joueur mobile actif** (sommeil normal, check ~1h) : village full L10 à ~**15-16 j**, conquête éligible **J+1** (~20h en construction pure).
-- **Joueur casual** (1-2 sessions/jour, 5-10 min) : non simulé — la durée sera plus longue (probablement 20-25 j pour full max), à valider en playtest.
+- **Passif pur tryhard** (engagement maximal, no sleep, aucun pillage) : village full L10 atteint en ~**35,6 j wall-clock**. Conquête éligible (Château 6 + Salle du Trône) à **J+8,1**.
+- **Passif pur mobile actif** (sommeil normal, check ~1h, aucun pillage) : village full L10 à ~**35,8 j**, conquête éligible **J+8,4**.
+- **Joueur actif avec pillage** : doit compresser fortement ces délais. Le modèle cible reste qu'un joueur qui pille efficacement progresse environ **2× plus vite** qu'un joueur passif.
+- **Joueur casual** (1-2 sessions/jour, 5-10 min) : non simulé — durée plus longue si peu de pillage, à valider en playtest.
 
-Numbers générés par `scripts/build-simulator.js`. Le simulateur ne modélise que la **construction + ressources passives** — armée, Seigneur, combat de conquête et trajet ne sont **pas** dans le scope. Première conquête réelle = éligibilité + ~24-48h de buildup militaire pour un joueur normal, soit **J+2 à J+4** réaliste (compressed-async, cf. [`00-game-flow.md`](./00-game-flow.md)).
+Numbers générés par `scripts/build-simulator.js`. Le simulateur ne modélise que la **construction + ressources passives** — armée, Seigneur, combat de conquête, loot de pillage et trajet ne sont **pas** dans le scope. En passif pur, première conquête réelle = éligibilité + ~24-48h de buildup militaire, soit environ **J+9 à J+11**. La cible gameplay avec pillage actif reste plutôt **J+5 à J+7** (compressed-async, cf. [`00-game-flow.md`](./00-game-flow.md)).
 
 ### Indices de bon équilibrage
 
-- **Idle ressources < 5 %** pour un joueur normal mobile (le sommeil laisse les mines accumuler).
-- **Idle ressources jusqu'à ~50 %** possible pour un tryhard rush conquête — c'est volontaire : crée la tension "rush Castle vs monter mines d'abord", levier d'indécision stratégique (cf. ADR-14, profils tall / wide / army-focused).
+- **Idle ressources élevé en passif pur** : c'est volontaire après recalibration. La production passive est une baseline, pas le moteur complet de progression.
+- **Pillage nécessaire pour accélérer** : un joueur actif doit pouvoir réduire fortement l'idle ressources via attaques barbares/PvP et priorisation des cibles riches.
 - **Walls construction** sensibles à L7 (heures) et L10 (jours) — alignés avec walls production pour récompenser l'investissement temps.
 
 ## Principes d'équilibrage

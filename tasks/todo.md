@@ -1,21 +1,38 @@
 # Todo
 
-## 2026-05-31 — PR 33 review follow-up
+## 2026-05-31 — Recalibration production ressources / pillage
 
-- [x] Récupérer les reviews PR avec état des threads et lister les commentaires encore actionnables.
-- [x] Vérifier chaque finding contre le code courant et séparer pertinent / non pertinent / déjà couvert.
-- [x] Corriger uniquement les findings pertinents avec changements minimaux.
-- [x] Lancer les tests ciblés et contrôles TypeScript utiles.
-- [x] Documenter la review finale dans ce fichier et préparer le push.
+- [x] Cartographier la source de vérité de production passive et ses consommateurs.
+- [x] Réduire la courbe de production horaire pour que Château L10 demande ~35 h de production passive sur la ressource limitante.
+- [x] Mettre à jour les tests et docs d'équilibrage production/coût.
+- [x] Lancer tests ciblés, simulateur et static-check, puis documenter la review.
 
 ### Review
 
-- Pertinents corrigés : 8 threads CodeRabbit non résolus + 1 retour Codex.
-- Non retenu : warning générique CodeRabbit "Docstring Coverage", hors règles projet et sans thread actionnable.
-- Backend : types explicites sur endpoints/service renfort, snapshots village obligatoires avant persistance report, `reinforcement.returned` inclut `hostVillageId` et notifie les deux propriétaires uniques.
-- Frontend : preview `RETURNED` affichée dans le sens hôte → origine ; invalidation renfort lit `hostVillageId`.
-- Tests/docs : test presenter, test preview retour, assertion dedup inbox same-owner, smoke retour host payload, liens archive corrigés.
-- Vérifications : `rtk yarn workspace battleforthecrown-backend test reinforcement-report.presenter.spec.ts` PASS ; `rtk yarn workspace battleforthecrown-pixi test reinforcementReportView.test.ts` PASS ; `rtk yarn workspace battleforthecrown-backend type-check` PASS ; `rtk yarn workspace battleforthecrown-pixi type-check` PASS ; `rtk yarn workspace battleforthecrown-backend test:smoke:preflight` PASS après `migrate deploy` sur `battleforthecrown_smoke` ; `rtk yarn workspace battleforthecrown-backend test:smoke:run -- reinforcements.smoke.spec.ts` PASS 3/3 ; `rtk yarn static-check` PASS.
+- Source corrigée : `RESOURCE_PRODUCTION_PER_HOUR` dans `packages/shared/src/resources/production.ts`, consommée backend par `WorldConfigService.getProductionRate`, `ResourcesService`, le frontend et `build-simulator.js`.
+- Calibration : courbe passive `60 -> 1350/h`; Château L10 demande `46980 / 1350 = 34,8 h` sur la pierre en passif pur.
+- Garde-fou : `buildings.spec.ts` vérifie que la production L10 garde Château L10 autour de 35 h de production passive sur la ressource limitante.
+- Docs : `02`, `03`, `23` et ADR-17 alignent passif pur (~35-36 j), conquête active avec pillage (cible J+5-J+7) et ancienne cible construction pure (~7-8 j).
+- Vérification : `rtk yarn workspace battleforthecrown-backend test -- buildings.spec.ts world-config.service.spec.ts` — 2 suites / 57 tests passés.
+- Vérification : `rtk yarn static-check` — passé.
+- Simulation passive mobile : `node scripts/build-simulator.js` — full L10 ~35,8 j, conquête éligible ~J+8,4, production finale 1350/h.
+- Simulation passive tryhard : `node scripts/build-simulator.js --tryhard` — full L10 ~35,6 j, conquête éligible ~J+8,1.
+
+## 2026-05-31 — Recalibration coûts bâtiments / entrepôt
+
+- [x] Cartographier la source de vérité des coûts, de l'entrepôt et leurs consommateurs backend/Pixi.
+- [x] Recalibrer les coûts ressources des bâtiments sur une fraction significative du max d'entrepôt atteignable.
+- [x] Ajouter un invariant automatisé pour empêcher une courbe trop basse ou impossible à stocker.
+- [x] Lancer les vérifications ciblées et documenter la review.
+
+### Review
+
+- Source corrigée : `BUILDING_DEFINITIONS` dans `packages/shared/src/village/buildings.ts`, consommée backend par `WorldConfigService.getCost` et frontend par les modales/cartes bâtiment.
+- Calibration : coûts des bâtiments actifs rebasés sur une fraction stockable mais non négligeable de la capacité d'Entrepôt du palier ; `HIDEOUT` et `WALL` restent hors scope car désactivés MVP.
+- Garde-fou : `buildings.spec.ts` vérifie que chaque bâtiment actif a un coût max significatif face à l'Entrepôt de référence et reste stockable.
+- Vérification : `rtk yarn workspace battleforthecrown-backend test -- buildings.spec.ts world-config.service.spec.ts` — 2 suites / 56 tests passés.
+- Vérification : `rtk yarn static-check` — passé.
+- Simulation : `node scripts/build-simulator.js` — max village ~7,5 jours, idle ressources ~6h01.
 
 ## 2026-05-31 — PR 29 review follow-up
 

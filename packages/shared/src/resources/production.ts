@@ -5,16 +5,16 @@ export type ResourceBuildingType = (typeof RESOURCE_BUILDING_TYPES)[number];
 
 export const RESOURCE_PRODUCTION_PER_HOUR: Readonly<Record<number, number>> =
   Object.freeze({
-    1: 200,
-    2: 280,
-    3: 400,
-    4: 580,
-    5: 850,
-    6: 1300,
-    7: 2050,
-    8: 3200,
-    9: 5100,
-    10: 8200,
+    1: 60,
+    2: 85,
+    3: 120,
+    4: 170,
+    5: 240,
+    6: 340,
+    7: 480,
+    8: 675,
+    9: 955,
+    10: 1350,
   });
 
 /**

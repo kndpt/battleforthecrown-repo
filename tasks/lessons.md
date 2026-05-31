@@ -1,12 +1,15 @@
 # Lessons
 
 - Relire les leçons projet en début de session ; si le fichier n'existe pas, le créer avant de continuer.
+- Quand le user fournit une capture + une URL précise, limiter la correction à l'écran demandé avant de généraliser au domaine métier ; ne pas modifier la carte Pixi si la cible est `/worlds`.
 - Les PR autonomes de maintenance ne doivent pas réutiliser les familles `run/*` ou `task/*` : utiliser `maint/<scope>/...` et un titre `maint(<scope>): ...` pour les identifier sans ambiguïté.
 - CodeRabbit ne doit pas reviewer les mémoires/suivis volatiles ni poster de nitpicks linguistiques ; exclure `.context-memory/**`, `tasks/todo.md`, `tasks/lessons.md` et garder un seuil "impact réel seulement" dans `.coderabbit.yaml`.
 - Pour une automation Codex qui doit lancer un skill, vérifier le `name:` réel dans `.agents/skills/*/SKILL.md` puis commencer le prompt par `$skill-name`; ne pas se contenter d'une phrase "utilise le skill ...".
 - Ne pas attendre longtemps un sub-agent silencieux : faire un poll court, fermer l'agent bloqué, documenter la dérogation et reprendre avec une cartographie locale ciblée.
 - Si une commande `rtk` en parallèle semble bloquer, stopper le fan-out et reprendre avec une seule commande ciblée, bornée en sortie.
 - Ne pas utiliser `tasks/todo.md` comme livrable durable hors exécution `$bftc-run` : il est volatile et peut être réécrit par le pipeline. Pour une adaptation de règle/skill, préférer la modification du skill/rule + review en réponse finale.
+- En PR, si `tasks/todo.md` entre en conflit avec `main`, garder la version de `main` et sortir le suivi volatile du diff ; les preuves durables restent dans le ticket archivé, `tasks/README.md`, le commit et la PR.
+- Avant de considérer une PR clôturée côté reviews, vérifier aussi `mergeable` / `mergeStateStatus` sur GitHub ; une PR peut ne plus avoir de threads actionnables mais rester bloquée par des conflits.
 - Après un `$bftc-run`, le rapport final doit contenir `Acceptance & QA` : critères d'acceptance vérifiés, tests automatisés, smokes ajoutés/modifiés, QA fonctionnelle agent (`server + curl`, REST, worker/job, SELECT DB si pertinent), puis uniquement les tests IG qui restent réellement au user.
 - Ne jamais faire de QA in-game via browser côté agent : l'agent se limite aux tests automatisés, smokes, curls, logs, healthchecks ou boot checks ; si une QA IG est nécessaire, donner seulement une checklist ultra concise à Kelvin.
 - Ne pas ajouter de smoke permanent pour un cas de compatibilité legacy déjà borné aux données existantes ; préférer un correctif minimal + inspection DB/QA ciblée, sauf si le scénario peut réapparaître dans le flux normal.

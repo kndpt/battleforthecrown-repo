@@ -146,7 +146,8 @@ describe('WorldCard', () => {
     expect(screen.queryByText('Villages')).not.toBeInTheDocument();
     expect(screen.getByText('Puissance')).toBeInTheDocument();
     expect(normalizedText(container)).toContain('1 234 567');
-    expect(container.querySelector('img')?.getAttribute('src')).toBe('/assets/army-power.png');
+    expect(container.querySelector('img[src="/assets/castle.png"]')).toBeInTheDocument();
+    expect(container.querySelector('img[src="/assets/army-power.png"]')).toBeInTheDocument();
 
     rerender(
       <WorldCard
