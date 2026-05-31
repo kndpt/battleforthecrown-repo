@@ -170,16 +170,18 @@ function getUpgradeDisabledLabel({
   isLockedByCastle,
   isPending,
   isQueueFull,
+  pendingLabel = 'Amélioration...',
   requiredCastleLevel,
 }: {
   canAfford: boolean;
   isLockedByCastle: boolean;
   isPending: boolean;
   isQueueFull: boolean;
+  pendingLabel?: string;
   requiredCastleLevel: number | null;
 }): string | undefined {
   if (isLockedByCastle) return `Château niv. ${requiredCastleLevel} requis`;
-  if (isPending) return 'Amélioration...';
+  if (isPending) return pendingLabel;
   if (isQueueFull) return 'File pleine';
   if (!canAfford) return 'Ressources insuff.';
   return undefined;
@@ -212,6 +214,8 @@ export function ResourceBuildingDetailModal({
   const resourceMeta = RESOURCE_BUILDING_META[resourceKey];
   const resourceMaxLevel = building.maxLevel;
   const isLockedByCastle = lockState.state === 'unbuilt-locked' && lockState.requiredCastleLevel !== null;
+  const isUnbuiltAvailable = lockState.state === 'unbuilt-available';
+  const upgradeActionLabel = isUnbuiltAvailable ? 'Construire' : 'Améliorer';
   const storageMax = resourceKey === 'quarter'
     ? (population?.max ?? getQuarterPopulationLimit(Math.max(1, building.level)))
     : (displayResources?.maxPerType ?? 0);
@@ -220,8 +224,14 @@ export function ResourceBuildingDetailModal({
     isLockedByCastle,
     isPending: upgradePending,
     isQueueFull,
+    pendingLabel: isUnbuiltAvailable ? 'Construction...' : undefined,
     requiredCastleLevel: lockState.requiredCastleLevel,
   });
+  const labels = {
+    ...(resourceKey === 'quarter' ? { sectionCapacity: 'Villageois disponibles' } : {}),
+    actionUpgrade: upgradeActionLabel,
+    upgradeLabel: upgradeActionLabel,
+  };
 
   return (
     <div
@@ -261,7 +271,7 @@ export function ResourceBuildingDetailModal({
               : undefined
           }
           isPopulation={resourceMeta.isPopulation}
-          labels={resourceKey === 'quarter' ? { sectionCapacity: 'Villageois disponibles' } : undefined}
+          labels={labels}
           level={building.level}
           levelStats={getResourceBuildingLevelStats(
             resourceKey,

@@ -541,6 +541,9 @@ export function SpecializedBuildingDetailModal(props: SpecializedBuildingDetailM
   } = props;
   const accent = buildingAccent(building.type);
   const isLockedByCastle = lockState.state === 'unbuilt-locked' && lockState.requiredCastleLevel !== null;
+  const isUnbuiltAvailable = lockState.state === 'unbuilt-available';
+  const upgradeActionLabel = isUnbuiltAvailable ? 'Construire' : 'Améliorer';
+  const upgradePendingLabel = isUnbuiltAvailable ? 'Construction...' : 'Amélioration...';
   const construction = lockState.state === 'in-progress'
     ? {
         progressPercent: props.progress.percent,
@@ -567,8 +570,8 @@ export function SpecializedBuildingDetailModal(props: SpecializedBuildingDetailM
               : isQueueFull
                 ? `File pleine (${queueLength}/${MAX_CONSTRUCTION_QUEUE})`
                 : upgradePending
-                  ? 'Amélioration...'
-                  : 'Améliorer',
+                  ? upgradePendingLabel
+                  : upgradeActionLabel,
             tone: 'success' as const,
           }]),
   ];
@@ -609,7 +612,7 @@ export function SpecializedBuildingDetailModal(props: SpecializedBuildingDetailM
               availablePopulation={availablePopulation}
               cost={nextCost}
               displayResources={displayResources}
-              label={`Améliorer · Niv. ${building.level} → ${building.level + 1}`}
+              label={`${upgradeActionLabel} · Niv. ${building.level} → ${building.level + 1}`}
               time={effectiveTimeMs !== null ? formatRemaining(effectiveTimeMs) : '—'}
             />
           ) : null}

@@ -14,6 +14,20 @@
 - [x] Faire review 5 axes + review indépendante obligatoire, corriger les findings.
 - [x] Décider docs/SPEC, archiver la run, mettre `tasks/README.md` à jour, commit, push et PR ready.
 
+## 2026-05-31 — Libellé construction bâtiment non construit
+
+- [x] Identifier le composant de détail bâtiment concerné.
+- [x] Corriger le libellé d'action niveau 0.
+- [x] Ajouter une vérification ciblée.
+- [x] Lancer tests ciblés et commit.
+
+### Review
+
+- Correction appliquée à `SpecializedBuildingDetailModal` pour la Caserne et aux bâtiments ressources pour garder le comportement cohérent.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test ResourceBuildingDetailModal.test.tsx SpecializedBuildingDetailModal.test.tsx` — 2 files / 3 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
+- QA IG restante : ouvrir une Caserne niv. 0 disponible et vérifier que le bandeau de coût et le bouton vert affichent `Construire`.
+
 ## 2026-05-31 — Politique smokes ciblés localement
 
 - [x] Cartographier les consignes smokes dans skills, docs et agents.
