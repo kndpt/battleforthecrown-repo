@@ -683,16 +683,14 @@ export function useCombatReportQuery(reportId: string | null) {
   });
 }
 
-export type ScoutReportDto = ScoutReportResponse;
-
 export function useScoutReportsQuery() {
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const worldId = useGameStore((state) => state.worldId);
-  return useQuery<ScoutReportDto[]>({
+  return useQuery<ScoutReportResponse[]>({
     queryKey: queryKeys.scoutReports(userId, worldId),
     queryFn: () => {
-      if (!userId || !worldId) return Promise.resolve([] as ScoutReportDto[]);
-      return apiClient.get<ScoutReportDto[]>('/combat/scout-reports');
+      if (!userId || !worldId) return Promise.resolve([] as ScoutReportResponse[]);
+      return apiClient.get<ScoutReportResponse[]>('/combat/scout-reports');
     },
     enabled: Boolean(userId && worldId),
     staleTime: 10_000,
@@ -702,11 +700,11 @@ export function useScoutReportsQuery() {
 export function useScoutReportQuery(reportId: string | null) {
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const worldId = useGameStore((state) => state.worldId);
-  return useQuery<ScoutReportDto>({
+  return useQuery<ScoutReportResponse>({
     queryKey: queryKeys.scoutReport(reportId, worldId),
     queryFn: () => {
       if (!reportId || !worldId) return Promise.reject(new Error('Missing scout report'));
-      return apiClient.get<ScoutReportDto>(`/combat/scout-report/${reportId}`);
+      return apiClient.get<ScoutReportResponse>(`/combat/scout-report/${reportId}`);
     },
     enabled: Boolean(reportId && userId && worldId),
     staleTime: 60_000,
@@ -735,9 +733,9 @@ export function useMarkScoutReportReadMutation() {
   const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const worldId = useGameStore((state) => state.worldId);
-  return useMutation<ScoutReportDto, Error, MarkReportReadInput>({
+  return useMutation<ScoutReportResponse, Error, MarkReportReadInput>({
     mutationFn: ({ reportId }) =>
-      apiClient.patch<ScoutReportDto>(`/combat/scout-report/${reportId}/read`),
+      apiClient.patch<ScoutReportResponse>(`/combat/scout-report/${reportId}/read`),
     onSettled: (_data, _err, { reportId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.scoutReports(userId, worldId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.scoutReport(reportId, worldId) });

@@ -2,7 +2,7 @@ import type {
   ScoutReportCardProps,
   ScoutReportSection,
 } from '@/features/design-system/components/ScoutReportCard';
-import type { ScoutReportDto } from '@/api/queries';
+import type { ScoutReportResponse } from '@battleforthecrown/shared/combat';
 import { unitMetaFor } from '@/features/army/unitConfig';
 import { formatResourceAmount } from '@/lib/resourceConfig';
 import { DEFAULT_VILLAGE_STRATEGY, type VillageStrategyType } from '@battleforthecrown/shared/village';
@@ -26,7 +26,7 @@ const RESOURCE_LABELS = {
   iron: 'Fer',
 } as const;
 
-export function scoutReportTargetLabel(report: ScoutReportDto): string {
+export function scoutReportTargetLabel(report: ScoutReportResponse): string {
   const base = TARGET_KIND_LABEL[report.targetKind] ?? report.targetKind;
   if (report.targetKind === 'BARBARIAN_VILLAGE' && report.targetTier) {
     return `${base} ${report.targetTier}`;
@@ -34,15 +34,15 @@ export function scoutReportTargetLabel(report: ScoutReportDto): string {
   return base;
 }
 
-export function scoutReportTitle(report: ScoutReportDto): string {
+export function scoutReportTitle(report: ScoutReportResponse): string {
   return report.targetName?.trim() || scoutReportTargetLabel(report);
 }
 
-export function scoutReportUnitTotal(report: ScoutReportDto): number {
+export function scoutReportUnitTotal(report: ScoutReportResponse): number {
   return Object.values(report.units ?? {}).reduce((sum, quantity) => sum + quantity, 0);
 }
 
-export function scoutReportResourceTotal(report: ScoutReportDto): number {
+export function scoutReportResourceTotal(report: ScoutReportResponse): number {
   return (
     (report.resources?.wood ?? 0) +
     (report.resources?.stone ?? 0) +
@@ -70,7 +70,7 @@ export function scoutReportStrategyLabel(strategy: string | null | undefined): s
 }
 
 export function buildScoutReportCardProps(
-  report: ScoutReportDto,
+  report: ScoutReportResponse,
   onDelete: ScoutReportCardProps['action']['onClick'],
   deleteDisabled: boolean,
 ): ScoutReportCardProps {

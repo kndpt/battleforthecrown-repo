@@ -19,6 +19,21 @@ This backlog tracks bounded existing-debt candidates for `bftc-maint-debt`.
 ## Candidates
 
 - status: proposed
+  area: >
+    battleforthecrown-pixi/src/api/queries.ts,
+    battleforthecrown-pixi/src/features/combat/scoutReportView.ts,
+    battleforthecrown-pixi/src/features/combat/scoutReportView.test.ts,
+    battleforthecrown-pixi/src/features/combat/ReportsList.tsx
+  branch: claude/bftc-maint-debt-scout-report-dto
+  title: "refactor(pixi/combat): drop ScoutReportDto alias, use ScoutReportResponse directly"
+  note: >
+    ScoutReportResponse was already imported from @battleforthecrown/shared/combat in queries.ts.
+    The re-exported ScoutReportDto alias was pure noise: it added a second name for the same type,
+    forcing 3 consumer files to import from @/api/queries instead of the authoritative shared package.
+    Removed the alias and updated all 4 files to use ScoutReportResponse directly.
+  verification: yarn static-check ✓ · pixi 229 tests ✓
+
+- status: fixed
   area: `battleforthecrown-backend/src/modules/event/game.gateway.ts`
   branch: claude/bftc-debt-gardener-EGUH6
   title: "fix(backend/event): type verifyAsync with JwtPayload in GameGateway"
@@ -28,7 +43,7 @@ This backlog tracks bounded existing-debt candidates for `bftc-maint-debt`.
     `verifyAsync<JwtPayload>(token)`, import the type, remove the eslint-disable.
   verification: yarn static-check ✓
 
-- status: proposed
+- status: fixed
   area: >
     battleforthecrown-pixi/src/lib/math.ts (new),
     battleforthecrown-pixi/src/lib/pathGeometry.ts (new),
@@ -66,7 +81,7 @@ This backlog tracks bounded existing-debt candidates for `bftc-maint-debt`.
     No functional effect: coordinate space is bounded and no entities exist beyond the edge, so the
     `lte` upper bound returns identical rows. Adding it is a no-op that duplicates a magic literal; skipped.
 
-- status: proposed
+- status: fixed
   area: >
     packages/shared/src/utils/level.ts (new),
     packages/shared/src/village/buildings.ts,
@@ -116,9 +131,10 @@ This backlog tracks bounded existing-debt candidates for `bftc-maint-debt`.
     ("1h 30m" vs "1 h 30 m") — consolidating changes rendered UI text, so needs product intent, not a
     blind dedupe. Defer.
 
-- status: candidate
+- status: fixed
   area: `battleforthecrown-pixi/src/api/queries.ts`
-  note: Prior audits flagged this as a high-value contract/API surface; reverify before editing.
+  branch: claude/bftc-maint-debt-scout-report-dto
+  note: ScoutReportDto alias removed; callers updated to use ScoutReportResponse from @battleforthecrown/shared/combat.
 
 - status: candidate
   area: `battleforthecrown-pixi/src/pixi/scenes/WorldMapScene.ts`
@@ -134,7 +150,7 @@ This backlog tracks bounded existing-debt candidates for `bftc-maint-debt`.
   area: `battleforthecrown-backend/src/workers/production.worker.ts`
   note: Prior audits flagged this as a high-value worker surface; preserve Outbox/server-authoritative invariants.
 
-- status: proposed
+- status: fixed
   area: >
     battleforthecrown-backend/src/modules/combat/loot/providers/resource-loot.provider.ts,
     battleforthecrown-backend/src/common/prisma-shared-enums.ts,
@@ -169,3 +185,7 @@ This backlog tracks bounded existing-debt candidates for `bftc-maint-debt`.
 - 2026-05-30: selected `parseArmyTrainingTimeSeconds` dead export + summaryLabel countdown formatter on
   `claude/bftc-maint-debt-army-cleanup` — deleted dead function, replaced formatArmyTrainingDuration(ms/1000)
   with formatRemaining(ms), added summaryLabel time assertion. static-check ✓ · backend 232 ✓ · pixi 229 ✓.
+- 2026-05-31: dropped redundant ScoutReportDto alias from queries.ts on `claude/bftc-maint-debt-scout-report-dto` —
+  ScoutReportResponse was already imported from @battleforthecrown/shared/combat; alias caused 3 consumer files to
+  import a re-exported name rather than the canonical shared type. Removed alias, updated 4 files.
+  static-check ✓ · pixi 229 ✓. Also cleaned backlog: marked proposed→fixed for PRs #6, #9, #10, #11.
