@@ -23,5 +23,6 @@ export function reinforcementReportPreview(report: ReinforcementReportResponse):
   const total = reinforcementReportUnitTotal(report);
   const origin = report.originVillageName ?? `(${report.originX}, ${report.originY})`;
   const host = report.hostVillageName ?? `(${report.hostX}, ${report.hostY})`;
-  return `${total} unités · de ${origin} → ${host}`;
+  const [from, to] = report.type === 'RETURNED' ? [host, origin] : [origin, host];
+  return `${total} unités · de ${from} → ${to}`;
 }

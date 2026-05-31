@@ -309,13 +309,15 @@ describe('reinforcements smoke', () => {
       });
 
     // 7. Assert DB: InboxEntry for userA exists, unread, not hidden
-    const stationedEntry = await ctx.prisma.inboxEntry.findFirstOrThrow({
+    const stationedEntries = await ctx.prisma.inboxEntry.findMany({
       where: {
         userId: userA.userId,
         reinforcementReportId: stationedReport.id,
         kind: 'REINFORCEMENT',
       },
     });
+    expect(stationedEntries).toHaveLength(1);
+    const stationedEntry = stationedEntries[0];
     expect(stationedEntry.isRead).toBe(false);
     expect(stationedEntry.hidden).toBe(false);
 
@@ -520,6 +522,13 @@ describe('reinforcements smoke', () => {
       { kind: 'reinforcement.returned', aggregateId: originVillageId },
       { timeoutMs: 30_000 },
     );
+    const returnedEvent = await ctx.prisma.eventOutbox.findFirstOrThrow({
+      where: { kind: 'reinforcement.returned', aggregateId: originVillageId },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(
+      (returnedEvent.payload as { hostVillageId?: string }).hostVillageId,
+    ).toBe(hostVillageId);
 
     const returnedInventory = await ctx.prisma.unitInventory.findUniqueOrThrow({
       where: {

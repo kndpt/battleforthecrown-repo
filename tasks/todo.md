@@ -1,5 +1,22 @@
 # Todo
 
+## 2026-05-31 — PR 33 review follow-up
+
+- [x] Récupérer les reviews PR avec état des threads et lister les commentaires encore actionnables.
+- [x] Vérifier chaque finding contre le code courant et séparer pertinent / non pertinent / déjà couvert.
+- [x] Corriger uniquement les findings pertinents avec changements minimaux.
+- [x] Lancer les tests ciblés et contrôles TypeScript utiles.
+- [x] Documenter la review finale dans ce fichier et préparer le push.
+
+### Review
+
+- Pertinents corrigés : 8 threads CodeRabbit non résolus + 1 retour Codex.
+- Non retenu : warning générique CodeRabbit "Docstring Coverage", hors règles projet et sans thread actionnable.
+- Backend : types explicites sur endpoints/service renfort, snapshots village obligatoires avant persistance report, `reinforcement.returned` inclut `hostVillageId` et notifie les deux propriétaires uniques.
+- Frontend : preview `RETURNED` affichée dans le sens hôte → origine ; invalidation renfort lit `hostVillageId`.
+- Tests/docs : test presenter, test preview retour, assertion dedup inbox same-owner, smoke retour host payload, liens archive corrigés.
+- Vérifications : `rtk yarn workspace battleforthecrown-backend test reinforcement-report.presenter.spec.ts` PASS ; `rtk yarn workspace battleforthecrown-pixi test reinforcementReportView.test.ts` PASS ; `rtk yarn workspace battleforthecrown-backend type-check` PASS ; `rtk yarn workspace battleforthecrown-pixi type-check` PASS ; `rtk yarn workspace battleforthecrown-backend test:smoke:preflight` PASS après `migrate deploy` sur `battleforthecrown_smoke` ; `rtk yarn workspace battleforthecrown-backend test:smoke:run -- reinforcements.smoke.spec.ts` PASS 3/3 ; `rtk yarn static-check` PASS.
+
 ## 2026-05-31 — PR 29 review follow-up
 
 - [x] Trier les commentaires PR : 3 pertinents, 2 stale à ignorer.

@@ -389,7 +389,7 @@ export function applyReinforcementReturned(
     ctx,
     payload.villageId,
     getString(payload, 'originVillageId'),
-    getString(payload, 'targetVillageId'),
+    getString(payload, 'hostVillageId'),
   );
   invalidateOpenExpeditions(ctx);
   invalidateRetentionSummary(ctx);

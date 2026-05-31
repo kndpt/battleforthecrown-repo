@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import { presentReinforcementReport } from './reinforcement-report.presenter';
+import type { ReinforcementReportResponse } from '@battleforthecrown/shared/combat';
 
 @Injectable()
 export class ReinforcementReportService {
@@ -10,7 +11,10 @@ export class ReinforcementReportService {
     private readonly ownership: OwnershipService,
   ) {}
 
-  async getAllReinforcementReports(userId: string, worldId: string) {
+  async getAllReinforcementReports(
+    userId: string,
+    worldId: string,
+  ): Promise<ReinforcementReportResponse[]> {
     await this.ownership.assertWorldMember(worldId, userId);
     const entries = await this.prisma.inboxEntry.findMany({
       where: { userId, worldId, kind: 'REINFORCEMENT', hidden: false },
@@ -26,7 +30,7 @@ export class ReinforcementReportService {
     userId: string,
     reportId: string,
     worldId: string,
-  ) {
+  ): Promise<ReinforcementReportResponse> {
     await this.ownership.assertWorldMember(worldId, userId);
     const entry = await this.prisma.inboxEntry.findFirst({
       where: {
@@ -48,7 +52,7 @@ export class ReinforcementReportService {
     userId: string,
     reportId: string,
     worldId: string,
-  ) {
+  ): Promise<ReinforcementReportResponse> {
     await this.ownership.assertWorldMember(worldId, userId);
     const entry = await this.prisma.inboxEntry.findFirst({
       where: {
@@ -73,7 +77,7 @@ export class ReinforcementReportService {
     userId: string,
     reportId: string,
     worldId: string,
-  ) {
+  ): Promise<{ message: string }> {
     await this.ownership.assertWorldMember(worldId, userId);
     const entry = await this.prisma.inboxEntry.findFirst({
       where: {

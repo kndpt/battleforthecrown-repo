@@ -99,5 +99,18 @@ describe('reinforcementReportView', () => {
       expect(preview).toContain('8');
       expect(preview).toContain('de (3, 7) → (10, 20)');
     });
+
+    it('uses host to origin direction for returned reports', () => {
+      const report = makeReport({
+        type: 'RETURNED',
+        originVillageName: 'Ironhold',
+        hostVillageName: 'Castleford',
+        units: { MILITIA: 3 },
+      });
+
+      expect(reinforcementReportPreview(report)).toContain(
+        'de Castleford → Ironhold',
+      );
+    });
   });
 });

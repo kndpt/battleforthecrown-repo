@@ -1169,6 +1169,7 @@ export class CombatWorker implements OnModuleInit {
           expeditionId: expedition.id,
           villageId: expedition.targetRefId,
           originVillageId: originVillageId,
+          hostVillageId: expedition.attackerVillageId,
           units,
         },
       );
@@ -1206,18 +1207,29 @@ export class CombatWorker implements OnModuleInit {
       }),
     ]);
 
+    if (!originVillageSnap) {
+      throw new Error(
+        `Reinforcement report origin village not found: originVillageId=${reportOriginVillageId}, worldId=${expedition.worldId}`,
+      );
+    }
+    if (!hostVillageSnap) {
+      throw new Error(
+        `Reinforcement report host village not found: hostVillageId=${reportHostVillageId}, worldId=${expedition.worldId}`,
+      );
+    }
+
     const report = await tx.reinforcementReport.create({
       data: {
         worldId: expedition.worldId,
         type: reportType,
         originVillageId: reportOriginVillageId,
-        originVillageName: originVillageSnap?.name ?? null,
-        originX: originVillageSnap?.x ?? 0,
-        originY: originVillageSnap?.y ?? 0,
+        originVillageName: originVillageSnap.name,
+        originX: originVillageSnap.x,
+        originY: originVillageSnap.y,
         hostVillageId: reportHostVillageId,
-        hostVillageName: hostVillageSnap?.name ?? null,
-        hostX: hostVillageSnap?.x ?? 0,
-        hostY: hostVillageSnap?.y ?? 0,
+        hostVillageName: hostVillageSnap.name,
+        hostX: hostVillageSnap.x,
+        hostY: hostVillageSnap.y,
         units: encodeUnitMap(units),
         actorUserId: reportActorUserId,
       },
@@ -1225,7 +1237,7 @@ export class CombatWorker implements OnModuleInit {
 
     const recipientIds = [
       ...new Set(
-        [originVillageSnap?.userId, hostVillageSnap?.userId].filter(
+        [originVillageSnap.userId, hostVillageSnap.userId].filter(
           (id): id is string => Boolean(id),
         ),
       ),

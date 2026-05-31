@@ -155,6 +155,7 @@ export interface ReinforcementReturnedPayload {
   expeditionId: string;
   villageId: string;
   originVillageId: string;
+  hostVillageId?: string;
   units: UnitMap;
 }
 

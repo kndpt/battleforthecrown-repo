@@ -29,6 +29,7 @@ import {
   scoutCommandSchema,
   type ScoutCommandDto,
 } from './dto/scout-command.schema';
+import type { ReinforcementReportResponse } from '@battleforthecrown/shared/combat';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { CurrentUser, type AuthenticatedUser } from '../../common/auth';
 
@@ -178,7 +179,7 @@ export class CombatController {
   async getAllReinforcementReports(
     @CurrentUser() user: AuthenticatedUser,
     @Headers('x-world-id') worldId?: string,
-  ) {
+  ): Promise<ReinforcementReportResponse[]> {
     return this.reinforcementReportService.getAllReinforcementReports(
       user.id,
       this.requireWorldId(worldId),
@@ -190,7 +191,7 @@ export class CombatController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('reportId') reportId: string,
     @Headers('x-world-id') worldId?: string,
-  ) {
+  ): Promise<ReinforcementReportResponse> {
     return this.reinforcementReportService.getReinforcementReport(
       user.id,
       reportId,
@@ -203,7 +204,7 @@ export class CombatController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('reportId') reportId: string,
     @Headers('x-world-id') worldId?: string,
-  ) {
+  ): Promise<ReinforcementReportResponse> {
     return this.reinforcementReportService.markReinforcementReportAsRead(
       user.id,
       reportId,
@@ -216,7 +217,7 @@ export class CombatController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('reportId') reportId: string,
     @Headers('x-world-id') worldId?: string,
-  ) {
+  ): Promise<{ message: string }> {
     return this.reinforcementReportService.deleteReinforcementReport(
       user.id,
       reportId,
