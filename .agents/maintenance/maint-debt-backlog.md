@@ -2,6 +2,9 @@
 
 This backlog tracks bounded existing-debt candidates for `bftc-maint-debt`.
 
+New proposed entries use branch `maint/debt/<short-topic>` and PR title
+`maint(debt): <subject>`. Older entries may keep legacy `claude/*` branch names.
+
 ## Candidate States
 
 - `candidate`: worth inspecting in a future run.

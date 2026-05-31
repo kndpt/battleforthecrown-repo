@@ -26,7 +26,7 @@ Reduce existing BFTC debt one small PR at a time. This skill is not tied to rece
    - `.agents/maintenance/maint-debt-backlog.md`
 2. Ensure the worktree is clean:
    - `git status --short`
-3. Check for existing open PRs for this skill (branch prefix `claude/bftc-maint-debt`, body token `bftc-maint-debt`).
+3. Check for existing open PRs for this skill (branch prefix `maint/debt/`, body token `bftc-maint-debt`).
 4. If matching open PRs exist: read each one to extract already-covered candidates and areas. Continue the run, selecting a candidate not already addressed.
 
 ## Candidate Discovery
@@ -99,7 +99,8 @@ Update `.agents/maintenance/maint-debt-backlog.md`:
 
 ## PR Output
 
-Branch: `claude/bftc-maint-debt-<short-topic>`
+Branch: `maint/debt/<short-topic>`
+PR title: `maint(debt): <subject>`
 
 Commit in English:
 ```

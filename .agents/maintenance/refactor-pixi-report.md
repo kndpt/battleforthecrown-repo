@@ -1,6 +1,10 @@
 # Code Quality Report — Pixi Frontend
 
-Populated by `/bftc-code-quality-pixi`. Each run appends a dated entry.
+Populated by `/bftc-refactor-pixi`. Each run appends a dated entry.
+
+New PRs use branch `maint/refactor-pixi/<short-topic>` and PR title
+`maint(refactor-pixi): <subject>`. Older report entries may keep legacy
+`claude/*` branch names.
 
 ---
 

@@ -17,6 +17,24 @@ escalation logic for overlapping work.
 
 ---
 
+## PR Naming Policy
+
+Maintenance PRs are neither `$bftc-run` runs nor task tickets. They use their own
+`maint/...` branch family so they are visible as autonomous maintenance work.
+
+| Skill | Branch | PR title |
+|---|---|---|
+| `bftc-maint-debt` | `maint/debt/<short-topic>` | `maint(debt): <subject>` |
+| `bftc-maint-new-commits` | `maint/new-commits/<short-sha>` | `maint(new-commits): review new main commits` |
+| `bftc-refactor-backend` | `maint/refactor-backend/<short-topic>` | `maint(refactor-backend): <subject>` |
+| `bftc-refactor-pixi` | `maint/refactor-pixi/<short-topic>` | `maint(refactor-pixi): <subject>` |
+| `bftc-refactor-shared` | `maint/refactor-shared/<short-topic>` | `maint(refactor-shared): <subject>` |
+
+Historical ledger/report entries may mention legacy `claude/*` branch names; new
+entries must use the conventions above.
+
+---
+
 ## Routines — Setup
 
 Routines run on Anthropic infrastructure even when your machine is off.

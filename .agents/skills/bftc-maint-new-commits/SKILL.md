@@ -32,7 +32,7 @@ Inspect only the unreviewed `main` commit range tracked in `.agents/maintenance/
    - `git status --short`
 3. Fetch the latest remote state:
    - `git fetch origin main`
-4. Check for an existing open PR for this skill (branch prefix `claude/bftc-maint-new-commits`, body token `bftc-maint-new-commits`).
+4. Check for an existing open PR for this skill (branch prefix `maint/new-commits/`, body token `bftc-maint-new-commits`).
 5. If any matching open PR exists, stop and report its URL.
 
 ## Range Selection
@@ -102,7 +102,8 @@ The ledger update must be part of the PR. The cursor becomes authoritative only 
 
 ## PR Output
 
-Branch: `claude/bftc-maint-new-commits-<short-sha>`
+Branch: `maint/new-commits/<short-sha>`
+PR title: `maint(new-commits): review new main commits`
 
 Commit in English:
 ```

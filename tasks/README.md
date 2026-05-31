@@ -29,6 +29,8 @@ Politique PR `$bftc-run` :
 
 - Fiche `tasks/runs/...` : PR ready for review obligatoire, sauf dérogation explicite au démarrage du run.
 - Ticket `tasks/...` : pas de PR par défaut ; ouvrir une PR seulement si le user le demande.
+- Branches : `run/<id>-<slug>` pour une fiche run, `task/<id>-<slug>` pour un ticket.
+- Titres : `run(<id>): <subject>` ou `task(<id>): <subject>`.
 
 ### Runs actifs
 

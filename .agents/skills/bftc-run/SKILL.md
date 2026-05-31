@@ -37,7 +37,8 @@ Préflight commun :
 5. Déterminer la politique PR **avant toute écriture** :
    - Mode `run` (`tasks/runs/...`) : PR obligatoire, ready for review, sauf dérogation explicite du user dans le message de démarrage du run (`pas de PR`, `no PR`, `sans PR`, `ne push pas`).
    - Mode `ticket` (`tasks/<id>-...`) : pas de PR par défaut ; ouvrir une PR seulement si le user le demande explicitement dans le message de démarrage ou après livraison.
-   - Si PR requise et branche courante = `main`/`master`/branche par défaut, créer une branche dédiée avant de coder : `kndpt/run-<id>-<slug>` pour un run, `kndpt/ticket-<id>-<slug>` pour un ticket. Si une branche de travail non-default existe déjà, la conserver sauf conflit évident.
+   - Si PR requise et branche courante = `main`/`master`/branche par défaut, créer une branche dédiée avant de coder : `run/<id>-<slug>` pour un run, `task/<id>-<slug>` pour un ticket. Si une branche de travail non-default existe déjà, la conserver seulement si elle respecte `run/*` ou `task/*`; sinon créer la branche dédiée.
+   - Titre PR obligatoire : `run(<id>): <subject>` en mode run, `task(<id>): <subject>` en mode ticket. Exemple : `run(012): add reinforcement reports`, `task(16): fix noble death report`.
    - Si PR non requise, ne pas push et ne pas créer de PR.
 6. Charger les skills spécialisés uniquement si le scope le demande :
    - Prisma/migrations/DB : `bftc-prisma`
@@ -61,7 +62,7 @@ Préflight commun :
 8c. **Backprop SPEC** — ajouter §V/§B seulement si un invariant durable ou bug subtil/récurrent a été révélé.
 9. **Documentation** — décider l'impact doc via `.agents/rules/docs.md`; déléguer au doc writer si non trivial.
 10. **Archive + commit** — `DONE`, archive via `git mv`, maj `tasks/README.md`, commit unique EN `<type>(<scope>): <subject>`.
-10b. **Publication PR conditionnelle** — si `PR_REQUIRED: oui`, push la branche et ouvrir une PR **ready for review** vers `main` avec résumé, root cause/impact et validations. Si `PR_REQUIRED: non`, pas de push et pas de PR.
+10b. **Publication PR conditionnelle** — si `PR_REQUIRED: oui`, push la branche et ouvrir une PR **ready for review** vers `main` avec titre `run(<id>): ...` ou `task(<id>): ...`, résumé, root cause/impact et validations. Si `PR_REQUIRED: non`, pas de push et pas de PR.
 11. **Démarrage IG conditionnel** — seulement si le rapport final contient des `Tests IG à faire par le user` non vides : utiliser `bftc-worktree-qa` pour démarrer backend + frontend depuis le worktree courant, puis inclure les URLs dans le rapport final.
 
 ## Mode Rapide

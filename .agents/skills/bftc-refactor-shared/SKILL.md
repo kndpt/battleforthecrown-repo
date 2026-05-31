@@ -30,7 +30,7 @@ Deep code quality pass on `packages/shared/`. Two phases: **Audit** (annotated f
 1. Read root `AGENTS.md`, `.agents/rules/{conventions,docs,git}.md`.
 2. Read `.agents/maintenance/refactor-shared-report.md` — mark prior findings `RESOLVED` or `STILL OPEN` before starting Phase 1.
 3. Verify clean worktree: `git status --short`.
-4. Check for an open PR with branch prefix `claude/bftc-refactor-shared`. If found, stop and report its URL.
+4. Check for an open PR with branch prefix `maint/refactor-shared/`. If found, stop and report its URL.
 
 ---
 
@@ -176,7 +176,8 @@ Write findings to `.agents/maintenance/refactor-shared-report.md`:
 
 ## PR
 
-Branch: `claude/bftc-refactor-shared-<short-topic>`
+Branch: `maint/refactor-shared/<short-topic>`
+PR title: `maint(refactor-shared): <subject>`
 
 Commit format:
 ```

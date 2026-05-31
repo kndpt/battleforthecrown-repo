@@ -8,6 +8,9 @@ last_analyzed_main_sha: ad58a6ac8f65fff96cef84bac9e756dff06a35c1
 - The cursor is commit-based, not time-based.
 - The cursor must advance only through a PR that is merged into `main`.
 - If an open `bftc-maint-new-commits` PR exists, do not start another run.
+- New proposed entries use branch `maint/new-commits/<short-sha>` and PR title
+  `maint(new-commits): review new main commits`; older entries may keep legacy
+  `claude/*` branch names.
 
 ## Runs
 

@@ -1,6 +1,7 @@
 # Lessons
 
 - Relire les leçons projet en début de session ; si le fichier n'existe pas, le créer avant de continuer.
+- Les PR autonomes de maintenance ne doivent pas réutiliser les familles `run/*` ou `task/*` : utiliser `maint/<scope>/...` et un titre `maint(<scope>): ...` pour les identifier sans ambiguïté.
 - CodeRabbit ne doit pas reviewer les mémoires/suivis volatiles ni poster de nitpicks linguistiques ; exclure `.context-memory/**`, `tasks/todo.md`, `tasks/lessons.md` et garder un seuil "impact réel seulement" dans `.coderabbit.yaml`.
 - Pour une automation Codex qui doit lancer un skill, vérifier le `name:` réel dans `.agents/skills/*/SKILL.md` puis commencer le prompt par `$skill-name`; ne pas se contenter d'une phrase "utilise le skill ...".
 - Ne pas attendre longtemps un sub-agent silencieux : faire un poll court, fermer l'agent bloqué, documenter la dérogation et reprendre avec une cartographie locale ciblée.

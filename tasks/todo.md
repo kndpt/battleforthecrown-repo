@@ -13,6 +13,9 @@
 - [x] Documenter dans `bftc-run` : run → PR obligatoire sauf dérogation au démarrage ; ticket → PR seulement sur demande.
 - [x] Aligner `tasks/runs/README.md` et `tasks/README.md`.
 - [x] Vérifier l'absence de contradictions push/PR.
+- [x] Remplacer les branches PR par `run/*` / `task/*` et les titres par `run(<id>): ...` / `task(<id>): ...`.
+- [x] Garder CodeRabbit actif sur toutes les PR ouvertes tout en filtrant les commentaires low-level.
+- [x] Ajouter la famille maintenance `maint/*` avec titres `maint(<scope>): ...` pour les skills autonomes.
 
 ## 2026-05-31 — Ticket 75 transition entrée monde
 

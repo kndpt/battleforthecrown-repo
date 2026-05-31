@@ -2,6 +2,10 @@
 
 Populated by `/bftc-refactor-backend`. Each run appends a dated entry.
 
+New PRs use branch `maint/refactor-backend/<short-topic>` and PR title
+`maint(refactor-backend): <subject>`. Older report entries may keep legacy
+`claude/*` branch names.
+
 ---
 
 ## Run 2026-05-31 — branch `claude/quirky-euler-JqDcx`
@@ -9,7 +13,7 @@ Populated by `/bftc-refactor-backend`. Each run appends a dated entry.
 **Model:** claude-opus-4-8
 **Scan commit:** `a086359`
 
-> Branch note: the skill's default prefix is `claude/bftc-refactor-backend-<topic>`, but this session is pinned by the harness to `claude/quirky-euler-JqDcx` (with an explicit "never push to a different branch" rule). The harness directive takes precedence.
+> Branch note: current runs use the `maint/refactor-backend/<topic>` branch family, but this historical session was pinned by the harness to `claude/quirky-euler-JqDcx` (with an explicit "never push to a different branch" rule). The harness directive took precedence.
 
 ---
 

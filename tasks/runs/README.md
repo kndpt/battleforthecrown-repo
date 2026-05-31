@@ -13,7 +13,8 @@ Politique PR :
 
 - **Run** : PR obligatoire, ready for review, sauf dérogation explicite dans le message de démarrage (`pas de PR`, `no PR`, `sans PR`, `ne push pas`).
 - **Ticket** : pas de PR par défaut. Ouvrir une PR seulement si le user le demande explicitement.
-- Si une PR est requise et que le checkout est sur `main`/branche par défaut, le lead crée une branche dédiée avant de coder (`kndpt/run-<id>-<slug>` ou `kndpt/ticket-<id>-<slug>`).
+- Si une PR est requise et que le checkout est sur `main`/branche par défaut, le lead crée une branche dédiée avant de coder (`run/<id>-<slug>` ou `task/<id>-<slug>`).
+- Titre PR obligatoire : `run(<id>): <subject>` pour une fiche run, `task(<id>): <subject>` pour un ticket.
 
 Même source de vérité dans les deux harnesses, conventions de nommage des sub-agents adaptées :
 
