@@ -14,7 +14,10 @@ import type {
   BuildingType,
 } from '@battleforthecrown/shared/village';
 import { getBuildingPowerWeight } from '@battleforthecrown/shared/power';
-import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
+import {
+  RESOURCE_PRODUCTION_PER_HOUR,
+  getWarehouseStorageLimit,
+} from '@battleforthecrown/shared/resources';
 import {
   PLAYER_VILLAGE_BUILDING_LIFECYCLE,
   getBarbarianConquestVillageBuildings,
@@ -40,9 +43,9 @@ describe('COUNCIL_HALL', () => {
 
   it('returns correct level 1 costs', () => {
     expect(getBuildingLevelValues('COUNCIL_HALL', 1)).toEqual({
-      wood: 150,
-      stone: 200,
-      iron: 100,
+      wood: 1510,
+      stone: 2040,
+      iron: 1135,
       population: 4,
       timeSeconds: 900,
     });
@@ -72,9 +75,9 @@ describe('THRONE_HALL', () => {
 
   it('returns correct level 1 costs', () => {
     expect(getBuildingLevelValues('THRONE_HALL', 1)).toEqual({
-      wood: 1600,
-      stone: 2400,
-      iron: 1200,
+      wood: 3850,
+      stone: 5775,
+      iron: 2890,
       population: 6,
       timeSeconds: 21600,
     });
@@ -119,6 +122,61 @@ describe('warehouse storage', () => {
     expect(limits.wood).toBe(3000);
     expect(limits.stone).toBe(3000);
     expect(limits.iron).toBe(3000);
+  });
+});
+
+describe('building resource costs', () => {
+  const minimumStorageShare = 0.03;
+
+  const storageLimitFor = (level: number, definition: BuildingDefinition) => {
+    const singleLevelUnlock = Object.keys(definition.levels).length === 1;
+    const referenceLevel = singleLevelUnlock
+      ? Math.max(level, definition.unlockCastleLevel ?? level)
+      : level;
+
+    return getWarehouseStorageLimit(referenceLevel).wood;
+  };
+
+  it('keeps enabled building costs meaningful against warehouse capacity', () => {
+    const enabledEntries = (
+      Object.entries(BUILDING_DEFINITIONS) as Array<
+        [BuildingType, BuildingDefinition]
+      >
+    ).filter(([, definition]) => definition.enabled);
+
+    for (const [, definition] of enabledEntries) {
+      for (const [rawLevel, levelValues] of Object.entries(definition.levels)) {
+        const level = Number(rawLevel);
+        const resourceCosts = [
+          levelValues.wood,
+          levelValues.stone,
+          levelValues.iron,
+        ];
+        const maxResourceCost = Math.max(...resourceCosts);
+
+        if (maxResourceCost === 0) continue;
+
+        const storageLimit = storageLimitFor(level, definition);
+
+        expect(maxResourceCost).toBeGreaterThanOrEqual(
+          Math.floor(storageLimit * minimumStorageShare),
+        );
+        expect(maxResourceCost).toBeLessThanOrEqual(storageLimit);
+      }
+    }
+  });
+});
+
+describe('resource production curve', () => {
+  it('keeps passive production below late construction costs', () => {
+    expect(RESOURCE_PRODUCTION_PER_HOUR[10]).toBe(1350);
+
+    const castleLevel10 = BUILDING_DEFINITIONS.CASTLE.levels[10];
+    const limitingResourceHours =
+      castleLevel10.stone / RESOURCE_PRODUCTION_PER_HOUR[10];
+
+    expect(limitingResourceHours).toBeGreaterThanOrEqual(34);
+    expect(limitingResourceHours).toBeLessThanOrEqual(36);
   });
 });
 

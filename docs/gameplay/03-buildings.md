@@ -28,14 +28,15 @@ Catalogue des 12 bâtiments du village — **rôle, mécaniques, déblocages, ef
 - **Annulation** : remboursement complet des ressources et de la population.
 - **Bonus Château** : à partir du niveau 2, le Château réduit le temps de construction global (`CASTLE_CONSTRUCTION_SPEED_BONUS`). Le facteur s'applique à toutes les nouvelles constructions du village.
 - **Tempo monde** : toutes les durées sont multipliées par `WorldConfig.tempo.constructionSpeed` (à défaut `tempo.global`). Cf. [`23-world-tempo-and-multipliers.md`](./23-world-tempo-and-multipliers.md).
+- **Coûts ressources** : les coûts sont calibrés comme une fraction significative de la capacité d'Entrepôt atteignable au palier concerné. Un upgrade doit rester stockable, mais ne doit plus représenter un coût négligeable face au plafond de stockage.
 
 ## Courbe de progression
 
-La courbe walled-v1 (cf. ADR-14) suit trois phases marquées :
+La courbe walled-v1 (cf. ADR-14, recalibrée par [ADR-15](../architecture/decisions.md#adr-15--recalibration-courbe-construction--max-village-78-j-via-bonus-château-renforcé)) suit trois phases marquées :
 
 - **L1-L5 (early)** : secondes → minutes. Onboarding mobile, première dopamine compressée.
 - **L6-L7 (premier wall)** : minutes → heures. Marque l'entrée du « vrai jeu », alignée avec la conquête (Château 6 = Salle du Trône).
-- **L8-L10 (wall final)** : heures → jours. Réservé aux profils « tall » (max village). Un tryhard atteint le max village en ~14 j wall-clock ; la conquête arrive bien avant (cf. [`00-game-flow.md`](./00-game-flow.md)).
+- **L8-L10 (wall final)** : heures → jours. Réservé aux profils « tall » (max village). En ressources passives seules, un village max demande ~35-36 j ; le pillage sert à compresser fortement ce délai (cf. [`00-game-flow.md`](./00-game-flow.md)). Le dernier palier du Château (9→10) ≈ 18 h de construction, mais ≈35 h de production passive sur la ressource limitante.
 
 Cette stratification crée naturellement les profils joueur **tall / wide / army-focused / defensive** (cf. ADR-14) sans cap dur.
 

@@ -4,6 +4,8 @@
 
 ## Done
 
+- 2026-05-31: Recalibration coûts bâtiments/Entrepôt : `BUILDING_DEFINITIONS` actifs rebasés sur capacité d'Entrepôt atteignable, invariant `buildings.spec.ts`, docs ADR-16/03 alignées, tests ciblés + static-check verts.
+- 2026-05-31: Recalibration production ressources : `RESOURCE_PRODUCTION_PER_HOUR` réduit à 60->1350/h pour que Château L10 demande ~35h de passif sur pierre; docs ADR-17/02/03, tests ciblés, simulateur et static-check verts.
 - 2026-05-31: Ticket 076 termine : annulation de formation depuis les `QueueChip` Caserne avec confirmation design-system, mutation existante branchee, pending global sur actions queue, test `ArmyViewDesign` + type-check Pixi + static-check verts.
 - 2026-05-31: Run 043 termine : `GameShellLayout` route-level centralise header/nav/toasts/power/unread pour `/game/*`; `VillageView` ouvre les bâtiments via `panel=buildings`; tests Pixi/static-check et QA navigateur verts.
 - 2026-05-31: Run 042 termine : page detail royaume `/worlds/:worldId` branchee sur `GET /worlds/public`, bouton `Details`, contrat public enrichi lifecycle days + map, tests Pixi/backend/static-check verts, QA navigateur validee par le user.

@@ -1,5 +1,7 @@
 # Decisions
 
+- 2026-05-31: Equilibrage bâtiments : coûts ressources des bâtiments actifs ancrés sur la capacité d'Entrepôt de référence du palier; upgrade stockable mais non négligeable. Bâtiments désactivés MVP (`HIDEOUT`, `WALL`) hors recalibration.
+- 2026-05-31: Production passive ressources contenue : courbe `RESOURCE_PRODUCTION_PER_HOUR` 60->1350/h; Château L10 coûte ~35h de production pierre passive, pillage devient l'accélérateur attendu.
 - 2026-05-11: Multi-agent skills : `run` et `plan-run` vivent uniquement dans `.agents/skills/`; Claude Code et Codex consomment via `.claude/skills` / `.codex/skills` symlinks. Ne pas recréer `.claude/commands` pour ces pipelines; `.gemini` est abandonné.
 - 2026-05-11: Docs `$bftc-run` : supprimer les docs `safety-fallbacks*` redondantes; garder le filet opérationnel dans `tasks/runs/README.md` + le détail exécutable dans `.agents/skills/bftc-run/SKILL.md`.
 - 2026-05-11: Contexte agent permanent : privilégier AGENTS + rules invariantes seulement (~2.4k mots après refacto final) et déplacer les procédures longues en skills (`bftc-tests-policy`, `bftc-qa`, `bftc-prisma`, `bftc-workers-outbox`, `bftc-react-hud`, `bftc-pixi-scene`). Ne pas garder de rule qui sert seulement à trigger un skill.

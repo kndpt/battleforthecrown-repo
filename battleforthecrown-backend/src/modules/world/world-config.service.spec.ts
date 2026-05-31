@@ -142,9 +142,9 @@ describe('WorldConfigService', () => {
       const result = await service.getCost('world-1', 'CASTLE', 2, 1);
 
       expect(result).toEqual({
-        wood: 75,
-        stone: 145,
-        iron: 75,
+        wood: 190,
+        stone: 340,
+        iron: 190,
         population: 0,
         time: 7500, // 15s * 1.0 castle bonus * 0.5 world speed = 7.5s
       });
@@ -153,7 +153,7 @@ describe('WorldConfigService', () => {
     it('applies the castle bonus to construction time', async () => {
       const result = await service.getCost('world-1', 'CASTLE', 2, 2);
 
-      expect(result.time).toBe(7200); // 15s * 0.96 * 0.5 = 7.2s
+      expect(result.time).toBe(6450); // 15s * 0.86 castle bonus niv2 * 0.5 = 6.45s
     });
 
     it('enforces a minimum time of 1000ms', async () => {
@@ -186,7 +186,7 @@ describe('WorldConfigService', () => {
     it('returns the production rate with multiplier applied', async () => {
       const result = await service.getProductionRate('world-1', 'WOOD', 2);
 
-      expect(result).toBeCloseTo(7, 5);
+      expect(result).toBeCloseTo(2.125, 5);
     });
 
     it('returns 0 when the level is not found', async () => {
@@ -205,7 +205,7 @@ describe('WorldConfigService', () => {
 
       const result = await service.getProductionRate('world-1', 'WOOD', 1);
 
-      expect(result).toBeCloseTo((200 / 60) * 2, 5);
+      expect(result).toBeCloseTo((60 / 60) * 2, 5);
     });
   });
 
