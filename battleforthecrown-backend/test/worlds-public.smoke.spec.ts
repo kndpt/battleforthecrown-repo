@@ -81,9 +81,13 @@ describe('public worlds smoke', () => {
       lifecycle: {
         day: null,
         totalDays: 60,
+        inscriptionMainDays: 7,
+        inscriptionLateDays: 3,
+        newbieShieldHours: 48,
         inscriptionPhase: 'closed',
         plannedOpenAt: addDays(now, 2).toISOString(),
       },
+      map: { width: 500, height: 500 },
       tempoProfile: 'standard',
       joinedCount: 0,
     });

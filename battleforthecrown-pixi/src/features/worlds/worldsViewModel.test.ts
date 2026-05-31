@@ -22,11 +22,15 @@ function makeWorld(overrides: Partial<PublicWorld> = {}): PublicWorld {
     lifecycle: {
       day: 5,
       endsAt: '2026-07-19T12:00:00.000Z',
+      inscriptionLateDays: 3,
+      inscriptionMainDays: 7,
+      newbieShieldHours: 72,
       inscriptionPhase: 'main',
       plannedOpenAt: null,
       startedAt: '2026-05-20T12:00:00.000Z',
       totalDays: 60,
     },
+    map: { width: 500, height: 500 },
     status: 'OPEN',
     tempoProfile: 'standard',
     ...overrides,
@@ -43,6 +47,10 @@ describe('worldsViewModel', () => {
     expect(model.ctaLabel).toBe('Rejoindre le royaume');
     expect(model.dayLabel).toBe('J. 5 / 60');
     expect(model.joinedCountLabel).toBe('8 420');
+    expect(model.lifecycleInscriptionMainDays).toBe(7);
+    expect(model.lifecycleInscriptionLateDays).toBe(3);
+    expect(model.mapSizeLabel).toBe('500 × 500');
+    expect(model.shieldLabel).toBe('72 h');
     expect(model.personalStats).toBeNull();
     expect(model.tempoLabel).toBe('STANDARD');
     expect(model.tierLabel).toBe('DÉBUTANTS');
@@ -55,6 +63,9 @@ describe('worldsViewModel', () => {
         lifecycle: {
           day: null,
           endsAt: null,
+          inscriptionLateDays: 3,
+          inscriptionMainDays: 7,
+          newbieShieldHours: 48,
           inscriptionPhase: 'closed',
           plannedOpenAt: '2026-05-27T02:00:00.000Z',
           startedAt: null,
@@ -79,6 +90,9 @@ describe('worldsViewModel', () => {
         lifecycle: {
           day: 28,
           endsAt: '2026-06-26T12:00:00.000Z',
+          inscriptionLateDays: 3,
+          inscriptionMainDays: 7,
+          newbieShieldHours: 48,
           inscriptionPhase: 'closed',
           plannedOpenAt: null,
           startedAt: '2026-04-27T12:00:00.000Z',
@@ -144,6 +158,9 @@ describe('worldsViewModel', () => {
         lifecycle: {
           day: null,
           endsAt: null,
+          inscriptionLateDays: 3,
+          inscriptionMainDays: 7,
+          newbieShieldHours: 48,
           inscriptionPhase: 'closed',
           plannedOpenAt: null,
           startedAt: null,

@@ -6,6 +6,7 @@ import { LandingScreen } from '@/features/auth/LandingScreen';
 import { LoginScreen } from '@/features/auth/LoginScreen';
 import { RegisterScreen } from '@/features/auth/RegisterScreen';
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute';
+import { WorldDetailScreen } from '@/features/worlds/WorldDetailScreen';
 import { WorldSelector } from '@/features/worlds/WorldSelector';
 import { WorldSessionGate } from '@/features/worlds/WorldSessionGate';
 import { Spinner } from '@/ui/spinners';
@@ -110,6 +111,7 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<AuthenticatedShell />}>
               <Route path="/worlds" element={<WorldSelector />} />
+              <Route path="/worlds/:worldId" element={<WorldDetailScreen />} />
               <Route path="/my-worlds" element={<Navigate to="/game" replace />} />
               <Route element={<GameShellLayout />}>
                 <Route path="/game" element={<GameGuard />} />

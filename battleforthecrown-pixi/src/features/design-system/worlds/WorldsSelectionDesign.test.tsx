@@ -15,9 +15,13 @@ function makeCard(overrides: Partial<WorldCardViewModel> = {}): WorldCardViewMod
     isJoined: false,
     joinedCountLabel: '8 420',
     lifecycleDay: 5,
+    lifecycleInscriptionLateDays: 3,
+    lifecycleInscriptionMainDays: 7,
     lifecycleTotalDays: 60,
+    mapSizeLabel: '500 × 500',
     opensInLabel: null,
     personalStats: null,
+    shieldLabel: '48 h',
     sigilGlyph: '♔',
     statusLabel: 'INSCRIPTION LIBRE',
     tab: 'open',
@@ -67,6 +71,7 @@ describe('WorldCard', () => {
   ])('renders the $title state without exposing raw inscriptionPhase', (scenario) => {
     render(
       <WorldCard
+        onDetails={() => undefined}
         onJoin={() => undefined}
         onNotify={() => undefined}
         world={makeCard({
@@ -103,6 +108,7 @@ describe('WorldCard', () => {
     const onJoin = vi.fn();
     render(
       <WorldCard
+        onDetails={() => undefined}
         onJoin={onJoin}
         onNotify={() => undefined}
         world={makeCard({
@@ -122,6 +128,7 @@ describe('WorldCard', () => {
   it('renders personal stats and the canonical power asset only when provided', () => {
     const { container, rerender } = render(
       <WorldCard
+        onDetails={() => undefined}
         onJoin={() => undefined}
         onNotify={() => undefined}
         world={makeCard({
@@ -143,6 +150,7 @@ describe('WorldCard', () => {
 
     rerender(
       <WorldCard
+        onDetails={() => undefined}
         onJoin={() => undefined}
         onNotify={() => undefined}
         world={makeCard({ personalStats: null })}
@@ -155,6 +163,17 @@ describe('WorldCard', () => {
     expect(container.querySelector('img[src="/assets/army-power.png"]')).not.toBeInTheDocument();
   });
 
+  it('keeps the details action separate from the join CTA', () => {
+    const onDetails = vi.fn();
+    const onJoin = vi.fn();
+    render(<WorldCard onDetails={onDetails} onJoin={onJoin} onNotify={() => undefined} world={makeCard()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Détails' }));
+
+    expect(onDetails).toHaveBeenCalledWith(expect.objectContaining({ id: 'world-open' }));
+    expect(onJoin).not.toHaveBeenCalled();
+  });
+
 });
 
 describe('WorldsSelectionDesign', () => {
@@ -165,6 +184,7 @@ describe('WorldsSelectionDesign', () => {
         counts={{ locked: 0, open: 1, planned: 0 }}
         labels={worldsSelectionLabels}
         noticeMessage="Inscription au monde impossible"
+        onDetails={vi.fn()}
         onJoin={vi.fn()}
         onNotify={vi.fn()}
         onTabChange={vi.fn()}
