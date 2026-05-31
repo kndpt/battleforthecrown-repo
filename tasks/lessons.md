@@ -1,6 +1,8 @@
 # Lessons
 
 - Relire les leçons projet en début de session ; si le fichier n'existe pas, le créer avant de continuer.
+- CodeRabbit ne doit pas reviewer les mémoires/suivis volatiles ni poster de nitpicks linguistiques ; exclure `.context-memory/**`, `tasks/todo.md`, `tasks/lessons.md` et garder un seuil "impact réel seulement" dans `.coderabbit.yaml`.
+- Pour une automation Codex qui doit lancer un skill, vérifier le `name:` réel dans `.agents/skills/*/SKILL.md` puis commencer le prompt par `$skill-name`; ne pas se contenter d'une phrase "utilise le skill ...".
 - Ne pas attendre longtemps un sub-agent silencieux : faire un poll court, fermer l'agent bloqué, documenter la dérogation et reprendre avec une cartographie locale ciblée.
 - Si une commande `rtk` en parallèle semble bloquer, stopper le fan-out et reprendre avec une seule commande ciblée, bornée en sortie.
 - Ne pas utiliser `tasks/todo.md` comme livrable durable hors exécution `$bftc-run` : il est volatile et peut être réécrit par le pipeline. Pour une adaptation de règle/skill, préférer la modification du skill/rule + review en réponse finale.

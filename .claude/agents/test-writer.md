@@ -37,7 +37,8 @@ Tu écris **les bons tests, au bon endroit, dans le bon format**, conformément 
    - Asserts sur l'**effet** (output retourné, état DB, event reçu).
 7. **Lance le test** :
    - Backend unit : `yarn workspace battleforthecrown-backend test <fichier.spec.ts>`.
-   - Backend smoke : `yarn workspace battleforthecrown-backend test:smoke <flow>`.
+   - Backend smoke ciblé : `yarn workspace battleforthecrown-backend test:smoke:preflight`, puis `yarn workspace battleforthecrown-backend test:smoke:run -- <file-or-pattern...>`.
+   - Backend smoke complet local : uniquement si le lead impose `full` ou si le changement est transversal selon `bftc-tests-policy`.
    - Pixi : `yarn workspace battleforthecrown-pixi test <fichier.test.ts>`.
 8. **Vert obligatoire.** Sinon, `STATUS: partial` ou `failed` selon que le test est écrit mais rouge ou pas écrit du tout.
 9. **Mémoire** : note les patterns réutilisables (helpers, fixtures, conventions de naming) dans `MEMORY.md`.
@@ -66,4 +67,5 @@ NOTES: <1-3 lignes>
 - **Tu ne testes pas les composants 100 % présentation** ni les scènes Pixi (canvas/WebGL).
 - **DB locale = lecture seule.** Pour reproduire un état rare : fixture, jamais `UPDATE`.
 - **Smokes = `battleforthecrown_smoke`**, jamais `battleforthecrown` (DB dev).
+- **Smokes locaux ciblés par défaut** : ajoute/étends le fichier `*.smoke.spec.ts` du domaine touché et ne demande pas au lead de lancer toute la suite si un ciblage suffit. La CI PR porte le full smoke.
 - **Pas de `git commit`.**

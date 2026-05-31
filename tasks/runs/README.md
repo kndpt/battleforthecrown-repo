@@ -9,17 +9,23 @@ Pipeline d'orchestration : skill `$bftc-run <path>` (path de fichier obligatoire
 - `tasks/runs/<id>-<slug>.md` → **mode run**, pipeline 10 étapes complet.
 - `tasks/<id>-<slug>.md` → **mode ticket**, pipeline allégé (mode rapide auto, skip `code-mapper`/`test-runner`/`doc-writer` selon critères, cas A élargi à ≤ 30 lignes ≤ 2 fichiers, **review et hard gate `git diff` non-négociables**).
 
+Politique PR :
+
+- **Run** : PR obligatoire, ready for review, sauf dérogation explicite dans le message de démarrage (`pas de PR`, `no PR`, `sans PR`, `ne push pas`).
+- **Ticket** : pas de PR par défaut. Ouvrir une PR seulement si le user le demande explicitement.
+- Si une PR est requise et que le checkout est sur `main`/branche par défaut, le lead crée une branche dédiée avant de coder (`kndpt/run-<id>-<slug>` ou `kndpt/ticket-<id>-<slug>`).
+
 Même source de vérité dans les deux harnesses, conventions de nommage des sub-agents adaptées :
 
 - **Source unique** : [`.agents/skills/bftc-run/SKILL.md`](../../.agents/skills/bftc-run/SKILL.md) et [`.agents/skills/bftc-plan/SKILL.md`](../../.agents/skills/bftc-plan/SKILL.md).
 - **Claude Code** : consomme les skills via le symlink `.claude/skills/`; sub-agents [`.claude/agents/*.md`](../../.claude/agents/) en kebab-case, ex `code-mapper`.
 - **Codex** : consomme les skills via le symlink `.codex/skills/`; sub-agents [`.codex/agents/*.toml`](../../.codex/agents/) en snake_case, ex `code_mapper`.
 
-## Pipeline d'un run (étapes 1-10)
+## Pipeline d'un run (étapes 1-10b)
 
 | # | Étape | Qui fait | Sortie attendue |
 |---:|---|---|---|
-| 0 | Préflight (git clean, fiche `PLANNED`, spec lue, rules chargées) | Lead | Go / abort |
+| 0 | Préflight (git clean, fiche `PLANNED`, spec lue, rules chargées, politique PR décidée) | Lead | Go / abort + branche si PR requise |
 | 1 | Clarification (≤ 4 questions, 1 aller-retour max) | Lead → User | Réponses ou skip |
 | 2 | Analyse code (cartographie) | Sub-agent `code-mapper` | `=== CARTE MODULE ===` |
 | 3 | Refinement (raisonnement, décomposition chirurgicale) | Lead | TaskList + maj fiche |
@@ -31,6 +37,7 @@ Même source de vérité dans les deux harnesses, conventions de nommage des sub
 | 8c | Backprop SPEC (promo §V/§B si savoir transverse révélé) | Lead | Diff SPEC.md (hard gate) |
 | 9 | Documentation (création/maj/références croisées) | Sub-agent `doc-writer` | Diff + rapport |
 | 10 | Archive + commit final | Lead | Fiche `DONE`, commit unique |
+| 10b | Publication PR conditionnelle | Lead | PR ready for review si requise, sinon aucun push |
 
 Garde-fou unique : délégation chirurgicale, refus si scope ambigu, rapport structuré, puis `git diff --stat` après chaque écriture. Si ce filet échoue deux fois, ouvrir un ticket process au lieu d'empiler des fallbacks.
 

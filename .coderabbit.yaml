@@ -4,7 +4,7 @@
 
 language: "en-US"
 
-tone_instructions: "Be direct. Cite file:line for every finding. No softening language. State the violation and the required fix. Request changes on Critical and High findings."
+tone_instructions: "Only actionable findings with real impact: bugs, security, data loss, regressions, architecture, missing tests. No wording/style/naming/formatting nitpicks or low-value comments."
 
 reviews:
   profile: "assertive"
@@ -55,12 +55,28 @@ reviews:
     - "!coverage/**"
     - "!.prisma/**"
     - "!**/generated/**"
+    # Volatile agent state — not product code and not useful for review comments.
+    - "!.context-memory/**"
+    - "!tasks/todo.md"
+    - "!tasks/lessons.md"
     # Skill-generated audit artefacts — machine-written, not human-reviewed.
     - "!.agents/maintenance/*-report.md"
     - "!.agents/maintenance/*-ledger.md"
     - "!.agents/maintenance/*-backlog.md"
 
   path_instructions:
+    # ──────────────────────────────────────────────
+    # REVIEW THRESHOLD — applies to every file
+    # ──────────────────────────────────────────────
+    - path: "**/*"
+      instructions: |
+        Only leave a comment when it is materially actionable and could affect correctness,
+        security, data integrity, runtime behavior, architecture, or meaningful test coverage.
+        Do NOT comment on spelling, accents, grammar, terminology preference, punctuation,
+        formatting, line wrapping, minor naming/style consistency, or wording tone unless it
+        creates a real user-facing ambiguity or contradicts an executable process.
+        If the finding would be labeled Nitpick, Trivial, Low value, or cosmetic, do not post it.
+
     # ──────────────────────────────────────────────
     # GLOBAL — applies to all TypeScript files
     # ──────────────────────────────────────────────
@@ -71,15 +87,6 @@ reviews:
         - BLOCK untyped return values on public methods/functions.
         - BLOCK `eslint-disable` comments without an inline justification comment explaining why and when it can be removed.
         - BLOCK `npm` references; this project uses `yarn` exclusively.
-
-        **Dead code**
-        - FLAG unused imports, unused variables, commented-out code blocks.
-
-        **Magic values (production code only)**
-        - In non-test source files, FLAG magic numbers and hardcoded strings (URLs, event names,
-          timeouts, limits) that lack a named constant.
-        - Do NOT apply this rule to `*.test.*` / `*.spec.*` files. Inline literal fixtures and seed
-          values are expected in tests — readability there comes from locality, not extraction.
 
         **Tests**
         - Any new function computing a formula, applying a rule, or transforming data requires a test.
@@ -240,8 +247,6 @@ reviews:
         - No `as any` to silence TypeScript — type fixtures properly.
         - No mocking of Prisma, pg-boss, or `setInterval` in unit tests.
           If infrastructure is required, it's an integration test and must be labeled as such.
-        - Test descriptions must be specific enough to diagnose a failure without reading the test body.
-          Flag generic descriptions like `"works correctly"`, `"handles the case"`.
 
     # ──────────────────────────────────────────────
     # PRISMA SCHEMA

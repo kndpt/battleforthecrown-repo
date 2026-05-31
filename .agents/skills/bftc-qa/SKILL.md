@@ -7,14 +7,35 @@ description: "Use when finishing a BFTC task to choose QA: playable checklist, c
 
 End every substantive task with one QA decision. Automated tests do not replace QA.
 
-## Smokes — non-négociables si backend touché
+## Smokes — ciblés localement, exhaustifs en CI
 
-Le hook `pre-push` ne lance plus les smokes (trop lents, flakies par ordering Jest). C'est désormais l'agent qui en porte la responsabilité.
+Le hook `pre-push` ne lance pas les smokes. La CI GitHub lance la suite smoke complète sur PR. En local, l'agent doit lancer le plus petit périmètre smoke qui prouve le risque du diff.
 
-- Si le diff touche `battleforthecrown-backend/src/` → lancer `yarn test:smoke:preflight && yarn test:smoke` en fin de tâche, tout vert.
-- Reporter dans `Acceptance & QA` : commande exacte + résultat synthétique (suites passées / tests passés).
+- Si le diff touche `battleforthecrown-backend/src/`, décider :
+  - **smoke ciblé** si un ou plusieurs flows existants couvrent directement l'endpoint, worker, event, contrat DB ou payload modifié ;
+  - **full smoke local** seulement pour les changements transversaux : Prisma schema/migration, AppModule/boot/config, auth/JWT global, EventOutbox/gateway global, shared contract multi-domaines, scheduler/workers communs, ou mapping incertain ;
+  - **pas de smoke local** si le diff backend est pure logic/unit-testé, type-only/DTO non runtime, script hors boot, ou refacto interne sans effet endpoint/worker/event. Justifier explicitement.
+- Toujours lancer le preflight avant un smoke local :
+
+```bash
+yarn workspace battleforthecrown-backend test:smoke:preflight
+```
+
+- Commande smoke ciblée :
+
+```bash
+yarn workspace battleforthecrown-backend test:smoke:run -- <file-or-pattern...>
+```
+
+- Commande smoke complète locale si nécessaire :
+
+```bash
+yarn workspace battleforthecrown-backend test:smoke
+```
+
+- Reporter dans `Acceptance & QA` : commandes exactes + résultat synthétique (suites passées / tests passés) + raison du périmètre choisi.
 - Si un smoke fail de façon flaky (ordering, timing), ne pas masquer : investiguer ou escalader. Pas de `--no-verify`.
-- Exception : diff strictement hors `src/` (docs, scripts hors boot, fixtures isolées) — écrire `Smokes : non applicables, raison : <…>`.
+- Le full smoke CI ne dispense pas de smoke ciblé quand le diff backend modifie un comportement orchestration/I/O, mais il évite de relancer systématiquement toute la suite localement.
 
 ## Choose the mode
 

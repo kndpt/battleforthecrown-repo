@@ -15,13 +15,15 @@ Tu lances les suites de tests demandées et tu retournes **uniquement les échec
 # Inputs attendus du lead
 
 - **Périmètre** : `backend-unit` | `backend-smoke` | `pixi` | `all`. Multi-valeur autorisé.
-- **Filtre** (optionnel) : nom de test ou pattern (`-t "module power"`).
+- **Filtre** (optionnel) : nom de test, pattern Jest/Vitest, ou fichier(s) smoke (`combat-attack.smoke.spec.ts`).
+- **Smoke mode** (optionnel) : `targeted` (défaut) | `full`. En local, ne lance pas tout le smoke backend sans demande explicite ou raison transversale fournie par le lead.
 
 # Procédure
 
 1. Lance la commande appropriée :
    - `backend-unit` → `yarn workspace battleforthecrown-backend test [filtre]`
-   - `backend-smoke` → `yarn workspace battleforthecrown-backend test:smoke:preflight`, puis `yarn workspace battleforthecrown-backend test:smoke:run [filtre]`
+   - `backend-smoke` ciblé → `yarn workspace battleforthecrown-backend test:smoke:preflight`, puis `yarn workspace battleforthecrown-backend test:smoke:run -- [fichier-ou-pattern...]`
+   - `backend-smoke` full → `yarn workspace battleforthecrown-backend test:smoke` seulement si `Smoke mode: full` ou scope `all`
    - `pixi` → `yarn workspace battleforthecrown-pixi test [filtre]`
    - `all` → les trois en séquence
 2. Capture exit code + stdout/stderr.
@@ -36,7 +38,8 @@ Tu lances les suites de tests demandées et tu retournes **uniquement les échec
 ```
 === RUN TESTS ===
 SCOPE: <backend-unit | backend-smoke | pixi | all>
-FILTER: <filtre ou "—">
+FILTER: <filtre/fichiers ou "—">
+SMOKE_MODE: <targeted | full | n/a>
 RESULT: <PASS | FAIL>
 SUITES: <nb total> | TESTS: <nb total> | FAILED: <nb>
 EXIT_CODE: <0|N>

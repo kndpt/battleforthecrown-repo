@@ -1,9 +1,10 @@
 # Local CI — hook pre-push + smokes via `/run`
 
-Le projet est solo + agent IA, sans joueur ni collaborateur, sans CI cloud configurée. Le filet anti-régression est réparti en deux couches :
+Le projet est solo + agent IA. Le filet anti-régression est réparti en trois couches :
 
 1. **Hook git `pre-push` (husky)** — léger, synchrone, bloque le push si du code qui ne compile pas ou casse les unit tests quitte la machine.
-2. **Skill `/run`** — porte la responsabilité des smokes en fin de chaque run/ticket via la section `Acceptance & QA` obligatoire.
+2. **Skill `/run`** — porte la responsabilité des tests ciblés en fin de chaque run/ticket via la section `Acceptance & QA` obligatoire.
+3. **CI GitHub Actions** — relance la suite smoke complète sur chaque PR vers `main`.
 
 > Source unique de la stratégie tests : skill [`bftc-tests-policy`](../../.agents/skills/bftc-tests-policy/SKILL.md). Politique QA et obligation smokes : skill [`bftc-qa`](../../.agents/skills/bftc-qa/SKILL.md). Hard Gate `/run` : skill [`run`](../../.agents/skills/bftc-run/SKILL.md).
 
@@ -18,21 +19,34 @@ yarn test:pixi     → Vitest jsdom                                      (~3 s)
                                                                 total ~10-15 s
 ```
 
-Si une étape échoue, le push est bloqué. Les **smokes ne tournent pas** dans le hook — c'est `/run` qui les lance en fin de tâche dès qu'un diff touche `battleforthecrown-backend/src/`.
+Si une étape échoue, le push est bloqué. Les **smokes ne tournent pas** dans le hook. En local, `/run` lance les smokes ciblés par impact backend ; la CI PR lance la suite smoke complète.
 
 ## Pourquoi sortir les smokes du hook
 
 **Coût synchrone trop élevé** — la suite smoke pèse ~2 min (boot Nest × N fichiers + scénarios DB réels). À chaque push, c'est rédhibitoire quand on push souvent. Le hook reste donc minimaliste (~10-15 s).
 
-Pas de CI cloud non plus (refus explicite : projet solo, on ne veut pas allonger la boucle ticket → push → résultat). On déporte la responsabilité smokes là où elle a le plus de sens : **l'agent qui vient de toucher le code backend**, dans le cadre formel du `/run`.
+La CI cloud existe, mais elle ne doit pas allonger la boucle locale ticket → commit. On déporte la première preuve runtime là où elle a le plus de sens : **l'agent qui vient de toucher le code backend**, dans le cadre formel du `/run`, avec des smokes ciblés. Le full smoke reste le filet exhaustif de PR.
 
 > Historique : un flake « ordering Jest » avait été cité comme 2e raison. Causé par le sequencer par défaut (`slowestFirst`) dont l'ordre dépend du cache `.jest-cache`. Résolu en figeant l'ordre des fichiers smoke via `test/jest-smoke-sequencer.js` (ordre alphabétique stable). Voir `tasks/archive/59-smokes-jest-ordering-flakies.md`.
 
 > ⚠️ **Concurrence CPU pendant smokes** : les smokes utilisent des timers réels et du polling pg-boss à 1 s. Lancer autre chose de CPU-heavy en parallèle (`yarn static-check`, autres jest, builds) peut faire timeout les workers et générer des faux positifs de flake. Lancer les smokes seuls, sans autre charge.
 
-## Câblage `/run` ↔ smokes
+## Câblage `/run` ↔ smokes ciblés
 
-Voir le Hard Gate dans [`run/SKILL.md`](../../.agents/skills/bftc-run/SKILL.md) et la section dédiée dans [`bftc-qa/SKILL.md`](../../.agents/skills/bftc-qa/SKILL.md). En résumé : smokes obligatoires dès que le diff touche `battleforthecrown-backend/src/`, reportés dans `Acceptance & QA`, flaky non masqué.
+Voir le Hard Gate dans [`run/SKILL.md`](../../.agents/skills/bftc-run/SKILL.md), la section dédiée dans [`bftc-qa`](../../.agents/skills/bftc-qa/SKILL.md), et la matrice dans [`bftc-tests-policy`](../../.agents/skills/bftc-tests-policy/SKILL.md).
+
+En résumé :
+
+1. Si un diff backend touche de l'orchestration/I/O (`controller`, `service` Prisma, worker pg-boss, Outbox, WS, endpoint critique), lancer `test:smoke:preflight`.
+2. Lancer ensuite les fichiers `*.smoke.spec.ts` qui couvrent le domaine touché :
+
+```bash
+yarn workspace battleforthecrown-backend test:smoke:preflight
+yarn workspace battleforthecrown-backend test:smoke:run -- combat-attack.smoke.spec.ts combat-reports-inbox.smoke.spec.ts
+```
+
+3. Lancer `yarn workspace battleforthecrown-backend test:smoke` complet localement seulement si le changement est transversal ou si le mapping d'impact est incertain.
+4. Reporter le périmètre choisi dans `Acceptance & QA`. Si aucun smoke local n'est lancé malgré un diff backend, justifier l'exception et rappeler que le full smoke est couvert par la CI PR.
 
 ## Pourquoi pre-push et pas pre-commit
 
@@ -83,7 +97,7 @@ Workflow actif : `.github/workflows/ci.yml`. Deux jobs requis pour merger sur `m
 | Job | Contenu | DB | Durée estimée |
 |---|---|---|---|
 | `unit` | `static-check` + `test:backend` + `test:pixi` | Aucune | ~3 min |
-| `smokes` | `prisma migrate deploy` + preflight + smoke suite | Postgres 16 natif | ~5-8 min |
+| `smokes` | `prisma migrate deploy` + preflight + smoke suite complète | Postgres 16 natif | ~5-8 min |
 
 **Détails smokes CI :**
 - `SMOKE_WORKERS=4` (vs 8 en local) pour rester sous les 100 connexions Postgres par défaut du runner 2 CPU.

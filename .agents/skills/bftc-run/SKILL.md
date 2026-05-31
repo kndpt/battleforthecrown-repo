@@ -34,7 +34,12 @@ Préflight commun :
 2. Lire la cible entière.
 3. Lire la spec source citée, mais seulement la section utile si l'ancre est claire.
 4. Lire `.agents/rules/{conventions,docs,git}.md`, `SPEC.md`, et le briefing workspace concerné.
-5. Charger les skills spécialisés uniquement si le scope le demande :
+5. Déterminer la politique PR **avant toute écriture** :
+   - Mode `run` (`tasks/runs/...`) : PR obligatoire, ready for review, sauf dérogation explicite du user dans le message de démarrage du run (`pas de PR`, `no PR`, `sans PR`, `ne push pas`).
+   - Mode `ticket` (`tasks/<id>-...`) : pas de PR par défaut ; ouvrir une PR seulement si le user le demande explicitement dans le message de démarrage ou après livraison.
+   - Si PR requise et branche courante = `main`/`master`/branche par défaut, créer une branche dédiée avant de coder : `kndpt/run-<id>-<slug>` pour un run, `kndpt/ticket-<id>-<slug>` pour un ticket. Si une branche de travail non-default existe déjà, la conserver sauf conflit évident.
+   - Si PR non requise, ne pas push et ne pas créer de PR.
+6. Charger les skills spécialisés uniquement si le scope le demande :
    - Prisma/migrations/DB : `bftc-prisma`
    - workers/Outbox/WS : `bftc-workers-outbox`
    - tests : `bftc-tests-policy`
@@ -44,7 +49,7 @@ Préflight commun :
 
 ## Pipeline
 
-0. **Préflight + routage** — valider path, statut, rules, spec, `SPEC.md`.
+0. **Préflight + routage + politique PR** — valider path, statut, rules, spec, `SPEC.md`, décider `PR_REQUIRED: oui|non` et créer la branche dédiée si nécessaire.
 1. **Clarification** — max 1 aller-retour, ≤ 4 questions. En ticket, poser `## Question à trancher` sauf si factuel et vérifiable par cartographie.
 2. **Cartographie** — mode rapide : `rg` + lectures ciblées si scope ≤ 3 fichiers. Sinon spawn code mapper.
 3. **Refinement** — découper en tâches chirurgicales ≤ 5 fichiers, citer tout §V/§B applicable de `SPEC.md`.
@@ -55,7 +60,8 @@ Préflight commun :
 8. **Retest + static-check** — tests adaptés au scope, puis `yarn static-check`.
 8c. **Backprop SPEC** — ajouter §V/§B seulement si un invariant durable ou bug subtil/récurrent a été révélé.
 9. **Documentation** — décider l'impact doc via `.agents/rules/docs.md`; déléguer au doc writer si non trivial.
-10. **Archive + commit** — `DONE`, archive via `git mv`, maj `tasks/README.md`, commit unique EN `<type>(<scope>): <subject>`, pas de push.
+10. **Archive + commit** — `DONE`, archive via `git mv`, maj `tasks/README.md`, commit unique EN `<type>(<scope>): <subject>`.
+10b. **Publication PR conditionnelle** — si `PR_REQUIRED: oui`, push la branche et ouvrir une PR **ready for review** vers `main` avec résumé, root cause/impact et validations. Si `PR_REQUIRED: non`, pas de push et pas de PR.
 11. **Démarrage IG conditionnel** — seulement si le rapport final contient des `Tests IG à faire par le user` non vides : utiliser `bftc-worktree-qa` pour démarrer backend + frontend depuis le worktree courant, puis inclure les URLs dans le rapport final.
 
 ## Mode Rapide
@@ -105,14 +111,20 @@ Les sub-agents doivent retourner un rapport structuré (`STATUS: success|partial
 - Si rapport `success` mais diff vide : dérogation lead ou re-scope.
 - Si `failed`/`partial` : 1 retry max, puis dérogation lead ou escalade.
 - Migrations Prisma : suivre `bftc-prisma`; destructif = accord user explicite; `prisma migrate reset` interdit.
-- Smokes backend : **obligatoires** dès que le diff touche `battleforthecrown-backend/src/`. Lancer `yarn test:smoke:preflight` puis `yarn test:smoke`. Tout vert exigé avant commit final. Exception : diff strictement hors `src/` (docs, scripts hors boot, fixtures isolées) — justifier dans le rapport.
+- Publication PR : respecter la politique décidée en préflight. Un `run` sans PR exige une dérogation user explicite au démarrage ; un `ticket` ne doit pas ouvrir de PR sauf demande explicite.
+- Smokes backend locaux : dès que le diff touche `battleforthecrown-backend/src/`, choisir le **plus petit périmètre smoke durable** via `bftc-tests-policy` / `bftc-qa`.
+  - Toujours lancer `yarn workspace battleforthecrown-backend test:smoke:preflight` avant un smoke local.
+  - Lancer ensuite les fichiers smoke ciblés avec `yarn workspace battleforthecrown-backend test:smoke:run -- <file-or-pattern...>`.
+  - Lancer `yarn workspace battleforthecrown-backend test:smoke` complet localement seulement si le diff est transversal : Prisma schema/migration, `EventOutbox`/gateway WS global, auth/JWT global, boot/config AppModule, shared contract consommé par plusieurs domaines, worker scheduler commun, ou doute sérieux sur le mapping.
+  - Si le diff backend `src/` est strictement pure logic déjà couverte par unit, DTO/type-only sans effet runtime, ou refacto interne sans endpoint/worker/event affecté, documenter l'exception dans `Acceptance & QA`.
+  - La CI PR lance la suite smoke complète ; le run local doit prouver le risque ciblé, pas dupliquer systématiquement la CI.
 - `yarn static-check` obligatoire avant commit final.
 - **Review indépendante** : si la fiche run porte `REVIEW_INDÉPENDANT_REQUIS: oui` (cf. `bftc-plan`) **ou** si l'un des critères de l'étape 6 devient vrai en cours de run, spawn `reviewer` est obligatoire avant l'étape 8c. Verdict `BLOCK` → fix findings (cap 3 cycles) → re-spawn `reviewer`. Pas de bypass lead sans escalade user explicite.
 - Rapport final : inclure une section `Acceptance & QA` obligatoire avec :
   - `Critères d'acceptance vérifiés` : checklist binaire, **commande exécutable obligatoire si automatisable** (curl, SQL via `bftc-db`, test auto, smoke, grep, script). Preuve textuelle uniquement si le critère est purement visuel/gameplay/UX (sinon = manquement). Format imposé par item : `- [x] <critère> — \`<commande ou "visuel">\` → <résultat observé>`. Si la commande est trop longue pour une ligne, la mettre dans un bloc code sous l'item et garder une référence courte sur la ligne.
   - `Review indépendante` : `Déclenchée (raison: <critère>)` avec verdict `GO` ou `BLOCK + findings résolus`, ou `Non déclenchée (aucun critère vrai)`. Obligatoire — jamais omettre cette ligne.
   - `Tests automatisés` : commandes exactes + résultat synthétique.
-  - `Smokes lancés` : commande exacte (`yarn test:smoke`) + résultat synthétique si backend touché, sinon `Non applicable, raison : <…>`.
+  - `Smokes lancés` : commande(s) exacte(s) + résultat synthétique si backend touché ; préciser `Ciblés` ou `Complets`. Si aucun smoke local n'est lancé malgré un diff backend, écrire `Non lancés localement, raison : <…>; full smoke couvert par CI PR`.
   - `Smokes ajoutés/modifiés` : fichiers + scénario couvert, ou `Aucun`, raison.
   - `QA fonctionnelle agent` : tests bout-en-bout manuels exécutés par l'agent quand pertinent (`server + curl`, REST, WebSocket, worker/job, ou `SELECT` DB), avec résultat observable. Si non fait, écrire `Non nécessaire` ou `Non exécuté` + raison précise.
   - `Tests IG à faire par le user` : seulement ce qui demande une appréciation gameplay/visuelle, un vrai navigateur humain, ou un scénario trop coûteux à automatiser ; formuler en checklist observable. Sinon `Aucun test IG nécessaire`, raison.
@@ -129,7 +141,7 @@ Les sub-agents doivent retourner un rapport structuré (`STATUS: success|partial
 - Ne pas masquer un test rouge ou un écart review.
 - Ne pas modifier les sections humaines d'une fiche run (`Cible`, `Dépendances`, `Critère de fin`).
 - Ne commit qu'à l'étape 10.
-- Pas de `--no-verify`, pas de push.
+- Pas de `--no-verify`. Pas de push sauf étape 10b avec `PR_REQUIRED: oui`.
 - Toujours conclure docs : `Docs : mises à jour ...` ou `Docs : aucun changement nécessaire, raison : ...`.
 - Ne jamais omettre la section `Acceptance & QA` du rapport final, même pour un ticket backend invisible IG.
 - Préférer un test auto, smoke, curl/REST, worker/job ou requête DB plutôt qu'un test IG quand le comportement à vérifier est purement data/logique côté backend et sans effet observable côté front.

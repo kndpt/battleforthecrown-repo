@@ -7,9 +7,10 @@ Ce document décrit la mise en œuvre concrète : où ils vivent, comment les la
 
 ```
 battleforthecrown-backend/test/
-├── smoke.spec.ts             # 1 describe, 1 boot, 1 it() par flow
+├── *.smoke.spec.ts           # 1 fichier par domaine/flow orchestration
 ├── helpers.ts                # bootSmokeApp, truncateAll, registerUser, joinWorld, waitFor, outboxDispatched
-├── jest-smoke.json           # config Jest dédiée (testRegex smoke.spec.ts$, runInBand)
+├── smoke-test-db.ts          # clones DB par worker Jest
+├── jest-smoke.json           # config Jest dédiée (testRegex smoke.spec.ts$)
 ├── jest-smoke-setup.ts       # env vars (DATABASE_URL smoke, JWT secrets de test)
 └── fixtures/smoke-world-config.ts   # WorldConfig avec tempo ultra-petit (timing compressé pour tests rapides)
 ```
@@ -22,24 +23,33 @@ yarn workspace battleforthecrown-backend test:smoke
 
 Pré-requis : la base `battleforthecrown_smoke` doit exister + migrations appliquées (cf. [`db-setup.md`](./db-setup.md)). La commande lance d'abord `scripts/smoke-preflight.sh` pour vérifier Docker, la DB smoke et `prisma migrate status`. Un seul boot AppModule, ~100s pour la suite complète locale actuelle.
 
+Pour un run agent local, préférer un périmètre ciblé :
+
+```bash
+yarn workspace battleforthecrown-backend test:smoke:preflight
+yarn workspace battleforthecrown-backend test:smoke:run -- combat-attack.smoke.spec.ts
+```
+
+La CI GitHub lance la suite complète sur PR vers `main`; le ciblage local sert à prouver rapidement le risque du diff sans dupliquer systématiquement le job CI.
+
 ## Flows couverts
 
-| # | Flow | Trigger | Assertion |
-|---|---|---|---|
-| 1 | production tick | `boss.send('production:tick')` | `ResourceStock.lastUpdateTs` bumped (no Outbox by design) |
-| 2 | construction | `POST /village/:id/upgrade` | `Building.level=2` + `building.completed` dispatched |
-| 3 | training | `POST /army/:id/train` | `UnitInventory.quantity≥1` + `unit.training.completed` dispatched |
-| 4 | combat resolve+return | `POST /combat/attack` | `battle.resolved` + `battle.returned` dispatched |
-| 5 | combat report supprimé pendant retour | `POST /combat/attack` puis `DELETE /combat/report/:id` | expédition supprimée, troupes/loot revenus, `battle.returned.reportId = null` dispatched |
-| 6 | combat reports participant-scoped | REST reports read/delete | lu/suppression isolés par participant |
-| 7 | target outside vision | `POST /combat/attack` | 403 |
-| 8 | scouting resolve+return | `POST /combat/scout` | SPY gate Caserne 3, SPY-only, `ScoutReport`, `scout.reported` + `scout.returned`, style ennemi absent du public |
-| 9 | conquest | combat + `PendingConquest` + `conquest:finalize` | fenêtre de capture, Seigneur + escorte survivante en garnison d'occupation, finalisation, village matérialisé spec + events dispatched |
-| 10 | crown production | `boss.send('crowns:production')` | `crowns.changed` dispatched |
-| 11 | barbarian seeding catchup | `BarbarianSeedingCatchupWorker.handleCatchup()` | new BVs seeded in DB for players created < 1h (no Outbox by design) |
-| 12 | JWT auth + refresh | REST register/login/refresh | tokens valides, route protégée 200 |
-| 13 | fog of war | `GET /world/:id/entities` | barbares hors vision portent `kind: 'fogged'` |
-| 14 | outbox dispatch (transversal) | upgrade WOOD + Socket.IO client | client reçoit `building.completed` via WS réel |
+| Smoke file | Flow principal |
+|---|---|
+| `auth.smoke.spec.ts` | JWT auth + refresh |
+| `worlds-public.smoke.spec.ts`, `world-membership.smoke.spec.ts` | royaumes publics, join, session monde |
+| `construction.smoke.spec.ts` | construction bâtiment + `building.completed` |
+| `village-labels.smoke.spec.ts`, `village-strategy.smoke.spec.ts` | endpoints village annexes |
+| `production-tick.smoke.spec.ts`, `crowns.smoke.spec.ts` | ticks ressources/couronnes |
+| `daily-retention.smoke.spec.ts`, `onboarding.smoke.spec.ts` | retention, onboarding |
+| `army-training.smoke.spec.ts`, `army-training-read.smoke.spec.ts`, `recruit-noble.smoke.spec.ts` | formation, lecture file, Seigneur |
+| `combat-attack.smoke.spec.ts`, `combat-reports-inbox.smoke.spec.ts` | attaque, retour, rapports participant-scoped |
+| `scouting.smoke.spec.ts`, `vision.smoke.spec.ts` | scout, brouillard de guerre |
+| `combat-conquest-hook.smoke.spec.ts`, `conquest-service.smoke.spec.ts`, `conquest-finalize.smoke.spec.ts` | fenêtre de capture, occupation, finalisation |
+| `recall-en-route.smoke.spec.ts`, `reinforcements.smoke.spec.ts` | rappel et renforts |
+| `realtime-socket.smoke.spec.ts` | dispatch Outbox via Socket.IO réel |
+| `barbarians.smoke.spec.ts` | seeding/catchup barbares |
+| `kingdom-activities-snapshots.smoke.spec.ts` | snapshots activités du royaume |
 
 ## Quand ajouter un smoke
 
@@ -52,7 +62,7 @@ Pré-requis : la base `battleforthecrown_smoke` doit exister + migrations appliq
 
 ## Comment ajouter un smoke
 
-1. Dans `smoke.spec.ts`, ajouter un `it()` dans le `describe` global.
+1. Choisir le fichier `*.smoke.spec.ts` existant du domaine ; créer un nouveau fichier seulement pour un nouveau domaine durable.
 2. Pattern : `seedSmokeWorld → registerUser → joinWorld → mutation → waitFor(state DB) → outboxDispatched(...)`.
 3. Pour les flows de longue durée (combat, training), ajuster `tempo.overrides.travelSpeed` ou `tempo.overrides.unitTrainingSpeed` dans la fixture si le timing est trop lent — `construction`/`training` sont déjà clampés à 1 s minimum côté shared. Sémantique : `tempo` plus petit = flux plus court (cf. [`docs/gameplay/23-world-tempo-and-multipliers.md` § 5.1.1](../gameplay/23-world-tempo-and-multipliers.md#511-sémantique-du-multiplier--règle-unique)).
 4. Pour un nouveau `kind` Outbox : retrouver l'`aggregateId` réel dans le publisher (`outbox-publisher.service.ts`) ou le worker — c'est lui qu'on filtre.

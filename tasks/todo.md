@@ -1,5 +1,19 @@
 # Todo
 
+## 2026-05-31 — Politique smokes ciblés localement
+
+- [x] Cartographier les consignes smokes dans skills, docs et agents.
+- [x] Adapter `bftc-run`, `bftc-qa` et `bftc-tests-policy` à la stratégie local ciblé / CI exhaustive.
+- [x] Nettoyer les docs `local-ci` et `smoke-tests`.
+- [x] Aligner les agents `.codex` et `.claude` test-runner/test-writer.
+- [x] Vérifier l'absence de contradictions et la validité du diff.
+
+## 2026-05-31 — Politique PR run vs ticket
+
+- [x] Documenter dans `bftc-run` : run → PR obligatoire sauf dérogation au démarrage ; ticket → PR seulement sur demande.
+- [x] Aligner `tasks/runs/README.md` et `tasks/README.md`.
+- [x] Vérifier l'absence de contradictions push/PR.
+
 ## 2026-05-31 — Ticket 75 transition entrée monde
 
 - [x] Charger le ticket, règles repo, `SPEC.md`, briefing Pixi et skill React HUD.

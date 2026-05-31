@@ -25,6 +25,11 @@ Fiches d'exécution déléguées aux harnesses Claude Code ou Codex (lead + sub-
 
 Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
+Politique PR `$bftc-run` :
+
+- Fiche `tasks/runs/...` : PR ready for review obligatoire, sauf dérogation explicite au démarrage du run.
+- Ticket `tasks/...` : pas de PR par défaut ; ouvrir une PR seulement si le user le demande.
+
 ### Runs actifs
 
 - [044 — Rapports persistants de renforts](./runs/044-feature-reinforcement-reports.md) — 📋 `PLANNED`. Créer des rapports de renfort typés et une couche inbox par destinataire, sans fragiliser `CombatReport` ni transformer l'Outbox en archive métier.
@@ -165,4 +170,4 @@ Pipeline et conventions : [`runs/README.md`](./runs/README.md).
 
 ## Process
 
-Pour résoudre un ticket actif : `$bftc-run tasks/<id>-<slug>.md` (mode ticket auto, `@` optionnel). Le pipeline lit le ticket, demande à l'utilisateur de trancher la piste si plusieurs proposées, exécute en mode rapide, archive le ticket et commit. Détail : [`runs/README.md`](./runs/README.md).
+Pour résoudre un ticket actif : `$bftc-run tasks/<id>-<slug>.md` (mode ticket auto, `@` optionnel). Le pipeline lit le ticket, demande à l'utilisateur de trancher la piste si plusieurs proposées, exécute en mode rapide, archive le ticket et commit. Pas de PR par défaut en mode ticket ; ajouter explicitement "ouvre une PR" si nécessaire. Détail : [`runs/README.md`](./runs/README.md).
