@@ -22,18 +22,19 @@ import { useDisplayResources, useDisplayCrowns } from '@/features/resources/useD
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
 import {
+  armyTrainingQueryOptions,
+  buildingsQueryOptions,
+  populationQueryOptions,
+  queueQueryOptions,
+  resourcesQueryOptions,
   useKingdomPowerQuery,
   useLogout,
   useMyMembershipsQuery,
   useMyVillagesQuery,
   usePopulationQuery,
-  queryKeys,
-  type ArmyTrainingDto,
-  type ResourcesPayload,
-  type VillageStrategyInfoDto,
+  villageStrategyQueryOptions,
   usePublicWorldsQuery,
 } from '@/api/queries';
-import { apiClient, type BuildingDto, type PopulationDto, type QueueEntryDto } from '@/api';
 import { formatHeaderCompactAmount } from '@/lib/resourceConfig';
 import { publicAsset } from '@/lib/publicAsset';
 import { BottomSheet } from '@/ui';
@@ -148,50 +149,38 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
   const villageIds = useMemo(() => villages.map((village) => village.id), [villages]);
   const villageResources = useQueries({
     queries: villageIds.map((id) => ({
+      ...resourcesQueryOptions(id),
       enabled: isVillageSheetOpen,
-      queryFn: () => apiClient.get<ResourcesPayload>(`/resources/${id}`),
-      queryKey: queryKeys.resources(id),
-      staleTime: 5_000,
     })),
   });
   const villagePopulation = useQueries({
     queries: villageIds.map((id) => ({
+      ...populationQueryOptions(id),
       enabled: isVillageSheetOpen,
-      queryFn: () => apiClient.get<PopulationDto>('/population', { query: { villageId: id } }),
-      queryKey: queryKeys.population(id),
-      staleTime: 5_000,
     })),
   });
   const villageBuildings = useQueries({
     queries: villageIds.map((id) => ({
+      ...buildingsQueryOptions(id),
       enabled: isVillageSheetOpen || shouldLoadProfileVillages,
-      queryFn: () => apiClient.get<BuildingDto[]>('/village/buildings', { query: { villageId: id } }),
-      queryKey: queryKeys.buildings(id),
-      staleTime: 5_000,
     })),
   });
   const villageQueue = useQueries({
     queries: villageIds.map((id) => ({
+      ...queueQueryOptions(id),
       enabled: isVillageSheetOpen,
-      queryFn: () => apiClient.get<QueueEntryDto[]>('/village/queue', { query: { villageId: id } }),
-      queryKey: queryKeys.queue(id),
-      staleTime: 5_000,
     })),
   });
   const villageStrategy = useQueries({
     queries: villageIds.map((id) => ({
+      ...villageStrategyQueryOptions(id),
       enabled: isVillageSheetOpen || shouldLoadProfileVillages,
-      queryFn: () => apiClient.get<VillageStrategyInfoDto>('/village/strategy', { query: { villageId: id } }),
-      queryKey: queryKeys.villageStrategy(id),
-      staleTime: 5_000,
     })),
   });
   const villageTraining = useQueries({
     queries: villageIds.map((id) => ({
+      ...armyTrainingQueryOptions(id),
       enabled: isVillageSheetOpen,
-      queryFn: () => apiClient.get<ArmyTrainingDto[]>(`/army/${id}/training`),
-      queryKey: queryKeys.armyTraining(id),
-      staleTime: 2_000,
     })),
   });
   const powerByVillageId = useMemo(
