@@ -1,5 +1,19 @@
 # Todo
 
+## 2026-05-31 — Run 043 layout shell jeu
+
+- [x] Préflight : fiche run, règles repo, `SPEC.md`, briefing Pixi, contexte mémoire et ADR ciblées.
+- [x] Créer un worktree dédié car le worktree principal est bloqué par un cherry-pick en cours.
+- [x] Charger les skills frontend/tests/QA nécessaires.
+- [x] Cartographier routes `/game/*`, shell actuel, chrome dupliqué, toasts, unread reports et tests existants.
+- [x] Implémenter un layout jeu route-level séparé d’`AuthenticatedShell`.
+- [x] Centraliser `GameHeader`, `BottomNavigationBar`, `ToastStack` et le badge Messages.
+- [x] Implémenter le contrat URL borné `panel=buildings`.
+- [x] Ajouter/adapter les tests ciblés layout/nav/panel/onboarding.
+- [x] Lancer type-check, tests ciblés, `static-check` et QA navigateur desktop/mobile.
+- [x] Faire review 5 axes + review indépendante obligatoire, corriger les findings.
+- [x] Décider docs/SPEC, archiver la run, mettre `tasks/README.md` à jour, commit, push et PR ready.
+
 ## 2026-05-31 — Politique smokes ciblés localement
 
 - [x] Cartographier les consignes smokes dans skills, docs et agents.

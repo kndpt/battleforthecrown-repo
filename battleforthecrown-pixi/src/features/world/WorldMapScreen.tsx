@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Compass, Map as MapIcon, X } from 'lucide-react';
-import { GameHeader } from '@/features/layout/GameHeader';
-import { ToastStack } from '@/features/layout/ToastStack';
 import { BottomSheet, IconButton, Spinner, Tooltip } from '@/ui';
 import { WorldMapCanvas, type WorldMapCanvasController } from './WorldMapCanvas';
 import { SelectedEntityPanel } from './SelectedEntityPanel';
@@ -12,12 +10,10 @@ import { WorldEntityTooltip } from './WorldEntityTooltip';
 import { buildMapEntities, filterEntitiesByVision } from './buildMapEntities';
 import { AttackDetailModal } from '@/features/combat/AttackDetailModal';
 import { KingdomActivitiesBottomSheet } from '@/features/combat/KingdomActivitiesBottomSheet';
-import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
 import { DailyRetentionWidget } from '@/features/retention/DailyRetentionWidget';
 import { OnboardingGuidance } from '@/features/onboarding/OnboardingGuidance';
 import { getOnboardingGuidance } from '@/features/onboarding/onboardingViewModel';
 import { runGameAction, type GameActionId } from '@/features/game-actions/gameActions';
-import { BottomNavigationBar } from '@/features/layout/BottomNavigationBar';
 import { useBuildingsForLockCheck } from '@/features/layout/useBuildingsForLockCheck';
 import {
   useClaimDailyCardMutation,
@@ -59,7 +55,6 @@ export function WorldMapScreen() {
   const openExpeditions = useOpenExpeditionsQuery(worldId);
   const worldDetails = useWorldDetailsQuery(worldId);
   const { isWatchtowerBuilt } = useBuildingsForLockCheck();
-  const unreadCount = useUnreadReportsCount();
   const expeditions = useExpeditionsStore((state) => state.byId);
 
   const setEntities = useWorldMapStore((state) => state.setEntities);
@@ -192,11 +187,7 @@ export function WorldMapScreen() {
   };
 
   return (
-    <div className="h-screen w-full flex flex-col overflow-hidden bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
-      <div className="flex-shrink">
-        <GameHeader />
-      </div>
-
+    <div className="flex h-full w-full flex-col overflow-hidden">
       <div className="relative flex-1 overflow-hidden">
         <div className="absolute right-4 top-4 z-30">
           <DailyRetentionWidget
@@ -332,15 +323,6 @@ export function WorldMapScreen() {
         </div>
       </div>
 
-      <BottomNavigationBar
-        activeTab="world"
-        onBuildingsClick={() => navigate('/game')}
-        onArmyClick={() => navigate('/game/army')}
-        onWorldClick={() => undefined}
-        onMessagesClick={() => navigate('/game/messages')}
-        unreadCount={unreadCount}
-      />
-
       {attackTarget && myVillage && (
         <AttackDetailModal
           target={attackTarget}
@@ -362,8 +344,6 @@ export function WorldMapScreen() {
           worldId={worldId}
         />
       </BottomSheet>
-
-      <ToastStack />
     </div>
   );
 }
