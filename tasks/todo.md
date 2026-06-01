@@ -1,5 +1,27 @@
 # Todo
 
+## 2026-06-01 — Topbar modulable Army
+
+- [x] Cartographier le hero `/game`, le header legacy et `ArmyScreen`.
+- [x] Remplacer la topbar legacy de `/game/army` par une topbar modulable inspirée de la vue village.
+- [x] Afficher compte/profil, puissance royaume, couronnes, switch village et ressources dans le nouvel ordre.
+- [x] Appliquer la modularité par route : Armée avec village+ressources, Monde avec village seul, Messages sans village ni ressources.
+- [x] Ajouter une animation de recomposition à l'arrivée depuis la vue village.
+- [x] Garder le contenu Armée inchangé.
+- [x] Lancer les vérifications ciblées et documenter la QA.
+
+### Review
+
+- La topbar legacy de `/game/army` est remplacée par un header runtime en trois blocs modulables : compte, village, ressources.
+- `/game/army` affiche compte + switch village + ressources ; `/game/world` affiche compte + switch village ; `/game/messages` affiche uniquement le compte.
+- Le contenu métier de l'écran Armée n'est pas modifié.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test GameHeader.test.tsx GameShellLayout.test.tsx` — 2 suites / 16 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi lint` — passé avec 3 warnings préexistants hors scope dans Armée/Onboarding.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi build` — passé.
+- Vérification : `rtk git diff --check` — passé.
+- QA IG restante : vérifier `/game/army`, `/game/world` et `/game/messages` pour confirmer la composition visible de la topbar par route.
+
 ## 2026-06-01 — PR #34 commentaires review
 
 - [x] Analyser les commentaires CodeRabbit de la PR #34 et séparer actionnable / non pertinent.

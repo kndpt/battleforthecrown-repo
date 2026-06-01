@@ -20,6 +20,8 @@
 - Pour un effet de flou directionnel, ne pas augmenter fortement `filter: blur()` ; préférer un léger blur plus `scaleX`/`skewX` dans l'axe du mouvement.
 - Dans le hero Village, la puissance top HUD représente le royaume/joueur total ; la puissance du village actif doit vivre dans les métadonnées du village, pas dans le top HUD.
 - Ne pas afficher une stratégie village par défaut tant que la Salle du Conseil n'est pas construite ; sinon `Équilibré` ressemble à une fonctionnalité disponible.
+- Pour une topbar modulable par vue, définir explicitement une matrice route -> sections visibles ; ne pas déduire les sections par exclusion globale (`!== world`) car Messages et Monde ont des besoins opposés.
+- Le nom de village doit avoir deux échelles distinctes : plus lisible dans le hero `/game`, plus compact dans la topbar des autres vues pour ne pas prendre le dessus sur le contenu.
 - Quand le user fournit une capture + une URL précise, limiter la correction à l'écran demandé avant de généraliser au domaine métier ; ne pas modifier la carte Pixi si la cible est `/worlds`.
 - Les PR autonomes de maintenance ne doivent pas réutiliser les familles `run/*` ou `task/*` : utiliser `maint/<scope>/...` et un titre `maint(<scope>): ...` pour les identifier sans ambiguïté.
 - CodeRabbit ne doit pas reviewer les mémoires/suivis volatiles ni poster de nitpicks linguistiques ; exclure `.context-memory/**`, `tasks/todo.md`, `tasks/lessons.md` et garder un seuil "impact réel seulement" dans `.coderabbit.yaml`.

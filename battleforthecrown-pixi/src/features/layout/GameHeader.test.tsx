@@ -264,7 +264,7 @@ afterEach(() => {
 });
 
 describe('GameHeader multi-village selector', () => {
-  it('renders header resources and available population with compact lowercase values', async () => {
+  it('renders header resources with compact lowercase values', async () => {
     const now = Date.now();
     populationByVillageId.v1 = { available: 13000000, max: 15000000, used: 2000000 };
     useCrownsStore.getState().setCrowns({
@@ -289,10 +289,7 @@ describe('GameHeader multi-village selector', () => {
     expect(await screen.findByLabelText('Bois 1k')).toBeInTheDocument();
     expect(await screen.findByLabelText('Pierre 12k')).toBeInTheDocument();
     expect(await screen.findByLabelText('Fer 120k')).toBeInTheDocument();
-    expect(await screen.findByLabelText('Population 13m')).toBeInTheDocument();
     expect(await screen.findByLabelText(/^Couronnes 12\s000$/u)).toBeInTheDocument();
-    expect(screen.queryByLabelText('Population 2m')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Population 15m')).not.toBeInTheDocument();
 
     act(() => {
       useResourcesStore.getState().setResources({
@@ -309,11 +306,12 @@ describe('GameHeader multi-village selector', () => {
     expect(await screen.findByLabelText('Bois 1m')).toBeInTheDocument();
   });
 
-  it('renders population as available in the header', async () => {
+  it('renders kingdom and active village power in the header', async () => {
     renderHeader();
 
-    expect(await screen.findByLabelText('Population 78')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Population 42/120')).not.toBeInTheDocument();
+    expect(await screen.findByLabelText('Puissance du royaume 320')).toBeInTheDocument();
+    expect(await screen.findByLabelText('Puissance du village 220')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Population 78')).not.toBeInTheDocument();
   });
 
   it('opens the bottom sheet from the village name and selects a village without rendering the old inline menu', async () => {

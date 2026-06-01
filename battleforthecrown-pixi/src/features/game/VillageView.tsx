@@ -948,7 +948,7 @@ export function VillageView() {
                   aria-expanded={isVillageSheetOpen}
                   className="mx-auto flex max-w-full items-center justify-center gap-2 disabled:cursor-default"
                 >
-                  <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap align-bottom text-[19px] font-bold uppercase tracking-[.04em] text-[#f6d57b] [text-shadow:0_2px_6px_rgba(0,0,0,.9)]">
+                  <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap align-bottom text-[16px] font-bold uppercase tracking-[.04em] text-[#f6d57b] [text-shadow:0_2px_6px_rgba(0,0,0,.9)]">
                     {activeVillage?.name ?? '—'}
                   </span>
                   {villages.length > 1 && (

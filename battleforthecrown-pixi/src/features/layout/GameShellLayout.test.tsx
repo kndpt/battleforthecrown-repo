@@ -15,10 +15,18 @@ vi.mock('@/features/power/PowerBottomSheet', () => ({
 vi.mock('./GameHeader', () => ({
   GameHeader: ({
     onPowerClick,
+    showResources,
+    showVillageSwitcher,
   }: {
     onPowerClick?: () => void;
+    showResources?: boolean;
+    showVillageSwitcher?: boolean;
   }) => (
-    <header data-testid="game-header">
+    <header
+      data-resources={showResources}
+      data-testid="game-header"
+      data-village-switcher={showVillageSwitcher}
+    >
       <button onClick={onPowerClick} type="button">
         power
       </button>
@@ -116,5 +124,24 @@ describe('GameShellLayout', () => {
     fireEvent.click(screen.getByRole('button', { name: 'power' }));
 
     expect(screen.getByTestId('power-sheet')).toBeInTheDocument();
+  });
+
+  it('configures the modular topbar per game route', () => {
+    const { unmount } = renderGameShell('/game/army');
+
+    expect(screen.getByTestId('game-header')).toHaveAttribute('data-resources', 'true');
+    expect(screen.getByTestId('game-header')).toHaveAttribute('data-village-switcher', 'true');
+
+    unmount();
+    const world = renderGameShell('/game/world');
+
+    expect(screen.getByTestId('game-header')).toHaveAttribute('data-resources', 'false');
+    expect(screen.getByTestId('game-header')).toHaveAttribute('data-village-switcher', 'true');
+
+    world.unmount();
+    renderGameShell('/game/messages');
+
+    expect(screen.getByTestId('game-header')).toHaveAttribute('data-resources', 'false');
+    expect(screen.getByTestId('game-header')).toHaveAttribute('data-village-switcher', 'false');
   });
 });

@@ -37,7 +37,11 @@ export function GameShellLayout() {
       {/* GameHeader hidden on village view — VillageView has its own header */}
       {!isVillageView && (
         <div className="flex-shrink-0">
-          <GameHeader onPowerClick={() => setIsPowerSheetOpen(true)} />
+          <GameHeader
+            onPowerClick={() => setIsPowerSheetOpen(true)}
+            showResources={activeTab === 'army'}
+            showVillageSwitcher={activeTab === 'army' || activeTab === 'world'}
+          />
         </div>
       )}
 
