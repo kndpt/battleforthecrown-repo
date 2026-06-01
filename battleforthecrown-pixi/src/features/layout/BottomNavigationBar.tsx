@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from 'react';
-import { Globe, Hammer, Home, Lock, Mail, Swords } from 'lucide-react';
+import { Globe, Home, Lock, Mail, Swords } from 'lucide-react';
 import { Tooltip } from '@/ui';
 import { useBuildingsForLockCheck } from './useBuildingsForLockCheck';
 
@@ -155,18 +155,14 @@ export function BottomNavigationBar({
           <div
             className={`${iconWrapBase} ${activeTab === 'buildings' ? iconActive : iconInactive}`}
           >
-            {activeTab === 'buildings' ? (
-              <Hammer size={iconSize} className="text-white drop-shadow-md" />
-            ) : (
-              <Home size={iconSize} className="text-white drop-shadow-md" />
-            )}
+            <Home size={iconSize} className="text-white drop-shadow-md" />
           </div>
           <span
             className={`${labelBase} ${
               activeTab === 'buildings' ? labelActive : labelInactive
             }`}
           >
-            {activeTab === 'buildings' ? 'Bâtiments' : 'Village'}
+            Village
           </span>
         </button>
 

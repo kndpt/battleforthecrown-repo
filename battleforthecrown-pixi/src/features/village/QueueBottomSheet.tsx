@@ -28,8 +28,8 @@ function formatTime(milliseconds: number): string {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
-function rawIconFor(type: string, meta: BuildingMeta): string {
-  return meta.iconPath ? `/assets/${type.toLowerCase()}.png` : '/assets/lock.png';
+function rawIconFor(_type: string, meta: BuildingMeta): string {
+  return meta.iconPath ?? '/assets/lock.png';
 }
 
 export function QueueBottomSheet({ isOpen, onClose }: QueueBottomSheetProps) {
