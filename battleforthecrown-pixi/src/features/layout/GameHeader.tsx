@@ -110,10 +110,9 @@ function formatWorldPhase(world: PublicWorld | undefined): string {
 
 interface GameHeaderProps {
   onPowerClick?: () => void;
-  onResourceClick?: (resource: 'iron' | 'stone' | 'wood') => void;
 }
 
-export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = {}) {
+export function GameHeader({ onPowerClick }: GameHeaderProps = {}) {
   const navigate = useNavigate();
   const villageId = useGameStore((state) => state.villageId);
   const worldId = useGameStore((state) => state.worldId);
@@ -134,7 +133,7 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
   const [villageFilter, setVillageFilter] = useState<MultiVillageFilter>('all');
   const [sortAscending, setSortAscending] = useState(true);
 
-  const villages = myVillages.data ?? [];
+  const villages = useMemo(() => myVillages.data ?? [], [myVillages.data]);
   const activeMembership = memberships.data?.find((membership) => membership.worldId === worldId);
   const activePublicWorld = publicWorlds.data?.find((world) => world.id === worldId);
   const shouldLoadProfileVillages = isProfileOpen && profileTab === 'villages';
@@ -349,24 +348,21 @@ export function GameHeader({ onPowerClick, onResourceClick }: GameHeaderProps = 
         label: 'Bois',
         value: formatHeaderCompactAmount(woodCurrent),
         fillRatio: ratio(woodCurrent),
-        onClick: onResourceClick ? () => onResourceClick('wood') : undefined,
       },
       {
         icon: '/assets/resources/stone.png',
         label: 'Pierre',
         value: formatHeaderCompactAmount(stoneCurrent),
         fillRatio: ratio(stoneCurrent),
-        onClick: onResourceClick ? () => onResourceClick('stone') : undefined,
       },
       {
         icon: '/assets/resources/iron.png',
         label: 'Fer',
         value: formatHeaderCompactAmount(ironCurrent),
         fillRatio: ratio(ironCurrent),
-        onClick: onResourceClick ? () => onResourceClick('iron') : undefined,
       },
     ];
-  }, [hasSnapshot, display, onResourceClick]);
+  }, [hasSnapshot, display]);
 
   const populationStat = useMemo<HeaderBarStat>(() => {
     const available = population.data?.available ?? 0;

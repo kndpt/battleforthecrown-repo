@@ -1,5 +1,56 @@
 # Todo
 
+## 2026-06-01 — Refacto vue village bâtiments
+
+- [x] Remplacer la migration design incomplète par une vue village runtime cohérente avec les écrans Armée/Messages.
+- [x] Supprimer le contrat obsolète `panel=buildings` et le code de bottom sheet bâtiments associé.
+- [x] Conserver les interactions existantes : modales bâtiment, queue, profil, pouvoir, rétention, multi-village et style de village.
+- [x] Aligner les tailles visuelles des composants/textes avec le reste de l'app.
+- [x] Masquer le bouton `Améliorer` quand les ressources ou la population disponible ne permettent pas le prochain niveau.
+- [x] Recaler le hero : nom de village légèrement réduit, asset plus contenu et mieux isolé verticalement.
+- [x] Ajouter le swipe horizontal gauche/droite sur le hero pour changer de village.
+- [x] Animer séparément l'asset et les informations village au changement de village.
+- [x] Animer les jauges et valeurs de ressources quand le village actif change.
+- [x] Compacter le statut capitale pour garder les métadonnées village sur une seule ligne.
+- [x] Sortir `Village + nom` de la ligne des flèches pour donner plus de largeur au nom.
+- [x] Remonter l'identité village sans déplacer l'asset ni les flèches gauche/droite.
+- [x] Intégrer le hero au scroll principal avec un parallax multi-couches piloté par `scrollTop`.
+- [x] Animer le hero au scroll sans modifier sa hauteur de layout.
+- [x] Rendre la barre de ressources sticky quand elle atteint le haut du scroll.
+- [x] Déplacer l'icône capitale sur le label `Village` pour libérer la ligne de métadonnées.
+- [x] Simplifier la barre sticky ressources en 3 colonnes séparées par des dividers pleine hauteur.
+- [x] Donner à la barre ressources sticky un fond glass semi-transparent avec blur.
+- [x] Rendre l'animation de changement de village directionnelle avec un blur court.
+- [x] Corriger l'affichage puissance : total royaume dans le top HUD, puissance village dans les métadonnées.
+- [x] Masquer le style village tant que la Salle du Conseil n'est pas construite.
+- [x] Corriger le saut de scroll au retour vers le haut après activation de la barre ressources sticky.
+- [x] Lancer les vérifications ciblées et documenter la review.
+
+### Review
+
+- Suppression du flux `?panel=buildings` : plus de `BuildingManagementPanel`, `GameShellLayoutContext` ni helper de search param.
+- Les cartes bâtiments restent cliquables pour ouvrir la modale détail ; le CTA vert `Améliorer` n'apparaît que si le coût du niveau suivant est payable.
+- Le hero garde le shell village, mais l'asset est recentré dans une zone verticale dédiée et le titre village passe à une taille moins dominante.
+- Le hero accepte maintenant un swipe gauche/droite pour changer de village ; l'asset et les informations se réaniment avec timings distincts.
+- La barre de ressources rejoue une animation de remplissage et une micro-animation de valeur à chaque changement de village.
+- Le statut `Capitale` est rendu en badge icône accessible pour éviter de forcer les coordonnées sur une seconde ligne.
+- Le bloc identité (`Village` + nom) est maintenant full-width au-dessus des flèches, qui restent disponibles en bas sans réduire la largeur du nom.
+- Les espacements du hero sont resserrés : l'identité remonte dans sa propre piste, la ligne de métadonnées est centrée verticalement avec les flèches, et l'asset reste à sa position.
+- Le hero n'est plus hors du scroll : il sort avec le contenu et applique un parallax multi-couches piloté par le scroll (fond, glow, HUD, asset, identité).
+- Le hero garde désormais une hauteur de layout stable de 368px ; l'effet scroll reste porté par les couches internes pour éviter le saut de scroll au retour vers le haut.
+- L'ancrage de scroll est désactivé sur le conteneur scrollable et sur la scène hero pour éviter un recalage navigateur pendant le désancrage de la barre ressources sticky.
+- La barre de ressources reste dans le flux au départ, puis devient sticky en haut pour garder les stocks visibles pendant la navigation dans les bâtiments.
+- L'icône capitale est déplacée près du libellé `Village`, et la barre ressources affiche uniquement Bois/Pierre/Fer en colonnes denses sans cartes internes.
+- La barre ressources sticky utilise maintenant un fond semi-transparent `backdrop-blur` pour laisser deviner le contenu dessous tout en gardant les valeurs lisibles.
+- Le changement de village conserve la direction du switch : entrée depuis la gauche ou la droite avec blur rapide sur l'asset et les infos.
+- Le top HUD affiche désormais la puissance totale du royaume, tandis que la ligne du village remplace la position par la puissance du village actif.
+- Le badge de style village n'apparaît plus avant construction de la Salle du Conseil.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi lint` — passé avec 3 warnings préexistants hors scope dans Armée/Onboarding.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi build` — passé.
+- Vérification : `rtk git diff --check` — passé.
+- QA IG restante : vérifier sur `/game` que le hero respire mieux, que les bâtiments non payables affichent `Manque ressources`, et que les modales/sheets s'ouvrent comme avant.
+
 ## 2026-05-31 — Recalibration production ressources / pillage
 
 - [x] Cartographier la source de vérité de production passive et ses consommateurs.

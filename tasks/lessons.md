@@ -1,6 +1,25 @@
 # Lessons
 
 - Relire les leçons projet en début de session ; si le fichier n'existe pas, le créer avant de continuer.
+- Après une migration design de vue complète, vérifier immédiatement TypeScript/lint/build et chaque interaction conservée (modales, sheets, navigation), pas seulement le rendu statique.
+- Dans le hero Village, ne pas réduire l'asset via `max-h-full` sans dimensionner d'abord sa piste verticale ; si l'image paraît trop grande, agrandir la zone puis réduire légèrement l'asset.
+- Dans un hero mobile, les noms dynamiques longs doivent être bornés à une ligne (`truncate`/ellipsis ou animation explicitement demandée) avant d'ajuster les tailles autour.
+- Pour un swipe horizontal dans une zone contenant des boutons, supprimer le clic suivant seulement après un vrai swipe afin de conserver les taps normaux sur les contrôles.
+- Pour une animation de ressources liée au changement de village, utiliser une clé de village plutôt que les valeurs interpolées afin d'éviter une animation permanente à chaque tick.
+- Quand une ligne de métadonnées mobile contient un statut rare mais important (`Capitale`), préférer un badge icône accessible à un libellé long qui provoque un wrap.
+- Quand un titre dynamique a besoin de largeur, ne pas le mettre dans le même flex que les contrôles latéraux ; sortir le titre en bloc full-width et positionner les contrôles séparément.
+- Pour ajuster les espacements du hero Village, positionner explicitement l'identité, la ligne meta et les flèches dans des pistes séparées ; éviter un `translate` global qui casse l'alignement.
+- Quand le user demande de remonter les infos sous l'asset, ne pas déplacer l'asset lui-même sans confirmation explicite.
+- Si un hero doit avoir un effet "wow" au scroll, animer des couches séparées (fond, asset, HUD, identité) à des vitesses différentes plutôt qu'un fade global plat.
+- Si les couches d'un hero partent au scroll, réduire aussi la hauteur du conteneur externe ou clipper une scène fixe ; sinon le contenu dessous révèle un vide.
+- Pour une animation pilotée par scroll, ne pas mapper directement `scrollTop` en progress linéaire si le début doit rester contrôlable ; appliquer une courbe d'easing au progress.
+- Pour un hero piloté par `scrollTop`, ne pas modifier la hauteur réelle du conteneur en fonction du scroll : au retour vers le haut, le sticky + scroll anchoring peuvent provoquer un saut. Garder le layout stable et animer uniquement les couches internes.
+- Pour garder une barre utile visible après un hero, préférer `sticky top-0` dans le conteneur scrollable plutôt qu'un `fixed` global qui sort du flux et complique les offsets.
+- Pour une barre de ressources sticky, éviter les cartes internes répétées : une grille dense avec dividers pleine hauteur garde l'info visible sans gaspiller l'espace.
+- Pour un switch horizontal, mémoriser la direction du changement et alimenter les keyframes via classes directionnelles ; une animation neutre casse le lien avec le geste.
+- Pour un effet de flou directionnel, ne pas augmenter fortement `filter: blur()` ; préférer un léger blur plus `scaleX`/`skewX` dans l'axe du mouvement.
+- Dans le hero Village, la puissance top HUD représente le royaume/joueur total ; la puissance du village actif doit vivre dans les métadonnées du village, pas dans le top HUD.
+- Ne pas afficher une stratégie village par défaut tant que la Salle du Conseil n'est pas construite ; sinon `Équilibré` ressemble à une fonctionnalité disponible.
 - Quand le user fournit une capture + une URL précise, limiter la correction à l'écran demandé avant de généraliser au domaine métier ; ne pas modifier la carte Pixi si la cible est `/worlds`.
 - Les PR autonomes de maintenance ne doivent pas réutiliser les familles `run/*` ou `task/*` : utiliser `maint/<scope>/...` et un titre `maint(<scope>): ...` pour les identifier sans ambiguïté.
 - CodeRabbit ne doit pas reviewer les mémoires/suivis volatiles ni poster de nitpicks linguistiques ; exclure `.context-memory/**`, `tasks/todo.md`, `tasks/lessons.md` et garder un seuil "impact réel seulement" dans `.coderabbit.yaml`.

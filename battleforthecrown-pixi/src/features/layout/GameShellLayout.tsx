@@ -1,14 +1,9 @@
-import { useCallback, useMemo, useState } from 'react';
-import { Outlet, useLocation, useNavigate, useSearchParams } from 'react-router';
+import { useCallback, useState } from 'react';
+import { Outlet, useLocation, useNavigate } from 'react-router';
 import { PowerBottomSheet } from '@/features/power/PowerBottomSheet';
 import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
-import { withBuildingsPanelSearch } from '@/features/game/gamePanelSearch';
 import { BottomNavigationBar } from './BottomNavigationBar';
 import { GameHeader } from './GameHeader';
-import {
-  GameShellHeaderContext,
-  type HeaderResourceClickHandler,
-} from './GameShellLayoutContext';
 import { ToastStack } from './ToastStack';
 
 type GameTab = 'army' | 'buildings' | 'world' | 'messages';
@@ -23,21 +18,11 @@ function activeTabForPath(pathname: string): GameTab {
 export function GameShellLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [, setSearchParams] = useSearchParams();
   const unreadCount = useUnreadReportsCount();
   const [isPowerSheetOpen, setIsPowerSheetOpen] = useState(false);
-  const [resourceClickHandler, setResourceClickHandler] =
-    useState<HeaderResourceClickHandler>(null);
+  // Village view is fully self-contained (own header + nav bar)
+  const isVillageView = location.pathname === '/game';
   const activeTab = activeTabForPath(location.pathname);
-
-  const setHeaderResourceClickHandler = useCallback((handler: HeaderResourceClickHandler) => {
-    setResourceClickHandler(() => handler);
-  }, []);
-
-  const contextValue = useMemo(
-    () => ({ setResourceClickHandler: setHeaderResourceClickHandler }),
-    [setHeaderResourceClickHandler],
-  );
 
   const handleBuildingsClick = useCallback(() => {
     if (location.pathname !== '/game') {
@@ -45,23 +30,23 @@ export function GameShellLayout() {
       return;
     }
 
-    setSearchParams((current) => withBuildingsPanelSearch(current));
-  }, [location.pathname, navigate, setSearchParams]);
+  }, [location.pathname, navigate]);
 
   return (
-    <GameShellHeaderContext.Provider value={contextValue}>
-      <div className="relative flex h-screen w-full flex-col overflow-hidden bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
+    <div className="relative flex h-screen w-full flex-col overflow-hidden bg-gradient-to-b from-parchment via-kingdom-50 to-kingdom-100">
+      {/* GameHeader hidden on village view — VillageView has its own header */}
+      {!isVillageView && (
         <div className="flex-shrink-0">
-          <GameHeader
-            onPowerClick={() => setIsPowerSheetOpen(true)}
-            onResourceClick={resourceClickHandler ?? undefined}
-          />
+          <GameHeader onPowerClick={() => setIsPowerSheetOpen(true)} />
         </div>
+      )}
 
-        <div className="relative min-h-0 flex-1 overflow-hidden">
-          <Outlet />
-        </div>
+      <div className="relative min-h-0 flex-1 overflow-hidden">
+        <Outlet />
+      </div>
 
+      {/* BottomNavigationBar hidden on village view — VillageView renders its own */}
+      {!isVillageView && (
         <BottomNavigationBar
           activeTab={activeTab}
           onArmyClick={activeTab === 'army' ? undefined : () => navigate('/game/army')}
@@ -72,14 +57,17 @@ export function GameShellLayout() {
           onWorldClick={activeTab === 'world' ? undefined : () => navigate('/game/world')}
           unreadCount={unreadCount}
         />
+      )}
 
+      {/* PowerBottomSheet for non-village views; village view manages its own */}
+      {!isVillageView && (
         <PowerBottomSheet
           isOpen={isPowerSheetOpen}
           onClose={() => setIsPowerSheetOpen(false)}
         />
+      )}
 
-        <ToastStack />
-      </div>
-    </GameShellHeaderContext.Provider>
+      <ToastStack />
+    </div>
   );
 }

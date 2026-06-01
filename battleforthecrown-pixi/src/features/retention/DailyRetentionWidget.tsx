@@ -32,11 +32,18 @@ interface ClaimInput {
 export interface DailyRetentionWidgetProps {
   activeVillageId: string | null;
   className?: string;
+  /** When true the RoyalSeal trigger button is not rendered (portal-only mode) */
+  hideButton?: boolean;
   isClaiming?: boolean;
   isLoading?: boolean;
   onAction?: (actionId: GameActionId) => void;
   onClaim: (input: ClaimInput) => void;
   onNavigate: (path: string) => void;
+  /** Controlled open state. When provided the component does not manage its own open state. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Override the RoyalSeal size (default 58) */
+  sealSize?: number;
   summary?: RetentionSummaryDto;
   villages: JoinedVillage[];
 }
@@ -140,15 +147,25 @@ function chooseDefaultVillageId(
 export function DailyRetentionWidget({
   activeVillageId,
   className,
+  hideButton = false,
   isClaiming = false,
   isLoading = false,
   onAction,
   onClaim,
   onNavigate,
+  open: controlledOpen,
+  onOpenChange,
+  sealSize = 58,
   summary,
   villages,
 }: DailyRetentionWidgetProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = isControlled ? (controlledOpen ?? false) : internalOpen;
+  const handleSetOpen = useCallback((value: boolean) => {
+    if (!isControlled) setInternalOpen(value);
+    onOpenChange?.(value);
+  }, [isControlled, onOpenChange]);
   const [isSealPressed, setIsSealPressed] = useState(false);
   const [selectedVillageId, setSelectedVillageId] = useState("");
   const claimableCount = summary?.claimableCount ?? 0;
@@ -174,14 +191,14 @@ export function DailyRetentionWidget({
 
   const runActionAndClose = useCallback(
     (actionId: GameActionId) => {
-      setIsOpen(false);
+      handleSetOpen(false);
       if (onAction) {
         onAction(actionId);
         return;
       }
       onNavigate(GAME_ACTIONS[actionId].route);
     },
-    [onAction, onNavigate],
+    [handleSetOpen, onAction, onNavigate],
   );
 
   const quests = useMemo(
@@ -253,35 +270,37 @@ export function DailyRetentionWidget({
 
   const handleBackdropMouseDown = (event: MouseEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) {
-      setIsOpen(false);
+      handleSetOpen(false);
     }
   };
 
   return (
     <>
-      <RoyalSeal
-        ariaLabel={
-          claimableCount > 0
-            ? `Devoir royal, ${claimableCount} carte${claimableCount > 1 ? "s" : ""} à réclamer`
-            : "Devoir royal"
-        }
-        badge={claimableCount > 0}
-        badgeCount={claimableCount > 0 ? claimableCount : null}
-        className={
-          isLoading && !summary ? `${className ?? ""} opacity-60` : className
-        }
-        halo={claimableCount > 0}
-        onBlur={() => setIsSealPressed(false)}
-        onClick={() => setIsOpen(true)}
-        onPointerCancel={() => setIsSealPressed(false)}
-        onPointerDown={() => setIsSealPressed(true)}
-        onPointerLeave={() => setIsSealPressed(false)}
-        onPointerUp={() => setIsSealPressed(false)}
-        pressed={isOpen || isSealPressed}
-        size={58}
-        softShadow
-        variant="wax"
-      />
+      {!hideButton && (
+        <RoyalSeal
+          ariaLabel={
+            claimableCount > 0
+              ? `Devoir royal, ${claimableCount} carte${claimableCount > 1 ? "s" : ""} à réclamer`
+              : "Devoir royal"
+          }
+          badge={claimableCount > 0}
+          badgeCount={claimableCount > 0 ? claimableCount : null}
+          className={
+            isLoading && !summary ? `${className ?? ""} opacity-60` : className
+          }
+          halo={claimableCount > 0}
+          onBlur={() => setIsSealPressed(false)}
+          onClick={() => handleSetOpen(true)}
+          onPointerCancel={() => setIsSealPressed(false)}
+          onPointerDown={() => setIsSealPressed(true)}
+          onPointerLeave={() => setIsSealPressed(false)}
+          onPointerUp={() => setIsSealPressed(false)}
+          pressed={isOpen || isSealPressed}
+          size={sealSize}
+          softShadow
+          variant="wax"
+        />
+      )}
 
       {isOpen && summary
         ? createPortal(
@@ -302,7 +321,8 @@ export function DailyRetentionWidget({
                 expiresInLabel="Reset à"
                 expiresInValue="04h00"
                 maxHeight="min(680px, calc(100dvh - 18px))"
-                onClose={() => setIsOpen(false)}
+                onClose={() => handleSetOpen(false)}
+
                 onPrimaryAction={handlePrimaryAction}
                 oyez={mapOyez(summary)}
                 primaryActionDisabled={
