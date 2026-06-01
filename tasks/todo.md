@@ -1,5 +1,22 @@
 # Todo
 
+## 2026-06-01 — PR #34 commentaires review topbar
+
+- [x] Lister les threads et commentaires encore ouverts sur la PR #34.
+- [x] Vérifier que les anciens threads tests sont déjà couverts par le code courant.
+- [x] Traiter le commentaire CodeRabbit sur la duplication `GameHeader` / `VillageView`.
+- [x] Lancer les vérifications ciblées avant résolution/push.
+
+### Review
+
+- Threads `categorizeVillageBuildings`, `DailyRetentionWidget` et `QueueBottomSheet` : déjà couverts par les tests existants.
+- Commentaire hors diff `GameHeader` : traité en extrayant les helpers partagés dans `features/layout/headerHelpers.ts` et les constantes profil dans `features/layout/profileSheetData.ts`.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test VillageViewData.test.ts DailyRetentionWidget.test.tsx QueueBottomSheet.test.ts GameHeader.test.tsx GameShellLayout.test.tsx` — 5 suites / 26 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi lint` — passé avec 3 warnings préexistants hors scope dans Armée/Onboarding.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi build` — passé.
+- Vérification : `rtk git diff --check` — passé.
+
 ## 2026-06-01 — Topbar modulable Army
 
 - [x] Cartographier le hero `/game`, le header legacy et `ArmyScreen`.
