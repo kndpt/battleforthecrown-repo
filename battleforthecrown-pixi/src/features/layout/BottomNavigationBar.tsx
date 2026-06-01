@@ -1,6 +1,8 @@
 import {
+  useEffect,
   useLayoutEffect,
   useRef,
+  useState,
   type ComponentType,
   type CSSProperties,
 } from "react";
@@ -19,6 +21,7 @@ interface BottomNavigationBarProps {
   onWorldClick?: () => void;
   onMessagesClick?: () => void;
   activeTab?: Tab;
+  animateActiveOnMount?: boolean;
   density?: "compact" | "cozy";
   /** Number of unread combat reports — drives the red bubble on Messages. */
   unreadCount?: number;
@@ -183,10 +186,22 @@ export function BottomNavigationBar({
   onWorldClick,
   onMessagesClick,
   activeTab = "buildings",
+  animateActiveOnMount = false,
   unreadCount = 0,
 }: BottomNavigationBarProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const { isBarracksBuilt, isWatchtowerBuilt } = useBuildingsForLockCheck();
+  const [shouldShowActive, setShouldShowActive] = useState(!animateActiveOnMount);
+
+  useEffect(() => {
+    if (!animateActiveOnMount) return undefined;
+
+    const frame = window.requestAnimationFrame(() => setShouldShowActive(true));
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [animateActiveOnMount]);
+
+  const animatedActiveTab = shouldShowActive ? activeTab : undefined;
 
   useLayoutEffect(() => {
     const node = rootRef.current;
@@ -260,7 +275,7 @@ export function BottomNavigationBar({
           <NavItem
             icon={Swords}
             label="Armée"
-            active={activeTab === "army"}
+            active={animatedActiveTab === "army"}
             locked={!isBarracksBuilt}
             lockHint="Construisez la caserne pour débloquer"
             hint="Gérer votre armée"
@@ -270,7 +285,7 @@ export function BottomNavigationBar({
           <NavItem
             icon={Castle}
             label="Village"
-            active={activeTab === "buildings"}
+            active={animatedActiveTab === "buildings"}
             hint="Retour au village"
             onClick={onBuildingsClick}
           />
@@ -278,7 +293,7 @@ export function BottomNavigationBar({
           <NavItem
             icon={Mail}
             label="Messages"
-            active={activeTab === "messages"}
+            active={animatedActiveTab === "messages"}
             hint="Consulter vos messages"
             badge={unreadCount}
             onClick={onMessagesClick}
@@ -287,7 +302,7 @@ export function BottomNavigationBar({
           <NavItem
             icon={Globe}
             label="Monde"
-            active={activeTab === "world"}
+            active={animatedActiveTab === "world"}
             locked={!isWatchtowerBuilt}
             lockHint="Construisez la tour de guet pour débloquer"
             hint="Explorer la carte du monde"

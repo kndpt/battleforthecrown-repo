@@ -1,5 +1,22 @@
 # Todo
 
+## 2026-06-01 — Animation bottom nav vers Village
+
+- [x] Diagnostiquer pourquoi l'item `Village` devient actif sans transition.
+- [x] Rejouer l'animation active quand la bottom nav est montée directement sur `/game`.
+- [x] Vérifier le changement et pousser sur la branche PR.
+
+### Review
+
+- La bottom nav accepte maintenant `animateActiveOnMount`, qui rend l'état actif après une frame pour laisser la transition CSS du sceau se jouer.
+- `VillageView` active ce mode pour l'item `Village`, car cette nav est remontée depuis zéro quand on revient sur `/game`.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test GameShellLayout.test.tsx GameHeader.test.tsx` — 2 suites / 16 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi lint` — passé avec 3 warnings préexistants hors scope dans Armée/Onboarding.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi build` — passé.
+- Vérification : `rtk git diff --check` — passé.
+- QA IG restante : depuis Armée/Messages/Monde, cliquer `Village` et vérifier que le sceau sélectionné s'anime au lieu d'apparaître directement actif.
+
 ## 2026-06-01 — PR #34 commentaires review topbar
 
 - [x] Lister les threads et commentaires encore ouverts sur la PR #34.

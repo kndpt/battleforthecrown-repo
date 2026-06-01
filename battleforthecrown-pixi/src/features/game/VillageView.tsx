@@ -1063,6 +1063,7 @@ export function VillageView() {
         {/* Bottom navigation */}
         <BottomNavigationBar
           activeTab="buildings"
+          animateActiveOnMount
           onArmyClick={() => navigate('/game/army')}
           onBuildingsClick={() => undefined}
           onMessagesClick={() => navigate('/game/messages')}
