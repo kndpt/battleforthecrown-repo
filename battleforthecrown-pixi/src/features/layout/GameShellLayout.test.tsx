@@ -37,6 +37,7 @@ vi.mock('./GameHeader', () => ({
 vi.mock('./BottomNavigationBar', () => ({
   BottomNavigationBar: ({
     activeTab,
+    animateActiveOnMount,
     onArmyClick,
     onBuildingsClick,
     onMessagesClick,
@@ -44,13 +45,19 @@ vi.mock('./BottomNavigationBar', () => ({
     unreadCount,
   }: {
     activeTab?: string;
+    animateActiveOnMount?: boolean;
     onArmyClick?: () => void;
     onBuildingsClick: () => void;
     onMessagesClick?: () => void;
     onWorldClick?: () => void;
     unreadCount?: number;
   }) => (
-    <nav data-active-tab={activeTab} data-testid="bottom-nav" data-unread={unreadCount}>
+    <nav
+      data-active-tab={activeTab}
+      data-animate-active-on-mount={animateActiveOnMount}
+      data-testid="bottom-nav"
+      data-unread={unreadCount}
+    >
       <button onClick={onBuildingsClick} type="button">
         buildings
       </button>
@@ -99,6 +106,10 @@ describe('GameShellLayout', () => {
     expect(screen.getAllByTestId('bottom-nav')).toHaveLength(1);
     expect(screen.getAllByTestId('toast-stack')).toHaveLength(1);
     expect(screen.getByTestId('bottom-nav')).toHaveAttribute('data-active-tab', 'messages');
+    expect(screen.getByTestId('bottom-nav')).toHaveAttribute(
+      'data-animate-active-on-mount',
+      'true',
+    );
     expect(screen.getByTestId('bottom-nav')).toHaveAttribute('data-unread', '7');
   });
 

@@ -23,6 +23,7 @@
 - Pour une topbar modulable par vue, définir explicitement une matrice route -> sections visibles ; ne pas déduire les sections par exclusion globale (`!== world`) car Messages et Monde ont des besoins opposés.
 - Le nom de village doit avoir deux échelles distinctes : plus lisible dans le hero `/game`, plus compact dans la topbar des autres vues pour ne pas prendre le dessus sur le contenu.
 - Si une nav animée est démontée entre deux routes, la route de destination doit pouvoir rejouer l'état actif au montage ; une transition CSS seule ne se déclenche pas si l'item arrive déjà actif.
+- Quand `/game` et les autres vues rendent chacun leur propre bottom nav, appliquer le replay d'état actif aux deux côtés du switch : retour vers Village et sortie de Village.
 - Tant que la progression de profil joueur n'existe pas, ne pas réutiliser le niveau de Château/village comme niveau profil ; afficher explicitement `1` partout où le profil joueur expose un niveau.
 - Quand le user fournit une capture + une URL précise, limiter la correction à l'écran demandé avant de généraliser au domaine métier ; ne pas modifier la carte Pixi si la cible est `/worlds`.
 - Les PR autonomes de maintenance ne doivent pas réutiliser les familles `run/*` ou `task/*` : utiliser `maint/<scope>/...` et un titre `maint(<scope>): ...` pour les identifier sans ambiguïté.

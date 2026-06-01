@@ -53,6 +53,7 @@ export function GameShellLayout() {
       {!isVillageView && (
         <BottomNavigationBar
           activeTab={activeTab}
+          animateActiveOnMount
           onArmyClick={activeTab === 'army' ? undefined : () => navigate('/game/army')}
           onBuildingsClick={handleBuildingsClick}
           onMessagesClick={

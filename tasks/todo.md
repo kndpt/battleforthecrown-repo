@@ -1,5 +1,22 @@
 # Todo
 
+## 2026-06-01 — Animation bottom nav depuis Village
+
+- [x] Diagnostiquer pourquoi les onglets hors village deviennent actifs sans transition depuis `/game`.
+- [x] Appliquer le replay d'animation au montage de la bottom nav du shell hors village.
+- [x] Vérifier et pousser sur la branche PR.
+
+### Review
+
+- `GameShellLayout` passe maintenant `animateActiveOnMount` à la bottom nav hors village, comme `VillageView` le faisait déjà pour l'item `Village`.
+- Les transitions gardent le comportement normal entre vues hors village, mais rejouent l'entrée active quand on sort de `/game`.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test GameShellLayout.test.tsx GameHeader.test.tsx` — 2 suites / 16 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi lint` — passé avec 3 warnings préexistants hors scope dans Armée/Onboarding.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi build` — passé.
+- Vérification : `rtk git diff --check` — passé.
+- QA IG restante : depuis `/game`, cliquer Armée, Messages puis Monde et vérifier que le sceau de l'item cible s'anime au lieu d'apparaître directement actif.
+
 ## 2026-06-01 — Niveau profil fixe
 
 - [x] Remplacer le niveau profil affiché en haut par `1`.
