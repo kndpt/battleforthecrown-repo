@@ -44,6 +44,7 @@ import {
   formatWorldPhase,
   getPlayerInitials,
   integerFormatter,
+  PLAYER_PROFILE_LEVEL,
   toResultMap,
 } from './headerHelpers';
 import {
@@ -148,7 +149,6 @@ export function GameHeader({
   const activeVillagePower = activeVillage
     ? powerByVillageId.get(activeVillage.id) ?? 0
     : 0;
-  const activeVillageLevel = activeVillage?.castleLevel ?? '—';
   const resourcesByVillageId = useMemo(
     () => toResultMap(villageIds, villageResources),
     [villageIds, villageResources],
@@ -237,7 +237,7 @@ export function GameHeader({
     return {
       player: {
         initials: getPlayerInitials(user?.email),
-        level: '—',
+        level: PLAYER_PROFILE_LEVEL,
         name: user?.email ?? 'Joueur',
         online: Boolean(user),
         tribe: { cap: 0, members: 0, name: 'Sans tribu', role: 'À venir', tag: '—' },
@@ -369,7 +369,7 @@ export function GameHeader({
             {getPlayerInitials(user?.email)}
           </span>
           <span className="absolute -bottom-0.5 -right-0.5 flex size-[18px] items-center justify-center rounded-full border border-[#7a5200] bg-gradient-to-b from-[#f6d57b] to-[#c9900c] font-game text-[8.5px] font-black text-[#3a2a00]">
-            {activeVillageLevel}
+            {PLAYER_PROFILE_LEVEL}
           </span>
         </button>
 

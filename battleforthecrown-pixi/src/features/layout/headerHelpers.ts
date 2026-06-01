@@ -4,6 +4,8 @@ export const integerFormatter = new Intl.NumberFormat('fr-FR', {
   maximumFractionDigits: 0,
 });
 
+export const PLAYER_PROFILE_LEVEL = 1;
+
 export function toResultMap<T>(
   ids: string[],
   results: readonly { data?: T }[],

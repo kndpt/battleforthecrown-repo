@@ -1,5 +1,22 @@
 # Todo
 
+## 2026-06-01 — Niveau profil fixe
+
+- [x] Remplacer le niveau profil affiché en haut par `1`.
+- [x] Remplacer le niveau profil dans la bottom sheet profil par `1`.
+- [x] Vérifier et pousser sur la branche PR.
+
+### Review
+
+- Ajout de `PLAYER_PROFILE_LEVEL = 1` comme valeur provisoire unique tant que la feature de progression joueur n'existe pas.
+- Le badge profil haut de `/game`, le badge profil du header partagé et les données de bottom sheet profil utilisent maintenant cette valeur.
+- Les niveaux de village/château restent inchangés dans les métadonnées village et la liste multi-villages.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test GameHeader.test.tsx GameShellLayout.test.tsx` — 2 suites / 16 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi lint` — passé avec 3 warnings préexistants hors scope dans Armée/Onboarding.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi build` — passé.
+- Vérification : `rtk git diff --check` — passé.
+
 ## 2026-06-01 — Animation bottom nav vers Village
 
 - [x] Diagnostiquer pourquoi l'item `Village` devient actif sans transition.

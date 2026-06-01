@@ -41,6 +41,7 @@ import {
   formatWorldPhase,
   getPlayerInitials,
   integerFormatter,
+  PLAYER_PROFILE_LEVEL,
   toResultMap,
 } from '@/features/layout/headerHelpers';
 import {
@@ -367,7 +368,7 @@ export function VillageView() {
     return {
       player: {
         initials: getPlayerInitials(user?.email),
-        level: castleLevel > 0 ? castleLevel : '—',
+        level: PLAYER_PROFILE_LEVEL,
         name: user?.email ?? 'Joueur',
         online: Boolean(user),
         tribe: { cap: 0, members: 0, name: 'Sans tribu', role: 'À venir', tag: '—' },
@@ -402,7 +403,6 @@ export function VillageView() {
   }, [
     activeMembership?.worldName,
     activePublicWorld,
-    castleLevel,
     crownBalance,
     kingdomPower.data,
     user,
@@ -788,7 +788,7 @@ export function VillageView() {
                 {getPlayerInitials(user?.email)}
               </div>
               <div className="absolute -bottom-0.5 -right-0.5 flex size-[18px] items-center justify-center rounded-full border border-[#7a5200] bg-gradient-to-b from-[#f6d57b] to-[#c9900c] text-[8.5px] font-black text-[#3a2a00]">
-                {castleLevel > 0 ? castleLevel : '—'}
+                {PLAYER_PROFILE_LEVEL}
               </div>
             </button>
 
