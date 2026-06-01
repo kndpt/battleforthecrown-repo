@@ -1,9 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { useState } from 'react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import { GameShellLayout } from './GameShellLayout';
-import { useGameShellResourceClick } from './GameShellLayoutContext';
 
 vi.mock('@/features/combat/useUnreadReportsCount', () => ({
   useUnreadReportsCount: () => 7,
@@ -17,17 +15,20 @@ vi.mock('@/features/power/PowerBottomSheet', () => ({
 vi.mock('./GameHeader', () => ({
   GameHeader: ({
     onPowerClick,
-    onResourceClick,
+    showResources,
+    showVillageSwitcher,
   }: {
     onPowerClick?: () => void;
-    onResourceClick?: (resource: 'iron' | 'stone' | 'wood') => void;
+    showResources?: boolean;
+    showVillageSwitcher?: boolean;
   }) => (
-    <header data-testid="game-header">
+    <header
+      data-resources={showResources}
+      data-testid="game-header"
+      data-village-switcher={showVillageSwitcher}
+    >
       <button onClick={onPowerClick} type="button">
         power
-      </button>
-      <button onClick={() => onResourceClick?.('wood')} type="button">
-        wood
       </button>
     </header>
   ),
@@ -36,6 +37,7 @@ vi.mock('./GameHeader', () => ({
 vi.mock('./BottomNavigationBar', () => ({
   BottomNavigationBar: ({
     activeTab,
+    animateActiveOnMount,
     onArmyClick,
     onBuildingsClick,
     onMessagesClick,
@@ -43,13 +45,19 @@ vi.mock('./BottomNavigationBar', () => ({
     unreadCount,
   }: {
     activeTab?: string;
+    animateActiveOnMount?: boolean;
     onArmyClick?: () => void;
     onBuildingsClick: () => void;
     onMessagesClick?: () => void;
     onWorldClick?: () => void;
     unreadCount?: number;
   }) => (
-    <nav data-active-tab={activeTab} data-testid="bottom-nav" data-unread={unreadCount}>
+    <nav
+      data-active-tab={activeTab}
+      data-animate-active-on-mount={animateActiveOnMount}
+      data-testid="bottom-nav"
+      data-unread={unreadCount}
+    >
       <button onClick={onBuildingsClick} type="button">
         buildings
       </button>
@@ -75,23 +83,12 @@ function LocationProbe() {
   return <div data-testid="location">{`${location.pathname}${location.search}`}</div>;
 }
 
-function ResourceProbe() {
-  const [resource, setResource] = useState('none');
-  useGameShellResourceClick(setResource);
-  return (
-    <>
-      <LocationProbe />
-      <div data-testid="resource">{resource}</div>
-    </>
-  );
-}
-
 function renderGameShell(initialPath: string) {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <Routes>
         <Route element={<GameShellLayout />}>
-          <Route path="/game" element={<ResourceProbe />} />
+          <Route path="/game" element={<LocationProbe />} />
           <Route path="/game/world" element={<LocationProbe />} />
           <Route path="/game/army" element={<LocationProbe />} />
           <Route path="/game/messages" element={<LocationProbe />} />
@@ -109,15 +106,19 @@ describe('GameShellLayout', () => {
     expect(screen.getAllByTestId('bottom-nav')).toHaveLength(1);
     expect(screen.getAllByTestId('toast-stack')).toHaveLength(1);
     expect(screen.getByTestId('bottom-nav')).toHaveAttribute('data-active-tab', 'messages');
+    expect(screen.getByTestId('bottom-nav')).toHaveAttribute(
+      'data-animate-active-on-mount',
+      'true',
+    );
     expect(screen.getByTestId('bottom-nav')).toHaveAttribute('data-unread', '7');
   });
 
-  it('opens the buildings panel via bounded URL state from the village route', () => {
+  it('leaves village chrome to the village view without shared header or nav', () => {
     renderGameShell('/game?foo=1');
 
-    fireEvent.click(screen.getByRole('button', { name: 'buildings' }));
-
-    expect(screen.getByTestId('location')).toHaveTextContent('/game?foo=1&panel=buildings');
+    expect(screen.getByTestId('location')).toHaveTextContent('/game?foo=1');
+    expect(screen.queryByTestId('game-header')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('bottom-nav')).not.toBeInTheDocument();
   });
 
   it('returns to the village without opening a panel from another tab', () => {
@@ -128,19 +129,30 @@ describe('GameShellLayout', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('/game');
   });
 
-  it('lets the village route provide a resource click handler to the shared header', () => {
-    renderGameShell('/game');
-
-    fireEvent.click(screen.getByRole('button', { name: 'wood' }));
-
-    expect(screen.getByTestId('resource')).toHaveTextContent('wood');
-  });
-
   it('keeps the power sheet in the shared layout', () => {
     renderGameShell('/game/world');
 
     fireEvent.click(screen.getByRole('button', { name: 'power' }));
 
     expect(screen.getByTestId('power-sheet')).toBeInTheDocument();
+  });
+
+  it('configures the modular topbar per game route', () => {
+    const { unmount } = renderGameShell('/game/army');
+
+    expect(screen.getByTestId('game-header')).toHaveAttribute('data-resources', 'true');
+    expect(screen.getByTestId('game-header')).toHaveAttribute('data-village-switcher', 'true');
+
+    unmount();
+    const world = renderGameShell('/game/world');
+
+    expect(screen.getByTestId('game-header')).toHaveAttribute('data-resources', 'false');
+    expect(screen.getByTestId('game-header')).toHaveAttribute('data-village-switcher', 'true');
+
+    world.unmount();
+    renderGameShell('/game/messages');
+
+    expect(screen.getByTestId('game-header')).toHaveAttribute('data-resources', 'false');
+    expect(screen.getByTestId('game-header')).toHaveAttribute('data-village-switcher', 'false');
   });
 });

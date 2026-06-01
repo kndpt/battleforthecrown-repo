@@ -33,6 +33,7 @@ Politique PR `$bftc-run` :
 
 ### Runs actifs
 
+- [045 — Toast de remboursement à l'annulation](./runs/045-feature-refund-toast-on-cancel.md) — 📋 `PLANNED`. Afficher un toast avec les ressources/pop/couronnes remboursées (valeurs > 0 uniquement) lors de l'annulation d'une construction ou d'un entraînement.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés

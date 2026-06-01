@@ -542,8 +542,8 @@ export function ArmyScreen() {
       <div
         className={
           activeRuntimeTab === 'barracks'
-            ? 'mb-[var(--bftc-bottom-nav-height,88px)] flex min-h-0 flex-1 flex-col overflow-hidden bg-[#2f1d12]'
-            : 'mb-[var(--bftc-bottom-nav-height,88px)] flex min-h-0 flex-1 flex-col overflow-hidden bg-[linear-gradient(180deg,#f5e6d3,#e8d4a8)]'
+            ? 'pb-[var(--bftc-bottom-nav-height,88px)] flex min-h-0 flex-1 flex-col overflow-hidden bg-[#3c2619]'
+            : 'pb-[var(--bftc-bottom-nav-height,88px)] flex min-h-0 flex-1 flex-col overflow-hidden bg-[linear-gradient(180deg,#f5e6d3,#e8d4a8)]'
         }
       >
         <OnboardingGuidance

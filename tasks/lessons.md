@@ -1,6 +1,30 @@
 # Lessons
 
 - Relire les leçons projet en début de session ; si le fichier n'existe pas, le créer avant de continuer.
+- Après une migration design de vue complète, vérifier immédiatement TypeScript/lint/build et chaque interaction conservée (modales, sheets, navigation), pas seulement le rendu statique.
+- Dans le hero Village, ne pas réduire l'asset via `max-h-full` sans dimensionner d'abord sa piste verticale ; si l'image paraît trop grande, agrandir la zone puis réduire légèrement l'asset.
+- Dans un hero mobile, les noms dynamiques longs doivent être bornés à une ligne (`truncate`/ellipsis ou animation explicitement demandée) avant d'ajuster les tailles autour.
+- Pour un swipe horizontal dans une zone contenant des boutons, supprimer le clic suivant seulement après un vrai swipe afin de conserver les taps normaux sur les contrôles.
+- Pour une animation de ressources liée au changement de village, utiliser une clé de village plutôt que les valeurs interpolées afin d'éviter une animation permanente à chaque tick.
+- Quand une ligne de métadonnées mobile contient un statut rare mais important (`Capitale`), préférer un badge icône accessible à un libellé long qui provoque un wrap.
+- Quand un titre dynamique a besoin de largeur, ne pas le mettre dans le même flex que les contrôles latéraux ; sortir le titre en bloc full-width et positionner les contrôles séparément.
+- Pour ajuster les espacements du hero Village, positionner explicitement l'identité, la ligne meta et les flèches dans des pistes séparées ; éviter un `translate` global qui casse l'alignement.
+- Quand le user demande de remonter les infos sous l'asset, ne pas déplacer l'asset lui-même sans confirmation explicite.
+- Si un hero doit avoir un effet "wow" au scroll, animer des couches séparées (fond, asset, HUD, identité) à des vitesses différentes plutôt qu'un fade global plat.
+- Si les couches d'un hero partent au scroll, réduire aussi la hauteur du conteneur externe ou clipper une scène fixe ; sinon le contenu dessous révèle un vide.
+- Pour une animation pilotée par scroll, ne pas mapper directement `scrollTop` en progress linéaire si le début doit rester contrôlable ; appliquer une courbe d'easing au progress.
+- Pour un hero piloté par `scrollTop`, ne pas modifier la hauteur réelle du conteneur en fonction du scroll : au retour vers le haut, le sticky + scroll anchoring peuvent provoquer un saut. Garder le layout stable et animer uniquement les couches internes.
+- Pour garder une barre utile visible après un hero, préférer `sticky top-0` dans le conteneur scrollable plutôt qu'un `fixed` global qui sort du flux et complique les offsets.
+- Pour une barre de ressources sticky, éviter les cartes internes répétées : une grille dense avec dividers pleine hauteur garde l'info visible sans gaspiller l'espace.
+- Pour un switch horizontal, mémoriser la direction du changement et alimenter les keyframes via classes directionnelles ; une animation neutre casse le lien avec le geste.
+- Pour un effet de flou directionnel, ne pas augmenter fortement `filter: blur()` ; préférer un léger blur plus `scaleX`/`skewX` dans l'axe du mouvement.
+- Dans le hero Village, la puissance top HUD représente le royaume/joueur total ; la puissance du village actif doit vivre dans les métadonnées du village, pas dans le top HUD.
+- Ne pas afficher une stratégie village par défaut tant que la Salle du Conseil n'est pas construite ; sinon `Équilibré` ressemble à une fonctionnalité disponible.
+- Pour une topbar modulable par vue, définir explicitement une matrice route -> sections visibles ; ne pas déduire les sections par exclusion globale (`!== world`) car Messages et Monde ont des besoins opposés.
+- Le nom de village doit avoir deux échelles distinctes : plus lisible dans le hero `/game`, plus compact dans la topbar des autres vues pour ne pas prendre le dessus sur le contenu.
+- Si une nav animée est démontée entre deux routes, la route de destination doit pouvoir rejouer l'état actif au montage ; une transition CSS seule ne se déclenche pas si l'item arrive déjà actif.
+- Quand `/game` et les autres vues rendent chacun leur propre bottom nav, appliquer le replay d'état actif aux deux côtés du switch : retour vers Village et sortie de Village.
+- Tant que la progression de profil joueur n'existe pas, ne pas réutiliser le niveau de Château/village comme niveau profil ; afficher explicitement `1` partout où le profil joueur expose un niveau.
 - Quand le user fournit une capture + une URL précise, limiter la correction à l'écran demandé avant de généraliser au domaine métier ; ne pas modifier la carte Pixi si la cible est `/worlds`.
 - Les PR autonomes de maintenance ne doivent pas réutiliser les familles `run/*` ou `task/*` : utiliser `maint/<scope>/...` et un titre `maint(<scope>): ...` pour les identifier sans ambiguïté.
 - CodeRabbit ne doit pas reviewer les mémoires/suivis volatiles ni poster de nitpicks linguistiques ; exclure `.context-memory/**`, `tasks/todo.md`, `tasks/lessons.md` et garder un seuil "impact réel seulement" dans `.coderabbit.yaml`.
@@ -40,6 +64,7 @@
 - Pour une conquête avec fenêtre de capture, ne jamais valider seulement "Seigneur immobilisé" : l'escorte survivante doit aussi rester en garnison d'occupation. Le smoke doit prouver que `battle.resolved.survivingUnits` ne retourne pas cette escorte et qu'une attaque hostile interrompt si le Seigneur meurt ou si l'escorte d'occupation est détruite.
 - Pour une sync mini-carte -> Pixi viewport, ne pas dépendre uniquement des events internes du viewport après un `moveCenter` programmatique : notifier explicitement la caméra et calculer le viewbox depuis `toWorld` sur les coins écran réels pour respecter le ratio mobile portrait.
 - Si un worktree BFTC ne résout pas `@battleforthecrown/shared/*` après `yarn install`, vérifier `packages/shared/dist/` et `packages/shared/tsconfig.tsbuildinfo` : un `.tsbuildinfo` tracké/stale peut empêcher l'émission du dist. Le correctif durable est de ne pas tracker les `.tsbuildinfo`; le dépannage local est `yarn workspace @battleforthecrown/shared clean && yarn workspace @battleforthecrown/shared build`.
+- `yarn dev` racine peut contourner les hooks `prestart:*` des workspaces en lançant directement les binaires ; les prérequis dev critiques (`shared build`, `prisma generate`, migrations) doivent être dans le script réellement appelé par le root dev.
 - Pour une QA IG depuis un worktree, ne pas lancer par défaut une DB isolée vide : cloner temporairement la DB principale (`pg_dump battleforthecrown | psql -d battleforthecrown_<worktree>`), tester avec les comptes/mondes existants, puis supprimer cette DB temporaire après validation.
 - Sur la WorldMap, ne pas dévaloriser visuellement les villages joueurs étrangers pour signaler l'ownership. Le rendu "village joueur normal" doit rester valorisant pour tous les joueurs ; distinguer plutôt les villages du joueur courant avec un marqueur propriétaire additionnel.
 - Pour une tâche quotidienne, aligner le libellé sur le trigger exact de progression : si le backend attend `battle.resolved` victorieux, écrire "Vaincre", pas "Attaquer".

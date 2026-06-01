@@ -1,5 +1,173 @@
 # Todo
 
+## 2026-06-01 — Animation bottom nav depuis Village
+
+- [x] Diagnostiquer pourquoi les onglets hors village deviennent actifs sans transition depuis `/game`.
+- [x] Appliquer le replay d'animation au montage de la bottom nav du shell hors village.
+- [x] Vérifier et pousser sur la branche PR.
+
+### Review
+
+- `GameShellLayout` passe maintenant `animateActiveOnMount` à la bottom nav hors village, comme `VillageView` le faisait déjà pour l'item `Village`.
+- Les transitions gardent le comportement normal entre vues hors village, mais rejouent l'entrée active quand on sort de `/game`.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test GameShellLayout.test.tsx GameHeader.test.tsx` — 2 suites / 16 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi lint` — passé avec 3 warnings préexistants hors scope dans Armée/Onboarding.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi build` — passé.
+- Vérification : `rtk git diff --check` — passé.
+- QA IG restante : depuis `/game`, cliquer Armée, Messages puis Monde et vérifier que le sceau de l'item cible s'anime au lieu d'apparaître directement actif.
+
+## 2026-06-01 — Niveau profil fixe
+
+- [x] Remplacer le niveau profil affiché en haut par `1`.
+- [x] Remplacer le niveau profil dans la bottom sheet profil par `1`.
+- [x] Vérifier et pousser sur la branche PR.
+
+### Review
+
+- Ajout de `PLAYER_PROFILE_LEVEL = 1` comme valeur provisoire unique tant que la feature de progression joueur n'existe pas.
+- Le badge profil haut de `/game`, le badge profil du header partagé et les données de bottom sheet profil utilisent maintenant cette valeur.
+- Les niveaux de village/château restent inchangés dans les métadonnées village et la liste multi-villages.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test GameHeader.test.tsx GameShellLayout.test.tsx` — 2 suites / 16 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi lint` — passé avec 3 warnings préexistants hors scope dans Armée/Onboarding.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi build` — passé.
+- Vérification : `rtk git diff --check` — passé.
+
+## 2026-06-01 — Animation bottom nav vers Village
+
+- [x] Diagnostiquer pourquoi l'item `Village` devient actif sans transition.
+- [x] Rejouer l'animation active quand la bottom nav est montée directement sur `/game`.
+- [x] Vérifier le changement et pousser sur la branche PR.
+
+### Review
+
+- La bottom nav accepte maintenant `animateActiveOnMount`, qui rend l'état actif après une frame pour laisser la transition CSS du sceau se jouer.
+- `VillageView` active ce mode pour l'item `Village`, car cette nav est remontée depuis zéro quand on revient sur `/game`.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test GameShellLayout.test.tsx GameHeader.test.tsx` — 2 suites / 16 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi lint` — passé avec 3 warnings préexistants hors scope dans Armée/Onboarding.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi build` — passé.
+- Vérification : `rtk git diff --check` — passé.
+- QA IG restante : depuis Armée/Messages/Monde, cliquer `Village` et vérifier que le sceau sélectionné s'anime au lieu d'apparaître directement actif.
+
+## 2026-06-01 — PR #34 commentaires review topbar
+
+- [x] Lister les threads et commentaires encore ouverts sur la PR #34.
+- [x] Vérifier que les anciens threads tests sont déjà couverts par le code courant.
+- [x] Traiter le commentaire CodeRabbit sur la duplication `GameHeader` / `VillageView`.
+- [x] Lancer les vérifications ciblées avant résolution/push.
+
+### Review
+
+- Threads `categorizeVillageBuildings`, `DailyRetentionWidget` et `QueueBottomSheet` : déjà couverts par les tests existants.
+- Commentaire hors diff `GameHeader` : traité en extrayant les helpers partagés dans `features/layout/headerHelpers.ts` et les constantes profil dans `features/layout/profileSheetData.ts`.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test VillageViewData.test.ts DailyRetentionWidget.test.tsx QueueBottomSheet.test.ts GameHeader.test.tsx GameShellLayout.test.tsx` — 5 suites / 26 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi lint` — passé avec 3 warnings préexistants hors scope dans Armée/Onboarding.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi build` — passé.
+- Vérification : `rtk git diff --check` — passé.
+
+## 2026-06-01 — Topbar modulable Army
+
+- [x] Cartographier le hero `/game`, le header legacy et `ArmyScreen`.
+- [x] Remplacer la topbar legacy de `/game/army` par une topbar modulable inspirée de la vue village.
+- [x] Afficher compte/profil, puissance royaume, couronnes, switch village et ressources dans le nouvel ordre.
+- [x] Appliquer la modularité par route : Armée avec village+ressources, Monde avec village seul, Messages sans village ni ressources.
+- [x] Ajouter une animation de recomposition à l'arrivée depuis la vue village.
+- [x] Garder le contenu Armée inchangé.
+- [x] Lancer les vérifications ciblées et documenter la QA.
+
+### Review
+
+- La topbar legacy de `/game/army` est remplacée par un header runtime en trois blocs modulables : compte, village, ressources.
+- `/game/army` affiche compte + switch village + ressources ; `/game/world` affiche compte + switch village ; `/game/messages` affiche uniquement le compte.
+- Le contenu métier de l'écran Armée n'est pas modifié.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test GameHeader.test.tsx GameShellLayout.test.tsx` — 2 suites / 16 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi lint` — passé avec 3 warnings préexistants hors scope dans Armée/Onboarding.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi build` — passé.
+- Vérification : `rtk git diff --check` — passé.
+- QA IG restante : vérifier `/game/army`, `/game/world` et `/game/messages` pour confirmer la composition visible de la topbar par route.
+
+## 2026-06-01 — PR #34 commentaires review
+
+- [x] Analyser les commentaires CodeRabbit de la PR #34 et séparer actionnable / non pertinent.
+- [x] Ajouter les tests ciblés pour `categorizeVillageBuildings`.
+- [x] Extraire et tester les helpers purs de `VillageViewSections`.
+- [x] Ajouter les tests de régression DailyRetentionWidget / QueueBottomSheet.
+- [x] Lancer les vérifications ciblées et pousser le follow-up sur la branche PR.
+
+### Analyse
+
+- `VillageViewData.ts` : pertinent. `categorizeVillageBuildings` transforme des données et applique une règle de lock ; ajout d'un test pur.
+- `VillageViewSections.tsx` tests complets : partiellement pertinent. Le commentaire demande trop large pour de la présentation, mais les helpers de temps/nombre/progression/ratio sont de la logique pure à tester.
+- `VillageViewSections.tsx` duplication progression queue : pertinent. Extraction d'un helper partagé.
+- `DailyRetentionWidget.tsx` état contrôlé/non contrôlé : pertinent. Le nouveau contrat mérite une régression React ciblée.
+- `QueueBottomSheet.tsx` fallback d'icône : pertinent. Ajout d'un test pur sur la règle.
+
+### Review
+
+- Ajout de tests purs pour la catégorisation bâtiments, les helpers de formatage/progression/ratios, l'affordability, et le fallback d'icône de queue.
+- Ajout de tests React ciblés pour le contrat controlled/uncontrolled de `DailyRetentionWidget`.
+- Extraction des helpers hors fichiers `.tsx` pour respecter `react-refresh/only-export-components`.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test VillageViewData.test.ts VillageViewSections.test.ts QueueBottomSheet.test.ts DailyRetentionWidget.test.tsx` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi lint` — passé avec 3 warnings préexistants Armée/Onboarding.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi build` — passé.
+- Vérification : `rtk git diff --check` — passé.
+
+## 2026-06-01 — Refacto vue village bâtiments
+
+- [x] Remplacer la migration design incomplète par une vue village runtime cohérente avec les écrans Armée/Messages.
+- [x] Supprimer le contrat obsolète `panel=buildings` et le code de bottom sheet bâtiments associé.
+- [x] Conserver les interactions existantes : modales bâtiment, queue, profil, pouvoir, rétention, multi-village et style de village.
+- [x] Aligner les tailles visuelles des composants/textes avec le reste de l'app.
+- [x] Masquer le bouton `Améliorer` quand les ressources ou la population disponible ne permettent pas le prochain niveau.
+- [x] Recaler le hero : nom de village légèrement réduit, asset plus contenu et mieux isolé verticalement.
+- [x] Ajouter le swipe horizontal gauche/droite sur le hero pour changer de village.
+- [x] Animer séparément l'asset et les informations village au changement de village.
+- [x] Animer les jauges et valeurs de ressources quand le village actif change.
+- [x] Compacter le statut capitale pour garder les métadonnées village sur une seule ligne.
+- [x] Sortir `Village + nom` de la ligne des flèches pour donner plus de largeur au nom.
+- [x] Remonter l'identité village sans déplacer l'asset ni les flèches gauche/droite.
+- [x] Intégrer le hero au scroll principal avec un parallax multi-couches piloté par `scrollTop`.
+- [x] Animer le hero au scroll sans modifier sa hauteur de layout.
+- [x] Rendre la barre de ressources sticky quand elle atteint le haut du scroll.
+- [x] Déplacer l'icône capitale sur le label `Village` pour libérer la ligne de métadonnées.
+- [x] Simplifier la barre sticky ressources en 3 colonnes séparées par des dividers pleine hauteur.
+- [x] Donner à la barre ressources sticky un fond glass semi-transparent avec blur.
+- [x] Rendre l'animation de changement de village directionnelle avec un blur court.
+- [x] Corriger l'affichage puissance : total royaume dans le top HUD, puissance village dans les métadonnées.
+- [x] Masquer le style village tant que la Salle du Conseil n'est pas construite.
+- [x] Corriger le saut de scroll au retour vers le haut après activation de la barre ressources sticky.
+- [x] Lancer les vérifications ciblées et documenter la review.
+
+### Review
+
+- Suppression du flux `?panel=buildings` : plus de `BuildingManagementPanel`, `GameShellLayoutContext` ni helper de search param.
+- Les cartes bâtiments restent cliquables pour ouvrir la modale détail ; le CTA vert `Améliorer` n'apparaît que si le coût du niveau suivant est payable.
+- Le hero garde le shell village, mais l'asset est recentré dans une zone verticale dédiée et le titre village passe à une taille moins dominante.
+- Le hero accepte maintenant un swipe gauche/droite pour changer de village ; l'asset et les informations se réaniment avec timings distincts.
+- La barre de ressources rejoue une animation de remplissage et une micro-animation de valeur à chaque changement de village.
+- Le statut `Capitale` est rendu en badge icône accessible pour éviter de forcer les coordonnées sur une seconde ligne.
+- Le bloc identité (`Village` + nom) est maintenant full-width au-dessus des flèches, qui restent disponibles en bas sans réduire la largeur du nom.
+- Les espacements du hero sont resserrés : l'identité remonte dans sa propre piste, la ligne de métadonnées est centrée verticalement avec les flèches, et l'asset reste à sa position.
+- Le hero n'est plus hors du scroll : il sort avec le contenu et applique un parallax multi-couches piloté par le scroll (fond, glow, HUD, asset, identité).
+- Le hero garde désormais une hauteur de layout stable de 368px ; l'effet scroll reste porté par les couches internes pour éviter le saut de scroll au retour vers le haut.
+- L'ancrage de scroll est désactivé sur le conteneur scrollable et sur la scène hero pour éviter un recalage navigateur pendant le désancrage de la barre ressources sticky.
+- La barre de ressources reste dans le flux au départ, puis devient sticky en haut pour garder les stocks visibles pendant la navigation dans les bâtiments.
+- L'icône capitale est déplacée près du libellé `Village`, et la barre ressources affiche uniquement Bois/Pierre/Fer en colonnes denses sans cartes internes.
+- La barre ressources sticky utilise maintenant un fond semi-transparent `backdrop-blur` pour laisser deviner le contenu dessous tout en gardant les valeurs lisibles.
+- Le changement de village conserve la direction du switch : entrée depuis la gauche ou la droite avec blur rapide sur l'asset et les infos.
+- Le top HUD affiche désormais la puissance totale du royaume, tandis que la ligne du village remplace la position par la puissance du village actif.
+- Le badge de style village n'apparaît plus avant construction de la Salle du Conseil.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi lint` — passé avec 3 warnings préexistants hors scope dans Armée/Onboarding.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi build` — passé.
+- Vérification : `rtk git diff --check` — passé.
+- QA IG restante : vérifier sur `/game` que le hero respire mieux, que les bâtiments non payables affichent `Manque ressources`, et que les modales/sheets s'ouvrent comme avant.
+
 ## 2026-05-31 — Recalibration production ressources / pillage
 
 - [x] Cartographier la source de vérité de production passive et ses consommateurs.
