@@ -4,16 +4,19 @@ import { metaFor } from '@/features/village/buildingMeta';
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
 import type { DisplayResources } from '@/lib/interpolation';
-import {
-  BUILDING_DEFINITIONS,
-  MAX_CONSTRUCTION_QUEUE,
-  type BuildingType,
-} from '@battleforthecrown/shared/village/buildings';
+import { MAX_CONSTRUCTION_QUEUE } from '@battleforthecrown/shared/village/buildings';
 import {
   villageBuildingCategories,
   type VillageBuildingCategoryDef,
   type VillageBuildingCategoryKey,
 } from './VillageViewData';
+import {
+  canAffordNextBuildingLevel,
+  computeQueueProgress,
+  computeResourceRatios,
+  formatCompactNumber,
+  formatQueueTime,
+} from './VillageViewSectionHelpers';
 
 export type VillageResourceType = 'iron' | 'stone' | 'wood';
 
@@ -46,21 +49,6 @@ const RESOURCE_BUTTONS = [
   key: VillageResourceType;
   label: string;
 }[];
-
-function formatQueueTime(ms: number): string {
-  const totalSec = Math.max(0, Math.floor(ms / 1_000));
-  const h = Math.floor(totalSec / 3600);
-  const m = Math.floor((totalSec % 3600) / 60);
-  const s = totalSec % 60;
-  if (h > 0) return `${h}:${m.toString().padStart(2, '0')}`;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
-function formatCompactNumber(n: number): string {
-  if (n >= 10_000) return `${Math.round(n / 1000)}K`;
-  if (n >= 1_000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}K`;
-  return String(Math.floor(n));
-}
 
 function CategoryHeader({ category, count }: { category: VillageBuildingCategoryDef; count: number }) {
   return (
@@ -119,24 +107,18 @@ function BuildingCard({
   const isInProgress = lockState.state === 'in-progress';
   const isMax = lockState.state === 'max';
   const isNew = lockState.state === 'unbuilt-available';
-  const nextCost =
-    BUILDING_DEFINITIONS[building.type as BuildingType]?.levels[building.level + 1] ?? null;
-  const canAffordNextLevel =
-    nextCost !== null &&
-    resources !== null &&
-    resources.wood >= nextCost.wood &&
-    resources.stone >= nextCost.stone &&
-    resources.iron >= nextCost.iron &&
-    (availablePopulation ?? 0) >= nextCost.population;
+  const canAffordNextLevel = canAffordNextBuildingLevel(
+    building,
+    resources,
+    availablePopulation,
+  );
 
   let timeRemaining = 0;
   let progress = 0;
   if (isInProgress && queueEntry) {
-    const endMs = Date.parse(queueEntry.endTime);
-    const startMs = Date.parse(queueEntry.startTime);
-    timeRemaining = Math.max(0, endMs - now);
-    const totalTime = Math.max(1, endMs - startMs);
-    progress = Math.min(100, ((now - startMs) / totalTime) * 100);
+    const queueProgress = computeQueueProgress(queueEntry, now);
+    timeRemaining = queueProgress.timeRemaining;
+    progress = queueProgress.progress;
   }
 
   return (
@@ -267,12 +249,7 @@ export function VillageResourcesBar({
   onSelectResource,
   resources,
 }: VillageResourcesBarProps) {
-  const maxRes = resources?.maxPerType ?? 0;
-  const ratios: Record<VillageResourceType, number> = {
-    wood: maxRes > 0 && resources ? Math.min(100, (Math.floor(resources.wood) / maxRes) * 100) : 0,
-    stone: maxRes > 0 && resources ? Math.min(100, (Math.floor(resources.stone) / maxRes) * 100) : 0,
-    iron: maxRes > 0 && resources ? Math.min(100, (Math.floor(resources.iron) / maxRes) * 100) : 0,
-  };
+  const ratios = computeResourceRatios(resources);
 
   return (
     <div className="sticky top-0 z-30 border-b border-[rgba(246,213,123,.16)] bg-[linear-gradient(180deg,rgba(44,26,10,.76),rgba(31,19,9,.68))] shadow-[0_10px_22px_rgba(0,0,0,.24)] backdrop-blur-md backdrop-saturate-150">
@@ -386,11 +363,7 @@ export function VillageConstructionQueueStrip({
             );
           }
 
-          const endMs = Date.parse(queueEntry.endTime);
-          const startMs = Date.parse(queueEntry.startTime);
-          const timeRemaining = Math.max(0, endMs - now);
-          const totalTime = Math.max(1, endMs - startMs);
-          const progress = Math.min(100, ((now - startMs) / totalTime) * 100);
+          const { progress, timeRemaining } = computeQueueProgress(queueEntry, now);
           const building = buildings.find((b) => b.id === queueEntry.id);
           const meta = metaFor(queueEntry.type);
           const currentLevel = building?.level ?? queueEntry.level - 1;

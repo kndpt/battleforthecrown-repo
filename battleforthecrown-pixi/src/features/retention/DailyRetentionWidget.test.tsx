@@ -111,6 +111,44 @@ describe('DailyRetentionWidget', () => {
     expect(screen.queryByText('Devoir royal')).not.toBeInTheDocument();
   });
 
+  it('delegates close requests without mutating visibility in controlled mode', () => {
+    const onOpenChange = vi.fn();
+    const { rerender } = render(
+      <DailyRetentionWidget
+        activeVillageId="v1"
+        hideButton
+        onClaim={vi.fn()}
+        onNavigate={vi.fn()}
+        onOpenChange={onOpenChange}
+        open
+        summary={summary}
+        villages={villages}
+      />,
+    );
+
+    expect(screen.getByText('Devoir royal')).toBeInTheDocument();
+
+    fireEvent.mouseDown(screen.getByTestId('daily-retention-backdrop'));
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(screen.getByText('Devoir royal')).toBeInTheDocument();
+
+    rerender(
+      <DailyRetentionWidget
+        activeVillageId="v1"
+        hideButton
+        onClaim={vi.fn()}
+        onNavigate={vi.fn()}
+        onOpenChange={onOpenChange}
+        open={false}
+        summary={summary}
+        villages={villages}
+      />,
+    );
+
+    expect(screen.queryByText('Devoir royal')).not.toBeInTheDocument();
+  });
+
   it('emits shared game actions for incomplete tasks', () => {
     const onAction = vi.fn();
     const activeSummary: RetentionSummaryDto = {
@@ -150,5 +188,50 @@ describe('DailyRetentionWidget', () => {
 
     expect(onAction).toHaveBeenCalledWith('open-building-management');
     expect(screen.queryByText('Devoir royal')).not.toBeInTheDocument();
+  });
+
+  it('requests controlled close before emitting a shared game action', () => {
+    const onAction = vi.fn();
+    const onOpenChange = vi.fn();
+    const activeSummary: RetentionSummaryDto = {
+      ...summary,
+      cards: [
+        {
+          ...summary.cards[0],
+          status: 'ACTIVE',
+          tasks: [
+            {
+              completedAt: null,
+              id: 'task-building',
+              label: 'Terminer une construction',
+              progress: 0,
+              target: 1,
+              type: 'COMPLETE_BUILDING',
+            },
+          ],
+        },
+      ],
+      claimableCount: 0,
+    };
+
+    render(
+      <DailyRetentionWidget
+        activeVillageId="v1"
+        hideButton
+        onAction={onAction}
+        onClaim={vi.fn()}
+        onNavigate={vi.fn()}
+        onOpenChange={onOpenChange}
+        open
+        summary={activeSummary}
+        villages={villages}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Village' }));
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onAction).toHaveBeenCalledWith('open-building-management');
+    expect(screen.getByText('Devoir royal')).toBeInTheDocument();
   });
 });

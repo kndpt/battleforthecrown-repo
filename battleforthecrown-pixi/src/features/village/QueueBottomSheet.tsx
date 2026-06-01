@@ -9,7 +9,8 @@ import {
 } from '@/api/queries';
 import { useGameStore } from '@/stores/game';
 import { useTickingNow } from '@/lib/useTickingNow';
-import { metaFor, type BuildingMeta } from './buildingMeta';
+import { metaFor } from './buildingMeta';
+import { rawIconFor } from './queueIcons';
 
 interface QueueBottomSheetProps {
   isOpen: boolean;
@@ -26,10 +27,6 @@ function formatTime(milliseconds: number): string {
     return `${hours}h ${minutes.toString().padStart(2, '0')}m`;
   }
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-}
-
-function rawIconFor(_type: string, meta: BuildingMeta): string {
-  return meta.iconPath ?? '/assets/lock.png';
 }
 
 export function QueueBottomSheet({ isOpen, onClose }: QueueBottomSheetProps) {

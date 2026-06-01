@@ -1,5 +1,32 @@
 # Todo
 
+## 2026-06-01 — PR #34 commentaires review
+
+- [x] Analyser les commentaires CodeRabbit de la PR #34 et séparer actionnable / non pertinent.
+- [x] Ajouter les tests ciblés pour `categorizeVillageBuildings`.
+- [x] Extraire et tester les helpers purs de `VillageViewSections`.
+- [x] Ajouter les tests de régression DailyRetentionWidget / QueueBottomSheet.
+- [x] Lancer les vérifications ciblées et pousser le follow-up sur la branche PR.
+
+### Analyse
+
+- `VillageViewData.ts` : pertinent. `categorizeVillageBuildings` transforme des données et applique une règle de lock ; ajout d'un test pur.
+- `VillageViewSections.tsx` tests complets : partiellement pertinent. Le commentaire demande trop large pour de la présentation, mais les helpers de temps/nombre/progression/ratio sont de la logique pure à tester.
+- `VillageViewSections.tsx` duplication progression queue : pertinent. Extraction d'un helper partagé.
+- `DailyRetentionWidget.tsx` état contrôlé/non contrôlé : pertinent. Le nouveau contrat mérite une régression React ciblée.
+- `QueueBottomSheet.tsx` fallback d'icône : pertinent. Ajout d'un test pur sur la règle.
+
+### Review
+
+- Ajout de tests purs pour la catégorisation bâtiments, les helpers de formatage/progression/ratios, l'affordability, et le fallback d'icône de queue.
+- Ajout de tests React ciblés pour le contrat controlled/uncontrolled de `DailyRetentionWidget`.
+- Extraction des helpers hors fichiers `.tsx` pour respecter `react-refresh/only-export-components`.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test VillageViewData.test.ts VillageViewSections.test.ts QueueBottomSheet.test.ts DailyRetentionWidget.test.tsx` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi lint` — passé avec 3 warnings préexistants Armée/Onboarding.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi build` — passé.
+- Vérification : `rtk git diff --check` — passé.
+
 ## 2026-06-01 — Refacto vue village bâtiments
 
 - [x] Remplacer la migration design incomplète par une vue village runtime cohérente avec les écrans Armée/Messages.
