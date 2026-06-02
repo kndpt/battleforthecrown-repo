@@ -368,39 +368,26 @@ export class RetentionService {
     worldId: string,
     dayKey: string,
   ): Promise<void> {
-    const existing = await tx.dailyCard.findUnique({
+    await tx.dailyCard.upsert({
       where: { userId_worldId_dayKey: { userId, worldId, dayKey } },
+      update: {},
+      create: {
+        userId,
+        worldId,
+        dayKey,
+        rewardWood: DAILY_REWARD.wood,
+        rewardStone: DAILY_REWARD.stone,
+        rewardIron: DAILY_REWARD.iron,
+        tasks: {
+          create: TASK_TEMPLATES.map((task) => ({
+            type: task.type,
+            label: task.label,
+            target: task.target,
+          })),
+        },
+      },
       select: { id: true },
     });
-    if (existing) return;
-
-    try {
-      await tx.dailyCard.create({
-        data: {
-          userId,
-          worldId,
-          dayKey,
-          rewardWood: DAILY_REWARD.wood,
-          rewardStone: DAILY_REWARD.stone,
-          rewardIron: DAILY_REWARD.iron,
-          tasks: {
-            create: TASK_TEMPLATES.map((task) => ({
-              type: task.type,
-              label: task.label,
-              target: task.target,
-            })),
-          },
-        },
-      });
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        return;
-      }
-      throw error;
-    }
   }
 
   private async expireStaleCards(

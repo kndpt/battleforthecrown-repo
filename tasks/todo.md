@@ -25,13 +25,16 @@
 - [x] Corriger la progression daily basée sur la date de création outbox.
 - [x] Supprimer les projections vers des tâches daily retirées.
 - [x] Corriger les liens cassés de la fiche run archivée.
+- [x] Remplacer le create+catch `P2002` transactionnel par un `upsert`.
 - [x] Relancer les vérifications ciblées.
-- [ ] Push le follow-up et résoudre les threads GitHub.
+- [x] Relancer les vérifications après `upsert`.
+- [ ] Push le follow-up et résoudre les statuts GitHub.
 
 ### Review
 
 - `RetentionService` progresse la carte du `EventOutbox.createdAt` avant d'expirer les cartes stale au jour courant de dispatch.
 - Les projections scout/renfort/garnison ne ciblent plus des types retirés de `TASK_TEMPLATES`.
+- `ensureDailyCardInTransaction` utilise un `upsert` atomique au lieu d'avaler `P2002` dans un `tx`.
 - Les liens de la fiche run archivée pointent vers des fichiers existants.
 - Vérifications : unit retention, smoke daily-retention, `static-check`.
 

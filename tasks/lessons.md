@@ -70,6 +70,7 @@
 - Pour une tâche quotidienne, aligner le libellé sur le trigger exact de progression : si le backend attend `battle.resolved` victorieux, écrire "Vaincre", pas "Attaquer".
 - Quand une tâche quotidienne est retirée des templates, retirer aussi sa projection d'event et ajouter un test de non-projection ; sinon l'outbox continue à viser des types que plus aucune carte ne contient.
 - Pour une progression déclenchée par outbox, utiliser la date métier `EventOutbox.createdAt` pour choisir la carte quotidienne à faire progresser ; le dispatch worker peut arriver après le reset 04h00.
+- Dans une transaction interactive Prisma/Postgres, ne pas provoquer puis avaler un `P2002` pour rendre une création idempotente ; utiliser `upsert`/`ON CONFLICT`, sinon le `tx` peut rester aborté.
 - Quand un bouton flottant daily/retention ouvre une boucle qui concerne aussi la carte, vérifier la parité d'emplacement entre `VillageView` et `WorldMapScreen`, puis déplacer les contrôles carte secondaires si le slot est occupé.
 - Ne jamais passer `relative` dans `BottomSheet.className` : cette classe s'ajoute au wrapper animé qui possède déjà `absolute bottom-0`; elle casse le positionnement/translate fermé-ouvert et laisse la sheet visible en bas.
 - Quand un bug de création de données est corrigé, ne pas s'arrêter au code : réparer ou signaler les lignes déjà créées avec l'ancien bug, puis prouver une nouvelle création via API/DB.
