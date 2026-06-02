@@ -79,6 +79,23 @@ export function buildMultiVillageSheetItems(
   }));
 }
 
+/**
+ * `buildMultiVillageSheetItems` + alphabetical sort, shared by every multi-village
+ * sheet call site (GameHeader, VillageView) so the sort stays consistent.
+ */
+export function buildSortedMultiVillageSheetItems(
+  villages: JoinedVillage[],
+  activeVillageId: string | null,
+  runtime: Parameters<typeof buildMultiVillageSheetItems>[2],
+  sortAscending: boolean,
+): MultiVillageItem[] {
+  return buildMultiVillageSheetItems(villages, activeVillageId, runtime).toSorted((a, b) =>
+    sortAscending
+      ? a.name.localeCompare(b.name, 'fr')
+      : b.name.localeCompare(a.name, 'fr'),
+  );
+}
+
 function getCastleLevel(buildings: BuildingDto[] | undefined) {
   return buildings?.find((building) => building.type === 'CASTLE')?.level;
 }

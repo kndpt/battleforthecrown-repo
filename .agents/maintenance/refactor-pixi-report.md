@@ -190,3 +190,78 @@ Frontend bien stratifié et discipliné. Vérifié cette passe :
 yarn static-check   → green (tsc --noEmit backend + pixi, ESLint backend + pixi --quiet)
 yarn test:pixi      → 46 test files, 230 tests passed (+1 session.test.ts)
 ```
+
+---
+
+## Run 2026-06-02 — commit 34b14a7
+
+**Scan date:** 2026-06-02
+**Commit SHA:** 34b14a749538d769e56a5866d31e04339946f118
+
+### Prior findings update
+
+- A1–A6 (ws-bindings query keys) : **RESOLVED**
+- B1 (`armyTrainingQueryOptions`) : **RESOLVED**
+- B2 (WorldSelector inline queryFn) : STILL OPEN — low, candidat `bftc-maint-debt`
+- N1, N2 : **RESOLVED**
+- S1, S2, S3 (session teardown) : **RESOLVED** (PR mergée)
+- C1 (GameHeader god-component) : **SELECTED** cette passe (élargi en D1, cf. ci-dessous)
+- C2 (BuildingManagementPanel 962 LOC) : STILL OPEN — logique encapsulée dans sous-composants, faible risque
+- C3 (ArmyScreen garrison derivations) : STILL OPEN — low, borderline view-model
+
+### Mental model
+
+Frontend toujours bien stratifié et discipliné. Vérifié cette passe :
+- **Server-authoritative** : 0 violation. `useDisplayResources`/`useDisplayCrowns` (interpolation display-only), toutes les mutations passent par REST → invalidation TanStack. Aucune valeur autoritative calculée localement.
+- **Type debt** : 0 `as any`, 0 `@ts-ignore`, 0 `@ts-expect-error`, 0 `fetch`/`axios` hors `src/api/`, 0 `.setState` direct hors actions. Boundary Zod sur `worlds/public`, `world/config`, cancel responses.
+- **Optimistic UI** : `useUpgradeBuildingMutation`, `useTrainUnitsMutation`, `useCancelConstructionMutation` — tous avec `onMutate`/`onError`/`onSettled` corrects.
+- **TanStack Query** : `queries.ts` (1212 LOC) est un module plat de hooks centralisés — pas un god-file problématique. `queryOptions` partagé pour resources/buildings/queue/strategy/population/armyTraining.
+
+### New findings
+
+| ID | Category | Location | Description | Severity | Effort | Status |
+|----|----------|----------|-------------|----------|--------|--------|
+| D1 | Component design / DRY | `features/layout/GameHeader.tsx:90-411` ⇄ `features/game/VillageView.tsx:188-411` | ~180 LOC d'orchestration multi-village + view-models profil **dupliqués quasi-verbatim** entre les 2 plus gros composants de production : `villageIds`, 6 `useQueries` (resources/population/buildings/queue/strategy/training) avec gating `isVillageSheetOpen`/`shouldLoadProfileVillages` identique, `powerByVillageId`, 6 `toResultMap`, `villageSheetItems` (+ tri), `profileVillages`, `profileSheetData`, `strategyLabels`. Un fix de logique (ex bug B1) doit être appliqué 2× ; risque de dérive. | **Medium** | M | **SELECTED** |
+| D2 | Test gap | `features/layout/headerHelpers.ts` | `toResultMap`, `getPlayerInitials`, `formatWorldPhase` — helpers purs, 0 test dédié (couverts indirectement via `GameHeader.test.tsx`). | Low | S | NOTED |
+| D3 | Component design | `features/layout/GameHeader.tsx:339-357` | Bloc `<style>{...}</style>` inline (keyframes) dans le JSX — magic CSS, pourrait vivre dans `index.css` ou un module. | Low | S | NOTED |
+| D4 | Naming / magic numbers | `api/queries.ts:509`, `:1047` | `timePerUnitMs: 60_000` / `endTime: +60_000` hardcodés dans les placeholders optimistic — durée arbitraire non nommée (acceptable car remplacée par le serveur en <1s, mais magic number). | Low | S | NOTED |
+
+### "Looks bad but is actually fine" (this run)
+
+| Pattern | Verdict |
+|---------|---------|
+| `queries.ts` 1212 LOC | ✅ module plat de hooks API centralisés, pas de god-logic ; découpe par domaine = churn mécanique à faible valeur. |
+| Double `useKingdomPowerQuery()` après extraction du hook | ✅ TanStack dédupe par clé (un seul fetch, observer partagé). Le hook l'absorbe pour éviter l'ambiguïté. |
+| `useRecallExpeditionMutation.onSuccess` écrit dans `useExpeditionsStore` | ✅ via l'action `update` du store (pattern reconcile documenté), pas un `setState` brut. |
+| `refetchInterval` conditionnels (expeditions, conquests, retention) | ✅ poll de secours quand WS drop, off au repos. |
+| `villageSheetItems` sans `now` passé à `buildMultiVillageSheetItems` | ✅ défaut `Date.now()` au render — ETAs sheet rafraîchies au re-render, comportement voulu (préservé). |
+| `categorizeVillageBuildings`, `getOnboardingGuidance`, `armyViewModel` | ✅ view-models purs bien séparés. |
+
+### Selected theme: **D1 — extract shared multi-village data hook + profile view-model**
+
+**Rationale :**
+- C1 (GameHeader god-component) était reporté 2× pour effort/discussion. La découverte que **VillageView duplique le même bloc quasi à l'identique** double la valeur : l'extraction supprime ~180 LOC dupliquées, dé-duplique 2 god-components d'un coup, et **réduit** le risque de churn futur (un seul point de fix au lieu de 2).
+- Catégorie « business logic in JSX components » + « components with > 2 responsibilities » explicitement priorisée par le skill.
+- Les view-models profil (`buildProfileVillages`, `buildPlayerProfileSheetData`) deviennent **purs et testables** (comble partiellement D2).
+- Scope chirurgical, 100 % vérifiable par `test:pixi` + `static-check`, 0 changement backend/API.
+
+**Implementation :**
+- `features/layout/useMultiVillageData.ts` (nouveau) : hook encapsulant `useKingdomPowerQuery` + 6 `useQueries` + maps + `villageSheetItems`. Expose `{ kingdomPower, powerByVillageId, buildingsByVillageId, strategyByVillageId, villageSheetItems }`.
+- `features/layout/profileViewModel.ts` (nouveau, pur) : `strategyLabels`, `buildProfileVillages`, `buildPlayerProfileSheetData`.
+- `features/layout/profileViewModel.test.ts` (nouveau) : tests des 2 builders.
+- `GameHeader.tsx` + `VillageView.tsx` : consomment hook + view-model, suppression des blocs dupliqués.
+
+**Rejected :**
+- C2 (BuildingManagementPanel) : logique déjà encapsulée en sous-composants, faible gain.
+- C3 (ArmyScreen garrison) : low, borderline.
+- B2 (WorldSelector inline queryFn) : low, candidat `bftc-maint-debt`.
+- D3/D4 : cosmétiques, hors thème cohérent.
+
+### Verification
+
+```text
+yarn static-check                          → green (tsc backend + pixi, ESLint backend + pixi --quiet)
+yarn workspace …-pixi test --run           → 56 test files, 282 tests passed (+1 profileViewModel.test.ts)
+```
+
+**Diff :** `GameHeader.tsx` −~190 LOC, `VillageView.tsx` −~210 LOC ; nouveaux `useMultiVillageData.ts` (hook), `profileViewModel.ts` (pur) + `.test.ts`, `+ buildSortedMultiVillageSheetItems` dans `multiVillageSheet.ts`. Net : −393 / +156 dans les fichiers modifiés.

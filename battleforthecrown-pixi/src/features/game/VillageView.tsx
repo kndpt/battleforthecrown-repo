@@ -9,7 +9,6 @@ import {
   type UIEvent,
 } from 'react';
 import { useNavigate } from 'react-router';
-import { useQueries } from '@tanstack/react-query';
 import { BottomSheet } from '@/ui';
 import { Spinner } from '@/ui/spinners';
 import { BuildingDetailModal } from '@/features/village/BuildingDetailModal';
@@ -28,22 +27,20 @@ import {
 } from '@/features/design-system/components/MultiVillageBottomSheet';
 import {
   PlayerProfileSheet,
-  type PlayerProfileSheetProps,
   type PlayerProfileSheetTab,
-  type PlayerProfileSheetVillage,
 } from '@/features/design-system/components/PlayerProfileSheet';
 import { villageStyleOptions } from '@/features/design-system/components/villageStyleData';
+import { multiVillageBottomSheetLabels } from '@/features/layout/multiVillageSheet';
 import {
-  buildMultiVillageSheetItems,
-  multiVillageBottomSheetLabels,
-} from '@/features/layout/multiVillageSheet';
-import {
-  formatWorldPhase,
   getPlayerInitials,
   integerFormatter,
   PLAYER_PROFILE_LEVEL,
-  toResultMap,
 } from '@/features/layout/headerHelpers';
+import { useMultiVillageData } from '@/features/layout/useMultiVillageData';
+import {
+  buildPlayerProfileSheetData,
+  buildProfileVillages,
+} from '@/features/layout/profileViewModel';
 import {
   profileSheetIcons,
   profileSheetLabels,
@@ -72,24 +69,16 @@ import {
   useVillageBuildingsQuery,
   useBuildingQueueQuery,
   usePopulationQuery,
-  useKingdomPowerQuery,
   useLogout,
   useMyMembershipsQuery,
   usePublicWorldsQuery,
   useCancelConstructionMutation,
-  armyTrainingQueryOptions,
-  buildingsQueryOptions,
-  populationQueryOptions,
-  queueQueryOptions,
-  resourcesQueryOptions,
   useVillageStrategyQuery,
-  villageStrategyQueryOptions,
 } from '@/api/queries';
 import type { BuildingDto } from '@/api';
 import { BUILDING_TYPES } from '@battleforthecrown/shared/village/buildings';
 import { VILLAGE_LABEL_DISPLAY } from '@battleforthecrown/shared/village';
 import { villageVisualTierFromCastleLevel } from '@battleforthecrown/shared/world';
-import { WORLD_SIGIL_GLYPHS, WORLD_THEME_TOKENS } from '@/features/worlds/worldsViewModel';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -102,7 +91,6 @@ const RESOURCE_BUILDING_BY_TYPE: Record<'iron' | 'stone' | 'wood', string> = {
   wood: BUILDING_TYPES.WOOD,
 };
 
-const strategyLabels = Object.fromEntries(villageStyleOptions.map((o) => [o.id, o.name]));
 
 type HeroSwipeState = {
   pointerId: number;
@@ -135,7 +123,6 @@ export function VillageView() {
   // Global data
   const { display: resources, hasSnapshot } = useDisplayResources(villageId);
   const { balance: crownBalance } = useDisplayCrowns(userId, worldId);
-  const kingdomPower = useKingdomPowerQuery();
   const retentionSummary = useRetentionSummaryQuery(worldId);
   const onboardingSummary = useOnboardingSummaryQuery(worldId);
   const claimDailyCard = useClaimDailyCardMutation();
@@ -194,9 +181,21 @@ export function VillageView() {
     ? villages.findIndex((v) => v.id === activeVillage.id)
     : -1;
 
-  const activeVillagePower =
-    kingdomPower.data?.villages.find((v) => v.villageId === villageId)?.total ?? 0;
-  const totalKingdomPower = kingdomPower.data?.kingdomPower ?? 0;
+  const {
+    kingdomPower,
+    powerByVillageId,
+    buildingsByVillageId,
+    strategyByVillageId,
+    villageSheetItems,
+  } = useMultiVillageData(villages, {
+    villageSheetOpen: isVillageSheetOpen,
+    profileVillagesActive: isProfileOpen && profileTab === 'villages',
+    activeVillageId: activeVillage?.id ?? villageId,
+    sortAscending,
+  });
+
+  const activeVillagePower = (villageId ? powerByVillageId.get(villageId) : undefined) ?? 0;
+  const totalKingdomPower = kingdomPower?.kingdomPower ?? 0;
 
   const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data);
   const retentionBadge = retentionSummary.data?.claimableCount ?? 0;
@@ -223,192 +222,28 @@ export function VillageView() {
 
   // ── Per-village data for sheets ──────────────────────────────────────────────
 
-  const villageIds = useMemo(() => villages.map((v) => v.id), [villages]);
-  const shouldLoadVillageData = isVillageSheetOpen;
-  const shouldLoadProfileVillages = isProfileOpen && profileTab === 'villages';
-
-  const villageResources = useQueries({
-    queries: villageIds.map((id) => ({
-      ...resourcesQueryOptions(id),
-      enabled: shouldLoadVillageData,
-    })),
-  });
-  const villagePopulation = useQueries({
-    queries: villageIds.map((id) => ({
-      ...populationQueryOptions(id),
-      enabled: shouldLoadVillageData,
-    })),
-  });
-  const villageBuildings = useQueries({
-    queries: villageIds.map((id) => ({
-      ...buildingsQueryOptions(id),
-      enabled: shouldLoadVillageData || shouldLoadProfileVillages,
-    })),
-  });
-  const villageQueue = useQueries({
-    queries: villageIds.map((id) => ({
-      ...queueQueryOptions(id),
-      enabled: shouldLoadVillageData,
-    })),
-  });
-  const villageStrategyQ = useQueries({
-    queries: villageIds.map((id) => ({
-      ...villageStrategyQueryOptions(id),
-      enabled: shouldLoadVillageData || shouldLoadProfileVillages,
-    })),
-  });
-  const villageTraining = useQueries({
-    queries: villageIds.map((id) => ({
-      ...armyTrainingQueryOptions(id),
-      enabled: shouldLoadVillageData,
-    })),
-  });
-
-  const powerByVillageId = useMemo(
-    () =>
-      new Map(
-        (kingdomPower.data?.villages ?? []).map((v) => [v.villageId, v.total]),
-      ),
-    [kingdomPower.data?.villages],
-  );
-  const resourcesByVillageId = useMemo(
-    () => toResultMap(villageIds, villageResources),
-    [villageIds, villageResources],
-  );
-  const populationByVillageId = useMemo(
-    () => toResultMap(villageIds, villagePopulation),
-    [villageIds, villagePopulation],
-  );
-  const buildingsByVillageId = useMemo(
-    () => toResultMap(villageIds, villageBuildings),
-    [villageIds, villageBuildings],
-  );
-  const queueByVillageId = useMemo(
-    () => toResultMap(villageIds, villageQueue),
-    [villageIds, villageQueue],
-  );
-  const strategyByVillageId = useMemo(
-    () => toResultMap(villageIds, villageStrategyQ),
-    [villageIds, villageStrategyQ],
-  );
-  const trainingByVillageId = useMemo(
-    () => toResultMap(villageIds, villageTraining),
-    [villageIds, villageTraining],
-  );
-
-  const villageSheetItems = useMemo(
-    () =>
-      buildMultiVillageSheetItems(villages, activeVillage?.id ?? villageId, {
-        buildingsByVillageId,
-        populationByVillageId,
-        powerByVillageId,
-        queueByVillageId,
-        resourcesByVillageId,
-        strategyByVillageId,
-        trainingByVillageId,
-      }).toSorted((a, b) =>
-        sortAscending
-          ? a.name.localeCompare(b.name, 'fr')
-          : b.name.localeCompare(a.name, 'fr'),
-      ),
-    [
-      activeVillage?.id,
-      buildingsByVillageId,
-      populationByVillageId,
-      powerByVillageId,
-      queueByVillageId,
-      resourcesByVillageId,
-      sortAscending,
-      strategyByVillageId,
-      trainingByVillageId,
-      villageId,
-      villages,
-    ],
-  );
-
-  // Profile sheet data
   const activeMembership = memberships.data?.find((m) => m.worldId === worldId);
   const activePublicWorld = publicWorlds.data?.find((w) => w.id === worldId);
 
-  const profileVillages = useMemo<PlayerProfileSheetVillage[]>(
+  const profileVillages = useMemo(
     () =>
-      villages.map((village) => {
-        const strategy = strategyByVillageId.get(village.id)?.currentStrategy;
-        const level =
-          village.castleLevel ??
-          buildingsByVillageId
-            .get(village.id)
-            ?.find((b) => b.type === 'CASTLE')?.level ??
-          '—';
-        return {
-          capital: village.isCapital,
-          coords: `${village.x}:${village.y}`,
-          id: village.id,
-          label: village.label ? VILLAGE_LABEL_DISPLAY[village.label] : undefined,
-          level,
-          name: village.name,
-          power: powerByVillageId.get(village.id)?.toLocaleString('fr-FR') ?? '—',
-          style: strategy
-            ? { id: strategy, label: strategyLabels[strategy] ?? strategy }
-            : undefined,
-        };
-      }),
+      buildProfileVillages({ villages, buildingsByVillageId, powerByVillageId, strategyByVillageId }),
     [buildingsByVillageId, powerByVillageId, strategyByVillageId, villages],
   );
 
-  const profileSheetData = useMemo<
-    Pick<PlayerProfileSheetProps, 'player' | 'stats' | 'world'>
-  >(() => {
-    const power = kingdomPower.data
-      ? integerFormatter.format(kingdomPower.data.kingdomPower)
-      : '—';
-    const crowns = Number.isFinite(crownBalance ?? NaN)
-      ? integerFormatter.format(Math.floor(crownBalance ?? 0))
-      : '—';
-    return {
-      player: {
-        initials: getPlayerInitials(user?.email),
-        level: PLAYER_PROFILE_LEVEL,
-        name: user?.email ?? 'Joueur',
-        online: Boolean(user),
-        tribe: { cap: 0, members: 0, name: 'Sans tribu', role: 'À venir', tag: '—' },
-      },
-      stats: {
-        crowns,
-        defenses: 'À venir',
-        points: 'À venir',
-        power,
-        raidsWon: 'À venir',
-        rank: '—',
-        rankTotal: '—',
-        villages: villages.length,
-      },
-      world: {
-        day: activePublicWorld?.lifecycle.day ?? '—',
-        name:
-          activePublicWorld?.identity.displayName ??
-          activeMembership?.worldName ??
-          worldId ??
-          'À venir',
-        phase: formatWorldPhase(activePublicWorld),
-        sigilGlyph: activePublicWorld
-          ? WORLD_SIGIL_GLYPHS[activePublicWorld.identity.sigil]
-          : WORLD_SIGIL_GLYPHS.crown,
-        theme: activePublicWorld
-          ? WORLD_THEME_TOKENS[activePublicWorld.identity.themeColor]
-          : WORLD_THEME_TOKENS.green,
-        total: activePublicWorld?.lifecycle.totalDays ?? '—',
-      },
-    };
-  }, [
-    activeMembership?.worldName,
-    activePublicWorld,
-    crownBalance,
-    kingdomPower.data,
-    user,
-    villages.length,
-    worldId,
-  ]);
+  const profileSheetData = useMemo(
+    () =>
+      buildPlayerProfileSheetData({
+        kingdomPower,
+        crownBalance,
+        user,
+        villagesCount: villages.length,
+        activePublicWorld,
+        activeMembership,
+        worldId,
+      }),
+    [activeMembership, activePublicWorld, crownBalance, kingdomPower, user, villages.length, worldId],
+  );
 
   // ── Effects ─────────────────────────────────────────────────────────────────
 
