@@ -57,6 +57,7 @@ enum DailyCardStatus {
   ACTIVE
   CLAIMABLE
   CLAIMED
+  EXPIRED
 }
 
 enum DailyCardTaskType {

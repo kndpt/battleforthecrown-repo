@@ -1,5 +1,24 @@
 # Todo
 
+## 2026-06-02 — Run 046 devoir royal FOMO légère
+
+- [x] Préflight : branche propre `run/046-refactor-royal-duty-light-fomo`, fiche run, règles repo, specs source, briefings backend/pixi, politique PR.
+- [x] Cartographier doc gameplay, `RetentionService`, smoke daily-retention, contrats shared et HUD daily.
+- [x] Acter dans la doc `1 carte / jour`, 3 tâches naturelles, reset/expiration 04h00 et grâce bornée.
+- [x] Adapter backend/shared : statut `EXPIRED`, expiration des anciennes cartes, génération courante sans backlog, claim unique avec grâce.
+- [x] Adapter frontend : retirer backlog/rattrapage visible, afficher `Expire à 04h00`, garder le sceau royal en topbar.
+- [x] Mettre à jour tests unitaires/Vitest et smoke daily-retention.
+- [x] Lancer preflight smoke, smoke ciblé, tests ciblés, `static-check` et review 5 axes.
+- [x] Archiver le run et mettre à jour `tasks/README.md`.
+
+### Review
+
+- Le lifecycle retention ne garde qu'une carte `ACTIVE` pour le jour courant ; les anciennes `ACTIVE` et les `CLAIMABLE` hors grâce passent `EXPIRED`.
+- La fenêtre de grâce accepte uniquement les clés quotidiennes courante et précédente.
+- La correction DST évite le faux reset par soustraction fixe de 4h UTC.
+- Le HUD n'affiche plus de pile/rattrapage et annonce `Expire à 04h00`.
+- Vérifications : unit retention, Vitest daily/header/layout, smokes retention/onboarding, grep wording, `static-check`.
+
 ## 2026-06-02 — PR #35 commentaires review
 
 - [x] Lire les threads review et séparer actionnable / optionnel / déjà OK.

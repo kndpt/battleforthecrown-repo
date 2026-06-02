@@ -1,4 +1,9 @@
-export const DAILY_CARD_STATUSES = ['ACTIVE', 'CLAIMABLE', 'CLAIMED'] as const;
+export const DAILY_CARD_STATUSES = [
+  'ACTIVE',
+  'CLAIMABLE',
+  'CLAIMED',
+  'EXPIRED',
+] as const;
 export type DailyCardStatus = (typeof DAILY_CARD_STATUSES)[number];
 
 export const DAILY_CARD_TASK_TYPES = [

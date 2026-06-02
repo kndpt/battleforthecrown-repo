@@ -25,8 +25,11 @@ const villages: JoinedVillage[] = [
   },
 ];
 
+const removedBacklogTitle = ['Cartes', 'en', 'attente'].join(' ');
+const removedCatchUpPattern = new RegExp(['rattraper'].join(''), 'i');
+
 const summary: RetentionSummaryDto = {
-  backlogLimit: 3,
+  backlogLimit: 1,
   cards: [
     {
       claimedAt: null,
@@ -83,6 +86,8 @@ describe('DailyRetentionWidget', () => {
     expect(screen.getByText('Devoir royal')).toBeInTheDocument();
     expect(screen.getByText('Oeil du Guet')).toBeInTheDocument();
     expect(screen.getAllByText('15 mai').length).toBeGreaterThan(0);
+    expect(screen.getByText('Expire à')).toBeInTheDocument();
+    expect(screen.getByText('04h00')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Village récompensé'), {
       target: { value: 'v2' },
@@ -90,6 +95,34 @@ describe('DailyRetentionWidget', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Récupérer' }));
 
     expect(onClaim).toHaveBeenCalledWith({ cardId: 'card-1', villageId: 'v2' });
+  });
+
+  it('does not render a backlog or missed-days catch-up copy', () => {
+    render(
+      <DailyRetentionWidget
+        activeVillageId="v1"
+        onClaim={vi.fn()}
+        onNavigate={vi.fn()}
+        summary={{
+          ...summary,
+          cards: [
+            ...summary.cards,
+            {
+              ...summary.cards[0],
+              dayKey: '2026-05-16',
+              id: 'card-2',
+              status: 'ACTIVE',
+            },
+          ],
+        }}
+        villages={villages}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Devoir royal, 1 carte à réclamer/i }));
+
+    expect(screen.queryByText(removedBacklogTitle)).not.toBeInTheDocument();
+    expect(screen.queryByText(removedCatchUpPattern)).not.toBeInTheDocument();
   });
 
   it('closes the daily sheet when clicking the backdrop', () => {

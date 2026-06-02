@@ -35,10 +35,11 @@ Chaque jour, le joueur reçoit une **carte de devoir royal** : un petit set de t
 | --- | --- |
 | Fréquence | 1 carte / jour |
 | Reset | 04:00 Europe/Paris |
-| Backlog | Jusqu'à 3 cartes actives |
-| Taille | 4 à 6 tâches |
+| Pile de cartes | Aucune pile visible : seule la carte du jour est générée comme devoir actif |
+| Taille | 3 tâches |
 | Session cible | 5 à 15 min |
-| Expiration | Pas d'expiration brutale tant que la carte tient dans le backlog |
+| Expiration | La carte du jour expire au reset suivant, à 04:00 Europe/Paris |
+| Grâce de réclamation | Une carte complétée mais non réclamée reste réclamable pendant le jour suivant, jusqu'au reset 04:00 ; après cette fenêtre, elle expire |
 | Récompense | Modérée, scalée, non-snowballante |
 
 Si la récompense s'applique à un village, le joueur choisit le village destinataire au moment de valider la carte. Le système propose par défaut le dernier village ayant reçu une récompense. Cette règle vient de la Phase 9 Navigation multi-village, voir [`22-village-roles-and-navigation.md`](./22-village-roles-and-navigation.md).
@@ -57,15 +58,13 @@ Si la récompense s'applique à un village, le joueur choisit le village destina
 
 ### Validation par events métier
 
-Les tâches doivent se valider sur des faits gameplay émis par le runtime, pas sur des signaux d'UI. Candidats canoniques :
+Les tâches doivent se valider sur des faits gameplay émis par le runtime, pas sur des signaux d'UI. Pour le MVP, une carte contient exactement 3 tâches naturelles :
 
 | Tâche | Event métier candidat |
 | --- | --- |
 | Recruter | `unit.trained` |
 | Lancer / finir un upgrade | `building.completed` pour la fin ; l'action de lancement reste côté mutation construction. |
 | Raider un barbare | `battle.resolved` avec cible barbare |
-| Scout une cible | `scout.reported` |
-| Renforcer un village | `reinforcement.sent` puis `garrison.added` selon le besoin de validation |
 
 ### Récompenses
 
@@ -132,16 +131,17 @@ Un seul écran compact :
 
 - bannière Oyez actif ;
 - carte quotidienne en cours ;
-- backlog visible sans pression excessive ;
 - tâches avec accès direct à l'action ;
 - récompense claire ;
 - état "terminé" satisfaisant, sans sur-animation.
+
+Si le joueur a terminé la carte précédente sans réclamer la récompense, la sheet peut prioriser cette récompense pendant sa fenêtre de grâce, sans afficher de pile de cartes ni de promesse de rattrapage.
 
 Le joueur doit comprendre en une lecture : quoi faire, pourquoi maintenant, ce qu'il gagne.
 
 ## Questions à trancher
 
-- Backlog exact : 2 ou 3 cartes ?
+- Faut-il réintroduire plus tard une grâce payante ou sociale pour les très longues absences ? Hors scope MVP.
 - Récompense fixe ou choix à la fin de la carte ?
 - Oyez cadence hebdo ou semi-hebdo ?
 - Les cartes peuvent-elles cibler des sites d'exploitation quand cette feature existe ?

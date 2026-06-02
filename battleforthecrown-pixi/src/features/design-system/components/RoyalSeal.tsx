@@ -7,7 +7,7 @@ import type {
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
 
-export type RoyalSealVariant = 'wax' | 'parchment';
+export type RoyalSealVariant = 'wax' | 'parchment' | 'crown';
 
 export interface RoyalSealProps {
   ariaLabel?: string;
@@ -94,6 +94,28 @@ function WaxFace({
   );
 }
 
+function CrownFace({ size, pressed }: { size: number; pressed: boolean }) {
+  const inner = Math.round(size * 0.45);
+  return (
+    <div
+      className={cn(
+        'relative z-[1] flex items-center justify-center rounded-full border-2 border-[#7a5200] bg-gradient-to-b from-[#e8b040] to-[#c47a0a] transition-[transform] duration-100',
+        pressed
+          ? 'translate-y-px shadow-[inset_0_3px_6px_rgba(0,0,0,.5)]'
+          : 'shadow-[0_2px_0_rgba(0,0,0,.35),inset_0_1px_0_rgba(255,255,255,.35)]',
+      )}
+      style={{ width: size, height: size }}
+    >
+      <img
+        alt=""
+        className="object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,.6)]"
+        src={publicAsset('/assets/casual-icons/crown.png')}
+        style={{ width: inner, height: inner }}
+      />
+    </div>
+  );
+}
+
 function ParchmentFace({ size, pressed }: { size: number; pressed: boolean }) {
   return (
     <div
@@ -153,6 +175,8 @@ export function RoyalSeal({
       ) : null}
       {variant === 'parchment' ? (
         <ParchmentFace pressed={pressed} size={size} />
+      ) : variant === 'crown' ? (
+        <CrownFace pressed={pressed} size={size} />
       ) : (
         <WaxFace pressed={pressed} size={size} softShadow={softShadow} />
       )}
