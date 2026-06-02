@@ -35,6 +35,12 @@ import { useGameStore } from '@/stores/game';
 import { resetGameSessionStores } from '@/stores/session';
 import { buildRecalledExpeditionPatch } from '@/lib/expeditionRecall';
 import { pushRefundToast } from './refundToast';
+import {
+  CancelConstructionResponseSchema,
+  CancelTrainingResponseSchema,
+  type CancelConstructionResponse,
+  type CancelTrainingResponse,
+} from './cancelResponses';
 import type {
   Expedition,
   GarrisonLine,
@@ -241,27 +247,6 @@ export interface ResourcesPayload {
   maxPerType: number;
   lastUpdateTs: string;
   productionRates: { wood: number; stone: number; iron: number };
-}
-
-export interface CancelConstructionRefund {
-  wood: number;
-  stone: number;
-  iron: number;
-  population: number;
-}
-
-export interface CancelTrainingRefund extends CancelConstructionRefund {
-  crowns: number;
-}
-
-export interface CancelConstructionResponse {
-  success: boolean;
-  refunded: CancelConstructionRefund;
-}
-
-export interface CancelTrainingResponse {
-  success: boolean;
-  refunded: CancelTrainingRefund;
 }
 
 export const resourcesQueryOptions = (villageId: string | null) =>
@@ -573,8 +558,12 @@ export function useCancelTrainingMutation() {
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const worldId = useGameStore((state) => state.worldId);
   return useMutation<CancelTrainingResponse, Error, CancelTrainingInput>({
-    mutationFn: ({ villageId, trainingId }) =>
-      apiClient.delete<CancelTrainingResponse>(`/army/${villageId}/training/${trainingId}/cancel`),
+    mutationFn: async ({ villageId, trainingId }) => {
+      const raw = await apiClient.delete<unknown>(
+        `/army/${villageId}/training/${trainingId}/cancel`,
+      );
+      return CancelTrainingResponseSchema.parse(raw);
+    },
     onSuccess: (data) => {
       pushRefundToast('Entraînement annulé', data.refunded);
     },
@@ -1180,8 +1169,12 @@ export function useClaimDailyCardMutation() {
 export function useCancelConstructionMutation() {
   const queryClient = useQueryClient();
   return useMutation<CancelConstructionResponse, Error, CancelConstructionInput, CancelContext>({
-    mutationFn: ({ villageId, buildingId }) =>
-      apiClient.delete<CancelConstructionResponse>(`/village/${villageId}/buildings/${buildingId}/cancel`),
+    mutationFn: async ({ villageId, buildingId }) => {
+      const raw = await apiClient.delete<unknown>(
+        `/village/${villageId}/buildings/${buildingId}/cancel`,
+      );
+      return CancelConstructionResponseSchema.parse(raw);
+    },
     onMutate: async ({ villageId, buildingId }) => {
       const queueKey = queryKeys.queue(villageId);
       await queryClient.cancelQueries({ queryKey: queueKey });

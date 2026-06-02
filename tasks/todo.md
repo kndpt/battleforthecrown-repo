@@ -1,5 +1,21 @@
 # Todo
 
+## 2026-06-02 — PR #35 commentaires review
+
+- [x] Lire les threads review et séparer actionnable / optionnel / déjà OK.
+- [x] Corriger les retours actionnables : types de retour backend, `pushRefundToast`, validation Zod.
+- [x] Lancer checks ciblés et `static-check`.
+- [ ] Pousser le follow-up, vérifier CI/CodeRabbit, puis merger.
+
+### Review
+
+- Deux use-cases backend déclarent maintenant explicitement leurs types de retour publics.
+- `pushRefundToast` déclare `: void`.
+- Les réponses cancel construction/training passent par des schemas Zod avant d'être utilisées par les mutations.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test cancelResponses.test.ts refundToast.test.ts ToastStack.test.tsx` — 3 suites / 10 tests passés.
+- Vérification : `rtk yarn static-check` — passé.
+- Smoke local non relancé : le diff backend est type-only ; les smokes complets restent couverts par la CI PR.
+
 ## 2026-06-02 — Fix icônes toast runtime
 
 - [x] Diagnostiquer les assets cassés des toasts runtime.

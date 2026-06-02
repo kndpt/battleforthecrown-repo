@@ -24,7 +24,7 @@ export function buildRefundToastItems(refunded: RefundToastPayload): ToastRefund
   });
 }
 
-export function pushRefundToast(title: string, refunded: RefundToastPayload) {
+export function pushRefundToast(title: string, refunded: RefundToastPayload): void {
   const refundItems = buildRefundToastItems(refunded);
   if (refundItems.length === 0) return;
 

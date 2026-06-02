@@ -9,10 +9,21 @@ import { OutboxPublisher } from '../event/outbox-publisher.service';
 import { CrownsService } from '../crowns/crowns.service';
 import {
   UNIT_CATALOG,
-  UnitType,
-  UnitCost,
+  type UnitType,
+  type UnitCost,
   UNIT_TYPES,
 } from '@battleforthecrown/shared/army';
+
+export interface CancelRecruitmentResult {
+  success: true;
+  refunded: {
+    wood: number;
+    stone: number;
+    iron: number;
+    population: number;
+    crowns: number;
+  };
+}
 
 @Injectable()
 export class CancelRecruitmentUseCase {
@@ -23,7 +34,11 @@ export class CancelRecruitmentUseCase {
     private readonly crowns: CrownsService,
   ) {}
 
-  async execute(villageId: string, trainingId: string, userId: string) {
+  async execute(
+    villageId: string,
+    trainingId: string,
+    userId: string,
+  ): Promise<CancelRecruitmentResult> {
     await this.ownership.assertVillageOwnedBy(villageId, userId);
 
     return this.prisma.$transaction(async (tx) => {

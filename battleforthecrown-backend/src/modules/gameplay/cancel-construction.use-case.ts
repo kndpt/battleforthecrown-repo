@@ -10,6 +10,16 @@ import { OutboxPublisher } from '../event/outbox-publisher.service';
 
 type StrategyName = 'FORTRESS' | 'RAIDERS' | 'ECONOMIC' | 'BALANCED';
 
+export interface CancelConstructionResult {
+  success: true;
+  refunded: {
+    wood: number;
+    stone: number;
+    iron: number;
+    population: number;
+  };
+}
+
 @Injectable()
 export class CancelConstructionUseCase {
   constructor(
@@ -19,7 +29,11 @@ export class CancelConstructionUseCase {
     private readonly outbox: OutboxPublisher,
   ) {}
 
-  async execute(villageId: string, buildingId: string, userId: string) {
+  async execute(
+    villageId: string,
+    buildingId: string,
+    userId: string,
+  ): Promise<CancelConstructionResult> {
     await this.ownership.assertVillageOwnedBy(villageId, userId);
 
     return this.prisma.$transaction(async (tx) => {
