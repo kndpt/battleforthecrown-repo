@@ -8,15 +8,10 @@ New PRs use branch `maint/refactor-backend/<short-topic>` and PR title
 
 ---
 
-## Run 2026-06-02 — branch `claude/stoic-mayer-OEflV`
+## Run 2026-06-02 — branch `maint/refactor-backend/combat-service-dedup`
 
 **Model:** claude-opus-4-8
 **Scan commit:** `34b14a7`
-
-> Branch note: skill prescribes `maint/refactor-backend/<topic>`, but the harness
-> pinned this session to `claude/stoic-mayer-OEflV` with an explicit "never push
-> to a different branch" rule. Harness directive takes precedence — same call as
-> Run 2026-05-31.
 
 ---
 
