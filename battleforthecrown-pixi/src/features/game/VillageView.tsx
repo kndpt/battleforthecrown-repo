@@ -194,7 +194,9 @@ export function VillageView() {
     sortAscending,
   });
 
-  const activeVillagePower = (villageId ? powerByVillageId.get(villageId) : undefined) ?? 0;
+  const activeVillagePowerId = activeVillage?.id ?? villageId;
+  const activeVillagePower =
+    (activeVillagePowerId ? powerByVillageId.get(activeVillagePowerId) : undefined) ?? 0;
   const totalKingdomPower = kingdomPower?.kingdomPower ?? 0;
 
   const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data);

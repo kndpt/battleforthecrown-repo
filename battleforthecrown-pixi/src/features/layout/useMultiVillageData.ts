@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
-import { useQueries } from '@tanstack/react-query';
-import type { BuildingDto, JoinedVillage } from '@/api';
+import { useCallback, useMemo } from 'react';
+import { useQueries, type UseQueryResult } from '@tanstack/react-query';
+import type { BuildingDto, JoinedVillage, PopulationDto, QueueEntryDto } from '@/api';
 import {
   armyTrainingQueryOptions,
   buildingsQueryOptions,
@@ -9,7 +9,9 @@ import {
   resourcesQueryOptions,
   useKingdomPowerQuery,
   villageStrategyQueryOptions,
+  type ArmyTrainingDto,
   type KingdomPowerDto,
+  type ResourcesPayload,
   type VillageStrategyInfoDto,
 } from '@/api/queries';
 import type { MultiVillageItem } from '@/features/design-system/components/MultiVillageBottomSheet';
@@ -40,6 +42,11 @@ interface MultiVillageData {
  * queue, strategy, training) gated on sheet visibility, plus the kingdom-power
  * map, and builds the sorted sheet items. Consumed by both `GameHeader` and
  * `VillageView` to avoid duplicating ~180 LOC of identical wiring.
+ *
+ * Each fan-out folds its results into a `Map` via the `combine` option so the
+ * derived maps stay referentially stable across renders (TanStack v5 returns a
+ * fresh results array on every render, which would otherwise defeat the
+ * downstream `useMemo`s — see #41 review).
  */
 export function useMultiVillageData(
   villages: JoinedVillage[],
@@ -48,29 +55,60 @@ export function useMultiVillageData(
   const kingdomPower = useKingdomPowerQuery();
   const villageIds = useMemo(() => villages.map((village) => village.id), [villages]);
 
-  const villageResources = useQueries({
+  const combineResources = useCallback(
+    (results: UseQueryResult<ResourcesPayload>[]) => toResultMap(villageIds, results),
+    [villageIds],
+  );
+  const combinePopulation = useCallback(
+    (results: UseQueryResult<PopulationDto>[]) => toResultMap(villageIds, results),
+    [villageIds],
+  );
+  const combineBuildings = useCallback(
+    (results: UseQueryResult<BuildingDto[]>[]) => toResultMap(villageIds, results),
+    [villageIds],
+  );
+  const combineQueue = useCallback(
+    (results: UseQueryResult<QueueEntryDto[]>[]) => toResultMap(villageIds, results),
+    [villageIds],
+  );
+  const combineStrategy = useCallback(
+    (results: UseQueryResult<VillageStrategyInfoDto>[]) => toResultMap(villageIds, results),
+    [villageIds],
+  );
+  const combineTraining = useCallback(
+    (results: UseQueryResult<ArmyTrainingDto[]>[]) => toResultMap(villageIds, results),
+    [villageIds],
+  );
+
+  const resourcesByVillageId = useQueries({
     queries: villageIds.map((id) => ({ ...resourcesQueryOptions(id), enabled: villageSheetOpen })),
+    combine: combineResources,
   });
-  const villagePopulation = useQueries({
+  const populationByVillageId = useQueries({
     queries: villageIds.map((id) => ({ ...populationQueryOptions(id), enabled: villageSheetOpen })),
+    combine: combinePopulation,
   });
-  const villageBuildings = useQueries({
+  const buildingsByVillageId = useQueries({
     queries: villageIds.map((id) => ({
       ...buildingsQueryOptions(id),
       enabled: villageSheetOpen || profileVillagesActive,
     })),
+    combine: combineBuildings,
   });
-  const villageQueue = useQueries({
+  const queueByVillageId = useQueries({
     queries: villageIds.map((id) => ({ ...queueQueryOptions(id), enabled: villageSheetOpen })),
+    combine: combineQueue,
   });
-  const villageStrategy = useQueries({
+  const strategyByVillageId = useQueries({
     queries: villageIds.map((id) => ({
       ...villageStrategyQueryOptions(id),
       enabled: villageSheetOpen || profileVillagesActive,
     })),
+    combine: combineStrategy,
   });
-  const villageTraining = useQueries({
+  const trainingByVillageId = useQueries({
     queries: villageIds.map((id) => ({ ...armyTrainingQueryOptions(id), enabled: villageSheetOpen })),
+    combine: combineTraining,
   });
 
   const powerByVillageId = useMemo(
@@ -79,30 +117,6 @@ export function useMultiVillageData(
         (kingdomPower.data?.villages ?? []).map((village) => [village.villageId, village.total]),
       ),
     [kingdomPower.data?.villages],
-  );
-  const resourcesByVillageId = useMemo(
-    () => toResultMap(villageIds, villageResources),
-    [villageIds, villageResources],
-  );
-  const populationByVillageId = useMemo(
-    () => toResultMap(villageIds, villagePopulation),
-    [villageIds, villagePopulation],
-  );
-  const buildingsByVillageId = useMemo(
-    () => toResultMap(villageIds, villageBuildings),
-    [villageIds, villageBuildings],
-  );
-  const queueByVillageId = useMemo(
-    () => toResultMap(villageIds, villageQueue),
-    [villageIds, villageQueue],
-  );
-  const strategyByVillageId = useMemo(
-    () => toResultMap(villageIds, villageStrategy),
-    [villageIds, villageStrategy],
-  );
-  const trainingByVillageId = useMemo(
-    () => toResultMap(villageIds, villageTraining),
-    [villageIds, villageTraining],
   );
 
   const villageSheetItems = useMemo(
