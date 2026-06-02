@@ -90,7 +90,16 @@ export class CancelRecruitmentUseCase {
         );
       }
 
-      return { success: true, refunded: remainingQty, refundedCrowns };
+      return {
+        success: true,
+        refunded: {
+          wood: refundWood,
+          stone: refundStone,
+          iron: refundIron,
+          population: refundPopulation,
+          crowns: refundedCrowns,
+        },
+      };
     });
   }
 }

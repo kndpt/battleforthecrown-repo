@@ -145,6 +145,16 @@ describe('recruit noble smoke', () => {
       .set('Authorization', `Bearer ${user.accessToken}`);
 
     expect(cancel.status).toBeLessThan(300);
+    expect(cancel.body).toEqual({
+      success: true,
+      refunded: {
+        wood: 5_000,
+        stone: 5_000,
+        iron: 5_000,
+        population: 15,
+        crowns: 5_000,
+      },
+    });
 
     await waitFor(
       async () => {

@@ -1,12 +1,19 @@
 import { create } from 'zustand';
 
 export type ToastTone = 'info' | 'success' | 'warning' | 'error';
+export type ToastRefundResource = 'wood' | 'stone' | 'iron' | 'population' | 'crowns';
+
+export interface ToastRefundItem {
+  resource: ToastRefundResource;
+  amount: number;
+}
 
 export interface ToastEntry {
   id: string;
   tone: ToastTone;
   title: string;
   description?: string;
+  refundItems?: ToastRefundItem[];
   ttlMs?: number;
 }
 

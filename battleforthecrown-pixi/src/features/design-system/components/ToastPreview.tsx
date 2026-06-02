@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
 
@@ -8,6 +9,7 @@ export interface ToastPreviewProps {
   icon: string;
   onClose?: () => void;
   subtitle?: string;
+  children?: ReactNode;
   title: string;
   tone?: ToastTone;
 }
@@ -19,7 +21,7 @@ const toneClass: Record<ToastTone, string> = {
   danger: 'border-[#a93226] bg-gradient-to-b from-[#e74c3c] to-[#c0392b] text-white',
 };
 
-export function ToastPreview({ className, icon, onClose, subtitle, title, tone = 'success' }: ToastPreviewProps) {
+export function ToastPreview({ children, className, icon, onClose, subtitle, title, tone = 'success' }: ToastPreviewProps) {
   return (
     <div
       className={cn(
@@ -38,6 +40,7 @@ export function ToastPreview({ className, icon, onClose, subtitle, title, tone =
             {subtitle}
           </div>
         )}
+        {children}
       </div>
       <button
         className="flex size-6 items-center justify-center rounded-md border-2 border-[rgba(0,0,0,.25)] bg-[rgba(0,0,0,.15)] font-game font-bold leading-none text-inherit"

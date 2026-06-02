@@ -44,6 +44,36 @@ describe('ToastStack', () => {
     expect(useUiStore.getState().toasts).toHaveLength(0);
   });
 
+  it('renders refund rows with ResourceIcon and hides zero values', () => {
+    useUiStore.getState().pushToast({
+      refundItems: [
+        { resource: 'wood', amount: 235 },
+        { resource: 'stone', amount: 0 },
+        { resource: 'population', amount: 6 },
+        { resource: 'crowns', amount: 50 },
+      ],
+      tone: 'success',
+      title: 'Construction annulée',
+      ttlMs: 0,
+    });
+
+    render(<ToastStack />);
+
+    expect(screen.getByLabelText('Ressources remboursées')).toHaveTextContent(
+      '+235',
+    );
+    expect(
+      screen.getByLabelText('Population et couronnes remboursées'),
+    ).toHaveTextContent('+6');
+    expect(
+      screen.getByLabelText('Population et couronnes remboursées'),
+    ).toHaveTextContent('+50');
+    expect(screen.getByAltText('Bois')).toBeInTheDocument();
+    expect(screen.getByAltText('Population')).toBeInTheDocument();
+    expect(screen.getByAltText('Couronnes')).toBeInTheDocument();
+    expect(screen.queryByAltText('Pierre')).not.toBeInTheDocument();
+  });
+
   it('dismisses runtime toasts after their ttl', () => {
     useUiStore.getState().pushToast({
       tone: 'success',

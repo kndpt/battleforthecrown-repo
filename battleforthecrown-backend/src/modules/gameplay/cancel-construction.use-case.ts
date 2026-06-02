@@ -87,7 +87,15 @@ export class CancelConstructionUseCase {
       // (the previous implementation forgot this — see audit ticket 03 / 11).
       await this.outbox.resourcesChanged(building.villageId, tx);
 
-      return { success: true, refunded: cost };
+      return {
+        success: true,
+        refunded: {
+          wood: cost.wood,
+          stone: cost.stone,
+          iron: cost.iron,
+          population: cost.population,
+        },
+      };
     });
   }
 }
