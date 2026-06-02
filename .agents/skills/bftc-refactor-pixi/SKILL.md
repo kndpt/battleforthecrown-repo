@@ -194,3 +194,16 @@ PR body must include:
 - Docs impact (`.agents/rules/docs.md`)
 
 PR status: **ready for review** (not draft).
+
+### Conflict check before reporting ready (do not skip)
+
+`main` moves between runs (this skill runs weekly via Routine), so the branch is
+often behind by the time the PR exists. After creating **or updating** the PR:
+
+1. `git fetch origin main`, then read the PR `mergeable_state` (GitHub API) — or
+   compare `git merge-base HEAD origin/main` against `origin/main`.
+2. If `dirty`/`behind`: `git merge origin/main` (never force-push), resolve
+   conflicts, re-run the Phase 2 verification commands above (run
+   `prisma generate` first if the merge touched `prisma/schema.prisma`), then push.
+3. Report the PR as ready only once `mergeable_state` is `clean` or `unstable`
+   (a pending non-blocking check) — never while `dirty`.
