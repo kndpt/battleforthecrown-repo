@@ -29,6 +29,22 @@ function dailyTaskData(completedAt: Date | null) {
   }));
 }
 
+function dailyTaskDataExcept(
+  openType: (typeof DAILY_TASK_FIXTURES)[number]['type'],
+  completedAt: Date,
+) {
+  return DAILY_TASK_FIXTURES.map((task) => {
+    const isOpenTask = task.type === openType;
+    return {
+      type: task.type,
+      label: task.label,
+      progress: isOpenTask ? 0 : 1,
+      target: 1,
+      completedAt: isOpenTask ? null : completedAt,
+    };
+  });
+}
+
 describe('daily retention smoke', () => {
   let ctx: SmokeContext;
 
@@ -235,6 +251,82 @@ describe('daily retention smoke', () => {
         where: { userId: player.userId, worldId: world.id, status: 'ACTIVE' },
       }),
     ).toBe(1);
+  });
+
+  it('progresses tasks against the outbox event day before expiring stale cards', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const player = await registerUser(ctx.server, 'daily-retention-event-time');
+    const join = await joinWorld(
+      ctx.server,
+      player.accessToken,
+      world.id,
+      'retention-event-time',
+    );
+    const now = new Date();
+    const currentDayKey = getParisDailyKey(now);
+    const previousDayKey = getPreviousParisDailyKey(now);
+    const completedAt = new Date(`${previousDayKey}T10:00:00.000Z`);
+    const eventCreatedAt = new Date(`${previousDayKey}T12:00:00.000Z`);
+
+    const staleCard = await ctx.prisma.dailyCard.create({
+      data: {
+        userId: player.userId,
+        worldId: world.id,
+        dayKey: previousDayKey,
+        tasks: { create: dailyTaskDataExcept('TRAIN_UNITS', completedAt) },
+      },
+    });
+
+    const summaryBeforeDispatch = await request(ctx.server)
+      .get('/retention')
+      .query({ worldId: world.id })
+      .set('Authorization', `Bearer ${player.accessToken}`);
+    expect(summaryBeforeDispatch.status).toBe(200);
+    expect(
+      await ctx.prisma.dailyCard.findUniqueOrThrow({
+        where: { id: staleCard.id },
+        select: { status: true },
+      }),
+    ).toMatchObject({ status: 'EXPIRED' });
+
+    await ctx.prisma.eventOutbox.create({
+      data: {
+        kind: 'unit.trained',
+        aggregateId: join.village.id,
+        createdAt: eventCreatedAt,
+        payload: {
+          trainingId: 'training-retention-event-time',
+          villageId: join.village.id,
+          unitType: 'MILITIA',
+          completedQty: 1,
+          totalQty: 1,
+        },
+      },
+    });
+
+    await ctx.app.get(EventOutboxService).dispatchPendingEvents();
+
+    const staleAfterDispatch = await ctx.prisma.dailyCard.findUniqueOrThrow({
+      where: { id: staleCard.id },
+      include: { tasks: true },
+    });
+    expect(staleAfterDispatch.status).toBe('CLAIMABLE');
+    expect(
+      staleAfterDispatch.tasks.find((task) => task.type === 'TRAIN_UNITS')
+        ?.completedAt,
+    ).toEqual(eventCreatedAt);
+
+    const currentCard = await ctx.prisma.dailyCard.findUniqueOrThrow({
+      where: {
+        userId_worldId_dayKey: {
+          userId: player.userId,
+          worldId: world.id,
+          dayKey: currentDayKey,
+        },
+      },
+      select: { status: true },
+    });
+    expect(currentCard.status).toBe('ACTIVE');
   });
 
   it('keeps a completed previous card claimable for one reset and expires older claimable cards', async () => {

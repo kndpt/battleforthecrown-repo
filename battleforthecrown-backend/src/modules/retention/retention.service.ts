@@ -16,10 +16,7 @@ import type {
   BattleResolvedPayload,
   BuildingCompletedPayload,
   EventKind,
-  GarrisonAddedPayload,
   PayloadForKind,
-  ReinforcementSentPayload,
-  ScoutReportedPayload,
   UnitTrainedPayload,
 } from '../event/event-types';
 import { createOutboxEvent } from '../event/event.utils';
@@ -190,6 +187,7 @@ export class RetentionService {
     eventOutboxId: string,
     kind: K,
     payload: PayloadForKind<K>,
+    eventCreatedAt: Date = new Date(),
   ): Promise<void> {
     const projection = getTaskProjection(kind, payload);
     if (!projection) return;
@@ -211,6 +209,7 @@ export class RetentionService {
         tx,
         projection.villageId,
         projection.type,
+        eventCreatedAt,
       );
     });
   }
@@ -271,6 +270,7 @@ export class RetentionService {
     tx: Prisma.TransactionClient,
     villageId: string,
     type: DailyCardTaskType,
+    eventCreatedAt: Date,
   ): Promise<void> {
     const now = new Date();
     const village = await tx.village.findUnique({
@@ -279,6 +279,21 @@ export class RetentionService {
     });
     if (!village?.userId) return;
     const currentDayKey = getParisDailyKey(now);
+    const eventDayKey = getParisDailyKey(eventCreatedAt);
+    await this.ensureDailyCardInTransaction(
+      tx,
+      village.userId,
+      village.worldId,
+      eventDayKey,
+    );
+    await this.progressMatchingTaskForDay(
+      tx,
+      village.userId,
+      village.worldId,
+      eventDayKey,
+      type,
+      eventCreatedAt,
+    );
     await this.expireStaleCardsInTransaction(
       tx,
       village.userId,
@@ -286,19 +301,30 @@ export class RetentionService {
       currentDayKey,
       now,
     );
-    await this.ensureDailyCardInTransaction(
-      tx,
-      village.userId,
-      village.worldId,
-      currentDayKey,
-    );
+    if (currentDayKey !== eventDayKey) {
+      await this.ensureDailyCardInTransaction(
+        tx,
+        village.userId,
+        village.worldId,
+        currentDayKey,
+      );
+    }
+  }
 
+  private async progressMatchingTaskForDay(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    worldId: string,
+    dayKey: string,
+    type: DailyCardTaskType,
+    completedAt: Date,
+  ): Promise<void> {
     const card = await tx.dailyCard.findFirst({
       where: {
-        userId: village.userId,
-        worldId: village.worldId,
-        dayKey: currentDayKey,
-        status: 'ACTIVE',
+        userId,
+        worldId,
+        dayKey,
+        status: { in: ['ACTIVE', 'EXPIRED'] },
         tasks: {
           some: {
             type,
@@ -317,15 +343,15 @@ export class RetentionService {
     if (!task) return;
 
     const progress = Math.min(task.progress + 1, task.target);
-    const completedAt = progress >= task.target ? new Date() : null;
+    const taskCompletedAt = progress >= task.target ? completedAt : null;
     await tx.dailyCardTask.update({
       where: { id: task.id },
-      data: { progress, completedAt },
+      data: { progress, completedAt: taskCompletedAt },
     });
 
     const tasksAfterUpdate = card.tasks.map((candidate) =>
       candidate.id === task.id
-        ? { ...candidate, progress, completedAt }
+        ? { ...candidate, progress, completedAt: taskCompletedAt }
         : candidate,
     );
     if (allTasksComplete(tasksAfterUpdate)) {
@@ -383,17 +409,19 @@ export class RetentionService {
     currentDayKey: string,
     now: Date,
   ): Promise<void> {
-    await this.expireStaleCardsInTransaction(
-      this.prisma,
-      userId,
-      worldId,
-      currentDayKey,
-      now,
-    );
+    await this.prisma.$transaction(async (tx) => {
+      await this.expireStaleCardsInTransaction(
+        tx,
+        userId,
+        worldId,
+        currentDayKey,
+        now,
+      );
+    });
   }
 
   private async expireStaleCardsInTransaction(
-    tx: Prisma.TransactionClient | PrismaService,
+    tx: Prisma.TransactionClient,
     userId: string,
     worldId: string,
     currentDayKey: string,
@@ -440,21 +468,6 @@ export function getTaskProjection<K extends EventKind>(
         eventPayload.isVictory
         ? { villageId: eventPayload.villageId, type: 'RAID_BARBARIAN' }
         : null;
-    }
-    case 'scout.reported': {
-      const eventPayload = payload as ScoutReportedPayload;
-      return { villageId: eventPayload.villageId, type: 'SCOUT_TARGET' };
-    }
-    case 'reinforcement.sent': {
-      const eventPayload = payload as ReinforcementSentPayload;
-      return { villageId: eventPayload.villageId, type: 'SEND_REINFORCEMENT' };
-    }
-    case 'garrison.added': {
-      const eventPayload = payload as GarrisonAddedPayload;
-      return {
-        villageId: eventPayload.originVillageId,
-        type: 'SEND_REINFORCEMENT',
-      };
     }
     default:
       return null;

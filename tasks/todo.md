@@ -19,6 +19,22 @@
 - Le HUD n'affiche plus de pile/rattrapage et annonce `Expire à 04h00`.
 - Vérifications : unit retention, Vitest daily/header/layout, smokes retention/onboarding, grep wording, `static-check`.
 
+## 2026-06-02 — PR #36 commentaires review
+
+- [x] Lister les threads et commentaires hors diff.
+- [x] Corriger la progression daily basée sur la date de création outbox.
+- [x] Supprimer les projections vers des tâches daily retirées.
+- [x] Corriger les liens cassés de la fiche run archivée.
+- [x] Relancer les vérifications ciblées.
+- [ ] Push le follow-up et résoudre les threads GitHub.
+
+### Review
+
+- `RetentionService` progresse la carte du `EventOutbox.createdAt` avant d'expirer les cartes stale au jour courant de dispatch.
+- Les projections scout/renfort/garnison ne ciblent plus des types retirés de `TASK_TEMPLATES`.
+- Les liens de la fiche run archivée pointent vers des fichiers existants.
+- Vérifications : unit retention, smoke daily-retention, `static-check`.
+
 ## 2026-06-02 — PR #35 commentaires review
 
 - [x] Lire les threads review et séparer actionnable / optionnel / déjà OK.

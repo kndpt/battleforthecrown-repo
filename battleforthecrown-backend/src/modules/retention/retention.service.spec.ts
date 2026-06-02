@@ -40,6 +40,36 @@ describe('getTaskProjection', () => {
       }),
     ).toBeNull();
   });
+
+  it('ignores event kinds that are no longer daily task templates', () => {
+    expect(
+      getTaskProjection('scout.reported', {
+        expeditionId: 'scout-1',
+        reportId: 'report-1',
+        villageId: 'village-1',
+        targetKind: 'BARBARIAN_VILLAGE',
+        targetName: 'Barbarian Village',
+        targetX: 10,
+        targetY: 11,
+        returnAt: new Date().toISOString(),
+      }),
+    ).toBeNull();
+    expect(
+      getTaskProjection('reinforcement.sent', {
+        expeditionId: 'reinforcement-1',
+        villageId: 'village-1',
+        targetVillageId: 'target-village-1',
+        arrivalAt: new Date().toISOString(),
+      }),
+    ).toBeNull();
+    expect(
+      getTaskProjection('garrison.added', {
+        villageId: 'host-village-1',
+        originVillageId: 'origin-village-1',
+        units: { MILITIA: 1 },
+      }),
+    ).toBeNull();
+  });
 });
 
 describe('daily card reset helpers', () => {

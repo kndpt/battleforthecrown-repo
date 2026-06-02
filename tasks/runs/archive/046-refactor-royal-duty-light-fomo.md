@@ -7,16 +7,16 @@
 ## Cible
 
 - **Phase roadmap** : Phase 10 — Rétention quotidienne MVP
-- **Spec source** : [`docs/gameplay/05-daily-cards-and-oyez.md`](../../docs/gameplay/05-daily-cards-and-oyez.md), [`docs/gameplay/lab/mobile-retention-modernization.md`](../../docs/gameplay/lab/mobile-retention-modernization.md) en inspiration non canonique
+- **Spec source** : [`docs/gameplay/05-daily-cards-and-oyez.md`](../../../docs/gameplay/05-daily-cards-and-oyez.md), [`docs/gameplay/lab/mobile-retention-modernization.md`](../../../docs/gameplay/lab/mobile-retention-modernization.md) en inspiration non canonique
 - **Type** : refacto
 - **Modules backend** : `retention`, `prisma`, `event`
 - **Modules frontend** : `pixi/features/retention`, `pixi/api`
 
 ## Dépendances
 
-- Les runs [`026 — Cartes quotidiennes & Oyez backend/shared`](./archive/026-feature-daily-cards-oyez-backend-shared.md) et [`027 — Cartes quotidiennes & Oyez frontend/HUD`](./archive/027-feature-daily-cards-oyez-frontend-hud.md) ont livré le modèle actuel avec backlog ; ce run le remplace comme cible gameplay.
+- Les runs [`026 — Cartes quotidiennes & Oyez backend/shared`](./026-feature-daily-cards-oyez-backend-shared.md) et [`027 — Cartes quotidiennes & Oyez frontend/HUD`](./027-feature-daily-cards-oyez-frontend-hud.md) ont livré le modèle actuel avec backlog ; ce run le remplace comme cible gameplay.
 - La règle Phase 9 de choix du village récompensé reste inchangée : le claim demande un village possédé et propose le dernier village récompensé par défaut.
-- Les bénédictions quotidiennes et grosses récompenses couronnes restent hors scope MVP, cf. [`tasks/archive/17-blessings-temporal-effects.md`](../archive/17-blessings-temporal-effects.md) et [`tasks/archive/28-royal-blessing-crown-percentage.md`](../archive/28-royal-blessing-crown-percentage.md).
+- Les bénédictions quotidiennes et grosses récompenses couronnes restent hors scope MVP, cf. [`tasks/archive/17-blessings-temporal-effects.md`](../../archive/17-blessings-temporal-effects.md) et [`tasks/archive/28-royal-blessing-crown-percentage.md`](../../archive/28-royal-blessing-crown-percentage.md).
 - L'onboarding scripté reste distinct des daily cards ; ne pas transformer le Devoir royal en tutoriel.
 - Migrations Prisma non destructives uniquement. Ne jamais reset la DB.
 
