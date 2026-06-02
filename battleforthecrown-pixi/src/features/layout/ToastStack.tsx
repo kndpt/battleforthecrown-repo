@@ -5,19 +5,13 @@ import type { ToastTone } from '@/features/design-system/components/ToastPreview
 import { ToastPreview } from '@/features/design-system/components/ToastPreview';
 import { ResourceIcon } from '@/ui';
 import { formatResourceAmount } from '@/lib/resourceConfig';
+import { TOAST_ICON_BY_TONE } from './toastIcons';
 
 const TONE_MAP: Record<string, ToastTone> = {
   error: 'danger',
   info: 'info',
   success: 'success',
   warning: 'warning',
-};
-
-const ICON_MAP: Record<ToastTone, string> = {
-  danger: 'assets/ui/icons/warning.svg',
-  info: 'assets/ui/icons/quest.svg',
-  success: 'assets/ui/icons/check.svg',
-  warning: 'assets/ui/icons/warning.svg',
 };
 
 const RESOURCE_REFUND_TYPES = new Set<ToastRefundItem['resource']>([
@@ -58,7 +52,7 @@ export function ToastStack() {
         return (
           <div key={toast.id} role="status" className="pointer-events-auto">
             <ToastPreview
-              icon={ICON_MAP[tone]}
+              icon={TOAST_ICON_BY_TONE[tone]}
               onClose={() => dismiss(toast.id)}
               subtitle={toast.description}
               title={toast.title}

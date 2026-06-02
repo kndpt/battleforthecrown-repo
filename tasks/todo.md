@@ -1,5 +1,21 @@
 # Todo
 
+## 2026-06-02 — Fix icônes toast runtime
+
+- [x] Diagnostiquer les assets cassés des toasts runtime.
+- [x] Remplacer les chemins inexistants par des assets `public/assets` réels.
+- [x] Ajouter une vérification ciblée sur les chemins d'icônes.
+- [x] Lancer les checks Pixi ciblés.
+- [x] Commit et push le follow-up PR.
+
+### Review
+
+- `ToastStack` utilise maintenant des assets runtime existants pour les quatre tons : ressources, rapport, main or, main rouge.
+- La map d'icônes vit dans `toastIcons.ts` pour rester compatible Fast Refresh.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test ToastStack.test.tsx` — 1 suite / 5 tests passés.
+- Vérification : `rtk yarn static-check` — passé.
+- Vérification assets : `rtk proxy curl -fsSI` sur les 4 chemins d'icônes — HTTP 200.
+
 ## 2026-06-02 — Run 045 toast remboursement annulation
 
 - [x] Préflight : fiche run, règles repo, specs source, briefings backend/pixi, politique PR.

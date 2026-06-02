@@ -1,7 +1,12 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useUiStore } from '@/stores/ui';
 import { ToastStack } from './ToastStack';
+import { TOAST_ICON_BY_TONE } from './toastIcons';
+
+const PUBLIC_DIR = join(process.cwd(), 'public');
 
 describe('ToastStack', () => {
   const play = vi.fn().mockResolvedValue(undefined);
@@ -42,6 +47,14 @@ describe('ToastStack', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Fermer' }));
     expect(useUiStore.getState().toasts).toHaveLength(0);
+  });
+
+  it('maps runtime toast icons to existing public assets', () => {
+    const missingIcons = Object.values(TOAST_ICON_BY_TONE).filter(
+      (iconPath) => !existsSync(join(PUBLIC_DIR, iconPath.replace(/^\/+/, ''))),
+    );
+
+    expect(missingIcons).toEqual([]);
   });
 
   it('renders refund rows with ResourceIcon and hides zero values', () => {
