@@ -37,6 +37,7 @@ Politique PR `$bftc-run` :
 
 ### Runs archivés
 
+- [046 — Devoir royal FOMO légère](./runs/archive/046-refactor-royal-duty-light-fomo.md) — ✅ `DONE` (2026-06-02). Cartes quotidiennes simplifiées : 1 carte du jour, statut `EXPIRED`, 3 tâches naturelles, grâce bornée à un reset, sceau royal topbar et wording `Expire à 04h00`.
 - [045 — Toast de remboursement à l'annulation](./runs/archive/045-feature-refund-toast-on-cancel.md) — ✅ `DONE` (2026-06-02). Payloads cancel construction/training normalisés avec détail refund, mutations frontend typées, toast remboursement via `ResourceIcon`, smokes ciblés et QA worktree.
 - [044 — Rapports persistants de renforts](./runs/archive/044-feature-reinforcement-reports.md) — ✅ `DONE` (2026-05-31). Modèle métier `ReinforcementReport` (STATIONED/RETURNED) + inbox par destinataire `InboxEntry` (FK typée), REST scopé user+world, badge/invalidation WS via events existants, migration additive. Review indépendante GO, smokes + static-check verts.
 - [043 — Layout shell du jeu](./runs/archive/043-refactor-game-shell-layout.md) — ✅ `DONE` (2026-05-31). Chrome jeu centralisé dans un layout route-level, unread badge unique, contrat URL `panel=buildings`, tests Pixi/static-check et QA navigateur.

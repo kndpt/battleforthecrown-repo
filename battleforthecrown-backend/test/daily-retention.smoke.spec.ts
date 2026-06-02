@@ -2,12 +2,48 @@ import request from 'supertest';
 import type { RetentionSummaryDto } from '@battleforthecrown/shared/retention';
 import { EventOutboxService } from '../src/modules/event/event-outbox.service';
 import {
+  getParisDailyKey,
+  getPreviousParisDailyKey,
+} from '../src/modules/retention/retention.service';
+import {
   bootSmokeApp,
   joinWorld,
   registerUser,
   seedSmokeWorld,
   type SmokeContext,
 } from './helpers';
+
+const DAILY_TASK_FIXTURES = [
+  { type: 'TRAIN_UNITS', label: 'Former une unité' },
+  { type: 'COMPLETE_BUILDING', label: 'Terminer une construction' },
+  { type: 'RAID_BARBARIAN', label: 'Vaincre un village barbare' },
+] as const;
+
+function dailyTaskData(completedAt: Date | null) {
+  return DAILY_TASK_FIXTURES.map((task) => ({
+    type: task.type,
+    label: task.label,
+    progress: completedAt ? 1 : 0,
+    target: 1,
+    completedAt,
+  }));
+}
+
+function dailyTaskDataExcept(
+  openType: (typeof DAILY_TASK_FIXTURES)[number]['type'],
+  completedAt: Date,
+) {
+  return DAILY_TASK_FIXTURES.map((task) => {
+    const isOpenTask = task.type === openType;
+    return {
+      type: task.type,
+      label: task.label,
+      progress: isOpenTask ? 0 : 1,
+      target: 1,
+      completedAt: isOpenTask ? null : completedAt,
+    };
+  });
+}
 
 describe('daily retention smoke', () => {
   let ctx: SmokeContext;
@@ -92,24 +128,14 @@ describe('daily retention smoke', () => {
           kind: 'scout.reported',
           aggregateId: villageId,
           payload: {
-            expeditionId: 'scout-retention',
-            reportId: 'scout-report-retention',
+            expeditionId: 'scout-retention-ignored',
+            reportId: 'scout-report-retention-ignored',
             villageId,
             targetKind: 'BARBARIAN_VILLAGE',
             targetName: 'Barbares',
             targetX: join.village.x + 2,
             targetY: join.village.y,
             returnAt: new Date(now.getTime() + 60_000).toISOString(),
-          },
-        },
-        {
-          kind: 'reinforcement.sent',
-          aggregateId: villageId,
-          payload: {
-            expeditionId: 'reinforcement-retention',
-            villageId,
-            targetVillageId: villageId,
-            arrivalAt: new Date(now.getTime() + 60_000).toISOString(),
           },
         },
       ],
@@ -128,7 +154,8 @@ describe('daily retention smoke', () => {
       theme: 'BUILDERS',
     });
     expect(completedSummaryBody.cards).toHaveLength(1);
-    expect(completedSummaryBody.cards[0].tasks).toHaveLength(5);
+    expect(completedSummaryBody.backlogLimit).toBe(1);
+    expect(completedSummaryBody.cards[0].tasks).toHaveLength(3);
     const cardId = completedSummaryBody.cards[0].id;
     expect(completedSummaryBody.cards[0]).toMatchObject({
       status: 'CLAIMABLE',
@@ -175,5 +202,199 @@ describe('daily retention smoke', () => {
     expect(afterClaimSummary.status).toBe(200);
     const afterClaimSummaryBody = afterClaimSummary.body as RetentionSummaryDto;
     expect(afterClaimSummaryBody.defaultRewardVillageId).toBe(villageId);
+  });
+
+  it('expires stale active cards and generates only the current daily card as active', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const player = await registerUser(ctx.server, 'daily-retention-reset');
+    await joinWorld(
+      ctx.server,
+      player.accessToken,
+      world.id,
+      'retention-reset',
+    );
+    const now = new Date();
+    const currentDayKey = getParisDailyKey(now);
+    const previousDayKey = getPreviousParisDailyKey(now);
+
+    const staleCard = await ctx.prisma.dailyCard.create({
+      data: {
+        userId: player.userId,
+        worldId: world.id,
+        dayKey: previousDayKey,
+        tasks: { create: dailyTaskData(null) },
+      },
+    });
+
+    const summary = await request(ctx.server)
+      .get('/retention')
+      .query({ worldId: world.id })
+      .set('Authorization', `Bearer ${player.accessToken}`);
+    expect(summary.status).toBe(200);
+    const body = summary.body as RetentionSummaryDto;
+
+    expect(body.currentDayKey).toBe(currentDayKey);
+    expect(body.cards).toHaveLength(1);
+    expect(body.cards[0]).toMatchObject({
+      dayKey: currentDayKey,
+      status: 'ACTIVE',
+    });
+    expect(body.cards[0].tasks).toHaveLength(3);
+
+    const staleAfterSummary = await ctx.prisma.dailyCard.findUniqueOrThrow({
+      where: { id: staleCard.id },
+      select: { status: true },
+    });
+    expect(staleAfterSummary.status).toBe('EXPIRED');
+    expect(
+      await ctx.prisma.dailyCard.count({
+        where: { userId: player.userId, worldId: world.id, status: 'ACTIVE' },
+      }),
+    ).toBe(1);
+  });
+
+  it('progresses tasks against the outbox event day before expiring stale cards', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const player = await registerUser(ctx.server, 'daily-retention-event-time');
+    const join = await joinWorld(
+      ctx.server,
+      player.accessToken,
+      world.id,
+      'retention-event-time',
+    );
+    const now = new Date();
+    const currentDayKey = getParisDailyKey(now);
+    const previousDayKey = getPreviousParisDailyKey(now);
+    const completedAt = new Date(`${previousDayKey}T10:00:00.000Z`);
+    const eventCreatedAt = new Date(`${previousDayKey}T12:00:00.000Z`);
+
+    const staleCard = await ctx.prisma.dailyCard.create({
+      data: {
+        userId: player.userId,
+        worldId: world.id,
+        dayKey: previousDayKey,
+        tasks: { create: dailyTaskDataExcept('TRAIN_UNITS', completedAt) },
+      },
+    });
+
+    const summaryBeforeDispatch = await request(ctx.server)
+      .get('/retention')
+      .query({ worldId: world.id })
+      .set('Authorization', `Bearer ${player.accessToken}`);
+    expect(summaryBeforeDispatch.status).toBe(200);
+    expect(
+      await ctx.prisma.dailyCard.findUniqueOrThrow({
+        where: { id: staleCard.id },
+        select: { status: true },
+      }),
+    ).toMatchObject({ status: 'EXPIRED' });
+
+    await ctx.prisma.eventOutbox.create({
+      data: {
+        kind: 'unit.trained',
+        aggregateId: join.village.id,
+        createdAt: eventCreatedAt,
+        payload: {
+          trainingId: 'training-retention-event-time',
+          villageId: join.village.id,
+          unitType: 'MILITIA',
+          completedQty: 1,
+          totalQty: 1,
+        },
+      },
+    });
+
+    await ctx.app.get(EventOutboxService).dispatchPendingEvents();
+
+    const staleAfterDispatch = await ctx.prisma.dailyCard.findUniqueOrThrow({
+      where: { id: staleCard.id },
+      include: { tasks: true },
+    });
+    expect(staleAfterDispatch.status).toBe('CLAIMABLE');
+    expect(
+      staleAfterDispatch.tasks.find((task) => task.type === 'TRAIN_UNITS')
+        ?.completedAt,
+    ).toEqual(eventCreatedAt);
+
+    const currentCard = await ctx.prisma.dailyCard.findUniqueOrThrow({
+      where: {
+        userId_worldId_dayKey: {
+          userId: player.userId,
+          worldId: world.id,
+          dayKey: currentDayKey,
+        },
+      },
+      select: { status: true },
+    });
+    expect(currentCard.status).toBe('ACTIVE');
+  });
+
+  it('keeps a completed previous card claimable for one reset and expires older claimable cards', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const player = await registerUser(ctx.server, 'daily-retention-grace');
+    const join = await joinWorld(
+      ctx.server,
+      player.accessToken,
+      world.id,
+      'retention-grace',
+    );
+    const now = new Date();
+    const previousDayKey = getPreviousParisDailyKey(now);
+    const expiredDayKey = getParisDailyKey(
+      new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000),
+    );
+    const completedAt = new Date(now.getTime() - 60_000);
+
+    const graceCard = await ctx.prisma.dailyCard.create({
+      data: {
+        userId: player.userId,
+        worldId: world.id,
+        dayKey: previousDayKey,
+        status: 'CLAIMABLE',
+        tasks: { create: dailyTaskData(completedAt) },
+      },
+    });
+    const expiredCard = await ctx.prisma.dailyCard.create({
+      data: {
+        userId: player.userId,
+        worldId: world.id,
+        dayKey: expiredDayKey,
+        status: 'CLAIMABLE',
+        tasks: { create: dailyTaskData(completedAt) },
+      },
+    });
+
+    const summary = await request(ctx.server)
+      .get('/retention')
+      .query({ worldId: world.id })
+      .set('Authorization', `Bearer ${player.accessToken}`);
+    expect(summary.status).toBe(200);
+    const body = summary.body as RetentionSummaryDto;
+
+    expect(body.claimableCount).toBe(1);
+    expect(body.cards.some((card) => card.id === graceCard.id)).toBe(true);
+    expect(body.cards.some((card) => card.id === expiredCard.id)).toBe(false);
+    expect(
+      await ctx.prisma.dailyCard.findUniqueOrThrow({
+        where: { id: expiredCard.id },
+        select: { status: true },
+      }),
+    ).toMatchObject({ status: 'EXPIRED' });
+
+    const claim = await request(ctx.server)
+      .post(`/retention/cards/${graceCard.id}/claim`)
+      .set('Authorization', `Bearer ${player.accessToken}`)
+      .send({ villageId: join.village.id });
+    expect(claim.status).toBe(201);
+    expect(claim.body).toMatchObject({
+      rewardVillageId: join.village.id,
+      card: { id: graceCard.id, status: 'CLAIMED' },
+    });
+
+    const expiredClaim = await request(ctx.server)
+      .post(`/retention/cards/${expiredCard.id}/claim`)
+      .set('Authorization', `Bearer ${player.accessToken}`)
+      .send({ villageId: join.village.id });
+    expect(expiredClaim.status).toBe(400);
   });
 });

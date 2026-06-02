@@ -153,7 +153,6 @@ export function VillageView() {
   const [isQueueOpen, setIsQueueOpen] = useState(false);
   const [isVillageSheetOpen, setIsVillageSheetOpen] = useState(false);
   const [isVillageStyleOpen, setIsVillageStyleOpen] = useState(false);
-  const [isRetentionOpen, setIsRetentionOpen] = useState(false);
   const [profileTab, setProfileTab] = useState<PlayerProfileSheetTab>('profile');
   const [villageFilter, setVillageFilter] = useState<MultiVillageFilter>('all');
   const [sortAscending, setSortAscending] = useState(true);
@@ -199,7 +198,6 @@ export function VillageView() {
   const totalKingdomPower = kingdomPower.data?.kingdomPower ?? 0;
 
   const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data);
-  const retentionBadge = retentionSummary.data?.claimableCount ?? 0;
   const crownsDisplay = Number.isFinite(crownBalance ?? NaN)
     ? integerFormatter.format(Math.floor(crownBalance ?? 0))
     : '0';
@@ -640,10 +638,6 @@ export function VillageView() {
   return (
     <>
       <style>{`
-        @keyframes royalHalo {
-          from { opacity: .3; transform: scale(.95); }
-          to   { opacity: .75; transform: scale(1.08); }
-        }
         @keyframes villageAssetEnter {
           0% {
             opacity: 0;
@@ -827,37 +821,19 @@ export function VillageView() {
               </span>
             </div>
 
-            {/* Devoir button */}
-            <button
-              type="button"
-              aria-label={
-                retentionBadge > 0
-                  ? `Devoir royal, ${retentionBadge} carte${retentionBadge > 1 ? 's' : ''} à réclamer`
-                  : 'Devoir royal'
-              }
-              onClick={() => setIsRetentionOpen(true)}
-              className="relative flex size-10 items-center justify-center rounded-full border-2 border-[#7a5200] bg-gradient-to-b from-[#e8b040] to-[#c47a0a] shadow-[0_2px_0_rgba(0,0,0,.35),inset_0_1px_0_rgba(255,255,255,.35)]"
-            >
-              <div
-                className="pointer-events-none absolute inset-[-5px] rounded-full"
-                style={{
-                  background: 'radial-gradient(circle,rgba(241,196,15,.35),transparent 68%)',
-                  animation: 'royalHalo 2s ease-in-out infinite alternate',
-                }}
-              />
-              <img
-                src={publicAsset('/assets/casual-icons/crown.png')}
-                alt=""
-                className="size-[18px] object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,.6)]"
-                loading="lazy"
-                decoding="async"
-              />
-              {retentionBadge > 0 && (
-                <span className="absolute -right-[3px] -top-[3px] flex size-[17px] items-center justify-center rounded-full border border-[#1a0f08] bg-[#c0392b] text-[9px] font-extrabold text-white">
-                  {retentionBadge}
-                </span>
-              )}
-            </button>
+            {/* Devoir royal */}
+            <DailyRetentionWidget
+              activeVillageId={villageId}
+              className="shrink-0"
+              isClaiming={claimDailyCard.isPending}
+              isLoading={retentionSummary.isLoading}
+              onAction={runVillageAction}
+              onClaim={(input) => claimDailyCard.mutate(input)}
+              onNavigate={navigate}
+              sealSize={40}
+              summary={retentionSummary.data}
+              villages={myVillages.data ?? []}
+            />
           </div>
 
           {/* ── Village identity and controls ── */}
@@ -1043,21 +1019,6 @@ export function VillageView() {
           isLoading={onboardingSummary.isLoading || !villageId || buildingsQuery.isLoading}
           onAction={runVillageAction}
           onNavigate={navigate}
-        />
-
-        {/* Daily retention widget — portal mode (button is the custom crown icon above) */}
-        <DailyRetentionWidget
-          activeVillageId={villageId}
-          hideButton
-          isClaiming={claimDailyCard.isPending}
-          isLoading={retentionSummary.isLoading}
-          onClaim={(input) => claimDailyCard.mutate(input)}
-          onAction={runVillageAction}
-          onNavigate={navigate}
-          open={isRetentionOpen}
-          onOpenChange={setIsRetentionOpen}
-          summary={retentionSummary.data}
-          villages={myVillages.data ?? []}
         />
 
         {/* Bottom navigation */}

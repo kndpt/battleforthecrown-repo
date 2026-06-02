@@ -17,6 +17,8 @@ import {
 } from '@/features/design-system/components/PlayerProfileSheet';
 import { villageStyleOptions } from '@/features/design-system/components/villageStyleData';
 import { useDisplayResources, useDisplayCrowns } from '@/features/resources/useDisplayResources';
+import { DailyRetentionWidget } from '@/features/retention/DailyRetentionWidget';
+import { runGameAction, type GameActionId } from '@/features/game-actions/gameActions';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
 import {
@@ -25,10 +27,12 @@ import {
   populationQueryOptions,
   queueQueryOptions,
   resourcesQueryOptions,
+  useClaimDailyCardMutation,
   useKingdomPowerQuery,
   useLogout,
   useMyMembershipsQuery,
   useMyVillagesQuery,
+  useRetentionSummaryQuery,
   villageStrategyQueryOptions,
   usePublicWorldsQuery,
 } from '@/api/queries';
@@ -79,6 +83,8 @@ export function GameHeader({
   const publicWorlds = usePublicWorldsQuery();
   const memberships = useMyMembershipsQuery();
   const myVillages = useMyVillagesQuery(worldId);
+  const retentionSummary = useRetentionSummaryQuery(worldId);
+  const claimDailyCard = useClaimDailyCardMutation();
   const { display, hasSnapshot } = useDisplayResources(villageId);
   const { balance: crownBalance } = useDisplayCrowns(userId, worldId);
   const [isVillageSheetOpen, setIsVillageSheetOpen] = useState(false);
@@ -333,6 +339,9 @@ export function GameHeader({
     setIsProfileOpen(false);
     setProfileTab('profile');
   };
+  const runHeaderAction = (actionId: GameActionId) => {
+    runGameAction(actionId, { navigate });
+  };
 
   return (
     <div className="relative flex flex-col overflow-hidden border-b border-[rgba(246,213,123,.16)] bg-[linear-gradient(180deg,#07150f_0%,#142816_46%,#2b170b_100%)] text-[#f0e0c0] shadow-[0_10px_26px_rgba(0,0,0,.3)]">
@@ -396,6 +405,19 @@ export function GameHeader({
             {integerFormatter.format(crowns)}
           </span>
         </div>
+
+        <DailyRetentionWidget
+          activeVillageId={villageId}
+          className="shrink-0"
+          isClaiming={claimDailyCard.isPending}
+          isLoading={retentionSummary.isLoading}
+          onAction={runHeaderAction}
+          onClaim={(input) => claimDailyCard.mutate(input)}
+          onNavigate={navigate}
+          sealSize={40}
+          summary={retentionSummary.data}
+          villages={villages}
+        />
       </div>
 
       {showVillageSwitcher && activeVillage && (

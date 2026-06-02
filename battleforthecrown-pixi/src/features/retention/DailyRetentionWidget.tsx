@@ -9,7 +9,6 @@ import type {
 import { VILLAGE_LABEL_DISPLAY } from "@battleforthecrown/shared/village";
 import {
   DailyQuestModal,
-  type DailyQuestBacklog,
   type DailyQuestChapter,
   type DailyQuestClaimPanel,
   type DailyQuestItem,
@@ -47,12 +46,6 @@ export interface DailyRetentionWidgetProps {
   summary?: RetentionSummaryDto;
   villages: JoinedVillage[];
 }
-
-const statusLabel: Record<DailyCardDto["status"], string> = {
-  ACTIVE: "En cours",
-  CLAIMABLE: "À réclamer",
-  CLAIMED: "Réclamée",
-};
 
 const taskLabelOverride: Partial<Record<DailyCardTaskType, string>> = {
   RAID_BARBARIAN: "Vaincre un village barbare",
@@ -217,24 +210,6 @@ export function DailyRetentionWidget({
       }
     : undefined;
 
-  const backlogCards =
-    summary?.cards
-      .filter((card) => card.id !== focusCard?.id)
-      .map((card) => ({
-        id: card.id,
-        statusLabel: statusLabel[card.status],
-        title: formatCardTitle(card),
-      })) ?? [];
-  const backlog: DailyQuestBacklog | undefined =
-    backlogCards.length > 0
-      ? {
-          badgeLabel: `${backlogCards.length}`,
-          cards: backlogCards,
-          hint: "Cartes conservées pour rattraper les jours manqués.",
-          title: "Cartes en attente",
-        }
-      : undefined;
-
   const completedCount = quests.filter(
     (quest) => quest.state === "done",
   ).length;
@@ -297,8 +272,7 @@ export function DailyRetentionWidget({
           onPointerUp={() => setIsSealPressed(false)}
           pressed={isOpen || isSealPressed}
           size={sealSize}
-          softShadow
-          variant="wax"
+          variant="crown"
         />
       )}
 
@@ -310,7 +284,6 @@ export function DailyRetentionWidget({
               onMouseDown={handleBackdropMouseDown}
             >
               <DailyQuestModal
-                backlog={backlog}
                 chapter={chapter}
                 claimPanel={claimPanel}
                 claimRowLabel="Réclamer"
@@ -318,7 +291,7 @@ export function DailyRetentionWidget({
                 completedLabel="accomplies"
                 completedSummary={`${completedCount} / ${quests.length}`}
                 eyebrow={undefined}
-                expiresInLabel="Reset à"
+                expiresInLabel="Expire à"
                 expiresInValue="04h00"
                 maxHeight="min(680px, calc(100dvh - 18px))"
                 onClose={() => handleSetOpen(false)}

@@ -16,10 +16,7 @@ import type {
   BattleResolvedPayload,
   BuildingCompletedPayload,
   EventKind,
-  GarrisonAddedPayload,
   PayloadForKind,
-  ReinforcementSentPayload,
-  ScoutReportedPayload,
   UnitTrainedPayload,
 } from '../event/event-types';
 import { createOutboxEvent } from '../event/event.utils';
@@ -32,7 +29,7 @@ import type {
   RetentionSummaryDto,
 } from '@battleforthecrown/shared/retention';
 
-const BACKLOG_LIMIT = 3;
+const DAILY_CARD_LIMIT = 1;
 const PARIS_RESET_HOUR = 4;
 const DAILY_REWARD = { wood: 120, stone: 120, iron: 120 };
 
@@ -44,8 +41,6 @@ const TASK_TEMPLATES: Array<{
   { type: 'TRAIN_UNITS', label: 'Former une unité', target: 1 },
   { type: 'COMPLETE_BUILDING', label: 'Terminer une construction', target: 1 },
   { type: 'RAID_BARBARIAN', label: 'Vaincre un village barbare', target: 1 },
-  { type: 'SCOUT_TARGET', label: 'Obtenir un rapport scout', target: 1 },
-  { type: 'SEND_REINFORCEMENT', label: 'Envoyer un renfort', target: 1 },
 ];
 
 type CardWithTasks = DailyCard & { tasks: DailyCardTask[] };
@@ -63,18 +58,24 @@ export class RetentionService {
     worldId: string,
   ): Promise<RetentionSummaryDto> {
     await this.ownership.assertWorldMember(worldId, userId);
-    const currentDayKey = getParisDailyKey(new Date());
+    const now = new Date();
+    const currentDayKey = getParisDailyKey(now);
+    await this.expireStaleCards(userId, worldId, currentDayKey, now);
     await this.ensureDailyCard(userId, worldId, currentDayKey);
+    const claimableDayKeys = getClaimableDayKeys(now);
 
     const [cards, latestClaim, oyez] = await Promise.all([
       this.prisma.dailyCard.findMany({
         where: {
           userId,
           worldId,
-          status: { in: ['ACTIVE', 'CLAIMABLE'] },
+          OR: [
+            { status: 'ACTIVE', dayKey: currentDayKey },
+            { status: 'CLAIMABLE', dayKey: { in: claimableDayKeys } },
+          ],
         },
         include: { tasks: { orderBy: { createdAt: 'asc' } } },
-        orderBy: { createdAt: 'asc' },
+        orderBy: [{ dayKey: 'desc' }, { createdAt: 'asc' }],
       }),
       this.prisma.dailyCard.findFirst({
         where: {
@@ -92,7 +93,7 @@ export class RetentionService {
     return {
       worldId,
       currentDayKey,
-      backlogLimit: BACKLOG_LIMIT,
+      backlogLimit: DAILY_CARD_LIMIT,
       claimableCount: cards.filter((card) => card.status === 'CLAIMABLE')
         .length,
       defaultRewardVillageId: latestClaim?.rewardVillageId ?? null,
@@ -110,6 +111,7 @@ export class RetentionService {
     const productionRates = await this.resources.getProductionRates(villageId);
 
     return this.prisma.$transaction(async (tx) => {
+      const now = new Date();
       const card = await tx.dailyCard.findUnique({
         where: { id: cardId },
         include: { tasks: { orderBy: { createdAt: 'asc' } } },
@@ -120,7 +122,10 @@ export class RetentionService {
       if (card.status === 'CLAIMED') {
         throw new ConflictException('Daily card already claimed');
       }
-      if (!allTasksComplete(card.tasks)) {
+      if (card.status === 'EXPIRED' || !isWithinClaimGrace(card.dayKey, now)) {
+        throw new BadRequestException('Daily card claim window expired');
+      }
+      if (card.status !== 'CLAIMABLE' || !allTasksComplete(card.tasks)) {
         throw new BadRequestException('Daily card is not complete');
       }
 
@@ -182,6 +187,7 @@ export class RetentionService {
     eventOutboxId: string,
     kind: K,
     payload: PayloadForKind<K>,
+    eventCreatedAt: Date = new Date(),
   ): Promise<void> {
     const projection = getTaskProjection(kind, payload);
     if (!projection) return;
@@ -203,6 +209,7 @@ export class RetentionService {
         tx,
         projection.villageId,
         projection.type,
+        eventCreatedAt,
       );
     });
   }
@@ -217,15 +224,6 @@ export class RetentionService {
       select: { id: true },
     });
     if (existing) return;
-
-    const openCards = await this.prisma.dailyCard.count({
-      where: {
-        userId,
-        worldId,
-        status: { in: ['ACTIVE', 'CLAIMABLE'] },
-      },
-    });
-    if (openCards >= BACKLOG_LIMIT) return;
 
     try {
       await this.prisma.dailyCard.create({
@@ -272,24 +270,61 @@ export class RetentionService {
     tx: Prisma.TransactionClient,
     villageId: string,
     type: DailyCardTaskType,
+    eventCreatedAt: Date,
   ): Promise<void> {
+    const now = new Date();
     const village = await tx.village.findUnique({
       where: { id: villageId },
       select: { userId: true, worldId: true },
     });
     if (!village?.userId) return;
+    const currentDayKey = getParisDailyKey(now);
+    const eventDayKey = getParisDailyKey(eventCreatedAt);
     await this.ensureDailyCardInTransaction(
       tx,
       village.userId,
       village.worldId,
-      getParisDailyKey(new Date()),
+      eventDayKey,
     );
+    await this.progressMatchingTaskForDay(
+      tx,
+      village.userId,
+      village.worldId,
+      eventDayKey,
+      type,
+      eventCreatedAt,
+    );
+    await this.expireStaleCardsInTransaction(
+      tx,
+      village.userId,
+      village.worldId,
+      currentDayKey,
+      now,
+    );
+    if (currentDayKey !== eventDayKey) {
+      await this.ensureDailyCardInTransaction(
+        tx,
+        village.userId,
+        village.worldId,
+        currentDayKey,
+      );
+    }
+  }
 
+  private async progressMatchingTaskForDay(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    worldId: string,
+    dayKey: string,
+    type: DailyCardTaskType,
+    completedAt: Date,
+  ): Promise<void> {
     const card = await tx.dailyCard.findFirst({
       where: {
-        userId: village.userId,
-        worldId: village.worldId,
-        status: 'ACTIVE',
+        userId,
+        worldId,
+        dayKey,
+        status: { in: ['ACTIVE', 'EXPIRED'] },
         tasks: {
           some: {
             type,
@@ -308,15 +343,15 @@ export class RetentionService {
     if (!task) return;
 
     const progress = Math.min(task.progress + 1, task.target);
-    const completedAt = progress >= task.target ? new Date() : null;
+    const taskCompletedAt = progress >= task.target ? completedAt : null;
     await tx.dailyCardTask.update({
       where: { id: task.id },
-      data: { progress, completedAt },
+      data: { progress, completedAt: taskCompletedAt },
     });
 
     const tasksAfterUpdate = card.tasks.map((candidate) =>
       candidate.id === task.id
-        ? { ...candidate, progress, completedAt }
+        ? { ...candidate, progress, completedAt: taskCompletedAt }
         : candidate,
     );
     if (allTasksComplete(tasksAfterUpdate)) {
@@ -333,48 +368,71 @@ export class RetentionService {
     worldId: string,
     dayKey: string,
   ): Promise<void> {
-    const existing = await tx.dailyCard.findUnique({
+    await tx.dailyCard.upsert({
       where: { userId_worldId_dayKey: { userId, worldId, dayKey } },
+      update: {},
+      create: {
+        userId,
+        worldId,
+        dayKey,
+        rewardWood: DAILY_REWARD.wood,
+        rewardStone: DAILY_REWARD.stone,
+        rewardIron: DAILY_REWARD.iron,
+        tasks: {
+          create: TASK_TEMPLATES.map((task) => ({
+            type: task.type,
+            label: task.label,
+            target: task.target,
+          })),
+        },
+      },
       select: { id: true },
     });
-    if (existing) return;
+  }
 
-    const openCards = await tx.dailyCard.count({
+  private async expireStaleCards(
+    userId: string,
+    worldId: string,
+    currentDayKey: string,
+    now: Date,
+  ): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await this.expireStaleCardsInTransaction(
+        tx,
+        userId,
+        worldId,
+        currentDayKey,
+        now,
+      );
+    });
+  }
+
+  private async expireStaleCardsInTransaction(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    worldId: string,
+    currentDayKey: string,
+    now: Date,
+  ): Promise<void> {
+    const claimableDayKeys = getClaimableDayKeys(now);
+    await tx.dailyCard.updateMany({
       where: {
         userId,
         worldId,
-        status: { in: ['ACTIVE', 'CLAIMABLE'] },
+        status: 'ACTIVE',
+        dayKey: { not: currentDayKey },
       },
+      data: { status: 'EXPIRED' },
     });
-    if (openCards >= BACKLOG_LIMIT) return;
-
-    try {
-      await tx.dailyCard.create({
-        data: {
-          userId,
-          worldId,
-          dayKey,
-          rewardWood: DAILY_REWARD.wood,
-          rewardStone: DAILY_REWARD.stone,
-          rewardIron: DAILY_REWARD.iron,
-          tasks: {
-            create: TASK_TEMPLATES.map((task) => ({
-              type: task.type,
-              label: task.label,
-              target: task.target,
-            })),
-          },
-        },
-      });
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        return;
-      }
-      throw error;
-    }
+    await tx.dailyCard.updateMany({
+      where: {
+        userId,
+        worldId,
+        status: 'CLAIMABLE',
+        dayKey: { notIn: claimableDayKeys },
+      },
+      data: { status: 'EXPIRED' },
+    });
   }
 }
 
@@ -398,21 +456,6 @@ export function getTaskProjection<K extends EventKind>(
         ? { villageId: eventPayload.villageId, type: 'RAID_BARBARIAN' }
         : null;
     }
-    case 'scout.reported': {
-      const eventPayload = payload as ScoutReportedPayload;
-      return { villageId: eventPayload.villageId, type: 'SCOUT_TARGET' };
-    }
-    case 'reinforcement.sent': {
-      const eventPayload = payload as ReinforcementSentPayload;
-      return { villageId: eventPayload.villageId, type: 'SEND_REINFORCEMENT' };
-    }
-    case 'garrison.added': {
-      const eventPayload = payload as GarrisonAddedPayload;
-      return {
-        villageId: eventPayload.originVillageId,
-        type: 'SEND_REINFORCEMENT',
-      };
-    }
     default:
       return null;
   }
@@ -426,18 +469,57 @@ function allTasksComplete(
   );
 }
 
-function getParisDailyKey(now: Date): string {
-  const shifted = new Date(now.getTime() - PARIS_RESET_HOUR * 60 * 60 * 1000);
+export function getParisDailyKey(now: Date): string {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Europe/Paris',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-  }).formatToParts(shifted);
+    hour: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(now);
   const values = Object.fromEntries(
     parts.map((part) => [part.type, part.value]),
   );
-  return `${values.year}-${values.month}-${values.day}`;
+  const year = Number(values.year);
+  const month = Number(values.month);
+  const day = Number(values.day);
+  const hour = Number(values.hour);
+
+  if (hour >= PARIS_RESET_HOUR) {
+    return formatDayKey(year, month, day);
+  }
+  return previousDayKey(year, month, day);
+}
+
+export function getPreviousParisDailyKey(now: Date): string {
+  return previousDayKeyFromKey(getParisDailyKey(now));
+}
+
+export function getClaimableDayKeys(now: Date): string[] {
+  return [getParisDailyKey(now), getPreviousParisDailyKey(now)];
+}
+
+export function isWithinClaimGrace(dayKey: string, now: Date): boolean {
+  return getClaimableDayKeys(now).includes(dayKey);
+}
+
+function formatDayKey(year: number, month: number, day: number): string {
+  return [
+    year.toString().padStart(4, '0'),
+    month.toString().padStart(2, '0'),
+    day.toString().padStart(2, '0'),
+  ].join('-');
+}
+
+function previousDayKey(year: number, month: number, day: number): string {
+  const previousDate = new Date(Date.UTC(year, month - 1, day - 1));
+  return previousDate.toISOString().slice(0, 10);
+}
+
+function previousDayKeyFromKey(dayKey: string): string {
+  const [year, month, day] = dayKey.split('-').map(Number);
+  return previousDayKey(year, month, day);
 }
 
 function mapTask(task: DailyCardTask): DailyCardTaskDto {
