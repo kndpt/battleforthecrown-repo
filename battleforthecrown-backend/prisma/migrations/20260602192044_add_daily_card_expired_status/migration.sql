@@ -1,0 +1,1 @@
+ALTER TYPE "DailyCardStatus" ADD VALUE 'EXPIRED';

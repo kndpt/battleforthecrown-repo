@@ -102,7 +102,12 @@ export class EventOutboxService {
       return;
     }
     const payload = parseEventPayload(event.kind, event.payload);
-    await this.retention.recordOutboxEvent(event.id, event.kind, payload);
+    await this.retention.recordOutboxEvent(
+      event.id,
+      event.kind,
+      payload,
+      event.createdAt,
+    );
     await this.onboarding.recordOutboxEvent(event.id, event.kind, payload);
     switch (event.kind) {
       case 'building.completed':

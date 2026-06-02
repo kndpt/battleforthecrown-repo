@@ -68,6 +68,9 @@
 - Pour une QA IG depuis un worktree, ne pas lancer par défaut une DB isolée vide : cloner temporairement la DB principale (`pg_dump battleforthecrown | psql -d battleforthecrown_<worktree>`), tester avec les comptes/mondes existants, puis supprimer cette DB temporaire après validation.
 - Sur la WorldMap, ne pas dévaloriser visuellement les villages joueurs étrangers pour signaler l'ownership. Le rendu "village joueur normal" doit rester valorisant pour tous les joueurs ; distinguer plutôt les villages du joueur courant avec un marqueur propriétaire additionnel.
 - Pour une tâche quotidienne, aligner le libellé sur le trigger exact de progression : si le backend attend `battle.resolved` victorieux, écrire "Vaincre", pas "Attaquer".
+- Quand une tâche quotidienne est retirée des templates, retirer aussi sa projection d'event et ajouter un test de non-projection ; sinon l'outbox continue à viser des types que plus aucune carte ne contient.
+- Pour une progression déclenchée par outbox, utiliser la date métier `EventOutbox.createdAt` pour choisir la carte quotidienne à faire progresser ; le dispatch worker peut arriver après le reset 04h00.
+- Dans une transaction interactive Prisma/Postgres, ne pas provoquer puis avaler un `P2002` pour rendre une création idempotente ; utiliser `upsert`/`ON CONFLICT`, sinon le `tx` peut rester aborté.
 - Quand un bouton flottant daily/retention ouvre une boucle qui concerne aussi la carte, vérifier la parité d'emplacement entre `VillageView` et `WorldMapScreen`, puis déplacer les contrôles carte secondaires si le slot est occupé.
 - Ne jamais passer `relative` dans `BottomSheet.className` : cette classe s'ajoute au wrapper animé qui possède déjà `absolute bottom-0`; elle casse le positionnement/translate fermé-ouvert et laisse la sheet visible en bas.
 - Quand un bug de création de données est corrigé, ne pas s'arrêter au code : réparer ou signaler les lignes déjà créées avec l'ancien bug, puis prouver une nouvelle création via API/DB.
@@ -90,4 +93,5 @@
 - Dans la modale de préparation de mission, respecter la couleur sémantique par mode : attaque rouge, scout/espion bleu, renfort vert.
 - Si un `$bftc-run` démarre avec un fichier sale explicitement gardé hors scope par le user, ne pas l'embarquer : créer la branche depuis `origin/main` si `main` a des commits locaux en avance, puis stage uniquement les fichiers du run.
 - Pour les toasts runtime, vérifier que chaque chemin d'icône pointe vers un fichier réel sous `public/assets` ; un dossier prototype inexistant produit une image cassée en jeu.
+- Dans un worktree BFTC fraîchement créé, lancer `yarn install` avant `shared build`, tests ou `prisma:generate` si `node_modules`/`zod`/`prisma` ne sont pas présents localement.
 - Avant de merger une PR après review, vérifier les threads non résolus et les reviews `CHANGES_REQUESTED`, pas seulement le dernier résumé CodeRabbit "No actionable comments".

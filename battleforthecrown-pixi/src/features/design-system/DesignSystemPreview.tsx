@@ -824,12 +824,6 @@ const dailyQuestItems: DailyQuestItem[] = [
   },
 ];
 
-const dailyQuestBacklog = {
-  badgeLabel: '1/3',
-  hint: 'Prochaine carte délivrée demain · 04h.',
-  title: 'Carte 1 de 3',
-};
-
 const playerProfileSheetFixture = {
   icons: {
     armyPower: '/assets/army-power.png',
@@ -2971,6 +2965,29 @@ export function DesignSystemPreview() {
                 </div>
               ))}
             </div>
+            <div className="h-px bg-[rgba(93,74,50,.25)]" />
+            <div className="flex flex-wrap items-end justify-around gap-x-7 gap-y-5">
+              {[
+                { label: 'Couronne', badge: false, halo: false },
+                { label: 'Avec dot', badge: true, halo: true },
+                { label: 'Avec total', badge: true, halo: true, count: 2 },
+                { label: 'Pressé', badge: true, halo: false, pressed: true },
+              ].map((sample) => (
+                <div className="flex flex-col items-center gap-2" key={`crown-${sample.label}`}>
+                  <RoyalSeal
+                    badge={sample.badge}
+                    badgeCount={sample.count ?? null}
+                    halo={sample.halo}
+                    pressed={sample.pressed ?? false}
+                    size={56}
+                    variant="crown"
+                  />
+                  <span className="font-game text-[10px] font-extrabold uppercase tracking-[.18em] text-[#6d5838]">
+                    {sample.label}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -2982,13 +2999,12 @@ export function DesignSystemPreview() {
           <div className="flex w-full justify-center">
             <DailyQuestPhoneFrame>
               <DailyQuestModal
-                backlog={dailyQuestBacklog}
                 claimRowLabel="Réclamer"
                 closeLabel="Fermer"
                 completedLabel="accomplie"
-                completedSummary="1 / 6"
+                completedSummary="1 / 3"
                 eyebrow="Devoir Royal · jour 1"
-                expiresInLabel="Prochain reset"
+                expiresInLabel="Expire à"
                 expiresInValue="04h00"
                 onClaim={() => undefined}
                 onClose={() => undefined}
@@ -2996,12 +3012,12 @@ export function DesignSystemPreview() {
                 oyez={dailyQuestOyez}
                 primaryActionLabel="Tout · 1"
                 primaryActionVariant="success"
-                quests={dailyQuestItems}
+                quests={dailyQuestItems.slice(0, 3)}
                 questsTodayLabel="Tâches du jour"
                 rewardLabel="Récompense"
                 tasksDividerLabel="Tâches du Roi"
                 taskDoneLabel="✓ Tâche accomplie"
-                title="Devoirs Royaux"
+                title="Devoir royal"
               />
             </DailyQuestPhoneFrame>
           </div>

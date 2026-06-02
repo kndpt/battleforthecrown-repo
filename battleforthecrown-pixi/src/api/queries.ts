@@ -47,17 +47,18 @@ import type {
   RecallReinforcementPayload,
   ReinforcePayload,
 } from '@/lib/types';
+import {
+  RetentionSummarySchema,
+  type ClaimDailyCardRequest,
+  type ClaimDailyCardResponse,
+  type RetentionSummaryDto,
+} from '@battleforthecrown/shared/retention';
 import type {
   OpenConquestDto,
   OpenExpeditionDto,
   ReinforcementReportResponse,
   ScoutReportResponse,
 } from '@battleforthecrown/shared/combat';
-import type {
-  ClaimDailyCardRequest,
-  ClaimDailyCardResponse,
-  RetentionSummaryDto,
-} from '@battleforthecrown/shared/retention';
 import type { OnboardingSummaryDto } from '@battleforthecrown/shared/onboarding';
 
 export const queryKeys = {
@@ -1117,9 +1118,10 @@ export function useRetentionSummaryQuery(worldId: string | null) {
   const userId = useAuthStore((state) => state.user?.id ?? null);
   return useQuery<RetentionSummaryDto>({
     queryKey: queryKeys.retentionSummary(userId, worldId),
-    queryFn: () => {
+    queryFn: async () => {
       if (!userId || !worldId) return Promise.reject(new Error('No world selected'));
-      return apiClient.get<RetentionSummaryDto>('/retention', { query: { worldId } });
+      const raw = await apiClient.get<unknown>('/retention', { query: { worldId } });
+      return RetentionSummarySchema.parse(raw);
     },
     enabled: Boolean(userId && worldId),
     refetchInterval: (query) =>

@@ -57,13 +57,7 @@ export class CombatService {
 
     return this.prisma.$transaction(async (tx) => {
       // 1. Verify ownership and get village
-      const village = await tx.village.findFirst({
-        where: { id: dto.villageId, userId },
-      });
-
-      if (!village) {
-        throw new NotFoundException('Village not found or not owned');
-      }
+      const village = await this.loadOwnedVillage(tx, dto.villageId, userId);
 
       const worldId = village.worldId;
 
@@ -96,16 +90,12 @@ export class CombatService {
       }
 
       // 3. Enforce fog of war: a target seen as a blip cannot be attacked.
-      // Cf. ADR-11 + docs/gameplay/01-overview.md ("Blip non-cliquable").
-      const config = await this.worldConfig.getConfig(worldId);
-      if (config.fogOfWar?.enabled) {
-        const disks = await this.visionService.getVisionDisks(userId, worldId);
-        if (!this.visionService.isInVision({ x: targetX, y: targetY }, disks)) {
-          throw new ForbiddenException(
-            'Target is outside your vision — extend your watchtower to attack.',
-          );
-        }
-      }
+      await this.assertTargetInVision(
+        userId,
+        worldId,
+        { x: targetX, y: targetY },
+        'attack',
+      );
 
       // 4. Verify and deduct units
       await this.verifyAndDeductUnits(tx, dto.villageId, dto.units);
@@ -152,14 +142,7 @@ export class CombatService {
       });
 
       // 8. Schedule combat resolution worker
-      await this.boss.send(
-        'combat:resolve',
-        { expeditionId: expedition.id },
-        {
-          startAfter: arrivalAt,
-          singletonKey: `combat:${expedition.id}`,
-        },
-      );
+      await this.scheduleResolution(expedition.id, arrivalAt);
 
       this.logger.log(
         `Attack expedition created: ${expedition.id}, arrives at ${arrivalAt.toISOString()}`,
@@ -173,28 +156,19 @@ export class CombatService {
     this.logger.log(`Scout initiated by user ${userId}`, { dto });
 
     return this.prisma.$transaction(async (tx) => {
-      const village = await tx.village.findFirst({
-        where: { id: dto.villageId, userId },
-      });
-
-      if (!village) {
-        throw new NotFoundException('Village not found or not owned');
-      }
+      const village = await this.loadOwnedVillage(tx, dto.villageId, userId);
 
       this.assertScoutUnitsOnly(dto.units);
 
       const worldId = village.worldId;
       const target = await this.resolveTargetVillage(tx, worldId, dto);
 
-      const config = await this.worldConfig.getConfig(worldId);
-      if (config.fogOfWar?.enabled) {
-        const disks = await this.visionService.getVisionDisks(userId, worldId);
-        if (!this.visionService.isInVision(target, disks)) {
-          throw new ForbiddenException(
-            'Target is outside your vision — extend your watchtower to scout.',
-          );
-        }
-      }
+      await this.assertTargetInVision(
+        userId,
+        worldId,
+        { x: target.x, y: target.y },
+        'scout',
+      );
 
       await this.verifyAndDeductUnits(tx, dto.villageId, dto.units);
 
@@ -236,14 +210,7 @@ export class CombatService {
         arrivalAt: arrivalAt.toISOString(),
       });
 
-      await this.boss.send(
-        'combat:resolve',
-        { expeditionId: expedition.id },
-        {
-          startAfter: arrivalAt,
-          singletonKey: `combat:${expedition.id}`,
-        },
-      );
+      await this.scheduleResolution(expedition.id, arrivalAt);
 
       this.logger.log(
         `Scout expedition created: ${expedition.id}, arrives at ${arrivalAt.toISOString()}`,
@@ -258,13 +225,12 @@ export class CombatService {
 
     return this.prisma.$transaction(async (tx) => {
       // 1. Verify ownership of origin village
-      const village = await tx.village.findFirst({
-        where: { id: dto.villageId, userId },
-      });
-
-      if (!village) {
-        throw new NotFoundException('Origin village not found or not owned');
-      }
+      const village = await this.loadOwnedVillage(
+        tx,
+        dto.villageId,
+        userId,
+        'Origin village not found or not owned',
+      );
 
       const worldId = village.worldId;
 
@@ -328,14 +294,7 @@ export class CombatService {
       });
 
       // 8. Schedule worker (same as combat:resolve, will handle REINFORCE)
-      await this.boss.send(
-        'combat:resolve',
-        { expeditionId: expedition.id },
-        {
-          startAfter: arrivalAt,
-          singletonKey: `combat:${expedition.id}`,
-        },
-      );
+      await this.scheduleResolution(expedition.id, arrivalAt);
 
       this.logger.log(
         `Reinforcement expedition created: ${expedition.id}, arrives at ${arrivalAt.toISOString()}`,
@@ -459,14 +418,7 @@ export class CombatService {
       });
 
       // 8. Schedule worker
-      await this.boss.send(
-        'combat:resolve',
-        { expeditionId: expedition.id },
-        {
-          startAfter: arrivalAtOrigin,
-          singletonKey: `combat:${expedition.id}`,
-        },
-      );
+      await this.scheduleResolution(expedition.id, arrivalAtOrigin);
 
       this.logger.log(
         `Recall expedition created: ${expedition.id}, arrives at ${arrivalAtOrigin.toISOString()}`,
@@ -689,6 +641,58 @@ export class CombatService {
     const arrivalAt = new Date(now.getTime() + travelTimeMs);
 
     return { travelTimeMs, arrivalAt, now };
+  }
+
+  /** Load a village the caller must own, or throw. Shared by the expedition creators. */
+  private async loadOwnedVillage(
+    tx: PrismaClientOrTx,
+    villageId: string,
+    userId: string,
+    notFoundMessage = 'Village not found or not owned',
+  ) {
+    const village = await tx.village.findFirst({
+      where: { id: villageId, userId },
+    });
+
+    if (!village) {
+      throw new NotFoundException(notFoundMessage);
+    }
+
+    return village;
+  }
+
+  /**
+   * Enforce fog of war: a target seen only as a blip cannot be targeted.
+   * No-op when the world has fog disabled.
+   * Cf. ADR-11 + docs/gameplay/01-overview.md ("Blip non-cliquable").
+   */
+  private async assertTargetInVision(
+    userId: string,
+    worldId: string,
+    point: { x: number; y: number },
+    action: string,
+  ) {
+    const config = await this.worldConfig.getConfig(worldId);
+    if (!config.fogOfWar?.enabled) return;
+
+    const disks = await this.visionService.getVisionDisks(userId, worldId);
+    if (!this.visionService.isInVision(point, disks)) {
+      throw new ForbiddenException(
+        `Target is outside your vision — extend your watchtower to ${action}.`,
+      );
+    }
+  }
+
+  /** Schedule the combat resolution worker for a freshly created EN_ROUTE expedition. */
+  private async scheduleResolution(expeditionId: string, startAfter: Date) {
+    await this.boss.send(
+      'combat:resolve',
+      { expeditionId },
+      {
+        startAfter,
+        singletonKey: `combat:${expeditionId}`,
+      },
+    );
   }
 
   async getActiveExpeditions(userId: string, villageId: string) {

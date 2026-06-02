@@ -10,18 +10,15 @@ import { WorldEntityTooltip } from './WorldEntityTooltip';
 import { buildMapEntities, filterEntitiesByVision } from './buildMapEntities';
 import { AttackDetailModal } from '@/features/combat/AttackDetailModal';
 import { KingdomActivitiesBottomSheet } from '@/features/combat/KingdomActivitiesBottomSheet';
-import { DailyRetentionWidget } from '@/features/retention/DailyRetentionWidget';
 import { OnboardingGuidance } from '@/features/onboarding/OnboardingGuidance';
 import { getOnboardingGuidance } from '@/features/onboarding/onboardingViewModel';
 import { runGameAction, type GameActionId } from '@/features/game-actions/gameActions';
 import { useBuildingsForLockCheck } from '@/features/layout/useBuildingsForLockCheck';
 import {
-  useClaimDailyCardMutation,
   useMyVillagesQuery,
   useOnboardingSummaryQuery,
   useOpenConquestsQuery,
   useOpenExpeditionsQuery,
-  useRetentionSummaryQuery,
   useWorldDetailsQuery,
   useWorldEntitiesQuery,
 } from '@/api/queries';
@@ -48,9 +45,7 @@ export function WorldMapScreen() {
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const worldEntities = useWorldEntitiesQuery(worldId);
   const myVillages = useMyVillagesQuery(worldId);
-  const retentionSummary = useRetentionSummaryQuery(worldId);
   const onboardingSummary = useOnboardingSummaryQuery(worldId);
-  const claimDailyCard = useClaimDailyCardMutation();
   const openConquests = useOpenConquestsQuery(worldId);
   const openExpeditions = useOpenExpeditionsQuery(worldId);
   const worldDetails = useWorldDetailsQuery(worldId);
@@ -189,19 +184,6 @@ export function WorldMapScreen() {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden">
       <div className="relative flex-1 overflow-hidden">
-        <div className="absolute right-4 top-4 z-30">
-          <DailyRetentionWidget
-            activeVillageId={currentVillageId}
-            isClaiming={claimDailyCard.isPending}
-            isLoading={retentionSummary.isLoading}
-            onClaim={(input) => claimDailyCard.mutate(input)}
-            onAction={runWorldAction}
-            onNavigate={navigate}
-            summary={retentionSummary.data}
-            villages={myVillages.data ?? []}
-          />
-        </div>
-
         <div className="mx-auto h-full w-full max-w-6xl">
           <main className="relative h-full overflow-hidden border-y-2 border-game-gold-border bg-[#0d0f17]">
             {worldEntities.isLoading || myVillages.isLoading ? (

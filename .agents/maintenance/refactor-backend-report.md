@@ -8,7 +8,104 @@ New PRs use branch `maint/refactor-backend/<short-topic>` and PR title
 
 ---
 
-## Run 2026-05-31 — branch `claude/quirky-euler-JqDcx`
+## Run 2026-06-02 — branch `maint/refactor-backend/combat-service-dedup`
+
+**Model:** claude-opus-4-8
+**Scan commit:** `34b14a7`
+
+---
+
+### Prior findings status (Run 2026-05-31)
+
+| ID | Status | Note |
+|----|--------|------|
+| B1 | **RESOLVED** | `handleCombatResolution` decomposed into 6 named steps (`combat.worker.ts:123-288`); the tx body is now a readable orchestration. |
+| B2 | **RESOLVED** | Loot/loss branches unified in `applyLootToDefender` (`combat.worker.ts:296-354`); the only barbarian/PvP divergence is an explicit conditional. |
+| B3 | **STILL OPEN** | `getUserIdByVillage` N+1 in outbox dispatch persists (`event-outbox.service.ts:534`, ~20 call-sites resolve villageId→userId one row at a time). Not selected — see rejected themes. |
+| B4 | **STILL OPEN** | Verbose per-event `logger.log` (📦/📨/✅/🔔/⚔️/🛡️) in the hot dispatch loop still at default level (`event-outbox.service.ts:65-92` + 8 per-notify sites). Low. |
+| B5 | **STILL OPEN** | Capture-duration tables still hardcoded in the worker (`combat.worker.ts:35-49`). Low. |
+| B6 | **PARTIAL** | Named `DefenderVillage`/`OccupationDefense` types + `EMPTY_LOOT` added; `applyDefenderLosses`/`getCaptureDurationMs` still re-spell the inline `Prisma.VillageGetPayload<…>` literal (`combat.worker.ts:949-951,1064-1066`). Low. |
+
+---
+
+### Module structure (mental model)
+
+`src/` = bounded contexts under `modules/` + cross-cutting `workers/`, `infra/`, `common/`. Layering is clean: only `health.controller.ts` touches Prisma (a liveness ping — the canonical exception); no other controller or gateway hits the DB. Zero `as any` / `: any` in production code, zero `console.*` outside `scripts/`, zero `@ts-ignore`. The combat module dominates by size **and** churn (`combat.worker.ts` 1389, `combat.service.ts` 907, `conquest.service.ts` 565) and is well sub-divided (`strategies/`, `loot/providers/`, `codecs/`, `*.presenter.ts`, `*-report.service.ts`). The `event/` module owns the Outbox→Socket.IO dispatch loop; `RetentionService`/`OnboardingService` are side-effect listeners hooked into dispatch. The two prior runs hollowed out `combat.worker.ts` (B1) and split `CombatReportService` out of `combat.service.ts` (C2), but `combat.service.ts` has since regrown 683 → 907 LOC as the four expedition-creation paths were added/extended, re-accumulating structural duplication.
+
+---
+
+### Findings
+
+| ID | Category | Location | Description | Severity | Effort |
+|----|----------|----------|-------------|----------|--------|
+| D1 | Duplication | `combat.service.ts:60,176,261` | **SELECTED** — owned-village lookup `tx.village.findFirst({ where: { id, userId } })` + `if (!village) throw NotFoundException` repeated verbatim across `initiateAttack`/`initiateScout`/`initiateReinforce` (and a 4th non-owning variant in `initiateRecall`). | Medium | S |
+| D2 | Duplication | `combat.service.ts:100-108, 189-197` | **SELECTED** — fog-of-war gate (load config → if `fogOfWar.enabled` → `getVisionDisks` → `isInVision` → `ForbiddenException`) duplicated verbatim in `initiateAttack` and `initiateScout`; only the action verb in the message differs. ~10 LOC × 2. | Medium | S |
+| D3 | Duplication | `combat.service.ts:155,239,331,462` | **SELECTED** — `boss.send('combat:resolve', { expeditionId }, { startAfter, singletonKey: \`combat:${id}\` })` block copied identically across all four EN_ROUTE expedition creators. | Medium | S |
+| D4 | Duplication | `combat.service.ts:127,213,304,434` | `tx.expedition.create` data block (`worldId`/`attackerVillageId`/`units: encodeUnitMap`/`status: 'EN_ROUTE'`/`departAt`/`arrivalAt`/`outboundTravelMs`) repeated 4× — varies only by `kind`/`targetKind`/`targetRefId`/`targetX/Y` + optional reinforcement fields. | Medium | M |
+| B3 | Performance | `event-outbox.service.ts:534` | `getUserIdByVillage` issues one `village.findUnique` per event in the ~1s dispatch loop — up to 100 sequential single-row queries per batch (~20 call-sites resolve villageId→userId individually). Batchable via one `findMany(where id in […])` per batch. Carried from B3/C4. | Medium | M |
+| B4 | Observability | `event-outbox.service.ts:65-92` + per-notify | Hot dispatch loop logs 2–3 verbose `logger.log` lines **per event** at default level on every poll, plus 8 emoji per-notify sites — noise + serialization cost in steady state; should be `debug`. Carried. | Low | S |
+| B5 | Config | `combat.worker.ts:35-49` | `BARBARIAN_CAPTURE_DURATIONS_MS` / `PVP_CAPTURE_DURATIONS_MS` are gameplay-balance tables hardcoded in the worker rather than world config. Carried. | Low | S |
+| B6 | Type debt | `combat.worker.ts:949-951, 1064-1066` | `applyDefenderLosses` / `getCaptureDurationMs` re-spell the inline `Prisma.VillageGetPayload<{ include: { resourceStock; buildings } }>` literal instead of reusing the named `DefenderVillage` alias defined at line 58. Trivial. | Low | S |
+| D5 | Duplication | `combat.worker.ts:842-866, 911-930` | `buildBarbarianDefender` and `buildPlayerDefender` share a near-identical garrison→participants aggregation loop (~25 LOC each); only the seed participant + resource source differ. Extractable to a shared `aggregateGarrisonParticipants` helper. | Low | M |
+| D6 | Observability | `combat.service.ts:56,173,257,349,480` + worker | Every public combat method opens with a `logger.log` echoing the full `dto` at default level — leaks unit composition / coordinates into steady-state logs; belongs at `debug`. | Low | S |
+
+---
+
+### Looks bad but is actually fine
+
+- **`combat.controller.ts` is 273 LOC** — over the 200-LOC controller threshold, but it's pure delegation: every handler is a one-liner forwarding to a service, the only logic is the `requireWorldId` guard (a routing-level 400). Length is a function of endpoint count, not misplaced logic. Not a finding.
+- **`as Payload` casts in `event-outbox.service.ts` switch** — each `case` narrows a value already validated by `parseEventPayload` against `EVENT_PAYLOAD_SCHEMAS` (line 104). Typing bridge over a Zod-checked value with an exhaustive `never` default. Fine.
+- **Outbox dispatch `catch` that only logs** (`event-outbox.service.ts:93-95`) — intentional: a failed dispatch leaves `dispatchedAt: null` so the next poll retries. Not swallowed.
+- **`boss.send` outside the `$transaction`** (`combat.service.ts:559-569` `recallEnRoute`, `combat.worker.ts:704`) — deliberate, documented inline: avoids scheduling a job a rolled-back tx would orphan. The N+1 scheduleResolution sites (D3) are *inside* their tx by design (same reasoning inverted: they must not fire if the create rolls back) — the dedup keeps them in-tx.
+- **`recallEnRoute` relies on the worker status guard instead of cancelling the pg-boss job** (`combat.service.ts:534-538`) — documented fallback; jobId isn't stored, worker no-ops on non-`EN_ROUTE`.
+- **`process.env` reads** — confined to `main.ts`/`app.module.ts` bootstrap, `outbox.worker.ts` poll interval, and `join-world.use-case.ts:176` (`startingResourceAmount`, validated + defaulted). No unvalidated secret reads.
+- **`resolveTargetVillage` double `worldId` check** (`combat.service.ts:646-656`) — redundant but harmless guard; not worth touching in a dedup PR.
+
+---
+
+### Selected theme: D1 + D2 + D3 — collapse the duplicated expedition-creation skeleton in `CombatService`
+
+**Why this over alternatives:**
+- **`combat.service.ts` is the #2 file by size and regrew 683 → 907 LOC** since the last run's split — the clearest "debt re-accumulated" signal in the backend, and it sits in the highest-churn module.
+- **D1/D2/D3 are three facets of one root cause**: the four EN_ROUTE expedition creators (`initiateAttack`/`Scout`/`Reinforce`/`Recall`) were written by copy-paste, so ownership lookup, the fog-of-war gate, and the `combat:resolve` scheduling are each duplicated 2–4×. Folding them into named private helpers is one coherent theme, not three.
+- **Pure behavior-preserving extraction** → fully covered by the existing smoke suite (`combat-attack`, `scouting`, `reinforcements`, `recall-en-route`, `combat-conquest-hook`) + `static-check`. No public-method signature change, no event/payload change, no Prisma migration, no gameplay rule change.
+- **Measurable**: collapses 6 owned-village lookups → 1 helper, 2 fog-of-war gates → 1, and 4 `combat:resolve` scheduling blocks → 1. Net LOC is ~flat (the three helpers cost roughly what the inline duplication did) — the win is single-source-of-truth, not line count: a change to ownership semantics, the fog gate, or the resolution-queue contract now touches one site instead of 2–4.
+
+**Rejected:**
+- **B3 (outbox N+1):** real and now ~20 call-sites, but Medium effort on the realtime hot path — higher blast radius, and it deserves its own focused PR with a perf assertion rather than riding on a dedup change. Deferred (3rd run running).
+- **D4 (`expedition.create` block):** tempting, but the four creates diverge on enough fields (`kind`, optional `reinforcementOriginVillageId`, `reinforcementRecallActorUserId`) that a single builder risks obscuring intent; left out to keep the diff a crisp, obviously-equivalent extraction. Candidate for a follow-up.
+- **D5 (defender-builder dedup):** Medium effort, touches combat-resolution input construction — better isolated so a reviewer can reason about garrison aggregation alone.
+- **B4/B5/B6/D6:** Low severity; bundling log-level or config-table changes into a structural dedup would muddy the diff and the review.
+
+**Plan:** add three private helpers to `CombatService`, behavior-preserving:
+1. `loadOwnedVillage(tx, villageId, userId, notFoundMessage?)` — owned-village lookup (D1), used in attack/scout/reinforce.
+2. `assertTargetInVision(userId, worldId, point, action)` — fog-of-war gate (D2), used in attack/scout; `action` feeds the existing error verb.
+3. `scheduleResolution(expeditionId, startAfter)` — wraps the `combat:resolve` `boss.send` (D3), used in all four creators.
+
+### Result
+
+- `combat.service.ts`: 3 new private helpers (`loadOwnedVillage`, `assertTargetInVision`, `scheduleResolution`) replace the duplicated skeleton in `initiateAttack`/`initiateScout`/`initiateReinforce`/`initiateRecall`.
+- Owned-village lookup: 3 inline `findFirst`+throw blocks → `loadOwnedVillage` (custom not-found message preserved for the reinforce path).
+- Fog-of-war gate: the two verbatim `getConfig`→`getVisionDisks`→`isInVision`→`ForbiddenException` blocks → `assertTargetInVision`, with the action verb (`attack`/`scout`) parameterised so the error messages are unchanged.
+- `combat:resolve` scheduling: 4 identical `boss.send` blocks → `scheduleResolution`. The single `combat:return` send in `recallEnRoute` is genuinely single-use and left inline.
+- No public-method signature, REST contract, WS event, payload, or Prisma change. Behavior-preserving. File LOC ~flat (907 → 911); the value is DRY, not line count.
+
+### Verification
+
+```shell
+yarn static-check                                   → ✅ tsc (backend+pixi) + eslint --quiet, 0 errors
+yarn test:backend (unit)                            → ✅ 236 passed, 22 suites
+yarn test:smoke:run (combat-attack, scouting,       → ✅ 14 passed, 5 suites
+  reinforcements, recall-en-route, conquest-hook)
+```
+
+Baseline (commit `34b14a7`): same suites green pre-refactor → green post-refactor. Behavior preserved.
+
+### Docs impact
+
+Aucun changement nécessaire — refactor interne d'un service (extraction de helpers privés), pas de changement d'API REST, d'event WS, de modèle Prisma ni de règle gameplay. Findings B3/B4/B5/B6/D4/D5/D6 restent ouverts (hors scope, documentés ci-dessus).
+
+
 
 **Model:** claude-opus-4-8
 **Scan commit:** `a086359`

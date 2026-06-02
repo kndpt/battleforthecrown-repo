@@ -272,15 +272,16 @@ describe('scripted onboarding smoke', () => {
       where: { userId: player.userId, worldId: world.id },
       include: { tasks: true },
     });
-    expect(dailyCard.status).toBe('ACTIVE');
+    expect(dailyCard.status).toBe('CLAIMABLE');
     const dailyTasks = Object.fromEntries(
       dailyCard.tasks.map((task) => [task.type, task]),
     );
+    expect(dailyCard.tasks).toHaveLength(3);
     expect(dailyTasks.COMPLETE_BUILDING?.progress).toBe(1);
     expect(dailyTasks.TRAIN_UNITS?.progress).toBe(1);
     expect(dailyTasks.RAID_BARBARIAN?.progress).toBe(1);
-    expect(dailyTasks.SCOUT_TARGET?.progress).toBe(0);
-    expect(dailyTasks.SEND_REINFORCEMENT?.progress).toBe(0);
+    expect(dailyTasks.SCOUT_TARGET).toBeUndefined();
+    expect(dailyTasks.SEND_REINFORCEMENT).toBeUndefined();
 
     const joinAfterCompletion = await joinWorld(
       ctx.server,
