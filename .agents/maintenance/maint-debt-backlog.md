@@ -126,8 +126,36 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
     a countdown: never shows 0 while time remains). Added summaryLabel time assertion (was uncovered).
   verification: yarn static-check ✓ · backend 232 tests ✓ · pixi 229 tests ✓
 
+- status: proposed
+  area: >
+    battleforthecrown-pixi/src/features/HelloPixiScene.tsx (deleted),
+    battleforthecrown-pixi/src/pixi/scenes/BootScene.ts (deleted),
+    battleforthecrown-pixi/src/features/layout/DebugOverlay.tsx (deleted),
+    battleforthecrown-pixi/src/lib/useGameSocketStatus.ts (deleted),
+    battleforthecrown-pixi/src/lib/unitConfig.ts (deleted)
+  branch: claude/beautiful-meitner-dumo0
+  title: "maint(debt): remove dead Pixi scaffolding (demo scenes/overlay + unused unit config)"
+  note: >
+    5 fully-dead files (zero importers anywhere, repo-wide grep + path-import check confirmed):
+    HelloPixiScene + createBootScene = leftover demo scenes; DebugOverlay (its only consumer of
+    useGameSocketStatus, so the hook went with it) was never mounted; lib/unitConfig.ts exported
+    UNIT_CONFIG/UnitConfig with no readers — distinct from the live features/army/unitConfig.ts
+    (`unitMetaFor`, ~11 importers). VillageCanvas was a sibling dead file but is the SOLE consumer of
+    the VillageScene pipeline; deleting it cascades into a render refactor — excluded as a separate
+    larger candidate (see new candidate below).
+  verification: yarn static-check ✓ · pixi 276 tests ✓
+
 - status: candidate
-  area: pixi magic constants — `SECONDS_PER_HOUR` (3600) inlined in ~6 files; duplicate `formatDuration` in UnitCard.tsx + UnitDetailModal.tsx
+  area: >
+    battleforthecrown-pixi/src/features/village/VillageCanvas.tsx + its exclusive deps
+    (pixi/scenes/VillageScene.ts, createVillageScene)
+  note: >
+    VillageCanvas has zero importers but is the only consumer of createVillageScene/VillageScene.
+    Removing it orphans the whole VillageScene render pipeline (BuildingSprite per-frame driver, etc.).
+    Too broad for a bounded debt PR — needs a deliberate "is canvas village rendering retired?" decision.
+
+- status: candidate
+  area: pixi magic constants — `SECONDS_PER_HOUR` (3600) inlined in ~7 files; duplicate `formatDuration` in UnitCard.tsx + UnitDetailModal.tsx
   note: >
     3600 repeats across army/village duration formatters; could import a shared MS_PER_HOUR or define
     SECONDS_PER_HOUR in pixi lib. formatDuration is duplicated but the two copies differ in spacing
@@ -187,3 +215,7 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
   ScoutReportResponse was already imported from @battleforthecrown/shared/combat; alias caused 3 consumer files to
   import a re-exported name rather than the canonical shared type. Removed alias, updated 4 files.
   static-check ✓ · pixi 229 ✓. Also cleaned backlog: marked proposed→fixed for PRs #6, #9, #10, #11.
+- 2026-06-02: dead-code sweep on `claude/beautiful-meitner-dumo0` — deleted 5 fully-orphaned Pixi
+  scaffolding files (HelloPixiScene, BootScene/createBootScene, DebugOverlay + its sole-consumer hook
+  useGameSocketStatus, lib/unitConfig.ts). Excluded VillageCanvas (sole consumer of VillageScene
+  pipeline → cascade, logged as candidate). static-check ✓ · pixi 276 ✓.
