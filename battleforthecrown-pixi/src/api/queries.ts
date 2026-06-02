@@ -34,6 +34,13 @@ import { useExpeditionsStore } from '@/stores/expeditions';
 import { useGameStore } from '@/stores/game';
 import { resetGameSessionStores } from '@/stores/session';
 import { buildRecalledExpeditionPatch } from '@/lib/expeditionRecall';
+import { pushRefundToast } from './refundToast';
+import {
+  CancelConstructionResponseSchema,
+  CancelTrainingResponseSchema,
+  type CancelConstructionResponse,
+  type CancelTrainingResponse,
+} from './cancelResponses';
 import type {
   Expedition,
   GarrisonLine,
@@ -548,14 +555,24 @@ interface CancelTrainingInput {
 
 export function useCancelTrainingMutation() {
   const queryClient = useQueryClient();
-  return useMutation<void, Error, CancelTrainingInput>({
-    mutationFn: ({ villageId, trainingId }) =>
-      apiClient.delete<void>(`/army/${villageId}/training/${trainingId}/cancel`),
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
+  return useMutation<CancelTrainingResponse, Error, CancelTrainingInput>({
+    mutationFn: async ({ villageId, trainingId }) => {
+      const raw = await apiClient.delete<unknown>(
+        `/army/${villageId}/training/${trainingId}/cancel`,
+      );
+      return CancelTrainingResponseSchema.parse(raw);
+    },
+    onSuccess: (data) => {
+      pushRefundToast('Entraînement annulé', data.refunded);
+    },
     onSettled: (_data, _err, { villageId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.armyTraining(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.resources(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.crowns(userId, worldId) });
     },
   });
 }
@@ -1151,9 +1168,13 @@ export function useClaimDailyCardMutation() {
 
 export function useCancelConstructionMutation() {
   const queryClient = useQueryClient();
-  return useMutation<void, Error, CancelConstructionInput, CancelContext>({
-    mutationFn: ({ villageId, buildingId }) =>
-      apiClient.delete<void>(`/village/${villageId}/buildings/${buildingId}/cancel`),
+  return useMutation<CancelConstructionResponse, Error, CancelConstructionInput, CancelContext>({
+    mutationFn: async ({ villageId, buildingId }) => {
+      const raw = await apiClient.delete<unknown>(
+        `/village/${villageId}/buildings/${buildingId}/cancel`,
+      );
+      return CancelConstructionResponseSchema.parse(raw);
+    },
     onMutate: async ({ villageId, buildingId }) => {
       const queueKey = queryKeys.queue(villageId);
       await queryClient.cancelQueries({ queryKey: queueKey });
@@ -1167,10 +1188,14 @@ export function useCancelConstructionMutation() {
       if (!context?.previousQueue) return;
       queryClient.setQueryData(queryKeys.queue(villageId), context.previousQueue);
     },
+    onSuccess: (data) => {
+      pushRefundToast('Construction annulée', data.refunded);
+    },
     onSettled: (_data, _err, { villageId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.queue(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.buildings(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.resources(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
     },
   });
 }

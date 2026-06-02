@@ -1,7 +1,12 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useUiStore } from '@/stores/ui';
 import { ToastStack } from './ToastStack';
+import { TOAST_ICON_BY_TONE } from './toastIcons';
+
+const PUBLIC_DIR = join(process.cwd(), 'public');
 
 describe('ToastStack', () => {
   const play = vi.fn().mockResolvedValue(undefined);
@@ -42,6 +47,44 @@ describe('ToastStack', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Fermer' }));
     expect(useUiStore.getState().toasts).toHaveLength(0);
+  });
+
+  it('maps runtime toast icons to existing public assets', () => {
+    const missingIcons = Object.values(TOAST_ICON_BY_TONE).filter(
+      (iconPath) => !existsSync(join(PUBLIC_DIR, iconPath.replace(/^\/+/, ''))),
+    );
+
+    expect(missingIcons).toEqual([]);
+  });
+
+  it('renders refund rows with ResourceIcon and hides zero values', () => {
+    useUiStore.getState().pushToast({
+      refundItems: [
+        { resource: 'wood', amount: 235 },
+        { resource: 'stone', amount: 0 },
+        { resource: 'population', amount: 6 },
+        { resource: 'crowns', amount: 50 },
+      ],
+      tone: 'success',
+      title: 'Construction annulée',
+      ttlMs: 0,
+    });
+
+    render(<ToastStack />);
+
+    expect(screen.getByLabelText('Ressources remboursées')).toHaveTextContent(
+      '+235',
+    );
+    expect(
+      screen.getByLabelText('Population et couronnes remboursées'),
+    ).toHaveTextContent('+6');
+    expect(
+      screen.getByLabelText('Population et couronnes remboursées'),
+    ).toHaveTextContent('+50');
+    expect(screen.getByAltText('Bois')).toBeInTheDocument();
+    expect(screen.getByAltText('Population')).toBeInTheDocument();
+    expect(screen.getByAltText('Couronnes')).toBeInTheDocument();
+    expect(screen.queryByAltText('Pierre')).not.toBeInTheDocument();
   });
 
   it('dismisses runtime toasts after their ttl', () => {

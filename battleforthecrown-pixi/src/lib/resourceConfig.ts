@@ -11,7 +11,7 @@
 // TYPES
 // ===================================
 
-export type ResourceType = 'wood' | 'stone' | 'iron' | 'gold' | 'food' | 'population';
+export type ResourceType = 'wood' | 'stone' | 'iron' | 'gold' | 'food' | 'population' | 'crowns';
 
 export interface ResourceConfig {
   id: ResourceType;
@@ -141,6 +141,24 @@ export const RESOURCE_CONFIG: Record<ResourceType, ResourceConfig> = {
     unit: {
       short: 'P',
       long: 'Population',
+    },
+  },
+
+  crowns: {
+    id: 'crowns',
+    name: 'couronnes',
+    nameCapitalized: 'Couronnes',
+    icon: '👑',
+    assetPath: '/assets/crown.png',
+    color: {
+      text: 'text-yellow-200',
+      bg: 'bg-yellow-100/20',
+      border: 'border-yellow-600',
+      gradient: 'from-yellow-200 to-yellow-400',
+    },
+    unit: {
+      short: 'C',
+      long: 'Couronnes',
     },
   },
 };

@@ -1,5 +1,9 @@
 import request from 'supertest';
-import { getQuarterPopulationLimit } from '@battleforthecrown/shared/village';
+import {
+  BUILDING_DEFINITIONS,
+  BUILDING_TYPES,
+  getQuarterPopulationLimit,
+} from '@battleforthecrown/shared/village';
 import { SMOKE_WORLD_CONFIG } from './fixtures/smoke-world-config';
 import {
   bootSmokeApp,
@@ -64,6 +68,82 @@ describe('construction smoke', () => {
       { timeoutMs: 10_000 },
     );
     expect(event?.dispatchedAt).toBeTruthy();
+  });
+
+  it('construction: cancel returns refunded resources and population payload', async () => {
+    const world = await seedSmokeWorld(
+      ctx.prisma,
+      `build-cancel-${Date.now()}`,
+    );
+    await ctx.prisma.world.update({
+      where: { id: world.id },
+      data: {
+        config: {
+          ...SMOKE_WORLD_CONFIG,
+          tempo: {
+            ...SMOKE_WORLD_CONFIG.tempo,
+            overrides: {
+              ...SMOKE_WORLD_CONFIG.tempo.overrides,
+              constructionSpeed: 1,
+            },
+          },
+        },
+      },
+    });
+    const user = await registerUser(ctx.server, 'build-cancel');
+    const join = await joinWorld(
+      ctx.server,
+      user.accessToken,
+      world.id,
+      'build-cancel-village',
+    );
+    const villageId = join.village.id;
+    const expectedRefund =
+      BUILDING_DEFINITIONS[BUILDING_TYPES.QUARTER].levels[1];
+
+    await ctx.prisma.building.updateMany({
+      where: { villageId, type: BUILDING_TYPES.QUARTER },
+      data: { level: 0, startTime: null, endTime: null },
+    });
+    await ctx.prisma.resourceStock.update({
+      where: { villageId },
+      data: {
+        wood: 1_000_000,
+        stone: 1_000_000,
+        iron: 1_000_000,
+        maxPerType: 10_000_000,
+      },
+    });
+    await ctx.prisma.population.update({
+      where: { villageId },
+      data: { used: 0, max: 1000 },
+    });
+
+    const upgrade = await request(ctx.server)
+      .post(`/village/${villageId}/upgrade`)
+      .set('Authorization', `Bearer ${user.accessToken}`)
+      .send({ buildingType: BUILDING_TYPES.QUARTER });
+    expect(upgrade.status).toBeLessThan(300);
+
+    const quarter = await ctx.prisma.building.findFirstOrThrow({
+      where: { villageId, type: BUILDING_TYPES.QUARTER },
+    });
+    expect(quarter.endTime).toBeTruthy();
+
+    const cancel = await request(ctx.server)
+      .delete(`/village/${villageId}/buildings/${quarter.id}/cancel`)
+      .set('Authorization', `Bearer ${user.accessToken}`);
+
+    expect(cancel.status).toBeLessThan(300);
+    expect(cancel.body).toEqual({
+      success: true,
+      refunded: {
+        wood: expectedRefund.wood,
+        stone: expectedRefund.stone,
+        iron: expectedRefund.iron,
+        population: expectedRefund.population,
+      },
+    });
   });
 
   it('construction: accepts QUARTER when an ECONOMIC population bonus covers the cost', async () => {

@@ -88,3 +88,6 @@
 - Pour les étapes onboarding qui ciblent une entité de jeu réelle, utiliser l'asset runtime de cette entité quand il existe plutôt qu'une icône générique.
 - Avant de figer une séquence onboarding, vérifier les prérequis de lock des bâtiments demandés ensuite ; si une étape future est verrouillée par un niveau de Château, ajouter l'upgrade dans le script.
 - Dans la modale de préparation de mission, respecter la couleur sémantique par mode : attaque rouge, scout/espion bleu, renfort vert.
+- Si un `$bftc-run` démarre avec un fichier sale explicitement gardé hors scope par le user, ne pas l'embarquer : créer la branche depuis `origin/main` si `main` a des commits locaux en avance, puis stage uniquement les fichiers du run.
+- Pour les toasts runtime, vérifier que chaque chemin d'icône pointe vers un fichier réel sous `public/assets` ; un dossier prototype inexistant produit une image cassée en jeu.
+- Avant de merger une PR après review, vérifier les threads non résolus et les reviews `CHANGES_REQUESTED`, pas seulement le dernier résumé CodeRabbit "No actionable comments".

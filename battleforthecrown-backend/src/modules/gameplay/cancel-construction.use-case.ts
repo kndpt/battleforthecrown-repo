@@ -10,6 +10,16 @@ import { OutboxPublisher } from '../event/outbox-publisher.service';
 
 type StrategyName = 'FORTRESS' | 'RAIDERS' | 'ECONOMIC' | 'BALANCED';
 
+export interface CancelConstructionResult {
+  success: true;
+  refunded: {
+    wood: number;
+    stone: number;
+    iron: number;
+    population: number;
+  };
+}
+
 @Injectable()
 export class CancelConstructionUseCase {
   constructor(
@@ -19,7 +29,11 @@ export class CancelConstructionUseCase {
     private readonly outbox: OutboxPublisher,
   ) {}
 
-  async execute(villageId: string, buildingId: string, userId: string) {
+  async execute(
+    villageId: string,
+    buildingId: string,
+    userId: string,
+  ): Promise<CancelConstructionResult> {
     await this.ownership.assertVillageOwnedBy(villageId, userId);
 
     return this.prisma.$transaction(async (tx) => {
@@ -87,7 +101,15 @@ export class CancelConstructionUseCase {
       // (the previous implementation forgot this — see audit ticket 03 / 11).
       await this.outbox.resourcesChanged(building.villageId, tx);
 
-      return { success: true, refunded: cost };
+      return {
+        success: true,
+        refunded: {
+          wood: cost.wood,
+          stone: cost.stone,
+          iron: cost.iron,
+          population: cost.population,
+        },
+      };
     });
   }
 }

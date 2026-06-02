@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { UNIT_TYPES } from '@battleforthecrown/shared/army';
+import { UNIT_CATALOG, UNIT_TYPES } from '@battleforthecrown/shared/army';
 import type { WorldConfig } from '@battleforthecrown/shared/world';
 import {
   bootSmokeApp,
@@ -91,6 +91,80 @@ describe('army training smoke', () => {
       events.filter((item) => item.kind === 'unit.training.completed'),
     ).toHaveLength(1);
     expect(events).toHaveLength(4);
+  });
+
+  it('training: cancel returns refunded cost payload for remaining units', async () => {
+    const world = await seedSmokeWorld(
+      ctx.prisma,
+      `train-cancel-${Date.now()}`,
+    );
+    await ctx.prisma.world.update({
+      where: { id: world.id },
+      data: {
+        config: {
+          ...SMOKE_WORLD_CONFIG,
+          tempo: {
+            ...SMOKE_WORLD_CONFIG.tempo,
+            overrides: {
+              ...SMOKE_WORLD_CONFIG.tempo.overrides,
+              unitTrainingSpeed: 1,
+            },
+          },
+        },
+      },
+    });
+    const user = await registerUser(ctx.server, 'train-cancel');
+    const join = await joinWorld(
+      ctx.server,
+      user.accessToken,
+      world.id,
+      'train-cancel-village',
+    );
+    const villageId = join.village.id;
+    const unitCost = UNIT_CATALOG.costs[UNIT_TYPES.MILITIA];
+
+    await ctx.prisma.building.updateMany({
+      where: { villageId, type: 'BARRACKS' },
+      data: { level: 1 },
+    });
+    await ctx.prisma.resourceStock.update({
+      where: { villageId },
+      data: {
+        wood: 100_000,
+        stone: 100_000,
+        iron: 100_000,
+        maxPerType: 1_000_000,
+      },
+    });
+    await ctx.prisma.population.update({
+      where: { villageId },
+      data: { used: 0, max: 1000 },
+    });
+
+    const train = await request(ctx.server)
+      .post(`/army/${villageId}/train`)
+      .set('Authorization', `Bearer ${user.accessToken}`)
+      .send({ unitType: UNIT_TYPES.MILITIA, quantity: 3 });
+    expect(train.status).toBeLessThan(300);
+
+    const training = await ctx.prisma.unitTraining.findFirstOrThrow({
+      where: { villageId, unitType: UNIT_TYPES.MILITIA },
+    });
+    const cancel = await request(ctx.server)
+      .delete(`/army/${villageId}/training/${training.id}/cancel`)
+      .set('Authorization', `Bearer ${user.accessToken}`);
+
+    expect(cancel.status).toBeLessThan(300);
+    expect(cancel.body).toEqual({
+      success: true,
+      refunded: {
+        wood: unitCost.wood * 3,
+        stone: unitCost.stone * 3,
+        iron: unitCost.iron * 3,
+        population: unitCost.population * 3,
+        crowns: 0,
+      },
+    });
   });
 
   it('training: accepts WARRIOR when an ECONOMIC population bonus covers the quantity', async () => {

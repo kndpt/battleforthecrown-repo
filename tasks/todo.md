@@ -1,5 +1,48 @@
 # Todo
 
+## 2026-06-02 — PR #35 commentaires review
+
+- [x] Lire les threads review et séparer actionnable / optionnel / déjà OK.
+- [x] Corriger les retours actionnables : types de retour backend, `pushRefundToast`, validation Zod.
+- [x] Lancer checks ciblés et `static-check`.
+- [ ] Pousser le follow-up, vérifier CI/CodeRabbit, puis merger.
+
+### Review
+
+- Deux use-cases backend déclarent maintenant explicitement leurs types de retour publics.
+- `pushRefundToast` déclare `: void`.
+- Les réponses cancel construction/training passent par des schemas Zod avant d'être utilisées par les mutations.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test cancelResponses.test.ts refundToast.test.ts ToastStack.test.tsx` — 3 suites / 10 tests passés.
+- Vérification : `rtk yarn static-check` — passé.
+- Smoke local non relancé : le diff backend est type-only ; les smokes complets restent couverts par la CI PR.
+
+## 2026-06-02 — Fix icônes toast runtime
+
+- [x] Diagnostiquer les assets cassés des toasts runtime.
+- [x] Remplacer les chemins inexistants par des assets `public/assets` réels.
+- [x] Ajouter une vérification ciblée sur les chemins d'icônes.
+- [x] Lancer les checks Pixi ciblés.
+- [x] Commit et push le follow-up PR.
+
+### Review
+
+- `ToastStack` utilise maintenant des assets runtime existants pour les quatre tons : ressources, rapport, main or, main rouge.
+- La map d'icônes vit dans `toastIcons.ts` pour rester compatible Fast Refresh.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test ToastStack.test.tsx` — 1 suite / 5 tests passés.
+- Vérification : `rtk yarn static-check` — passé.
+- Vérification assets : `rtk proxy curl -fsSI` sur les 4 chemins d'icônes — HTTP 200.
+
+## 2026-06-02 — Run 045 toast remboursement annulation
+
+- [x] Préflight : fiche run, règles repo, specs source, briefings backend/pixi, politique PR.
+- [x] Cartographier les use-cases backend cancel construction/training, les mutations frontend et `ToastStack`.
+- [x] Exposer et typer les payloads refund `{wood, stone, iron, population, crowns?}`.
+- [x] Câbler un toast unique de remboursement sur succès mutation, valeurs `> 0` uniquement.
+- [x] Adapter `ToastStack`/`ToastPreview` pour rendre les lignes via `ResourceIcon`.
+- [x] Ajouter les tests ciblés backend/frontend selon `bftc-tests-policy`.
+- [ ] Lancer vérifications, smokes ciblés, static-check et review 5 axes.
+- [ ] Archiver le run, mettre à jour `tasks/README.md`, commit, push et PR ready.
+
 ## 2026-06-01 — Animation bottom nav depuis Village
 
 - [x] Diagnostiquer pourquoi les onglets hors village deviennent actifs sans transition depuis `/game`.
