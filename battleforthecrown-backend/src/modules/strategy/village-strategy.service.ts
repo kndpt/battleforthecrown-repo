@@ -9,7 +9,7 @@ import { OwnershipService } from '../../common/auth';
 import { CrownsService } from '../crowns/crowns.service';
 import { WorldConfigService } from '../world/world-config.service';
 import { createOutboxEvent } from '../event/event.utils';
-import { VillageStrategy } from '@prisma/client';
+import { Prisma, VillageStrategy } from '@prisma/client';
 import {
   BASE_VILLAGE_STRATEGY_BONUS,
   BUILDING_TYPES,
@@ -155,6 +155,10 @@ export class VillageStrategyService {
     }
 
     const now = new Date();
+    // Cheap early-out on already-loaded data. NOT the authoritative guard:
+    // two concurrent requests can both read a passed cooldown here before
+    // either commits. The atomic guard inside the transaction below is what
+    // actually serializes them.
     if (
       village.strategyConfig?.cooldownEndsAt &&
       now < village.strategyConfig.cooldownEndsAt
@@ -178,13 +182,65 @@ export class VillageStrategyService {
     );
 
     return this.prisma.$transaction(async (tx) => {
-      // Both crown and resource sufficiency checks are folded into the UPDATE
-      // predicate (same pattern) so the check and decrement are a single atomic
-      // Postgres statement evaluated at row-lock time.  A separate pre-tx read
-      // + in-tx update pair races under READ COMMITTED: two concurrent requests
-      // both read sufficient balances, both pass the guard, and the second
-      // decrement applies against T1's already-decremented value, going negative.
-      // With WHERE … >= cost the second request simply matches 0 rows.
+      // ── Cooldown guard (atomic, fail-fast) ────────────────────────────────
+      // Fold the cooldown check into a conditional UPDATE so Postgres evaluates
+      // it at row-lock time. Without this, two requests that both passed the
+      // pre-tx read above would both debit and both apply a change (last upsert
+      // wins) — double-charging the user. The losing request matches 0 rows
+      // here and aborts the whole transaction, rolling back its debits.
+      const configUpdate = await tx.villageStrategyConfig.updateMany({
+        where: {
+          villageId,
+          OR: [{ cooldownEndsAt: null }, { cooldownEndsAt: { lte: now } }],
+        },
+        data: {
+          strategy: newStrategy as VillageStrategy,
+          lastChangedAt: now,
+          cooldownEndsAt,
+          changeCost: changeCost.crowns,
+        },
+      });
+      if (configUpdate.count === 0) {
+        // 0 rows ⇒ the config row either doesn't exist yet (first-ever change)
+        // or its cooldown is still active. One read disambiguates.
+        const existing = await tx.villageStrategyConfig.findUnique({
+          where: { villageId },
+          select: { id: true },
+        });
+        if (existing) {
+          throw new ConflictException('Strategy change is on cooldown');
+        }
+        // First change for this village: no prior cooldown to guard against.
+        // The @unique(villageId) constraint serializes concurrent first creates;
+        // the loser's P2002 surfaces as a cooldown conflict.
+        try {
+          await tx.villageStrategyConfig.create({
+            data: {
+              villageId,
+              strategy: newStrategy as VillageStrategy,
+              lastChangedAt: now,
+              cooldownEndsAt,
+              changeCost: changeCost.crowns,
+            },
+          });
+        } catch (e) {
+          if (
+            e instanceof Prisma.PrismaClientKnownRequestError &&
+            e.code === 'P2002'
+          ) {
+            throw new ConflictException('Strategy change is on cooldown');
+          }
+          throw e;
+        }
+      }
+
+      // ── Crown debit (atomic check + decrement) ────────────────────────────
+      // The sufficiency check is folded into the UPDATE predicate so check and
+      // decrement are a single atomic statement evaluated at row-lock time. A
+      // separate pre-tx read + in-tx update pair races under READ COMMITTED:
+      // two concurrent requests both read a sufficient balance, both pass the
+      // guard, and the second decrement goes negative. With WHERE … >= cost the
+      // second request simply matches 0 rows.
       const debitResult = await tx.crownBalance.updateMany({
         where: {
           userId,
@@ -226,27 +282,11 @@ export class VillageStrategyService {
 
       // Separate update for maxPerType (not a guard — always applied once the
       // decrement succeeded) and to fetch the final values for the outbox event.
+      // The strategy/cooldown row was already written by the atomic guard above.
       const updatedStock = await tx.resourceStock.update({
         where: { villageId },
         data: {
           maxPerType: this.getStorageLimitForStrategy(village, newStrategy),
-        },
-      });
-
-      await tx.villageStrategyConfig.upsert({
-        where: { villageId },
-        update: {
-          strategy: newStrategy as VillageStrategy,
-          lastChangedAt: now,
-          cooldownEndsAt,
-          changeCost: changeCost.crowns,
-        },
-        create: {
-          villageId,
-          strategy: newStrategy as VillageStrategy,
-          lastChangedAt: now,
-          cooldownEndsAt,
-          changeCost: changeCost.crowns,
         },
       });
 
