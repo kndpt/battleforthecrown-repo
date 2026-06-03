@@ -144,6 +144,8 @@ export interface OpenConquestDto {
   targetName: string;
   targetX: number;
   targetY: number;
+  targetKind: TargetKind;
+  targetCastleLevel: number | null;
   targetTier: 'T1' | 'T2' | 'T3' | 'T4' | 'T5' | null;
   captureStartedAt: string;
   captureUntil: string;

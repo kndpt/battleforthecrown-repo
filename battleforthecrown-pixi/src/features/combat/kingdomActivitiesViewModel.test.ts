@@ -17,6 +17,8 @@ describe('kingdom activities view model', () => {
       captureStartedAt: '2026-05-13T12:00:00.000Z',
       captureUntil: '2026-05-13T13:00:00.000Z',
       pendingConquestId: 'pc1',
+      targetCastleLevel: null,
+      targetKind: 'BARBARIAN_VILLAGE',
       status: 'OPEN',
       targetName: 'Village barbare',
       targetTier: 'T3',
@@ -33,7 +35,34 @@ describe('kingdom activities view model', () => {
       statusLabel: 'Bientôt terminée',
       targetName: 'Village barbare',
       tier: 'T3',
+      tierSubLabel: 'Tier',
       timeRemaining: '10m 00s',
+    });
+  });
+
+  it('maps a player capture with a PvP badge and castle level', () => {
+    const now = Date.parse('2026-05-13T12:30:00.000Z');
+    const conquest: OpenConquestDto = {
+      attackerVillageId: 'v1',
+      attackerVillageName: 'Royaume du Nord',
+      captureStartedAt: '2026-05-13T12:00:00.000Z',
+      captureUntil: '2026-05-13T16:30:00.000Z',
+      pendingConquestId: 'pc1',
+      status: 'OPEN',
+      targetCastleLevel: 10,
+      targetKind: 'PLAYER_VILLAGE',
+      targetName: 'Royaume rival',
+      targetTier: null,
+      targetVillageId: 'target-1',
+      targetX: 265,
+      targetY: 241,
+    };
+
+    expect(mapOpenConquestToCaptureCard(conquest, now)).toMatchObject({
+      progress: 11.11111111111111,
+      tier: 'PVP',
+      tierSubLabel: 'Ch. 10',
+      timeRemaining: '4h 00m',
     });
   });
 

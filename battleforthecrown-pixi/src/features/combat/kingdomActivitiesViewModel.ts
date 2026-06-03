@@ -53,6 +53,7 @@ export function mapOpenConquestToCaptureCard(
   const remainingMs = Math.max(0, captureUntil - nowMs);
   const progress = computeProgress(captureStartedAt, captureUntil, nowMs);
   const soon = remainingMs > 0 && remainingMs <= SOON_THRESHOLD_MS;
+  const isPlayerTarget = conquest.targetKind === 'PLAYER_VILLAGE';
 
   return {
     coordinates: `${conquest.targetX}|${conquest.targetY}`,
@@ -66,8 +67,10 @@ export function mapOpenConquestToCaptureCard(
     state: soon ? 'soon' : 'open',
     statusLabel: soon ? labels.captureSoonStatusLabel : labels.captureStatusLabel,
     targetName: conquest.targetName,
-    tier: conquest.targetTier ?? ('T1' satisfies CaptureTier),
-    tierSubLabel: labels.tierSubLabel,
+    tier: isPlayerTarget ? 'PVP' : conquest.targetTier ?? ('T1' satisfies CaptureTier),
+    tierSubLabel: isPlayerTarget
+      ? formatCastleLevel(conquest.targetCastleLevel)
+      : labels.tierSubLabel,
     timeRemaining: formatRemaining(remainingMs),
   };
 }
@@ -129,6 +132,10 @@ export function formatTime(timestamp: number): string {
 function formatRelativeDue(dueAt: number, nowMs: number): string {
   if (!Number.isFinite(dueAt)) return 'indisponible';
   return `dans ${formatRemaining(Math.max(0, dueAt - nowMs))}`;
+}
+
+function formatCastleLevel(castleLevel: number | null | undefined): string {
+  return castleLevel ? `Ch. ${castleLevel}` : 'Joueur';
 }
 
 function computeProgress(startAt: number, endAt: number, nowMs: number): number {

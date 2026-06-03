@@ -194,18 +194,6 @@ function SwordsGlyph({ size = 14, color = '#fef9f0' }: { color?: string; size?: 
   );
 }
 
-function HelmGlyph({ size = 14, color = '#f6d57b' }: { color?: string; size?: number }) {
-  return (
-    <svg aria-hidden="true" height={size} viewBox="0 0 16 16" width={size}>
-      <path d="M3 11 C3 6 5 4 8 4 C11 4 13 6 13 11 L13 13 L3 13 Z" fill={color} stroke="#1f1308" strokeWidth="1" />
-      <rect fill="#1f1308" height="1.4" opacity=".55" width="8" x="4" y="8" />
-      <rect fill="#1f1308" height=".8" opacity=".3" width="8" x="4" y="10.2" />
-      <path d="M8 2 L8 4" stroke="#1f1308" strokeLinecap="round" strokeWidth="1" />
-      <circle cx="8" cy="1.7" fill="#c93a2e" r="1.3" stroke="#1f1308" strokeWidth=".5" />
-    </svg>
-  );
-}
-
 function AlertGlyph({ size = 12, color = '#fff' }: { color?: string; size?: number }) {
   return (
     <svg aria-hidden="true" height={size} viewBox="0 0 16 16" width={size}>
@@ -354,7 +342,16 @@ function ActivityChip({ eta, kind, labels, onClick }: ActivityChipProps) {
   const empty = !eta;
   const palette: Record<MultiVillageActivityKind, { glyph: ReactNode; label: string }> = {
     build: { glyph: <HammerGlyph color="#3d2f1f" size={11} />, label: labels.buildActivity },
-    lords: { glyph: <HelmGlyph color="#a07118" size={11} />, label: labels.lordActivity },
+    lords: {
+      glyph: (
+        <img
+          alt=""
+          className="size-[13px] object-contain drop-shadow-[0_1px_1px_rgba(0,0,0,.28)]"
+          src={publicAsset('/assets/army/noble.png')}
+        />
+      ),
+      label: labels.lordActivity,
+    },
     troops: { glyph: <SwordsGlyph color="#3d2f1f" size={11} />, label: labels.troopsActivity },
   };
   const meta = palette[kind];

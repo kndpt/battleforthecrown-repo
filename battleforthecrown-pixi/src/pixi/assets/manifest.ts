@@ -40,6 +40,7 @@ export const WORLD_MAP_BUNDLE: AssetsBundle = {
     { alias: 'world.barbarian.t3', src: publicAsset('/assets/world/entity/barbarian-village-tier3.png') },
     { alias: 'world.barbarian.t4', src: publicAsset('/assets/world/entity/barbarian-village-tier4.png') },
     { alias: 'world.barbarian.t5', src: publicAsset('/assets/world/entity/barbarian-village-tier5.png') },
+    { alias: 'world.capture.crown', src: publicAsset('/assets/army/noble.png') },
     { alias: 'world.village.t1', src: publicAsset('/assets/world/entity/village-tier1.png') },
     { alias: 'world.village.t2', src: publicAsset('/assets/world/entity/village-tier2.png') },
     { alias: 'world.village.t3', src: publicAsset('/assets/world/entity/village-tier3.png') },

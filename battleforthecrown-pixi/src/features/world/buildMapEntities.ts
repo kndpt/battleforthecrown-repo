@@ -23,7 +23,11 @@ export function buildMapEntities(
     result.set(dto.id, entityFromWorldDto(dto, myUserId));
   }
   for (const village of myVillages) {
-    result.set(village.id, entityFromMyVillage(village, myUserId));
+    const worldEntity = result.get(village.id);
+    result.set(village.id, {
+      ...entityFromMyVillage(village, myUserId),
+      captureWindow: worldEntity?.captureWindow,
+    });
   }
   return Array.from(result.values());
 }

@@ -4,6 +4,10 @@
 
 ## Done
 
+- 2026-06-03: Régression smoke capture tempo corrigée : `combat-conquest-hook.smoke` importe la durée T1 depuis `capture-duration.ts`; preflight smoke, smoke ciblé, `static-check` et `diff --check` verts.
+- 2026-06-03: Audit impact docs du patch local mixte : gameplay docs capture déjà justes; `capture-duration.ts` corrigé pour la courbe barbare compressée; docs techniques `backend-modules`/`balance-and-tempo` pointent vers le nouveau helper; test ciblé + `static-check` verts.
+- 2026-06-03: Capture monde corrigée : `%` entier dans `CaptureWindowCard`, DTO `OpenConquest` expose `targetKind`/`targetCastleLevel`, badge joueur `PVP/Ch.N`, durée PvP alignée doc 14 (`9-10 => 4h30`), tests Pixi/backend/smokes/static-check verts; capture locale `cmpygad00008rvd3j4nmggvcf` reschedulée 4h30.
+- 2026-06-03: Bug Armée Seigneur invisible corrigé : `armyViewModel` sépare inventaire complet `UNIT_TYPES` et Caserne `BARRACKS_UNIT_TYPES`; test `armyViewModel`, Pixi type-check et `static-check` verts.
 - 2026-05-31: Recalibration coûts bâtiments/Entrepôt : `BUILDING_DEFINITIONS` actifs rebasés sur capacité d'Entrepôt atteignable, invariant `buildings.spec.ts`, docs ADR-16/03 alignées, tests ciblés + static-check verts.
 - 2026-05-31: Recalibration production ressources : `RESOURCE_PRODUCTION_PER_HOUR` réduit à 60->1350/h pour que Château L10 demande ~35h de passif sur pierre; docs ADR-17/02/03, tests ciblés, simulateur et static-check verts.
 - 2026-05-31: Ticket 076 termine : annulation de formation depuis les `QueueChip` Caserne avec confirmation design-system, mutation existante branchee, pending global sur actions queue, test `ArmyViewDesign` + type-check Pixi + static-check verts.

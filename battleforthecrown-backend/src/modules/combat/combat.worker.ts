@@ -22,7 +22,7 @@ import {
 import { parseUnitMap, encodeUnitMap, encodeLootResult } from './codecs';
 import { getStrategyBonusValue } from '@battleforthecrown/shared/village';
 import { calculateDistance } from '@battleforthecrown/shared/logic';
-import { TempoService, type WorldTempo } from '@battleforthecrown/shared/world';
+import type { WorldTempo } from '@battleforthecrown/shared/world';
 import type { CombatResolution } from '@battleforthecrown/shared/combat';
 import {
   UNIT_COSTS,
@@ -31,23 +31,7 @@ import {
   type UnitType,
 } from '@battleforthecrown/shared/army';
 import { typedEntries } from '@battleforthecrown/shared/utils';
-
-const BARBARIAN_CAPTURE_DURATIONS_MS: Record<string, number> = {
-  T1: 2 * 60 * 60 * 1000,
-  T2: 4 * 60 * 60 * 1000,
-  T3: 6 * 60 * 60 * 1000,
-  T4: 9 * 60 * 60 * 1000,
-  T5: 12 * 60 * 60 * 1000,
-};
-
-const PVP_CAPTURE_DURATIONS_MS = [
-  { minCastleLevel: 9, durationMs: 18 * 60 * 60 * 1000 },
-  { minCastleLevel: 7, durationMs: 12 * 60 * 60 * 1000 },
-  { minCastleLevel: 5, durationMs: 9 * 60 * 60 * 1000 },
-  { minCastleLevel: 3, durationMs: 6 * 60 * 60 * 1000 },
-  { minCastleLevel: 1, durationMs: 4 * 60 * 60 * 1000 },
-];
-const MIN_CAPTURE_DURATION_MS = 1000;
+import { getCaptureDurationMs } from './capture-duration';
 
 interface PendingConquestToSchedule {
   id: string;
@@ -1066,29 +1050,16 @@ export class CombatWorker implements OnModuleInit {
     }>,
     tempo: WorldTempo,
   ): number {
-    let baseDurationMs: number;
+    const castleLevel =
+      targetVillage.buildings.find((building) => building.type === 'CASTLE')
+        ?.level ?? 1;
 
-    if (targetVillage.isBarbarian) {
-      baseDurationMs =
-        BARBARIAN_CAPTURE_DURATIONS_MS[targetVillage.tier ?? ''] ??
-        BARBARIAN_CAPTURE_DURATIONS_MS.T1;
-    } else {
-      const castleLevel =
-        targetVillage.buildings.find((building) => building.type === 'CASTLE')
-          ?.level ?? 1;
-
-      baseDurationMs =
-        PVP_CAPTURE_DURATIONS_MS.find(
-          (entry) => castleLevel >= entry.minCastleLevel,
-        )?.durationMs ?? PVP_CAPTURE_DURATIONS_MS.at(-1)!.durationMs;
-    }
-
-    return Math.max(
-      MIN_CAPTURE_DURATION_MS,
-      Math.round(
-        TempoService.applyDuration(baseDurationMs, tempo, 'captureWindow'),
-      ),
-    );
+    return getCaptureDurationMs({
+      castleLevel,
+      isBarbarian: targetVillage.isBarbarian,
+      tempo,
+      tier: targetVillage.tier,
+    });
   }
 
   private async handleReinforcementArrival(

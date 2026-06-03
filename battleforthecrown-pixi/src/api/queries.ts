@@ -77,6 +77,8 @@ export const queryKeys = {
   kingdomPower: (userId: string | null, worldId: string | null) => ['power', 'kingdom', userId, worldId] as const,
   publicKingdomPower: (userId: string | null, worldId: string | null) =>
     ['power', 'kingdom', 'public', userId, worldId] as const,
+  publicVillagePower: (villageId: string | null) =>
+    ['power', 'village', 'public', villageId] as const,
   armyInventory: (villageId: string | null) => ['army', 'inventory', villageId] as const,
   armyTraining: (villageId: string | null) => ['army', 'training', villageId] as const,
   activeExpeditions: (villageId: string | null) => ['combat', 'active', villageId] as const,
@@ -462,6 +464,33 @@ export const publicKingdomPowerQueryOptions = (userId: string | null, worldId: s
     queryKey: queryKeys.publicKingdomPower(userId, worldId),
     staleTime: 30_000,
   });
+
+const PublicVillagePowerSchema = z.strictObject({
+  villageId: z.string(),
+  buildings: z.number(),
+});
+
+export type PublicVillagePowerDto = z.infer<typeof PublicVillagePowerSchema>;
+
+/**
+ * Building-only power of any village (no ownership check), used to surface a
+ * foreign/barbarian village's strength in the world-map selection panel.
+ * Troops are intentionally excluded — they are not public information.
+ */
+export function usePublicVillagePowerQuery(villageId: string | null) {
+  return useQuery<PublicVillagePowerDto>({
+    queryKey: queryKeys.publicVillagePower(villageId),
+    queryFn: async () => {
+      if (!villageId) return Promise.reject(new Error('villageId required'));
+      const raw = await apiClient.get<unknown>(`/power/village/${villageId}/public`, {
+        skipAuth: true,
+      });
+      return PublicVillagePowerSchema.parse(raw);
+    },
+    enabled: Boolean(villageId),
+    staleTime: 30_000,
+  });
+}
 
 export interface ArmyUnitDto {
   id: string;

@@ -79,8 +79,8 @@ export const UNIT_META: Record<UnitType, UnitMeta> = {
     name: 'Seigneur',
     pluralName: 'Seigneurs',
     description: 'Seigneur de haut rang. Permet de conquérir des villages ennemis.',
-    iconPath: null,
-    emoji: '👑',
+    iconPath: '/assets/army/noble.png',
+    emoji: '',
   },
 };
 
