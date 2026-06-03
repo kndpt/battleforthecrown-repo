@@ -180,25 +180,22 @@ export class VillageStrategyService {
       throw new BadRequestException('Insufficient resources');
     }
 
-    const crownBalance = await this.prisma.crownBalance.findUnique({
-      where: {
-        userId_worldId: {
-          userId,
-          worldId: village.worldId,
-        },
-      },
-    });
-
-    if (!crownBalance || crownBalance.balance < changeCost.crowns) {
-      throw new BadRequestException('Insufficient crowns');
-    }
-
     // Calculer le nouveau cooldown
     const cooldownEndsAt = new Date(
       now.getTime() + strategyConfig.cooldownDuration * MS_PER_HOUR,
     );
 
     return this.prisma.$transaction(async (tx) => {
+      // Read crown balance inside the tx so the sufficiency check and the
+      // decrement are atomic: concurrent requests cannot both pass the check
+      // against a stale snapshot and overdraw the account.
+      const crownBalance = await tx.crownBalance.findUnique({
+        where: { userId_worldId: { userId, worldId: village.worldId } },
+      });
+      if (!crownBalance || crownBalance.balance < changeCost.crowns) {
+        throw new BadRequestException('Insufficient crowns');
+      }
+
       await tx.crownBalance.update({
         where: {
           userId_worldId: {
@@ -207,7 +204,7 @@ export class VillageStrategyService {
           },
         },
         data: {
-          balance: crownBalance.balance - changeCost.crowns,
+          balance: { decrement: changeCost.crowns },
           lastUpdateTs: now,
         },
       });
