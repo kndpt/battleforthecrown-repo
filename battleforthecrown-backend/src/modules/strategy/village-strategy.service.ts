@@ -172,28 +172,19 @@ export class VillageStrategyService {
     );
     const changeCost = getVillageStrategyChangeCost(newStrategy, castleLevel);
 
-    if (
-      village.resourceStock.wood < changeCost.wood ||
-      village.resourceStock.stone < changeCost.stone ||
-      village.resourceStock.iron < changeCost.iron
-    ) {
-      throw new BadRequestException('Insufficient resources');
-    }
-
     // Calculer le nouveau cooldown
     const cooldownEndsAt = new Date(
       now.getTime() + strategyConfig.cooldownDuration * MS_PER_HOUR,
     );
 
     return this.prisma.$transaction(async (tx) => {
-      // Fold the balance sufficiency check into the UPDATE predicate so the
-      // check and the decrement are a single atomic Postgres statement.
-      // With READ COMMITTED isolation a separate findUnique + update pair
-      // still races: T2 can read a sufficient balance before T1 commits its
-      // debit, pass the guard, then decrement from T1's already-decremented
-      // value and go negative.  The updateMany WHERE balance >= cost pattern
-      // is evaluated by Postgres at the moment it acquires the row lock, so
-      // T2's update will simply match 0 rows after T1 commits.
+      // Both crown and resource sufficiency checks are folded into the UPDATE
+      // predicate (same pattern) so the check and decrement are a single atomic
+      // Postgres statement evaluated at row-lock time.  A separate pre-tx read
+      // + in-tx update pair races under READ COMMITTED: two concurrent requests
+      // both read sufficient balances, both pass the guard, and the second
+      // decrement applies against T1's already-decremented value, going negative.
+      // With WHERE … >= cost the second request simply matches 0 rows.
       const debitResult = await tx.crownBalance.updateMany({
         where: {
           userId,
@@ -213,14 +204,32 @@ export class VillageStrategyService {
       // crown-production avec production > 0 (cf. crowns.service.ts JSDoc).
       await this.crowns.createCrownsChangedEvent(userId, village.worldId, tx);
 
-      const updatedStock = await tx.resourceStock.update({
-        where: { villageId },
+      // Same atomic pattern for resources: decrement only if all three
+      // balances are still sufficient at lock time.
+      const stockDebitResult = await tx.resourceStock.updateMany({
+        where: {
+          villageId,
+          wood: { gte: changeCost.wood },
+          stone: { gte: changeCost.stone },
+          iron: { gte: changeCost.iron },
+        },
         data: {
           wood: { decrement: changeCost.wood },
           stone: { decrement: changeCost.stone },
           iron: { decrement: changeCost.iron },
-          maxPerType: this.getStorageLimitForStrategy(village, newStrategy),
           lastUpdateTs: now,
+        },
+      });
+      if (stockDebitResult.count === 0) {
+        throw new BadRequestException('Insufficient resources');
+      }
+
+      // Separate update for maxPerType (not a guard — always applied once the
+      // decrement succeeded) and to fetch the final values for the outbox event.
+      const updatedStock = await tx.resourceStock.update({
+        where: { villageId },
+        data: {
+          maxPerType: this.getStorageLimitForStrategy(village, newStrategy),
         },
       });
 
