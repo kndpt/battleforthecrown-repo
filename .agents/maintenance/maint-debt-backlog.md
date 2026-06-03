@@ -126,7 +126,7 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
     a countdown: never shows 0 while time remains). Added summaryLabel time assertion (was uncovered).
   verification: yarn static-check ✓ · backend 232 tests ✓ · pixi 229 tests ✓
 
-- status: proposed
+- status: fixed
   area: >
     battleforthecrown-pixi/src/features/HelloPixiScene.tsx (deleted),
     battleforthecrown-pixi/src/pixi/scenes/BootScene.ts (deleted),
@@ -135,6 +135,22 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
     battleforthecrown-pixi/src/lib/unitConfig.ts (deleted)
   branch: maint/debt/remove-dead-pixi-scaffolding
   title: "maint(debt): remove dead Pixi scaffolding (demo scenes/overlay + unused unit config)"
+
+- status: proposed
+  area: >
+    battleforthecrown-backend/src/modules/combat/combat-fixtures.ts (new),
+    battleforthecrown-backend/src/modules/combat/combat-resolution.spec.ts,
+    battleforthecrown-backend/src/modules/combat/strategies/combat-strategies.spec.ts
+  branch: maint/debt/combat-test-fixtures
+  title: "maint(debt): typed combat fixture factories, drop 14 as any in combat tests"
+  note: >
+    14 `as any` casts in two combat spec files: expedition cast because Prisma Expedition has
+    10+ fields absent from test fixtures; config cast because CombatConfig extends the full
+    WorldConfig (tempo, lifecycle, identity, barbarianSeeding, etc.) while tests only use
+    config.combat. New combat-fixtures.ts: makeExpeditionFixture(partial?) and
+    makeCombatConfigFixture(partial?) using shared DEFAULT_* constants. Also removed dead
+    _lootManager variable + eslint-disable in combat-strategies.spec.ts.
+  verification: yarn static-check ✓ · 240 backend tests ✓
   note: >
     5 fully-dead files (zero importers anywhere, repo-wide grep + path-import check confirmed):
     HelloPixiScene + createBootScene = leftover demo scenes; DebugOverlay (its only consumer of
@@ -219,3 +235,7 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
   scaffolding files (HelloPixiScene, BootScene/createBootScene, DebugOverlay + its sole-consumer hook
   useGameSocketStatus, lib/unitConfig.ts). Excluded VillageCanvas (sole consumer of VillageScene
   pipeline → cascade, logged as candidate). static-check ✓ · pixi 276 ✓.
+- 2026-06-03: typed combat fixture factories on `maint/debt/combat-test-fixtures` — new combat-fixtures.ts
+  with makeExpeditionFixture + makeCombatConfigFixture eliminates 14 `as any` in combat-resolution.spec.ts
+  and combat-strategies.spec.ts; also removed dead _lootManager variable + eslint-disable.
+  static-check ✓ · 240 backend tests ✓.

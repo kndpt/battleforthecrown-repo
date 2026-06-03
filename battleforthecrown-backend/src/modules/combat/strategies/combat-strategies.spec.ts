@@ -4,12 +4,14 @@ import { PlayerVillageStrategy } from './player-village.strategy';
 import { LootManager } from '../loot/loot.manager';
 import { CombatContext } from '../interfaces/combat-context.interface';
 import type { UnitType } from '@battleforthecrown/shared/army';
+import {
+  makeExpeditionFixture,
+  makeCombatConfigFixture,
+} from '../combat-fixtures';
 
 describe('Combat Strategies', () => {
   let barbarianStrategy: BarbarianVillageStrategy;
   let playerStrategy: PlayerVillageStrategy;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let _lootManager: LootManager;
 
   const mockLootManager = {
     calculateLoot: jest.fn(),
@@ -33,7 +35,6 @@ describe('Combat Strategies', () => {
       BarbarianVillageStrategy,
     );
     playerStrategy = module.get<PlayerVillageStrategy>(PlayerVillageStrategy);
-    _lootManager = module.get<LootManager>(LootManager);
   });
 
   afterEach(() => {
@@ -45,21 +46,7 @@ describe('Combat Strategies', () => {
       // Arrange
       const context: CombatContext = {
         worldId: 'world-1',
-        expedition: {
-          id: 'exp-1',
-          attackerVillageId: 'v1',
-          targetKind: 'BARBARIAN_VILLAGE',
-          targetRefId: 'barb-1',
-          targetX: 10,
-          targetY: 20,
-          units: { MILITIA: 50 },
-          status: 'EN_ROUTE',
-          departAt: new Date(),
-          arrivalAt: new Date(),
-          returnAt: null,
-          reportId: null,
-          worldId: 'world-1',
-        } as any,
+        expedition: makeExpeditionFixture({ units: { MILITIA: 50 } }),
         attacker: {
           village: {
             id: 'v1',
@@ -85,12 +72,7 @@ describe('Combat Strategies', () => {
           resources: { wood: 100, stone: 50, iron: 30 },
           participants: [{ villageId: 'barb-1', units: {} }],
         },
-        config: {
-          combat: { attackBonus: 1.0, defenseBonus: 1.0, lootFactor: 0.5 },
-          units: { stats: {} },
-          _distance: 14,
-          _travelTime: 14000,
-        } as any,
+        config: makeCombatConfigFixture(),
       };
 
       mockLootManager.calculateLoot.mockResolvedValue({
@@ -110,21 +92,7 @@ describe('Combat Strategies', () => {
     it('should resolve barbarian defenders with the shared combat formula', async () => {
       const context: CombatContext = {
         worldId: 'world-1',
-        expedition: {
-          id: 'exp-1',
-          attackerVillageId: 'v1',
-          targetKind: 'BARBARIAN_VILLAGE',
-          targetRefId: 'barb-1',
-          targetX: 10,
-          targetY: 20,
-          units: { MILITIA: 20 },
-          status: 'EN_ROUTE',
-          departAt: new Date(),
-          arrivalAt: new Date(),
-          returnAt: null,
-          reportId: null,
-          worldId: 'world-1',
-        } as any,
+        expedition: makeExpeditionFixture({ units: { MILITIA: 20 } }),
         attacker: {
           village: {
             id: 'v1',
@@ -150,12 +118,7 @@ describe('Combat Strategies', () => {
           resources: { wood: 100, stone: 50, iron: 30 },
           participants: [{ villageId: 'barb-1', units: { MILITIA: 10 } }],
         },
-        config: {
-          combat: { attackBonus: 1.0, defenseBonus: 1.0, lootFactor: 0.5 },
-          units: { stats: {} },
-          _distance: 14,
-          _travelTime: 14000,
-        } as any,
+        config: makeCombatConfigFixture(),
       };
 
       mockLootManager.calculateLoot.mockResolvedValue({
@@ -180,21 +143,11 @@ describe('Combat Strategies', () => {
       // Arrange
       const context: CombatContext = {
         worldId: 'world-1',
-        expedition: {
-          id: 'exp-1',
-          attackerVillageId: 'v1',
+        expedition: makeExpeditionFixture({
           targetKind: 'PLAYER_VILLAGE',
           targetRefId: 'v2',
-          targetX: 10,
-          targetY: 20,
           units: { MILITIA: 100, ARCHER: 50 },
-          status: 'EN_ROUTE',
-          departAt: new Date(),
-          arrivalAt: new Date(),
-          returnAt: null,
-          reportId: null,
-          worldId: 'world-1',
-        } as any,
+        }),
         attacker: {
           village: {
             id: 'v1',
@@ -222,17 +175,9 @@ describe('Combat Strategies', () => {
             { villageId: 'v2', units: { MILITIA: 30, ARCHER: 10 } },
           ],
         },
-        config: {
+        config: makeCombatConfigFixture({
           combat: { attackBonus: 1.5, defenseBonus: 1.0, lootFactor: 0.5 },
-          units: {
-            stats: {
-              MILITIA: { attack: 10, defenseInfantry: 5, carryCapacity: 10 },
-              ARCHER: { attack: 15, defenseInfantry: 3, carryCapacity: 5 },
-            },
-          },
-          _distance: 14,
-          _travelTime: 14000,
-        } as any,
+        }),
       };
 
       mockLootManager.calculateLoot.mockResolvedValue({
@@ -260,21 +205,11 @@ describe('Combat Strategies', () => {
       // Arrange
       const context: CombatContext = {
         worldId: 'world-1',
-        expedition: {
-          id: 'exp-1',
-          attackerVillageId: 'v1',
+        expedition: makeExpeditionFixture({
           targetKind: 'PLAYER_VILLAGE',
           targetRefId: 'v2',
-          targetX: 10,
-          targetY: 20,
           units: { MILITIA: 20, ARCHER: 10 },
-          status: 'EN_ROUTE',
-          departAt: new Date(),
-          arrivalAt: new Date(),
-          returnAt: null,
-          reportId: null,
-          worldId: 'world-1',
-        } as any,
+        }),
         attacker: {
           village: {
             id: 'v1',
@@ -302,17 +237,9 @@ describe('Combat Strategies', () => {
             { villageId: 'v2', units: { MILITIA: 100, ARCHER: 50 } },
           ],
         },
-        config: {
+        config: makeCombatConfigFixture({
           combat: { attackBonus: 1.0, defenseBonus: 1.5, lootFactor: 0.5 },
-          units: {
-            stats: {
-              MILITIA: { attack: 10, defenseInfantry: 5, carryCapacity: 10 },
-              ARCHER: { attack: 15, defenseInfantry: 3, carryCapacity: 5 },
-            },
-          },
-          _distance: 14,
-          _travelTime: 14000,
-        } as any,
+        }),
       };
 
       mockLootManager.calculateLoot.mockResolvedValue({
@@ -337,21 +264,11 @@ describe('Combat Strategies', () => {
       // Attacker wins but with losses
       const context: CombatContext = {
         worldId: 'world-1',
-        expedition: {
-          id: 'exp-1',
-          attackerVillageId: 'v1',
+        expedition: makeExpeditionFixture({
           targetKind: 'PLAYER_VILLAGE',
           targetRefId: 'v2',
-          targetX: 10,
-          targetY: 20,
           units: { MILITIA: 50 },
-          status: 'EN_ROUTE',
-          departAt: new Date(),
-          arrivalAt: new Date(),
-          returnAt: null,
-          reportId: null,
-          worldId: 'world-1',
-        } as any,
+        }),
         attacker: {
           village: {
             id: 'v1',
@@ -377,16 +294,9 @@ describe('Combat Strategies', () => {
           resources: { wood: 100, stone: 50, iron: 30 },
           participants: [{ villageId: 'v2', units: { MILITIA: 50 } }],
         },
-        config: {
+        config: makeCombatConfigFixture({
           combat: { attackBonus: 1.0, defenseBonus: 1.5, lootFactor: 0.5 },
-          units: {
-            stats: {
-              MILITIA: { attack: 10, defenseInfantry: 5, carryCapacity: 10 },
-            },
-          },
-          _distance: 14,
-          _travelTime: 14000,
-        } as any,
+        }),
       };
 
       mockLootManager.calculateLoot.mockResolvedValue({
@@ -411,21 +321,11 @@ describe('Combat Strategies', () => {
       // Arrange
       const context: CombatContext = {
         worldId: 'world-1',
-        expedition: {
-          id: 'exp-1',
-          attackerVillageId: 'v1',
+        expedition: makeExpeditionFixture({
           targetKind: 'PLAYER_VILLAGE',
           targetRefId: 'v2',
-          targetX: 10,
-          targetY: 20,
           units: { MILITIA: 100 },
-          status: 'EN_ROUTE',
-          departAt: new Date(),
-          arrivalAt: new Date(),
-          returnAt: null,
-          reportId: null,
-          worldId: 'world-1',
-        } as any,
+        }),
         attacker: {
           village: {
             id: 'v1',
@@ -451,16 +351,7 @@ describe('Combat Strategies', () => {
           resources: { wood: 100, stone: 50, iron: 30 },
           participants: [{ villageId: 'v2', units: { MILITIA: 100 } }],
         },
-        config: {
-          combat: { attackBonus: 1.0, defenseBonus: 1.0, lootFactor: 0.5 },
-          units: {
-            stats: {
-              MILITIA: { attack: 10, defenseInfantry: 5, carryCapacity: 10 },
-            },
-          },
-          _distance: 14,
-          _travelTime: 14000,
-        } as any,
+        config: makeCombatConfigFixture(),
       };
 
       mockLootManager.calculateLoot.mockResolvedValue({

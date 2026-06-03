@@ -11,6 +11,10 @@ import {
   getWeightedDefensePower,
 } from './combat-resolution';
 import { CombatContext } from './interfaces/combat-context.interface';
+import {
+  makeExpeditionFixture,
+  makeCombatConfigFixture,
+} from './combat-fixtures';
 
 function createCombatContext(
   attackerUnits: UnitMap,
@@ -18,21 +22,7 @@ function createCombatContext(
 ): CombatContext {
   return {
     worldId: 'world-1',
-    expedition: {
-      id: 'exp-1',
-      attackerVillageId: 'v1',
-      targetKind: 'BARBARIAN_VILLAGE',
-      targetRefId: 'barb-1',
-      targetX: 1,
-      targetY: 0,
-      units: attackerUnits,
-      status: 'EN_ROUTE',
-      departAt: new Date(),
-      arrivalAt: new Date(),
-      returnAt: null,
-      reportId: null,
-      worldId: 'world-1',
-    } as any,
+    expedition: makeExpeditionFixture({ targetX: 1, targetY: 0 }),
     attacker: {
       village: {
         id: 'v1',
@@ -57,12 +47,7 @@ function createCombatContext(
       units: defenderUnits,
       participants: [{ villageId: 'barb-1', units: defenderUnits }],
     },
-    config: {
-      combat: { attackBonus: 1, defenseBonus: 1, lootFactor: 0.5 },
-      units: { stats: {} },
-      _distance: 1,
-      _travelTime: 1000,
-    } as any,
+    config: makeCombatConfigFixture({ _distance: 1, _travelTime: 1000 }),
   };
 }
 
