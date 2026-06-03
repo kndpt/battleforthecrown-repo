@@ -49,7 +49,7 @@ export function NumericKeypadSheet({
   };
 
   return (
-    <BottomSheet isOpen={open} onClose={handleCancel} maxHeight={maxHeight} zIndex={50}>
+    <BottomSheet isOpen={open} onClose={handleCancel} maxHeight={maxHeight}>
       <Panel
         variant="parchment"
         padding="none"

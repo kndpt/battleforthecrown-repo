@@ -353,7 +353,6 @@ export function GameHeader({
           isOpen={isVillageSheetOpen}
           maxHeight="68vh"
           onClose={() => setIsVillageSheetOpen(false)}
-          zIndex={50}
         >
           <MultiVillageBottomSheet
             availableFilters={['all', 'active']}

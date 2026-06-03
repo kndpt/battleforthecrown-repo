@@ -13,6 +13,11 @@ export interface BottomSheetProps extends HTMLAttributes<HTMLDivElement> {
   onClose: () => void;
   children: ReactNode;
   maxHeight?: string; // ex: '50vh', '75vh', '600px'
+  /**
+   * z-index du sheet. Défaut 50 : au-dessus de la BottomNavigationBar (40) et
+   * des overlays de modals (40). Monter à 60+ uniquement pour empiler un sheet
+   * par-dessus un autre sheet déjà ouvert (ex: PlayerProfileSheet sur MultiVillage).
+   */
   zIndex?: number;
 }
 
@@ -50,7 +55,7 @@ interface DragStart {
  * ```
  */
 export const BottomSheet = forwardRef<HTMLDivElement, BottomSheetProps>(
-  ({ isOpen, onClose, children, maxHeight = '75vh', zIndex = 40, className = '', style, ...props }, ref) => {
+  ({ isOpen, onClose, children, maxHeight = '75vh', zIndex = 50, className = '', style, ...props }, ref) => {
     const rootRef = useRef<HTMLDivElement>(null);
     const dragStartRef = useRef<DragStart | null>(null);
     const [dragY, setDragY] = useState(0);

@@ -15,7 +15,7 @@ export function PowerBottomSheet({ isOpen, onClose }: PowerBottomSheetProps) {
   const village = useVillagePowerQuery(villageId);
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} maxHeight="80vh" zIndex={50}>
+    <BottomSheet isOpen={isOpen} onClose={onClose} maxHeight="80vh">
       <GameBottomSheetPanel
         bodyClassName="p-4"
         closeLabel="Fermer"
