@@ -193,6 +193,82 @@ yarn test:pixi      → 46 test files, 230 tests passed (+1 session.test.ts)
 
 ---
 
+## Run 2026-06-03 — commit ad45e43
+
+**Scan date:** 2026-06-03  
+**Commit SHA:** ad45e43bf699ffafc07bce3c7981c8b25f14bc05
+
+### Prior findings update
+
+- A1–A6 (ws-bindings query keys) : **RESOLVED**
+- B1 (GameHeader inline queryFn/staleTime) : **RESOLVED**
+- B2 (WorldSelector/useWorldCardModels inline queryFn) : **RESOLVED** (ce run)
+- N1, N2 : **RESOLVED**
+- S1, S2, S3 (session teardown) : **RESOLVED**
+- C1 (GameHeader god-component) : **RESOLVED** (useMultiVillageData + profileViewModel)
+- C2 (BuildingManagementPanel 962 LOC) : STILL OPEN — logique encapsulée dans sous-composants, faible risque
+- C3 (ArmyScreen garrison derivations) : STILL OPEN — low, borderline view-model
+- D2 (headerHelpers.ts tests) : **RESOLVED** (ce run — headerHelpers.test.ts)
+- D3 (VillageView inline keyframes) : STILL OPEN — cosmétique, ~72 LOC de CSS inline
+- D4 (magic number 60_000) : STILL OPEN — acceptable (remplacé par le serveur en <1s)
+
+### Mental model
+
+Frontend propre et discipliné. Couverture de cette passe :
+- **Server-authoritative** : 0 violation. Interpolation display-only, toutes les mutations via REST → invalidation TanStack.
+- **Type debt** : 0 `as any`, 0 `@ts-ignore`, 0 `@ts-expect-error`, 0 `fetch`/`axios` hors `src/api/`, 0 `.setState` direct hors actions.
+- **Optimistic UI** : patterns `onMutate/onError/onSettled` corrects.
+- **Query layer** : `queries.ts` est maintenant la seule source de `queryFn` — `useWorldCardModels` était le dernier fichier hors-`queries.ts` à définir une `queryFn` inline avec schéma Zod et `staleTime`.
+- **Pixi scenes** : `WorldMapScene.ts` (720 LOC) propre — pas de lecture de store dans le ticker, cleanup correct via `SceneManager.destroy({ children: true })`.
+
+### New findings
+
+| ID | Category | Location | Description | Severity | Effort | Status |
+|----|----------|----------|-------------|----------|--------|--------|
+| B2 | API layer | `features/worlds/useWorldCardModels.ts:35-49` | Inline `queryFn` + `PublicKingdomPowerSchema` local + `staleTime: 30_000` non partagés. Dernier `queryFn` hors `queries.ts`. | **Medium** | S | **RESOLVED** (ce run) |
+| D2 | Test gap | `features/layout/headerHelpers.ts` | `toResultMap`, `getPlayerInitials`, `formatWorldPhase` — 0 test dédié, 3+ call sites (useMultiVillageData, profileViewModel, VillageView, GameHeader). | Low | S | **RESOLVED** (ce run) |
+| D3 | Component design | `features/game/VillageView.tsx:477-549` | Bloc `<style>` inline (72 LOC de keyframes + classes d'animation) dans le JSX — non standard, ne peut pas être analysé statiquement. | Low | S | STILL OPEN |
+| D4 | Naming / magic numbers | `api/queries.ts:509,1047` | `timePerUnitMs: 60_000` / `endTime: +60_000` hardcodés — OK car remplacé par le serveur en <1s. | Low | S | STILL OPEN |
+| E1 | Component size | `features/game/VillageView.tsx` (970 LOC) | Toujours large, mais bien organisé : hero (~300 LOC animé), dérivations useMemo (~100 LOC), handlers (~100 LOC), JSX (~200 LOC). Pas de god-component — responsabilités bien délimitées pour un écran principal. | Low | L | NOTED |
+
+### "Looks bad but is actually fine" (this run)
+
+| Pattern | Verdict |
+|---------|---------|
+| `useWorldCardModels.ts` inline queryFn | ⚠️ était le seul cas restant — **traité par ce run** |
+| `WorldMapScene.ts exit()` — `visuals.clear()` sans `destroyVisual()` | ✅ `SceneManager.destroy({ children: true })` couvre l'arbre Pixi entier |
+| 5 `useMemo<CSSProperties>` parallax dans VillageView | ✅ display-only, dépendances correctes, rAF throttle justifié |
+| `VillageView.tsx` `<style>` block inline | ⚠️ non standard mais fonctionnel, pas de comportement cassé — D3, candidat bftc-maint-debt |
+| `retryAttachTextures` toutes les 500ms dans `WorldMapScene.update()` | ✅ O(n) forEach sur une petite Map (assets), 500ms cooldown — acceptable |
+| `SpecializedBuildingDetailModal.tsx` (639 LOC) | ✅ purement présentationnel (props only), sous-composants par type de bâtiment, testé |
+| `ArmyScreen.tsx` garrison derivations inline | ✅ 10 lignes de ternaires simples sur des arrays petits, pas de fuite de logique métier |
+| `headerHelpers.ts` nommé `headerHelpers` mais utilisé par `useMultiVillageData` | ✅ couplage faible, renommage = churn mécanique sans valeur |
+| `toResultMap` non wrappé dans `useMemo` dans `useMultiVillageData` | ✅ utilisé comme `combine` option de `useQueries` — TanStack stabilise les références via son propre système |
+
+### Selected theme: **B2 + D2 — Centralize `publicKingdomPower` query config + `headerHelpers.test.ts`**
+
+**Rationale :**
+- B2 était le dernier `queryFn` inline hors `queries.ts` — viole la convention établie (toutes les queryFn/staleTime dans `queries.ts`). L'extraction vers `publicKingdomPowerQueryOptions` suit exactement le pattern `armyTrainingQueryOptions` (run 2026-05-31).
+- D2 : `toResultMap` (utilisé 6× dans `useMultiVillageData`) + `getPlayerInitials` (3 call sites) + `formatWorldPhase` (2 call sites) n'avaient aucun test direct. Un regression sur `toResultMap` (ex : swap d'index dans le flatMap) ne serait attrapée que par les tests E2E de rendu.
+- Les deux items forment un thème cohérent : « compléter la couche data — centralisation + filet de régression ».
+
+**Rejected :**
+- D3 (VillageView keyframes) : cosmétique, candidat `bftc-maint-debt`.
+- E1 (VillageView 970 LOC) : organisé, lisible, décomposition serait du churn mécanique.
+- C2 (BuildingManagementPanel) : logique encapsulée en sous-composants, faible gain.
+- C3 (ArmyScreen garrison) : low, borderline.
+
+### Verification
+
+```text
+yarn static-check   → green (tsc backend + pixi, ESLint backend + pixi --quiet)
+yarn workspace …-pixi test --run   → 58 test files, 300 tests passed (+1 headerHelpers.test.ts, +15 tests)
+```
+
+**Diff :** `queries.ts` +35 LOC (`publicKingdomPowerQueryOptions` + Zod schema + type), `useWorldCardModels.ts` −15 LOC (inline queryFn supprimé), `headerHelpers.test.ts` +97 LOC (14 tests directs). Net : −15 / +132 LOC dans les fichiers modifiés.
+
+---
+
 ## Run 2026-06-02 — commit 34b14a7
 
 **Scan date:** 2026-06-02
