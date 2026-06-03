@@ -44,7 +44,8 @@ New PRs use branch `maint/refactor-backend/<short-topic>` and PR title
 | ID | Category | Location | Description | Severity | Effort |
 |----|----------|----------|-------------|----------|--------|
 | E1 | Correctness | `village-strategy.service.ts:183-213` | **SELECTED** — `changeStrategy` reads `crownBalance` outside the `$transaction` (line 183), snapshots the balance, then uses `balance: crownBalance.balance - changeCost.crowns` inside the tx (line 210). Two concurrent requests can both pass the `balance < changeCost` check against the same snapshot and both succeed with the same absolute value, leaving the balance at `snapshot - cost` instead of `snapshot - 2×cost`. Crown balance can be overdrafted. | High | S |
-| E2 | Correctness | `village-strategy.service.ts:165-228` | Same TOCTOU pattern for `resourceStock.wood/stone/iron` check (outside tx, lines 175-181) vs. decrement inside tx (lines 222-224). Less severe: decrement uses `{ decrement: X }` (atomic) so the worst case is two decrements instead of two no-ops — resources can go negative rather than being duplicated. Separate issue from E1. | Medium | S |
+| E2 | Correctness | `village-strategy.service.ts:165-228` | **RESOLVED (commit `8580f25`)** — Same TOCTOU pattern for `resourceStock.wood/stone/iron`: pre-tx check removed, replaced with `tx.resourceStock.updateMany WHERE wood/stone/iron >= cost` + count check. Same atomic pattern as E1. CodeRabbit LGTM (lines 207-234). | Medium | S |
+| E3 | Correctness | `village-strategy.service.ts:157-163` | Cooldown check reads `village.strategyConfig.cooldownEndsAt` before entering `$transaction`. Two concurrent requests can both pass, both debit crowns + resources, both upsert `villageStrategyConfig`. The second upsert overwrites the first's cooldown — user is double-charged but both strategy changes apply. Fix: fold the guard into the `villageStrategyConfig` upsert using `updateMany WHERE cooldownEndsAt IS NULL OR cooldownEndsAt <= now`. Requires the row to pre-exist (non-trivial because of the current upsert-on-create pattern). CodeRabbit: Nitpick/Trivial, not blocking, out of scope for this PR. | Low | M |
 | C6 | Readability/reliability | `resources.service.ts:50` | Recursive `this.getResources(villageId, userId)` call after `updateProduction`. Was marked RESOLVED in run 2026-05-31 but is still present. Terminates after one level (production catchup updates `lastUpdateTs`) but surprising; a loop or an explicit re-read would be clearer. | Low | S |
 | B3 | Performance | `event-outbox.service.ts:539` | `getUserIdByVillage` issues one `findUnique` per event in the ~1s dispatch loop — up to 100 sequential single-row queries per batch. Now ~16 call-sites. Carried (4th run). | Medium | M |
 | B4 | Observability | `event-outbox.service.ts:65-91` + 8 notify sites | Hot dispatch loop logs 2–3 verbose lines per event at default level on every poll. Should be `debug`. Carried. | Low | S |
@@ -64,7 +65,7 @@ New PRs use branch `maint/refactor-backend/<short-topic>` and PR title
 - **`expireStaleCards` wrapping `expireStaleCardsInTransaction`** in `retention.service.ts:393-408` — wrapper exists to allow calling the inner method either inside or outside a tx. Pattern is valid.
 - **`village-strategy.service.ts:383-423` `getProductionRatesForStrategy`** — three sequential `worldConfig.getProductionRate` await calls, each reading from an in-memory config cache (`WorldConfigService`). No DB round-trips; not N+1.
 - **`calculateChangeCosts` hardcodes the 4 strategy names** — enum-exhaustive mapping, not a risk; would need a type-safe `Object.values(VillageStrategy)` if strategies were added dynamically. Low/cosmetic.
-- **Resource stock TOCTOU (E2)** — atomic `{ decrement }` means the worst case is a temporary negative balance (which existing validation guards handle elsewhere), not a silent overdraft. Distinct from E1 and lower risk.
+- **Resource stock TOCTOU (E2)** — atomic `{ decrement }` means the worst case is a temporary negative balance (which existing validation guards handle elsewhere), not a silent overdraft. Distinct from E1 and lower risk. **Now fixed in commit `8580f25`** (same `updateMany WHERE` pattern).
 - **`getStrategyInfo` double ownership check** (ownership.assertVillageOwnedBy + findUnique) — the service needs the full village object; the extra query is necessary. Not a finding.
 
 ---
@@ -77,7 +78,7 @@ New PRs use branch `maint/refactor-backend/<short-topic>` and PR title
 - **Fully verifiable**: existing `village-strategy.smoke.spec.ts` covers the happy path and the cooldown enforcement; `crowns.smoke.spec.ts` covers the crown read-back. Both green post-fix.
 
 **Rejected:**
-- **E2 (resource TOCTOU)**: uses atomic `{ decrement }` already — the race produces a temporary negative balance, not a silent overdraft. Lower risk and separate theme; worth its own PR if resources-negative is observed in prod.
+- **E2 (resource TOCTOU)**: Originally deferred — uses atomic `{ decrement }` already. CodeRabbit upgraded to Major in review; fixed in commit `8580f25` (same `updateMany WHERE` pattern).
 - **B3 (outbox N+1)**: Medium effort, hot path, higher blast radius. Deferred (4th run running).
 - **D4 (expedition.create dedup)**: Medium effort, 4 create sites diverge enough to risk obscuring intent.
 - **B4/B5/B6/D5/D6**: Low severity; bundling with a correctness fix would muddy the diff.
@@ -85,8 +86,9 @@ New PRs use branch `maint/refactor-backend/<short-topic>` and PR title
 ### Result
 
 - `village-strategy.service.ts`: moved `crownBalance.findUnique` inside the `$transaction` lambda; changed absolute `balance: crownBalance.balance - changeCost.crowns` to atomic `balance: { decrement: changeCost.crowns }`. The pre-tx snapshot that enabled the race is gone.
+- `village-strategy.service.ts` (commit `8580f25`): also applied atomic `updateMany WHERE wood/stone/iron >= cost` pattern to resource debit (E2), prompted by CodeRabbit Major finding in review.
 - No change to `CrownsService.createCrownsChangedEvent` — it already re-reads from the tx client, so it sees the correct decremented value.
-- LOC unchanged.
+- Cooldown check TOCTOU (E3) logged for next run — pre-existing, non-blocking, requires more complex upsert restructure.
 
 ### Verification
 
@@ -94,9 +96,14 @@ New PRs use branch `maint/refactor-backend/<short-topic>` and PR title
 yarn static-check                                   → ✅ tsc (backend+pixi) + eslint --quiet, 0 errors
 yarn workspace battleforthecrown-backend jest       → ✅ 240 passed, 22 suites
 npx jest --config ./test/jest-smoke.json            →
-  village-strategy.smoke.spec.ts                    → ✅ 2 passed
+  village-strategy.smoke.spec.ts                    → ✅ 2 passed (both commits)
   crowns.smoke.spec.ts                              → ✅ 3 passed
 ```
+
+**CodeRabbit final review (commit `8580f25`):**
+- Crown debit (lines 181-205): LGTM
+- Resource debit (lines 207-234): LGTM
+- Cooldown check (lines 157-163): Nitpick/Trivial, not blocking → logged as E3 for next run
 
 ### Docs impact
 
