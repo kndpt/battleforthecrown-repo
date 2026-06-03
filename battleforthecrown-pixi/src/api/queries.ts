@@ -1,4 +1,5 @@
 import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { z } from 'zod';
 import {
   PublicWorldsResponseSchema,
   WorldConfigSchema,
@@ -439,6 +440,28 @@ export function useKingdomPowerQuery() {
     staleTime: 30_000,
   });
 }
+
+const PublicKingdomPowerSchema = z.strictObject({
+  userId: z.string(),
+  kingdomPower: z.number(),
+});
+
+export type PublicKingdomPowerDto = z.infer<typeof PublicKingdomPowerSchema>;
+
+export const publicKingdomPowerQueryOptions = (userId: string | null, worldId: string) =>
+  queryOptions({
+    enabled: userId !== null,
+    queryFn: async (): Promise<PublicKingdomPowerDto> => {
+      if (!userId) return Promise.reject(new Error('userId required'));
+      const raw = await apiClient.get<unknown>(`/power/kingdom/${userId}/public`, {
+        query: { worldId },
+        skipAuth: true,
+      });
+      return PublicKingdomPowerSchema.parse(raw);
+    },
+    queryKey: queryKeys.publicKingdomPower(userId, worldId),
+    staleTime: 30_000,
+  });
 
 export interface ArmyUnitDto {
   id: string;
