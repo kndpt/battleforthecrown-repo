@@ -8,6 +8,109 @@ New PRs use branch `maint/refactor-backend/<short-topic>` and PR title
 
 ---
 
+## Run 2026-06-03 — branch `maint/refactor-backend/strategy-crown-toctou`
+
+**Model:** claude-sonnet-4-6
+**Scan commit:** `2c3aed4`
+
+---
+
+### Prior findings status (Run 2026-06-02)
+
+| ID | Status | Note |
+|----|--------|------|
+| D1 | **RESOLVED** | `loadOwnedVillage` helper in place (`combat.service.ts:647`). |
+| D2 | **RESOLVED** | `assertTargetInVision` helper in place (`combat.service.ts:669`). |
+| D3 | **RESOLVED** | `scheduleResolution` helper in place (`combat.service.ts:687`). |
+| B3 | **STILL OPEN** | `getUserIdByVillage` N+1 in outbox dispatch still at `event-outbox.service.ts:539`, ~16 call-sites. Deferred (4th run). |
+| B4 | **STILL OPEN** | Verbose `logger.log` in hot dispatch loop at `event-outbox.service.ts:65-91` + 8 per-notify sites. |
+| B5 | **STILL OPEN** | Capture duration tables hardcoded at `combat.worker.ts:35-49`. Low. |
+| B6 | **STILL OPEN** | `applyDefenderLosses`/`getCaptureDurationMs` re-spell inline `Prisma.VillageGetPayload<…>` at `combat.worker.ts:947-951, 1063-1066`. Low. |
+| D4 | **STILL OPEN** | `expedition.create` block repeated 4× in `combat.service.ts`. Deferred. |
+| D5 | **STILL OPEN** | `buildBarbarianDefender`/`buildPlayerDefender` garrison loop duplication at `combat.worker.ts:842-866, 877-945`. Deferred. |
+| D6 | **STILL OPEN** | Verbose `logger.log` at entry of each combat public method. Low. |
+| C6 | **REOPENED** | Recursive `this.getResources` call at `resources.service.ts:50` marked RESOLVED in run-2 but still present. |
+
+---
+
+### Module structure (mental model)
+
+`src/` = bounded contexts under `modules/` + cross-cutting `workers/`, `infra/`, `common/`. Layering clean: only `health.controller.ts` touches Prisma (liveness ping). Zero `as any`, zero `console.*`, zero `@ts-ignore` in production code. Combat module still dominates by size and churn (`combat.worker.ts` 1389 LOC, `combat.service.ts` 911 LOC, `conquest.service.ts` 565 LOC). The `strategy/` module (`village-strategy.service.ts` 495 LOC) is new-ish and contains a TOCTOU correctness bug in its transaction boundary. `retention/` recently grew to 573 LOC but is well-structured. `event-outbox.service.ts` (560 LOC) still carries the B3 N+1 and B4 log noise.
+
+---
+
+### Findings
+
+| ID | Category | Location | Description | Severity | Effort |
+|----|----------|----------|-------------|----------|--------|
+| E1 | Correctness | `village-strategy.service.ts:183-213` | **SELECTED** — `changeStrategy` reads `crownBalance` outside the `$transaction` (line 183), snapshots the balance, then uses `balance: crownBalance.balance - changeCost.crowns` inside the tx (line 210). Two concurrent requests can both pass the `balance < changeCost` check against the same snapshot and both succeed with the same absolute value, leaving the balance at `snapshot - cost` instead of `snapshot - 2×cost`. Crown balance can be overdrafted. | High | S |
+| E2 | Correctness | `village-strategy.service.ts:165-228` | **RESOLVED (commit `8580f25`)** — Same TOCTOU pattern for `resourceStock.wood/stone/iron`: pre-tx check removed, replaced with `tx.resourceStock.updateMany WHERE wood/stone/iron >= cost` + count check. Same atomic pattern as E1. CodeRabbit LGTM (lines 207-234). | Medium | S |
+| E3 | Correctness | `village-strategy.service.ts:157-163` | **RESOLVED** — Cooldown check read `village.strategyConfig.cooldownEndsAt` before the `$transaction`: two concurrent requests could both pass, both debit, both write `villageStrategyConfig` — double-charge. Folded the guard into an atomic `updateMany WHERE cooldownEndsAt IS NULL OR <= now` at the head of the tx (fail-fast); 0 rows ⇒ disambiguate row-missing (first change → guarded `create`, P2002→409) vs. cooldown-active (→409). Pre-tx check kept as a free early-out. Concurrency regression test added (`village-strategy.smoke.spec.ts`). | Low | M |
+| C6 | Readability/reliability | `resources.service.ts:50` | Recursive `this.getResources(villageId, userId)` call after `updateProduction`. Was marked RESOLVED in run 2026-05-31 but is still present. Terminates after one level (production catchup updates `lastUpdateTs`) but surprising; a loop or an explicit re-read would be clearer. | Low | S |
+| B3 | Performance | `event-outbox.service.ts:539` | `getUserIdByVillage` issues one `findUnique` per event in the ~1s dispatch loop — up to 100 sequential single-row queries per batch. Now ~16 call-sites. Carried (4th run). | Medium | M |
+| B4 | Observability | `event-outbox.service.ts:65-91` + 8 notify sites | Hot dispatch loop logs 2–3 verbose lines per event at default level on every poll. Should be `debug`. Carried. | Low | S |
+| B5 | Config | `combat.worker.ts:35-49` | Capture duration tables hardcoded in worker. Carried. | Low | S |
+| B6 | Type debt | `combat.worker.ts:947-951, 1063-1066` | `applyDefenderLosses`/`getCaptureDurationMs` re-spell inline `Prisma.VillageGetPayload<…>` instead of the named `DefenderVillage` alias at line 58. Carried. | Low | S |
+| D4 | Duplication | `combat.service.ts:117,187,270,393` | `expedition.create` data block repeated 4× (varies on `kind`/`targetKind`/optional reinforcement fields). Carried. | Medium | M |
+| D5 | Duplication | `combat.worker.ts:842-866, 911-930` | `buildBarbarianDefender`/`buildPlayerDefender` share identical garrison→participants aggregation loop (~25 LOC). Carried. | Low | M |
+| D6 | Observability | `combat.service.ts:56,155,224,308,432` | `logger.log(…, { dto })` entry in each public method at default level — leaks unit composition/coordinates. Low. Carried. | Low | S |
+
+---
+
+### Looks bad but is actually fine
+
+- **`crownBalance.findUnique` outside tx in `changeStrategy`** — the pre-tx read *was* redundant, and E1 is a real bug. The crown balance check has now been moved inside the tx (this run's fix).
+- **`updateProduction` in `CrownsService` reads balance inside tx** (`crowns.service.ts:133`) — correct; this path doesn't share the snapshot bug.
+- **`ResourcesService.updateProduction` decrement** is done with absolute arithmetic (`newBalance = balance + production`), also inside a `$transaction` with a re-read — fine.
+- **`expireStaleCards` wrapping `expireStaleCardsInTransaction`** in `retention.service.ts:393-408` — wrapper exists to allow calling the inner method either inside or outside a tx. Pattern is valid.
+- **`village-strategy.service.ts:383-423` `getProductionRatesForStrategy`** — three sequential `worldConfig.getProductionRate` await calls, each reading from an in-memory config cache (`WorldConfigService`). No DB round-trips; not N+1.
+- **`calculateChangeCosts` hardcodes the 4 strategy names** — enum-exhaustive mapping, not a risk; would need a type-safe `Object.values(VillageStrategy)` if strategies were added dynamically. Low/cosmetic.
+- **Resource stock TOCTOU (E2)** — atomic `{ decrement }` means the worst case is a temporary negative balance (which existing validation guards handle elsewhere), not a silent overdraft. Distinct from E1 and lower risk. **Now fixed in commit `8580f25`** (same `updateMany WHERE` pattern).
+- **`getStrategyInfo` double ownership check** (ownership.assertVillageOwnedBy + findUnique) — the service needs the full village object; the extra query is necessary. Not a finding.
+
+---
+
+### Selected theme: E1 — move crown balance check inside transaction in `changeStrategy`
+
+**Why this over alternatives:**
+- **E1 is the highest-severity new finding** and a correctness bug in a financial flow (crowns are spent, not just display state). Two concurrent requests can silently overdraft the crown balance.
+- **Scope is minimal** (one file, ~5-line net change): move `crownBalance.findUnique` inside the `$transaction` lambda, change `balance: crownBalance.balance - changeCost.crowns` to `balance: { decrement: changeCost.crowns }`. No public API change, no Prisma migration, no gameplay rule change.
+- **Fully verifiable**: existing `village-strategy.smoke.spec.ts` covers the happy path and the cooldown enforcement; `crowns.smoke.spec.ts` covers the crown read-back. Both green post-fix.
+
+**Rejected:**
+- **E2 (resource TOCTOU)**: Originally deferred — uses atomic `{ decrement }` already. CodeRabbit upgraded to Major in review; fixed in commit `8580f25` (same `updateMany WHERE` pattern).
+- **B3 (outbox N+1)**: Medium effort, hot path, higher blast radius. Deferred (4th run running).
+- **D4 (expedition.create dedup)**: Medium effort, 4 create sites diverge enough to risk obscuring intent.
+- **B4/B5/B6/D5/D6**: Low severity; bundling with a correctness fix would muddy the diff.
+
+### Result
+
+- `village-strategy.service.ts`: moved `crownBalance.findUnique` inside the `$transaction` lambda; changed absolute `balance: crownBalance.balance - changeCost.crowns` to atomic `balance: { decrement: changeCost.crowns }`. The pre-tx snapshot that enabled the race is gone.
+- `village-strategy.service.ts` (commit `8580f25`): also applied atomic `updateMany WHERE wood/stone/iron >= cost` pattern to resource debit (E2), prompted by CodeRabbit Major finding in review.
+- No change to `CrownsService.createCrownsChangedEvent` — it already re-reads from the tx client, so it sees the correct decremented value.
+- Cooldown check TOCTOU (E3) logged for next run — pre-existing, non-blocking, requires more complex upsert restructure.
+
+### Verification
+
+```shell
+yarn static-check                                   → ✅ tsc (backend+pixi) + eslint --quiet, 0 errors
+yarn workspace battleforthecrown-backend jest       → ✅ 240 passed, 22 suites
+npx jest --config ./test/jest-smoke.json            →
+  village-strategy.smoke.spec.ts                    → ✅ 2 passed (both commits)
+  crowns.smoke.spec.ts                              → ✅ 3 passed
+```
+
+**CodeRabbit final review (commit `8580f25`):**
+- Crown debit (lines 181-205): LGTM
+- Resource debit (lines 207-234): LGTM
+- Cooldown check (lines 157-163): Nitpick/Trivial, not blocking → logged as E3 for next run
+
+### Docs impact
+
+Aucun changement nécessaire — fix interne d'un service (frontière de transaction), pas de changement d'API REST, d'event WS, de modèle Prisma ni de règle gameplay.
+
+---
+
 ## Run 2026-06-02 — branch `maint/refactor-backend/combat-service-dedup`
 
 **Model:** claude-opus-4-8

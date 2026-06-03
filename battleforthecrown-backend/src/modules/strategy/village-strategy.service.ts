@@ -9,7 +9,7 @@ import { OwnershipService } from '../../common/auth';
 import { CrownsService } from '../crowns/crowns.service';
 import { WorldConfigService } from '../world/world-config.service';
 import { createOutboxEvent } from '../event/event.utils';
-import { VillageStrategy } from '@prisma/client';
+import { Prisma, VillageStrategy } from '@prisma/client';
 import {
   BASE_VILLAGE_STRATEGY_BONUS,
   BUILDING_TYPES,
@@ -155,6 +155,10 @@ export class VillageStrategyService {
     }
 
     const now = new Date();
+    // Cheap early-out on already-loaded data. NOT the authoritative guard:
+    // two concurrent requests can both read a passed cooldown here before
+    // either commits. The atomic guard inside the transaction below is what
+    // actually serializes them.
     if (
       village.strategyConfig?.cooldownEndsAt &&
       now < village.strategyConfig.cooldownEndsAt
@@ -172,75 +176,117 @@ export class VillageStrategyService {
     );
     const changeCost = getVillageStrategyChangeCost(newStrategy, castleLevel);
 
-    if (
-      village.resourceStock.wood < changeCost.wood ||
-      village.resourceStock.stone < changeCost.stone ||
-      village.resourceStock.iron < changeCost.iron
-    ) {
-      throw new BadRequestException('Insufficient resources');
-    }
-
-    const crownBalance = await this.prisma.crownBalance.findUnique({
-      where: {
-        userId_worldId: {
-          userId,
-          worldId: village.worldId,
-        },
-      },
-    });
-
-    if (!crownBalance || crownBalance.balance < changeCost.crowns) {
-      throw new BadRequestException('Insufficient crowns');
-    }
-
     // Calculer le nouveau cooldown
     const cooldownEndsAt = new Date(
       now.getTime() + strategyConfig.cooldownDuration * MS_PER_HOUR,
     );
 
     return this.prisma.$transaction(async (tx) => {
-      await tx.crownBalance.update({
+      // ── Cooldown guard (atomic, fail-fast) ────────────────────────────────
+      // Fold the cooldown check into a conditional UPDATE so Postgres evaluates
+      // it at row-lock time. Without this, two requests that both passed the
+      // pre-tx read above would both debit and both apply a change (last upsert
+      // wins) — double-charging the user. The losing request matches 0 rows
+      // here and aborts the whole transaction, rolling back its debits.
+      const configUpdate = await tx.villageStrategyConfig.updateMany({
         where: {
-          userId_worldId: {
-            userId,
-            worldId: village.worldId,
-          },
+          villageId,
+          OR: [{ cooldownEndsAt: null }, { cooldownEndsAt: { lte: now } }],
         },
         data: {
-          balance: crownBalance.balance - changeCost.crowns,
+          strategy: newStrategy as VillageStrategy,
+          lastChangedAt: now,
+          cooldownEndsAt,
+          changeCost: changeCost.crowns,
+        },
+      });
+      if (configUpdate.count === 0) {
+        // 0 rows ⇒ the config row either doesn't exist yet (first-ever change)
+        // or its cooldown is still active. One read disambiguates.
+        const existing = await tx.villageStrategyConfig.findUnique({
+          where: { villageId },
+          select: { id: true },
+        });
+        if (existing) {
+          throw new ConflictException('Strategy change is on cooldown');
+        }
+        // First change for this village: no prior cooldown to guard against.
+        // The @unique(villageId) constraint serializes concurrent first creates;
+        // the loser's P2002 surfaces as a cooldown conflict.
+        try {
+          await tx.villageStrategyConfig.create({
+            data: {
+              villageId,
+              strategy: newStrategy as VillageStrategy,
+              lastChangedAt: now,
+              cooldownEndsAt,
+              changeCost: changeCost.crowns,
+            },
+          });
+        } catch (e) {
+          if (
+            e instanceof Prisma.PrismaClientKnownRequestError &&
+            e.code === 'P2002'
+          ) {
+            throw new ConflictException('Strategy change is on cooldown');
+          }
+          throw e;
+        }
+      }
+
+      // ── Crown debit (atomic check + decrement) ────────────────────────────
+      // The sufficiency check is folded into the UPDATE predicate so check and
+      // decrement are a single atomic statement evaluated at row-lock time. A
+      // separate pre-tx read + in-tx update pair races under READ COMMITTED:
+      // two concurrent requests both read a sufficient balance, both pass the
+      // guard, and the second decrement goes negative. With WHERE … >= cost the
+      // second request simply matches 0 rows.
+      const debitResult = await tx.crownBalance.updateMany({
+        where: {
+          userId,
+          worldId: village.worldId,
+          balance: { gte: changeCost.crowns },
+        },
+        data: {
+          balance: { decrement: changeCost.crowns },
           lastUpdateTs: now,
         },
       });
+      if (debitResult.count === 0) {
+        throw new BadRequestException('Insufficient crowns');
+      }
 
       // Notifier le HUD de la dépense — sinon stale jusqu'au prochain tick
       // crown-production avec production > 0 (cf. crowns.service.ts JSDoc).
       await this.crowns.createCrownsChangedEvent(userId, village.worldId, tx);
 
-      const updatedStock = await tx.resourceStock.update({
-        where: { villageId },
+      // Same atomic pattern for resources: decrement only if all three
+      // balances are still sufficient at lock time.
+      const stockDebitResult = await tx.resourceStock.updateMany({
+        where: {
+          villageId,
+          wood: { gte: changeCost.wood },
+          stone: { gte: changeCost.stone },
+          iron: { gte: changeCost.iron },
+        },
         data: {
           wood: { decrement: changeCost.wood },
           stone: { decrement: changeCost.stone },
           iron: { decrement: changeCost.iron },
-          maxPerType: this.getStorageLimitForStrategy(village, newStrategy),
           lastUpdateTs: now,
         },
       });
+      if (stockDebitResult.count === 0) {
+        throw new BadRequestException('Insufficient resources');
+      }
 
-      await tx.villageStrategyConfig.upsert({
+      // Separate update for maxPerType (not a guard — always applied once the
+      // decrement succeeded) and to fetch the final values for the outbox event.
+      // The strategy/cooldown row was already written by the atomic guard above.
+      const updatedStock = await tx.resourceStock.update({
         where: { villageId },
-        update: {
-          strategy: newStrategy as VillageStrategy,
-          lastChangedAt: now,
-          cooldownEndsAt,
-          changeCost: changeCost.crowns,
-        },
-        create: {
-          villageId,
-          strategy: newStrategy as VillageStrategy,
-          lastChangedAt: now,
-          cooldownEndsAt,
-          changeCost: changeCost.crowns,
+        data: {
+          maxPerType: this.getStorageLimitForStrategy(village, newStrategy),
         },
       });
 

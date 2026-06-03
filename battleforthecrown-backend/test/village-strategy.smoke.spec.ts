@@ -180,6 +180,55 @@ describe('village strategy smoke', () => {
     expect(JSON.stringify(publicVillages.body)).not.toContain('strategyConfig');
   }, 30_000);
 
+  it('serializes concurrent strategy changes — single debit, no double-charge (TOCTOU)', async () => {
+    const world = await seedSmokeWorld(ctx.prisma, `style-race-${Date.now()}`);
+    const { user, village } = await seedPlayer('race-owner', world.id, 40, 40);
+
+    await ctx.prisma.building.updateMany({
+      where: { villageId: village.id, type: 'CASTLE' },
+      data: { level: 4 },
+    });
+    await ctx.prisma.building.updateMany({
+      where: { villageId: village.id, type: 'COUNCIL_HALL' },
+      data: { level: 1 },
+    });
+    // Stock + balance sized for TWO changes, so only the cooldown guard (not
+    // insufficiency) can reject the loser. Both target *different* strategies so
+    // the loser always hits the cooldown (409), never "already uses" (400).
+    await stockVillage(village.id, { wood: 1_000, stone: 1_000, iron: 1_000 });
+    await ctx.prisma.crownBalance.update({
+      where: { userId_worldId: { userId: user.userId, worldId: world.id } },
+      data: { balance: 500 },
+    });
+
+    const fire = (strategy: 'RAIDERS' | 'FORTRESS') =>
+      request(ctx.server)
+        .post(`/village/${village.id}/strategy`)
+        .set('Authorization', `Bearer ${user.accessToken}`)
+        .send({ strategy });
+
+    const [a, b] = await Promise.all([fire('RAIDERS'), fire('FORTRESS')]);
+
+    // Exactly one wins; the loser is serialized out by the atomic cooldown
+    // guard (or the first-change unique-constraint race), both surfaced as 409.
+    expect([a.status, b.status].sort()).toEqual([201, 409]);
+
+    // Crowns debited exactly once (both strategies cost 80). On the old code the
+    // cooldown TOCTOU let both transactions through, leaving balance at 340.
+    await expect(
+      ctx.prisma.crownBalance.findUniqueOrThrow({
+        where: { userId_worldId: { userId: user.userId, worldId: world.id } },
+      }),
+    ).resolves.toMatchObject({ balance: 420 });
+
+    // Resources debited by exactly one change. RAIDERS and FORTRESS both total
+    // 350 (50+100+200 / 200+100+50), so the sum is winner-independent.
+    const stock = await ctx.prisma.resourceStock.findUniqueOrThrow({
+      where: { villageId: village.id },
+    });
+    expect(stock.wood + stock.stone + stock.iron).toBe(3_000 - 350);
+  }, 30_000);
+
   it('applies fortress defense bonus in real combat resolution', async () => {
     const world = await ctx.prisma.world.create({
       data: {
