@@ -186,28 +186,28 @@ export class VillageStrategyService {
     );
 
     return this.prisma.$transaction(async (tx) => {
-      // Read crown balance inside the tx so the sufficiency check and the
-      // decrement are atomic: concurrent requests cannot both pass the check
-      // against a stale snapshot and overdraw the account.
-      const crownBalance = await tx.crownBalance.findUnique({
-        where: { userId_worldId: { userId, worldId: village.worldId } },
-      });
-      if (!crownBalance || crownBalance.balance < changeCost.crowns) {
-        throw new BadRequestException('Insufficient crowns');
-      }
-
-      await tx.crownBalance.update({
+      // Fold the balance sufficiency check into the UPDATE predicate so the
+      // check and the decrement are a single atomic Postgres statement.
+      // With READ COMMITTED isolation a separate findUnique + update pair
+      // still races: T2 can read a sufficient balance before T1 commits its
+      // debit, pass the guard, then decrement from T1's already-decremented
+      // value and go negative.  The updateMany WHERE balance >= cost pattern
+      // is evaluated by Postgres at the moment it acquires the row lock, so
+      // T2's update will simply match 0 rows after T1 commits.
+      const debitResult = await tx.crownBalance.updateMany({
         where: {
-          userId_worldId: {
-            userId,
-            worldId: village.worldId,
-          },
+          userId,
+          worldId: village.worldId,
+          balance: { gte: changeCost.crowns },
         },
         data: {
           balance: { decrement: changeCost.crowns },
           lastUpdateTs: now,
         },
       });
+      if (debitResult.count === 0) {
+        throw new BadRequestException('Insufficient crowns');
+      }
 
       // Notifier le HUD de la dépense — sinon stale jusqu'au prochain tick
       // crown-production avec production > 0 (cf. crowns.service.ts JSDoc).
