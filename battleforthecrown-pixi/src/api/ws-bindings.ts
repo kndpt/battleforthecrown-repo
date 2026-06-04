@@ -517,7 +517,7 @@ export function applyVillageCaptureWindowOpened(
 }
 
 export function applyVillageCaptureWindowCompleted(
-  payload: VillageCaptureWindowCompletedPayload,
+  _payload: VillageCaptureWindowCompletedPayload,
   ctx: BindingsContext,
 ): void {
   ctx.queryClient.invalidateQueries({ queryKey: ['memberships'] });
@@ -527,7 +527,7 @@ export function applyVillageCaptureWindowCompleted(
   useUiStore.getState().pushToast({
     tone: 'success',
     title: 'Capture terminée',
-    description: payload.targetVillageId,
+    description: 'Village conquis',
     ttlMs: 6000,
   });
 }

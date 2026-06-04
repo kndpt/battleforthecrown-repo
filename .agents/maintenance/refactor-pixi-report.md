@@ -341,3 +341,73 @@ yarn workspace …-pixi test --run           → 56 test files, 282 tests passed
 ```
 
 **Diff :** `GameHeader.tsx` −~190 LOC, `VillageView.tsx` −~210 LOC ; nouveaux `useMultiVillageData.ts` (hook), `profileViewModel.ts` (pur) + `.test.ts`, `+ buildSortedMultiVillageSheetItems` dans `multiVillageSheet.ts`. Net : −393 / +156 dans les fichiers modifiés.
+
+---
+
+## Run 2026-06-04 — commit 3ac0888
+
+**Scan date:** 2026-06-04
+**Commit SHA:** 3ac088806af7c7b4ac976ff1ca3b127849d799dd
+
+### Prior findings update
+
+- A1–A6 (ws-bindings query keys) : **RESOLVED**
+- B1, B2 : **RESOLVED**
+- N1, N2 : **RESOLVED**
+- S1, S2, S3 (session teardown) : **RESOLVED**
+- C1 (GameHeader god-component) : **RESOLVED**
+- D2 (headerHelpers tests) : **RESOLVED**
+- C2 (BuildingManagementPanel 962 LOC) : STILL OPEN — logique encapsulée dans sous-composants, faible risque
+- C3 (ArmyScreen garrison derivations) : STILL OPEN — low, borderline view-model
+- D3 (VillageView inline `<style>` block) : STILL OPEN — cosmétique
+- D4 (magic number 60_000 optimistic) : STILL OPEN — acceptable
+
+### Mental model
+
+Frontend propre et discipliné. Vérifié cette passe :
+- **Server-authoritative** : 0 violation. `projectResources`/`projectCrowns` display-only, toutes les mutations via REST → invalidation TanStack.
+- **Type debt** : 0 `as any`, 0 `@ts-ignore`, 0 `@ts-expect-error`, 0 `fetch`/`axios` hors `src/api/`, 0 `.setState` direct hors actions. Boundary Zod sur `worlds/public`, `world/config`, `cancelResponses`, `retentionSummary`, `publicKingdomPower`, `buildMapEntities.captureWindow`.
+- **Stores Zustand** : minces, une responsabilité chacun, tous avec `clear()`. Session teardown centralisé (`stores/session.ts`).
+- **Pixi scenes** : `WorldMapScene.ts` (721 LOC) propre — pas de lecture de store dans le ticker, cleanup correct via `SceneManager.destroy({ children: true })`. Deux bugs corrigés ce run (F1 + F4).
+- **TanStack Query** : `queries.ts` (1237 LOC) centralisé, `queryOptions` partagés. `openConquests` / `openExpeditions` avec `refetchInterval` conditionnel.
+
+### New findings
+
+| ID | Category | Location | Description | Severity | Effort | Status |
+|----|----------|----------|-------------|----------|--------|--------|
+| F1 | API layer / UX | `ws-bindings.ts:527` | `applyVillageCaptureWindowCompleted` toast `description: payload.targetVillageId` affichait le UUID brut de la cible — aucun nom de village dans le payload | **Medium** | S | **RESOLVED** (ce run) |
+| F4 | Pixi scene / Performance | `WorldMapScene.ts:709` | `drawCaptureMarker` appelé sur toutes les entités à chaque tick (~60/s), y compris celles sans `captureWindow` → `Graphics.clear()` inutile sur 100+ entités/frame | **Medium** | S | **RESOLVED** (ce run) |
+| F2 | Magic string | `DailyRetentionWidget.tsx:295` | `expiresInValue="04h00"` hardcodé — approximation du reset quotidien non dérivée des données | Low | S | STILL OPEN |
+| F3 | Test gap | `kingdomActivitiesViewModel.ts:121` | `formatTime` pure — non testée directement | Low | S | STILL OPEN |
+
+### "Looks bad but is actually fine" (this run)
+
+| Pattern | Verdict |
+|---------|---------|
+| `['power', 'kingdom', userId]` clé partielle dans `invalidatePowerQueries` | ✅ prefix-match intentionnel (tous worldId) — n'atteint pas `publicKingdomPower` car le 3e élément est `'public'` |
+| `['combat', 'reports', userId]` dans `invalidateCombatReports` | ✅ prefix-match intentionnel (cross-world) — confirmé runs précédents |
+| `['memberships']`, `['villages']`, `['world-entities']` dans `applyVillageConquered` / capture events | ✅ broad invalidation cross-ownership intentionnelle |
+| `useWorldEntitiesQuery` `staleTime: 30_000` + `refetchInterval: 30_000` | ✅ refetchInterval force le refresh indépendamment de la staleness ; WS events invalident immédiatement |
+| `captureWindow` field absent du `SelectedEntityPanel` tooltip | ✅ information rendue par le marker Pixi sur la carte, non dupliquée dans le callout |
+| `SelectedEntityPanel` appelle `useArmyInventoryQuery(null)` / `useGarrisonQuery(null)` pour entités non-mine | ✅ `enabled: Boolean(villageId)` — queries désactivées quand null |
+| `DailyRetentionWidget.tsx` `expiresInValue="04h00"` | ⚠️ placeholder du reset journalier (minuit Paris) — non dérivé du DTO ; F2, candidat `bftc-maint-debt` |
+
+### Selected theme: **F1 + F4 — capture event correctness & Pixi tick optimization**
+
+**Rationale :**
+- F1 est un bug UX visible sur le happy-path de la capture (toast "Capture terminée" affichait un UUID opaque). Le payload `VillageCaptureWindowCompletedPayload` ne contient pas de nom de village → message générique `'Village conquis'`.
+- F4 est une anomalie Pixi : `drawCaptureMarker` était appelé sur TOUTES les entités dans le ticker même quand aucune n'était en capture, entraînant `Graphics.clear()` inutile sur chaque entité à ~60/s. La correction consiste à ne passer dans `drawCaptureMarker` que les entités ayant effectivement un `captureWindow` actif. Le nettoyage lors du retrait du `captureWindow` est déjà géré par `drawEntity` (ligne 429) appelé via `reconcile`.
+- Le test ajouté à `ws-bindings.test.ts` régresse F1 et assure qu'aucune future modification du payload ne réintroduira un UUID brut.
+- Thème cohérent (domaine capture window), scope chirurgical (3 fichiers), 100 % vérifiable sans backend.
+
+**Rejected :**
+- F2 (DailyRetentionWidget expiresInValue hardcoded) : low, cosmétique, candidat `bftc-maint-debt`.
+- F3 (formatTime test gap) : low, formatTime couverte indirectement par `mapOpenConquestToCaptureCard` tests.
+- C2, C3, D3, D4 : reportés depuis runs précédents, bénéfice marginal.
+
+### Verification
+
+```text
+yarn static-check   → green (tsc backend + pixi, ESLint backend + pixi --quiet)
+yarn test:pixi      → 59 test files, 309 tests passed (+1 ws-bindings.test.ts)
+```
