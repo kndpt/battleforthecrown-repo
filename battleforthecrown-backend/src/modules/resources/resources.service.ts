@@ -237,38 +237,37 @@ export class ResourcesService {
     buildings: Array<{ type: string; level: number }>,
     strategy?: VillageStrategyType,
   ): Promise<{ wood: number; stone: number; iron: number }> {
+    const config = await this.worldConfig.getConfig(worldId);
     const woodBuilding = buildings.find((b) => b.type === 'WOOD');
     const stoneBuilding = buildings.find((b) => b.type === 'STONE');
     const ironBuilding = buildings.find((b) => b.type === 'IRON');
 
-    const [wood, stone, iron] = await Promise.all([
-      woodBuilding
-        ? this.worldConfig.getProductionRate(
-            worldId,
+    return {
+      wood: woodBuilding
+        ? this.worldConfig.computeProductionRate(
+            config,
             'WOOD',
             woodBuilding.level,
             strategy,
           )
-        : Promise.resolve(0),
-      stoneBuilding
-        ? this.worldConfig.getProductionRate(
-            worldId,
+        : 0,
+      stone: stoneBuilding
+        ? this.worldConfig.computeProductionRate(
+            config,
             'STONE',
             stoneBuilding.level,
             strategy,
           )
-        : Promise.resolve(0),
-      ironBuilding
-        ? this.worldConfig.getProductionRate(
-            worldId,
+        : 0,
+      iron: ironBuilding
+        ? this.worldConfig.computeProductionRate(
+            config,
             'IRON',
             ironBuilding.level,
             strategy,
           )
-        : Promise.resolve(0),
-    ]);
-
-    return { wood, stone, iron };
+        : 0,
+    };
   }
 
   /**
