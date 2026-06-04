@@ -8,6 +8,88 @@ New PRs use branch `maint/refactor-backend/<short-topic>` and PR title
 
 ---
 
+## Run 2026-06-04 — branch `maint/refactor-backend/resources-fetch-rates`
+
+**Model:** claude-sonnet-4-6
+**Scan commit:** `3ac0888`
+
+---
+
+### Prior findings status (Run 2026-06-03)
+
+| ID | Status | Note |
+|----|--------|------|
+| E1 | **RESOLVED** | Crown balance TOCTOU fixed (commit `5e817c2`). |
+| E2 | **RESOLVED** | Resource TOCTOU fixed (`updateMany WHERE >= cost` in `changeStrategy`). |
+| E3 | **RESOLVED** | Cooldown TOCTOU fixed (atomic `updateMany WHERE cooldownEndsAt <= now`). |
+| C6 | **STILL OPEN** | Recursive `this.getResources` at `resources.service.ts:50`. Terminates in 2 steps max (updateProduction stamps `lastUpdateTs = now`, second call's elapsed < threshold). Not a bug; cosmetically surprising. |
+| B3 | **STILL OPEN** | `getUserIdByVillage` N+1 in outbox dispatch (`event-outbox.service.ts:539`, ~15 call-sites). Deferred (5th run). |
+| B4 | **STILL OPEN** | Verbose `logger.log` in hot dispatch loop (`event-outbox.service.ts:65-91` + 8 notify sites). Deferred. |
+| B5 | **STILL OPEN** | Capture duration tables hardcoded at `combat.worker.ts:35-49`. PR #46 (draft) proposes extraction but not merged. |
+| B6 | **STILL OPEN** | `applyDefenderLosses`/`getCaptureDurationMs` re-spell inline `Prisma.VillageGetPayload<…>` instead of `DefenderVillage` alias (`combat.worker.ts:949-951, 1063-1065`). Low. |
+| D4 | **STILL OPEN** | `expedition.create` block repeated 4× in `combat.service.ts`. Deferred. |
+| D5 | **STILL OPEN** | `buildBarbarianDefender`/`buildPlayerDefender` garrison loop duplication (`combat.worker.ts:842-866, 911-930`). Deferred. |
+| D6 | **STILL OPEN** | Verbose `logger.log` at entry of each combat public method. Low. Deferred. |
+
+---
+
+### Module structure (mental model)
+
+`src/` = bounded contexts under `modules/` + cross-cutting `workers/`, `infra/`, `common/`. Layering clean: only `health.controller.ts` touches Prisma (liveness ping). Zero `as any`, zero `console.*`, zero `@ts-ignore` in production code. Combat module still largest by size and churn (`combat.worker.ts` 1389, `combat.service.ts` 911). Prior TOCTOU fixes closed E1/E2/E3. `event-outbox.service.ts` (560 LOC) carries B3/B4. `resources.service.ts` (340 → 293 LOC after this run) had the highest intra-service duplication. `crowns.service.ts` (282) and `world-entities-query.service.ts` (258) introduced minor new findings (N2, N3).
+
+---
+
+### Findings
+
+| ID | Category | Location | Description | Severity | Effort |
+|----|----------|----------|-------------|----------|--------|
+| N1 | Duplication | `resources.service.ts:98-126, 160-175, 264-285` (pre-fix) | **SELECTED** — `findBuilding + getProductionRate` × 3 resources repeated 3× in `updateProduction`, `calculateCurrentResources`, `getProductionRates`. ~30 LOC × 3. Extracted to `fetchBuildingRates` private helper. | Medium | S |
+| N2 | Duplication | `crowns.service.ts:131-178, 202-248` | `updateProduction` and `recalculateOnBuildingChange` duplicate the crown production accumulation pattern (find balance → calculateProductionRate → elapsedHours → floor → increment). Only divergence: `recalculateOnBuildingChange` creates balance if missing, always emits event. | Low | M |
+| N3 | Correctness | `world-entities-query.service.ts:98-100` | `getVillagesInRadius` missing upper-bound clamp on `maxX`/`maxY` (const `maxX = centerX + radius` vs `getEntitiesInRadius` which uses `Math.min(…, 499)`). No practical Prisma bug but inconsistent with sibling method. | Low | S |
+
+---
+
+### Looks bad but is actually fine
+
+- **`this.getResources` recursive call** (`resources.service.ts:50`) — terminates in exactly 2 calls: `updateProduction` stamps `lastUpdateTs = now`, so the second call's `elapsedMs` ≈ 0, well below `PRODUCTION_CATCHUP_THRESHOLD_MS`. Not N+1 recursion.
+- **`calculateProductionRate` called inside `$transaction` in `recalculateOnBuildingChange`** (`crowns.service.ts:224`) — uses `this.prisma` (not the tx client), so it reads committed state. The building update is committed before this method is called (from construction worker). Correct.
+- **`getProductionRate` is async** (`WorldConfigService`) — in-memory config cache, no DB round-trips. The `Promise.all` in the new `fetchBuildingRates` helper is a cosmetic parallelization bonus, not an N+1 fix.
+- **`PVP_CAPTURE_DURATIONS_MS` / `BARBARIAN_CAPTURE_DURATIONS_MS` hardcoded** — B5 still open; draft PR #46 proposes extraction to `capture-duration.ts` but not yet merged.
+- **`VillageStrategy` (Prisma) vs `VillageStrategyType` (shared)** — both resolve to the same string literal union; TypeScript structural compatibility allows passing one where the other is expected without cast.
+
+---
+
+### Selected theme: N1 — Extract `fetchBuildingRates` in `ResourcesService`
+
+**Why this over alternatives:**
+- `resources.service.ts` had the most glaring intra-file duplication — the same 30-LOC pattern 3× with no semantic difference.
+- Single-file scope, pure extraction, fully behavior-preserving. No public API change, no Prisma change, no gameplay rule change.
+- The 3 callers (`updateProduction` / `calculateCurrentResources` / `getProductionRates`) are all in the resource hot path (called per tick, per REST poll, per combat). A single source of truth benefits future strategy bonuses or new resource types.
+- **B3 (outbox N+1)** deferred again — real impact but the fix changes `dispatchEvent` signature + 15 notify-function signatures; merits its own focused PR with a load assertion.
+- **N2 (crowns duplication)** deferred — Medium effort, the divergence around balance creation makes extraction tricky without obscuring intent.
+
+**Result:**
+- `resources.service.ts`: new private `fetchBuildingRates(worldId, buildings, strategy?)` helper, uses `Promise.all` on the 3 independent `getProductionRate` calls.
+- `updateProduction`: ~30 LOC of building-lookup + rate-fetch → 5-line destructure call.
+- `calculateCurrentResources`: same.
+- `getProductionRates`: same.
+- Net: 61 insertions / 90 deletions = −29 LOC in service body + 22 LOC helper = −7 LOC net.
+
+### Verification
+
+```shell
+yarn static-check                                   → ✅ tsc (backend+pixi) + eslint --quiet, 0 errors
+yarn test:backend                                   → ✅ 240 passed, 22 suites
+npx jest --config ./test/jest-smoke.json crowns.smoke.spec.ts village-strategy.smoke.spec.ts → ✅ 6 passed
+npx jest --config ./test/jest-smoke.json construction.smoke.spec.ts daily-retention.smoke.spec.ts → ✅ 8 passed
+```
+
+### Docs impact
+
+Aucun changement nécessaire — refactor interne d'un service (extraction de helper privé), pas de changement d'API REST, d'event WS, de modèle Prisma ni de règle gameplay. Findings B3/B4/B5/B6/D4/D5/D6/N2/N3 restent ouverts, documentés ci-dessus.
+
+---
+
 ## Run 2026-06-03 — branch `maint/refactor-backend/strategy-crown-toctou`
 
 **Model:** claude-sonnet-4-6
