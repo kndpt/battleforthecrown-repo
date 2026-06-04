@@ -28,6 +28,14 @@ describe('Pixi asset manifest', () => {
     }
   });
 
+  it('uses the noble asset for capture markers', () => {
+    const captureAsset = (WORLD_MAP_BUNDLE.assets as Array<{ alias: string; src: string }>).find(
+      (asset) => asset.alias === 'world.capture.crown',
+    );
+
+    expect(captureAsset?.src).toContain('/assets/army/noble.png');
+  });
+
   it('every asset src references the public /assets/ tree', () => {
     for (const bundle of PIXI_BUNDLES) {
       for (const asset of bundle.assets as Array<{ src: string }>) {

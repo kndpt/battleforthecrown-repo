@@ -2,18 +2,20 @@ import { Injectable } from '@nestjs/common';
 import { z } from 'zod';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 
+const captureWindowSchema = z
+  .object({
+    status: z.literal('OPEN'),
+    pendingConquestId: z.string(),
+    attackerVillageId: z.string(),
+    captureUntil: z.string(),
+  })
+  .optional();
+
 const barbarianVillageDataSchema = z.object({
   tier: z.string().nullable(),
   name: z.string(),
   villageId: z.string(),
-  captureWindow: z
-    .object({
-      status: z.literal('OPEN'),
-      pendingConquestId: z.string(),
-      attackerVillageId: z.string(),
-      captureUntil: z.string(),
-    })
-    .optional(),
+  captureWindow: captureWindowSchema,
 });
 
 type BarbarianVillageData = z.infer<typeof barbarianVillageDataSchema>;
@@ -32,6 +34,7 @@ const playerVillageDataSchema = z.object({
   name: z.string(),
   villageId: z.string(),
   castleLevel: z.number().int().min(1).max(10),
+  captureWindow: captureWindowSchema,
 });
 
 type PlayerVillageData = z.infer<typeof playerVillageDataSchema>;
@@ -218,12 +221,22 @@ export class WorldEntitiesQueryService {
           orderBy: [{ level: 'desc' }, { createdAt: 'asc' }],
           take: 1,
         },
+        pendingConquestTargets: {
+          where: { status: 'OPEN' },
+          select: {
+            id: true,
+            attackerVillageId: true,
+            captureUntil: true,
+          },
+          take: 1,
+        },
       },
       orderBy: [{ y: 'asc' }, { x: 'asc' }],
     });
 
     return villages.map((village) => {
       const castleLevel = village.buildings[0]?.level ?? 1;
+      const capture = village.pendingConquestTargets[0];
 
       return {
         id: village.id,
@@ -236,6 +249,16 @@ export class WorldEntitiesQueryService {
           name: village.name,
           villageId: village.id,
           castleLevel,
+          ...(capture
+            ? {
+                captureWindow: {
+                  status: 'OPEN' as const,
+                  pendingConquestId: capture.id,
+                  attackerVillageId: capture.attackerVillageId,
+                  captureUntil: capture.captureUntil.toISOString(),
+                },
+              }
+            : {}),
         }),
       };
     });

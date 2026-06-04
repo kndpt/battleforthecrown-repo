@@ -110,7 +110,7 @@ Pour lecteurs qui veulent comprendre où chaque axe est consommé :
 | `unitTrainingSpeed` / `lordTrainingSpeed` | `RecruitTroops` / `RecruitNoble` use-cases — `gameplay/recruit-*.use-case.ts` |
 | `barbarianRegen` | `BarbarianRuntimeService` — `world/barbarian-runtime.service.ts` |
 | `crownsYield` | `CrownsService` — `crowns/crowns.service.ts` |
-| `captureWindow` | `CombatWorker` — `combat/combat.worker.ts` |
+| `captureWindow` | `getCaptureDurationMs()` — `combat/capture-duration.ts`, appelé par `CombatWorker` |
 
 Tous passent par `TempoService.applyDuration` ou `applyRate` (jamais l'opérateur en direct dans les use-cases — c'est la règle [doc 23 § 5.1.1](../gameplay/23-world-tempo-and-multipliers.md#511-sémantique-du-multiplier--règle-unique)).
 

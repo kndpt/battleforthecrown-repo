@@ -78,6 +78,7 @@ combat/
 ├── combat.service.ts             # Orchestration attaque/scout/renforts + rapports
 ├── combat.controller.ts
 ├── combat.worker.ts              # Job pg-boss déclenché à arrival time
+├── capture-duration.ts           # Courbes fenêtre de capture + tempo.captureWindow
 ├── return.worker.ts              # Job retour d'armée
 ├── conquest.service.ts           # Logique de conquête de village
 ├── loot/                         # LootManager + providers (resources / building / etc.)

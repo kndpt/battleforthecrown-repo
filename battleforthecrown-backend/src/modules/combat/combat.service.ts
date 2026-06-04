@@ -727,7 +727,18 @@ export class CombatService {
       include: {
         attackerVillage: { select: { id: true, name: true } },
         targetVillage: {
-          select: { id: true, name: true, x: true, y: true, tier: true },
+          select: {
+            buildings: {
+              select: { level: true, type: true },
+              where: { type: 'CASTLE' },
+            },
+            id: true,
+            isBarbarian: true,
+            name: true,
+            tier: true,
+            x: true,
+            y: true,
+          },
         },
       },
       orderBy: { captureUntil: 'asc' },
@@ -741,6 +752,12 @@ export class CombatService {
       targetName: conquest.targetVillage.name,
       targetX: conquest.targetVillage.x,
       targetY: conquest.targetVillage.y,
+      targetKind: conquest.targetVillage.isBarbarian
+        ? 'BARBARIAN_VILLAGE'
+        : 'PLAYER_VILLAGE',
+      targetCastleLevel: conquest.targetVillage.isBarbarian
+        ? null
+        : (conquest.targetVillage.buildings[0]?.level ?? 1),
       targetTier: this.toCaptureTier(conquest.targetVillage.tier),
       captureStartedAt: conquest.openedAt.toISOString(),
       captureUntil: conquest.captureUntil.toISOString(),

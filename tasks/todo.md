@@ -1,5 +1,163 @@
 # Todo
 
+## 2026-06-04 — PR #46 commentaires review capture
+
+- [x] Relire les threads encore ouverts sur #46 et #49.
+- [x] Corriger le fallback implicite de niveau de Château sur capture PvP.
+- [x] Ajouter une régression pure sur le niveau de Château manquant.
+- [x] Relancer les vérifications ciblées capture et static-check.
+- [x] Commit, push et résoudre les threads GitHub.
+
+### Review
+
+- Thread #46 valide : `getCaptureDurationMs` ne retombe plus sur Château 1 quand un village joueur n'a pas de bâtiment `CASTLE` chargé ; le helper échoue explicitement.
+- Thread #46 Armée : faux positif à répondre, car `UNIT_COSTS.time` et `getEffectiveUnitTrainingDurationSeconds` manipulent des secondes.
+- Thread #49 ressources : obsolète sur le head courant.
+- Vérification : `rtk yarn workspace battleforthecrown-backend test -- capture-duration` — 1 suite / 4 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-backend test:smoke:preflight` — passé après démarrage du Postgres Docker local.
+- Vérification : `rtk yarn workspace battleforthecrown-backend test:smoke:run -- combat-conquest-hook.smoke.spec.ts` — 1 suite / 6 tests passés.
+- Vérification : `rtk yarn static-check` — passé.
+- Vérification : `rtk git diff --check` — passé.
+
+## 2026-06-03 — Fix smoke capture tempo
+
+- [x] Remplacer la constante T1 dupliquée par la courbe canonique.
+- [x] Relancer le smoke conquest ciblé.
+- [x] Relancer l'hygiène finale.
+
+### Review
+
+- Correction : `combat-conquest-hook.smoke.spec.ts` importe `BARBARIAN_CAPTURE_DURATIONS_MS.T1` depuis `capture-duration.ts` au lieu de dupliquer l'ancienne durée T1 barbare.
+- Vérification : `rtk yarn workspace battleforthecrown-backend test:smoke:preflight` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-backend test:smoke:run -- combat-conquest-hook.smoke.spec.ts` — 1 suite / 6 tests passés.
+- Vérification : `rtk yarn static-check` — passé.
+- Vérification : `rtk git diff --check` — passé.
+
+## 2026-06-03 — Audit impact docs patch local
+
+- [x] Cartographier le diff local par domaine.
+- [x] Comparer les changements aux docs gameplay/architecture actives.
+- [x] Corriger uniquement l'écart réel détecté.
+- [x] Lancer les vérifications ciblées.
+
+### Review
+
+- Docs gameplay : pas de mise à jour nécessaire ; les specs capture barbare/PvP étaient déjà alignées sur le tempo compressé.
+- Correction hors doc : `capture-duration.ts` et son test utilisent maintenant la courbe barbare de `docs/gameplay/13-barbarian-conquest.md` / `23-world-tempo-and-multipliers.md`.
+- Docs techniques : `docs/architecture/backend-modules.md` et `docs/architecture/balance-and-tempo.md` pointent vers le nouveau helper `combat/capture-duration.ts`.
+- Vérification : `rtk yarn workspace battleforthecrown-backend test -- capture-duration` — 1 suite / 3 tests passés.
+- Vérification : `rtk yarn static-check` — passé.
+- Vérification : `rtk git diff --check` — passé.
+
+## 2026-06-03 — Carte capture nom cible
+
+- [x] Retirer le badge carré gauche des cartes capture.
+- [x] Repositionner l'info tier/château en compact sans réduire le titre.
+- [x] Vérifier le composant capture ciblé et documenter la QA.
+
+### Review
+
+- Le gros badge carré `PVP / Ch. N` n'est plus rendu à gauche du titre de carte capture.
+- L'info tier/château reste visible en pastille compacte dans la ligne meta, avec un label accessible.
+- Le nom du village ciblé récupère toute la largeur de la ligne titre avant le statut.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test -- KingdomActivitiesPanel` — 1 suite / 1 test passé.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi eslint src/features/design-system/components/KingdomActivitiesPanel.tsx src/features/design-system/components/KingdomActivitiesPanel.test.tsx` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
+- Vérification : `rtk yarn static-check` — passé.
+- Vérification : `rtk git diff --check` — passé.
+- QA IG restante : ouvrir `Captures` et vérifier que le nom du village ciblé est lisible sans badge carré à gauche.
+
+## 2026-06-03 — Assets rapports de combat
+
+- [x] Confirmer que `/assets/loot-rapport.png` correspond à l’asset demandé.
+- [x] Remplacer l’asset hero du rapport de combat victoire.
+- [x] Confirmer que `/assets/no-loot-rapport.png` correspond à l’asset demandé.
+- [x] Remplacer l’asset hero du rapport de combat défaite.
+- [x] Lancer la vérification Pixi ciblée et documenter la QA.
+
+### Review
+
+- Correction : les rapports de combat victorieux utilisent `/assets/loot-rapport.png` dans le cartouche hero, avec une taille dédiée à cet asset.
+- Correction : les rapports de combat perdus utilisent `/assets/no-loot-rapport.png` dans le cartouche hero, avec la même taille dédiée.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test -- combatReportView` — 1 suite / 4 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi eslint src/features/design-system/components/CombatReportModal.tsx` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
+- QA IG restante : ouvrir un rapport de combat victorieux et un rapport perdu ; vérifier que le cartouche en haut à gauche affiche le bon asset et garde le badge d’identifiant lisible.
+
+## 2026-06-03 — Asset Seigneur canonique
+
+- [x] Brancher la troupe `NOBLE` sur `/assets/army/noble.png` au lieu de l'emoji couronne.
+- [x] Réutiliser ce même asset pour le marqueur animé de capture sur la carte monde.
+- [x] Adapter les tests ciblés et lancer les vérifications Pixi.
+
+### Review
+
+- `NOBLE` utilise désormais `/assets/army/noble.png` dans `unitConfig`; l'emoji fallback Seigneur est vide et n'est plus rendu.
+- La Salle du Trône et l'activité `Seigneur` de la sheet multi-villages utilisent le même PNG au lieu d'un emoji/glyphe local.
+- Le marqueur Pixi `world.capture.crown` pointe vers `/assets/army/noble.png`, donc la couronne animée de capture utilise le nouvel asset.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test -- armyViewModel manifest` — 2 suites / 9 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi lint:check --quiet` — passé.
+- Vérification : `rtk yarn static-check` — passé.
+- Vérification : `rtk git diff --check` — passé.
+- QA IG restante : vérifier une carte Seigneur dans Armée, la Salle du Trône et un village en capture sur la carte monde.
+
+## 2026-06-03 — Capture monde pourcentage et durée
+
+- [x] Localiser le rendu du pourcentage et la source de `0.27904`.
+- [x] Tracer la durée de capture depuis le worker backend jusqu’au DTO Activités.
+- [x] Corriger le formatage UI si le pourcentage est un ratio brut.
+- [x] Décider si `17h57` est un bug de calcul ou une règle de balance à revoir.
+- [x] Faire remonter `captureWindow` sur les villages joueurs du feed monde.
+- [x] Conserver l'état de capture quand un village à moi remplace l'entité monde.
+- [x] Ajouter une animation + un marqueur visuel au-dessus des villages en capture.
+- [x] Afficher une section capture dans le panel de village sans révéler les troupes.
+- [x] Lancer les vérifications ciblées et documenter la QA.
+
+### Review
+
+- Le pourcentage est calculé en base 100 dans `kingdomActivitiesViewModel`, puis affiché brut dans `CaptureWindowCard`.
+- La capture locale dure 18h parce que la cible est un village joueur Château 10, tempo `captureWindow = 1`, et le code PvP actuel applique le palier `9+ => 18h`.
+- La doc gameplay active PvP spécifie pourtant `9-10 => 4h30`; le code est désaligné.
+- Correction : les durées PvP sont alignées sur la doc `14-pvp-conquest` (`1h`, `1h30`, `2h15`, `3h`, `4h30`).
+- Correction : le badge capture joueur expose `PVP` + `Ch. N` au lieu de retomber sur `T1`.
+- Correction : `/world/:id/entities` expose désormais `captureWindow` sur les villages joueurs, pas seulement sur les barbares.
+- Correction : `buildMapEntities` conserve `captureWindow` quand `myVillages` remplace l'entité monde.
+- Correction : les villages en capture ont un halo renforcé + une couronne animée au-dessus de l'asset.
+- Correction : le panel du village affiche une section `Capture` avec village source, temps écoulé, temps restant et progression, sans afficher les troupes.
+- Donnée locale réparée : `pending_conquest cmpygad00008rvd3j4nmggvcf` et son job `conquest:finalize` passent de 18h à 4h30 (`capture_until/start_after = 2026-06-03T23:49:35.760Z`).
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test -- buildMapEntities SelectedEntityPanel` — 2 suites / 15 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-backend test -- capture-duration` — 1 suite / 3 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test -- kingdomActivitiesViewModel KingdomActivitiesPanel` — 2 suites / 5 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-backend test -- capture-duration.spec.ts` — 1 suite / 3 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test -- profileViewModel` — 1 suite / 6 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-backend type-check` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-backend test:smoke:preflight` — passé.
+- Vérification : `rtk yarn workspace battleforthecrown-backend test:smoke:run -- combat-conquest-hook.smoke.spec.ts` — 1 suite / 6 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-backend test:smoke:run -- kingdom-activities-snapshots.smoke.spec.ts combat-conquest-hook.smoke.spec.ts` — 2 suites / 7 tests passés ; log pg-boss de teardown non bloquant.
+- Vérification : `rtk yarn static-check` — passé.
+- Vérification : `rtk git diff --check` — passé.
+- QA IG restante : rafraîchir `/game/world`, vérifier que le village joueur en capture affiche une couronne animée, puis cliquer le village et vérifier la section `Capture` complète sans ligne de troupes. Ouvrir aussi `Captures` pour vérifier le pourcentage entier, le badge `PVP / Ch. 10`, et un temps restant basé sur une fenêtre totale de 4h30.
+
+## 2026-06-03 — Bug Seigneur invisible dans Armée
+
+- [x] Tracer le contrat Armée et confirmer où `NOBLE` est exclu.
+- [x] Corriger le view-model pour afficher les Seigneurs présents au village dans l’onglet Armée.
+- [x] Garder le Seigneur hors liste Caserne/recrutement.
+- [x] Ajouter une régression ciblée sur un Seigneur présent au village.
+- [x] Lancer les vérifications Pixi pertinentes et documenter la QA.
+
+### Review
+
+- Le view-model Armée construit les lignes depuis tous les `UNIT_TYPES`, donc `NOBLE` apparaît dans `Village` avec quantité, puissance et détail unité.
+- `barracksTroops` reste filtré sur `BARRACKS_UNIT_TYPES`, donc le Seigneur ne devient pas recrutable par la Caserne.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test -- armyViewModel` — 1 suite / 4 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi type-check` — passé.
+- Vérification : `rtk yarn static-check` — passé.
+- Vérification : `rtk git diff --check` — passé.
+- QA IG restante : vérifier `/game/army` onglet Armée avec un village possédant un Seigneur ; la section `Village` doit afficher une ligne `Seigneur` avec `Moi ×1`, puissance et détail au clic sur l’icône.
+
 ## 2026-06-02 — Run 046 devoir royal FOMO légère
 
 - [x] Préflight : branche propre `run/046-refactor-royal-duty-light-fomo`, fiche run, règles repo, specs source, briefings backend/pixi, politique PR.

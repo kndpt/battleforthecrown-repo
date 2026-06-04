@@ -2,6 +2,7 @@ import {
   BARRACKS_UNIT_TYPES,
   UNIT_COSTS,
   UNIT_STATS,
+  UNIT_TYPES,
   type UnitType,
 } from '@battleforthecrown/shared/army';
 import { getUnitPowerWeight } from '@battleforthecrown/shared/power';
@@ -54,6 +55,9 @@ const UNIT_CATEGORIES: Record<UnitType, ArmyTroopCategory> = {
   TEMPLAR: 'Élite',
   WARRIOR: 'Infanterie',
 };
+
+const ARMY_UNIT_TYPES = Object.values(UNIT_TYPES) as UnitType[];
+const BARRACKS_UNIT_TYPE_SET = new Set<UnitType>(BARRACKS_UNIT_TYPES);
 
 export interface ArmyViewModelInput {
   activeFilterId: ArmyFilterId;
@@ -115,17 +119,20 @@ export function buildArmyViewModel({
   const incomingByType = sumGarrisonByType(garrisonLines, 'INCOMING');
   const outgoingByType = sumGarrisonByType(garrisonLines, 'OUTGOING');
   const stock = buildArmyRecruitStock(resources, population);
-  const troops = BARRACKS_UNIT_TYPES.map((unitType) => {
+  const troops = ARMY_UNIT_TYPES.map((unitType) => {
     const cost = UNIT_COSTS[unitType];
     const stats = UNIT_STATS[unitType];
     const meta = unitMetaFor(unitType);
+    const trainableInBarracks = BARRACKS_UNIT_TYPE_SET.has(unitType);
     const requiredLevel = cost.requiredBarracksLevel;
-    const unlocked = barracksLevel >= requiredLevel;
-    const trainingSeconds = getEffectiveUnitTrainingDurationSeconds({
-      barracksLevel,
-      unitTimeSeconds: cost.time,
-      worldTempo,
-    });
+    const unlocked = trainableInBarracks ? barracksLevel >= requiredLevel : true;
+    const trainingSeconds = trainableInBarracks
+      ? getEffectiveUnitTrainingDurationSeconds({
+          barracksLevel,
+          unitTimeSeconds: cost.time,
+          worldTempo,
+        })
+      : cost.time;
 
     return {
       attack: stats.attack,
@@ -140,7 +147,7 @@ export function buildArmyViewModel({
         stats.defenseCavalry,
         stats.defenseInfantry,
       ),
-      draggable: unlocked,
+      draggable: trainableInBarracks && unlocked,
       emoji: meta.iconPath ? undefined : meta.emoji,
       fromAllies: incomingByType.get(unitType) ?? 0,
       icon: meta.iconPath ?? undefined,
@@ -149,8 +156,10 @@ export function buildArmyViewModel({
       name: meta.name,
       pop: cost.population,
       power: getUnitPowerWeight(unitType),
-      requiredLevel,
-      requirementLabel: `Caserne niv. ${requiredLevel} requis`,
+      requiredLevel: trainableInBarracks ? requiredLevel : undefined,
+      requirementLabel: trainableInBarracks
+        ? `Caserne niv. ${requiredLevel} requis`
+        : undefined,
       short: meta.name,
       supportingElsewhere: outgoingByType.get(unitType) ?? 0,
       trainingTime: formatRemaining(Math.floor(trainingSeconds) * 1000),
@@ -209,10 +218,12 @@ function filterArmyTroops(troops: ArmyTroop[], filterId: ArmyFilterId): ArmyTroo
 }
 
 function buildBarracksTroops(troops: ArmyTroop[]): ArmyTroop[] {
-  return troops.map((troop) => ({
-    ...troop,
-    displayQuantity: troop.inVillage + (troop.supportingElsewhere ?? 0),
-  }));
+  return troops
+    .filter((troop) => BARRACKS_UNIT_TYPE_SET.has(troop.id as UnitType))
+    .map((troop) => ({
+      ...troop,
+      displayQuantity: troop.inVillage + (troop.supportingElsewhere ?? 0),
+    }));
 }
 
 function buildArmySections(

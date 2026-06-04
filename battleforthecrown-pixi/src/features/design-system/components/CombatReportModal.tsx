@@ -77,7 +77,8 @@ const outcomeTone = {
     heroBg: 'bg-[linear-gradient(160deg,#4a1410_0%,#1d0606_100%)]',
     heroGlow:
       'bg-[radial-gradient(ellipse_at_50%_40%,rgba(231,76,60,.55)_0%,rgba(231,76,60,0)_70%)]',
-    heroIcon: '/assets/icons/hand-red.png',
+    heroIcon: '/assets/no-loot-rapport.png',
+    heroIconClassName: 'w-[96%] max-w-none',
     role:
       'border-[#a93226] bg-[linear-gradient(to_bottom,#e74c3c,#c0392b)] text-white [text-shadow:1px_1px_1px_rgba(0,0,0,.4)]',
     tint:
@@ -90,7 +91,8 @@ const outcomeTone = {
     heroBg: 'bg-[linear-gradient(160deg,#1f3d18_0%,#0d1a07_100%)]',
     heroGlow:
       'bg-[radial-gradient(ellipse_at_50%_40%,rgba(126,199,78,.55)_0%,rgba(126,199,78,0)_70%)]',
-    heroIcon: '/assets/casual-icons/crown.png',
+    heroIcon: '/assets/loot-rapport.png',
+    heroIconClassName: 'w-[96%] max-w-none',
     role:
       'border-[#3a6c1f] bg-[linear-gradient(to_bottom,#6ebf49,#4a8c2a)] text-white [text-shadow:1px_1px_1px_rgba(0,0,0,.4)]',
     tint:
@@ -164,7 +166,10 @@ function ReportHero({
         <span className={cn('absolute inset-0', tone.heroGlow)} />
         <img
           alt=""
-          className="relative z-[1] w-[64%] drop-shadow-[0_4px_6px_rgba(0,0,0,.55)]"
+          className={cn(
+            'relative z-[1] drop-shadow-[0_4px_6px_rgba(0,0,0,.55)]',
+            tone.heroIconClassName,
+          )}
           src={publicAsset(tone.heroIcon)}
         />
         <span className="absolute bottom-1 left-1 z-[2] rounded border border-[#9e7b0d] bg-[linear-gradient(to_bottom,#f1c40f,#d4a017)] px-[5px] py-0.5 font-game text-[7.5px] font-extrabold tracking-[.18em] text-[#3a2a00] shadow-[inset_0_1px_0_rgba(255,255,255,.4)]">

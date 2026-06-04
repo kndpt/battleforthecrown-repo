@@ -30,6 +30,10 @@ export interface MapEntityCalloutSectionRow {
 }
 
 export interface MapEntityCalloutSection {
+  progress?: {
+    label?: string;
+    value: number;
+  };
   title: string;
   rows: MapEntityCalloutSectionRow[];
 }
@@ -141,6 +145,21 @@ export function MapEntityCallout({
                   </div>
                 ))}
               </div>
+              {section.progress ? (
+                <div className="mt-2 flex items-center gap-2">
+                  <div className="relative h-1.5 flex-1 overflow-hidden rounded-full border border-[rgba(241,196,15,.26)] bg-[rgba(0,0,0,.28)]">
+                    <div
+                      className="h-full rounded-full bg-[linear-gradient(90deg,#f1c40f,#d4a017)] shadow-[0_0_8px_rgba(241,196,15,.36)] transition-[width] duration-500 ease-out"
+                      style={{ width: `${clampProgress(section.progress.value)}%` }}
+                    />
+                  </div>
+                  {section.progress.label ? (
+                    <span className="w-9 text-right text-[11px] font-extrabold tabular-nums text-[#f6d57b]">
+                      {section.progress.label}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
             </section>
           ))}
         </div>
@@ -167,4 +186,9 @@ export function MapEntityCallout({
       )}
     </article>
   );
+}
+
+function clampProgress(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(100, Math.max(0, value));
 }
