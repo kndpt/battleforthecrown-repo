@@ -706,7 +706,9 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
       // freeze the unit at t = 0.
       const now = Date.now();
       drawActiveVillageHalo(now);
-      visuals.forEach((visual) => drawCaptureMarker(visual, now));
+      visuals.forEach((visual) => {
+        if (visual.data.captureWindow) drawCaptureMarker(visual, now);
+      });
       expeditionVisuals.forEach((visual) => visual.tick(now));
       textureRetryAccumulator += deltaMs;
       if (textureRetryAccumulator >= 500) {
