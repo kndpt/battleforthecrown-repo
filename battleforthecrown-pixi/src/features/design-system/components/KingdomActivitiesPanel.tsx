@@ -5,7 +5,7 @@ import { ArmyMovementRow, type ArmyMovementRowProps, type ArmyMovementTone } fro
 import { GameBottomSheetPanel } from './GameBottomSheetPanel';
 
 export type CaptureWindowState = 'open' | 'soon' | 'completed' | 'interrupted';
-export type CaptureTier = 'T1' | 'T2' | 'T3' | 'T4' | 'T5';
+export type CaptureTier = 'T1' | 'T2' | 'T3' | 'T4' | 'T5' | 'PVP';
 export type ExpeditionActivityKind = 'attack' | 'reinforce' | 'scout' | 'conquest';
 export type ExpeditionActivityPhase = 'en_route' | 'resolved' | 'returning';
 export type KingdomActivityTab = 'expeditions' | 'captures';
@@ -179,6 +179,11 @@ const tierStyle: Record<CaptureTier, { background: string; border: string; text:
     border: 'border-[#3f3290]',
     text: 'text-[#fff8d0]',
   },
+  PVP: {
+    background: 'bg-[linear-gradient(180deg,#f6d57b,#d4a017)]',
+    border: 'border-[#9e7b0d]',
+    text: 'text-[#3a2a00]',
+  },
 };
 
 const expeditionArmyTone: Record<ExpeditionActivityKind, ArmyMovementTone> = {
@@ -297,6 +302,7 @@ export function CaptureWindowCard({
 }: CaptureWindowCardProps) {
   const style = captureStateStyle[state];
   const clampedProgress = clamp(progress, 0, 100);
+  const progressLabel = `${Math.round(clampedProgress)}%`;
 
   return (
     <article
@@ -311,29 +317,39 @@ export function CaptureWindowCard({
     >
       <div className={cn('absolute bottom-0 left-0 top-0 w-1.5 border-r shadow-[inset_0_1px_0_rgba(255,255,255,.5)]', style.stripe, style.stripeBorder)} />
       <div className="flex flex-col gap-[9px] px-3 pb-[11px] pl-4 pt-2.5">
-        <div className="flex items-center gap-2.5">
-          <CaptureTierBadge tier={tier} tierSubLabel={tierSubLabel} />
-          <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
-            <div className="flex min-w-0 items-center gap-1.5">
-              <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-game text-sm font-extrabold leading-[1.1] text-[#3d2f1f] [text-shadow:0_1px_0_rgba(255,255,255,.5)]">
-                {targetName}
+        <div className="flex min-w-0 flex-col gap-[3px]">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-game text-sm font-extrabold leading-[1.1] text-[#3d2f1f] [text-shadow:0_1px_0_rgba(255,255,255,.5)]">
+              {targetName}
+            </span>
+            <CaptureStatusPill state={state} statusLabel={statusLabel} />
+          </div>
+          <div className="flex min-w-0 items-center gap-2 font-game text-[11px] font-semibold text-[#6d5838]">
+            <span className="inline-flex shrink-0 items-center gap-1">
+              <PinGlyph className="size-[11px]" />
+              <span className="font-extrabold tabular-nums tracking-[.04em] text-[#3d2f1f]">{coordinates}</span>
+            </span>
+            <span
+              aria-label={`${tier} ${tierSubLabel}`}
+              className={cn(
+                'inline-flex h-[18px] shrink-0 items-center gap-1 rounded-full border px-1.5 font-game text-[8.5px] font-black uppercase tracking-[.08em] shadow-[inset_0_1px_0_rgba(255,255,255,.38)]',
+                tierStyle[tier].background,
+                tierStyle[tier].border,
+                tierStyle[tier].text,
+              )}
+            >
+              {tier}
+              <span className="opacity-55">·</span>
+              {tierSubLabel}
+            </span>
+            <span className="text-[#8b7355] opacity-[.6]">·</span>
+            <span className="inline-flex min-w-0 items-center gap-1">
+              <CastleGlyph className="size-[11px] shrink-0" />
+              <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                {originLabelPrefix}{' '}
+                <em className="not-italic font-bold text-[#3d2f1f]">{originName}</em>
               </span>
-              <CaptureStatusPill state={state} statusLabel={statusLabel} />
-            </div>
-            <div className="flex min-w-0 items-center gap-2 font-game text-[11px] font-semibold text-[#6d5838]">
-              <span className="inline-flex shrink-0 items-center gap-1">
-                <PinGlyph className="size-[11px]" />
-                <span className="font-extrabold tabular-nums tracking-[.04em] text-[#3d2f1f]">{coordinates}</span>
-              </span>
-              <span className="text-[#8b7355] opacity-[.6]">·</span>
-              <span className="inline-flex min-w-0 items-center gap-1">
-                <CastleGlyph className="size-[11px] shrink-0" />
-                <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
-                  {originLabelPrefix}{' '}
-                  <em className="not-italic font-bold text-[#3d2f1f]">{originName}</em>
-                </span>
-              </span>
-            </div>
+            </span>
           </div>
         </div>
 
@@ -369,7 +385,7 @@ export function CaptureWindowCard({
               style={{ width: `${Math.max(2, clampedProgress)}%` }}
             />
           </div>
-          <span className="w-[30px] text-right font-game text-[10px] font-extrabold tabular-nums text-[#6d5838]">{clampedProgress}%</span>
+          <span className="w-[30px] text-right font-game text-[10px] font-extrabold tabular-nums text-[#6d5838]">{progressLabel}</span>
         </div>
       </div>
     </article>

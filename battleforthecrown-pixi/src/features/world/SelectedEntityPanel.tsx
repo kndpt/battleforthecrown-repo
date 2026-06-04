@@ -1,9 +1,21 @@
-import { MapEntityCallout } from '@/features/design-system/components';
-import { useArmyInventoryQuery, useGarrisonQuery } from '@/api/queries';
+import {
+  MapEntityCallout,
+  type MapEntityCalloutSection,
+  type MapEntityCalloutStat,
+} from '@/features/design-system/components';
+import {
+  useArmyInventoryQuery,
+  useGarrisonQuery,
+  usePublicVillagePowerQuery,
+} from '@/api/queries';
 import type { MapEntity } from '@/api/world-types';
+import type { OpenConquestDto } from '@battleforthecrown/shared/combat';
+import { useTickingNow } from '@/lib/useTickingNow';
+import { formatRemaining } from '@/features/village/constructionProgress';
 import { buildTroopsSection, summarizePresentTroops } from './selectedEntityTroops';
 
 interface SelectedEntityPanelProps {
+  activeCapture?: OpenConquestDto | null;
   entity: MapEntity | null;
   currentVillageId?: string | null;
   onAttack?: (entity: MapEntity) => void;
@@ -30,17 +42,34 @@ function typeLabel(entity: MapEntity): string {
 }
 
 export function SelectedEntityPanel({
+  activeCapture,
   entity,
   currentVillageId,
   onAttack,
   onScout,
   onGoToVillage,
 }: SelectedEntityPanelProps) {
+  const now = useTickingNow(1_000);
   const ownedVillageId = entity?.kind === 'PLAYER_VILLAGE' && entity.isMine ? entity.id : null;
+  const villagePowerId =
+    entity?.kind === 'PLAYER_VILLAGE' || entity?.kind === 'BARBARIAN_VILLAGE'
+      ? entity.id
+      : null;
   const armyInventory = useArmyInventoryQuery(ownedVillageId);
   const garrison = useGarrisonQuery(ownedVillageId);
+  const villagePower = usePublicVillagePowerQuery(villagePowerId);
 
   if (!entity) return null;
+
+  // Village-only power (buildings); troops are excluded server-side.
+  const stats: MapEntityCalloutStat[] | undefined = villagePower.data
+    ? [
+        {
+          icon: '/assets/castle.png',
+          value: villagePower.data.buildings.toLocaleString('fr-FR'),
+        },
+      ]
+    : undefined;
 
   const isPlayerVillage = entity.kind === 'PLAYER_VILLAGE' && !entity.isMine;
   const isOwnedPlayerVillage = entity.kind === 'PLAYER_VILLAGE' && entity.isMine;
@@ -59,6 +88,10 @@ export function SelectedEntityPanel({
     garrison.data ?? [],
     armyInventory.isLoading || garrison.isLoading,
     armyInventory.isError || garrison.isError,
+  );
+  const captureSection = captureSectionFor(entity, activeCapture, now);
+  const sections = [captureSection, troopSection].filter(
+    (section): section is MapEntityCalloutSection => Boolean(section),
   );
   const actions = [
     ...(showAttack
@@ -107,7 +140,8 @@ export function SelectedEntityPanel({
     <MapEntityCallout
       actions={actions}
       coordinates={`${entity.x}|${entity.y}`}
-      sections={troopSection ? [troopSection] : []}
+      sections={sections}
+      stats={stats}
       subtitle={subtitleFor(entity)}
       tier={entity.tier ? { label: `★ ${entity.tier}` } : undefined}
       title={entity.name}
@@ -119,6 +153,75 @@ export function SelectedEntityPanel({
 function subtitleFor(entity: MapEntity): string {
   if (entity.kind === 'BARBARIAN_VILLAGE') return 'Inhabité · pillable';
   return typeLabel(entity);
+}
+
+function captureSectionFor(
+  entity: MapEntity,
+  activeCapture: OpenConquestDto | null | undefined,
+  nowMs: number,
+): MapEntityCalloutSection | null {
+  if (activeCapture) {
+    const startedAt = Date.parse(activeCapture.captureStartedAt);
+    const captureUntil = Date.parse(activeCapture.captureUntil);
+    const elapsedMs = Number.isFinite(startedAt)
+      ? Math.max(0, nowMs - startedAt)
+      : 0;
+    const remainingMs = Number.isFinite(captureUntil)
+      ? Math.max(0, captureUntil - nowMs)
+      : 0;
+    const progress = computeProgress(startedAt, captureUntil, nowMs);
+
+    return {
+      title: 'Capture',
+      rows: [
+        {
+          icon: '/assets/castle.png',
+          label: 'Depuis',
+          value: activeCapture.attackerVillageName || 'Village inconnu',
+        },
+        {
+          icon: '/assets/clock.png',
+          label: 'Écoulé',
+          value: formatRemaining(elapsedMs),
+        },
+        {
+          icon: '/assets/clock.png',
+          label: 'Reste',
+          value: formatRemaining(remainingMs),
+        },
+      ],
+      progress: {
+        label: `${Math.round(progress)}%`,
+        value: progress,
+      },
+    };
+  }
+
+  if (!entity.captureWindow) return null;
+
+  const captureUntil = Date.parse(entity.captureWindow.captureUntil);
+  const remainingMs = Number.isFinite(captureUntil)
+    ? Math.max(0, captureUntil - nowMs)
+    : 0;
+
+  return {
+    title: 'Capture',
+    rows: [
+      {
+        icon: '/assets/clock.png',
+        label: 'Reste',
+        value: formatRemaining(remainingMs),
+      },
+    ],
+  };
+}
+
+function computeProgress(startAt: number, endAt: number, nowMs: number): number {
+  if (!Number.isFinite(startAt) || !Number.isFinite(endAt) || endAt <= startAt) {
+    return 100;
+  }
+
+  return Math.min(100, Math.max(0, ((nowMs - startAt) / (endAt - startAt)) * 100));
 }
 
 function troopsSectionFor(

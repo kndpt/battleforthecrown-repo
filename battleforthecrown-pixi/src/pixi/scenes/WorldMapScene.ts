@@ -78,6 +78,7 @@ interface EntityVisual {
   container: Container;
   graphic: Graphics;
   captureMarker: Graphics;
+  captureIcon: Sprite;
   sprite: Sprite;
   label: Text;
   data: MapEntity;
@@ -383,7 +384,7 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
   };
 
   const drawEntity = (visual: EntityVisual) => {
-    const { captureMarker, graphic, sprite, data } = visual;
+    const { captureIcon, captureMarker, graphic, sprite, data } = visual;
     const { color, ringColor, radius, zIndex } = styleFor(data);
     const isSelected = data.id === selectedId;
     const alias = aliasFor(data);
@@ -426,20 +427,29 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     visual.container.zIndex = zIndex + (isSelected ? 50 : 0);
     visual.label.text = data.name;
     visual.label.visible = isMine || isSelected;
-    if (!data.captureWindow) captureMarker.clear();
+    if (!data.captureWindow) {
+      captureMarker.clear();
+      captureIcon.visible = false;
+    }
   };
 
   const drawCaptureMarker = (visual: EntityVisual, nowMs: number) => {
-    const { captureMarker, data } = visual;
+    const { captureIcon, captureMarker, data } = visual;
     captureMarker.clear();
-    if (!data.captureWindow) return;
+    if (!data.captureWindow) {
+      captureIcon.visible = false;
+      return;
+    }
 
     const alias = aliasFor(data);
     const texture = alias ? Assets.get<Texture>(alias) : null;
-    const size = texture ? (data.isMine ? PLAYER_SPRITE_SIZE : SPRITE_SIZE) : styleFor(data).radius * 2;
+    const size = texture
+      ? (data.kind === 'PLAYER_VILLAGE' ? PLAYER_SPRITE_SIZE : SPRITE_SIZE)
+      : styleFor(data).radius * 2;
     const baseRadius = size * 0.58;
     const pulse = (Math.sin(nowMs / 360) + 1) / 2;
     const outerRadius = baseRadius + 6 + pulse * 7;
+    const iconTexture = Assets.get<Texture>('world.capture.crown');
 
     captureMarker
       .circle(0, 0, outerRadius)
@@ -450,6 +460,17 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     captureMarker
       .circle(0, 0, baseRadius + 7)
       .stroke({ color: 0xffffff, width: 1.5, alpha: 0.45 });
+
+    if (iconTexture) {
+      captureIcon.texture = iconTexture;
+      captureIcon.visible = true;
+      const iconSize = 22 + pulse * 4;
+      captureIcon.width = iconSize;
+      captureIcon.height = iconSize;
+      captureIcon.alpha = 0.88 + pulse * 0.12;
+      captureIcon.rotation = Math.sin(nowMs / 480) * 0.08;
+      captureIcon.position.set(size * 0.32, -size * 0.62 - pulse * 4);
+    }
   };
 
   const ensureVisual = (entity: MapEntity): EntityVisual => {
@@ -494,6 +515,12 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     label.visible = false;
     container.addChild(label);
 
+    const captureIcon = new Sprite();
+    captureIcon.anchor.set(0.5);
+    captureIcon.eventMode = 'none';
+    captureIcon.visible = false;
+    container.addChild(captureIcon);
+
     const { px, py } = tileToWorld(entity.x, entity.y);
     container.position.set(px, py);
 
@@ -506,7 +533,7 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
 
     entitiesLayer.addChild(container);
 
-    visual = { container, graphic, captureMarker, sprite, label, data: entity };
+    visual = { container, graphic, captureMarker, captureIcon, sprite, label, data: entity };
     visuals.set(entity.id, visual);
     drawEntity(visual);
     return visual;
@@ -706,7 +733,9 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
       // freeze the unit at t = 0.
       const now = Date.now();
       drawActiveVillageHalo(now);
-      visuals.forEach((visual) => drawCaptureMarker(visual, now));
+      visuals.forEach((visual) => {
+        if (visual.data.captureWindow) drawCaptureMarker(visual, now);
+      });
       expeditionVisuals.forEach((visual) => visual.tick(now));
       textureRetryAccumulator += deltaMs;
       if (textureRetryAccumulator >= 500) {

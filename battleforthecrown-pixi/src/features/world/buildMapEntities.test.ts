@@ -99,6 +99,34 @@ describe('buildMapEntities', () => {
     expect(entry?.castleLevel).toBe(10);
   });
 
+  it('preserves capture state when my villages override the world feed', () => {
+    const sameIdInFeed: WorldEntityDto = {
+      ...playerEntity,
+      id: 'mv1',
+      data: {
+        ...playerEntity.data,
+        userId: 'me',
+        captureWindow: {
+          status: 'OPEN',
+          pendingConquestId: 'pc-owned',
+          attackerVillageId: 'attacker-village',
+          captureUntil: '2026-05-13T22:00:00.000Z',
+        },
+      },
+    };
+
+    const result = buildMapEntities([sameIdInFeed], [myVillage], 'me');
+    const entry = result.find((e) => e.id === 'mv1');
+
+    expect(entry?.isMine).toBe(true);
+    expect(entry?.captureWindow).toEqual({
+      status: 'OPEN',
+      pendingConquestId: 'pc-owned',
+      attackerVillageId: 'attacker-village',
+      captureUntil: '2026-05-13T22:00:00.000Z',
+    });
+  });
+
   it('returns empty when both feeds are empty', () => {
     expect(buildMapEntities([], [], null)).toEqual([]);
   });

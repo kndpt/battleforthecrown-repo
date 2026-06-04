@@ -55,6 +55,7 @@
 - Vue armée : les résumés de section `Village` / `Stationnées ailleurs` doivent afficher la puissance totale avec l'asset puissance, pas le nombre brut de troupes.
 - Vue armée : une ligne `Village` sans alliés ne doit pas ouvrir la modale détail ; seul l'asset de gauche ouvre le détail, et la ligne n'ouvre la garnison que si `Alliés > 0`.
 - Vue armée : éviter une barre de ratio si elle force le joueur à interpréter une proportion ; pour `Moi` / `Alliés`, deux badges colorés et explicites sont plus lisibles dans une ligne compacte.
+- Vue armée : l’onglet Armée doit mapper l’inventaire complet (`UNIT_TYPES`) ; réserver `BARRACKS_UNIT_TYPES` aux surfaces Caserne/recrutement pour ne pas masquer les Seigneurs.
 - Vue armée : ne pas réserver l'espace du bottom nav fixe avec un padding interne (`pb-24`) sur le wrapper de contenu ; utiliser une marge externe calée sur `--bftc-bottom-nav-height` pour éviter une bande visible entre contenu et navigation.
 - Vue armée : la sheet de garnison doit rester dans le langage visuel Armée/Caserne ; afficher village + joueur quand le contrat le fournit, et limiter le bouton `position.png` au design tant que la navigation carte n'est pas planifiée.
 - Intégration auth runtime : ne pas conserver de placeholder inutile du prototype (visiteur, labels décoratifs, faux monogrammes SSO) ; si un bouton SSO est visible mais inactif, utiliser un asset réel et le griser clairement.
@@ -62,6 +63,12 @@
 - Bottom sheets : chrome et hauteur runtime appartiennent au shell partagé ; vérifier `GameBottomSheetPanel` + sheets custom avant tout ajustement local.
 - Pour les rapports scout, ne pas traiter l'UI comme pure présentation : vérifier que le snapshot backend/shared transporte toutes les infos promises par le gameplay (ex. niveau de Rempart), sinon les anciens fallbacks masquent un trou de contrat.
 - Pour une conquête avec fenêtre de capture, ne jamais valider seulement "Seigneur immobilisé" : l'escorte survivante doit aussi rester en garnison d'occupation. Le smoke doit prouver que `battle.resolved.survivingUnits` ne retourne pas cette escorte et qu'une attaque hostile interrompt si le Seigneur meurt ou si l'escorte d'occupation est détruite.
+- Pour une fenêtre de capture PvP, la source gameplay active est `docs/gameplay/14-pvp-conquest.md` : Château 9-10 = 4h30 à tempo 1, pas 18h ; protéger la courbe par un helper pur testé.
+- Quand une durée gameplay est extraite dans un helper canonique, mettre à jour les smokes qui dupliquaient l'ancienne constante pour importer le helper ou la table source.
+- Dans les cartes d'activité capture, formater le pourcentage d'avancement en entier côté composant ; ne jamais afficher le ratio/float brut (`0.27904%`) au joueur.
+- Dans les cartes d'activité capture, ne pas afficher `T1` quand `targetTier` est nul pour un village joueur ; exposer un badge PvP avec le niveau de Château cible.
+- Dans une carte capture compacte, ne pas placer un badge tier carré avant le nom de cible ; garder le titre prioritaire et déplacer le tier en méta compacte.
+- Quand un asset canonique est fourni pour une troupe, le brancher dans `unitConfig` et réutiliser ce chemin partout ; éviter les emojis ou glyphes locaux concurrents pour la même troupe.
 - Pour une sync mini-carte -> Pixi viewport, ne pas dépendre uniquement des events internes du viewport après un `moveCenter` programmatique : notifier explicitement la caméra et calculer le viewbox depuis `toWorld` sur les coins écran réels pour respecter le ratio mobile portrait.
 - Si un worktree BFTC ne résout pas `@battleforthecrown/shared/*` après `yarn install`, vérifier `packages/shared/dist/` et `packages/shared/tsconfig.tsbuildinfo` : un `.tsbuildinfo` tracké/stale peut empêcher l'émission du dist. Le correctif durable est de ne pas tracker les `.tsbuildinfo`; le dépannage local est `yarn workspace @battleforthecrown/shared clean && yarn workspace @battleforthecrown/shared build`.
 - `yarn dev` racine peut contourner les hooks `prestart:*` des workspaces en lançant directement les binaires ; les prérequis dev critiques (`shared build`, `prisma generate`, migrations) doivent être dans le script réellement appelé par le root dev.
@@ -95,3 +102,4 @@
 - Pour les toasts runtime, vérifier que chaque chemin d'icône pointe vers un fichier réel sous `public/assets` ; un dossier prototype inexistant produit une image cassée en jeu.
 - Dans un worktree BFTC fraîchement créé, lancer `yarn install` avant `shared build`, tests ou `prisma:generate` si `node_modules`/`zod`/`prisma` ne sont pas présents localement.
 - Avant de merger une PR après review, vérifier les threads non résolus et les reviews `CHANGES_REQUESTED`, pas seulement le dernier résumé CodeRabbit "No actionable comments".
+- Pour une capture PvP, ne jamais compenser un bâtiment `CASTLE` absent par un palier gameplay par défaut ; faire échouer explicitement le calcul pour révéler le trou de données.

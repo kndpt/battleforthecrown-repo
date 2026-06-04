@@ -75,7 +75,7 @@ const training: ArmyTrainingDto = {
 };
 
 describe('buildArmyViewModel', () => {
-  it('maps only barracks units and keeps locked states based on barracks level', () => {
+  it('maps village army units while keeping non-barracks units out of recruitment', () => {
     const model = buildArmyViewModel({
       activeFilterId: 'all',
       barracksLevel: 2,
@@ -87,7 +87,27 @@ describe('buildArmyViewModel', () => {
       units,
     });
 
-    expect(model.troops.map((troop) => troop.id)).not.toContain('NOBLE');
+    expect(model.troops.find((troop) => troop.id === 'NOBLE')).toMatchObject({
+      draggable: false,
+      emoji: undefined,
+      icon: '/assets/army/noble.png',
+      inVillage: 1,
+      name: 'Seigneur',
+      requiredLevel: undefined,
+      unlocked: true,
+    });
+    expect(model.barracksTroops.map((troop) => troop.id)).not.toContain('NOBLE');
+    expect(model.armySections[0]?.villageRows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          alliedQuantity: 0,
+          id: 'NOBLE',
+          ownQuantity: 1,
+          power: getUnitPowerWeight('NOBLE'),
+          totalQuantity: 1,
+        }),
+      ]),
+    );
     expect(model.troops.find((troop) => troop.id === 'SQUIRE')).toMatchObject({
       requiredLevel: UNIT_COSTS.SQUIRE.requiredBarracksLevel,
       unlocked: true,
@@ -118,10 +138,10 @@ describe('buildArmyViewModel', () => {
       'Envoyés',
       'Toutes',
     ]);
-    expect(model.filters.find((filter) => filter.id === 'mine')?.count).toBe(12);
+    expect(model.filters.find((filter) => filter.id === 'mine')?.count).toBe(13);
     expect(model.filters.find((filter) => filter.id === 'allies')?.count).toBe(7);
     expect(model.filters.find((filter) => filter.id === 'sent')?.count).toBe(18);
-    expect(model.filters.find((filter) => filter.id === 'all')?.count).toBe(19);
+    expect(model.filters.find((filter) => filter.id === 'all')?.count).toBe(20);
     expect(model.barracksTroops.find((troop) => troop.id === 'SQUIRE')).toMatchObject({
       displayQuantity: 3,
     });
@@ -130,7 +150,8 @@ describe('buildArmyViewModel', () => {
     });
     const villagePower = (
       12 * getUnitPowerWeight('MILITIA') +
-      7 * getUnitPowerWeight('ARCHER')
+      7 * getUnitPowerWeight('ARCHER') +
+      getUnitPowerWeight('NOBLE')
     ).toLocaleString('fr-FR');
     const awayPower = (
       3 * getUnitPowerWeight('SQUIRE') +
@@ -157,10 +178,18 @@ describe('buildArmyViewModel', () => {
             power: 7 * getUnitPowerWeight('ARCHER'),
             totalQuantity: 7,
           }),
+          expect.objectContaining({
+            alliedQuantity: 0,
+            id: 'NOBLE',
+            ownQuantity: 1,
+            power: getUnitPowerWeight('NOBLE'),
+            totalQuantity: 1,
+          }),
         ]),
         troops: expect.arrayContaining([
           expect.objectContaining({ displayQuantity: 12, id: 'MILITIA' }),
           expect.objectContaining({ displayQuantity: 7, id: 'ARCHER' }),
+          expect.objectContaining({ displayQuantity: 1, id: 'NOBLE' }),
         ]),
       },
       {

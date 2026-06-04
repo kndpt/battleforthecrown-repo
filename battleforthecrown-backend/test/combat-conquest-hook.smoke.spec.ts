@@ -8,8 +8,9 @@ import {
   type SmokeContext,
 } from './helpers';
 import { SMOKE_WORLD_CONFIG } from './fixtures/smoke-world-config';
+import { BARBARIAN_CAPTURE_DURATIONS_MS } from '../src/modules/combat/capture-duration';
 
-const T1_CAPTURE_DURATION_MS = 2 * 60 * 60 * 1000;
+const T1_CAPTURE_DURATION_MS = BARBARIAN_CAPTURE_DURATIONS_MS.T1;
 
 describe('combat conquest hook smoke', () => {
   let ctx: SmokeContext;
@@ -235,6 +236,60 @@ describe('combat conquest hook smoke', () => {
       },
     });
   }, 45_000);
+
+  it('exposes player village capture windows in world entities', async () => {
+    const world = await seedWorld();
+    const origin = await seedConquestOrigin(
+      world.id,
+      `pvp-origin-${Date.now()}`,
+    );
+    const defender = await registerUser(
+      ctx.server,
+      `pvp-defender-${Date.now()}`,
+    );
+    const targetJoin = await joinWorld(
+      ctx.server,
+      defender.accessToken,
+      world.id,
+      'pvp-target',
+    );
+    const captureUntil = new Date(Date.now() + 60_000);
+    const pending = await ctx.prisma.pendingConquest.create({
+      data: {
+        attackerUserId: origin.user.userId,
+        attackerVillageId: origin.village.id,
+        captureUntil,
+        status: 'OPEN',
+        targetVillageId: targetJoin.village.id,
+        worldId: world.id,
+      },
+    });
+
+    const entitiesRes = await request(ctx.server)
+      .get(`/world/${world.id}/entities`)
+      .set('Authorization', `Bearer ${origin.user.accessToken}`);
+
+    expect(entitiesRes.status).toBe(200);
+    const entitiesBody = entitiesRes.body as {
+      entities: Array<{ id: string; data?: unknown; kind: string }>;
+    };
+    const targetEntity = entitiesBody.entities.find(
+      (entity) => entity.id === targetJoin.village.id,
+    );
+
+    expect(targetEntity).toMatchObject({
+      id: targetJoin.village.id,
+      kind: 'PLAYER_VILLAGE',
+      data: {
+        captureWindow: {
+          status: 'OPEN',
+          pendingConquestId: pending.id,
+          attackerVillageId: origin.village.id,
+          captureUntil: captureUntil.toISOString(),
+        },
+      },
+    });
+  }, 30_000);
 
   it('applies world capture tempo and keeps reference tempo at normal duration', async () => {
     const acceleratedWorld = await seedWorld({

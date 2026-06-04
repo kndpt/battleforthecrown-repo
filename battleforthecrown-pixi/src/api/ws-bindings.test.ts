@@ -702,6 +702,23 @@ describe('conquest websocket bindings', () => {
     expect(queryClient.getQueryState(queryKeys.openConquests('user-1', 'world-1'))?.isInvalidated).toBe(true);
   });
 
+  it('pushes a human-readable toast on capture-window-completed (no raw UUID)', () => {
+    setCurrentWorldSession();
+    applyVillageCaptureWindowCompleted(
+      {
+        newOwnerUserId: 'user-1',
+        pendingConquestId: 'pc1',
+        targetVillageId: 'barb-1-uuid-very-long',
+      },
+      { queryClient: new QueryClient() },
+    );
+    const toasts = useUiStore.getState().toasts;
+    expect(toasts).toHaveLength(1);
+    expect(toasts[0].title).toBe('Capture terminée');
+    expect(toasts[0].description).not.toContain('barb-1-uuid-very-long');
+    expect(toasts[0].description).toBe('Village conquis');
+  });
+
   it('refreshes attacker army state when the noble dies', () => {
     setCurrentWorldSession();
     const queryClient = new QueryClient();

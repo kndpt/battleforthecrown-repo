@@ -402,7 +402,11 @@ function ThroneHallContent({
       <div className="mx-3.5 mb-3 rounded-[16px] border-[3px] border-[#8b5f18] bg-[linear-gradient(160deg,rgba(241,196,15,.28),rgba(255,255,255,.6))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,.55),0_3px_0_rgba(0,0,0,.12)]">
         <div className="mb-3 flex items-start gap-3">
           <div className="flex size-14 shrink-0 items-center justify-center rounded-[14px] border-2 border-[#8b5f18] bg-[linear-gradient(to_bottom,#f1c40f,#b8860b)] text-3xl shadow-[inset_0_1px_0_rgba(255,255,255,.45),0_3px_0_rgba(0,0,0,.16)]">
-            👑
+            <img
+              alt=""
+              className="size-12 object-contain drop-shadow-[0_2px_2px_rgba(0,0,0,.32)]"
+              src={publicAsset('/assets/army/noble.png')}
+            />
           </div>
           <div className="min-w-0 flex-1">
             <div className="font-game text-[15px] font-black text-[#3d2f1f]">Recruter le Seigneur</div>

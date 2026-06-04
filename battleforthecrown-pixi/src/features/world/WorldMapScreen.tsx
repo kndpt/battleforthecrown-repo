@@ -109,6 +109,9 @@ export function WorldMapScreen() {
   const selectedEntity = selectedEntityId
     ? visibleEntities.find((e) => e.id === selectedEntityId) ?? null
     : null;
+  const selectedCapture = selectedEntity
+    ? openConquests.data?.find((conquest) => conquest.targetVillageId === selectedEntity.id) ?? null
+    : null;
 
   // Update tooltip screen-space position whenever the selection changes. We
   // declare this *before* any early return so React keeps the hook order stable.
@@ -285,6 +288,7 @@ export function WorldMapScreen() {
             {selectedEntity && tooltipPosition && (
               <WorldEntityTooltip screenPosition={tooltipPosition}>
                 <SelectedEntityPanel
+                  activeCapture={selectedCapture}
                   entity={selectedEntity}
                   currentVillageId={currentVillageId}
                   onAttack={(target) => {
