@@ -209,6 +209,46 @@ describe('WorldConfigService', () => {
     });
   });
 
+  describe('computeProductionRate', () => {
+    it('applies tempo to the base production rate', () => {
+      const result = service.computeProductionRate(mockWorldConfig, 'WOOD', 2);
+
+      // level 2 WOOD = 85/60 per min; resourceProduction=1/1.5 → 85/60/(1/1.5)=2.125
+      expect(result).toBeCloseTo(2.125, 5);
+    });
+
+    it('returns 0 for an unknown level', () => {
+      const result = service.computeProductionRate(mockWorldConfig, 'WOOD', 99);
+
+      expect(result).toBe(0);
+    });
+
+    it('applies ECONOMIC strategy production bonus (+20%)', () => {
+      const base = service.computeProductionRate(mockWorldConfig, 'WOOD', 1);
+      const withEconomic = service.computeProductionRate(
+        mockWorldConfig,
+        'WOOD',
+        1,
+        'ECONOMIC',
+      );
+
+      expect(withEconomic).toBeCloseTo(base * 1.2, 5);
+    });
+
+    it('produces the same result as getProductionRate', async () => {
+      mockWorld();
+
+      const asyncResult = await service.getProductionRate('world-1', 'WOOD', 2);
+      const syncResult = service.computeProductionRate(
+        mockWorldConfig,
+        'WOOD',
+        2,
+      );
+
+      expect(syncResult).toBe(asyncResult);
+    });
+  });
+
   describe('getStorageLimit', () => {
     it('returns the storage limit for a warehouse level', () => {
       expect(service.getStorageLimit('world-1', 5)).toBe(12000);

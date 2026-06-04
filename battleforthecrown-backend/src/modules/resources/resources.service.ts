@@ -95,35 +95,15 @@ export class ResourcesService {
       const elapsedMs = now.getTime() - lastUpdate.getTime();
       const elapsedMinutes = elapsedMs / MS_PER_MINUTE;
 
-      const woodBuilding = village.buildings.find((b) => b.type === 'WOOD');
-      const stoneBuilding = village.buildings.find((b) => b.type === 'STONE');
-      const ironBuilding = village.buildings.find((b) => b.type === 'IRON');
-
-      // Vérifier les taux de production
-      const woodRate = woodBuilding
-        ? await this.worldConfig.getProductionRate(
-            worldId,
-            'WOOD',
-            woodBuilding.level,
-            storageStrategy,
-          )
-        : 0;
-      const stoneRate = stoneBuilding
-        ? await this.worldConfig.getProductionRate(
-            worldId,
-            'STONE',
-            stoneBuilding.level,
-            storageStrategy,
-          )
-        : 0;
-      const ironRate = ironBuilding
-        ? await this.worldConfig.getProductionRate(
-            worldId,
-            'IRON',
-            ironBuilding.level,
-            storageStrategy,
-          )
-        : 0;
+      const {
+        wood: woodRate,
+        stone: stoneRate,
+        iron: ironRate,
+      } = await this.fetchBuildingRates(
+        worldId,
+        village.buildings,
+        storageStrategy,
+      );
 
       const woodGain = woodRate * elapsedMinutes;
       const stoneGain = stoneRate * elapsedMinutes;
@@ -181,35 +161,11 @@ export class ResourcesService {
     const elapsedMs = now.getTime() - resourceStock.lastUpdateTs.getTime();
     const elapsedMinutes = elapsedMs / MS_PER_MINUTE;
 
-    // Find production buildings
-    const woodBuilding = buildings.find((b) => b.type === 'WOOD');
-    const stoneBuilding = buildings.find((b) => b.type === 'STONE');
-    const ironBuilding = buildings.find((b) => b.type === 'IRON');
-
-    const woodRate = woodBuilding
-      ? await this.worldConfig.getProductionRate(
-          worldId,
-          'WOOD',
-          woodBuilding.level,
-          strategy,
-        )
-      : 0;
-    const stoneRate = stoneBuilding
-      ? await this.worldConfig.getProductionRate(
-          worldId,
-          'STONE',
-          stoneBuilding.level,
-          strategy,
-        )
-      : 0;
-    const ironRate = ironBuilding
-      ? await this.worldConfig.getProductionRate(
-          worldId,
-          'IRON',
-          ironBuilding.level,
-          strategy,
-        )
-      : 0;
+    const {
+      wood: woodRate,
+      stone: stoneRate,
+      iron: ironRate,
+    } = await this.fetchBuildingRates(worldId, buildings, strategy);
 
     // Calculate gains
     const woodGain = Math.floor(woodRate * elapsedMinutes);
@@ -276,6 +232,44 @@ export class ResourcesService {
     return Math.max(1, Math.floor(baseLimit * storageBonus));
   }
 
+  private async fetchBuildingRates(
+    worldId: string,
+    buildings: Array<{ type: string; level: number }>,
+    strategy?: VillageStrategyType,
+  ): Promise<{ wood: number; stone: number; iron: number }> {
+    const config = await this.worldConfig.getConfig(worldId);
+    const woodBuilding = buildings.find((b) => b.type === 'WOOD');
+    const stoneBuilding = buildings.find((b) => b.type === 'STONE');
+    const ironBuilding = buildings.find((b) => b.type === 'IRON');
+
+    return {
+      wood: woodBuilding
+        ? this.worldConfig.computeProductionRate(
+            config,
+            'WOOD',
+            woodBuilding.level,
+            strategy,
+          )
+        : 0,
+      stone: stoneBuilding
+        ? this.worldConfig.computeProductionRate(
+            config,
+            'STONE',
+            stoneBuilding.level,
+            strategy,
+          )
+        : 0,
+      iron: ironBuilding
+        ? this.worldConfig.computeProductionRate(
+            config,
+            'IRON',
+            ironBuilding.level,
+            strategy,
+          )
+        : 0,
+    };
+  }
+
   /**
    * Get production rates per hour for a village
    * Used by frontend for local interpolation
@@ -296,45 +290,21 @@ export class ResourcesService {
 
     const worldId = village.worldId;
 
-    const woodBuilding = village.buildings.find((b) => b.type === 'WOOD');
-    const stoneBuilding = village.buildings.find((b) => b.type === 'STONE');
-    const ironBuilding = village.buildings.find((b) => b.type === 'IRON');
-
     const strategyType = village.strategyConfig?.strategy as
       | VillageStrategyType
       | undefined;
 
-    // Get rates per minute from config
-    const woodRatePerMin = woodBuilding
-      ? await this.worldConfig.getProductionRate(
-          worldId,
-          'WOOD',
-          woodBuilding.level,
-          strategyType,
-        )
-      : 0;
-    const stoneRatePerMin = stoneBuilding
-      ? await this.worldConfig.getProductionRate(
-          worldId,
-          'STONE',
-          stoneBuilding.level,
-          strategyType,
-        )
-      : 0;
-    const ironRatePerMin = ironBuilding
-      ? await this.worldConfig.getProductionRate(
-          worldId,
-          'IRON',
-          ironBuilding.level,
-          strategyType,
-        )
-      : 0;
+    const ratesPerMin = await this.fetchBuildingRates(
+      worldId,
+      village.buildings,
+      strategyType,
+    );
 
     // Convert to per hour (frontend expects per hour)
     return {
-      wood: woodRatePerMin * 60,
-      stone: stoneRatePerMin * 60,
-      iron: ironRatePerMin * 60,
+      wood: ratesPerMin.wood * 60,
+      stone: ratesPerMin.stone * 60,
+      iron: ratesPerMin.iron * 60,
     };
   }
 }

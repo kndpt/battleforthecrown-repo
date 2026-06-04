@@ -83,7 +83,15 @@ export class WorldConfigService {
     strategy?: VillageStrategyType,
   ): Promise<number> {
     const config = await this.getConfig(worldId);
+    return this.computeProductionRate(config, type, level, strategy);
+  }
 
+  computeProductionRate(
+    config: WorldConfig,
+    type: ResourceBuildingType,
+    level: number,
+    strategy?: VillageStrategyType,
+  ): number {
     const absoluteRate = calculateProductionRate(type, level, 1, strategy);
     return TempoService.applyRate(
       absoluteRate,
