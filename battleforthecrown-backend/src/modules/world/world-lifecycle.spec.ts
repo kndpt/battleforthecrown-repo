@@ -5,9 +5,9 @@ import {
   type WorldLifecycleConfig,
   type WorldLifecycleSource,
 } from '@battleforthecrown/shared/world';
+import { MS_PER_DAY } from '@battleforthecrown/shared/time';
 
 const STARTED_AT = new Date('2026-01-01T00:00:00.000Z');
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 describe('world lifecycle helpers', () => {
   describe('deriveInscriptionPhase', () => {
