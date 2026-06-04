@@ -136,7 +136,7 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
   branch: maint/debt/remove-dead-pixi-scaffolding
   title: "maint(debt): remove dead Pixi scaffolding (demo scenes/overlay + unused unit config)"
 
-- status: proposed
+- status: fixed
   area: >
     battleforthecrown-backend/src/modules/combat/combat-fixtures.ts (new),
     battleforthecrown-backend/src/modules/combat/combat-resolution.spec.ts,
@@ -188,9 +188,21 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
   title: "fix(backend/world): parse barbarian village data with Zod schema"
   note: Merged PR #4.
 
-- status: candidate
+- status: rejected
   area: `battleforthecrown-backend/src/workers/production.worker.ts`
-  note: Prior audits flagged this as a high-value worker surface; preserve Outbox/server-authoritative invariants.
+  note: Audited — clean. Proper error handling, logging, batch separation. No debt found.
+
+- status: proposed
+  area: >
+    battleforthecrown-backend/src/workers/world-lifecycle.worker.ts,
+    battleforthecrown-backend/src/modules/world/world-lifecycle.spec.ts
+  branch: maint/debt/world-lifecycle-ms-per-day
+  title: "maint(debt): import MS_PER_DAY from shared/time in world-lifecycle worker and spec"
+  note: >
+    Both files defined `const MS_PER_DAY = 24 * 60 * 60 * 1000` locally despite
+    the shared package exporting the same constant from `@battleforthecrown/shared/time`.
+    Auth, crowns, resources, barbarian workers already imported from shared.
+  verification: yarn static-check ✓ · world-lifecycle 13 tests ✓
 
 - status: fixed
   area: >
@@ -239,3 +251,7 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
   with makeExpeditionFixture + makeCombatConfigFixture eliminates 14 `as any` in combat-resolution.spec.ts
   and combat-strategies.spec.ts; also removed dead _lootManager variable + eslint-disable.
   static-check ✓ · 240 backend tests ✓.
+- 2026-06-04: local MS_PER_DAY constants removed from world-lifecycle.worker.ts and world-lifecycle.spec.ts
+  on `maint/debt/world-lifecycle-ms-per-day` — both imported from @battleforthecrown/shared/time
+  (same pattern as auth, crowns, resources, barbarian workers).
+  static-check ✓ · world-lifecycle 13 tests ✓.

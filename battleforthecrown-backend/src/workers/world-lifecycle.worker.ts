@@ -7,8 +7,7 @@ import {
   WorldConfigSchema,
   resolveWorldLifecycleConfig,
 } from '@battleforthecrown/shared/world';
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
+import { MS_PER_DAY } from '@battleforthecrown/shared/time';
 const WORLD_LIFECYCLE_QUEUE = 'world:lifecycle';
 const WORLD_LIFECYCLE_CRON = '*/5 * * * *';
 
