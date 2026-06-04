@@ -74,18 +74,7 @@ describe('ResourcesService', () => {
         buildings: [{ type: 'IRON', level: 1 }],
       });
 
-      expect(mockWorldConfig.computeProductionRate).not.toHaveBeenCalledWith(
-        expect.anything(),
-        'WOOD',
-        expect.anything(),
-        expect.anything(),
-      );
-      expect(mockWorldConfig.computeProductionRate).not.toHaveBeenCalledWith(
-        expect.anything(),
-        'STONE',
-        expect.anything(),
-        expect.anything(),
-      );
+      expect(mockWorldConfig.computeProductionRate).toHaveBeenCalledTimes(1);
       expect(mockWorldConfig.computeProductionRate).toHaveBeenCalledWith(
         fakeConfig,
         'IRON',
