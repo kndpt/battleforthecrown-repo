@@ -20,6 +20,20 @@ export const PVP_CAPTURE_DURATIONS_MS = [
 
 const MIN_CAPTURE_DURATION_MS = 1000;
 
+function getPvpCaptureDurationMs(castleLevel?: number | null): number {
+  if (castleLevel == null) {
+    throw new Error(
+      'castleLevel is required for player-village capture duration',
+    );
+  }
+
+  return (
+    PVP_CAPTURE_DURATIONS_MS.find(
+      (entry) => castleLevel >= entry.minCastleLevel,
+    )?.durationMs ?? PVP_CAPTURE_DURATIONS_MS.at(-1)!.durationMs
+  );
+}
+
 export function getCaptureDurationMs({
   castleLevel,
   isBarbarian,
@@ -34,9 +48,7 @@ export function getCaptureDurationMs({
   const baseDurationMs = isBarbarian
     ? (BARBARIAN_CAPTURE_DURATIONS_MS[tier ?? ''] ??
       BARBARIAN_CAPTURE_DURATIONS_MS.T1)
-    : (PVP_CAPTURE_DURATIONS_MS.find(
-        (entry) => (castleLevel ?? 1) >= entry.minCastleLevel,
-      )?.durationMs ?? PVP_CAPTURE_DURATIONS_MS.at(-1)!.durationMs);
+    : getPvpCaptureDurationMs(castleLevel);
 
   return Math.max(
     MIN_CAPTURE_DURATION_MS,

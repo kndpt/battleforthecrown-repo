@@ -1050,9 +1050,10 @@ export class CombatWorker implements OnModuleInit {
     }>,
     tempo: WorldTempo,
   ): number {
-    const castleLevel =
-      targetVillage.buildings.find((building) => building.type === 'CASTLE')
-        ?.level ?? 1;
+    const castleLevel = targetVillage.isBarbarian
+      ? null
+      : targetVillage.buildings.find((building) => building.type === 'CASTLE')
+          ?.level;
 
     return getCaptureDurationMs({
       castleLevel,

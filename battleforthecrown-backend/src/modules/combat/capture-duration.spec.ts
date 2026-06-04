@@ -55,6 +55,12 @@ describe('getCaptureDurationMs', () => {
     ).toBe(4.5 * HOUR_MS);
   });
 
+  it('rejects player-village capture durations without a castle level', () => {
+    expect(() =>
+      getCaptureDurationMs({ castleLevel: null, isBarbarian: false, tempo }),
+    ).toThrow('castleLevel is required for player-village capture duration');
+  });
+
   it('applies capture tempo and keeps a minimum duration', () => {
     expect(
       getCaptureDurationMs({

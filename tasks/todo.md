@@ -1,5 +1,24 @@
 # Todo
 
+## 2026-06-04 — PR #46 commentaires review capture
+
+- [x] Relire les threads encore ouverts sur #46 et #49.
+- [x] Corriger le fallback implicite de niveau de Château sur capture PvP.
+- [x] Ajouter une régression pure sur le niveau de Château manquant.
+- [x] Relancer les vérifications ciblées capture et static-check.
+- [x] Commit, push et résoudre les threads GitHub.
+
+### Review
+
+- Thread #46 valide : `getCaptureDurationMs` ne retombe plus sur Château 1 quand un village joueur n'a pas de bâtiment `CASTLE` chargé ; le helper échoue explicitement.
+- Thread #46 Armée : faux positif à répondre, car `UNIT_COSTS.time` et `getEffectiveUnitTrainingDurationSeconds` manipulent des secondes.
+- Thread #49 ressources : obsolète sur le head courant.
+- Vérification : `rtk yarn workspace battleforthecrown-backend test -- capture-duration` — 1 suite / 4 tests passés.
+- Vérification : `rtk yarn workspace battleforthecrown-backend test:smoke:preflight` — passé après démarrage du Postgres Docker local.
+- Vérification : `rtk yarn workspace battleforthecrown-backend test:smoke:run -- combat-conquest-hook.smoke.spec.ts` — 1 suite / 6 tests passés.
+- Vérification : `rtk yarn static-check` — passé.
+- Vérification : `rtk git diff --check` — passé.
+
 ## 2026-06-03 — Fix smoke capture tempo
 
 - [x] Remplacer la constante T1 dupliquée par la courbe canonique.
