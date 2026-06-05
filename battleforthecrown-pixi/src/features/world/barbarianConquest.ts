@@ -1,6 +1,5 @@
+import { MS_PER_HOUR } from '@battleforthecrown/shared/time';
 import type { WorldTier } from '@battleforthecrown/shared/world';
-
-const HOUR_MS = 60 * 60 * 1000;
 
 export const BARBARIAN_CAPTURE_DURATION_HOURS: Record<WorldTier, number> = {
   T1: 2,
@@ -14,12 +13,12 @@ export function getBarbarianCaptureDurationMs(
   tier: WorldTier | null | undefined,
 ): number | null {
   if (!tier) return null;
-  return BARBARIAN_CAPTURE_DURATION_HOURS[tier] * HOUR_MS;
+  return BARBARIAN_CAPTURE_DURATION_HOURS[tier] * MS_PER_HOUR;
 }
 
 export function formatBarbarianCaptureDuration(ms: number | null): string | null {
   if (ms === null) return null;
-  const hours = ms / HOUR_MS;
+  const hours = ms / MS_PER_HOUR;
   return Number.isInteger(hours) ? `${hours}h` : `${hours.toFixed(1)}h`;
 }
 
