@@ -1,21 +1,20 @@
+import { MS_PER_HOUR } from '@battleforthecrown/shared/time';
 import { TempoService, type WorldTempo } from '@battleforthecrown/shared/world';
 
-const HOUR_MS = 60 * 60 * 1000;
-
 export const BARBARIAN_CAPTURE_DURATIONS_MS: Record<string, number> = {
-  T1: 0.5 * HOUR_MS,
-  T2: 1 * HOUR_MS,
-  T3: 1.5 * HOUR_MS,
-  T4: 2.25 * HOUR_MS,
-  T5: 3 * HOUR_MS,
+  T1: 0.5 * MS_PER_HOUR,
+  T2: 1 * MS_PER_HOUR,
+  T3: 1.5 * MS_PER_HOUR,
+  T4: 2.25 * MS_PER_HOUR,
+  T5: 3 * MS_PER_HOUR,
 };
 
 export const PVP_CAPTURE_DURATIONS_MS = [
-  { minCastleLevel: 9, durationMs: 4.5 * HOUR_MS },
-  { minCastleLevel: 7, durationMs: 3 * HOUR_MS },
-  { minCastleLevel: 5, durationMs: 2.25 * HOUR_MS },
-  { minCastleLevel: 3, durationMs: 1.5 * HOUR_MS },
-  { minCastleLevel: 1, durationMs: 1 * HOUR_MS },
+  { minCastleLevel: 9, durationMs: 4.5 * MS_PER_HOUR },
+  { minCastleLevel: 7, durationMs: 3 * MS_PER_HOUR },
+  { minCastleLevel: 5, durationMs: 2.25 * MS_PER_HOUR },
+  { minCastleLevel: 3, durationMs: 1.5 * MS_PER_HOUR },
+  { minCastleLevel: 1, durationMs: 1 * MS_PER_HOUR },
 ] as const;
 
 const MIN_CAPTURE_DURATION_MS = 1000;
