@@ -49,7 +49,7 @@ export class EventOutboxService {
     private readonly onboarding: OnboardingService,
   ) {}
 
-  async dispatchPendingEvents() {
+  async dispatchPendingEvents(): Promise<void> {
     const fetchStartTime = Date.now();
 
     const events = await this.prisma.eventOutbox.findMany({
@@ -62,7 +62,7 @@ export class EventOutboxService {
 
     if (events.length === 0) return;
 
-    this.logger.log(
+    this.logger.debug(
       `📦 [Outbox] ${events.length} events à dispatcher (fetch: ${fetchEndTime - fetchStartTime}ms)`,
     );
 
@@ -70,7 +70,7 @@ export class EventOutboxService {
       const eventDispatchStart = Date.now();
       const eventAge = eventDispatchStart - event.createdAt.getTime();
 
-      this.logger.log(`📨 [Outbox] Dispatch event ${event.kind}:`, {
+      this.logger.debug(`📨 [Outbox] Dispatch event ${event.kind}:`, {
         eventId: event.id,
         kind: event.kind,
         createdAt: event.createdAt.toISOString(),
@@ -87,7 +87,7 @@ export class EventOutboxService {
         });
 
         const eventDispatchEnd = Date.now();
-        this.logger.log(
+        this.logger.debug(
           `✅ [Outbox] Event ${event.kind} dispatché en ${eventDispatchEnd - eventDispatchStart}ms`,
         );
       } catch (error) {
@@ -210,7 +210,7 @@ export class EventOutboxService {
     if (!userId) return;
 
     const notifyTime = Date.now();
-    this.logger.log(
+    this.logger.debug(
       `🔔 [Outbox] Envoi WebSocket building.completed à ${notifyTime}:`,
       {
         userId,
@@ -233,7 +233,7 @@ export class EventOutboxService {
     const userId = await this.getUserIdByVillage(payload.villageId);
     if (!userId) return;
 
-    this.logger.log(`✅ [Outbox] Envoi WebSocket unit.training.completed:`, {
+    this.logger.debug(`✅ [Outbox] Envoi WebSocket unit.training.completed:`, {
       userId,
       trainingId: payload.trainingId,
       unitType: payload.unitType,
@@ -267,7 +267,7 @@ export class EventOutboxService {
     const userId = await this.getUserIdByVillage(payload.villageId);
     if (!userId) return;
 
-    this.logger.log(`⚔️ [Outbox] Envoi WebSocket battle.sent:`, {
+    this.logger.debug(`⚔️ [Outbox] Envoi WebSocket battle.sent:`, {
       userId,
       expeditionId: payload.expeditionId,
       targetKind: payload.targetKind,
@@ -287,7 +287,7 @@ export class EventOutboxService {
     const userId = await this.getUserIdByVillage(payload.villageId);
     if (!userId) return;
 
-    this.logger.log(`⚔️ [Outbox] Envoi WebSocket battle.resolved:`, {
+    this.logger.debug(`⚔️ [Outbox] Envoi WebSocket battle.resolved:`, {
       userId,
       expeditionId: payload.expeditionId,
       reportId: payload.reportId,
@@ -317,7 +317,7 @@ export class EventOutboxService {
     const userId = await this.getUserIdByVillage(payload.villageId);
     if (!userId) return;
 
-    this.logger.log(`⚔️ [Outbox] Envoi WebSocket battle.returned:`, {
+    this.logger.debug(`⚔️ [Outbox] Envoi WebSocket battle.returned:`, {
       userId,
       expeditionId: payload.expeditionId,
     });
@@ -362,7 +362,7 @@ export class EventOutboxService {
       (await this.getUserIdByVillage(defenderVillageId));
     if (!userId) return;
 
-    this.logger.log(`🛡️ [Outbox] Envoi WebSocket village.attacked:`, {
+    this.logger.debug(`🛡️ [Outbox] Envoi WebSocket village.attacked:`, {
       userId,
       attackerVillageId: payload.attackerVillageId,
       isDefenseSuccessful: payload.isDefenseSuccessful,
