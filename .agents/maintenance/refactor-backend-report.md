@@ -8,6 +8,94 @@ New PRs use branch `maint/refactor-backend/<short-topic>` and PR title
 
 ---
 
+## Run 2026-06-05 — branch `maint/refactor-backend/log-level-hygiene`
+
+**Model:** claude-sonnet-4-6
+**Scan commit:** `7cc1b2f`
+
+---
+
+### Prior findings status (Run 2026-06-04)
+
+| ID | Status | Note |
+|----|--------|------|
+| C6 | **STILL OPEN** | Recursive `this.getResources` at `resources.service.ts:50`. Terminates in 2 steps max; cosmetically surprising only. |
+| B3 | **STILL OPEN** | `getUserIdByVillage` N+1 in outbox dispatch (`event-outbox.service.ts:539`, ~14 call-sites). Deferred (6th run). |
+| B4 | **RESOLVED** | `logger.log` → `logger.debug` in outbox dispatch loop + 6 per-notify sites (this run). |
+| B5 | **RESOLVED** | Extracted to `capture-duration.ts` (PR #46, commit `67bf004`). |
+| B6 | **STILL OPEN** | `applyDefenderLosses:933` and private `getCaptureDurationMs:1047` still re-spell `Prisma.VillageGetPayload<{include:{resourceStock,buildings}}>` instead of `DefenderVillage` alias. S effort. |
+| D4 | **STILL OPEN** | `expedition.create` block repeated 4× in `combat.service.ts`. Deferred. |
+| D5 | **STILL OPEN** | `buildBarbarianDefender`/`buildPlayerDefender` garrison loop duplication (`combat.worker.ts`). Deferred. |
+| D6 | **RESOLVED** | `logger.log` → `logger.debug` at entry of each combat method in `combat.service.ts` (this run). |
+| N2 | **STILL OPEN** | Crowns: `updateProduction` + `recalculateOnBuildingChange` duplicate production accumulation. Deferred. |
+| N3 | **STILL OPEN** | `getVillagesInRadius` missing upper-bound clamp on `maxX`/`maxY` (`world-entities-query.service.ts:101`). S effort. |
+
+---
+
+### Module structure (mental model)
+
+`src/` = bounded contexts under `modules/` + cross-cutting `workers/`, `infra/`, `common/`. Layering clean: only `health.controller.ts` touches Prisma (liveness ping). Zero `as any`, zero `console.*`, zero `@ts-ignore` in production code. Combat module largest by size and churn (`combat.worker.ts` 1361 LOC, `combat.service.ts` 928 LOC after B1 decomposition + D1/D2/D3 helpers). PR #46 landed `capture-duration.ts` (B5 resolved) and expanded `world-entities-query.service.ts` with castle-level + pendingConquest subqueries. `event-outbox.service.ts` (560 LOC) still carries B3 N+1.
+
+---
+
+### Findings
+
+| ID | Category | Location | Description | Severity | Effort |
+|----|----------|----------|-------------|----------|--------|
+| O1 | Type debt | `combat.worker.ts:1047-1050` | Private `getCaptureDurationMs` method uses inline `Prisma.VillageGetPayload<{include:{resourceStock,buildings}}>` for `targetVillage` parameter instead of the `DefenderVillage` alias defined at line 42. Same issue at `applyDefenderLosses:933`. (B6 — still open.) | Low | S |
+| O2 | Performance | `crowns.service.ts:26-54` | `calculateProductionRate` issues `prisma.village.findMany(include:{buildings:true})` on every call. Called 3× per crown balance operation (`getCrownBalance`, `updateProduction`, `createCrownsChangedEvent`) — each re-fetches all villages+buildings for the same user. No batching. | Low | M |
+| O3 | Design | `event-outbox.service.ts:426-466` | `notifyVillageCaptureWindowOpened` and `notifyVillageCaptureWindowInterrupted` issue a `prisma.pendingConquest.findUnique` to recover `attackerUserId` — the payload doesn't carry it directly. Adding `attackerUserId` to both payloads would eliminate the extra DB read and align with how other notify methods work. | Low | M |
+
+---
+
+### Looks bad but is actually fine
+
+- **`this.getResources` recursive call** (`resources.service.ts:50`) — terminates in exactly 2 calls (C6 explanation remains valid).
+- **`CombatWorker.getCaptureDurationMs` shadows imported `getCaptureDurationMs`** (`combat.worker.ts:34,1047`) — class method shadows only within the class scope via `this.`; the module-level import is still reachable without `this`. No runtime confusion, just naming overlap. The class method is a correct thin wrapper.
+- **`calculateProductionRate` called inside `$transaction` uses `this.prisma` not the tx client** (`crowns.service.ts:224`) — the building update is committed before this method is called (from construction worker). Reading committed state is intentional here.
+- **B3 N+1 remains** — at current game scale (≤100 events per dispatch batch, single-node), the sequential `findUnique` per event adds <10ms to each 1s poll cycle. Measurable but not felt. Merits its own PR with a load assertion when scale increases.
+
+---
+
+### Selected theme: B4 + D6 — Log level hygiene
+
+**Evidence:**
+- `event-outbox.service.ts:65,73,90` — 3 `logger.log` calls in the dispatch loop, fire on every event in every ~1s batch (up to 100× per second in a busy game).
+- `event-outbox.service.ts:213,236,270,290,320,365` — 6 per-notify `logger.log` calls for high-frequency game events (building.completed, unit.training.completed, battle.sent/resolved/returned, village.attacked).
+- `combat.service.ts:56,155,224,308,432` — 5 entry-point `logger.log` calls that include `{ dto }`, leaking unit composition and coordinates into steady-state info logs.
+
+**Why this theme:**
+- B4 and D6 are two facets of the same root: verbose `log`-level calls in hot or per-request paths that belong at `debug`. In NestJS production, `debug` is suppressed by default — so this change has zero impact on behavior and eliminates all noise without any flag.
+- Combined scope: 2 files, 14 one-word substitutions (`log` → `debug`). Fully mechanical, zero behavior change.
+- Measurable: in a game with 10 active players, the outbox fires ~20-40 events/second. Each previously emitted 3 info-level log lines = 60-120 lines/s of log serialization; after this PR: 0 unless debug is explicitly enabled.
+- **B3 (outbox N+1)** deferred again — 6th run, real impact but changing the dispatch mechanism (batch lookup) has higher blast radius and deserves its own focused PR.
+- **D4, D5** (duplication) deferred — moderate effort, coherent combat-resolution scope, better as isolated PRs.
+- **O1/B6, N3** — both S effort, next-run candidates.
+
+**Rejected:**
+- **B3**: Medium effort + hot realtime path → own PR with load assertion.
+- **D5** (garrison dedup): M effort, touches combat resolution context building → own PR.
+- **O1/B6**: S effort but 1 type reference fix doesn't meet PR-size threshold alone; bundle with N3 next run.
+- **N3** (`getVillagesInRadius` clamp): S effort, correctness minor. Bundle with B6 next run.
+
+### Files changed
+
+- `battleforthecrown-backend/src/modules/event/event-outbox.service.ts` — 9 `logger.log` → `logger.debug` (3 dispatch loop + 6 per-notify)
+- `battleforthecrown-backend/src/modules/combat/combat.service.ts` — 5 `logger.log` → `logger.debug` (entry-point calls that include dto)
+
+### Verification
+
+```shell
+yarn static-check   → ✅ tsc (backend+pixi) + eslint --quiet, 0 errors
+yarn test:backend   → ✅ 252 passed, 24 suites
+```
+
+### Docs impact
+
+Aucun changement nécessaire — changement purement observabilité (niveaux de log), pas de changement d'API REST, d'event WS, de modèle Prisma ni de règle gameplay. Findings B3/B6/C6/D4/D5/N2/N3/O1/O2/O3 restent ouverts, documentés ci-dessus.
+
+---
+
 ## Run 2026-06-04 — branch `maint/refactor-backend/resources-fetch-rates`
 
 **Model:** claude-sonnet-4-6

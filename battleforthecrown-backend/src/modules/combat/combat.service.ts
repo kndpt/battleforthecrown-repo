@@ -53,7 +53,7 @@ export class CombatService {
   ) {}
 
   async initiateAttack(userId: string, dto: AttackCommandDto) {
-    this.logger.log(`Attack initiated by user ${userId}`, { dto });
+    this.logger.debug(`Attack initiated by user ${userId}`, { dto });
 
     return this.prisma.$transaction(async (tx) => {
       // 1. Verify ownership and get village
@@ -153,7 +153,7 @@ export class CombatService {
   }
 
   async initiateScout(userId: string, dto: ScoutCommandDto) {
-    this.logger.log(`Scout initiated by user ${userId}`, { dto });
+    this.logger.debug(`Scout initiated by user ${userId}`, { dto });
 
     return this.prisma.$transaction(async (tx) => {
       const village = await this.loadOwnedVillage(tx, dto.villageId, userId);
@@ -221,7 +221,7 @@ export class CombatService {
   }
 
   async initiateReinforce(userId: string, dto: ReinforceCommandDto) {
-    this.logger.log(`Reinforcement initiated by user ${userId}`, { dto });
+    this.logger.debug(`Reinforcement initiated by user ${userId}`, { dto });
 
     return this.prisma.$transaction(async (tx) => {
       // 1. Verify ownership of origin village
@@ -305,7 +305,7 @@ export class CombatService {
   }
 
   async initiateRecall(userId: string, dto: RecallCommandDto) {
-    this.logger.log(`Recall initiated by user ${userId}`, { dto });
+    this.logger.debug(`Recall initiated by user ${userId}`, { dto });
 
     return this.prisma.$transaction(async (tx) => {
       // 1. Verify both villages and allow either recall-from-origin or send-back-from-host.
@@ -429,7 +429,7 @@ export class CombatService {
   }
 
   async recallEnRoute(userId: string, expeditionId: string) {
-    this.logger.log(
+    this.logger.debug(
       `Recall en-route requested for expedition ${expeditionId} by user ${userId}`,
     );
 
