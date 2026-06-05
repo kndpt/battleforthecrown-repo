@@ -138,7 +138,7 @@ function formatCastleLevel(castleLevel: number | null | undefined): string {
   return castleLevel ? `Ch. ${castleLevel}` : 'Joueur';
 }
 
-function computeProgress(startAt: number, endAt: number, nowMs: number): number {
+export function computeProgress(startAt: number, endAt: number, nowMs: number): number {
   if (!Number.isFinite(startAt) || !Number.isFinite(endAt) || endAt <= startAt) {
     return 100;
   }
