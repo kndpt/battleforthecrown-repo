@@ -411,3 +411,81 @@ Frontend propre et discipliné. Vérifié cette passe :
 yarn static-check   → green (tsc backend + pixi, ESLint backend + pixi --quiet)
 yarn test:pixi      → 59 test files, 309 tests passed (+1 ws-bindings.test.ts)
 ```
+
+---
+
+## Run 2026-06-05 — commit 9e2589c
+
+**Scan date:** 2026-06-05
+**Commit SHA:** 9e2589c (on branch maint/refactor-pixi/shared-compute-progress)
+
+### Prior findings update
+
+- A1–A6 (ws-bindings query keys) : **RESOLVED**
+- B1, B2 : **RESOLVED**
+- N1, N2 : **RESOLVED**
+- S1, S2, S3 (session teardown) : **RESOLVED**
+- C1 (GameHeader god-component) : **RESOLVED**
+- D2 (headerHelpers tests) : **RESOLVED**
+- F1 (UUID toast) : **RESOLVED**
+- F4 (drawCaptureMarker all entities) : **RESOLVED**
+- G1 (computeProgress duplication) : **RESOLVED** (ce run)
+- F3 / G2 (formatTime untested) : **RESOLVED** (ce run)
+- C2 (BuildingManagementPanel 962 LOC) : STILL OPEN — logique encapsulée dans sous-composants, faible risque
+- C3 (ArmyScreen garrison derivations) : STILL OPEN — low, borderline view-model
+- D3 (VillageView inline `<style>` block) : STILL OPEN — cosmétique
+- D4 (magic number 60_000) : STILL OPEN — acceptable
+- F2 (DailyRetentionWidget expiresInValue hardcoded) : STILL OPEN — cosmétique
+
+### Mental model
+
+Frontend propre et discipliné. Vérifié cette passe (commit 67bf004 + contexte):
+- **Server-authoritative** : 0 violation. `computeProgress` et `formatTime` sont display-only.
+- **Type debt** : 0 `as any`, 0 `@ts-ignore`, 0 `@ts-expect-error`, 0 `fetch`/`axios` hors `src/api/`.
+- **Noble unit** : `useRecruitNobleMutation` — pas d'optimistic UI, `onSettled` invalide armyTraining/armyInventory/resources/population/crowns. Correct (noble training dure ~minutes, rollback non trivial).
+- **SelectedEntityPanel** : 3 queries avec `enabled` guards, capture section bien gérée.
+- **worldMapScene** : ticker ne passe dans `drawCaptureMarker` que les entités avec `captureWindow` actif (F4 fixé).
+
+### New findings
+
+| ID | Category | Location | Description | Severity | Effort | Status |
+|----|----------|----------|-------------|----------|--------|--------|
+| G1 | DRY / Type debt | `SelectedEntityPanel.tsx:219` (commit 67bf004) | `computeProgress` copié verbatim depuis `kingdomActivitiesViewModel.ts:141` — 2 définitions identiques. | **Medium** | S | **RESOLVED** (ce run) |
+| G2 | Test gap | `kingdomActivitiesViewModel.ts:124` | `formatTime` exporté sans test direct — `endTime` jamais asserté dans les tests existants. | Low | S | **RESOLVED** (ce run) |
+
+### "Looks bad but is actually fine" (this run)
+
+| Pattern | Verdict |
+|---------|---------|
+| `useRecruitNobleMutation` sans optimistic UI | ✅ noble training = opération longue/irréversible, `onSettled` invalide correctement |
+| `SelectedEntityPanel` 3 queries inline | ✅ `enabled: Boolean(ownedVillageId)` / `Boolean(villagePowerId)` — pas de fetch superflu pour entités non-possédées |
+| `computeProgress` retourne 100 quand `endAt <= startAt` | ✅ comportement voulu : capture terminée = barre pleine |
+| `kingdomActivitiesViewModel.ts` `computeProgress` était private | ✅ devenu export nommé — aucune violation d'encapsulation, module-level helper cohérent |
+| `noble.killed` dans ws-bindings sans toast de succès | ✅ succès = `village.capture-window-completed` (toast séparé) ; `noble.killed` est l'échec |
+| ArmyScreen 3 BottomSheets inline | ✅ zIndex distincts (80), ouverture exclusive, pas de couplage problématique |
+| C3 (ArmyScreen garrison ternaires) | ✅ 30 lignes plates, facile à lire, extraction = churn sans valeur |
+
+### Selected theme: **G1 + G2 — Extract `computeProgress` + direct `formatTime`/`computeProgress` tests**
+
+**Rationale :**
+- G1 : copie introduite dans 67bf004 (feature noble/capture). Une divergence future (ex: clamping différent) devrait être appliquée 2× ou passerait inaperçue.  
+- G2 : `formatTime` est un export pur ; son résultat `endTime` n'était jamais vérifié. Une régression locale ou de timezone ne serait pas catchée.
+- Thème cohérent (domaine capture window timing), scope S, zéro backend, entièrement vérifiable.
+
+**Implementation :**
+- `kingdomActivitiesViewModel.ts` : `function computeProgress` → `export function computeProgress`.
+- `SelectedEntityPanel.tsx` : import `computeProgress` depuis `kingdomActivitiesViewModel`, suppression du doublon local.
+- `kingdomActivitiesViewModel.test.ts` : ajout de suites `formatTime` (3 tests) et `computeProgress` (5 tests) + assertion `endTime` dans le test conquest existant.
+
+**Rejected :**
+- C2/C3 : scope large, churn sans valeur fonctionnelle.
+- D3/D4/F2 : cosmétiques, candidats `bftc-maint-debt`.
+
+### Verification
+
+```text
+yarn static-check   → green (tsc backend + pixi, ESLint backend + pixi --quiet)
+yarn test:pixi      → 60 test files, 322 tests passed (+8 kingdomActivitiesViewModel.test.ts)
+```
+
+**Diff :** `kingdomActivitiesViewModel.ts` +1 LOC (`export`), `SelectedEntityPanel.tsx` −8 LOC (local computeProgress supprimé, import ajouté), `kingdomActivitiesViewModel.test.ts` +57 LOC (+8 tests). Net : −7 / +58 dans les fichiers modifiés.
