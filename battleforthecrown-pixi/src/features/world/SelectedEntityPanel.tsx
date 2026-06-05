@@ -12,6 +12,7 @@ import type { MapEntity } from '@/api/world-types';
 import type { OpenConquestDto } from '@battleforthecrown/shared/combat';
 import { useTickingNow } from '@/lib/useTickingNow';
 import { formatRemaining } from '@/features/village/constructionProgress';
+import { computeProgress } from '@/features/combat/kingdomActivitiesViewModel';
 import { buildTroopsSection, summarizePresentTroops } from './selectedEntityTroops';
 
 interface SelectedEntityPanelProps {
@@ -214,14 +215,6 @@ function captureSectionFor(
       },
     ],
   };
-}
-
-function computeProgress(startAt: number, endAt: number, nowMs: number): number {
-  if (!Number.isFinite(startAt) || !Number.isFinite(endAt) || endAt <= startAt) {
-    return 100;
-  }
-
-  return Math.min(100, Math.max(0, ((nowMs - startAt) / (endAt - startAt)) * 100));
 }
 
 function troopsSectionFor(

@@ -4,6 +4,8 @@ import type {
   OpenExpeditionDto,
 } from '@battleforthecrown/shared/combat';
 import {
+  computeProgress,
+  formatTime,
   mapOpenConquestToCaptureCard,
   mapOpenExpeditionToActivityCard,
 } from './kingdomActivitiesViewModel';
@@ -27,8 +29,10 @@ describe('kingdom activities view model', () => {
       targetY: 242,
     };
 
-    expect(mapOpenConquestToCaptureCard(conquest, now)).toMatchObject({
+    const card = mapOpenConquestToCaptureCard(conquest, now);
+    expect(card).toMatchObject({
       coordinates: '259|242',
+      endTime: formatTime(Date.parse('2026-05-13T13:00:00.000Z')),
       originName: 'Royaume du Nord',
       progress: 83.33333333333334,
       state: 'soon',
@@ -127,5 +131,63 @@ describe('kingdom activities view model', () => {
       statusLabel: 'SCOUT',
       time: '1m 00s',
     });
+  });
+});
+
+describe('formatTime', () => {
+  it('formats a finite UTC timestamp as HH:MM in fr-FR locale', () => {
+    const ts = Date.parse('2026-05-13T14:05:00.000Z');
+    const result = formatTime(ts);
+    expect(result).toMatch(/^\d{2}:\d{2}$/);
+  });
+
+  it('returns --:-- for NaN / non-finite input', () => {
+    expect(formatTime(NaN)).toBe('--:--');
+    expect(formatTime(Infinity)).toBe('--:--');
+  });
+
+  it('is used by mapOpenConquestToCaptureCard to populate endTime', () => {
+    const captureUntil = Date.parse('2026-05-13T13:00:00.000Z');
+    const conquest: OpenConquestDto = {
+      attackerVillageId: 'v1',
+      attackerVillageName: 'Nord',
+      captureStartedAt: '2026-05-13T12:00:00.000Z',
+      captureUntil: new Date(captureUntil).toISOString(),
+      pendingConquestId: 'pc1',
+      status: 'OPEN',
+      targetCastleLevel: null,
+      targetKind: 'BARBARIAN_VILLAGE',
+      targetName: 'Village barbare',
+      targetTier: 'T1',
+      targetVillageId: 'target-1',
+      targetX: 10,
+      targetY: 20,
+    };
+    const card = mapOpenConquestToCaptureCard(conquest, captureUntil - 1_000);
+    expect(card.endTime).toBe(formatTime(captureUntil));
+  });
+});
+
+describe('computeProgress', () => {
+  it('returns 100 when past the end', () => {
+    expect(computeProgress(0, 1_000, 2_000)).toBe(100);
+  });
+
+  it('returns 0 when at the start', () => {
+    expect(computeProgress(0, 1_000, 0)).toBe(0);
+  });
+
+  it('returns 50 at the midpoint', () => {
+    expect(computeProgress(0, 1_000, 500)).toBe(50);
+  });
+
+  it('clamps to 100 for endAt <= startAt (degenerate range)', () => {
+    expect(computeProgress(500, 500, 500)).toBe(100);
+    expect(computeProgress(500, 400, 500)).toBe(100);
+  });
+
+  it('returns 100 for non-finite inputs', () => {
+    expect(computeProgress(NaN, 1_000, 500)).toBe(100);
+    expect(computeProgress(0, NaN, 500)).toBe(100);
   });
 });
