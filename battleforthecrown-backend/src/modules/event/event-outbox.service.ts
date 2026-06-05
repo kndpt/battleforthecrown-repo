@@ -49,7 +49,7 @@ export class EventOutboxService {
     private readonly onboarding: OnboardingService,
   ) {}
 
-  async dispatchPendingEvents() {
+  async dispatchPendingEvents(): Promise<void> {
     const fetchStartTime = Date.now();
 
     const events = await this.prisma.eventOutbox.findMany({

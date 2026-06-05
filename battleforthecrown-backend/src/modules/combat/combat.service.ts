@@ -19,7 +19,11 @@ import type { AttackCommandDto } from './dto/attack-command.schema';
 import type { ReinforceCommandDto } from './dto/reinforce-command.schema';
 import type { RecallCommandDto } from './dto/recall-command.schema';
 import type { ScoutCommandDto } from './dto/scout-command.schema';
-import { ExpeditionKind, PendingConquestStatus } from '@prisma/client';
+import {
+  Expedition,
+  ExpeditionKind,
+  PendingConquestStatus,
+} from '@prisma/client';
 import { encodeUnitMap, parseUnitMap } from './codecs';
 import PgBoss from 'pg-boss';
 import { createOutboxEvent } from '../event/event.utils';
@@ -52,7 +56,10 @@ export class CombatService {
     @Inject('PG_BOSS') private readonly boss: PgBoss,
   ) {}
 
-  async initiateAttack(userId: string, dto: AttackCommandDto) {
+  async initiateAttack(
+    userId: string,
+    dto: AttackCommandDto,
+  ): Promise<Expedition> {
     this.logger.debug(`Attack initiated by user ${userId}`, { dto });
 
     return this.prisma.$transaction(async (tx) => {
@@ -152,7 +159,10 @@ export class CombatService {
     });
   }
 
-  async initiateScout(userId: string, dto: ScoutCommandDto) {
+  async initiateScout(
+    userId: string,
+    dto: ScoutCommandDto,
+  ): Promise<Expedition> {
     this.logger.debug(`Scout initiated by user ${userId}`, { dto });
 
     return this.prisma.$transaction(async (tx) => {
@@ -220,7 +230,10 @@ export class CombatService {
     });
   }
 
-  async initiateReinforce(userId: string, dto: ReinforceCommandDto) {
+  async initiateReinforce(
+    userId: string,
+    dto: ReinforceCommandDto,
+  ): Promise<Expedition> {
     this.logger.debug(`Reinforcement initiated by user ${userId}`, { dto });
 
     return this.prisma.$transaction(async (tx) => {
@@ -304,7 +317,10 @@ export class CombatService {
     });
   }
 
-  async initiateRecall(userId: string, dto: RecallCommandDto) {
+  async initiateRecall(
+    userId: string,
+    dto: RecallCommandDto,
+  ): Promise<Expedition> {
     this.logger.debug(`Recall initiated by user ${userId}`, { dto });
 
     return this.prisma.$transaction(async (tx) => {
@@ -428,7 +444,10 @@ export class CombatService {
     });
   }
 
-  async recallEnRoute(userId: string, expeditionId: string) {
+  async recallEnRoute(
+    userId: string,
+    expeditionId: string,
+  ): Promise<Expedition> {
     this.logger.debug(
       `Recall en-route requested for expedition ${expeditionId} by user ${userId}`,
     );
