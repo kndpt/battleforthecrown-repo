@@ -192,7 +192,7 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
   area: `battleforthecrown-backend/src/workers/production.worker.ts`
   note: Audited — clean. Proper error handling, logging, batch separation. No debt found.
 
-- status: proposed
+- status: fixed
   area: >
     battleforthecrown-backend/src/workers/world-lifecycle.worker.ts,
     battleforthecrown-backend/src/modules/world/world-lifecycle.spec.ts
@@ -203,6 +203,20 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
     the shared package exporting the same constant from `@battleforthecrown/shared/time`.
     Auth, crowns, resources, barbarian workers already imported from shared.
   verification: yarn static-check ✓ · world-lifecycle 13 tests ✓
+
+- status: proposed
+  area: >
+    battleforthecrown-backend/src/modules/combat/capture-duration.ts,
+    battleforthecrown-backend/src/modules/combat/capture-duration.spec.ts,
+    battleforthecrown-pixi/src/features/world/barbarianConquest.ts
+  branch: maint/debt/ms-per-hour-constants
+  title: "maint(debt): import MS_PER_HOUR from shared/time in capture-duration and barbarianConquest"
+  note: >
+    All three files defined `const HOUR_MS = 60 * 60 * 1000` locally despite
+    MS_PER_HOUR being exported from @battleforthecrown/shared/time and already used
+    in crowns, strategy, barbarian-runtime, and barbarian-seeding-catchup workers.
+    Same pattern as the MS_PER_DAY fix merged in #47.
+  verification: yarn static-check ✓ · 252 backend tests ✓ · 314 pixi tests ✓
 
 - status: fixed
   area: >
@@ -255,3 +269,7 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
   on `maint/debt/world-lifecycle-ms-per-day` — both imported from @battleforthecrown/shared/time
   (same pattern as auth, crowns, resources, barbarian workers).
   static-check ✓ · world-lifecycle 13 tests ✓.
+- 2026-06-05: local HOUR_MS constants removed from capture-duration.ts, capture-duration.spec.ts,
+  barbarianConquest.ts on `maint/debt/ms-per-hour-constants` — imported MS_PER_HOUR from
+  @battleforthecrown/shared/time (same pattern, MS_PER_HOUR already used in 4+ backend modules).
+  PR #50. static-check ✓ · 252 backend tests ✓ · 314 pixi tests ✓.
