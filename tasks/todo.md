@@ -1,5 +1,20 @@
 # Todo
 
+## 2026-06-06 — Plan run map focus links
+
+- [x] Lire les conventions `tasks/` et `tasks/runs/`.
+- [x] Scanner les tickets/runs liés à map, world, focus, navigation, village, report et combat.
+- [x] Cartographier le `pendingFocus` existant, `WorldMapScreen`, `centerOn` et les rapports de combat.
+- [x] Valider le draft avec Kelvin.
+- [x] Écrire la fiche run 048 et mettre à jour l'index.
+
+### Review
+
+- Artefact retenu : run, car la feature introduit une primitive frontend transverse durable et une doc technique.
+- Solution cible retenue : contrat public URL-readable `/game/world?focusX=<x>&focusY=<y>` + helper/hook unique, avec `pendingFocus` conservé comme pont runtime interne.
+- Liens détectés : run 024 modal victoire, ticket 62 mini-carte, run 043 shell jeu, run 012 rapports combat, ticket 69 inbox mapping ; aucun doublon strict.
+- Vérification : fiche run relue, index actif mis à jour, `rtk git diff --check` passé.
+
 ## 2026-06-06 — Rapport de renfort cohérent
 
 - [x] Relire les leçons projet et localiser le rendu des rapports de renfort.
