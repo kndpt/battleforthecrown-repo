@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { ArrowLeft, Lock } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@/api';
 import {
+  queryKeys,
   useArmyInventoryQuery,
   useArmyTrainingQuery,
   useCancelTrainingMutation,
@@ -320,6 +322,20 @@ export function ArmyScreen() {
   const population = usePopulationQuery(villageId);
   const worldConfig = useWorldConfigQuery(worldId);
   const onboardingSummary = useOnboardingSummaryQuery(worldId);
+  const queryClient = useQueryClient();
+  const prevTrainingLengthRef = useRef<number | null>(null);
+
+  // Mirror the WS unit.trained cascade when the poll detects a completed training (WS-drop fallback).
+  useEffect(() => {
+    const len = training.data?.length ?? 0;
+    const prev = prevTrainingLengthRef.current;
+    if (prev !== null && len < prev) {
+      queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
+    }
+    prevTrainingLengthRef.current = len;
+  }, [training.data, queryClient, villageId]);
+
   const cancelTraining = useCancelTrainingMutation();
   const recallReinforcement = useRecallReinforcementMutation();
   const train = useTrainUnitsMutation();
