@@ -531,6 +531,10 @@ export const armyTrainingQueryOptions = (villageId: string | null) =>
     },
     enabled: Boolean(villageId),
     staleTime: 2_000,
+    // Poll while trainings are active so ArmyScreen self-heals on WS drop.
+    // Noble training can last 10+ min, making a dropped socket a real risk.
+    refetchInterval: (query) =>
+      query.state.data && query.state.data.length > 0 ? 5_000 : false,
   });
 
 export function useArmyTrainingQuery(villageId: string | null) {

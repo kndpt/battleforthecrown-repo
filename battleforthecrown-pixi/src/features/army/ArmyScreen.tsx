@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { ArrowLeft, Lock } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '@/api';
 import {
+  queryKeys,
   useArmyInventoryQuery,
   useArmyTrainingQuery,
   useCancelTrainingMutation,
@@ -36,6 +38,7 @@ import { useDisplayResources } from '@/features/resources/useDisplayResources';
 import type { GarrisonLine } from '@/lib/types';
 import { publicAsset } from '@/lib/publicAsset';
 import { useTickingNow } from '@/lib/useTickingNow';
+import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
 import { useUiStore } from '@/stores/ui';
 import { UnitDetailModal } from './UnitDetailModal';
@@ -320,6 +323,30 @@ export function ArmyScreen() {
   const population = usePopulationQuery(villageId);
   const worldConfig = useWorldConfigQuery(worldId);
   const onboardingSummary = useOnboardingSummaryQuery(worldId);
+  const queryClient = useQueryClient();
+  const prevTrainingRef = useRef<{ len: number; completedTotal: number } | null>(null);
+
+  // Mirror the WS unit.trained cascade when the poll detects units added or a batch removed (WS-drop fallback).
+  useEffect(() => {
+    const len = training.data?.length ?? 0;
+    const completedTotal = training.data?.reduce((sum, t) => sum + t.completedQty, 0) ?? 0;
+    const prev = prevTrainingRef.current;
+    if (
+      prev !== null &&
+      (prev.len > 0 || prev.completedTotal > 0) &&
+      (len < prev.len || completedTotal > prev.completedTotal)
+    ) {
+      const userId = useAuthStore.getState().user?.id ?? null;
+      queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.villagePower(villageId) });
+      queryClient.invalidateQueries({ queryKey: ['power', 'kingdom', userId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.retentionSummary(userId, worldId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.onboardingSummary(userId, worldId) });
+    }
+    prevTrainingRef.current = { len, completedTotal };
+  }, [training.data, queryClient, villageId, worldId]);
+
   const cancelTraining = useCancelTrainingMutation();
   const recallReinforcement = useRecallReinforcementMutation();
   const train = useTrainUnitsMutation();

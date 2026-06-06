@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { metaFor } from './buildingMeta';
 import { computeConstructionProgress } from './constructionProgress';
 import { useTickingNow } from '@/lib/useTickingNow';
@@ -9,7 +8,6 @@ import {
   useBuildingQueueQuery,
   useCancelTrainingMutation,
   useUpgradeBuildingMutation,
-  queryKeys,
   useCancelConstructionMutation,
   usePopulationQuery,
   useRecruitNobleMutation,
@@ -30,7 +28,6 @@ import { UNIT_COSTS, UNIT_TYPES } from '@battleforthecrown/shared/army';
 import { calculateBuildingCost } from '@battleforthecrown/shared/logic';
 import { TempoService } from '@battleforthecrown/shared/world';
 import { getBuildingLockState } from './buildingLockState';
-import { computeUnitTrainingProgress } from '@/features/army/trainingProgress';
 import { ResourceBuildingDetailModal } from './ResourceBuildingDetailModal';
 import { getResourceBuildingKey } from './resourceBuildingKey';
 import { SpecializedBuildingDetailModal } from './SpecializedBuildingDetailModal';
@@ -46,7 +43,6 @@ export function BuildingDetailModal({ villageId, building: initialBuilding, onCl
   const cancel = useCancelConstructionMutation();
   const cancelTraining = useCancelTrainingMutation();
   const recruitNoble = useRecruitNobleMutation();
-  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
 
   const buildingsQuery = useVillageBuildingsQuery(villageId);
@@ -134,19 +130,6 @@ export function BuildingDetailModal({ villageId, building: initialBuilding, onCl
     (displayResources?.iron ?? 0) >= nobleCost.iron &&
     crownsBalance >= (nobleCost.crowns ?? 0) &&
     availablePopulation >= nobleCost.population;
-
-  useEffect(() => {
-    if (!nobleTraining) return;
-    const trainingProgress = computeUnitTrainingProgress(nobleTraining, now);
-    if (
-      trainingProgress.totalRemainingMs === 0 &&
-      nobleTraining.completedQty < nobleTraining.totalQty
-    ) {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.armyTraining(villageId),
-      });
-    }
-  }, [nobleTraining, now, queryClient, villageId]);
 
   const handleUpgrade = () => {
     if (isUnbuiltLocked) return;
