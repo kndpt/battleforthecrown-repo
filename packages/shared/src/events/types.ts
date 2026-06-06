@@ -116,6 +116,8 @@ export interface VillageCaptureWindowOpenedPayload {
   pendingConquestId: string;
   targetVillageId: string;
   attackerVillageId: string;
+  /** Present in all events written after the 2026-06-06 deploy; absent in older queued rows. */
+  attackerUserId?: string;
   captureUntil: string;
 }
 
@@ -128,6 +130,8 @@ export interface VillageCaptureWindowCompletedPayload {
 export interface VillageCaptureWindowInterruptedPayload {
   pendingConquestId: string;
   targetVillageId: string;
+  /** Present in all events written after the 2026-06-06 deploy; absent in older queued rows. */
+  attackerUserId?: string;
   reason: string;
 }
 

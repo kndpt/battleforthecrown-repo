@@ -118,6 +118,7 @@ const VillageCaptureWindowOpenedPayloadSchema = z.object({
   pendingConquestId: z.string(),
   targetVillageId: z.string(),
   attackerVillageId: z.string(),
+  attackerUserId: z.string().optional(),
   captureUntil: z.string(),
 });
 
@@ -130,6 +131,7 @@ const VillageCaptureWindowCompletedPayloadSchema = z.object({
 const VillageCaptureWindowInterruptedPayloadSchema = z.object({
   pendingConquestId: z.string(),
   targetVillageId: z.string(),
+  attackerUserId: z.string().optional(),
   reason: z.string(),
 });
 

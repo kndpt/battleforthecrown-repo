@@ -387,7 +387,7 @@ export class EventOutboxService {
   }
 
   private notifyVillageConquered(payload: VillageConqueredPayload) {
-    this.logger.log(`🏰 [Outbox] Envoi WebSocket village.conquered:`, {
+    this.logger.debug(`🏰 [Outbox] Envoi WebSocket village.conquered:`, {
       newOwnerId: payload.newOwnerId,
       previousOwnerId: payload.previousOwnerId,
       villageId: payload.villageId,
@@ -426,14 +426,12 @@ export class EventOutboxService {
   private async notifyVillageCaptureWindowOpened(
     payload: VillageCaptureWindowOpenedPayload,
   ) {
-    const pendingConquest = await this.prisma.pendingConquest.findUnique({
-      where: { id: payload.pendingConquestId },
-      select: { attackerUserId: true },
-    });
-    if (!pendingConquest) return;
-
+    const attackerUserId =
+      payload.attackerUserId ??
+      (await this.getAttackerUserIdByConquest(payload.pendingConquestId));
+    if (!attackerUserId) return;
     this.gateway.notifyUser(
-      pendingConquest.attackerUserId,
+      attackerUserId,
       'village.capture-window-opened',
       payload,
     );
@@ -452,14 +450,12 @@ export class EventOutboxService {
   private async notifyVillageCaptureWindowInterrupted(
     payload: VillageCaptureWindowInterruptedPayload,
   ) {
-    const pendingConquest = await this.prisma.pendingConquest.findUnique({
-      where: { id: payload.pendingConquestId },
-      select: { attackerUserId: true },
-    });
-    if (!pendingConquest) return;
-
+    const attackerUserId =
+      payload.attackerUserId ??
+      (await this.getAttackerUserIdByConquest(payload.pendingConquestId));
+    if (!attackerUserId) return;
     this.gateway.notifyUser(
-      pendingConquest.attackerUserId,
+      attackerUserId,
       'village.capture-window-interrupted',
       payload,
     );
@@ -542,6 +538,16 @@ export class EventOutboxService {
       select: { userId: true },
     });
     return village?.userId || null;
+  }
+
+  private async getAttackerUserIdByConquest(
+    pendingConquestId: string,
+  ): Promise<string | null> {
+    const conquest = await this.prisma.pendingConquest.findUnique({
+      where: { id: pendingConquestId },
+      select: { attackerUserId: true },
+    });
+    return conquest?.attackerUserId ?? null;
   }
 
   private async getUniqueUserIdsByVillages(

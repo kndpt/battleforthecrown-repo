@@ -8,6 +8,101 @@ New PRs use branch `maint/refactor-backend/<short-topic>` and PR title
 
 ---
 
+## Run 2026-06-06 — branch `maint/refactor-backend/outbox-capture-payload`
+
+**Model:** claude-sonnet-4-6
+**Scan commit:** `502f039`
+
+---
+
+### Prior findings status (Run 2026-06-05)
+
+| ID | Status | Note |
+|----|--------|------|
+| B3 | **STILL OPEN** | `getUserIdByVillage` N+1 in outbox dispatch — deferred (7th run). |
+| O1/B6 | **STILL OPEN** | `applyDefenderLosses:933` and `getCaptureDurationMs:1047` re-spell inline `Prisma.VillageGetPayload<{include:{resourceStock,buildings}}>` instead of `DefenderVillage` alias. Deferred again (S effort). |
+| C6 | **STILL OPEN** | Recursive `this.getResources` at `resources.service.ts:50`. Terminates in 2 steps max; cosmetically surprising only. |
+| D4 | **STILL OPEN** | `expedition.create` block repeated 4× in `combat.service.ts`. Deferred. |
+| D5 | **STILL OPEN** | `buildBarbarianDefender`/`buildPlayerDefender` garrison loop duplication (`combat.worker.ts`). Deferred. |
+| N2 | **STILL OPEN** | Crowns: `updateProduction` + `recalculateOnBuildingChange` duplicate production accumulation. Deferred. |
+| N3 | **STILL OPEN** | `getVillagesInRadius` missing upper-bound clamp on `maxX`/`maxY` (`world-entities-query.service.ts:101`). S effort. |
+| O2 | **STILL OPEN** | `calculateProductionRate` issues `findMany(include:{buildings})` 2× per crown update operation (once in accumulate helper, once in `createCrownsChangedEvent`). M effort. |
+| O3 | **RESOLVED** | `notifyVillageCaptureWindowOpened/Interrupted` extra DB reads eliminated (this run). |
+
+---
+
+### Module structure (mental model)
+
+Same as last run. Combat module largest (`combat.worker.ts` 1361 LOC, `combat.service.ts` 947 LOC). `event-outbox.service.ts` (550 LOC — shrunk by removing 2 `findUnique` methods) now fully synchronous for capture-window dispatch. Shared package `packages/shared/src/events/types.ts` updated: both capture-window interrupted/opened payloads now carry `attackerUserId`, making them self-contained. Layering clean; zero `as any`, zero `console.*`, zero `@ts-ignore` in production code. All 252 backend unit tests + 322 pixi tests green.
+
+---
+
+### Findings
+
+| ID | Category | Location | Description | Severity | Effort |
+|----|----------|----------|-------------|----------|--------|
+| P1 | Observability | `event-outbox.service.ts:390` | **RESOLVED** — `notifyVillageConquered` used `logger.log` (missed by B4 resolution). Fixed to `logger.debug`. | Low | S |
+| O3 | Performance/Design | `event-outbox.service.ts:426-466` (pre-fix) | **RESOLVED** — `notifyVillageCaptureWindowOpened/Interrupted` did `prisma.pendingConquest.findUnique` to get `attackerUserId`. Payload now carries it directly; 2 DB reads eliminated from the outbox hot path. | Low | M |
+| O1/B6 | Type debt | `combat.worker.ts:933, 1047` | `applyDefenderLosses` and `getCaptureDurationMs` re-spell `Prisma.VillageGetPayload<{include:{resourceStock,buildings}}>` instead of `DefenderVillage` alias (line 42). S effort. | Low | S |
+| N3 | Correctness | `world-entities-query.service.ts:101` | `getVillagesInRadius` missing `Math.min(maxX, 499)` / `Math.min(maxY, 499)` clamp (sibling `getEntitiesInRadius` has it). No Prisma bug but inconsistent boundary. | Low | S |
+| N2 | Duplication | `crowns.service.ts:131-248` | `updateProduction` and `recalculateOnBuildingChange` duplicate the accumulation pattern (findBalance → calculateProductionRate → elapsedHours → floor → update). The only semantic difference: `recalculateOnBuildingChange` creates balance if missing and always emits the event. | Low | M |
+| O2 | Performance | `crowns.service.ts:147, 272` | Inside `updateProduction`, `calculateProductionRate` is called once (line 147); then `createCrownsChangedEvent` calls it again (line 272) — 2× `findMany(include:{buildings})` per tick. Passing the pre-computed rate into `createCrownsChangedEvent` eliminates the redundant call. | Low | M |
+| D4 | Duplication | `combat.service.ts:124, 197, 283, 409` | `tx.expedition.create` data block repeated 4× across `initiateAttack/Scout/Reinforce/Recall`. Shared core fields: `worldId, attackerVillageId, units, status, departAt, arrivalAt, outboundTravelMs`. | Medium | M |
+| D5 | Duplication | `combat.worker.ts:826-858, 881-928` | `buildBarbarianDefender` / `buildPlayerDefender` share near-identical garrison→participants aggregation loop (~30 LOC each). | Low | M |
+| B3 | Performance | `event-outbox.service.ts:539` | `getUserIdByVillage` N+1 — 1 `findUnique` per event in the dispatch loop, up to 100 sequential queries/batch. Batchable. | Medium | M |
+
+---
+
+### Looks bad but is actually fine
+
+- **B3 N+1 remains** — at current game scale (≤100 events per batch, single-node), <10ms per 1s poll. Real, but the fix changes `dispatchEvent` signature + all notify-function signatures. Merits own PR.
+- **`this.getResources` recursive call** (`resources.service.ts:50`) — terminates in 2 calls exactly (C6, unchanged since run 2026-06-03).
+- **`calculateProductionRate` uses `this.prisma` inside `$transaction`** (`crowns.service.ts:147, 224`) — reads committed state intentionally; the building update is committed before this is called from the construction worker.
+- **Smoke tests require `battleforthecrown_smoke_w1` DB** — missing in this remote environment (infra constraint, not a code regression). Unit suites are the authoritative check here.
+
+---
+
+### Selected theme: O3 + P1 — embed `attackerUserId` in capture-window payloads; fix stray `logger.log`
+
+**Evidence:**
+- `event-outbox.service.ts:426-466` — `notifyVillageCaptureWindowOpened` and `notifyVillageCaptureWindowInterrupted` each did a `prisma.pendingConquest.findUnique` to recover `attackerUserId` at dispatch time. The `attackerUserId` is always available at write time (in `conquest.service.ts`), so the DB lookup was purely a payload-completeness gap.
+- `event-outbox.service.ts:390` — `notifyVillageConquered` used `logger.log`, inconsistent with all other notify methods.
+
+**Why this theme:**
+- Architectural correctness: payloads should carry all data needed at dispatch time. The 2 `findUnique` reads violated this: the outbox is meant to be a durable record of events with enough context to dispatch without re-querying.
+- The fix is backwards-compatible for the frontend (additive field), required no Prisma migration, and covers all 3 callers that write the interrupted event.
+- O3 was explicitly deferred as "own PR when scale increases" but the architectural gap is real at any scale.
+- P1 was missed by the B4 resolution run — cleanup.
+
+**Rejected:**
+- **B3**: Medium effort, hot realtime path, 14+ signature changes → own PR.
+- **N2 + O2**: Medium effort, crown service — coherent pair, better as isolated PR targeting `crowns.service.ts`.
+- **D4 + D5**: Explicit PR risk noted in prior runs (diverging fields in create blocks).
+- **O1/B6 + N3**: S effort, but these are truly polish — deferred one more run.
+
+### Files changed
+
+- `packages/shared/src/events/types.ts` — `attackerUserId: string` added to `VillageCaptureWindowOpenedPayload` and `VillageCaptureWindowInterruptedPayload`
+- `packages/shared/src/events/schemas.ts` — `z.string()` added to both Zod schemas
+- `battleforthecrown-backend/src/modules/combat/conquest.service.ts` — 3 `createOutboxEvent` calls include `attackerUserId`
+- `battleforthecrown-backend/src/modules/event/event-outbox.service.ts` — `notifyVillageCaptureWindowOpened/Interrupted` now synchronous (no `findUnique`), `notifyVillageConquered` `logger.log` → `logger.debug`
+- `battleforthecrown-pixi/src/api/ws-bindings.test.ts` — 2 mock payloads updated with `attackerUserId`
+
+### Verification
+
+```shell
+yarn workspace @battleforthecrown/shared build   → ✅ tsc, 0 errors
+yarn static-check                                 → ✅ tsc (backend+pixi) + eslint --quiet, 0 errors
+yarn test:backend                                 → ✅ 252 passed, 24 suites
+yarn test:pixi                                    → ✅ 322 passed, 60 files
+```
+
+### Docs impact
+
+Aucun changement nécessaire — pas de changement d'API REST, pas de règle gameplay, pas de modèle Prisma. Le payload WS `village.capture-window-opened` et `village.capture-window-interrupted` ont un champ additionnel (`attackerUserId`) — additive, non-breaking pour les clients existants. Findings B3/C6/D4/D5/N2/N3/O1/O2 restent ouverts.
+
+---
+
 ## Run 2026-06-05 — branch `maint/refactor-backend/log-level-hygiene`
 
 **Model:** claude-sonnet-4-6
