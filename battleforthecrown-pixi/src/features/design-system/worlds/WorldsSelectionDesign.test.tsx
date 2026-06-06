@@ -7,7 +7,7 @@ import { defaultSeasonVariants, worldsSelectionLabels } from './worldsSelectionC
 function makeCard(overrides: Partial<WorldCardViewModel> = {}): WorldCardViewModel {
   return {
     ctaKind: 'join',
-    ctaLabel: 'Rejoindre le royaume',
+    ctaLabel: "S'inscrire",
     dayLabel: 'J. 5 / 60',
     displayName: 'Aubeforge',
     id: 'world-open',
@@ -23,7 +23,7 @@ function makeCard(overrides: Partial<WorldCardViewModel> = {}): WorldCardViewMod
     personalStats: null,
     shieldLabel: '48 h',
     sigilGlyph: '♔',
-    statusLabel: 'INSCRIPTION LIBRE',
+    statusLabel: 'INSCRIPTIONS OUVERTES',
     tab: 'open',
     tagline: 'Où les vassaux bâtissent leur légende',
     tempoLabel: 'STANDARD',
@@ -41,16 +41,16 @@ function normalizedText(container: HTMLElement): string {
 describe('WorldCard', () => {
   it.each([
     {
-      expectedButton: 'Rejoindre le royaume',
+      expectedButton: "S'inscrire",
       expectedDay: 'J. 5 / 60',
-      expectedStatus: 'INSCRIPTION LIBRE',
+      expectedStatus: 'INSCRIPTIONS OUVERTES',
       phase: 'main' as const,
       title: 'OPEN main',
     },
     {
-      expectedButton: 'Rejoindre le royaume',
+      expectedButton: "S'inscrire",
       expectedDay: 'J. 8 / 60',
-      expectedStatus: 'INSCRIPTION LIBRE',
+      expectedStatus: 'INSCRIPTIONS OUVERTES',
       phase: 'late' as const,
       title: 'OPEN late',
     },
@@ -62,9 +62,9 @@ describe('WorldCard', () => {
       title: 'PLANNED',
     },
     {
-      expectedButton: 'Inscription close',
+      expectedButton: null,
       expectedDay: 'J. 28 / 60',
-      expectedStatus: 'INSCRIPTION CLOSE',
+      expectedStatus: 'INSCRIPTIONS CLOSES',
       phase: 'closed' as const,
       title: 'LOCKED',
     },
@@ -72,22 +72,23 @@ describe('WorldCard', () => {
     render(
       <WorldCard
         onDetails={() => undefined}
+        onEnter={() => undefined}
         onJoin={() => undefined}
         onNotify={() => undefined}
         world={makeCard({
           ctaKind: scenario.expectedButton === "Me prévenir à l'ouverture"
             ? 'notify'
-            : scenario.expectedButton === 'Inscription close'
+            : scenario.expectedButton === null
               ? 'locked'
               : 'join',
-          ctaLabel: scenario.expectedButton,
+          ctaLabel: scenario.expectedButton ?? 'Inscriptions closes',
           dayLabel: scenario.expectedDay,
           inscriptionPhase: scenario.phase,
           lifecycleDay: scenario.expectedStatus === 'PLANIFIÉ' ? null : 5,
           statusLabel: scenario.expectedStatus,
           tab: scenario.expectedStatus === 'PLANIFIÉ'
             ? 'planned'
-            : scenario.expectedStatus === 'INSCRIPTION CLOSE'
+            : scenario.expectedStatus === 'INSCRIPTIONS CLOSES'
               ? 'locked'
               : 'open',
         })}
@@ -98,17 +99,24 @@ describe('WorldCard', () => {
     expect(screen.getByText('♔')).toBeInTheDocument();
     expect(screen.getByText(scenario.expectedStatus)).toBeInTheDocument();
     expect(screen.getByText(scenario.expectedDay)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: scenario.expectedButton })).toBeInTheDocument();
+    if (scenario.expectedButton) {
+      expect(screen.getByRole('button', { name: scenario.expectedButton })).toBeInTheDocument();
+    } else {
+      expect(screen.getByRole('button', { name: 'Détails' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /inscription/i })).not.toBeInTheDocument();
+    }
     expect(screen.queryByText('main')).not.toBeInTheDocument();
     expect(screen.queryByText('late')).not.toBeInTheDocument();
     expect(screen.queryByText('closed')).not.toBeInTheDocument();
   });
 
   it('lets an already joined world enter the game instead of disabling the CTA', () => {
+    const onEnter = vi.fn();
     const onJoin = vi.fn();
     render(
       <WorldCard
         onDetails={() => undefined}
+        onEnter={onEnter}
         onJoin={onJoin}
         onNotify={() => undefined}
         world={makeCard({
@@ -122,13 +130,15 @@ describe('WorldCard', () => {
     const button = screen.getByRole('button', { name: 'Entrer dans le royaume' });
     expect(button).not.toBeDisabled();
     fireEvent.click(button);
-    expect(onJoin).toHaveBeenCalledWith(expect.objectContaining({ id: 'world-open' }));
+    expect(onEnter).toHaveBeenCalledWith(expect.objectContaining({ id: 'world-open' }));
+    expect(onJoin).not.toHaveBeenCalled();
   });
 
   it('renders personal stats and the canonical power asset only when provided', () => {
     const { container, rerender } = render(
       <WorldCard
         onDetails={() => undefined}
+        onEnter={() => undefined}
         onJoin={() => undefined}
         onNotify={() => undefined}
         world={makeCard({
@@ -152,6 +162,7 @@ describe('WorldCard', () => {
     rerender(
       <WorldCard
         onDetails={() => undefined}
+        onEnter={() => undefined}
         onJoin={() => undefined}
         onNotify={() => undefined}
         world={makeCard({ personalStats: null })}
@@ -167,7 +178,7 @@ describe('WorldCard', () => {
   it('keeps the details action separate from the join CTA', () => {
     const onDetails = vi.fn();
     const onJoin = vi.fn();
-    render(<WorldCard onDetails={onDetails} onJoin={onJoin} onNotify={() => undefined} world={makeCard()} />);
+    render(<WorldCard onDetails={onDetails} onEnter={() => undefined} onJoin={onJoin} onNotify={() => undefined} world={makeCard()} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Détails' }));
 
@@ -186,6 +197,7 @@ describe('WorldsSelectionDesign', () => {
         labels={worldsSelectionLabels}
         noticeMessage="Inscription au monde impossible"
         onDetails={vi.fn()}
+        onEnter={vi.fn()}
         onJoin={vi.fn()}
         onNotify={vi.fn()}
         onTabChange={vi.fn()}
@@ -197,7 +209,7 @@ describe('WorldsSelectionDesign', () => {
 
     expect(screen.getByRole('alert')).toHaveTextContent('Inscription au monde impossible');
     expect(screen.getByText('Aubeforge')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Rejoindre le royaume' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: "S'inscrire" })).toBeInTheDocument();
   });
 
   it('renders the full-screen entry transition for a world', () => {

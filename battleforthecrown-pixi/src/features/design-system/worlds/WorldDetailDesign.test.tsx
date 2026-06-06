@@ -7,7 +7,7 @@ import { worldDetailLabels } from './worldDetailConfig';
 function makeWorld(overrides: Partial<WorldCardViewModel> = {}): WorldCardViewModel {
   return {
     ctaKind: 'join',
-    ctaLabel: 'Rejoindre le royaume',
+    ctaLabel: "S'inscrire",
     dayLabel: 'J. 5 / 60',
     displayName: 'Aubeforge',
     id: 'world-open',
@@ -23,7 +23,7 @@ function makeWorld(overrides: Partial<WorldCardViewModel> = {}): WorldCardViewMo
     personalStats: null,
     shieldLabel: '72 h',
     sigilGlyph: '♔',
-    statusLabel: 'INSCRIPTION LIBRE',
+    statusLabel: 'INSCRIPTIONS OUVERTES',
     tab: 'open',
     tagline: 'Où les vassaux bâtissent leur légende',
     tempoLabel: 'STANDARD',
@@ -40,6 +40,7 @@ describe('WorldDetailDesign', () => {
       <WorldDetailDesign
         labels={worldDetailLabels}
         onBack={() => undefined}
+        onEnter={() => undefined}
         onJoin={() => undefined}
         onNotify={() => undefined}
         world={makeWorld()}
@@ -64,6 +65,7 @@ describe('WorldDetailDesign', () => {
       <WorldDetailDesign
         labels={worldDetailLabels}
         onBack={() => undefined}
+        onEnter={() => undefined}
         onJoin={() => undefined}
         onNotify={() => undefined}
         world={makeWorld({
@@ -84,6 +86,7 @@ describe('WorldDetailDesign', () => {
       <WorldDetailDesign
         labels={worldDetailLabels}
         onBack={() => undefined}
+        onEnter={() => undefined}
         onJoin={() => undefined}
         onNotify={() => undefined}
         world={makeWorld({ isJoined: true, personalStats: null })}
@@ -100,14 +103,60 @@ describe('WorldDetailDesign', () => {
       <WorldDetailDesign
         labels={worldDetailLabels}
         onBack={() => undefined}
+        onEnter={() => undefined}
         onJoin={onJoin}
         onNotify={() => undefined}
         world={makeWorld()}
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Rejoindre le royaume' }));
+    fireEvent.click(screen.getByRole('button', { name: "S'inscrire" }));
 
     expect(onJoin).toHaveBeenCalledWith(expect.objectContaining({ id: 'world-open' }));
   });
+
+  it('routes already joined worlds through the enter CTA instead of join', () => {
+    const onEnter = vi.fn();
+    const onJoin = vi.fn();
+    render(
+      <WorldDetailDesign
+        labels={worldDetailLabels}
+        onBack={() => undefined}
+        onEnter={onEnter}
+        onJoin={onJoin}
+        onNotify={() => undefined}
+        world={makeWorld({
+          ctaKind: 'joined',
+          ctaLabel: 'Entrer dans le royaume',
+          isJoined: true,
+        })}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Entrer dans le royaume' }));
+
+    expect(onEnter).toHaveBeenCalledWith(expect.objectContaining({ id: 'world-open' }));
+    expect(onJoin).not.toHaveBeenCalled();
+  });
+
+  it('hides the CTA when inscriptions are closed and the player is not joined', () => {
+    render(
+      <WorldDetailDesign
+        labels={worldDetailLabels}
+        onBack={() => undefined}
+        onEnter={() => undefined}
+        onJoin={() => undefined}
+        onNotify={() => undefined}
+        world={makeWorld({
+          ctaKind: 'locked',
+          ctaLabel: 'Inscriptions closes',
+          statusLabel: 'INSCRIPTIONS CLOSES',
+          tab: 'locked',
+        })}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: /inscription/i })).not.toBeInTheDocument();
+  });
+
 });

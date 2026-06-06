@@ -5,6 +5,7 @@ import {
 } from '@/features/design-system/worlds/WorldsSelectionDesign';
 import { defaultSeasonVariants, worldsSelectionLabels } from '@/features/design-system/worlds/worldsSelectionConfig';
 import { ToastStack } from '@/features/layout/ToastStack';
+import { useGameStore } from '@/stores/game';
 import { useUiStore } from '@/stores/ui';
 import {
   buildWorldTabCounts,
@@ -19,6 +20,7 @@ export function WorldSelector() {
   const pushToast = useUiStore((state) => state.pushToast);
   const [activeTab, setActiveTab] = useState<WorldsTab>('open');
   const [error, setError] = useState<string | null>(null);
+  const setGameContext = useGameStore((state) => state.setContext);
   const { currentWorldId, defaultVillageName, join, memberships, worldModels, worlds } = useWorldCardModels();
   const counts = useMemo(() => buildWorldTabCounts(worldModels), [worldModels]);
   const filteredWorlds = useMemo(
@@ -26,7 +28,17 @@ export function WorldSelector() {
     [activeTab, worldModels],
   );
 
+  const onEnter = (world: WorldCardViewModel) => {
+    setError(null);
+    setGameContext({ worldId: world.id, villageId: null });
+    navigate('/game');
+  };
+
   const onJoin = (world: WorldCardViewModel) => {
+    if (world.isJoined) {
+      onEnter(world);
+      return;
+    }
     if (join.isPending) return;
     setError(null);
     join.mutate(
@@ -59,6 +71,7 @@ export function WorldSelector() {
         labels={worldsSelectionLabels}
         noticeMessage={error}
         onBack={() => navigate(currentWorldId ? '/game' : '/')}
+        onEnter={onEnter}
         onJoin={onJoin}
         onDetails={(world) => navigate(`/worlds/${world.id}`)}
         onNotify={onNotify}

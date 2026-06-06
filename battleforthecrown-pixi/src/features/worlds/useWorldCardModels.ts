@@ -74,6 +74,14 @@ export function useWorldCardModels() {
   };
 }
 
+const JOIN_ERROR_TRANSLATIONS: Array<[RegExp, string]> = [
+  [/not open for joining/i, "Les inscriptions de ce royaume sont closes."],
+  [/already joined/i, "Tu as déjà un village dans ce royaume : utilise « Entrer dans le royaume »."],
+];
+
 export function joinErrorMessage(err: unknown): string {
-  return err instanceof ApiError ? err.message : 'Inscription au monde impossible';
+  if (!(err instanceof ApiError)) return 'Inscription au royaume impossible.';
+
+  const translated = JOIN_ERROR_TRANSLATIONS.find(([pattern]) => pattern.test(err.message));
+  return (translated?.[1] ?? err.message) || 'Inscription au royaume impossible.';
 }
