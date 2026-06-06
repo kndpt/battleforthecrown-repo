@@ -204,7 +204,7 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
     Auth, crowns, resources, barbarian workers already imported from shared.
   verification: yarn static-check ✓ · world-lifecycle 13 tests ✓
 
-- status: proposed
+- status: fixed
   area: >
     battleforthecrown-backend/src/modules/combat/capture-duration.ts,
     battleforthecrown-backend/src/modules/combat/capture-duration.spec.ts,
@@ -216,7 +216,20 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
     MS_PER_HOUR being exported from @battleforthecrown/shared/time and already used
     in crowns, strategy, barbarian-runtime, and barbarian-seeding-catchup workers.
     Same pattern as the MS_PER_DAY fix merged in #47.
-  verification: yarn static-check ✓ · 252 backend tests ✓ · 314 pixi tests ✓
+  verification: yarn static-check ✓ · 252 backend tests ✓ · 314 pixi tests ✓ (merged PR #50)
+
+- status: proposed
+  area: >
+    battleforthecrown-backend/src/modules/combat/travel-time.spec.ts (new),
+    battleforthecrown-pixi/src/lib/combatHelpers.test.ts (new)
+  branch: maint/debt/travel-time-tests
+  title: "maint(debt): add missing tests for shared travel-time formulas and pixi combat helpers"
+  note: >
+    calculateDistance, calculateTravelTime, findSlowestUnitSpeed from shared/logic/travel-time.ts
+    are used in combat.service, combat.worker, and world-config.service (critical combat path) but
+    had zero test coverage. formatTravelTime and calculateExpeditionTravelTime in pixi combatHelpers.ts
+    also untested. New files: travel-time.spec.ts (20 backend tests) and combatHelpers.test.ts (15 pixi tests).
+  verification: yarn static-check ✓ · 272 backend tests ✓ · 337 pixi tests ✓
 
 - status: fixed
   area: >
@@ -273,3 +286,8 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
   barbarianConquest.ts on `maint/debt/ms-per-hour-constants` — imported MS_PER_HOUR from
   @battleforthecrown/shared/time (same pattern, MS_PER_HOUR already used in 4+ backend modules).
   PR #50. static-check ✓ · 252 backend tests ✓ · 314 pixi tests ✓.
+- 2026-06-06: missing tests for shared travel-time formulas on `maint/debt/travel-time-tests` —
+  calculateDistance + calculateTravelTime + findSlowestUnitSpeed from shared/logic had zero coverage
+  despite being on the critical combat path (combat.service, combat.worker, world-config.service).
+  Also added pixi tests for formatTravelTime + calculateExpeditionTravelTime (combatHelpers.ts).
+  2 new test files, 35 tests total. static-check ✓ · 272 backend tests ✓ · 337 pixi tests ✓.
