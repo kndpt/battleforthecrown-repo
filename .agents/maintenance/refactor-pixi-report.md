@@ -489,3 +489,85 @@ yarn test:pixi      → 60 test files, 322 tests passed (+8 kingdomActivitiesVie
 ```
 
 **Diff :** `kingdomActivitiesViewModel.ts` +1 LOC (`export`), `SelectedEntityPanel.tsx` −8 LOC (local computeProgress supprimé, import ajouté), `kingdomActivitiesViewModel.test.ts` +57 LOC (+8 tests). Net : −7 / +58 dans les fichiers modifiés.
+
+---
+
+## Run 2026-06-06 — commit 502f039
+
+**Scan date:** 2026-06-06  
+**Commit SHA:** 502f039eacfe8312f7da8139f339f980a4ca2009
+
+### Prior findings update
+
+- A1–A6 (ws-bindings query keys) : **RESOLVED**
+- B1, B2 : **RESOLVED**
+- N1, N2 : **RESOLVED**
+- S1, S2, S3 (session teardown) : **RESOLVED**
+- C1 (GameHeader god-component) : **RESOLVED**
+- D2 (headerHelpers tests) : **RESOLVED**
+- F1 (UUID toast) : **RESOLVED**
+- F4 (drawCaptureMarker all entities) : **RESOLVED**
+- G1 (computeProgress duplication) : **RESOLVED**
+- F3 / G2 (formatTime tests) : **RESOLVED**
+- H1 (armyTraining refetchInterval) : **SELECTED** (ce run)
+- H2 (BuildingDetailModal polling useEffect) : **SELECTED** (ce run)
+- C2 (SpecializedBuildingDetailModal 643 LOC) : STILL OPEN — bien organisé (sous-composants par type), faible risque
+- C3 (ArmyScreen garrison derivations) : STILL OPEN — 30 lignes plates, extraction = churn sans valeur
+- D3 (VillageView inline `<style>` block, lignes 477-549) : STILL OPEN — cosmétique
+- D4 (magic number 60_000 optimistic) : STILL OPEN — acceptable, serveur remplace en <1s
+- F2 (DailyRetentionWidget expiresInValue hardcoded) : STILL OPEN — cosmétique
+
+### Mental model
+
+Frontend propre et discipliné. Vérifié cette passe (commit 502f039 + 67bf004 noble/capture feature):
+- **Server-authoritative** : 0 violation. `travelMs`/`totalAttack`/`totalCarryCapacity` dans `AttackDetailModal` sont display-only (estimations avant soumission) — le serveur calcule les valeurs autoritatives à la création d'expédition.
+- **Type debt** : 0 `as any`, 0 `@ts-ignore`, 0 `@ts-expect-error`, 0 `fetch`/`axios` hors `src/api/`. `usePublicVillagePowerQuery` valide la réponse avec `PublicVillagePowerSchema` (Zod strict).
+- **Stores Zustand** : tous avec `clear()`, teardown centralisé dans `stores/session.ts` — confirmé.
+- **Pixi scenes** : `WorldMapScene.ts:729-745` ticker correct — `drawCaptureMarker` uniquement sur entités avec `captureWindow` actif (fix F4 confirmé).
+- **TanStack Query** : `openConquests` / `openExpeditions` / `activeExpeditions` / `retentionSummary` ont tous `refetchInterval` conditionnel. `armyTraining` était le seul manquant.
+
+### New findings
+
+| ID | Category | Location | Description | Severity | Effort | Status |
+|----|----------|----------|-------------|----------|--------|--------|
+| H1 | TanStack Query | `api/queries.ts:525-534` (`armyTrainingQueryOptions`) | Pas de `refetchInterval` — `ArmyScreen` ne se répare pas si le WS drop pendant un entraînement de Noble (10+ min). Toutes les queries longues comparables ont un `refetchInterval` conditionnel (`activeExpeditions`, `openConquests`, `openExpeditions`, `retentionSummary`). | **Medium** | S | **RESOLVED** (ce run) |
+| H2 | Component design | `features/village/BuildingDetailModal.tsx:138-149` | `useEffect` appelant `queryClient.invalidateQueries` toutes les secondes comme workaround local du H1 manquant — préoccupation de poll appartient à la couche query, pas au composant. Redondant une fois H1 corrigé. | Low | S | **RESOLVED** (ce run) |
+
+### "Looks bad but is actually fine" (this run)
+
+| Pattern | Verdict |
+|---------|---------|
+| `QueueBottomSheet.formatTime` (ligne 20) vs `VillageViewSectionHelpers.formatQueueTime` | ✅ Formats différents ("H h MM m" vs "H:MM") pour des contextes UI distincts — pas une duplication |
+| `BottomNavigationBar` styles inline au lieu de Tailwind | ✅ Animations spring et CSS custom properties (`--village-enter-x`) non exprimables en Tailwind standard |
+| `AttackDetailModal` calculs locaux `travelMs` / `totalAttack` / `totalCarryCapacity` | ✅ Estimations display-only avant soumission ; le serveur calcule les valeurs autoritatives |
+| `armyTraining` sans `refetchInterval` | ⚠️ **Était** le seul cas manquant — traité par H1 |
+| `BuildingDetailModal` `useEffect` polling noble training | ⚠️ Workaround composant du H1 manquant — traité par H2 |
+| Noble training sans optimistic UI | ✅ Opération longue/irréversible, `onSettled` invalide correctement |
+| `useOpenConquestsQuery` `refetchInterval: 10_000` (vs 5_000 pour expeditions) | ✅ Conquêtes moins fréquentes, 10s acceptable |
+| `WorldMapScene` exit — pas de `visuals.clear()` explicite | ✅ `SceneManager.destroy({ children: true })` couvre l'arbre Pixi entier |
+
+### Selected theme: **H1 + H2 — `refetchInterval` sur `armyTrainingQueryOptions` + suppression du workaround composant**
+
+**Rationale :**
+- H1 est un gap de correctness : l'entraînement noble dure 10+ min, un drop WS pendant cette fenêtre est probable. Toutes les queries avec des données actives longues ont `refetchInterval` — `armyTraining` était l'exception non justifiée.
+- H2 est la conséquence directe de H1 : le `useEffect` dans `BuildingDetailModal` compensait le manquant mais seulement quand cette modale spécifique était ouverte (pas `ArmyScreen`). Corriger H1 couvre les deux call sites proprement.
+- Le fix suit la convention établie et testée déjà utilisée pour `activeExpeditions`, `openConquests`, `retentionSummary`.
+- Scope S : +4 LOC dans `queries.ts`, −14 LOC dans `BuildingDetailModal.tsx` (imports + useEffect).
+
+**Implementation :**
+- `api/queries.ts:525-534` : ajout `refetchInterval: (query) => query.state.data && query.state.data.length > 0 ? 5_000 : false` à `armyTrainingQueryOptions`.
+- `features/village/BuildingDetailModal.tsx` : suppression `useEffect`, `queryClient`, imports `useQueryClient` / `queryKeys` / `computeUnitTrainingProgress` devenus inutiles.
+
+**Rejected :**
+- D3 (VillageView `<style>` block) : cosmétique, candidat `bftc-maint-debt`.
+- C2, C3 : churn sans bénéfice fonctionnel.
+- D4, F2 : cosmétiques.
+
+### Verification
+
+```text
+yarn static-check   → green (tsc backend + pixi, ESLint backend + pixi --quiet)
+yarn test:pixi      → 60 test files, 322 tests passed (aucun test cassé)
+```
+
+**Diff :** `queries.ts` +4 LOC (`refetchInterval`), `BuildingDetailModal.tsx` −14 LOC (useEffect + imports). Net : −10 LOC dans les fichiers modifiés.
