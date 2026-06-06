@@ -1517,6 +1517,7 @@ export function DesignSystemPreview() {
                 labels={worldsSelectionLabels}
                 onBack={() => undefined}
                 onDetails={() => undefined}
+                onEnter={() => undefined}
                 onJoin={() => undefined}
                 onNotify={() => undefined}
                 onTabChange={setWorldsPreviewTab}
@@ -1540,6 +1541,7 @@ export function DesignSystemPreview() {
               <WorldDetailDesign
                 labels={worldDetailLabels}
                 onBack={() => undefined}
+                onEnter={() => undefined}
                 onJoin={() => undefined}
                 onNotify={() => undefined}
                 world={{

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Bell, Castle, Check, ChevronLeft, Clock, Lock, Map, ScrollText, Shield, Users } from 'lucide-react';
+import { Bell, Castle, Check, ChevronLeft, Clock, Map, Shield, UserPlus, Users } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { publicAsset } from '@/lib/publicAsset';
 import type { WorldCardViewModel, WorldThemeTokens } from '@/features/worlds/worldsViewModel';
@@ -21,6 +21,7 @@ export interface WorldDetailDesignProps {
   labels: WorldDetailLabels;
   noticeMessage?: string | null;
   onBack: () => void;
+  onEnter: (world: WorldCardViewModel) => void;
   onJoin: (world: WorldCardViewModel) => void;
   onNotify: (world: WorldCardViewModel) => void;
   world: WorldCardViewModel;
@@ -156,36 +157,36 @@ function FactRow({
 }
 
 function DetailCta({
+  onEnter,
   onJoin,
   onNotify,
   world,
 }: {
+  onEnter: (world: WorldCardViewModel) => void;
   onJoin: (world: WorldCardViewModel) => void;
   onNotify: (world: WorldCardViewModel) => void;
   world: WorldCardViewModel;
 }) {
-  const disabled = world.ctaKind === 'locked';
+  if (world.ctaKind === 'locked') return null;
+
   const tone = world.ctaKind === 'notify'
     ? 'border-[#1f5288] bg-[linear-gradient(to_bottom,#5b9bd5,#2e75b6)]'
     : world.ctaKind === 'join'
       ? 'border-[#3a6c1f] bg-[linear-gradient(to_bottom,#6ebf49,#4a8c2a)]'
-      : world.ctaKind === 'joined'
-        ? 'border-[#9e7b0d] bg-[linear-gradient(to_bottom,#f6d57b,#c59e3f)] text-[#3a2a00] [text-shadow:0_1px_0_rgba(255,255,255,.35)]'
-        : 'border-[#5d6d6e] bg-[linear-gradient(to_bottom,#b0b8c0,#7c8088)]';
-  const Icon = world.ctaKind === 'notify' ? Bell : world.ctaKind === 'joined' ? Check : world.ctaKind === 'locked' ? Lock : ScrollText;
+      : 'border-[#9e7b0d] bg-[linear-gradient(to_bottom,#f6d57b,#c59e3f)] text-[#3a2a00] [text-shadow:0_1px_0_rgba(255,255,255,.35)]';
+  const Icon = world.ctaKind === 'notify' ? Bell : world.ctaKind === 'joined' ? Check : UserPlus;
 
   return (
     <button
       className={cn(
         'inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border-2 px-3 font-game text-[12px] font-extrabold uppercase tracking-[.08em] text-white shadow-[inset_0_1px_0_rgba(255,255,255,.28),0_3px_0_rgba(0,0,0,.22)] [text-shadow:1px_1px_1px_rgba(0,0,0,.45)]',
         tone,
-        disabled ? 'cursor-not-allowed opacity-[.72]' : 'cursor-pointer active:translate-y-px',
+        'cursor-pointer active:translate-y-px',
       )}
-      disabled={disabled}
       onClick={() => {
-        if (disabled) return;
         if (world.ctaKind === 'notify') onNotify(world);
-        if (world.ctaKind === 'join' || world.ctaKind === 'joined') onJoin(world);
+        if (world.ctaKind === 'join') onJoin(world);
+        if (world.ctaKind === 'joined') onEnter(world);
       }}
       type="button"
     >
@@ -201,6 +202,7 @@ export function WorldDetailDesign({
   labels,
   noticeMessage,
   onBack,
+  onEnter,
   onJoin,
   onNotify,
   world,
@@ -288,9 +290,11 @@ export function WorldDetailDesign({
           )}
         </div>
 
-        <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-[420px] bg-[linear-gradient(to_top,rgba(212,192,148,1)_60%,rgba(212,192,148,0))] px-3 pb-3 pt-7">
-          <DetailCta onJoin={onJoin} onNotify={onNotify} world={world} />
-        </div>
+        {world.ctaKind !== 'locked' ? (
+          <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-[420px] bg-[linear-gradient(to_top,rgba(212,192,148,1)_60%,rgba(212,192,148,0))] px-3 pb-3 pt-7">
+            <DetailCta onEnter={onEnter} onJoin={onJoin} onNotify={onNotify} world={world} />
+          </div>
+        ) : null}
       </div>
     </main>
   );

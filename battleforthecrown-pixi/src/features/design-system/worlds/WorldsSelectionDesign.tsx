@@ -1,4 +1,4 @@
-import { Bell, Check, ChevronLeft, Lock, ScrollText, Users } from 'lucide-react';
+import { Bell, Check, ChevronLeft, Lock, ScrollText, UserPlus, Users } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { publicAsset } from '@/lib/publicAsset';
 import type { WorldCardViewModel, WorldsTab, WorldThemeTokens } from '@/features/worlds/worldsViewModel';
@@ -30,6 +30,7 @@ export interface WorldsSelectionDesignProps {
   noticeMessage?: string | null;
   onBack?: () => void;
   onDetails: (world: WorldCardViewModel) => void;
+  onEnter: (world: WorldCardViewModel) => void;
   onJoin: (world: WorldCardViewModel) => void;
   onNotify: (world: WorldCardViewModel) => void;
   onTabChange: (tab: WorldsTab) => void;
@@ -155,34 +156,36 @@ function LifecycleBar({ world }: { world: WorldCardViewModel }) {
 }
 
 function CtaButton({
+  onEnter,
   onJoin,
   onNotify,
   world,
 }: {
+  onEnter: (world: WorldCardViewModel) => void;
   onJoin: (world: WorldCardViewModel) => void;
   onNotify: (world: WorldCardViewModel) => void;
   world: WorldCardViewModel;
 }) {
-  const disabled = world.ctaKind === 'locked';
+  if (world.ctaKind === 'locked') return null;
+
   const tone = world.ctaKind === 'notify'
     ? 'border-[#1f5288] bg-[linear-gradient(to_bottom,#5b9bd5,#2e75b6)]'
     : world.ctaKind === 'join'
       ? 'border-[#3a6c1f] bg-[linear-gradient(to_bottom,#6ebf49,#4a8c2a)]'
-      : 'border-[#5d6d6e] bg-[linear-gradient(to_bottom,#b0b8c0,#7c8088)]';
-  const Icon = world.ctaKind === 'notify' ? Bell : world.ctaKind === 'joined' ? Check : world.ctaKind === 'locked' ? Lock : ScrollText;
+      : 'border-[#9e7b0d] bg-[linear-gradient(to_bottom,#f6d57b,#c59e3f)] text-[#3a2a00] [text-shadow:0_1px_0_rgba(255,255,255,.35)]';
+  const Icon = world.ctaKind === 'notify' ? Bell : world.ctaKind === 'joined' ? Check : UserPlus;
 
   return (
     <button
       className={cn(
         'inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg border-2 px-3 font-game text-[11px] font-extrabold uppercase tracking-[.08em] text-white shadow-[inset_0_1px_0_rgba(255,255,255,.28),0_3px_0_rgba(0,0,0,.2)] [text-shadow:1px_1px_1px_rgba(0,0,0,.45)]',
         tone,
-        disabled ? 'cursor-not-allowed opacity-[.7]' : 'cursor-pointer active:translate-y-px',
+        'cursor-pointer active:translate-y-px',
       )}
-      disabled={disabled}
       onClick={() => {
-        if (disabled) return;
         if (world.ctaKind === 'notify') onNotify(world);
-        if (world.ctaKind === 'join' || world.ctaKind === 'joined') onJoin(world);
+        if (world.ctaKind === 'join') onJoin(world);
+        if (world.ctaKind === 'joined') onEnter(world);
       }}
       type="button"
     >
@@ -194,11 +197,13 @@ function CtaButton({
 
 export function WorldCard({
   onDetails,
+  onEnter,
   onJoin,
   onNotify,
   world,
 }: {
   onDetails: (world: WorldCardViewModel) => void;
+  onEnter: (world: WorldCardViewModel) => void;
   onJoin: (world: WorldCardViewModel) => void;
   onNotify: (world: WorldCardViewModel) => void;
   world: WorldCardViewModel;
@@ -261,7 +266,10 @@ export function WorldCard({
             </div>
           </div>
         ) : null}
-        <div className="grid grid-cols-[minmax(0,0.85fr)_minmax(0,1.35fr)] gap-1.5">
+        <div className={cn(
+          'grid gap-1.5',
+          world.ctaKind === 'locked' ? 'grid-cols-1' : 'grid-cols-[minmax(0,0.85fr)_minmax(0,1.35fr)]',
+        )}>
           <button
             className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border-2 border-[#5d4a32] bg-[linear-gradient(to_bottom,#fef9f0,#d8c298)] px-2 font-game text-[10.5px] font-extrabold uppercase tracking-[.08em] text-[#3d2f1f] shadow-[inset_0_1px_0_rgba(255,255,255,.45),0_3px_0_rgba(60,38,25,.18)] active:translate-y-px"
             onClick={() => onDetails(world)}
@@ -270,7 +278,7 @@ export function WorldCard({
             <ScrollText aria-hidden="true" className="size-3.5 stroke-[2.4]" />
             Détails
           </button>
-          <CtaButton onJoin={onJoin} onNotify={onNotify} world={world} />
+          <CtaButton onEnter={onEnter} onJoin={onJoin} onNotify={onNotify} world={world} />
         </div>
       </div>
     </article>
@@ -334,6 +342,7 @@ export function WorldsSelectionDesign({
   noticeMessage,
   onBack,
   onDetails,
+  onEnter,
   onJoin,
   onNotify,
   onTabChange,
@@ -466,7 +475,7 @@ export function WorldsSelectionDesign({
               ) : (
                 <div className="flex flex-col gap-2">
                   {worlds.map((world) => (
-                    <WorldCard key={world.id} onDetails={onDetails} onJoin={onJoin} onNotify={onNotify} world={world} />
+                    <WorldCard key={world.id} onDetails={onDetails} onEnter={onEnter} onJoin={onJoin} onNotify={onNotify} world={world} />
                   ))}
                   <div className="sticky -bottom-3 h-[30px] shrink-0 bg-[linear-gradient(to_bottom,transparent,#d4c094)]" />
                 </div>

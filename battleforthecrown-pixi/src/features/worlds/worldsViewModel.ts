@@ -76,8 +76,8 @@ const tabByStatus: Record<PublicWorld['status'], WorldsTab> = {
 };
 
 const statusLabels: Record<PublicWorld['status'], string> = {
-  LOCKED: 'INSCRIPTION CLOSE',
-  OPEN: 'INSCRIPTION LIBRE',
+  LOCKED: 'INSCRIPTIONS CLOSES',
+  OPEN: 'INSCRIPTIONS OUVERTES',
   PLANNED: 'PLANIFIÉ',
 };
 
@@ -103,8 +103,8 @@ function formatCountdown(plannedOpenAt: string | null, nowMs: number): string | 
 function ctaFor(world: PublicWorld, isJoined: boolean): Pick<WorldCardViewModel, 'ctaKind' | 'ctaLabel'> {
   if (isJoined) return { ctaKind: 'joined', ctaLabel: 'Entrer dans le royaume' };
   if (world.status === 'PLANNED') return { ctaKind: 'notify', ctaLabel: "Me prévenir à l'ouverture" };
-  if (world.status === 'LOCKED') return { ctaKind: 'locked', ctaLabel: 'Inscription close' };
-  return { ctaKind: 'join', ctaLabel: 'Rejoindre le royaume' };
+  if (world.status === 'LOCKED') return { ctaKind: 'locked', ctaLabel: 'Inscriptions closes' };
+  return { ctaKind: 'join', ctaLabel: "S'inscrire" };
 }
 
 function formatVillageCount(count: number): string {

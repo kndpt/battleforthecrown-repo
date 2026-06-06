@@ -42,9 +42,9 @@ describe('worldsViewModel', () => {
     const model = toWorldCardViewModel(makeWorld(), new Set<string>(), now);
 
     expect(model.tab).toBe('open');
-    expect(model.statusLabel).toBe('INSCRIPTION LIBRE');
+    expect(model.statusLabel).toBe('INSCRIPTIONS OUVERTES');
     expect(model.ctaKind).toBe('join');
-    expect(model.ctaLabel).toBe('Rejoindre le royaume');
+    expect(model.ctaLabel).toBe("S'inscrire");
     expect(model.dayLabel).toBe('J. 5 / 60');
     expect(model.joinedCountLabel).toBe('8 420');
     expect(model.lifecycleInscriptionMainDays).toBe(7);
@@ -105,9 +105,9 @@ describe('worldsViewModel', () => {
     );
 
     expect(model.tab).toBe('locked');
-    expect(model.statusLabel).toBe('INSCRIPTION CLOSE');
+    expect(model.statusLabel).toBe('INSCRIPTIONS CLOSES');
     expect(model.ctaKind).toBe('locked');
-    expect(model.ctaLabel).toBe('Inscription close');
+    expect(model.ctaLabel).toBe('Inscriptions closes');
   });
 
   it('marks already joined worlds without changing tab counts', () => {
