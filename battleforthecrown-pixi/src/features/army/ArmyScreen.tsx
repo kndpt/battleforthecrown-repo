@@ -323,17 +323,18 @@ export function ArmyScreen() {
   const worldConfig = useWorldConfigQuery(worldId);
   const onboardingSummary = useOnboardingSummaryQuery(worldId);
   const queryClient = useQueryClient();
-  const prevTrainingLengthRef = useRef<number | null>(null);
+  const prevTrainingRef = useRef<{ len: number; completedTotal: number } | null>(null);
 
-  // Mirror the WS unit.trained cascade when the poll detects a completed training (WS-drop fallback).
+  // Mirror the WS unit.trained cascade when the poll detects units added or a batch removed (WS-drop fallback).
   useEffect(() => {
     const len = training.data?.length ?? 0;
-    const prev = prevTrainingLengthRef.current;
-    if (prev !== null && len < prev) {
+    const completedTotal = training.data?.reduce((sum, t) => sum + t.completedQty, 0) ?? 0;
+    const prev = prevTrainingRef.current;
+    if (prev !== null && (len < prev.len || completedTotal > prev.completedTotal)) {
       queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
     }
-    prevTrainingLengthRef.current = len;
+    prevTrainingRef.current = { len, completedTotal };
   }, [training.data, queryClient, villageId]);
 
   const cancelTraining = useCancelTrainingMutation();
