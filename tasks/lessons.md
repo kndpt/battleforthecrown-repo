@@ -103,3 +103,4 @@
 - Dans un worktree BFTC fraîchement créé, lancer `yarn install` avant `shared build`, tests ou `prisma:generate` si `node_modules`/`zod`/`prisma` ne sont pas présents localement.
 - Avant de merger une PR après review, vérifier les threads non résolus et les reviews `CHANGES_REQUESTED`, pas seulement le dernier résumé CodeRabbit "No actionable comments".
 - Pour une capture PvP, ne jamais compenser un bâtiment `CASTLE` absent par un palier gameplay par défaut ; faire échouer explicitement le calcul pour révéler le trou de données.
+- Pour un rapport militaire visible, ne pas remonter de libellés techniques ou génériques : passer par les configs canoniques (`unitMetaFor`, assets `/assets/army/*`) et aligner la composition sur les rapports déjà validés.

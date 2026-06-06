@@ -1,5 +1,22 @@
 # Todo
 
+## 2026-06-06 — Rapport de renfort cohérent
+
+- [x] Relire les leçons projet et localiser le rendu des rapports de renfort.
+- [x] Définir un rendu aligné avec les rapports combat/scout.
+- [x] Brancher les libellés et assets d'unités canoniques.
+- [x] Lancer les vérifications ciblées Pixi.
+- [x] Documenter la review et la QA IG restante.
+
+### Review
+
+- Correction : le rapport de renfort utilise une modale dédiée alignée avec les autres rapports, avec hero militaire, trajet en deux colonnes égales et détachement avec assets d'unités canoniques.
+- Correction : les libellés visibles passent de termes techniques/génériques à `Soutien arrivé`, `Troupes rentrées`, `Départ`, `Garnison` et `Détachement`.
+- Correction : retrait du badge quantité sur l'asset hero, du titre `Trajet du renfort`, de la phrase en citation, du type/date en haut et du résumé `troupes en mouvement`.
+- Vérification : `rtk yarn static-check` — passé.
+- Vérification : `rtk yarn test` — passé : backend 24 suites / 252 tests, Pixi 60 fichiers / 317 tests, smokes 25 suites / 61 tests.
+- QA IG restante : ouvrir un rapport de renfort arrivé et un rapport de retour ; vérifier que les noms longs de villages sont ellipsés sans déséquilibrer les deux colonnes du trajet.
+
 ## 2026-06-04 — PR #46 commentaires review capture
 
 - [x] Relire les threads encore ouverts sur #46 et #49.
