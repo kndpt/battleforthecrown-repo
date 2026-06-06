@@ -33,6 +33,7 @@ Politique PR `$bftc-run` :
 
 ### Runs actifs
 
+- [047 — Rapports de capture](./runs/047-feature-capture-reports.md) — 📋 `PLANNED`. Spécifier puis livrer les rapports persistants liés aux attaques pendant capture PvP et à la capture finale.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés
