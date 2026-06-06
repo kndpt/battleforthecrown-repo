@@ -133,6 +133,7 @@ export class ConquestService {
         pendingConquestId: created.id,
         targetVillageId: params.targetVillageId,
         attackerVillageId: params.attackerVillageId,
+        attackerUserId: params.attackerUserId,
         captureUntil: params.captureUntil.toISOString(),
       },
     );
@@ -190,6 +191,7 @@ export class ConquestService {
       {
         pendingConquestId: pending.id,
         targetVillageId,
+        attackerUserId: pending.attackerUserId,
         reason,
       },
     );
@@ -268,6 +270,7 @@ export class ConquestService {
         {
           pendingConquestId: pending.id,
           targetVillageId,
+          attackerUserId: pending.attackerUserId,
           reason,
         },
       );

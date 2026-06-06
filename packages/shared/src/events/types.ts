@@ -116,6 +116,7 @@ export interface VillageCaptureWindowOpenedPayload {
   pendingConquestId: string;
   targetVillageId: string;
   attackerVillageId: string;
+  attackerUserId: string;
   captureUntil: string;
 }
 
@@ -128,6 +129,7 @@ export interface VillageCaptureWindowCompletedPayload {
 export interface VillageCaptureWindowInterruptedPayload {
   pendingConquestId: string;
   targetVillageId: string;
+  attackerUserId: string;
   reason: string;
 }
 

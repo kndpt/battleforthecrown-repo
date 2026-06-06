@@ -662,6 +662,7 @@ describe('conquest websocket bindings', () => {
         pendingConquestId: 'pc1',
         targetVillageId: 'barb-1',
         attackerVillageId: 'v-att',
+        attackerUserId: 'user-1',
         captureUntil: '2026-05-04T23:00:00.000Z',
       },
       { queryClient },
@@ -696,6 +697,7 @@ describe('conquest websocket bindings', () => {
         pendingConquestId: 'pc1',
         reason: 'NOBLE_KILLED',
         targetVillageId: 'barb-1',
+        attackerUserId: 'user-1',
       },
       { queryClient },
     );

@@ -149,7 +149,7 @@ export class EventOutboxService {
         this.notifyVillageConquered(payload as VillageConqueredPayload);
         break;
       case 'village.capture-window-opened':
-        await this.notifyVillageCaptureWindowOpened(
+        this.notifyVillageCaptureWindowOpened(
           payload as VillageCaptureWindowOpenedPayload,
         );
         break;
@@ -159,7 +159,7 @@ export class EventOutboxService {
         );
         break;
       case 'village.capture-window-interrupted':
-        await this.notifyVillageCaptureWindowInterrupted(
+        this.notifyVillageCaptureWindowInterrupted(
           payload as VillageCaptureWindowInterruptedPayload,
         );
         break;
@@ -387,7 +387,7 @@ export class EventOutboxService {
   }
 
   private notifyVillageConquered(payload: VillageConqueredPayload) {
-    this.logger.log(`🏰 [Outbox] Envoi WebSocket village.conquered:`, {
+    this.logger.debug(`🏰 [Outbox] Envoi WebSocket village.conquered:`, {
       newOwnerId: payload.newOwnerId,
       previousOwnerId: payload.previousOwnerId,
       villageId: payload.villageId,
@@ -423,17 +423,11 @@ export class EventOutboxService {
     }
   }
 
-  private async notifyVillageCaptureWindowOpened(
+  private notifyVillageCaptureWindowOpened(
     payload: VillageCaptureWindowOpenedPayload,
   ) {
-    const pendingConquest = await this.prisma.pendingConquest.findUnique({
-      where: { id: payload.pendingConquestId },
-      select: { attackerUserId: true },
-    });
-    if (!pendingConquest) return;
-
     this.gateway.notifyUser(
-      pendingConquest.attackerUserId,
+      payload.attackerUserId,
       'village.capture-window-opened',
       payload,
     );
@@ -449,17 +443,11 @@ export class EventOutboxService {
     );
   }
 
-  private async notifyVillageCaptureWindowInterrupted(
+  private notifyVillageCaptureWindowInterrupted(
     payload: VillageCaptureWindowInterruptedPayload,
   ) {
-    const pendingConquest = await this.prisma.pendingConquest.findUnique({
-      where: { id: payload.pendingConquestId },
-      select: { attackerUserId: true },
-    });
-    if (!pendingConquest) return;
-
     this.gateway.notifyUser(
-      pendingConquest.attackerUserId,
+      payload.attackerUserId,
       'village.capture-window-interrupted',
       payload,
     );
