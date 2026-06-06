@@ -149,7 +149,7 @@ export class EventOutboxService {
         this.notifyVillageConquered(payload as VillageConqueredPayload);
         break;
       case 'village.capture-window-opened':
-        this.notifyVillageCaptureWindowOpened(
+        await this.notifyVillageCaptureWindowOpened(
           payload as VillageCaptureWindowOpenedPayload,
         );
         break;
@@ -159,7 +159,7 @@ export class EventOutboxService {
         );
         break;
       case 'village.capture-window-interrupted':
-        this.notifyVillageCaptureWindowInterrupted(
+        await this.notifyVillageCaptureWindowInterrupted(
           payload as VillageCaptureWindowInterruptedPayload,
         );
         break;
@@ -423,11 +423,15 @@ export class EventOutboxService {
     }
   }
 
-  private notifyVillageCaptureWindowOpened(
+  private async notifyVillageCaptureWindowOpened(
     payload: VillageCaptureWindowOpenedPayload,
   ) {
+    const attackerUserId =
+      payload.attackerUserId ??
+      (await this.getAttackerUserIdByConquest(payload.pendingConquestId));
+    if (!attackerUserId) return;
     this.gateway.notifyUser(
-      payload.attackerUserId,
+      attackerUserId,
       'village.capture-window-opened',
       payload,
     );
@@ -443,11 +447,15 @@ export class EventOutboxService {
     );
   }
 
-  private notifyVillageCaptureWindowInterrupted(
+  private async notifyVillageCaptureWindowInterrupted(
     payload: VillageCaptureWindowInterruptedPayload,
   ) {
+    const attackerUserId =
+      payload.attackerUserId ??
+      (await this.getAttackerUserIdByConquest(payload.pendingConquestId));
+    if (!attackerUserId) return;
     this.gateway.notifyUser(
-      payload.attackerUserId,
+      attackerUserId,
       'village.capture-window-interrupted',
       payload,
     );
@@ -530,6 +538,16 @@ export class EventOutboxService {
       select: { userId: true },
     });
     return village?.userId || null;
+  }
+
+  private async getAttackerUserIdByConquest(
+    pendingConquestId: string,
+  ): Promise<string | null> {
+    const conquest = await this.prisma.pendingConquest.findUnique({
+      where: { id: pendingConquestId },
+      select: { attackerUserId: true },
+    });
+    return conquest?.attackerUserId ?? null;
   }
 
   private async getUniqueUserIdsByVillages(
