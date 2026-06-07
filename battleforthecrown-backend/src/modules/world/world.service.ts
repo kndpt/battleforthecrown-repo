@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WorldConfigService } from './world-config.service';
 import {
@@ -186,6 +190,9 @@ export class WorldService {
 
     if (!membership) {
       throw new NotFoundException(`World ${worldId} membership not found`);
+    }
+    if (membership.world.status === 'ENDED') {
+      throw new BadRequestException(`World ${worldId} is not open for entry`);
     }
 
     const lastLoginAt = new Date();
