@@ -66,6 +66,7 @@ export function WorldMapScreen() {
   const [isKingdomActivitiesOpen, setIsKingdomActivitiesOpen] = useState(false);
   const [kingdomActivityTab, setKingdomActivityTab] = useState<KingdomActivityTab>('expeditions');
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
+  const [canvasReady, setCanvasReady] = useState(false);
   const [camera, setCamera] = useState<WorldMapCameraSnapshot>({
     center: { x: FALLBACK_GRID.gridWidth / 2, y: FALLBACK_GRID.gridHeight / 2 },
     viewportTiles: FALLBACK_VIEWPORT_TILES,
@@ -151,6 +152,7 @@ export function WorldMapScreen() {
 
   useEffect(() => {
     if (!activeFocus) return;
+    if (!canvasReady) return;
     if (!canvasRef.current) return;
 
     canvasRef.current.centerOn(activeFocus.x, activeFocus.y);
@@ -162,7 +164,7 @@ export function WorldMapScreen() {
     if (urlFocus) {
       setSearchParams(clearWorldMapFocusSearch(searchParams), { replace: true });
     }
-  }, [activeFocus, pendingFocus, searchParams, setPendingFocus, setSearchParams, setSelectedEntity, urlFocus]);
+  }, [activeFocus, canvasReady, pendingFocus, searchParams, setPendingFocus, setSearchParams, setSelectedEntity, urlFocus]);
 
   useEffect(() => {
     if (isMiniMapVisible) {
@@ -219,6 +221,7 @@ export function WorldMapScreen() {
                     setCamera(nextCamera);
                   }
                 }}
+                onControllerReady={setCanvasReady}
                 controllerRef={canvasRef}
               />
             )}
