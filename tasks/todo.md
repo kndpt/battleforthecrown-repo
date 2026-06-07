@@ -1,5 +1,39 @@
 # Todo
 
+## 2026-06-07 — QA locale maximale run 048 navigation carte
+
+- [x] Tracer le diff exact et choisir le périmètre de tests.
+- [x] Lancer les tests ciblés Pixi liés à la navigation carte et aux rapports de combat.
+- [x] Lancer `static-check`, build et suite de tests pertinente.
+- [x] Exécuter le preflight smoke backend et justifier les smokes runtime.
+- [x] Démarrer une stack locale isolée backend/frontend et vérifier health, pages HTTP et logs.
+- [x] Documenter les résultats, limites restantes et checklist IG minimale.
+
+### Review en cours
+
+- Demande : Kelvin ne peut pas tester IG, donc l'agent doit pousser la QA locale au maximum autorisé hors QA in-game navigateur.
+- Boundary repo : pas de QA in-game automatisée ; seuls tests, smokes, curls, logs, DB reads, healthchecks et boot checks côté agent.
+- Périmètre diff : frontend Pixi + docs uniquement (`WorldMapScreen`, `worldMapNavigation`, `ReportDetailModal`, `VictoryModalHost`, docs architecture, archive run 048).
+- Couverture ajoutée : `ReportDetailModal.test.tsx` vérifie que le bouton `Carte` ferme le modal et navigue vers `{ x: targetX, y: targetY }`.
+- Couverture ajoutée : `VictoryModalHost.test.tsx` vérifie que `Voir le village` vide la modale, alimente `pendingFocus` et navigue vers `/game/world?focusX=45&focusY=67`.
+- `rtk yarn workspace battleforthecrown-pixi test src/features/world/worldMapNavigation.test.ts src/features/combat/combatReportView.test.ts src/features/combat/ReportDetailModal.test.tsx src/ui/modals/VictoryModalHost.test.tsx` passé : 4 fichiers / 11 tests.
+- `rtk yarn static-check` passé.
+- `rtk git diff --check` a d'abord détecté des marqueurs de conflit dans `tasks/README.md`; résolution appliquée en conservant `047`, `048`, `049` archivés et `050`, `029` actifs.
+- `rtk git diff --check` repassé après correction.
+- `rtk yarn test` passé : backend unit 27 suites / 289 tests, Pixi 66 fichiers / 360 tests, smokes backend 25 suites / 63 tests. Note : Vitest affiche le warning jsdom connu `HTMLCanvasElement.getContext` non implémenté ; les tests passent. Les smokes realtime ont aussi émis deux logs Prisma de teardown pendant la sortie Jest, sans échec de suite.
+- `rtk yarn build` passé : backend Nest, Pixi Vite et shared.
+- Scan statique passé : les anciens `navigate('/game/world')` restants sont la navigation normale menu/shell, pas le pattern focus coordonnées ; les callsites focus passent par `useWorldMapNavigation`.
+- QA runtime isolée passée sur DB temporaire clonée `battleforthecrown_048qa` : migrations OK, backend `http://localhost:15002/health` OK avec DB up.
+- Frontend isolé `http://localhost:5174/` OK HTTP 200, `/design-system` OK HTTP 200, `/game/world?focusX=12&focusY=34` OK HTTP 200.
+- Logs backend après healthcheck : `GET 200 - "/health"` et aucun crash runtime observé ; logs Vite sans erreur après les requêtes HTTP.
+- DB temporaire `battleforthecrown_048qa` supprimée, serveurs QA arrêtés, ports `15002` et `5174` libres.
+
+## QA IG restante
+
+- [ ] Ouvrir un rapport de combat et cliquer sur `Carte`, vérifier que la carte monde s'ouvre centrée sur la cible.
+- [ ] Répéter depuis une cible hors vision si un scénario dev existe, vérifier qu'aucune sélection fantôme ne reste affichée.
+- [ ] Depuis un modal de victoire conquête, cliquer sur `Voir le village` et vérifier que la carte centre le village conquis.
+
 ## 2026-06-07 — QA locale maximale run 049 rétention
 
 - [x] Tracer le diff exact et choisir le périmètre de tests.
