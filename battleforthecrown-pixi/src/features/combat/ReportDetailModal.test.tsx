@@ -15,8 +15,14 @@ const combatReport: CombatReportDto = {
   id: 'abcdef123456',
   worldId: 'world-1',
   attackerVillageId: 'v-attacker',
+  attackerVillageName: 'Aubefer',
+  attackerX: 10,
+  attackerY: 20,
   attackerUserId: 'u-attacker',
   defenderVillageId: 'v-defender',
+  defenderVillageName: 'Hauterive',
+  defenderX: 12,
+  defenderY: 34,
   defenderUserId: 'u-defender',
   targetKind: 'PLAYER_VILLAGE',
   targetX: 12,
@@ -67,7 +73,7 @@ describe('ReportDetailModal', () => {
     expect(screen.queryByRole('button', { name: 'Carte' })).not.toBeInTheDocument();
 
     fireEvent.click(await screen.findByRole('button', {
-      name: 'Voir Village joueur en 12|34',
+      name: 'Voir Hauterive en 12|34',
     }));
 
     expect(onClose).toHaveBeenCalledTimes(1);

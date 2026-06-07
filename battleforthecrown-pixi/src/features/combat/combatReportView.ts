@@ -50,16 +50,16 @@ function targetLabel(report: CombatReportDto): string {
 
 function participant({
   coord,
-  isPlayer,
+  name,
   place,
 }: {
   coord: string;
-  isPlayer: boolean;
+  name: string;
   place: string;
 }): CombatReportParticipant {
   return {
     coord,
-    name: isPlayer ? 'Vous' : place,
+    name,
     place,
   };
 }
@@ -143,7 +143,10 @@ export function combatReportTypeLabel(report: CombatReportDto): {
   if (report.isAttacker) {
     return {
       icon: '⚔️',
-      label: report.targetKind === 'BARBARIAN_VILLAGE' ? 'Pillage barbare' : 'Attaque',
+      label:
+        report.targetKind === 'BARBARIAN_VILLAGE'
+          ? 'Pillage barbare'
+          : 'Attaque',
       roleLabel: 'Attaquant',
     };
   }
@@ -151,7 +154,9 @@ export function combatReportTypeLabel(report: CombatReportDto): {
   return { icon: '🛡️', label: 'Défense', roleLabel: 'Défenseur' };
 }
 
-function buildLootHighlight(report: CombatReportDto): CombatReportHighlight | undefined {
+function buildLootHighlight(
+  report: CombatReportDto,
+): CombatReportHighlight | undefined {
   const resources = report.loot?.resources ?? {};
   const remaining = report.loot?.remainingResources ?? {};
   const chips = (['wood', 'stone', 'iron'] as const)
@@ -183,16 +188,37 @@ export function buildCombatReportModalProps(
 ): CombatReportModalProps {
   const { isVictory, outcome } = combatReportOutcome(report);
   const target = targetLabel(report);
-  const targetCoord = formatCoord(report.targetX, report.targetY);
+  const attackerCoord = formatCoord(
+    report.attackerX ?? undefined,
+    report.attackerY ?? undefined,
+  );
+  const defenderCoord = formatCoord(
+    report.defenderX ?? report.targetX,
+    report.defenderY ?? report.targetY,
+  );
+  const isSelfAttacker =
+    report.recipientRole != null
+      ? report.recipientRole === 'attacker'
+      : report.isAttacker;
+  const isSelfDefender =
+    report.recipientRole != null
+      ? report.recipientRole === 'defender'
+      : !report.isAttacker;
+  const attackerVillageName =
+    report.attackerVillageName ??
+    (isSelfAttacker ? 'Votre village' : 'Village attaquant');
+  const defenderVillageName =
+    report.defenderVillageName ??
+    (isSelfDefender ? 'Votre village' : target);
   const attacker = participant({
-    coord: report.isAttacker ? '—' : '—',
-    isPlayer: report.isAttacker,
-    place: report.isAttacker ? 'Votre village' : 'Village attaquant',
+    coord: attackerCoord,
+    name: isSelfAttacker ? 'Vous' : attackerVillageName,
+    place: isSelfAttacker ? attackerVillageName : 'Village attaquant',
   });
   const defender = participant({
-    coord: targetCoord,
-    isPlayer: !report.isAttacker,
-    place: target,
+    coord: defenderCoord,
+    name: isSelfDefender ? 'Vous' : defenderVillageName,
+    place: isSelfDefender ? defenderVillageName : target,
   });
   const unitTypes = allUnitTypes(report);
   const reportType = combatReportTypeLabel(report);
@@ -200,11 +226,19 @@ export function buildCombatReportModalProps(
   return {
     actions,
     attacker,
-    attackerUnits: buildUnits(unitTypes, report.totalUnitsAttacker, report.lossesAttacker),
+    attackerUnits: buildUnits(
+      unitTypes,
+      report.totalUnitsAttacker,
+      report.lossesAttacker,
+    ),
     battleId: shortReportId(report.id),
     banner: isVictory ? 'VICTOIRE' : 'DÉFAITE',
     defender,
-    defenderUnits: buildUnits(unitTypes, report.totalUnitsDefender, report.lossesDefender),
+    defenderUnits: buildUnits(
+      unitTypes,
+      report.totalUnitsDefender,
+      report.lossesDefender,
+    ),
     highlight: buildLootHighlight(report),
     isPlayerAttacker: report.isAttacker,
     labels: combatReportLabels,

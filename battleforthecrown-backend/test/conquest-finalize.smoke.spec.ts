@@ -210,6 +210,12 @@ describe('conquest finalize smoke', () => {
       },
     });
     expect(finalReport.defenderUserId).toBeNull();
+    expect(finalReport.attackerVillageName).toBe(join.village.name);
+    expect(finalReport.attackerX).toBe(join.village.x);
+    expect(finalReport.attackerY).toBe(join.village.y);
+    expect(finalReport.defenderVillageName).toBe(target.name);
+    expect(finalReport.defenderX).toBe(target.x);
+    expect(finalReport.defenderY).toBe(target.y);
     expect(finalReport.targetX).toBe(target.x);
     expect(finalReport.targetY).toBe(target.y);
 

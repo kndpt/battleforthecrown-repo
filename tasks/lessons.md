@@ -1,6 +1,7 @@
 # Lessons
 
 - Relire les leçons projet en début de session ; si le fichier n'existe pas, le créer avant de continuer.
+- Quand le user demande d'annuler "ce que tu viens de faire" après un pivot vers `origin/main`, ne pas rollback tout le travail précédent : identifier précisément le dernier geste à annuler, vérifier `origin/main`, puis reprendre le patch utile sur cette base.
 - Après une migration design de vue complète, vérifier immédiatement TypeScript/lint/build et chaque interaction conservée (modales, sheets, navigation), pas seulement le rendu statique.
 - Dans le hero Village, ne pas réduire l'asset via `max-h-full` sans dimensionner d'abord sa piste verticale ; si l'image paraît trop grande, agrandir la zone puis réduire légèrement l'asset.
 - Dans un hero mobile, les noms dynamiques longs doivent être bornés à une ligne (`truncate`/ellipsis ou animation explicitement demandée) avant d'ajuster les tailles autour.

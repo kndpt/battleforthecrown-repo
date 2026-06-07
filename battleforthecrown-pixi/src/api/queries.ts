@@ -743,8 +743,14 @@ export interface CombatReportDto {
   id: string;
   worldId: string;
   attackerVillageId: string;
+  attackerVillageName?: string | null;
+  attackerX?: number | null;
+  attackerY?: number | null;
   attackerUserId: string;
   defenderVillageId?: string | null;
+  defenderVillageName?: string | null;
+  defenderX?: number | null;
+  defenderY?: number | null;
   defenderUserId?: string | null;
   observerUserId?: string | null;
   targetKind: string;
