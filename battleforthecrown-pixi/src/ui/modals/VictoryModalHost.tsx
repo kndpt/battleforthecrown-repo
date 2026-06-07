@@ -1,13 +1,11 @@
-import { useNavigate } from 'react-router';
 import { useUiStore } from '@/stores/ui';
-import { useWorldMapStore } from '@/stores/worldMap';
+import { useWorldMapNavigation } from '@/features/world/worldMapNavigation';
 import { VictoryModal } from './VictoryModal';
 
 export const VictoryModalHost = () => {
-  const navigate = useNavigate();
   const current = useUiStore((state) => state.victoryModals[0] ?? null);
   const dismissVictoryModal = useUiStore((state) => state.dismissVictoryModal);
-  const setPendingFocus = useWorldMapStore((state) => state.setPendingFocus);
+  const { navigateToWorldMapFocus } = useWorldMapNavigation();
 
   if (!current) return null;
 
@@ -16,9 +14,8 @@ export const VictoryModalHost = () => {
   };
 
   const handleViewVillage = () => {
-    setPendingFocus({ x: current.x, y: current.y });
     dismissVictoryModal(current.id);
-    navigate('/game/world');
+    navigateToWorldMapFocus({ x: current.x, y: current.y });
   };
 
   return (

@@ -1,5 +1,77 @@
 # Todo
 
+## 2026-06-07 — Traitement commentaires PR 61
+
+- [x] Lister tous les threads/commentaires non résolus de la PR #61.
+- [x] Classer chaque commentaire en actionnable ou non pertinent.
+- [x] Corriger les retours pertinents au bon endroit.
+- [x] Résoudre les threads GitHub traités ou non pertinents.
+- [x] Vérifier, commit, push et confirmer que la PR est entièrement traitée.
+
+### Review en cours
+
+- Demande : traiter tous les commentaires de la PR #61 ; appliquer les corrections pertinentes et résoudre les commentaires non pertinents.
+- Threads non résolus trouvés : 2, tous les deux sur `WorldMapScreen` et le même problème réel de focus perdu si demandé avant que le contrôleur Pixi soit prêt.
+- Décision : commentaire pertinent ; correction appliquée via signal explicite `onControllerReady` dans `WorldMapCanvas` et état `canvasReady` dans `WorldMapScreen`.
+- Effet attendu : l'effet de focus ne nettoie/applique plus tant que le contrôleur n'est pas prêt, puis se relance dès que `canvasReady` passe à `true`.
+- Vérifications : `rtk yarn workspace battleforthecrown-pixi test src/features/world/worldMapNavigation.test.ts src/features/combat/ReportDetailModal.test.tsx src/ui/modals/VictoryModalHost.test.tsx` passé ; `rtk yarn static-check` passé ; `rtk git diff --check` passé.
+- Threads GitHub résolus : `PRRT_kwDOSYETNs6HrnOV` et `PRRT_kwDOSYETNs6HrnRD`.
+- Contrôle final threads : 2 threads review au total, 0 non résolu.
+
+## 2026-06-07 — Correction UX PR 61 action carte rapport
+
+- [x] Retirer l'action carte du footer du rapport de combat.
+- [x] Recomposer le bloc attaquant/défenseur pour afficher la position carte avec asset.
+- [x] Garder le clic carte branché sur la même primitive `useWorldMapNavigation`.
+- [x] Adapter les tests ciblés et relancer les vérifications frontend.
+- [x] Commit/push la correction sur la PR 61.
+
+### Review en cours
+
+- Feedback Kelvin : le bouton `Carte` en bas du modal est trop décorrélé du village cible ; l'utilisateur ne sait pas sur quel village il sera téléporté.
+- Direction retenue : intégrer l'action carte directement dans le bloc d'informations du village cible avec coordonnées visibles et asset `position.png`, puis garder le footer pour les actions globales.
+- Correction appliquée : `CombatReportModal` accepte maintenant `targetAction` et rend le CTA cible dans le panneau du village cible, avec asset `position.png` et coordonnées visibles.
+- `ReportDetailModal` ne met plus `Carte` dans les actions footer ; le footer revient à `Supprimer` / `Fermer`.
+- Test ciblé mis à jour : le bouton porte l'aria-label `Voir Village joueur en 12|34` et déclenche toujours `navigateToWorldMapFocus({ x: 12, y: 34 })`.
+- Correction feedback : retrait du mot `Carte` dans le CTA cible ; l'action affiche uniquement `position.png` + coordonnées, avec aria-label `Voir Village joueur en 12|34`.
+- `rtk yarn workspace battleforthecrown-pixi test src/features/combat/ReportDetailModal.test.tsx src/features/world/worldMapNavigation.test.ts` passé : 2 fichiers / 5 tests.
+- `rtk yarn static-check` passé.
+- QA runtime IG restante : vérifier visuellement que le CTA carte est bien dans le bloc du village cible et que le footer ne contient plus d'action `Carte`.
+
+## 2026-06-07 — QA locale maximale run 048 navigation carte
+
+- [x] Tracer le diff exact et choisir le périmètre de tests.
+- [x] Lancer les tests ciblés Pixi liés à la navigation carte et aux rapports de combat.
+- [x] Lancer `static-check`, build et suite de tests pertinente.
+- [x] Exécuter le preflight smoke backend et justifier les smokes runtime.
+- [x] Démarrer une stack locale isolée backend/frontend et vérifier health, pages HTTP et logs.
+- [x] Documenter les résultats, limites restantes et checklist IG minimale.
+
+### Review en cours
+
+- Demande : Kelvin ne peut pas tester IG, donc l'agent doit pousser la QA locale au maximum autorisé hors QA in-game navigateur.
+- Boundary repo : pas de QA in-game automatisée ; seuls tests, smokes, curls, logs, DB reads, healthchecks et boot checks côté agent.
+- Périmètre diff : frontend Pixi + docs uniquement (`WorldMapScreen`, `worldMapNavigation`, `ReportDetailModal`, `VictoryModalHost`, docs architecture, archive run 048).
+- Couverture ajoutée : `ReportDetailModal.test.tsx` vérifie que le bouton `Carte` ferme le modal et navigue vers `{ x: targetX, y: targetY }`.
+- Couverture ajoutée : `VictoryModalHost.test.tsx` vérifie que `Voir le village` vide la modale, alimente `pendingFocus` et navigue vers `/game/world?focusX=45&focusY=67`.
+- `rtk yarn workspace battleforthecrown-pixi test src/features/world/worldMapNavigation.test.ts src/features/combat/combatReportView.test.ts src/features/combat/ReportDetailModal.test.tsx src/ui/modals/VictoryModalHost.test.tsx` passé : 4 fichiers / 11 tests.
+- `rtk yarn static-check` passé.
+- `rtk git diff --check` a d'abord détecté des marqueurs de conflit dans `tasks/README.md`; résolution appliquée en conservant `047`, `048`, `049` archivés et `050`, `029` actifs.
+- `rtk git diff --check` repassé après correction.
+- `rtk yarn test` passé : backend unit 27 suites / 289 tests, Pixi 66 fichiers / 360 tests, smokes backend 25 suites / 63 tests. Note : Vitest affiche le warning jsdom connu `HTMLCanvasElement.getContext` non implémenté ; les tests passent. Les smokes realtime ont aussi émis deux logs Prisma de teardown pendant la sortie Jest, sans échec de suite.
+- `rtk yarn build` passé : backend Nest, Pixi Vite et shared.
+- Scan statique passé : les anciens `navigate('/game/world')` restants sont la navigation normale menu/shell, pas le pattern focus coordonnées ; les callsites focus passent par `useWorldMapNavigation`.
+- QA runtime isolée passée sur DB temporaire clonée `battleforthecrown_048qa` : migrations OK, backend `http://localhost:15002/health` OK avec DB up.
+- Frontend isolé `http://localhost:5174/` OK HTTP 200, `/design-system` OK HTTP 200, `/game/world?focusX=12&focusY=34` OK HTTP 200.
+- Logs backend après healthcheck : `GET 200 - "/health"` et aucun crash runtime observé ; logs Vite sans erreur après les requêtes HTTP.
+- DB temporaire `battleforthecrown_048qa` supprimée, serveurs QA arrêtés, ports `15002` et `5174` libres.
+
+## QA IG restante
+
+- [ ] Ouvrir un rapport de combat et cliquer sur `Carte`, vérifier que la carte monde s'ouvre centrée sur la cible.
+- [ ] Répéter depuis une cible hors vision si un scénario dev existe, vérifier qu'aucune sélection fantôme ne reste affichée.
+- [ ] Depuis un modal de victoire conquête, cliquer sur `Voir le village` et vérifier que la carte centre le village conquis.
+
 ## 2026-06-07 — QA locale maximale run 049 rétention
 
 - [x] Tracer le diff exact et choisir le périmètre de tests.

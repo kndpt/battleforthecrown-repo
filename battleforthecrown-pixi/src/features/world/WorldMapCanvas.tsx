@@ -28,6 +28,7 @@ interface WorldMapCanvasProps {
   visionDisks?: readonly VisionDisk[];
   fogOfWarEnabled?: boolean;
   onCameraChange?: (camera: WorldMapCameraSnapshot) => void;
+  onControllerReady?: (ready: boolean) => void;
   controllerRef?: MutableRefObject<WorldMapCanvasController | null>;
 }
 
@@ -38,6 +39,7 @@ export function WorldMapCanvas({
   visionDisks = EMPTY_VISION_DISKS,
   fogOfWarEnabled = true,
   onCameraChange,
+  onControllerReady,
   controllerRef,
 }: WorldMapCanvasProps) {
   const setSelectedEntity = useWorldMapStore((state) => state.setSelectedEntity);
@@ -75,6 +77,7 @@ export function WorldMapCanvas({
           worldToScreen: handle.worldToScreen,
         };
       }
+      onControllerReady?.(true);
 
       manager.register('world-map', () => handle.scene);
       manager.switchTo('world-map');
@@ -107,6 +110,7 @@ export function WorldMapCanvas({
         unsubExpeditions();
         unsubCamera();
         if (controllerRef) controllerRef.current = null;
+        onControllerReady?.(false);
         handleRef.current = null;
         manager.destroy();
       };
@@ -116,6 +120,7 @@ export function WorldMapCanvas({
       gridHeight,
       fogOfWarEnabled,
       setSelectedEntity,
+      onControllerReady,
       controllerRef,
     ],
   );

@@ -20,6 +20,7 @@ import { ScoutReportCard } from '@/features/design-system/components/ScoutReport
 import { buildCombatReportModalProps } from './combatReportView';
 import { buildScoutReportCardProps } from './scoutReportView';
 import { buildReinforcementReportModalProps } from './reinforcementReportView';
+import { useWorldMapNavigation } from '@/features/world/worldMapNavigation';
 
 interface ReportDetailModalProps {
   reportId: string;
@@ -259,6 +260,7 @@ function CombatReportDetail({
   const report = useCombatReportQuery(reportId);
   const { mutate: markRead } = useMarkReportReadMutation();
   const { mutateAsync: deleteReport } = useDeleteReportMutation();
+  const { navigateToWorldMapFocus } = useWorldMapNavigation();
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
@@ -282,6 +284,11 @@ function CombatReportDetail({
   const handleAction = async (action: { id: string }) => {
     if (action.id === 'delete') {
       await handleDelete();
+      return;
+    }
+    if (action.id === 'view-map' && data) {
+      onClose();
+      navigateToWorldMapFocus({ x: data.targetX, y: data.targetY });
       return;
     }
     if (action.id === 'close') {
@@ -336,6 +343,7 @@ function CombatReportDetail({
               ],
               handleAction,
             )}
+            targetAction={{ id: 'view-map', label: 'Position', tone: 'success' }}
           />
         )}
       </div>

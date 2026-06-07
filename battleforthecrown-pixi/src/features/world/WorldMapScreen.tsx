@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { Compass, Map as MapIcon, X } from 'lucide-react';
 import { BottomSheet, IconButton, Spinner, Tooltip } from '@/ui';
 import { WorldMapCanvas, type WorldMapCanvasController } from './WorldMapCanvas';
@@ -7,6 +7,7 @@ import { SelectedEntityPanel } from './SelectedEntityPanel';
 import { WorldLockedScreen } from './WorldLockedScreen';
 import { WorldMiniMap } from './WorldMiniMap';
 import { WorldEntityTooltip } from './WorldEntityTooltip';
+import { clearWorldMapFocusSearch, parseWorldMapFocusSearch } from './worldMapNavigation';
 import { buildMapEntities, filterEntitiesByVision } from './buildMapEntities';
 import { AttackDetailModal } from '@/features/combat/AttackDetailModal';
 import { KingdomActivitiesBottomSheet } from '@/features/combat/KingdomActivitiesBottomSheet';
@@ -40,6 +41,7 @@ const FALLBACK_VIEWPORT_TILES = { width: 30, height: 30 };
 
 export function WorldMapScreen() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const worldId = useGameStore((state) => state.worldId);
   const currentVillageId = useGameStore((state) => state.villageId);
   const userId = useAuthStore((state) => state.user?.id ?? null);
@@ -64,6 +66,7 @@ export function WorldMapScreen() {
   const [isKingdomActivitiesOpen, setIsKingdomActivitiesOpen] = useState(false);
   const [kingdomActivityTab, setKingdomActivityTab] = useState<KingdomActivityTab>('expeditions');
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
+  const [canvasReady, setCanvasReady] = useState(false);
   const [camera, setCamera] = useState<WorldMapCameraSnapshot>({
     center: { x: FALLBACK_GRID.gridWidth / 2, y: FALLBACK_GRID.gridHeight / 2 },
     viewportTiles: FALLBACK_VIEWPORT_TILES,
@@ -89,6 +92,8 @@ export function WorldMapScreen() {
     () => filterEntitiesByVision(allEntities, visionDisks, fogOfWarEnabled),
     [allEntities, visionDisks, fogOfWarEnabled],
   );
+  const urlFocus = useMemo(() => parseWorldMapFocusSearch(searchParams), [searchParams]);
+  const activeFocus = urlFocus ?? pendingFocus;
   const expeditionSnapshots = useMemo(() => Object.values(expeditions), [expeditions]);
   const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data);
 
@@ -135,22 +140,31 @@ export function WorldMapScreen() {
   useEffect(() => {
     if (hasCameraSnapshotRef.current) return;
     const fallbackCamera = {
-      center: pendingFocus ?? myVillage ?? { x: dims.gridWidth / 2, y: dims.gridHeight / 2 },
+      center: activeFocus ?? myVillage ?? { x: dims.gridWidth / 2, y: dims.gridHeight / 2 },
       viewportTiles: FALLBACK_VIEWPORT_TILES,
     };
     latestCameraRef.current = fallbackCamera;
     setCamera(fallbackCamera);
-    // pendingFocus volontairement hors deps : on l'utilise comme seed initial une fois,
+    // activeFocus volontairement hors deps : on l'utilise comme seed initial une fois,
     // l'application via centerOn est gérée par l'effet ci-dessous quand le canvas est prêt.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dims.gridWidth, dims.gridHeight, myVillage]);
 
   useEffect(() => {
-    if (!pendingFocus) return;
+    if (!activeFocus) return;
+    if (!canvasReady) return;
     if (!canvasRef.current) return;
-    canvasRef.current.centerOn(pendingFocus.x, pendingFocus.y);
-    setPendingFocus(null);
-  }, [pendingFocus, worldEntities.isLoading, myVillages.isLoading, setPendingFocus]);
+
+    canvasRef.current.centerOn(activeFocus.x, activeFocus.y);
+    setSelectedEntity(null);
+
+    if (pendingFocus) {
+      setPendingFocus(null);
+    }
+    if (urlFocus) {
+      setSearchParams(clearWorldMapFocusSearch(searchParams), { replace: true });
+    }
+  }, [activeFocus, canvasReady, pendingFocus, searchParams, setPendingFocus, setSearchParams, setSelectedEntity, urlFocus]);
 
   useEffect(() => {
     if (isMiniMapVisible) {
@@ -207,6 +221,7 @@ export function WorldMapScreen() {
                     setCamera(nextCamera);
                   }
                 }}
+                onControllerReady={setCanvasReady}
                 controllerRef={canvasRef}
               />
             )}
