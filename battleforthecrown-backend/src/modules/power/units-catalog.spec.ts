@@ -46,9 +46,7 @@ describe('units catalog — pure logic (run 003 regression)', () => {
       number,
     ][]) {
       expect(getUnitPowerWeight(type)).toBe(weight);
-      expect(UNIT_POWER_WEIGHTS[type as keyof typeof UNIT_POWER_WEIGHTS]).toBe(
-        weight,
-      );
+      expect(UNIT_POWER_WEIGHTS[type]).toBe(weight);
     }
   });
 

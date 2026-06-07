@@ -22,13 +22,11 @@ type CombatReportDetails = {
 };
 
 function asUnitMap(value: unknown): UnitMap {
-  return value && typeof value === 'object' ? (value as UnitMap) : {};
+  return value && typeof value === 'object' ? value : {};
 }
 
 function reportDetails(value: unknown): CombatReportDetails {
-  return value && typeof value === 'object'
-    ? (value as CombatReportDetails)
-    : {};
+  return value && typeof value === 'object' ? value : {};
 }
 
 function shouldHideBarbarianDefeatDetails(

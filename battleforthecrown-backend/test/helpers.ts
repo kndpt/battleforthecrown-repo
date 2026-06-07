@@ -95,7 +95,7 @@ export async function seedSmokeWorld(
       id,
       name: id,
       status: 'OPEN',
-      config: SMOKE_WORLD_CONFIG as object,
+      config: SMOKE_WORLD_CONFIG,
     },
   });
 }

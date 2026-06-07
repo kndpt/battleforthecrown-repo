@@ -3,27 +3,33 @@ import { useNavigate, useParams } from 'react-router';
 import { WorldDetailDesign } from '@/features/design-system/worlds/WorldDetailDesign';
 import { worldDetailLabels } from '@/features/design-system/worlds/worldDetailConfig';
 import { ToastStack } from '@/features/layout/ToastStack';
-import { useGameStore } from '@/stores/game';
 import { useUiStore } from '@/stores/ui';
 import type { WorldCardViewModel } from './worldsViewModel';
-import { joinErrorMessage, useWorldCardModels } from './useWorldCardModels';
+import { enterErrorMessage, joinErrorMessage, useWorldCardModels } from './useWorldCardModels';
 
 export function WorldDetailScreen() {
   const navigate = useNavigate();
   const { worldId } = useParams();
   const pushToast = useUiStore((state) => state.pushToast);
-  const setGameContext = useGameStore((state) => state.setContext);
   const [error, setError] = useState<string | null>(null);
-  const { defaultVillageName, join, memberships, worldModels, worlds } = useWorldCardModels();
+  const { defaultVillageName, enter, join, memberships, worldModels, worlds } = useWorldCardModels();
   const world = useMemo(
     () => worldModels.find((candidate) => candidate.id === worldId) ?? null,
     [worldId, worldModels],
   );
 
   const onEnter = (selectedWorld: WorldCardViewModel) => {
+    if (enter.isPending) return;
     setError(null);
-    setGameContext({ worldId: selectedWorld.id, villageId: null });
-    navigate('/game');
+    enter.mutate(
+      { worldId: selectedWorld.id },
+      {
+        onError: (err) => {
+          setError(enterErrorMessage(err));
+        },
+        onSuccess: () => navigate('/game'),
+      },
+    );
   };
 
   const onJoin = (selectedWorld: WorldCardViewModel) => {

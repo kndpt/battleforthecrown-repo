@@ -169,6 +169,10 @@ interface JoinWorldInput {
   villageName?: string;
 }
 
+interface EnterWorldInput {
+  worldId: string;
+}
+
 export function useJoinWorldMutation() {
   const queryClient = useQueryClient();
   const setContext = useGameStore((state) => state.setContext);
@@ -182,6 +186,19 @@ export function useJoinWorldMutation() {
       queryClient.invalidateQueries({ queryKey: ['memberships'] });
       queryClient.invalidateQueries({ queryKey: ['villages'] });
       queryClient.invalidateQueries({ queryKey: ['onboarding'] });
+    },
+  });
+}
+
+export function useEnterWorldMutation() {
+  const queryClient = useQueryClient();
+  const setContext = useGameStore((state) => state.setContext);
+  return useMutation<WorldMembership, Error, EnterWorldInput>({
+    mutationFn: ({ worldId }) =>
+      apiClient.post<WorldMembership>(`/world/${worldId}/enter`),
+    onSuccess: (membership) => {
+      setContext({ worldId: membership.worldId, villageId: null });
+      queryClient.invalidateQueries({ queryKey: ['memberships'] });
     },
   });
 }

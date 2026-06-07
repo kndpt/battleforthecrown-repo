@@ -236,7 +236,7 @@ describe('army training smoke', () => {
         id: `train-barracks-speed-${Date.now()}`,
         name: 'train-barracks-speed',
         status: 'OPEN',
-        config: config as object,
+        config: config,
       },
     });
     const levelOneUser = await registerUser(ctx.server, 'train-barracks-l1');

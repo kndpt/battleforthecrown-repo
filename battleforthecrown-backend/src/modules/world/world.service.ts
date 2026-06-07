@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WorldConfigService } from './world-config.service';
 import {
@@ -10,6 +14,7 @@ import {
   TempoService,
   type PublicWorld,
   type WorldConfig,
+  type WorldMembershipResponse,
 } from '@battleforthecrown/shared/world';
 
 @Injectable()
@@ -172,6 +177,42 @@ export class WorldService {
       lastLoginAt: m.lastLoginAt,
       villageCount: countByWorld.get(m.worldId) ?? 0,
     }));
+  }
+
+  async touchUserMembership(
+    userId: string,
+    worldId: string,
+  ): Promise<WorldMembershipResponse> {
+    const membership = await this.prisma.worldMembership.findUnique({
+      where: { userId_worldId: { userId, worldId } },
+      include: { world: true },
+    });
+
+    if (!membership) {
+      throw new NotFoundException(`World ${worldId} membership not found`);
+    }
+    if (membership.world.status === 'ENDED') {
+      throw new BadRequestException(`World ${worldId} is not open for entry`);
+    }
+
+    const lastLoginAt = new Date();
+    await this.prisma.worldMembership.update({
+      where: { userId_worldId: { userId, worldId } },
+      data: { lastLoginAt },
+    });
+
+    const villageCount = await this.prisma.village.count({
+      where: { userId, worldId },
+    });
+
+    return {
+      worldId: membership.worldId,
+      worldName: membership.world.name,
+      role: membership.role,
+      joinedAt: membership.joinedAt.toISOString(),
+      lastLoginAt: lastLoginAt.toISOString(),
+      villageCount,
+    };
   }
 
   private parseWorldConfig(worldId: string, config: unknown): WorldConfig {
