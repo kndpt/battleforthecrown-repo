@@ -5,8 +5,8 @@
 - [x] Lister tous les threads/commentaires non résolus de la PR #61.
 - [x] Classer chaque commentaire en actionnable ou non pertinent.
 - [x] Corriger les retours pertinents au bon endroit.
-- [ ] Résoudre les threads GitHub traités ou non pertinents.
-- [ ] Vérifier, commit, push et confirmer que la PR est entièrement traitée.
+- [x] Résoudre les threads GitHub traités ou non pertinents.
+- [x] Vérifier, commit, push et confirmer que la PR est entièrement traitée.
 
 ### Review en cours
 
@@ -14,6 +14,9 @@
 - Threads non résolus trouvés : 2, tous les deux sur `WorldMapScreen` et le même problème réel de focus perdu si demandé avant que le contrôleur Pixi soit prêt.
 - Décision : commentaire pertinent ; correction appliquée via signal explicite `onControllerReady` dans `WorldMapCanvas` et état `canvasReady` dans `WorldMapScreen`.
 - Effet attendu : l'effet de focus ne nettoie/applique plus tant que le contrôleur n'est pas prêt, puis se relance dès que `canvasReady` passe à `true`.
+- Vérifications : `rtk yarn workspace battleforthecrown-pixi test src/features/world/worldMapNavigation.test.ts src/features/combat/ReportDetailModal.test.tsx src/ui/modals/VictoryModalHost.test.tsx` passé ; `rtk yarn static-check` passé ; `rtk git diff --check` passé.
+- Threads GitHub résolus : `PRRT_kwDOSYETNs6HrnOV` et `PRRT_kwDOSYETNs6HrnRD`.
+- Contrôle final threads : 2 threads review au total, 0 non résolu.
 
 ## 2026-06-07 — Correction UX PR 61 action carte rapport
 
