@@ -444,11 +444,17 @@ export class CombatWorker implements OnModuleInit {
       data: {
         worldId: expedition.worldId,
         attackerVillageId: expedition.attackerVillageId,
+        attackerVillageName: attackerVillage.name,
+        attackerX: attackerVillage.x,
+        attackerY: attackerVillage.y,
         attackerUserId: attackerVillage.userId!, // Guaranteed non-null for player attacks
         defenderVillageId:
           expedition.targetKind === 'PLAYER_VILLAGE' || occupationDefense
             ? expedition.targetRefId
             : null,
+        defenderVillageName: defenderVillage?.name ?? null,
+        defenderX: defenderVillage?.x ?? expedition.targetX,
+        defenderY: defenderVillage?.y ?? expedition.targetY,
         defenderUserId:
           occupationDefense?.attackerUserId ??
           (expedition.targetKind === 'PLAYER_VILLAGE' && defenderVillage

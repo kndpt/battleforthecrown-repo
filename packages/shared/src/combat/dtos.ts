@@ -62,7 +62,13 @@ export interface CombatLoot {
 export interface CombatReportResponse {
   id: string;
   attackerVillageId: string;
-  defenderVillageId?: string;
+  attackerVillageName?: string | null;
+  attackerX?: number | null;
+  attackerY?: number | null;
+  defenderVillageId?: string | null;
+  defenderVillageName?: string | null;
+  defenderX?: number | null;
+  defenderY?: number | null;
   observerUserId?: string | null;
   targetKind: string;
   targetX: number;

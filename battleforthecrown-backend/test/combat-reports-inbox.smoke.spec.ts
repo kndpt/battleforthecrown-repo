@@ -62,8 +62,14 @@ describe('combat reports inbox smoke', () => {
         worldId: world.id,
         attackerUserId: attacker.userId,
         attackerVillageId: attackerJoin.village.id,
+        attackerVillageName: attackerJoin.village.name,
+        attackerX: attackerJoin.village.x,
+        attackerY: attackerJoin.village.y,
         defenderUserId: defender.userId,
         defenderVillageId: defenderJoin.village.id,
+        defenderVillageName: defenderJoin.village.name,
+        defenderX: defenderJoin.village.x,
+        defenderY: defenderJoin.village.y,
         observerUserId: observer.userId,
         targetKind: 'PLAYER_VILLAGE',
         targetX: defenderJoin.village.x,
@@ -138,11 +144,27 @@ describe('combat reports inbox smoke', () => {
       .set('x-world-id', world.id);
     expect(defenderDetail.status).toBeLessThan(300);
     const defenderDetailBody = defenderDetail.body as unknown as {
+      attackerVillageName: string;
+      attackerX: number;
+      attackerY: number;
+      defenderVillageName: string;
+      defenderX: number;
+      defenderY: number;
       isRead: boolean;
       recipientRole: string;
     };
     expect(defenderDetailBody.isRead).toBe(false);
     expect(defenderDetailBody.recipientRole).toBe('defender');
+    expect(defenderDetailBody).toEqual(
+      expect.objectContaining({
+        attackerVillageName: attackerJoin.village.name,
+        attackerX: attackerJoin.village.x,
+        attackerY: attackerJoin.village.y,
+        defenderVillageName: defenderJoin.village.name,
+        defenderX: defenderJoin.village.x,
+        defenderY: defenderJoin.village.y,
+      }),
+    );
 
     const observerRead = await request(ctx.server)
       .patch(`/combat/report/${shared.id}/read`)

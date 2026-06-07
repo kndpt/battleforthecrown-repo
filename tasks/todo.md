@@ -1,5 +1,25 @@
 # Todo
 
+## 2026-06-07 — Fix snapshots rapports combat sur main
+
+- [x] Repartir du `origin/main` qui contient l'action carte `position.png`.
+- [x] Réappliquer uniquement les snapshots nom/position des villages dans le contrat combat.
+- [x] Adapter le mapper rapport sans casser `targetAction`.
+- [x] Vérifier tests ciblés, smokes et DB locale.
+
+### Review en cours
+
+- Correction de trajectoire : le run 048 / PR 61 sur `origin/main` contient déjà le clic coordonnée vers la carte ; ce fix doit préserver cette feature.
+- Symptôme restant : les participants du rapport de combat utilisent encore les fallbacks `Votre village` / `Village joueur` et l'attaquant n'a pas de coordonnée.
+- Correction : ajout des snapshots `attackerVillageName/attackerX/attackerY` et `defenderVillageName/defenderX/defenderY` au rapport de combat, avec backfill depuis `village`.
+- UI : `combatReportView` alimente le vrai nom + coordonnée des deux participants ; `CombatReportModal.targetAction` reste fourni par `ReportDetailModal` et continue d'afficher `position.png` côté cible.
+- Vérification frontend : `rtk yarn workspace battleforthecrown-pixi test -- combatReportView ReportDetailModal worldMapNavigation` passé, 3 fichiers / 11 tests.
+- Vérification backend ciblée : `rtk yarn workspace battleforthecrown-backend test -- combat-report.presenter` passé, 1 suite / 6 tests.
+- Vérification DB locale : migrations appliquées sur `battleforthecrown` sans reset ; SQL `combat_report` = 17/17 avec `attacker_village_name`, 17/17 avec `defender_village_name`.
+- Vérification smoke : `rtk yarn workspace battleforthecrown-backend test:smoke:preflight` passé ; `combat-attack.smoke.spec.ts` passé isolé, 4 tests ; `combat-reports-inbox.smoke.spec.ts` passé isolé, 2 tests.
+- Note QA : le lancement groupé des deux smokes a montré un échec d'interférence sur un scénario existant, puis les deux fichiers sont passés isolément.
+- Vérification statique : `rtk yarn static-check` passé.
+
 ## 2026-06-07 — Traitement commentaires PR 61
 
 - [x] Lister tous les threads/commentaires non résolus de la PR #61.

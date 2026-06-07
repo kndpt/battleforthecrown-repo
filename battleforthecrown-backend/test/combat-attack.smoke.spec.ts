@@ -146,6 +146,16 @@ describe('combat attack smoke', () => {
     expect(
       (returning.report?.lossesDefender as Record<string, number>).MILITIA,
     ).toBe(10);
+    expect(returning.report).toEqual(
+      expect.objectContaining({
+        attackerVillageName: 'attacker',
+        attackerX: join.village.x,
+        attackerY: join.village.y,
+        defenderVillageName: 'barb-target',
+        defenderX: barbarian.x,
+        defenderY: barbarian.y,
+      }),
+    );
     const reportDetails = returning.report?.details as {
       travelTime?: number;
     };
