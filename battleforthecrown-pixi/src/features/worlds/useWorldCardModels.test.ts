@@ -15,7 +15,9 @@ describe('joinErrorMessage', () => {
 
   it('translates "not open for joining" to French', () => {
     const err = new ApiError('World not open for joining', 400);
-    expect(joinErrorMessage(err)).toBe('Les inscriptions de ce royaume sont closes.');
+    expect(joinErrorMessage(err)).toBe(
+      'Les inscriptions de ce royaume sont closes.',
+    );
   });
 
   it('translates "already joined" to French', () => {
@@ -46,6 +48,18 @@ describe('enterErrorMessage', () => {
 
   it('returns a generic fallback for non-ApiError inputs', () => {
     expect(enterErrorMessage(new Error('internal'))).toBe(
+      "Impossible d'entrer dans le royaume.",
+    );
+  });
+
+  it('returns the raw message for non-404 ApiErrors', () => {
+    const err = new ApiError('World is not open for entry', 400);
+    expect(enterErrorMessage(err)).toBe('World is not open for entry');
+  });
+
+  it('returns generic fallback when non-404 ApiError message is empty', () => {
+    const err = new ApiError('', 500);
+    expect(enterErrorMessage(err)).toBe(
       "Impossible d'entrer dans le royaume.",
     );
   });
