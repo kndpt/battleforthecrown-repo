@@ -343,7 +343,7 @@ function CombatReportDetail({
               ],
               handleAction,
             )}
-            targetAction={{ id: 'view-map', label: 'Carte', tone: 'success' }}
+            targetAction={{ id: 'view-map', label: 'Position', tone: 'success' }}
           />
         )}
       </div>

@@ -12,9 +12,10 @@
 
 - Feedback Kelvin : le bouton `Carte` en bas du modal est trop décorrélé du village cible ; l'utilisateur ne sait pas sur quel village il sera téléporté.
 - Direction retenue : intégrer l'action carte directement dans le bloc d'informations du village cible avec coordonnées visibles et asset `position.png`, puis garder le footer pour les actions globales.
-- Correction appliquée : `CombatReportModal` accepte maintenant `targetAction` et rend le CTA carte dans le panneau du village cible, avec asset `position.png`, libellé `Carte` et coordonnées visibles.
+- Correction appliquée : `CombatReportModal` accepte maintenant `targetAction` et rend le CTA cible dans le panneau du village cible, avec asset `position.png` et coordonnées visibles.
 - `ReportDetailModal` ne met plus `Carte` dans les actions footer ; le footer revient à `Supprimer` / `Fermer`.
-- Test ciblé mis à jour : le bouton porte l'aria-label `Ouvrir la carte sur Village joueur 12|34` et déclenche toujours `navigateToWorldMapFocus({ x: 12, y: 34 })`.
+- Test ciblé mis à jour : le bouton porte l'aria-label `Voir Village joueur en 12|34` et déclenche toujours `navigateToWorldMapFocus({ x: 12, y: 34 })`.
+- Correction feedback : retrait du mot `Carte` dans le CTA cible ; l'action affiche uniquement `position.png` + coordonnées, avec aria-label `Voir Village joueur en 12|34`.
 - `rtk yarn workspace battleforthecrown-pixi test src/features/combat/ReportDetailModal.test.tsx src/features/world/worldMapNavigation.test.ts` passé : 2 fichiers / 5 tests.
 - `rtk yarn static-check` passé.
 - QA runtime IG restante : vérifier visuellement que le CTA carte est bien dans le bloc du village cible et que le footer ne contient plus d'action `Carte`.

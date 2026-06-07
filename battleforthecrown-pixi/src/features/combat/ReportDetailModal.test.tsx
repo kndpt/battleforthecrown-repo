@@ -67,7 +67,7 @@ describe('ReportDetailModal', () => {
     expect(screen.queryByRole('button', { name: 'Carte' })).not.toBeInTheDocument();
 
     fireEvent.click(await screen.findByRole('button', {
-      name: 'Ouvrir la carte sur Village joueur 12|34',
+      name: 'Voir Village joueur en 12|34',
     }));
 
     expect(onClose).toHaveBeenCalledTimes(1);

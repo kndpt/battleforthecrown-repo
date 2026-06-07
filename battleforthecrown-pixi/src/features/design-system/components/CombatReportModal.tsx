@@ -242,7 +242,7 @@ function ParticipantCard({
       </div>
       {action ? (
         <button
-          aria-label={`Ouvrir la carte sur ${participant.name} ${participant.coord}`}
+          aria-label={`Voir ${participant.name} en ${participant.coord}`}
           className={cn(
             coordClassName,
             'cursor-pointer border-[#3a6c1f] bg-[linear-gradient(to_bottom,rgba(126,199,78,.26),rgba(74,140,42,.18))] text-[#2d6b16] enabled:hover:brightness-105 enabled:active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50',
@@ -252,7 +252,6 @@ function ParticipantCard({
           type="button"
         >
           <img alt="" className="size-4 shrink-0 object-contain" src={publicAsset('/assets/position.png')} />
-          <span className="shrink-0 uppercase">Carte</span>
           <span className="truncate tabular-nums">{coord}</span>
         </button>
       ) : (
