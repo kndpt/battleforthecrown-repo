@@ -11,7 +11,7 @@ export class PlayerVillageStrategy implements CombatStrategy {
   constructor(private readonly lootManager: LootManager) {}
 
   async resolve(context: CombatContext): Promise<CombatResolution> {
-    this.logger.log(
+    this.logger.debug(
       `Resolving PvP attack: expedition ${context.expedition.id}`,
     );
 
@@ -26,7 +26,7 @@ export class PlayerVillageStrategy implements CombatStrategy {
     };
     const loot = await this.lootManager.calculateLoot(lootContext);
 
-    this.logger.log(
+    this.logger.debug(
       `PvP combat resolved: attacker losses ${JSON.stringify(combatOutcome.lossesAttacker)}, ` +
         `defender losses ${JSON.stringify(combatOutcome.lossesDefender)}, ` +
         `loot ${JSON.stringify(loot.resources)}`,

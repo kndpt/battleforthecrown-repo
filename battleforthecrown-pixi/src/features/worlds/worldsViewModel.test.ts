@@ -124,6 +124,8 @@ describe("worldsViewModel", () => {
   });
 
   it("keeps joined CTA for a LOCKED world the player has already joined", () => {
+    // Real gameplay case: inscriptions close while players are already in the world.
+    // ctaFor() checks isJoined first so status=LOCKED must not override.
     const model = toWorldCardViewModel(
       makeWorld({ id: "joined-locked-world", status: "LOCKED" }),
       new Set(["joined-locked-world"]),

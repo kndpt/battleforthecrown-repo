@@ -105,7 +105,7 @@ export class CombatWorker implements OnModuleInit {
   }
 
   private async handleCombatResolution(data: CombatJob) {
-    this.logger.log(`Processing combat resolution: ${data.expeditionId}`);
+    this.logger.debug(`Processing combat resolution: ${data.expeditionId}`);
 
     try {
       const pendingConquestToSchedule = await this.prisma.$transaction(
@@ -252,7 +252,7 @@ export class CombatWorker implements OnModuleInit {
             isVictory,
           });
 
-          this.logger.log(
+          this.logger.debug(
             `Combat resolved for expedition ${expedition.id}, victory=${isVictory}, returnAt=${returnAt?.toISOString() ?? 'none'}`,
           );
           return pendingConquest;
@@ -1067,7 +1067,7 @@ export class CombatWorker implements OnModuleInit {
     tx: PrismaClientOrTx,
     expedition: Expedition,
   ) {
-    this.logger.log(`Processing reinforcement arrival: ${expedition.id}`);
+    this.logger.debug(`Processing reinforcement arrival: ${expedition.id}`);
 
     const units = parseUnitMap(expedition.units, 'expedition.units');
     const originVillageId =
@@ -1075,7 +1075,7 @@ export class CombatWorker implements OnModuleInit {
     const isReturningHome = expedition.targetRefId === originVillageId;
 
     if (isReturningHome) {
-      this.logger.log(`Reinforcement returning home to ${originVillageId}`);
+      this.logger.debug(`Reinforcement returning home to ${originVillageId}`);
       // Back to home inventory
       for (const [unitType, quantity] of Object.entries(units)) {
         if (quantity <= 0) continue;
@@ -1097,7 +1097,7 @@ export class CombatWorker implements OnModuleInit {
         });
       }
     } else {
-      this.logger.log(
+      this.logger.debug(
         `Reinforcement arriving at ${expedition.targetRefId} from ${originVillageId}`,
       );
       // Transfer units to Garrison
@@ -1226,11 +1226,11 @@ export class CombatWorker implements OnModuleInit {
       });
     }
 
-    this.logger.log(
+    this.logger.debug(
       `ReinforcementReport ${report.id} (${reportType}) created, ${recipientIds.length} inbox entries for expedition ${expedition.id}`,
     );
 
-    this.logger.log(
+    this.logger.debug(
       `Reinforcement ${isReturningHome ? 'returned' : 'stationed'}: ${expedition.id}`,
     );
   }
@@ -1239,7 +1239,7 @@ export class CombatWorker implements OnModuleInit {
     tx: PrismaClientOrTx,
     expedition: Expedition,
   ) {
-    this.logger.log(`Processing scout arrival: ${expedition.id}`);
+    this.logger.debug(`Processing scout arrival: ${expedition.id}`);
 
     const [attackerVillage, targetVillage] = await Promise.all([
       tx.village.findUnique({
@@ -1354,7 +1354,7 @@ export class CombatWorker implements OnModuleInit {
       },
     );
 
-    this.logger.log(
+    this.logger.debug(
       `Scout resolved for expedition ${expedition.id}, report=${report.id}, returns at ${returnAt.toISOString()}`,
     );
   }

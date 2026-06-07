@@ -315,7 +315,7 @@ export class ConquestService {
     buildings: number;
     tier?: string;
   }> {
-    this.logger.log(
+    this.logger.debug(
       `Attempting conquest: ${params.attackerVillageId} -> ${params.targetVillageId}`,
     );
 
@@ -482,7 +482,7 @@ export class ConquestService {
       buildingsKept,
     });
 
-    this.logger.log(
+    this.logger.debug(
       `Village ${target.name} conquered by user ${attackerUserId}`,
     );
 

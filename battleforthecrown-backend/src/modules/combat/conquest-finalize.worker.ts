@@ -39,7 +39,7 @@ export class ConquestFinalizeWorker implements OnModuleInit {
         data.pendingConquestId,
       );
       if (!result.completed) {
-        this.logger.log(
+        this.logger.debug(
           `Pending conquest ${data.pendingConquestId} is no longer open, skipping`,
         );
       }

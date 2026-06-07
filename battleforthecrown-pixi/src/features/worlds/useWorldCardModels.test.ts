@@ -4,8 +4,12 @@ import { enterErrorMessage, joinErrorMessage } from './useWorldCardModels';
 
 describe('joinErrorMessage', () => {
   it('returns generic fallback for non-ApiError', () => {
-    expect(joinErrorMessage(new Error('internal'))).toBe('Inscription au royaume impossible.');
-    expect(joinErrorMessage('some string')).toBe('Inscription au royaume impossible.');
+    expect(joinErrorMessage(new Error('internal'))).toBe(
+      'Inscription au royaume impossible.',
+    );
+    expect(joinErrorMessage('some string')).toBe(
+      'Inscription au royaume impossible.',
+    );
     expect(joinErrorMessage(null)).toBe('Inscription au royaume impossible.');
   });
 
@@ -35,10 +39,14 @@ describe('joinErrorMessage', () => {
 describe('enterErrorMessage', () => {
   it('translates missing membership to French', () => {
     const err = new ApiError('World world-1 membership not found', 404);
-    expect(enterErrorMessage(err)).toBe("Tu n'es pas encore inscrit à ce royaume.");
+    expect(enterErrorMessage(err)).toBe(
+      "Tu n'es pas encore inscrit à ce royaume.",
+    );
   });
 
   it('returns a generic fallback for non-ApiError inputs', () => {
-    expect(enterErrorMessage(new Error('internal'))).toBe("Impossible d'entrer dans le royaume.");
+    expect(enterErrorMessage(new Error('internal'))).toBe(
+      "Impossible d'entrer dans le royaume.",
+    );
   });
 });
