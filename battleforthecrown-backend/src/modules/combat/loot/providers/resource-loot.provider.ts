@@ -62,7 +62,7 @@ export class ResourceLootProvider implements LootResolver {
     const totalCapacityUsed =
       actualLoot.wood + actualLoot.stone + actualLoot.iron;
 
-    this.logger.log(
+    this.logger.debug(
       `Loot calculated: ${JSON.stringify(actualLoot)}, lootFactor: ${lootFactor}, capped: ${cappedByCapacity}`,
     );
 

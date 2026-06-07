@@ -36,7 +36,7 @@ export class ReturnWorker implements OnModuleInit {
   }
 
   private async handleReturn(data: ReturnJob) {
-    this.logger.log(`Processing troops return: ${data.expeditionId}`);
+    this.logger.debug(`Processing troops return: ${data.expeditionId}`);
 
     try {
       await this.prisma.$transaction(async (tx) => {
@@ -76,7 +76,7 @@ export class ReturnWorker implements OnModuleInit {
             : expedition.reportId;
 
         if (expedition.recalled) {
-          this.logger.log(
+          this.logger.debug(
             `Expedition ${data.expeditionId} was recalled, skipping report check`,
           );
           survivingUnits = parseUnitMap(expedition.units, 'expedition.units');
@@ -158,7 +158,7 @@ export class ReturnWorker implements OnModuleInit {
               },
         );
 
-        this.logger.log(
+        this.logger.debug(
           `Troops returned for expedition ${data.expeditionId}: ` +
             `${JSON.stringify(survivingUnits)}, looted ${JSON.stringify(lootedResources)}`,
         );
