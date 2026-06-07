@@ -6,6 +6,7 @@
 - [x] Réappliquer uniquement les snapshots nom/position des villages dans le contrat combat.
 - [x] Adapter le mapper rapport sans casser `targetAction`.
 - [x] Vérifier tests ciblés, smokes et DB locale.
+- [ ] Traiter tous les commentaires review de la PR #62.
 
 ### Review en cours
 
@@ -19,6 +20,10 @@
 - Vérification smoke : `rtk yarn workspace battleforthecrown-backend test:smoke:preflight` passé ; `combat-attack.smoke.spec.ts` passé isolé, 4 tests ; `combat-reports-inbox.smoke.spec.ts` passé isolé, 2 tests.
 - Note QA : le lancement groupé des deux smokes a montré un échec d'interférence sur un scénario existant, puis les deux fichiers sont passés isolément.
 - Vérification statique : `rtk yarn static-check` passé.
+- Commentaires PR #62 : 3 threads non résolus trouvés, tous pertinents.
+- Correction review : `combatReportView` priorise `recipientRole` sur `isAttacker` pour décider qui est `Vous`, afin que les observateurs ne soient jamais affichés comme joueur courant.
+- Correction review : fallback attaquant séparé (`Village attaquant`) pour les rapports legacy non snapshotés quand le destinataire n'est pas l'attaquant.
+- Correction review : les rapports finaux de capture écrits par `writeCaptureFinalReportInTx` remplissent aussi les snapshots nom/position attaquant et défenseur.
 
 ## 2026-06-07 — Traitement commentaires PR 61
 

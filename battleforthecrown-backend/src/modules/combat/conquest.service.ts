@@ -522,17 +522,29 @@ export class ConquestService {
     },
   ): Promise<void> {
     const { pending, previousOwnerUserId, villageName } = args;
-    const target = await tx.village.findUniqueOrThrow({
-      where: { id: pending.targetVillageId },
-      select: { x: true, y: true },
-    });
+    const [attacker, target] = await Promise.all([
+      tx.village.findUniqueOrThrow({
+        where: { id: pending.attackerVillageId },
+        select: { name: true, x: true, y: true },
+      }),
+      tx.village.findUniqueOrThrow({
+        where: { id: pending.targetVillageId },
+        select: { name: true, x: true, y: true },
+      }),
+    ]);
 
     await tx.combatReport.create({
       data: {
         worldId: pending.worldId,
         attackerVillageId: pending.attackerVillageId,
+        attackerVillageName: attacker.name,
+        attackerX: attacker.x,
+        attackerY: attacker.y,
         attackerUserId: pending.attackerUserId,
         defenderVillageId: pending.targetVillageId,
+        defenderVillageName: target.name,
+        defenderX: target.x,
+        defenderY: target.y,
         defenderUserId:
           previousOwnerUserId && previousOwnerUserId !== pending.attackerUserId
             ? previousOwnerUserId

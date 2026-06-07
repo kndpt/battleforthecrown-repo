@@ -138,6 +138,56 @@ describe('combatReportView', () => {
     });
   });
 
+  it('does not label observer reports as the current player', () => {
+    const observerReport: CombatReportDto = {
+      ...report,
+      isAttacker: false,
+      recipientRole: 'observer',
+    };
+
+    const props = buildCombatReportModalProps(observerReport, []);
+
+    expect(props.attacker).toEqual({
+      coord: '10|20',
+      name: 'Aubefer',
+      place: 'Village attaquant',
+    });
+    expect(props.defender).toEqual({
+      coord: '12|34',
+      name: 'Hauterive',
+      place: 'Village joueur',
+    });
+    expect(props.attacker.name).not.toBe('Vous');
+    expect(props.defender.name).not.toBe('Vous');
+  });
+
+  it('keeps role-aware fallbacks for legacy observer reports', () => {
+    const legacyObserverReport: CombatReportDto = {
+      ...report,
+      attackerVillageName: undefined,
+      attackerX: undefined,
+      attackerY: undefined,
+      defenderVillageName: undefined,
+      defenderX: undefined,
+      defenderY: undefined,
+      isAttacker: false,
+      recipientRole: 'observer',
+    };
+
+    const props = buildCombatReportModalProps(legacyObserverReport, []);
+
+    expect(props.attacker).toEqual({
+      coord: '—',
+      name: 'Village attaquant',
+      place: 'Village attaquant',
+    });
+    expect(props.defender).toEqual({
+      coord: '12|34',
+      name: 'Village joueur',
+      place: 'Village joueur',
+    });
+  });
+
   it('marks attacker wipe as defeat for attacker and victory for defender', () => {
     const attackerWipeReport: CombatReportDto = {
       ...report,

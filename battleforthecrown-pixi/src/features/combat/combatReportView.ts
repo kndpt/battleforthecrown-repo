@@ -196,17 +196,29 @@ export function buildCombatReportModalProps(
     report.defenderX ?? report.targetX,
     report.defenderY ?? report.targetY,
   );
-  const attackerVillageName = report.attackerVillageName ?? 'Votre village';
-  const defenderVillageName = report.defenderVillageName ?? target;
+  const isSelfAttacker =
+    report.recipientRole != null
+      ? report.recipientRole === 'attacker'
+      : report.isAttacker;
+  const isSelfDefender =
+    report.recipientRole != null
+      ? report.recipientRole === 'defender'
+      : !report.isAttacker;
+  const attackerVillageName =
+    report.attackerVillageName ??
+    (isSelfAttacker ? 'Votre village' : 'Village attaquant');
+  const defenderVillageName =
+    report.defenderVillageName ??
+    (isSelfDefender ? 'Votre village' : target);
   const attacker = participant({
     coord: attackerCoord,
-    name: report.isAttacker ? 'Vous' : attackerVillageName,
-    place: report.isAttacker ? attackerVillageName : 'Village attaquant',
+    name: isSelfAttacker ? 'Vous' : attackerVillageName,
+    place: isSelfAttacker ? attackerVillageName : 'Village attaquant',
   });
   const defender = participant({
     coord: defenderCoord,
-    name: !report.isAttacker ? 'Vous' : defenderVillageName,
-    place: !report.isAttacker ? defenderVillageName : target,
+    name: isSelfDefender ? 'Vous' : defenderVillageName,
+    place: isSelfDefender ? defenderVillageName : target,
   });
   const unitTypes = allUnitTypes(report);
   const reportType = combatReportTypeLabel(report);
