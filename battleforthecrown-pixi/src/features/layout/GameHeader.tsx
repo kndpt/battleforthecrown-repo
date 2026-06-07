@@ -229,7 +229,7 @@ export function GameHeader({
           onClick={onPowerClick}
           className="flex items-center gap-1.5 rounded-full border border-[#1a120a] bg-[linear-gradient(180deg,#4a3a28,#2a1f14)] px-2.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,.1)] transition-transform active:scale-95"
         >
-          <img alt="" className="size-[14px] object-contain" src={publicAsset('/assets/army-power.png')} />
+          <img alt="" className="size-[14px] object-contain" src={publicAsset('/assets/power.png')} />
           <span className="font-game tabular-nums text-[12px] font-bold text-[#f0e0c0] [text-shadow:0_1px_1px_rgba(0,0,0,.6)]">
             {integerFormatter.format(totalPower)}
           </span>
@@ -303,7 +303,7 @@ export function GameHeader({
               aria-label={`Puissance du village ${integerFormatter.format(activeVillagePower)}`}
               className="mt-1 flex items-center gap-1 font-game tabular-nums text-[11px] font-bold text-[#cdb88a]"
             >
-              <img alt="" className="size-[12px] object-contain" src={publicAsset('/assets/army-power.png')} />
+              <img alt="" className="size-[12px] object-contain" src={publicAsset('/assets/power.png')} />
               {integerFormatter.format(activeVillagePower)}
             </span>
           </button>

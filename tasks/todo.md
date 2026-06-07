@@ -1,5 +1,32 @@
 # Todo
 
+## 2026-06-06 — Refonte sheet puissance royaume
+
+- [x] Relire le gameplay et le contrat de puissance royaume/village.
+- [x] Recomposer la sheet avec les primitives HUD et les assets runtime.
+- [x] Rendre l'UX lisible : total royaume, contribution bâtiments/armée, focus village actif.
+- [x] Ajouter une vérification frontend ciblée.
+- [x] Documenter la review et la QA IG restante.
+
+### Review
+
+- Contrat repris : puissance royaume = somme des villages du joueur ; puissance village = bâtiments construits + armée rattachée au village.
+- UI : suppression des emojis, réutilisation des assets runtime (`power`, `army-power`, `castle`, `village-tier`) et du shell `GameBottomSheetPanel`.
+- UX : lecture en trois niveaux — force cumulée du royaume, contributions bâtiments/armée, puis détail compact du village actif.
+- Correction feedback : retrait des progress bars/ratios sans plafond gameplay naturel ; les valeurs sont maintenant absolues et additives.
+- Correction feedback 2 : retrait de la formule explicative, du rappel `sur <royaume>`, du total village répété et du texte d'aide.
+- Correction feedback 3 : section village actif compactée en une ligne de stats, sans tuiles imbriquées ; sheet bornée à `64vh` sans hauteur forcée.
+- Correction feedback 4 : retrait des labels répétés et du préfixe `+` dans les valeurs du village actif.
+- Correction feedback 5 : la liste multi-villages remplace `Niv. X` par la puissance du village.
+- Correction feedback 6 : `/assets/power.png` représente les puissances totales ; `/assets/army-power.png` reste réservé à l'armée.
+- Correction feedback 7 : les villageois disponibles remplacent le niveau dans la méta du hero Village.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi test -- PowerBottomSheet GameHeader WorldsSelectionDesign` — 3 fichiers / 21 tests passés.
+- Vérification : `rtk yarn static-check` — passé.
+- Vérification : `rtk yarn test` — passé : backend unit, Pixi unit et smokes.
+- Vérification : `rtk yarn workspace battleforthecrown-pixi build` — passé.
+- Vérification : `rtk git diff --check` — passé.
+- QA IG restante : ouvrir la sheet puissance depuis le HUD et vérifier que total royaume, contributions et village actif se lisent sans confusion.
+
 ## 2026-06-06 — Plan run map focus links
 
 - [x] Lire les conventions `tasks/` et `tasks/runs/`.

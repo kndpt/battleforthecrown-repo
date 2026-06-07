@@ -631,7 +631,7 @@ export function VillageView() {
               className="flex items-center gap-1.5 rounded-full border border-[#1a120a] bg-[linear-gradient(180deg,#4a3a28,#2a1f14)] px-2.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,.1)]"
             >
               <img
-                src={publicAsset('/assets/army-power.png')}
+                    src={publicAsset('/assets/power.png')}
                 alt="Force"
                 className="size-[14px] object-contain"
                 loading="lazy"
@@ -768,13 +768,23 @@ export function VillageView() {
                       {VILLAGE_LABEL_DISPLAY[activeVillage.label]}
                     </span>
                   )}
-                  <span className="shrink-0 text-[12px] text-[#cdb88a]">
-                    Niv. <b className="text-[#fef9f0]">{castleLevel > 0 ? castleLevel : '—'}</b>
+                  <span
+                    aria-label={`Villageois disponibles ${populationQuery.data?.available ?? '—'}`}
+                    className="flex shrink-0 items-center gap-1 tabular-nums text-[12px] text-[#cdb88a]"
+                  >
+                    <img
+                      src={publicAsset('/assets/resources/population.png')}
+                      alt=""
+                      className="size-[13px] object-contain"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <b className="text-[#fef9f0]">{populationQuery.data?.available ?? '—'}</b>
                   </span>
                   <span className="shrink-0 text-[12px] text-[#cdb88a] opacity-40">·</span>
                   <span className="flex shrink-0 items-center gap-1 tabular-nums text-[12px] text-[#cdb88a]">
                     <img
-                      src={publicAsset('/assets/army-power.png')}
+                      src={publicAsset('/assets/power.png')}
                       alt=""
                       className="size-[12px] object-contain"
                       loading="lazy"

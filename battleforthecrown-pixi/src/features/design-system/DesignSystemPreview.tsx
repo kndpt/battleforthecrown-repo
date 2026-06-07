@@ -826,7 +826,7 @@ const dailyQuestItems: DailyQuestItem[] = [
 
 const playerProfileSheetFixture = {
   icons: {
-    armyPower: '/assets/army-power.png',
+    armyPower: '/assets/power.png',
     castle: '/assets/castle.png',
     crown: '/assets/casual-icons/crown.png',
     defense: '/assets/hand-silver.png',
@@ -1115,7 +1115,7 @@ export function DesignSystemPreview() {
       level: 12,
       playerInitials: 'SK',
       power: '4 642',
-      powerIcon: '/assets/army-power.png',
+      powerIcon: '/assets/power.png',
       resources: [
         { icon: '/assets/resources/wood.png', id: 'wood', label: 'Bois', sub: '+120/h', value: '4.5K' },
         { icon: '/assets/resources/stone.png', id: 'stone', label: 'Pierre', sub: '+80/h', value: '4.4K' },
@@ -1635,7 +1635,7 @@ export function DesignSystemPreview() {
             <ResourceIconTile icon="/assets/resources/iron.png" label="Fer" />
             <ResourceIconTile icon="/assets/resources/population.png" label="Population" />
             <ResourceIconTile icon="/assets/crown.png" label="Couronne" tone="premium" />
-            <ResourceIconTile icon="/assets/army-power.png" label="Puissance" />
+            <ResourceIconTile icon="/assets/power.png" label="Puissance" />
             <ResourceIconTile icon="/assets/clock.png" label="Temps" />
           </div>
         </section>
@@ -1972,7 +1972,7 @@ export function DesignSystemPreview() {
               level={12}
               population={{ icon: '/assets/resources/population.png', label: 'Population', value: '120' }}
               primaryStats={[
-                { icon: '/assets/army-power.png', label: 'Puissance', value: '2 480' },
+                { icon: '/assets/power.png', label: 'Puissance', value: '2 480' },
                 { icon: '/assets/crown.png', label: 'Couronnes', value: '28' },
               ]}
               resources={[
@@ -1996,7 +1996,7 @@ export function DesignSystemPreview() {
                   level={12}
                   population={{ icon: '/assets/resources/population.png', label: 'Population', value: '120' }}
                   primaryStats={[
-                    { icon: '/assets/army-power.png', label: 'Puissance', value: '2 480' },
+                    { icon: '/assets/power.png', label: 'Puissance', value: '2 480' },
                     { icon: '/assets/crown.png', label: 'Couronnes', value: '28' },
                   ]}
                   resources={[
@@ -2796,7 +2796,7 @@ export function DesignSystemPreview() {
               showCrown
               stats={[
                 { icon: '/assets/casual-icons/crown.png', label: 'pts', value: '62.480' },
-                { icon: '/assets/army-power.png', label: 'pwr', value: '4.250' },
+                { icon: '/assets/power.png', label: 'pwr', value: '4.250' },
                 { label: '🏰', value: '3 villages' },
               ]}
               tribe={{ name: 'Les Lames du Nord', tag: 'BFC' }}
@@ -2813,7 +2813,7 @@ export function DesignSystemPreview() {
               relation="enemy"
               stats={[
                 { icon: '/assets/casual-icons/crown.png', value: '48.210' },
-                { icon: '/assets/army-power.png', value: '2.580' },
+                { icon: '/assets/power.png', value: '2.580' },
                 { label: '🏰', value: '2' },
               ]}
               tribe={{ name: 'Corbeaux Noirs', tag: 'RVN', tone: 'red' }}
@@ -2830,7 +2830,7 @@ export function DesignSystemPreview() {
               relation="ally"
               stats={[
                 { icon: '/assets/casual-icons/crown.png', value: '71.020' },
-                { icon: '/assets/army-power.png', value: '5.840' },
+                { icon: '/assets/power.png', value: '5.840' },
                 { label: '🏰', value: '4' },
               ]}
               tribe={{ name: 'Alliée', tag: 'BFC' }}
@@ -2841,7 +2841,7 @@ export function DesignSystemPreview() {
               name="Brigand_223"
               stats={[
                 { icon: '/assets/casual-icons/crown.png', value: '1.240' },
-                { icon: '/assets/army-power.png', value: '180' },
+                { icon: '/assets/power.png', value: '180' },
               ]}
               tribe={{ name: 'sans tribu', tag: '—', tone: 'stone' }}
             />

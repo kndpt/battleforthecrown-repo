@@ -1,7 +1,7 @@
 import type { PlayerProfileSheetProps } from '@/features/design-system/components/PlayerProfileSheet';
 
 export const profileSheetIcons: PlayerProfileSheetProps['icons'] = {
-  armyPower: '/assets/army-power.png',
+  armyPower: '/assets/power.png',
   castle: '/assets/castle.png',
   crown: '/assets/casual-icons/crown.png',
   defense: '/assets/hand-silver.png',

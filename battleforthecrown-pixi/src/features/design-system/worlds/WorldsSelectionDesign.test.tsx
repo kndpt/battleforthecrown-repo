@@ -157,7 +157,7 @@ describe('WorldCard', () => {
     expect(screen.getByText('Puissance')).toBeInTheDocument();
     expect(normalizedText(container)).toContain('1 234 567');
     expect(container.querySelector('img[src="/assets/castle.png"]')).toBeInTheDocument();
-    expect(container.querySelector('img[src="/assets/army-power.png"]')).toBeInTheDocument();
+    expect(container.querySelector('img[src="/assets/power.png"]')).toBeInTheDocument();
 
     rerender(
       <WorldCard
@@ -172,7 +172,7 @@ describe('WorldCard', () => {
     expect(screen.queryByText('2 villages')).not.toBeInTheDocument();
     expect(screen.queryByText('Votre royaume')).not.toBeInTheDocument();
     expect(normalizedText(container)).not.toContain('1 234 567');
-    expect(container.querySelector('img[src="/assets/army-power.png"]')).not.toBeInTheDocument();
+    expect(container.querySelector('img[src="/assets/power.png"]')).not.toBeInTheDocument();
   });
 
   it('keeps the details action separate from the join CTA', () => {
