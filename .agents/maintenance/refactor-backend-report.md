@@ -8,6 +8,103 @@ New PRs use branch `maint/refactor-backend/<short-topic>` and PR title
 
 ---
 
+## Run 2026-06-07 — branch `maint/refactor-backend/combat-log-hygiene`
+
+**Model:** claude-sonnet-4-6
+**Scan commit:** `dee539b`
+
+---
+
+### Prior findings status (Run 2026-06-06)
+
+| ID | Status | Note |
+|----|--------|------|
+| B3 | **STILL OPEN** | `getUserIdByVillage` N+1 in outbox dispatch — 8th run. |
+| O1/B6 | **STILL OPEN** | `applyDefenderLosses:933` and `getCaptureDurationMs:1048` re-spell inline `Prisma.VillageGetPayload<{include:{resourceStock,buildings}}>` instead of `DefenderVillage` alias. S effort. |
+| C6 | **STILL OPEN** | Recursive `this.getResources` at `resources.service.ts:50`. Terminates in 2 steps max; cosmetically surprising only. |
+| D4 | **STILL OPEN** | `expedition.create` block repeated 4× in `combat.service.ts`. Deferred. |
+| D5 | **STILL OPEN** | `buildBarbarianDefender`/`buildPlayerDefender` garrison loop duplication (`combat.worker.ts:826-858, 881-929`). Deferred. |
+| N2 | **STILL OPEN** | Crowns: `updateProduction` + `recalculateOnBuildingChange` duplicate production accumulation. Deferred. |
+| N3 | **STILL OPEN** | `getVillagesInRadius` missing upper-bound clamp on `maxX`/`maxY` (`world-entities-query.service.ts:101`). S effort. |
+| O2 | **STILL OPEN** | `calculateProductionRate` called 2× per crown update operation. M effort. |
+
+---
+
+### Module structure (mental model)
+
+Same as last run. No new commits since scan commit `dee539b`. Combat module dominates by size and churn (`combat.worker.ts` 1361 LOC, `combat.service.ts` 947 LOC). Layering clean; zero `as any`, zero `console.*`, zero `@ts-ignore` in production code. B4+D6 (run 2026-06-05) addressed entry-point logs in `combat.service.ts` and the outbox dispatch loop. Body-level and per-job logs across the combat module were not in scope at the time, leaving 24 `logger.log` calls on hot paths (per-action, per-job, per-combat).
+
+---
+
+### Findings
+
+| ID | Category | Location | Description | Severity | Effort |
+|----|----------|----------|-------------|----------|--------|
+| P2 | Observability | `combat.service.ts:154,225,312,439,523` | **SELECTED** — 5 body-level `logger.log` in expedition creation methods (attack/scout/reinforce/recall/recallEnRoute). Each fires per user action at info level. D6 only addressed the entry-point dto logs; these confirmation logs were missed. | Low | S |
+| P3 | Observability | `combat.worker.ts:108,255,1070,1078,1100,1229,1233,1242,1357` | **SELECTED** — 9 `logger.log` in combat worker: "Processing combat resolution", "Combat resolved", reinforcement arrival/return/stationed messages, scout arrival/resolved. All per-job → info-level noise on every combat tick. | Low | S |
+| P4 | Observability | `return.worker.ts:39,79,161` | **SELECTED** — 3 `logger.log` in return worker: processing, recalled-path guard, and troops-returned summary with JSON.stringify. Per-job hot path. | Low | S |
+| P5 | Observability | `barbarian-village.strategy.ts:14,28` + `player-village.strategy.ts:14,29` | **SELECTED** — 4 `logger.log` in combat strategies: resolve entry + outcome with `JSON.stringify(losses/loot)`. JSON serialization at info level for every combat. | Low | S |
+| P6 | Observability | `resource-loot.provider.ts:65` | **SELECTED** — `logger.log` "Loot calculated: {JSON.stringify(actualLoot)}". Serializes loot per combat. | Low | S |
+| P7 | Observability | `conquest.service.ts:318,485` | **SELECTED** — 2 `logger.log` on conquest initiation and success. Per-capture-action hot path. | Low | S |
+| P8 | Observability | `conquest-finalize.worker.ts:42` | **SELECTED** — `logger.log` "Pending conquest no longer open, skipping" on the hot guard path. | Low | S |
+
+---
+
+### Looks bad but is actually fine
+
+- **`combat.worker.ts:100` "Combat worker initialized"** — one-time init at startup; `log` level correct.
+- **`return.worker.ts:31` / `conquest-finalize.worker.ts:26`** — same, one-time init.
+- **`game.gateway.ts` logs** — WebSocket connection/join events. Appropriate at `log` for auth debugging; not a hot path in the sense of per-game-action.
+- **`barbarian-seeding.service.ts` logs** — periodic admin operations, not per-player-action.
+- **B3 N+1 remains** — at current scale unchanged verdict. 8th run.
+- **D4/D5 dedup** — deferred again; 4 creates diverge enough that safety > DRY pressure.
+
+---
+
+### Selected theme: P2-P8 — Log level hygiene, combat module phase 2
+
+**Evidence:**
+- B4+D6 (run 2026-06-05) fixed outbox dispatch loop + entry-point dto logs in `combat.service.ts`. 24 body/worker logs across the combat module remained at `logger.log` (NestJS info level).
+- `barbarian-village.strategy.ts:28` and `player-village.strategy.ts:29` each call `JSON.stringify` on attacker/defender loss maps and loot at info level — every combat serializes 3 JSON objects at default log level.
+- `return.worker.ts:161` calls `JSON.stringify(survivingUnits)` + `JSON.stringify(lootedResources)` on the hot return path.
+- In a game with 10 active players running raids, the backend can process 5-20 combat jobs/minute; this run eliminates ~10-25 info log lines per combat cycle.
+
+**Why this theme:**
+- All 24 changes are mechanical (`log` → `debug`), zero behavior change, covered by existing test suite.
+- Coherent: all changes are in the combat module and its workers — same bounded context.
+- Measurable: `JSON.stringify` calls at info level have a real serialization cost suppressed at debug.
+- B4+D6 deliberately left the body logs in scope for a follow-up; this is that follow-up.
+
+**Rejected:**
+- **B3** (N+1 outbox): Medium effort, hot realtime path, 14+ signature changes → own PR. Deferred 8th run.
+- **N2 + O2** (crowns duplication): Medium effort, one file — coherent pair, better as isolated PR.
+- **D4** (expedition.create 4×): Prior runs noted risk of obscuring intent in the diverging fields. Deferred.
+- **O1/B6 + N3**: S effort but purely cosmetic; keep for a combined polish PR.
+
+### Files changed
+
+- `battleforthecrown-backend/src/modules/combat/combat.service.ts` — 5 `logger.log` → `logger.debug`
+- `battleforthecrown-backend/src/modules/combat/combat.worker.ts` — 9 `logger.log` → `logger.debug`
+- `battleforthecrown-backend/src/modules/combat/return.worker.ts` — 3 `logger.log` → `logger.debug`
+- `battleforthecrown-backend/src/modules/combat/strategies/barbarian-village.strategy.ts` — 2 `logger.log` → `logger.debug`
+- `battleforthecrown-backend/src/modules/combat/strategies/player-village.strategy.ts` — 2 `logger.log` → `logger.debug`
+- `battleforthecrown-backend/src/modules/combat/loot/providers/resource-loot.provider.ts` — 1 `logger.log` → `logger.debug`
+- `battleforthecrown-backend/src/modules/combat/conquest.service.ts` — 2 `logger.log` → `logger.debug`
+- `battleforthecrown-backend/src/modules/combat/conquest-finalize.worker.ts` — 1 `logger.log` → `logger.debug`
+
+### Verification
+
+```shell
+yarn static-check   → ✅ tsc (backend+pixi) + eslint --quiet, 0 errors
+yarn test:backend   → ✅ 272 passed, 25 suites
+```
+
+### Docs impact
+
+Aucun changement nécessaire — changement purement observabilité (niveaux de log), pas de changement d'API REST, d'event WS, de modèle Prisma ni de règle gameplay. Findings B3/C6/D4/D5/N2/N3/O1/O2 restent ouverts, documentés ci-dessus. Findings P2-P8 résolus dans ce run.
+
+---
+
 ## Run 2026-06-06 — branch `maint/refactor-backend/outbox-capture-payload`
 
 **Model:** claude-sonnet-4-6

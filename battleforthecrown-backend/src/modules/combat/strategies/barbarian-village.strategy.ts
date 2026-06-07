@@ -11,7 +11,7 @@ export class BarbarianVillageStrategy implements CombatStrategy {
   constructor(private readonly lootManager: LootManager) {}
 
   async resolve(context: CombatContext): Promise<CombatResolution> {
-    this.logger.log(
+    this.logger.debug(
       `Resolving barbarian attack: expedition ${context.expedition.id}`,
     );
 
@@ -25,7 +25,7 @@ export class BarbarianVillageStrategy implements CombatStrategy {
       },
     });
 
-    this.logger.log(
+    this.logger.debug(
       `Barbarian attack resolved: attacker losses ${JSON.stringify(combatOutcome.lossesAttacker)}, ` +
         `defender losses ${JSON.stringify(combatOutcome.lossesDefender)}, ` +
         `loot ${JSON.stringify(loot.resources)}`,

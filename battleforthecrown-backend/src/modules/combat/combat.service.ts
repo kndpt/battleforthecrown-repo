@@ -151,7 +151,7 @@ export class CombatService {
       // 8. Schedule combat resolution worker
       await this.scheduleResolution(expedition.id, arrivalAt);
 
-      this.logger.log(
+      this.logger.debug(
         `Attack expedition created: ${expedition.id}, arrives at ${arrivalAt.toISOString()}`,
       );
 
@@ -222,7 +222,7 @@ export class CombatService {
 
       await this.scheduleResolution(expedition.id, arrivalAt);
 
-      this.logger.log(
+      this.logger.debug(
         `Scout expedition created: ${expedition.id}, arrives at ${arrivalAt.toISOString()}`,
       );
 
@@ -309,7 +309,7 @@ export class CombatService {
       // 8. Schedule worker (same as combat:resolve, will handle REINFORCE)
       await this.scheduleResolution(expedition.id, arrivalAt);
 
-      this.logger.log(
+      this.logger.debug(
         `Reinforcement expedition created: ${expedition.id}, arrives at ${arrivalAt.toISOString()}`,
       );
 
@@ -436,7 +436,7 @@ export class CombatService {
       // 8. Schedule worker
       await this.scheduleResolution(expedition.id, arrivalAtOrigin);
 
-      this.logger.log(
+      this.logger.debug(
         `Recall expedition created: ${expedition.id}, arrives at ${arrivalAtOrigin.toISOString()}`,
       );
 
@@ -520,7 +520,7 @@ export class CombatService {
         },
       );
 
-      this.logger.log(
+      this.logger.debug(
         `Expedition ${expeditionId} recalled, returns at ${returnAt.toISOString()}`,
       );
 
