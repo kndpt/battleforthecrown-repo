@@ -64,7 +64,11 @@ describe('ReportDetailModal', () => {
 
     render(<ReportDetailModal reportId={combatReport.id} reportKind="combat" onClose={onClose} />);
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Carte' }));
+    expect(screen.queryByRole('button', { name: 'Carte' })).not.toBeInTheDocument();
+
+    fireEvent.click(await screen.findByRole('button', {
+      name: 'Ouvrir la carte sur Village joueur 12|34',
+    }));
 
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(mocks.navigateToWorldMapFocus).toHaveBeenCalledWith({ x: 12, y: 34 });

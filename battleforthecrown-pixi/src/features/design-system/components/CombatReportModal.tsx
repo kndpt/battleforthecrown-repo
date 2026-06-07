@@ -65,6 +65,7 @@ export interface CombatReportModalProps {
   onAction?: (action: CombatReportAction) => void;
   outcome: CombatReportOutcome;
   roleLabel: string;
+  targetAction?: CombatReportAction;
   type: string;
   when: string;
   width?: number | string;
@@ -213,25 +214,73 @@ function ReportHero({
   );
 }
 
+function ParticipantCard({
+  action,
+  align,
+  participant,
+  onAction,
+}: {
+  action?: CombatReportAction;
+  align: 'left' | 'right';
+  participant: CombatReportParticipant;
+  onAction?: (action: CombatReportAction) => void;
+}) {
+  const isRight = align === 'right';
+  const coord = participant.coord === '—' ? '—' : participant.coord;
+  const coordClassName = cn(
+    'mt-1 inline-flex max-w-full items-center gap-1.5 rounded-full border border-[rgba(60,38,25,.18)] bg-[rgba(255,255,255,.38)] px-2 py-1 font-game text-[9px] font-extrabold tracking-[.06em] text-[#5b472f] shadow-[inset_0_1px_0_rgba(255,255,255,.45)]',
+    isRight ? 'self-end' : 'self-start',
+  );
+
+  return (
+    <div className={cn('flex min-w-0 flex-col', isRight ? 'items-end text-right' : 'items-start')}>
+      <div className="max-w-full truncate font-game text-[11.5px] font-extrabold tracking-[.02em] text-[#3d2f1f]">
+        {participant.name}
+      </div>
+      <div className="max-w-full truncate font-game text-[9.5px] font-semibold tracking-[.04em] text-[#6d5838]">
+        {participant.place}
+      </div>
+      {action ? (
+        <button
+          aria-label={`Ouvrir la carte sur ${participant.name} ${participant.coord}`}
+          className={cn(
+            coordClassName,
+            'cursor-pointer border-[#3a6c1f] bg-[linear-gradient(to_bottom,rgba(126,199,78,.26),rgba(74,140,42,.18))] text-[#2d6b16] enabled:hover:brightness-105 enabled:active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50',
+          )}
+          disabled={action.disabled}
+          onClick={() => onAction?.(action)}
+          type="button"
+        >
+          <img alt="" className="size-4 shrink-0 object-contain" src={publicAsset('/assets/position.png')} />
+          <span className="shrink-0 uppercase">Carte</span>
+          <span className="truncate tabular-nums">{coord}</span>
+        </button>
+      ) : (
+        <div className={coordClassName}>
+          <img alt="" className="size-4 shrink-0 object-contain opacity-80" src={publicAsset('/assets/position.png')} />
+          <span className="truncate tabular-nums">{coord}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function VersusStrip({
   left,
+  onAction,
   outcome,
   right,
+  targetAction,
 }: {
   left: CombatReportParticipant;
+  onAction?: (action: CombatReportAction) => void;
   outcome: CombatReportOutcome;
   right: CombatReportParticipant;
+  targetAction?: CombatReportAction;
 }) {
   return (
-    <div className="mx-3.5 mt-0.5 grid grid-cols-[1fr_auto_1fr] items-center gap-2 rounded-[10px] border border-[rgba(60,38,25,.2)] bg-[linear-gradient(to_bottom,rgba(60,38,25,.06),rgba(60,38,25,.12))] px-2.5 py-[7px]">
-      <div className="min-w-0">
-        <div className="truncate font-game text-[11.5px] font-extrabold tracking-[.02em] text-[#3d2f1f]">
-          {left.name}
-        </div>
-        <div className="font-game text-[9.5px] font-semibold tracking-[.04em] text-[#6d5838]">
-          {left.place} · {left.coord}
-        </div>
-      </div>
+    <div className="mx-3.5 mt-0.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 rounded-[10px] border border-[rgba(60,38,25,.2)] bg-[linear-gradient(to_bottom,rgba(60,38,25,.06),rgba(60,38,25,.12))] px-2.5 py-[9px]">
+      <ParticipantCard align="left" participant={left} />
       <div
         className={cn(
           'flex size-9 items-center justify-center rounded-full border-2 font-game text-xs font-black tracking-[.04em] text-white shadow-[inset_0_1px_0_rgba(255,255,255,.4),0_2px_0_rgba(0,0,0,.2)] [text-shadow:1px_1px_1px_rgba(0,0,0,.45)]',
@@ -240,14 +289,7 @@ function VersusStrip({
       >
         VS
       </div>
-      <div className="min-w-0 text-right">
-        <div className="truncate font-game text-[11.5px] font-extrabold tracking-[.02em] text-[#3d2f1f]">
-          {right.name}
-        </div>
-        <div className="font-game text-[9.5px] font-semibold tracking-[.04em] text-[#6d5838]">
-          {right.place} · {right.coord}
-        </div>
-      </div>
+      <ParticipantCard action={targetAction} align="right" onAction={onAction} participant={right} />
     </div>
   );
 }
@@ -348,6 +390,7 @@ export function CombatReportModal({
   onAction,
   outcome,
   roleLabel,
+  targetAction,
   type,
   when,
   width = BASE_MODAL_DEFAULT_WIDTH,
@@ -393,7 +436,13 @@ export function CombatReportModal({
           type={type}
           when={when}
         />
-        <VersusStrip left={attacker} outcome={outcome} right={defender} />
+        <VersusStrip
+          left={attacker}
+          onAction={onAction}
+          outcome={outcome}
+          right={defender}
+          targetAction={targetAction}
+        />
 
         <div className="mx-3.5 mb-2 mt-3 flex items-center gap-2">
           <span className="h-px flex-1 bg-[rgba(60,38,25,.22)]" />

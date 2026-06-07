@@ -1,5 +1,24 @@
 # Todo
 
+## 2026-06-07 — Correction UX PR 61 action carte rapport
+
+- [x] Retirer l'action carte du footer du rapport de combat.
+- [x] Recomposer le bloc attaquant/défenseur pour afficher la position carte avec asset.
+- [x] Garder le clic carte branché sur la même primitive `useWorldMapNavigation`.
+- [x] Adapter les tests ciblés et relancer les vérifications frontend.
+- [x] Commit/push la correction sur la PR 61.
+
+### Review en cours
+
+- Feedback Kelvin : le bouton `Carte` en bas du modal est trop décorrélé du village cible ; l'utilisateur ne sait pas sur quel village il sera téléporté.
+- Direction retenue : intégrer l'action carte directement dans le bloc d'informations du village cible avec coordonnées visibles et asset `position.png`, puis garder le footer pour les actions globales.
+- Correction appliquée : `CombatReportModal` accepte maintenant `targetAction` et rend le CTA carte dans le panneau du village cible, avec asset `position.png`, libellé `Carte` et coordonnées visibles.
+- `ReportDetailModal` ne met plus `Carte` dans les actions footer ; le footer revient à `Supprimer` / `Fermer`.
+- Test ciblé mis à jour : le bouton porte l'aria-label `Ouvrir la carte sur Village joueur 12|34` et déclenche toujours `navigateToWorldMapFocus({ x: 12, y: 34 })`.
+- `rtk yarn workspace battleforthecrown-pixi test src/features/combat/ReportDetailModal.test.tsx src/features/world/worldMapNavigation.test.ts` passé : 2 fichiers / 5 tests.
+- `rtk yarn static-check` passé.
+- QA runtime IG restante : vérifier visuellement que le CTA carte est bien dans le bloc du village cible et que le footer ne contient plus d'action `Carte`.
+
 ## 2026-06-07 — QA locale maximale run 048 navigation carte
 
 - [x] Tracer le diff exact et choisir le périmètre de tests.

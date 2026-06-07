@@ -339,11 +339,11 @@ function CombatReportDetail({
                   label: isDeleting ? 'Suppression...' : 'Supprimer',
                   tone: 'danger',
                 },
-                { id: 'view-map', label: 'Carte', tone: 'success' },
                 { id: 'close', label: 'Fermer', tone: 'neutral' },
               ],
               handleAction,
             )}
+            targetAction={{ id: 'view-map', label: 'Carte', tone: 'success' }}
           />
         )}
       </div>
