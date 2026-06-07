@@ -218,7 +218,7 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
     Same pattern as the MS_PER_DAY fix merged in #47.
   verification: yarn static-check ✓ · 252 backend tests ✓ · 314 pixi tests ✓ (merged PR #50)
 
-- status: proposed
+- status: fixed
   area: >
     battleforthecrown-backend/src/modules/combat/travel-time.spec.ts (new),
     battleforthecrown-pixi/src/lib/combatHelpers.test.ts (new)
@@ -230,6 +230,19 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
     had zero test coverage. formatTravelTime and calculateExpeditionTravelTime in pixi combatHelpers.ts
     also untested. New files: travel-time.spec.ts (20 backend tests) and combatHelpers.test.ts (15 pixi tests).
   verification: yarn static-check ✓ · 272 backend tests ✓ · 337 pixi tests ✓
+
+- status: proposed
+  area: >
+    battleforthecrown-backend/src/modules/combat/scout-report.presenter.spec.ts (new)
+  branch: maint/debt/scout-report-presenter-spec
+  title: "maint(debt): add missing spec for scout-report.presenter"
+  note: >
+    scout-report.presenter.ts had zero test coverage despite being the sole path that maps raw Prisma
+    ScoutReport rows into ScoutReportResponse DTOs consumed by the frontend. Its two siblings
+    (combat-report.presenter.spec.ts, reinforcement-report.presenter.spec.ts) were already covered.
+    The reportDetails helper has ~6 branches (null, non-object, scoutLosses, scoutUnits, wallLevel,
+    combined) that warranted explicit regression tests. New spec: 10 tests, no mocks required.
+  verification: yarn static-check ✓ · 282 backend tests ✓
 
 - status: fixed
   area: >
@@ -291,3 +304,10 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
   despite being on the critical combat path (combat.service, combat.worker, world-config.service).
   Also added pixi tests for formatTravelTime + calculateExpeditionTravelTime (combatHelpers.ts).
   2 new test files, 35 tests total. static-check ✓ · 272 backend tests ✓ · 337 pixi tests ✓.
+  (Also updated travel-time-tests from proposed→fixed: branch was merged, no open PR found.)
+- 2026-06-07: missing spec for scout-report.presenter on `maint/debt/scout-report-presenter-spec` —
+  scout-report.presenter.ts had zero tests despite being sole mapping path from Prisma ScoutReport
+  to ScoutReportResponse. Siblings combat-report and reinforcement-report presenters were already
+  covered. New spec: 10 tests covering reportDetails branches (null, non-object, wallLevel,
+  scoutLosses, scoutUnits, combined, invalid types) + full mapping + barbarian scout case.
+  static-check ✓ · 282 backend tests ✓.
