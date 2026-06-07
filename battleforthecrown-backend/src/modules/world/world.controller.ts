@@ -21,6 +21,7 @@ import {
   type VisionDisk,
 } from './vision.service';
 import { joinWorldSchema, type JoinWorldDto } from './dto/join-world.dto';
+import type { WorldMembershipResponse } from '@battleforthecrown/shared/world';
 
 interface PositionedEntity {
   id: string;
@@ -102,6 +103,14 @@ export class WorldController {
       userId: user.id,
       villageName: dto.villageName,
     });
+  }
+
+  @Post(':worldId/enter')
+  enterWorld(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('worldId') worldId: string,
+  ): Promise<WorldMembershipResponse> {
+    return this.worldService.touchUserMembership(user.id, worldId);
   }
 
   @Delete(':worldId/me')

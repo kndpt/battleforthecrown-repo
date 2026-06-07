@@ -5,7 +5,6 @@ import {
 } from '@/features/design-system/worlds/WorldsSelectionDesign';
 import { defaultSeasonVariants, worldsSelectionLabels } from '@/features/design-system/worlds/worldsSelectionConfig';
 import { ToastStack } from '@/features/layout/ToastStack';
-import { useGameStore } from '@/stores/game';
 import { useUiStore } from '@/stores/ui';
 import {
   buildWorldTabCounts,
@@ -13,15 +12,14 @@ import {
   type WorldCardViewModel,
   type WorldsTab,
 } from './worldsViewModel';
-import { joinErrorMessage, useWorldCardModels } from './useWorldCardModels';
+import { enterErrorMessage, joinErrorMessage, useWorldCardModels } from './useWorldCardModels';
 
 export function WorldSelector() {
   const navigate = useNavigate();
   const pushToast = useUiStore((state) => state.pushToast);
   const [activeTab, setActiveTab] = useState<WorldsTab>('open');
   const [error, setError] = useState<string | null>(null);
-  const setGameContext = useGameStore((state) => state.setContext);
-  const { currentWorldId, defaultVillageName, join, memberships, worldModels, worlds } = useWorldCardModels();
+  const { currentWorldId, defaultVillageName, enter, join, memberships, worldModels, worlds } = useWorldCardModels();
   const counts = useMemo(() => buildWorldTabCounts(worldModels), [worldModels]);
   const filteredWorlds = useMemo(
     () => filterWorldsByTab(worldModels, activeTab),
@@ -29,9 +27,17 @@ export function WorldSelector() {
   );
 
   const onEnter = (world: WorldCardViewModel) => {
+    if (enter.isPending) return;
     setError(null);
-    setGameContext({ worldId: world.id, villageId: null });
-    navigate('/game');
+    enter.mutate(
+      { worldId: world.id },
+      {
+        onError: (err) => {
+          setError(enterErrorMessage(err));
+        },
+        onSuccess: () => navigate('/game'),
+      },
+    );
   };
 
   const onJoin = (world: WorldCardViewModel) => {

@@ -19,5 +19,5 @@ export function parseUnitMap(
 
 /** Encode a UnitMap for writing into a Prisma JSON column. */
 export function encodeUnitMap(value: UnitMap): Prisma.InputJsonValue {
-  return value as Prisma.InputJsonValue;
+  return value;
 }

@@ -3,6 +3,7 @@ import { useQueries } from '@tanstack/react-query';
 import { ApiError } from '@/api';
 import {
   publicKingdomPowerQueryOptions,
+  useEnterWorldMutation,
   useJoinWorldMutation,
   useMyMembershipsQuery,
   usePublicWorldsQuery,
@@ -20,6 +21,7 @@ function defaultVillageName(email?: string): string {
 export function useWorldCardModels() {
   const worlds = usePublicWorldsQuery();
   const memberships = useMyMembershipsQuery();
+  const enter = useEnterWorldMutation();
   const join = useJoinWorldMutation();
   const user = useAuthStore((state) => state.user);
   const userEmail = user?.email;
@@ -67,6 +69,7 @@ export function useWorldCardModels() {
   return {
     currentWorldId,
     defaultVillageName: defaultVillageName(userEmail),
+    enter,
     join,
     memberships,
     worldModels,
@@ -84,4 +87,10 @@ export function joinErrorMessage(err: unknown): string {
 
   const translated = JOIN_ERROR_TRANSLATIONS.find(([pattern]) => pattern.test(err.message));
   return (translated?.[1] ?? err.message) || 'Inscription au royaume impossible.';
+}
+
+export function enterErrorMessage(err: unknown): string {
+  if (!(err instanceof ApiError)) return "Impossible d'entrer dans le royaume.";
+  if (err.status === 404) return "Tu n'es pas encore inscrit à ce royaume.";
+  return err.message || "Impossible d'entrer dans le royaume.";
 }

@@ -33,7 +33,7 @@ describe('combat conquest hook smoke', () => {
         config: {
           ...config,
           fogOfWar: { enabled: false },
-        } as object,
+        },
       },
     });
   }

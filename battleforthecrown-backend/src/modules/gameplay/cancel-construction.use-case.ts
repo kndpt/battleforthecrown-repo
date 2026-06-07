@@ -8,8 +8,6 @@ import { OwnershipService } from '../../common/auth';
 import { WorldConfigService } from '../world/world-config.service';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
 
-type StrategyName = 'FORTRESS' | 'RAIDERS' | 'ECONOMIC' | 'BALANCED';
-
 export interface CancelConstructionResult {
   success: true;
   refunded: {
@@ -63,9 +61,7 @@ export class CancelConstructionUseCase {
       const strategyConfig = await tx.villageStrategyConfig.findUnique({
         where: { villageId: building.villageId },
       });
-      const currentStrategy = strategyConfig?.strategy as
-        | StrategyName
-        | undefined;
+      const currentStrategy = strategyConfig?.strategy;
 
       const cost = await this.worldConfig.getCost(
         worldId,

@@ -20,8 +20,6 @@ import {
   MAX_CONSTRUCTION_QUEUE,
 } from '@battleforthecrown/shared/village';
 
-type StrategyName = 'FORTRESS' | 'RAIDERS' | 'ECONOMIC' | 'BALANCED';
-
 @Injectable()
 export class UpgradeBuildingUseCase {
   private readonly logger = new Logger(UpgradeBuildingUseCase.name);
@@ -97,9 +95,7 @@ export class UpgradeBuildingUseCase {
 
       const castle = allBuildings.find((b) => b.type === 'CASTLE');
       const castleLevel = castle?.level ?? 1;
-      const currentStrategy = strategyConfig?.strategy as
-        | StrategyName
-        | undefined;
+      const currentStrategy = strategyConfig?.strategy;
 
       const cost = await this.worldConfig.getCost(
         village.worldId,

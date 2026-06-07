@@ -25,10 +25,10 @@ function reportDetails(value: unknown): ScoutReportResponse['details'] {
   const wallLevel = details.wallLevel;
   return {
     ...(details.scoutLosses && typeof details.scoutLosses === 'object'
-      ? { scoutLosses: details.scoutLosses as UnitMap }
+      ? { scoutLosses: details.scoutLosses }
       : {}),
     ...(details.scoutUnits && typeof details.scoutUnits === 'object'
-      ? { scoutUnits: details.scoutUnits as UnitMap }
+      ? { scoutUnits: details.scoutUnits }
       : {}),
     ...(typeof wallLevel === 'number' ? { wallLevel } : {}),
   };

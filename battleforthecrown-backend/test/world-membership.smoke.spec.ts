@@ -19,6 +19,48 @@ describe('world membership smoke', () => {
     await ctx.app.close();
   });
 
+  it('POST /world/:id/enter refreshes lastLoginAt for an existing membership only', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const member = await registerUser(ctx.server);
+    const outsider = await registerUser(ctx.server);
+    await joinWorld(ctx.server, member.accessToken, world.id, 'active-village');
+
+    const staleLastLoginAt = new Date('2026-01-01T00:00:00.000Z');
+    await ctx.prisma.worldMembership.update({
+      where: { userId_worldId: { userId: member.userId, worldId: world.id } },
+      data: { lastLoginAt: staleLastLoginAt },
+    });
+
+    const enter = await request(ctx.server)
+      .post(`/world/${world.id}/enter`)
+      .set('Authorization', `Bearer ${member.accessToken}`)
+      .send({});
+    expect(enter.status).toBeLessThan(300);
+    const enterBody = enter.body as { lastLoginAt?: unknown };
+    if (typeof enterBody.lastLoginAt !== 'string') {
+      throw new Error('Expected enter response lastLoginAt');
+    }
+    expect(Date.parse(enterBody.lastLoginAt)).toBeGreaterThan(
+      staleLastLoginAt.getTime(),
+    );
+
+    const refreshed = await ctx.prisma.worldMembership.findUniqueOrThrow({
+      where: { userId_worldId: { userId: member.userId, worldId: world.id } },
+    });
+    if (!refreshed.lastLoginAt) {
+      throw new Error('Expected refreshed membership lastLoginAt');
+    }
+    expect(refreshed.lastLoginAt.getTime()).toBeGreaterThan(
+      staleLastLoginAt.getTime(),
+    );
+
+    const rejected = await request(ctx.server)
+      .post(`/world/${world.id}/enter`)
+      .set('Authorization', `Bearer ${outsider.accessToken}`)
+      .send({});
+    expect(rejected.status).toBe(404);
+  });
+
   it('reset world: join → upgrade → DELETE /world/:id/me wipes everything → re-join recreates fresh village', async () => {
     const world = await seedSmokeWorld(ctx.prisma);
     const user = await registerUser(ctx.server);

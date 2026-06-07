@@ -201,9 +201,7 @@ export class ResourcesService {
       village.worldId,
       warehouseLevel,
     );
-    const strategyType = village.strategyConfig?.strategy as
-      | VillageStrategyType
-      | undefined;
+    const strategyType = village.strategyConfig?.strategy;
     const adjustedLimit = this.applyStrategyStorageBonus(
       strategyType ?? null,
       baseLimit,
@@ -290,9 +288,7 @@ export class ResourcesService {
 
     const worldId = village.worldId;
 
-    const strategyType = village.strategyConfig?.strategy as
-      | VillageStrategyType
-      | undefined;
+    const strategyType = village.strategyConfig?.strategy;
 
     const ratesPerMin = await this.fetchBuildingRates(
       worldId,

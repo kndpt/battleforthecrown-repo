@@ -264,6 +264,15 @@ export { SemanticColorRow } from './SemanticColorRow';
 export type { SemanticColorRowProps, SemanticColorSegment } from './SemanticColorRow';
 export { ScoutReportCard } from './ScoutReportCard';
 export type { ScoutReportAction, ScoutReportCardProps, ScoutReportSection, ScoutReportStat, ScoutReportTroopBar, ScoutReportVerdict, ScoutReportVerdictTone } from './ScoutReportCard';
+export { ReinforcementReportModal } from './ReinforcementReportModal';
+export type {
+  ReinforcementReportAction,
+  ReinforcementReportModalLabels,
+  ReinforcementReportModalProps,
+  ReinforcementReportPlace,
+  ReinforcementReportTone,
+  ReinforcementReportUnit,
+} from './ReinforcementReportModal';
 export { ShadowDepthTile } from './ShadowDepthTile';
 export type { ShadowDepthTileProps, ShadowDepthTone } from './ShadowDepthTile';
 export { SurfaceTile } from './SurfaceTile';

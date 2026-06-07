@@ -40,7 +40,7 @@ describe('barbarians smoke', () => {
             targetMin: 1,
             targetMax: 2,
           },
-        } as object,
+        },
       },
     });
 
@@ -144,7 +144,7 @@ describe('barbarians smoke', () => {
             targetMin: 0,
             targetMax: 0,
           },
-        } as object,
+        },
       },
     });
 

@@ -238,7 +238,7 @@ describe('village strategy smoke', () => {
         config: {
           ...SMOKE_WORLD_CONFIG,
           fogOfWar: { enabled: false },
-        } as object,
+        },
       },
     });
     const balancedAttacker = await seedPlayer(

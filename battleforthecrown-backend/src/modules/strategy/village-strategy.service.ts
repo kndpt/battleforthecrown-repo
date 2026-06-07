@@ -194,7 +194,7 @@ export class VillageStrategyService {
           OR: [{ cooldownEndsAt: null }, { cooldownEndsAt: { lte: now } }],
         },
         data: {
-          strategy: newStrategy as VillageStrategy,
+          strategy: newStrategy,
           lastChangedAt: now,
           cooldownEndsAt,
           changeCost: changeCost.crowns,
@@ -217,7 +217,7 @@ export class VillageStrategyService {
           await tx.villageStrategyConfig.create({
             data: {
               villageId,
-              strategy: newStrategy as VillageStrategy,
+              strategy: newStrategy,
               lastChangedAt: now,
               cooldownEndsAt,
               changeCost: changeCost.crowns,
@@ -328,9 +328,7 @@ export class VillageStrategyService {
       select: { strategyConfig: { select: { strategy: true } } },
     });
 
-    const strategy = village?.strategyConfig?.strategy as
-      | VillageStrategyType
-      | undefined;
+    const strategy = village?.strategyConfig?.strategy;
     if (!strategy) {
       return null;
     }
