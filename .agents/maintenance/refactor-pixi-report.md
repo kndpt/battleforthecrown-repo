@@ -571,3 +571,81 @@ yarn test:pixi      → 60 test files, 322 tests passed (aucun test cassé)
 ```
 
 **Diff :** `queries.ts` +4 LOC (`refetchInterval`), `BuildingDetailModal.tsx` −14 LOC (useEffect + imports). Net : −10 LOC dans les fichiers modifiés.
+
+---
+
+## Run 2026-06-07 — commit a44a710
+
+**Scan date:** 2026-06-07  
+**Commit SHA:** a44a7102c077ac691ee33a8b107d6277565262f4
+
+### Prior findings update
+
+- A1–A6 (ws-bindings query keys) : **RESOLVED**
+- B1, B2 : **RESOLVED**
+- N1, N2 : **RESOLVED**
+- S1, S2, S3 (session teardown) : **RESOLVED**
+- C1 (GameHeader god-component) : **RESOLVED**
+- D2 (headerHelpers tests) : **RESOLVED**
+- F1 (UUID toast) : **RESOLVED**
+- F4 (drawCaptureMarker all entities) : **RESOLVED**
+- G1 (computeProgress duplication) : **RESOLVED**
+- F3 / G2 (formatTime tests) : **RESOLVED**
+- H1 (armyTraining refetchInterval) : **RESOLVED**
+- H2 (BuildingDetailModal polling useEffect) : **RESOLVED**
+- I1 (joinErrorMessage tests) : **RESOLVED** (ce run)
+- I5 (ctaFor joined+LOCKED test) : **RESOLVED** (ce run)
+- C2 (SpecializedBuildingDetailModal 643 LOC) : STILL OPEN — organisé, faible risque
+- C3 (ArmyScreen garrison derivations) : STILL OPEN — 30 lignes plates
+- D3 (VillageView inline `<style>` block) : STILL OPEN — cosmétique
+- D4 (magic number 60_000 optimistic) : STILL OPEN — acceptable
+- F2 (DailyRetentionWidget expiresInValue hardcoded) : STILL OPEN — serveur n'expose pas le reset time
+
+### Mental model
+
+Frontend propre et discipliné. Vérifié cette passe (commits depuis run 2026-06-06) :
+- **Server-authoritative** : 0 violation. Aucun nouveau calcul local autoritatif.
+- **Type debt** : 0 `as any`, 0 `@ts-ignore`, 0 `@ts-expect-error`, 0 `fetch`/`axios` hors `src/api/`.
+- **Stores Zustand** : inchangés, teardown centralisé confirmé.
+- **Pixi scenes** : `WorldMapScene.ts` inchangé, ticker correct.
+- **TanStack Query** : `queries.ts` patterns cohérents. `reinforcementReportQuery` + `reinforcementReportsQuery` ajoutées avec `staleTime` conformes aux patterns existants (60_000 / 10_000).
+- **ArmyScreen WS-drop cascade** : useEffect correct — guard `(prev.len > 0 || prev.completedTotal > 0)` protège contre le spurious trigger au mount.
+
+### New findings
+
+| ID | Category | Location | Description | Severity | Effort | Status |
+|----|----------|----------|-------------|----------|--------|--------|
+| I1 | Test gap | `features/worlds/useWorldCardModels.ts:77-87` | `joinErrorMessage` — 4 branches (ApiError+match, ApiError+pas de match, ApiError+message vide, non-ApiError), 0 test direct | Low | S | **RESOLVED** (ce run) |
+| I5 | Test gap | `features/worlds/worldsViewModel.ts:152-156` | `ctaFor` joined+LOCKED non testé — quand un monde se ferme avec des joueurs déjà inscrits, le CTA doit rester "Entrer" pas "Inscriptions closes" | Low | S | **RESOLVED** (ce run) |
+
+### "Looks bad but is actually fine" (this run)
+
+| Pattern | Verdict |
+|---------|---------|
+| `ArmyScreen` WS-drop cascade `['power', 'kingdom', userId]` raw key | ✅ prefix-match intentionnel — même pattern que `invalidatePowerQueries` dans ws-bindings |
+| Garde défensive `if (world.isJoined)` dans `onJoin` de `WorldSelector`/`WorldDetailScreen` | ✅ mort en routing normal (design system route `joined→onEnter`), mais inoffensif |
+| `useDeleteReinforcementReportMutation` n'invalide pas le cache du rapport individuel | ✅ cohérent avec delete patterns combat/scout ; composant appelle `onClose()` après delete |
+| `ReinforcementReportModal.tsx` 315 LOC | ✅ purement présentationnel, organisé par section, cohérent avec design-system modals existantes |
+| `expiresInValue="04h00"` dans `DailyRetentionWidget.tsx:295` | ✅ `RetentionSummaryDto` n'expose pas le reset time — F2 bloqué côté serveur |
+| `onEnter`/`onJoin` dupliqués entre `WorldSelector` et `WorldDetailScreen` | ✅ contextes de navigation distincts ; abstraction sans valeur pour 2 écrans |
+
+### Selected theme: **I1 + I5 — Test coverage: `joinErrorMessage` + `ctaFor` joined+LOCKED**
+
+**Rationale :**
+- `joinErrorMessage` est la seule traduction d'erreur pour les world joins (2 callers production). 4 branches dont le fallback sur message vide — une régression exposerait les messages internes backend.
+- `ctaFor` joined+LOCKED est un cas gameplay réel (inscriptions ferment pendant une partie active). La suite ne testait que joined+OPEN et joined+PLANNED.
+- Les deux sont des fonctions pures sans mock nécessaire — filet chirurgical.
+
+**Rejected :**
+- C2/C3 : churn sans impact comportemental.
+- D3/D4/F2 : cosmétiques ou bloqués backend.
+
+### Verification
+
+```text
+yarn static-check   → green (tsc backend + pixi, ESLint backend + pixi --quiet)
+yarn test:pixi      → 62 test files, 348 tests passed (+1 useWorldCardModels.test.ts, +6 tests)
+yarn test:backend   → 25 suites, 272 tests passed
+```
+
+**Diff :** `useWorldCardModels.test.ts` +33 LOC (nouveau, 5 tests), `worldsViewModel.test.ts` +15 LOC (+1 test). Net : +48 LOC.
