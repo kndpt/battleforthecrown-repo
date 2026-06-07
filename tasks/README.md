@@ -33,6 +33,7 @@ Politique PR `$bftc-run` :
 
 ### Runs actifs
 
+- [050 — Caravane de ressources entre villages](./runs/050-feature-resource-caravan.md) — 📋 `PLANNED`. Transfert A→B intra-joueur via expédition `CARAVAN` (porteurs = pop verrouillée, vitesse marchande, plafond Entrepôt B, excédent perdu, pas de bâtiment). Intégrée au MVP, remplace le « Marché royal » post-MVP.
 - [049 — Devoir royal : scaling par niveau du joueur](./runs/049-feature-royal-duty-level-scaling.md) — 📋 `PLANNED`. Missions et récompenses des cartes quotidiennes scalées par château max (tier barbare, quantité, récompense plafonnée non-snowball).
 - [048 — Map focus links](./runs/048-feature-map-focus-links.md) — 📋 `PLANNED`. Créer une primitive de navigation carte réutilisable vers `/game/world` avec focus coordonnées, premier consumer rapport de combat et doc technique.
 - [047 — Rapports de capture](./runs/047-feature-capture-reports.md) — 📋 `PLANNED`. Spécifier puis livrer les rapports persistants liés aux attaques pendant capture PvP et à la capture finale.
