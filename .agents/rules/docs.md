@@ -54,3 +54,7 @@ docs/
 | Briefing AI agent | `<workspace>/AGENTS.md`. |
 | Onboarding humain | `README.md` de chaque workspace. |
 | Historique des changements | `git log` (les commits suivent `<type>(<scope>): <subject>`). |
+
+## ADR / décision structurante
+
+Ajouter `docs/architecture/decisions.md` seulement si le choix est durable, surprenant sans contexte, et issu d'un vrai trade-off. Sinon, doc de référence, note de run, ou rien.

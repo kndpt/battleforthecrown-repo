@@ -47,6 +47,7 @@ Préflight commun :
    - QA finale : `bftc-qa`
    - démarrage IG depuis worktree : `bftc-worktree-qa`
    - React/Pixi : `bftc-react-hud` / `bftc-pixi-scene`
+7. Si la cible est un bug et ne contient ni repro, ni signal rouge, ni commande de vérification automatisable, stopper avant coding et recommander `$bftc-diagnose <bug report>` sauf si la cartographie établit immédiatement une boucle rouge fiable.
 
 ## Pipeline
 

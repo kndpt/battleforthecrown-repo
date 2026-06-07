@@ -1,5 +1,15 @@
 # Todo
 
+## 2026-06-07 — Skills compagnons diagnose/slice
+
+- [x] Ajouter `bftc-diagnose` / `bftc-slice` sans charger le harness existant.
+- [x] Compacter les hooks et bodies après review contexte.
+
+### Review en cours
+
+- Résultat : deux skills compagnons courts, hooks minimaux dans `plan/run/tests/docs`.
+- Vérif : YAML Ruby OK ; descriptions <160 chars ; `quick_validate.py` bloqué par `ModuleNotFoundError: yaml`; `rtk git diff --check` OK.
+
 ## 2026-06-07 — Fix snapshots rapports combat sur main
 
 - [x] Repartir du `origin/main` qui contient l'action carte `position.png`.

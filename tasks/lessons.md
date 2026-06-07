@@ -112,3 +112,4 @@
 - Dans la liste multi-villages, ne pas afficher le niveau de Château si le tier est déjà visible sur l'asset ; privilégier la puissance du village en méta principale.
 - Réserver `/assets/army-power.png` à la puissance armée ; utiliser `/assets/power.png` pour une puissance totale royaume/village.
 - Les villageois disponibles appartiennent à la ligne méta du village actif ; ne pas les superposer à la barre bois/pierre/fer.
+- Quand on ajoute des skills/harness, optimiser aussi le contexte négatif : supprimer les doublons et garder les nouveaux bodies en protocole court plutôt qu'en procédure longue.

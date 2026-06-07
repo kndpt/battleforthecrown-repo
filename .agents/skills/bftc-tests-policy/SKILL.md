@@ -7,6 +7,8 @@ description: Use for BFTC test decisions, Jest/Vitest/smokes, Zod, pure formulas
 
 Use the smallest durable regression net. Do not add tests "just in case".
 
+Tests doivent viser le comportement observable via interface publique. Ajouter un comportement à la fois : un signal rouge utile, le minimum pour passer vert, puis itérer. Ne pas écrire une matrice de tests imaginés en avance si le premier slice peut changer la compréhension.
+
 ## Decision
 
 1. User explicitly asked for a test → continue, but validate the type below.

@@ -108,7 +108,7 @@ ESTIMATION_SCOPE: small | medium | large
 NOTES: <reste libre>
 ```
 
-Si `ESTIMATION_SCOPE: large` avec note de segmentation, tu proposeras au user de découper avant écriture (cf. étape 3).
+Si `ESTIMATION_SCOPE: large`, recommander `$bftc-slice <source>` sauf si un premier run vertical évident peut être créé seul.
 
 ## Étape 3 — Présentation au user pour validation
 
@@ -125,7 +125,7 @@ Pose ensuite la question :
 > 1. OK, écris l'artefact
 > 2. Ajuster avant écriture (réponds avec ce qu'il faut changer)
 > 3. Contester le verdict `ARTEFACT` (force ticket ou run, motiver)
-> 4. Découper en plusieurs runs/tickets (si `ESTIMATION_SCOPE: large`)
+> 4. Découper en plusieurs runs via `$bftc-slice` (si `ESTIMATION_SCOPE: large`)
 > 5. Fusionner avec un lien détecté / annuler au profit d'un existant
 > 6. Annuler
 
@@ -133,9 +133,7 @@ Si « Ajuster » : applique les modifications sur le draft, reboucle au début d
 
 Si « Contester » : applique le verdict utilisateur (le user a la décision finale sur l'artefact). Note dans le récap final que le verdict a été contesté + la raison.
 
-Si « Découper » : produit la liste des artefacts à créer, propose au user :
-- Écrire tous les artefacts d'un coup en `PLANNED`.
-- Écrire seulement le premier, écrire les suivants à la demande.
+Si « Découper » : recommander `$bftc-slice <source>` avec le contexte déjà établi.
 
 ## Étape 4 — Écriture de l'artefact
 
@@ -211,7 +209,7 @@ Le `run_planner` doit appliquer ces critères. Si **AU MOINS UN** est vrai → `
 | Demande une décision archi entre 2+ pistes design | Validation user en étape 3 du `$bftc-run` indispensable |
 | > 4 fichiers estimés au scope | Au-delà, le mode rapide n'est plus sûr |
 | Impact non trivial sur `docs/architecture/` | Demande passage `doc-writer` |
-| Phase entière de la roadmap (Phase 6, 7, etc.) | Toujours un run (et souvent à découper en plusieurs) |
+| Phase entière de la roadmap (Phase 6, 7, etc.) | Toujours au moins un run ; si large, router vers `$bftc-slice` |
 
 Tous les autres cas → `ARTEFACT: ticket` (bug ciblé, refacto local, ajout endpoint trivial, fix UI bornée, doc isolée).
 
