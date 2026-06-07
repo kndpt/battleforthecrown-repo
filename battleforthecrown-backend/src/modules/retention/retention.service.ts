@@ -21,6 +21,11 @@ import type {
 } from '../event/event-types';
 import { createOutboxEvent } from '../event/event.utils';
 import { ResourcesService } from '../resources/resources.service';
+import {
+  compareBarbarianTier,
+  getDailyCardScaling,
+  type DailyTaskMetadata,
+} from './retention-scaling';
 import type {
   ClaimDailyCardResponse,
   DailyCardDto,
@@ -31,17 +36,6 @@ import type {
 
 const DAILY_CARD_LIMIT = 1;
 const PARIS_RESET_HOUR = 4;
-const DAILY_REWARD = { wood: 120, stone: 120, iron: 120 };
-
-const TASK_TEMPLATES: Array<{
-  type: DailyCardTaskType;
-  label: string;
-  target: number;
-}> = [
-  { type: 'TRAIN_UNITS', label: 'Former une unité', target: 1 },
-  { type: 'COMPLETE_BUILDING', label: 'Terminer une construction', target: 1 },
-  { type: 'RAID_BARBARIAN', label: 'Vaincre un village barbare', target: 1 },
-];
 
 type CardWithTasks = DailyCard & { tasks: DailyCardTask[] };
 
@@ -209,6 +203,8 @@ export class RetentionService {
         tx,
         projection.villageId,
         projection.type,
+        projection.completedQty,
+        projection.targetTier,
         eventCreatedAt,
       );
     });
@@ -226,19 +222,23 @@ export class RetentionService {
     if (existing) return;
 
     try {
+      const scaling = getDailyCardScaling(
+        await getPlayerMaxCastleLevel(this.prisma, userId, worldId),
+      );
       await this.prisma.dailyCard.create({
         data: {
           userId,
           worldId,
           dayKey,
-          rewardWood: DAILY_REWARD.wood,
-          rewardStone: DAILY_REWARD.stone,
-          rewardIron: DAILY_REWARD.iron,
+          rewardWood: scaling.reward.wood,
+          rewardStone: scaling.reward.stone,
+          rewardIron: scaling.reward.iron,
           tasks: {
-            create: TASK_TEMPLATES.map((task) => ({
+            create: scaling.tasks.map((task) => ({
               type: task.type,
               label: task.label,
               target: task.target,
+              metadata: task.metadata as Prisma.InputJsonObject,
             })),
           },
         },
@@ -270,6 +270,8 @@ export class RetentionService {
     tx: Prisma.TransactionClient,
     villageId: string,
     type: DailyCardTaskType,
+    completedQty: number,
+    targetTier: string | null,
     eventCreatedAt: Date,
   ): Promise<void> {
     const now = new Date();
@@ -292,6 +294,8 @@ export class RetentionService {
       village.worldId,
       eventDayKey,
       type,
+      completedQty,
+      targetTier,
       eventCreatedAt,
     );
     await this.expireStaleCardsInTransaction(
@@ -317,6 +321,8 @@ export class RetentionService {
     worldId: string,
     dayKey: string,
     type: DailyCardTaskType,
+    completedQty: number,
+    targetTier: string | null,
     completedAt: Date,
   ): Promise<void> {
     const card = await tx.dailyCard.findFirst({
@@ -338,12 +344,18 @@ export class RetentionService {
     if (!card) return;
 
     const task = card.tasks.find(
-      (candidate) => candidate.type === type && !candidate.completedAt,
+      (candidate) =>
+        candidate.type === type &&
+        !candidate.completedAt &&
+        calculateTaskProgressUpdate(candidate, completedQty, targetTier) !==
+          null,
     );
     if (!task) return;
 
-    const progress = Math.min(task.progress + 1, task.target);
-    const taskCompletedAt = progress >= task.target ? completedAt : null;
+    const update = calculateTaskProgressUpdate(task, completedQty, targetTier);
+    if (!update) return;
+    const progress = update.progress;
+    const taskCompletedAt = update.isComplete ? completedAt : null;
     await tx.dailyCardTask.update({
       where: { id: task.id },
       data: { progress, completedAt: taskCompletedAt },
@@ -368,6 +380,9 @@ export class RetentionService {
     worldId: string,
     dayKey: string,
   ): Promise<void> {
+    const scaling = getDailyCardScaling(
+      await getPlayerMaxCastleLevel(tx, userId, worldId),
+    );
     await tx.dailyCard.upsert({
       where: { userId_worldId_dayKey: { userId, worldId, dayKey } },
       update: {},
@@ -375,14 +390,15 @@ export class RetentionService {
         userId,
         worldId,
         dayKey,
-        rewardWood: DAILY_REWARD.wood,
-        rewardStone: DAILY_REWARD.stone,
-        rewardIron: DAILY_REWARD.iron,
+        rewardWood: scaling.reward.wood,
+        rewardStone: scaling.reward.stone,
+        rewardIron: scaling.reward.iron,
         tasks: {
-          create: TASK_TEMPLATES.map((task) => ({
+          create: scaling.tasks.map((task) => ({
             type: task.type,
             label: task.label,
             target: task.target,
+            metadata: task.metadata as Prisma.InputJsonObject,
           })),
         },
       },
@@ -439,26 +455,109 @@ export class RetentionService {
 export function getTaskProjection<K extends EventKind>(
   kind: K,
   payload: PayloadForKind<K>,
-): { villageId: string; type: DailyCardTaskType } | null {
+): {
+  villageId: string;
+  type: DailyCardTaskType;
+  completedQty: number;
+  targetTier: string | null;
+} | null {
   switch (kind) {
     case 'unit.trained': {
       const eventPayload = payload as UnitTrainedPayload;
-      return { villageId: eventPayload.villageId, type: 'TRAIN_UNITS' };
+      return {
+        villageId: eventPayload.villageId,
+        type: 'TRAIN_UNITS',
+        completedQty: eventPayload.completedQty,
+        targetTier: null,
+      };
     }
     case 'building.completed': {
       const eventPayload = payload as BuildingCompletedPayload;
-      return { villageId: eventPayload.villageId, type: 'COMPLETE_BUILDING' };
+      return {
+        villageId: eventPayload.villageId,
+        type: 'COMPLETE_BUILDING',
+        completedQty: 1,
+        targetTier: null,
+      };
     }
     case 'battle.resolved': {
       const eventPayload = payload as BattleResolvedPayload;
       return eventPayload.targetKind === 'BARBARIAN_VILLAGE' &&
         eventPayload.isVictory
-        ? { villageId: eventPayload.villageId, type: 'RAID_BARBARIAN' }
+        ? {
+            villageId: eventPayload.villageId,
+            type: 'RAID_BARBARIAN',
+            completedQty: 1,
+            targetTier: eventPayload.targetTier ?? null,
+          }
         : null;
     }
     default:
       return null;
   }
+}
+
+interface CastleLevelReader {
+  building: {
+    aggregate(args: {
+      where: { type: string; village: { userId: string; worldId: string } };
+      _max: { level: true };
+    }): Promise<{ _max: { level: number | null } }>;
+  };
+}
+
+export async function getPlayerMaxCastleLevel(
+  prisma: CastleLevelReader,
+  userId: string,
+  worldId: string,
+): Promise<number> {
+  const result = await prisma.building.aggregate({
+    where: {
+      type: 'CASTLE',
+      village: { userId, worldId },
+    },
+    _max: { level: true },
+  });
+
+  return result._max.level ?? 1;
+}
+
+export function calculateTaskProgressUpdate(
+  task: Pick<DailyCardTask, 'progress' | 'target' | 'metadata'>,
+  eventCompletedQty: number,
+  targetTier: string | null,
+): { progress: number; isComplete: boolean } | null {
+  if (eventCompletedQty <= 0) return null;
+  const metadata = parseTaskMetadata(task.metadata);
+  if (
+    metadata.minTargetTier &&
+    compareBarbarianTier(targetTier, metadata.minTargetTier) < 0
+  ) {
+    return null;
+  }
+  const completedQty = metadata.completedQty ?? eventCompletedQty;
+  const progress = Math.min(task.progress + completedQty, task.target);
+  return { progress, isComplete: progress >= task.target };
+}
+
+export function parseTaskMetadata(
+  metadata: Prisma.JsonValue,
+): DailyTaskMetadata {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return {};
+  }
+  const raw = metadata as Record<string, unknown>;
+  return {
+    completedQty:
+      typeof raw.completedQty === 'number' && Number.isFinite(raw.completedQty)
+        ? Math.max(1, Math.floor(raw.completedQty))
+        : undefined,
+    minTargetTier:
+      typeof raw.minTargetTier === 'string' &&
+      /^T[1-5]$/.test(raw.minTargetTier)
+        ? (raw.minTargetTier as DailyTaskMetadata['minTargetTier'])
+        : undefined,
+  };
 }
 
 function allTasksComplete(
@@ -530,6 +629,7 @@ function mapTask(task: DailyCardTask): DailyCardTaskDto {
     progress: task.progress,
     target: task.target,
     completedAt: task.completedAt?.toISOString() ?? null,
+    metadata: parseTaskMetadata(task.metadata),
   };
 }
 

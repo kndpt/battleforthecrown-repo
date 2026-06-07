@@ -100,7 +100,9 @@ function mapTask(
     icon: meta.icon,
     id: task.id,
     loopLabel: meta.loopLabel,
-    name: taskLabelOverride[task.type] ?? task.label,
+    name: task.metadata.minTargetTier
+      ? task.label
+      : (taskLabelOverride[task.type] ?? task.label),
     need: task.target,
     rewards: [],
     state: isDone ? "done" : "progress",
@@ -155,10 +157,13 @@ export function DailyRetentionWidget({
   const isControlled = controlledOpen !== undefined;
   const [internalOpen, setInternalOpen] = useState(false);
   const isOpen = isControlled ? (controlledOpen ?? false) : internalOpen;
-  const handleSetOpen = useCallback((value: boolean) => {
-    if (!isControlled) setInternalOpen(value);
-    onOpenChange?.(value);
-  }, [isControlled, onOpenChange]);
+  const handleSetOpen = useCallback(
+    (value: boolean) => {
+      if (!isControlled) setInternalOpen(value);
+      onOpenChange?.(value);
+    },
+    [isControlled, onOpenChange],
+  );
   const [isSealPressed, setIsSealPressed] = useState(false);
   const [selectedVillageId, setSelectedVillageId] = useState("");
   const claimableCount = summary?.claimableCount ?? 0;
@@ -195,7 +200,8 @@ export function DailyRetentionWidget({
   );
 
   const quests = useMemo(
-    () => focusCard?.tasks.map((task) => mapTask(task, runActionAndClose)) ?? [],
+    () =>
+      focusCard?.tasks.map((task) => mapTask(task, runActionAndClose)) ?? [],
     [focusCard, runActionAndClose],
   );
 
@@ -295,7 +301,6 @@ export function DailyRetentionWidget({
                 expiresInValue="04h00"
                 maxHeight="min(680px, calc(100dvh - 18px))"
                 onClose={() => handleSetOpen(false)}
-
                 onPrimaryAction={handlePrimaryAction}
                 oyez={mapOyez(summary)}
                 primaryActionDisabled={

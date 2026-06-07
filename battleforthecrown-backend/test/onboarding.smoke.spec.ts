@@ -236,6 +236,7 @@ describe('scripted onboarding smoke', () => {
             villageName: join.village.name,
             targetKind: 'BARBARIAN_VILLAGE',
             targetName: 'Barbares T1',
+            targetTier: 'T1',
             targetX: join.village.x + 1,
             targetY: join.village.y,
             isVictory: true,
@@ -278,7 +279,9 @@ describe('scripted onboarding smoke', () => {
     );
     expect(dailyCard.tasks).toHaveLength(3);
     expect(dailyTasks.COMPLETE_BUILDING?.progress).toBe(1);
-    expect(dailyTasks.TRAIN_UNITS?.progress).toBe(1);
+    expect(dailyTasks.TRAIN_UNITS?.progress).toBe(
+      dailyTasks.TRAIN_UNITS?.target,
+    );
     expect(dailyTasks.RAID_BARBARIAN?.progress).toBe(1);
     expect(dailyTasks.SCOUT_TARGET).toBeUndefined();
     expect(dailyTasks.SEND_REINFORCEMENT).toBeUndefined();

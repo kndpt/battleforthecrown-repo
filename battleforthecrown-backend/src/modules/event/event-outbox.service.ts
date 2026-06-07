@@ -302,6 +302,7 @@ export class EventOutboxService {
       villageName: payload.villageName,
       targetKind: payload.targetKind,
       targetName: payload.targetName,
+      targetTier: payload.targetTier,
       targetX: payload.targetX,
       targetY: payload.targetY,
       isVictory: payload.isVictory,

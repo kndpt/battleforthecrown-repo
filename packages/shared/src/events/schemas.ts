@@ -1,7 +1,7 @@
-import { z } from 'zod';
-import { UnitMapSchema } from '../army/unit-map';
-import { LootResourcesSchema } from '../combat/schemas';
-import type { EventKind, PayloadForKind } from './types';
+import { z } from "zod";
+import { UnitMapSchema } from "../army/unit-map";
+import { LootResourcesSchema } from "../combat/schemas";
+import type { EventKind, PayloadForKind } from "./types";
 
 const BuildingCompletedPayloadSchema = z.object({
   buildingId: z.string(),
@@ -42,6 +42,7 @@ const BattleResolvedPayloadSchema = z.object({
   villageName: z.string(),
   targetKind: z.string(),
   targetName: z.string(),
+  targetTier: z.string().nullable().optional(),
   targetX: z.number(),
   targetY: z.number(),
   isVictory: z.boolean(),
@@ -208,36 +209,38 @@ const CrownsChangedPayloadSchema = z.object({
 
 const WorldStatusChangedPayloadSchema = z.object({
   worldId: z.string(),
-  from: z.enum(['PLANNED', 'OPEN', 'LOCKED', 'ENDED']),
-  to: z.enum(['PLANNED', 'OPEN', 'LOCKED', 'ENDED']),
+  from: z.enum(["PLANNED", "OPEN", "LOCKED", "ENDED"]),
+  to: z.enum(["PLANNED", "OPEN", "LOCKED", "ENDED"]),
   at: z.string().datetime(),
 });
 
 export const EVENT_PAYLOAD_SCHEMAS = {
-  'building.completed': BuildingCompletedPayloadSchema,
-  'unit.training.completed': UnitTrainingCompletedPayloadSchema,
-  'unit.trained': UnitTrainedPayloadSchema,
-  'battle.sent': BattleSentPayloadSchema,
-  'battle.resolved': BattleResolvedPayloadSchema,
-  'battle.returned': BattleReturnedPayloadSchema,
-  'scout.sent': ScoutSentPayloadSchema,
-  'scout.reported': ScoutReportedPayloadSchema,
-  'scout.returned': ScoutReturnedPayloadSchema,
-  'village.attacked': VillageAttackedPayloadSchema,
-  'village.conquered': VillageConqueredPayloadSchema,
-  'village.capture-window-opened': VillageCaptureWindowOpenedPayloadSchema,
-  'village.capture-window-completed': VillageCaptureWindowCompletedPayloadSchema,
-  'village.capture-window-interrupted': VillageCaptureWindowInterruptedPayloadSchema,
-  'noble.killed': NobleKilledPayloadSchema,
-  'reinforcement.sent': ReinforcementSentPayloadSchema,
-  'reinforcement.recalled': ReinforcementRecalledPayloadSchema,
-  'reinforcement.returned': ReinforcementReturnedPayloadSchema,
-  'expedition.recalled': ExpeditionRecalledPayloadSchema,
-  'expedition.returned': ExpeditionReturnedPayloadSchema,
-  'garrison.added': GarrisonAddedPayloadSchema,
-  'resources.changed': ResourcesChangedPayloadSchema,
-  'crowns.changed': CrownsChangedPayloadSchema,
-  'world.status.changed': WorldStatusChangedPayloadSchema,
+  "building.completed": BuildingCompletedPayloadSchema,
+  "unit.training.completed": UnitTrainingCompletedPayloadSchema,
+  "unit.trained": UnitTrainedPayloadSchema,
+  "battle.sent": BattleSentPayloadSchema,
+  "battle.resolved": BattleResolvedPayloadSchema,
+  "battle.returned": BattleReturnedPayloadSchema,
+  "scout.sent": ScoutSentPayloadSchema,
+  "scout.reported": ScoutReportedPayloadSchema,
+  "scout.returned": ScoutReturnedPayloadSchema,
+  "village.attacked": VillageAttackedPayloadSchema,
+  "village.conquered": VillageConqueredPayloadSchema,
+  "village.capture-window-opened": VillageCaptureWindowOpenedPayloadSchema,
+  "village.capture-window-completed":
+    VillageCaptureWindowCompletedPayloadSchema,
+  "village.capture-window-interrupted":
+    VillageCaptureWindowInterruptedPayloadSchema,
+  "noble.killed": NobleKilledPayloadSchema,
+  "reinforcement.sent": ReinforcementSentPayloadSchema,
+  "reinforcement.recalled": ReinforcementRecalledPayloadSchema,
+  "reinforcement.returned": ReinforcementReturnedPayloadSchema,
+  "expedition.recalled": ExpeditionRecalledPayloadSchema,
+  "expedition.returned": ExpeditionReturnedPayloadSchema,
+  "garrison.added": GarrisonAddedPayloadSchema,
+  "resources.changed": ResourcesChangedPayloadSchema,
+  "crowns.changed": CrownsChangedPayloadSchema,
+  "world.status.changed": WorldStatusChangedPayloadSchema,
 } as const satisfies Record<EventKind, z.ZodType>;
 
 export type EventPayloadSchema<K extends EventKind> = z.ZodType<

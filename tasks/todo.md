@@ -1,5 +1,46 @@
 # Todo
 
+## 2026-06-07 — QA locale maximale run 049 rétention
+
+- [x] Tracer le diff exact et choisir le périmètre de tests.
+- [x] Lancer les checks shared/static et tests ciblés backend/Pixi.
+- [x] Exécuter le preflight smoke et les smokes backend pertinents.
+- [x] Démarrer une stack locale isolée backend/frontend et vérifier health/API/front/logs.
+- [x] Documenter les résultats, limites restantes et checklist IG minimale.
+
+### Review en cours
+
+- Demande : Kelvin ne peut pas tester IG, donc l'agent doit pousser la QA locale au maximum autorisé hors QA in-game navigateur.
+- Boundary repo : pas de QA in-game automatisée ; seuls tests, smokes, curls, logs, DB reads, healthchecks et boot checks côté agent.
+- Périmètre diff : scaling `DailyCard`, `DailyCardTask.metadata`, `completedQty`, `battle.resolved.targetTier`, widget daily retention et docs run 049.
+- Périmètre QA retenu : shared build, backend tests rétention/scaling, Pixi widget retention, static-check, preflight smoke, smoke `daily-retention` + `combat-attack`, puis boot backend/frontend isolé.
+- `rtk yarn workspace @battleforthecrown/shared build` passé.
+- `rtk yarn workspace battleforthecrown-backend test -- retention` passé : 2 suites / 12 tests.
+- `rtk yarn workspace battleforthecrown-pixi test -- DailyRetentionWidget` passé : 1 fichier / 6 tests.
+- `rtk yarn static-check` passé.
+- Premier smoke ciblé `daily-retention + combat-attack` en échec : le fixture manuel `battle.resolved` n'envoyait pas `targetTier`, donc la tâche RAID scalée restait ouverte.
+- Correction appliquée au smoke : payload `battle.resolved` rétention aligné sur le worker réel avec `targetTier: 'T1'`.
+- `rtk yarn workspace battleforthecrown-backend test:smoke:preflight` passé.
+- Relance smoke ciblé passée : `daily-retention.smoke.spec.ts` + `combat-attack.smoke.spec.ts` = 2 suites / 8 tests.
+- Première suite complète `rtk yarn test` en échec sur `onboarding.smoke.spec.ts` : même fixture manuel sans `targetTier`, puis assertion `TRAIN_UNITS.progress === 1` obsolète avec `completedQty`.
+- Corrections appliquées au smoke onboarding : `targetTier: 'T1'` et assertion sur `progress === target`.
+- Relance isolée `onboarding.smoke.spec.ts` passée : 1 suite / 3 tests.
+- Relance complète `rtk yarn test` passée : backend 27 suites / 289 tests, Pixi 63 fichiers / 354 tests, smokes 25 suites / 63 tests.
+- `rtk yarn static-check` post-corrections passé.
+- `rtk yarn build` passé : backend Nest + Pixi Vite + shared.
+- QA runtime isolée passée sur DB temporaire clonée `battleforthecrown_049qa` : backend `http://localhost:15002/health` OK, frontend `/` et `/design-system` HTTP 200.
+- Parcours REST agent passé : register QA, join `default`, `GET /retention?worldId=default` renvoie une carte `ACTIVE`, récompense scalée `173/173/173` et tâche `RAID_BARBARIAN` avec `metadata.minTargetTier = T1`.
+- Logs backend après parcours : 201/200 attendus, un 400 initial attendu sur `fresh-open` fermé aux inscriptions, aucun crash runtime.
+- DB temporaire `battleforthecrown_049qa` supprimée, serveurs QA arrêtés, ports `15002`/`5174` libres.
+- `rtk git diff --check` passé après résolution d'un conflit résiduel dans `tasks/README.md` ; les entrées archivées 049 et 047 sont conservées.
+- Limite restante : pas de QA in-game navigateur côté agent conformément aux règles repo ; checklist IG minimale ci-dessous.
+
+## QA IG restante
+
+- [ ] Ouvrir le Devoir royal sur un nouveau joueur et vérifier que les missions affichent les quantités/tier attendus.
+- [ ] Vérifier qu'une carte RAID affiche `T1 ou plus` au début, puis un tier plus haut sur un joueur avancé.
+- [ ] Vérifier qu'une carte complétée reste lisible dans le HUD/sheet et que le claim crédite le village choisi.
+
 ## 2026-06-07 — QA locale run 047 rapports capture
 
 - [x] Vérifier l'environnement local Postgres/Docker/Yarn/Prisma.

@@ -1,13 +1,18 @@
-import { z } from 'zod';
+import { z } from "zod";
 import {
   DAILY_CARD_STATUSES,
   DAILY_CARD_TASK_TYPES,
   DAILY_REWARD_TYPES,
-} from './types';
+} from "./types";
 
 export const DailyCardStatusSchema = z.enum(DAILY_CARD_STATUSES);
 export const DailyCardTaskTypeSchema = z.enum(DAILY_CARD_TASK_TYPES);
 export const DailyRewardTypeSchema = z.enum(DAILY_REWARD_TYPES);
+
+export const DailyCardTaskMetadataSchema = z.object({
+  completedQty: z.number().optional(),
+  minTargetTier: z.enum(["T1", "T2", "T3", "T4", "T5"]).optional(),
+});
 
 export const DailyCardTaskSchema = z.object({
   id: z.string(),
@@ -16,6 +21,7 @@ export const DailyCardTaskSchema = z.object({
   progress: z.number(),
   target: z.number(),
   completedAt: z.string().nullable(),
+  metadata: DailyCardTaskMetadataSchema,
 });
 
 export const DailyCardRewardSchema = z.object({

@@ -114,6 +114,7 @@ describe('daily retention smoke', () => {
             villageName: join.village.name,
             targetKind: 'BARBARIAN_VILLAGE',
             targetName: 'Barbares',
+            targetTier: 'T1',
             targetX: join.village.x + 1,
             targetY: join.village.y,
             isVictory: true,

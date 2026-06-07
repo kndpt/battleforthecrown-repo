@@ -1,5 +1,5 @@
-import type { LootResources } from '../combat/loot';
-import type { UnitMap } from '../army/unit-map';
+import type { LootResources } from "../combat/loot";
+import type { UnitMap } from "../army/unit-map";
 
 export interface BuildingCompletedPayload {
   buildingId: string;
@@ -40,6 +40,7 @@ export interface BattleResolvedPayload {
   villageName: string;
   targetKind: string;
   targetName: string;
+  targetTier?: string | null;
   targetX: number;
   targetY: number;
   isVictory: boolean;
@@ -208,52 +209,52 @@ export interface CrownsChangedPayload {
 
 export interface WorldStatusChangedPayload {
   worldId: string;
-  from: 'PLANNED' | 'OPEN' | 'LOCKED' | 'ENDED';
-  to: 'PLANNED' | 'OPEN' | 'LOCKED' | 'ENDED';
+  from: "PLANNED" | "OPEN" | "LOCKED" | "ENDED";
+  to: "PLANNED" | "OPEN" | "LOCKED" | "ENDED";
   at: string;
 }
 
 export type OutboxEventPayload =
-  | { kind: 'building.completed'; payload: BuildingCompletedPayload }
-  | { kind: 'unit.training.completed'; payload: UnitTrainingCompletedPayload }
-  | { kind: 'unit.trained'; payload: UnitTrainedPayload }
-  | { kind: 'battle.sent'; payload: BattleSentPayload }
-  | { kind: 'battle.resolved'; payload: BattleResolvedPayload }
-  | { kind: 'battle.returned'; payload: BattleReturnedPayload }
-  | { kind: 'scout.sent'; payload: ScoutSentPayload }
-  | { kind: 'scout.reported'; payload: ScoutReportedPayload }
-  | { kind: 'scout.returned'; payload: ScoutReturnedPayload }
-  | { kind: 'village.attacked'; payload: VillageAttackedPayload }
-  | { kind: 'village.conquered'; payload: VillageConqueredPayload }
+  | { kind: "building.completed"; payload: BuildingCompletedPayload }
+  | { kind: "unit.training.completed"; payload: UnitTrainingCompletedPayload }
+  | { kind: "unit.trained"; payload: UnitTrainedPayload }
+  | { kind: "battle.sent"; payload: BattleSentPayload }
+  | { kind: "battle.resolved"; payload: BattleResolvedPayload }
+  | { kind: "battle.returned"; payload: BattleReturnedPayload }
+  | { kind: "scout.sent"; payload: ScoutSentPayload }
+  | { kind: "scout.reported"; payload: ScoutReportedPayload }
+  | { kind: "scout.returned"; payload: ScoutReturnedPayload }
+  | { kind: "village.attacked"; payload: VillageAttackedPayload }
+  | { kind: "village.conquered"; payload: VillageConqueredPayload }
   | {
-      kind: 'village.capture-window-opened';
+      kind: "village.capture-window-opened";
       payload: VillageCaptureWindowOpenedPayload;
     }
   | {
-      kind: 'village.capture-window-completed';
+      kind: "village.capture-window-completed";
       payload: VillageCaptureWindowCompletedPayload;
     }
   | {
-      kind: 'village.capture-window-interrupted';
+      kind: "village.capture-window-interrupted";
       payload: VillageCaptureWindowInterruptedPayload;
     }
-  | { kind: 'noble.killed'; payload: NobleKilledPayload }
-  | { kind: 'reinforcement.sent'; payload: ReinforcementSentPayload }
-  | { kind: 'reinforcement.recalled'; payload: ReinforcementRecalledPayload }
-  | { kind: 'reinforcement.returned'; payload: ReinforcementReturnedPayload }
-  | { kind: 'expedition.recalled'; payload: ExpeditionRecalledPayload }
-  | { kind: 'expedition.returned'; payload: ExpeditionReturnedPayload }
-  | { kind: 'garrison.added'; payload: GarrisonAddedPayload }
-  | { kind: 'resources.changed'; payload: ResourcesChangedPayload }
-  | { kind: 'crowns.changed'; payload: CrownsChangedPayload }
-  | { kind: 'world.status.changed'; payload: WorldStatusChangedPayload };
+  | { kind: "noble.killed"; payload: NobleKilledPayload }
+  | { kind: "reinforcement.sent"; payload: ReinforcementSentPayload }
+  | { kind: "reinforcement.recalled"; payload: ReinforcementRecalledPayload }
+  | { kind: "reinforcement.returned"; payload: ReinforcementReturnedPayload }
+  | { kind: "expedition.recalled"; payload: ExpeditionRecalledPayload }
+  | { kind: "expedition.returned"; payload: ExpeditionReturnedPayload }
+  | { kind: "garrison.added"; payload: GarrisonAddedPayload }
+  | { kind: "resources.changed"; payload: ResourcesChangedPayload }
+  | { kind: "crowns.changed"; payload: CrownsChangedPayload }
+  | { kind: "world.status.changed"; payload: WorldStatusChangedPayload };
 
-export type EventKind = OutboxEventPayload['kind'];
+export type EventKind = OutboxEventPayload["kind"];
 
 export type PayloadForKind<K extends EventKind> = Extract<
   OutboxEventPayload,
   { kind: K }
->['payload'];
+>["payload"];
 
 export type AnyEventPayload =
   | BuildingCompletedPayload
@@ -282,30 +283,30 @@ export type AnyEventPayload =
   | WorldStatusChangedPayload;
 
 export interface ServerEvents {
-  'resources.changed': ResourcesChangedPayload;
-  'crowns.changed': CrownsChangedPayload;
-  'building.completed': BuildingCompletedPayload;
-  'unit.training.completed': UnitTrainingCompletedPayload;
-  'unit.trained': UnitTrainedPayload;
-  'battle.sent': BattleSentPayload;
-  'battle.resolved': BattleResolvedPayload;
-  'battle.returned': BattleReturnedPayload;
-  'scout.sent': ScoutSentPayload;
-  'scout.reported': ScoutReportedPayload;
-  'scout.returned': ScoutReturnedPayload;
-  'village.attacked': VillageAttackedPayload;
-  'village.conquered': VillageConqueredPayload;
-  'village.capture-window-opened': VillageCaptureWindowOpenedPayload;
-  'village.capture-window-completed': VillageCaptureWindowCompletedPayload;
-  'village.capture-window-interrupted': VillageCaptureWindowInterruptedPayload;
-  'noble.killed': NobleKilledPayload;
-  'reinforcement.sent': ReinforcementSentPayload;
-  'reinforcement.recalled': ReinforcementRecalledPayload;
-  'reinforcement.returned': ReinforcementReturnedPayload;
-  'expedition.recalled': ExpeditionRecalledPayload;
-  'expedition.returned': ExpeditionReturnedPayload;
-  'garrison.added': GarrisonAddedPayload;
-  'world.status.changed': WorldStatusChangedPayload;
+  "resources.changed": ResourcesChangedPayload;
+  "crowns.changed": CrownsChangedPayload;
+  "building.completed": BuildingCompletedPayload;
+  "unit.training.completed": UnitTrainingCompletedPayload;
+  "unit.trained": UnitTrainedPayload;
+  "battle.sent": BattleSentPayload;
+  "battle.resolved": BattleResolvedPayload;
+  "battle.returned": BattleReturnedPayload;
+  "scout.sent": ScoutSentPayload;
+  "scout.reported": ScoutReportedPayload;
+  "scout.returned": ScoutReturnedPayload;
+  "village.attacked": VillageAttackedPayload;
+  "village.conquered": VillageConqueredPayload;
+  "village.capture-window-opened": VillageCaptureWindowOpenedPayload;
+  "village.capture-window-completed": VillageCaptureWindowCompletedPayload;
+  "village.capture-window-interrupted": VillageCaptureWindowInterruptedPayload;
+  "noble.killed": NobleKilledPayload;
+  "reinforcement.sent": ReinforcementSentPayload;
+  "reinforcement.recalled": ReinforcementRecalledPayload;
+  "reinforcement.returned": ReinforcementReturnedPayload;
+  "expedition.recalled": ExpeditionRecalledPayload;
+  "expedition.returned": ExpeditionReturnedPayload;
+  "garrison.added": GarrisonAddedPayload;
+  "world.status.changed": WorldStatusChangedPayload;
 }
 
 export type ServerEventName = keyof ServerEvents;

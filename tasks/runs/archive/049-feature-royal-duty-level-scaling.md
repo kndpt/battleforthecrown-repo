@@ -1,8 +1,8 @@
 # Run #049 — feature-royal-duty-level-scaling
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-07
+> **Terminé** : 2026-06-07
 
 ## Cible
 
@@ -17,6 +17,7 @@
 Faire scaler **missions ET récompenses** du Devoir royal selon le **niveau du joueur = château max parmi ses villages**, pour que la carte reste un nudge pertinent du early au late sans snowball.
 
 Aujourd'hui c'est plat et inadapté :
+
 - Récompense fixe `DAILY_REWARD = { wood:120, stone:120, iron:120 }` (`retention.service.ts:34`).
 - 3 tâches fixes `target:1` (`TASK_TEMPLATES`, `retention.service.ts:36-44`).
 
@@ -91,22 +92,48 @@ Décomposition pressentie (issue du planning, à confirmer/replanner à l'étape
 
 ## Progress (rempli pendant le run)
 
-_(Vide au démarrage. Mis à jour à chaque transition d'étape ou de tâche.)_
+- 2026-06-07 — Préflight effectué avec dérogation user sur workspace sale préexistant (`yarn.lock`, `.yarn/`, `.yarnrc.yml`) ; branche dédiée `run/049-feature-royal-duty-level-scaling` créée.
+- 2026-06-07 — Cartographie backend/shared/front : `RetentionService`, `combat.worker`, payload `battle.resolved`, DTO retention et widget Devoir royal.
+- 2026-06-07 — Implémentation scaling pur, génération des cartes via château max, projection `completedQty`, filtre floor tier barbare et affichage HUD.
+- 2026-06-07 — Documentation gameplay et invariant SPEC ajoutés.
+- 2026-06-07 — Tests unitaires ciblés, shared build, static-check ; smoke backend bloqué par environnement sans Docker/Postgres.
 
 ## Décisions prises
 
-_(Vide au démarrage. Décisions archi non triviales, dérogations lead, findings de review, refus de sub-agents.)_
+- Q1 — Retenu A : `battle.resolved` propage `targetTier` pour les cibles barbares ; le champ reste optionnel côté schema pour compatibilité avec d'anciennes lignes Outbox, mais les nouveaux events barbares le renseignent.
+- Q2 — Retenu A : récompense ancrée sur la production brute shared (`RESOURCE_PRODUCTION_PER_HOUR`) plutôt que sur le loot SQL.
+- Q3 — Plafond : 12% de la production journalière brute par ressource au niveau de bande, couronnes exclues.
+- Q4 — Retenu par-carte sans migration : les poids par mission alimentent la somme de récompense au moment de générer la carte ; les contraintes de mission sont stockées dans `DailyCardTask.metadata`.
+- Q5 — Retenu 1 château = 1 band, clamp 1-10.
+- Dérogation user : workspace sale préexistant accepté pour poursuivre ; ces fichiers préexistants ne sont pas intégrés au commit de run.
+- Review indépendante : requise par la fiche, mais non déclenchée car les instructions système Codex interdisent de spawn un sub-agent sans demande explicite de délégation/parallel agent work. Review lead 5 axes effectuée : pas de finding bloquant.
 
 ## Rapport final
 
-_(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tickets ouverts, méta-évaluation si applicable.)_
+Livré : scaling Devoir royal par château max joueur/monde, table pure de bandes 1-10, récompense ressources plafonnée, missions avec quantités/tier floor en metadata, `battle.resolved.targetTier` pour les barbares, projection multi-quantité, DTO metadata et HUD lisible.
+
+Review lead 5 axes :
+
+- Correctness — OK : les deux chemins de création de carte consomment le même scaling, fallback château max = 1, RAID ignore tier inférieur et `target>1` progresse par quantité.
+- Readability — OK : scaling isolé dans `retention-scaling.ts`, helpers testés.
+- Architecture — OK : pas de migration inutile, metadata Prisma existant utilisé, frontend reste consommateur DTO.
+- Security — OK : pas de changement auth/secret ; requêtes scoppées `userId` + `worldId`.
+- Performance — OK : une agrégation `Building._max(level)` à la création de carte, pas dans le rendu ni dans chaque projection hors upsert de carte.
 
 ### Acceptance & QA
 
 - **Critères d'acceptance vérifiés** (commande exécutable obligatoire si automatisable, preuve textuelle uniquement si visuel/gameplay/UX) :
-  - [ ] <critère> — `<commande>` → <résultat observé>
-- **Review indépendante** : `Déclenchée (raison: back+front + payload WS partagé + boucle anti-farm / chemin économique)` — verdict à remplir.
-- **Tests automatisés** : commandes exactes + résultat synthétique.
-- **Smokes ajoutés/modifiés** : fichiers + scénario couvert, ou `Aucun`, raison.
-- **QA fonctionnelle agent** : `server + curl` / REST / WS / worker / `SELECT` DB selon pertinence.
-- **Tests IG à faire par le user** : checklist observable (widget lisible, floor construction faisable), sinon `Aucun`.
+  - [x] Deux joueurs à château max différents reçoivent des cartes différentes — `yarn workspace battleforthecrown-backend test retention` → `retention-scaling.spec.ts` couvre early vs late.
+  - [x] Helper château max max/fallback — `yarn workspace battleforthecrown-backend test retention` → `getPlayerMaxCastleLevel` couvre max 7 puis fallback 1.
+  - [x] `battle.resolved.targetTier` pour barbare — inspection code + `yarn static-check` → payload worker typé avec `defenderVillage.tier`.
+  - [x] RAID floor tier — `yarn workspace battleforthecrown-backend test retention` → T2 rejeté pour floor T3, T3/T4 acceptés.
+  - [x] `target>1` progresse de `completedQty` — `yarn workspace battleforthecrown-backend test retention` → progression de 3 sur target 5.
+  - [x] Récompense ≤ plafond band — `yarn workspace battleforthecrown-backend test retention` → boucle bandes 1-10.
+  - [x] `yarn static-check` vert, shared rebuild inclus — `yarn static-check` → exit 0.
+  - [ ] Widget lisible en <5s — validation IG Kelvin requise.
+  - [x] Construction haut château faisable en 1 jour — `yarn workspace battleforthecrown-backend test retention` → target construction toujours 1.
+- **Review indépendante** : `Non déclenchée` — raison : instructions système Codex > skill, pas de spawn sans demande explicite de délégation ; review lead 5 axes GO.
+- **Tests automatisés** : `yarn workspace @battleforthecrown/shared build` (pass), `yarn workspace battleforthecrown-backend test retention` (2 suites / 12 tests pass), `yarn workspace battleforthecrown-pixi test DailyRetentionWidget` (1 fichier / 6 tests pass), `yarn static-check` (pass).
+- **Smokes ajoutés/modifiés** : Aucun, raison : couverture par tests unitaires purs + smokes existants daily-retention/combat ; smoke local non exécuté faute de Docker/Postgres dans l'environnement.
+- **QA fonctionnelle agent** : smoke preflight tenté (`yarn workspace battleforthecrown-backend test:smoke:preflight`) puis Docker tenté (`cd battleforthecrown-backend && docker compose up -d`) ; bloqué car aucun Postgres local et `docker` absent.
+- **Tests IG à faire par le user** : ouvrir le Devoir royal sur un compte château bas puis haut ; vérifier que les libellés affichent les quantités/tier (`Vaincre un barbare Tn ou plus`) et que la tâche construction reste une seule construction.

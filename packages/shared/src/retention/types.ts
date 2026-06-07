@@ -1,22 +1,27 @@
 export const DAILY_CARD_STATUSES = [
-  'ACTIVE',
-  'CLAIMABLE',
-  'CLAIMED',
-  'EXPIRED',
+  "ACTIVE",
+  "CLAIMABLE",
+  "CLAIMED",
+  "EXPIRED",
 ] as const;
 export type DailyCardStatus = (typeof DAILY_CARD_STATUSES)[number];
 
 export const DAILY_CARD_TASK_TYPES = [
-  'TRAIN_UNITS',
-  'COMPLETE_BUILDING',
-  'RAID_BARBARIAN',
-  'SCOUT_TARGET',
-  'SEND_REINFORCEMENT',
+  "TRAIN_UNITS",
+  "COMPLETE_BUILDING",
+  "RAID_BARBARIAN",
+  "SCOUT_TARGET",
+  "SEND_REINFORCEMENT",
 ] as const;
 export type DailyCardTaskType = (typeof DAILY_CARD_TASK_TYPES)[number];
 
-export const DAILY_REWARD_TYPES = ['RESOURCES'] as const;
+export const DAILY_REWARD_TYPES = ["RESOURCES"] as const;
 export type DailyRewardType = (typeof DAILY_REWARD_TYPES)[number];
+
+export interface DailyCardTaskMetadataDto {
+  completedQty?: number;
+  minTargetTier?: "T1" | "T2" | "T3" | "T4" | "T5";
+}
 
 export interface DailyCardTaskDto {
   id: string;
@@ -25,6 +30,7 @@ export interface DailyCardTaskDto {
   progress: number;
   target: number;
   completedAt: string | null;
+  metadata: DailyCardTaskMetadataDto;
 }
 
 export interface DailyCardRewardDto {

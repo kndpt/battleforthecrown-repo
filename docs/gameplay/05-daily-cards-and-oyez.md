@@ -16,43 +16,47 @@ La rétention BFTC doit :
 
 ## Scope
 
-| Sujet | Statut |
-| --- | --- |
-| Cartes quotidiennes | ✅ Source de vérité ici |
-| Oyez | ✅ Source de vérité ici |
-| Progression de saison / pass | ❌ Plus tard, lab uniquement |
-| Bénédictions quotidiennes | ❌ Supprimées comme système séparé |
-| Quêtes quotidiennes legacy | ❌ Remplacées par les cartes |
-| Raids barbares globaux | ❌ Sortis de cette doc, à reprendre dans le pilier PVM barbare |
-| Notifications / inbox | ❌ Docs dédiées : [`16-notifications.md`](./16-notifications.md), [`17-inbox-and-reports.md`](./17-inbox-and-reports.md) |
-| Classements | ❌ Post-MVP, voir [`09-power-and-rankings.md`](./09-power-and-rankings.md) |
+| Sujet                        | Statut                                                                                                                   |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Cartes quotidiennes          | ✅ Source de vérité ici                                                                                                  |
+| Oyez                         | ✅ Source de vérité ici                                                                                                  |
+| Progression de saison / pass | ❌ Plus tard, lab uniquement                                                                                             |
+| Bénédictions quotidiennes    | ❌ Supprimées comme système séparé                                                                                       |
+| Quêtes quotidiennes legacy   | ❌ Remplacées par les cartes                                                                                             |
+| Raids barbares globaux       | ❌ Sortis de cette doc, à reprendre dans le pilier PVM barbare                                                           |
+| Notifications / inbox        | ❌ Docs dédiées : [`16-notifications.md`](./16-notifications.md), [`17-inbox-and-reports.md`](./17-inbox-and-reports.md) |
+| Classements                  | ❌ Post-MVP, voir [`09-power-and-rankings.md`](./09-power-and-rankings.md)                                               |
 
 ## Cartes quotidiennes
 
 Chaque jour, le joueur reçoit une **carte de devoir royal** : un petit set de tâches simples liées au gameplay normal.
 
-| Élément | Règle cible |
-| --- | --- |
-| Fréquence | 1 carte / jour |
-| Reset | 04:00 Europe/Paris |
-| Pile de cartes | Aucune pile visible : seule la carte du jour est générée comme devoir actif |
-| Taille | 3 tâches |
-| Session cible | 5 à 15 min |
-| Expiration | La carte du jour expire au reset suivant, à 04:00 Europe/Paris |
+| Élément              | Règle cible                                                                                                                             |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Fréquence            | 1 carte / jour                                                                                                                          |
+| Reset                | 04:00 Europe/Paris                                                                                                                      |
+| Pile de cartes       | Aucune pile visible : seule la carte du jour est générée comme devoir actif                                                             |
+| Taille               | 3 tâches                                                                                                                                |
+| Session cible        | 5 à 15 min                                                                                                                              |
+| Expiration           | La carte du jour expire au reset suivant, à 04:00 Europe/Paris                                                                          |
 | Grâce de réclamation | Une carte complétée mais non réclamée reste réclamable pendant le jour suivant, jusqu'au reset 04:00 ; après cette fenêtre, elle expire |
-| Récompense | Modérée, scalée, non-snowballante |
+| Récompense           | Modérée, scalée, non-snowballante                                                                                                       |
+
+Le Devoir royal scale sur le **niveau de joueur**, défini comme le niveau de château maximum parmi tous ses villages du monde (fallback niveau 1 si aucun château n'est trouvé). Ce proxy évite de scaler sur le village destinataire de la récompense, qui serait gameable. Les 10 bandes de château gardent 3 tâches naturelles, avec une construction toujours à `target=1` pour rester faisable dans la journée ; la difficulté monte surtout par la quantité de troupes et par les raids barbares avec un floor de tier (`Tn ou plus`, jamais `exactement Tn`).
+
+La récompense ressources est calculée à la génération de la carte depuis la production brute des producteurs au niveau de bande, plafonnée à 12% d'une journée de production par ressource. La proportion par mission reste portée par la table de scaling serveur et sommée sur la carte, sans migration de récompense par tâche.
 
 Si la récompense s'applique à un village, le joueur choisit le village destinataire au moment de valider la carte. Le système propose par défaut le dernier village ayant reçu une récompense. Cette règle vient de la Phase 9 Navigation multi-village, voir [`22-village-roles-and-navigation.md`](./22-village-roles-and-navigation.md).
 
 ### Types de tâches
 
-| Boucle | Exemples |
-| --- | --- |
-| Économie | Lancer un upgrade, éviter l'entrepôt plein, améliorer un producteur |
-| Militaire | Recruter, raider un barbare, rappeler une armée |
-| Exploration | Construire / améliorer Watchtower, scout une cible |
-| Défense | Renforcer un village, lire une menace, réagir à une attaque |
-| Conquête | Préparer un Seigneur, escorter, tenir une fenêtre |
+| Boucle      | Exemples                                                            |
+| ----------- | ------------------------------------------------------------------- |
+| Économie    | Lancer un upgrade, éviter l'entrepôt plein, améliorer un producteur |
+| Militaire   | Recruter, raider un barbare, rappeler une armée                     |
+| Exploration | Construire / améliorer Watchtower, scout une cible                  |
+| Défense     | Renforcer un village, lire une menace, réagir à une attaque         |
+| Conquête    | Préparer un Seigneur, escorter, tenir une fenêtre                   |
 
 À éviter : tâches artificielles, répétitives, ou qui poussent à une action sous-optimale juste pour cocher une case.
 
@@ -60,11 +64,11 @@ Si la récompense s'applique à un village, le joueur choisit le village destina
 
 Les tâches doivent se valider sur des faits gameplay émis par le runtime, pas sur des signaux d'UI. Pour le MVP, une carte contient exactement 3 tâches naturelles :
 
-| Tâche | Event métier candidat |
-| --- | --- |
-| Recruter | `unit.trained` |
+| Tâche                     | Event métier candidat                                                                      |
+| ------------------------- | ------------------------------------------------------------------------------------------ |
+| Recruter                  | `unit.trained`                                                                             |
 | Lancer / finir un upgrade | `building.completed` pour la fin ; l'action de lancement reste côté mutation construction. |
-| Raider un barbare | `battle.resolved` avec cible barbare |
+| Raider un barbare         | `battle.resolved` avec cible barbare                                                       |
 
 ### Récompenses
 
@@ -89,13 +93,13 @@ Préférer :
 
 L'Oyez est le **contexte monde** : un signal partagé qui oriente légèrement la méta pendant une courte période.
 
-| Élément | Règle cible |
-| --- | --- |
-| Actif simultané | 1 seul Oyez |
-| Cadence | À tester : 1 à 2 par semaine, ou plus rare |
-| Début | 04:00 Europe/Paris |
-| Effet | Léger, lisible, non cumulatif avec même catégorie |
-| Rôle principal | Influencer les cartes quotidiennes et la priorité du moment |
+| Élément         | Règle cible                                                 |
+| --------------- | ----------------------------------------------------------- |
+| Actif simultané | 1 seul Oyez                                                 |
+| Cadence         | À tester : 1 à 2 par semaine, ou plus rare                  |
+| Début           | 04:00 Europe/Paris                                          |
+| Effet           | Léger, lisible, non cumulatif avec même catégorie           |
+| Rôle principal  | Influencer les cartes quotidiennes et la priorité du moment |
 
 ### Interaction avec les cartes
 
@@ -110,12 +114,12 @@ Il ne doit pas rendre les cartes obligatoires ni créer un avantage massif pour 
 
 ### Exemples
 
-| Oyez | Effet léger | Carte associée |
-| --- | --- | --- |
-| Jour des bâtisseurs | Construction légèrement favorisée | Lancer / finir des upgrades |
-| Marche forcée | Expéditions légèrement favorisées | Envoyer une armée, rappeler, lire un retour |
-| Oeil du Guet | Exploration favorisée | Scout, Watchtower, carte |
-| Jour des barbares | PVM favorisé | Raids barbares, scout barbare, préparation PVM |
+| Oyez                | Effet léger                       | Carte associée                                 |
+| ------------------- | --------------------------------- | ---------------------------------------------- |
+| Jour des bâtisseurs | Construction légèrement favorisée | Lancer / finir des upgrades                    |
+| Marche forcée       | Expéditions légèrement favorisées | Envoyer une armée, rappeler, lire un retour    |
+| Oeil du Guet        | Exploration favorisée             | Scout, Watchtower, carte                       |
+| Jour des barbares   | PVM favorisé                      | Raids barbares, scout barbare, préparation PVM |
 
 ## UX attendue
 

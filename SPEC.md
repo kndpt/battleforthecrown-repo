@@ -15,15 +15,15 @@ Ce fichier ne remplace pas `docs/` : il référence les sources de vérité et n
 
 ## §S — Sources de vérité
 
-| Domaine | Source |
-|---|---|
-| Architecture | `docs/architecture/decisions.md` |
-| Modèle DB | `docs/architecture/data-model.md` + `battleforthecrown-backend/prisma/schema.prisma` |
-| Realtime / Outbox | `docs/architecture/realtime.md` |
-| Setup DB | `docs/architecture/db-setup.md` |
-| Gameplay | `docs/gameplay/` |
-| Règles agentiques | `.agents/rules/` |
-| Runs / tickets | `tasks/runs/`, `tasks/`, `tasks/README.md` |
+| Domaine           | Source                                                                               |
+| ----------------- | ------------------------------------------------------------------------------------ |
+| Architecture      | `docs/architecture/decisions.md`                                                     |
+| Modèle DB         | `docs/architecture/data-model.md` + `battleforthecrown-backend/prisma/schema.prisma` |
+| Realtime / Outbox | `docs/architecture/realtime.md`                                                      |
+| Setup DB          | `docs/architecture/db-setup.md`                                                      |
+| Gameplay          | `docs/gameplay/`                                                                     |
+| Règles agentiques | `.agents/rules/`                                                                     |
+| Runs / tickets    | `tasks/runs/`, `tasks/`, `tasks/README.md`                                           |
 
 ## §V — Invariants à appliquer
 
@@ -36,19 +36,21 @@ V2 | La puissance armée d'un village est rattachée au village d'origine des tr
 V3 | Toute donnée visible joueur dépendante d'un monde doit être filtrée par `worldId` côté backend et keyée par `worldId` côté frontend ; `userId` seul ne suffit pas pour power, reports, inbox, HUD ou profils. | source: tasks/runs/archive/034-fix-world-scoped-player-data.md
 V4 | L'onboarding de première session est un état dédié `userId × worldId`, distinct des cartes quotidiennes, et progresse uniquement depuis les facts serveur Outbox dans l'ordre scripté courant. | source: tasks/runs/036-feature-scripted-onboarding-runtime.md
 V5 | Un rapport inbox = fait métier dans une table typée par domaine (`CombatReport`, `ScoutReport`, `ReinforcementReport`) ; l'état lu/masqué est par destinataire (`InboxEntry` ou colonnes `read*/hidden*`) ; `EventOutbox` reste temps réel, jamais une archive. Ne pas créer de table `Report` polymorphe ni stocker le métier dans l'Outbox. | source: tasks/runs/archive/044-feature-reinforcement-reports.md
+V6 | Le Devoir royal scale sur le château max du joueur dans le monde, jamais sur le village receveur ; les raids barbares utilisent un floor de tier (`Tn ou plus`) porté par `battle.resolved.targetTier`, et les récompenses ressources restent plafonnées par bande. | source: tasks/runs/archive/049-feature-royal-duty-level-scaling.md
 
 ## §B — Bugs récurrents / anti-patterns
 
 Format :
 
-| id | symptôme | cause racine | fix canonique | source |
-|---|---|---|---|---|
+| id  | symptôme | cause racine | fix canonique | source |
+| --- | -------- | ------------ | ------------- | ------ |
 
 <!-- Ajouter uniquement si le bug est récurrent, subtil, ou assez coûteux pour mériter une prévention explicite. -->
 
 | B1 | capture interrompue sans rapport défenseur pour l'occupant | les villages barbares sous capture étaient traités comme sans `defenderUserId` malgré leur garnison joueur | si une `PendingConquest.OPEN` existe sur la cible, la garnison d'occupation rend `attackerUserId` défenseur de rapport et destinataire `village.attacked` | tasks/53-capture-occupation-defense-report-missing.md |
 | B2 | carte multi-village avec un seul disque de vision | le frontend recalculait un rayon depuis le village sélectionné au lieu de consommer la vision serveur | `GET /world/:worldId/entities` expose `visionDisks`; Pixi/mini-carte/filtre client consomment ces disques autoritatifs, jamais le niveau Watchtower local courant | tasks/archive/58-multi-village-vision-disks-missing.md |
 | B3 | reset quotidien 04:00 faux autour des changements d'heure | soustraire 4h UTC simule mal une règle Europe/Paris pendant DST | dériver la clé quotidienne depuis l'heure locale Europe/Paris réelle, puis reculer d'un jour calendrier seulement si l'heure locale est `< 04:00` | tasks/runs/archive/046-refactor-royal-duty-light-fomo.md |
+
 ## §A — Règle d'ajout
 
 Avant d'ajouter une entrée :
