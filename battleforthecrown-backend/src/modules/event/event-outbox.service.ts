@@ -369,7 +369,7 @@ export class EventOutboxService {
       casualtyRate: payload.casualtyRate,
     });
 
-    this.gateway.notifyUser(userId, 'village.attacked', {
+    const payloadForClient = {
       defenderVillageId: payload.defenderVillageId,
       defenderUserId: payload.defenderUserId,
       attackerVillageId: payload.attackerVillageId,
@@ -383,7 +383,15 @@ export class EventOutboxService {
       casualtyRate: payload.casualtyRate,
       resourcesLost: payload.resourcesLost,
       timestamp: payload.timestamp,
-    });
+    };
+
+    this.gateway.notifyUser(userId, 'village.attacked', payloadForClient);
+    if (payload.observerUserId && payload.observerUserId !== userId) {
+      this.gateway.notifyUser(payload.observerUserId, 'village.attacked', {
+        ...payloadForClient,
+        observerUserId: payload.observerUserId,
+      });
+    }
   }
 
   private notifyVillageConquered(payload: VillageConqueredPayload) {

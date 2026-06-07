@@ -502,6 +502,7 @@ model CombatReport {
   attackerUserId    String    @map("attacker_user_id")
   defenderVillageId String?   @map("defender_village_id")
   defenderUserId    String?   @map("defender_user_id")
+  observerUserId    String?   @map("observer_user_id")
   targetKind        TargetKind @map("target_kind")
   targetX           Int       @map("target_x")
   targetY           Int       @map("target_y")
@@ -517,8 +518,10 @@ model CombatReport {
   isRead            Boolean   @default(false) @map("is_read")
   readByAttacker    Boolean   @default(false) @map("read_by_attacker")
   readByDefender    Boolean   @default(false) @map("read_by_defender")
+  readByObserver    Boolean   @default(false) @map("read_by_observer")
   hiddenByAttacker  Boolean   @default(false) @map("hidden_by_attacker")
   hiddenByDefender  Boolean   @default(false) @map("hidden_by_defender")
+  hiddenByObserver  Boolean   @default(false) @map("hidden_by_observer")
   
   timestamp         DateTime  @default(now()) @db.Timestamptz(3)
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
@@ -528,6 +531,7 @@ model CombatReport {
 
   @@index([attackerUserId])
   @@index([defenderUserId])
+  @@index([observerUserId])
   @@index([worldId])
   @@index([timestamp])
   @@map("combat_report")

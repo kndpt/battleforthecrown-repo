@@ -36,11 +36,11 @@ Politique PR `$bftc-run` :
 - [050 — Caravane de ressources entre villages](./runs/050-feature-resource-caravan.md) — 📋 `PLANNED`. Transfert A→B intra-joueur via expédition `CARAVAN` (porteurs = pop verrouillée, vitesse marchande, plafond Entrepôt B, excédent perdu, pas de bâtiment). Intégrée au MVP, remplace le « Marché royal » post-MVP.
 - [049 — Devoir royal : scaling par niveau du joueur](./runs/049-feature-royal-duty-level-scaling.md) — 📋 `PLANNED`. Missions et récompenses des cartes quotidiennes scalées par château max (tier barbare, quantité, récompense plafonnée non-snowball).
 - [048 — Map focus links](./runs/048-feature-map-focus-links.md) — 📋 `PLANNED`. Créer une primitive de navigation carte réutilisable vers `/game/world` avec focus coordonnées, premier consumer rapport de combat et doc technique.
-- [047 — Rapports de capture](./runs/047-feature-capture-reports.md) — 📋 `PLANNED`. Spécifier puis livrer les rapports persistants liés aux attaques pendant capture PvP et à la capture finale.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés
 
+- [047 — Rapports de capture](./runs/archive/047-feature-capture-reports.md) — ✅ `DONE` (2026-06-07). Matrice capture documentée, `CombatReport` à trois rôles, rapports finalisation capture, labels inbox et invalidations WS.
 - [046 — Devoir royal FOMO légère](./runs/archive/046-refactor-royal-duty-light-fomo.md) — ✅ `DONE` (2026-06-02). Cartes quotidiennes simplifiées : 1 carte du jour, statut `EXPIRED`, 3 tâches naturelles, grâce bornée à un reset, sceau royal topbar et wording `Expire à 04h00`.
 - [045 — Toast de remboursement à l'annulation](./runs/archive/045-feature-refund-toast-on-cancel.md) — ✅ `DONE` (2026-06-02). Payloads cancel construction/training normalisés avec détail refund, mutations frontend typées, toast remboursement via `ResourceIcon`, smokes ciblés et QA worktree.
 - [044 — Rapports persistants de renforts](./runs/archive/044-feature-reinforcement-reports.md) — ✅ `DONE` (2026-05-31). Modèle métier `ReinforcementReport` (STATIONED/RETURNED) + inbox par destinataire `InboxEntry` (FK typée), REST scopé user+world, badge/invalidation WS via events existants, migration additive. Review indépendante GO, smokes + static-check verts.

@@ -18,18 +18,30 @@ Le **système** qui héberge ces rapports — l'inbox — est livré au MVP pour
 | --- | --- |
 | **Catégories** | Combat, scout et renfort. Conquête détaillée, push, serveur/Oyez et classements restent hors scope. |
 | **Source de vérité** | `CombatReport` porte les rapports de combat. `ScoutReport` porte les rapports de scout. `ReinforcementReport` porte les rapports de renfort. `EventOutbox` reste un canal temps réel, pas une archive métier. Pas de table `Report` transverse au MVP. |
-| **Participants** | Un rapport PvP est partagé par le combat, mais l'état inbox est par participant : attaquant et défenseur ont chacun leur lu/non-lu et leur suppression. Un rapport barbare n'a qu'un participant joueur. Pour le renfort, l'état inbox est porté par `InboxEntry` (une ligne par destinataire unique). |
+| **Participants** | Un rapport PvP est partagé par le combat, mais l'état inbox est par participant : attaquant, défenseur et observateur de capture éventuel ont chacun leur lu/non-lu et leur suppression. Un rapport barbare n'a qu'un participant joueur, sauf pendant une capture où l'occupant joueur peut être défenseur ; il n'a jamais de propriétaire original observateur. Pour le renfort, l'état inbox est porté par `InboxEntry` (une ligne par destinataire unique). |
 | **Marquage** | Lu / non-lu persistant cross-device. Ouvrir le détail marque le rapport comme lu pour le joueur connecté uniquement. |
 | **Badge** | Badge global "messages" = nombre de rapports non lus du joueur connecté dans les catégories branchées à l'inbox (combat, scout, renfort). Il se met à jour après lecture, refetch, reconnexion et événement temps réel. |
 | **Tri** | Liste triée du plus récent au plus ancien. |
-| **Accès** | Le joueur connecté voit uniquement les rapports combat où il est attaquant ou défenseur, les rapports scout dont il est propriétaire, et les entrées `InboxEntry` qui lui sont adressées (renfort) — sauf entrée masquée. |
+| **Accès** | Le joueur connecté voit uniquement les rapports combat où il est attaquant, défenseur ou observateur de capture, les rapports scout dont il est propriétaire, et les entrées `InboxEntry` qui lui sont adressées (renfort) — sauf entrée masquée. |
 | **Suppression manuelle** | Suppression unitaire conservée au MVP. Elle masque l'entrée pour le joueur courant ; le rapport physique peut rester tant qu'un autre participant y a accès ou qu'un retour d'armée peut encore le référencer. Supprimer le rapport ne doit jamais bloquer la restitution des survivants/loot. Pour le renfort : `DELETE` passe `InboxEntry.hidden = true`, ne supprime jamais le `ReinforcementReport` physique ni ne bloque la restitution des unités. |
 | **Rétention / capacité** | Pas de purge automatique ni cap au MVP. À réouvrir post-MVP après playtest. |
 | **Filtres / recherche / pin** | Hors scope MVP. La première version peut afficher une seule liste de rapports. |
 | **REST minimal** | Combat : `GET /combat/reports`, `GET /combat/report/:id`, `PATCH /combat/report/:id/read`, `DELETE /combat/report/:id`. Scout : `GET /combat/scout-reports`, `GET /combat/scout-report/:id`, `PATCH /combat/scout-report/:id/read`, `DELETE /combat/scout-report/:id`. Renfort : `GET /combat/reinforcement-reports`, `GET /combat/reinforcement-report/:id`, `PATCH /combat/reinforcement-report/:id/read`, `DELETE /combat/reinforcement-report/:id`. |
-| **Temps réel minimal** | Une résolution de combat invalide l'inbox via WS : `battle.resolved` côté attaquant, `village.attacked` côté défenseur. Un scout arrivé invalide l'inbox via `scout.reported`; son retour émet `scout.returned`. Pour le renfort : l'inbox renfort se rafraîchit via les events existants `garrison.added` (arrivée STATIONED, côté owner hôte) et `reinforcement.returned` (RETURNED, côté owner origine) — sans nouvel event kind. Le frontend refetch REST ensuite. |
+| **Temps réel minimal** | Une résolution de combat invalide l'inbox via WS : `battle.resolved` côté attaquant, `village.attacked` côté défenseur et observateur de capture éventuel. Un scout arrivé invalide l'inbox via `scout.reported`; son retour émet `scout.returned`. Pour le renfort : l'inbox renfort se rafraîchit via les events existants `garrison.added` (arrivée STATIONED, côté owner hôte) et `reinforcement.returned` (RETURNED, côté owner origine) — sans nouvel event kind. La fin de capture utilise `village.capture-window-completed` et `village.conquered`. Le frontend refetch REST ensuite. |
 
 Modèle de référence post-MVP : Tribal Wars / Kingsage gardent les rapports ~30 jours par défaut, avec tags/favoris/archive et un cap de capacité. Ce n'est pas requis pour la Phase 2 initiale.
+
+### Catégorie capture/conquête
+
+Les rapports de capture restent dans la catégorie combat au MVP, sans table `Report` transverse. La matrice détaillée vit dans [`14-pvp-conquest.md` § Matrice des rapports inbox de capture](./14-pvp-conquest.md#matrice-des-rapports-inbox-de-capture).
+
+Contrats inbox durables :
+
+- `CombatReport.observerUserId` sert uniquement au propriétaire original d'un village joueur pendant une capture contestée. Son état est isolé via `readByObserver` / `hiddenByObserver`.
+- Une attaque pendant une fenêtre ouverte produit un rapport partagé par l'assaillant, l'occupant qui défend la garnison et, si applicable, le propriétaire original observateur.
+- Un village barbare en capture n'a pas de propriétaire original : aucun rapport observateur n'est créé.
+- La finalisation réussie crée un rapport final persistant partagé par le conquérant et l'ancien propriétaire joueur distinct ; un village barbare ne crée que le rapport du conquérant.
+- L'inbox doit libeller ces cas sans UUID brut : `Attaque`, `Défense de capture`, `Capture contestée`, `Capture réussie`, `Capture perdue`.
 
 ## Catégorie renfort
 

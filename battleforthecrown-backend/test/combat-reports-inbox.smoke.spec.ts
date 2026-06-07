@@ -23,6 +23,7 @@ describe('combat reports inbox smoke', () => {
     const world = await seedSmokeWorld(ctx.prisma);
     const attacker = await registerUser(ctx.server);
     const defender = await registerUser(ctx.server);
+    const observer = await registerUser(ctx.server);
     const attackerJoin = await joinWorld(
       ctx.server,
       attacker.accessToken,
@@ -34,6 +35,12 @@ describe('combat reports inbox smoke', () => {
       defender.accessToken,
       world.id,
       'report-defender',
+    );
+    await joinWorld(
+      ctx.server,
+      observer.accessToken,
+      world.id,
+      'report-observer',
     );
 
     const older = await ctx.prisma.combatReport.create({
@@ -57,6 +64,7 @@ describe('combat reports inbox smoke', () => {
         attackerVillageId: attackerJoin.village.id,
         defenderUserId: defender.userId,
         defenderVillageId: defenderJoin.village.id,
+        observerUserId: observer.userId,
         targetKind: 'PLAYER_VILLAGE',
         targetX: defenderJoin.village.x,
         targetY: defenderJoin.village.y,
@@ -67,6 +75,37 @@ describe('combat reports inbox smoke', () => {
         timestamp: new Date('2026-05-11T21:00:00.000Z'),
       },
     });
+
+    const selfOccupation = await ctx.prisma.combatReport.create({
+      data: {
+        worldId: world.id,
+        attackerUserId: attacker.userId,
+        attackerVillageId: attackerJoin.village.id,
+        defenderUserId: attacker.userId,
+        defenderVillageId: defenderJoin.village.id,
+        targetKind: 'BARBARIAN_VILLAGE',
+        targetX: defenderJoin.village.x,
+        targetY: defenderJoin.village.y,
+        loot: {},
+        lossesAttacker: {},
+        lossesDefender: {},
+        details: {
+          occupationDefense: { attackerVillageId: attackerJoin.village.id },
+        },
+        timestamp: new Date('2026-05-11T22:00:00.000Z'),
+      },
+    });
+
+    const hideSelfOccupation = await request(ctx.server)
+      .delete(`/combat/report/${selfOccupation.id}`)
+      .set('Authorization', `Bearer ${attacker.accessToken}`)
+      .set('x-world-id', world.id);
+    expect(hideSelfOccupation.status).toBeLessThan(300);
+    await expect(
+      ctx.prisma.combatReport.findUniqueOrThrow({
+        where: { id: selfOccupation.id },
+      }),
+    ).rejects.toThrow();
 
     const list = await request(ctx.server)
       .get('/combat/reports')
@@ -100,8 +139,31 @@ describe('combat reports inbox smoke', () => {
     expect(defenderDetail.status).toBeLessThan(300);
     const defenderDetailBody = defenderDetail.body as unknown as {
       isRead: boolean;
+      recipientRole: string;
     };
     expect(defenderDetailBody.isRead).toBe(false);
+    expect(defenderDetailBody.recipientRole).toBe('defender');
+
+    const observerRead = await request(ctx.server)
+      .patch(`/combat/report/${shared.id}/read`)
+      .set('Authorization', `Bearer ${observer.accessToken}`)
+      .set('x-world-id', world.id);
+    expect(observerRead.status).toBeLessThan(300);
+    const observerReadBody = observerRead.body as unknown as {
+      isRead: boolean;
+      recipientRole: string;
+    };
+    expect(observerReadBody).toEqual(
+      expect.objectContaining({ isRead: true, recipientRole: 'observer' }),
+    );
+
+    const defenderStillUnread = await request(ctx.server)
+      .get(`/combat/report/${shared.id}`)
+      .set('Authorization', `Bearer ${defender.accessToken}`)
+      .set('x-world-id', world.id);
+    expect((defenderStillUnread.body as { isRead: boolean }).isRead).toBe(
+      false,
+    );
 
     const hideForAttacker = await request(ctx.server)
       .delete(`/combat/report/${shared.id}`)
@@ -130,6 +192,18 @@ describe('combat reports inbox smoke', () => {
       .set('Authorization', `Bearer ${defender.accessToken}`)
       .set('x-world-id', world.id);
     expect(hideForDefender.status).toBeLessThan(300);
+
+    const observerStillSeesIt = await request(ctx.server)
+      .get(`/combat/report/${shared.id}`)
+      .set('Authorization', `Bearer ${observer.accessToken}`)
+      .set('x-world-id', world.id);
+    expect(observerStillSeesIt.status).toBeLessThan(300);
+
+    const hideForObserver = await request(ctx.server)
+      .delete(`/combat/report/${shared.id}`)
+      .set('Authorization', `Bearer ${observer.accessToken}`)
+      .set('x-world-id', world.id);
+    expect(hideForObserver.status).toBeLessThan(300);
     await expect(
       ctx.prisma.combatReport.findUniqueOrThrow({ where: { id: shared.id } }),
     ).rejects.toThrow();

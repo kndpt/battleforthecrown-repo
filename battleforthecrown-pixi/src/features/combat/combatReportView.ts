@@ -97,12 +97,58 @@ export function combatReportOutcome(report: CombatReportDto): {
   isVictory: boolean;
   outcome: CombatReportOutcome;
 } {
+  if (report.details?.captureFinalized) {
+    const isVictory = report.recipientRole === 'attacker';
+    return { isVictory, outcome: isVictory ? 'win' : 'lose' };
+  }
+
   const attackerWon = isVictoryForAttacker(
     report.lossesAttacker,
     report.totalUnitsAttacker,
   );
   const isVictory = report.isAttacker ? attackerWon : !attackerWon;
   return { isVictory, outcome: isVictory ? 'win' : 'lose' };
+}
+
+export function combatReportTypeLabel(report: CombatReportDto): {
+  icon: string;
+  label: string;
+  roleLabel: string;
+} {
+  if (report.details?.captureFinalized) {
+    const isConqueror = report.recipientRole === 'attacker';
+    return {
+      icon: isConqueror ? '🏰' : '💔',
+      label: isConqueror ? 'Capture réussie' : 'Capture perdue',
+      roleLabel: isConqueror ? 'Conquérant' : 'Ancien propriétaire',
+    };
+  }
+
+  if (report.recipientRole === 'observer') {
+    return {
+      icon: '👁️',
+      label: 'Capture contestée',
+      roleLabel: 'Propriétaire original',
+    };
+  }
+
+  if (report.details?.occupationDefense) {
+    return {
+      icon: '🛡️',
+      label: 'Défense de capture',
+      roleLabel: 'Occupant',
+    };
+  }
+
+  if (report.isAttacker) {
+    return {
+      icon: '⚔️',
+      label: report.targetKind === 'BARBARIAN_VILLAGE' ? 'Pillage barbare' : 'Attaque',
+      roleLabel: 'Attaquant',
+    };
+  }
+
+  return { icon: '🛡️', label: 'Défense', roleLabel: 'Défenseur' };
 }
 
 function buildLootHighlight(report: CombatReportDto): CombatReportHighlight | undefined {
@@ -149,11 +195,7 @@ export function buildCombatReportModalProps(
     place: target,
   });
   const unitTypes = allUnitTypes(report);
-  const type = report.isAttacker
-    ? report.targetKind === 'BARBARIAN_VILLAGE'
-      ? 'Pillage barbare'
-      : 'Pillage offensif'
-    : 'Défense du village';
+  const reportType = combatReportTypeLabel(report);
 
   return {
     actions,
@@ -167,13 +209,17 @@ export function buildCombatReportModalProps(
     isPlayerAttacker: report.isAttacker,
     labels: combatReportLabels,
     maxHeight: 'min(90dvh, 760px)',
-    motto: isVictory
-      ? '« Le champ de bataille vous appartient. »'
-      : '« Le rapport consigne vos pertes. »',
+    motto: report.details?.captureFinalized
+      ? isVictory
+        ? '« La bannière du village est désormais vôtre. »'
+        : '« Le registre consigne la perte du village. »'
+      : isVictory
+        ? '« Le champ de bataille vous appartient. »'
+        : '« Le rapport consigne vos pertes. »',
     onAction,
     outcome,
-    roleLabel: report.isAttacker ? 'Attaquant' : 'Défenseur',
-    type,
+    roleLabel: reportType.roleLabel,
+    type: reportType.label,
     when: DATE_FORMATTER.format(new Date(report.timestamp)),
     width: 360,
   };

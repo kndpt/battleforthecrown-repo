@@ -1,6 +1,6 @@
 import { Badge, Card } from '@/ui';
 import type { CombatReportDto } from '@/api/queries';
-import { combatReportOutcome } from './combatReportView';
+import { combatReportOutcome, combatReportTypeLabel } from './combatReportView';
 
 interface ReportCardProps {
   report: CombatReportDto;
@@ -40,8 +40,7 @@ export function ReportCard({ report, onClick }: ReportCardProps) {
 
   const { isVictory } = combatReportOutcome(report);
   const lossesForPlayer = report.isAttacker ? attackerLosses : defenderLosses;
-  const typeIcon = report.isAttacker ? '⚔️' : '🛡️';
-  const typeLabel = report.isAttacker ? 'Attaque' : 'Défense';
+  const { icon: typeIcon, label: typeLabel } = combatReportTypeLabel(report);
 
   return (
     <button
@@ -73,6 +72,9 @@ export function ReportCard({ report, onClick }: ReportCardProps) {
               <span className="text-sm font-game text-kingdom-900">
                 ({report.targetX}, {report.targetY})
               </span>
+              <Badge variant="neutral" size="md" className="px-2">
+                {typeLabel}
+              </Badge>
             </div>
             <div className="flex items-center gap-2">
               <Badge variant={totalLoot > 0 ? 'success' : 'neutral'} size="md" className="px-2">
@@ -97,7 +99,7 @@ export function ReportCard({ report, onClick }: ReportCardProps) {
               {!report.isRead && <Badge variant="error">!</Badge>}
             </div>
             <Badge variant={isVictory ? 'success' : 'error'} size="md" className="px-2">
-              {isVictory ? 'Victoire' : 'Défaite'}
+              {report.details?.captureFinalized ? typeLabel : isVictory ? 'Victoire' : 'Défaite'}
             </Badge>
           </div>
         </div>

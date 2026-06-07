@@ -7,3 +7,4 @@
 - [Pattern WorldMap visual tier propagation](pattern_world_map_visual_tier_propagation.md) — chaîne shared DTO → backend query → MapEntity → `aliasFor` Pixi ; trade-off join runtime vs dénormalisation pour les feeds carte
 - [Pattern toast remboursement ressources](pattern_resource_refund_toast.md) — variant riche du toast système, déclenché au niveau mutation (pas par callsite) ; réutiliser ResourceIcon ; asymétrie payload cancel construction vs training
 - [Pattern scaling cartes rétention](pattern_retention_card_scaling.md) — Devoir royal scalé par château max ; 2 chemins de génération, metadata Json inexploité, tier déjà dans combat.worker mais pas dans payload shared
+- [Pattern nouveau flux d'expédition](pattern_expedition_new_flow.md) — cloner REINFORCE pour CARAVAN/SUPPLY : enum 2 endroits, combat.service send/recall, combat.worker dispatch par kind, return.worker libère pop+crédite, storage cap helper

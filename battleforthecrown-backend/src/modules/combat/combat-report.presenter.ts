@@ -4,6 +4,7 @@ import { isVictoryForAttacker } from './combat.utils';
 type CombatReportVisibilityInput = {
   attackerUserId?: string;
   defenderUserId?: string | null;
+  observerUserId?: string | null;
   targetKind: string;
   loot: unknown;
   totalUnitsAttacker: unknown;
@@ -14,9 +15,11 @@ type CombatReportVisibilityInput = {
   isRead?: boolean;
   readByAttacker?: boolean;
   readByDefender?: boolean;
+  readByObserver?: boolean;
 };
 
 type CombatReportDetails = {
+  captureFinalized?: { outcome?: string };
   occupationDefense?: unknown;
   targetTier?: string;
 };
@@ -48,29 +51,42 @@ export function presentCombatReport<
 >(
   report: TReport,
   userId: string,
-): TReport & { isAttacker: boolean; isRead: boolean } {
-  const isOccupationDefenseForUser =
-    report.defenderUserId === userId &&
-    Boolean(reportDetails(report.details).occupationDefense);
+): TReport & {
+  isAttacker: boolean;
+  isRead: boolean;
+  recipientRole: 'attacker' | 'defender' | 'observer' | null;
+} {
+  const details = reportDetails(report.details);
+  const isObserver = report.observerUserId === userId;
+  const isDefender = !isObserver && report.defenderUserId === userId;
   const isAttacker =
-    report.attackerUserId === userId && !isOccupationDefenseForUser;
-  const isDefender = report.defenderUserId === userId;
+    !isObserver && !isDefender && report.attackerUserId === userId;
+  const recipientRole = isAttacker
+    ? 'attacker'
+    : isDefender
+      ? 'defender'
+      : isObserver
+        ? 'observer'
+        : null;
   const isRead = isAttacker
     ? (report.readByAttacker ?? report.isRead ?? false)
     : isDefender
       ? (report.readByDefender ?? report.isRead ?? false)
-      : (report.isRead ?? false);
+      : isObserver
+        ? (report.readByObserver ?? report.isRead ?? false)
+        : (report.isRead ?? false);
 
   if (!shouldHideBarbarianDefeatDetails(report, isAttacker)) {
-    return { ...report, isAttacker, isRead };
+    return { ...report, isAttacker, isRead, recipientRole };
   }
 
-  const { targetTier } = reportDetails(report.details);
+  const { targetTier } = details;
 
   return {
     ...report,
     isAttacker,
     isRead,
+    recipientRole,
     loot: {},
     totalUnitsDefender: {},
     lossesDefender: {},

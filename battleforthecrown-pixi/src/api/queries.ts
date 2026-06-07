@@ -746,6 +746,7 @@ export interface CombatReportDto {
   attackerUserId: string;
   defenderVillageId?: string | null;
   defenderUserId?: string | null;
+  observerUserId?: string | null;
   targetKind: string;
   targetX: number;
   targetY: number;
@@ -754,9 +755,21 @@ export interface CombatReportDto {
   totalUnitsDefender: Record<string, number>;
   lossesAttacker: Record<string, number>;
   lossesDefender: Record<string, number>;
-  details?: { targetTier?: string | null };
+  details?: {
+    targetTier?: string | null;
+    occupationDefense?: unknown;
+    captureFinalized?: {
+      pendingConquestId?: string;
+      villageId?: string;
+      villageName?: string;
+      openedAt?: string;
+      completedAt?: string;
+      outcome?: string;
+    };
+  };
   isRead: boolean;
   isAttacker: boolean;
+  recipientRole?: 'attacker' | 'defender' | 'observer' | null;
   timestamp: string;
   createdAt: string;
 }

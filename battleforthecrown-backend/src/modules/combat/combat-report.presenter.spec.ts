@@ -25,6 +25,7 @@ describe('presentCombatReport', () => {
       ...baseReport,
       isAttacker: true,
       isRead: false,
+      recipientRole: 'attacker',
       loot: {},
       totalUnitsDefender: {},
       lossesDefender: {},
@@ -42,6 +43,7 @@ describe('presentCombatReport', () => {
       ...report,
       isAttacker: true,
       isRead: false,
+      recipientRole: 'attacker',
     });
   });
 
@@ -50,6 +52,7 @@ describe('presentCombatReport', () => {
       ...baseReport,
       isAttacker: false,
       isRead: false,
+      recipientRole: null,
     });
   });
 
@@ -70,7 +73,25 @@ describe('presentCombatReport', () => {
       ...report,
       isAttacker: false,
       isRead: false,
+      recipientRole: 'defender',
     });
+  });
+
+  it('projects observer read state independently', () => {
+    const report = {
+      ...baseReport,
+      defenderUserId: 'defender-1',
+      observerUserId: 'observer-1',
+      readByObserver: true,
+    };
+
+    expect(presentCombatReport(report, 'observer-1')).toEqual(
+      expect.objectContaining({
+        isAttacker: false,
+        isRead: true,
+        recipientRole: 'observer',
+      }),
+    );
   });
 
   it('projects read state for the requesting participant only', () => {

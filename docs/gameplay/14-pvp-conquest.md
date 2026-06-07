@@ -139,6 +139,18 @@ Si l'attaque tierce ou défensive **échoue** (la garnison d'occupation tient) :
 - La capture **continue normalement** — pas de prolongation, pas de bonus pour le conquérant.
 - La garnison d'occupation peut être **affaiblie** (pertes du combat) → la prochaine attaque tierce sera plus dangereuse pour la conquête. Effet boule-de-neige défensif possible si plusieurs assauts s'enchaînent.
 
+#### Matrice des rapports inbox de capture
+
+La capture PvP utilise `CombatReport` comme archive persistante, avec un état lu/masqué isolé par destinataire. Chaque combat crée une nouvelle ligne : plusieurs attaques successives pendant la même fenêtre ne s'écrasent jamais.
+
+| Moment | Destinataires | Rapport attendu | Exception |
+| --- | --- | --- | --- |
+| Attaque initiale avec Seigneur | Attaquant et propriétaire défenseur si village joueur ; attaquant seul si village barbare | Rapport de combat normal, victoire ou défaite. Si victoire avec Seigneur survivant, le rapport reste un rapport de combat et la fenêtre de capture est ouverte en plus. | Village barbare : aucun défenseur propriétaire inexistant. |
+| Attaque reçue pendant une fenêtre ouverte | Attaquant tiers/défenseur d'origine qui lance l'attaque ; occupant initial dont la garnison défend ; propriétaire original comme observateur si c'est un autre joueur | Rapport de combat de capture : attaque pour l'assaillant, défense de capture pour l'occupant, capture contestée pour le propriétaire original. | Village barbare en capture : pas de rapport observateur/propriétaire original. |
+| Fin de fenêtre réussie | Conquérant ; joueur qui perd le village si le village était possédé par un joueur distinct | Rapport final persistant `Capture réussie` côté conquérant et `Capture perdue` côté ancien propriétaire. | Village barbare : seul le conquérant reçoit le rapport final. |
+
+Les événements temps réel existants continuent à déclencher le rafraîchissement des surfaces : `battle.resolved` côté assaillant, `village.attacked` côté défense/observateur de capture, puis `village.capture-window-completed` et `village.conquered` à la finalisation.
+
 ### Garde-fous anti-snowball
 
 Mécaniques structurelles pour empêcher qu'un top-player domine le serveur. Décidées au MVP comme suit.

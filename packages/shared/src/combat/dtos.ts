@@ -63,6 +63,7 @@ export interface CombatReportResponse {
   id: string;
   attackerVillageId: string;
   defenderVillageId?: string;
+  observerUserId?: string | null;
   targetKind: string;
   targetX: number;
   targetY: number;
@@ -73,6 +74,19 @@ export interface CombatReportResponse {
   lossesDefender?: UnitMap;
   isRead: boolean;
   isAttacker: boolean;
+  recipientRole?: 'attacker' | 'defender' | 'observer' | null;
+  details?: {
+    targetTier?: string | null;
+    occupationDefense?: unknown;
+    captureFinalized?: {
+      pendingConquestId?: string;
+      villageId?: string;
+      villageName?: string;
+      openedAt?: string;
+      completedAt?: string;
+      outcome?: string;
+    };
+  };
   timestamp: string;
 }
 

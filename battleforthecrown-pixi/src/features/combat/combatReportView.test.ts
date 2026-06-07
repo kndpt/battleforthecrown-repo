@@ -3,6 +3,7 @@ import type { CombatReportDto } from '@/api/queries';
 import {
   buildCombatReportModalProps,
   combatReportOutcome,
+  combatReportTypeLabel,
 } from './combatReportView';
 
 const report: CombatReportDto = {
@@ -40,7 +41,7 @@ describe('combatReportView', () => {
     expect(props.banner).toBe('VICTOIRE');
     expect(props.outcome).toBe('win');
     expect(props.roleLabel).toBe('Attaquant');
-    expect(props.type).toBe('Pillage offensif');
+    expect(props.type).toBe('Attaque');
     expect(props.attacker).toEqual({
       coord: '—',
       name: 'Vous',
@@ -88,7 +89,7 @@ describe('combatReportView', () => {
     const props = buildCombatReportModalProps(defenseReport, []);
 
     expect(props.roleLabel).toBe('Défenseur');
-    expect(props.type).toBe('Défense du village');
+    expect(props.type).toBe('Défense');
     expect(props.defender).toEqual({
       coord: '12|34',
       name: 'Vous',
@@ -135,4 +136,57 @@ describe('combatReportView', () => {
       outcome: 'win',
     });
   });
+
+  it('labels capture defense, observed contest and final capture reports', () => {
+    const captureDefense: CombatReportDto = {
+      ...report,
+      details: { occupationDefense: { attackerVillageId: 'v-origin' } },
+      isAttacker: false,
+      recipientRole: 'defender',
+    };
+    expect(combatReportTypeLabel(captureDefense)).toEqual({
+      icon: '🛡️',
+      label: 'Défense de capture',
+      roleLabel: 'Occupant',
+    });
+
+    const observedContest: CombatReportDto = {
+      ...report,
+      details: { occupationDefense: { attackerVillageId: 'v-origin' } },
+      isAttacker: false,
+      recipientRole: 'observer',
+    };
+    expect(combatReportTypeLabel(observedContest)).toEqual({
+      icon: '👁️',
+      label: 'Capture contestée',
+      roleLabel: 'Propriétaire original',
+    });
+
+    const captureWon: CombatReportDto = {
+      ...report,
+      details: { captureFinalized: { outcome: 'COMPLETED' } },
+      lossesAttacker: {},
+      lossesDefender: {},
+      totalUnitsAttacker: {},
+      totalUnitsDefender: {},
+      recipientRole: 'attacker',
+    };
+    expect(combatReportOutcome(captureWon)).toEqual({
+      isVictory: true,
+      outcome: 'win',
+    });
+    expect(combatReportTypeLabel(captureWon).label).toBe('Capture réussie');
+
+    const captureLost: CombatReportDto = {
+      ...captureWon,
+      isAttacker: false,
+      recipientRole: 'defender',
+    };
+    expect(combatReportOutcome(captureLost)).toEqual({
+      isVictory: false,
+      outcome: 'lose',
+    });
+    expect(combatReportTypeLabel(captureLost).label).toBe('Capture perdue');
+  });
+
 });

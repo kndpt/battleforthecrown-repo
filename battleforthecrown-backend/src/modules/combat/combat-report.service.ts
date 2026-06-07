@@ -21,14 +21,17 @@ export class CombatReportService {
       where: {
         worldId,
         OR: [
-          { attackerUserId: userId, hiddenByAttacker: false },
-          { defenderUserId: userId, hiddenByDefender: false },
+          { observerUserId: userId },
+          { defenderUserId: userId },
+          { attackerUserId: userId },
         ],
       },
       orderBy: { timestamp: 'desc' },
     });
 
-    return reports.map((report) => presentCombatReport(report, userId));
+    return reports
+      .filter((report) => this.canAccessReport(report, userId))
+      .map((report) => presentCombatReport(report, userId));
   }
 
   async getReport(userId: string, reportId: string, worldId: string) {
@@ -63,29 +66,17 @@ export class CombatReportService {
     }
 
     const role = this.getReportRole(report, userId);
-    if (
-      report.attackerUserId === userId &&
-      report.defenderUserId === userId &&
-      this.isOccupationDefenseReport(report.details)
-    ) {
-      await this.prisma.combatReport.delete({ where: { id: reportId } });
-      return { message: 'Report deleted successfully' };
-    }
+    const participants = this.getReportParticipants(report);
+    const otherParticipantsHidden = participants
+      .filter((participant) => participant.role !== role)
+      .every((participant) => participant.hidden);
 
-    const otherParticipantHidden =
-      role === 'attacker'
-        ? report.hiddenByDefender || !report.defenderUserId
-        : report.hiddenByAttacker;
-
-    if (otherParticipantHidden) {
+    if (otherParticipantsHidden) {
       await this.prisma.combatReport.delete({ where: { id: reportId } });
     } else {
       await this.prisma.combatReport.update({
         where: { id: reportId },
-        data:
-          role === 'attacker'
-            ? { hiddenByAttacker: true }
-            : { hiddenByDefender: true },
+        data: this.hiddenPatchForRole(role),
       });
     }
 
@@ -109,10 +100,7 @@ export class CombatReportService {
     const role = this.getReportRole(report, userId);
     const updated = await this.prisma.combatReport.update({
       where: { id: reportId },
-      data:
-        role === 'attacker'
-          ? { readByAttacker: true }
-          : { readByDefender: true },
+      data: this.readPatchForRole(role),
     });
 
     return presentCombatReport(updated, userId);
@@ -201,41 +189,90 @@ export class CombatReportService {
     report: {
       attackerUserId: string;
       defenderUserId: string | null;
-      details?: unknown;
+      observerUserId?: string | null;
     },
     userId: string,
-  ): 'attacker' | 'defender' | null {
-    if (
-      report.defenderUserId === userId &&
-      this.isOccupationDefenseReport(report.details)
-    ) {
-      return 'defender';
-    }
-    if (report.attackerUserId === userId) return 'attacker';
+  ): 'attacker' | 'defender' | 'observer' | null {
+    if (report.observerUserId === userId) return 'observer';
     if (report.defenderUserId === userId) return 'defender';
+    if (report.attackerUserId === userId) return 'attacker';
     return null;
   }
 
-  private isOccupationDefenseReport(details: unknown): boolean {
-    return (
-      details !== null &&
-      typeof details === 'object' &&
-      'occupationDefense' in details
-    );
+  private getReportParticipants(report: {
+    attackerUserId: string;
+    defenderUserId: string | null;
+    observerUserId?: string | null;
+    hiddenByAttacker: boolean;
+    hiddenByDefender: boolean;
+    hiddenByObserver?: boolean;
+  }): Array<{
+    role: 'attacker' | 'defender' | 'observer';
+    userId: string;
+    hidden: boolean;
+  }> {
+    const byUser = new Map<
+      string,
+      {
+        role: 'attacker' | 'defender' | 'observer';
+        userId: string;
+        hidden: boolean;
+      }
+    >();
+
+    byUser.set(report.attackerUserId, {
+      role: 'attacker',
+      userId: report.attackerUserId,
+      hidden: report.hiddenByAttacker,
+    });
+    if (report.defenderUserId) {
+      byUser.set(report.defenderUserId, {
+        role: 'defender',
+        userId: report.defenderUserId,
+        hidden: report.hiddenByDefender,
+      });
+    }
+    if (report.observerUserId) {
+      byUser.set(report.observerUserId, {
+        role: 'observer',
+        userId: report.observerUserId,
+        hidden: report.hiddenByObserver ?? false,
+      });
+    }
+    return [...byUser.values()];
+  }
+
+  private readPatchForRole(role: 'attacker' | 'defender' | 'observer' | null) {
+    if (role === 'attacker') return { readByAttacker: true };
+    if (role === 'defender') return { readByDefender: true };
+    if (role === 'observer') return { readByObserver: true };
+    return {};
+  }
+
+  private hiddenPatchForRole(
+    role: 'attacker' | 'defender' | 'observer' | null,
+  ) {
+    if (role === 'attacker') return { hiddenByAttacker: true };
+    if (role === 'defender') return { hiddenByDefender: true };
+    if (role === 'observer') return { hiddenByObserver: true };
+    return {};
   }
 
   private canAccessReport(
     report: {
       attackerUserId: string;
       defenderUserId: string | null;
+      observerUserId?: string | null;
       hiddenByAttacker: boolean;
       hiddenByDefender: boolean;
+      hiddenByObserver?: boolean;
     },
     userId: string,
   ): boolean {
     const role = this.getReportRole(report, userId);
     if (role === 'attacker') return !report.hiddenByAttacker;
     if (role === 'defender') return !report.hiddenByDefender;
+    if (role === 'observer') return !(report.hiddenByObserver ?? false);
     return false;
   }
 }

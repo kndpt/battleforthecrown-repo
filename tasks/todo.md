@@ -1,5 +1,29 @@
 # Todo
 
+## 2026-06-07 — QA locale run 047 rapports capture
+
+- [x] Vérifier l'environnement local Postgres/Docker/Yarn/Prisma.
+- [x] Relancer les checks statiques et tests ciblés backend/frontend du run 047.
+- [x] Exécuter le preflight smoke puis les smokes capture réels.
+- [x] Faire une QA runtime agent backend/front sans QA IG navigateur.
+- [x] Documenter les résultats, limites restantes et checklist IG minimale.
+
+### Review
+
+- Docker disponible ; `battleforthecrown-postgres` expose `localhost:5432`.
+- Migration run 047 inspectée : additive (`observer_user_id`, `read_by_observer`, `hidden_by_observer`, index observateur).
+- Migration appliquée sur la DB locale `battleforthecrown` puis Prisma Client généré.
+- `rtk yarn static-check` passé.
+- Tests ciblés passés : `combat-report.presenter.spec.ts` (6 tests) et `combatReportView.test.ts` (5 tests).
+- Premier smoke ciblé `combat-reports-inbox.smoke.spec.ts` en échec : rapports attacker-only absents de la liste à cause de `NOT` Prisma sur colonnes nullable.
+- Correctif appliqué dans `CombatReportService.getAllReports` : sélection des participants puis filtrage par rôle effectif via `canAccessReport`.
+- Smokes ciblés passés après correctif : `combat-reports-inbox.smoke.spec.ts` + `conquest-finalize.smoke.spec.ts` (2 suites / 4 tests).
+- `rtk yarn test` passé : backend unit 26 suites / 283 tests, Pixi 63 fichiers / 354 tests, smoke complet 25 suites / 63 tests.
+- Relance isolée capture/realtime passée : 4 suites / 11 tests. Le smoke realtime conserve un log Prisma/pg-boss de teardown sur `resources.changed`, reproduit seul et non lié au payload `village.attacked`.
+- `rtk yarn build` passé.
+- QA runtime agent passée sur DB temporaire clonée `battleforthecrown_047qa` : backend `/health` OK, frontend `/` et `/design-system` HTTP 200, REST authentifié inbox read/delete OK.
+- DB temporaire `battleforthecrown_047qa` supprimée, serveurs QA arrêtés.
+
 ## 2026-06-07 — Merge PRs ouvertes vers main
 
 - [x] Recontrôler les statuts GitHub des PR #56 à #60.

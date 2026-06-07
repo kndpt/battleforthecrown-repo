@@ -43,10 +43,11 @@ type DefenderVillage = Prisma.VillageGetPayload<{
   include: { resourceStock: true; buildings: true };
 }>;
 
-/** Occupation owner currently holding a barbarian village (PvP defender on capture). */
+/** Capture owner currently defending the target garrison during an open window. */
 interface OccupationDefense {
   attackerUserId: string;
   attackerVillageId: string;
+  originalOwnerUserId: string | null;
 }
 
 const EMPTY_LOOT = { wood: 0, stone: 0, iron: 0 } as const;
@@ -295,11 +296,18 @@ export class CombatWorker implements OnModuleInit {
       include: { resourceStock: true, buildings: true },
     });
 
-    const occupationDefense = isBarbarian
-      ? await tx.pendingConquest.findFirst({
-          where: { targetVillageId: expedition.targetRefId, status: 'OPEN' },
-          select: { attackerUserId: true, attackerVillageId: true },
-        })
+    const pendingCapture = await tx.pendingConquest.findFirst({
+      where: { targetVillageId: expedition.targetRefId, status: 'OPEN' },
+      select: { attackerUserId: true, attackerVillageId: true },
+    });
+    const occupationDefense = pendingCapture
+      ? {
+          ...pendingCapture,
+          originalOwnerUserId:
+            !isBarbarian && defenderVillage?.userId
+              ? defenderVillage.userId
+              : null,
+        }
       : null;
 
     if (defenderVillage?.resourceStock) {
@@ -365,9 +373,11 @@ export class CombatWorker implements OnModuleInit {
     } = args;
 
     const defenderUserId =
-      expedition.targetKind === 'PLAYER_VILLAGE'
+      occupationDefense?.attackerUserId ??
+      (expedition.targetKind === 'PLAYER_VILLAGE'
         ? defenderVillage?.userId
-        : occupationDefense?.attackerUserId;
+        : null);
+    const observerUserId = occupationDefense?.originalOwnerUserId;
 
     if (
       !defenderVillage ||
@@ -386,8 +396,11 @@ export class CombatWorker implements OnModuleInit {
 
     await createOutboxEvent(tx, 'village.attacked', defenderVillage.id, {
       defenderVillageId: defenderVillage.id,
-      ...(expedition.targetKind === 'BARBARIAN_VILLAGE'
+      ...(occupationDefense || expedition.targetKind === 'BARBARIAN_VILLAGE'
         ? { defenderUserId }
+        : {}),
+      ...(observerUserId && observerUserId !== defenderUserId
+        ? { observerUserId }
         : {}),
       attackerVillageId: expedition.attackerVillageId,
       attackerVillageName: attackerVillage.name,
@@ -437,9 +450,17 @@ export class CombatWorker implements OnModuleInit {
             ? expedition.targetRefId
             : null,
         defenderUserId:
-          expedition.targetKind === 'PLAYER_VILLAGE' && defenderVillage
+          occupationDefense?.attackerUserId ??
+          (expedition.targetKind === 'PLAYER_VILLAGE' && defenderVillage
             ? defenderVillage.userId
-            : (occupationDefense?.attackerUserId ?? null),
+            : null),
+        observerUserId:
+          occupationDefense?.originalOwnerUserId &&
+          occupationDefense.originalOwnerUserId !== attackerVillage.userId &&
+          occupationDefense.originalOwnerUserId !==
+            occupationDefense.attackerUserId
+            ? occupationDefense.originalOwnerUserId
+            : null,
         targetKind: expedition.targetKind,
         targetX: expedition.targetX,
         targetY: expedition.targetY,

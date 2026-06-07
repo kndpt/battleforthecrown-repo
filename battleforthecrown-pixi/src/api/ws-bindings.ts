@@ -485,6 +485,7 @@ export function applyVillageConquered(payload: VillageConqueredPayload, ctx: Bin
   ctx.queryClient.invalidateQueries({ queryKey: ['world-entities'] });
   invalidatePowerQueries(ctx, payload.villageId);
   invalidateOpenConquests(ctx);
+  invalidateCombatReports(ctx);
   // Mark the entity as conquered on the map by simply removing it; the next
   // refetch will reinsert it under the new owner.
   useWorldMapStore.getState().removeEntity(payload.villageId);
@@ -524,6 +525,7 @@ export function applyVillageCaptureWindowCompleted(
   ctx.queryClient.invalidateQueries({ queryKey: ['villages'] });
   ctx.queryClient.invalidateQueries({ queryKey: ['world-entities'] });
   invalidateOpenConquests(ctx);
+  invalidateCombatReports(ctx);
   useUiStore.getState().pushToast({
     tone: 'success',
     title: 'Capture terminée',

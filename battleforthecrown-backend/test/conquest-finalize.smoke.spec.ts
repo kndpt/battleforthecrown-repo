@@ -199,6 +199,20 @@ describe('conquest finalize smoke', () => {
     );
     expect(population.max).toBe(getQuarterPopulationLimit(EXPECTED_T2_LEVEL));
 
+    const finalReport = await ctx.prisma.combatReport.findFirstOrThrow({
+      where: {
+        attackerUserId: user.userId,
+        defenderVillageId: target.id,
+        details: {
+          path: ['captureFinalized', 'pendingConquestId'],
+          equals: pending.id,
+        },
+      },
+    });
+    expect(finalReport.defenderUserId).toBeNull();
+    expect(finalReport.targetX).toBe(target.x);
+    expect(finalReport.targetY).toBe(target.y);
+
     await outboxDispatched(
       ctx.prisma,
       { kind: 'village.capture-window-completed', aggregateId: target.id },

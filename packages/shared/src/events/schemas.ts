@@ -90,6 +90,7 @@ const ScoutReturnedPayloadSchema = z.object({
 const VillageAttackedPayloadSchema = z.object({
   defenderVillageId: z.string(),
   defenderUserId: z.string().optional(),
+  observerUserId: z.string().optional(),
   attackerVillageId: z.string(),
   attackerVillageName: z.string(),
   attackerX: z.number(),

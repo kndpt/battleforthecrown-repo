@@ -6,7 +6,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { PendingConquestStatus } from '@prisma/client';
+import { PendingConquestStatus, TargetKind } from '@prisma/client';
 import PgBoss from 'pg-boss';
 import { PrismaClientOrTx } from '../../common/prisma.types';
 import { PrismaService } from '../../infra/prisma/prisma.service';
@@ -23,6 +23,7 @@ import {
   type BuildingType,
 } from '@battleforthecrown/shared/village';
 import { getBarbarianConquestVillageBuildings } from '../village/player-village-building-lifecycle';
+import { encodeUnitMap } from './codecs';
 
 export const CONQUEST_FINALIZE_QUEUE = 'conquest:finalize';
 
@@ -217,10 +218,16 @@ export class ConquestService {
         return { completed: false };
       }
 
-      await this.conquerVillageInTx(tx, {
+      const conquestResult = await this.conquerVillageInTx(tx, {
         attackerVillageId: pending.attackerVillageId,
         targetVillageId: pending.targetVillageId,
         attackerUserId: pending.attackerUserId,
+      });
+
+      await this.writeCaptureFinalReportInTx(tx, {
+        pending,
+        previousOwnerUserId: conquestResult.previousOwnerId,
+        villageName: conquestResult.name,
       });
 
       await this.installNobleInConqueredVillage(tx, pending);
@@ -313,6 +320,7 @@ export class ConquestService {
     villageId: string;
     name: string;
     buildings: number;
+    previousOwnerId: string | null;
     tier?: string;
   }> {
     this.logger.debug(
@@ -355,6 +363,7 @@ export class ConquestService {
     villageId: string;
     name: string;
     buildings: number;
+    previousOwnerId: string | null;
     tier?: string;
   }> {
     const { attackerVillageId, targetVillageId, attackerUserId } = params;
@@ -491,8 +500,63 @@ export class ConquestService {
       villageId: target.id,
       name: target.name,
       buildings: buildingsKept,
+      previousOwnerId: target.userId,
       tier: target.tier || undefined,
     };
+  }
+
+  private async writeCaptureFinalReportInTx(
+    tx: PrismaClientOrTx,
+    args: {
+      pending: {
+        attackerVillageId: string;
+        attackerUserId: string;
+        targetVillageId: string;
+        worldId: string;
+        id: string;
+        openedAt: Date;
+        captureUntil: Date;
+      };
+      previousOwnerUserId: string | null;
+      villageName: string;
+    },
+  ): Promise<void> {
+    const { pending, previousOwnerUserId, villageName } = args;
+    const target = await tx.village.findUniqueOrThrow({
+      where: { id: pending.targetVillageId },
+      select: { x: true, y: true },
+    });
+
+    await tx.combatReport.create({
+      data: {
+        worldId: pending.worldId,
+        attackerVillageId: pending.attackerVillageId,
+        attackerUserId: pending.attackerUserId,
+        defenderVillageId: pending.targetVillageId,
+        defenderUserId:
+          previousOwnerUserId && previousOwnerUserId !== pending.attackerUserId
+            ? previousOwnerUserId
+            : null,
+        targetKind: TargetKind.PLAYER_VILLAGE,
+        targetX: target.x,
+        targetY: target.y,
+        loot: {},
+        totalUnitsAttacker: encodeUnitMap({}),
+        totalUnitsDefender: encodeUnitMap({}),
+        lossesAttacker: encodeUnitMap({}),
+        lossesDefender: encodeUnitMap({}),
+        details: {
+          captureFinalized: {
+            pendingConquestId: pending.id,
+            villageId: pending.targetVillageId,
+            villageName,
+            openedAt: pending.openedAt.toISOString(),
+            completedAt: new Date().toISOString(),
+            outcome: 'COMPLETED',
+          },
+        },
+      },
+    });
   }
 
   private async installNobleInConqueredVillage(
