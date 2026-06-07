@@ -123,6 +123,21 @@ describe("worldsViewModel", () => {
     expect(model.ctaLabel).toBe("Entrer");
   });
 
+  it("keeps joined CTA for a LOCKED world the player has already joined", () => {
+    // Real gameplay case: inscriptions close while players are already in the world.
+    // ctaFor() checks isJoined first so status=LOCKED must not override.
+    const model = toWorldCardViewModel(
+      makeWorld({ id: "joined-locked-world", status: "LOCKED" }),
+      new Set(["joined-locked-world"]),
+      now,
+    );
+
+    expect(model.isJoined).toBe(true);
+    expect(model.ctaKind).toBe("joined");
+    expect(model.ctaLabel).toBe("Entrer");
+    expect(model.statusLabel).toBe("INSCRIPTIONS CLOSES");
+  });
+
   it("formats personal stats only for joined worlds with loaded stats", () => {
     const stats = new Map([
       ["joined-world", { kingdomPower: 1234567, villageCount: 2 }],
