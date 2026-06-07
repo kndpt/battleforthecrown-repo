@@ -129,7 +129,7 @@ interface StrategyIconProps {
 interface VillageCardProps {
   labels: Pick<
     MultiVillageBottomSheetLabels,
-    'buildActivity' | 'levelPrefix' | 'lordActivity' | 'troopsActivity'
+    'buildActivity' | 'lordActivity' | 'troopsActivity'
   >;
   onActivitySelect?: (village: MultiVillageItem, kind: MultiVillageActivityKind) => void;
   onSelect?: (village: MultiVillageItem) => void;
@@ -137,7 +137,6 @@ interface VillageCardProps {
 }
 
 interface VillageIdentityProps {
-  levelPrefix: string;
   village: MultiVillageItem;
 }
 
@@ -413,9 +412,9 @@ function AlertPill({ alert, dense = false }: AlertPillProps) {
   );
 }
 
-function VillageIdentity({ levelPrefix, village }: VillageIdentityProps) {
+function VillageIdentity({ village }: VillageIdentityProps) {
   const tier = village.power ? tierFromPower(village.power) : 1;
-  const hasDetails = village.level !== undefined || Boolean(village.power) || Boolean(village.coords);
+  const hasDetails = Boolean(village.power) || Boolean(village.coords);
 
   return (
     <div className="flex min-w-0 items-center gap-2.5">
@@ -449,18 +448,10 @@ function VillageIdentity({ levelPrefix, village }: VillageIdentityProps) {
         </div>
         {hasDetails ? (
           <div className="mt-0.5 flex flex-wrap items-center gap-[7px] font-game text-[11.5px] text-[#6d5838]">
-            {village.level !== undefined ? (
-              <>
-                <span className="whitespace-nowrap">
-                  {levelPrefix} <b className="text-[#3d2f1f]">{village.level}</b>
-                </span>
-                <span className="opacity-40">·</span>
-              </>
-            ) : null}
             {village.power ? (
               <>
                 <span className="inline-flex items-center gap-[3px] whitespace-nowrap">
-                  <img alt="" className="w-[11px]" src={publicAsset('/assets/army-power.png')} />
+                  <img alt="" className="w-[11px]" src={publicAsset('/assets/power.png')} />
                   <b className="text-[#3d2f1f] tabular-nums">{village.power.replace(/\s/g, '\u00a0')}</b>
                 </span>
                 <span className="opacity-40">·</span>
@@ -491,7 +482,7 @@ function VillageCard({ labels, onActivitySelect, onSelect, village }: VillageCar
       )}
     >
       <button className="min-w-0 text-left" onClick={() => onSelect?.(village)} type="button">
-        <VillageIdentity levelPrefix={labels.levelPrefix} village={village} />
+        <VillageIdentity village={village} />
       </button>
       <button className="text-left" onClick={() => onSelect?.(village)} type="button">
         <ResourceRow resources={village.resources} />

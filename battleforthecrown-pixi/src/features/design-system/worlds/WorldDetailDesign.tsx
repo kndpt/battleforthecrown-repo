@@ -27,7 +27,7 @@ export interface WorldDetailDesignProps {
   world: WorldCardViewModel;
 }
 
-const KINGDOM_POWER_ICON = '/assets/army-power.png';
+const KINGDOM_POWER_ICON = '/assets/power.png';
 
 function DetailCrest({ glyph, theme }: { glyph: string; theme: WorldThemeTokens }) {
   return (

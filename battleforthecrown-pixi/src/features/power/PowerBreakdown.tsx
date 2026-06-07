@@ -1,6 +1,7 @@
-import { ProgressBar, Tooltip } from '@/ui';
+import { publicAsset } from '@/lib/publicAsset';
+import { cn } from '@/lib/cn';
 
-interface PowerBreakdownProps {
+export interface PowerBreakdownProps {
   buildings: number;
   army: number;
   className?: string;
@@ -8,42 +9,44 @@ interface PowerBreakdownProps {
 
 const SECTIONS = [
   {
-    key: 'kingdom' as const,
-    label: '🏰 Puissance Bâtiments',
-    tooltip: 'Somme des niveaux de bâtiments × poids',
+    key: 'buildings' as const,
+    icon: '/assets/castle.png',
   },
   {
     key: 'army' as const,
-    label: '⚔️ Puissance Armée',
-    tooltip: "Quantité d'unités × population × 10",
+    icon: '/assets/army-power.png',
   },
-];
+] as const;
 
-export function PowerBreakdown({ buildings, army, className = '' }: PowerBreakdownProps) {
-  const values = { kingdom: buildings, army };
-  const maxValue = Math.max(buildings, army);
+const numberFormatter = new Intl.NumberFormat('fr-FR');
+
+export function PowerBreakdown({
+  buildings,
+  army,
+  className,
+}: PowerBreakdownProps) {
+  const values = { buildings, army };
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={cn('grid grid-cols-2 gap-2', className)}>
       {SECTIONS.map((section) => {
         const value = values[section.key];
+
         return (
-          <div key={section.key}>
-            <div className="flex justify-between items-center mb-1">
-              <Tooltip content={section.tooltip}>
-                <span className="text-sm font-medium font-game text-kingdom-800">
-                  {section.label}
-                </span>
-              </Tooltip>
-              <span className="text-sm font-bold font-game text-kingdom-900">
-                {value.toLocaleString()}
-              </span>
-            </div>
-            <ProgressBar
-              value={maxValue > 0 ? (value / maxValue) * 100 : 0}
-              size="sm"
-              variant={section.key === 'kingdom' ? 'info' : 'danger'}
+          <div
+            className="flex min-w-0 items-center gap-1.5"
+            key={section.key}
+          >
+            <img
+              alt=""
+              className="size-5 shrink-0 object-contain drop-shadow-[0_1px_1px_rgba(0,0,0,.3)]"
+              src={publicAsset(section.icon)}
             />
+            <div className="min-w-0 flex-1">
+              <div className="font-game text-[14px] font-extrabold leading-none tabular-nums text-[#3d2f1f]">
+                {numberFormatter.format(value)}
+              </div>
+            </div>
           </div>
         );
       })}

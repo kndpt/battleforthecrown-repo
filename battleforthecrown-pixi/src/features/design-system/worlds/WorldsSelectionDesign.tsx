@@ -50,7 +50,7 @@ const variantTone: Record<SeasonVariant['id'], WorldThemeTokens> = {
   speed: { border: '#9e7b0d', dark: '#c59e3f', glow: 'rgba(246,213,123,.35)', light: '#f6d57b' },
   standard: { border: '#3a6c1f', dark: '#4a8c2a', glow: 'rgba(110,191,73,.35)', light: '#6ebf49' },
 };
-const KINGDOM_POWER_ICON = '/assets/army-power.png';
+const KINGDOM_POWER_ICON = '/assets/power.png';
 const VILLAGE_ICON = '/assets/castle.png';
 
 function lifecycleToneFor(world: WorldCardViewModel): WorldThemeTokens {

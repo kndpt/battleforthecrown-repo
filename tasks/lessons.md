@@ -104,3 +104,10 @@
 - Avant de merger une PR après review, vérifier les threads non résolus et les reviews `CHANGES_REQUESTED`, pas seulement le dernier résumé CodeRabbit "No actionable comments".
 - Pour une capture PvP, ne jamais compenser un bâtiment `CASTLE` absent par un palier gameplay par défaut ; faire échouer explicitement le calcul pour révéler le trou de données.
 - Pour un rapport militaire visible, ne pas remonter de libellés techniques ou génériques : passer par les configs canoniques (`unitMetaFor`, assets `/assets/army/*`) et aligner la composition sur les rapports déjà validés.
+- Quand une métrique n'a pas de plafond gameplay naturel, ne pas utiliser une barre de progression ou un ratio décoratif ; afficher la formule additive et les valeurs absolues.
+- Quand une valeur est déjà visible dans le titre d'une section, ne pas la répéter en total/footer ou en comparaison globale ; réduire la densité avant d'ajouter une explication.
+- Dans une bottom sheet mobile, ne pas imbriquer des tuiles pour deux métriques simples ; préférer une ligne compacte et laisser la sheet s'ajuster au contenu.
+- Quand deux sous-valeurs sont déjà identifiées par des cartes juste au-dessus, ne pas répéter leurs labels dans le détail local ; icône + valeur suffit.
+- Dans la liste multi-villages, ne pas afficher le niveau de Château si le tier est déjà visible sur l'asset ; privilégier la puissance du village en méta principale.
+- Réserver `/assets/army-power.png` à la puissance armée ; utiliser `/assets/power.png` pour une puissance totale royaume/village.
+- Les villageois disponibles appartiennent à la ligne méta du village actif ; ne pas les superposer à la barre bois/pierre/fer.

@@ -307,10 +307,11 @@ describe('GameHeader multi-village selector', () => {
   });
 
   it('renders kingdom and active village power in the header', async () => {
-    renderHeader();
+    const { container } = renderHeader();
 
     expect(await screen.findByLabelText('Puissance du royaume 320')).toBeInTheDocument();
     expect(await screen.findByLabelText('Puissance du village 220')).toBeInTheDocument();
+    expect(container.querySelectorAll('img[src="/assets/power.png"]').length).toBeGreaterThanOrEqual(2);
     expect(screen.queryByLabelText('Population 78')).not.toBeInTheDocument();
   });
 
@@ -330,6 +331,7 @@ describe('GameHeader multi-village selector', () => {
     expect(await screen.findByText((content, element) =>
       content === '220' && element?.tagName.toLowerCase() === 'b',
     )).toBeInTheDocument();
+    expect(screen.queryByText(/Niv\./)).not.toBeInTheDocument();
     expect(await screen.findByText('4.5K')).toBeInTheDocument();
     expect((await screen.findAllByText('78')).length).toBeGreaterThan(0);
     expect(await screen.findByTitle('Forteresse')).toBeInTheDocument();
