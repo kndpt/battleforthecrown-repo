@@ -4,6 +4,8 @@
 
 ## Done
 
+- 2026-06-07: PRs ouvertes traitees hors `kndpt/refine-power-and-village-ui` : #57/#58/#59 sans threads actionnables, #56 corrigee avec endpoint `POST /world/:worldId/enter`, refresh `lastLoginAt`, refus des mondes `ENDED`, mutation Pixi serveur-authoritative, tests ciblés/smoke/static-check verts et threads GitHub resolus.
+- 2026-06-07: Toutes les PR ouvertes #56-#60 ont ete mergees sur `main` apres verification live. Ordre final : #57, #58, #59, #56 apres resolution conflit tests avec #59 + recheck CI/smoke/CodeRabbit, puis #60 en dernier. `origin/main` final `504db2e857985a3168a1db5c42c4ae4ba9792a5b`.
 - 2026-06-03: Régression smoke capture tempo corrigée : `combat-conquest-hook.smoke` importe la durée T1 depuis `capture-duration.ts`; preflight smoke, smoke ciblé, `static-check` et `diff --check` verts.
 - 2026-06-03: Audit impact docs du patch local mixte : gameplay docs capture déjà justes; `capture-duration.ts` corrigé pour la courbe barbare compressée; docs techniques `backend-modules`/`balance-and-tempo` pointent vers le nouveau helper; test ciblé + `static-check` verts.
 - 2026-06-03: Capture monde corrigée : `%` entier dans `CaptureWindowCard`, DTO `OpenConquest` expose `targetKind`/`targetCastleLevel`, badge joueur `PVP/Ch.N`, durée PvP alignée doc 14 (`9-10 => 4h30`), tests Pixi/backend/smokes/static-check verts; capture locale `cmpygad00008rvd3j4nmggvcf` reschedulée 4h30.

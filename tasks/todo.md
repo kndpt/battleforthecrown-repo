@@ -1,10 +1,48 @@
 # Todo
 
+## 2026-06-07 — Merge PRs ouvertes vers main
+
+- [x] Recontrôler les statuts GitHub des PR #56 à #60.
+- [x] Inspecter les threads review, y compris #60 maintenant inclus.
+- [x] Simuler l’ordre de merge pour détecter les conflits croisés.
+- [x] Merger uniquement les PR `APPROVED`, `CLEAN`, checks verts et sans thread non résolu.
+- [x] Vérifier l’état final de `main` distant et documenter le résultat.
+
+### Review
+
+- PR #57 mergée : `8a2d68d29f6352a4f9bb5045b11a96561dbbc0f9`.
+- PR #58 mergée : `7b30901190490faddd7f430494d8cae677e2ad48`.
+- PR #59 mergée : `c907fb187d250f2dc9bb1c72a3e175c1ffc898eb`.
+- PR #56 : conflit croisé avec #59 résolu sur la branche via merge de `origin/main`; ajout de la couverture `enterErrorMessage` demandée par CodeRabbit ; tests ciblés worlds, `static-check`, CI GitHub, smoke et CodeRabbit verts.
+- PR #56 mergée : `dbe90c39019512deb8fd5f813ce0ae1826028c86`.
+- PR #60 vérifiée en dernier puis mergée : `504db2e857985a3168a1db5c42c4ae4ba9792a5b`.
+- État final : aucune PR ouverte ; `origin/main` pointe sur `504db2e857985a3168a1db5c42c4ae4ba9792a5b`.
+
+## 2026-06-07 — Traitement complet des PR GitHub ouvertes
+
+- [x] Lister toutes les PR ouvertes et exclure `kndpt/refine-power-and-village-ui`.
+- [x] Pour chaque PR retenue, inspecter threads non résolus, reviews `CHANGES_REQUESTED`, commentaires top-level et commentaires inline aplatis.
+- [x] Classer chaque commentaire en actionnable, déjà traité, obsolète ou non pertinent.
+- [x] Appliquer les corrections pertinentes au bon endroit, avec tests ciblés.
+- [x] Résoudre les threads GitHub non pertinents ou traités, et laisser une réponse si nécessaire.
+- [x] Vérifier que chaque PR retenue n’a plus de commentaire actionnable ouvert.
+
+### Review
+
+- PR #57, #58 et #59 : aucun thread review ouvert ni commentaire actionnable à traiter.
+- PR #56 : trois threads actionnables traités. L’entrée directe dans un royaume passe maintenant par `POST /world/:worldId/enter`, rafraîchit `WorldMembership.lastLoginAt` côté serveur et n’ouvre le jeu côté Pixi qu’après succès de la mutation.
+- PR #56 : l’entrée directe refuse désormais les mondes `ENDED`, sans rafraîchir l’activité membership ; les mondes `LOCKED` restent accessibles aux membres existants.
+- PR #56 : les tests couvrent les traductions/fallbacks `joinErrorMessage`, les erreurs d’entrée royaume, le CTA `Entrer` pour un monde rejoint/verrouillé et le smoke backend d’entrée membre/non-membre.
+- Threads GitHub #56 résolus : activité membership à l’entrée directe, couverture test `joinErrorMessage`, refus d’entrée sur monde terminé.
+- Vérifications locales #56 : `rtk yarn workspace battleforthecrown-pixi test -- useWorldCardModels worldsViewModel`, `rtk yarn workspace battleforthecrown-pixi type-check`, `rtk yarn workspace battleforthecrown-backend type-check`, `rtk yarn workspace battleforthecrown-backend test:smoke:preflight`, `rtk yarn workspace battleforthecrown-backend test:smoke:run -- world-membership.smoke.spec.ts`, `rtk yarn static-check`, `rtk git diff --check`.
+- Push #56 : commits `c746c8d01aa962802d66e748518df9d7d27c882c` et `a65dbfa40b04692bbdf4cf56ae845b32802b285d` poussés sur `kndpt/modifier-la-carte-des-mondes`.
+- État GitHub final hors PR #60 exclue : #56, #57, #58 et #59 sont `APPROVED`, `CLEAN`, avec static/unit, smoke et CodeRabbit en succès.
+
 ## 2026-06-06 — Refonte sheet puissance royaume
 
 - [x] Relire le gameplay et le contrat de puissance royaume/village.
 - [x] Recomposer la sheet avec les primitives HUD et les assets runtime.
-- [x] Rendre l'UX lisible : total royaume, contribution bâtiments/armée, focus village actif.
+- [x] Rendre l’UX lisible : total royaume, contribution bâtiments/armée, focus village actif.
 - [x] Ajouter une vérification frontend ciblée.
 - [x] Documenter la review et la QA IG restante.
 
@@ -14,11 +52,11 @@
 - UI : suppression des emojis, réutilisation des assets runtime (`power`, `army-power`, `castle`, `village-tier`) et du shell `GameBottomSheetPanel`.
 - UX : lecture en trois niveaux — force cumulée du royaume, contributions bâtiments/armée, puis détail compact du village actif.
 - Correction feedback : retrait des progress bars/ratios sans plafond gameplay naturel ; les valeurs sont maintenant absolues et additives.
-- Correction feedback 2 : retrait de la formule explicative, du rappel `sur <royaume>`, du total village répété et du texte d'aide.
+- Correction feedback 2 : retrait de la formule explicative, du rappel `sur <royaume>`, du total village répété et du texte d’aide.
 - Correction feedback 3 : section village actif compactée en une ligne de stats, sans tuiles imbriquées ; sheet bornée à `64vh` sans hauteur forcée.
 - Correction feedback 4 : retrait des labels répétés et du préfixe `+` dans les valeurs du village actif.
 - Correction feedback 5 : la liste multi-villages remplace `Niv. X` par la puissance du village.
-- Correction feedback 6 : `/assets/power.png` représente les puissances totales ; `/assets/army-power.png` reste réservé à l'armée.
+- Correction feedback 6 : `/assets/power.png` représente les puissances totales ; `/assets/army-power.png` reste réservé à l’armée.
 - Correction feedback 7 : les villageois disponibles remplacent le niveau dans la méta du hero Village.
 - Vérification : `rtk yarn workspace battleforthecrown-pixi test -- PowerBottomSheet GameHeader WorldsSelectionDesign` — 3 fichiers / 21 tests passés.
 - Vérification : `rtk yarn static-check` — passé.
