@@ -184,42 +184,33 @@ export class CrownsService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      let crownBalance = await tx.crownBalance.findUnique({
+      const crownBalance = await tx.crownBalance.findUnique({
         where: { userId_worldId: { userId, worldId } },
       });
 
       const now = new Date();
-      let productionRate: number;
 
       if (!crownBalance) {
-        crownBalance = await tx.crownBalance.create({
+        await tx.crownBalance.create({
           data: { userId, worldId, balance: 0, lastUpdateTs: now },
         });
-        productionRate = await this.calculateProductionRate(userId, worldId);
       } else {
-        ({ productionRate } = await this.accumulateCrowns(
-          tx,
-          userId,
-          worldId,
-          crownBalance,
-          now,
-        ));
+        await this.accumulateCrowns(tx, userId, worldId, crownBalance, now);
       }
 
-      await this.createCrownsChangedEvent(userId, worldId, tx, productionRate);
+      await this.createCrownsChangedEvent(userId, worldId, tx);
     });
   }
 
   /**
    * Create event in EventOutbox for WebSocket dispatch.
-   * Pass `productionRate` when it has already been computed to avoid a
-   * redundant `prisma.village.findMany` call.
+   * Always re-reads production rate so concurrent building completions
+   * are reflected in the emitted event.
    */
   async createCrownsChangedEvent(
     userId: string,
     worldId: string,
     tx?: PrismaClientOrTx,
-    productionRate?: number,
   ): Promise<void> {
     const prisma = tx || this.prisma;
 
@@ -232,8 +223,7 @@ export class CrownsService {
       return;
     }
 
-    const rate =
-      productionRate ?? (await this.calculateProductionRate(userId, worldId));
+    const rate = await this.calculateProductionRate(userId, worldId);
 
     await createOutboxEvent(prisma, 'crowns.changed', userId, {
       userId,
