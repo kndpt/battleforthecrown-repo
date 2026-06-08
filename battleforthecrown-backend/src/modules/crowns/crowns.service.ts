@@ -129,7 +129,11 @@ export class CrownsService {
    * propre `crowns.changed` — sinon le HUD restera stale jusqu'au prochain
    * tick avec `production > 0`.
    */
-  async updateProduction(userId: string, worldId: string, createEvent = false) {
+  async updateProduction(
+    userId: string,
+    worldId: string,
+    createEvent = false,
+  ): Promise<CrownBalance | null> {
     return this.prisma.$transaction(async (tx) => {
       const crownBalance = await tx.crownBalance.findUnique({
         where: { userId_worldId: { userId, worldId } },
@@ -216,7 +220,7 @@ export class CrownsService {
     worldId: string,
     tx?: PrismaClientOrTx,
     productionRate?: number,
-  ) {
+  ): Promise<void> {
     const prisma = tx || this.prisma;
 
     const crownBalance = await prisma.crownBalance.findUnique({
