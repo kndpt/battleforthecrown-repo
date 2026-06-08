@@ -252,7 +252,10 @@ export class CrownsService {
     updated: CrownBalance;
   }> {
     const productionRate = await this.calculateProductionRate(userId, worldId);
-    const elapsedMs = now.getTime() - crownBalance.lastUpdateTs.getTime();
+    const elapsedMs = Math.max(
+      0,
+      now.getTime() - crownBalance.lastUpdateTs.getTime(),
+    );
     const elapsedHours = elapsedMs / MS_PER_HOUR;
     const production = Math.floor(productionRate * elapsedHours);
     const newBalance = crownBalance.balance + production;
