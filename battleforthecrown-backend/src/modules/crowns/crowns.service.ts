@@ -167,7 +167,7 @@ export class CrownsService {
    * Recalculate production rate when a building changes.
    * Called after construction completion.
    */
-  async recalculateOnBuildingChange(villageId: string) {
+  async recalculateOnBuildingChange(villageId: string): Promise<void> {
     const village = await this.prisma.village.findUnique({
       where: { id: villageId },
     });
