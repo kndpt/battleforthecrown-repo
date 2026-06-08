@@ -162,7 +162,7 @@ canvas {
 
 /* ── VillageView entrance animations ───────────────────────────────────── */
 
-@keyframes villageAssetEnter {
+@keyframes bftc-village-asset-enter {
   0% {
     opacity: 0;
     transform: translate3d(var(--village-enter-x, 0px), 0, 0) scale(0.9) scaleX(1.16)
@@ -182,7 +182,7 @@ canvas {
   }
 }
 
-@keyframes villageInfoEnter {
+@keyframes bftc-village-info-enter {
   0% {
     opacity: 0;
     transform: translate3d(0, 12px, 0);
@@ -193,7 +193,7 @@ canvas {
   }
 }
 
-@keyframes villageResourceFillEnter {
+@keyframes bftc-village-resource-fill-enter {
   0% {
     transform: scaleX(0);
     filter: brightness(1.35);
@@ -207,7 +207,7 @@ canvas {
   }
 }
 
-@keyframes villageResourceValueEnter {
+@keyframes bftc-village-resource-value-enter {
   0% {
     opacity: 0;
     transform: translate3d(0, -3px, 0) scale(0.92);
@@ -226,10 +226,10 @@ canvas {
 }
 
 .village-asset-enter {
-  animation: villageAssetEnter 0.38s cubic-bezier(0.16, 1, 0.24, 1) both;
+  animation: bftc-village-asset-enter 0.38s cubic-bezier(0.16, 1, 0.24, 1) both;
 }
 .village-info-enter {
-  animation: villageInfoEnter 0.34s cubic-bezier(0.16, 1, 0.24, 1) 0.05s both;
+  animation: bftc-village-info-enter 0.34s cubic-bezier(0.16, 1, 0.24, 1) 0.05s both;
 }
 .village-enter-from-left {
   --village-enter-x: -86px;
@@ -244,10 +244,10 @@ canvas {
   --village-enter-skew: 0deg;
 }
 .village-resource-fill-enter {
-  animation: villageResourceFillEnter 0.58s cubic-bezier(0.2, 0.8, 0.2, 1) 0.08s both;
+  animation: bftc-village-resource-fill-enter 0.58s cubic-bezier(0.2, 0.8, 0.2, 1) 0.08s both;
 }
 .village-resource-value-enter {
-  animation: villageResourceValueEnter 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: bftc-village-resource-value-enter 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
