@@ -73,14 +73,11 @@ export class CrownsService {
     });
 
     if (!crownBalance) {
-      // Create initial balance
-      crownBalance = await this.prisma.crownBalance.create({
-        data: {
-          userId,
-          worldId,
-          balance: 0,
-          lastUpdateTs: new Date(),
-        },
+      // upsert handles concurrent requests for the same new user
+      crownBalance = await this.prisma.crownBalance.upsert({
+        where: { userId_worldId: { userId, worldId } },
+        create: { userId, worldId, balance: 0, lastUpdateTs: new Date() },
+        update: {},
       });
     } else {
       // Perform catch-up if needed
@@ -261,11 +258,10 @@ export class CrownsService {
     );
     const elapsedHours = elapsedMs / MS_PER_HOUR;
     const production = Math.floor(productionRate * elapsedHours);
-    const newBalance = crownBalance.balance + production;
 
     const updated = await tx.crownBalance.update({
       where: { userId_worldId: { userId, worldId } },
-      data: { balance: newBalance, lastUpdateTs: now },
+      data: { balance: { increment: production }, lastUpdateTs: now },
     });
 
     return { production, productionRate, updated };
