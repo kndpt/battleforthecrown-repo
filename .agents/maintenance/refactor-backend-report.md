@@ -85,7 +85,17 @@ Same structure as last run. New commits since `dee539b`: feat(retention) growing
 
 ### Files changed
 
-- `battleforthecrown-backend/src/modules/crowns/crowns.service.ts` — `accumulateCrowns` private helper added; `updateProduction` and `recalculateOnBuildingChange` refactored; `createCrownsChangedEvent` simplified (no `productionRate?` param; always re-reads rate)
+- `battleforthecrown-backend/src/modules/crowns/crowns.service.ts` — `accumulateCrowns` private helper added; `updateProduction` and `recalculateOnBuildingChange` refactored; `createCrownsChangedEvent` simplified (no `productionRate?` param; always re-reads rate); + 5 correctness fixes added during review cycle (see below)
+
+### Correctness fixes added during review cycle (CodeRabbit + Codex)
+
+| Fix | Commit | Finding |
+|-----|--------|---------|
+| `elapsedMs = Math.max(0, ...)` in `accumulateCrowns` | `8cd140c` | Clock skew could produce negative production, rolling back balance |
+| `upsert` in `recalculateOnBuildingChange` (create path) | `0ec4ae2` | Two concurrent PgBoss workers both reading null → both `create` → unique-constraint on second |
+| `upsert` in `getCrownBalance` (create path) | `64ead46` | Same race for two concurrent HTTP requests to the same new user |
+| `{ balance: { increment: production } }` in `accumulateCrowns` | `64ead46` | Absolute write under READ COMMITTED allowed lost-update (two transactions both reading same balance, both overwriting with same value) |
+| `lockCrownBalance` SELECT FOR UPDATE in `updateProduction` + `recalculateOnBuildingChange` | `d9ac32c` | Atomic increment fixes lost-update on balance, but both workers still computed production from the same stale `lastUpdateTs` → double-credit. SELECT FOR UPDATE serializes the read-compute-write cycle. |
 
 ### Verification
 
@@ -93,6 +103,8 @@ Same structure as last run. New commits since `dee539b`: feat(retention) growing
 yarn static-check   → ✅ tsc (backend+pixi) + eslint --quiet, 0 errors
 yarn test:backend   → ✅ 289 passed, 27 suites
 ```
+
+**Final commit:** `d9ac32c` — CodeRabbit approved, no remaining actionable issues.
 
 ### Docs impact
 
