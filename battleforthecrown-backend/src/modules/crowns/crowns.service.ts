@@ -191,8 +191,11 @@ export class CrownsService {
       const now = new Date();
 
       if (!crownBalance) {
-        await tx.crownBalance.create({
-          data: { userId, worldId, balance: 0, lastUpdateTs: now },
+        // upsert handles concurrent creation from parallel PgBoss workers
+        await tx.crownBalance.upsert({
+          where: { userId_worldId: { userId, worldId } },
+          create: { userId, worldId, balance: 0, lastUpdateTs: now },
+          update: {},
         });
       } else {
         await this.accumulateCrowns(tx, userId, worldId, crownBalance, now);
