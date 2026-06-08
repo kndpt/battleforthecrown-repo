@@ -142,16 +142,17 @@ export class CrownsService {
         return null;
       }
 
-      const { updated, production, productionRate } =
-        await this.accumulateCrowns(tx, userId, worldId, crownBalance);
+      const { updated, production } = await this.accumulateCrowns(
+        tx,
+        userId,
+        worldId,
+        crownBalance,
+      );
 
       if (createEvent && production > 0) {
-        await this.createCrownsChangedEvent(
-          userId,
-          worldId,
-          tx,
-          productionRate,
-        );
+        // No pre-computed rate: let createCrownsChangedEvent re-read so it
+        // emits the current rate even if a building completed mid-tick.
+        await this.createCrownsChangedEvent(userId, worldId, tx);
       }
 
       return updated;
