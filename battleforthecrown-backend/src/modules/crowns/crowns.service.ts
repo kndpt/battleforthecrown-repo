@@ -132,9 +132,7 @@ export class CrownsService {
     createEvent = false,
   ): Promise<CrownBalance | null> {
     return this.prisma.$transaction(async (tx) => {
-      const crownBalance = await tx.crownBalance.findUnique({
-        where: { userId_worldId: { userId, worldId } },
-      });
+      const crownBalance = await this.lockCrownBalance(tx, userId, worldId);
 
       if (!crownBalance) {
         this.logger.warn(
@@ -181,9 +179,7 @@ export class CrownsService {
     }
 
     return this.prisma.$transaction(async (tx) => {
-      const crownBalance = await tx.crownBalance.findUnique({
-        where: { userId_worldId: { userId, worldId } },
-      });
+      const crownBalance = await this.lockCrownBalance(tx, userId, worldId);
 
       const now = new Date();
 
@@ -232,6 +228,28 @@ export class CrownsService {
       productionRate: rate,
       lastUpdateTs: crownBalance.lastUpdateTs.toISOString(),
     });
+  }
+
+  /**
+   * Acquires a row-level lock (SELECT FOR UPDATE) on the crown balance row so
+   * that concurrent PgBoss workers for the same user serialize their
+   * accumulation and don't compute production from the same stale lastUpdateTs.
+   * Must be called inside a prisma.$transaction.
+   */
+  private async lockCrownBalance(
+    tx: PrismaClientOrTx,
+    userId: string,
+    worldId: string,
+  ): Promise<{ balance: number; lastUpdateTs: Date } | null> {
+    const rows = await tx.$queryRaw<
+      Array<{ balance: number; lastUpdateTs: Date }>
+    >`
+      SELECT balance, last_update_ts AS "lastUpdateTs"
+      FROM crown_balance
+      WHERE user_id = ${userId} AND world_id = ${worldId}
+      FOR UPDATE
+    `;
+    return rows[0] ?? null;
   }
 
   /**
