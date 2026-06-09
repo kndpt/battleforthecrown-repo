@@ -189,7 +189,7 @@ export class ReturnWorker implements OnModuleInit {
     const resources = this.parseCaravanResources(expedition);
     const porters = this.getPorters(resources);
 
-    if (!expedition.recalled && porters > 0) {
+    if (porters > 0) {
       const populationRelease = await tx.population.updateMany({
         where: {
           villageId: expedition.attackerVillageId,

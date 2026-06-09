@@ -416,7 +416,7 @@ describe('resource caravan smoke', () => {
       ctx.prisma.population.findUniqueOrThrow({
         where: { villageId: villageAId },
       }),
-    ).resolves.toMatchObject({ used: 10 });
+    ).resolves.toMatchObject({ used: 11 });
 
     await waitFor(
       () =>

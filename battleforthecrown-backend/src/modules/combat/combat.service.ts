@@ -768,20 +768,6 @@ export class CombatService {
                 tx,
               );
             }
-            if (porters > 0) {
-              const populationRestore = await tx.population.updateMany({
-                where: {
-                  villageId: expedition.attackerVillageId,
-                  used: { gte: porters },
-                },
-                data: { used: { decrement: porters } },
-              });
-              if (populationRestore.count === 0) {
-                throw new BadRequestException(
-                  'Failed to restore caravan population',
-                );
-              }
-            }
             await createOutboxEvent(
               tx,
               'caravan.recalled',
