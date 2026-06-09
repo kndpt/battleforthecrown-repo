@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/kelvindupont/Documents/battleforthecrown-repo/.codex/hooks/session-start.sh'"
+          }
+        ]
+      }
+    ]
+  }
+}
