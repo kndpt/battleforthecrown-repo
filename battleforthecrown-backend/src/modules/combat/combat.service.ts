@@ -43,6 +43,7 @@ import { createOutboxEvent } from '../event/event.utils';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
 import { PrismaClientOrTx } from '../../common/prisma.types';
 import { OwnershipService } from '../../common/auth';
+import { ResourcesService } from '../resources/resources.service';
 
 export interface GarrisonLineDto {
   villageId: string;
@@ -103,6 +104,7 @@ export class CombatService {
     private readonly visionService: VisionService,
     private readonly ownership: OwnershipService,
     private readonly outbox: OutboxPublisher,
+    private readonly resourcesService: ResourcesService,
     @Inject('PG_BOSS') private readonly boss: PgBoss,
   ) {}
 
@@ -407,14 +409,23 @@ export class CombatService {
           }
 
           const porters = caravanPortersFor(resources);
-          const [originStock, population, originWarehouse] = await Promise.all([
+          const [
+            originStock,
+            population,
+            originBuildings,
+            originStrategyConfig,
+          ] = await Promise.all([
             tx.resourceStock.findUnique({
               where: { villageId: dto.villageId },
             }),
             tx.population.findUnique({ where: { villageId: dto.villageId } }),
-            tx.building.findFirst({
-              where: { villageId: dto.villageId, type: 'WAREHOUSE' },
-              select: { level: true },
+            tx.building.findMany({
+              where: { villageId: dto.villageId },
+              select: { type: true, level: true },
+            }),
+            tx.villageStrategyConfig.findUnique({
+              where: { villageId: dto.villageId },
+              select: { strategy: true },
             }),
           ]);
           if (!originStock) {
@@ -424,10 +435,17 @@ export class CombatService {
             throw new BadRequestException('Origin population not found');
           }
 
+          const currentOriginStock =
+            await this.resourcesService.calculateCurrentResources({
+              worldId,
+              resourceStock: originStock,
+              buildings: originBuildings,
+              strategy: originStrategyConfig?.strategy,
+            });
           if (
-            originStock.wood < resources.wood ||
-            originStock.stone < resources.stone ||
-            originStock.iron < resources.iron
+            currentOriginStock.wood < resources.wood ||
+            currentOriginStock.stone < resources.stone ||
+            currentOriginStock.iron < resources.iron
           ) {
             throw new BadRequestException('Insufficient resources for caravan');
           }
@@ -438,6 +456,9 @@ export class CombatService {
               `Insufficient free population: have ${freePopulation}, need ${porters}`,
             );
           }
+          const originWarehouse = originBuildings.find(
+            (building) => building.type === 'WAREHOUSE',
+          );
           const caravanCapacity = getCaravanResourceCapacity(
             getWarehouseStorageLimit(originWarehouse?.level ?? 1),
           );
@@ -456,23 +477,15 @@ export class CombatService {
           const now = new Date();
           const arrivalAt = new Date(now.getTime() + travelTimeMs);
 
-          const stockDebitResult = await tx.resourceStock.updateMany({
-            where: {
-              villageId: dto.villageId,
-              wood: { gte: resources.wood },
-              stone: { gte: resources.stone },
-              iron: { gte: resources.iron },
-            },
+          await tx.resourceStock.update({
+            where: { villageId: dto.villageId },
             data: {
-              wood: { decrement: resources.wood },
-              stone: { decrement: resources.stone },
-              iron: { decrement: resources.iron },
+              wood: currentOriginStock.wood - resources.wood,
+              stone: currentOriginStock.stone - resources.stone,
+              iron: currentOriginStock.iron - resources.iron,
               lastUpdateTs: now,
             },
           });
-          if (stockDebitResult.count === 0) {
-            throw new BadRequestException('Insufficient resources for caravan');
-          }
 
           const activeCaravanResources =
             await this.sumActiveOutgoingCaravanResources(tx, dto.villageId);
@@ -753,21 +766,6 @@ export class CombatService {
           if (expedition.kind === ExpeditionKind.CARAVAN) {
             const resources = this.parseCaravanResources(expedition.loot);
             const porters = caravanPortersFor(resources);
-            if (sumResources(resources) > 0) {
-              await tx.resourceStock.update({
-                where: { villageId: expedition.attackerVillageId },
-                data: {
-                  wood: { increment: resources.wood },
-                  stone: { increment: resources.stone },
-                  iron: { increment: resources.iron },
-                  lastUpdateTs: now,
-                },
-              });
-              await this.outbox.resourcesChanged(
-                expedition.attackerVillageId,
-                tx,
-              );
-            }
             await createOutboxEvent(
               tx,
               'caravan.recalled',

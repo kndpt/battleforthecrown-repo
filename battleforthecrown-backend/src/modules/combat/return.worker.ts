@@ -8,6 +8,7 @@ import { ExpeditionKind, type Expedition } from '@prisma/client';
 import { PrismaClientOrTx } from '../../common/prisma.types';
 import { CARRY_PER_PORTER } from '@battleforthecrown/shared/logic';
 import type { UnitMap } from '@battleforthecrown/shared/army';
+import { ResourcesService } from '../resources/resources.service';
 
 interface ReturnJob {
   expeditionId: string;
@@ -23,6 +24,7 @@ export class ReturnWorker implements OnModuleInit {
     @Inject('PG_BOSS') private readonly boss: PgBoss,
     private readonly prisma: PrismaService,
     private readonly outbox: OutboxPublisher,
+    private readonly resourcesService: ResourcesService,
   ) {}
 
   async onModuleInit() {
@@ -188,6 +190,39 @@ export class ReturnWorker implements OnModuleInit {
   ) {
     const resources = this.parseCaravanResources(expedition);
     const porters = this.getPorters(resources);
+
+    if (expedition.recalled && this.sumResources(resources) > 0) {
+      const originVillage = await tx.village.findUnique({
+        where: { id: expedition.attackerVillageId },
+        include: {
+          buildings: { select: { type: true, level: true } },
+          resourceStock: true,
+          strategyConfig: true,
+        },
+      });
+      if (!originVillage?.resourceStock) {
+        throw new Error(`Caravan origin stock not found for ${expedition.id}`);
+      }
+
+      const now = new Date();
+      const currentStock =
+        await this.resourcesService.calculateCurrentResources({
+          worldId: originVillage.worldId,
+          resourceStock: originVillage.resourceStock,
+          buildings: originVillage.buildings,
+          strategy: originVillage.strategyConfig?.strategy,
+        });
+      await tx.resourceStock.update({
+        where: { villageId: expedition.attackerVillageId },
+        data: {
+          wood: currentStock.wood + resources.wood,
+          stone: currentStock.stone + resources.stone,
+          iron: currentStock.iron + resources.iron,
+          lastUpdateTs: now,
+        },
+      });
+      await this.outbox.resourcesChanged(expedition.attackerVillageId, tx);
+    }
 
     if (porters > 0) {
       const populationRelease = await tx.population.updateMany({
