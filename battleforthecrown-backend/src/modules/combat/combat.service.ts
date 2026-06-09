@@ -531,6 +531,8 @@ export class CombatService {
           });
           await this.outbox.resourcesChanged(dto.villageId, tx);
 
+          await this.scheduleResolution(expedition.id, arrivalAt);
+
           this.logger.debug(
             `Caravan expedition created: ${expedition.id}, arrives at ${arrivalAt.toISOString()}`,
           );
@@ -540,8 +542,6 @@ export class CombatService {
         { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       ),
     );
-
-    await this.scheduleResolution(expedition.id, expedition.arrivalAt);
 
     return expedition;
   }
@@ -681,124 +681,142 @@ export class CombatService {
       `Recall en-route requested for expedition ${expeditionId} by user ${userId}`,
     );
 
-    const result = await this.prisma.$transaction(async (tx) => {
-      // 1. Get expedition
-      const expedition = await tx.expedition.findUnique({
-        where: { id: expeditionId },
-      });
-
-      if (!expedition) {
-        throw new NotFoundException('Expedition not found');
-      }
-
-      // 2. Verify ownership (attacker village must be owned by user)
-      const village = await tx.village.findFirst({
-        where: { id: expedition.attackerVillageId, userId },
-      });
-
-      if (!village) {
-        throw new ForbiddenException(
-          'You do not own the origin village of this expedition',
-        );
-      }
-
-      // 3. Verify status
-      if (expedition.status !== 'EN_ROUTE') {
-        throw new BadRequestException(
-          `Expedition cannot be recalled (status: ${expedition.status})`,
-        );
-      }
-
-      // 4. Verify timing (cannot recall if already arrived, even if worker hasn't run yet)
-      const now = new Date();
-      if (now >= expedition.arrivalAt) {
-        throw new BadRequestException(
-          'Expedition has already arrived at target',
-        );
-      }
-
-      // 5. Calculate return time (time elapsed since departure)
-      const elapsedMs = now.getTime() - expedition.departAt.getTime();
-      const returnAt = new Date(now.getTime() + elapsedMs);
-
-      // 6. Update expedition
-      const updated = await tx.expedition.update({
-        where: { id: expeditionId },
-        data: {
-          status: 'RETURNING',
-          recalled: true,
-          returnAt,
-        },
-      });
-
-      // 7. Attempt to cancel combat resolution job
-      // Fallback: the job will still trigger but handleCombatResolution
-      // will skip it because the status is no longer EN_ROUTE.
-      // PgBoss.cancel requires a jobId, which we don't store.
-      // We rely on the status guard in the worker.
-
-      // 8. Create event
-      if (expedition.kind === ExpeditionKind.CARAVAN) {
-        const resources = this.parseCaravanResources(expedition.loot);
-        const porters = caravanPortersFor(resources);
-        if (sumResources(resources) > 0) {
-          await tx.resourceStock.update({
-            where: { villageId: expedition.attackerVillageId },
-            data: {
-              wood: { increment: resources.wood },
-              stone: { increment: resources.stone },
-              iron: { increment: resources.iron },
-              lastUpdateTs: now,
-            },
+    const result = await this.withSerializableRetry(() =>
+      this.prisma.$transaction(
+        async (tx) => {
+          // 1. Get expedition
+          const expedition = await tx.expedition.findUnique({
+            where: { id: expeditionId },
           });
-          await this.outbox.resourcesChanged(expedition.attackerVillageId, tx);
-        }
-        if (porters > 0) {
-          const populationRestore = await tx.population.updateMany({
-            where: {
-              villageId: expedition.attackerVillageId,
-              used: { gte: porters },
-            },
-            data: { used: { decrement: porters } },
+
+          if (!expedition) {
+            throw new NotFoundException('Expedition not found');
+          }
+
+          // 2. Verify ownership (attacker village must be owned by user)
+          const village = await tx.village.findFirst({
+            where: { id: expedition.attackerVillageId, userId },
           });
-          if (populationRestore.count === 0) {
-            throw new BadRequestException(
-              'Failed to restore caravan population',
+
+          if (!village) {
+            throw new ForbiddenException(
+              'You do not own the origin village of this expedition',
             );
           }
-        }
-        await createOutboxEvent(
-          tx,
-          'caravan.recalled',
-          expedition.attackerVillageId,
-          {
-            expeditionId: expedition.id,
-            villageId: expedition.attackerVillageId,
-            targetVillageId: expedition.targetRefId,
-            resources,
-            porters,
-            returnAt: returnAt.toISOString(),
-          },
-        );
-      } else {
-        await createOutboxEvent(
-          tx,
-          'expedition.recalled',
-          expedition.attackerVillageId,
-          {
-            expeditionId: expedition.id,
-            villageId: expedition.attackerVillageId,
-            returnAt: returnAt.toISOString(),
-          },
-        );
-      }
 
-      this.logger.debug(
-        `Expedition ${expeditionId} recalled, returns at ${returnAt.toISOString()}`,
-      );
+          // 3. Verify status
+          if (expedition.status !== 'EN_ROUTE') {
+            throw new BadRequestException(
+              `Expedition cannot be recalled (status: ${expedition.status})`,
+            );
+          }
 
-      return updated;
-    });
+          // 4. Verify timing (cannot recall if already arrived, even if worker hasn't run yet)
+          const now = new Date();
+          if (now >= expedition.arrivalAt) {
+            throw new BadRequestException(
+              'Expedition has already arrived at target',
+            );
+          }
+
+          // 5. Calculate return time (time elapsed since departure)
+          const elapsedMs = now.getTime() - expedition.departAt.getTime();
+          const returnAt = new Date(now.getTime() + elapsedMs);
+
+          // 6. Claim the EN_ROUTE row before applying any recall side effects.
+          const claimed = await tx.expedition.updateMany({
+            where: {
+              id: expeditionId,
+              status: 'EN_ROUTE',
+              arrivalAt: { gt: now },
+            },
+            data: {
+              status: 'RETURNING',
+              recalled: true,
+              returnAt,
+            },
+          });
+          if (claimed.count === 0) {
+            throw new BadRequestException('Expedition cannot be recalled');
+          }
+          const updated = await tx.expedition.findUniqueOrThrow({
+            where: { id: expeditionId },
+          });
+
+          // 7. Attempt to cancel combat resolution job
+          // Fallback: the job will still trigger but handleCombatResolution
+          // will skip it because the status is no longer EN_ROUTE.
+          // PgBoss.cancel requires a jobId, which we don't store.
+          // We rely on the status guard in the worker.
+
+          // 8. Create event
+          if (expedition.kind === ExpeditionKind.CARAVAN) {
+            const resources = this.parseCaravanResources(expedition.loot);
+            const porters = caravanPortersFor(resources);
+            if (sumResources(resources) > 0) {
+              await tx.resourceStock.update({
+                where: { villageId: expedition.attackerVillageId },
+                data: {
+                  wood: { increment: resources.wood },
+                  stone: { increment: resources.stone },
+                  iron: { increment: resources.iron },
+                  lastUpdateTs: now,
+                },
+              });
+              await this.outbox.resourcesChanged(
+                expedition.attackerVillageId,
+                tx,
+              );
+            }
+            if (porters > 0) {
+              const populationRestore = await tx.population.updateMany({
+                where: {
+                  villageId: expedition.attackerVillageId,
+                  used: { gte: porters },
+                },
+                data: { used: { decrement: porters } },
+              });
+              if (populationRestore.count === 0) {
+                throw new BadRequestException(
+                  'Failed to restore caravan population',
+                );
+              }
+            }
+            await createOutboxEvent(
+              tx,
+              'caravan.recalled',
+              expedition.attackerVillageId,
+              {
+                expeditionId: expedition.id,
+                villageId: expedition.attackerVillageId,
+                targetVillageId: expedition.targetRefId,
+                resources,
+                porters,
+                returnAt: returnAt.toISOString(),
+              },
+            );
+          } else {
+            await createOutboxEvent(
+              tx,
+              'expedition.recalled',
+              expedition.attackerVillageId,
+              {
+                expeditionId: expedition.id,
+                villageId: expedition.attackerVillageId,
+                returnAt: returnAt.toISOString(),
+              },
+            );
+          }
+
+          this.logger.debug(
+            `Expedition ${expeditionId} recalled, returns at ${returnAt.toISOString()}`,
+          );
+
+          return updated;
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      ),
+    );
 
     // 9. Schedule return job (OUTSIDE transaction to avoid race condition with worker)
     if (result.returnAt) {
