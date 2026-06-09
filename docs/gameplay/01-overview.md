@@ -122,7 +122,7 @@ C'est une vraie règle de jeu **server-authoritative**, pas un effet visuel : le
 
 ## Classements
 
-> 🚧 **Post-MVP — à retravailler.** L'esquisse de 4 classements (Pillards, Boucliers, Architectes, Chevaliers du peuple) reste documentée pour traçabilité mais sort du scope MVP : les récompenses chiffrées créent un snowball mécanique non maîtrisé. Détail et points à reprendre : [`09-power-and-rankings.md` § Classements](./09-power-and-rankings.md#classements).
+Les classements sont séparés en trois signaux : **Puissance du Royaume** pour la force live, **Gloire d'Assaut** pour les unités ennemies tuées en attaque PvP, et **Gloire du Rempart** pour les unités ennemies tuées en défense PvP. Les récompenses sont cosmétiques par défaut afin d'éviter le snowball économique. Détail : [`24-rankings.md`](./24-rankings.md).
 
 ## Philosophie mobile
 
@@ -130,7 +130,7 @@ C'est une vraie règle de jeu **server-authoritative**, pas un effet visuel : le
 | --- | --- |
 | **Décision simple, effet clair** | 1 clic = 1 conséquence visible |
 | **Zéro frustration définitive** | Villages en ruines, jamais détruits |
-| **Rétention par intérêt** | Raids barbares, classements, Almanax |
+| **Rétention par intérêt** | Raids barbares, classements de prestige, Almanax |
 | **Feedback visuel constant** | Icônes, effets de niveaux, jauges, musiques dynamiques |
 | **Sessions courtes mais utiles** | Chaque session (2–5 min) = construction ou attaque utile |
 

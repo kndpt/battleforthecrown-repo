@@ -25,7 +25,7 @@ La rétention BFTC doit :
 | Quêtes quotidiennes legacy   | ❌ Remplacées par les cartes                                                                                             |
 | Raids barbares globaux       | ❌ Sortis de cette doc, à reprendre dans le pilier PVM barbare                                                           |
 | Notifications / inbox        | ❌ Docs dédiées : [`16-notifications.md`](./16-notifications.md), [`17-inbox-and-reports.md`](./17-inbox-and-reports.md) |
-| Classements                  | ❌ Post-MVP, voir [`09-power-and-rankings.md`](./09-power-and-rankings.md)                                               |
+| Classements                  | ❌ Hors cartes quotidiennes, voir [`24-rankings.md`](./24-rankings.md)                                                   |
 
 ## Cartes quotidiennes
 

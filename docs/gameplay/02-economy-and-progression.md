@@ -106,8 +106,9 @@ Calibrage cible : un Seigneur (5 000 couronnes, cf. [`10-conquest.md` § Coût d
 | Source | Gain |
 | --- | --- |
 | Raids barbares repoussés | +Y instantané (à chiffrer) |
-| Classement Pillards (hebdo, top 3) | _Post-MVP — esquisse à retravailler, cf. [`09-power-and-rankings.md` § Classements](./09-power-and-rankings.md#classements). Pas de gain couronnes via classement au MVP._ |
 | Événements Almanax | multiplicateurs |
+
+Les classements ne sont pas une source de couronnes par défaut. Voir [`24-rankings.md`](./24-rankings.md#rewards) : les rewards de leaderboard sont cosmétiques pour éviter le snowball.
 
 ### Dépenses
 

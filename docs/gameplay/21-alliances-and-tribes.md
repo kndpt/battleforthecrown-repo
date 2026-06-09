@@ -43,5 +43,5 @@ Le compromis MVP est une **liste d'amis défensifs** ultra-restreinte (renforts 
 - [`20-defensive-friends.md`](./20-defensive-friends.md) — compromis MVP (renforts uniquement, cap 5).
 - [`14-pvp-conquest.md`](./14-pvp-conquest.md) — PvP de conquête, qui prévoit déjà des hooks post-MVP pour les alliés (intervention pendant la fenêtre de capture, etc.).
 - [`19-world-lifecycle.md`](./19-world-lifecycle.md) — cycle de vie d'un monde (durée, wipe — impact direct sur la longévité d'une alliance).
-- [`09-power-and-rankings.md`](./09-power-and-rankings.md) — classements (potentiel ajout d'une catégorie collective post-MVP).
+- [`24-rankings.md`](./24-rankings.md) — classements (potentiel ajout d'une catégorie collective post-MVP).
 - [`01-overview.md` § Extensions post-MVP](./01-overview.md#extensions-post-mvp) — où la mention « Alliances / Tribus » figure déjà comme post-MVP.

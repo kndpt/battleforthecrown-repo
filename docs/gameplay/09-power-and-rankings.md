@@ -1,6 +1,6 @@
-# Puissance et classements
+# Puissance
 
-Métriques de comparaison entre joueurs. La **puissance** mesure la force d'un village ou d'un royaume ; les **classements** récompensent les performances périodiques.
+Métrique de force globale entre joueurs. La **puissance** mesure la force d'un village ou d'un royaume ; les **classements** périodiques sont spécifiés séparément dans [`24-rankings.md`](./24-rankings.md).
 
 ## Système de puissance
 
@@ -8,7 +8,7 @@ La **puissance** représente la force globale d'un village ou d'un royaume. Elle
 
 - Le **revenu en couronnes** : `couronnes/h = puissance_bâtiments_cumulée × 0.05`, sommée sur tous les villages possédés. Détail et tableau de gains par phase : [`02-economy-and-progression.md` § Couronnes](./02-economy-and-progression.md#couronnes).
 - L'**évaluation stratégique** : estimer la difficulté d'une cible avant attaque (cf. [`04-combat.md`](./04-combat.md)).
-- Les **classements** publics (cf. ci-dessous).
+- Le **classement public de Puissance du Royaume** (cf. [`24-rankings.md`](./24-rankings.md#puissance-du-royaume)).
 
 ### Calcul
 
@@ -74,68 +74,21 @@ La puissance affichée côté HUD se rafraîchit par invalidation REST après le
 - `building.completed` rafraîchit la puissance village et royaume à la fin d'un upgrade.
 - Les events combat qui mutent l'inventaire ou la propriété (`battle.resolved`, `battle.returned`, `village.attacked`, `village.conquered`) rafraîchissent aussi la puissance village et royaume sans F5.
 
-## Classements
+## Articulation avec les classements
 
-> 🚧 **Feature post-MVP — à retravailler entièrement.** L'esquisse ci-dessous est conservée pour mémoire mais **sort du scope MVP**. Les motivations et points à reprendre sont listés juste en dessous.
+La puissance n'est pas une performance périodique : elle indique la taille et la force actuelle du royaume. Les classements de performance vivent dans [`24-rankings.md`](./24-rankings.md) et sont séparés en trois signaux :
 
-### Pourquoi sortir les classements du MVP
+- **Puissance du Royaume** : classement live, non reset, basé sur la puissance décrite ici.
+- **Gloire d'Assaut** : points PvP gagnés en tuant des unités ennemies quand le joueur attaque.
+- **Gloire du Rempart** : points PvP gagnés en tuant des unités ennemies quand le joueur défend.
 
-L'esquisse actuelle crée un **snowball mécanique** non maîtrisé :
-
-- **Pillards** : 1 500 couronnes/semaine au top 1 = ~6 000 couronnes/mois. Le top-player **s'auto-finance ses Seigneurs en boucle** (un Seigneur = 5 000 couronnes, cf. [`10-conquest.md` § Coût de recrutement](./10-conquest.md#coût-de-recrutement-du-seigneur)). Plus il pille, plus il reçoit, plus il conquiert, plus il pille — la régulation `puissance ÷ 3` ([`14-pvp-conquest.md`](./14-pvp-conquest.md#garde-fous-anti-snowball)) ne suffit pas à compenser.
-- **Architectes** : +5 % production sur 7 j est cumulable cycle après cycle pour le même top-player, et avantage les comptes déjà à niveau de bâtiments élevé (qui en font le plus, donc gagnent le plus, donc en font encore plus).
-- **Boucliers / Chevaliers** : cosmétique uniquement — pas de snowball, mais aussi peu d'incitation à pousser le sujet en MVP.
-
-→ La conséquence est qu'au lieu de servir de **rétention** (mon objectif initial), les classements deviennent un **multiplicateur d'inégalité** entre les top-players et le reste du serveur.
-
-### Points à retravailler (post-MVP)
-
-| Sujet | Pistes |
-| --- | --- |
-| **Dégressivité ou cap** | Plafond de couronnes Pillards par compte/mois (ex : 5 000 couronnes max cumul mois). Ou récompense décroissante si remporté plusieurs cycles consécutifs. |
-| **Récompenses structurellement non-snowballantes** | Cosmétique uniquement ? Récompenses one-shot non cumulables ? Bonus défensifs uniquement (ex : Bouclier d'or = +X % défense pendant 7 j, qui ne booste pas l'offensif) ? |
-| **Cycles** | Garder l'hebdo, ou passer en mensuel ? Ou saisonnier aligné sur le [cycle de vie d'un monde](./19-world-lifecycle.md) (point structurant à trancher en parallèle) ? |
-| **Qui peut concourir** | Tous les joueurs ? Top % uniquement ? Filtrer par tranche de puissance pour éviter que les nouveaux soient écrasés par les top-players ? |
-| **Lien avec les alliances** | Quand les [alliances post-MVP](./21-alliances-and-tribes.md) arriveront, faut-il un classement collectif distinct des classements individuels ? |
-| **Anti-farming** | Comment éviter qu'un top-player exploite le compte d'un alt pour cumuler les podiums ? |
-
-→ Le rework devra repartir d'**objectifs design clairs** (rétention ? rivalité saine ? récompense d'effort ?) avant de chiffrer les rewards. L'erreur de l'esquisse actuelle a été de chiffrer avant de cadrer.
-
-### Esquisse historique (à archiver lors du rework)
-
-> Le texte qui suit décrit l'esquisse actuelle, conservée pour traçabilité. **Ne pas l'utiliser comme spec implémentable** — voir « Points à retravailler » ci-dessus.
-
-4 classements thématiques publiés par monde, **reset hebdomadaire** (chaque lundi 00:00 UTC). Récompenses sur **podium top 3** (Or / Argent / Bronze). Le 4ᵉ et au-delà ne reçoivent rien — la fréquence hebdo garantit qu'un nouveau cycle s'ouvre vite et qu'un comeback est toujours à portée.
-
-### Critères et récompenses
-
-| Type | Critère (cumul de la semaine) | 🥇 Or (Top 1) | 🥈 Argent (Top 2) | 🥉 Bronze (Top 3) |
-| --- | --- | --- | --- | --- |
-| **Pillards de la semaine** | Ressources pillées (raids barbares + PvP) | **+1 500 couronnes** (~1 jour de revenu mid-game) | +1 000 couronnes | +500 couronnes |
-| **Architectes** | Niveaux de bâtiments gagnés | **+5 % production** (bois/pierre/fer) pendant 7 j | +3 % production / 7 j | +2 % production / 7 j |
-| **Boucliers d'acier** | Attaques défensives repoussées | Bannière dorée prestige | Bannière argentée | Bannière bronze |
-| **Chevaliers du peuple** | Population totale (snapshot fin de cycle) | Couronne dorée sur le pseudo | Couronne argentée | Couronne bronze |
-
-**Calage Pillards** : 1 jour de revenu pour un Château 6 mid-game (~1 680 cour/jour, cf. [`02-economy-and-progression.md` § Couronnes](./02-economy-and-progression.md#couronnes)). Bonus lisible mais non snowballant — un Seigneur (5 000) requiert ~3 cycles consécutifs en Top 1 cumulés.
-
-**Calage Architectes** : +5 % pendant 7 j sur un mid-game qui produit ~800 ressources/h × 6 mines = **+240 ressources/h × 168 h ≈ 40 000 ressources** (équivalent ~1 upgrade fin de mid-game). Significatif sans dominer.
-
-**Boucliers / Chevaliers** : récompenses **purement cosmétiques** (visibles dans la fiche joueur publique + le HUD). Pas de bonus chiffré — les défenseurs gagnent déjà du loot et de l'XP à chaque attaque repoussée, et la pop est récompensée mécaniquement (production de couronnes via puissance bâtiments).
-
-### Cycle reset
-
-- **Reset** : chaque **lundi 00:00 UTC**, tous les compteurs et bonus actifs sont réinitialisés.
-- **Bonus Architectes (+X % production)** : appliqué dès le calcul du podium, dure jusqu'au reset suivant (7 j max).
-- **Couronnes Pillards** : créditées immédiatement au reset, balance permanente comme tout autre gain.
-- **Cosmétiques** : portés pendant le cycle suivant uniquement (1 semaine), puis remplacés par ceux du nouveau podium.
-
-> 💡 Pas de cycle mensuel au MVP — la simplicité prime. Si la rétention long-terme se révèle insuffisante en playtest, un classement saisonnier (mensuel ou trimestriel) pourra être ajouté en post-MVP avec ses propres récompenses (ex : titre permanent « Pillard de la saison »).
+Les classements de performance ne donnent pas de couronnes, ressources, bonus de production ou bonus offensifs par défaut. Les rewards sont cosmétiques afin d'éviter de transformer le leaderboard en accélérateur de snowball.
 
 ## Liens connexes
 
 - [`02-economy-and-progression.md` § Couronnes](./02-economy-and-progression.md#couronnes) — la puissance bâtiments pilote le rendement en couronnes.
 - [`03-buildings.md`](./03-buildings.md) — détail par bâtiment, dont le Château (poids le plus élevé).
 - [`04-combat.md`](./04-combat.md) — combat et conquête (consommateur principal de l'évaluation stratégique).
-- [`05-daily-cards-and-oyez.md`](./05-daily-cards-and-oyez.md) — cartes quotidiennes et Oyez ; les classements restent séparés et post-MVP.
+- [`24-rankings.md`](./24-rankings.md) — classements Puissance du Royaume, Gloire d'Assaut et Gloire du Rempart.
 - [`08-units.md`](./08-units.md) — catalogue des unités, dont les poids alimentent la puissance armée.
-- Backend : [`docs/architecture/backend-modules.md` § power](../architecture/backend-modules.md) — endpoints `GET /power?villageId=…`, `GET /power/kingdom`, `GET /power/leaderboard`.
+- Backend : [`docs/architecture/backend-modules.md` § power](../architecture/backend-modules.md) — endpoints `GET /power?villageId=…`, `GET /power/kingdom`, `GET /power/leaderboard` pour la puissance.

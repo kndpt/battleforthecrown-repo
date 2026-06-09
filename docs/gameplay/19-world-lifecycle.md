@@ -84,7 +84,7 @@ Déclenchement : job planifié à `startedAt + 10 j` (default 🔧 — `inscript
 Déclenchement : job planifié à `endsAt` (= `startedAt + 60 j`, default 🔧).
 
 À ce moment :
-- Snapshot du leaderboard final (cf. [`09-power-and-rankings.md`](./09-power-and-rankings.md) — réactivable même si les classements hebdo sont post-MVP).
+- Snapshot du leaderboard final (cf. [`24-rankings.md`](./24-rankings.md) — Puissance du Royaume, Gloire d'Assaut et Gloire du Rempart).
 - Attribution des **récompenses cosmétiques permanentes** (titre, bannière du monde, badge profil global). Pas de carry-over de ressources, couronnes, ou progression entre mondes.
 - Mode lecture seule : les joueurs peuvent encore consulter leur royaume mais plus d'action (raid, upgrade, conquête).
 - Le monde reste consultable 🔧 7 j en `ENDED` puis archivé (données conservées pour stats globales, plus accessibles depuis l'UI).
@@ -111,7 +111,7 @@ Cette spec **débloque ou impacte** plusieurs autres docs.
 | --- | --- |
 | **Bouclier débutant 48 h** ([`14-pvp-conquest.md` § Bouclier débutant](./14-pvp-conquest.md#3-bouclier-débutant--48-h-à-larrivée-sur-le-monde)) | Inchangé en valeur absolue (48 h temps réel, pas temps de jeu — cf. [`23` § Questions ouvertes](./23-world-tempo-and-multipliers.md#9-questions-ouvertes-à-trancher-en-playtest-pas-bloquantes-pour-cette-spec)). Reste pertinent pendant toute la fenêtre `OPEN` (cohorte principale **et** retardataires) — un joueur arrivant J+9 (dernier jour retardataire) a toujours ses 48 h de protection qui finissent J+11, soit juste après le `LOCKED`. Pas de conflit. |
 | **Abandon 14 j** ([`18-inactivity-and-abandonment.md`](./18-inactivity-and-abandonment.md)) | À recalibrer post-MVP. 14 j sur un monde de 60 j = ~23 % de la durée — sans doute à descendre à ~7 j sur Standard. À traiter quand le mécanisme sortira du chantier. |
-| **Classements** ([`09-power-and-rankings.md`](./09-power-and-rankings.md)) | Post-MVP. Le rework des récompenses doit intégrer la fin de monde (snapshot leaderboard à `ENDED`, récompenses séparées des cycles hebdo). |
+| **Classements** ([`24-rankings.md`](./24-rankings.md)) | Snapshot leaderboard à `ENDED`, rewards cosmétiques permanents, et séparation entre cycles courts et classement de monde entier. |
 | **Spawn barbare** ([`07-barbarian-spawning.md`](./07-barbarian-spawning.md)) | À ajuster : densité barbare cible doit tenir compte du fait que ~95 % des joueurs arriveront dans la fenêtre `OPEN` totale de 10 j (cohorte principale + retardataires) — pic de seeding sur ~7 j puis queue plus courte. |
 | **Snowball production** ([`02-economy-and-progression.md`](./02-economy-and-progression.md)) | Borné par 60 j + tempo compressé. La courbe `1.4^n` reste agressive mais l'écart ne s'accumule plus indéfiniment. Pas de modification de la courbe — c'est le tempo qui change le rythme d'accumulation, cf. [`23`](./23-world-tempo-and-multipliers.md). |
 | **Couronnes** ([`02-economy-and-progression.md` § Couronnes](./02-economy-and-progression.md#couronnes)) | Le calage cible (« 3 j de revenu pour 5 000 couronnes ») est exprimé à `tempo.global = 1.0`. À recalibrer dans la passe d'ajustement des chiffres absolus (cf. [`23` § Impacts à recalibrer](./23-world-tempo-and-multipliers.md#7-impacts-à-recalibrer-dans-les-autres-docs)). |
@@ -134,7 +134,8 @@ Cette spec **débloque ou impacte** plusieurs autres docs.
 - [`01-overview.md`](./01-overview.md) — vision globale (à mettre à jour pour refléter la fin programmée du monde).
 - [`02-economy-and-progression.md`](./02-economy-and-progression.md) — courbe de production et formule des couronnes (consommatrices indirectes de la durée du monde).
 - [`07-barbarian-spawning.md`](./07-barbarian-spawning.md) — densité barbare adaptative à recaler sur le pic de seeding J0-J7.
-- [`09-power-and-rankings.md`](./09-power-and-rankings.md) — classements (post-MVP) et leaderboard final.
+- [`09-power-and-rankings.md`](./09-power-and-rankings.md) — puissance.
+- [`24-rankings.md`](./24-rankings.md) — classements et leaderboard final.
 - [`14-pvp-conquest.md` § Bouclier débutant](./14-pvp-conquest.md#3-bouclier-débutant--48-h-à-larrivée-sur-le-monde) — protection 48 h, indépendante du cycle de monde mais activée à chaque arrivée.
 - [`18-inactivity-and-abandonment.md`](./18-inactivity-and-abandonment.md) — abandon 14 j, à recalibrer si nécessaire post-MVP.
 - Backend : `world.controller.ts` + `join-world.use-case.ts` — déjà câblés pour rejeter `LOCKED`/`ENDED`. Champs `world.startedAt` / `world.endsAt` / `world.status` / `world.plannedOpenAt` en schéma. `GET /worlds/public` expose l'identité, le lifecycle dérivé, les durées de sous-phase d'inscription (`inscriptionMainDays`, `inscriptionLateDays`), la durée du bouclier débutant (`newbieShieldHours`), les dimensions publiques de carte (`gridWidth × gridHeight`) et les mondes `PLANNED | OPEN | LOCKED` pour l'écran de sélection et la page détail.

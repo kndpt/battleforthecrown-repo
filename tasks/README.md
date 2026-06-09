@@ -33,6 +33,7 @@ Politique PR `$bftc-run` :
 
 ### Runs actifs
 
+- [051 — Classements Gloire d'Assaut / Rempart](./runs/051-feature-rankings-glory.md) — 📋 `PLANNED`. Premier vertical classements : scoring PvP durable, APIs world-scoped, affichage minimal, sans rewards économiques.
 - [050 — Caravane de ressources entre villages](./runs/050-feature-resource-caravan.md) — 📋 `PLANNED`. Transfert A→B intra-joueur via expédition `CARAVAN` (porteurs = pop verrouillée, vitesse marchande, plafond Entrepôt B, excédent perdu, pas de bâtiment). Intégrée au MVP, remplace le « Marché royal » post-MVP.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 

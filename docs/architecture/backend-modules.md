@@ -66,7 +66,7 @@ src/
 | **retention** | `GET /retention`, `POST /retention/cards/:cardId/claim` | — | Cartes quotidiennes Phase 10, Oyez actif, projection de progression depuis les events métier Outbox |
 | **onboarding** | `GET /onboarding?worldId=...` | — | Tutoriel scripté Phase 8, récompense initiale unique au premier village et projection séquentielle depuis les facts Outbox |
 | **population** | `GET /population/:villageId` | — | Population courante / max via `getFarmPopulationLimit` |
-| **power** | `GET /power?villageId=…`, `GET /power/village/:id/public`, `GET /power/kingdom`, `GET /power/kingdom/:userId/public?worldId=...`, `GET /power/leaderboard?worldId=...` | — | Calcul puissance bâtiments + armée d'un village (propriétaire), puissance bâtiments publique d'un village, puissance royaume world-scopée du joueur authentifié ou publique, leaderboard public par monde (post-MVP) |
+| **power** | `GET /power?villageId=…`, `GET /power/village/:id/public`, `GET /power/kingdom`, `GET /power/kingdom/:userId/public?worldId=...`, `GET /power/leaderboard?worldId=...` | — | Calcul puissance bâtiments + armée d'un village (propriétaire), puissance bâtiments publique d'un village, puissance royaume world-scopée du joueur authentifié ou publique, leaderboard public de puissance par monde |
 | **event** | WS `socket.io` | (consommé par `OutboxWorker`) | Gateway temps réel + `OutboxPublisher` (point unique de création d'events Outbox côté gameplay) |
 
 ## Sous-services notables

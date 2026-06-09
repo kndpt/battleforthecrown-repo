@@ -240,4 +240,5 @@ Modèle aligné sur Kingsage / Tribal Wars qui n'utilise pas non plus de bouclie
 - [`13-barbarian-conquest.md`](./13-barbarian-conquest.md) — conquête barbare (référence pour comparer).
 - [`04-combat.md` § Conquête](./04-combat.md#conquête) — mécanisme général.
 - [`02-economy-and-progression.md` § Conquête et reset](./02-economy-and-progression.md#conquête-et-reset) — règle existante de reset.
-- [`09-power-and-rankings.md`](./09-power-and-rankings.md) — classements impactés par les conquêtes.
+- [`09-power-and-rankings.md`](./09-power-and-rankings.md) — puissance impactée par les conquêtes.
+- [`24-rankings.md`](./24-rankings.md) — Gloire d'Assaut / Rempart impactée par les pertes PvP.

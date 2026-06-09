@@ -1,5 +1,22 @@
 # Todo
 
+## 2026-06-09 — Spec gameplay classements
+
+- [x] Créer une doc gameplay dédiée aux classements puissance / assaut / rempart.
+- [x] Remplacer l'ancienne esquisse historique des classements.
+- [x] Mettre à jour les références docs vers la nouvelle source canonique.
+- [x] Vérifier la cohérence documentaire par grep et diff.
+
+### Review en cours
+
+- Demande : formaliser le gameplay des classements après validation du cadrage brainstorm.
+- Direction retenue : séparer la puissance live du royaume, la performance offensive et la performance défensive ; baser les points de combat sur la valeur des unités ennemies tuées ; garder les récompenses non économiques pour éviter le snowball.
+- Spec ajoutée : `docs/gameplay/24-rankings.md` devient la source gameplay des classements.
+- Nettoyage : `docs/gameplay/09-power-and-rankings.md` ne porte plus l'ancienne esquisse historique des classements et renvoie vers `24`.
+- Références mises à jour : overview, game flow, économie/couronnes, combat, unités, PvP conquête, abandon, lifecycle, alliances, tempo, architecture auth/backend.
+- Vérification : grep ancien wording/lien `09#classements` sans résultat ; `rtk git diff --check` OK ; nouveau fichier sans trailing whitespace.
+- QA : pas de test runtime nécessaire, raison : changement documentation gameplay uniquement.
+
 ## 2026-06-07 — Skills compagnons diagnose/slice
 
 - [x] Ajouter `bftc-diagnose` / `bftc-slice` sans charger le harness existant.

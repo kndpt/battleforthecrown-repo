@@ -13,7 +13,7 @@ Documentation gameplay consolidée. Vision design, mécaniques, formules d'équi
 6. [`06-barbarians.md`](./06-barbarians.md) — villages barbares : tiers, génération, régénération, distribution carte, lisibilité joueur, questions ouvertes.
 7. [`07-barbarian-spawning.md`](./07-barbarian-spawning.md) — algorithme de génération des villages barbares à l'arrivée d'un joueur : déclencheur, anneau et chunking, distribution T1-T5 par distance, anti-submersion par présence joueur, catchup d'arrivée différée.
 8. [`08-units.md`](./08-units.md) — catalogue des troupes : stats, coûts, passifs, archétypes, contre-relations.
-9. [`09-power-and-rankings.md`](./09-power-and-rankings.md) — système de puissance (calcul, poids bâtiments/unités, visibilité, usage stratégique) et classements hebdo/mensuels.
+9. [`09-power-and-rankings.md`](./09-power-and-rankings.md) — système de puissance (calcul, poids bâtiments/unités, visibilité, usage stratégique).
 10. [`10-conquest.md`](./10-conquest.md) — hub conquête : règles communes (Seigneur, période de capture variable, garde-fous globaux). Spécificités dans 13 et 14.
 11. [`11-scouting.md`](./11-scouting.md) — scout / espionnage : unité ESPION, mission, rapport, feature transversale toutes entités.
 12. [`12-village-styles.md`](./12-village-styles.md) — styles stratégiques de village (Forteresse / Raiders / Économique / Équilibré) : mécanique par village, débloqué par Salle du Conseil, caché par scout.
@@ -28,6 +28,7 @@ Documentation gameplay consolidée. Vision design, mécaniques, formules d'équi
 21. [`21-alliances-and-tribes.md`](./21-alliances-and-tribes.md) — système complet d'alliances / tribus (chat, diplomatie, guerre coordonnée) : **strictement post-MVP**, doc en chantier.
 22. [`22-village-roles-and-navigation.md`](./22-village-roles-and-navigation.md) — rôles privés et favoris de villages : navigation multi-village MVP légère, sans bonus mécanique.
 23. [`23-world-tempo-and-multipliers.md`](./23-world-tempo-and-multipliers.md) — **pivot compressed-async + tempo world-scoped**. Pourquoi BFTC n'est pas un slow-MMORTS, monde Standard 60 j, multipliers `WorldConfig.tempo` (global + overrides), garde-fous, impacts à recalibrer. **Pièce centrale du gameplay.**
+24. [`24-rankings.md`](./24-rankings.md) — classements Puissance du Royaume, Gloire d'Assaut et Gloire du Rempart ; scoring PvP, cycles, rewards non-snowballants.
 
 ### Laboratoire
 

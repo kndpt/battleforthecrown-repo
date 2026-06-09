@@ -22,7 +22,7 @@
 | Retour du joueur | Un joueur qui se reconnecte après 14 j peut-il reprendre ses villages gratuitement (cf. mécanique de ruines, [`01-overview.md`](./01-overview.md#monde-persistant-et-raids)) ou doit-il les reconquérir via le flux barbare standard ? |
 | Affichage carte | Indicateur visuel des comptes inactifs (gris à la Kingsage) **avant** le basculement — entre J+7 et J+14 par exemple ? Ou bascule sec sans warning carte ? |
 | Notification au joueur inactif | Mail / push « ton royaume est en danger, reconnecte-toi » à J+10 ? Hors scope MVP, cf. [`16-notifications.md`](./16-notifications.md). |
-| Effet sur les classements | Compte abandonné gelé ou retiré des [classements hebdo](./09-power-and-rankings.md#classements) ? |
+| Effet sur les classements | Compte abandonné gelé ou retiré des [classements](./24-rankings.md) ? |
 | Effet sur les ressources et armée | Stock conservé / reset au moment du basculement ? Armée garnison conservée et utilisable contre l'attaquant qui vient piller ? Aligné sur la spec de [conquête barbare](./13-barbarian-conquest.md) ou cas particulier ? |
 | Granularité | Bascule **tous** les villages d'un coup, ou un par un selon une règle (le moins défendu en premier) ? |
 

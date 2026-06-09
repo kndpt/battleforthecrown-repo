@@ -113,7 +113,7 @@ Un nouveau monde `PLANNED → OPEN` toutes les ~7 j ([`19` § Paramètres MVP](.
 | Sujet | Spec | Impact game flow |
 | --- | --- | --- |
 | **Alliances / tribus** | [`21`](./21-alliances-and-tribes.md) | Renforts d'alliés pendant la fenêtre de capture, diplomatie, guerres coordonnées. Change radicalement le mid/late-game. |
-| **Classements hebdo** | [`09` § Classements](./09-power-and-rankings.md#classements) | Récompenses périodiques pendant le monde, pas seulement à `ENDED`. |
+| **Classements** | [`24`](./24-rankings.md) | Puissance live + Gloire d'Assaut / Rempart, avec rewards cosmétiques et non-snowballants. |
 | **Marché royal** | [`01` § Extensions](./01-overview.md#extensions-post-mvp) | Échanges entre joueurs, brise le « pas de transfert » MVP. |
 | **Zones d'influence** | [`01` § Monde persistant](./01-overview.md#monde-persistant-et-raids) | Bonus déplacement entre villages proches, perdu si ennemi s'intercale. À spécifier post-playtest. |
 | **Unités destructrices de bâtiments** | [`14` § Bâtiments hérités](./14-pvp-conquest.md#bâtiments-hérités) | Permettent d'affaiblir un voisin sans le conquérir. La conquête héritera naturellement de l'état dégradé. |
@@ -132,5 +132,5 @@ Ordre chronologique de lecture pour comprendre le jeu de bout en bout :
 8. [`05-daily-cards-and-oyez.md`](./05-daily-cards-and-oyez.md) — cartes quotidiennes et Oyez.
 9. [`12-village-styles.md`](./12-village-styles.md) — styles stratégiques.
 10. [`11-scouting.md`](./11-scouting.md) — espionnage.
-11. [`09-power-and-rankings.md`](./09-power-and-rankings.md) — puissance, classements.
+11. [`09-power-and-rankings.md`](./09-power-and-rankings.md) + [`24-rankings.md`](./24-rankings.md) — puissance et classements.
 12. [`15`](./15-onboarding.md), [`16`](./16-notifications.md), [`17`](./17-inbox-and-reports.md), [`18`](./18-inactivity-and-abandonment.md), [`20`](./20-defensive-friends.md), [`21`](./21-alliances-and-tribes.md), [`22`](./22-village-roles-and-navigation.md) — esquisses MVP / post-MVP.

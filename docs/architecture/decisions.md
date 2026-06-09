@@ -295,7 +295,7 @@ Question posée : faut-il aligner BFTC sur cette granularité (passer à 30 leve
 
 - Toute proposition de calibration de courbe se fait **sur 10 paliers**, en empruntant la **logique de placement** des walls Century (paliers marqués vers L7 et L10) mais pas la granularité.
 - Les `unlockCastleLevel` restent les seules contraintes de prérequis (pas de cap « non-Château ≤ Château ») — voir [`gameplay/03-buildings.md`](../gameplay/03-buildings.md).
-- Le ranking et la puissance s'expriment sur ce barème 10 levels, étendu par le nombre de villages et de conquêtes. Si un futur playtest révèle un plafond ressenti dès J+30, **on ajoute des bâtiments ou des mécaniques transverses** (alliances, classements hebdo, zones d'influence), **pas des levels**.
+- La puissance s'exprime sur ce barème 10 levels, étendu par le nombre de villages et de conquêtes. Si un futur playtest révèle un plafond ressenti dès J+30, **on ajoute des bâtiments ou des mécaniques transverses** (alliances, classements de prestige, zones d'influence), **pas des levels**.
 - L'invariant « 10 levels max » est ancré dans `packages/shared/src/village/buildings.ts` (table `BUILDING_DEFINITIONS`) et dans [`gameplay/03-buildings.md`](../gameplay/03-buildings.md) (« Niveau max = **10** pour tous »). Ces deux sources et cet ADR doivent rester en cohérence.
 - Un simulateur (`scripts/build-simulator.js`) permet de tester l'impact d'une nouvelle courbe sur la wall-clock d'un joueur (tempo + profil sommeil + queue 3 slots + bonus Château + ressources/entrepôt).
 

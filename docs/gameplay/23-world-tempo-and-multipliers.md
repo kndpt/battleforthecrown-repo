@@ -175,7 +175,7 @@ Mécaniques exprimées en temps réel humain — elles structurent l'expérience
 | Cooldown changement de style | [`12` § Cadre](./12-village-styles.md#cadre) | 24 h | Anti-abuse tactique (changer en boucle pour annuler un malus). C'est une cadence humaine (« une fois par jour max »), pas un timer de jeu. |
 | Reset cartes quotidiennes / Oyez | [`05`](./05-daily-cards-and-oyez.md) | 04:00 Europe/Paris | Wall-clock fixe par design (rythme journalier). |
 | Seuil d'abandon de compte | [`18`](./18-inactivity-and-abandonment.md) | 14 j (post-MVP, à recalibrer pour 60 j) | Mesure d'inactivité humaine. À recalibrer en jours-réels, pas en jours-tempo. |
-| Reset hebdo des classements (post-MVP) | [`09` § Classements](./09-power-and-rankings.md#classements) | Lundi 00:00 UTC | Wall-clock fixe. |
+| Reset hebdo des classements | [`24`](./24-rankings.md#cycles) | Lundi 00:00 UTC | Wall-clock fixe. |
 
 🎯 **Règle d'or** : si une constante définit **« combien de temps de jeu »** ou **« combien par heure de jeu »**, elle est candidate au tempo. Si elle définit **« combien d'unités »**, **« combien de pop »**, **« quel ratio »**, **« quel seuil »**, ou **« combien de temps réel humain »**, elle est intouchable.
 
@@ -242,7 +242,7 @@ Cette section liste **ce qu'il faudra faire**, pas **comment**. La spec d'implé
 | Faut-il recalibrer la durée d'abandon (14 j) ? | À vérifier en post-MVP. 14 j sur 60 j = 23 % — sans doute à descendre à 7 j sur Standard. Reste **wall-clock** dans tous les cas (cf. § 6.1). |
 | UX joueur : afficher le `tempo.global` du monde dans la liste des mondes ? | Probablement oui post-MVP (« Standard », « Speed ×1.5 » comme label). Pas critique au MVP (un seul type de monde). |
 | Les fenêtres `OPEN main` / `OPEN late` doivent-elles scaler avec la durée du monde ou rester en absolu ? | À trancher dans la passe de recalibration de [`19`](./19-world-lifecycle.md). Hypothèse : ratio ~15-20 % de la durée totale (déjà 7 + 3 = 10 j sur 60 j Standard MVP). |
-| Bonus de classement post-MVP avec durée fixe (ex : Architectes +5 % prod pendant 7 j) | À cadrer quand [`09`](./09-power-and-rankings.md) sortira du chantier. Hypothèse : les durées de bonus sont **wall-clock** (rythme hebdomadaire, comme le reset des classements), pas tempo. |
+| Rewards de classement avec durée fixe | Cadré dans [`24`](./24-rankings.md#rewards) : cosmetiques par défaut, pas de bonus de production / attaque / couronnes. Les durées de port de titre ou bannière sont **wall-clock** (rythme hebdomadaire, comme le reset des classements), pas tempo. |
 | Les 4 multipliers économiques (`resourceProduction`, `crownsYield`, `barbarianRegen`, `unitTrainingSpeed`) doivent-ils suivre une règle de cohérence (ex : si `resourceProduction` augmente, `crownsYield` doit suivre) ? | Pas de couplage forcé au MVP. Documenter les couples « cohérents » et laisser au designer de monde. |
 
 ## 10. Rappel : ce que cette spec ne fait pas

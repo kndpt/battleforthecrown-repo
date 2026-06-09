@@ -79,7 +79,8 @@ Les **styles stratégiques de village** (bonus/malus, mécanique de choix, débl
 ## Liens connexes
 
 - [`04-combat.md`](./04-combat.md) — résolution combat, conquête, styles stratégiques de village.
-- [`09-power-and-rankings.md`](./09-power-and-rankings.md) — système de puissance (poids unités, calcul, visibilité) et classements.
+- [`09-power-and-rankings.md`](./09-power-and-rankings.md) — système de puissance (poids unités, calcul, visibilité).
+- [`24-rankings.md`](./24-rankings.md) — valeur de bataille des unités pour les classements PvP.
 - [`03-buildings.md` § Caserne](./03-buildings.md#caserne-barracks) — déblocages d'unités et vitesse d'entraînement.
 - [`02-economy-and-progression.md` § Population](./02-economy-and-progression.md#population) — limiteur stratégique armée vs infrastructure.
 - [`06-barbarians.md`](./06-barbarians.md) — armée des villages barbares (consommateur du blueprint d'unités).

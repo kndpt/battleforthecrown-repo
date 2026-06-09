@@ -65,7 +65,8 @@ Spec dédiée : [`12-village-styles.md`](./12-village-styles.md). Mécanique de 
 ## Liens connexes
 
 - [`08-units.md`](./08-units.md) — catalogue des unités, entraînement, stratégies d'utilisation.
-- [`09-power-and-rankings.md`](./09-power-and-rankings.md) — système de puissance (calcul, poids, visibilité) et classements.
+- [`09-power-and-rankings.md`](./09-power-and-rankings.md) — système de puissance (calcul, poids, visibilité).
+- [`24-rankings.md`](./24-rankings.md) — scoring Gloire d'Assaut / Rempart basé sur les pertes PvP.
 - [`02-economy-and-progression.md` § Population](./02-economy-and-progression.md#population) — limiteur stratégique armée vs infrastructure.
 - [`03-buildings.md` § Caserne](./03-buildings.md#caserne-barracks) — déblocages d'unités et vitesse d'entraînement.
 - [`01-overview.md` § Boucles](./01-overview.md#boucles-de-gameplay) — boucle militaire et conquête au niveau macro.
