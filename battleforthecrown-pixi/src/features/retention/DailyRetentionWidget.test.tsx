@@ -276,4 +276,44 @@ describe("DailyRetentionWidget", () => {
     expect(onAction).toHaveBeenCalledWith("open-building-management");
     expect(screen.getByText("Devoir royal")).toBeInTheDocument();
   });
+
+  it("uses server-provided label for tiered tasks (minTargetTier bypasses local override)", () => {
+    const tieredSummary: RetentionSummaryDto = {
+      ...summary,
+      cards: [
+        {
+          ...summary.cards[0],
+          status: "ACTIVE",
+          tasks: [
+            {
+              completedAt: null,
+              metadata: { minTargetTier: "T2" },
+              id: "task-raid-tier",
+              label: "Vaincre un village barbare de niveau 2",
+              progress: 0,
+              target: 1,
+              type: "RAID_BARBARIAN",
+            },
+          ],
+        },
+      ],
+      claimableCount: 0,
+    };
+
+    render(
+      <DailyRetentionWidget
+        activeVillageId="v1"
+        onClaim={vi.fn()}
+        onNavigate={vi.fn()}
+        summary={tieredSummary}
+        villages={villages}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Devoir royal" }));
+
+    // Server label must be shown as-is; local override ("Vaincre un village barbare") must not appear.
+    expect(screen.getByText("Vaincre un village barbare de niveau 2")).toBeInTheDocument();
+    expect(screen.queryByText("Vaincre un village barbare")).not.toBeInTheDocument();
+  });
 });
