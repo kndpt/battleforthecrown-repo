@@ -189,6 +189,7 @@ export class ReturnWorker implements OnModuleInit {
     expedition: Expedition,
   ) {
     const resources = this.parseCaravanResources(expedition);
+    let returnedResources: CaravanResources = { wood: 0, stone: 0, iron: 0 };
     const porters = this.getPorters(resources);
 
     if (expedition.recalled && this.sumResources(resources) > 0) {
@@ -212,12 +213,27 @@ export class ReturnWorker implements OnModuleInit {
           buildings: originVillage.buildings,
           strategy: originVillage.strategyConfig?.strategy,
         });
+      const maxPerType = originVillage.resourceStock.maxPerType;
+      returnedResources = {
+        wood: Math.min(
+          resources.wood,
+          Math.max(0, maxPerType - currentStock.wood),
+        ),
+        stone: Math.min(
+          resources.stone,
+          Math.max(0, maxPerType - currentStock.stone),
+        ),
+        iron: Math.min(
+          resources.iron,
+          Math.max(0, maxPerType - currentStock.iron),
+        ),
+      };
       await tx.resourceStock.update({
         where: { villageId: expedition.attackerVillageId },
         data: {
-          wood: currentStock.wood + resources.wood,
-          stone: currentStock.stone + resources.stone,
-          iron: currentStock.iron + resources.iron,
+          wood: currentStock.wood + returnedResources.wood,
+          stone: currentStock.stone + returnedResources.stone,
+          iron: currentStock.iron + returnedResources.iron,
           lastUpdateTs: now,
         },
       });
@@ -251,9 +267,7 @@ export class ReturnWorker implements OnModuleInit {
         expeditionId: expedition.id,
         villageId: expedition.attackerVillageId,
         targetVillageId: expedition.targetRefId,
-        resources: expedition.recalled
-          ? resources
-          : { wood: 0, stone: 0, iron: 0 },
+        resources: returnedResources,
         porters,
         recalled: expedition.recalled,
       },

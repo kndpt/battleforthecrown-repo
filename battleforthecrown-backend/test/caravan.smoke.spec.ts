@@ -279,7 +279,7 @@ describe('resource caravan smoke', () => {
       where: { id: villageBId },
       data: {
         userId: userA.userId,
-        x: joinA.village.x + 50,
+        x: joinA.village.x + 5000,
         y: joinA.village.y,
       },
     });
@@ -463,6 +463,10 @@ describe('resource caravan smoke', () => {
       });
     expect(sendRes.status).toBeLessThan(300);
     const expeditionId = (sendRes.body as { id: string }).id;
+    await ctx.prisma.expedition.update({
+      where: { id: expeditionId },
+      data: { departAt: new Date(Date.now() - 1_000) },
+    });
 
     const recallRes = await request(ctx.server)
       .post(`/combat/recall/${expeditionId}`)
@@ -482,6 +486,16 @@ describe('resource caravan smoke', () => {
         where: { villageId: villageAId },
       }),
     ).resolves.toMatchObject({ used: 11 });
+    await ctx.prisma.resourceStock.update({
+      where: { villageId: villageAId },
+      data: {
+        wood: 3000,
+        stone: 0,
+        iron: 0,
+        maxPerType: 3000,
+        lastUpdateTs: new Date(),
+      },
+    });
 
     await waitFor(
       () =>
@@ -495,7 +509,7 @@ describe('resource caravan smoke', () => {
       ctx.prisma.resourceStock.findUniqueOrThrow({
         where: { villageId: villageAId },
       }),
-    ).resolves.toMatchObject({ wood: 1000, stone: 0, iron: 0 });
+    ).resolves.toMatchObject({ wood: 3000, stone: 0, iron: 0 });
     await expect(
       ctx.prisma.population.findUniqueOrThrow({
         where: { villageId: villageAId },
@@ -528,5 +542,13 @@ describe('resource caravan smoke', () => {
         where: { kind: 'caravan.recalled', aggregateId: villageAId },
       }),
     ).resolves.not.toBeNull();
+    const returnedEvent = await ctx.prisma.eventOutbox.findFirstOrThrow({
+      where: { kind: 'caravan.returned', aggregateId: villageAId },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(returnedEvent.payload).toMatchObject({
+      resources: { wood: 0, stone: 0, iron: 0 },
+      recalled: true,
+    });
   }, 60_000);
 });

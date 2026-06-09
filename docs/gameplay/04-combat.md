@@ -61,7 +61,7 @@ Une caravane est une expédition non-combat (`CARAVAN`) entre deux villages poss
 | **Combat en chemin** | Aucun, cohérent avec la règle générale « pas d'interception en voyage ».                                             |
 | **À l'arrivée**      | Crédit des ressources dans l'Entrepôt cible jusqu'à sa capacité ; excédent perdu. La caravane repart ensuite vers A. |
 | **Retour**           | Libère les porteurs dans la population de A. Aucune unité n'est créée ou restituée.                                  |
-| **Rappel**           | Avant arrivée uniquement : retour vers A avec restitution intégrale des ressources et libération des porteurs.       |
+| **Rappel**           | Avant arrivée uniquement : retour vers A, restitution des ressources jusqu'à la capacité de A, surplus perdu, puis libération des porteurs. |
 
 Sur la carte et dans les listes d'expéditions, une caravane est rendue comme un flux distinct d'une attaque ou d'un renfort.
 

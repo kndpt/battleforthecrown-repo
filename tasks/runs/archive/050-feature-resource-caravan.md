@@ -37,7 +37,7 @@
 - [ ] Au départ : ressources débitées de A (clamp ≥ 0) **et** `Population.used` de A incrémenté de `porteurs`. _(auto : SQL/smoke)_
 - [ ] À l'arrivée : ressources créditées sur B sans dépasser `getWarehouseStorageLimit(niveau Entrepôt B)` ; **excédent NON crédité (perdu)**. _(auto)_
 - [ ] Au retour (`return.worker`) : `Population.used` de A décrémenté de `porteurs` ; **aucune unité ajoutée à `unitInventory`** ; expedition supprimée. _(auto)_
-- [ ] Rappel en route avant arrivée : `status RETURNING`, ressources **restituées intégralement à A** au retour, pop rendue, **aucun crédit sur B**. _(auto)_
+- [ ] Rappel en route avant arrivée : `status RETURNING`, ressources restituées à A au retour jusqu'à capacité de stockage, pop rendue, **aucun crédit sur B**. _(auto)_
 - [ ] `calculateTravelTime` caravane > cavalerie même distance (`CARAVAN_SPEED` < vitesse cavalerie). _(auto : test pur)_
 - [ ] Aucune fee couronnes débitée à aucune étape. _(auto)_
 - [ ] Un flux `CARAVAN` s'affiche sur la WorldMap avec un glyphe **distinct** de l'attaque/renfort + dans la liste des mouvements. _(visuel/gameplay IG)_
@@ -94,7 +94,7 @@
 
 ## Rapport final
 
-Caravane de ressources livrée en vertical slice complet. Le backend accepte un transfert entre deux villages du même joueur, borne chaque ressource par la capacité caravane de l'Entrepôt source, verrouille les porteurs sur la population du village source, débite les ressources au départ, crédite la destination à l'arrivée dans la limite de l'Entrepôt, perd l'overflow, puis libère les porteurs au retour. Le rappel en route restitue les ressources à l'origine et ne crédite pas la cible.
+Caravane de ressources livrée en vertical slice complet. Le backend accepte un transfert entre deux villages du même joueur, borne chaque ressource par la capacité caravane de l'Entrepôt source, verrouille les porteurs sur la population du village source, débite les ressources au départ, crédite la destination à l'arrivée dans la limite de l'Entrepôt, perd l'overflow, puis libère les porteurs au retour. Le rappel en route restitue les ressources à l'origine au retour jusqu'à capacité de stockage et ne crédite pas la cible.
 
 Côté front, la carte propose l'action "Envoyer ressources" sur un autre village possédé, ouvre un modal avec volumes/porteurs/population libre, POST `/combat/caravan`, affiche les événements temps réel dans les activités du royaume et rend un glyphe Pixi distinct. Les docs gameplay, architecture realtime/data-model, roadmap MVP et `SPEC.md` sont alignés.
 
@@ -109,7 +109,7 @@ Aucun ticket follow-up ouvert.
   - [x] Départ débite A + incrémente `Population.used` A — `caravan.smoke.spec.ts` → vert.
   - [x] Arrivée crédite B sans dépasser Entrepôt, overflow perdu — `caravan.smoke.spec.ts` → vert.
   - [x] Retour libère les porteurs, aucune unité ajoutée, expedition supprimée — `caravan.smoke.spec.ts` → vert.
-  - [x] Rappel restitue A, ne crédite pas B — `caravan.smoke.spec.ts` → vert.
+  - [x] Rappel restitue A au retour jusqu'à capacité, ne crédite pas B — `caravan.smoke.spec.ts` → vert.
   - [x] Caravane plus lente que cavalerie — `yarn workspace battleforthecrown-backend test -- src/modules/combat/travel-time.spec.ts` → 21/21 verts.
   - [x] Aucune fee couronnes — `caravan.smoke.spec.ts` → vert.
   - [x] Flux `CARAVAN` dans WorldMap + activités — `yarn workspace battleforthecrown-pixi test -- src/features/combat/kingdomActivitiesViewModel.test.ts src/api/ws-bindings.test.ts` → 44/44 verts.
