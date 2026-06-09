@@ -231,7 +231,7 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
     also untested. New files: travel-time.spec.ts (20 backend tests) and combatHelpers.test.ts (15 pixi tests).
   verification: yarn static-check ✓ · 272 backend tests ✓ · 337 pixi tests ✓
 
-- status: proposed
+- status: fixed
   area: >
     battleforthecrown-backend/src/modules/combat/scout-report.presenter.spec.ts (new)
   branch: maint/debt/scout-report-presenter-spec
@@ -242,7 +242,42 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
     (combat-report.presenter.spec.ts, reinforcement-report.presenter.spec.ts) were already covered.
     The reportDetails helper has ~6 branches (null, non-object, scoutLosses, scoutUnits, wallLevel,
     combined) that warranted explicit regression tests. New spec: 10 tests, no mocks required.
-  verification: yarn static-check ✓ · 282 backend tests ✓
+  verification: yarn static-check ✓ · 282 backend tests ✓ (merged 8a2d68d)
+
+- status: proposed
+  area: >
+    battleforthecrown-backend/src/modules/world/building-cost.spec.ts (new)
+  branch: maint/debt/building-cost-spec
+  title: "maint(debt): add missing spec for calculateBuildingCost"
+  note: >
+    calculateBuildingCost (packages/shared/src/logic/building-cost.ts) had zero direct unit coverage
+    despite being used in world-config.service.ts (construction cost list), recruit-troops/noble
+    use-cases, and BuildingDetailModal.tsx. New spec: 8 tests covering base costs (WOOD, BARRACKS),
+    castle-level speed bonus, speed multiplier, minimum 1000ms floor, unknown building throw, and
+    out-of-range castle level fallback.
+  verification: yarn static-check ✓ · 297 backend tests ✓ · 363 pixi tests ✓ (PR #63)
+
+- status: proposed
+  area: >
+    battleforthecrown-pixi/src/lib/gameHelpers.ts (deleted)
+  branch: maint/debt/remove-dead-game-helpers
+  title: "maint(debt): delete dead gameHelpers.ts (zero importers since creation)"
+  note: >
+    gameHelpers.ts was created on 2026-05-31 but never imported by any consumer file (0 importers,
+    confirmed repo-wide grep). Exports: getAllPlayerResources, canAffordCost (wrapping shared), 
+    formatMissingResources, re-exports from @battleforthecrown/shared/resources. All live 
+    affordability consumers import directly from @battleforthecrown/shared/resources. 
+    85 lines of dead code.
+  verification: yarn static-check ✓ · pixi 363 tests ✓
+
+- status: candidate
+  area: >
+    battleforthecrown-backend/src/modules/combat/combat.worker.ts:964, 1079
+  note: >
+    O1/B6 from refactor-backend audit: applyDefenderLosses (line 964) and getCaptureDurationMs
+    (line 1079) use inline Prisma.VillageGetPayload<{ include: { resourceStock: true; buildings: true } }>,
+    identical to the DefenderVillage alias defined at line 42. Replace with DefenderVillage.
+    1 file, 2 locations, trivial type consistency fix.
 
 - status: fixed
   area: >
@@ -311,3 +346,7 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
   covered. New spec: 10 tests covering reportDetails branches (null, non-object, wallLevel,
   scoutLosses, scoutUnits, combined, invalid types) + full mapping + barbarian scout case.
   static-check ✓ · 282 backend tests ✓.
+- 2026-06-09: dead gameHelpers.ts deleted on `maint/debt/remove-dead-game-helpers` — file created
+  2026-05-31 but never imported by any consumer (0 importers confirmed). Affordability consumers
+  already import directly from @battleforthecrown/shared/resources. 85 lines removed.
+  static-check ✓ · pixi 363 tests ✓.

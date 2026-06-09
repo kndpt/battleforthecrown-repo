@@ -473,82 +473,7 @@ export function VillageView() {
   }
 
   return (
-    <>
-      <style>{`
-        @keyframes villageAssetEnter {
-          0% {
-            opacity: 0;
-            transform: translate3d(var(--village-enter-x, 0px), 0, 0) scale(.9) scaleX(1.16) skewX(var(--village-enter-skew, 0deg));
-            filter: blur(2.5px);
-          }
-          64% {
-            opacity: 1;
-            transform: translate3d(calc(var(--village-enter-x, 0px) * -0.12), 0, 0) scale(1.035) scaleX(.98) skewX(calc(var(--village-enter-skew, 0deg) * -0.2));
-            filter: blur(.6px);
-          }
-          100% {
-            opacity: 1;
-            transform: translate3d(0, 0, 0) scale(1);
-            filter: blur(0);
-          }
-        }
-        @keyframes villageInfoEnter {
-          0% {
-            opacity: 0;
-            transform: translate3d(0, 12px, 0);
-          }
-          100% {
-            opacity: 1;
-            transform: translate3d(0, 0, 0);
-          }
-        }
-        @keyframes villageResourceFillEnter {
-          0% { transform: scaleX(0); filter: brightness(1.35); }
-          70% { filter: brightness(1.2); }
-          100% { transform: scaleX(1); filter: brightness(1); }
-        }
-        @keyframes villageResourceValueEnter {
-          0% { opacity: 0; transform: translate3d(0, -3px, 0) scale(.92); color: #f6d57b; }
-          60% { opacity: 1; transform: translate3d(0, 0, 0) scale(1.06); color: #f6d57b; }
-          100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); color: #f0e0c0; }
-        }
-        .village-asset-enter {
-          animation: villageAssetEnter .38s cubic-bezier(.16,1,.24,1) both;
-        }
-        .village-info-enter {
-          animation: villageInfoEnter .34s cubic-bezier(.16,1,.24,1) .05s both;
-        }
-        .village-enter-from-left {
-          --village-enter-x: -86px;
-          --village-enter-skew: -7deg;
-        }
-        .village-enter-from-right {
-          --village-enter-x: 86px;
-          --village-enter-skew: 7deg;
-        }
-        .village-enter-neutral {
-          --village-enter-x: 0px;
-          --village-enter-skew: 0deg;
-        }
-        .village-resource-fill-enter {
-          animation: villageResourceFillEnter .58s cubic-bezier(.2,.8,.2,1) .08s both;
-        }
-        .village-resource-value-enter {
-          animation: villageResourceValueEnter .42s cubic-bezier(.2,.8,.2,1) both;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .village-asset-enter,
-          .village-info-enter,
-          .village-resource-fill-enter,
-          .village-resource-value-enter {
-            animation: none;
-          }
-        }
-        .bftc-noscroll::-webkit-scrollbar { display: none; }
-        .bftc-noscroll { scrollbar-width: none; -ms-overflow-style: none; }
-      `}</style>
-
-      <div className="font-game relative flex h-full flex-col overflow-hidden bg-[#1a0f08]">
+    <div className="font-game relative flex h-full flex-col overflow-hidden bg-[#1a0f08]">
 
         <div
           className="bftc-noscroll flex-1 overflow-y-auto [overflow-anchor:none]"
@@ -974,7 +899,6 @@ export function VillageView() {
           onOpenChange={setIsVillageStyleOpen}
           showTrigger={false}
         />
-      </div>
-    </>
+    </div>
   );
 }

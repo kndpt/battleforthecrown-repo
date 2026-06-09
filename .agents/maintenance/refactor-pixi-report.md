@@ -652,6 +652,96 @@ yarn test:backend   → 25 suites, 272 tests passed
 
 ---
 
+---
+
+## Run 2026-06-08 — commit fa7e29f
+
+**Scan date:** 2026-06-08
+**Commit SHA:** fa7e29fa9c6065455164577c1e9de4bbbf5f8ea1
+
+### Prior findings update
+
+- A1–A6 (ws-bindings query keys) : **RESOLVED**
+- B1, B2 : **RESOLVED**
+- N1, N2 : **RESOLVED**
+- S1, S2, S3 (session teardown) : **RESOLVED**
+- C1 (GameHeader god-component) : **RESOLVED**
+- D2 (headerHelpers tests) : **RESOLVED**
+- F1 (UUID toast) : **RESOLVED**
+- F4 (drawCaptureMarker all entities) : **RESOLVED**
+- G1 (computeProgress duplication) : **RESOLVED**
+- F3 / G2 (formatTime tests) : **RESOLVED**
+- H1 (armyTraining refetchInterval) : **RESOLVED**
+- H2 (BuildingDetailModal polling useEffect) : **RESOLVED**
+- I1 (joinErrorMessage tests) : **RESOLVED**
+- I5 (ctaFor joined+LOCKED test) : **RESOLVED**
+- **D3 (VillageView inline `<style>` block) : RESOLVED (ce run)**
+- C2 (SpecializedBuildingDetailModal 962 LOC) : STILL OPEN — organisé, faible risque
+- C3 (ArmyScreen garrison derivations) : STILL OPEN — 30 lignes plates
+- D4 (magic number 60_000 optimistic) : STILL OPEN — acceptable
+- F2 (DailyRetentionWidget expiresInValue hardcoded) : STILL OPEN — serveur n'expose pas le reset time
+
+### Mental model
+
+Frontend propre et discipliné. Vérifié cette passe (commits depuis run 2026-06-07) :
+- **Server-authoritative** : 0 violation. Les nouvelles features (capture reports, power sheet, focus navigation, royal duty par niveau) n'introduisent aucun calcul autoritatif local.
+- **Type debt** : 0 `as any`, 0 `@ts-ignore`, 0 `@ts-expect-error`, 0 `fetch`/`axios` hors `src/api/`.
+- **Stores Zustand** : inchangés, teardown centralisé confirmé. `worldMapStore.clear()` inclut `pendingFocus`.
+- **Pixi scenes** : `WorldMapScene.ts` inchangé, ticker correct.
+- **TanStack Query** : `useEnterWorldMutation` (nouveau) invalide `['memberships']` — correct (enter ne crée pas de village).
+- **Focus navigation** : mécanisme `pendingFocus` + URL params cohérent ; `WorldMapScreen` nettoie les deux en réponse à `activeFocus`.
+
+### New findings
+
+| ID | Category | Location | Description | Severity | Effort | Status |
+|----|----------|----------|-------------|----------|--------|--------|
+| D3 | Component design | `features/game/VillageView.tsx:477-549` | 72 LOC de CSS inline (`<style>` block) — 4 keyframes + 7 classes + media query. Couplage implicite avec `VillageViewSections.tsx` (`.village-resource-*`, `.bftc-noscroll` définis dans VillageView mais consommés dans VillageViewSections). | **Medium** | S | **RESOLVED** (ce run) |
+| J1 | Naming | `features/world/worldMapNavigation.ts:14-16` | `normalizeFocusValue` dead ternary — les deux branches retournent `value.toString()`. | Low | S | NOTED |
+| J2 | Type debt | `api/queries.ts` (`CombatReportDto.details`) | `occupationDefense?: unknown` — truthiness-only check, `unknown` techniquement correct. | Low | S | NOTED |
+| J3 | Test gap | `features/power/PowerBottomSheet.tsx:20-26` | `villageTierFromPower` pure, seuils hardcodés (300/800/1500/2500), zéro test. | Low | S | NOTED |
+| J4 | Component design | `features/combat/ReportDetailModal.tsx:100,193,299` | Backdrop wrapper verbatim 3× dans les 3 sub-composants. | Low | S | NOTED |
+
+### "Looks bad but is actually fine" (this run)
+
+| Pattern | Verdict |
+|---------|---------|
+| `ReportCard.tsx` calcs inline (`attackerLosses`, `defenderLosses`, `totalLoot`) | ✅ 3 triviales additions, display-only, clairement correctes |
+| `DailyRetentionWidget` `createPortal` | ✅ pattern React standard pour stacking context |
+| `worldMapNavigation.ts` `setPendingFocus` + URL params simultanés | ✅ belt-and-suspenders : URL survit cross-page, `pendingFocus` couvre si déjà sur `/game/world` |
+| `worldMapStore.clear()` sur unmount WorldMapScreen | ✅ inclut `pendingFocus: null` — confirmé `worldMap.ts:44` |
+| `useEnterWorldMutation` invalide uniquement `['memberships']` | ✅ enter ne crée pas de village |
+| `PowerBottomSheet.tsx` `numberFormatter` local | ✅ composant UI auto-contenu |
+| `bftc-noscroll` utilisé dans `VillageViewSections.tsx` | ✅ résolu par D3 — maintenant dans `index.css` |
+
+### Selected theme: **D3 — Extract VillageView inline `<style>` block to `index.css`**
+
+**Rationale :**
+- D3 différé depuis run 2026-06-03 (4 runs) — pattern non standard qui résiste à la maintenance automatisée. C'est le bon moment de l'éliminer.
+- Le `<style>` inline empêche toute analyse statique CSS (Tailwind, IDE, purging). Les keyframes et classes sont invisibles des outils de refactoring.
+- Couplage implicite identifié : `VillageViewSections.tsx` utilise `.village-resource-fill-enter`, `.village-resource-value-enter` et `.bftc-noscroll` sans les définir — ils existent uniquement grâce au `<style>` de VillageView. Rendre la dépendance explicite dans `index.css` améliore la maintenabilité.
+- Scope S : 2 fichiers, migration mécanique, aucun changement comportemental.
+
+**Implementation :**
+- `index.css` : ajout des 4 keyframes (`villageAssetEnter`, `villageInfoEnter`, `villageResourceFillEnter`, `villageResourceValueEnter`), 7 classes, 1 `@media (prefers-reduced-motion)` block, 2 sélecteurs `.bftc-noscroll`.
+- `VillageView.tsx` : suppression du `<style>` block + Fragment wrapper (`<>` / `</>`). Return simplifié vers la `<div>` directement. −78 LOC.
+
+**Rejected :**
+- J1 (normalizeFocusValue dead ternary) : low, trivial, `bftc-maint-debt`.
+- J3 (villageTierFromPower test) : low, display-only, `bftc-maint-debt`.
+- J4 (ReportDetailModal backdrop × 3) : low, même fichier, `bftc-maint-debt`.
+- C2, C3 : churn sans bénéfice fonctionnel.
+
+### Verification
+
+```text
+yarn static-check   → green (tsc backend + pixi, ESLint backend + pixi --quiet)
+yarn test:pixi      → 66 test files, 363 tests passed (aucun test cassé)
+```
+
+**Diff :** `VillageView.tsx` −78 LOC (style block + Fragment), `index.css` +111 LOC (keyframes + classes). Net : −78 / +111 dans les fichiers modifiés.
+
+---
+
 ## Run 2026-06-09 — commit 42d136a
 
 **Scan date:** 2026-06-09
@@ -665,6 +755,7 @@ yarn test:backend   → 25 suites, 272 tests passed
 - S1, S2, S3 (session teardown) : **RESOLVED**
 - C1 (GameHeader god-component) : **RESOLVED**
 - D2 (headerHelpers tests) : **RESOLVED**
+- D3 (VillageView inline `<style>` block) : **RESOLVED** — run 2026-06-08
 - F1, F4 (capture event correctness & Pixi tick) : **RESOLVED**
 - G1, G2 (computeProgress duplication / formatTime tests) : **RESOLVED**
 - H1, H2 (armyTraining refetchInterval / BuildingDetailModal polling) : **RESOLVED**
@@ -672,9 +763,10 @@ yarn test:backend   → 25 suites, 272 tests passed
 - I5 (ctaFor joined+LOCKED test) : **RESOLVED** — run 2026-06-07
 - J1 (normalizeFocusValue dead ternary) : **SELECTED** (ce run)
 - J2 (minTargetTier task label test gap) : **SELECTED** (ce run)
+- J3 (villageTierFromPower test) : NOTED — candidat `bftc-maint-debt`
+- J4 (ReportDetailModal backdrop × 3) : NOTED — candidat `bftc-maint-debt`
 - C2 (SpecializedBuildingDetailModal 643 LOC) : STILL OPEN — organisé, faible risque
 - C3 (ArmyScreen garrison derivations) : STILL OPEN — 30 lignes plates
-- D3 (VillageView inline `<style>` block) : STILL OPEN — cosmétique
 - D4 (magic number 60_000 optimistic) : STILL OPEN — acceptable
 - F2 (DailyRetentionWidget expiresInValue hardcoded) : STILL OPEN — bloqué côté serveur (RetentionSummaryDto n'expose pas le reset time)
 
@@ -719,7 +811,7 @@ Frontend propre et discipliné. Commits depuis run 2026-06-07 :
 
 **Rejected :**
 - C2/C3 : faible gain comportemental, churn mécanique.
-- D3/D4/F2 : cosmétiques ou bloqués côté serveur.
+- D4/F2 : cosmétiques ou bloqués côté serveur.
 
 ### Verification
 
