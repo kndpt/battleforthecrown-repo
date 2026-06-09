@@ -1,4 +1,4 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryOptions, useMutation, useQuery, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { z } from 'zod';
 import {
   PublicWorldsResponseSchema,
@@ -1080,7 +1080,7 @@ export function useInitiateReinforceMutation() {
   });
 }
 
-export function useInitiateCaravanMutation() {
+export function useInitiateCaravanMutation(): UseMutationResult<Expedition, Error, CaravanPayload> {
   const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const worldId = useGameStore((state) => state.worldId);

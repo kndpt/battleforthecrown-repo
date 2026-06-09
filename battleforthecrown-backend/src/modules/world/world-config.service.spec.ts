@@ -4,10 +4,14 @@ import {
   DEFAULT_WORLD_IDENTITY_CONFIG,
   DEFAULT_WORLD_LIFECYCLE_CONFIG,
   DEFAULT_PLAYER_VILLAGE_PLACEMENT_PLAN,
+  TempoService,
   type WorldConfig,
 } from '@battleforthecrown/shared/world';
 import type { UnitType } from '@battleforthecrown/shared/army';
-import { REFERENCE_SPEED } from '@battleforthecrown/shared/logic';
+import {
+  calculateTravelTime,
+  REFERENCE_SPEED,
+} from '@battleforthecrown/shared/logic';
 import { WorldConfigService } from './world-config.service';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 
@@ -392,6 +396,40 @@ describe('WorldConfigService', () => {
       const result = await service.getLootFactor('world-1');
 
       expect(result).toBe(0.5);
+    });
+  });
+
+  describe('getTravelTimeForSpeed', () => {
+    it('returns tempo-scaled travel time for a fixed distance and speed', async () => {
+      mockWorld({
+        tempo: {
+          global: 1,
+          overrides: { travelSpeed: 0.5 },
+        },
+      });
+
+      const distance = 12;
+      const speed = 20;
+
+      await expect(
+        service.getTravelTimeForSpeed('world-1', distance, speed),
+      ).resolves.toBe(
+        Math.round(
+          TempoService.applyDuration(
+            calculateTravelTime(distance, 1, speed),
+            { global: 1, overrides: { travelSpeed: 0.5 } },
+            'travelSpeed',
+          ),
+        ),
+      );
+    });
+
+    it('returns 0 when speed is 0', async () => {
+      mockWorld();
+
+      await expect(
+        service.getTravelTimeForSpeed('world-1', 12, 0),
+      ).resolves.toBe(0);
     });
   });
 });

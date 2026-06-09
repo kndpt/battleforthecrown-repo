@@ -452,6 +452,8 @@ export function applyCaravanRecalled(
     description: `Retour prévu à ${new Date(payload.returnAt).toLocaleTimeString()}`,
     ttlMs: 4000,
   });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
   invalidateOpenExpeditions(ctx);
 }
 

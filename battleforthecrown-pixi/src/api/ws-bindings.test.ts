@@ -898,6 +898,8 @@ describe('caravan websocket bindings', () => {
       returnAt: Date.parse('2026-05-04T22:00:10.000Z'),
     });
     expect(useUiStore.getState().toasts[0].title).toBe('Caravane rappelée');
+    expect(queryClient.getQueryState(queryKeys.resources('origin-village'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.population('origin-village'))?.isInvalidated).toBe(true);
 
     applyCaravanReturned(
       {

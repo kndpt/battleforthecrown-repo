@@ -189,27 +189,18 @@ export class ReturnWorker implements OnModuleInit {
     const resources = this.parseCaravanResources(expedition);
     const porters = this.getPorters(resources);
 
-    if (expedition.recalled && this.sumResources(resources) > 0) {
-      await tx.resourceStock.update({
-        where: { villageId: expedition.attackerVillageId },
-        data: {
-          wood: { increment: resources.wood },
-          stone: { increment: resources.stone },
-          iron: { increment: resources.iron },
+    if (!expedition.recalled && porters > 0) {
+      const populationRelease = await tx.population.updateMany({
+        where: {
+          villageId: expedition.attackerVillageId,
+          used: { gte: porters },
         },
+        data: { used: { decrement: porters } },
       });
-      await this.outbox.resourcesChanged(expedition.attackerVillageId, tx);
-    }
-
-    if (porters > 0) {
-      const population = await tx.population.findUnique({
-        where: { villageId: expedition.attackerVillageId },
-      });
-      if (population) {
-        await tx.population.update({
-          where: { villageId: expedition.attackerVillageId },
-          data: { used: Math.max(0, population.used - porters) },
-        });
+      if (populationRelease.count === 0) {
+        throw new Error(
+          `Failed to release caravan population for ${expedition.id}`,
+        );
       }
     }
 

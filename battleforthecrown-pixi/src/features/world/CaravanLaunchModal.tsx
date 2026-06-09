@@ -25,13 +25,13 @@ import {
 } from "@/lib/combatHelpers";
 import {
   CARAVAN_SPEED,
-  CARRY_PER_PORTER,
   getCaravanResourceCapacity,
 } from "@battleforthecrown/shared/logic";
 import { getWarehouseStorageLimit } from "@battleforthecrown/shared/resources";
 import { TempoService } from "@battleforthecrown/shared/world";
 import type { MapEntity } from "@/api/world-types";
 import type { LootResources } from "@battleforthecrown/shared/combat";
+import { getCaravanLaunchState } from "./caravanLaunchState";
 
 type ResourceKey = keyof LootResources;
 const RESOURCE_KEYS = ["wood", "stone", "iron"] as const;
@@ -107,17 +107,32 @@ export function CaravanLaunchModal({
     iron: Math.max(0, caravanCapacity.iron - activeCaravanResources.iron),
   };
   const stock = resourcesQuery.data;
-  const maxResources: LootResources = {
-    wood: Math.max(0, Math.min(stock?.wood ?? 0, capacityRemaining.wood)),
-    stone: Math.max(0, Math.min(stock?.stone ?? 0, capacityRemaining.stone)),
-    iron: Math.max(0, Math.min(stock?.iron ?? 0, capacityRemaining.iron)),
-  };
-  const totalVolume = resources.wood + resources.stone + resources.iron;
-  const totalMaxVolume =
-    maxResources.wood + maxResources.stone + maxResources.iron;
-  const porters =
-    totalVolume > 0 ? Math.ceil(totalVolume / CARRY_PER_PORTER) : 0;
   const freePopulation = populationQuery.data?.available ?? 0;
+  const isLoading =
+    resourcesQuery.isLoading ||
+    populationQuery.isLoading ||
+    buildingsQuery.isLoading ||
+    openExpeditionsQuery.isLoading;
+  const {
+    canSubmit,
+    hasEnoughCaravanCapacity,
+    hasEnoughPopulation,
+    hasEnoughResources,
+    maxResources,
+    mutationPayload,
+    porters,
+    totalMaxVolume,
+    totalVolume,
+  } = getCaravanLaunchState({
+    villageId,
+    targetVillageId: target.id,
+    resources,
+    stock,
+    capacityRemaining,
+    freePopulation,
+    isLoading,
+    isPending: caravan.isPending,
+  });
   const distance = calculateDistance(origin.x, origin.y, target.x, target.y);
   const travelMs = useMemo(() => {
     const tempo = worldConfig.data?.tempo;
@@ -130,29 +145,6 @@ export function CaravanLaunchModal({
       ),
     );
   }, [distance, totalVolume, worldConfig.data]);
-
-  const hasEnoughResources =
-    !stock ||
-    (resources.wood <= stock.wood &&
-      resources.stone <= stock.stone &&
-      resources.iron <= stock.iron);
-  const hasEnoughPopulation = porters <= freePopulation;
-  const hasEnoughCaravanCapacity = RESOURCE_KEYS.every(
-    (key) => resources[key] <= capacityRemaining[key],
-  );
-  const isLoading =
-    resourcesQuery.isLoading ||
-    populationQuery.isLoading ||
-    buildingsQuery.isLoading ||
-    openExpeditionsQuery.isLoading;
-  const canSubmit =
-    Boolean(villageId) &&
-    totalVolume > 0 &&
-    hasEnoughResources &&
-    hasEnoughPopulation &&
-    hasEnoughCaravanCapacity &&
-    !isLoading &&
-    !caravan.isPending;
 
   const updateResource = (key: ResourceKey, raw: string) => {
     const value = Math.max(0, Math.floor(Number(raw) || 0));
@@ -185,22 +177,19 @@ export function CaravanLaunchModal({
       setError("Charge maximale dépassée");
       return;
     }
+    if (!mutationPayload) {
+      setError("Sélection invalide");
+      return;
+    }
 
-    caravan.mutate(
-      {
-        villageId,
-        targetVillageId: target.id,
-        resources,
+    caravan.mutate(mutationPayload, {
+      onSuccess: () => onClose(),
+      onError: (err) => {
+        setError(
+          err instanceof ApiError ? err.message : "Échec de la caravane",
+        );
       },
-      {
-        onSuccess: () => onClose(),
-        onError: (err) => {
-          setError(
-            err instanceof ApiError ? err.message : "Échec de la caravane",
-          );
-        },
-      },
-    );
+    });
   };
 
   return (

@@ -30,6 +30,7 @@ import {
   Expedition,
   ExpeditionKind,
   PendingConquestStatus,
+  Prisma,
 } from '@prisma/client';
 import {
   encodeCombatLoot,
@@ -372,168 +373,177 @@ export class CombatService {
   ): Promise<Expedition> {
     this.logger.debug(`Caravan initiated by user ${userId}`, { dto });
 
-    return this.prisma.$transaction(async (tx) => {
-      const village = await this.loadOwnedVillage(
-        tx,
-        dto.villageId,
-        userId,
-        'Origin village not found or not owned',
-      );
-      const worldId = village.worldId;
+    const expedition = await this.withSerializableRetry(() =>
+      this.prisma.$transaction(
+        async (tx) => {
+          const village = await this.loadOwnedVillage(
+            tx,
+            dto.villageId,
+            userId,
+            'Origin village not found or not owned',
+          );
+          const worldId = village.worldId;
 
-      if (dto.targetVillageId === dto.villageId) {
-        throw new BadRequestException('Target village must be different');
-      }
+          if (dto.targetVillageId === dto.villageId) {
+            throw new BadRequestException('Target village must be different');
+          }
 
-      const targetVillage = await tx.village.findUnique({
-        where: { id: dto.targetVillageId },
-      });
-      if (!targetVillage || targetVillage.worldId !== worldId) {
-        throw new BadRequestException('Target village not found');
-      }
-      if (targetVillage.userId !== userId) {
-        throw new ForbiddenException(
-          'You can only send caravans to your own villages',
-        );
-      }
+          const targetVillage = await tx.village.findUnique({
+            where: { id: dto.targetVillageId },
+          });
+          if (!targetVillage || targetVillage.worldId !== worldId) {
+            throw new BadRequestException('Target village not found');
+          }
+          if (targetVillage.userId !== userId) {
+            throw new ForbiddenException(
+              'You can only send caravans to your own villages',
+            );
+          }
 
-      const resources = normalizeCaravanResources(dto.resources);
-      const totalVolume = sumResources(resources);
-      if (totalVolume <= 0) {
-        throw new BadRequestException('Caravan must carry resources');
-      }
+          const resources = normalizeCaravanResources(dto.resources);
+          const totalVolume = sumResources(resources);
+          if (totalVolume <= 0) {
+            throw new BadRequestException('Caravan must carry resources');
+          }
 
-      const porters = caravanPortersFor(resources);
-      const [originStock, population, originWarehouse] = await Promise.all([
-        tx.resourceStock.findUnique({ where: { villageId: dto.villageId } }),
-        tx.population.findUnique({ where: { villageId: dto.villageId } }),
-        tx.building.findFirst({
-          where: { villageId: dto.villageId, type: 'WAREHOUSE' },
-          select: { level: true },
-        }),
-      ]);
-      if (!originStock) {
-        throw new BadRequestException('Origin resource stock not found');
-      }
-      if (!population) {
-        throw new BadRequestException('Origin population not found');
-      }
+          const porters = caravanPortersFor(resources);
+          const [originStock, population, originWarehouse] = await Promise.all([
+            tx.resourceStock.findUnique({
+              where: { villageId: dto.villageId },
+            }),
+            tx.population.findUnique({ where: { villageId: dto.villageId } }),
+            tx.building.findFirst({
+              where: { villageId: dto.villageId, type: 'WAREHOUSE' },
+              select: { level: true },
+            }),
+          ]);
+          if (!originStock) {
+            throw new BadRequestException('Origin resource stock not found');
+          }
+          if (!population) {
+            throw new BadRequestException('Origin population not found');
+          }
 
-      if (
-        originStock.wood < resources.wood ||
-        originStock.stone < resources.stone ||
-        originStock.iron < resources.iron
-      ) {
-        throw new BadRequestException('Insufficient resources for caravan');
-      }
+          if (
+            originStock.wood < resources.wood ||
+            originStock.stone < resources.stone ||
+            originStock.iron < resources.iron
+          ) {
+            throw new BadRequestException('Insufficient resources for caravan');
+          }
 
-      const freePopulation = population.max - population.used;
-      if (freePopulation < porters) {
-        throw new BadRequestException(
-          `Insufficient free population: have ${freePopulation}, need ${porters}`,
-        );
-      }
-      const caravanCapacity = getCaravanResourceCapacity(
-        getWarehouseStorageLimit(originWarehouse?.level ?? 1),
-      );
+          const freePopulation = population.max - population.used;
+          if (freePopulation < porters) {
+            throw new BadRequestException(
+              `Insufficient free population: have ${freePopulation}, need ${porters}`,
+            );
+          }
+          const caravanCapacity = getCaravanResourceCapacity(
+            getWarehouseStorageLimit(originWarehouse?.level ?? 1),
+          );
 
-      const distance = calculateDistance(
-        village.x,
-        village.y,
-        targetVillage.x,
-        targetVillage.y,
-      );
-      const travelTimeMs = await this.worldConfig.getTravelTimeForSpeed(
-        worldId,
-        distance,
-        CARAVAN_SPEED,
-      );
-      const now = new Date();
-      const arrivalAt = new Date(now.getTime() + travelTimeMs);
+          const distance = calculateDistance(
+            village.x,
+            village.y,
+            targetVillage.x,
+            targetVillage.y,
+          );
+          const travelTimeMs = await this.worldConfig.getTravelTimeForSpeed(
+            worldId,
+            distance,
+            CARAVAN_SPEED,
+          );
+          const now = new Date();
+          const arrivalAt = new Date(now.getTime() + travelTimeMs);
 
-      const stockDebitResult = await tx.resourceStock.updateMany({
-        where: {
-          villageId: dto.villageId,
-          wood: { gte: resources.wood },
-          stone: { gte: resources.stone },
-          iron: { gte: resources.iron },
+          const stockDebitResult = await tx.resourceStock.updateMany({
+            where: {
+              villageId: dto.villageId,
+              wood: { gte: resources.wood },
+              stone: { gte: resources.stone },
+              iron: { gte: resources.iron },
+            },
+            data: {
+              wood: { decrement: resources.wood },
+              stone: { decrement: resources.stone },
+              iron: { decrement: resources.iron },
+              lastUpdateTs: now,
+            },
+          });
+          if (stockDebitResult.count === 0) {
+            throw new BadRequestException('Insufficient resources for caravan');
+          }
+
+          const activeCaravanResources =
+            await this.sumActiveOutgoingCaravanResources(tx, dto.villageId);
+          const reservedWithRequest = addCaravanResources(
+            activeCaravanResources,
+            resources,
+          );
+          if (
+            reservedWithRequest.wood > caravanCapacity.wood ||
+            reservedWithRequest.stone > caravanCapacity.stone ||
+            reservedWithRequest.iron > caravanCapacity.iron
+          ) {
+            throw new BadRequestException('Caravan capacity exceeded');
+          }
+
+          const populationLockResult = await tx.population.updateMany({
+            where: {
+              villageId: dto.villageId,
+              used: { lte: population.max - porters },
+            },
+            data: { used: { increment: porters } },
+          });
+          if (populationLockResult.count === 0) {
+            throw new BadRequestException(
+              `Insufficient free population: have ${freePopulation}, need ${porters}`,
+            );
+          }
+
+          const expedition = await tx.expedition.create({
+            data: {
+              worldId,
+              attackerVillageId: dto.villageId,
+              kind: ExpeditionKind.CARAVAN,
+              targetKind: 'PLAYER_VILLAGE',
+              targetRefId: targetVillage.id,
+              targetX: targetVillage.x,
+              targetY: targetVillage.y,
+              units: encodeUnitMap({}),
+              status: 'EN_ROUTE',
+              departAt: now,
+              arrivalAt,
+              outboundTravelMs: travelTimeMs,
+              loot: encodeCombatLoot({ resources }),
+            },
+          });
+
+          await createOutboxEvent(tx, 'caravan.sent', dto.villageId, {
+            expeditionId: expedition.id,
+            villageId: dto.villageId,
+            targetVillageId: targetVillage.id,
+            targetX: targetVillage.x,
+            targetY: targetVillage.y,
+            resources,
+            porters,
+            arrivalAt: arrivalAt.toISOString(),
+          });
+          await this.outbox.resourcesChanged(dto.villageId, tx);
+
+          this.logger.debug(
+            `Caravan expedition created: ${expedition.id}, arrives at ${arrivalAt.toISOString()}`,
+          );
+
+          return expedition;
         },
-        data: {
-          wood: { decrement: resources.wood },
-          stone: { decrement: resources.stone },
-          iron: { decrement: resources.iron },
-          lastUpdateTs: now,
-        },
-      });
-      if (stockDebitResult.count === 0) {
-        throw new BadRequestException('Insufficient resources for caravan');
-      }
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      ),
+    );
 
-      const activeCaravanResources =
-        await this.sumActiveOutgoingCaravanResources(tx, dto.villageId);
-      const reservedWithRequest = addCaravanResources(
-        activeCaravanResources,
-        resources,
-      );
-      if (
-        reservedWithRequest.wood > caravanCapacity.wood ||
-        reservedWithRequest.stone > caravanCapacity.stone ||
-        reservedWithRequest.iron > caravanCapacity.iron
-      ) {
-        throw new BadRequestException('Caravan capacity exceeded');
-      }
+    await this.scheduleResolution(expedition.id, expedition.arrivalAt);
 
-      const populationLockResult = await tx.population.updateMany({
-        where: {
-          villageId: dto.villageId,
-          used: { lte: population.max - porters },
-        },
-        data: { used: { increment: porters } },
-      });
-      if (populationLockResult.count === 0) {
-        throw new BadRequestException(
-          `Insufficient free population: have ${freePopulation}, need ${porters}`,
-        );
-      }
-
-      const expedition = await tx.expedition.create({
-        data: {
-          worldId,
-          attackerVillageId: dto.villageId,
-          kind: ExpeditionKind.CARAVAN,
-          targetKind: 'PLAYER_VILLAGE',
-          targetRefId: targetVillage.id,
-          targetX: targetVillage.x,
-          targetY: targetVillage.y,
-          units: encodeUnitMap({}),
-          status: 'EN_ROUTE',
-          departAt: now,
-          arrivalAt,
-          outboundTravelMs: travelTimeMs,
-          loot: encodeCombatLoot({ resources }),
-        },
-      });
-
-      await createOutboxEvent(tx, 'caravan.sent', dto.villageId, {
-        expeditionId: expedition.id,
-        villageId: dto.villageId,
-        targetVillageId: targetVillage.id,
-        targetX: targetVillage.x,
-        targetY: targetVillage.y,
-        resources,
-        porters,
-        arrivalAt: arrivalAt.toISOString(),
-      });
-      await this.outbox.resourcesChanged(dto.villageId, tx);
-
-      await this.scheduleResolution(expedition.id, arrivalAt);
-
-      this.logger.debug(
-        `Caravan expedition created: ${expedition.id}, arrives at ${arrivalAt.toISOString()}`,
-      );
-
-      return expedition;
-    });
+    return expedition;
   }
 
   async initiateRecall(
@@ -730,6 +740,33 @@ export class CombatService {
       // 8. Create event
       if (expedition.kind === ExpeditionKind.CARAVAN) {
         const resources = this.parseCaravanResources(expedition.loot);
+        const porters = caravanPortersFor(resources);
+        if (sumResources(resources) > 0) {
+          await tx.resourceStock.update({
+            where: { villageId: expedition.attackerVillageId },
+            data: {
+              wood: { increment: resources.wood },
+              stone: { increment: resources.stone },
+              iron: { increment: resources.iron },
+              lastUpdateTs: now,
+            },
+          });
+          await this.outbox.resourcesChanged(expedition.attackerVillageId, tx);
+        }
+        if (porters > 0) {
+          const populationRestore = await tx.population.updateMany({
+            where: {
+              villageId: expedition.attackerVillageId,
+              used: { gte: porters },
+            },
+            data: { used: { decrement: porters } },
+          });
+          if (populationRestore.count === 0) {
+            throw new BadRequestException(
+              'Failed to restore caravan population',
+            );
+          }
+        }
         await createOutboxEvent(
           tx,
           'caravan.recalled',
@@ -739,7 +776,7 @@ export class CombatService {
             villageId: expedition.attackerVillageId,
             targetVillageId: expedition.targetRefId,
             resources,
-            porters: caravanPortersFor(resources),
+            porters,
             returnAt: returnAt.toISOString(),
           },
         );
@@ -947,6 +984,35 @@ export class CombatService {
         startAfter,
         singletonKey: `combat:${expeditionId}`,
       },
+    );
+  }
+
+  private async withSerializableRetry<T>(
+    operation: () => Promise<T>,
+    maxAttempts = 3,
+  ): Promise<T> {
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        return await operation();
+      } catch (error) {
+        if (!this.isSerializationFailure(error) || attempt === maxAttempts) {
+          throw error;
+        }
+        this.logger.warn(
+          `Retrying serialized caravan transaction after conflict (${attempt}/${maxAttempts})`,
+        );
+      }
+    }
+
+    throw new Error('Unreachable serializable retry state');
+  }
+
+  private isSerializationFailure(error: unknown): boolean {
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code?: unknown }).code === 'P2034'
     );
   }
 

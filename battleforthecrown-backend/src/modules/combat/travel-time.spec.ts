@@ -78,6 +78,7 @@ describe('calculateTravelTime', () => {
   });
 
   it('makes caravans slower than cavalry at the same distance', () => {
+    expect(CARAVAN_SPEED).toBe(20);
     const distance = 10;
     const caravan = calculateTravelTime(distance, 1, CARAVAN_SPEED);
     const cavalry = calculateTravelTime(

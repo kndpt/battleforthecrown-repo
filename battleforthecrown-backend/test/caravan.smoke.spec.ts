@@ -273,6 +273,77 @@ describe('resource caravan smoke', () => {
     ).resolves.toBe(1);
   }, 60_000);
 
+  it('serializes concurrent caravan sends against the same origin capacity', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const userA = await registerUser(
+      ctx.server,
+      'caravan-concurrent-a' + Date.now(),
+    );
+    const joinA = await joinWorld(
+      ctx.server,
+      userA.accessToken,
+      world.id,
+      'caravan-concurrent-a',
+    );
+    const villageAId = joinA.village.id;
+    const userB = await registerUser(
+      ctx.server,
+      'caravan-concurrent-b' + Date.now(),
+    );
+    const joinB = await joinWorld(
+      ctx.server,
+      userB.accessToken,
+      world.id,
+      'caravan-concurrent-b',
+    );
+    const villageBId = joinB.village.id;
+    await ctx.prisma.village.update({
+      where: { id: villageBId },
+      data: {
+        userId: userA.userId,
+        x: joinA.village.x + 50,
+        y: joinA.village.y,
+      },
+    });
+    await ctx.prisma.resourceStock.update({
+      where: { villageId: villageAId },
+      data: { wood: 2000, stone: 2000, iron: 2000 },
+    });
+    await ctx.prisma.population.update({
+      where: { villageId: villageAId },
+      data: { used: 0, max: 20 },
+    });
+
+    const send = () =>
+      request(ctx.server)
+        .post('/combat/caravan')
+        .set('Authorization', `Bearer ${userA.accessToken}`)
+        .send({
+          villageId: villageAId,
+          targetVillageId: villageBId,
+          resources: { wood: 400, stone: 0, iron: 0 },
+        });
+
+    const statuses = (await Promise.all([send(), send()]))
+      .map((res) => res.status)
+      .sort();
+    expect(statuses).toEqual([201, 400]);
+    await expect(
+      ctx.prisma.resourceStock.findUniqueOrThrow({
+        where: { villageId: villageAId },
+      }),
+    ).resolves.toMatchObject({ wood: 1600, stone: 2000, iron: 2000 });
+    await expect(
+      ctx.prisma.expedition.count({
+        where: {
+          attackerVillageId: villageAId,
+          kind: 'CARAVAN',
+          status: 'EN_ROUTE',
+        },
+      }),
+    ).resolves.toBe(1);
+  }, 60_000);
+
   it('recalls a caravan en route, restores resources to origin, and does not credit target', async () => {
     const world = await seedSmokeWorld(ctx.prisma);
     const userA = await registerUser(
@@ -336,6 +407,16 @@ describe('resource caravan smoke', () => {
       recalled: true,
       status: 'RETURNING',
     });
+    await expect(
+      ctx.prisma.resourceStock.findUniqueOrThrow({
+        where: { villageId: villageAId },
+      }),
+    ).resolves.toMatchObject({ wood: 1000, stone: 0, iron: 0 });
+    await expect(
+      ctx.prisma.population.findUniqueOrThrow({
+        where: { villageId: villageAId },
+      }),
+    ).resolves.toMatchObject({ used: 10 });
 
     await waitFor(
       () =>
