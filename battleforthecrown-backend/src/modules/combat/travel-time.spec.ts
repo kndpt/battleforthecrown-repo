@@ -3,9 +3,11 @@ import {
   calculateDistance,
   calculateTravelTime,
   findSlowestUnitSpeed,
+  getCaravanResourceCapacity,
   REFERENCE_SPEED,
 } from '@battleforthecrown/shared/logic';
 import { UNIT_STATS, UNIT_TYPES } from '@battleforthecrown/shared/army';
+import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
 
 describe('calculateDistance', () => {
   it('returns 0 for the same point', () => {
@@ -126,5 +128,20 @@ describe('findSlowestUnitSpeed', () => {
     const stats = { ARCHER: { speed: 18 } };
     // CAVALRY selected but not in statsMap — only ARCHER counts
     expect(findSlowestUnitSpeed({ CAVALRY: 5, ARCHER: 2 }, stats)).toBe(18);
+  });
+});
+
+describe('getCaravanResourceCapacity', () => {
+  it('caps each resource at 20% of the origin warehouse capacity', () => {
+    expect(getCaravanResourceCapacity(getWarehouseStorageLimit(10))).toEqual({
+      wood: 17_400,
+      stone: 17_400,
+      iron: 17_400,
+    });
+    expect(getCaravanResourceCapacity(getWarehouseStorageLimit(9))).toEqual({
+      wood: 11_600,
+      stone: 11_600,
+      iron: 11_600,
+    });
   });
 });

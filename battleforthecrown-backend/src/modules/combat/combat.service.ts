@@ -13,7 +13,9 @@ import {
   calculateDistance,
   CARAVAN_SPEED,
   CARRY_PER_PORTER,
+  getCaravanResourceCapacity,
 } from '@battleforthecrown/shared/logic';
+import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
 import { UNIT_TYPES } from '@battleforthecrown/shared/army';
 import type {
   OpenConquestDto,
@@ -77,6 +79,17 @@ function sumResources(resources: CaravanResources): number {
 function caravanPortersFor(resources: CaravanResources): number {
   const volume = sumResources(resources);
   return volume > 0 ? Math.ceil(volume / CARRY_PER_PORTER) : 0;
+}
+
+function addCaravanResources(
+  left: CaravanResources,
+  right: CaravanResources,
+): CaravanResources {
+  return {
+    wood: left.wood + right.wood,
+    stone: left.stone + right.stone,
+    iron: left.iron + right.iron,
+  };
 }
 
 @Injectable()
@@ -391,9 +404,13 @@ export class CombatService {
       }
 
       const porters = caravanPortersFor(resources);
-      const [originStock, population] = await Promise.all([
+      const [originStock, population, originWarehouse] = await Promise.all([
         tx.resourceStock.findUnique({ where: { villageId: dto.villageId } }),
         tx.population.findUnique({ where: { villageId: dto.villageId } }),
+        tx.building.findFirst({
+          where: { villageId: dto.villageId, type: 'WAREHOUSE' },
+          select: { level: true },
+        }),
       ]);
       if (!originStock) {
         throw new BadRequestException('Origin resource stock not found');
@@ -416,6 +433,9 @@ export class CombatService {
           `Insufficient free population: have ${freePopulation}, need ${porters}`,
         );
       }
+      const caravanCapacity = getCaravanResourceCapacity(
+        getWarehouseStorageLimit(originWarehouse?.level ?? 1),
+      );
 
       const distance = calculateDistance(
         village.x,
@@ -447,6 +467,20 @@ export class CombatService {
       });
       if (stockDebitResult.count === 0) {
         throw new BadRequestException('Insufficient resources for caravan');
+      }
+
+      const activeCaravanResources =
+        await this.sumActiveOutgoingCaravanResources(tx, dto.villageId);
+      const reservedWithRequest = addCaravanResources(
+        activeCaravanResources,
+        resources,
+      );
+      if (
+        reservedWithRequest.wood > caravanCapacity.wood ||
+        reservedWithRequest.stone > caravanCapacity.stone ||
+        reservedWithRequest.iron > caravanCapacity.iron
+      ) {
+        throw new BadRequestException('Caravan capacity exceeded');
       }
 
       const populationLockResult = await tx.population.updateMany({
@@ -1155,6 +1189,26 @@ export class CombatService {
     if (raw === null) return emptyCaravanResources();
     return normalizeCaravanResources(
       parseCombatLoot(raw).resources ?? emptyCaravanResources(),
+    );
+  }
+
+  private async sumActiveOutgoingCaravanResources(
+    tx: PrismaClientOrTx,
+    villageId: string,
+  ): Promise<CaravanResources> {
+    const caravans = await tx.expedition.findMany({
+      where: {
+        attackerVillageId: villageId,
+        kind: ExpeditionKind.CARAVAN,
+        status: 'EN_ROUTE',
+      },
+      select: { loot: true },
+    });
+
+    return caravans.reduce(
+      (total, caravan) =>
+        addCaravanResources(total, this.parseCaravanResources(caravan.loot)),
+      emptyCaravanResources(),
     );
   }
 }
