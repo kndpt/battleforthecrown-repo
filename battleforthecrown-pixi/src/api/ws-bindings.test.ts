@@ -920,6 +920,37 @@ describe('caravan websocket bindings', () => {
     expect(useExpeditionsStore.getState().byId['caravan-3']).toBeUndefined();
     vi.useRealTimers();
   });
+
+  it('creates a returning caravan snapshot when recall arrives before sent state', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-04T22:00:05.000Z'));
+    setCurrentWorldSession();
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.resources('origin-village'), { wood: 100 });
+    queryClient.setQueryData(queryKeys.population('origin-village'), { used: 1, max: 10, available: 9 });
+    queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
+
+    applyCaravanRecalled(
+      {
+        expeditionId: 'caravan-missing',
+        villageId: 'origin-village',
+        targetVillageId: 'target-village',
+        resources: { wood: 120, stone: 50, iron: 0 },
+        porters: 1,
+        returnAt: '2026-05-04T22:00:10.000Z',
+      },
+      { queryClient },
+    );
+
+    expect(useExpeditionsStore.getState().byId['caravan-missing']).toMatchObject({
+      kind: 'CARAVAN',
+      phase: 'RETURNING',
+      originVillageId: 'origin-village',
+      targetVillageId: 'target-village',
+      returnAt: Date.parse('2026-05-04T22:00:10.000Z'),
+    });
+    vi.useRealTimers();
+  });
 });
 
 describe('applyBattleReturned', () => {

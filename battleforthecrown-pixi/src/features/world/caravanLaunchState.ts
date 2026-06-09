@@ -53,17 +53,20 @@ export function getCaravanLaunchState(
     maxResources.wood + maxResources.stone + maxResources.iron;
   const porters =
     totalVolume > 0 ? Math.ceil(totalVolume / CARRY_PER_PORTER) : 0;
+  const stockSnapshot = input.stock;
+  const hasStockSnapshot = stockSnapshot !== null && stockSnapshot !== undefined;
   const hasEnoughResources =
-    !input.stock ||
-    (input.resources.wood <= input.stock.wood &&
-      input.resources.stone <= input.stock.stone &&
-      input.resources.iron <= input.stock.iron);
+    hasStockSnapshot &&
+    input.resources.wood <= stockSnapshot.wood &&
+    input.resources.stone <= stockSnapshot.stone &&
+    input.resources.iron <= stockSnapshot.iron;
   const hasEnoughPopulation = porters <= input.freePopulation;
   const hasEnoughCaravanCapacity = RESOURCE_KEYS.every(
     (key) => input.resources[key] <= input.capacityRemaining[key],
   );
   const canSubmit =
     Boolean(input.villageId) &&
+    hasStockSnapshot &&
     totalVolume > 0 &&
     hasEnoughResources &&
     hasEnoughPopulation &&

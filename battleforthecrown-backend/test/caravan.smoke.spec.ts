@@ -450,5 +450,18 @@ describe('resource caravan smoke', () => {
         where: { kind: 'caravan.arrived', aggregateId: villageBId },
       }),
     ).resolves.toBeNull();
+    await expect(
+      ctx.prisma.eventOutbox.findFirst({
+        where: {
+          kind: 'expedition.recalled',
+          aggregateId: { in: [villageAId, villageBId] },
+        },
+      }),
+    ).resolves.toBeNull();
+    await expect(
+      ctx.prisma.eventOutbox.findFirst({
+        where: { kind: 'caravan.recalled', aggregateId: villageAId },
+      }),
+    ).resolves.not.toBeNull();
   }, 60_000);
 });

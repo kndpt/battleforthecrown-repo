@@ -43,6 +43,23 @@ describe("getCaravanLaunchState", () => {
     expect(state.mutationPayload).toBeNull();
   });
 
+  it("blocks submission when origin stock is unknown", () => {
+    const state = getCaravanLaunchState({
+      villageId: "origin",
+      targetVillageId: "target",
+      resources: { wood: 500, stone: 0, iron: 0 },
+      stock: null,
+      capacityRemaining,
+      freePopulation: 10,
+      isLoading: false,
+      isPending: false,
+    });
+
+    expect(state.hasEnoughResources).toBe(false);
+    expect(state.canSubmit).toBe(false);
+    expect(state.mutationPayload).toBeNull();
+  });
+
   it("blocks submission when free population cannot cover porters", () => {
     const state = getCaravanLaunchState({
       villageId: "origin",
@@ -57,6 +74,23 @@ describe("getCaravanLaunchState", () => {
 
     expect(state.hasEnoughPopulation).toBe(false);
     expect(state.canSubmit).toBe(false);
+  });
+
+  it("blocks submission when per-resource caravan capacity is exceeded", () => {
+    const state = getCaravanLaunchState({
+      villageId: "origin",
+      targetVillageId: "target",
+      resources: { wood: capacityRemaining.wood + 1, stone: 0, iron: 0 },
+      stock,
+      capacityRemaining,
+      freePopulation: 999,
+      isLoading: false,
+      isPending: false,
+    });
+
+    expect(state.hasEnoughCaravanCapacity).toBe(false);
+    expect(state.canSubmit).toBe(false);
+    expect(state.mutationPayload).toBeNull();
   });
 
   it("builds the mutation payload when all guards pass", () => {

@@ -438,14 +438,30 @@ export function applyCaravanRecalled(
   const store = useExpeditionsStore.getState();
   const current = store.byId[payload.expeditionId];
   const returnAt = Date.parse(payload.returnAt);
-  store.update(
-    payload.expeditionId,
-    current
-      ? current.phase === 'RETURNING'
+  if (current) {
+    store.update(
+      payload.expeditionId,
+      current.phase === 'RETURNING'
         ? { phase: 'RETURNING', returnAt }
-        : buildRecalledExpeditionPatch(current, Date.now(), returnAt)
-      : { phase: 'RETURNING', returnAt },
-  );
+        : buildRecalledExpeditionPatch(current, Date.now(), returnAt),
+    );
+  } else {
+    const now = Date.now();
+    store.add({
+      expeditionId: payload.expeditionId,
+      kind: 'CARAVAN',
+      villageId: payload.villageId,
+      originVillageId: payload.villageId,
+      targetVillageId: payload.targetVillageId,
+      origin: resolveOrigin(payload.villageId),
+      target: resolveOrigin(payload.targetVillageId),
+      targetKind: 'PLAYER_VILLAGE',
+      phase: 'RETURNING',
+      departAt: now,
+      arrivalAt: now,
+      returnAt,
+    });
+  }
   useUiStore.getState().pushToast({
     tone: 'warning',
     title: 'Caravane rappelée',
