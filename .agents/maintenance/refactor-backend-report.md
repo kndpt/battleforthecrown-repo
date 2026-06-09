@@ -8,6 +8,110 @@ New PRs use branch `maint/refactor-backend/<short-topic>` and PR title
 
 ---
 
+## Run 2026-06-08 — branch `maint/refactor-backend/crowns-accumulate-dedup`
+
+**Model:** claude-sonnet-4-6
+**Scan commit:** `42d136a`
+
+---
+
+### Prior findings status (Run 2026-06-07)
+
+| ID | Status | Note |
+|----|--------|------|
+| B3 | **STILL OPEN** | `getUserIdByVillage` N+1 in outbox dispatch — 9th run. |
+| O1/B6 | **STILL OPEN** | `applyDefenderLosses:964` and `getCaptureDurationMs:1079` re-spell inline `Prisma.VillageGetPayload<{include:{resourceStock,buildings}}>` instead of `DefenderVillage` alias. S effort. |
+| C6 | **STILL OPEN** | Recursive `this.getResources` at `resources.service.ts:50`. Terminates in 2 steps max; cosmetically surprising only. |
+| D4 | **STILL OPEN** | `expedition.create` block repeated 4× in `combat.service.ts`. Deferred. |
+| D5 | **STILL OPEN** | `buildBarbarianDefender`/`buildPlayerDefender` garrison loop duplication. Deferred. |
+| N2 | **RESOLVED** | `updateProduction` + `recalculateOnBuildingChange` duplication eliminated — this run. |
+| N3 | **STILL OPEN** | `getVillagesInRadius` missing upper-bound clamp on `maxX`/`maxY` (`world-entities-query.service.ts:101`). S effort. |
+| O2 | **RESOLVED** | `calculateProductionRate` called 2× per crown update — eliminated — this run. |
+| P2-P8 | **RESOLVED** | Log level hygiene combat module (run 2026-06-07). |
+
+---
+
+### Module structure (mental model)
+
+Same structure as last run. New commits since `dee539b`: feat(retention) growing `retention.service.ts` from 152 LOC to 673 LOC via `retention-scaling.ts` extraction + `recordOutboxEvent` additions; feat(combat) adding capture reports (`combat-report.service.ts` grew to 278 LOC, `conquest.service.ts` to 644 LOC); fix(combat) snapshot village labels (new migrations + `combat.worker.ts`/`conquest.service.ts`). New file: `combat-resolution.ts` (261 LOC) — pure combat math extracted. Layering clean; zero `as any`, zero `console.*`, zero `@ts-ignore` in production code. `crowns.service.ts` (282 LOC) now refactored to eliminate N2/O2.
+
+---
+
+### Findings
+
+| ID | Category | Location | Description | Severity | Effort |
+|----|----------|----------|-------------|----------|--------|
+| N2 | Duplication | `crowns.service.ts:131-248` (pre-fix) | **RESOLVED** — `updateProduction` and `recalculateOnBuildingChange` duplicated the accumulation pattern (findBalance → calculateProductionRate → elapsedHours → floor → update). Extracted to private `accumulateCrowns` helper. | Low | M |
+| O2 | Performance | `crowns.service.ts:147, 272` (pre-fix) | **REVERTED for correctness** — `productionRate?` param added in `aabf2e6` but removed in `a843017` (Codex P2 + CodeRabbit P2). Passing pre-computed rate risked emitting a stale rate if another building completed between `accumulateCrowns` and the outbox insert (READ COMMITTED allows cross-tx reads). `createCrownsChangedEvent` now always re-reads via `calculateProductionRate`. | Low | — |
+| R4 | Correctness | `crowns.service.ts:264-272` | `Math.floor(productionRate * elapsedHours)` permanently drops the fractional remainder each tick. With a 5-min tick, 13 crowns/hr yields 1/tick (12/hr actual). Rates < 12/hr stall at 0. Fix requires either (a) new `fractionalCarry` column on `CrownBalance` (Prisma migration) or (b) adjusting `lastUpdateTs` back by unconsumed time. Out of scope for this refactoring PR — needs dedicated gameplay-mechanic PR. | High | M |
+| R1 | Performance | `retention.service.ts:346-355` | `progressMatchingTaskForDay` calls `calculateTaskProgressUpdate(candidate, completedQty, targetTier)` **twice** per matching task: once in `.find()` predicate (result discarded), once to read the result. Pure function, cheap, but misleading pattern. Fix: closure in `.find()` capturing the result. | Low | S |
+| R2 | Duplication | `retention.service.ts:213-255 vs 377-407` | `ensureDailyCard` (non-tx) and `ensureDailyCardInTransaction` (tx) duplicate daily card creation payload construction. Both call `getDailyCardScaling(getPlayerMaxCastleLevel(...))` and build the same `{ rewardWood, rewardStone, rewardIron, tasks }` shape. Fix: extract `buildDailyCardData` factory. | Medium | S |
+| R3 | Service design | `retention.service.ts:455-623` | File (673 LOC) mixes `RetentionService` class with 14 exported pure utility functions (date keys, task projection, metadata parsing) and 5 private mappers. Since last scan, the file grew from 152 LOC. Utilities belong in a separate `retention.utils.ts` module. | Medium | M |
+| B3 | Performance | `event-outbox.service.ts:544` | `getUserIdByVillage` N+1 — 1 `findUnique` per event in dispatch loop. Batchable. 9th run. | Medium | M |
+| O1/B6 | Type debt | `combat.worker.ts:964, 1079` | `applyDefenderLosses` and `getCaptureDurationMs` re-spell `Prisma.VillageGetPayload<{include:{resourceStock,buildings}}>` instead of `DefenderVillage` alias (line 42). S effort. | Low | S |
+| N3 | Correctness | `world-entities-query.service.ts:101` | `getVillagesInRadius` missing `Math.min(maxX, 499)` / `Math.min(maxY, 499)` clamp. S effort. | Low | S |
+| D4 | Duplication | `combat.service.ts:124, 197, 283, 409` | `tx.expedition.create` data block repeated 4×. Deferred. | Medium | M |
+| D5 | Duplication | `combat.worker.ts:826-858, 881-928` | `buildBarbarianDefender`/`buildPlayerDefender` garrison loop duplication. Deferred. | Low | M |
+
+---
+
+### Looks bad but is actually fine
+
+- **`createCrownsChangedEvent` always re-reads rate** — after Codex P2 finding (`a843017`), the `productionRate?` optional param was removed. All callers (internal and external) now get a fresh `calculateProductionRate` call. The extra query per building completion is negligible; correctness wins over micro-optimisation.
+- **External callers of `createCrownsChangedEvent`** (`cancel-recruitment.use-case.ts:101`, `recruit-noble.use-case.ts:188`, `village-strategy.service.ts:261`) — unaffected by the param removal; they never passed a rate.
+- **`accumulateCrowns` `now = new Date()` default** — the default is evaluated at call time (not definition time), consistent with how `recalculateOnBuildingChange` previously computed `now`. No stale timestamp risk.
+- **B3 N+1 remains** — at current scale unchanged verdict. 9th run.
+- **C6 recursive `getResources`** — terminates in 2 calls exactly. Cosmetic.
+
+---
+
+### Selected theme: N2 + Codex-P2 race fix — Extract `accumulateCrowns` + always-fresh rate in `createCrownsChangedEvent`
+
+**Evidence:**
+- `updateProduction` (lines 131-178, pre-fix): called `calculateProductionRate` → `prisma.village.findMany(include:{buildings})` on every production tick. When `createEvent=true && production>0`, `createCrownsChangedEvent` called it again → 2× `findMany`.
+- `recalculateOnBuildingChange` (lines 184-248, pre-fix): same pattern, always 2× `findMany` for the existing-balance branch.
+- The accumulation body (findBalance → rate → elapsed → floor → update) was duplicated verbatim across both methods, ~35 LOC × 2.
+
+**Final state (N2 resolved, O2 reverted for correctness):**
+- `accumulateCrowns` private helper extracted (N2 ✅ — eliminates ~35 LOC duplication).
+- `createCrownsChangedEvent` `productionRate?` param added then reverted (commit `a843017`): passing a pre-computed rate risks emitting a stale value if another building completes between `accumulateCrowns` and the outbox insert (READ COMMITTED isolation allows cross-tx reads mid-transaction). Both `updateProduction` and `recalculateOnBuildingChange` now always let `createCrownsChangedEvent` re-read the rate.
+- Net: O2 micro-optimisation is off; correctness gains are on. Extra `calculateProductionRate` per event emit is one `prisma.village.findMany(include:{buildings})` — acceptable at current scale.
+
+**Rejected:**
+- **B3**: 9th run, hot realtime path, 14+ signature changes → own PR.
+- **R2+R1**: New retention findings, S effort; valid but lower severity.
+- **R3**: M effort extraction of retention utilities; not yet causing bugs.
+- **O1/B6 + N3**: S effort but cosmetic; bundle next run.
+
+### Files changed
+
+- `battleforthecrown-backend/src/modules/crowns/crowns.service.ts` — `accumulateCrowns` private helper added; `updateProduction` and `recalculateOnBuildingChange` refactored; `createCrownsChangedEvent` simplified (no `productionRate?` param; always re-reads rate); + 5 correctness fixes added during review cycle (see below)
+
+### Correctness fixes added during review cycle (CodeRabbit + Codex)
+
+| Fix | Commit | Finding |
+|-----|--------|---------|
+| `elapsedMs = Math.max(0, ...)` in `accumulateCrowns` | `8cd140c` | Clock skew could produce negative production, rolling back balance |
+| `upsert` in `recalculateOnBuildingChange` (create path) | `0ec4ae2` | Two concurrent PgBoss workers both reading null → both `create` → unique-constraint on second |
+| `upsert` in `getCrownBalance` (create path) | `64ead46` | Same race for two concurrent HTTP requests to the same new user |
+| `{ balance: { increment: production } }` in `accumulateCrowns` | `64ead46` | Absolute write under READ COMMITTED allowed lost-update (two transactions both reading same balance, both overwriting with same value) |
+| `lockCrownBalance` SELECT FOR UPDATE in `updateProduction` + `recalculateOnBuildingChange` | `d9ac32c` | Atomic increment fixes lost-update on balance, but both workers still computed production from the same stale `lastUpdateTs` → double-credit. SELECT FOR UPDATE serializes the read-compute-write cycle. |
+
+### Verification
+
+```shell
+yarn static-check   → ✅ tsc (backend+pixi) + eslint --quiet, 0 errors
+yarn test:backend   → ✅ 289 passed, 27 suites
+```
+
+**Final commit:** `d9ac32c` — CodeRabbit approved, no remaining actionable issues.
+
+### Docs impact
+
+Aucun changement nécessaire — refactor interne du service `crowns.service.ts`, pas de changement d'API REST, d'event WS, de modèle Prisma ni de règle gameplay. Findings B3/C6/D4/D5/N3/O1/B6 restent ouverts. Findings R1/R2/R3 nouveaux (retention.service.ts), ouverts. Finding R4 nouveau (fractional crown carry, needs Prisma migration), ouvert.
+
+---
+
 ## Run 2026-06-07 — branch `maint/refactor-backend/combat-log-hygiene`
 
 **Model:** claude-sonnet-4-6

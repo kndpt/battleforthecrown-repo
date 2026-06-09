@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import type { CrownBalance } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import { PrismaClientOrTx } from 'src/common/prisma.types';
@@ -72,14 +73,11 @@ export class CrownsService {
     });
 
     if (!crownBalance) {
-      // Create initial balance
-      crownBalance = await this.prisma.crownBalance.create({
-        data: {
-          userId,
-          worldId,
-          balance: 0,
-          lastUpdateTs: new Date(),
-        },
+      // upsert handles concurrent requests for the same new user
+      crownBalance = await this.prisma.crownBalance.upsert({
+        where: { userId_worldId: { userId, worldId } },
+        create: { userId, worldId, balance: 0, lastUpdateTs: new Date() },
+        update: {},
       });
     } else {
       // Perform catch-up if needed
@@ -128,13 +126,13 @@ export class CrownsService {
    * propre `crowns.changed` — sinon le HUD restera stale jusqu'au prochain
    * tick avec `production > 0`.
    */
-  async updateProduction(userId: string, worldId: string, createEvent = false) {
+  async updateProduction(
+    userId: string,
+    worldId: string,
+    createEvent = false,
+  ): Promise<CrownBalance | null> {
     return this.prisma.$transaction(async (tx) => {
-      const crownBalance = await tx.crownBalance.findUnique({
-        where: {
-          userId_worldId: { userId, worldId },
-        },
-      });
+      const crownBalance = await this.lockCrownBalance(tx, userId, worldId);
 
       if (!crownBalance) {
         this.logger.warn(
@@ -143,33 +141,16 @@ export class CrownsService {
         return null;
       }
 
-      // Calculate production rate on-the-fly
-      const productionRate = await this.calculateProductionRate(
+      const { updated, production } = await this.accumulateCrowns(
+        tx,
         userId,
         worldId,
+        crownBalance,
       );
 
-      const now = new Date();
-      const elapsedMs = now.getTime() - crownBalance.lastUpdateTs.getTime();
-      const elapsedHours = elapsedMs / MS_PER_HOUR;
-
-      // Calculate production based on current rate
-      const production = Math.floor(productionRate * elapsedHours);
-      const newBalance = crownBalance.balance + production;
-
-      // Update balance
-      const updated = await tx.crownBalance.update({
-        where: {
-          userId_worldId: { userId, worldId },
-        },
-        data: {
-          balance: newBalance,
-          lastUpdateTs: now,
-        },
-      });
-
-      // Create event if requested
       if (createEvent && production > 0) {
+        // No pre-computed rate: let createCrownsChangedEvent re-read so it
+        // emits the current rate even if a building completed mid-tick.
         await this.createCrownsChangedEvent(userId, worldId, tx);
       }
 
@@ -178,11 +159,10 @@ export class CrownsService {
   }
 
   /**
-   * Recalculate production rate when a building changes
-   * Called after construction completion
+   * Recalculate production rate when a building changes.
+   * Called after construction completion.
    */
-  async recalculateOnBuildingChange(villageId: string) {
-    // Get village info
+  async recalculateOnBuildingChange(villageId: string): Promise<void> {
     const village = await this.prisma.village.findUnique({
       where: { id: villageId },
     });
@@ -194,73 +174,44 @@ export class CrownsService {
 
     const { userId, worldId } = village;
 
-    // Check if crown system is enabled
     if (!DEFAULT_CROWNS.enabled) {
       return;
     }
 
     return this.prisma.$transaction(async (tx) => {
-      // Get or create crown balance
-      let crownBalance = await tx.crownBalance.findUnique({
-        where: {
-          userId_worldId: { userId, worldId },
-        },
-      });
+      const crownBalance = await this.lockCrownBalance(tx, userId, worldId);
 
       const now = new Date();
 
       if (!crownBalance) {
-        // Create initial balance if it doesn't exist
-        crownBalance = await tx.crownBalance.create({
-          data: {
-            userId,
-            worldId,
-            balance: 0,
-            lastUpdateTs: now,
-          },
+        // upsert handles concurrent creation from parallel PgBoss workers
+        await tx.crownBalance.upsert({
+          where: { userId_worldId: { userId, worldId } },
+          create: { userId, worldId, balance: 0, lastUpdateTs: now },
+          update: {},
         });
       } else {
-        // Catch up production with current rate
-        const productionRate = await this.calculateProductionRate(
-          userId,
-          worldId,
-        );
-
-        const elapsedMs = now.getTime() - crownBalance.lastUpdateTs.getTime();
-        const elapsedHours = elapsedMs / MS_PER_HOUR;
-        const production = Math.floor(productionRate * elapsedHours);
-
-        // Update with new balance (rate is calculated on-the-fly, no need to store)
-        crownBalance = await tx.crownBalance.update({
-          where: {
-            userId_worldId: { userId, worldId },
-          },
-          data: {
-            balance: crownBalance.balance + production,
-            lastUpdateTs: now,
-          },
-        });
+        await this.accumulateCrowns(tx, userId, worldId, crownBalance, now);
       }
 
-      // Create event (always emit, even if balance was just created)
       await this.createCrownsChangedEvent(userId, worldId, tx);
     });
   }
 
   /**
-   * Create event in EventOutbox for WebSocket dispatch
+   * Create event in EventOutbox for WebSocket dispatch.
+   * Always re-reads production rate so concurrent building completions
+   * are reflected in the emitted event.
    */
   async createCrownsChangedEvent(
     userId: string,
     worldId: string,
     tx?: PrismaClientOrTx,
-  ) {
+  ): Promise<void> {
     const prisma = tx || this.prisma;
 
     const crownBalance = await prisma.crownBalance.findUnique({
-      where: {
-        userId_worldId: { userId, worldId },
-      },
+      where: { userId_worldId: { userId, worldId } },
     });
 
     if (!crownBalance) {
@@ -268,15 +219,69 @@ export class CrownsService {
       return;
     }
 
-    // Calculate production rate on-the-fly for event payload
-    const productionRate = await this.calculateProductionRate(userId, worldId);
+    const rate = await this.calculateProductionRate(userId, worldId);
 
     await createOutboxEvent(prisma, 'crowns.changed', userId, {
       userId,
       worldId,
       balance: crownBalance.balance,
-      productionRate,
+      productionRate: rate,
       lastUpdateTs: crownBalance.lastUpdateTs.toISOString(),
     });
+  }
+
+  /**
+   * Acquires a row-level lock (SELECT FOR UPDATE) on the crown balance row so
+   * that concurrent PgBoss workers for the same user serialize their
+   * accumulation and don't compute production from the same stale lastUpdateTs.
+   * Must be called inside a prisma.$transaction.
+   */
+  private async lockCrownBalance(
+    tx: PrismaClientOrTx,
+    userId: string,
+    worldId: string,
+  ): Promise<{ balance: number; lastUpdateTs: Date } | null> {
+    const rows = await tx.$queryRaw<
+      Array<{ balance: number; lastUpdateTs: Date }>
+    >`
+      SELECT balance, last_update_ts AS "lastUpdateTs"
+      FROM crown_balance
+      WHERE user_id = ${userId} AND world_id = ${worldId}
+      FOR UPDATE
+    `;
+    return rows[0] ?? null;
+  }
+
+  /**
+   * Computes elapsed production and updates `crownBalance` in a single DB
+   * write. Returns the production amount, the rate, and the updated record so
+   * callers avoid a second `calculateProductionRate` call when they also need
+   * to emit a `crowns.changed` event.
+   */
+  private async accumulateCrowns(
+    tx: PrismaClientOrTx,
+    userId: string,
+    worldId: string,
+    crownBalance: { balance: number; lastUpdateTs: Date },
+    now = new Date(),
+  ): Promise<{
+    production: number;
+    productionRate: number;
+    updated: CrownBalance;
+  }> {
+    const productionRate = await this.calculateProductionRate(userId, worldId);
+    const elapsedMs = Math.max(
+      0,
+      now.getTime() - crownBalance.lastUpdateTs.getTime(),
+    );
+    const elapsedHours = elapsedMs / MS_PER_HOUR;
+    const production = Math.floor(productionRate * elapsedHours);
+
+    const updated = await tx.crownBalance.update({
+      where: { userId_worldId: { userId, worldId } },
+      data: { balance: { increment: production }, lastUpdateTs: now },
+    });
+
+    return { production, productionRate, updated };
   }
 }
