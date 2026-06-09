@@ -649,3 +649,83 @@ yarn test:backend   → 25 suites, 272 tests passed
 ```
 
 **Diff :** `useWorldCardModels.test.ts` +33 LOC (nouveau, 5 tests), `worldsViewModel.test.ts` +15 LOC (+1 test). Net : +48 LOC.
+
+---
+
+## Run 2026-06-09 — commit 42d136a
+
+**Scan date:** 2026-06-09
+**Commit SHA:** 42d136a5b574ab6466596d634d8118f79535067e
+
+### Prior findings update
+
+- A1–A6 (ws-bindings query keys) : **RESOLVED**
+- B1, B2 : **RESOLVED**
+- N1, N2 : **RESOLVED**
+- S1, S2, S3 (session teardown) : **RESOLVED**
+- C1 (GameHeader god-component) : **RESOLVED**
+- D2 (headerHelpers tests) : **RESOLVED**
+- F1, F4 (capture event correctness & Pixi tick) : **RESOLVED**
+- G1, G2 (computeProgress duplication / formatTime tests) : **RESOLVED**
+- H1, H2 (armyTraining refetchInterval / BuildingDetailModal polling) : **RESOLVED**
+- I1 (joinErrorMessage tests) : **RESOLVED** — run 2026-06-07 (+ `enterErrorMessage` ajouté dans même PR)
+- I5 (ctaFor joined+LOCKED test) : **RESOLVED** — run 2026-06-07
+- J1 (normalizeFocusValue dead ternary) : **SELECTED** (ce run)
+- J2 (minTargetTier task label test gap) : **SELECTED** (ce run)
+- C2 (SpecializedBuildingDetailModal 643 LOC) : STILL OPEN — organisé, faible risque
+- C3 (ArmyScreen garrison derivations) : STILL OPEN — 30 lignes plates
+- D3 (VillageView inline `<style>` block) : STILL OPEN — cosmétique
+- D4 (magic number 60_000 optimistic) : STILL OPEN — acceptable
+- F2 (DailyRetentionWidget expiresInValue hardcoded) : STILL OPEN — bloqué côté serveur (RetentionSummaryDto n'expose pas le reset time)
+
+### Mental model
+
+Frontend propre et discipliné. Commits depuis run 2026-06-07 :
+- `run(048)/d0d9685` : `worldMapNavigation.ts` (nouveau) + `WorldMapScreen` focus URL, `VictoryModalHost` map link — navigation propre, store `worldMap.pendingFocus` correctement utilisé.
+- `dc12d42` : `feat(retention): scale royal duty by player level` — `mapTask` conditionnel `minTargetTier`, DTOs `@shared/retention` mis à jour.
+- `c80b05e` : `feat(combat): add capture reports` — `combatReportView.ts` enrichi (`recipientRole`, `captureFinalized`), tests étendus.
+- `f788610` : `fix(combat): snapshot report village labels` — `CombatReportDto` enrichi (snapshot villageNames), `combatReportView.ts` adapté, tests mis à jour.
+- `504db2e` / `dbe90c3` : UI power + séparation enter/join avec `useEnterWorldMutation` + `enterErrorMessage` (déjà couvert dans `useWorldCardModels.test.ts` ligne 41–66).
+
+**Server-authoritative** : 0 violation. Aucun calcul local autoritatif introduit.
+**Type debt** : 0 `as any`, 0 `@ts-ignore`. `enterErrorMessage` typé, `CombatReportDto.recipientRole` union strict.
+**Stores Zustand** : inchangés, teardown centralisé confirmé.
+**Pixi scenes** : `WorldMapScene.ts` inchangé, ticker correct.
+**TanStack Query** : `useEnterWorldMutation` sans `['villages']` → ✅ `setContext({ worldId })` suffit (nouvelle clé de query déclenche le re-fetch automatiquement).
+
+### New findings
+
+| ID | Category | Location | Description | Severity | Effort | Status |
+|----|----------|----------|-------------|----------|--------|--------|
+| J1 | Naming / readability | `features/world/worldMapNavigation.ts:14-17` | `normalizeFocusValue` : ternaire mort — `Number.isInteger(v) ? v.toString() : v.toString()`, les deux branches identiques. Trompe le lecteur en laissant croire que les deux cas sont traités différemment. | Low | S | **RESOLVED** (ce run) |
+| J2 | Test gap | `features/retention/DailyRetentionWidget.test.tsx` | `mapTask` branch `minTargetTier` (ajouté dans dc12d42) sans test direct : les tâches de pillage barbares à tier spécifique doivent afficher `task.label` (fourni par le serveur) plutôt que `taskLabelOverride`. | Low | S | **RESOLVED** (ce run) |
+
+### "Looks bad but is actually fine" (this run)
+
+| Pattern | Verdict |
+|---------|---------|
+| `useEnterWorldMutation` sans invalidation `['villages']` | ✅ `setContext({ worldId })` change la clé `useMyVillagesQuery(worldId)` → TanStack re-fetche automatiquement |
+| `invalidateCombatReports` ne couvre pas `reinforcement-reports` | ✅ domaines distincts — `reinforcement-reports` invalidé uniquement sur `reinforcement.returned` / `garrison.added` |
+| `invalidateReinforcementReports` raw key `['combat', 'reinforcement-reports', userId]` | ✅ prefix-match intentionnel (cross-worldId) — même pattern que `invalidateCombatReports` |
+| `buildWorldMapFocusSearch` passe des entiers pour x/y | ✅ coordonnées de tiles sont toujours des entiers dans ce jeu — `String(n)` suffit |
+| `DailyRetentionWidget.tsx:301` `expiresInValue="04h00"` | ✅ `RetentionSummaryDto` n'expose pas le reset time — F2 bloqué côté serveur |
+
+### Selected theme: **J1 + J2 — Dead ternary cleanup + filet de régression `minTargetTier`**
+
+**Rationale :**
+- J1 élimine un ternaire trompeur introduit dans `d0d9685`. Le lecteur voit `Number.isInteger ? ... : ...` et s'attend à un traitement différent selon le cas. Simplification en `String(value)` — comportement identique, intention lisible. Scope : 1 LOC.
+- J2 couvre la branche `minTargetTier` de `mapTask` introduite dans `dc12d42` sans filet de régression. Une régression (ex : swap de condition) afficherait la mauvaise étiquette pour les tâches de pillage à tier (`"Vaincre un village barbare"` au lieu du label serveur précis). Test S : 1 render, 2 assertions.
+- Thème cohérent (code récent ajouté sans nettoyage minutieux), scope total S, zéro changement backend.
+
+**Rejected :**
+- C2/C3 : faible gain comportemental, churn mécanique.
+- D3/D4/F2 : cosmétiques ou bloqués côté serveur.
+
+### Verification
+
+```text
+yarn static-check   → green (tsc backend + pixi, ESLint backend + pixi --quiet)
+yarn test:pixi      → 66 test files, 364 tests passed (+1 DailyRetentionWidget.test.tsx)
+```
+
+**Diff :** `worldMapNavigation.ts` −2 LOC (ternaire → `String(value)`), `DailyRetentionWidget.test.tsx` +37 LOC (+1 test). Net : −2 / +37 dans les fichiers modifiés.

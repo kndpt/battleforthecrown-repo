@@ -12,7 +12,7 @@ export interface WorldMapFocusTarget {
 }
 
 function normalizeFocusValue(value: number): string {
-  return Number.isInteger(value) ? value.toString() : value.toString();
+  return String(value);
 }
 
 function searchParamsFrom(search?: string | URLSearchParams): URLSearchParams {
