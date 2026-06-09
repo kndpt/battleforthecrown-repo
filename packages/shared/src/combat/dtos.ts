@@ -16,12 +16,13 @@ export const EXPEDITION_STATUSES = {
   RETURNING: 'RETURNING',
 } as const;
 
-export type ExpeditionKind = 'ATTACK' | 'REINFORCE' | 'SCOUT';
+export type ExpeditionKind = 'ATTACK' | 'REINFORCE' | 'SCOUT' | 'CARAVAN';
 
 export const EXPEDITION_KINDS = {
   ATTACK: 'ATTACK',
   REINFORCE: 'REINFORCE',
   SCOUT: 'SCOUT',
+  CARAVAN: 'CARAVAN',
 } as const;
 
 export interface AttackCommand {
@@ -46,6 +47,12 @@ export interface ScoutCommand {
   targetKind: TargetKind;
   targetRefId: string;
   units: UnitMap;
+}
+
+export interface CaravanCommand {
+  villageId: string;
+  targetVillageId: string;
+  resources: LootResources;
 }
 
 export interface RecallCommand {
@@ -188,4 +195,5 @@ export interface OpenExpeditionDto {
   returnAt: string | null;
   status: ExpeditionStatus;
   recalled: boolean;
+  resources?: LootResources;
 }

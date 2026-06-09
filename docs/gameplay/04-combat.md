@@ -48,6 +48,21 @@ Sur la carte et dans les listes d'expéditions, un renfort est rendu comme un fl
 
 > ✅ **Statut implémentation** : UI frontend + endpoint de garnison + cycle d'events backend alignés.
 
+## Caravane de ressources entre ses propres villages
+
+Une caravane est une expédition non-combat (`CARAVAN`) entre deux villages possédés par le même joueur. Elle réutilise le système de trajet : distance euclidienne, pas d'interception en chemin, et rappel possible pendant l'aller.
+
+| Élément | Règle |
+| --- | --- |
+| **Action** | « Envoyer ressources » depuis la carte, vers un autre village possédé. |
+| **Durée** | Distance euclidienne × `CARAVAN_SPEED`, vitesse marchande fixe plus lente que la cavalerie. |
+| **Combat en chemin** | Aucun, cohérent avec la règle générale « pas d'interception en voyage ». |
+| **À l'arrivée** | Crédit des ressources dans l'Entrepôt cible jusqu'à sa capacité ; excédent perdu. La caravane repart ensuite vers A. |
+| **Retour** | Libère les porteurs dans la population de A. Aucune unité n'est créée ou restituée. |
+| **Rappel** | Avant arrivée uniquement : retour vers A avec restitution intégrale des ressources et libération des porteurs. |
+
+Sur la carte et dans les listes d'expéditions, une caravane est rendue comme un flux distinct d'une attaque ou d'un renfort.
+
 ## Conquête
 
 1. Le joueur **recrute un Seigneur** à la **Salle du Trône** (Château 6 requis, 1 par village). Coût et règles complètes : [`10-conquest.md` § Le Seigneur](./10-conquest.md#le-seigneur--recrutement-et-règles).
@@ -67,7 +82,7 @@ Spec dédiée : [`12-village-styles.md`](./12-village-styles.md). Mécanique de 
 - [`08-units.md`](./08-units.md) — catalogue des unités, entraînement, stratégies d'utilisation.
 - [`09-power-and-rankings.md`](./09-power-and-rankings.md) — système de puissance (calcul, poids, visibilité).
 - [`24-rankings.md`](./24-rankings.md) — scoring Gloire d'Assaut / Rempart basé sur les pertes PvP.
-- [`02-economy-and-progression.md` § Population](./02-economy-and-progression.md#population) — limiteur stratégique armée vs infrastructure.
+- [`02-economy-and-progression.md` § Population](./02-economy-and-progression.md#population) — limiteur stratégique armée, infrastructure et porteurs de caravane.
 - [`03-buildings.md` § Caserne](./03-buildings.md#caserne-barracks) — déblocages d'unités et vitesse d'entraînement.
 - [`01-overview.md` § Boucles](./01-overview.md#boucles-de-gameplay) — boucle militaire et conquête au niveau macro.
 - [`06-barbarians.md`](./06-barbarians.md) — combat appliqué aux villages barbares (rapport asymétrique, scout).

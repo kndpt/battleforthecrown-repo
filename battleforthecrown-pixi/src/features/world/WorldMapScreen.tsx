@@ -10,6 +10,7 @@ import { WorldEntityTooltip } from './WorldEntityTooltip';
 import { clearWorldMapFocusSearch, parseWorldMapFocusSearch } from './worldMapNavigation';
 import { buildMapEntities, filterEntitiesByVision } from './buildMapEntities';
 import { AttackDetailModal } from '@/features/combat/AttackDetailModal';
+import { CaravanLaunchModal } from './CaravanLaunchModal';
 import { KingdomActivitiesBottomSheet } from '@/features/combat/KingdomActivitiesBottomSheet';
 import { OnboardingGuidance } from '@/features/onboarding/OnboardingGuidance';
 import { getOnboardingGuidance } from '@/features/onboarding/onboardingViewModel';
@@ -61,6 +62,7 @@ export function WorldMapScreen() {
   const pendingFocus = useWorldMapStore((state) => state.pendingFocus);
   const setPendingFocus = useWorldMapStore((state) => state.setPendingFocus);
   const [attackTarget, setAttackTarget] = useState<MapEntity | null>(null);
+  const [caravanTarget, setCaravanTarget] = useState<MapEntity | null>(null);
   const [attackInitialMode, setAttackInitialMode] = useState<'attack' | 'scout'>('attack');
   const [isMiniMapVisible, setIsMiniMapVisible] = useState(false);
   const [isKingdomActivitiesOpen, setIsKingdomActivitiesOpen] = useState(false);
@@ -316,6 +318,10 @@ export function WorldMapScreen() {
                     setAttackTarget(target);
                     setSelectedEntity(null);
                   }}
+                  onCaravan={(target) => {
+                    setCaravanTarget(target);
+                    setSelectedEntity(null);
+                  }}
                   onGoToVillage={goToVillage}
                 />
               </WorldEntityTooltip>
@@ -330,6 +336,14 @@ export function WorldMapScreen() {
           origin={{ x: myVillage.x, y: myVillage.y }}
           initialMode={attackInitialMode}
           onClose={() => setAttackTarget(null)}
+        />
+      )}
+
+      {caravanTarget && myVillage && (
+        <CaravanLaunchModal
+          target={caravanTarget}
+          origin={{ x: myVillage.x, y: myVillage.y }}
+          onClose={() => setCaravanTarget(null)}
         />
       )}
 

@@ -9,7 +9,11 @@ import {
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WorldConfigService } from '../world/world-config.service';
 import { VisionService } from '../world/vision.service';
-import { calculateDistance } from '@battleforthecrown/shared/logic';
+import {
+  calculateDistance,
+  CARAVAN_SPEED,
+  CARRY_PER_PORTER,
+} from '@battleforthecrown/shared/logic';
 import { UNIT_TYPES } from '@battleforthecrown/shared/army';
 import type {
   OpenConquestDto,
@@ -19,14 +23,21 @@ import type { AttackCommandDto } from './dto/attack-command.schema';
 import type { ReinforceCommandDto } from './dto/reinforce-command.schema';
 import type { RecallCommandDto } from './dto/recall-command.schema';
 import type { ScoutCommandDto } from './dto/scout-command.schema';
+import type { CaravanCommandDto } from './dto/caravan-command.schema';
 import {
   Expedition,
   ExpeditionKind,
   PendingConquestStatus,
 } from '@prisma/client';
-import { encodeUnitMap, parseUnitMap } from './codecs';
+import {
+  encodeCombatLoot,
+  encodeUnitMap,
+  parseCombatLoot,
+  parseUnitMap,
+} from './codecs';
 import PgBoss from 'pg-boss';
 import { createOutboxEvent } from '../event/event.utils';
+import { OutboxPublisher } from '../event/outbox-publisher.service';
 import { PrismaClientOrTx } from '../../common/prisma.types';
 import { OwnershipService } from '../../common/auth';
 
@@ -43,6 +54,30 @@ export interface GarrisonLineDto {
 }
 
 type CaptureTierDto = OpenConquestDto['targetTier'];
+type CaravanResources = { wood: number; stone: number; iron: number };
+
+function emptyCaravanResources(): CaravanResources {
+  return { wood: 0, stone: 0, iron: 0 };
+}
+
+function normalizeCaravanResources(
+  resources: Partial<CaravanResources>,
+): CaravanResources {
+  return {
+    wood: Math.floor(resources.wood ?? 0),
+    stone: Math.floor(resources.stone ?? 0),
+    iron: Math.floor(resources.iron ?? 0),
+  };
+}
+
+function sumResources(resources: CaravanResources): number {
+  return resources.wood + resources.stone + resources.iron;
+}
+
+function caravanPortersFor(resources: CaravanResources): number {
+  const volume = sumResources(resources);
+  return volume > 0 ? Math.ceil(volume / CARRY_PER_PORTER) : 0;
+}
 
 @Injectable()
 export class CombatService {
@@ -53,6 +88,7 @@ export class CombatService {
     private readonly worldConfig: WorldConfigService,
     private readonly visionService: VisionService,
     private readonly ownership: OwnershipService,
+    private readonly outbox: OutboxPublisher,
     @Inject('PG_BOSS') private readonly boss: PgBoss,
   ) {}
 
@@ -317,6 +353,155 @@ export class CombatService {
     });
   }
 
+  async initiateCaravan(
+    userId: string,
+    dto: CaravanCommandDto,
+  ): Promise<Expedition> {
+    this.logger.debug(`Caravan initiated by user ${userId}`, { dto });
+
+    return this.prisma.$transaction(async (tx) => {
+      const village = await this.loadOwnedVillage(
+        tx,
+        dto.villageId,
+        userId,
+        'Origin village not found or not owned',
+      );
+      const worldId = village.worldId;
+
+      if (dto.targetVillageId === dto.villageId) {
+        throw new BadRequestException('Target village must be different');
+      }
+
+      const targetVillage = await tx.village.findUnique({
+        where: { id: dto.targetVillageId },
+      });
+      if (!targetVillage || targetVillage.worldId !== worldId) {
+        throw new BadRequestException('Target village not found');
+      }
+      if (targetVillage.userId !== userId) {
+        throw new ForbiddenException(
+          'You can only send caravans to your own villages',
+        );
+      }
+
+      const resources = normalizeCaravanResources(dto.resources);
+      const totalVolume = sumResources(resources);
+      if (totalVolume <= 0) {
+        throw new BadRequestException('Caravan must carry resources');
+      }
+
+      const porters = caravanPortersFor(resources);
+      const [originStock, population] = await Promise.all([
+        tx.resourceStock.findUnique({ where: { villageId: dto.villageId } }),
+        tx.population.findUnique({ where: { villageId: dto.villageId } }),
+      ]);
+      if (!originStock) {
+        throw new BadRequestException('Origin resource stock not found');
+      }
+      if (!population) {
+        throw new BadRequestException('Origin population not found');
+      }
+
+      if (
+        originStock.wood < resources.wood ||
+        originStock.stone < resources.stone ||
+        originStock.iron < resources.iron
+      ) {
+        throw new BadRequestException('Insufficient resources for caravan');
+      }
+
+      const freePopulation = population.max - population.used;
+      if (freePopulation < porters) {
+        throw new BadRequestException(
+          `Insufficient free population: have ${freePopulation}, need ${porters}`,
+        );
+      }
+
+      const distance = calculateDistance(
+        village.x,
+        village.y,
+        targetVillage.x,
+        targetVillage.y,
+      );
+      const travelTimeMs = await this.worldConfig.getTravelTimeForSpeed(
+        worldId,
+        distance,
+        CARAVAN_SPEED,
+      );
+      const now = new Date();
+      const arrivalAt = new Date(now.getTime() + travelTimeMs);
+
+      const stockDebitResult = await tx.resourceStock.updateMany({
+        where: {
+          villageId: dto.villageId,
+          wood: { gte: resources.wood },
+          stone: { gte: resources.stone },
+          iron: { gte: resources.iron },
+        },
+        data: {
+          wood: { decrement: resources.wood },
+          stone: { decrement: resources.stone },
+          iron: { decrement: resources.iron },
+          lastUpdateTs: now,
+        },
+      });
+      if (stockDebitResult.count === 0) {
+        throw new BadRequestException('Insufficient resources for caravan');
+      }
+
+      const populationLockResult = await tx.population.updateMany({
+        where: {
+          villageId: dto.villageId,
+          used: { lte: population.max - porters },
+        },
+        data: { used: { increment: porters } },
+      });
+      if (populationLockResult.count === 0) {
+        throw new BadRequestException(
+          `Insufficient free population: have ${freePopulation}, need ${porters}`,
+        );
+      }
+
+      const expedition = await tx.expedition.create({
+        data: {
+          worldId,
+          attackerVillageId: dto.villageId,
+          kind: ExpeditionKind.CARAVAN,
+          targetKind: 'PLAYER_VILLAGE',
+          targetRefId: targetVillage.id,
+          targetX: targetVillage.x,
+          targetY: targetVillage.y,
+          units: encodeUnitMap({}),
+          status: 'EN_ROUTE',
+          departAt: now,
+          arrivalAt,
+          outboundTravelMs: travelTimeMs,
+          loot: encodeCombatLoot({ resources }),
+        },
+      });
+
+      await createOutboxEvent(tx, 'caravan.sent', dto.villageId, {
+        expeditionId: expedition.id,
+        villageId: dto.villageId,
+        targetVillageId: targetVillage.id,
+        targetX: targetVillage.x,
+        targetY: targetVillage.y,
+        resources,
+        porters,
+        arrivalAt: arrivalAt.toISOString(),
+      });
+      await this.outbox.resourcesChanged(dto.villageId, tx);
+
+      await this.scheduleResolution(expedition.id, arrivalAt);
+
+      this.logger.debug(
+        `Caravan expedition created: ${expedition.id}, arrives at ${arrivalAt.toISOString()}`,
+      );
+
+      return expedition;
+    });
+  }
+
   async initiateRecall(
     userId: string,
     dto: RecallCommandDto,
@@ -509,16 +694,33 @@ export class CombatService {
       // We rely on the status guard in the worker.
 
       // 8. Create event
-      await createOutboxEvent(
-        tx,
-        'expedition.recalled',
-        expedition.attackerVillageId,
-        {
-          expeditionId: expedition.id,
-          villageId: expedition.attackerVillageId,
-          returnAt: returnAt.toISOString(),
-        },
-      );
+      if (expedition.kind === ExpeditionKind.CARAVAN) {
+        const resources = this.parseCaravanResources(expedition.loot);
+        await createOutboxEvent(
+          tx,
+          'caravan.recalled',
+          expedition.attackerVillageId,
+          {
+            expeditionId: expedition.id,
+            villageId: expedition.attackerVillageId,
+            targetVillageId: expedition.targetRefId,
+            resources,
+            porters: caravanPortersFor(resources),
+            returnAt: returnAt.toISOString(),
+          },
+        );
+      } else {
+        await createOutboxEvent(
+          tx,
+          'expedition.recalled',
+          expedition.attackerVillageId,
+          {
+            expeditionId: expedition.id,
+            villageId: expedition.attackerVillageId,
+            returnAt: returnAt.toISOString(),
+          },
+        );
+      }
 
       this.logger.debug(
         `Expedition ${expeditionId} recalled, returns at ${returnAt.toISOString()}`,
@@ -843,6 +1045,10 @@ export class CombatService {
           returnAt: expedition.returnAt?.toISOString() ?? null,
           status: expedition.status,
           recalled: expedition.recalled,
+          resources:
+            expedition.kind === ExpeditionKind.CARAVAN && expedition.loot
+              ? this.parseCaravanResources(expedition.loot)
+              : undefined,
         };
       })
       .sort((left, right) => {
@@ -943,5 +1149,12 @@ export class CombatService {
     }
 
     return null;
+  }
+
+  private parseCaravanResources(raw: Expedition['loot']): CaravanResources {
+    if (raw === null) return emptyCaravanResources();
+    return normalizeCaravanResources(
+      parseCombatLoot(raw).resources ?? emptyCaravanResources(),
+    );
   }
 }

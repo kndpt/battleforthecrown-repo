@@ -20,8 +20,10 @@ import {
   distributeLossesProportionally,
 } from './combat.utils';
 import { parseUnitMap, encodeUnitMap, encodeLootResult } from './codecs';
+import { parseCombatLoot } from './codecs';
 import { getStrategyBonusValue } from '@battleforthecrown/shared/village';
 import { calculateDistance } from '@battleforthecrown/shared/logic';
+import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
 import type { WorldTempo } from '@battleforthecrown/shared/world';
 import type { CombatResolution } from '@battleforthecrown/shared/combat';
 import {
@@ -51,6 +53,7 @@ interface OccupationDefense {
 }
 
 const EMPTY_LOOT = { wood: 0, stone: 0, iron: 0 } as const;
+type ResourceBundle = { wood: number; stone: number; iron: number };
 
 /**
  * Total population freed by a set of unit losses. The pop of a dead unit is
@@ -134,6 +137,10 @@ export class CombatWorker implements OnModuleInit {
 
           if (expedition.kind === ExpeditionKind.SCOUT) {
             return this.handleScoutArrival(tx, expedition);
+          }
+
+          if (expedition.kind === ExpeditionKind.CARAVAN) {
+            return this.handleCaravanArrival(tx, expedition);
           }
 
           // 2. Build combat context
@@ -1389,4 +1396,118 @@ export class CombatWorker implements OnModuleInit {
       `Scout resolved for expedition ${expedition.id}, report=${report.id}, returns at ${returnAt.toISOString()}`,
     );
   }
+
+  private async handleCaravanArrival(
+    tx: PrismaClientOrTx,
+    expedition: Expedition,
+  ) {
+    this.logger.debug(`Processing caravan arrival: ${expedition.id}`);
+
+    const targetVillage = await tx.village.findUnique({
+      where: { id: expedition.targetRefId },
+      include: {
+        buildings: { where: { type: 'WAREHOUSE' }, select: { level: true } },
+        resourceStock: true,
+      },
+    });
+    if (!targetVillage?.resourceStock) {
+      throw new Error(
+        `Caravan target stock not found: ${expedition.targetRefId}`,
+      );
+    }
+
+    const carried = parseCaravanResources(expedition);
+    const warehouseLevel = targetVillage.buildings[0]?.level ?? 1;
+    const limits = getWarehouseStorageLimit(warehouseLevel);
+    const credited = {
+      wood: Math.min(
+        carried.wood,
+        Math.max(0, limits.wood - targetVillage.resourceStock.wood),
+      ),
+      stone: Math.min(
+        carried.stone,
+        Math.max(0, limits.stone - targetVillage.resourceStock.stone),
+      ),
+      iron: Math.min(
+        carried.iron,
+        Math.max(0, limits.iron - targetVillage.resourceStock.iron),
+      ),
+    };
+    const lost = subtractResources(carried, credited);
+    const returnAt = new Date(Date.now() + expedition.outboundTravelMs);
+
+    if (sumResourceBundle(credited) > 0) {
+      await tx.resourceStock.update({
+        where: { villageId: expedition.targetRefId },
+        data: {
+          wood: { increment: credited.wood },
+          stone: { increment: credited.stone },
+          iron: { increment: credited.iron },
+        },
+      });
+      await this.outbox.resourcesChanged(expedition.targetRefId, tx);
+    }
+
+    await tx.expedition.update({
+      where: { id: expedition.id },
+      data: {
+        status: 'RETURNING',
+        returnAt,
+      },
+    });
+
+    await createOutboxEvent(tx, 'caravan.arrived', expedition.targetRefId, {
+      expeditionId: expedition.id,
+      villageId: expedition.attackerVillageId,
+      targetVillageId: expedition.targetRefId,
+      credited,
+      lost,
+      returnAt: returnAt.toISOString(),
+    });
+
+    await this.boss.send(
+      'combat:return',
+      { expeditionId: expedition.id },
+      {
+        startAfter: returnAt,
+        singletonKey: `return:${expedition.id}`,
+      },
+    );
+
+    this.logger.debug(
+      `Caravan arrived for expedition ${expedition.id}, credited=${JSON.stringify(credited)}, lost=${JSON.stringify(lost)}`,
+    );
+  }
+}
+
+function normalizeResources(
+  resources: Partial<ResourceBundle>,
+): ResourceBundle {
+  return {
+    wood: Math.max(0, Math.floor(resources.wood ?? 0)),
+    stone: Math.max(0, Math.floor(resources.stone ?? 0)),
+    iron: Math.max(0, Math.floor(resources.iron ?? 0)),
+  };
+}
+
+function subtractResources(
+  left: ResourceBundle,
+  right: ResourceBundle,
+): ResourceBundle {
+  return {
+    wood: Math.max(0, left.wood - right.wood),
+    stone: Math.max(0, left.stone - right.stone),
+    iron: Math.max(0, left.iron - right.iron),
+  };
+}
+
+function sumResourceBundle(resources: ResourceBundle): number {
+  return resources.wood + resources.stone + resources.iron;
+}
+
+function parseCaravanResources(expedition: Expedition): ResourceBundle {
+  if (expedition.loot === null) return normalizeResources(EMPTY_LOOT);
+  return normalizeResources(
+    parseCombatLoot(expedition.loot).resources ?? EMPTY_LOOT,
+  );
 }

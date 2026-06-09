@@ -4,6 +4,10 @@ import {
   applyBattleResolved,
   applyBattleReturned,
   applyBuildingCompleted,
+  applyCaravanArrived,
+  applyCaravanRecalled,
+  applyCaravanReturned,
+  applyCaravanSent,
   applyCrownsChanged,
   applyExpeditionRecalled,
   applyGarrisonAdded,
@@ -765,6 +769,154 @@ describe('kingdom activity expedition invalidations', () => {
     );
 
     expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
+  });
+});
+
+describe('caravan websocket bindings', () => {
+  it('adds an outbound CARAVAN snapshot and refreshes origin resources/population', () => {
+    setCurrentWorldSession();
+    useWorldMapStore.getState().setEntities([
+      {
+        id: 'origin-village',
+        kind: 'PLAYER_VILLAGE',
+        isMine: true,
+        x: 3,
+        y: 4,
+        name: 'Origin',
+        tier: null,
+      },
+    ]);
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.resources('origin-village'), { wood: 100 });
+    queryClient.setQueryData(queryKeys.population('origin-village'), { used: 1, max: 10, available: 9 });
+    queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
+
+    applyCaravanSent(
+      {
+        expeditionId: 'caravan-1',
+        villageId: 'origin-village',
+        targetVillageId: 'target-village',
+        targetX: 9,
+        targetY: 11,
+        resources: { wood: 120, stone: 50, iron: 0 },
+        porters: 1,
+        arrivalAt: '2026-05-04T22:05:00.000Z',
+      },
+      { queryClient },
+    );
+
+    expect(useExpeditionsStore.getState().byId['caravan-1']).toMatchObject({
+      expeditionId: 'caravan-1',
+      kind: 'CARAVAN',
+      villageId: 'origin-village',
+      originVillageId: 'origin-village',
+      targetVillageId: 'target-village',
+      origin: { x: 3, y: 4 },
+      target: { x: 9, y: 11 },
+      targetKind: 'PLAYER_VILLAGE',
+      phase: 'EN_ROUTE',
+      arrivalAt: Date.parse('2026-05-04T22:05:00.000Z'),
+    });
+    expect(queryClient.getQueryState(queryKeys.resources('origin-village'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.population('origin-village'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
+  });
+
+  it('turns the caravan back at arrival and refreshes target resources', () => {
+    setCurrentWorldSession();
+    useExpeditionsStore.getState().add({
+      expeditionId: 'caravan-2',
+      kind: 'CARAVAN',
+      villageId: 'origin-village',
+      originVillageId: 'origin-village',
+      targetVillageId: 'target-village',
+      origin: { x: 3, y: 4 },
+      target: { x: 9, y: 11 },
+      phase: 'EN_ROUTE',
+      departAt: 0,
+      arrivalAt: Date.parse('2026-05-04T22:05:00.000Z'),
+    });
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.resources('target-village'), { wood: 100 });
+    queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
+
+    applyCaravanArrived(
+      {
+        expeditionId: 'caravan-2',
+        villageId: 'origin-village',
+        targetVillageId: 'target-village',
+        credited: { wood: 120, stone: 50, iron: 0 },
+        lost: { wood: 0, stone: 0, iron: 0 },
+        returnAt: '2026-05-04T22:10:00.000Z',
+      },
+      { queryClient },
+    );
+
+    expect(useExpeditionsStore.getState().byId['caravan-2']).toMatchObject({
+      phase: 'RETURNING',
+      returnAt: Date.parse('2026-05-04T22:10:00.000Z'),
+    });
+    expect(queryClient.getQueryState(queryKeys.resources('target-village'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
+  });
+
+  it('keeps recalled caravans visible until returned, then refreshes origin resources/population', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-04T22:00:05.000Z'));
+    setCurrentWorldSession();
+    useExpeditionsStore.getState().add({
+      expeditionId: 'caravan-3',
+      kind: 'CARAVAN',
+      villageId: 'origin-village',
+      origin: { x: 0, y: 0 },
+      target: { x: 10, y: 0 },
+      phase: 'EN_ROUTE',
+      departAt: Date.parse('2026-05-04T22:00:00.000Z'),
+      arrivalAt: Date.parse('2026-05-04T22:00:10.000Z'),
+    });
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.resources('origin-village'), { wood: 100 });
+    queryClient.setQueryData(queryKeys.population('origin-village'), { used: 1, max: 10, available: 9 });
+    queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
+
+    applyCaravanRecalled(
+      {
+        expeditionId: 'caravan-3',
+        villageId: 'origin-village',
+        targetVillageId: 'target-village',
+        resources: { wood: 120, stone: 50, iron: 0 },
+        porters: 1,
+        returnAt: '2026-05-04T22:00:10.000Z',
+      },
+      { queryClient },
+    );
+
+    const recalled = useExpeditionsStore.getState().byId['caravan-3'];
+    expect(recalled).toMatchObject({
+      phase: 'RETURNING',
+      arrivalAt: Date.parse('2026-05-04T22:00:05.000Z'),
+      returnAt: Date.parse('2026-05-04T22:00:10.000Z'),
+    });
+    expect(useUiStore.getState().toasts[0].title).toBe('Caravane rappelée');
+
+    applyCaravanReturned(
+      {
+        expeditionId: 'caravan-3',
+        villageId: 'origin-village',
+        targetVillageId: 'target-village',
+        resources: { wood: 120, stone: 50, iron: 0 },
+        porters: 1,
+        recalled: true,
+      },
+      { queryClient },
+    );
+
+    expect(useExpeditionsStore.getState().byId['caravan-3'].phase).toBe('RETURNED');
+    expect(queryClient.getQueryState(queryKeys.resources('origin-village'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.population('origin-village'))?.isInvalidated).toBe(true);
+    vi.advanceTimersByTime(RETURNED_TO_CLEANUP_DELAY_MS);
+    expect(useExpeditionsStore.getState().byId['caravan-3']).toBeUndefined();
+    vi.useRealTimers();
   });
 });
 

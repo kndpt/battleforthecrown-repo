@@ -30,7 +30,7 @@ Quand un village est **conquis** :
 
 - Chaque village est un **nœud de ressources indépendant** — pas de pool global.
 - La production stoppe si l'entrepôt est plein.
-- **Pas de transfert direct** entre villages joueur (marché prévu post-MVP).
+- **Transfert entre villages possédés via caravane** : un joueur peut envoyer des ressources d'un village A vers un autre village B qu'il possède. Le transfert est physique (trajet d'expédition), consomme temporairement de la population libre de A comme porteurs, et reste limité par l'entrepôt de B. Aucun transfert direct instantané, aucun marché entre joueurs au MVP.
 - Les villages barbares **régénèrent** leurs ressources et leurs troupes avec le temps. Spec complète dans [`06-barbarians.md`](./06-barbarians.md).
 - Le revenu en couronnes dépend de la **puissance cumulée** de tous les villages possédés.
 
@@ -61,8 +61,24 @@ Population disponible (village V) = Population max (Quartier de V)
 - **Entraînement** → `−Y population` (permanent jusqu'à mort de l'unité).
 - **Destruction** → `+X population` (libérée).
 - **Mort d'une unité** → `+Y population` libérée **immédiatement à la résolution du combat** (pas au retour de l'expédition). Côté attaquant, la pop des morts est rendue dès l'event `battle.resolved` ; les survivants gardent leur pop consommée jusqu'à la mort ou la dissolution.
+- **Porteurs de caravane** → `−ceil(volume / CARRY_PER_PORTER)` population du village expéditeur pendant l'aller-retour, puis libération au retour. Cette population n'est pas convertie en unité et n'apparaît jamais dans `UnitInventory`.
 
 > 💡 Friction offensive : envoyer une armée en suicide ne coûte que les ressources et le temps de re-recrutement — la pop revient. C'est un choix design assumé (modèle Tribal Wars / Kingsage), aligné avec l'idée que la population représente le **stock instantané** de citoyens disponibles, pas un coût permanent par bataille.
+
+### Caravane de ressources entre ses propres villages
+
+Une caravane transfère bois, pierre et fer entre deux villages du même joueur.
+
+| Élément | Règle |
+| --- | --- |
+| **Cible** | Village B possédé par le même joueur que le village expéditeur A. Un village non possédé est refusé. |
+| **Volume** | Le joueur choisit les ressources transportées ; `porteurs = ceil(volume total / CARRY_PER_PORTER)`. |
+| **Population** | Les porteurs consomment temporairement la population libre de A. Si A n'a pas assez de population libre, l'action est refusée sans débit. |
+| **Stock expéditeur** | Les ressources quittent A au départ. Aucune couronne n'est débitée. |
+| **Stock destinataire** | À l'arrivée, les ressources sont créditées dans B jusqu'à la limite de son Entrepôt (`getWarehouseStorageLimit`). L'excédent est perdu, déterministiquement, et n'est crédité nulle part. |
+| **Rappel** | Possible pendant l'aller. Les ressources reviennent intégralement à A au retour ; B ne reçoit rien. |
+
+Invariant d'équilibrage : la caravane lève un gate **ressources** entre villages possédés, mais jamais le gate **temps de construction**. Les files et durées de construction restent par village et intransférables, ce qui empêche un village nourricier unique de supprimer la progression locale de chaque village.
 
 ### Limites et contraintes
 

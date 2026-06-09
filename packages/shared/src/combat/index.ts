@@ -19,6 +19,7 @@ export type {
   ExpeditionKind,
   AttackCommand,
   ReinforceCommand,
+  CaravanCommand,
   RecallCommand,
   ExpeditionResponse,
   OpenConquestDto,

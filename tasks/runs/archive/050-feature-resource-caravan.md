@@ -1,8 +1,8 @@
 # Run #050 — feature-resource-caravan
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-09
+> **Terminé** : 2026-06-09
 
 ## Cible
 
@@ -75,21 +75,54 @@
 
 ## Progress (rempli pendant le run)
 
-_(Vide au démarrage. Mis à jour à chaque transition d'étape ou de tâche.)_
+- 2026-06-09 — Préflight effectué, branche `run/050-feature-resource-caravan` créée depuis `origin/main`, PR requise confirmée.
+- 2026-06-09 — Shared/backend/front/docs implémentés : `ExpeditionKind.CARAVAN`, route `POST /combat/caravan`, events `caravan.*`, workers arrivée/retour, modal Pixi, activité royaume, rendu carte et docs.
+- 2026-06-09 — Filets ajoutés : smoke backend caravane, tests WS Pixi caravane, test view-model activité caravane, test pur vitesse caravane.
+- 2026-06-09 — Review indépendante déclenchée, verdict `GO`; deux mineurs corrigés (roadmap MVP + test activité `CARAVAN`).
+- 2026-06-09 — Static-check, tests ciblés et smoke caravane verts.
 
 ## Décisions prises
 
-_(Vide au démarrage. Décisions archi non triviales, dérogations lead, findings de review, refus de sub-agents.)_
+- `CARAVAN_SPEED = 20`, plus lent que la cavalerie (`35`) et proche d'une vitesse de fantassin lourd.
+- `CARRY_PER_PORTER = 500`, porteurs dérivés par `ceil(totalResources / CARRY_PER_PORTER)`.
+- Ressources transportées stockées dans `Expedition.loot.resources` plutôt que dans un champ Prisma dédié.
+- Les débits ressources/pop sont atomiques via `updateMany` conditionnel pour éviter les doubles envois concurrents.
+- Events dédiés `caravan.sent`, `caravan.arrived`, `caravan.recalled`, `caravan.returned`; pas de réutilisation du generic `expedition.recalled` pour les caravanes.
+- Le reviewer spécialisé a échoué côté modèle indisponible; relance effectuée avec agent indépendant standard, même consigne d'isolement, verdict `GO`.
 
 ## Rapport final
 
-_(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tickets ouverts, méta-évaluation si applicable.)_
+Caravane de ressources livrée en vertical slice complet. Le backend accepte un transfert entre deux villages du même joueur, verrouille les porteurs sur la population du village source, débite les ressources au départ, crédite la destination à l'arrivée dans la limite de l'Entrepôt, perd l'overflow, puis libère les porteurs au retour. Le rappel en route restitue les ressources à l'origine et ne crédite pas la cible.
+
+Côté front, la carte propose l'action "Envoyer ressources" sur un autre village possédé, ouvre un modal avec volumes/porteurs/population libre, POST `/combat/caravan`, affiche les événements temps réel dans les activités du royaume et rend un glyphe Pixi distinct. Les docs gameplay, architecture realtime/data-model, roadmap MVP et `SPEC.md` sont alignés.
+
+Aucun ticket follow-up ouvert.
 
 ### Acceptance & QA
 
-- **Critères d'acceptance vérifiés** : _(rempli à l'étape 10)_
-- **Review indépendante** : `Déclenchée` requise (raison : (a) back+front, (c) diff > 100 lignes, (d) invariant durable + mutations financières/pop sur état autoritatif).
-- **Tests automatisés** : _(rempli à l'étape 10)_
-- **Smokes ajoutés/modifiés** : _(rempli à l'étape 10)_
-- **QA fonctionnelle agent** : _(rempli à l'étape 10)_
-- **Tests IG à faire par le user** : _(rempli à l'étape 10)_
+- **Critères d'acceptance vérifiés** :
+  - [x] `POST /combat/caravan` crée une `Expedition` `CARAVAN`; cible non possédée refusée — `yarn workspace battleforthecrown-backend test:smoke:run -- caravan.smoke.spec.ts` → 3/3 verts.
+  - [x] Portage `ceil(V / CARRY_PER_PORTER)`, refus pop insuffisante sans débit — `caravan.smoke.spec.ts` → vert.
+  - [x] Départ débite A + incrémente `Population.used` A — `caravan.smoke.spec.ts` → vert.
+  - [x] Arrivée crédite B sans dépasser Entrepôt, overflow perdu — `caravan.smoke.spec.ts` → vert.
+  - [x] Retour libère les porteurs, aucune unité ajoutée, expedition supprimée — `caravan.smoke.spec.ts` → vert.
+  - [x] Rappel restitue A, ne crédite pas B — `caravan.smoke.spec.ts` → vert.
+  - [x] Caravane plus lente que cavalerie — `yarn workspace battleforthecrown-backend test -- src/modules/combat/travel-time.spec.ts` → 21/21 verts.
+  - [x] Aucune fee couronnes — `caravan.smoke.spec.ts` → vert.
+  - [x] Flux `CARAVAN` dans WorldMap + activités — `yarn workspace battleforthecrown-pixi test -- src/features/combat/kingdomActivitiesViewModel.test.ts src/api/ws-bindings.test.ts` → 44/44 verts.
+  - [x] Modal refuse visuellement une pop libre insuffisante — couvert par validation UI + à vérifier IG.
+  - [x] Docs patchées — `docs/gameplay/*`, `docs/architecture/*`, `tasks/00-mvp-roadmap.md`, `SPEC.md`.
+- **Review indépendante** : `Déclenchée (raison: back+front, SPEC.md modifié, diff > 100 lignes, invariant durable)` → verdict `GO`; findings mineurs corrigés.
+- **Tests automatisés** :
+  - `yarn workspace @battleforthecrown/shared build` → vert.
+  - `yarn workspace battleforthecrown-backend prisma generate` → vert.
+  - `yarn workspace battleforthecrown-backend test -- src/modules/combat/travel-time.spec.ts` → 21/21 verts.
+  - `yarn workspace battleforthecrown-pixi test -- src/features/combat/kingdomActivitiesViewModel.test.ts src/api/ws-bindings.test.ts` → 44/44 verts.
+  - `yarn static-check` → vert.
+- **Smokes ajoutés/modifiés** : `battleforthecrown-backend/test/caravan.smoke.spec.ts` couvre nominal, pop insuffisante et rappel.
+- **QA fonctionnelle agent** : `yarn workspace battleforthecrown-backend test:smoke:preflight` → vert; `yarn workspace battleforthecrown-backend test:smoke:run -- caravan.smoke.spec.ts` → 3/3 verts.
+- **Tests IG à faire par le user** :
+  - Ouvrir un village possédé autre que le village actif sur la WorldMap, vérifier l'action "Envoyer ressources".
+  - Entrer un volume qui dépasse la pop libre et vérifier le blocage visuel.
+  - Envoyer une petite caravane, vérifier le glyphe distinct sur la carte et la carte "CARAVANE" dans les activités.
+  - Rappeler la caravane avant arrivée et vérifier qu'elle repart vers l'origine.

@@ -1,9 +1,11 @@
 import {
+  CARAVAN_SPEED,
   calculateDistance,
   calculateTravelTime,
   findSlowestUnitSpeed,
   REFERENCE_SPEED,
 } from '@battleforthecrown/shared/logic';
+import { UNIT_STATS, UNIT_TYPES } from '@battleforthecrown/shared/army';
 
 describe('calculateDistance', () => {
   it('returns 0 for the same point', () => {
@@ -71,6 +73,18 @@ describe('calculateTravelTime', () => {
     // Ensure result is an integer (Math.round applied)
     const result = calculateTravelTime(1, 3, REFERENCE_SPEED);
     expect(result).toBe(Math.round(result));
+  });
+
+  it('makes caravans slower than cavalry at the same distance', () => {
+    const distance = 10;
+    const caravan = calculateTravelTime(distance, 1, CARAVAN_SPEED);
+    const cavalry = calculateTravelTime(
+      distance,
+      1,
+      UNIT_STATS[UNIT_TYPES.CAVALRY].speed,
+    );
+
+    expect(caravan).toBeGreaterThan(cavalry);
   });
 });
 

@@ -181,6 +181,22 @@ export class WorldConfigService {
     );
   }
 
+  async getTravelTimeForSpeed(
+    worldId: string,
+    distance: number,
+    speed: number,
+  ): Promise<number> {
+    const config = await this.getConfig(worldId);
+    const absoluteTravelTime = calculateTravelTime(distance, 1, speed);
+    return Math.round(
+      TempoService.applyDuration(
+        absoluteTravelTime,
+        config.tempo,
+        'travelSpeed',
+      ),
+    );
+  }
+
   /**
    * Get the loot factor (percentage of resources that can be looted)
    */

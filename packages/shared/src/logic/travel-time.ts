@@ -7,6 +7,8 @@ import type { UnitMap } from '../army/unit-map';
  * comme le SPY à speed 100, parcourt donc 1 tuile en environ 3.6 secondes.
  */
 export const REFERENCE_SPEED = 6;
+export const CARAVAN_SPEED = 20;
+export const CARRY_PER_PORTER = 500;
 
 export function calculateTravelTime(
   distance: number,

@@ -26,6 +26,10 @@ import {
   type ReinforcementSentPayload,
   type ReinforcementRecalledPayload,
   type ReinforcementReturnedPayload,
+  type CaravanSentPayload,
+  type CaravanArrivedPayload,
+  type CaravanRecalledPayload,
+  type CaravanReturnedPayload,
   type ExpeditionRecalledPayload,
   type ExpeditionReturnedPayload,
   type GarrisonAddedPayload,
@@ -178,6 +182,18 @@ export class EventOutboxService {
         await this.notifyReinforcementReturned(
           payload as ReinforcementReturnedPayload,
         );
+        break;
+      case 'caravan.sent':
+        await this.notifyCaravanSent(payload as CaravanSentPayload);
+        break;
+      case 'caravan.arrived':
+        await this.notifyCaravanArrived(payload as CaravanArrivedPayload);
+        break;
+      case 'caravan.recalled':
+        await this.notifyCaravanRecalled(payload as CaravanRecalledPayload);
+        break;
+      case 'caravan.returned':
+        await this.notifyCaravanReturned(payload as CaravanReturnedPayload);
         break;
       case 'expedition.recalled':
         await this.notifyExpeditionRecalled(
@@ -518,6 +534,38 @@ export class EventOutboxService {
     for (const userId of recipientIds) {
       this.gateway.notifyUser(userId, 'reinforcement.returned', payload);
     }
+  }
+
+  private async notifyCaravanSent(payload: CaravanSentPayload) {
+    const userId = await this.getUserIdByVillage(payload.villageId);
+    if (!userId) return;
+
+    this.gateway.notifyUser(userId, 'caravan.sent', payload);
+  }
+
+  private async notifyCaravanArrived(payload: CaravanArrivedPayload) {
+    const recipientIds = await this.getUniqueUserIdsByVillages(
+      payload.villageId,
+      payload.targetVillageId,
+    );
+
+    for (const userId of recipientIds) {
+      this.gateway.notifyUser(userId, 'caravan.arrived', payload);
+    }
+  }
+
+  private async notifyCaravanRecalled(payload: CaravanRecalledPayload) {
+    const userId = await this.getUserIdByVillage(payload.villageId);
+    if (!userId) return;
+
+    this.gateway.notifyUser(userId, 'caravan.recalled', payload);
+  }
+
+  private async notifyCaravanReturned(payload: CaravanReturnedPayload) {
+    const userId = await this.getUserIdByVillage(payload.villageId);
+    if (!userId) return;
+
+    this.gateway.notifyUser(userId, 'caravan.returned', payload);
   }
 
   private async notifyExpeditionRecalled(payload: ExpeditionRecalledPayload) {

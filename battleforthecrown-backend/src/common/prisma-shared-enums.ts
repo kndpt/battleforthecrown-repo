@@ -1,4 +1,5 @@
 import type {
+  ExpeditionKind as PrismaExpeditionKind,
   ExpeditionStatus as PrismaExpeditionStatus,
   OnboardingStatus as PrismaOnboardingStatus,
   OnboardingStep as PrismaOnboardingStep,
@@ -7,6 +8,7 @@ import type {
   VillageStrategy as PrismaVillageStrategy,
 } from '@prisma/client';
 import type {
+  ExpeditionKind,
   ExpeditionStatus,
   ReinforcementReportType,
   TargetKind,
@@ -36,6 +38,25 @@ export const _expeditionStatusToPrisma: Record<
   EN_ROUTE: 'EN_ROUTE',
   RESOLVED: 'RESOLVED',
   RETURNING: 'RETURNING',
+};
+
+export const _expeditionKindFromPrisma: Record<
+  PrismaExpeditionKind,
+  ExpeditionKind
+> = {
+  ATTACK: 'ATTACK',
+  REINFORCE: 'REINFORCE',
+  SCOUT: 'SCOUT',
+  CARAVAN: 'CARAVAN',
+};
+export const _expeditionKindToPrisma: Record<
+  ExpeditionKind,
+  PrismaExpeditionKind
+> = {
+  ATTACK: 'ATTACK',
+  REINFORCE: 'REINFORCE',
+  SCOUT: 'SCOUT',
+  CARAVAN: 'CARAVAN',
 };
 
 export const _reinforcementReportTypeFromPrisma: Record<

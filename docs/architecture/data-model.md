@@ -69,8 +69,8 @@ Spécificités runtime :
 
 | Table | Rôle |
 |-------|------|
-| `Expedition` | un trajet d'armée (ou `Combat` dans la doc gameplay). Champs : `attackerVillageId`, `targetRefId`, `arrivalAt`, `outboundTravelMs`, `returnAt`, `status`, plus snapshot de retour `survivingUnits`/`loot` après résolution. |
-| `Expedition.kind` | `ATTACK`, `REINFORCE` ou `SCOUT`. Détermine le comportement à l'arrivée. |
+| `Expedition` | un trajet d'armée ou de caravane. Champs : `attackerVillageId`, `targetRefId`, `arrivalAt`, `outboundTravelMs`, `returnAt`, `status`, plus snapshot de retour `survivingUnits`/`loot` selon le kind. |
+| `Expedition.kind` | `ATTACK`, `REINFORCE`, `SCOUT` ou `CARAVAN`. Détermine le comportement à l'arrivée. |
 | `Expedition.recalled` | boolean — vrai si l'armée a fait demi-tour pendant l'aller (Recall). |
 | `Expedition.reinforcementOriginVillageId` | utilisé pour identifier le village d'origine lors d'un rappel (Recall) de renforts. |
 | `Expedition.reinforcementRecallActorUserId` | colonne additive nullable. Porte l'identité de l'acteur du Rappeler / Renvoyer depuis le service jusqu'au worker ; permet de créer le `ReinforcementReport` RETURNED avec le bon acteur à l'arrivée. |
@@ -81,6 +81,8 @@ Spécificités runtime :
 | `PendingConquest` | fenêtre de capture ouverte après un pré-combat victorieux avec Seigneur survivant. Stocke `attackerVillageId`, `attackerUserId`, `targetVillageId`, `captureUntil`, `status` (`OPEN`/`COMPLETED`/`INTERRUPTED`) et le `finalizeJobId` pg-boss. |
 
 Un trajet passe généralement par les phases `EN_ROUTE → RESOLVED → RETURNING` (cf. `ExpeditionStatus`). Backend : un job pg-boss à `arrivalAt` (résolution), puis un autre à `returnAt` (retour) uniquement s'il reste des unités ou du loot à ramener. Si toute l'armée attaquante est détruite sans loot, l'expédition reste `RESOLVED` avec `returnAt = null`. Pour les retours de raids et scouts, `returnAt` est calculé avec `outboundTravelMs`, la durée aller figée au dispatch.
+
+Pour `CARAVAN`, `Expedition.units` reste vide et `Expedition.loot.resources` porte les ressources transportées. À l'arrivée, le worker crédite le village cible jusqu'à la capacité de son Entrepôt et perd l'excédent ; le retour libère seulement les porteurs dans `Population.used` du village d'origine. Aucune ligne `UnitInventory` n'est créée pour les porteurs.
 
 Une conquête passe par `PendingConquest.OPEN → COMPLETED|INTERRUPTED`. La DB impose une seule fenêtre `OPEN` par `targetVillageId` via index unique partiel SQL ; les historiques terminés/interrompus peuvent coexister pour une même cible. Pendant la fenêtre, le Seigneur survivant est stationné comme `Garrison { villageId: targetVillageId, originVillageId: attackerVillageId, unitType: NOBLE }`; s'il survit jusqu'à la finalisation, il est converti en `UnitInventory.NOBLE` du village conquis.
 
