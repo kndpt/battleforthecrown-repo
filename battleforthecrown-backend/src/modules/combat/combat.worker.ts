@@ -3,6 +3,7 @@ import { Expedition, Prisma, ExpeditionKind, Village } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WorldConfigService } from '../world/world-config.service';
 import { BarbarianRuntimeService } from '../world/barbarian-runtime.service';
+import { ResourcesService } from '../resources/resources.service';
 import { BarbarianVillageStrategy } from './strategies/barbarian-village.strategy';
 import { PlayerVillageStrategy } from './strategies/player-village.strategy';
 import { ConquestService } from './conquest.service';
@@ -87,6 +88,7 @@ export class CombatWorker implements OnModuleInit {
     private readonly prisma: PrismaService,
     private readonly worldConfig: WorldConfigService,
     private readonly barbarianRuntime: BarbarianRuntimeService,
+    private readonly resources: ResourcesService,
     private readonly barbarianStrategy: BarbarianVillageStrategy,
     private readonly playerStrategy: PlayerVillageStrategy,
     private readonly outbox: OutboxPublisher,
@@ -1409,8 +1411,9 @@ export class CombatWorker implements OnModuleInit {
     const targetVillage = await tx.village.findUnique({
       where: { id: expedition.targetRefId },
       include: {
-        buildings: { where: { type: 'WAREHOUSE' }, select: { level: true } },
+        buildings: { select: { type: true, level: true } },
         resourceStock: true,
+        strategyConfig: true,
       },
     });
     if (!targetVillage?.resourceStock) {
@@ -1420,36 +1423,44 @@ export class CombatWorker implements OnModuleInit {
     }
 
     const carried = parseCaravanResources(expedition);
-    const warehouseLevel = targetVillage.buildings[0]?.level ?? 1;
+    const warehouseLevel =
+      targetVillage.buildings.find((building) => building.type === 'WAREHOUSE')
+        ?.level ?? 1;
     const limits = getWarehouseStorageLimit(warehouseLevel);
+    const now = new Date();
+    const currentStock = await this.resources.calculateCurrentResources({
+      worldId: targetVillage.worldId,
+      resourceStock: targetVillage.resourceStock,
+      buildings: targetVillage.buildings,
+      strategy: targetVillage.strategyConfig?.strategy,
+    });
     const credited = {
       wood: Math.min(
         carried.wood,
-        Math.max(0, limits.wood - targetVillage.resourceStock.wood),
+        Math.max(0, limits.wood - currentStock.wood),
       ),
       stone: Math.min(
         carried.stone,
-        Math.max(0, limits.stone - targetVillage.resourceStock.stone),
+        Math.max(0, limits.stone - currentStock.stone),
       ),
       iron: Math.min(
         carried.iron,
-        Math.max(0, limits.iron - targetVillage.resourceStock.iron),
+        Math.max(0, limits.iron - currentStock.iron),
       ),
     };
     const lost = subtractResources(carried, credited);
     const returnAt = new Date(Date.now() + expedition.outboundTravelMs);
 
-    if (sumResourceBundle(credited) > 0) {
-      await tx.resourceStock.update({
-        where: { villageId: expedition.targetRefId },
-        data: {
-          wood: { increment: credited.wood },
-          stone: { increment: credited.stone },
-          iron: { increment: credited.iron },
-        },
-      });
-      await this.outbox.resourcesChanged(expedition.targetRefId, tx);
-    }
+    await tx.resourceStock.update({
+      where: { villageId: expedition.targetRefId },
+      data: {
+        wood: currentStock.wood + credited.wood,
+        stone: currentStock.stone + credited.stone,
+        iron: currentStock.iron + credited.iron,
+        lastUpdateTs: now,
+      },
+    });
+    await this.outbox.resourcesChanged(expedition.targetRefId, tx);
 
     await tx.expedition.update({
       where: { id: expedition.id },
@@ -1531,10 +1542,6 @@ function subtractResources(
     stone: Math.max(0, left.stone - right.stone),
     iron: Math.max(0, left.iron - right.iron),
   };
-}
-
-function sumResourceBundle(resources: ResourceBundle): number {
-  return resources.wood + resources.stone + resources.iron;
 }
 
 function parseCaravanResources(expedition: Expedition): ResourceBundle {

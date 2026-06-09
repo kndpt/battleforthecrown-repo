@@ -54,7 +54,13 @@ describe('resource caravan smoke', () => {
     });
     await ctx.prisma.resourceStock.update({
       where: { villageId: villageBId },
-      data: { wood: 2900, stone: 2990, iron: 0, maxPerType: 3000 },
+      data: {
+        wood: 2940,
+        stone: 2940,
+        iron: 3000,
+        maxPerType: 3000,
+        lastUpdateTs: new Date(Date.now() - 60 * 60 * 1000),
+      },
     });
     await ctx.prisma.population.update({
       where: { villageId: villageAId },
@@ -100,7 +106,7 @@ describe('resource caravan smoke', () => {
     expect(targetAfterArrival).toMatchObject({
       wood: 3000,
       stone: 3000,
-      iron: 0,
+      iron: 3000,
     });
 
     const arrivedEvent = await ctx.prisma.eventOutbox.findFirstOrThrow({
@@ -108,8 +114,8 @@ describe('resource caravan smoke', () => {
       orderBy: { createdAt: 'desc' },
     });
     expect(arrivedEvent.payload).toMatchObject({
-      credited: { wood: 100, stone: 10, iron: 0 },
-      lost: { wood: 100, stone: 40, iron: 0 },
+      credited: { wood: 0, stone: 0, iron: 0 },
+      lost: { wood: 200, stone: 50, iron: 0 },
     });
 
     await waitFor(
