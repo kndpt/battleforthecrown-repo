@@ -231,7 +231,7 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
     also untested. New files: travel-time.spec.ts (20 backend tests) and combatHelpers.test.ts (15 pixi tests).
   verification: yarn static-check ✓ · 272 backend tests ✓ · 337 pixi tests ✓
 
-- status: proposed
+- status: fixed
   area: >
     battleforthecrown-backend/src/modules/combat/scout-report.presenter.spec.ts (new)
   branch: maint/debt/scout-report-presenter-spec
@@ -242,7 +242,20 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
     (combat-report.presenter.spec.ts, reinforcement-report.presenter.spec.ts) were already covered.
     The reportDetails helper has ~6 branches (null, non-object, scoutLosses, scoutUnits, wallLevel,
     combined) that warranted explicit regression tests. New spec: 10 tests, no mocks required.
-  verification: yarn static-check ✓ · 282 backend tests ✓
+  verification: yarn static-check ✓ · 282 backend tests ✓ (merged 8a2d68d)
+
+- status: proposed
+  area: >
+    battleforthecrown-backend/src/modules/world/building-cost.spec.ts (new)
+  branch: maint/debt/building-cost-spec
+  title: "maint(debt): add missing spec for calculateBuildingCost"
+  note: >
+    calculateBuildingCost (packages/shared/src/logic/building-cost.ts) had zero direct unit coverage
+    despite being used in world-config.service.ts (construction cost list), recruit-troops/noble
+    use-cases, and BuildingDetailModal.tsx. New spec: 8 tests covering base costs (WOOD, BARRACKS),
+    castle-level speed bonus, speed multiplier, minimum 1000ms floor, unknown building throw, and
+    out-of-range castle level fallback.
+  verification: yarn static-check ✓ · 297 backend tests ✓ · 363 pixi tests ✓ (PR #63)
 
 - status: fixed
   area: >
