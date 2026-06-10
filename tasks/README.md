@@ -33,6 +33,7 @@ Politique PR `$bftc-run` :
 
 ### Runs actifs
 
+- [052 — Rapports persistants de caravanes](./runs/052-feature-caravan-reports.md) — 📋 `PLANNED`. Ajouter `CaravanReport` + inbox `CARAVAN` pour les livraisons et retours rappelés de caravanes, avec REST, badge/messages, invalidations WS et docs report/inbox/outbox.
 - [051 — Classements Gloire d'Assaut / Rempart](./runs/051-feature-rankings-glory.md) — 📋 `PLANNED`. Premier vertical classements : scoring PvP durable, APIs world-scoped, affichage minimal, sans rewards économiques.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
