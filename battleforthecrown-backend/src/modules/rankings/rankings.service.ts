@@ -12,6 +12,7 @@ import type { UnitMap } from '@battleforthecrown/shared/army';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { PowerService } from '../power/power.service';
 import type { PrismaClientOrTx } from '../../common/prisma.types';
+import { createOutboxEvent } from '../event/event.utils';
 
 const GLORY_WEEKLY_DAYS = 7;
 
@@ -40,6 +41,12 @@ export class RankingsService {
     input: CreditGloryInput,
   ): Promise<GloryLedger | null> {
     if (input.scorerUserId === input.opponentUserId) return null;
+    if (
+      input.scorerPowerSnapshot === null ||
+      input.opponentPowerSnapshot === null
+    ) {
+      return null;
+    }
 
     const rawPoints = Math.max(
       0,
@@ -66,13 +73,13 @@ export class RankingsService {
       previousRaw,
     );
     const opponentMultiplier = calculateOpponentMultiplier(
-      input.scorerPowerSnapshot ?? 0,
-      input.opponentPowerSnapshot ?? 0,
+      input.scorerPowerSnapshot,
+      input.opponentPowerSnapshot,
     );
     const points = Math.floor(effectiveRawPoints * opponentMultiplier);
     if (points <= 0) return null;
 
-    return tx.gloryLedger.create({
+    const ledger = await tx.gloryLedger.create({
       data: {
         worldId: input.worldId,
         signal: input.signal,
@@ -88,6 +95,16 @@ export class RankingsService {
         occurredAt,
       },
     });
+    await createOutboxEvent(tx, 'rankings.changed', input.worldId, {
+      worldId: input.worldId,
+      signal: input.signal,
+      scorerUserId: input.scorerUserId,
+      opponentUserId: input.opponentUserId,
+      points,
+      combatReportId: input.combatReportId,
+      occurredAt: occurredAt.toISOString(),
+    });
+    return ledger;
   }
 
   async getRankingsSummary(

@@ -2,16 +2,7 @@ import { Trophy } from "lucide-react";
 import { useRankingsSummaryQuery } from "@/api/queries";
 import { useGameStore } from "@/stores/game";
 import { Panel, Spinner } from "@/ui";
-
-function formatScore(score: number) {
-  return score.toLocaleString("fr-FR");
-}
-
-function periodLabel(period: string) {
-  if (period === "LIVE") return "Live";
-  if (period === "WEEKLY") return "Hebdomadaire";
-  return "Monde entier";
-}
+import { formatScore, periodLabel } from "./rankingsFormat";
 
 export function RankingsScreen() {
   const worldId = useGameStore((state) => state.worldId);

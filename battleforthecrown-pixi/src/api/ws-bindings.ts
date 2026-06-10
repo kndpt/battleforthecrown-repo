@@ -7,6 +7,7 @@ import type {
   BattleSentPayload,
   BuildingCompletedPayload,
   CrownsChangedPayload,
+  RankingsChangedPayload,
   ResourcesChangedPayload,
   ScoutReportedPayload,
   ScoutReturnedPayload,
@@ -86,6 +87,15 @@ export function applyCrownsChanged(
     balance: payload.balance,
     productionRate: payload.productionRate,
     lastUpdateTs: Date.parse(payload.lastUpdateTs),
+  });
+}
+
+export function applyRankingsChanged(
+  payload: RankingsChangedPayload,
+  ctx: BindingsContext,
+): void {
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.rankingsSummary(payload.worldId),
   });
 }
 
@@ -732,6 +742,7 @@ function invalidateReinforcementQueries(
 const bindings: ServerEventBindings = {
   'resources.changed': applyResourcesChanged,
   'crowns.changed': applyCrownsChanged,
+  'rankings.changed': applyRankingsChanged,
   'world.status.changed': applyWorldStatusChanged,
   'building.completed': applyBuildingCompleted,
   'unit.training.completed': applyUnitTrainingCompleted,

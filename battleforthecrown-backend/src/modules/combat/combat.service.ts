@@ -160,22 +160,7 @@ export class CombatService {
         'attack',
       );
 
-      // 4. Verify and deduct units
-      await this.verifyAndDeductUnits(tx, dto.villageId, dto.units);
-
-      // 5. Calculate timing
-      const { travelTimeMs, arrivalAt, now } =
-        await this.calculateExpeditionTiming(
-          tx,
-          worldId,
-          village.x,
-          village.y,
-          targetX,
-          targetY,
-          dto.units,
-          dto.villageId,
-        );
-
+      // 4. Snapshot kingdom power before the outbound army mutates inventory.
       const attackerKingdomPowerSnapshot =
         await this.powerService.getKingdomPowerValue(userId, worldId, tx);
       const defenderPowerSnapshot = await this.snapshotDefenderKingdomPowers(
@@ -189,7 +174,23 @@ export class CombatService {
           null)
         : null;
 
-      // 6. Create expedition
+      // 5. Verify and deduct units
+      await this.verifyAndDeductUnits(tx, dto.villageId, dto.units);
+
+      // 6. Calculate timing
+      const { travelTimeMs, arrivalAt, now } =
+        await this.calculateExpeditionTiming(
+          tx,
+          worldId,
+          village.x,
+          village.y,
+          targetX,
+          targetY,
+          dto.units,
+          dto.villageId,
+        );
+
+      // 7. Create expedition
       const expedition = await tx.expedition.create({
         data: {
           worldId,
@@ -210,7 +211,7 @@ export class CombatService {
         },
       });
 
-      // 7. Create event
+      // 8. Create event
       await createOutboxEvent(tx, 'battle.sent', dto.villageId, {
         expeditionId: expedition.id,
         villageId: dto.villageId,
@@ -220,7 +221,7 @@ export class CombatService {
         arrivalAt: arrivalAt.toISOString(),
       });
 
-      // 8. Schedule combat resolution worker
+      // 9. Schedule combat resolution worker
       await this.scheduleResolution(expedition.id, arrivalAt);
 
       this.logger.debug(

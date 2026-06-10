@@ -102,20 +102,6 @@ _(Vide au démarrage. Décisions archi non triviales, dérogations lead, finding
 
 ## Rapport final
 
-_(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tickets ouverts, méta-évaluation si applicable.)_
-
-### Acceptance & QA
-
-- **Critères d'acceptance vérifiés** : _(rempli à l'étape 10)_
-- **Review indépendante** : `Déclenchée` requise (raison : (a) back+front, (c) diff estimé > 100 lignes, (d) invariant durable de scoring/classement).
-- **Tests automatisés** : _(rempli à l'étape 10)_
-- **Smokes ajoutés/modifiés** : _(rempli à l'étape 10)_
-- **QA fonctionnelle agent** : _(rempli à l'étape 10)_
-- **Tests IG à faire par le user** : _(rempli à l'étape 10)_
-
-
-## Rapport final
-
 ### Résumé
 
 - Ajout d'un ledger durable `GloryLedger` et des snapshots de puissance royaume au dispatch des attaques.

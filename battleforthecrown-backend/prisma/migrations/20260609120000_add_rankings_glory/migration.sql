@@ -31,4 +31,4 @@ CREATE INDEX "glory_ledger_world_id_pair_key_occurred_at_idx" ON "glory_ledger"(
 
 ALTER TABLE "glory_ledger" ADD CONSTRAINT "glory_ledger_world_id_fkey" FOREIGN KEY ("world_id") REFERENCES "world"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "glory_ledger" ADD CONSTRAINT "glory_ledger_scorer_user_id_fkey" FOREIGN KEY ("scorer_user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "glory_ledger" ADD CONSTRAINT "glory_ledger_combat_report_id_fkey" FOREIGN KEY ("combat_report_id") REFERENCES "combat_report"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "glory_ledger" ADD CONSTRAINT "glory_ledger_combat_report_id_fkey" FOREIGN KEY ("combat_report_id") REFERENCES "combat_report"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

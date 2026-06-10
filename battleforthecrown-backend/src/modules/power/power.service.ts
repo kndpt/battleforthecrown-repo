@@ -154,6 +154,7 @@ export class PowerService {
     let totalArmy = 0;
     const armyPowerByVillage = await this.getArmyPowerByOriginVillage(
       villages.map((village) => village.id),
+      reader,
     );
 
     const villagePowers = villages.map((village) => {

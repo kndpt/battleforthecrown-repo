@@ -62,7 +62,10 @@ import type {
   ScoutReportResponse,
 } from '@battleforthecrown/shared/combat';
 import type { OnboardingSummaryDto } from '@battleforthecrown/shared/onboarding';
-import type { RankingsLeaderboardResponse } from '@battleforthecrown/shared/rankings';
+import {
+  RankingsSummaryResponseSchema,
+  type RankingsSummaryResponse,
+} from '@battleforthecrown/shared/rankings';
 
 export const queryKeys = {
   worlds: () => ['worlds'] as const,
@@ -531,16 +534,15 @@ export interface ArmyTrainingDto {
 }
 
 
-export interface RankingsSummaryResponse {
-  leaderboards: RankingsLeaderboardResponse[];
-}
-
 export function useRankingsSummaryQuery(worldId: string | null) {
   return useQuery<RankingsSummaryResponse>({
     queryKey: queryKeys.rankingsSummary(worldId),
-    queryFn: () => {
+    queryFn: async () => {
       if (!worldId) return Promise.resolve({ leaderboards: [] });
-      return apiClient.get<RankingsSummaryResponse>('/rankings', { query: { worldId } });
+      const response = await apiClient.get<unknown>('/rankings', {
+        query: { worldId },
+      });
+      return RankingsSummaryResponseSchema.parse(response);
     },
     enabled: Boolean(worldId),
     staleTime: 30_000,

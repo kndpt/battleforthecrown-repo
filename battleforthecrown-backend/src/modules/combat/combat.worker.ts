@@ -67,6 +67,13 @@ interface OccupationDefense {
 const EMPTY_LOOT = { wood: 0, stone: 0, iron: 0 } as const;
 type ResourceBundle = { wood: number; stone: number; iron: number };
 
+function addUnitLosses(target: UnitMap, losses: UnitMap): void {
+  for (const [unitType, quantity] of typedEntries(losses)) {
+    if (!Number.isFinite(quantity) || quantity <= 0) continue;
+    target[unitType] = (target[unitType] ?? 0) + quantity;
+  }
+}
+
 /**
  * Total population freed by a set of unit losses. The pop of a dead unit is
  * released back to the village's pool — see `docs/gameplay/02-economy-and-progression.md` § Population.
@@ -567,6 +574,7 @@ export class CombatWorker implements OnModuleInit {
     );
     const defenderUnits = context.defender.units || {};
     const assaultLosses = resolution.lossesDefender || {};
+    const assaultLossesByDefender = new Map<string, UnitMap>();
 
     for (const participant of context.defender.participants) {
       const defenderUserId = participantOwnerByVillageId.get(
@@ -579,7 +587,12 @@ export class CombatWorker implements OnModuleInit {
         defenderUnits,
         participant.units,
       );
+      const current = assaultLossesByDefender.get(defenderUserId) ?? {};
+      addUnitLosses(current, participantLosses);
+      assaultLossesByDefender.set(defenderUserId, current);
+    }
 
+    for (const [defenderUserId, participantLosses] of assaultLossesByDefender) {
       await this.rankings.creditGlory(tx, {
         worldId: expedition.worldId,
         signal: RankingSignal.ASSAULT_GLORY,
@@ -588,9 +601,7 @@ export class CombatWorker implements OnModuleInit {
         combatReportId: report.id,
         losses: participantLosses,
         scorerPowerSnapshot: expedition.attackerKingdomPowerSnapshot,
-        opponentPowerSnapshot:
-          defenderPowerSnapshots[defenderUserId] ??
-          expedition.defenderKingdomPowerSnapshot,
+        opponentPowerSnapshot: defenderPowerSnapshots[defenderUserId] ?? null,
       });
     }
 
@@ -621,9 +632,7 @@ export class CombatWorker implements OnModuleInit {
         opponentUserId: attackerUserId,
         combatReportId: report.id,
         rawPoints: split.points,
-        scorerPowerSnapshot:
-          defenderPowerSnapshots[split.id] ??
-          expedition.defenderKingdomPowerSnapshot,
+        scorerPowerSnapshot: defenderPowerSnapshots[split.id] ?? null,
         opponentPowerSnapshot: expedition.attackerKingdomPowerSnapshot,
       });
     }

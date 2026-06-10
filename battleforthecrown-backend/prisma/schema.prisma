@@ -573,7 +573,7 @@ model GloryLedger {
 
   world        World        @relation(fields: [worldId], references: [id], onDelete: Cascade)
   scorer       User         @relation(fields: [scorerUserId], references: [id], onDelete: Cascade)
-  combatReport CombatReport @relation(fields: [combatReportId], references: [id], onDelete: Cascade)
+  combatReport CombatReport @relation(fields: [combatReportId], references: [id])
 
   @@unique([combatReportId, signal, scorerUserId, opponentUserId], map: "glory_ledger_report_signal_scorer_opponent_key")
   @@index([worldId, signal, occurredAt])
