@@ -8,6 +8,107 @@ New PRs use branch `maint/refactor-backend/<short-topic>` and PR title
 
 ---
 
+## Run 2026-06-10 — branch `maint/refactor-backend/caravan-utils-dedup`
+
+**Model:** claude-sonnet-4-6
+**Scan commit:** `9b7c2dc`
+
+---
+
+### Prior findings status (Run 2026-06-08)
+
+| ID | Status | Note |
+|----|--------|------|
+| B3 | **STILL OPEN** | `getUserIdByVillage` N+1 in outbox dispatch — 10th run. Caravan feature added 4 more notify sites (`notifyCaravanSent/Recalled/Returned/Arrived`). |
+| O1/B6 | **IN REVIEW** | PR #69 (`maint/debt/defender-village-alias`) open — fixes `applyDefenderLosses:964` and `getCaptureDurationMs:1079`. |
+| C6 | **STILL OPEN** | Recursive `this.getResources` at `resources.service.ts:50`. Terminates in 2 steps; cosmetic. |
+| D4 | **STILL OPEN** | `expedition.create` block repeated 4× in `combat.service.ts`. Deferred. |
+| D5 | **STILL OPEN** | `buildBarbarianDefender`/`buildPlayerDefender` garrison loop duplication. Deferred. |
+| R1 | **STILL OPEN** | `calculateTaskProgressUpdate` called twice in `.find()` + body (`retention.service.ts:346-355`). |
+| R2 | **STILL OPEN** | `ensureDailyCard` vs `ensureDailyCardInTransaction` duplicate payload construction. |
+| R3 | **STILL OPEN** | `retention.service.ts` (673 LOC) mixes class + 14 pure utility functions. |
+| R4 | **STILL OPEN** | Fractional crown carry bug — needs dedicated gameplay-mechanic PR. |
+| N2 | **RESOLVED** | Run 2026-06-08. |
+| O2 | **RESOLVED** (reverted for correctness) | Run 2026-06-08. |
+| P2-P8 | **RESOLVED** | Run 2026-06-07. |
+
+---
+
+### Module structure (mental model)
+
+Largest structural change since last scan: commit `9b7c2dc` (run/050 resource caravans) — `combat.service.ts` +483 LOC (now 1282), `combat.worker.ts` +420 (now 1552), `return.worker.ts` +125 (now 299), new `caravan.smoke.spec.ts` (554 LOC). PR #70 (rankings/glory) open but not yet merged; not scanned.
+
+Layering remains clean. Zero `as any`, zero `console.*`, zero `@ts-ignore` in production code. Combat module still dominates by size and churn.
+
+---
+
+### Findings
+
+| ID | Category | Location | Description | Severity | Effort |
+|----|----------|----------|-------------|----------|--------|
+| V1 | Duplication | `combat.service.ts:61-95,1256`, `combat.worker.ts:1526-1552`, `return.worker.ts:17,281-298` | **RESOLVED** — `CaravanResources` type + `parseCaravanResources` + `sumResources` + `caravanPortersFor` duplicated across 3 files with subtly divergent implementations (service lacked `Math.max(0, ...)` guard). Extracted to `caravan.utils.ts`. | Medium | S |
+| W1 | Duplication | `combat.service.ts:992-1018`, `combat.worker.ts:1496-1523` | **RESOLVED** — `withSerializableRetry` + `isSerializationFailure` identical across CombatService and CombatWorker. Extracted to `common/serializable-retry.utils.ts`. | Medium | S |
+| V3 | Style | `combat.service.ts:480-515` | Resource deduction precedes capacity check in `initiateCaravan`. Tx rollback makes it safe, but inverted logic order. Low, cosmetic. | Low | S |
+| B3 | Performance | `event-outbox.service.ts:592` | N+1 `getUserIdByVillage` — now ~18 call-sites after caravan feature. 10th run. | Medium | M |
+| O1/B6 | Type debt | `combat.worker.ts:964,1079` | IN REVIEW — PR #69. | Low | S |
+| C6 | Readability | `resources.service.ts:50` | Recursive `this.getResources`. Terminates. Cosmetic. | Low | S |
+| D4 | Duplication | `combat.service.ts:176,249,335,517` | `expedition.create` repeated 4×. The CARAVAN create is distinct (has `loot`). | Medium | M |
+| D5 | Duplication | `combat.worker.ts:844-902` | `buildBarbarianDefender`/`buildPlayerDefender` garrison loop. | Low | M |
+| R1 | Performance | `retention.service.ts:346-355` | `calculateTaskProgressUpdate` called twice per task in `.find()`. | Low | S |
+| R2 | Duplication | `retention.service.ts:213-255 vs 377-407` | `ensureDailyCard` / `ensureDailyCardInTransaction` duplicate payload. | Medium | S |
+| R3 | Service design | `retention.service.ts:455-623` | File mixes class + 14 pure utility exports. | Medium | M |
+| R4 | Correctness | `crowns.service.ts:264-272` | Fractional crown carry — needs dedicated migration PR. | High | M |
+| N3 | Correctness | `world-entities-query.service.ts:101` | `getVillagesInRadius` missing `Math.min(maxX/maxY, 499)` clamp. | Low | S |
+
+---
+
+### Looks bad but is actually fine
+
+- **SERIALIZABLE + retry in `initiateCaravan`** — absolute write `currentOriginStock.wood - resources.wood` is safe because SERIALIZABLE isolation (+ P2034 retry) serializes concurrent transactions.
+- **`getUniqueUserIdsByVillages` in `event-outbox.service.ts:610`** — already parallel (`Promise.all`), not sequential; but still N+1 per event across the batch. Same root as B3.
+- **`parseCombatLoot` in `caravan.utils.ts` via `combat.worker.ts`** — no circular import; `caravan.utils.ts` → `./codecs` is a leaf dependency.
+- **B3 still open** — 10th run. At current scale unchanged verdict; fix requires own PR with 18+ signature changes.
+- **C6 still open** — terminates in 2 calls exactly. Cosmetic.
+
+---
+
+### Selected theme: V1 + W1 — Caravan utils + serializable retry dedup
+
+**Evidence:**
+- `CaravanResources` type defined independently in `combat.service.ts:61` and `return.worker.ts:17`; `ResourceBundle` alias in `combat.worker.ts:62` is the same shape.
+- `parseCaravanResources` implemented 3× (`combat.service.ts:1256`, `combat.worker.ts:1547`, `return.worker.ts:281`); the service version omitted `Math.max(0, ...)` which the workers had.
+- `sumResources` implemented 2× (`combat.service.ts:77`, `return.worker.ts:296`); `caravanPortersFor/getPorters` implemented 2× (`combat.service.ts:81`, `return.worker.ts:291`).
+- `withSerializableRetry` + `isSerializationFailure` identical in `combat.service.ts:992-1018` and `combat.worker.ts:1496-1523`; only log message differed.
+
+**Why this theme over alternatives:**
+- All introduced by the same commit (`9b7c2dc`), making the PR a coherent caravan-feature debt paydown.
+- Zero behavior change; fully verified by existing test suite.
+- Side-fixes the `normalizeCaravanResources` inconsistency (missing `Math.max(0, ...)`) in a single canonical implementation.
+- B3/R2/D5 rejected as before — own PRs.
+
+### Files changed
+
+- `battleforthecrown-backend/src/modules/combat/caravan.utils.ts` — NEW
+- `battleforthecrown-backend/src/common/serializable-retry.utils.ts` — NEW
+- `battleforthecrown-backend/src/modules/combat/combat.service.ts` — import + remove 7 local functions + 2 private methods
+- `battleforthecrown-backend/src/modules/combat/combat.worker.ts` — import + remove module-level functions + 2 private methods + `ResourceBundle` type
+- `battleforthecrown-backend/src/modules/combat/return.worker.ts` — import + remove 3 private methods + `CaravanResources` type
+
+### Verification
+
+```shell
+yarn static-check   → ✅ tsc (backend+pixi) + eslint --quiet, 0 errors
+yarn test:backend   → ✅ 301 passed, 28 suites
+```
+
+**Final commit:** `47da6f5`
+
+### Docs impact
+
+Aucun changement nécessaire — extraction pure d'utilitaires, pas de changement d'API REST, d'event WS, de modèle Prisma ni de règle gameplay. Findings B3/C6/D4/D5/N3/R1/R2/R3/R4/O1B6 restent ouverts. Finding V3 (ordering cosmétique) nouveau, ouvert.
+
+---
+
 ## Run 2026-06-08 — branch `maint/refactor-backend/crowns-accumulate-dedup`
 
 **Model:** claude-sonnet-4-6

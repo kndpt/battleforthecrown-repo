@@ -8,11 +8,20 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WorldConfigService } from '../world/world-config.service';
+import {
+  type CaravanResources,
+  addCaravanResources,
+  caravanPortersFor,
+  emptyCaravanResources,
+  normalizeCaravanResources,
+  parseCaravanResources,
+  sumCaravanResources,
+} from './caravan.utils';
+import { withSerializableRetry } from '../../common/serializable-retry.utils';
 import { VisionService } from '../world/vision.service';
 import {
   calculateDistance,
   CARAVAN_SPEED,
-  CARRY_PER_PORTER,
   getCaravanResourceCapacity,
 } from '@battleforthecrown/shared/logic';
 import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
@@ -32,12 +41,7 @@ import {
   PendingConquestStatus,
   Prisma,
 } from '@prisma/client';
-import {
-  encodeCombatLoot,
-  encodeUnitMap,
-  parseCombatLoot,
-  parseUnitMap,
-} from './codecs';
+import { encodeCombatLoot, encodeUnitMap, parseUnitMap } from './codecs';
 import PgBoss from 'pg-boss';
 import { createOutboxEvent } from '../event/event.utils';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
@@ -59,41 +63,6 @@ export interface GarrisonLineDto {
 }
 
 type CaptureTierDto = OpenConquestDto['targetTier'];
-type CaravanResources = { wood: number; stone: number; iron: number };
-
-function emptyCaravanResources(): CaravanResources {
-  return { wood: 0, stone: 0, iron: 0 };
-}
-
-function normalizeCaravanResources(
-  resources: Partial<CaravanResources>,
-): CaravanResources {
-  return {
-    wood: Math.floor(resources.wood ?? 0),
-    stone: Math.floor(resources.stone ?? 0),
-    iron: Math.floor(resources.iron ?? 0),
-  };
-}
-
-function sumResources(resources: CaravanResources): number {
-  return resources.wood + resources.stone + resources.iron;
-}
-
-function caravanPortersFor(resources: CaravanResources): number {
-  const volume = sumResources(resources);
-  return volume > 0 ? Math.ceil(volume / CARRY_PER_PORTER) : 0;
-}
-
-function addCaravanResources(
-  left: CaravanResources,
-  right: CaravanResources,
-): CaravanResources {
-  return {
-    wood: left.wood + right.wood,
-    stone: left.stone + right.stone,
-    iron: left.iron + right.iron,
-  };
-}
 
 @Injectable()
 export class CombatService {
@@ -396,185 +365,190 @@ export class CombatService {
   ): Promise<Expedition> {
     this.logger.debug(`Caravan initiated by user ${userId}`, { dto });
 
-    const expedition = await this.withSerializableRetry(() =>
-      this.prisma.$transaction(
-        async (tx) => {
-          const village = await this.loadOwnedVillage(
-            tx,
-            dto.villageId,
-            userId,
-            'Origin village not found or not owned',
-          );
-          const worldId = village.worldId;
-
-          if (dto.targetVillageId === dto.villageId) {
-            throw new BadRequestException('Target village must be different');
-          }
-
-          const targetVillage = await tx.village.findUnique({
-            where: { id: dto.targetVillageId },
-          });
-          if (!targetVillage || targetVillage.worldId !== worldId) {
-            throw new BadRequestException('Target village not found');
-          }
-          if (targetVillage.userId !== userId) {
-            throw new ForbiddenException(
-              'You can only send caravans to your own villages',
+    const expedition = await withSerializableRetry(
+      () =>
+        this.prisma.$transaction(
+          async (tx) => {
+            const village = await this.loadOwnedVillage(
+              tx,
+              dto.villageId,
+              userId,
+              'Origin village not found or not owned',
             );
-          }
+            const worldId = village.worldId;
 
-          const resources = normalizeCaravanResources(dto.resources);
-          const totalVolume = sumResources(resources);
-          if (totalVolume <= 0) {
-            throw new BadRequestException('Caravan must carry resources');
-          }
+            if (dto.targetVillageId === dto.villageId) {
+              throw new BadRequestException('Target village must be different');
+            }
 
-          const porters = caravanPortersFor(resources);
-          const [
-            originStock,
-            population,
-            originBuildings,
-            originStrategyConfig,
-          ] = await Promise.all([
-            tx.resourceStock.findUnique({
-              where: { villageId: dto.villageId },
-            }),
-            tx.population.findUnique({ where: { villageId: dto.villageId } }),
-            tx.building.findMany({
-              where: { villageId: dto.villageId },
-              select: { type: true, level: true },
-            }),
-            tx.villageStrategyConfig.findUnique({
-              where: { villageId: dto.villageId },
-              select: { strategy: true },
-            }),
-          ]);
-          if (!originStock) {
-            throw new BadRequestException('Origin resource stock not found');
-          }
-          if (!population) {
-            throw new BadRequestException('Origin population not found');
-          }
-
-          const currentOriginStock =
-            await this.resourcesService.calculateCurrentResources({
-              worldId,
-              resourceStock: originStock,
-              buildings: originBuildings,
-              strategy: originStrategyConfig?.strategy,
+            const targetVillage = await tx.village.findUnique({
+              where: { id: dto.targetVillageId },
             });
-          if (
-            currentOriginStock.wood < resources.wood ||
-            currentOriginStock.stone < resources.stone ||
-            currentOriginStock.iron < resources.iron
-          ) {
-            throw new BadRequestException('Insufficient resources for caravan');
-          }
+            if (!targetVillage || targetVillage.worldId !== worldId) {
+              throw new BadRequestException('Target village not found');
+            }
+            if (targetVillage.userId !== userId) {
+              throw new ForbiddenException(
+                'You can only send caravans to your own villages',
+              );
+            }
 
-          const freePopulation = population.max - population.used;
-          if (freePopulation < porters) {
-            throw new BadRequestException(
-              `Insufficient free population: have ${freePopulation}, need ${porters}`,
+            const resources = normalizeCaravanResources(dto.resources);
+            const totalVolume = sumCaravanResources(resources);
+            if (totalVolume <= 0) {
+              throw new BadRequestException('Caravan must carry resources');
+            }
+
+            const porters = caravanPortersFor(resources);
+            const [
+              originStock,
+              population,
+              originBuildings,
+              originStrategyConfig,
+            ] = await Promise.all([
+              tx.resourceStock.findUnique({
+                where: { villageId: dto.villageId },
+              }),
+              tx.population.findUnique({ where: { villageId: dto.villageId } }),
+              tx.building.findMany({
+                where: { villageId: dto.villageId },
+                select: { type: true, level: true },
+              }),
+              tx.villageStrategyConfig.findUnique({
+                where: { villageId: dto.villageId },
+                select: { strategy: true },
+              }),
+            ]);
+            if (!originStock) {
+              throw new BadRequestException('Origin resource stock not found');
+            }
+            if (!population) {
+              throw new BadRequestException('Origin population not found');
+            }
+
+            const currentOriginStock =
+              await this.resourcesService.calculateCurrentResources({
+                worldId,
+                resourceStock: originStock,
+                buildings: originBuildings,
+                strategy: originStrategyConfig?.strategy,
+              });
+            if (
+              currentOriginStock.wood < resources.wood ||
+              currentOriginStock.stone < resources.stone ||
+              currentOriginStock.iron < resources.iron
+            ) {
+              throw new BadRequestException(
+                'Insufficient resources for caravan',
+              );
+            }
+
+            const freePopulation = population.max - population.used;
+            if (freePopulation < porters) {
+              throw new BadRequestException(
+                `Insufficient free population: have ${freePopulation}, need ${porters}`,
+              );
+            }
+            const originWarehouse = originBuildings.find(
+              (building) => building.type === 'WAREHOUSE',
             );
-          }
-          const originWarehouse = originBuildings.find(
-            (building) => building.type === 'WAREHOUSE',
-          );
-          const caravanCapacity = getCaravanResourceCapacity(
-            getWarehouseStorageLimit(originWarehouse?.level ?? 1),
-          );
-
-          const distance = calculateDistance(
-            village.x,
-            village.y,
-            targetVillage.x,
-            targetVillage.y,
-          );
-          const travelTimeMs = await this.worldConfig.getTravelTimeForSpeed(
-            worldId,
-            distance,
-            CARAVAN_SPEED,
-          );
-          const now = new Date();
-          const arrivalAt = new Date(now.getTime() + travelTimeMs);
-
-          await tx.resourceStock.update({
-            where: { villageId: dto.villageId },
-            data: {
-              wood: currentOriginStock.wood - resources.wood,
-              stone: currentOriginStock.stone - resources.stone,
-              iron: currentOriginStock.iron - resources.iron,
-              lastUpdateTs: now,
-            },
-          });
-
-          const activeCaravanResources =
-            await this.sumActiveOutgoingCaravanResources(tx, dto.villageId);
-          const reservedWithRequest = addCaravanResources(
-            activeCaravanResources,
-            resources,
-          );
-          if (
-            reservedWithRequest.wood > caravanCapacity.wood ||
-            reservedWithRequest.stone > caravanCapacity.stone ||
-            reservedWithRequest.iron > caravanCapacity.iron
-          ) {
-            throw new BadRequestException('Caravan capacity exceeded');
-          }
-
-          const populationLockResult = await tx.population.updateMany({
-            where: {
-              villageId: dto.villageId,
-              used: { lte: population.max - porters },
-            },
-            data: { used: { increment: porters } },
-          });
-          if (populationLockResult.count === 0) {
-            throw new BadRequestException(
-              `Insufficient free population: have ${freePopulation}, need ${porters}`,
+            const caravanCapacity = getCaravanResourceCapacity(
+              getWarehouseStorageLimit(originWarehouse?.level ?? 1),
             );
-          }
 
-          const expedition = await tx.expedition.create({
-            data: {
+            const distance = calculateDistance(
+              village.x,
+              village.y,
+              targetVillage.x,
+              targetVillage.y,
+            );
+            const travelTimeMs = await this.worldConfig.getTravelTimeForSpeed(
               worldId,
-              attackerVillageId: dto.villageId,
-              kind: ExpeditionKind.CARAVAN,
-              targetKind: 'PLAYER_VILLAGE',
-              targetRefId: targetVillage.id,
+              distance,
+              CARAVAN_SPEED,
+            );
+            const now = new Date();
+            const arrivalAt = new Date(now.getTime() + travelTimeMs);
+
+            await tx.resourceStock.update({
+              where: { villageId: dto.villageId },
+              data: {
+                wood: currentOriginStock.wood - resources.wood,
+                stone: currentOriginStock.stone - resources.stone,
+                iron: currentOriginStock.iron - resources.iron,
+                lastUpdateTs: now,
+              },
+            });
+
+            const activeCaravanResources =
+              await this.sumActiveOutgoingCaravanResources(tx, dto.villageId);
+            const reservedWithRequest = addCaravanResources(
+              activeCaravanResources,
+              resources,
+            );
+            if (
+              reservedWithRequest.wood > caravanCapacity.wood ||
+              reservedWithRequest.stone > caravanCapacity.stone ||
+              reservedWithRequest.iron > caravanCapacity.iron
+            ) {
+              throw new BadRequestException('Caravan capacity exceeded');
+            }
+
+            const populationLockResult = await tx.population.updateMany({
+              where: {
+                villageId: dto.villageId,
+                used: { lte: population.max - porters },
+              },
+              data: { used: { increment: porters } },
+            });
+            if (populationLockResult.count === 0) {
+              throw new BadRequestException(
+                `Insufficient free population: have ${freePopulation}, need ${porters}`,
+              );
+            }
+
+            const expedition = await tx.expedition.create({
+              data: {
+                worldId,
+                attackerVillageId: dto.villageId,
+                kind: ExpeditionKind.CARAVAN,
+                targetKind: 'PLAYER_VILLAGE',
+                targetRefId: targetVillage.id,
+                targetX: targetVillage.x,
+                targetY: targetVillage.y,
+                units: encodeUnitMap({}),
+                status: 'EN_ROUTE',
+                departAt: now,
+                arrivalAt,
+                outboundTravelMs: travelTimeMs,
+                loot: encodeCombatLoot({ resources }),
+              },
+            });
+
+            await createOutboxEvent(tx, 'caravan.sent', dto.villageId, {
+              expeditionId: expedition.id,
+              villageId: dto.villageId,
+              targetVillageId: targetVillage.id,
               targetX: targetVillage.x,
               targetY: targetVillage.y,
-              units: encodeUnitMap({}),
-              status: 'EN_ROUTE',
-              departAt: now,
-              arrivalAt,
-              outboundTravelMs: travelTimeMs,
-              loot: encodeCombatLoot({ resources }),
-            },
-          });
+              resources,
+              porters,
+              arrivalAt: arrivalAt.toISOString(),
+            });
+            await this.outbox.resourcesChanged(dto.villageId, tx);
 
-          await createOutboxEvent(tx, 'caravan.sent', dto.villageId, {
-            expeditionId: expedition.id,
-            villageId: dto.villageId,
-            targetVillageId: targetVillage.id,
-            targetX: targetVillage.x,
-            targetY: targetVillage.y,
-            resources,
-            porters,
-            arrivalAt: arrivalAt.toISOString(),
-          });
-          await this.outbox.resourcesChanged(dto.villageId, tx);
+            await this.scheduleResolution(expedition.id, arrivalAt);
 
-          await this.scheduleResolution(expedition.id, arrivalAt);
+            this.logger.debug(
+              `Caravan expedition created: ${expedition.id}, arrives at ${arrivalAt.toISOString()}`,
+            );
 
-          this.logger.debug(
-            `Caravan expedition created: ${expedition.id}, arrives at ${arrivalAt.toISOString()}`,
-          );
-
-          return expedition;
-        },
-        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-      ),
+            return expedition;
+          },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        ),
+      this.logger,
+      'caravan transaction',
     );
 
     return expedition;
@@ -715,112 +689,115 @@ export class CombatService {
       `Recall en-route requested for expedition ${expeditionId} by user ${userId}`,
     );
 
-    const result = await this.withSerializableRetry(() =>
-      this.prisma.$transaction(
-        async (tx) => {
-          // 1. Get expedition
-          const expedition = await tx.expedition.findUnique({
-            where: { id: expeditionId },
-          });
+    const result = await withSerializableRetry(
+      () =>
+        this.prisma.$transaction(
+          async (tx) => {
+            // 1. Get expedition
+            const expedition = await tx.expedition.findUnique({
+              where: { id: expeditionId },
+            });
 
-          if (!expedition) {
-            throw new NotFoundException('Expedition not found');
-          }
+            if (!expedition) {
+              throw new NotFoundException('Expedition not found');
+            }
 
-          // 2. Verify ownership (attacker village must be owned by user)
-          const village = await tx.village.findFirst({
-            where: { id: expedition.attackerVillageId, userId },
-          });
+            // 2. Verify ownership (attacker village must be owned by user)
+            const village = await tx.village.findFirst({
+              where: { id: expedition.attackerVillageId, userId },
+            });
 
-          if (!village) {
-            throw new ForbiddenException(
-              'You do not own the origin village of this expedition',
-            );
-          }
+            if (!village) {
+              throw new ForbiddenException(
+                'You do not own the origin village of this expedition',
+              );
+            }
 
-          // 3. Verify status
-          if (expedition.status !== 'EN_ROUTE') {
-            throw new BadRequestException(
-              `Expedition cannot be recalled (status: ${expedition.status})`,
-            );
-          }
+            // 3. Verify status
+            if (expedition.status !== 'EN_ROUTE') {
+              throw new BadRequestException(
+                `Expedition cannot be recalled (status: ${expedition.status})`,
+              );
+            }
 
-          // 4. Verify timing (cannot recall if already arrived, even if worker hasn't run yet)
-          const now = new Date();
-          if (now >= expedition.arrivalAt) {
-            throw new BadRequestException(
-              'Expedition has already arrived at target',
-            );
-          }
+            // 4. Verify timing (cannot recall if already arrived, even if worker hasn't run yet)
+            const now = new Date();
+            if (now >= expedition.arrivalAt) {
+              throw new BadRequestException(
+                'Expedition has already arrived at target',
+              );
+            }
 
-          // 5. Calculate return time (time elapsed since departure)
-          const elapsedMs = now.getTime() - expedition.departAt.getTime();
-          const returnAt = new Date(now.getTime() + elapsedMs);
+            // 5. Calculate return time (time elapsed since departure)
+            const elapsedMs = now.getTime() - expedition.departAt.getTime();
+            const returnAt = new Date(now.getTime() + elapsedMs);
 
-          // 6. Claim the EN_ROUTE row before applying any recall side effects.
-          const claimed = await tx.expedition.updateMany({
-            where: {
-              id: expeditionId,
-              status: 'EN_ROUTE',
-              arrivalAt: { gt: now },
-            },
-            data: {
-              status: 'RETURNING',
-              recalled: true,
-              returnAt,
-            },
-          });
-          if (claimed.count === 0) {
-            throw new BadRequestException('Expedition cannot be recalled');
-          }
-          const updated = await tx.expedition.findUniqueOrThrow({
-            where: { id: expeditionId },
-          });
-
-          // 7. Attempt to cancel combat resolution job
-          // Fallback: the job will still trigger but handleCombatResolution
-          // will skip it because the status is no longer EN_ROUTE.
-          // PgBoss.cancel requires a jobId, which we don't store.
-          // We rely on the status guard in the worker.
-
-          // 8. Create event
-          if (expedition.kind === ExpeditionKind.CARAVAN) {
-            const resources = this.parseCaravanResources(expedition.loot);
-            const porters = caravanPortersFor(resources);
-            await createOutboxEvent(
-              tx,
-              'caravan.recalled',
-              expedition.attackerVillageId,
-              {
-                expeditionId: expedition.id,
-                villageId: expedition.attackerVillageId,
-                targetVillageId: expedition.targetRefId,
-                resources,
-                porters,
-                returnAt: returnAt.toISOString(),
+            // 6. Claim the EN_ROUTE row before applying any recall side effects.
+            const claimed = await tx.expedition.updateMany({
+              where: {
+                id: expeditionId,
+                status: 'EN_ROUTE',
+                arrivalAt: { gt: now },
               },
-            );
-          } else {
-            await createOutboxEvent(
-              tx,
-              'expedition.recalled',
-              expedition.attackerVillageId,
-              {
-                expeditionId: expedition.id,
-                villageId: expedition.attackerVillageId,
-                returnAt: returnAt.toISOString(),
+              data: {
+                status: 'RETURNING',
+                recalled: true,
+                returnAt,
               },
+            });
+            if (claimed.count === 0) {
+              throw new BadRequestException('Expedition cannot be recalled');
+            }
+            const updated = await tx.expedition.findUniqueOrThrow({
+              where: { id: expeditionId },
+            });
+
+            // 7. Attempt to cancel combat resolution job
+            // Fallback: the job will still trigger but handleCombatResolution
+            // will skip it because the status is no longer EN_ROUTE.
+            // PgBoss.cancel requires a jobId, which we don't store.
+            // We rely on the status guard in the worker.
+
+            // 8. Create event
+            if (expedition.kind === ExpeditionKind.CARAVAN) {
+              const resources = parseCaravanResources(expedition);
+              const porters = caravanPortersFor(resources);
+              await createOutboxEvent(
+                tx,
+                'caravan.recalled',
+                expedition.attackerVillageId,
+                {
+                  expeditionId: expedition.id,
+                  villageId: expedition.attackerVillageId,
+                  targetVillageId: expedition.targetRefId,
+                  resources,
+                  porters,
+                  returnAt: returnAt.toISOString(),
+                },
+              );
+            } else {
+              await createOutboxEvent(
+                tx,
+                'expedition.recalled',
+                expedition.attackerVillageId,
+                {
+                  expeditionId: expedition.id,
+                  villageId: expedition.attackerVillageId,
+                  returnAt: returnAt.toISOString(),
+                },
+              );
+            }
+
+            this.logger.debug(
+              `Expedition ${expeditionId} recalled, returns at ${returnAt.toISOString()}`,
             );
-          }
 
-          this.logger.debug(
-            `Expedition ${expeditionId} recalled, returns at ${returnAt.toISOString()}`,
-          );
-
-          return updated;
-        },
-        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-      ),
+            return updated;
+          },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        ),
+      this.logger,
+      'recall transaction',
     );
 
     // 9. Schedule return job (OUTSIDE transaction to avoid race condition with worker)
@@ -1050,35 +1027,6 @@ export class CombatService {
     );
   }
 
-  private async withSerializableRetry<T>(
-    operation: () => Promise<T>,
-    maxAttempts = 3,
-  ): Promise<T> {
-    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-      try {
-        return await operation();
-      } catch (error) {
-        if (!this.isSerializationFailure(error) || attempt === maxAttempts) {
-          throw error;
-        }
-        this.logger.warn(
-          `Retrying serialized caravan transaction after conflict (${attempt}/${maxAttempts})`,
-        );
-      }
-    }
-
-    throw new Error('Unreachable serializable retry state');
-  }
-
-  private isSerializationFailure(error: unknown): boolean {
-    return (
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      (error as { code?: unknown }).code === 'P2034'
-    );
-  }
-
   async getActiveExpeditions(userId: string, villageId: string) {
     // Verify ownership
     const village = await this.prisma.village.findFirst({
@@ -1210,7 +1158,7 @@ export class CombatService {
           recalled: expedition.recalled,
           resources:
             expedition.kind === ExpeditionKind.CARAVAN && expedition.loot
-              ? this.parseCaravanResources(expedition.loot)
+              ? parseCaravanResources(expedition)
               : undefined,
         };
       })
@@ -1314,13 +1262,6 @@ export class CombatService {
     return null;
   }
 
-  private parseCaravanResources(raw: Expedition['loot']): CaravanResources {
-    if (raw === null) return emptyCaravanResources();
-    return normalizeCaravanResources(
-      parseCombatLoot(raw).resources ?? emptyCaravanResources(),
-    );
-  }
-
   private async sumActiveOutgoingCaravanResources(
     tx: PrismaClientOrTx,
     villageId: string,
@@ -1336,7 +1277,7 @@ export class CombatService {
 
     return caravans.reduce(
       (total, caravan) =>
-        addCaravanResources(total, this.parseCaravanResources(caravan.loot)),
+        addCaravanResources(total, parseCaravanResources(caravan)),
       emptyCaravanResources(),
     );
   }

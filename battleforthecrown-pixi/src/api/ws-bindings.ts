@@ -552,8 +552,13 @@ function invalidateOpenExpeditions(ctx: BindingsContext): void {
 
 function invalidatePowerQueries(ctx: BindingsContext, villageId: string): void {
   const userId = useAuthStore.getState().user?.id ?? null;
+  const worldId = useGameStore.getState().worldId;
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.villagePower(villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: ['power', 'kingdom', userId] });
+  // The rankings summary embeds the live POWER leaderboard; refresh it whenever
+  // kingdom power shifts (build/train/combat/conquest), since the backend only
+  // emits rankings.changed on glory writes, not power changes.
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.rankingsSummary(worldId) });
 }
 
 function invalidateRetentionSummary(ctx: BindingsContext): void {

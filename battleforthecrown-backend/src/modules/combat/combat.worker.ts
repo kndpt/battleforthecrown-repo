@@ -27,7 +27,11 @@ import {
   distributeLossesProportionally,
 } from './combat.utils';
 import { parseUnitMap, encodeUnitMap, encodeLootResult } from './codecs';
-import { parseCombatLoot } from './codecs';
+import {
+  parseCaravanResources,
+  subtractCaravanResources,
+} from './caravan.utils';
+import { withSerializableRetry } from '../../common/serializable-retry.utils';
 import { getStrategyBonusValue } from '@battleforthecrown/shared/village';
 import { calculateDistance } from '@battleforthecrown/shared/logic';
 import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
@@ -65,7 +69,6 @@ interface OccupationDefense {
 }
 
 const EMPTY_LOOT = { wood: 0, stone: 0, iron: 0 } as const;
-type ResourceBundle = { wood: number; stone: number; iron: number };
 
 function addUnitLosses(target: UnitMap, losses: UnitMap): void {
   for (const [unitType, quantity] of typedEntries(losses)) {
@@ -133,173 +136,176 @@ export class CombatWorker implements OnModuleInit {
     this.logger.debug(`Processing combat resolution: ${data.expeditionId}`);
 
     try {
-      const pendingConquestToSchedule = await this.withSerializableRetry(() =>
-        this.prisma.$transaction(
-          async (tx) => {
-            // 1. Get expedition with related data
-            const expedition = await tx.expedition.findUnique({
-              where: { id: data.expeditionId },
-            });
-
-            if (!expedition) {
-              this.logger.warn(`Expedition ${data.expeditionId} not found`);
-              return;
-            }
-
-            if (expedition.status !== 'EN_ROUTE') {
-              this.logger.warn(
-                `Expedition ${data.expeditionId} already resolved (${expedition.status})`,
-              );
-              return;
-            }
-
-            if (expedition.kind === ExpeditionKind.REINFORCE) {
-              return this.handleReinforcementArrival(tx, expedition);
-            }
-
-            if (expedition.kind === ExpeditionKind.SCOUT) {
-              return this.handleScoutArrival(tx, expedition);
-            }
-
-            if (expedition.kind === ExpeditionKind.CARAVAN) {
-              return this.handleCaravanArrival(tx, expedition);
-            }
-
-            // 2. Build combat context
-            const context = await this.buildCombatContext(tx, expedition);
-
-            // 3. Select strategy based on target kind
-            const strategy =
-              expedition.targetKind === 'BARBARIAN_VILLAGE'
-                ? this.barbarianStrategy
-                : this.playerStrategy;
-
-            if (!strategy) {
-              throw new Error(
-                `No strategy found for target kind: ${expedition.targetKind}`,
-              );
-            }
-
-            // 4. Resolve combat
-            const resolution = await strategy.resolve(context);
-
-            // 5. Apply loot + losses to the defender (barbarian or PvP village).
-            const {
-              defenderVillage,
-              occupationDefense,
-              reinforcementOriginVillageIds,
-            } = await this.applyLootToDefender(
-              tx,
-              expedition,
-              resolution,
-              context,
-            );
-
-            // Release attacker population for dead units (always — PvP and barbarian raids).
-            // Pop is freed at combat resolution, not at return — the units are dead now,
-            // even if survivors are still on the road back. See docs/gameplay/02-economy-and-progression.md § Population.
-            const popReleasedAttacker = sumPopulationCost(
-              resolution.lossesAttacker,
-            );
-            if (popReleasedAttacker > 0) {
-              await tx.population.update({
-                where: { villageId: expedition.attackerVillageId },
-                data: { used: { decrement: popReleasedAttacker } },
+      const pendingConquestToSchedule = await withSerializableRetry(
+        () =>
+          this.prisma.$transaction(
+            async (tx) => {
+              // 1. Get expedition with related data
+              const expedition = await tx.expedition.findUnique({
+                where: { id: data.expeditionId },
               });
-            }
 
-            // 6. Get attacker village for userId
-            const attackerVillage = await tx.village.findUnique({
-              where: { id: expedition.attackerVillageId },
-            });
+              if (!expedition) {
+                this.logger.warn(`Expedition ${data.expeditionId} not found`);
+                return;
+              }
 
-            if (!attackerVillage) {
-              throw new Error('Attacker village not found');
-            }
+              if (expedition.status !== 'EN_ROUTE') {
+                this.logger.warn(
+                  `Expedition ${data.expeditionId} already resolved (${expedition.status})`,
+                );
+                return;
+              }
 
-            // 7. Notify the defender (PvP owner, or occupation owner on a barbarian capture).
-            await this.emitVillageAttackedEvent(tx, {
-              expedition,
-              resolution,
-              context,
-              defenderVillage,
-              occupationDefense,
-              attackerVillage,
-              reinforcementOriginVillageIds,
-            });
+              if (expedition.kind === ExpeditionKind.REINFORCE) {
+                return this.handleReinforcementArrival(tx, expedition);
+              }
 
-            // 8. Persist the combat report.
-            const report = await this.writeCombatReport(tx, {
-              expedition,
-              resolution,
-              context,
-              defenderVillage,
-              occupationDefense,
-              attackerVillage,
-            });
+              if (expedition.kind === ExpeditionKind.SCOUT) {
+                return this.handleScoutArrival(tx, expedition);
+              }
 
-            // 9. Credit PvP glory ledgers before conquest side effects.
-            await this.creditCombatGlory(tx, {
-              expedition,
-              resolution,
-              context,
-              defenderVillage,
-              occupationDefense,
-              attackerVillage,
-              report,
-            });
+              if (expedition.kind === ExpeditionKind.CARAVAN) {
+                return this.handleCaravanArrival(tx, expedition);
+              }
 
-            // 10. Apply the conquest outcome (open capture window, or signal a dead noble).
-            const originalUnits = parseUnitMap(
-              expedition.units,
-              'expedition.units',
-            );
-            const isVictory = isVictoryForAttacker(
-              resolution.lossesAttacker,
-              originalUnits,
-            );
-            const { pendingConquest, returningUnits, captureWindowOpened } =
-              await this.handleConquestOutcome(tx, {
+              // 2. Build combat context
+              const context = await this.buildCombatContext(tx, expedition);
+
+              // 3. Select strategy based on target kind
+              const strategy =
+                expedition.targetKind === 'BARBARIAN_VILLAGE'
+                  ? this.barbarianStrategy
+                  : this.playerStrategy;
+
+              if (!strategy) {
+                throw new Error(
+                  `No strategy found for target kind: ${expedition.targetKind}`,
+                );
+              }
+
+              // 4. Resolve combat
+              const resolution = await strategy.resolve(context);
+
+              // 5. Apply loot + losses to the defender (barbarian or PvP village).
+              const {
+                defenderVillage,
+                occupationDefense,
+                reinforcementOriginVillageIds,
+              } = await this.applyLootToDefender(
+                tx,
+                expedition,
+                resolution,
+                context,
+              );
+
+              // Release attacker population for dead units (always — PvP and barbarian raids).
+              // Pop is freed at combat resolution, not at return — the units are dead now,
+              // even if survivors are still on the road back. See docs/gameplay/02-economy-and-progression.md § Population.
+              const popReleasedAttacker = sumPopulationCost(
+                resolution.lossesAttacker,
+              );
+              if (popReleasedAttacker > 0) {
+                await tx.population.update({
+                  where: { villageId: expedition.attackerVillageId },
+                  data: { used: { decrement: popReleasedAttacker } },
+                });
+              }
+
+              // 6. Get attacker village for userId
+              const attackerVillage = await tx.village.findUnique({
+                where: { id: expedition.attackerVillageId },
+              });
+
+              if (!attackerVillage) {
+                throw new Error('Attacker village not found');
+              }
+
+              // 7. Notify the defender (PvP owner, or occupation owner on a barbarian capture).
+              await this.emitVillageAttackedEvent(tx, {
                 expedition,
                 resolution,
                 context,
                 defenderVillage,
+                occupationDefense,
+                attackerVillage,
+                reinforcementOriginVillageIds,
+              });
+
+              // 8. Persist the combat report.
+              const report = await this.writeCombatReport(tx, {
+                expedition,
+                resolution,
+                context,
+                defenderVillage,
+                occupationDefense,
+                attackerVillage,
+              });
+
+              // 9. Credit PvP glory ledgers before conquest side effects.
+              await this.creditCombatGlory(tx, {
+                expedition,
+                resolution,
+                context,
+                defenderVillage,
+                occupationDefense,
                 attackerVillage,
                 report,
+              });
+
+              // 10. Apply the conquest outcome (open capture window, or signal a dead noble).
+              const originalUnits = parseUnitMap(
+                expedition.units,
+                'expedition.units',
+              );
+              const isVictory = isVictoryForAttacker(
+                resolution.lossesAttacker,
+                originalUnits,
+              );
+              const { pendingConquest, returningUnits, captureWindowOpened } =
+                await this.handleConquestOutcome(tx, {
+                  expedition,
+                  resolution,
+                  context,
+                  defenderVillage,
+                  attackerVillage,
+                  report,
+                  isVictory,
+                });
+
+              // 11. Compute what returns home (units + loot withheld during a capture).
+              const { returningLoot, expeditionLoot, returnAt } =
+                this.computeReturn(
+                  expedition,
+                  resolution,
+                  returningUnits,
+                  captureWindowOpened,
+                );
+
+              // 12. Update expedition + emit battle.resolved + schedule the return.
+              await this.finalizeExpedition(tx, {
+                expedition,
+                resolution,
+                attackerVillage,
+                defenderVillage,
+                report,
+                originalUnits,
+                returningUnits,
+                returningLoot,
+                expeditionLoot,
+                returnAt,
                 isVictory,
               });
 
-            // 11. Compute what returns home (units + loot withheld during a capture).
-            const { returningLoot, expeditionLoot, returnAt } =
-              this.computeReturn(
-                expedition,
-                resolution,
-                returningUnits,
-                captureWindowOpened,
+              this.logger.debug(
+                `Combat resolved for expedition ${expedition.id}, victory=${isVictory}, returnAt=${returnAt?.toISOString() ?? 'none'}`,
               );
-
-            // 12. Update expedition + emit battle.resolved + schedule the return.
-            await this.finalizeExpedition(tx, {
-              expedition,
-              resolution,
-              attackerVillage,
-              defenderVillage,
-              report,
-              originalUnits,
-              returningUnits,
-              returningLoot,
-              expeditionLoot,
-              returnAt,
-              isVictory,
-            });
-
-            this.logger.debug(
-              `Combat resolved for expedition ${expedition.id}, victory=${isVictory}, returnAt=${returnAt?.toISOString() ?? 'none'}`,
-            );
-            return pendingConquest;
-          },
-          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-        ),
+              return pendingConquest;
+            },
+            { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+          ),
+        this.logger,
+        'combat resolution',
       );
 
       if (pendingConquestToSchedule) {
@@ -559,7 +565,15 @@ export class CombatWorker implements OnModuleInit {
       report,
     } = args;
     const attackerUserId = attackerVillage.userId;
-    if (!attackerUserId || expedition.targetKind === 'BARBARIAN_VILLAGE') {
+    // Barbarian fights award no glory — unless a player garrison occupies the
+    // village during a capture window: that fight is PvP against the occupier
+    // (see docs/gameplay/24-rankings.md § Gloire du Rempart, capture window).
+    // loadParticipantOwnerIds remaps the occupied barbarian village to the
+    // occupier, so participant ownership already resolves to the player.
+    const isUnoccupiedBarbarian =
+      expedition.targetKind === 'BARBARIAN_VILLAGE' &&
+      !occupationDefense?.attackerUserId;
+    if (!attackerUserId || isUnoccupiedBarbarian) {
       return;
     }
 
@@ -1151,9 +1165,7 @@ export class CombatWorker implements OnModuleInit {
 
   private async applyDefenderLosses(
     tx: PrismaClientOrTx,
-    defenderVillage: Prisma.VillageGetPayload<{
-      include: { resourceStock: true; buildings: true };
-    }>,
+    defenderVillage: DefenderVillage,
     participants: CombatParticipant[],
     totalDefenderUnits: UnitMap,
     lossesDefender: UnitMap,
@@ -1266,9 +1278,7 @@ export class CombatWorker implements OnModuleInit {
   }
 
   private getCaptureDurationMs(
-    targetVillage: Prisma.VillageGetPayload<{
-      include: { resourceStock: true; buildings: true };
-    }>,
+    targetVillage: DefenderVillage,
     tempo: WorldTempo,
   ): number {
     const castleLevel = targetVillage.isBarbarian
@@ -1626,7 +1636,7 @@ export class CombatWorker implements OnModuleInit {
         Math.max(0, limits.iron - currentStock.iron),
       ),
     };
-    const lost = subtractResources(carried, credited);
+    const lost = subtractCaravanResources(carried, credited);
     const returnAt = new Date(Date.now() + expedition.outboundTravelMs);
 
     await tx.resourceStock.update({
@@ -1670,61 +1680,4 @@ export class CombatWorker implements OnModuleInit {
       `Caravan arrived for expedition ${expedition.id}, credited=${JSON.stringify(credited)}, lost=${JSON.stringify(lost)}`,
     );
   }
-
-  private async withSerializableRetry<T>(
-    operation: () => Promise<T>,
-    maxAttempts = 3,
-  ): Promise<T> {
-    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-      try {
-        return await operation();
-      } catch (error) {
-        if (!this.isSerializationFailure(error) || attempt === maxAttempts) {
-          throw error;
-        }
-        this.logger.warn(
-          `Retrying serialized combat resolution after conflict (${attempt}/${maxAttempts})`,
-        );
-      }
-    }
-
-    throw new Error('Unreachable serializable retry state');
-  }
-
-  private isSerializationFailure(error: unknown): boolean {
-    return (
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      (error as { code?: unknown }).code === 'P2034'
-    );
-  }
-}
-
-function normalizeResources(
-  resources: Partial<ResourceBundle>,
-): ResourceBundle {
-  return {
-    wood: Math.max(0, Math.floor(resources.wood ?? 0)),
-    stone: Math.max(0, Math.floor(resources.stone ?? 0)),
-    iron: Math.max(0, Math.floor(resources.iron ?? 0)),
-  };
-}
-
-function subtractResources(
-  left: ResourceBundle,
-  right: ResourceBundle,
-): ResourceBundle {
-  return {
-    wood: Math.max(0, left.wood - right.wood),
-    stone: Math.max(0, left.stone - right.stone),
-    iron: Math.max(0, left.iron - right.iron),
-  };
-}
-
-function parseCaravanResources(expedition: Expedition): ResourceBundle {
-  if (expedition.loot === null) return normalizeResources(EMPTY_LOOT);
-  return normalizeResources(
-    parseCombatLoot(expedition.loot).resources ?? EMPTY_LOOT,
-  );
 }
