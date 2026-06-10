@@ -47,6 +47,7 @@ import { createOutboxEvent } from '../event/event.utils';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
 import { PrismaClientOrTx } from '../../common/prisma.types';
 import { OwnershipService } from '../../common/auth';
+import { PowerService } from '../power/power.service';
 import { ResourcesService } from '../resources/resources.service';
 
 export interface GarrisonLineDto {
@@ -72,6 +73,7 @@ export class CombatService {
     private readonly worldConfig: WorldConfigService,
     private readonly visionService: VisionService,
     private readonly ownership: OwnershipService,
+    private readonly powerService: PowerService,
     private readonly outbox: OutboxPublisher,
     private readonly resourcesService: ResourcesService,
     @Inject('PG_BOSS') private readonly boss: PgBoss,
@@ -93,6 +95,7 @@ export class CombatService {
       let targetRefId: string;
       let targetX: number;
       let targetY: number;
+      let defenderUserId: string | null = null;
 
       if (dto.targetKind === 'BARBARIAN_VILLAGE') {
         // Phase 2: Barbarian villages are now in Village table with isBarbarian=true
@@ -115,6 +118,7 @@ export class CombatService {
         targetRefId = targetVillage.id;
         targetX = targetVillage.x;
         targetY = targetVillage.y;
+        defenderUserId = targetVillage.userId;
       }
 
       // 3. Enforce fog of war: a target seen as a blip cannot be attacked.
@@ -125,10 +129,24 @@ export class CombatService {
         'attack',
       );
 
-      // 4. Verify and deduct units
+      // 4. Snapshot kingdom power before the outbound army mutates inventory.
+      const attackerKingdomPowerSnapshot =
+        await this.powerService.getKingdomPowerValue(userId, worldId, tx);
+      const defenderPowerSnapshot = await this.snapshotDefenderKingdomPowers(
+        tx,
+        worldId,
+        targetRefId,
+        defenderUserId,
+      );
+      const defenderKingdomPowerSnapshot = defenderPowerSnapshot.primaryUserId
+        ? (defenderPowerSnapshot.values[defenderPowerSnapshot.primaryUserId] ??
+          null)
+        : null;
+
+      // 5. Verify and deduct units
       await this.verifyAndDeductUnits(tx, dto.villageId, dto.units);
 
-      // 5. Calculate timing
+      // 6. Calculate timing
       const { travelTimeMs, arrivalAt, now } =
         await this.calculateExpeditionTiming(
           tx,
@@ -141,7 +159,7 @@ export class CombatService {
           dto.villageId,
         );
 
-      // 6. Create expedition
+      // 7. Create expedition
       const expedition = await tx.expedition.create({
         data: {
           worldId,
@@ -156,10 +174,13 @@ export class CombatService {
           departAt: now,
           arrivalAt,
           outboundTravelMs: travelTimeMs,
+          attackerKingdomPowerSnapshot,
+          defenderKingdomPowerSnapshot,
+          defenderKingdomPowerSnapshots: defenderPowerSnapshot.values,
         },
       });
 
-      // 7. Create event
+      // 8. Create event
       await createOutboxEvent(tx, 'battle.sent', dto.villageId, {
         expeditionId: expedition.id,
         villageId: dto.villageId,
@@ -169,7 +190,7 @@ export class CombatService {
         arrivalAt: arrivalAt.toISOString(),
       });
 
-      // 8. Schedule combat resolution worker
+      // 9. Schedule combat resolution worker
       await this.scheduleResolution(expedition.id, arrivalAt);
 
       this.logger.debug(
@@ -930,6 +951,46 @@ export class CombatService {
     }
 
     return village;
+  }
+
+  private async snapshotDefenderKingdomPowers(
+    tx: PrismaClientOrTx,
+    worldId: string,
+    targetVillageId: string,
+    primaryDefenderUserId: string | null,
+  ): Promise<{ primaryUserId: string | null; values: Record<string, number> }> {
+    const userIds = new Set<string>();
+
+    const [garrisons, pendingCapture] = await Promise.all([
+      tx.garrison.findMany({
+        where: { villageId: targetVillageId, quantity: { gt: 0 } },
+        select: { originVillage: { select: { userId: true } } },
+      }),
+      tx.pendingConquest.findFirst({
+        where: { targetVillageId, status: PendingConquestStatus.OPEN },
+        select: { attackerUserId: true },
+      }),
+    ]);
+
+    const primaryUserId =
+      pendingCapture?.attackerUserId ?? primaryDefenderUserId;
+    if (primaryUserId) userIds.add(primaryUserId);
+
+    for (const garrison of garrisons) {
+      if (garrison.originVillage.userId) {
+        userIds.add(garrison.originVillage.userId);
+      }
+    }
+
+    const snapshots: Record<string, number> = {};
+    for (const defenderUserId of userIds) {
+      snapshots[defenderUserId] = await this.powerService.getKingdomPowerValue(
+        defenderUserId,
+        worldId,
+        tx,
+      );
+    }
+    return { primaryUserId, values: snapshots };
   }
 
   /**

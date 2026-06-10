@@ -800,6 +800,7 @@ export function VillageView() {
           onArmyClick={() => navigate('/game/army')}
           onBuildingsClick={() => undefined}
           onMessagesClick={() => navigate('/game/messages')}
+          onRankingsClick={() => navigate('/game/rankings')}
           onWorldClick={() => navigate('/game/world')}
           unreadCount={unreadCount}
         />
