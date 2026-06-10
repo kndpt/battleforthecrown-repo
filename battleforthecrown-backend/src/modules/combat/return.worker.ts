@@ -6,13 +6,15 @@ import { OutboxPublisher } from '../event/outbox-publisher.service';
 import { parseUnitMap, parseCombatLoot } from './codecs';
 import { ExpeditionKind, type Expedition } from '@prisma/client';
 import { PrismaClientOrTx } from '../../common/prisma.types';
-import { CARRY_PER_PORTER } from '@battleforthecrown/shared/logic';
 import type { UnitMap } from '@battleforthecrown/shared/army';
 import { ResourcesService } from '../resources/resources.service';
 import {
   subtractCaravanResources,
   type CaravanResources,
-} from './caravan-resources';
+  caravanPortersFor,
+  parseCaravanResources,
+  sumCaravanResources,
+} from './caravan.utils';
 
 interface ReturnJob {
   expeditionId: string;
@@ -190,11 +192,11 @@ export class ReturnWorker implements OnModuleInit {
     tx: PrismaClientOrTx,
     expedition: Expedition,
   ) {
-    const resources = this.parseCaravanResources(expedition);
+    const resources = parseCaravanResources(expedition);
     let returnedResources: CaravanResources = { wood: 0, stone: 0, iron: 0 };
-    const porters = this.getPorters(resources);
+    const porters = caravanPortersFor(resources);
 
-    if (expedition.recalled && this.sumResources(resources) > 0) {
+    if (expedition.recalled && sumCaravanResources(resources) > 0) {
       const originVillage = await tx.village.findUnique({
         where: { id: expedition.attackerVillageId },
         include: {
@@ -357,24 +359,5 @@ export class ReturnWorker implements OnModuleInit {
     this.logger.debug(
       `Caravan returned for expedition ${expedition.id}: recalled=${expedition.recalled}, porters=${porters}`,
     );
-  }
-
-  private parseCaravanResources(expedition: Expedition): CaravanResources {
-    if (expedition.loot === null) return { wood: 0, stone: 0, iron: 0 };
-    const resources = parseCombatLoot(expedition.loot).resources;
-    return {
-      wood: Math.max(0, Math.floor(resources?.wood ?? 0)),
-      stone: Math.max(0, Math.floor(resources?.stone ?? 0)),
-      iron: Math.max(0, Math.floor(resources?.iron ?? 0)),
-    };
-  }
-
-  private getPorters(resources: CaravanResources): number {
-    const total = this.sumResources(resources);
-    return total > 0 ? Math.ceil(total / CARRY_PER_PORTER) : 0;
-  }
-
-  private sumResources(resources: CaravanResources): number {
-    return resources.wood + resources.stone + resources.iron;
   }
 }
