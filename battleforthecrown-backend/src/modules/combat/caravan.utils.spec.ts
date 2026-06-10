@@ -1,6 +1,8 @@
 import {
   normalizeCaravanResources,
+  sumCaravanResources,
   caravanPortersFor,
+  addCaravanResources,
   subtractCaravanResources,
   parseCaravanResources,
   emptyCaravanResources,
@@ -130,6 +132,51 @@ describe('caravan.utils', () => {
     it('returns empty resources when loot has no resources field', () => {
       const loot = {};
       expect(parseCaravanResources({ loot })).toEqual(emptyCaravanResources());
+    });
+  });
+
+  describe('sumCaravanResources', () => {
+    it('returns 0 for an empty resource object', () => {
+      expect(sumCaravanResources({ wood: 0, stone: 0, iron: 0 })).toBe(0);
+    });
+
+    it('sums all three resource fields', () => {
+      expect(sumCaravanResources({ wood: 100, stone: 200, iron: 50 })).toBe(
+        350,
+      );
+    });
+
+    it('handles partial resources', () => {
+      expect(sumCaravanResources({ wood: 0, stone: 0, iron: 500 })).toBe(500);
+    });
+  });
+
+  describe('addCaravanResources', () => {
+    it('adds two resource objects field by field', () => {
+      expect(
+        addCaravanResources(
+          { wood: 100, stone: 50, iron: 30 },
+          { wood: 40, stone: 20, iron: 10 },
+        ),
+      ).toEqual({ wood: 140, stone: 70, iron: 40 });
+    });
+
+    it('adding zero-valued resources leaves values unchanged', () => {
+      expect(
+        addCaravanResources(
+          { wood: 100, stone: 200, iron: 300 },
+          { wood: 0, stone: 0, iron: 0 },
+        ),
+      ).toEqual({ wood: 100, stone: 200, iron: 300 });
+    });
+
+    it('adding two empty objects yields zero', () => {
+      expect(
+        addCaravanResources(
+          { wood: 0, stone: 0, iron: 0 },
+          { wood: 0, stone: 0, iron: 0 },
+        ),
+      ).toEqual({ wood: 0, stone: 0, iron: 0 });
     });
   });
 });
