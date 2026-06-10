@@ -31,10 +31,9 @@ import { getWarehouseStorageLimit } from "@battleforthecrown/shared/resources";
 import { TempoService } from "@battleforthecrown/shared/world";
 import type { MapEntity } from "@/api/world-types";
 import type { LootResources } from "@battleforthecrown/shared/combat";
-import { getCaravanLaunchState } from "./caravanLaunchState";
+import { getCaravanLaunchState, RESOURCE_KEYS } from "./caravanLaunchState";
 
 type ResourceKey = keyof LootResources;
-const RESOURCE_KEYS = ["wood", "stone", "iron"] as const;
 
 const RESOURCE_LABELS: Record<ResourceKey, string> = {
   wood: "Bois",
