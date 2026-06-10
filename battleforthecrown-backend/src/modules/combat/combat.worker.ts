@@ -161,6 +161,15 @@ export class CombatWorker implements OnModuleInit {
               }
 
               if (expedition.status !== 'EN_ROUTE') {
+                const pendingConquest =
+                  await this.findPendingConquestFinalizeJobToRecover(
+                    tx,
+                    expedition,
+                  );
+                if (pendingConquest) {
+                  return { pendingConquest };
+                }
+
                 this.logger.warn(
                   `Expedition ${data.expeditionId} already resolved (${expedition.status})`,
                 );
@@ -327,6 +336,23 @@ export class CombatWorker implements OnModuleInit {
       );
       throw error;
     }
+  }
+
+  private async findPendingConquestFinalizeJobToRecover(
+    tx: PrismaClientOrTx,
+    expedition: Expedition,
+  ): Promise<PendingConquestToSchedule | null> {
+    if (expedition.kind !== ExpeditionKind.ATTACK) return null;
+
+    return tx.pendingConquest.findFirst({
+      where: {
+        attackerVillageId: expedition.attackerVillageId,
+        targetVillageId: expedition.targetRefId,
+        status: 'OPEN',
+        finalizeJobId: null,
+      },
+      select: { id: true, captureUntil: true },
+    });
   }
 
   private async scheduleReturnJob(job: ReturnJobToSchedule): Promise<void> {
