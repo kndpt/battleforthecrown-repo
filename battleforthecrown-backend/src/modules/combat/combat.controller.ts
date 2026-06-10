@@ -29,6 +29,10 @@ import {
   scoutCommandSchema,
   type ScoutCommandDto,
 } from './dto/scout-command.schema';
+import {
+  caravanCommandSchema,
+  type CaravanCommandDto,
+} from './dto/caravan-command.schema';
 import type { ReinforcementReportResponse } from '@battleforthecrown/shared/combat';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { CurrentUser, type AuthenticatedUser } from '../../common/auth';
@@ -64,6 +68,15 @@ export class CombatController {
     dto: ReinforceCommandDto,
   ) {
     return this.combatService.initiateReinforce(user.id, dto);
+  }
+
+  @Post('caravan')
+  caravan(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(caravanCommandSchema))
+    dto: CaravanCommandDto,
+  ) {
+    return this.combatService.initiateCaravan(user.id, dto);
   }
 
   @Post('recall')

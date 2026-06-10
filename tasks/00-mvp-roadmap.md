@@ -109,6 +109,8 @@ Livrable : étiquettes privées (`Offensif`, `Défensif`, `Économique`) sans bo
 
 Décisions retenues pour Phase 10 : la capitale n'est pas choisie par le joueur, elle est dérivée du premier village puis du premier village conquis restant si la capitale est prise. Quand une récompense doit cibler un village, le joueur choisit le village destinataire à la validation ; le système retient le dernier village récompensé.
 
+Extension MVP livrée : la **Caravane de ressources** (run [`050`](./runs/archive/050-feature-resource-caravan.md)) complète la navigation multi-village en permettant un transfert A→B entre villages du même joueur, via trajet visible, porteurs de population verrouillés, plafond d'Entrepôt à l'arrivée et excédent perdu. Elle ne remplace pas le Marché royal public post-MVP.
+
 Critère de fin : un joueur multi-village peut étiqueter ses villages `Offensif`, `Défensif` ou `Économique`, retrouver ces étiquettes dans le sélecteur et les filtres, voir sa capitale dérivée, et la règle « récompense → quel village » est documentée.
 
 ### Phase 10 — Rétention quotidienne MVP
@@ -148,7 +150,7 @@ Ne pas prioriser dans cette roadmap, mais ne pas perdre de vue :
 - [`21-alliances-and-tribes.md`](../docs/gameplay/21-alliances-and-tribes.md) — alliances/tribus complètes.
 - [`09-power-and-rankings.md`](../docs/gameplay/09-power-and-rankings.md) § Classements hebdo/mensuels — récompenses périodiques.
 - Progression de saison avancée / pass premium — lab uniquement pour l'instant, pas MVP.
-- Marché royal, zones d'influence, Cachette (bâtiment), unités destructrices de bâtiments.
+- Marché royal public/inter-joueurs, zones d'influence, Cachette (bâtiment), unités destructrices de bâtiments.
 
 ## Mise à jour de ce document
 

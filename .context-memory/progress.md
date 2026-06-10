@@ -4,6 +4,7 @@
 
 ## Done
 
+- 2026-06-09: Run 050 caravanes ressources termine + PR #68 mise a jour : cap sortant par ressource = 20% Entrepot source, UX modale simplifiee en "Chargement X/Y" + "Villageois N mobilises"; static-check, unit backend/pixi hook, smoke caravan vert.
 - 2026-06-07: QA locale maximale run 049 rétention passée après alignement des smokes manuels `daily-retention`/`onboarding` sur `battle.resolved.targetTier` et `completedQty`. Vérifications vertes: shared build, tests ciblés rétention/Pixi, `static-check`, `yarn test` complet (backend 27/289, Pixi 63/354, smokes 25/63), `yarn build`, runtime isolé DB `battleforthecrown_049qa` avec `/health`, frontend 200, REST register/join/retention.
 - 2026-06-07: PRs ouvertes traitees hors `kndpt/refine-power-and-village-ui` : #57/#58/#59 sans threads actionnables, #56 corrigee avec endpoint `POST /world/:worldId/enter`, refresh `lastLoginAt`, refus des mondes `ENDED`, mutation Pixi serveur-authoritative, tests ciblés/smoke/static-check verts et threads GitHub resolus.
 - 2026-06-07: Toutes les PR ouvertes #56-#60 ont ete mergees sur `main` apres verification live. Ordre final : #57, #58, #59, #56 apres resolution conflit tests avec #59 + recheck CI/smoke/CodeRabbit, puis #60 en dernier. `origin/main` final `504db2e857985a3168a1db5c42c4ae4ba9792a5b`.

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type {
   OpenConquestDto,
   OpenExpeditionDto,
@@ -131,6 +131,47 @@ describe('kingdom activities view model', () => {
       statusLabel: 'SCOUT',
       time: '1m 00s',
     });
+  });
+
+  it('maps a resource caravan as a recallable caravan activity', () => {
+    const now = Date.parse('2026-05-13T12:01:00.000Z');
+    const onRecall = vi.fn();
+    const expedition: OpenExpeditionDto = {
+      arrivalAt: '2026-05-13T12:05:00.000Z',
+      attackerVillageId: 'origin-1',
+      attackerVillageName: 'Royaume du Nord',
+      departAt: '2026-05-13T12:00:00.000Z',
+      expeditionId: 'caravan-1',
+      isConquest: false,
+      kind: 'CARAVAN',
+      recalled: false,
+      resources: { wood: 300, stone: 150, iron: 0 },
+      returnAt: null,
+      status: 'EN_ROUTE',
+      targetKind: 'PLAYER_VILLAGE',
+      targetName: 'Royaume du Sud',
+      targetVillageId: 'target-1',
+      targetX: 210,
+      targetY: 244,
+    };
+
+    const card = mapOpenExpeditionToActivityCard(expedition, now, onRecall);
+
+    expect(card).toMatchObject({
+      icon: '/assets/resources/resources.png',
+      kind: 'caravan',
+      movementId: 'caravan-1',
+      phase: 'en_route',
+      progress: 20,
+      recallLabel: 'Rappeler',
+      statusLabel: 'CARAVANE',
+      subtitle: '210|244 · Arrivée dans 4m 00s',
+      time: '4m 00s',
+      title: 'Royaume du Sud',
+    });
+
+    card.onRecall?.('caravan-1');
+    expect(onRecall).toHaveBeenCalledWith('caravan-1', 'origin-1');
   });
 });
 

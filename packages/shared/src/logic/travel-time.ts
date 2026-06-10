@@ -1,5 +1,8 @@
-import { getStrategyBonusValue, VillageStrategyType } from '../village/strategy';
-import type { UnitMap } from '../army/unit-map';
+import {
+  getStrategyBonusValue,
+  VillageStrategyType,
+} from "../village/strategy";
+import type { UnitMap } from "../army/unit-map";
 
 /**
  * Référence de vitesse : à `speed = REFERENCE_SPEED` (= 6), une unité parcourt
@@ -7,15 +10,34 @@ import type { UnitMap } from '../army/unit-map';
  * comme le SPY à speed 100, parcourt donc 1 tuile en environ 3.6 secondes.
  */
 export const REFERENCE_SPEED = 6;
+export const CARAVAN_SPEED = 20;
+export const CARRY_PER_PORTER = 500;
+export const CARAVAN_CAPACITY_SHARE = 0.2;
+
+export type CaravanResourceCapacity = {
+  wood: number;
+  stone: number;
+  iron: number;
+};
+
+export function getCaravanResourceCapacity(
+  storageLimits: CaravanResourceCapacity,
+): CaravanResourceCapacity {
+  return {
+    wood: Math.floor(storageLimits.wood * CARAVAN_CAPACITY_SHARE),
+    stone: Math.floor(storageLimits.stone * CARAVAN_CAPACITY_SHARE),
+    iron: Math.floor(storageLimits.iron * CARAVAN_CAPACITY_SHARE),
+  };
+}
 
 export function calculateTravelTime(
   distance: number,
   speedMultiplier: number,
   armySpeed: number,
-  strategy?: VillageStrategyType
+  strategy?: VillageStrategyType,
 ): number {
   const strategyMultiplier = strategy
-    ? (getStrategyBonusValue(strategy, 'armySpeedBonus') as number)
+    ? (getStrategyBonusValue(strategy, "armySpeedBonus") as number)
     : 1.0;
 
   const finalSpeedMultiplier = speedMultiplier * strategyMultiplier;
@@ -33,7 +55,7 @@ export function calculateDistance(
   x1: number,
   y1: number,
   x2: number,
-  y2: number
+  y2: number,
 ): number {
   return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 }
@@ -51,7 +73,7 @@ export function findSlowestUnitSpeed(
   for (const [unitType, qty] of Object.entries(selectedUnits)) {
     if (qty && qty > 0) {
       const unitSpeed = unitStatsMap[unitType]?.speed;
-      if (typeof unitSpeed === 'number' && unitSpeed < slowestSpeed) {
+      if (typeof unitSpeed === "number" && unitSpeed < slowestSpeed) {
         slowestSpeed = unitSpeed;
       }
     }

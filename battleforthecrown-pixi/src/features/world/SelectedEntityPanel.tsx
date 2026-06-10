@@ -20,6 +20,7 @@ interface SelectedEntityPanelProps {
   entity: MapEntity | null;
   currentVillageId?: string | null;
   onAttack?: (entity: MapEntity) => void;
+  onCaravan?: (entity: MapEntity) => void;
   onScout?: (entity: MapEntity) => void;
   onGoToVillage?: (entity: MapEntity) => void;
 }
@@ -47,6 +48,7 @@ export function SelectedEntityPanel({
   entity,
   currentVillageId,
   onAttack,
+  onCaravan,
   onScout,
   onGoToVillage,
 }: SelectedEntityPanelProps) {
@@ -80,6 +82,9 @@ export function SelectedEntityPanel({
   const showReinforce = isOwnedPlayerVillage
     && entity.id !== currentVillageId
     && Boolean(onAttack);
+  const showCaravan = isOwnedPlayerVillage
+    && entity.id !== currentVillageId
+    && Boolean(onCaravan);
   const showGoToVillage = isOwnedPlayerVillage
     && entity.id !== currentVillageId
     && Boolean(onGoToVillage);
@@ -122,6 +127,16 @@ export function SelectedEntityPanel({
             label: 'Renforcer',
             tone: 'support' as const,
             onClick: () => onAttack?.(entity),
+          },
+        ]
+      : []),
+    ...(showCaravan
+      ? [
+          {
+            icon: '📦',
+            label: 'Envoyer ressources',
+            tone: 'support' as const,
+            onClick: () => onCaravan?.(entity),
           },
         ]
       : []),

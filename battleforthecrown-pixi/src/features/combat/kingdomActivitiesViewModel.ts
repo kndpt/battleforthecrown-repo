@@ -35,12 +35,14 @@ const EXPEDITION_LABELS: Record<OpenExpeditionDto['kind'], string> = {
   ATTACK: 'ATTAQUE',
   REINFORCE: 'RENFORT',
   SCOUT: 'SCOUT',
+  CARAVAN: 'CARAVANE',
 };
 
 const EXPEDITION_ICONS: Record<OpenExpeditionDto['kind'], string> = {
   ATTACK: '/assets/hand-red.png',
   REINFORCE: '/assets/hand-silver.png',
   SCOUT: '/assets/lupa.png',
+  CARAVAN: '/assets/resources/resources.png',
 };
 
 export function mapOpenConquestToCaptureCard(
@@ -93,7 +95,9 @@ export function mapOpenExpeditionToActivityCard(
       ? 'reinforce'
       : expedition.kind === 'SCOUT'
         ? 'scout'
-        : 'attack';
+        : expedition.kind === 'CARAVAN'
+          ? 'caravan'
+          : 'attack';
 
   return {
     icon: expedition.isConquest ? '/assets/casual-icons/crown.png' : EXPEDITION_ICONS[expedition.kind],

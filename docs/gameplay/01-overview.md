@@ -37,7 +37,8 @@ Les détails sur les ressources, la population et les couronnes sont dans [`02-e
 1. Les bâtiments produisent passivement des ressources.
 2. Le joueur les investit dans de nouvelles constructions ou des unités.
 3. Les entrepôts limitent la production (nécessitent upgrades).
-4. Le joueur équilibre population / production / défense.
+4. Les villages possédés peuvent s'entraider par caravane de ressources, avec trajet physique et porteurs temporaires.
+5. Le joueur équilibre population / production / défense.
 
 🎯 **Objectif** : créer une progression visible et régulière, même en mode idle.
 
@@ -138,7 +139,7 @@ Les classements sont séparés en trois signaux : **Puissance du Royaume** pour 
 
 | Feature | Description |
 | --- | --- |
-| **Marché royal** | Échanges entre joueurs contre couronnes |
+| **Marché royal** | Échanges entre joueurs contre couronnes (distinct des caravanes entre ses propres villages déjà MVP) |
 | **Alliances / Tribus** | Petits regroupements défensifs |
 | **Techno globale** | Arbre léger centré sur économie |
 | **Prestige visuel** | Skins, bannières, effets |

@@ -10,6 +10,7 @@ import {
 
 const COLOR = {
   reinforce: 0x4fb3d8,
+  caravan: 0xd4a017,
   enRoute: 0x4a8c2a,
   resolvedVictory: 0xf1c40f,
   resolvedDefeat: 0xc0392b,
@@ -44,6 +45,7 @@ const DUST_TTL_MS = 600;
 const DUST_INTERVAL_MS = 90;
 const ATTACK_GLYPH = '⚔️';
 const REINFORCE_GLYPH = '🛡️';
+const CARAVAN_GLYPH = '📦';
 const RETURNING_GLYPH = '🐎';
 
 export function createExpeditionVisual(options: ExpeditionVisualOptions): ExpeditionVisualHandle {
@@ -68,7 +70,7 @@ export function createExpeditionVisual(options: ExpeditionVisualOptions): Expedi
   container.addChild(unit);
 
   const unitGlyph = new Text({
-    text: options.snapshot.kind === 'REINFORCE' ? REINFORCE_GLYPH : ATTACK_GLYPH,
+    text: glyphFor(options.snapshot),
     style: {
       fontFamily: 'Apple Color Emoji, Segoe UI Emoji, Cinzel, serif',
       fontSize: 28,
@@ -89,6 +91,7 @@ export function createExpeditionVisual(options: ExpeditionVisualOptions): Expedi
     const target = options.worldToScene(snapshot.target);
     const control = pathControl(origin, target);
     const isReinforce = snapshot.kind === 'REINFORCE';
+    const isCaravan = snapshot.kind === 'CARAVAN';
 
     const color =
       snapshot.phase === 'RETURNING' || snapshot.phase === 'RETURNED'
@@ -99,7 +102,9 @@ export function createExpeditionVisual(options: ExpeditionVisualOptions): Expedi
             : COLOR.resolvedDefeat
           : isReinforce
             ? COLOR.reinforce
-            : COLOR.enRoute;
+            : isCaravan
+              ? COLOR.caravan
+              : COLOR.enRoute;
 
     pathGraphic.clear();
     if (snapshot.phase === 'RETURNED') {
@@ -195,9 +200,7 @@ export function createExpeditionVisual(options: ExpeditionVisualOptions): Expedi
       unit.visible = true;
       unitGlyph.text = progress.returning
         ? RETURNING_GLYPH
-        : snapshot.kind === 'REINFORCE'
-          ? REINFORCE_GLYPH
-          : ATTACK_GLYPH;
+        : glyphFor(snapshot);
       emitDust(nowMs, point.x, point.y);
     } else if (snapshot.phase === 'EN_ROUTE' || snapshot.phase === 'RESOLVED') {
       const point = pathPointAt(geometry.origin, geometry.control, geometry.target, 1);
@@ -229,4 +232,10 @@ export function createExpeditionVisual(options: ExpeditionVisualOptions): Expedi
   };
 
   return { container, setSnapshot, tick, destroy };
+}
+
+function glyphFor(snapshot: ExpeditionSnapshot): string {
+  if (snapshot.kind === 'REINFORCE') return REINFORCE_GLYPH;
+  if (snapshot.kind === 'CARAVAN') return CARAVAN_GLYPH;
+  return ATTACK_GLYPH;
 }

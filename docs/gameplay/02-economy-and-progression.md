@@ -2,13 +2,13 @@
 
 ## Ressources
 
-| Type | Rôle | Produit par |
-| --- | --- | --- |
-| **Bois** | Construction, unités de base | Camp de bûcherons (Wood Camp) |
-| **Pierre** | Construction défensive | Carrière (Stone Quarry) |
-| **Fer** | Unités avancées | Mine de fer (Iron Mine) |
-| **Population** | Ressource humaine limitée (workforce) | Quartier (Quarter) |
-| **Couronnes** | Ressource stratégique principale (taxes, seigneurs, stratégie) | Gains via villages possédés |
+| Type           | Rôle                                                           | Produit par                   |
+| -------------- | -------------------------------------------------------------- | ----------------------------- |
+| **Bois**       | Construction, unités de base                                   | Camp de bûcherons (Wood Camp) |
+| **Pierre**     | Construction défensive                                         | Carrière (Stone Quarry)       |
+| **Fer**        | Unités avancées                                                | Mine de fer (Iron Mine)       |
+| **Population** | Ressource humaine limitée (workforce)                          | Quartier (Quarter)            |
+| **Couronnes**  | Ressource stratégique principale (taxes, seigneurs, stratégie) | Gains via villages possédés   |
 
 ### Production de ressources
 
@@ -30,7 +30,7 @@ Quand un village est **conquis** :
 
 - Chaque village est un **nœud de ressources indépendant** — pas de pool global.
 - La production stoppe si l'entrepôt est plein.
-- **Pas de transfert direct** entre villages joueur (marché prévu post-MVP).
+- **Transfert entre villages possédés via caravane** : un joueur peut envoyer des ressources d'un village A vers un autre village B qu'il possède. Le transfert est physique (trajet d'expédition), consomme temporairement de la population libre de A comme porteurs, reste limité par la capacité caravane de l'Entrepôt de A et par l'Entrepôt de B à l'arrivée. Aucun transfert direct instantané, aucun marché entre joueurs au MVP.
 - Les villages barbares **régénèrent** leurs ressources et leurs troupes avec le temps. Spec complète dans [`06-barbarians.md`](./06-barbarians.md).
 - Le revenu en couronnes dépend de la **puissance cumulée** de tous les villages possédés.
 
@@ -40,12 +40,12 @@ La **population** est une **ressource finie et permanente** qui représente les 
 
 ### Principes fondamentaux
 
-| Élément | Description |
-| --- | --- |
-| **Population max** | **Par village** : déterminée par le niveau du Quartier **de ce village**. Pas de pool global mutualisé entre les villages d'un joueur. |
-| **Source** | **Quartier** : chaque niveau ajouté augmente la population disponible **du village qui l'héberge** (cf. [`03-buildings.md` § Quartier](./03-buildings.md#quartier-quarter)). |
-| **Coût** | Chaque bâtiment et chaque unité **du village** consomme la population **de ce village** (définitivement). |
-| **Libération** | Seulement si un bâtiment est détruit ou une unité meurt (la pop libérée retourne au pool **du village d'origine** — y compris pour des troupes mortes en renfort dans un autre village, cf. [`04-combat.md` § Renforts](./04-combat.md#renforts-entre-ses-propres-villages)). |
+| Élément            | Description                                                                                                                                                                                                                                                                   |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Population max** | **Par village** : déterminée par le niveau du Quartier **de ce village**. Pas de pool global mutualisé entre les villages d'un joueur.                                                                                                                                        |
+| **Source**         | **Quartier** : chaque niveau ajouté augmente la population disponible **du village qui l'héberge** (cf. [`03-buildings.md` § Quartier](./03-buildings.md#quartier-quarter)).                                                                                                  |
+| **Coût**           | Chaque bâtiment et chaque unité **du village** consomme la population **de ce village** (définitivement).                                                                                                                                                                     |
+| **Libération**     | Seulement si un bâtiment est détruit ou une unité meurt (la pop libérée retourne au pool **du village d'origine** — y compris pour des troupes mortes en renfort dans un autre village, cf. [`04-combat.md` § Renforts](./04-combat.md#renforts-entre-ses-propres-villages)). |
 
 > 💡 Population max d'un village = somme des bonus du Quartier de ce village (ex : Quartier niveau 3 = pop lvl 1 + lvl 2 + lvl 3). Implémentation côté Prisma : table `Population` indexée par `villageId` (1 ligne par village).
 
@@ -61,16 +61,33 @@ Population disponible (village V) = Population max (Quartier de V)
 - **Entraînement** → `−Y population` (permanent jusqu'à mort de l'unité).
 - **Destruction** → `+X population` (libérée).
 - **Mort d'une unité** → `+Y population` libérée **immédiatement à la résolution du combat** (pas au retour de l'expédition). Côté attaquant, la pop des morts est rendue dès l'event `battle.resolved` ; les survivants gardent leur pop consommée jusqu'à la mort ou la dissolution.
+- **Porteurs de caravane** → `−ceil(volume / CARRY_PER_PORTER)` population du village expéditeur pendant l'aller-retour, puis libération au retour. Cette population n'est pas convertie en unité et n'apparaît jamais dans `UnitInventory`.
 
 > 💡 Friction offensive : envoyer une armée en suicide ne coûte que les ressources et le temps de re-recrutement — la pop revient. C'est un choix design assumé (modèle Tribal Wars / Kingsage), aligné avec l'idée que la population représente le **stock instantané** de citoyens disponibles, pas un coût permanent par bataille.
 
+### Caravane de ressources entre ses propres villages
+
+Une caravane transfère bois, pierre et fer entre deux villages du même joueur.
+
+| Élément                | Règle                                                                                                                                                                                     |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Cible**              | Village B possédé par le même joueur que le village expéditeur A. Un village non possédé est refusé.                                                                                      |
+| **Volume**             | Le joueur choisit les ressources transportées ; `porteurs = ceil(volume total / CARRY_PER_PORTER)`.                                                                                       |
+| **Capacité caravane**  | Par ressource, A peut avoir au maximum `20%` de la capacité de son Entrepôt en caravanes actuellement à l'aller. Exemple Entrepôt 10 : `17 400` bois, `17 400` pierre, `17 400` fer.      |
+| **Population**         | Les porteurs consomment temporairement la population libre de A. Si A n'a pas assez de population libre, l'action est refusée sans débit.                                                 |
+| **Stock expéditeur**   | Les ressources quittent A au départ. Aucune couronne n'est débitée.                                                                                                                       |
+| **Stock destinataire** | À l'arrivée, les ressources sont créditées dans B jusqu'à la limite de son Entrepôt (`getWarehouseStorageLimit`). L'excédent est perdu, déterministiquement, et n'est crédité nulle part. |
+| **Rappel**             | Possible pendant l'aller. Les ressources reviennent intégralement à A au retour ; B ne reçoit rien.                                                                                       |
+
+Invariant d'équilibrage : la caravane lève un gate **ressources** entre villages possédés, mais jamais le gate **temps de construction**. Les files et durées de construction restent par village et intransférables, ce qui empêche un village nourricier unique de supprimer la progression locale de chaque village.
+
 ### Limites et contraintes
 
-| Règle | Impact stratégique |
-| --- | --- |
-| **Population finie** | Impossible de tout construire ET d'entraîner une armée massive |
-| **Choix exclusif** | "Bâtiments ?", "Armée ?", ou "Mélange ?" → chaque joueur décide son style |
-| **Coût de l'erreur** | Mal équilibrer = village faible en offensif OU en ressources |
+| Règle                | Impact stratégique                                                        |
+| -------------------- | ------------------------------------------------------------------------- |
+| **Population finie** | Impossible de tout construire ET d'entraîner une armée massive            |
+| **Choix exclusif**   | "Bâtiments ?", "Armée ?", ou "Mélange ?" → chaque joueur décide son style |
+| **Coût de l'erreur** | Mal équilibrer = village faible en offensif OU en ressources              |
 
 ### Stratégies de gestion
 
@@ -92,12 +109,12 @@ Sommée sur **tous les villages possédés** par le joueur. Implémenté dans `p
 
 Calibrage cible : un Seigneur (5 000 couronnes, cf. [`10-conquest.md` § Coût de recrutement](./10-conquest.md#coût-de-recrutement-du-seigneur)) doit représenter ~18 h de revenu pour un joueur **mid-game** qui vient de construire sa Salle du Trône.
 
-| Phase | Puissance bât. typique | Revenu | Temps pour 5 000 cour. (Seigneur) |
-| --- | ---: | ---: | --- |
-| Early game (Château 2-3) | ~360 | ~72 / h | ~3 jours (Seigneur inaccessible — Château 6 requis) |
-| **Mid game (Château 6, Trône frais)** | **~1 400** | **~280 / h** | **~18 h** ← **cible de calage** |
-| Late game (Château 10, 1 village max) | ~2 600 | ~520 / h | ~10 h |
-| Late game (3 villages max) | ~7 900 | ~1 580 / h | ~3 h |
+| Phase                                 | Puissance bât. typique |       Revenu | Temps pour 5 000 cour. (Seigneur)                   |
+| ------------------------------------- | ---------------------: | -----------: | --------------------------------------------------- |
+| Early game (Château 2-3)              |                   ~360 |      ~72 / h | ~3 jours (Seigneur inaccessible — Château 6 requis) |
+| **Mid game (Château 6, Trône frais)** |             **~1 400** | **~280 / h** | **~18 h** ← **cible de calage**                     |
+| Late game (Château 10, 1 village max) |                 ~2 600 |     ~520 / h | ~10 h                                               |
+| Late game (3 villages max)            |                 ~7 900 |   ~1 580 / h | ~3 h                                                |
 
 > 💡 La rapidité en late-game est volontaire : un joueur multi-village doit pouvoir alimenter l'expansion en Seigneurs successifs.
 
@@ -112,12 +129,12 @@ Les classements ne sont pas une source de couronnes par défaut. Voir [`24-ranki
 
 ### Dépenses
 
-| Action | Coût (couronnes) |
-| --- | --- |
-| Changer stratégie de village | 50–100 |
-| Nommer un Seigneur | élevé — voir [`10-conquest.md` § Coût de recrutement](./10-conquest.md#coût-de-recrutement-du-seigneur) |
-| Activer un bonus temporaire (bénédiction) | 150 |
-| Déplacer un village / resettlement | 200 |
+| Action                                    | Coût (couronnes)                                                                                        |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Changer stratégie de village              | 50–100                                                                                                  |
+| Nommer un Seigneur                        | élevé — voir [`10-conquest.md` § Coût de recrutement](./10-conquest.md#coût-de-recrutement-du-seigneur) |
+| Activer un bonus temporaire (bénédiction) | 150                                                                                                     |
+| Déplacer un village / resettlement        | 200                                                                                                     |
 
 > 🎯 Rôle central : tout passe par cette monnaie → elle lie toutes les boucles.
 
@@ -150,12 +167,12 @@ Progression non linéaire, inspirée Clash of Clans, avec trois phases caractér
 
 Principe fondamental : **production passive comme baseline, pillage comme accélérateur majeur**.
 
-| Source | Impact |
-| --- | --- |
-| **Production passive** | Baseline, progression constante. Cap fixé par l'Entrepôt. Ne finance pas seule un rush confortable des L10. |
-| **Pillage actif** | Apporte idéalement un volume comparable à la production passive d'un joueur engagé, jusqu'à ~2× la vitesse d'un passif. |
-| **Raids barbares défensifs** | Bonus légers — récompenses si défense réussie. |
-| **Cartes quotidiennes** | Valeur modérée, à plafonner. Bonus de confort / rattrapage, pas troisième pilier économique. |
+| Source                       | Impact                                                                                                                  |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **Production passive**       | Baseline, progression constante. Cap fixé par l'Entrepôt. Ne finance pas seule un rush confortable des L10.             |
+| **Pillage actif**            | Apporte idéalement un volume comparable à la production passive d'un joueur engagé, jusqu'à ~2× la vitesse d'un passif. |
+| **Raids barbares défensifs** | Bonus légers — récompenses si défense réussie.                                                                          |
+| **Cartes quotidiennes**      | Valeur modérée, à plafonner. Bonus de confort / rattrapage, pas troisième pilier économique.                            |
 
 > 💡 Un joueur qui pille activement progresse **jusqu'à ~2× plus vite** qu'un joueur passif. En Standard MVP compressé, ce volume vient typiquement de 10–15 raids bien choisis sur des cibles riches, ou de davantage de micro-raids courts selon la zone.
 
@@ -164,6 +181,7 @@ Principe fondamental : **production passive comme baseline, pillage comme accél
 ## Courbes de progression
 
 > 📌 **Valeurs absolues dans `packages/shared/src/`** — source de vérité unique (cf. [AGENTS.md § docs](../../AGENTS.md)) :
+>
 > - **Coûts + temps d'upgrade** : `village/buildings.ts` → `BUILDING_DEFINITIONS[type].levels[n]` (`wood`, `stone`, `iron`, `population`, `timeSeconds`).
 > - **Production passive** des mines : `resources/production.ts` → `RESOURCE_PRODUCTION_PER_HOUR[level]`.
 > - **Capacité Entrepôt** : `resources/storage.ts` → `WAREHOUSE_STORAGE_LIMITS[level]`.
@@ -194,15 +212,15 @@ Détail des coûts exacts par niveau dans `BUILDING_DEFINITIONS`.
 
 Le niveau du Château détermine l'accès aux autres bâtiments, créant des objectifs intermédiaires :
 
-| Niveau Château | Déblocage |
-| --- | --- |
-| **1** | Mines (Bois, Pierre, Fer), Entrepôt, Quartier |
-| **2** | **Caserne** (militaire de base) |
-| **3** | **Tour de guet** (exploration carte) |
-| **4** | **Salle du Conseil** (choix de [style stratégique](./12-village-styles.md)) — _Hideout prévu post-MVP_ |
-| **5** | _(Wall prévu post-MVP — palier libre au MVP)_ |
-| **6** | **Salle du Trône** (entrée end-game — recrutement [Seigneur](./10-conquest.md#le-seigneur--recrutement-et-règles)) |
-| **7** | _(palier libre au MVP)_ |
+| Niveau Château | Déblocage                                                                                                          |
+| -------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **1**          | Mines (Bois, Pierre, Fer), Entrepôt, Quartier                                                                      |
+| **2**          | **Caserne** (militaire de base)                                                                                    |
+| **3**          | **Tour de guet** (exploration carte)                                                                               |
+| **4**          | **Salle du Conseil** (choix de [style stratégique](./12-village-styles.md)) — _Hideout prévu post-MVP_             |
+| **5**          | _(Wall prévu post-MVP — palier libre au MVP)_                                                                      |
+| **6**          | **Salle du Trône** (entrée end-game — recrutement [Seigneur](./10-conquest.md#le-seigneur--recrutement-et-règles)) |
+| **7**          | _(palier libre au MVP)_                                                                                            |
 
 ## Validation économique : rythme de progression
 
@@ -223,12 +241,12 @@ Numbers générés par `scripts/build-simulator.js`. Le simulateur ne modélise 
 
 ## Principes d'équilibrage
 
-| Principe | Application |
-| --- | --- |
-| **Aucune ressource plus rare** | Bois = Pierre = Fer (production identique) |
-| **Progression exponentielle** | Chaque niveau significativement plus long que le précédent |
-| **Pillage récompensé** | Joueur actif progresse 2× plus vite |
-| **Population = limiteur stratégique** | Trade-off permanent : armée vs infrastructure |
-| **Arrondis au multiple de 5** | Lisibilité et clarté des valeurs |
-| **Distribution spécialisée** | Chaque bâtiment consomme plus de sa ressource thématique |
-| **Paliers de déblocage** | Objectifs intermédiaires clairs (Château 2–7) |
+| Principe                              | Application                                                |
+| ------------------------------------- | ---------------------------------------------------------- |
+| **Aucune ressource plus rare**        | Bois = Pierre = Fer (production identique)                 |
+| **Progression exponentielle**         | Chaque niveau significativement plus long que le précédent |
+| **Pillage récompensé**                | Joueur actif progresse 2× plus vite                        |
+| **Population = limiteur stratégique** | Trade-off permanent : armée vs infrastructure              |
+| **Arrondis au multiple de 5**         | Lisibilité et clarté des valeurs                           |
+| **Distribution spécialisée**          | Chaque bâtiment consomme plus de sa ressource thématique   |
+| **Paliers de déblocage**              | Objectifs intermédiaires clairs (Château 2–7)              |

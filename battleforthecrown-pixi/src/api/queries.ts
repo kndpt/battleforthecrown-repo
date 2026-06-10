@@ -1,4 +1,4 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryOptions, useMutation, useQuery, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { z } from 'zod';
 import {
   PublicWorldsResponseSchema,
@@ -44,6 +44,7 @@ import {
 } from './cancelResponses';
 import type {
   Expedition,
+  CaravanPayload,
   GarrisonLine,
   RecallReinforcementPayload,
   ReinforcePayload,
@@ -672,7 +673,7 @@ export function useCancelTrainingMutation() {
 
 export interface ActiveExpeditionDto {
   id: string;
-  kind?: 'ATTACK' | 'REINFORCE' | 'SCOUT';
+  kind?: 'ATTACK' | 'REINFORCE' | 'SCOUT' | 'CARAVAN';
   attackerVillageId: string;
   attackerUserId: string;
   defenderVillageId?: string | null;
@@ -1094,6 +1095,27 @@ export function useInitiateReinforceMutation() {
       queryClient.invalidateQueries({ queryKey: queryKeys.openExpeditions(userId, worldId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.garrison(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.garrison(targetVillageId) });
+    },
+  });
+}
+
+export function useInitiateCaravanMutation(): UseMutationResult<Expedition, Error, CaravanPayload> {
+  const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
+  return useMutation<Expedition, Error, CaravanPayload>({
+    mutationFn: ({ villageId, targetVillageId, resources }) =>
+      apiClient.post<Expedition>('/combat/caravan', {
+        villageId,
+        targetVillageId,
+        resources,
+      }),
+    onSettled: (_data, _err, { villageId, targetVillageId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.resources(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.resources(targetVillageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.openExpeditions(userId, worldId) });
     },
   });
 }

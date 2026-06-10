@@ -1,9 +1,13 @@
 import {
+  CARAVAN_SPEED,
   calculateDistance,
   calculateTravelTime,
   findSlowestUnitSpeed,
+  getCaravanResourceCapacity,
   REFERENCE_SPEED,
 } from '@battleforthecrown/shared/logic';
+import { UNIT_STATS, UNIT_TYPES } from '@battleforthecrown/shared/army';
+import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
 
 describe('calculateDistance', () => {
   it('returns 0 for the same point', () => {
@@ -72,6 +76,19 @@ describe('calculateTravelTime', () => {
     const result = calculateTravelTime(1, 3, REFERENCE_SPEED);
     expect(result).toBe(Math.round(result));
   });
+
+  it('makes caravans slower than cavalry at the same distance', () => {
+    expect(CARAVAN_SPEED).toBe(20);
+    const distance = 10;
+    const caravan = calculateTravelTime(distance, 1, CARAVAN_SPEED);
+    const cavalry = calculateTravelTime(
+      distance,
+      1,
+      UNIT_STATS[UNIT_TYPES.CAVALRY].speed,
+    );
+
+    expect(caravan).toBeGreaterThan(cavalry);
+  });
 });
 
 describe('findSlowestUnitSpeed', () => {
@@ -112,5 +129,20 @@ describe('findSlowestUnitSpeed', () => {
     const stats = { ARCHER: { speed: 18 } };
     // CAVALRY selected but not in statsMap — only ARCHER counts
     expect(findSlowestUnitSpeed({ CAVALRY: 5, ARCHER: 2 }, stats)).toBe(18);
+  });
+});
+
+describe('getCaravanResourceCapacity', () => {
+  it('caps each resource at 20% of the origin warehouse capacity', () => {
+    expect(getCaravanResourceCapacity(getWarehouseStorageLimit(10))).toEqual({
+      wood: 17_400,
+      stone: 17_400,
+      iron: 17_400,
+    });
+    expect(getCaravanResourceCapacity(getWarehouseStorageLimit(9))).toEqual({
+      wood: 11_600,
+      stone: 11_600,
+      iron: 11_600,
+    });
   });
 });
