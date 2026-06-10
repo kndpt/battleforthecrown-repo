@@ -1,5 +1,39 @@
 # Todo
 
+## 2026-06-10 — Blocage clics `/game`
+
+- [x] Identifier l'élément invisible qui intercepte les clics sur `/game`.
+- [x] Corriger le scope de l'overlay sans impacter `world`, `messages`, `army`.
+- [x] Vérifier par inspection DOM/tests ciblés.
+
+### Review en cours
+
+- Symptôme Kelvin : sur `/game` uniquement, les composants ne sont plus cliquables, comme si une couche invisible était au-dessus du jeu.
+- Diagnostic : avec un compte sans tutoriel, aucun overlay global permanent n'était détecté ; `elementFromPoint` pointait bien les cartes bâtiments et un clic ouvrait la modale. Avec un compte affichant le tutoriel, Kelvin confirme que `/game` reste interactif.
+- Correction liée : l'animation du floating tutoriel donnait une impression de lag car le `transform` restait transitionné pendant le drag.
+- Ajustement : drag en `duration-0`, pulse tap raccourci et scale/rotation/ombre réduits.
+- Correction feedback Kelvin : suppression des ronds/halos animés autour du floating ; feedback réduit au bouton lui-même avec pulse 180ms et ombre sobre.
+- Vérifications : `rtk yarn workspace battleforthecrown-pixi test OnboardingFab.test.tsx` passé ; `rtk yarn workspace battleforthecrown-pixi type-check` passé ; `rtk yarn static-check` passé.
+
+## 2026-06-10 — Floating tutoriel déplaçable
+
+- [x] Relire le composant `OnboardingFab` et ses tests ciblés.
+- [x] Ajouter une sélection immédiate au tap/pointer down.
+- [x] Permettre le déplacement sans long tap, avec feedback visuel pendant le drag.
+- [x] Préserver l'ouverture de la modale quand il n'y a pas de vrai déplacement.
+- [x] Lancer les tests frontend ciblés et documenter la review.
+
+### Review en cours
+
+- Demande : rendre le tutoriel flottant sélectionnable et déplaçable avec un tap simple, sans long tap, en ajoutant une animation au tap et un effet visuel pendant le déplacement.
+- Scope retenu : composant partagé `OnboardingFab`, sans modifier la logique backend/onboarding ni les écrans consommateurs.
+- Implémentation : pointer down sélectionne immédiatement le floating, pointer move démarre le déplacement dès un seuil minimal, la position est bornée au viewport et un drag supprime le click d'ouverture post-relâchement.
+- Feedback visuel : pulse de sélection au tap, halo animé + scale/rotation/ombre pendant le déplacement, avec support `prefers-reduced-motion`.
+- Tests ciblés : `rtk yarn workspace battleforthecrown-pixi test OnboardingFab.test.tsx` passé, 1 fichier / 6 tests.
+- Vérification types : `rtk yarn workspace battleforthecrown-pixi type-check` passé.
+- Vérification statique : `rtk yarn static-check` passé.
+- QA preview hors IG : Vite `http://127.0.0.1:5174/design-system`, drag du bouton `Former la milice` observé de `(469,126)` vers `(544,94)`, click simple après déplacement ouvre toujours la modale, console sans erreur.
+
 ## 2026-06-09 — Spec gameplay classements
 
 - [x] Créer une doc gameplay dédiée aux classements puissance / assaut / rempart.

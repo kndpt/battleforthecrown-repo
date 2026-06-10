@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
 
@@ -35,6 +36,55 @@ export interface OnboardingFabProps {
 
 function buildPayload(props: Pick<OnboardingFabProps, 'step' | 'title' | 'total'>) {
   return { step: props.step, title: props.title, total: props.total };
+}
+
+interface DragOffset {
+  x: number;
+  y: number;
+}
+
+interface FloatingDragState {
+  baseLeft: number;
+  baseTop: number;
+  height: number;
+  moved: boolean;
+  pointerId: number;
+  startClientX: number;
+  startClientY: number;
+  startOffsetX: number;
+  startOffsetY: number;
+  width: number;
+}
+
+const FLOATING_EDGE_GAP = 8;
+const DRAG_START_THRESHOLD = 2;
+const DRAG_CLICK_SUPPRESSION_MS = 200;
+const SELECT_FEEDBACK_MS = 180;
+
+function clamp(value: number, min: number, max: number) {
+  const lower = Math.min(min, max);
+  const upper = Math.max(min, max);
+  return Math.min(Math.max(value, lower), upper);
+}
+
+function clampFloatingOffset(
+  offset: DragOffset,
+  dragState: FloatingDragState,
+): DragOffset {
+  if (typeof window === 'undefined') return offset;
+
+  return {
+    x: clamp(
+      offset.x,
+      FLOATING_EDGE_GAP - dragState.baseLeft,
+      window.innerWidth - FLOATING_EDGE_GAP - dragState.baseLeft - dragState.width,
+    ),
+    y: clamp(
+      offset.y,
+      FLOATING_EDGE_GAP - dragState.baseTop,
+      window.innerHeight - FLOATING_EDGE_GAP - dragState.baseTop - dragState.height,
+    ),
+  };
 }
 
 function TutoRing({
@@ -217,36 +267,183 @@ export function OnboardingFab({
 }: OnboardingFabProps) {
   const payload = buildPayload({ step, title, total });
   const isDisabled = disabled || loading;
+  const [floatingOffset, setFloatingOffset] = useState<DragOffset>({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [isSelected, setIsSelected] = useState(false);
+  const dragStateRef = useRef<FloatingDragState | null>(null);
+  const selectedTimeoutRef = useRef<number | null>(null);
+  const suppressClickRef = useRef(false);
+  const suppressClickTimeoutRef = useRef<number | null>(null);
   const rootPlacement =
     placement === 'viewport'
       ? 'fixed bottom-[calc(var(--bftc-bottom-nav-height,72px)+var(--bftc-bottom-nav-gap,18px))] left-[6px]'
       : 'absolute bottom-[calc(var(--bftc-bottom-nav-height,58px)+var(--bftc-bottom-nav-gap,18px))] left-[6px]';
   const overlayPlacement = placement === 'viewport' ? 'fixed' : 'absolute';
+  const floatingStyle = {
+    '--bftc-onboarding-drag-x': `${floatingOffset.x}px`,
+    '--bftc-onboarding-drag-y': `${floatingOffset.y}px`,
+  } as CSSProperties;
+
+  useEffect(() => {
+    return () => {
+      if (selectedTimeoutRef.current) {
+        window.clearTimeout(selectedTimeoutRef.current);
+      }
+      if (suppressClickTimeoutRef.current) {
+        window.clearTimeout(suppressClickTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  function keepSelectedBriefly() {
+    setIsSelected(true);
+    if (selectedTimeoutRef.current) {
+      window.clearTimeout(selectedTimeoutRef.current);
+    }
+    selectedTimeoutRef.current = window.setTimeout(() => {
+      setIsSelected(false);
+      selectedTimeoutRef.current = null;
+    }, SELECT_FEEDBACK_MS);
+  }
+
+  function releaseFloatingPointer(event: PointerEvent<HTMLButtonElement>) {
+    if (
+      typeof event.currentTarget.hasPointerCapture === 'function' &&
+      event.currentTarget.hasPointerCapture(event.pointerId)
+    ) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }
+
+  function scheduleClickSuppressionReset() {
+    if (suppressClickTimeoutRef.current) {
+      window.clearTimeout(suppressClickTimeoutRef.current);
+    }
+    suppressClickTimeoutRef.current = window.setTimeout(() => {
+      suppressClickRef.current = false;
+      suppressClickTimeoutRef.current = null;
+    }, DRAG_CLICK_SUPPRESSION_MS);
+  }
+
+  function handleFloatingPointerDown(event: PointerEvent<HTMLButtonElement>) {
+    if (isDisabled || (event.pointerType === 'mouse' && event.button !== 0)) {
+      return;
+    }
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    if (typeof event.currentTarget.setPointerCapture === 'function') {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+    keepSelectedBriefly();
+    dragStateRef.current = {
+      baseLeft: rect.left - floatingOffset.x,
+      baseTop: rect.top - floatingOffset.y,
+      height: rect.height,
+      moved: false,
+      pointerId: event.pointerId,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      startOffsetX: floatingOffset.x,
+      startOffsetY: floatingOffset.y,
+      width: rect.width,
+    };
+  }
+
+  function handleFloatingPointerMove(event: PointerEvent<HTMLButtonElement>) {
+    const dragState = dragStateRef.current;
+    if (!dragState || dragState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const deltaX = event.clientX - dragState.startClientX;
+    const deltaY = event.clientY - dragState.startClientY;
+    const distance = Math.hypot(deltaX, deltaY);
+    if (distance <= DRAG_START_THRESHOLD && !dragState.moved) {
+      return;
+    }
+
+    dragState.moved = true;
+    setIsDragging(true);
+    setIsSelected(true);
+    event.preventDefault();
+    setFloatingOffset(
+      clampFloatingOffset(
+        {
+          x: dragState.startOffsetX + deltaX,
+          y: dragState.startOffsetY + deltaY,
+        },
+        dragState,
+      ),
+    );
+  }
+
+  function handleFloatingPointerUp(event: PointerEvent<HTMLButtonElement>) {
+    const dragState = dragStateRef.current;
+    if (!dragState || dragState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    releaseFloatingPointer(event);
+    dragStateRef.current = null;
+    setIsDragging(false);
+    keepSelectedBriefly();
+
+    if (dragState.moved) {
+      suppressClickRef.current = true;
+      event.preventDefault();
+      scheduleClickSuppressionReset();
+    }
+  }
+
+  function handleFloatingPointerCancel(event: PointerEvent<HTMLButtonElement>) {
+    const dragState = dragStateRef.current;
+    if (!dragState || dragState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    releaseFloatingPointer(event);
+    dragStateRef.current = null;
+    setIsDragging(false);
+    keepSelectedBriefly();
+  }
 
   return (
     <>
       <button
         className={cn(
-          'pointer-events-auto relative z-30 inline-flex w-[min(212px,calc(100vw-186px))] cursor-pointer items-center gap-1.5 overflow-visible rounded-full border-2 border-[#3c2619] bg-[linear-gradient(to_bottom,rgba(254,249,240,.84),rgba(232,212,168,.78))] py-0.5 pl-0.5 pr-2.5 text-left shadow-[0_0_0_1px_rgba(212,160,23,.88),inset_0_1px_0_rgba(255,255,255,.48),0_3px_8px_rgba(0,0,0,.32)] backdrop-blur-[2px] transition-[filter,transform] duration-[150ms] hover:brightness-[1.04] active:translate-y-px disabled:cursor-not-allowed disabled:brightness-[.9] disabled:saturate-[.7]',
+          'pointer-events-auto relative z-30 inline-flex w-[min(212px,calc(100vw-186px))] touch-none select-none items-center gap-1.5 overflow-visible rounded-full border-2 border-[#3c2619] bg-[linear-gradient(to_bottom,rgba(254,249,240,.84),rgba(232,212,168,.78))] py-0.5 pl-0.5 pr-2.5 text-left shadow-[0_0_0_1px_rgba(212,160,23,.88),inset_0_1px_0_rgba(255,255,255,.48),0_3px_8px_rgba(0,0,0,.32)] backdrop-blur-[2px] translate-x-[var(--bftc-onboarding-drag-x)] translate-y-[var(--bftc-onboarding-drag-y)] transition-[filter,transform,box-shadow] duration-[90ms] hover:brightness-[1.04] disabled:cursor-not-allowed disabled:brightness-[.9] disabled:saturate-[.7]',
+          isDisabled ? 'cursor-not-allowed' : isDragging ? 'cursor-grabbing' : 'cursor-grab',
+          isDragging &&
+            'scale-[1.02] -rotate-[0.35deg] brightness-[1.05] duration-0 shadow-[0_0_0_1px_rgba(255,225,128,.92),0_9px_18px_rgba(0,0,0,.36),inset_0_1px_0_rgba(255,255,255,.58)]',
+          isSelected &&
+            !isDragging &&
+            'animate-[bftcOnboardingSelectPulse_180ms_cubic-bezier(.2,.9,.2,1)_1] shadow-[0_0_0_1px_rgba(255,225,128,.9),inset_0_1px_0_rgba(255,255,255,.58),0_5px_11px_rgba(0,0,0,.34)]',
           isAdvancing &&
-            'animate-[bftcOnboardingAdvancePulse_900ms_ease-out_1] shadow-[0_0_0_1px_rgba(212,160,23,.95),0_0_0_5px_rgba(244,208,63,.20),inset_0_1px_0_rgba(255,255,255,.58),0_6px_13px_rgba(0,0,0,.38)]',
+            'animate-[bftcOnboardingAdvancePulse_520ms_ease-out_1] shadow-[0_0_0_1px_rgba(212,160,23,.95),inset_0_1px_0_rgba(255,255,255,.58),0_6px_13px_rgba(0,0,0,.38)]',
           rootPlacement,
           className,
         )}
         data-advancing={isAdvancing ? 'true' : undefined}
+        data-dragging={isDragging ? 'true' : undefined}
+        data-selected={isSelected ? 'true' : undefined}
         disabled={isDisabled}
-        onClick={() => onOpenChange(true)}
+        onClick={(event) => {
+          if (suppressClickRef.current) {
+            suppressClickRef.current = false;
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+          }
+          onOpenChange(true);
+        }}
+        onPointerCancel={handleFloatingPointerCancel}
+        onPointerDown={handleFloatingPointerDown}
+        onPointerMove={handleFloatingPointerMove}
+        onPointerUp={handleFloatingPointerUp}
+        style={floatingStyle}
         title={title}
         type="button"
       >
-        <span
-          aria-hidden="true"
-          className={cn(
-            'pointer-events-none absolute inset-[-5px] rounded-full opacity-0',
-            isAdvancing &&
-              'animate-[bftcOnboardingAdvanceHalo_900ms_ease-out_1] bg-[radial-gradient(circle_at_16%_50%,rgba(255,244,196,.74)_0_8%,transparent_9%),radial-gradient(circle_at_44%_4%,rgba(255,220,90,.62)_0_6%,transparent_7%),radial-gradient(circle_at_83%_42%,rgba(255,235,148,.58)_0_7%,transparent_8%)]',
-          )}
-        />
         <TutoOrb size={36} step={step} total={total} />
         <span className="flex min-w-0 flex-col gap-px">
           <span className="font-game text-[7.5px] font-black uppercase tracking-[.26em] text-[#92400e] [text-shadow:0_1px_0_rgba(255,255,255,.55)]">
@@ -334,24 +531,45 @@ export function OnboardingFab({
       ) : null}
 
       <style>{`
-        @keyframes bftcOnboardingAdvancePulse {
-          0% { transform: translateY(0) scale(1); filter: brightness(1); }
-          28% { transform: translateY(-4px) scale(1.035); filter: brightness(1.12); }
-          58% { transform: translateY(1px) scale(.995); filter: brightness(1.04); }
-          100% { transform: translateY(0) scale(1); filter: brightness(1); }
+        @keyframes bftcOnboardingSelectPulse {
+          0% {
+            transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) scale(1);
+            filter: brightness(1);
+          }
+          42% {
+            transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) scale(1.02) rotate(-0.35deg);
+            filter: brightness(1.06);
+          }
+          100% {
+            transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) scale(1);
+            filter: brightness(1);
+          }
         }
 
-        @keyframes bftcOnboardingAdvanceHalo {
-          0% { opacity: 0; transform: scale(.88); }
-          24% { opacity: .95; transform: scale(1.04); }
-          100% { opacity: 0; transform: scale(1.22); }
+        @keyframes bftcOnboardingAdvancePulse {
+          0% {
+            transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) translateY(0) scale(1);
+            filter: brightness(1);
+          }
+          28% {
+            transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) translateY(-2px) scale(1.025);
+            filter: brightness(1.08);
+          }
+          58% {
+            transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) translateY(1px) scale(.995);
+            filter: brightness(1.04);
+          }
+          100% {
+            transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) translateY(0) scale(1);
+            filter: brightness(1);
+          }
         }
 
         @media (prefers-reduced-motion: reduce) {
           [data-advancing='true'] {
             animation: none !important;
           }
-          [data-advancing='true'] > span[aria-hidden='true'] {
+          [data-selected='true'] {
             animation: none !important;
           }
         }
