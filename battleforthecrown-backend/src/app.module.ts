@@ -20,6 +20,7 @@ import { CombatModule } from './modules/combat/combat.module';
 import { CrownsModule } from './modules/crowns/crowns.module';
 import { RetentionModule } from './modules/retention/retention.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
+import { RankingsModule } from './modules/rankings/rankings.module';
 import { WorkersModule } from './workers/workers.module';
 import { HealthController } from './health.controller';
 import { RequestLoggerMiddleware } from './common/request-logger.middleware';
@@ -68,6 +69,7 @@ import { RequestLoggerMiddleware } from './common/request-logger.middleware';
     CrownsModule,
     RetentionModule,
     OnboardingModule,
+    RankingsModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],

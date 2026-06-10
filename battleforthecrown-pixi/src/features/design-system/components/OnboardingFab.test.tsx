@@ -53,6 +53,68 @@ describe('OnboardingFab', () => {
     );
   });
 
+  it('selects the floating tutorial as soon as it is tapped', () => {
+    renderFab();
+
+    const pill = screen.getByRole('button', { name: /Construire la Caserne/i });
+    fireEvent.pointerDown(pill, {
+      clientX: 20,
+      clientY: 620,
+      pointerId: 1,
+      pointerType: 'touch',
+    });
+
+    expect(pill).toHaveAttribute('data-selected', 'true');
+  });
+
+  it('moves the floating tutorial immediately and does not open the modal after a drag', () => {
+    const onOpenChange = vi.fn();
+    const rect = {
+      bottom: 642,
+      height: 42,
+      left: 6,
+      right: 206,
+      top: 600,
+      width: 200,
+      x: 6,
+      y: 600,
+      toJSON: () => undefined,
+    } as DOMRect;
+    const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(rect);
+
+    renderFab({ onOpenChange });
+
+    const pill = screen.getByRole('button', { name: /Construire la Caserne/i });
+    fireEvent.pointerDown(pill, {
+      clientX: 20,
+      clientY: 620,
+      pointerId: 1,
+      pointerType: 'touch',
+    });
+    fireEvent.pointerMove(pill, {
+      clientX: 56,
+      clientY: 594,
+      pointerId: 1,
+      pointerType: 'touch',
+    });
+
+    expect(pill).toHaveAttribute('data-dragging', 'true');
+    expect(pill).toHaveClass('duration-0');
+    expect(pill.style.getPropertyValue('--bftc-onboarding-drag-x')).toBe('36px');
+    expect(pill.style.getPropertyValue('--bftc-onboarding-drag-y')).toBe('-26px');
+
+    fireEvent.pointerUp(pill, {
+      clientX: 56,
+      clientY: 594,
+      pointerId: 1,
+      pointerType: 'touch',
+    });
+    fireEvent.click(pill);
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+    rectSpy.mockRestore();
+  });
+
   it('renders the open modal with the provided image and action payloads', () => {
     const onPrimaryAction = vi.fn();
     const onSecondaryAction = vi.fn();

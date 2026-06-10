@@ -32,6 +32,10 @@
       "types": "./dist/power/index.d.ts",
       "default": "./dist/power/index.js"
     },
+    "./rankings": {
+      "types": "./dist/rankings/index.d.ts",
+      "default": "./dist/rankings/index.js"
+    },
     "./world": {
       "types": "./dist/world/index.d.ts",
       "default": "./dist/world/index.js"

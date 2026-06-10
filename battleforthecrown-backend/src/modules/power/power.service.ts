@@ -8,6 +8,10 @@ import {
 
 type LeaderboardType = 'total' | 'kingdom' | 'army';
 type UnitQuantityMap = Record<string, number>;
+type PrismaPowerReader = Pick<
+  PrismaService,
+  'village' | 'unitInventory' | 'garrison' | 'expedition'
+>;
 
 @Injectable()
 export class PowerService {
@@ -48,36 +52,56 @@ export class PowerService {
 
   async getLeaderboard(type: LeaderboardType, limit = 20, worldId: string) {
     const villages = await this.prisma.village.findMany({
-      where: { worldId },
-      include: { buildings: true, user: true },
+      where: { worldId, userId: { not: null } },
+      include: { buildings: true },
     });
     const armyPowerByVillage = await this.getArmyPowerByOriginVillage(
       villages.map((village) => village.id),
     );
+    const byUser = new Map<
+      string,
+      {
+        userId: string;
+        playerName: string;
+        total: number;
+        building: number;
+        army: number;
+        villageCount: number;
+      }
+    >();
 
-    const computed = villages
-      .filter((village) => village.user !== null) // Exclude barbarian villages
-      .map((village) => {
-        const scores = this.computeScores(
-          village,
-          armyPowerByVillage.get(village.id) ?? 0,
-        );
-        return {
-          villageId: village.id,
-          villageName: village.name,
-          userId: village.userId!,
-          email: village.user!.email,
-          ...scores,
-        };
-      });
+    for (const village of villages) {
+      if (!village.userId) continue;
+      const scores = this.computeScores(
+        village,
+        armyPowerByVillage.get(village.id) ?? 0,
+      );
+      const current = byUser.get(village.userId) ?? {
+        userId: village.userId,
+        playerName: this.toPublicPlayerName(village.userId),
+        total: 0,
+        building: 0,
+        army: 0,
+        villageCount: 0,
+      };
+      current.total += scores.total;
+      current.building += scores.building;
+      current.army += scores.army;
+      current.villageCount += 1;
+      byUser.set(village.userId, current);
+    }
 
-    const sorted = computed.sort((a, b) => {
+    const sorted = [...byUser.values()].sort((a, b) => {
       if (type === 'kingdom') return b.building - a.building;
       if (type === 'army') return b.army - a.army;
       return b.total - a.total;
     });
 
     return sorted.slice(0, limit);
+  }
+
+  private toPublicPlayerName(userId: string): string {
+    return `Joueur ${userId.slice(-6)}`;
   }
 
   private computeScores(
@@ -100,8 +124,21 @@ export class PowerService {
     return this.getKingdomPowerForUser(userId, worldId);
   }
 
-  private async getKingdomPowerForUser(userId: string, worldId: string) {
-    const villages = await this.prisma.village.findMany({
+  async getKingdomPowerValue(
+    userId: string,
+    worldId: string,
+    reader: PrismaPowerReader = this.prisma,
+  ): Promise<number> {
+    const kingdom = await this.getKingdomPowerForUser(userId, worldId, reader);
+    return kingdom.kingdomPower;
+  }
+
+  private async getKingdomPowerForUser(
+    userId: string,
+    worldId: string,
+    reader: PrismaPowerReader = this.prisma,
+  ) {
+    const villages = await reader.village.findMany({
       where: { userId, worldId },
       include: { buildings: true },
     });
@@ -121,6 +158,7 @@ export class PowerService {
     let totalArmy = 0;
     const armyPowerByVillage = await this.getArmyPowerByOriginVillage(
       villages.map((village) => village.id),
+      reader,
     );
 
     const villagePowers = villages.map((village) => {
@@ -201,19 +239,20 @@ export class PowerService {
 
   private async getArmyPowerByOriginVillage(
     villageIds: string[],
+    reader: PrismaPowerReader = this.prisma,
   ): Promise<Map<string, number>> {
     const uniqueVillageIds = [...new Set(villageIds)];
     const totals = new Map(uniqueVillageIds.map((id) => [id, 0]));
     if (uniqueVillageIds.length === 0) return totals;
 
     const [inventories, garrisons, expeditions] = await Promise.all([
-      this.prisma.unitInventory.findMany({
+      reader.unitInventory.findMany({
         where: { villageId: { in: uniqueVillageIds } },
       }),
-      this.prisma.garrison.findMany({
+      reader.garrison.findMany({
         where: { originVillageId: { in: uniqueVillageIds } },
       }),
-      this.prisma.expedition.findMany({
+      reader.expedition.findMany({
         where: {
           status: { in: ['EN_ROUTE', 'RETURNING'] },
           OR: [

@@ -14,6 +14,8 @@ export interface SegmentedControlOption {
 
 export interface SegmentedControlProps {
   ariaLabel: string;
+  /** Stretch to full width with equal-width buttons. */
+  block?: boolean;
   className?: string;
   onChange: (value: string) => void;
   options: SegmentedControlOption[];
@@ -30,6 +32,7 @@ const sizeClass: Record<SegmentedControlSize, string> = {
 
 export function SegmentedControl({
   ariaLabel,
+  block = false,
   className,
   onChange,
   options,
@@ -43,7 +46,8 @@ export function SegmentedControl({
     <div
       aria-label={ariaLabel}
       className={cn(
-        'inline-flex gap-[3px] rounded-[10px] border-2 p-[3px] shadow-[inset_0_1px_2px_rgba(0,0,0,.18)]',
+        'gap-[3px] rounded-[10px] border-2 p-[3px] shadow-[inset_0_1px_2px_rgba(0,0,0,.18)]',
+        block ? 'flex w-full' : 'inline-flex',
         dark ? 'border-[#0a0a0a] bg-[rgba(0,0,0,.4)]' : 'border-[#8b7355] bg-[rgba(0,0,0,.08)]',
         className,
       )}
@@ -57,6 +61,7 @@ export function SegmentedControl({
             className={cn(
               'inline-flex cursor-pointer appearance-none items-center gap-[5px] rounded-[7px] border-0 bg-transparent font-game font-bold',
               dark ? 'text-[#cdb88a]' : 'text-[#6d5838]',
+              block ? 'flex-1 justify-center' : '',
               sizeClass[size],
               active
                 ? dark

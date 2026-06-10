@@ -1,5 +1,58 @@
 # Todo
 
+## 2026-06-10 — Blocage clics `/game`
+
+- [x] Identifier l'élément invisible qui intercepte les clics sur `/game`.
+- [x] Corriger le scope de l'overlay sans impacter `world`, `messages`, `army`.
+- [x] Vérifier par inspection DOM/tests ciblés.
+
+### Review en cours
+
+- Symptôme Kelvin : sur `/game` uniquement, les composants ne sont plus cliquables, comme si une couche invisible était au-dessus du jeu.
+- Diagnostic : avec un compte sans tutoriel, aucun overlay global permanent n'était détecté ; `elementFromPoint` pointait bien les cartes bâtiments et un clic ouvrait la modale. Avec un compte affichant le tutoriel, Kelvin confirme que `/game` reste interactif.
+- Correction liée : l'animation du floating tutoriel donnait une impression de lag car le `transform` restait transitionné pendant le drag.
+- Ajustement : drag en `duration-0`, pulse tap raccourci et scale/rotation/ombre réduits.
+- Correction feedback Kelvin : suppression des ronds/halos animés autour du floating ; feedback réduit au bouton lui-même avec pulse 180ms et ombre sobre.
+- Vérifications : `rtk yarn workspace battleforthecrown-pixi test OnboardingFab.test.tsx` passé ; `rtk yarn workspace battleforthecrown-pixi type-check` passé ; `rtk yarn static-check` passé.
+
+## 2026-06-10 — Floating tutoriel déplaçable
+
+- [x] Relire le composant `OnboardingFab` et ses tests ciblés.
+- [x] Ajouter une sélection immédiate au tap/pointer down.
+- [x] Permettre le déplacement sans long tap, avec feedback visuel pendant le drag.
+- [x] Préserver l'ouverture de la modale quand il n'y a pas de vrai déplacement.
+- [x] Lancer les tests frontend ciblés et documenter la review.
+
+### Review en cours
+
+- Demande : rendre le tutoriel flottant sélectionnable et déplaçable avec un tap simple, sans long tap, en ajoutant une animation au tap et un effet visuel pendant le déplacement.
+- Scope retenu : composant partagé `OnboardingFab`, sans modifier la logique backend/onboarding ni les écrans consommateurs.
+- Implémentation : pointer down sélectionne immédiatement le floating, pointer move démarre le déplacement dès un seuil minimal, la position est bornée au viewport et un drag supprime le click d'ouverture post-relâchement.
+- Feedback visuel : pulse de sélection au tap, halo animé + scale/rotation/ombre pendant le déplacement, avec support `prefers-reduced-motion`.
+- Tests ciblés : `rtk yarn workspace battleforthecrown-pixi test OnboardingFab.test.tsx` passé, 1 fichier / 6 tests.
+- Vérification types : `rtk yarn workspace battleforthecrown-pixi type-check` passé.
+- Vérification statique : `rtk yarn static-check` passé.
+- QA preview hors IG : Vite `http://127.0.0.1:5174/design-system`, drag du bouton `Former la milice` observé de `(469,126)` vers `(544,94)`, click simple après déplacement ouvre toujours la modale, console sans erreur.
+## 2026-06-10 — Reprise PR run 051 classements
+
+- [x] Reprendre le diff local du run 051 et créer la branche dédiée.
+- [x] Vérifier/commit le diff local sans embarquer de hors-scope.
+- [x] Push la branche et retrouver/créer la PR ready for review.
+- [x] Lire tous les threads/commentaires non résolus de la PR.
+- [x] Traiter les commentaires pertinents au bon endroit, résoudre les non pertinents.
+- [x] Relancer les vérifications adaptées.
+- [ ] Confirmer qu'il ne reste plus aucun commentaire PR non résolu.
+
+### Review en cours
+
+- Demande : finaliser localement le run 051, pousser la PR, puis traiter tous les commentaires GitHub restants.
+- État initial local : diff du run présent non commité sur `main`; remote `origin` disponible; branche dédiée créée `run/051-feature-rankings-glory`.
+- PR : #70 `run(051): add glory rankings leaderboards`, branche `run/051-feature-rankings-glory`.
+- Review CodeRabbit traitée localement : ledger append-only sans cascade report, snapshots de puissance avant mutation d'armée, refus de fallback silencieux quand un snapshot de puissance manque, agrégation Gloire d'Assaut par owner défenseur avant écriture unique, remap occupation limité aux villages barbares/sans owner, exclusion explicite des combats barbares, anonymisation des noms publics de classement, event Outbox `rankings.changed`, validation Zod runtime côté Pixi, tests helpers UI, doc `period`, suppression du template final du run archivé.
+- Vérifications : `rtk yarn static-check` passé ; `rtk yarn workspace battleforthecrown-backend test -- rankings-formulas units-catalog combat-resolution travel-time world-config` passé (5 suites / 84 tests) ; `rtk yarn workspace battleforthecrown-pixi test` passé (68 fichiers / 380 tests, warning jsdom canvas connu) ; `rtk git diff --check` passé.
+- Smoke local : `rtk yarn workspace battleforthecrown-backend test:smoke:preflight` bloqué par absence de Postgres sur `localhost:5432`; tentative `cd battleforthecrown-backend && rtk docker compose up -d postgres` bloquée par socket OrbStack absent.
+- QA IG restante : vérifier dans le jeu que l'écran `Rangs` se recharge après un combat PvP et que les scores affichés restent lisibles sur mobile.
+
 ## 2026-06-09 — Spec gameplay classements
 
 - [x] Créer une doc gameplay dédiée aux classements puissance / assaut / rempart.

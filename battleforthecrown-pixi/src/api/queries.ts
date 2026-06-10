@@ -63,6 +63,10 @@ import type {
   ScoutReportResponse,
 } from '@battleforthecrown/shared/combat';
 import type { OnboardingSummaryDto } from '@battleforthecrown/shared/onboarding';
+import {
+  RankingsSummaryResponseSchema,
+  type RankingsSummaryResponse,
+} from '@battleforthecrown/shared/rankings';
 
 const CaravanReportResourcesSchema = z.strictObject({
   wood: z.number(),
@@ -131,6 +135,7 @@ export const queryKeys = {
   worldConfig: (worldId: string | null) => ['world-config', worldId] as const,
   retentionSummary: (userId: string | null, worldId: string | null) => ['retention', 'summary', userId, worldId] as const,
   onboardingSummary: (userId: string | null, worldId: string | null) => ['onboarding', 'summary', userId, worldId] as const,
+  rankingsSummary: (worldId: string | null) => ['rankings', 'summary', worldId] as const,
 };
 
 interface LoginInput {
@@ -560,6 +565,22 @@ export interface ArmyTrainingDto {
   timePerUnitMs: number;
   nextUnitEta: string;
   createdAt: string;
+}
+
+
+export function useRankingsSummaryQuery(worldId: string | null) {
+  return useQuery<RankingsSummaryResponse>({
+    queryKey: queryKeys.rankingsSummary(worldId),
+    queryFn: async () => {
+      if (!worldId) return Promise.resolve({ leaderboards: [] });
+      const response = await apiClient.get<unknown>('/rankings', {
+        query: { worldId },
+      });
+      return RankingsSummaryResponseSchema.parse(response);
+    },
+    enabled: Boolean(worldId),
+    staleTime: 30_000,
+  });
 }
 
 export function useArmyInventoryQuery(villageId: string | null) {

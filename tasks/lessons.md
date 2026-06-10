@@ -113,3 +113,4 @@
 - Réserver `/assets/army-power.png` à la puissance armée ; utiliser `/assets/power.png` pour une puissance totale royaume/village.
 - Les villageois disponibles appartiennent à la ligne méta du village actif ; ne pas les superposer à la barre bois/pierre/fer.
 - Quand on ajoute des skills/harness, optimiser aussi le contexte négatif : supprimer les doublons et garder les nouveaux bodies en protocole court plutôt qu'en procédure longue.
+- Pour un contrôle flottant draggable, éviter les halos/ronds décoratifs animés : ils donnent une impression de lag et n'aident pas l'interaction ; préférer un feedback direct sur le bouton.

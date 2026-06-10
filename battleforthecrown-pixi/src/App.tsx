@@ -26,6 +26,9 @@ const ArmyScreen = lazy(() =>
 const MessagesScreen = lazy(() =>
   import('@/features/combat/MessagesScreen').then((m) => ({ default: m.MessagesScreen })),
 );
+const RankingsScreen = lazy(() =>
+  import('@/features/rankings/RankingsScreen').then((m) => ({ default: m.RankingsScreen })),
+);
 const UiTestScreen = lazy(() =>
   import('@/features/ui-test/UiTestScreen').then((m) => ({ default: m.UiTestScreen })),
 );
@@ -83,6 +86,16 @@ function MessagesGuard() {
   );
 }
 
+function RankingsGuard() {
+  return (
+    <WorldSessionGate>
+      <Suspense fallback={<GameLoader />}>
+        <RankingsScreen />
+      </Suspense>
+    </WorldSessionGate>
+  );
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -118,6 +131,7 @@ export default function App() {
                 <Route path="/game/world" element={<WorldMapGuard />} />
                 <Route path="/game/army" element={<ArmyGuard />} />
                 <Route path="/game/messages" element={<MessagesGuard />} />
+                <Route path="/game/rankings" element={<RankingsGuard />} />
               </Route>
             </Route>
           </Route>

@@ -252,6 +252,16 @@ const WorldStatusChangedPayloadSchema = z.object({
   at: z.string().datetime(),
 });
 
+const RankingsChangedPayloadSchema = z.object({
+  worldId: z.string(),
+  signal: z.enum(["ASSAULT_GLORY", "RAMPART_GLORY"]),
+  scorerUserId: z.string(),
+  opponentUserId: z.string(),
+  points: z.number().int().positive(),
+  combatReportId: z.string(),
+  occurredAt: z.string().datetime(),
+});
+
 export const EVENT_PAYLOAD_SCHEMAS = {
   "building.completed": BuildingCompletedPayloadSchema,
   "unit.training.completed": UnitTrainingCompletedPayloadSchema,
@@ -282,6 +292,7 @@ export const EVENT_PAYLOAD_SCHEMAS = {
   "garrison.added": GarrisonAddedPayloadSchema,
   "resources.changed": ResourcesChangedPayloadSchema,
   "crowns.changed": CrownsChangedPayloadSchema,
+  "rankings.changed": RankingsChangedPayloadSchema,
   "world.status.changed": WorldStatusChangedPayloadSchema,
 } as const satisfies Record<EventKind, z.ZodType>;
 
