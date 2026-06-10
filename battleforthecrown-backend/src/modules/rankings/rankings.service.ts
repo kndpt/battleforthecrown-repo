@@ -173,7 +173,7 @@ export class RankingsService {
       entries: rows.map((row, index) => ({
         rank: index + 1,
         userId: row.userId,
-        playerName: row.email,
+        playerName: row.playerName,
         score: row.total,
         villageCount: row.villageCount,
       })),
@@ -198,12 +198,6 @@ export class RankingsService {
       orderBy: { _sum: { points: 'desc' } },
       take: limit,
     });
-    const users = await this.prisma.user.findMany({
-      where: { id: { in: grouped.map((row) => row.scorerUserId) } },
-      select: { id: true, email: true },
-    });
-    const emailById = new Map(users.map((user) => [user.id, user.email]));
-
     return {
       worldId,
       signal,
@@ -215,7 +209,7 @@ export class RankingsService {
       entries: grouped.map((row, index) => ({
         rank: index + 1,
         userId: row.scorerUserId,
-        playerName: emailById.get(row.scorerUserId) ?? row.scorerUserId,
+        playerName: this.toPublicPlayerName(row.scorerUserId),
         score: row._sum.points ?? 0,
       })),
     };
@@ -242,6 +236,10 @@ export class RankingsService {
 
   private toPairKey(left: string, right: string): string {
     return [left, right].sort().join(':');
+  }
+
+  private toPublicPlayerName(userId: string): string {
+    return `Joueur ${userId.slice(-6)}`;
   }
 
   private getWeeklyCutoff(): Date {

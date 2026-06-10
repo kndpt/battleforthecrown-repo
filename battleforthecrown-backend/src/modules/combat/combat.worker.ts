@@ -559,7 +559,7 @@ export class CombatWorker implements OnModuleInit {
       report,
     } = args;
     const attackerUserId = attackerVillage.userId;
-    if (!attackerUserId) {
+    if (!attackerUserId || expedition.targetKind === 'BARBARIAN_VILLAGE') {
       return;
     }
 
