@@ -165,6 +165,44 @@ export interface ReinforcementReturnedPayload {
   units: UnitMap;
 }
 
+export interface CaravanSentPayload {
+  expeditionId: string;
+  villageId: string;
+  targetVillageId: string;
+  targetX: number;
+  targetY: number;
+  resources: LootResources;
+  porters: number;
+  arrivalAt: string;
+}
+
+export interface CaravanArrivedPayload {
+  expeditionId: string;
+  villageId: string;
+  targetVillageId: string;
+  credited: LootResources;
+  lost: LootResources;
+  returnAt: string;
+}
+
+export interface CaravanRecalledPayload {
+  expeditionId: string;
+  villageId: string;
+  targetVillageId: string;
+  resources: LootResources;
+  porters: number;
+  returnAt: string;
+}
+
+export interface CaravanReturnedPayload {
+  expeditionId: string;
+  villageId: string;
+  targetVillageId: string;
+  resources: LootResources;
+  porters: number;
+  recalled: boolean;
+}
+
 export interface ExpeditionRecalledPayload {
   expeditionId: string;
   villageId: string;
@@ -242,6 +280,10 @@ export type OutboxEventPayload =
   | { kind: "reinforcement.sent"; payload: ReinforcementSentPayload }
   | { kind: "reinforcement.recalled"; payload: ReinforcementRecalledPayload }
   | { kind: "reinforcement.returned"; payload: ReinforcementReturnedPayload }
+  | { kind: "caravan.sent"; payload: CaravanSentPayload }
+  | { kind: "caravan.arrived"; payload: CaravanArrivedPayload }
+  | { kind: "caravan.recalled"; payload: CaravanRecalledPayload }
+  | { kind: "caravan.returned"; payload: CaravanReturnedPayload }
   | { kind: "expedition.recalled"; payload: ExpeditionRecalledPayload }
   | { kind: "expedition.returned"; payload: ExpeditionReturnedPayload }
   | { kind: "garrison.added"; payload: GarrisonAddedPayload }
@@ -275,6 +317,10 @@ export type AnyEventPayload =
   | ReinforcementSentPayload
   | ReinforcementRecalledPayload
   | ReinforcementReturnedPayload
+  | CaravanSentPayload
+  | CaravanArrivedPayload
+  | CaravanRecalledPayload
+  | CaravanReturnedPayload
   | ExpeditionRecalledPayload
   | ExpeditionReturnedPayload
   | GarrisonAddedPayload
@@ -303,6 +349,10 @@ export interface ServerEvents {
   "reinforcement.sent": ReinforcementSentPayload;
   "reinforcement.recalled": ReinforcementRecalledPayload;
   "reinforcement.returned": ReinforcementReturnedPayload;
+  "caravan.sent": CaravanSentPayload;
+  "caravan.arrived": CaravanArrivedPayload;
+  "caravan.recalled": CaravanRecalledPayload;
+  "caravan.returned": CaravanReturnedPayload;
   "expedition.recalled": ExpeditionRecalledPayload;
   "expedition.returned": ExpeditionReturnedPayload;
   "garrison.added": GarrisonAddedPayload;

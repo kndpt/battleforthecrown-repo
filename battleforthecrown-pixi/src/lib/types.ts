@@ -169,6 +169,12 @@ export interface ReinforcePayload {
   units: Partial<Record<UnitType, number>>;
 }
 
+export interface CaravanPayload {
+  villageId: string;
+  targetVillageId: string;
+  resources: LootResources;
+}
+
 export interface RecallReinforcementPayload {
   villageId: string;
   originVillageId: string;

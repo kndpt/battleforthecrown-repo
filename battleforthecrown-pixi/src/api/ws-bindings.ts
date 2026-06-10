@@ -396,6 +396,93 @@ export function applyReinforcementReturned(
   invalidateReinforcementReports(ctx);
 }
 
+export function applyCaravanSent(
+  payload: ServerEvents['caravan.sent'],
+  ctx: BindingsContext,
+): void {
+  const snapshot: ExpeditionSnapshot = {
+    expeditionId: payload.expeditionId,
+    kind: 'CARAVAN',
+    villageId: payload.villageId,
+    originVillageId: payload.villageId,
+    targetVillageId: payload.targetVillageId,
+    origin: resolveOrigin(payload.villageId),
+    target: { x: payload.targetX, y: payload.targetY },
+    targetKind: 'PLAYER_VILLAGE',
+    phase: 'EN_ROUTE',
+    departAt: Date.now(),
+    arrivalAt: Date.parse(payload.arrivalAt),
+  };
+  useExpeditionsStore.getState().add(snapshot);
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
+  invalidateOpenExpeditions(ctx);
+}
+
+export function applyCaravanArrived(
+  payload: ServerEvents['caravan.arrived'],
+  ctx: BindingsContext,
+): void {
+  useExpeditionsStore.getState().update(payload.expeditionId, {
+    phase: 'RETURNING',
+    returnAt: Date.parse(payload.returnAt),
+  });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.targetVillageId) });
+  invalidateOpenExpeditions(ctx);
+}
+
+export function applyCaravanRecalled(
+  payload: ServerEvents['caravan.recalled'],
+  ctx: BindingsContext,
+): void {
+  const store = useExpeditionsStore.getState();
+  const current = store.byId[payload.expeditionId];
+  const returnAt = Date.parse(payload.returnAt);
+  if (current) {
+    store.update(
+      payload.expeditionId,
+      current.phase === 'RETURNING'
+        ? { phase: 'RETURNING', returnAt }
+        : buildRecalledExpeditionPatch(current, Date.now(), returnAt),
+    );
+  } else {
+    const now = Date.now();
+    store.add({
+      expeditionId: payload.expeditionId,
+      kind: 'CARAVAN',
+      villageId: payload.villageId,
+      originVillageId: payload.villageId,
+      targetVillageId: payload.targetVillageId,
+      origin: resolveOrigin(payload.villageId),
+      target: resolveOrigin(payload.targetVillageId),
+      targetKind: 'PLAYER_VILLAGE',
+      phase: 'RETURNING',
+      departAt: now,
+      arrivalAt: now,
+      returnAt,
+    });
+  }
+  useUiStore.getState().pushToast({
+    tone: 'warning',
+    title: 'Caravane rappelée',
+    description: `Retour prévu à ${new Date(payload.returnAt).toLocaleTimeString()}`,
+    ttlMs: 4000,
+  });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
+  invalidateOpenExpeditions(ctx);
+}
+
+export function applyCaravanReturned(
+  payload: ServerEvents['caravan.returned'],
+  ctx: BindingsContext,
+): void {
+  markExpeditionReturned(payload.expeditionId);
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
+  invalidateOpenExpeditions(ctx);
+}
+
 export function applyGarrisonAdded(
   payload: ServerEvents['garrison.added'],
   ctx: BindingsContext,
@@ -660,6 +747,10 @@ const bindings: ServerEventBindings = {
   'reinforcement.sent': applyReinforcementSent,
   'reinforcement.recalled': applyReinforcementRecalled,
   'reinforcement.returned': applyReinforcementReturned,
+  'caravan.sent': applyCaravanSent,
+  'caravan.arrived': applyCaravanArrived,
+  'caravan.recalled': applyCaravanRecalled,
+  'caravan.returned': applyCaravanReturned,
   'garrison.added': applyGarrisonAdded,
   'village.attacked': applyVillageAttacked,
   'village.conquered': applyVillageConquered,

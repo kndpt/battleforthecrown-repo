@@ -4,11 +4,17 @@ import PgBoss from 'pg-boss';
 import { createOutboxEvent } from '../event/event.utils';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
 import { parseUnitMap, parseCombatLoot } from './codecs';
+import { ExpeditionKind, type Expedition } from '@prisma/client';
+import { PrismaClientOrTx } from '../../common/prisma.types';
+import { CARRY_PER_PORTER } from '@battleforthecrown/shared/logic';
 import type { UnitMap } from '@battleforthecrown/shared/army';
+import { ResourcesService } from '../resources/resources.service';
 
 interface ReturnJob {
   expeditionId: string;
 }
+
+type CaravanResources = { wood: number; stone: number; iron: number };
 
 @Injectable()
 export class ReturnWorker implements OnModuleInit {
@@ -18,6 +24,7 @@ export class ReturnWorker implements OnModuleInit {
     @Inject('PG_BOSS') private readonly boss: PgBoss,
     private readonly prisma: PrismaService,
     private readonly outbox: OutboxPublisher,
+    private readonly resourcesService: ResourcesService,
   ) {}
 
   async onModuleInit() {
@@ -54,6 +61,11 @@ export class ReturnWorker implements OnModuleInit {
           this.logger.warn(
             `Expedition ${data.expeditionId} not in RETURNING state (${expedition.status})`,
           );
+          return;
+        }
+
+        if (expedition.kind === ExpeditionKind.CARAVAN) {
+          await this.handleCaravanReturn(tx, expedition);
           return;
         }
 
@@ -170,5 +182,118 @@ export class ReturnWorker implements OnModuleInit {
       );
       throw error;
     }
+  }
+
+  private async handleCaravanReturn(
+    tx: PrismaClientOrTx,
+    expedition: Expedition,
+  ) {
+    const resources = this.parseCaravanResources(expedition);
+    let returnedResources: CaravanResources = { wood: 0, stone: 0, iron: 0 };
+    const porters = this.getPorters(resources);
+
+    if (expedition.recalled && this.sumResources(resources) > 0) {
+      const originVillage = await tx.village.findUnique({
+        where: { id: expedition.attackerVillageId },
+        include: {
+          buildings: { select: { type: true, level: true } },
+          resourceStock: true,
+          strategyConfig: true,
+        },
+      });
+      if (!originVillage?.resourceStock) {
+        throw new Error(`Caravan origin stock not found for ${expedition.id}`);
+      }
+
+      const now = new Date();
+      const currentStock =
+        await this.resourcesService.calculateCurrentResources({
+          worldId: originVillage.worldId,
+          resourceStock: originVillage.resourceStock,
+          buildings: originVillage.buildings,
+          strategy: originVillage.strategyConfig?.strategy,
+        });
+      const maxPerType = originVillage.resourceStock.maxPerType;
+      returnedResources = {
+        wood: Math.min(
+          resources.wood,
+          Math.max(0, maxPerType - currentStock.wood),
+        ),
+        stone: Math.min(
+          resources.stone,
+          Math.max(0, maxPerType - currentStock.stone),
+        ),
+        iron: Math.min(
+          resources.iron,
+          Math.max(0, maxPerType - currentStock.iron),
+        ),
+      };
+      await tx.resourceStock.update({
+        where: { villageId: expedition.attackerVillageId },
+        data: {
+          wood: currentStock.wood + returnedResources.wood,
+          stone: currentStock.stone + returnedResources.stone,
+          iron: currentStock.iron + returnedResources.iron,
+          lastUpdateTs: now,
+        },
+      });
+      await this.outbox.resourcesChanged(expedition.attackerVillageId, tx);
+    }
+
+    if (porters > 0) {
+      const populationRelease = await tx.population.updateMany({
+        where: {
+          villageId: expedition.attackerVillageId,
+          used: { gte: porters },
+        },
+        data: { used: { decrement: porters } },
+      });
+      if (populationRelease.count === 0) {
+        throw new Error(
+          `Failed to release caravan population for ${expedition.id}`,
+        );
+      }
+    }
+
+    await tx.expedition.delete({
+      where: { id: expedition.id },
+    });
+
+    await createOutboxEvent(
+      tx,
+      'caravan.returned',
+      expedition.attackerVillageId,
+      {
+        expeditionId: expedition.id,
+        villageId: expedition.attackerVillageId,
+        targetVillageId: expedition.targetRefId,
+        resources: returnedResources,
+        porters,
+        recalled: expedition.recalled,
+      },
+    );
+
+    this.logger.debug(
+      `Caravan returned for expedition ${expedition.id}: recalled=${expedition.recalled}, porters=${porters}`,
+    );
+  }
+
+  private parseCaravanResources(expedition: Expedition): CaravanResources {
+    if (expedition.loot === null) return { wood: 0, stone: 0, iron: 0 };
+    const resources = parseCombatLoot(expedition.loot).resources;
+    return {
+      wood: Math.max(0, Math.floor(resources?.wood ?? 0)),
+      stone: Math.max(0, Math.floor(resources?.stone ?? 0)),
+      iron: Math.max(0, Math.floor(resources?.iron ?? 0)),
+    };
+  }
+
+  private getPorters(resources: CaravanResources): number {
+    const total = this.sumResources(resources);
+    return total > 0 ? Math.ceil(total / CARRY_PER_PORTER) : 0;
+  }
+
+  private sumResources(resources: CaravanResources): number {
+    return resources.wood + resources.stone + resources.iron;
   }
 }

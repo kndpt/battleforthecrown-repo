@@ -6,7 +6,7 @@ import { GameBottomSheetPanel } from './GameBottomSheetPanel';
 
 export type CaptureWindowState = 'open' | 'soon' | 'completed' | 'interrupted';
 export type CaptureTier = 'T1' | 'T2' | 'T3' | 'T4' | 'T5' | 'PVP';
-export type ExpeditionActivityKind = 'attack' | 'reinforce' | 'scout' | 'conquest';
+export type ExpeditionActivityKind = 'attack' | 'reinforce' | 'scout' | 'caravan' | 'conquest';
 export type ExpeditionActivityPhase = 'en_route' | 'resolved' | 'returning';
 export type KingdomActivityTab = 'expeditions' | 'captures';
 export type KingdomActivitiesPanelState = 'idle' | 'loading' | 'error';
@@ -191,6 +191,7 @@ const expeditionArmyTone: Record<ExpeditionActivityKind, ArmyMovementTone> = {
   conquest: 'conquest',
   reinforce: 'reinforce',
   scout: 'scout',
+  caravan: 'return',
 };
 
 const hudToneClass: Record<KingdomActivityHudBadgeTone, string> = {

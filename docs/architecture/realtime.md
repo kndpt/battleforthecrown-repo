@@ -108,6 +108,10 @@ Chaque payload est validé runtime par `parseEventPayload(kind, raw)` (backend `
 | `reinforcement.sent` | `userId` (village d'origine) | `expeditionId, villageId, targetVillageId, arrivalAt` | `CombatService.initiateReinforce` |
 | `reinforcement.recalled` | `userId` (village hôte ou d'origine) | `expeditionId, villageId, originVillageId, arrivalAt` | `CombatService.initiateRecall` |
 | `reinforcement.returned` | `userId` (village hôte ou d'origine) | `expeditionId, villageId, originVillageId, units` | `CombatWorker` quand un renfort repart vers son village d'origine |
+| `caravan.sent` | `userId` (village d'origine) | `expeditionId, villageId, targetVillageId, resources, porters, arrivalAt` | `CombatService.initiateCaravan` |
+| `caravan.arrived` | `userId` (origine + destination) | `expeditionId, villageId, targetVillageId, credited, lost, returnAt` | `CombatWorker` quand une caravane arrive et crédite l'entrepôt cible |
+| `caravan.recalled` | `userId` (village d'origine) | `expeditionId, villageId, targetVillageId, resources, porters, returnAt` | `CombatService.recallEnRoute` pour une expédition `CARAVAN` |
+| `caravan.returned` | `userId` (village d'origine) | `expeditionId, villageId, targetVillageId, resources, porters, recalled` | `ReturnWorker` quand la caravane rentre et libère les porteurs |
 | `garrison.added` | `userId` (village hôte) | `villageId, originVillageId, units` | `CombatWorker` quand un renfort arrive et se stationne en garnison |
 | `village.attacked` | `userId` (défenseur ou occupant de capture) | `defenderVillageId, defenderUserId?` pour une occupation barbare, `attackerVillageId, attackerVillageName, isDefenseSuccessful, losses (UnitMap), casualtyRate, resourcesLost, …` | `CombatWorker` (notification + invalidation inbox défenseur côté frontend) |
 | `village.capture-window-opened` | `userId` (attaquant) | `pendingConquestId, targetVillageId, attackerVillageId, captureUntil` | `ConquestService.openCaptureWindow` |

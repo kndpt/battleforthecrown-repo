@@ -23,6 +23,7 @@ enum ExpeditionKind {
   ATTACK
   REINFORCE
   SCOUT
+  CARAVAN
 }
 
 enum ExpeditionStatus {
