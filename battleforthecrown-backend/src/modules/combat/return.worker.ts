@@ -255,6 +255,85 @@ export class ReturnWorker implements OnModuleInit {
       }
     }
 
+    if (expedition.recalled) {
+      const [originVillage, targetVillage] = await Promise.all([
+        tx.village.findUnique({
+          where: { id: expedition.attackerVillageId },
+          select: { id: true, name: true, x: true, y: true, userId: true },
+        }),
+        tx.village.findUnique({
+          where: { id: expedition.targetRefId },
+          select: { id: true, name: true, x: true, y: true, userId: true },
+        }),
+      ]);
+
+      if (!originVillage?.userId) {
+        throw new Error(
+          `Caravan return report origin village not found: originVillageId=${expedition.attackerVillageId}, worldId=${expedition.worldId}`,
+        );
+      }
+      if (!targetVillage) {
+        throw new Error(
+          `Caravan return report target village not found: targetVillageId=${expedition.targetRefId}, worldId=${expedition.worldId}`,
+        );
+      }
+
+      const report = await tx.caravanReport.upsert({
+        where: {
+          expeditionId_type: {
+            expeditionId: expedition.id,
+            type: 'RETURNED',
+          },
+        },
+        create: {
+          worldId: expedition.worldId,
+          expeditionId: expedition.id,
+          type: 'RETURNED',
+          originVillageId: originVillage.id,
+          originVillageName: originVillage.name,
+          originX: originVillage.x,
+          originY: originVillage.y,
+          targetVillageId: targetVillage.id,
+          targetVillageName: targetVillage.name,
+          targetX: targetVillage.x,
+          targetY: targetVillage.y,
+          resources,
+          credited: { wood: 0, stone: 0, iron: 0 },
+          returned: returnedResources,
+          lost: this.subtractResources(resources, returnedResources),
+          porters,
+          recalled: true,
+        },
+        update: {},
+      });
+
+      const recipientIds = [
+        ...new Set(
+          [originVillage.userId, targetVillage.userId].filter(
+            (id): id is string => Boolean(id),
+          ),
+        ),
+      ];
+
+      for (const recipientUserId of recipientIds) {
+        await tx.inboxEntry.upsert({
+          where: {
+            userId_caravanReportId: {
+              userId: recipientUserId,
+              caravanReportId: report.id,
+            },
+          },
+          create: {
+            userId: recipientUserId,
+            worldId: expedition.worldId,
+            kind: 'CARAVAN',
+            caravanReportId: report.id,
+          },
+          update: {},
+        });
+      }
+    }
+
     await tx.expedition.delete({
       where: { id: expedition.id },
     });
@@ -295,5 +374,16 @@ export class ReturnWorker implements OnModuleInit {
 
   private sumResources(resources: CaravanResources): number {
     return resources.wood + resources.stone + resources.iron;
+  }
+
+  private subtractResources(
+    left: CaravanResources,
+    right: CaravanResources,
+  ): CaravanResources {
+    return {
+      wood: Math.max(0, left.wood - right.wood),
+      stone: Math.max(0, left.stone - right.stone),
+      iron: Math.max(0, left.iron - right.iron),
+    };
   }
 }

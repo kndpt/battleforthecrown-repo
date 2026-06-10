@@ -33,12 +33,12 @@ Politique PR `$bftc-run` :
 
 ### Runs actifs
 
-- [052 — Rapports persistants de caravanes](./runs/052-feature-caravan-reports.md) — 📋 `PLANNED`. Ajouter `CaravanReport` + inbox `CARAVAN` pour les livraisons et retours rappelés de caravanes, avec REST, badge/messages, invalidations WS et docs report/inbox/outbox.
 - [051 — Classements Gloire d'Assaut / Rempart](./runs/051-feature-rankings-glory.md) — 📋 `PLANNED`. Premier vertical classements : scoring PvP durable, APIs world-scoped, affichage minimal, sans rewards économiques.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés
 
+- [052 — Rapports persistants de caravanes](./runs/archive/052-feature-caravan-reports.md) — ✅ `DONE` (2026-06-10). `CaravanReport` + inbox `CARAVAN` pour arrivée nominale et retour rappelé, REST list/detail/read/delete, badge/messages, invalidations WS, docs report/inbox/outbox et smokes caravane.
 - [050 — Caravane de ressources entre villages](./runs/archive/050-feature-resource-caravan.md) — ✅ `DONE` (2026-06-09). Transfert A→B intra-joueur via expédition `CARAVAN`, cap `20%` Entrepôt source par ressource, porteurs de population verrouillés puis libérés, plafond Entrepôt destination avec overflow perdu, rappel/restauration, events realtime et UI WorldMap/Activités.
 - [049 — Devoir royal : scaling par niveau du joueur](./runs/archive/049-feature-royal-duty-level-scaling.md) — ✅ `DONE` (2026-06-07). Missions/récompenses de carte quotidienne scalées par château max joueur, RAID floor tier via `battle.resolved.targetTier`, metadata de tâche, récompense ressources plafonnée et HUD lisible.
 - [048 — Map focus links](./runs/archive/048-feature-map-focus-links.md) — ✅ `DONE` (2026-06-07). Primitive `useWorldMapNavigation` avec contrat URL `/game/world?focusX&focusY`, consommation unique dans `WorldMapScreen`, action carte des rapports combat, CTA victoire migré et doc technique.

@@ -23,7 +23,10 @@ import {
 import { parseUnitMap, encodeUnitMap, encodeLootResult } from './codecs';
 import { parseCombatLoot } from './codecs';
 import { getStrategyBonusValue } from '@battleforthecrown/shared/village';
-import { calculateDistance } from '@battleforthecrown/shared/logic';
+import {
+  calculateDistance,
+  CARRY_PER_PORTER,
+} from '@battleforthecrown/shared/logic';
 import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
 import type { WorldTempo } from '@battleforthecrown/shared/world';
 import type { CombatResolution } from '@battleforthecrown/shared/combat';
@@ -1470,6 +1473,71 @@ export class CombatWorker implements OnModuleInit {
       },
     });
 
+    const originVillage = await tx.village.findUnique({
+      where: { id: expedition.attackerVillageId },
+      select: { id: true, name: true, x: true, y: true, userId: true },
+    });
+    if (!originVillage?.userId) {
+      throw new Error(
+        `Caravan report origin village not found: originVillageId=${expedition.attackerVillageId}, worldId=${expedition.worldId}`,
+      );
+    }
+
+    const report = await tx.caravanReport.upsert({
+      where: {
+        expeditionId_type: {
+          expeditionId: expedition.id,
+          type: 'ARRIVED',
+        },
+      },
+      create: {
+        worldId: expedition.worldId,
+        expeditionId: expedition.id,
+        type: 'ARRIVED',
+        originVillageId: originVillage.id,
+        originVillageName: originVillage.name,
+        originX: originVillage.x,
+        originY: originVillage.y,
+        targetVillageId: targetVillage.id,
+        targetVillageName: targetVillage.name,
+        targetX: targetVillage.x,
+        targetY: targetVillage.y,
+        resources: carried,
+        credited,
+        returned: EMPTY_LOOT,
+        lost,
+        porters: getCaravanPorters(carried),
+        recalled: false,
+      },
+      update: {},
+    });
+
+    const recipientIds = [
+      ...new Set(
+        [originVillage.userId, targetVillage.userId].filter(
+          (id): id is string => Boolean(id),
+        ),
+      ),
+    ];
+
+    for (const recipientUserId of recipientIds) {
+      await tx.inboxEntry.upsert({
+        where: {
+          userId_caravanReportId: {
+            userId: recipientUserId,
+            caravanReportId: report.id,
+          },
+        },
+        create: {
+          userId: recipientUserId,
+          worldId: expedition.worldId,
+          kind: 'CARAVAN',
+          caravanReportId: report.id,
+        },
+        update: {},
+      });
+    }
+
     await createOutboxEvent(tx, 'caravan.arrived', expedition.targetRefId, {
       expeditionId: expedition.id,
       villageId: expedition.attackerVillageId,
@@ -1542,6 +1610,11 @@ function subtractResources(
     stone: Math.max(0, left.stone - right.stone),
     iron: Math.max(0, left.iron - right.iron),
   };
+}
+
+function getCaravanPorters(resources: ResourceBundle): number {
+  const total = resources.wood + resources.stone + resources.iron;
+  return total > 0 ? Math.ceil(total / CARRY_PER_PORTER) : 0;
 }
 
 function parseCaravanResources(expedition: Expedition): ResourceBundle {

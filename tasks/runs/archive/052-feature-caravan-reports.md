@@ -1,8 +1,8 @@
 # Run #052 — feature-caravan-reports
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-10 20:09 CEST
+> **Terminé** : 2026-06-10 20:37 CEST
 
 ## Cible
 
@@ -49,43 +49,49 @@
 
 ## Décomposition initiale (rempli par le lead à l'étape 3)
 
-_(Vide au démarrage. Tâches chirurgicales : ≤ 5 fichiers chacune, scope précis, critère de succès observable.)_
-
-Draft de plan issu de `$bftc-plan`, à raffiner au lancement :
-
-- **T1 — Specs/docs** : documenter la catégorie caravane et la matrice de rapports (`ARRIVED`, retour rappelé ; pas `SENT` par défaut) dans `17-inbox-and-reports.md`, puis aligner `02-economy-and-progression.md`, `data-model.md`, `realtime.md` et `SPEC.md` si l'invariant report/inbox/outbox doit être promu.
-- **T2 — Prisma/shared** : ajouter `CaravanReport`, étendre `InboxKind` avec `CARAVAN`, ajouter `InboxEntry.caravanReportId`, migration additive, DTO shared `CaravanReportResponse`.
-- **T3 — Backend write path** : créer `CaravanReport` + `InboxEntry` dans les transactions worker qui finalisent l'arrivée nominale et le retour rappelé, sans utiliser `EventOutbox` comme archive métier.
-- **T4 — Backend REST** : exposer list/detail/read/delete `/combat/caravan-report(s)` via service + presenter, avec accès `userId` + `worldId` et mutation limitée à l'entrée inbox du viewer.
-- **T5 — Front API/realtime** : ajouter query keys/hooks/mutations caravan reports et invalidations WS sur `caravan.arrived` / `caravan.returned`.
-- **T6 — Front inbox** : intégrer la 4e catégorie dans `ReportsList`, `ReportDetailModal`, unread badge et view-model de détail, avec wording clair.
-- **T7 — Tests/QA** : smoke backend cycle caravane → rapport → read/delete, test idempotence/retry raisonnable, tests Pixi de mapping/invalidation/listing, static-check.
+- **T1 — Prisma/shared/backend REST** : ajouter `CaravanReport`, `InboxKind.CARAVAN`, `InboxEntry.caravanReportId`, migration additive, DTO shared, presenter/service/endpoints `/combat/caravan-report(s)`.
+- **T2 — Backend workers/smokes** : créer les rapports dans `handleCaravanArrival` et dans `handleCaravanReturn` uniquement si `recalled`, avec garde idempotente par `expeditionId + type`, puis couvrir list/detail/read/delete et absence de `SENT` en smoke.
+- **T3 — Front API/realtime/inbox** : ajouter hooks/query keys/mutations caravane, invalidations WS `caravan.arrived`/`caravan.returned`, liste + tabs + badge + détail modal.
+- **T4 — Docs/SPEC** : documenter la catégorie caravane, la matrice `ARRIVED` / retour rappelé / pas `SENT`, et rappeler que l'Outbox realtime n'est pas une archive métier.
+- **T5 — QA/review** : static-check, tests ciblés backend/front, smoke backend, review indépendante obligatoire, finalisation fiche + commit + PR.
 
 ## Progress (rempli pendant le run)
 
-_(Vide au démarrage. Mis à jour à chaque transition d'étape ou de tâche.)_
+- 2026-06-10 20:09 CEST — Préflight OK : branche `run/052-feature-caravan-reports` créée depuis `origin/main`, fiche 052 appliquée, `PR_REQUIRED: oui`, specs/rules/SPEC et skills spécialisés lus. Cartographie backend/frontend lancée via `code_mapper`.
+- 2026-06-10 20:16 CEST — Refinement tranché : rapports persistants uniquement sur arrivée nominale et retour rappelé ; pas de rapport `SENT`, pas de rapport sur retour normal post-livraison. Mapping code terminé, implémentation lancée par zones backend/front.
+- 2026-06-10 20:22 CEST — Docs/SPEC alignés : `CaravanReport` documenté comme fait métier typé, `InboxEntry` comme état par destinataire, `EventOutbox` comme canal realtime/invalidation.
+- 2026-06-10 20:37 CEST — Implémentation, tests, smoke ciblé, static-check et review indépendante terminés. Finding enum Prisma/shared résolu par compile-check `CaravanReportType`.
 
 ## Décisions prises
 
-_(Vide au démarrage. Décisions archi non triviales, dérogations lead, findings de review, refus de sub-agents.)_
+- `CaravanReport` reste un modèle métier typé, relié à `InboxEntry` via `InboxKind.CARAVAN`; pas de table `Report` générique JSON.
+- `EventOutbox` reste réservé au realtime/invalidation (`caravan.arrived`, `caravan.returned`) et ne sert jamais d'historique consultable.
+- Les caravanes MVP sont intra-joueur : un rapport est adressé au propriétaire des villages concernés, avec déduplication défensive si origine/destination pointent vers le même utilisateur.
+- L'idempotence worker passe par une contrainte logique `expeditionId + type`, pour éviter les doublons en cas de retry sans bloquer une éventuelle évolution future des types.
 
 ## Rapport final
 
-_(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tickets ouverts, méta-évaluation si applicable.)_
+Livré : `CaravanReport` persistant typé, `InboxEntry.CARAVAN`, endpoints REST list/detail/read/delete, création idempotente des rapports à l'arrivée nominale et au retour rappelé, intégration `/game/messages` avec tab `Caravanes`, badge unread, détail modal et invalidations WS `caravan.arrived` / `caravan.returned`.
+
+Docs : mises à jour dans `17-inbox-and-reports.md`, `02-economy-and-progression.md`, `data-model.md`, `realtime.md` et `SPEC.md` pour figer la frontière `CaravanReport` / `InboxEntry` / `EventOutbox`.
 
 ### Acceptance & QA
 
 - **Critères d'acceptance vérifiés** (commande exécutable obligatoire si automatisable, preuve textuelle uniquement si visuel/gameplay/UX) :
-  - [ ] Rapport arrivée nominale — `smoke/SQL à renseigner` → —
-  - [ ] Rapport retour rappelé — `smoke/SQL à renseigner` → —
-  - [ ] Pas de rapport `SENT` par défaut — `smoke/SQL/grep à renseigner` → —
-  - [ ] REST list/detail/read/delete scopés — `curl/smoke à renseigner` → —
-  - [ ] Inbox Pixi + badge + invalidations — `tests Pixi à renseigner` → —
-  - [ ] Docs report/inbox/outbox — `grep/relecture à renseigner` → —
-- **Review indépendante** : `Déclenchée (raison: back+front, diff estimé > 100 lignes, invariant durable report/inbox, SPEC.md probable)`.
-- **Tests automatisés** : _(rempli à l'étape 10)_
-- **Smokes ajoutés/modifiés** : _(rempli à l'étape 10)_
-- **QA fonctionnelle agent** : _(rempli à l'étape 10)_
+  - [x] Rapport arrivée nominale — `DATABASE_URL="postgresql://postgres:postgres@localhost:5432/battleforthecrown_smoke" yarn workspace battleforthecrown-backend test:smoke:run -- caravan.smoke.spec.ts` → 1 suite, 6 tests pass ; assertion `CaravanReport ARRIVED` + `InboxEntry.CARAVAN`.
+  - [x] Rapport retour rappelé — `DATABASE_URL="postgresql://postgres:postgres@localhost:5432/battleforthecrown_smoke" yarn workspace battleforthecrown-backend test:smoke:run -- caravan.smoke.spec.ts` → 1 suite, 6 tests pass ; assertion `CaravanReport RETURNED`, ressources restituées/perdues, porteurs.
+  - [x] Pas de rapport `SENT` par défaut — `DATABASE_URL="postgresql://postgres:postgres@localhost:5432/battleforthecrown_smoke" yarn workspace battleforthecrown-backend test:smoke:run -- caravan.smoke.spec.ts` → assertion count `0` après envoi actif avant arrivée.
+  - [x] REST list/detail/read/delete scopés — `DATABASE_URL="postgresql://postgres:postgres@localhost:5432/battleforthecrown_smoke" yarn workspace battleforthecrown-backend test:smoke:run -- caravan.smoke.spec.ts` → endpoints `/combat/caravan-report(s)` pass, read/delete masquent l'`InboxEntry` sans supprimer `CaravanReport`.
+  - [x] Inbox Pixi + badge + invalidations — `yarn workspace battleforthecrown-pixi test src/features/combat/caravanReportView.test.ts src/features/combat/ReportDetailModal.test.tsx src/api/ws-bindings.test.ts` → 3 fichiers, 38 tests pass.
+  - [x] Docs report/inbox/outbox — `yarn static-check` → pass ; relecture docs/SPEC effectuée.
+- **Review indépendante** : `Déclenchée (raison: back+front, SPEC.md, diff > 100 lignes, invariant durable)`. Verdict `GO`; findings résolus : fichiers untracked inclus au staging final, compile-check `CaravanReportType` ajouté dans `prisma-shared-enums.ts`.
+- **Tests automatisés** :
+  - `yarn static-check` → pass.
+  - `yarn workspace battleforthecrown-pixi test src/features/combat/caravanReportView.test.ts src/features/combat/ReportDetailModal.test.tsx src/api/ws-bindings.test.ts` → 3 fichiers, 38 tests pass.
+  - `git diff --check` → pass.
+- **Smokes ajoutés/modifiés** : `battleforthecrown-backend/test/caravan.smoke.spec.ts` couvre arrivée nominale, absence de rapport avant arrivée, REST list/detail/read/delete, suppression logique, retour normal sans second rapport, retour rappelé avec rapport.
+- **Smokes lancés** : Ciblés — `DATABASE_URL="postgresql://postgres:postgres@localhost:5432/battleforthecrown_smoke" yarn workspace battleforthecrown-backend test:smoke:run -- caravan.smoke.spec.ts` → 1 suite, 6 tests pass.
+- **QA fonctionnelle agent** : Non exécutée en navigateur ; comportement data/REST/worker couvert par smoke automatisé, rendu Pixi couvert par tests composants/helpers. Une validation IG reste demandée pour le ressenti visuel.
 - **Tests IG à faire par le user** :
   - [ ] Envoyer une caravane entre deux villages possédés, attendre l'arrivée, ouvrir `/game/messages` et vérifier le rapport de livraison.
   - [ ] Rappeler une caravane avant arrivée, attendre son retour, vérifier le rapport de retour rappelé et les ressources affichées.

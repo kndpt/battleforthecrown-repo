@@ -150,6 +150,40 @@ export interface ReinforcementReportResponse {
   timestamp: string;
 }
 
+export type CaravanReportType = 'ARRIVED' | 'RETURNED';
+
+export const CARAVAN_REPORT_TYPES = {
+  ARRIVED: 'ARRIVED',
+  RETURNED: 'RETURNED',
+} as const;
+
+/**
+ * A resource caravan report as seen by one recipient. `isRead` reflects the
+ * connected player's own inbox entry.
+ */
+export interface CaravanReportResponse {
+  id: string;
+  worldId: string;
+  expeditionId: string;
+  type: CaravanReportType;
+  originVillageId: string;
+  originVillageName?: string | null;
+  originX: number;
+  originY: number;
+  targetVillageId: string;
+  targetVillageName?: string | null;
+  targetX: number;
+  targetY: number;
+  resources: LootResources;
+  credited: LootResources;
+  returned: LootResources;
+  lost: LootResources;
+  porters: number;
+  recalled: boolean;
+  isRead: boolean;
+  timestamp: string;
+}
+
 export interface ExpeditionResponse {
   id: string;
   attackerVillageId: string;

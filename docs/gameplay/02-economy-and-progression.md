@@ -77,7 +77,8 @@ Une caravane transfère bois, pierre et fer entre deux villages du même joueur.
 | **Population**         | Les porteurs consomment temporairement la population libre de A. Si A n'a pas assez de population libre, l'action est refusée sans débit.                                                 |
 | **Stock expéditeur**   | Les ressources quittent A au départ. Aucune couronne n'est débitée.                                                                                                                       |
 | **Stock destinataire** | À l'arrivée, les ressources sont créditées dans B jusqu'à la limite de son Entrepôt (`getWarehouseStorageLimit`). L'excédent est perdu, déterministiquement, et n'est crédité nulle part. |
-| **Rappel**             | Possible pendant l'aller. Les ressources reviennent intégralement à A au retour ; B ne reçoit rien.                                                                                       |
+| **Rappel**             | Possible pendant l'aller. Au retour, les ressources sont restituées à A jusqu'à la limite de son Entrepôt ; l'excédent est perdu et B ne reçoit rien.                                      |
+| **Rapport inbox**      | Un rapport persistant est créé à l'arrivée nominale, puis uniquement au retour d'une caravane rappelée. L'envoi et le retour normal après livraison restent des events temps réel sans rapport persistant. Voir [`17-inbox-and-reports.md` § Catégorie caravane](./17-inbox-and-reports.md#catégorie-caravane). |
 
 Invariant d'équilibrage : la caravane lève un gate **ressources** entre villages possédés, mais jamais le gate **temps de construction**. Les files et durées de construction restent par village et intransférables, ce qui empêche un village nourricier unique de supprimer la progression locale de chaque village.
 

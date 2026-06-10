@@ -428,6 +428,7 @@ export function applyCaravanArrived(
     returnAt: Date.parse(payload.returnAt),
   });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.targetVillageId) });
+  invalidateCaravanReports(ctx);
   invalidateOpenExpeditions(ctx);
 }
 
@@ -480,6 +481,7 @@ export function applyCaravanReturned(
   markExpeditionReturned(payload.expeditionId);
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
+  invalidateCaravanReports(ctx);
   invalidateOpenExpeditions(ctx);
 }
 
@@ -526,6 +528,12 @@ function invalidateCombatReports(ctx: BindingsContext): void {
 function invalidateReinforcementReports(ctx: BindingsContext): void {
   const userId = useAuthStore.getState().user?.id ?? null;
   ctx.queryClient.invalidateQueries({ queryKey: ['combat', 'reinforcement-reports', userId] });
+}
+
+function invalidateCaravanReports(ctx: BindingsContext): void {
+  const userId = useAuthStore.getState().user?.id ?? null;
+  ctx.queryClient.invalidateQueries({ queryKey: ['combat', 'caravan-reports', userId] });
+  ctx.queryClient.invalidateQueries({ queryKey: ['combat', 'caravan-report'] });
 }
 
 function invalidateOpenConquests(ctx: BindingsContext): void {

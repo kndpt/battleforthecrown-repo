@@ -118,6 +118,87 @@ describe('resource caravan smoke', () => {
       lost: { wood: 200, stone: 50, iron: 0 },
     });
 
+    const arrivedReport = await ctx.prisma.caravanReport.findFirstOrThrow({
+      where: { worldId: world.id, expeditionId, type: 'ARRIVED' },
+    });
+    expect(arrivedReport).toMatchObject({
+      originVillageId: villageAId,
+      targetVillageId: villageBId,
+      resources: { wood: 200, stone: 50, iron: 0 },
+      credited: { wood: 0, stone: 0, iron: 0 },
+      returned: { wood: 0, stone: 0, iron: 0 },
+      lost: { wood: 200, stone: 50, iron: 0 },
+      porters: 1,
+      recalled: false,
+    });
+    const arrivedEntry = await ctx.prisma.inboxEntry.findFirstOrThrow({
+      where: {
+        userId: userA.userId,
+        worldId: world.id,
+        kind: 'CARAVAN',
+        caravanReportId: arrivedReport.id,
+      },
+    });
+    expect(arrivedEntry).toMatchObject({ isRead: false, hidden: false });
+
+    const listRes = await request(ctx.server)
+      .get('/combat/caravan-reports')
+      .set('Authorization', `Bearer ${userA.accessToken}`)
+      .set('x-world-id', world.id);
+    expect(listRes.status).toBe(200);
+    expect(
+      (
+        listRes.body as Array<{
+          id: string;
+          type: string;
+          isRead: boolean;
+          originVillageId: string;
+          targetVillageId: string;
+        }>
+      ).find((report) => report.id === arrivedReport.id),
+    ).toMatchObject({
+      type: 'ARRIVED',
+      isRead: false,
+      originVillageId: villageAId,
+      targetVillageId: villageBId,
+    });
+
+    const readRes = await request(ctx.server)
+      .patch(`/combat/caravan-report/${arrivedReport.id}/read`)
+      .set('Authorization', `Bearer ${userA.accessToken}`)
+      .set('x-world-id', world.id);
+    expect(readRes.status).toBeLessThan(300);
+    expect(readRes.body).toMatchObject({ id: arrivedReport.id, isRead: true });
+
+    const detailRes = await request(ctx.server)
+      .get(`/combat/caravan-report/${arrivedReport.id}`)
+      .set('Authorization', `Bearer ${userA.accessToken}`)
+      .set('x-world-id', world.id);
+    expect(detailRes.status).toBe(200);
+    expect(detailRes.body).toMatchObject({
+      id: arrivedReport.id,
+      type: 'ARRIVED',
+      isRead: true,
+      resources: { wood: 200, stone: 50, iron: 0 },
+      lost: { wood: 200, stone: 50, iron: 0 },
+    });
+
+    const deleteRes = await request(ctx.server)
+      .delete(`/combat/caravan-report/${arrivedReport.id}`)
+      .set('Authorization', `Bearer ${userA.accessToken}`)
+      .set('x-world-id', world.id);
+    expect(deleteRes.status).toBeLessThan(300);
+    await expect(
+      ctx.prisma.inboxEntry.findUniqueOrThrow({
+        where: { id: arrivedEntry.id },
+      }),
+    ).resolves.toMatchObject({ hidden: true });
+    await expect(
+      ctx.prisma.caravanReport.findUnique({
+        where: { id: arrivedReport.id },
+      }),
+    ).resolves.not.toBeNull();
+
     await waitFor(
       () =>
         ctx.prisma.expedition
@@ -133,6 +214,12 @@ describe('resource caravan smoke', () => {
       where: { villageId: villageAId },
     });
     expect(unitsAfterReturn).toHaveLength(0);
+    await expect(
+      ctx.prisma.caravanReport.findMany({
+        where: { worldId: world.id, expeditionId },
+        orderBy: { type: 'asc' },
+      }),
+    ).resolves.toMatchObject([{ type: 'ARRIVED' }]);
 
     const crownsAfter = await ctx.prisma.crownBalance.findUniqueOrThrow({
       where: { userId_worldId: { userId: userA.userId, worldId: world.id } },
@@ -311,6 +398,7 @@ describe('resource caravan smoke', () => {
         resources: { wood: 400, stone: 0, iron: 0 },
       });
     expect(first.status).toBeLessThan(300);
+    const firstExpeditionId = (first.body as { id: string }).id;
 
     const overActiveCap = await request(ctx.server)
       .post('/combat/caravan')
@@ -336,6 +424,11 @@ describe('resource caravan smoke', () => {
         },
       }),
     ).resolves.toBe(1);
+    await expect(
+      ctx.prisma.caravanReport.count({
+        where: { worldId: world.id, expeditionId: firstExpeditionId },
+      }),
+    ).resolves.toBe(0);
   }, 60_000);
 
   it('serializes concurrent caravan sends against the same origin capacity', async () => {
@@ -550,5 +643,45 @@ describe('resource caravan smoke', () => {
       resources: { wood: 0, stone: 0, iron: 0 },
       recalled: true,
     });
+    const returnedReport = await ctx.prisma.caravanReport.findFirstOrThrow({
+      where: { worldId: world.id, expeditionId, type: 'RETURNED' },
+    });
+    expect(returnedReport).toMatchObject({
+      originVillageId: villageAId,
+      targetVillageId: villageBId,
+      resources: { wood: 500, stone: 0, iron: 0 },
+      credited: { wood: 0, stone: 0, iron: 0 },
+      returned: { wood: 0, stone: 0, iron: 0 },
+      lost: { wood: 500, stone: 0, iron: 0 },
+      porters: 1,
+      recalled: true,
+    });
+    await expect(
+      ctx.prisma.inboxEntry.findFirst({
+        where: {
+          userId: userA.userId,
+          worldId: world.id,
+          kind: 'CARAVAN',
+          caravanReportId: returnedReport.id,
+          hidden: false,
+        },
+      }),
+    ).resolves.not.toBeNull();
+    const returnedListRes = await request(ctx.server)
+      .get('/combat/caravan-reports')
+      .set('Authorization', `Bearer ${userA.accessToken}`)
+      .set('x-world-id', world.id);
+    expect(returnedListRes.status).toBe(200);
+    expect(
+      (returnedListRes.body as Array<{ id: string; type: string }>).filter(
+        (report) => report.id === returnedReport.id,
+      ),
+    ).toMatchObject([{ type: 'RETURNED' }]);
+    await expect(
+      ctx.prisma.caravanReport.findMany({
+        where: { worldId: world.id, expeditionId },
+        orderBy: { type: 'asc' },
+      }),
+    ).resolves.toMatchObject([{ type: 'RETURNED' }]);
   }, 60_000);
 });

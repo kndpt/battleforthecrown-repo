@@ -822,7 +822,7 @@ describe('caravan websocket bindings', () => {
     expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
   });
 
-  it('turns the caravan back at arrival and refreshes target resources', () => {
+  it('turns the caravan back at arrival and refreshes target resources plus caravan inbox', () => {
     setCurrentWorldSession();
     useExpeditionsStore.getState().add({
       expeditionId: 'caravan-2',
@@ -839,6 +839,9 @@ describe('caravan websocket bindings', () => {
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.resources('target-village'), { wood: 100 });
     queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
+    queryClient.setQueryData(queryKeys.caravanReports('user-1', 'world-1'), []);
+    queryClient.setQueryData(queryKeys.caravanReports('user-1', 'world-old'), []);
+    queryClient.setQueryData(queryKeys.caravanReport('caravan-report-1', 'world-1'), {});
 
     applyCaravanArrived(
       {
@@ -858,6 +861,9 @@ describe('caravan websocket bindings', () => {
     });
     expect(queryClient.getQueryState(queryKeys.resources('target-village'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.caravanReports('user-1', 'world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.caravanReports('user-1', 'world-old'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.caravanReport('caravan-report-1', 'world-1'))?.isInvalidated).toBe(true);
   });
 
   it('keeps recalled caravans visible until returned, then refreshes origin resources/population', () => {
@@ -878,6 +884,8 @@ describe('caravan websocket bindings', () => {
     queryClient.setQueryData(queryKeys.resources('origin-village'), { wood: 100 });
     queryClient.setQueryData(queryKeys.population('origin-village'), { used: 1, max: 10, available: 9 });
     queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
+    queryClient.setQueryData(queryKeys.caravanReports('user-1', 'world-1'), []);
+    queryClient.setQueryData(queryKeys.caravanReport('caravan-report-2', 'world-1'), {});
 
     applyCaravanRecalled(
       {
@@ -916,6 +924,8 @@ describe('caravan websocket bindings', () => {
     expect(useExpeditionsStore.getState().byId['caravan-3'].phase).toBe('RETURNED');
     expect(queryClient.getQueryState(queryKeys.resources('origin-village'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.population('origin-village'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.caravanReports('user-1', 'world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.caravanReport('caravan-report-2', 'world-1'))?.isInvalidated).toBe(true);
     vi.advanceTimersByTime(RETURNED_TO_CLEANUP_DELAY_MS);
     expect(useExpeditionsStore.getState().byId['caravan-3']).toBeUndefined();
     vi.useRealTimers();
