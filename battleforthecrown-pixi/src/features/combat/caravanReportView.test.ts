@@ -8,6 +8,7 @@ import {
   caravanReportSummary,
   caravanReportTypeLabel,
   caravanReportVillageLabel,
+  caravanReportWhen,
 } from './caravanReportView';
 
 function makeReport(overrides: Partial<CaravanReportResponse>): CaravanReportResponse {
@@ -101,5 +102,18 @@ describe('caravanReportView', () => {
       sentTotal: 125,
       title: 'Retour complet',
     });
+  });
+
+  it('formats the report timestamp for display', () => {
+    const timestamp = '2026-06-10T10:00:00.000Z';
+    const expected = new Intl.DateTimeFormat('fr-FR', {
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(new Date(timestamp));
+
+    expect(caravanReportWhen(makeReport({ timestamp }))).toBe(expected);
   });
 });

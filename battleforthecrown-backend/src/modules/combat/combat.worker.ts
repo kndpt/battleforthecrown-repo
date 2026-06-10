@@ -38,6 +38,10 @@ import {
 } from '@battleforthecrown/shared/army';
 import { typedEntries } from '@battleforthecrown/shared/utils';
 import { getCaptureDurationMs } from './capture-duration';
+import {
+  subtractCaravanResources,
+  type CaravanResources,
+} from './caravan-resources';
 
 interface PendingConquestToSchedule {
   id: string;
@@ -57,7 +61,6 @@ interface OccupationDefense {
 }
 
 const EMPTY_LOOT = { wood: 0, stone: 0, iron: 0 } as const;
-type ResourceBundle = { wood: number; stone: number; iron: number };
 
 /**
  * Total population freed by a set of unit losses. The pop of a dead unit is
@@ -1451,7 +1454,7 @@ export class CombatWorker implements OnModuleInit {
         Math.max(0, limits.iron - currentStock.iron),
       ),
     };
-    const lost = subtractResources(carried, credited);
+    const lost = subtractCaravanResources(carried, credited);
     const returnAt = new Date(Date.now() + expedition.outboundTravelMs);
 
     await tx.resourceStock.update({
@@ -1592,8 +1595,8 @@ export class CombatWorker implements OnModuleInit {
 }
 
 function normalizeResources(
-  resources: Partial<ResourceBundle>,
-): ResourceBundle {
+  resources: Partial<CaravanResources>,
+): CaravanResources {
   return {
     wood: Math.max(0, Math.floor(resources.wood ?? 0)),
     stone: Math.max(0, Math.floor(resources.stone ?? 0)),
@@ -1601,23 +1604,12 @@ function normalizeResources(
   };
 }
 
-function subtractResources(
-  left: ResourceBundle,
-  right: ResourceBundle,
-): ResourceBundle {
-  return {
-    wood: Math.max(0, left.wood - right.wood),
-    stone: Math.max(0, left.stone - right.stone),
-    iron: Math.max(0, left.iron - right.iron),
-  };
-}
-
-function getCaravanPorters(resources: ResourceBundle): number {
+function getCaravanPorters(resources: CaravanResources): number {
   const total = resources.wood + resources.stone + resources.iron;
   return total > 0 ? Math.ceil(total / CARRY_PER_PORTER) : 0;
 }
 
-function parseCaravanResources(expedition: Expedition): ResourceBundle {
+function parseCaravanResources(expedition: Expedition): CaravanResources {
   if (expedition.loot === null) return normalizeResources(EMPTY_LOOT);
   return normalizeResources(
     parseCombatLoot(expedition.loot).resources ?? EMPTY_LOOT,

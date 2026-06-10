@@ -9,12 +9,14 @@ import { PrismaClientOrTx } from '../../common/prisma.types';
 import { CARRY_PER_PORTER } from '@battleforthecrown/shared/logic';
 import type { UnitMap } from '@battleforthecrown/shared/army';
 import { ResourcesService } from '../resources/resources.service';
+import {
+  subtractCaravanResources,
+  type CaravanResources,
+} from './caravan-resources';
 
 interface ReturnJob {
   expeditionId: string;
 }
-
-type CaravanResources = { wood: number; stone: number; iron: number };
 
 @Injectable()
 export class ReturnWorker implements OnModuleInit {
@@ -300,7 +302,7 @@ export class ReturnWorker implements OnModuleInit {
           resources,
           credited: { wood: 0, stone: 0, iron: 0 },
           returned: returnedResources,
-          lost: this.subtractResources(resources, returnedResources),
+          lost: subtractCaravanResources(resources, returnedResources),
           porters,
           recalled: true,
         },
@@ -374,16 +376,5 @@ export class ReturnWorker implements OnModuleInit {
 
   private sumResources(resources: CaravanResources): number {
     return resources.wood + resources.stone + resources.iron;
-  }
-
-  private subtractResources(
-    left: CaravanResources,
-    right: CaravanResources,
-  ): CaravanResources {
-    return {
-      wood: Math.max(0, left.wood - right.wood),
-      stone: Math.max(0, left.stone - right.stone),
-      iron: Math.max(0, left.iron - right.iron),
-    };
   }
 }

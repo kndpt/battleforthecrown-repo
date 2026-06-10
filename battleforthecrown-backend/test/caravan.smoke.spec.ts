@@ -199,6 +199,18 @@ describe('resource caravan smoke', () => {
       }),
     ).resolves.not.toBeNull();
 
+    const readHiddenRes = await request(ctx.server)
+      .patch(`/combat/caravan-report/${arrivedReport.id}/read`)
+      .set('Authorization', `Bearer ${userA.accessToken}`)
+      .set('x-world-id', world.id);
+    expect(readHiddenRes.status).toBe(404);
+
+    const deleteHiddenRes = await request(ctx.server)
+      .delete(`/combat/caravan-report/${arrivedReport.id}`)
+      .set('Authorization', `Bearer ${userA.accessToken}`)
+      .set('x-world-id', world.id);
+    expect(deleteHiddenRes.status).toBe(404);
+
     await waitFor(
       () =>
         ctx.prisma.expedition

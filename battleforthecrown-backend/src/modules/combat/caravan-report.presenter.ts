@@ -2,12 +2,14 @@ import type {
   CaravanReportResponse,
   LootResources,
 } from '@battleforthecrown/shared/combat';
+import type { CaravanReportType as PrismaCaravanReportType } from '@prisma/client';
+import { _caravanReportTypeFromPrisma } from '../../common/prisma-shared-enums';
 
 type CaravanReportInput = {
   id: string;
   worldId: string;
   expeditionId: string;
-  type: string;
+  type: PrismaCaravanReportType;
   originVillageId: string;
   originVillageName: string | null;
   originX: number;
@@ -33,7 +35,7 @@ export function presentCaravanReport(
     id: report.id,
     worldId: report.worldId,
     expeditionId: report.expeditionId,
-    type: report.type as CaravanReportResponse['type'],
+    type: _caravanReportTypeFromPrisma[report.type],
     originVillageId: report.originVillageId,
     originVillageName: report.originVillageName,
     originX: report.originX,
@@ -53,7 +55,7 @@ export function presentCaravanReport(
   };
 }
 
-function presentResources(value: unknown): LootResources {
+export function presentResources(value: unknown): LootResources {
   if (!value || typeof value !== 'object') {
     return { wood: 0, stone: 0, iron: 0 };
   }
@@ -65,6 +67,6 @@ function presentResources(value: unknown): LootResources {
   };
 }
 
-function presentResource(value: unknown): number {
+export function presentResource(value: unknown): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : 0;
 }

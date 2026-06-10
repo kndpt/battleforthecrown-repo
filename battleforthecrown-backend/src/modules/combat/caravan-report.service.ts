@@ -60,6 +60,7 @@ export class CaravanReportService {
         worldId,
         kind: 'CARAVAN',
         caravanReportId: reportId,
+        hidden: false,
       },
       include: { caravanReport: true },
     });
@@ -85,6 +86,7 @@ export class CaravanReportService {
         worldId,
         kind: 'CARAVAN',
         caravanReportId: reportId,
+        hidden: false,
       },
       include: { caravanReport: true },
     });
