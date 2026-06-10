@@ -660,8 +660,14 @@ enum ReinforcementReportType {
   RETURNED
 }
 
+enum CaravanReportType {
+  ARRIVED
+  RETURNED
+}
+
 enum InboxKind {
   REINFORCEMENT
+  CARAVAN
 }
 
 /// Business fact for a reinforcement movement (arrival or homecoming).
@@ -690,6 +696,38 @@ model ReinforcementReport {
   @@map("reinforcement_report")
 }
 
+/// Business fact for a resource caravan delivery or recalled homecoming.
+/// EventOutbox remains realtime-only; this table is the persistent archive.
+model CaravanReport {
+  id                String            @id @default(cuid())
+  worldId           String            @map("world_id")
+  expeditionId      String            @map("expedition_id")
+  type              CaravanReportType
+  originVillageId   String            @map("origin_village_id")
+  originVillageName String?           @map("origin_village_name")
+  originX           Int               @map("origin_x")
+  originY           Int               @map("origin_y")
+  targetVillageId   String            @map("target_village_id")
+  targetVillageName String?           @map("target_village_name")
+  targetX           Int               @map("target_x")
+  targetY           Int               @map("target_y")
+  resources         Json
+  credited          Json
+  returned          Json
+  lost              Json
+  porters           Int               @default(0)
+  recalled          Boolean           @default(false)
+  timestamp         DateTime          @default(now()) @db.Timestamptz(3)
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  inboxEntries InboxEntry[]
+
+  @@unique([expeditionId, type])
+  @@index([worldId])
+  @@index([timestamp])
+  @@map("caravan_report")
+}
+
 /// Per-recipient inbox state. One row per distinct recipient of a report.
 /// Typed FK per domain (no polymorphic JSON `reportId`).
 model InboxEntry {
@@ -698,14 +736,17 @@ model InboxEntry {
   worldId               String    @map("world_id")
   kind                  InboxKind
   reinforcementReportId String?   @map("reinforcement_report_id")
+  caravanReportId       String?   @map("caravan_report_id")
   isRead                Boolean   @default(false) @map("is_read")
   hidden                Boolean   @default(false)
   timestamp             DateTime  @default(now()) @db.Timestamptz(3)
   createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
 
   reinforcementReport ReinforcementReport? @relation(fields: [reinforcementReportId], references: [id], onDelete: Cascade)
+  caravanReport       CaravanReport?       @relation(fields: [caravanReportId], references: [id], onDelete: Cascade)
 
   @@unique([userId, reinforcementReportId])
+  @@unique([userId, caravanReportId])
   @@index([userId, worldId])
   @@index([timestamp])
   @@map("inbox_entry")

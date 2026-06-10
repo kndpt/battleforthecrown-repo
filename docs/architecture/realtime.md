@@ -121,18 +121,23 @@ Chaque payload est validé runtime par `parseEventPayload(kind, raw)` (backend `
 | `village.conquered` | `userId` (nouveau propriétaire + ancien propriétaire si PvP) | `villageId, villageName, newOwnerId, previousOwnerId, previousTier, x, y, buildingsKept` | `ConquestService` |
 | `world.status.changed` | `worldId` | `worldId, from, to, at` | `WorldLifecycleWorker` quand un monde passe `PLANNED → OPEN`, `OPEN → LOCKED` ou `LOCKED → ENDED` |
 
-Pour les renforts, la forme exacte des payloads reste dérivée des schémas partagés (`packages/shared/src/events/{schemas,types}.ts`). Cette table ne liste que les champs discriminants utiles pour lire le flux fonctionnel.
+Pour les renforts et caravanes, la forme exacte des payloads reste dérivée des schémas partagés (`packages/shared/src/events/{schemas,types}.ts`). Cette table ne liste que les champs discriminants utiles pour lire le flux fonctionnel.
 
-### Invalidation inbox renfort — aucun nouvel event kind
+### Invalidation inbox renfort et caravane — aucun nouvel event kind
 
 L'inbox renfort (`InboxEntry` / `ReinforcementReport`) se rafraîchit côté frontend via les events **existants** :
 
 - `garrison.added` → déclenché à l'arrivée d'un renfort stationné (`STATIONED`), scopé `userId` owner hôte. Le frontend invalide la query `/combat/reinforcement-reports`.
 - `reinforcement.returned` → déclenché au retour vers le village d'origine (`RETURNED`), scopé `userId` owner origine. Le frontend invalide la query `/combat/reinforcement-reports`.
 
-**Pas de nouvel event kind** pour l'inbox renfort. Justification : `initiateReinforce` est aujourd'hui mono-joueur (renfort inter-joueurs interdit), donc ces deux events couvrent exactement les destinataires de l'`InboxEntry`. Si le renfort inter-joueurs est activé à l'avenir, un event dédié (ex. `reinforcement.report.created`) sera nécessaire pour notifier le joueur hôte indépendamment de l'origine.
+L'inbox caravane (`InboxEntry` / `CaravanReport`) se rafraîchit aussi via les events **existants** :
 
-**Frontière EventOutbox / archive** : `EventOutbox` reste un canal temps réel, jamais une archive métier. L'historique persistant des mouvements de renfort vit dans `ReinforcementReport` ; l'état lu/masqué par joueur vit dans `InboxEntry`. Voir [`docs/architecture/data-model.md`](./data-model.md) et [`docs/gameplay/17-inbox-and-reports.md`](../gameplay/17-inbox-and-reports.md).
+- `caravan.arrived` → déclenché à la livraison nominale (`ARRIVED`), scopé au joueur propriétaire. Le frontend invalide la query `/combat/caravan-reports`.
+- `caravan.returned` → déclenché au retour de caravane ; seul le cas `payload.recalled === true` correspond à un rapport `RETURNED`, mais le frontend peut invalider la query dans tous les cas sans effet métier.
+
+**Pas de nouvel event kind** pour ces inbox. Justification : `initiateReinforce` et `initiateCaravan` sont aujourd'hui mono-joueur, donc les events métier existants couvrent exactement les destinataires de l'`InboxEntry`. Si le renfort ou la caravane inter-joueurs est activé à l'avenir, un event dédié (ex. `reinforcement.report.created` ou `caravan.report.created`) sera nécessaire pour notifier un destinataire distinct indépendamment de l'origine.
+
+**Frontière EventOutbox / archive** : `EventOutbox` reste un canal temps réel, jamais une archive métier. L'historique persistant des mouvements de renfort vit dans `ReinforcementReport`, celui des livraisons/rappels de caravane vit dans `CaravanReport` ; l'état lu/masqué par joueur vit dans `InboxEntry`. Voir [`docs/architecture/data-model.md`](./data-model.md) et [`docs/gameplay/17-inbox-and-reports.md`](../gameplay/17-inbox-and-reports.md).
 
 ## Event métier consommé par plusieurs invalidations
 

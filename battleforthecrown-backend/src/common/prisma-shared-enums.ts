@@ -1,4 +1,5 @@
 import type {
+  CaravanReportType as PrismaCaravanReportType,
   ExpeditionKind as PrismaExpeditionKind,
   ExpeditionStatus as PrismaExpeditionStatus,
   OnboardingStatus as PrismaOnboardingStatus,
@@ -8,6 +9,7 @@ import type {
   VillageStrategy as PrismaVillageStrategy,
 } from '@prisma/client';
 import type {
+  CaravanReportType,
   ExpeditionKind,
   ExpeditionStatus,
   ReinforcementReportType,
@@ -71,6 +73,21 @@ export const _reinforcementReportTypeToPrisma: Record<
   PrismaReinforcementReportType
 > = {
   STATIONED: 'STATIONED',
+  RETURNED: 'RETURNED',
+};
+
+export const _caravanReportTypeFromPrisma: Record<
+  PrismaCaravanReportType,
+  CaravanReportType
+> = {
+  ARRIVED: 'ARRIVED',
+  RETURNED: 'RETURNED',
+};
+export const _caravanReportTypeToPrisma: Record<
+  CaravanReportType,
+  PrismaCaravanReportType
+> = {
+  ARRIVED: 'ARRIVED',
   RETURNED: 'RETURNED',
 };
 

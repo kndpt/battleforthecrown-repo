@@ -13,6 +13,7 @@ import {
 import { CombatService } from './combat.service';
 import { CombatReportService } from './combat-report.service';
 import { ReinforcementReportService } from './reinforcement-report.service';
+import { CaravanReportService } from './caravan-report.service';
 import {
   attackCommandSchema,
   type AttackCommandDto,
@@ -33,7 +34,10 @@ import {
   caravanCommandSchema,
   type CaravanCommandDto,
 } from './dto/caravan-command.schema';
-import type { ReinforcementReportResponse } from '@battleforthecrown/shared/combat';
+import type {
+  CaravanReportResponse,
+  ReinforcementReportResponse,
+} from '@battleforthecrown/shared/combat';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { CurrentUser, type AuthenticatedUser } from '../../common/auth';
 
@@ -43,6 +47,7 @@ export class CombatController {
     private readonly combatService: CombatService,
     private readonly reportService: CombatReportService,
     private readonly reinforcementReportService: ReinforcementReportService,
+    private readonly caravanReportService: CaravanReportService,
   ) {}
 
   @Post('attack')
@@ -232,6 +237,56 @@ export class CombatController {
     @Headers('x-world-id') worldId?: string,
   ): Promise<{ message: string }> {
     return this.reinforcementReportService.deleteReinforcementReport(
+      user.id,
+      reportId,
+      this.requireWorldId(worldId),
+    );
+  }
+
+  @Get('caravan-reports')
+  async getAllCaravanReports(
+    @CurrentUser() user: AuthenticatedUser,
+    @Headers('x-world-id') worldId?: string,
+  ): Promise<CaravanReportResponse[]> {
+    return this.caravanReportService.getAllCaravanReports(
+      user.id,
+      this.requireWorldId(worldId),
+    );
+  }
+
+  @Get('caravan-report/:reportId')
+  async getCaravanReport(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('reportId') reportId: string,
+    @Headers('x-world-id') worldId?: string,
+  ): Promise<CaravanReportResponse> {
+    return this.caravanReportService.getCaravanReport(
+      user.id,
+      reportId,
+      this.requireWorldId(worldId),
+    );
+  }
+
+  @Patch('caravan-report/:reportId/read')
+  async markCaravanReportAsRead(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('reportId') reportId: string,
+    @Headers('x-world-id') worldId?: string,
+  ): Promise<CaravanReportResponse> {
+    return this.caravanReportService.markCaravanReportAsRead(
+      user.id,
+      reportId,
+      this.requireWorldId(worldId),
+    );
+  }
+
+  @Delete('caravan-report/:reportId')
+  async deleteCaravanReport(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('reportId') reportId: string,
+    @Headers('x-world-id') worldId?: string,
+  ): Promise<{ message: string }> {
+    return this.caravanReportService.deleteCaravanReport(
       user.id,
       reportId,
       this.requireWorldId(worldId),

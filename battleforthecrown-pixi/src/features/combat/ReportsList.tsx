@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Panel, PanelBody, PanelHeader, Spinner } from '@/ui';
 import {
+  useCaravanReportsQuery,
   useCombatReportsQuery,
   useScoutReportsQuery,
   useReinforcementReportsQuery,
   type CombatReportDto,
 } from '@/api/queries';
-import type { ReinforcementReportResponse, ScoutReportResponse } from '@battleforthecrown/shared/combat';
+import type { CaravanReportResponse, ReinforcementReportResponse, ScoutReportResponse } from '@battleforthecrown/shared/combat';
 import { InboxTabs, MailInboxItem } from '@/features/design-system/components/MailInboxItem';
 import {
   scoutReportResourceTotal,
@@ -19,11 +20,17 @@ import {
   reinforcementReportPreview,
   reinforcementReportSubject,
 } from './reinforcementReportView';
+import {
+  caravanReportPreview,
+  caravanReportStateLabel,
+  caravanReportSubject,
+} from './caravanReportView';
 
 export type InboxReportSummary =
   | { kind: 'combat'; report: CombatReportDto }
   | { kind: 'scout'; report: ScoutReportResponse }
-  | { kind: 'reinforcement'; report: ReinforcementReportResponse };
+  | { kind: 'reinforcement'; report: ReinforcementReportResponse }
+  | { kind: 'caravan'; report: CaravanReportResponse };
 
 interface ReportsListProps {
   onReportClick: (report: InboxReportSummary) => void;
@@ -87,26 +94,45 @@ function reinforcementInboxItem(report: ReinforcementReportResponse) {
   };
 }
 
+function caravanInboxItem(report: CaravanReportResponse) {
+  return {
+    icon: '/assets/loot-rapport.png',
+    preview: caravanReportPreview(report),
+    sender: '',
+    subject: caravanReportSubject(report),
+    tag: { label: caravanReportStateLabel(report).toUpperCase(), tone: 'system' as const },
+    tone: 'system' as const,
+  };
+}
+
 export function ReportsList({ onReportClick }: ReportsListProps) {
   const [tab, setTab] = useState('all');
   const combatReports = useCombatReportsQuery();
   const scoutReports = useScoutReportsQuery();
   const reinforcementReports = useReinforcementReportsQuery();
+  const caravanReports = useCaravanReportsQuery();
   const allReports: InboxReportSummary[] = [
     ...(combatReports.data ?? []).map((report) => ({ kind: 'combat' as const, report })),
     ...(scoutReports.data ?? []).map((report) => ({ kind: 'scout' as const, report })),
     ...(reinforcementReports.data ?? []).map((report) => ({ kind: 'reinforcement' as const, report })),
+    ...(caravanReports.data ?? []).map((report) => ({ kind: 'caravan' as const, report })),
   ].sort((a, b) => Date.parse(b.report.timestamp) - Date.parse(a.report.timestamp));
   const reports = tab === 'scout'
     ? allReports.filter((report) => report.kind === 'scout')
     : tab === 'combat'
       ? allReports.filter((report) => report.kind === 'combat')
-      : allReports;
+      : tab === 'reinforcement'
+        ? allReports.filter((report) => report.kind === 'reinforcement')
+        : tab === 'caravan'
+          ? allReports.filter((report) => report.kind === 'caravan')
+          : allReports;
   const unreadCount = allReports.filter((report) => !report.report.isRead).length;
   const unreadCombatCount = (combatReports.data ?? []).filter((report) => !report.isRead).length;
   const unreadScoutCount = (scoutReports.data ?? []).filter((report) => !report.isRead).length;
+  const unreadReinforcementCount = (reinforcementReports.data ?? []).filter((report) => !report.isRead).length;
+  const unreadCaravanCount = (caravanReports.data ?? []).filter((report) => !report.isRead).length;
 
-  if (combatReports.isLoading || scoutReports.isLoading || reinforcementReports.isLoading) {
+  if (combatReports.isLoading || scoutReports.isLoading || reinforcementReports.isLoading || caravanReports.isLoading) {
     return (
       <Panel variant="parchment" padding="none">
         <PanelHeader variant="parchment" size="sm">
@@ -145,6 +171,8 @@ export function ReportsList({ onReportClick }: ReportsListProps) {
           { count: unreadCount > 0 ? String(unreadCount) : undefined, label: 'Tous', value: 'all' },
           { count: unreadCombatCount > 0 ? String(unreadCombatCount) : undefined, label: 'Combats', value: 'combat' },
           { count: unreadScoutCount > 0 ? String(unreadScoutCount) : undefined, label: 'Scouts', value: 'scout' },
+          { count: unreadReinforcementCount > 0 ? String(unreadReinforcementCount) : undefined, label: 'Renforts', value: 'reinforcement' },
+          { count: unreadCaravanCount > 0 ? String(unreadCaravanCount) : undefined, label: 'Caravanes', value: 'caravan' },
         ]}
         value={tab}
       />
@@ -160,7 +188,9 @@ export function ReportsList({ onReportClick }: ReportsListProps) {
             ? combatInboxItem(report.report)
             : report.kind === 'scout'
               ? scoutInboxItem(report.report)
-              : reinforcementInboxItem(report.report))}
+              : report.kind === 'reinforcement'
+                ? reinforcementInboxItem(report.report)
+                : caravanInboxItem(report.report))}
           alertLabel={report.report.isRead ? undefined : '!'}
           onClick={() => onReportClick(report)}
           time={formatDate(report.report.timestamp)}

@@ -58,6 +58,7 @@ import {
 import type {
   OpenConquestDto,
   OpenExpeditionDto,
+  CaravanReportResponse,
   ReinforcementReportResponse,
   ScoutReportResponse,
 } from '@battleforthecrown/shared/combat';
@@ -66,6 +67,37 @@ import {
   RankingsSummaryResponseSchema,
   type RankingsSummaryResponse,
 } from '@battleforthecrown/shared/rankings';
+
+const CaravanReportResourcesSchema = z.strictObject({
+  wood: z.number(),
+  stone: z.number(),
+  iron: z.number(),
+});
+
+const CaravanReportResponseSchema = z.strictObject({
+  id: z.string(),
+  worldId: z.string(),
+  expeditionId: z.string(),
+  type: z.enum(['ARRIVED', 'RETURNED']),
+  originVillageId: z.string(),
+  originVillageName: z.string().nullable().optional(),
+  originX: z.number(),
+  originY: z.number(),
+  targetVillageId: z.string(),
+  targetVillageName: z.string().nullable().optional(),
+  targetX: z.number(),
+  targetY: z.number(),
+  resources: CaravanReportResourcesSchema,
+  credited: CaravanReportResourcesSchema,
+  returned: CaravanReportResourcesSchema,
+  lost: CaravanReportResourcesSchema,
+  porters: z.number(),
+  recalled: z.boolean(),
+  isRead: z.boolean(),
+  timestamp: z.string(),
+});
+
+const CaravanReportsResponseSchema = z.array(CaravanReportResponseSchema);
 
 export const queryKeys = {
   worlds: () => ['worlds'] as const,
@@ -96,6 +128,8 @@ export const queryKeys = {
   scoutReport: (reportId: string | null, worldId: string | null) => ['combat', 'scout-report', reportId, worldId] as const,
   reinforcementReports: (userId: string | null, worldId: string | null) => ['combat', 'reinforcement-reports', userId, worldId] as const,
   reinforcementReport: (reportId: string | null, worldId: string | null) => ['combat', 'reinforcement-report', reportId, worldId] as const,
+  caravanReports: (userId: string | null, worldId: string | null) => ['combat', 'caravan-reports', userId, worldId] as const,
+  caravanReport: (reportId: string | null, worldId: string | null) => ['combat', 'caravan-report', reportId, worldId] as const,
   worldConfigFull: (worldId: string | null) => ['world-config-full', worldId] as const,
   worldEntities: (worldId: string | null) => ['world-entities', worldId] as const,
   worldConfig: (worldId: string | null) => ['world-config', worldId] as const,
@@ -971,6 +1005,66 @@ export function useDeleteReinforcementReportMutation() {
       apiClient.delete<unknown>(`/combat/reinforcement-report/${reportId}`),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.reinforcementReports(userId, worldId) });
+    },
+  });
+}
+
+export function useCaravanReportsQuery() {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
+  return useQuery<CaravanReportResponse[]>({
+    queryKey: queryKeys.caravanReports(userId, worldId),
+    queryFn: async () => {
+      if (!userId || !worldId) return Promise.resolve([] as CaravanReportResponse[]);
+      const raw = await apiClient.get<unknown>('/combat/caravan-reports');
+      return CaravanReportsResponseSchema.parse(raw);
+    },
+    enabled: Boolean(userId && worldId),
+    staleTime: 10_000,
+  });
+}
+
+export function useCaravanReportQuery(reportId: string | null) {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
+  return useQuery<CaravanReportResponse>({
+    queryKey: queryKeys.caravanReport(reportId, worldId),
+    queryFn: async () => {
+      if (!reportId || !worldId) return Promise.reject(new Error('Missing caravan report'));
+      const raw = await apiClient.get<unknown>(`/combat/caravan-report/${reportId}`);
+      return CaravanReportResponseSchema.parse(raw);
+    },
+    enabled: Boolean(reportId && userId && worldId),
+    staleTime: 60_000,
+  });
+}
+
+export function useMarkCaravanReportReadMutation() {
+  const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
+  return useMutation<CaravanReportResponse, Error, MarkReportReadInput>({
+    mutationFn: async ({ reportId }) => {
+      const raw = await apiClient.patch<unknown>(`/combat/caravan-report/${reportId}/read`);
+      return CaravanReportResponseSchema.parse(raw);
+    },
+    onSettled: (_data, _err, { reportId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.caravanReports(userId, worldId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.caravanReport(reportId, worldId) });
+    },
+  });
+}
+
+export function useDeleteCaravanReportMutation() {
+  const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const worldId = useGameStore((state) => state.worldId);
+  return useMutation<unknown, Error, DeleteReportInput>({
+    mutationFn: ({ reportId }) =>
+      apiClient.delete<unknown>(`/combat/caravan-report/${reportId}`),
+    onSettled: (_data, _err, { reportId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.caravanReports(userId, worldId) });
+      queryClient.removeQueries({ queryKey: queryKeys.caravanReport(reportId, worldId) });
     },
   });
 }

@@ -1,10 +1,12 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CombatReportDto } from '@/api/queries';
+import type { CaravanReportResponse } from '@battleforthecrown/shared/combat';
 import { ReportDetailModal } from './ReportDetailModal';
 
 const mocks = vi.hoisted(() => ({
   deleteReport: vi.fn(),
+  markCaravanRead: vi.fn(),
   markCombatRead: vi.fn(),
   markReinforcementRead: vi.fn(),
   markScoutRead: vi.fn(),
@@ -42,11 +44,37 @@ const combatReport: CombatReportDto = {
   createdAt: '2026-05-12T10:00:00.000Z',
 };
 
+const caravanReport: CaravanReportResponse = {
+  id: 'caravan-report-123456',
+  worldId: 'world-1',
+  expeditionId: 'expedition-1',
+  type: 'ARRIVED',
+  originVillageId: 'v-origin',
+  originVillageName: 'Aubefer',
+  originX: 10,
+  originY: 20,
+  targetVillageId: 'v-target',
+  targetVillageName: 'Hauterive',
+  targetX: 12,
+  targetY: 34,
+  resources: { iron: 0, stone: 25, wood: 75 },
+  credited: { iron: 0, stone: 25, wood: 70 },
+  returned: { iron: 0, stone: 0, wood: 0 },
+  lost: { iron: 0, stone: 0, wood: 5 },
+  porters: 2,
+  recalled: false,
+  timestamp: '2026-05-12T10:00:00.000Z',
+  isRead: false,
+};
+
 vi.mock('@/api/queries', () => ({
+  useCaravanReportQuery: () => ({ data: caravanReport, error: null, isLoading: false }),
   useCombatReportQuery: () => ({ data: combatReport, error: null, isLoading: false }),
+  useDeleteCaravanReportMutation: () => ({ mutateAsync: mocks.deleteReport }),
   useDeleteReportMutation: () => ({ mutateAsync: mocks.deleteReport }),
   useDeleteReinforcementReportMutation: () => ({ mutateAsync: mocks.deleteReport }),
   useDeleteScoutReportMutation: () => ({ mutateAsync: mocks.deleteReport }),
+  useMarkCaravanReportReadMutation: () => ({ mutate: mocks.markCaravanRead }),
   useMarkReinforcementReportReadMutation: () => ({ mutate: mocks.markReinforcementRead }),
   useMarkReportReadMutation: () => ({ mutate: mocks.markCombatRead }),
   useMarkScoutReportReadMutation: () => ({ mutate: mocks.markScoutRead }),
@@ -80,6 +108,35 @@ describe('ReportDetailModal', () => {
     expect(mocks.navigateToWorldMapFocus).toHaveBeenCalledWith({ x: 12, y: 34 });
     await waitFor(() => {
       expect(mocks.markCombatRead).toHaveBeenCalledWith({ reportId: combatReport.id });
+    });
+  });
+
+  it('renders a caravan report without raw identifiers and uses caravan actions', async () => {
+    const onClose = vi.fn();
+    mocks.deleteReport.mockResolvedValue(undefined);
+
+    render(<ReportDetailModal reportId={caravanReport.id} reportKind="caravan" onClose={onClose} />);
+
+    expect(await screen.findByText('Livraison partielle')).toBeInTheDocument();
+    expect(screen.queryByText('Rapport caravane')).not.toBeInTheDocument();
+    expect(screen.queryByText('Livraison vers Hauterive')).not.toBeInTheDocument();
+    expect(screen.getByText('Bilan des ressources')).toBeInTheDocument();
+    expect(screen.getByText('Entrepôt plein')).toBeInTheDocument();
+    expect(screen.getByText("95 ressources ont été livrées. 5 n'ont pas pu entrer dans l'Entrepôt.")).toBeInTheDocument();
+    expect(screen.getByText('5 perdues')).toBeInTheDocument();
+    expect(screen.queryByText('Créditées')).not.toBeInTheDocument();
+    expect(screen.queryByText('Envoyées')).not.toBeInTheDocument();
+    expect(screen.queryByText(caravanReport.id)).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(mocks.markCaravanRead).toHaveBeenCalledWith({ reportId: caravanReport.id });
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Supprimer le rapport de caravane' }));
+
+    await waitFor(() => {
+      expect(mocks.deleteReport).toHaveBeenCalledWith({ reportId: caravanReport.id });
+      expect(onClose).toHaveBeenCalledTimes(1);
     });
   });
 });

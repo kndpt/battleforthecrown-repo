@@ -9,6 +9,7 @@ import { PrismaClientOrTx } from '../../common/prisma.types';
 import type { UnitMap } from '@battleforthecrown/shared/army';
 import { ResourcesService } from '../resources/resources.service';
 import {
+  subtractCaravanResources,
   type CaravanResources,
   caravanPortersFor,
   parseCaravanResources,
@@ -256,6 +257,75 @@ export class ReturnWorker implements OnModuleInit {
           `Failed to release caravan population for ${expedition.id}`,
         );
       }
+    }
+
+    if (expedition.recalled) {
+      const [originVillage, targetVillage] = await Promise.all([
+        tx.village.findUnique({
+          where: { id: expedition.attackerVillageId },
+          select: { id: true, name: true, x: true, y: true, userId: true },
+        }),
+        tx.village.findUnique({
+          where: { id: expedition.targetRefId },
+          select: { id: true, name: true, x: true, y: true },
+        }),
+      ]);
+
+      if (!originVillage?.userId) {
+        throw new Error(
+          `Caravan return report origin village not found: originVillageId=${expedition.attackerVillageId}, worldId=${expedition.worldId}`,
+        );
+      }
+      if (!targetVillage) {
+        throw new Error(
+          `Caravan return report target village not found: targetVillageId=${expedition.targetRefId}, worldId=${expedition.worldId}`,
+        );
+      }
+
+      const report = await tx.caravanReport.upsert({
+        where: {
+          expeditionId_type: {
+            expeditionId: expedition.id,
+            type: 'RETURNED',
+          },
+        },
+        create: {
+          worldId: expedition.worldId,
+          expeditionId: expedition.id,
+          type: 'RETURNED',
+          originVillageId: originVillage.id,
+          originVillageName: originVillage.name,
+          originX: originVillage.x,
+          originY: originVillage.y,
+          targetVillageId: targetVillage.id,
+          targetVillageName: targetVillage.name,
+          targetX: targetVillage.x,
+          targetY: targetVillage.y,
+          resources,
+          credited: { wood: 0, stone: 0, iron: 0 },
+          returned: returnedResources,
+          lost: subtractCaravanResources(resources, returnedResources),
+          porters,
+          recalled: true,
+        },
+        update: {},
+      });
+
+      await tx.inboxEntry.upsert({
+        where: {
+          userId_caravanReportId: {
+            userId: originVillage.userId,
+            caravanReportId: report.id,
+          },
+        },
+        create: {
+          userId: originVillage.userId,
+          worldId: expedition.worldId,
+          kind: 'CARAVAN',
+          caravanReportId: report.id,
+        },
+        update: {},
+      });
     }
 
     await tx.expedition.delete({

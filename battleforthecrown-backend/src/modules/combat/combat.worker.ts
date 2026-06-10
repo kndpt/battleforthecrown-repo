@@ -28,6 +28,7 @@ import {
 } from './combat.utils';
 import { parseUnitMap, encodeUnitMap, encodeLootResult } from './codecs';
 import {
+  caravanPortersFor,
   parseCaravanResources,
   subtractCaravanResources,
 } from './caravan.utils';
@@ -54,6 +55,16 @@ import { RankingsService } from '../rankings/rankings.service';
 interface PendingConquestToSchedule {
   id: string;
   captureUntil: Date;
+}
+
+interface ReturnJobToSchedule {
+  expeditionId: string;
+  returnAt: Date;
+}
+
+interface CombatPostCommitWork {
+  pendingConquest?: PendingConquestToSchedule | null;
+  returnJob?: ReturnJobToSchedule | null;
 }
 
 /** Defender village hydrated with the data combat resolution needs to mutate. */
@@ -136,10 +147,10 @@ export class CombatWorker implements OnModuleInit {
     this.logger.debug(`Processing combat resolution: ${data.expeditionId}`);
 
     try {
-      const pendingConquestToSchedule = await withSerializableRetry(
+      const postCommitWork = await withSerializableRetry(
         () =>
           this.prisma.$transaction(
-            async (tx) => {
+            async (tx): Promise<CombatPostCommitWork | undefined> => {
               // 1. Get expedition with related data
               const expedition = await tx.expedition.findUnique({
                 where: { id: data.expeditionId },
@@ -150,7 +161,34 @@ export class CombatWorker implements OnModuleInit {
                 return;
               }
 
+              if (
+                expedition.kind === ExpeditionKind.CARAVAN &&
+                expedition.status === 'RETURNING'
+              ) {
+                if (!expedition.returnAt) {
+                  this.logger.warn(
+                    `Caravan expedition ${data.expeditionId} is RETURNING without returnAt`,
+                  );
+                  return;
+                }
+                return {
+                  returnJob: {
+                    expeditionId: expedition.id,
+                    returnAt: expedition.returnAt,
+                  },
+                };
+              }
+
               if (expedition.status !== 'EN_ROUTE') {
+                const pendingConquest =
+                  await this.findPendingConquestFinalizeJobToRecover(
+                    tx,
+                    expedition,
+                  );
+                if (pendingConquest) {
+                  return { pendingConquest };
+                }
+
                 this.logger.warn(
                   `Expedition ${data.expeditionId} already resolved (${expedition.status})`,
                 );
@@ -158,15 +196,21 @@ export class CombatWorker implements OnModuleInit {
               }
 
               if (expedition.kind === ExpeditionKind.REINFORCE) {
-                return this.handleReinforcementArrival(tx, expedition);
+                await this.handleReinforcementArrival(tx, expedition);
+                return;
               }
 
               if (expedition.kind === ExpeditionKind.SCOUT) {
-                return this.handleScoutArrival(tx, expedition);
+                await this.handleScoutArrival(tx, expedition);
+                return;
               }
 
               if (expedition.kind === ExpeditionKind.CARAVAN) {
-                return this.handleCaravanArrival(tx, expedition);
+                const returnJob = await this.handleCaravanArrival(
+                  tx,
+                  expedition,
+                );
+                return { returnJob };
               }
 
               // 2. Build combat context
@@ -300,7 +344,7 @@ export class CombatWorker implements OnModuleInit {
               this.logger.debug(
                 `Combat resolved for expedition ${expedition.id}, victory=${isVictory}, returnAt=${returnAt?.toISOString() ?? 'none'}`,
               );
-              return pendingConquest;
+              return { pendingConquest };
             },
             { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
           ),
@@ -308,8 +352,12 @@ export class CombatWorker implements OnModuleInit {
         'combat resolution',
       );
 
-      if (pendingConquestToSchedule) {
-        await this.conquest.scheduleFinalizeJob(pendingConquestToSchedule);
+      if (postCommitWork?.pendingConquest) {
+        await this.conquest.scheduleFinalizeJob(postCommitWork.pendingConquest);
+      }
+
+      if (postCommitWork?.returnJob) {
+        await this.scheduleReturnJob(postCommitWork.returnJob);
       }
     } catch (error) {
       this.logger.error(
@@ -318,6 +366,34 @@ export class CombatWorker implements OnModuleInit {
       );
       throw error;
     }
+  }
+
+  private async findPendingConquestFinalizeJobToRecover(
+    tx: PrismaClientOrTx,
+    expedition: Expedition,
+  ): Promise<PendingConquestToSchedule | null> {
+    if (expedition.kind !== ExpeditionKind.ATTACK) return null;
+
+    return tx.pendingConquest.findFirst({
+      where: {
+        attackerVillageId: expedition.attackerVillageId,
+        targetVillageId: expedition.targetRefId,
+        status: 'OPEN',
+        finalizeJobId: null,
+      },
+      select: { id: true, captureUntil: true },
+    });
+  }
+
+  private async scheduleReturnJob(job: ReturnJobToSchedule): Promise<void> {
+    await this.boss.send(
+      'combat:return',
+      { expeditionId: job.expeditionId },
+      {
+        startAfter: job.returnAt,
+        singletonKey: `return:${job.expeditionId}`,
+      },
+    );
   }
 
   /**
@@ -1593,7 +1669,7 @@ export class CombatWorker implements OnModuleInit {
   private async handleCaravanArrival(
     tx: PrismaClientOrTx,
     expedition: Expedition,
-  ) {
+  ): Promise<ReturnJobToSchedule> {
     this.logger.debug(`Processing caravan arrival: ${expedition.id}`);
 
     const targetVillage = await tx.village.findUnique({
@@ -1658,6 +1734,71 @@ export class CombatWorker implements OnModuleInit {
       },
     });
 
+    const originVillage = await tx.village.findUnique({
+      where: { id: expedition.attackerVillageId },
+      select: { id: true, name: true, x: true, y: true, userId: true },
+    });
+    if (!originVillage?.userId) {
+      throw new Error(
+        `Caravan report origin village not found: originVillageId=${expedition.attackerVillageId}, worldId=${expedition.worldId}`,
+      );
+    }
+
+    const report = await tx.caravanReport.upsert({
+      where: {
+        expeditionId_type: {
+          expeditionId: expedition.id,
+          type: 'ARRIVED',
+        },
+      },
+      create: {
+        worldId: expedition.worldId,
+        expeditionId: expedition.id,
+        type: 'ARRIVED',
+        originVillageId: originVillage.id,
+        originVillageName: originVillage.name,
+        originX: originVillage.x,
+        originY: originVillage.y,
+        targetVillageId: targetVillage.id,
+        targetVillageName: targetVillage.name,
+        targetX: targetVillage.x,
+        targetY: targetVillage.y,
+        resources: carried,
+        credited,
+        returned: EMPTY_LOOT,
+        lost,
+        porters: caravanPortersFor(carried),
+        recalled: false,
+      },
+      update: {},
+    });
+
+    const recipientIds = [
+      ...new Set(
+        [originVillage.userId, targetVillage.userId].filter(
+          (id): id is string => Boolean(id),
+        ),
+      ),
+    ];
+
+    for (const recipientUserId of recipientIds) {
+      await tx.inboxEntry.upsert({
+        where: {
+          userId_caravanReportId: {
+            userId: recipientUserId,
+            caravanReportId: report.id,
+          },
+        },
+        create: {
+          userId: recipientUserId,
+          worldId: expedition.worldId,
+          kind: 'CARAVAN',
+          caravanReportId: report.id,
+        },
+        update: {},
+      });
+    }
+
     await createOutboxEvent(tx, 'caravan.arrived', expedition.targetRefId, {
       expeditionId: expedition.id,
       villageId: expedition.attackerVillageId,
@@ -1667,17 +1808,10 @@ export class CombatWorker implements OnModuleInit {
       returnAt: returnAt.toISOString(),
     });
 
-    await this.boss.send(
-      'combat:return',
-      { expeditionId: expedition.id },
-      {
-        startAfter: returnAt,
-        singletonKey: `return:${expedition.id}`,
-      },
-    );
-
     this.logger.debug(
       `Caravan arrived for expedition ${expedition.id}, credited=${JSON.stringify(credited)}, lost=${JSON.stringify(lost)}`,
     );
+
+    return { expeditionId: expedition.id, returnAt };
   }
 }
