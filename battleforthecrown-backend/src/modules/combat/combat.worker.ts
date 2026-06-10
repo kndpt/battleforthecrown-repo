@@ -961,9 +961,7 @@ export class CombatWorker implements OnModuleInit {
 
   private async applyDefenderLosses(
     tx: PrismaClientOrTx,
-    defenderVillage: Prisma.VillageGetPayload<{
-      include: { resourceStock: true; buildings: true };
-    }>,
+    defenderVillage: DefenderVillage,
     participants: CombatParticipant[],
     totalDefenderUnits: UnitMap,
     lossesDefender: UnitMap,
@@ -1076,9 +1074,7 @@ export class CombatWorker implements OnModuleInit {
   }
 
   private getCaptureDurationMs(
-    targetVillage: Prisma.VillageGetPayload<{
-      include: { resourceStock: true; buildings: true };
-    }>,
+    targetVillage: DefenderVillage,
     tempo: WorldTempo,
   ): number {
     const castleLevel = targetVillage.isBarbarian
