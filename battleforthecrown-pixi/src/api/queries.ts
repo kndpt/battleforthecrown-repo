@@ -1051,6 +1051,8 @@ export function useRecallExpeditionMutation() {
       );
     },
     onSettled: (_data, _err, { villageId }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.resources(villageId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.openExpeditions(userId, worldId) });
     },
