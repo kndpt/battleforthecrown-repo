@@ -267,7 +267,7 @@ export class ReturnWorker implements OnModuleInit {
         }),
         tx.village.findUnique({
           where: { id: expedition.targetRefId },
-          select: { id: true, name: true, x: true, y: true, userId: true },
+          select: { id: true, name: true, x: true, y: true },
         }),
       ]);
 
@@ -311,31 +311,21 @@ export class ReturnWorker implements OnModuleInit {
         update: {},
       });
 
-      const recipientIds = [
-        ...new Set(
-          [originVillage.userId, targetVillage.userId].filter(
-            (id): id is string => Boolean(id),
-          ),
-        ),
-      ];
-
-      for (const recipientUserId of recipientIds) {
-        await tx.inboxEntry.upsert({
-          where: {
-            userId_caravanReportId: {
-              userId: recipientUserId,
-              caravanReportId: report.id,
-            },
-          },
-          create: {
-            userId: recipientUserId,
-            worldId: expedition.worldId,
-            kind: 'CARAVAN',
+      await tx.inboxEntry.upsert({
+        where: {
+          userId_caravanReportId: {
+            userId: originVillage.userId,
             caravanReportId: report.id,
           },
-          update: {},
-        });
-      }
+        },
+        create: {
+          userId: originVillage.userId,
+          worldId: expedition.worldId,
+          kind: 'CARAVAN',
+          caravanReportId: report.id,
+        },
+        update: {},
+      });
     }
 
     await tx.expedition.delete({

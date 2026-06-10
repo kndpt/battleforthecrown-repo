@@ -591,6 +591,10 @@ describe('resource caravan smoke', () => {
         where: { villageId: villageAId },
       }),
     ).resolves.toMatchObject({ used: 11 });
+    await ctx.prisma.village.update({
+      where: { id: villageBId },
+      data: { userId: userB.userId },
+    });
     await ctx.prisma.resourceStock.update({
       where: { villageId: villageAId },
       data: {
@@ -679,6 +683,17 @@ describe('resource caravan smoke', () => {
         },
       }),
     ).resolves.not.toBeNull();
+    await expect(
+      ctx.prisma.inboxEntry.findFirst({
+        where: {
+          userId: userB.userId,
+          worldId: world.id,
+          kind: 'CARAVAN',
+          caravanReportId: returnedReport.id,
+          hidden: false,
+        },
+      }),
+    ).resolves.toBeNull();
     const returnedListRes = await request(ctx.server)
       .get('/combat/caravan-reports')
       .set('Authorization', `Bearer ${userA.accessToken}`)

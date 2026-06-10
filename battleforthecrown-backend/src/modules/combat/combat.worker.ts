@@ -46,6 +46,16 @@ interface PendingConquestToSchedule {
   captureUntil: Date;
 }
 
+interface ReturnJobToSchedule {
+  expeditionId: string;
+  returnAt: Date;
+}
+
+interface CombatPostCommitWork {
+  pendingConquest?: PendingConquestToSchedule | null;
+  returnJob?: ReturnJobToSchedule | null;
+}
+
 /** Defender village hydrated with the data combat resolution needs to mutate. */
 type DefenderVillage = Prisma.VillageGetPayload<{
   include: { resourceStock: true; buildings: true };
@@ -118,10 +128,10 @@ export class CombatWorker implements OnModuleInit {
     this.logger.debug(`Processing combat resolution: ${data.expeditionId}`);
 
     try {
-      const pendingConquestToSchedule = await withSerializableRetry(
+      const postCommitWork = await withSerializableRetry(
         () =>
           this.prisma.$transaction(
-            async (tx) => {
+            async (tx): Promise<CombatPostCommitWork | undefined> => {
               // 1. Get expedition with related data
               const expedition = await tx.expedition.findUnique({
                 where: { id: data.expeditionId },
@@ -140,15 +150,21 @@ export class CombatWorker implements OnModuleInit {
               }
 
               if (expedition.kind === ExpeditionKind.REINFORCE) {
-                return this.handleReinforcementArrival(tx, expedition);
+                await this.handleReinforcementArrival(tx, expedition);
+                return;
               }
 
               if (expedition.kind === ExpeditionKind.SCOUT) {
-                return this.handleScoutArrival(tx, expedition);
+                await this.handleScoutArrival(tx, expedition);
+                return;
               }
 
               if (expedition.kind === ExpeditionKind.CARAVAN) {
-                return this.handleCaravanArrival(tx, expedition);
+                const returnJob = await this.handleCaravanArrival(
+                  tx,
+                  expedition,
+                );
+                return { returnJob };
               }
 
               // 2. Build combat context
@@ -271,7 +287,7 @@ export class CombatWorker implements OnModuleInit {
               this.logger.debug(
                 `Combat resolved for expedition ${expedition.id}, victory=${isVictory}, returnAt=${returnAt?.toISOString() ?? 'none'}`,
               );
-              return pendingConquest;
+              return { pendingConquest };
             },
             { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
           ),
@@ -279,8 +295,12 @@ export class CombatWorker implements OnModuleInit {
         'combat resolution',
       );
 
-      if (pendingConquestToSchedule) {
-        await this.conquest.scheduleFinalizeJob(pendingConquestToSchedule);
+      if (postCommitWork?.pendingConquest) {
+        await this.conquest.scheduleFinalizeJob(postCommitWork.pendingConquest);
+      }
+
+      if (postCommitWork?.returnJob) {
+        await this.scheduleReturnJob(postCommitWork.returnJob);
       }
     } catch (error) {
       this.logger.error(
@@ -289,6 +309,17 @@ export class CombatWorker implements OnModuleInit {
       );
       throw error;
     }
+  }
+
+  private async scheduleReturnJob(job: ReturnJobToSchedule): Promise<void> {
+    await this.boss.send(
+      'combat:return',
+      { expeditionId: job.expeditionId },
+      {
+        startAfter: job.returnAt,
+        singletonKey: `return:${job.expeditionId}`,
+      },
+    );
   }
 
   /**
@@ -1408,7 +1439,7 @@ export class CombatWorker implements OnModuleInit {
   private async handleCaravanArrival(
     tx: PrismaClientOrTx,
     expedition: Expedition,
-  ) {
+  ): Promise<ReturnJobToSchedule> {
     this.logger.debug(`Processing caravan arrival: ${expedition.id}`);
 
     const targetVillage = await tx.village.findUnique({
@@ -1547,17 +1578,10 @@ export class CombatWorker implements OnModuleInit {
       returnAt: returnAt.toISOString(),
     });
 
-    await this.boss.send(
-      'combat:return',
-      { expeditionId: expedition.id },
-      {
-        startAfter: returnAt,
-        singletonKey: `return:${expedition.id}`,
-      },
-    );
-
     this.logger.debug(
       `Caravan arrived for expedition ${expedition.id}, credited=${JSON.stringify(credited)}, lost=${JSON.stringify(lost)}`,
     );
+
+    return { expeditionId: expedition.id, returnAt };
   }
 }

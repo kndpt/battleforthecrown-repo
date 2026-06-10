@@ -64,6 +64,37 @@ import type {
 } from '@battleforthecrown/shared/combat';
 import type { OnboardingSummaryDto } from '@battleforthecrown/shared/onboarding';
 
+const CaravanReportResourcesSchema = z.strictObject({
+  wood: z.number(),
+  stone: z.number(),
+  iron: z.number(),
+});
+
+const CaravanReportResponseSchema = z.strictObject({
+  id: z.string(),
+  worldId: z.string(),
+  expeditionId: z.string(),
+  type: z.enum(['ARRIVED', 'RETURNED']),
+  originVillageId: z.string(),
+  originVillageName: z.string().nullable().optional(),
+  originX: z.number(),
+  originY: z.number(),
+  targetVillageId: z.string(),
+  targetVillageName: z.string().nullable().optional(),
+  targetX: z.number(),
+  targetY: z.number(),
+  resources: CaravanReportResourcesSchema,
+  credited: CaravanReportResourcesSchema,
+  returned: CaravanReportResourcesSchema,
+  lost: CaravanReportResourcesSchema,
+  porters: z.number(),
+  recalled: z.boolean(),
+  isRead: z.boolean(),
+  timestamp: z.string(),
+});
+
+const CaravanReportsResponseSchema = z.array(CaravanReportResponseSchema);
+
 export const queryKeys = {
   worlds: () => ['worlds'] as const,
   publicWorlds: () => ['worlds', 'public'] as const,
@@ -962,9 +993,10 @@ export function useCaravanReportsQuery() {
   const worldId = useGameStore((state) => state.worldId);
   return useQuery<CaravanReportResponse[]>({
     queryKey: queryKeys.caravanReports(userId, worldId),
-    queryFn: () => {
+    queryFn: async () => {
       if (!userId || !worldId) return Promise.resolve([] as CaravanReportResponse[]);
-      return apiClient.get<CaravanReportResponse[]>('/combat/caravan-reports');
+      const raw = await apiClient.get<unknown>('/combat/caravan-reports');
+      return CaravanReportsResponseSchema.parse(raw);
     },
     enabled: Boolean(userId && worldId),
     staleTime: 10_000,
@@ -976,9 +1008,10 @@ export function useCaravanReportQuery(reportId: string | null) {
   const worldId = useGameStore((state) => state.worldId);
   return useQuery<CaravanReportResponse>({
     queryKey: queryKeys.caravanReport(reportId, worldId),
-    queryFn: () => {
+    queryFn: async () => {
       if (!reportId || !worldId) return Promise.reject(new Error('Missing caravan report'));
-      return apiClient.get<CaravanReportResponse>(`/combat/caravan-report/${reportId}`);
+      const raw = await apiClient.get<unknown>(`/combat/caravan-report/${reportId}`);
+      return CaravanReportResponseSchema.parse(raw);
     },
     enabled: Boolean(reportId && userId && worldId),
     staleTime: 60_000,
@@ -990,8 +1023,10 @@ export function useMarkCaravanReportReadMutation() {
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const worldId = useGameStore((state) => state.worldId);
   return useMutation<CaravanReportResponse, Error, MarkReportReadInput>({
-    mutationFn: ({ reportId }) =>
-      apiClient.patch<CaravanReportResponse>(`/combat/caravan-report/${reportId}/read`),
+    mutationFn: async ({ reportId }) => {
+      const raw = await apiClient.patch<unknown>(`/combat/caravan-report/${reportId}/read`);
+      return CaravanReportResponseSchema.parse(raw);
+    },
     onSettled: (_data, _err, { reportId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.caravanReports(userId, worldId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.caravanReport(reportId, worldId) });
@@ -1006,8 +1041,9 @@ export function useDeleteCaravanReportMutation() {
   return useMutation<unknown, Error, DeleteReportInput>({
     mutationFn: ({ reportId }) =>
       apiClient.delete<unknown>(`/combat/caravan-report/${reportId}`),
-    onSettled: () => {
+    onSettled: (_data, _err, { reportId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.caravanReports(userId, worldId) });
+      queryClient.removeQueries({ queryKey: queryKeys.caravanReport(reportId, worldId) });
     },
   });
 }
