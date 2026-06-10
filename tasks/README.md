@@ -33,6 +33,7 @@ Politique PR `$bftc-run` :
 
 ### Runs actifs
 
+- [054 — Cible barbare narrative d'onboarding](./runs/054-feature-onboarding-narrative-barbarian-target.md) — 📋 `PLANNED`. Remplacer la garantie T1 globale par une cible affaiblie dédiée au tutoriel, tout en préservant les T1 standards.
 - [052 — Retour joueur après perte du dernier village](./runs/052-feature-eliminated-player-rejoin-flow.md) — 📋 `PLANNED`. État "membre sans village" après conquête PvP : écran DA, CTA revenir sur le monde, choix autre monde et rejoin contrôlé.
 - [053 — Nom public de joueur global](./runs/053-feature-player-display-name.md) — 📋 `PLANNED`. Ajouter `User.displayName` global, unique et public, puis remplacer l'email dans les surfaces de jeu.
 - [051 — Classements Gloire d'Assaut / Rempart](./runs/051-feature-rankings-glory.md) — 📋 `PLANNED`. Premier vertical classements : scoring PvP durable, APIs world-scoped, affichage minimal, sans rewards économiques.
