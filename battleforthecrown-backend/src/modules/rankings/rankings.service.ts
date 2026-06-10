@@ -21,7 +21,8 @@ interface CreditGloryInput {
   scorerUserId: string;
   opponentUserId: string;
   combatReportId: string;
-  losses: UnitMap;
+  losses?: UnitMap;
+  rawPoints?: number;
   scorerPowerSnapshot: number | null;
   opponentPowerSnapshot: number | null;
   occurredAt?: Date;
@@ -40,7 +41,12 @@ export class RankingsService {
   ): Promise<GloryLedger | null> {
     if (input.scorerUserId === input.opponentUserId) return null;
 
-    const rawPoints = calculateRawBattleValue(input.losses);
+    const rawPoints = Math.max(
+      0,
+      Math.floor(
+        input.rawPoints ?? calculateRawBattleValue(input.losses ?? {}),
+      ),
+    );
     if (rawPoints <= 0) return null;
 
     const occurredAt = input.occurredAt ?? new Date();

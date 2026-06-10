@@ -2,7 +2,8 @@ CREATE TYPE "RankingSignal" AS ENUM ('ASSAULT_GLORY', 'RAMPART_GLORY');
 
 ALTER TABLE "expedition"
 ADD COLUMN "attacker_kingdom_power_snapshot" INTEGER,
-ADD COLUMN "defender_kingdom_power_snapshot" INTEGER;
+ADD COLUMN "defender_kingdom_power_snapshot" INTEGER,
+ADD COLUMN "defender_kingdom_power_snapshots" JSONB;
 
 CREATE TABLE "glory_ledger" (
     "id" TEXT NOT NULL,
@@ -23,7 +24,7 @@ CREATE TABLE "glory_ledger" (
     CONSTRAINT "glory_ledger_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX "glory_ledger_combat_report_id_signal_scorer_user_id_key" ON "glory_ledger"("combat_report_id", "signal", "scorer_user_id");
+CREATE UNIQUE INDEX "glory_ledger_report_signal_scorer_opponent_key" ON "glory_ledger"("combat_report_id", "signal", "scorer_user_id", "opponent_user_id");
 CREATE INDEX "glory_ledger_world_id_signal_occurred_at_idx" ON "glory_ledger"("world_id", "signal", "occurred_at");
 CREATE INDEX "glory_ledger_world_id_signal_scorer_user_id_idx" ON "glory_ledger"("world_id", "signal", "scorer_user_id");
 CREATE INDEX "glory_ledger_world_id_pair_key_occurred_at_idx" ON "glory_ledger"("world_id", "pair_key", "occurred_at");

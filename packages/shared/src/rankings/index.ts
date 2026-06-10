@@ -81,6 +81,41 @@ export function applyPairDiminishingReturns(
   return Math.floor(effective);
 }
 
+export function splitPointsByWeights<T extends string>(
+  totalPoints: number,
+  weights: { id: T; weight: number }[],
+): { id: T; points: number }[] {
+  const safeTotal = Math.max(0, Math.floor(totalPoints));
+  if (safeTotal <= 0) return [];
+
+  const grouped = new Map<T, number>();
+  for (const item of weights) {
+    if (!Number.isFinite(item.weight) || item.weight <= 0) continue;
+    grouped.set(item.id, (grouped.get(item.id) ?? 0) + item.weight);
+  }
+
+  const entries = [...grouped.entries()].map(([id, weight]) => ({ id, weight }));
+  const totalWeight = entries.reduce((sum, item) => sum + item.weight, 0);
+  if (totalWeight <= 0) return [];
+
+  const split = entries.map((item) => {
+    const exact = (safeTotal * item.weight) / totalWeight;
+    const points = Math.floor(exact);
+    return { id: item.id, points, remainder: exact - points };
+  });
+
+  let remaining = safeTotal - split.reduce((sum, item) => sum + item.points, 0);
+  for (const item of [...split].sort((a, b) => b.remainder - a.remainder)) {
+    if (remaining <= 0) break;
+    item.points += 1;
+    remaining -= 1;
+  }
+
+  return split
+    .filter((item) => item.points > 0)
+    .map(({ id, points }) => ({ id, points }));
+}
+
 export interface RankingsLeaderboardEntry {
   rank: number;
   userId: string;

@@ -486,7 +486,8 @@ model Expedition {
   arrivalAt         DateTime         @map("arrival_at") @db.Timestamptz(3)
   outboundTravelMs  Int              @map("outbound_travel_ms")
   attackerKingdomPowerSnapshot Int?  @map("attacker_kingdom_power_snapshot")
-  defenderKingdomPowerSnapshot Int?  @map("defender_kingdom_power_snapshot")
+  defenderKingdomPowerSnapshot  Int?  @map("defender_kingdom_power_snapshot")
+  defenderKingdomPowerSnapshots Json? @map("defender_kingdom_power_snapshots")
   returnAt          DateTime?        @map("return_at") @db.Timestamptz(3)
   recalled          Boolean          @default(false)
   reportId          String?          @unique @map("report_id")
@@ -574,7 +575,7 @@ model GloryLedger {
   scorer       User         @relation(fields: [scorerUserId], references: [id], onDelete: Cascade)
   combatReport CombatReport @relation(fields: [combatReportId], references: [id], onDelete: Cascade)
 
-  @@unique([combatReportId, signal, scorerUserId])
+  @@unique([combatReportId, signal, scorerUserId, opponentUserId], map: "glory_ledger_report_signal_scorer_opponent_key")
   @@index([worldId, signal, occurredAt])
   @@index([worldId, signal, scorerUserId])
   @@index([worldId, pairKey, occurredAt])

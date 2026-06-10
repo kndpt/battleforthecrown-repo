@@ -4,6 +4,7 @@ import {
   applyPairDiminishingReturns,
   calculateOpponentMultiplier,
   calculateRawBattleValue,
+  splitPointsByWeights,
 } from '@battleforthecrown/shared/rankings';
 import { UNIT_POWER_WEIGHTS } from '@battleforthecrown/shared/power';
 
@@ -25,5 +26,27 @@ describe('rankings glory formulas — pure logic', () => {
     expect(applyPairDiminishingReturns(1_000, 1_500)).toBe(750);
     expect(applyPairDiminishingReturns(1_000, 4_500)).toBe(350);
     expect(applyPairDiminishingReturns(1_000, 5_000)).toBe(200);
+  });
+
+  it('splits integer points by participant weights while preserving the total', () => {
+    expect(
+      splitPointsByWeights(10, [
+        { id: 'host', weight: 2 },
+        { id: 'ally', weight: 1 },
+      ]),
+    ).toEqual([
+      { id: 'host', points: 7 },
+      { id: 'ally', points: 3 },
+    ]);
+    expect(
+      splitPointsByWeights(3, [
+        { id: 'host', weight: 1 },
+        { id: 'host', weight: 1 },
+        { id: 'ally', weight: 1 },
+      ]),
+    ).toEqual([
+      { id: 'host', points: 2 },
+      { id: 'ally', points: 1 },
+    ]);
   });
 });

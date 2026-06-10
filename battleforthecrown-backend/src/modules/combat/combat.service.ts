@@ -178,12 +178,15 @@ export class CombatService {
 
       const attackerKingdomPowerSnapshot =
         await this.powerService.getKingdomPowerValue(userId, worldId, tx);
+      const defenderKingdomPowerSnapshots =
+        await this.snapshotDefenderKingdomPowers(
+          tx,
+          worldId,
+          targetRefId,
+          defenderUserId,
+        );
       const defenderKingdomPowerSnapshot = defenderUserId
-        ? await this.powerService.getKingdomPowerValue(
-            defenderUserId,
-            worldId,
-            tx,
-          )
+        ? (defenderKingdomPowerSnapshots[defenderUserId] ?? null)
         : null;
 
       // 6. Create expedition
@@ -203,6 +206,7 @@ export class CombatService {
           outboundTravelMs: travelTimeMs,
           attackerKingdomPowerSnapshot,
           defenderKingdomPowerSnapshot,
+          defenderKingdomPowerSnapshots,
         },
       });
 
@@ -969,6 +973,46 @@ export class CombatService {
     }
 
     return village;
+  }
+
+  private async snapshotDefenderKingdomPowers(
+    tx: PrismaClientOrTx,
+    worldId: string,
+    targetVillageId: string,
+    primaryDefenderUserId: string | null,
+  ): Promise<Record<string, number>> {
+    const userIds = new Set<string>();
+    if (primaryDefenderUserId) userIds.add(primaryDefenderUserId);
+
+    const [garrisons, pendingCapture] = await Promise.all([
+      tx.garrison.findMany({
+        where: { villageId: targetVillageId, quantity: { gt: 0 } },
+        select: { originVillage: { select: { userId: true } } },
+      }),
+      tx.pendingConquest.findFirst({
+        where: { targetVillageId, status: PendingConquestStatus.OPEN },
+        select: { attackerUserId: true },
+      }),
+    ]);
+
+    if (pendingCapture?.attackerUserId) {
+      userIds.add(pendingCapture.attackerUserId);
+    }
+    for (const garrison of garrisons) {
+      if (garrison.originVillage.userId) {
+        userIds.add(garrison.originVillage.userId);
+      }
+    }
+
+    const snapshots: Record<string, number> = {};
+    for (const defenderUserId of userIds) {
+      snapshots[defenderUserId] = await this.powerService.getKingdomPowerValue(
+        defenderUserId,
+        worldId,
+        tx,
+      );
+    }
+    return snapshots;
   }
 
   /**

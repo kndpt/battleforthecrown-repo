@@ -26,6 +26,7 @@ const BASE_EXPEDITION: Expedition = {
   outboundTravelMs: 14000,
   attackerKingdomPowerSnapshot: null,
   defenderKingdomPowerSnapshot: null,
+  defenderKingdomPowerSnapshots: null,
   returnAt: null,
   recalled: false,
   reportId: null,

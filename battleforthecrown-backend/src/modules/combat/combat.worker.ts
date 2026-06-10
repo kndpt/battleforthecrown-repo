@@ -31,6 +31,10 @@ import { parseCombatLoot } from './codecs';
 import { getStrategyBonusValue } from '@battleforthecrown/shared/village';
 import { calculateDistance } from '@battleforthecrown/shared/logic';
 import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
+import {
+  calculateRawBattleValue,
+  splitPointsByWeights,
+} from '@battleforthecrown/shared/rankings';
 import type { WorldTempo } from '@battleforthecrown/shared/world';
 import type { CombatResolution } from '@battleforthecrown/shared/combat';
 import {
@@ -231,6 +235,7 @@ export class CombatWorker implements OnModuleInit {
             await this.creditCombatGlory(tx, {
               expedition,
               resolution,
+              context,
               defenderVillage,
               occupationDefense,
               attackerVillage,
@@ -530,6 +535,7 @@ export class CombatWorker implements OnModuleInit {
     args: {
       expedition: Expedition;
       resolution: CombatResolution;
+      context: CombatContext;
       defenderVillage: DefenderVillage | null;
       occupationDefense: OccupationDefense | null;
       attackerVillage: Village;
@@ -539,47 +545,131 @@ export class CombatWorker implements OnModuleInit {
     const {
       expedition,
       resolution,
+      context,
       defenderVillage,
       occupationDefense,
       attackerVillage,
       report,
     } = args;
     const attackerUserId = attackerVillage.userId;
-    const defenderUserId =
-      occupationDefense?.attackerUserId ??
-      (expedition.targetKind === 'PLAYER_VILLAGE'
-        ? defenderVillage?.userId
-        : null);
-
-    if (
-      !attackerUserId ||
-      !defenderUserId ||
-      attackerUserId === defenderUserId
-    ) {
+    if (!attackerUserId) {
       return;
     }
 
-    await this.rankings.creditGlory(tx, {
-      worldId: expedition.worldId,
-      signal: RankingSignal.ASSAULT_GLORY,
-      scorerUserId: attackerUserId,
-      opponentUserId: defenderUserId,
-      combatReportId: report.id,
-      losses: resolution.lossesDefender || {},
-      scorerPowerSnapshot: expedition.attackerKingdomPowerSnapshot,
-      opponentPowerSnapshot: expedition.defenderKingdomPowerSnapshot,
-    });
+    const participantOwnerByVillageId = await this.loadParticipantOwnerIds(
+      tx,
+      context.defender.participants,
+      defenderVillage,
+      occupationDefense,
+    );
+    const defenderPowerSnapshots = this.parsePowerSnapshots(
+      expedition.defenderKingdomPowerSnapshots,
+    );
+    const defenderUnits = context.defender.units || {};
+    const assaultLosses = resolution.lossesDefender || {};
 
-    await this.rankings.creditGlory(tx, {
-      worldId: expedition.worldId,
-      signal: RankingSignal.RAMPART_GLORY,
-      scorerUserId: defenderUserId,
-      opponentUserId: attackerUserId,
-      combatReportId: report.id,
-      losses: resolution.lossesAttacker,
-      scorerPowerSnapshot: expedition.defenderKingdomPowerSnapshot,
-      opponentPowerSnapshot: expedition.attackerKingdomPowerSnapshot,
-    });
+    for (const participant of context.defender.participants) {
+      const defenderUserId = participantOwnerByVillageId.get(
+        participant.villageId,
+      );
+      if (!defenderUserId || defenderUserId === attackerUserId) continue;
+
+      const participantLosses = distributeLossesProportionally(
+        assaultLosses,
+        defenderUnits,
+        participant.units,
+      );
+
+      await this.rankings.creditGlory(tx, {
+        worldId: expedition.worldId,
+        signal: RankingSignal.ASSAULT_GLORY,
+        scorerUserId: attackerUserId,
+        opponentUserId: defenderUserId,
+        combatReportId: report.id,
+        losses: participantLosses,
+        scorerPowerSnapshot: expedition.attackerKingdomPowerSnapshot,
+        opponentPowerSnapshot:
+          defenderPowerSnapshots[defenderUserId] ??
+          expedition.defenderKingdomPowerSnapshot,
+      });
+    }
+
+    const rampartRawPoints = calculateRawBattleValue(resolution.lossesAttacker);
+    const rampartWeights = context.defender.participants.flatMap(
+      (participant) => {
+        const defenderUserId = participantOwnerByVillageId.get(
+          participant.villageId,
+        );
+        if (!defenderUserId || defenderUserId === attackerUserId) return [];
+        return [
+          {
+            id: defenderUserId,
+            weight: calculateRawBattleValue(participant.units),
+          },
+        ];
+      },
+    );
+
+    for (const split of splitPointsByWeights(
+      rampartRawPoints,
+      rampartWeights,
+    )) {
+      await this.rankings.creditGlory(tx, {
+        worldId: expedition.worldId,
+        signal: RankingSignal.RAMPART_GLORY,
+        scorerUserId: split.id,
+        opponentUserId: attackerUserId,
+        combatReportId: report.id,
+        rawPoints: split.points,
+        scorerPowerSnapshot:
+          defenderPowerSnapshots[split.id] ??
+          expedition.defenderKingdomPowerSnapshot,
+        opponentPowerSnapshot: expedition.attackerKingdomPowerSnapshot,
+      });
+    }
+  }
+
+  private async loadParticipantOwnerIds(
+    tx: PrismaClientOrTx,
+    participants: CombatParticipant[],
+    defenderVillage: DefenderVillage | null,
+    occupationDefense: OccupationDefense | null,
+  ): Promise<Map<string, string>> {
+    const participantVillageIds = [
+      ...new Set(participants.map((participant) => participant.villageId)),
+    ];
+    const villages = participantVillageIds.length
+      ? await tx.village.findMany({
+          where: { id: { in: participantVillageIds } },
+          select: { id: true, userId: true },
+        })
+      : [];
+    const ownerByVillageId = new Map(
+      villages.flatMap((village) =>
+        village.userId ? [[village.id, village.userId] as const] : [],
+      ),
+    );
+
+    if (defenderVillage && occupationDefense?.attackerUserId) {
+      ownerByVillageId.set(
+        defenderVillage.id,
+        occupationDefense.attackerUserId,
+      );
+    }
+
+    return ownerByVillageId;
+  }
+
+  private parsePowerSnapshots(raw: Prisma.JsonValue): Record<string, number> {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+
+    return Object.fromEntries(
+      Object.entries(raw).flatMap(([userId, value]) =>
+        typeof value === 'number' && Number.isFinite(value)
+          ? [[userId, value]]
+          : [],
+      ),
+    );
   }
 
   /**
