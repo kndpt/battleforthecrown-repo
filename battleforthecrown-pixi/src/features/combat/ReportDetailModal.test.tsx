@@ -117,10 +117,15 @@ describe('ReportDetailModal', () => {
 
     render(<ReportDetailModal reportId={caravanReport.id} reportKind="caravan" onClose={onClose} />);
 
-    expect(await screen.findByText('Rapport caravane')).toBeInTheDocument();
-    expect(screen.getByText('Caravane arrivée · Hauterive')).toBeInTheDocument();
-    expect(screen.getByText('Créditées')).toBeInTheDocument();
-    expect(screen.getByText('Perdues')).toBeInTheDocument();
+    expect(await screen.findByText('Livraison partielle')).toBeInTheDocument();
+    expect(screen.queryByText('Rapport caravane')).not.toBeInTheDocument();
+    expect(screen.queryByText('Livraison vers Hauterive')).not.toBeInTheDocument();
+    expect(screen.getByText('Bilan des ressources')).toBeInTheDocument();
+    expect(screen.getByText('Entrepôt plein')).toBeInTheDocument();
+    expect(screen.getByText("95 ressources ont été livrées. 5 n'ont pas pu entrer dans l'Entrepôt.")).toBeInTheDocument();
+    expect(screen.getByText('5 perdues')).toBeInTheDocument();
+    expect(screen.queryByText('Créditées')).not.toBeInTheDocument();
+    expect(screen.queryByText('Envoyées')).not.toBeInTheDocument();
     expect(screen.queryByText(caravanReport.id)).not.toBeInTheDocument();
 
     await waitFor(() => {

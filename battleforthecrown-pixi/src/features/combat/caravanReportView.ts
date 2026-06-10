@@ -21,14 +21,21 @@ export interface CaravanReportResourceLine {
   icon: string;
   key: keyof CaravanReportResourcesDto;
   label: string;
-  value: string;
+  lostValue?: string;
+  primaryAmount: number;
+  primaryLabel: string;
+  primaryValue: string;
+  sentValue: string;
 }
 
-export interface CaravanReportResourceSection {
-  id: 'resources' | 'credited' | 'returned' | 'lost';
-  label: string;
+export interface CaravanReportSummary {
+  body: string;
+  lostTotal: number;
+  primaryLabel: string;
+  primaryTotal: number;
   resources: CaravanReportResourceLine[];
-  total: number;
+  sentTotal: number;
+  title: string;
 }
 
 const resourceMeta: Record<keyof CaravanReportResourcesDto, { icon: string; label: string }> = {
@@ -43,9 +50,9 @@ export function caravanReportTypeLabel(type: CaravanReportResponse['type']): str
 
 export function caravanReportStateLabel(report: CaravanReportResponse): string {
   if (report.type === 'RETURNED' || report.recalled) {
-    return 'Retour rappelé';
+    return 'Caravane rentrée';
   }
-  return 'Livraison arrivée';
+  return caravanReportResourceTotal(report.lost) > 0 ? 'Livraison partielle' : 'Livraison réussie';
 }
 
 export function caravanReportResourceTotal(resources: CaravanReportResourcesDto): number {
@@ -76,68 +83,91 @@ export function caravanReportTargetVillage(report: CaravanReportResponse): Carav
   };
 }
 
-function resourceLines(resources: CaravanReportResourcesDto): CaravanReportResourceLine[] {
-  return (['wood', 'stone', 'iron'] as const).map((key) => ({
+function formatResource(value: number): string {
+  return NUMBER_FORMATTER.format(value);
+}
+
+function deliveredResources(report: CaravanReportResponse): CaravanReportResourcesDto {
+  return report.type === 'ARRIVED' ? report.credited : report.returned;
+}
+
+function resourceLines(report: CaravanReportResponse): CaravanReportResourceLine[] {
+  const delivered = deliveredResources(report);
+  const primaryLabel = report.type === 'ARRIVED' ? 'Livré' : 'Récupéré';
+  const keys = (['wood', 'stone', 'iron'] as const).filter(
+    (key) => report.resources[key] > 0 || delivered[key] > 0 || report.lost[key] > 0,
+  );
+  const visibleKeys = keys.length > 0 ? keys : (['wood', 'stone', 'iron'] as const);
+
+  return visibleKeys.map((key) => ({
     icon: resourceMeta[key].icon,
     key,
     label: resourceMeta[key].label,
-    value: NUMBER_FORMATTER.format(resources[key]),
+    lostValue: report.lost[key] > 0 ? formatResource(report.lost[key]) : undefined,
+    primaryAmount: delivered[key],
+    primaryLabel,
+    primaryValue: formatResource(delivered[key]),
+    sentValue: formatResource(report.resources[key]),
   }));
 }
 
-export function caravanReportResourceSections(report: CaravanReportResponse): CaravanReportResourceSection[] {
-  const sections: CaravanReportResourceSection[] = [
-    {
-      id: 'resources',
-      label: 'Envoyées',
-      resources: resourceLines(report.resources),
-      total: caravanReportResourceTotal(report.resources),
-    },
-  ];
+export function caravanReportSummary(report: CaravanReportResponse): CaravanReportSummary {
+  const sentTotal = caravanReportResourceTotal(report.resources);
+  const primaryTotal = caravanReportResourceTotal(deliveredResources(report));
+  const lostTotal = caravanReportResourceTotal(report.lost);
+  const primaryLabel = report.type === 'ARRIVED' ? 'Livré' : 'Récupéré';
 
-  if (report.type === 'ARRIVED') {
-    sections.push({
-      id: 'credited',
-      label: 'Créditées',
-      resources: resourceLines(report.credited),
-      total: caravanReportResourceTotal(report.credited),
-    });
+  if (report.type === 'RETURNED') {
+    return {
+      body: primaryTotal === 0
+        ? lostTotal > 0
+          ? `Aucune ressource n'a pu revenir au village d'origine. ${formatResource(lostTotal)} n'ont pas pu être stockées.`
+          : "Aucune ressource n'était transportée."
+        : lostTotal > 0
+          ? `${formatResource(primaryTotal)} ressources sont revenues au village d'origine. ${formatResource(lostTotal)} n'ont pas pu être stockées.`
+          : `${formatResource(primaryTotal)} ressources sont revenues au village d'origine.`,
+      lostTotal,
+      primaryLabel,
+      primaryTotal,
+      resources: resourceLines(report),
+      sentTotal,
+      title: lostTotal > 0 ? 'Retour partiel' : 'Retour complet',
+    };
   }
 
-  if (report.type === 'RETURNED' || caravanReportResourceTotal(report.returned) > 0) {
-    sections.push({
-      id: 'returned',
-      label: 'Restaurées',
-      resources: resourceLines(report.returned),
-      total: caravanReportResourceTotal(report.returned),
-    });
-  }
-
-  if (caravanReportResourceTotal(report.lost) > 0) {
-    sections.push({
-      id: 'lost',
-      label: 'Perdues',
-      resources: resourceLines(report.lost),
-      total: caravanReportResourceTotal(report.lost),
-    });
-  }
-
-  return sections;
+  return {
+    body: primaryTotal === 0
+      ? lostTotal > 0
+        ? `Aucune ressource n'a pu être livrée. ${formatResource(lostTotal)} n'ont pas pu entrer dans l'Entrepôt.`
+        : "Aucune ressource n'était transportée."
+      : lostTotal > 0
+        ? `${formatResource(primaryTotal)} ressources ont été livrées. ${formatResource(lostTotal)} n'ont pas pu entrer dans l'Entrepôt.`
+        : `${formatResource(primaryTotal)} ressources ont été livrées au village destinataire.`,
+    lostTotal,
+    primaryLabel,
+    primaryTotal,
+    resources: resourceLines(report),
+    sentTotal,
+    title: lostTotal > 0 ? 'Entrepôt plein' : 'Livraison complète',
+  };
 }
 
 export function caravanReportSubject(report: CaravanReportResponse): string {
-  const village = report.type === 'ARRIVED' ? caravanReportTargetVillage(report) : caravanReportOriginVillage(report);
-  return `${caravanReportTypeLabel(report.type)} · ${caravanReportVillageLabel(village)}`;
+  return caravanReportSummary(report).title;
 }
 
 export function caravanReportPreview(report: CaravanReportResponse): string {
-  const total = report.type === 'ARRIVED'
-    ? caravanReportResourceTotal(report.credited)
-    : caravanReportResourceTotal(report.returned);
+  const summary = caravanReportSummary(report);
   const origin = caravanReportVillageLabel(caravanReportOriginVillage(report));
   const target = caravanReportVillageLabel(caravanReportTargetVillage(report));
   const route = report.type === 'ARRIVED' ? `${origin} vers ${target}` : `${target} vers ${origin}`;
-  return `${NUMBER_FORMATTER.format(total)} ressources · ${route}`;
+  const primary = summary.primaryTotal > 0
+    ? `${formatResource(summary.primaryTotal)} ${summary.primaryLabel.toLowerCase()}`
+    : report.type === 'ARRIVED'
+      ? 'Aucune ressource livrée'
+      : 'Aucune ressource récupérée';
+  const loss = summary.lostTotal > 0 ? ` · ${formatResource(summary.lostTotal)} perdues` : '';
+  return `${primary}${loss} · ${route}`;
 }
 
 export function caravanReportWhen(report: CaravanReportResponse): string {
