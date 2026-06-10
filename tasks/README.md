@@ -33,6 +33,7 @@ Politique PR `$bftc-run` :
 
 ### Runs actifs
 
+- [052 — Retour joueur après perte du dernier village](./runs/052-feature-eliminated-player-rejoin-flow.md) — 📋 `PLANNED`. État "membre sans village" après conquête PvP : écran DA, CTA revenir sur le monde, choix autre monde et rejoin contrôlé.
 - [051 — Classements Gloire d'Assaut / Rempart](./runs/051-feature-rankings-glory.md) — 📋 `PLANNED`. Premier vertical classements : scoring PvP durable, APIs world-scoped, affichage minimal, sans rewards économiques.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
