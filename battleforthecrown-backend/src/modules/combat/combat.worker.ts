@@ -659,7 +659,11 @@ export class CombatWorker implements OnModuleInit {
       ),
     );
 
-    if (defenderVillage && occupationDefense?.attackerUserId) {
+    if (
+      defenderVillage &&
+      occupationDefense?.attackerUserId &&
+      (defenderVillage.isBarbarian || !defenderVillage.userId)
+    ) {
       ownerByVillageId.set(
         defenderVillage.id,
         occupationDefense.attackerUserId,
