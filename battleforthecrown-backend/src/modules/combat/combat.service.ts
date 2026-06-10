@@ -178,15 +178,15 @@ export class CombatService {
 
       const attackerKingdomPowerSnapshot =
         await this.powerService.getKingdomPowerValue(userId, worldId, tx);
-      const defenderKingdomPowerSnapshots =
-        await this.snapshotDefenderKingdomPowers(
-          tx,
-          worldId,
-          targetRefId,
-          defenderUserId,
-        );
-      const defenderKingdomPowerSnapshot = defenderUserId
-        ? (defenderKingdomPowerSnapshots[defenderUserId] ?? null)
+      const defenderPowerSnapshot = await this.snapshotDefenderKingdomPowers(
+        tx,
+        worldId,
+        targetRefId,
+        defenderUserId,
+      );
+      const defenderKingdomPowerSnapshot = defenderPowerSnapshot.primaryUserId
+        ? (defenderPowerSnapshot.values[defenderPowerSnapshot.primaryUserId] ??
+          null)
         : null;
 
       // 6. Create expedition
@@ -206,7 +206,7 @@ export class CombatService {
           outboundTravelMs: travelTimeMs,
           attackerKingdomPowerSnapshot,
           defenderKingdomPowerSnapshot,
-          defenderKingdomPowerSnapshots,
+          defenderKingdomPowerSnapshots: defenderPowerSnapshot.values,
         },
       });
 
@@ -980,9 +980,8 @@ export class CombatService {
     worldId: string,
     targetVillageId: string,
     primaryDefenderUserId: string | null,
-  ): Promise<Record<string, number>> {
+  ): Promise<{ primaryUserId: string | null; values: Record<string, number> }> {
     const userIds = new Set<string>();
-    if (primaryDefenderUserId) userIds.add(primaryDefenderUserId);
 
     const [garrisons, pendingCapture] = await Promise.all([
       tx.garrison.findMany({
@@ -995,9 +994,10 @@ export class CombatService {
       }),
     ]);
 
-    if (pendingCapture?.attackerUserId) {
-      userIds.add(pendingCapture.attackerUserId);
-    }
+    const primaryUserId =
+      pendingCapture?.attackerUserId ?? primaryDefenderUserId;
+    if (primaryUserId) userIds.add(primaryUserId);
+
     for (const garrison of garrisons) {
       if (garrison.originVillage.userId) {
         userIds.add(garrison.originVillage.userId);
@@ -1012,7 +1012,7 @@ export class CombatService {
         tx,
       );
     }
-    return snapshots;
+    return { primaryUserId, values: snapshots };
   }
 
   /**
