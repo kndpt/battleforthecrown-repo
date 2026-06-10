@@ -142,6 +142,24 @@ export class CombatWorker implements OnModuleInit {
                 return;
               }
 
+              if (
+                expedition.kind === ExpeditionKind.CARAVAN &&
+                expedition.status === 'RETURNING'
+              ) {
+                if (!expedition.returnAt) {
+                  this.logger.warn(
+                    `Caravan expedition ${data.expeditionId} is RETURNING without returnAt`,
+                  );
+                  return;
+                }
+                return {
+                  returnJob: {
+                    expeditionId: expedition.id,
+                    returnAt: expedition.returnAt,
+                  },
+                };
+              }
+
               if (expedition.status !== 'EN_ROUTE') {
                 this.logger.warn(
                   `Expedition ${data.expeditionId} already resolved (${expedition.status})`,
