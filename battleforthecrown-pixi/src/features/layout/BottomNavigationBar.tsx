@@ -6,10 +6,10 @@ import {
   type ComponentType,
   type CSSProperties,
 } from "react";
-import { Castle, Globe, Lock, Mail, Swords } from "lucide-react";
+import { Castle, Globe, Lock, Mail, Swords, Trophy } from "lucide-react";
 import { useBuildingsForLockCheck } from "./useBuildingsForLockCheck";
 
-type Tab = "army" | "buildings" | "world" | "messages";
+type Tab = "army" | "buildings" | "world" | "messages" | "rankings";
 
 export const BOTTOM_NAV_HEIGHT_VAR = "--bftc-bottom-nav-height";
 export const BOTTOM_NAV_GAP_VAR = "--bftc-bottom-nav-gap";
@@ -20,6 +20,7 @@ interface BottomNavigationBarProps {
   onArmyClick?: () => void;
   onWorldClick?: () => void;
   onMessagesClick?: () => void;
+  onRankingsClick?: () => void;
   activeTab?: Tab;
   animateActiveOnMount?: boolean;
   density?: "compact" | "cozy";
@@ -185,13 +186,15 @@ export function BottomNavigationBar({
   onArmyClick,
   onWorldClick,
   onMessagesClick,
+  onRankingsClick,
   activeTab = "buildings",
   animateActiveOnMount = false,
   unreadCount = 0,
 }: BottomNavigationBarProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const { isBarracksBuilt, isWatchtowerBuilt } = useBuildingsForLockCheck();
-  const [shouldShowActive, setShouldShowActive] = useState(!animateActiveOnMount);
+  const [shouldShowActive, setShouldShowActive] =
+    useState(!animateActiveOnMount);
 
   useEffect(() => {
     if (!animateActiveOnMount) return undefined;
@@ -297,6 +300,14 @@ export function BottomNavigationBar({
             hint="Consulter vos messages"
             badge={unreadCount}
             onClick={onMessagesClick}
+          />
+
+          <NavItem
+            icon={Trophy}
+            label="Rangs"
+            active={animatedActiveTab === "rankings"}
+            hint="Voir les classements"
+            onClick={onRankingsClick}
           />
 
           <NavItem

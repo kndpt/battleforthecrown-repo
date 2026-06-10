@@ -6,12 +6,13 @@ import { BottomNavigationBar } from './BottomNavigationBar';
 import { GameHeader } from './GameHeader';
 import { ToastStack } from './ToastStack';
 
-type GameTab = 'army' | 'buildings' | 'world' | 'messages';
+type GameTab = 'army' | 'buildings' | 'world' | 'messages' | 'rankings';
 
 function activeTabForPath(pathname: string): GameTab {
   if (pathname === '/game/army') return 'army';
   if (pathname === '/game/world') return 'world';
   if (pathname === '/game/messages') return 'messages';
+  if (pathname === '/game/rankings') return 'rankings';
   return 'buildings';
 }
 
@@ -58,6 +59,9 @@ export function GameShellLayout() {
           onBuildingsClick={handleBuildingsClick}
           onMessagesClick={
             activeTab === 'messages' ? undefined : () => navigate('/game/messages')
+          }
+          onRankingsClick={
+            activeTab === 'rankings' ? undefined : () => navigate('/game/rankings')
           }
           onWorldClick={activeTab === 'world' ? undefined : () => navigate('/game/world')}
           unreadCount={unreadCount}

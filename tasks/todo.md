@@ -1,5 +1,20 @@
 # Todo
 
+## 2026-06-10 — Reprise PR run 051 classements
+
+- [x] Reprendre le diff local du run 051 et créer la branche dédiée.
+- [ ] Vérifier/commit le diff local sans embarquer de hors-scope.
+- [ ] Push la branche et retrouver/créer la PR ready for review.
+- [ ] Lire tous les threads/commentaires non résolus de la PR.
+- [ ] Traiter les commentaires pertinents au bon endroit, résoudre les non pertinents.
+- [ ] Relancer les vérifications adaptées.
+- [ ] Confirmer qu'il ne reste plus aucun commentaire PR non résolu.
+
+### Review en cours
+
+- Demande : finaliser localement le run 051, pousser la PR, puis traiter tous les commentaires GitHub restants.
+- État initial local : diff du run présent non commité sur `main`; remote `origin` disponible; branche dédiée créée `run/051-feature-rankings-glory`.
+
 ## 2026-06-09 — Spec gameplay classements
 
 - [x] Créer une doc gameplay dédiée aux classements puissance / assaut / rempart.

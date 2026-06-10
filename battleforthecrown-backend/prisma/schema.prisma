@@ -36,6 +36,11 @@ enum TargetKind {
   BARBARIAN_VILLAGE
 }
 
+enum RankingSignal {
+  ASSAULT_GLORY
+  RAMPART_GLORY
+}
+
 enum TrainingBuilding {
   BARRACKS
   THRONE_HALL
@@ -98,6 +103,7 @@ model User {
   worldMemberships  WorldMembership[]
   crownBalances     CrownBalance[]
   onboardingStates  OnboardingState[]
+  gloryLedgers      GloryLedger[]
 
   @@map("user")
 }
@@ -136,6 +142,7 @@ model World {
   zoneCapacities  ZoneCapacity[]
   pendingConquests PendingConquest[]
   onboardingStates OnboardingState[]
+  gloryLedgers     GloryLedger[]
 
   @@index([status, plannedOpenAt])
   @@index([status, startedAt])
@@ -477,6 +484,8 @@ model Expedition {
   departAt          DateTime         @map("depart_at") @db.Timestamptz(3)
   arrivalAt         DateTime         @map("arrival_at") @db.Timestamptz(3)
   outboundTravelMs  Int              @map("outbound_travel_ms")
+  attackerKingdomPowerSnapshot Int?  @map("attacker_kingdom_power_snapshot")
+  defenderKingdomPowerSnapshot Int?  @map("defender_kingdom_power_snapshot")
   returnAt          DateTime?        @map("return_at") @db.Timestamptz(3)
   recalled          Boolean          @default(false)
   reportId          String?          @unique @map("report_id")
@@ -534,6 +543,7 @@ model CombatReport {
   details           Json
   
   expedition        Expedition?
+  gloryLedgers      GloryLedger[]
 
   @@index([attackerUserId])
   @@index([defenderUserId])
@@ -541,6 +551,33 @@ model CombatReport {
   @@index([worldId])
   @@index([timestamp])
   @@map("combat_report")
+}
+
+model GloryLedger {
+  id                      String        @id @default(cuid())
+  worldId                 String        @map("world_id")
+  signal                  RankingSignal
+  scorerUserId            String        @map("scorer_user_id")
+  opponentUserId          String        @map("opponent_user_id")
+  pairKey                 String        @map("pair_key")
+  combatReportId          String        @map("combat_report_id")
+  rawPoints               Int           @map("raw_points")
+  pairRawPoints24hBefore  Int           @default(0) @map("pair_raw_points_24h_before")
+  effectiveRawPoints      Int           @map("effective_raw_points")
+  opponentMultiplier      Float         @map("opponent_multiplier")
+  points                  Int
+  occurredAt              DateTime      @default(now()) @map("occurred_at") @db.Timestamptz(3)
+  createdAt               DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  world        World        @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  scorer       User         @relation(fields: [scorerUserId], references: [id], onDelete: Cascade)
+  combatReport CombatReport @relation(fields: [combatReportId], references: [id], onDelete: Cascade)
+
+  @@unique([combatReportId, signal, scorerUserId])
+  @@index([worldId, signal, occurredAt])
+  @@index([worldId, signal, scorerUserId])
+  @@index([worldId, pairKey, occurredAt])
+  @@map("glory_ledger")
 }
 
 model ScoutReport {

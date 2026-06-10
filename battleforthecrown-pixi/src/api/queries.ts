@@ -61,6 +61,7 @@ import type {
   ScoutReportResponse,
 } from '@battleforthecrown/shared/combat';
 import type { OnboardingSummaryDto } from '@battleforthecrown/shared/onboarding';
+import type { RankingsLeaderboardResponse } from '@battleforthecrown/shared/rankings';
 
 export const queryKeys = {
   worlds: () => ['worlds'] as const,
@@ -96,6 +97,7 @@ export const queryKeys = {
   worldConfig: (worldId: string | null) => ['world-config', worldId] as const,
   retentionSummary: (userId: string | null, worldId: string | null) => ['retention', 'summary', userId, worldId] as const,
   onboardingSummary: (userId: string | null, worldId: string | null) => ['onboarding', 'summary', userId, worldId] as const,
+  rankingsSummary: (worldId: string | null) => ['rankings', 'summary', worldId] as const,
 };
 
 interface LoginInput {
@@ -525,6 +527,23 @@ export interface ArmyTrainingDto {
   timePerUnitMs: number;
   nextUnitEta: string;
   createdAt: string;
+}
+
+
+export interface RankingsSummaryResponse {
+  leaderboards: RankingsLeaderboardResponse[];
+}
+
+export function useRankingsSummaryQuery(worldId: string | null) {
+  return useQuery<RankingsSummaryResponse>({
+    queryKey: queryKeys.rankingsSummary(worldId),
+    queryFn: () => {
+      if (!worldId) return Promise.resolve({ leaderboards: [] });
+      return apiClient.get<RankingsSummaryResponse>('/rankings', { query: { worldId } });
+    },
+    enabled: Boolean(worldId),
+    staleTime: 30_000,
+  });
 }
 
 export function useArmyInventoryQuery(villageId: string | null) {

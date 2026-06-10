@@ -1,5 +1,11 @@
 import { Injectable, Logger, Inject, OnModuleInit } from '@nestjs/common';
-import { Expedition, Prisma, ExpeditionKind, Village } from '@prisma/client';
+import {
+  Expedition,
+  Prisma,
+  ExpeditionKind,
+  RankingSignal,
+  Village,
+} from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WorldConfigService } from '../world/world-config.service';
 import { BarbarianRuntimeService } from '../world/barbarian-runtime.service';
@@ -32,6 +38,7 @@ import {
 } from '@battleforthecrown/shared/army';
 import { typedEntries } from '@battleforthecrown/shared/utils';
 import { getCaptureDurationMs } from './capture-duration';
+import { RankingsService } from '../rankings/rankings.service';
 
 interface PendingConquestToSchedule {
   id: string;
@@ -88,6 +95,7 @@ export class CombatWorker implements OnModuleInit {
     private readonly playerStrategy: PlayerVillageStrategy,
     private readonly outbox: OutboxPublisher,
     private readonly conquest: ConquestService,
+    private readonly rankings: RankingsService,
   ) {}
 
   async onModuleInit() {
@@ -209,7 +217,17 @@ export class CombatWorker implements OnModuleInit {
             attackerVillage,
           });
 
-          // 9. Apply the conquest outcome (open capture window, or signal a dead noble).
+          // 9. Credit PvP glory ledgers before conquest side effects.
+          await this.creditCombatGlory(tx, {
+            expedition,
+            resolution,
+            defenderVillage,
+            occupationDefense,
+            attackerVillage,
+            report,
+          });
+
+          // 10. Apply the conquest outcome (open capture window, or signal a dead noble).
           const originalUnits = parseUnitMap(
             expedition.units,
             'expedition.units',
@@ -229,7 +247,7 @@ export class CombatWorker implements OnModuleInit {
               isVictory,
             });
 
-          // 10. Compute what returns home (units + loot withheld during a capture).
+          // 11. Compute what returns home (units + loot withheld during a capture).
           const { returningLoot, expeditionLoot, returnAt } =
             this.computeReturn(
               expedition,
@@ -238,7 +256,7 @@ export class CombatWorker implements OnModuleInit {
               captureWindowOpened,
             );
 
-          // 11. Update expedition + emit battle.resolved + schedule the return.
+          // 12. Update expedition + emit battle.resolved + schedule the return.
           await this.finalizeExpedition(tx, {
             expedition,
             resolution,
@@ -495,8 +513,65 @@ export class CombatWorker implements OnModuleInit {
     });
   }
 
+  private async creditCombatGlory(
+    tx: PrismaClientOrTx,
+    args: {
+      expedition: Expedition;
+      resolution: CombatResolution;
+      defenderVillage: DefenderVillage | null;
+      occupationDefense: OccupationDefense | null;
+      attackerVillage: Village;
+      report: { id: string };
+    },
+  ): Promise<void> {
+    const {
+      expedition,
+      resolution,
+      defenderVillage,
+      occupationDefense,
+      attackerVillage,
+      report,
+    } = args;
+    const attackerUserId = attackerVillage.userId;
+    const defenderUserId =
+      occupationDefense?.attackerUserId ??
+      (expedition.targetKind === 'PLAYER_VILLAGE'
+        ? defenderVillage?.userId
+        : null);
+
+    if (
+      !attackerUserId ||
+      !defenderUserId ||
+      attackerUserId === defenderUserId
+    ) {
+      return;
+    }
+
+    await this.rankings.creditGlory(tx, {
+      worldId: expedition.worldId,
+      signal: RankingSignal.ASSAULT_GLORY,
+      scorerUserId: attackerUserId,
+      opponentUserId: defenderUserId,
+      combatReportId: report.id,
+      losses: resolution.lossesDefender || {},
+      scorerPowerSnapshot: expedition.attackerKingdomPowerSnapshot,
+      opponentPowerSnapshot: expedition.defenderKingdomPowerSnapshot,
+    });
+
+    await this.rankings.creditGlory(tx, {
+      worldId: expedition.worldId,
+      signal: RankingSignal.RAMPART_GLORY,
+      scorerUserId: defenderUserId,
+      opponentUserId: attackerUserId,
+      combatReportId: report.id,
+      losses: resolution.lossesAttacker,
+      scorerPowerSnapshot: expedition.defenderKingdomPowerSnapshot,
+      opponentPowerSnapshot: expedition.attackerKingdomPowerSnapshot,
+    });
+  }
+
   /**
-   * Step 9: when a victorious noble survives, open the capture window and
+   * Step 10: when a victorious noble survives, open the capture window and
    * station the surviving escort in the target's garrison (removed from the
    * returning column). A dead noble emits `noble.killed` instead.
    */

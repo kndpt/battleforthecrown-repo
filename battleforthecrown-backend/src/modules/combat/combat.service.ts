@@ -29,6 +29,7 @@ import PgBoss from 'pg-boss';
 import { createOutboxEvent } from '../event/event.utils';
 import { PrismaClientOrTx } from '../../common/prisma.types';
 import { OwnershipService } from '../../common/auth';
+import { PowerService } from '../power/power.service';
 
 export interface GarrisonLineDto {
   villageId: string;
@@ -53,6 +54,7 @@ export class CombatService {
     private readonly worldConfig: WorldConfigService,
     private readonly visionService: VisionService,
     private readonly ownership: OwnershipService,
+    private readonly powerService: PowerService,
     @Inject('PG_BOSS') private readonly boss: PgBoss,
   ) {}
 
@@ -72,6 +74,7 @@ export class CombatService {
       let targetRefId: string;
       let targetX: number;
       let targetY: number;
+      let defenderUserId: string | null = null;
 
       if (dto.targetKind === 'BARBARIAN_VILLAGE') {
         // Phase 2: Barbarian villages are now in Village table with isBarbarian=true
@@ -94,6 +97,7 @@ export class CombatService {
         targetRefId = targetVillage.id;
         targetX = targetVillage.x;
         targetY = targetVillage.y;
+        defenderUserId = targetVillage.userId;
       }
 
       // 3. Enforce fog of war: a target seen as a blip cannot be attacked.
@@ -120,6 +124,16 @@ export class CombatService {
           dto.villageId,
         );
 
+      const attackerKingdomPowerSnapshot =
+        await this.powerService.getKingdomPowerValue(userId, worldId, tx);
+      const defenderKingdomPowerSnapshot = defenderUserId
+        ? await this.powerService.getKingdomPowerValue(
+            defenderUserId,
+            worldId,
+            tx,
+          )
+        : null;
+
       // 6. Create expedition
       const expedition = await tx.expedition.create({
         data: {
@@ -135,6 +149,8 @@ export class CombatService {
           departAt: now,
           arrivalAt,
           outboundTravelMs: travelTimeMs,
+          attackerKingdomPowerSnapshot,
+          defenderKingdomPowerSnapshot,
         },
       });
 

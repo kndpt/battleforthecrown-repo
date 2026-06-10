@@ -29,6 +29,7 @@ JWT au handshake via `socket.handshake.auth.token`, vérifié dans `src/modules/
 | `/power/village/:id/public` | puissance bâtiments publique d'un village |
 | `/power/kingdom/:userId/public?worldId=...` | puissance royaume publique d'un joueur sur un monde |
 | `/power/leaderboard?worldId=...` | classement public de puissance d'un monde |
+| `/rankings?worldId=...`, `/rankings/:signal?worldId=...` | classements publics Puissance du Royaume / Gloire d'Assaut / Gloire du Rempart |
 
 Dans un controller protégé :
 

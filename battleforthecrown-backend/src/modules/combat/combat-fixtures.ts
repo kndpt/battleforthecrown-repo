@@ -24,6 +24,8 @@ const BASE_EXPEDITION: Expedition = {
   departAt: new Date('2026-01-01'),
   arrivalAt: new Date('2026-01-01'),
   outboundTravelMs: 14000,
+  attackerKingdomPowerSnapshot: null,
+  defenderKingdomPowerSnapshot: null,
   returnAt: null,
   recalled: false,
   reportId: null,
