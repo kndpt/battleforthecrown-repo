@@ -7,6 +7,7 @@ import type {
   BattleSentPayload,
   BuildingCompletedPayload,
   CrownsChangedPayload,
+  RankingsChangedPayload,
   ResourcesChangedPayload,
   ScoutReportedPayload,
   ScoutReturnedPayload,
@@ -86,6 +87,15 @@ export function applyCrownsChanged(
     balance: payload.balance,
     productionRate: payload.productionRate,
     lastUpdateTs: Date.parse(payload.lastUpdateTs),
+  });
+}
+
+export function applyRankingsChanged(
+  payload: RankingsChangedPayload,
+  ctx: BindingsContext,
+): void {
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.rankingsSummary(payload.worldId),
   });
 }
 
@@ -542,8 +552,13 @@ function invalidateOpenExpeditions(ctx: BindingsContext): void {
 
 function invalidatePowerQueries(ctx: BindingsContext, villageId: string): void {
   const userId = useAuthStore.getState().user?.id ?? null;
+  const worldId = useGameStore.getState().worldId;
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.villagePower(villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: ['power', 'kingdom', userId] });
+  // The rankings summary embeds the live POWER leaderboard; refresh it whenever
+  // kingdom power shifts (build/train/combat/conquest), since the backend only
+  // emits rankings.changed on glory writes, not power changes.
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.rankingsSummary(worldId) });
 }
 
 function invalidateRetentionSummary(ctx: BindingsContext): void {
@@ -732,6 +747,7 @@ function invalidateReinforcementQueries(
 const bindings: ServerEventBindings = {
   'resources.changed': applyResourcesChanged,
   'crowns.changed': applyCrownsChanged,
+  'rankings.changed': applyRankingsChanged,
   'world.status.changed': applyWorldStatusChanged,
   'building.completed': applyBuildingCompleted,
   'unit.training.completed': applyUnitTrainingCompleted,

@@ -303,16 +303,18 @@ describe('combat reports inbox smoke', () => {
       .get('/power/leaderboard')
       .query({ worldId: worldA.id });
     expect(leaderboardA.status).toBe(200);
-    expect(
-      (leaderboardA.body as Array<{ villageId: string }>).map(
-        (entry) => entry.villageId,
-      ),
-    ).toEqual(expect.arrayContaining([joinA.village.id, extraVillageA.id]));
-    expect(
-      (leaderboardA.body as Array<{ villageId: string }>).map(
-        (entry) => entry.villageId,
-      ),
-    ).not.toContain(joinB.village.id);
+    // Leaderboard is aggregated per player (anonymized), not per village.
+    const leaderboardEntriesA = leaderboardA.body as Array<{
+      userId: string;
+      villageCount: number;
+    }>;
+    const selfLeaderboardEntryA = leaderboardEntriesA.find(
+      (entry) => entry.userId === user.userId,
+    );
+    expect(selfLeaderboardEntryA).toBeDefined();
+    // World-scoped: only worldA villages are counted (joinA + extraVillageA);
+    // worldB's village must not leak in.
+    expect(selfLeaderboardEntryA?.villageCount).toBe(2);
 
     const leaderboardMissingWorld = await request(ctx.server).get(
       '/power/leaderboard',

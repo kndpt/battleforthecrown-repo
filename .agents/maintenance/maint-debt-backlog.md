@@ -244,7 +244,7 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
     combined) that warranted explicit regression tests. New spec: 10 tests, no mocks required.
   verification: yarn static-check ✓ · 282 backend tests ✓ (merged 8a2d68d)
 
-- status: proposed
+- status: fixed
   area: >
     battleforthecrown-backend/src/modules/world/building-cost.spec.ts (new)
   branch: maint/debt/building-cost-spec
@@ -255,9 +255,9 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
     use-cases, and BuildingDetailModal.tsx. New spec: 8 tests covering base costs (WOOD, BARRACKS),
     castle-level speed bonus, speed multiplier, minimum 1000ms floor, unknown building throw, and
     out-of-range castle level fallback.
-  verification: yarn static-check ✓ · 297 backend tests ✓ · 363 pixi tests ✓ (PR #63)
+  verification: yarn static-check ✓ · 297 backend tests ✓ · 363 pixi tests ✓ (PR #63, merged)
 
-- status: proposed
+- status: fixed
   area: >
     battleforthecrown-pixi/src/lib/gameHelpers.ts (deleted)
   branch: maint/debt/remove-dead-game-helpers
@@ -268,16 +268,19 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
     formatMissingResources, re-exports from @battleforthecrown/shared/resources. All live 
     affordability consumers import directly from @battleforthecrown/shared/resources. 
     85 lines of dead code.
-  verification: yarn static-check ✓ · pixi 363 tests ✓
+  verification: yarn static-check ✓ · pixi 363 tests ✓ (PR #66, merged)
 
-- status: candidate
+- status: proposed
   area: >
     battleforthecrown-backend/src/modules/combat/combat.worker.ts:964, 1079
+  branch: maint/debt/defender-village-alias
+  title: "maint(debt): use DefenderVillage alias in applyDefenderLosses and getCaptureDurationMs"
   note: >
     O1/B6 from refactor-backend audit: applyDefenderLosses (line 964) and getCaptureDurationMs
-    (line 1079) use inline Prisma.VillageGetPayload<{ include: { resourceStock: true; buildings: true } }>,
-    identical to the DefenderVillage alias defined at line 42. Replace with DefenderVillage.
+    (line 1079) used inline Prisma.VillageGetPayload<{ include: { resourceStock: true; buildings: true } }>,
+    identical to the DefenderVillage alias defined at line 42. Replaced with DefenderVillage.
     1 file, 2 locations, trivial type consistency fix.
+  verification: yarn static-check ✓ · 108 combat tests ✓
 
 - status: fixed
   area: >
@@ -349,4 +352,9 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
 - 2026-06-09: dead gameHelpers.ts deleted on `maint/debt/remove-dead-game-helpers` — file created
   2026-05-31 but never imported by any consumer (0 importers confirmed). Affordability consumers
   already import directly from @battleforthecrown/shared/resources. 85 lines removed.
-  static-check ✓ · pixi 363 tests ✓.
+  static-check ✓ · pixi 363 tests ✓. Also marked building-cost-spec (PR #63) and
+  remove-dead-game-helpers (PR #66) as fixed (both merged).
+- 2026-06-10: inline Prisma.VillageGetPayload replaced with DefenderVillage alias in combat.worker.ts
+  on `maint/debt/defender-village-alias` — applyDefenderLosses (line 964) and getCaptureDurationMs
+  (line 1079) used the full inline type instead of the DefenderVillage alias at line 42.
+  1 file, 2 locations. static-check ✓ · 108 combat tests ✓.

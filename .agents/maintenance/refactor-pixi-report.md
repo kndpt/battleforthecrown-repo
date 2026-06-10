@@ -821,3 +821,87 @@ yarn test:pixi      → 66 test files, 364 tests passed (+1 DailyRetentionWidget
 ```
 
 **Diff :** `worldMapNavigation.ts` −2 LOC (ternaire → `String(value)`), `DailyRetentionWidget.test.tsx` +37 LOC (+1 test). Net : −2 / +37 dans les fichiers modifiés.
+
+---
+
+## Run 2026-06-10 — commit 9b7c2dc
+
+**Scan date:** 2026-06-10
+**Commit SHA:** 9b7c2dc69560ec504a8ed5631cb9378c49c5cac1
+
+### Prior findings update
+
+- A1–A6 (ws-bindings query keys) : **RESOLVED**
+- B1, B2 : **RESOLVED**
+- N1, N2 : **RESOLVED**
+- S1, S2, S3 (session teardown) : **RESOLVED**
+- C1 (GameHeader god-component) : **RESOLVED**
+- D2 (headerHelpers tests) : **RESOLVED**
+- D3 (VillageView inline `<style>` block) : **RESOLVED**
+- F1, F4 (capture event correctness & Pixi tick) : **RESOLVED**
+- G1, G2 (computeProgress duplication / formatTime tests) : **RESOLVED**
+- H1, H2 (armyTraining refetchInterval / BuildingDetailModal polling) : **RESOLVED**
+- I1, I5 (world join/enter error tests) : **RESOLVED**
+- J1, J2 (dead ternary / minTargetTier test) : **RESOLVED**
+- J3 (villageTierFromPower test) : NOTED — `PowerBottomSheet.test.tsx` existe (render test via mock) mais n'exerce pas la fonction directement ; candidat `bftc-maint-debt`
+- J4 (ReportDetailModal backdrop × 3) : NOTED — candidat `bftc-maint-debt`
+- C2 (SpecializedBuildingDetailModal 643 LOC) : STILL OPEN — organisé, faible risque
+- C3 (ArmyScreen garrison derivations) : STILL OPEN — 30 lignes plates
+- D4 (magic number 60_000 optimistic) : STILL OPEN — acceptable
+- F2 (DailyRetentionWidget expiresInValue hardcoded) : STILL OPEN — bloqué côté serveur
+
+### Mental model
+
+Frontend propre et discipliné. Commit majeur depuis run 2026-06-09 :
+- `9b7c2dc` (run 050) : feature `resource caravans` — `CaravanLaunchModal.tsx` (369 LOC), `caravanLaunchState.ts` (pure view-model), `caravanLaunchState.test.ts` (6 tests), WS handlers (`applyCaravanSent`, `applyCaravanArrived`, `applyCaravanRecalled`, `applyCaravanReturned`), ws-bindings tests (+185 LOC), `useInitiateCaravanMutation` dans `queries.ts`.
+
+**Server-authoritative** : 0 violation. `CaravanLaunchModal` calcule `activeCaravanResources` / `caravanCapacity` / `travelMs` display-only depuis données TanStack Query (serveur). Aucun calcul autoritatif local.
+**Type debt** : 0 `as any`, 0 `@ts-ignore`, 0 `@ts-expect-error`. `CARAVAN_SPEED` / `CARRY_PER_PORTER` / `getCaravanResourceCapacity` importés depuis `@battleforthecrown/shared`.
+**Stores Zustand** : inchangés, teardown centralisé confirmé.
+**Pixi scenes** : `ExpeditionVisual.ts` — `CARAVAN_GLYPH` + couleur or (`0xd4a017`) correctement intégrés, aucune lecture de store dans ticker.
+**TanStack Query** : `useInitiateCaravanMutation` invalide `resources`, `population`, `activeExpeditions`, `openExpeditions` — correct. `useRecallExpeditionMutation` ne couvrait pas ces deux keys : voir K1.
+
+### New findings
+
+| ID | Category | Location | Description | Severity | Effort | Status |
+|----|----------|----------|-------------|----------|--------|--------|
+| K1 | TanStack Query | `api/queries.ts:1053` | `useRecallExpeditionMutation.onSettled` n'invalide pas `resources` ni `population`. Pour un rappel de caravane en cas de drop WS : porteurs libérés (population) et ressources retournées à l'origine ne se rafraîchissent pas. Comparer : `applyCaravanRecalled` invalide correctement les deux ; `useInitiateCaravanMutation.onSettled` invalide aussi les deux. | **Medium** | S | **SELECTED** (ce run) |
+| K2 | DRY | `features/world/CaravanLaunchModal.tsx:37` / `features/world/caravanLaunchState.ts:4` | `RESOURCE_KEYS = ["wood", "stone", "iron"] as const` défini deux fois. `caravanLaunchState.ts` (source logique) devrait exporter la constante ; `CaravanLaunchModal.tsx` l'importe. | Low | S | **SELECTED** (ce run) |
+
+### "Looks bad but is actually fine" (this run)
+
+| Pattern | Verdict |
+|---------|---------|
+| `activeCaravanResources` filtre uniquement `EN_ROUTE` | ✅ display-only — le backend applique le cap côté serveur ; le frontend est une aide UX non autoritative |
+| `CaravanLaunchModal` sans optimistic UI | ✅ allocation population + ressources avec guards multiples — rollback non trivial |
+| `getCaravanResourceCapacity(getWarehouseStorageLimit(warehouseLevel))` dans le composant | ✅ fonctions pures shared, display-only, résultat stable tant que `warehouseLevel` ne change pas |
+| `TempoService.applyDuration(calculateTravelTime(...))` dans `CaravanLaunchModal` | ✅ `travelMs` display-only, `worldConfig.data?.tempo` vient du serveur |
+| `recallLabel: kind !== 'REINFORCE' && EN_ROUTE` couvre `CARAVAN` | ✅ caravanes rappelables — logique correcte |
+| `applyCaravanArrived` invalide `resources(targetVillageId)` mais pas `population(villageId)` | ✅ porteurs restent mobilisés jusqu'au retour physique (`applyCaravanReturned` invalide `population`) |
+| `useInitiateCaravanMutation.onSettled` invalide `resources(targetVillageId)` au send | ✅ inoffensif pour multi-village (même joueur, 2 villages) ; le serveur est authoritative |
+
+### Selected theme: **K1 + K2 — caravan query layer : fix WS-drop recall gap + DRY RESOURCE_KEYS**
+
+**Rationale :**
+- K1 est un gap de correctness : rappeler une caravane (via `useRecallExpeditionMutation`) en cas de drop WS laisse `resources` et `population` stales. `useInitiateCaravanMutation.onSettled` invalide déjà les deux ; l'ajout dans `useRecallExpeditionMutation.onSettled` est conservatif (pour les rappels d'armées non-caravane, les queries sont no-op = inoffensif).
+- K2 consolide les deux définitions identiques de `RESOURCE_KEYS` — une divergence future (ajout d'une ressource) devrait être faite en 1 lieu.
+- Thème cohérent (domaine caravane, couche query), scope S, 0 changement backend.
+
+**Implementation :**
+- `api/queries.ts` : ajout `queryKeys.resources(villageId)` + `queryKeys.population(villageId)` dans `useRecallExpeditionMutation.onSettled`.
+- `caravanLaunchState.ts` : `const RESOURCE_KEYS` → `export const RESOURCE_KEYS`.
+- `CaravanLaunchModal.tsx` : import `RESOURCE_KEYS` depuis `caravanLaunchState`, suppression de la déclaration locale.
+
+**Rejected :**
+- K3 (premature `resources(targetVillageId)` invalidation on send) : inoffensif, aucun bénéfice comportemental à supprimer.
+- C2/C3 : churn sans impact comportemental.
+- D4/F2 : cosmétiques ou bloqués côté serveur.
+
+### Verification
+
+```text
+yarn static-check   → green (tsc backend + pixi, ESLint backend + pixi --quiet)
+yarn test:pixi      → 67 test files, 378 tests passed (aucun test cassé)
+```
+
+**Diff :** `queries.ts` +2 LOC (2 invalidations ajoutées), `caravanLaunchState.ts` +1 mot-clé (`export`), `CaravanLaunchModal.tsx` −1 LOC (déclaration locale supprimée). Net : +1 LOC dans les fichiers modifiés.

@@ -1,7 +1,7 @@
 import { CARRY_PER_PORTER } from "@battleforthecrown/shared/logic";
 import type { LootResources } from "@battleforthecrown/shared/combat";
 
-const RESOURCE_KEYS = ["wood", "stone", "iron"] as const;
+export const RESOURCE_KEYS = ["wood", "stone", "iron"] as const;
 
 interface CaravanLaunchStateInput {
   villageId: string | null;

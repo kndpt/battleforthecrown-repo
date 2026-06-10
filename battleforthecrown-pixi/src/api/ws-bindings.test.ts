@@ -246,6 +246,7 @@ describe('applyBuildingCompleted', () => {
     queryClient.setQueryData(queryKeys.kingdomPower('user-1', 'w1'), { kingdomPower: 1 });
     queryClient.setQueryData(queryKeys.retentionSummary('user-1', 'w1'), { claimableCount: 0 });
     queryClient.setQueryData(queryKeys.onboardingSummary('user-1', 'w1'), { status: 'ACTIVE' });
+    queryClient.setQueryData(queryKeys.rankingsSummary('w1'), { leaderboards: [] });
     let invalidationCount = 0;
     const originalInvalidate = queryClient.invalidateQueries.bind(queryClient);
     queryClient.invalidateQueries = ((...args: Parameters<typeof originalInvalidate>) => {
@@ -263,10 +264,11 @@ describe('applyBuildingCompleted', () => {
       { queryClient },
     );
 
-    expect(invalidationCount).toBe(9);
+    expect(invalidationCount).toBe(10);
     expect(queryClient.getQueryState(queryKeys.villageStrategy('v1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.villagePower('v1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.kingdomPower('user-1', 'w1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.rankingsSummary('w1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.retentionSummary('user-1', 'w1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.onboardingSummary('user-1', 'w1'))?.isInvalidated).toBe(true);
     const toasts = useUiStore.getState().toasts;

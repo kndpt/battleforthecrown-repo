@@ -37,6 +37,11 @@ enum TargetKind {
   BARBARIAN_VILLAGE
 }
 
+enum RankingSignal {
+  ASSAULT_GLORY
+  RAMPART_GLORY
+}
+
 enum TrainingBuilding {
   BARRACKS
   THRONE_HALL
@@ -93,12 +98,13 @@ model User {
   password  String
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  sessions          Session[]
-  villages          Village[]
-  worldSeeds        WorldSeedState[]
-  worldMemberships  WorldMembership[]
-  crownBalances     CrownBalance[]
-  onboardingStates  OnboardingState[]
+  sessions         Session[]
+  villages         Village[]
+  worldSeeds       WorldSeedState[]
+  worldMemberships WorldMembership[]
+  crownBalances    CrownBalance[]
+  onboardingStates OnboardingState[]
+  gloryLedgers     GloryLedger[]
 
   @@map("user")
 }
@@ -117,26 +123,27 @@ model Session {
 }
 
 model World {
-  id               String      @id
-  name             String
-  status           WorldStatus @default(PLANNED)
-  config           Json        @default("{}")
-  gridWidth        Int         @default(500)
-  gridHeight       Int         @default(500)
-  continentWidth   Int         @default(100) @map("continent_width")
-  continentHeight  Int         @default(100) @map("continent_height")
-  startedAt        DateTime?   @map("started_at") @db.Timestamptz(3)
-  endsAt           DateTime?   @map("ends_at") @db.Timestamptz(3)
-  plannedOpenAt    DateTime?   @map("planned_open_at") @db.Timestamptz(3)
-  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  id              String      @id
+  name            String
+  status          WorldStatus @default(PLANNED)
+  config          Json        @default("{}")
+  gridWidth       Int         @default(500)
+  gridHeight      Int         @default(500)
+  continentWidth  Int         @default(100) @map("continent_width")
+  continentHeight Int         @default(100) @map("continent_height")
+  startedAt       DateTime?   @map("started_at") @db.Timestamptz(3)
+  endsAt          DateTime?   @map("ends_at") @db.Timestamptz(3)
+  plannedOpenAt   DateTime?   @map("planned_open_at") @db.Timestamptz(3)
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  villages        Village[]
-  memberships     WorldMembership[]
-  seedStates      WorldSeedState[]
-  chunkStates     ChunkSpawnState[]
-  zoneCapacities  ZoneCapacity[]
+  villages         Village[]
+  memberships      WorldMembership[]
+  seedStates       WorldSeedState[]
+  chunkStates      ChunkSpawnState[]
+  zoneCapacities   ZoneCapacity[]
   pendingConquests PendingConquest[]
   onboardingStates OnboardingState[]
+  gloryLedgers     GloryLedger[]
 
   @@index([status, plannedOpenAt])
   @@index([status, startedAt])
@@ -145,31 +152,31 @@ model World {
 }
 
 model Village {
-  id          String    @id @default(cuid())
-  worldId     String    @map("world_id")
-  userId      String?   @map("user_id")
-  name        String
-  x           Int
-  y           Int
-  isBarbarian Boolean   @default(false) @map("is_barbarian")
-  tier        String?
-  label       VillageLabel?
-  barbarianTroopsLastRegenTs DateTime? @map("barbarian_troops_last_regen_ts") @db.Timestamptz(3)
-  conqueredAt DateTime? @map("conquered_at") @db.Timestamptz(3)
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  id                         String        @id @default(cuid())
+  worldId                    String        @map("world_id")
+  userId                     String?       @map("user_id")
+  name                       String
+  x                          Int
+  y                          Int
+  isBarbarian                Boolean       @default(false) @map("is_barbarian")
+  tier                       String?
+  label                      VillageLabel?
+  barbarianTroopsLastRegenTs DateTime?     @map("barbarian_troops_last_regen_ts") @db.Timestamptz(3)
+  conqueredAt                DateTime?     @map("conquered_at") @db.Timestamptz(3)
+  createdAt                  DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  world         World            @relation(fields: [worldId], references: [id], onDelete: Cascade)
-  user          User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  buildings     Building[]
-  resourceStock ResourceStock?
-  population    Population?
-  unitInventory UnitInventory[]
-  unitTraining  UnitTraining[]
-  strategyConfig     VillageStrategyConfig?
-  garrisons          Garrison[] @relation("VillageGarrison")
-  sentReinforcements Garrison[] @relation("OriginVillageGarrison")
-  pendingConquestAttacks PendingConquest[] @relation("PendingConquestAttacker")
-  pendingConquestTargets PendingConquest[] @relation("PendingConquestTarget")
+  world                  World                  @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  user                   User?                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  buildings              Building[]
+  resourceStock          ResourceStock?
+  population             Population?
+  unitInventory          UnitInventory[]
+  unitTraining           UnitTraining[]
+  strategyConfig         VillageStrategyConfig?
+  garrisons              Garrison[]             @relation("VillageGarrison")
+  sentReinforcements     Garrison[]             @relation("OriginVillageGarrison")
+  pendingConquestAttacks PendingConquest[]      @relation("PendingConquestAttacker")
+  pendingConquestTargets PendingConquest[]      @relation("PendingConquestTarget")
 
   @@unique([worldId, x, y])
   @@index([userId])
@@ -197,12 +204,12 @@ model Building {
 }
 
 model ResourceStock {
-  villageId     String   @id @map("village_id")
-  wood          Int      @default(0)
-  stone         Int      @default(0)
-  iron          Int      @default(0)
-  maxPerType    Int      @default(1000) @map("max_per_type")
-  lastUpdateTs  DateTime @default(now()) @map("last_update_ts") @db.Timestamptz(3)
+  villageId    String   @id @map("village_id")
+  wood         Int      @default(0)
+  stone        Int      @default(0)
+  iron         Int      @default(0)
+  maxPerType   Int      @default(1000) @map("max_per_type")
+  lastUpdateTs DateTime @default(now()) @map("last_update_ts") @db.Timestamptz(3)
 
   village Village @relation(fields: [villageId], references: [id], onDelete: Cascade)
 
@@ -231,16 +238,16 @@ model UnitInventory {
 }
 
 model PendingConquest {
-  id                String                  @id @default(cuid())
-  attackerVillageId String                  @map("attacker_village_id")
-  attackerUserId    String                  @map("attacker_user_id")
-  attackerNobleId   String?                 @map("attacker_noble_id")
-  targetVillageId   String                  @map("target_village_id")
-  worldId           String                  @map("world_id")
-  openedAt          DateTime                @default(now()) @map("opened_at") @db.Timestamptz(3)
-  captureUntil      DateTime                @map("capture_until") @db.Timestamptz(3)
-  status            PendingConquestStatus   @default(OPEN)
-  finalizeJobId     String?                 @map("finalize_job_id")
+  id                String                @id @default(cuid())
+  attackerVillageId String                @map("attacker_village_id")
+  attackerUserId    String                @map("attacker_user_id")
+  attackerNobleId   String?               @map("attacker_noble_id")
+  targetVillageId   String                @map("target_village_id")
+  worldId           String                @map("world_id")
+  openedAt          DateTime              @default(now()) @map("opened_at") @db.Timestamptz(3)
+  captureUntil      DateTime              @map("capture_until") @db.Timestamptz(3)
+  status            PendingConquestStatus @default(OPEN)
+  finalizeJobId     String?               @map("finalize_job_id")
 
   attackerVillage Village @relation("PendingConquestAttacker", fields: [attackerVillageId], references: [id], onDelete: Cascade)
   targetVillage   Village @relation("PendingConquestTarget", fields: [targetVillageId], references: [id], onDelete: Cascade)
@@ -253,16 +260,16 @@ model PendingConquest {
 }
 
 model UnitTraining {
-  id            String   @id @default(cuid())
-  villageId     String   @map("village_id")
+  id            String           @id @default(cuid())
+  villageId     String           @map("village_id")
   building      TrainingBuilding @default(BARRACKS)
-  unitType      String   @map("unit_type")
-  totalQty      Int      @map("total_qty")
-  completedQty  Int      @default(0) @map("completed_qty")
-  timePerUnitMs Int      @map("time_per_unit_ms")
-  nextUnitEta   DateTime @map("next_unit_eta_ts") @db.Timestamptz(3)
-  version       Int      @default(0)
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  unitType      String           @map("unit_type")
+  totalQty      Int              @map("total_qty")
+  completedQty  Int              @default(0) @map("completed_qty")
+  timePerUnitMs Int              @map("time_per_unit_ms")
+  nextUnitEta   DateTime         @map("next_unit_eta_ts") @db.Timestamptz(3)
+  version       Int              @default(0)
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
 
   village Village @relation(fields: [villageId], references: [id], onDelete: Cascade)
 
@@ -376,20 +383,20 @@ model DailyOyez {
 }
 
 model OnboardingState {
-  id                   String           @id @default(cuid())
-  userId               String           @map("user_id")
-  worldId              String           @map("world_id")
-  firstVillageId       String           @map("first_village_id")
-  status               OnboardingStatus @default(ACTIVE)
-  currentStep          OnboardingStep   @default(UPGRADE_CASTLE_LEVEL_2) @map("current_step")
-  initialRewardApplied Boolean          @default(false) @map("initial_reward_applied")
-  initialRewardAppliedAt DateTime?      @map("initial_reward_applied_at") @db.Timestamptz(3)
-  completedAt          DateTime?        @map("completed_at") @db.Timestamptz(3)
-  createdAt            DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt            DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  id                     String           @id @default(cuid())
+  userId                 String           @map("user_id")
+  worldId                String           @map("world_id")
+  firstVillageId         String           @map("first_village_id")
+  status                 OnboardingStatus @default(ACTIVE)
+  currentStep            OnboardingStep   @default(UPGRADE_CASTLE_LEVEL_2) @map("current_step")
+  initialRewardApplied   Boolean          @default(false) @map("initial_reward_applied")
+  initialRewardAppliedAt DateTime?        @map("initial_reward_applied_at") @db.Timestamptz(3)
+  completedAt            DateTime?        @map("completed_at") @db.Timestamptz(3)
+  createdAt              DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  user  User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  world World                    @relation(fields: [worldId], references: [id], onDelete: Cascade)
   steps OnboardingStepProgress[]
 
   @@unique([userId, worldId])
@@ -435,9 +442,9 @@ model WorldMembership {
 }
 
 model ZoneCapacity {
-  worldId      String @map("world_id")
-  zoneIndex    Int    @map("zone_index")
-  villageCount Int    @default(0) @map("village_count")
+  worldId      String   @map("world_id")
+  zoneIndex    Int      @map("zone_index")
+  villageCount Int      @default(0) @map("village_count")
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
@@ -463,28 +470,31 @@ model CrownBalance {
 }
 
 model Expedition {
-  id                String           @id @default(cuid())
-  worldId           String           @map("world_id")
-  attackerVillageId String           @map("attacker_village_id")
-  reinforcementOriginVillageId String? @map("reinforcement_origin_village_id")
-  reinforcementRecallActorUserId String? @map("reinforcement_recall_actor_user_id")
-  kind              ExpeditionKind   @default(ATTACK)
-  targetKind        TargetKind       @map("target_kind")
-  targetRefId       String           @map("target_ref_id")
-  targetX           Int              @map("target_x")
-  targetY           Int              @map("target_y")
-  units             Json
-  status            ExpeditionStatus @default(EN_ROUTE)
-  departAt          DateTime         @map("depart_at") @db.Timestamptz(3)
-  arrivalAt         DateTime         @map("arrival_at") @db.Timestamptz(3)
-  outboundTravelMs  Int              @map("outbound_travel_ms")
-  returnAt          DateTime?        @map("return_at") @db.Timestamptz(3)
-  recalled          Boolean          @default(false)
-  reportId          String?          @unique @map("report_id")
-  scoutReportId     String?          @unique @map("scout_report_id")
-  survivingUnits    Json?            @map("surviving_units")
-  loot              Json?            @map("loot")
-  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  id                             String           @id @default(cuid())
+  worldId                        String           @map("world_id")
+  attackerVillageId              String           @map("attacker_village_id")
+  reinforcementOriginVillageId   String?          @map("reinforcement_origin_village_id")
+  reinforcementRecallActorUserId String?          @map("reinforcement_recall_actor_user_id")
+  kind                           ExpeditionKind   @default(ATTACK)
+  targetKind                     TargetKind       @map("target_kind")
+  targetRefId                    String           @map("target_ref_id")
+  targetX                        Int              @map("target_x")
+  targetY                        Int              @map("target_y")
+  units                          Json
+  status                         ExpeditionStatus @default(EN_ROUTE)
+  departAt                       DateTime         @map("depart_at") @db.Timestamptz(3)
+  arrivalAt                      DateTime         @map("arrival_at") @db.Timestamptz(3)
+  outboundTravelMs               Int              @map("outbound_travel_ms")
+  attackerKingdomPowerSnapshot   Int?             @map("attacker_kingdom_power_snapshot")
+  defenderKingdomPowerSnapshot   Int?             @map("defender_kingdom_power_snapshot")
+  defenderKingdomPowerSnapshots  Json?            @map("defender_kingdom_power_snapshots")
+  returnAt                       DateTime?        @map("return_at") @db.Timestamptz(3)
+  recalled                       Boolean          @default(false)
+  reportId                       String?          @unique @map("report_id")
+  scoutReportId                  String?          @unique @map("scout_report_id")
+  survivingUnits                 Json?            @map("surviving_units")
+  loot                           Json?            @map("loot")
+  createdAt                      DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
 
   report      CombatReport? @relation(fields: [reportId], references: [id], onDelete: SetNull)
   scoutReport ScoutReport?  @relation(fields: [scoutReportId], references: [id], onDelete: SetNull)
@@ -497,44 +507,45 @@ model Expedition {
 }
 
 model CombatReport {
-  id                String    @id @default(cuid())
-  worldId           String    @map("world_id")
-  attackerVillageId String    @map("attacker_village_id")
-  attackerVillageName String? @map("attacker_village_name")
-  attackerX          Int?      @map("attacker_x")
-  attackerY          Int?      @map("attacker_y")
-  attackerUserId    String    @map("attacker_user_id")
-  defenderVillageId String?   @map("defender_village_id")
-  defenderVillageName String? @map("defender_village_name")
-  defenderX          Int?      @map("defender_x")
-  defenderY          Int?      @map("defender_y")
-  defenderUserId    String?   @map("defender_user_id")
-  observerUserId    String?   @map("observer_user_id")
-  targetKind        TargetKind @map("target_kind")
-  targetX           Int       @map("target_x")
-  targetY           Int       @map("target_y")
-  
-  loot              Json
-  
-  totalUnitsAttacker Json     @default("{}") @map("total_units_attacker")
-  totalUnitsDefender Json?    @map("total_units_defender")
-  
-  lossesAttacker    Json      @map("losses_attacker")
-  lossesDefender    Json?     @map("losses_defender")
-  
-  isRead            Boolean   @default(false) @map("is_read")
-  readByAttacker    Boolean   @default(false) @map("read_by_attacker")
-  readByDefender    Boolean   @default(false) @map("read_by_defender")
-  readByObserver    Boolean   @default(false) @map("read_by_observer")
-  hiddenByAttacker  Boolean   @default(false) @map("hidden_by_attacker")
-  hiddenByDefender  Boolean   @default(false) @map("hidden_by_defender")
-  hiddenByObserver  Boolean   @default(false) @map("hidden_by_observer")
-  
-  timestamp         DateTime  @default(now()) @db.Timestamptz(3)
-  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  details           Json
-  
-  expedition        Expedition?
+  id                  String     @id @default(cuid())
+  worldId             String     @map("world_id")
+  attackerVillageId   String     @map("attacker_village_id")
+  attackerVillageName String?    @map("attacker_village_name")
+  attackerX           Int?       @map("attacker_x")
+  attackerY           Int?       @map("attacker_y")
+  attackerUserId      String     @map("attacker_user_id")
+  defenderVillageId   String?    @map("defender_village_id")
+  defenderVillageName String?    @map("defender_village_name")
+  defenderX           Int?       @map("defender_x")
+  defenderY           Int?       @map("defender_y")
+  defenderUserId      String?    @map("defender_user_id")
+  observerUserId      String?    @map("observer_user_id")
+  targetKind          TargetKind @map("target_kind")
+  targetX             Int        @map("target_x")
+  targetY             Int        @map("target_y")
+
+  loot Json
+
+  totalUnitsAttacker Json  @default("{}") @map("total_units_attacker")
+  totalUnitsDefender Json? @map("total_units_defender")
+
+  lossesAttacker Json  @map("losses_attacker")
+  lossesDefender Json? @map("losses_defender")
+
+  isRead           Boolean @default(false) @map("is_read")
+  readByAttacker   Boolean @default(false) @map("read_by_attacker")
+  readByDefender   Boolean @default(false) @map("read_by_defender")
+  readByObserver   Boolean @default(false) @map("read_by_observer")
+  hiddenByAttacker Boolean @default(false) @map("hidden_by_attacker")
+  hiddenByDefender Boolean @default(false) @map("hidden_by_defender")
+  hiddenByObserver Boolean @default(false) @map("hidden_by_observer")
+
+  timestamp DateTime @default(now()) @db.Timestamptz(3)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  details   Json
+
+  expedition   Expedition?
+  gloryLedgers GloryLedger[]
 
   @@index([attackerUserId])
   @@index([defenderUserId])
@@ -544,25 +555,57 @@ model CombatReport {
   @@map("combat_report")
 }
 
+model GloryLedger {
+  id                     String        @id @default(cuid())
+  worldId                String        @map("world_id")
+  signal                 RankingSignal
+  scorerUserId           String        @map("scorer_user_id")
+  /// Denormalized opponent id, intentionally without an FK relation. The Glory
+  /// ledger is durable and append-only: rows must survive opponent account
+  /// deletion so historical weekly/all-time standings stay reproducible. No
+  /// cleanup is tied to the opponent lifecycle; display names are resolved
+  /// lazily and tolerate a missing user.
+  opponentUserId         String        @map("opponent_user_id")
+  pairKey                String        @map("pair_key")
+  combatReportId         String        @map("combat_report_id")
+  rawPoints              Int           @map("raw_points")
+  pairRawPoints24hBefore Int           @default(0) @map("pair_raw_points_24h_before")
+  effectiveRawPoints     Int           @map("effective_raw_points")
+  opponentMultiplier     Float         @map("opponent_multiplier")
+  points                 Int
+  occurredAt             DateTime      @default(now()) @map("occurred_at") @db.Timestamptz(3)
+  createdAt              DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  world        World        @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  scorer       User         @relation(fields: [scorerUserId], references: [id], onDelete: Cascade)
+  combatReport CombatReport @relation(fields: [combatReportId], references: [id])
+
+  @@unique([combatReportId, signal, scorerUserId, opponentUserId], map: "glory_ledger_report_signal_scorer_opponent_key")
+  @@index([worldId, signal, occurredAt])
+  @@index([worldId, signal, scorerUserId])
+  @@index([worldId, pairKey, occurredAt])
+  @@map("glory_ledger")
+}
+
 model ScoutReport {
-  id             String          @id @default(cuid())
-  worldId        String          @map("world_id")
-  scoutVillageId String          @map("scout_village_id")
-  scoutUserId    String          @map("scout_user_id")
-  targetVillageId String?        @map("target_village_id")
-  targetKind     TargetKind      @map("target_kind")
-  targetX        Int             @map("target_x")
-  targetY        Int             @map("target_y")
-  targetName     String?         @map("target_name")
-  targetTier     String?         @map("target_tier")
-  units          Json
-  resources      Json
-  strategy       VillageStrategy?
-  isRead         Boolean         @default(false) @map("is_read")
-  hidden         Boolean         @default(false)
-  timestamp      DateTime        @default(now()) @db.Timestamptz(3)
-  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
-  details        Json
+  id              String           @id @default(cuid())
+  worldId         String           @map("world_id")
+  scoutVillageId  String           @map("scout_village_id")
+  scoutUserId     String           @map("scout_user_id")
+  targetVillageId String?          @map("target_village_id")
+  targetKind      TargetKind       @map("target_kind")
+  targetX         Int              @map("target_x")
+  targetY         Int              @map("target_y")
+  targetName      String?          @map("target_name")
+  targetTier      String?          @map("target_tier")
+  units           Json
+  resources       Json
+  strategy        VillageStrategy?
+  isRead          Boolean          @default(false) @map("is_read")
+  hidden          Boolean          @default(false)
+  timestamp       DateTime         @default(now()) @db.Timestamptz(3)
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  details         Json
 
   expedition Expedition?
 
@@ -580,14 +623,14 @@ enum VillageStrategy {
 }
 
 model VillageStrategyConfig {
-  id                  String         @id @default(cuid())
-  villageId           String         @unique @map("village_id")
-  strategy            VillageStrategy
-  lastChangedAt       DateTime       @default(now()) @map("last_changed_at") @db.Timestamptz(3)
-  changeCost          Int            @default(0) @map("change_cost")
-  cooldownEndsAt      DateTime?      @map("cooldown_ends_at") @db.Timestamptz(3)
-  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt           DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  id             String          @id @default(cuid())
+  villageId      String          @unique @map("village_id")
+  strategy       VillageStrategy
+  lastChangedAt  DateTime        @default(now()) @map("last_changed_at") @db.Timestamptz(3)
+  changeCost     Int             @default(0) @map("change_cost")
+  cooldownEndsAt DateTime?       @map("cooldown_ends_at") @db.Timestamptz(3)
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   village Village @relation(fields: [villageId], references: [id], onDelete: Cascade)
 
@@ -597,11 +640,11 @@ model VillageStrategyConfig {
 }
 
 model Garrison {
-  id              String  @id @default(cuid())
-  villageId       String  @map("village_id")
-  originVillageId String  @map("origin_village_id")
-  unitType        String  @map("unit_type")
-  quantity        Int     @default(0)
+  id              String @id @default(cuid())
+  villageId       String @map("village_id")
+  originVillageId String @map("origin_village_id")
+  unitType        String @map("unit_type")
+  quantity        Int    @default(0)
 
   village       Village @relation("VillageGarrison", fields: [villageId], references: [id], onDelete: Cascade)
   originVillage Village @relation("OriginVillageGarrison", fields: [originVillageId], references: [id], onDelete: Cascade)

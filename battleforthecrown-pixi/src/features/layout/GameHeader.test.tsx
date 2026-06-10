@@ -241,6 +241,8 @@ function installPointerCaptureStubs() {
 }
 
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-06-10T08:00:00.000Z'));
   installPointerCaptureStubs();
   populationByVillageId = {
     v1: { ...defaultPopulationByVillageId.v1 },
@@ -257,6 +259,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.useRealTimers();
   useAuthStore.getState().clearSession();
   useGameStore.getState().clear();
   useCrownsStore.getState().clear();

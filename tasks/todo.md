@@ -33,6 +33,25 @@
 - Vérification types : `rtk yarn workspace battleforthecrown-pixi type-check` passé.
 - Vérification statique : `rtk yarn static-check` passé.
 - QA preview hors IG : Vite `http://127.0.0.1:5174/design-system`, drag du bouton `Former la milice` observé de `(469,126)` vers `(544,94)`, click simple après déplacement ouvre toujours la modale, console sans erreur.
+## 2026-06-10 — Reprise PR run 051 classements
+
+- [x] Reprendre le diff local du run 051 et créer la branche dédiée.
+- [x] Vérifier/commit le diff local sans embarquer de hors-scope.
+- [x] Push la branche et retrouver/créer la PR ready for review.
+- [x] Lire tous les threads/commentaires non résolus de la PR.
+- [x] Traiter les commentaires pertinents au bon endroit, résoudre les non pertinents.
+- [x] Relancer les vérifications adaptées.
+- [ ] Confirmer qu'il ne reste plus aucun commentaire PR non résolu.
+
+### Review en cours
+
+- Demande : finaliser localement le run 051, pousser la PR, puis traiter tous les commentaires GitHub restants.
+- État initial local : diff du run présent non commité sur `main`; remote `origin` disponible; branche dédiée créée `run/051-feature-rankings-glory`.
+- PR : #70 `run(051): add glory rankings leaderboards`, branche `run/051-feature-rankings-glory`.
+- Review CodeRabbit traitée localement : ledger append-only sans cascade report, snapshots de puissance avant mutation d'armée, refus de fallback silencieux quand un snapshot de puissance manque, agrégation Gloire d'Assaut par owner défenseur avant écriture unique, remap occupation limité aux villages barbares/sans owner, exclusion explicite des combats barbares, anonymisation des noms publics de classement, event Outbox `rankings.changed`, validation Zod runtime côté Pixi, tests helpers UI, doc `period`, suppression du template final du run archivé.
+- Vérifications : `rtk yarn static-check` passé ; `rtk yarn workspace battleforthecrown-backend test -- rankings-formulas units-catalog combat-resolution travel-time world-config` passé (5 suites / 84 tests) ; `rtk yarn workspace battleforthecrown-pixi test` passé (68 fichiers / 380 tests, warning jsdom canvas connu) ; `rtk git diff --check` passé.
+- Smoke local : `rtk yarn workspace battleforthecrown-backend test:smoke:preflight` bloqué par absence de Postgres sur `localhost:5432`; tentative `cd battleforthecrown-backend && rtk docker compose up -d postgres` bloquée par socket OrbStack absent.
+- QA IG restante : vérifier dans le jeu que l'écran `Rangs` se recharge après un combat PvP et que les scores affichés restent lisibles sur mobile.
 
 ## 2026-06-09 — Spec gameplay classements
 

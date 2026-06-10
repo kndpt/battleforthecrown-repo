@@ -35,6 +35,7 @@ import {
   type GarrisonAddedPayload,
   type ResourcesChangedPayload,
   type CrownsChangedPayload,
+  type RankingsChangedPayload,
   type WorldStatusChangedPayload,
 } from './event-types';
 
@@ -211,6 +212,9 @@ export class EventOutboxService {
       case 'crowns.changed':
         this.notifyCrownsChanged(payload as CrownsChangedPayload);
         break;
+      case 'rankings.changed':
+        this.notifyRankingsChanged(payload as RankingsChangedPayload);
+        break;
       case 'world.status.changed':
         this.notifyWorldStatusChanged(payload as WorldStatusChangedPayload);
         break;
@@ -219,6 +223,10 @@ export class EventOutboxService {
         this.logger.warn(`Unknown event kind: ${String(exhaustiveCheck)}`);
       }
     }
+  }
+
+  private notifyRankingsChanged(payload: RankingsChangedPayload) {
+    this.gateway.notifyWorld(payload.worldId, 'rankings.changed', payload);
   }
 
   private async notifyBuildingCompleted(payload: BuildingCompletedPayload) {

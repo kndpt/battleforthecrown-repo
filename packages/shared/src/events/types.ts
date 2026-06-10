@@ -252,6 +252,16 @@ export interface WorldStatusChangedPayload {
   at: string;
 }
 
+export interface RankingsChangedPayload {
+  worldId: string;
+  signal: "ASSAULT_GLORY" | "RAMPART_GLORY";
+  scorerUserId: string;
+  opponentUserId: string;
+  points: number;
+  combatReportId: string;
+  occurredAt: string;
+}
+
 export type OutboxEventPayload =
   | { kind: "building.completed"; payload: BuildingCompletedPayload }
   | { kind: "unit.training.completed"; payload: UnitTrainingCompletedPayload }
@@ -289,6 +299,7 @@ export type OutboxEventPayload =
   | { kind: "garrison.added"; payload: GarrisonAddedPayload }
   | { kind: "resources.changed"; payload: ResourcesChangedPayload }
   | { kind: "crowns.changed"; payload: CrownsChangedPayload }
+  | { kind: "rankings.changed"; payload: RankingsChangedPayload }
   | { kind: "world.status.changed"; payload: WorldStatusChangedPayload };
 
 export type EventKind = OutboxEventPayload["kind"];
@@ -326,11 +337,13 @@ export type AnyEventPayload =
   | GarrisonAddedPayload
   | ResourcesChangedPayload
   | CrownsChangedPayload
+  | RankingsChangedPayload
   | WorldStatusChangedPayload;
 
 export interface ServerEvents {
   "resources.changed": ResourcesChangedPayload;
   "crowns.changed": CrownsChangedPayload;
+  "rankings.changed": RankingsChangedPayload;
   "building.completed": BuildingCompletedPayload;
   "unit.training.completed": UnitTrainingCompletedPayload;
   "unit.trained": UnitTrainedPayload;
