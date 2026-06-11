@@ -6,6 +6,7 @@ import {
   type PublicWorld,
   type WorldConfig,
 } from '@battleforthecrown/shared/world';
+import { authSessionResponseSchema } from '@battleforthecrown/shared/auth';
 import type {
   StrategyBonus,
   UpdateVillageLabelRequest,
@@ -19,7 +20,6 @@ import { gameSocket } from './ws';
 import {
   toAuthSession,
   type AuthSession,
-  type AuthSessionResponse,
   type BuildingDto,
   type JoinedVillage,
   type JoinWorldResult,
@@ -151,7 +151,9 @@ export function useLoginMutation() {
   const setSession = useAuthStore((state) => state.setSession);
   return useMutation<AuthSession, Error, LoginInput>({
     mutationFn: async (input) => {
-      const payload = await apiClient.post<AuthSessionResponse>('/auth/login', input, { skipAuth: true });
+      const payload = authSessionResponseSchema.parse(
+        await apiClient.post('/auth/login', input, { skipAuth: true }),
+      );
       return toAuthSession(payload);
     },
     onSuccess: (session) => {
@@ -164,7 +166,9 @@ export function useRegisterMutation() {
   const setSession = useAuthStore((state) => state.setSession);
   return useMutation<AuthSession, Error, RegisterInput>({
     mutationFn: async (input) => {
-      const payload = await apiClient.post<AuthSessionResponse>('/auth/register', input, { skipAuth: true });
+      const payload = authSessionResponseSchema.parse(
+        await apiClient.post('/auth/register', input, { skipAuth: true }),
+      );
       return toAuthSession(payload);
     },
     onSuccess: (session) => {

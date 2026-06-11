@@ -8,6 +8,8 @@ import { Prisma } from '@prisma/client';
 import {
   DISPLAY_NAME_COLLISION_MESSAGE,
   normalizeDisplayName,
+  type AuthRefreshResponse,
+  type AuthSessionResponse,
 } from '@battleforthecrown/shared/auth';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
@@ -25,7 +27,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(dto: RegisterDto) {
+  async register(dto: RegisterDto): Promise<AuthSessionResponse> {
     const hashedPassword = await bcrypt.hash(dto.password, 10);
     const displayName = normalizeDisplayName(dto.displayName);
 
@@ -75,7 +77,7 @@ export class AuthService {
     }
   }
 
-  async login(dto: LoginDto) {
+  async login(dto: LoginDto): Promise<AuthSessionResponse> {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
       include: {
@@ -99,7 +101,7 @@ export class AuthService {
   private toSessionResponse(
     user: { id: string; email: string; displayName: string },
     tokens: { accessToken: string; refreshToken: string; villageId?: string },
-  ) {
+  ): AuthSessionResponse {
     return {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
@@ -134,7 +136,7 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async refresh(dto: RefreshDto) {
+  async refresh(dto: RefreshDto): Promise<AuthRefreshResponse> {
     let decoded: { sub: string };
     try {
       decoded = this.jwtService.verify(dto.refreshToken);

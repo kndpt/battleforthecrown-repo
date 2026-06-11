@@ -21,3 +21,8 @@ export interface AuthSessionResponse {
 export interface AuthSession extends AuthTokens {
   user: AuthUser;
 }
+
+export interface AuthRefreshResponse {
+  accessToken: string;
+  refreshToken: string;
+}

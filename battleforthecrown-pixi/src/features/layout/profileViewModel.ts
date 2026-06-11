@@ -81,7 +81,7 @@ export function buildPlayerProfileSheetData({
 
   return {
     player: {
-      initials: getPlayerInitials(user?.displayName ?? user?.email),
+      initials: getPlayerInitials(user?.displayName ?? 'Joueur'),
       level: PLAYER_PROFILE_LEVEL,
       name: user?.displayName ?? 'Joueur',
       online: Boolean(user),
