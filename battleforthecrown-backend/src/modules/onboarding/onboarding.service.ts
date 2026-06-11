@@ -91,26 +91,19 @@ export class OnboardingService {
   ): Promise<void> {
     const { userId, worldId, villageId } = params;
 
-    const existing = await tx.onboardingState.findUnique({
+    await tx.onboardingState.upsert({
       where: { userId_worldId: { userId, worldId } },
+      create: {
+        userId,
+        worldId,
+        firstVillageId: villageId,
+        currentStep: 'UPGRADE_CASTLE_LEVEL_2',
+        initialRewardApplied: false,
+      },
+      update: {
+        firstVillageId: villageId,
+      },
     });
-
-    if (!existing) {
-      await tx.onboardingState.create({
-        data: {
-          userId,
-          worldId,
-          firstVillageId: villageId,
-          currentStep: 'UPGRADE_CASTLE_LEVEL_2',
-          initialRewardApplied: false,
-        },
-      });
-    } else {
-      await tx.onboardingState.update({
-        where: { userId_worldId: { userId, worldId } },
-        data: { firstVillageId: villageId },
-      });
-    }
 
     const stock = await tx.resourceStock.findUniqueOrThrow({
       where: { villageId },
