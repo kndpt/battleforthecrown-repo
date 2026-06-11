@@ -529,51 +529,6 @@ export function OnboardingFab({
           </section>
         </div>
       ) : null}
-
-      <style>{`
-        @keyframes bftcOnboardingSelectPulse {
-          0% {
-            transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) scale(1);
-            filter: brightness(1);
-          }
-          42% {
-            transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) scale(1.02) rotate(-0.35deg);
-            filter: brightness(1.06);
-          }
-          100% {
-            transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) scale(1);
-            filter: brightness(1);
-          }
-        }
-
-        @keyframes bftcOnboardingAdvancePulse {
-          0% {
-            transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) translateY(0) scale(1);
-            filter: brightness(1);
-          }
-          28% {
-            transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) translateY(-2px) scale(1.025);
-            filter: brightness(1.08);
-          }
-          58% {
-            transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) translateY(1px) scale(.995);
-            filter: brightness(1.04);
-          }
-          100% {
-            transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) translateY(0) scale(1);
-            filter: brightness(1);
-          }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          [data-advancing='true'] {
-            animation: none !important;
-          }
-          [data-selected='true'] {
-            animation: none !important;
-          }
-        }
-      `}</style>
     </>
   );
 }
