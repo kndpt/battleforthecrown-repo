@@ -2,6 +2,7 @@ import { Assets, Container, Graphics, Sprite, Text, Texture, type Application, t
 import { Viewport } from 'pixi-viewport';
 import type { PixiScene } from './SceneManager';
 import { villageSpriteAliasForEntity, type MapEntity } from '@/api/world-types';
+import { mapEntityCanvasLabel } from '@/features/world/mapEntityLabels';
 import type { ExpeditionSnapshot } from '@/stores/expeditions';
 import type { VisionDisk } from '@battleforthecrown/shared/world';
 import { createExpeditionVisual, type ExpeditionVisualHandle } from '@/pixi/entities/ExpeditionVisual';
@@ -425,7 +426,7 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
       }
     }
     visual.container.zIndex = zIndex + (isSelected ? 50 : 0);
-    visual.label.text = data.name;
+    visual.label.text = mapEntityCanvasLabel(data);
     visual.label.visible = isMine || isSelected;
     if (!data.captureWindow) {
       captureMarker.clear();
