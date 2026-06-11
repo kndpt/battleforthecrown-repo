@@ -48,6 +48,22 @@ function renderSheet(onClose = vi.fn()) {
   return { ...result, onClose, panel };
 }
 
+describe('BottomSheet pointer events', () => {
+  it('does not leave an interactive overlay when closed', () => {
+    const { container } = render(
+      <BottomSheet isOpen={false} onClose={() => undefined}>
+        <div>Sheet content</div>
+      </BottomSheet>,
+    );
+
+    const overlay = container.querySelector('.absolute.inset-0.bg-black');
+    const panel = container.querySelector('.absolute.bottom-0');
+
+    expect(overlay).toHaveClass('pointer-events-none');
+    expect(panel).toHaveClass('pointer-events-none');
+  });
+});
+
 describe('BottomSheet mobile gestures', () => {
   beforeEach(() => installPointerCaptureStubs());
 

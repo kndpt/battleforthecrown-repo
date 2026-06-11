@@ -131,7 +131,7 @@ export const BottomSheet = forwardRef<HTMLDivElement, BottomSheetProps>(
         {/* Overlay - Fade uniquement */}
         <div
           className={`absolute inset-0 bg-black transition-opacity duration-300 ${
-            isOpen ? 'opacity-50' : 'opacity-0'
+            isOpen ? 'opacity-50' : 'pointer-events-none opacity-0'
           }`}
           onClick={onClose}
           aria-hidden="true"
@@ -141,7 +141,7 @@ export const BottomSheet = forwardRef<HTMLDivElement, BottomSheetProps>(
         <div
           className={`absolute bottom-0 left-0 right-0 z-10 touch-pan-y select-none transform transition-transform ${
             isDragging ? 'duration-0' : 'duration-300'
-          } ${className}`}
+          } ${isOpen ? '' : 'pointer-events-none'} ${className}`}
           onPointerCancel={(event) => resetDrag(event.currentTarget)}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}

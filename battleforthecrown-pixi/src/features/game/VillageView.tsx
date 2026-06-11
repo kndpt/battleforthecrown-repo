@@ -785,13 +785,15 @@ export function VillageView() {
 
         {/* ═══════════════════════ OVERLAYS & PORTALS ═══════════════════════ */}
 
-        {/* Tutorial guidance (floating FAB) */}
-        <OnboardingGuidance
-          guidance={onboardingGuidance}
-          isLoading={onboardingSummary.isLoading || !villageId || buildingsQuery.isLoading}
-          onAction={runVillageAction}
-          onNavigate={navigate}
-        />
+        {/* Tutorial guidance (floating FAB) — pointer-events-none wrapper so only the FAB/modal capture taps */}
+        <div className="pointer-events-none fixed inset-0 z-[35]">
+          <OnboardingGuidance
+            guidance={onboardingGuidance}
+            isLoading={onboardingSummary.isLoading || !villageId || buildingsQuery.isLoading}
+            onAction={runVillageAction}
+            onNavigate={navigate}
+          />
+        </div>
 
         {/* Bottom navigation */}
         <BottomNavigationBar

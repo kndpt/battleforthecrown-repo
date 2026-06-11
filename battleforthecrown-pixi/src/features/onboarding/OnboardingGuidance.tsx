@@ -38,6 +38,16 @@ export function OnboardingGuidance({
     return () => window.clearTimeout(timeout);
   }, [guidance?.step]);
 
+  useEffect(() => {
+    if (!guidance || isLoading) {
+      setIsOpen(false);
+    }
+  }, [guidance, isLoading]);
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [guidance?.step]);
+
   if (!guidance || isLoading) return null;
 
   return (
