@@ -270,16 +270,14 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
     85 lines of dead code.
   verification: yarn static-check ✓ · pixi 363 tests ✓ (PR #66, merged)
 
-- status: proposed
+- status: fixed
   area: >
     battleforthecrown-backend/src/modules/combat/combat.worker.ts:964, 1079
   branch: maint/debt/defender-village-alias
   title: "maint(debt): use DefenderVillage alias in applyDefenderLosses and getCaptureDurationMs"
   note: >
-    O1/B6 from refactor-backend audit: applyDefenderLosses (line 964) and getCaptureDurationMs
-    (line 1079) used inline Prisma.VillageGetPayload<{ include: { resourceStock: true; buildings: true } }>,
-    identical to the DefenderVillage alias defined at line 42. Replaced with DefenderVillage.
-    1 file, 2 locations, trivial type consistency fix.
+    Already applied on main (confirmed via grep — DefenderVillage used at all call sites,
+    no inline VillageGetPayload remaining). No open PR found.
   verification: yarn static-check ✓ · 108 combat tests ✓
 
 - status: fixed
@@ -358,3 +356,7 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
   on `maint/debt/defender-village-alias` — applyDefenderLosses (line 964) and getCaptureDurationMs
   (line 1079) used the full inline type instead of the DefenderVillage alias at line 42.
   1 file, 2 locations. static-check ✓ · 108 combat tests ✓.
+- 2026-06-11: inline 24*60*60*1000 literals replaced with MS_PER_DAY in rankings.service.ts on
+  `maint/debt/ms-per-day-rankings` — creditGlory 24h window + getWeeklyCutoff 7-day cutoff.
+  Same pattern as world-lifecycle (#47) and ms-per-hour-constants (#50). PR #74.
+  static-check ✓ · 4 rankings tests ✓ · 344 backend tests ✓ · 389 pixi tests ✓.
