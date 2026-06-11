@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { Test } from '@nestjs/testing';
 import type { INestApplication } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
@@ -102,14 +103,20 @@ export async function seedSmokeWorld(
 
 type Server = SmokeContext['server'];
 
+/** Unique smoke display name (case-insensitive index). Never truncate a human label. */
+export function smokeDisplayName(): string {
+  return `Smk${randomUUID().replace(/-/g, '').slice(0, 17)}`;
+}
+
 export async function registerUser(server: Server, suffix?: string) {
   const tag =
     suffix ?? `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
   const email = `smoke-${tag}@test.local`;
+  const displayName = smokeDisplayName();
   const password = 'smoke-password-123';
   const res = await request(server)
     .post('/auth/register')
-    .send({ email, password });
+    .send({ email, displayName, password });
   if (res.status >= 300)
     throw new Error(
       `register failed: ${res.status} ${JSON.stringify(res.body)}`,
@@ -119,6 +126,7 @@ export async function registerUser(server: Server, suffix?: string) {
     refreshToken: string;
     userId: string;
     email: string;
+    displayName: string;
   };
 }
 

@@ -124,6 +124,27 @@ describe('SelectedEntityPanel owned village troops', () => {
     expect(await screen.findByText('Aucune troupe')).toBeInTheDocument();
   });
 
+  it('shows the foreign owner display name in the callout subtitle', async () => {
+    vi.spyOn(apiClient, 'get').mockImplementation(async (path) => {
+      if (path === '/power/village/enemy-1/public') return { villageId: 'enemy-1', buildings: 880 };
+      throw new Error(`Unexpected GET ${path}`);
+    });
+
+    renderPanel(
+      playerVillage({
+        id: 'enemy-1',
+        isMine: false,
+        name: 'Royaume de helper.brutom',
+        ownerDisplayName: 'Sire Kelvin',
+        ownerId: 'u-foreign',
+      }),
+      'village-1',
+    );
+
+    expect(await screen.findByText('Sire Kelvin · Village joueur')).toBeInTheDocument();
+    expect(screen.getByText('Royaume de helper.brutom')).toBeInTheDocument();
+  });
+
   it('shows building power but never troops for a village the player does not own', async () => {
     const getSpy = vi.spyOn(apiClient, 'get').mockImplementation(async (path) => {
       if (path === '/power/village/enemy-1/public') return { villageId: 'enemy-1', buildings: 880 };

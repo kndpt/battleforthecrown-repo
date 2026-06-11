@@ -41,20 +41,18 @@ describe('getPlayerInitials', () => {
     expect(getPlayerInitials('   ')).toBe('—');
   });
 
-  it('uses first two chars of local part when no separator', () => {
-    expect(getPlayerInitials('john@example.com')).toBe('JO');
-    expect(getPlayerInitials('ab@x.io')).toBe('AB');
+  it('uses first two chars for a single-word display name', () => {
+    expect(getPlayerInitials('Kelvin')).toBe('KE');
+    expect(getPlayerInitials('ab')).toBe('AB');
   });
 
-  it('uses first char of each segment split by . _ or -', () => {
-    expect(getPlayerInitials('john.doe@example.com')).toBe('JD');
-    expect(getPlayerInitials('john_doe@example.com')).toBe('JD');
-    expect(getPlayerInitials('john-doe@example.com')).toBe('JD');
-    expect(getPlayerInitials('a.b.c@x.io')).toBe('AB');
+  it('uses first char of first two words', () => {
+    expect(getPlayerInitials('Sire Kelvin')).toBe('SK');
+    expect(getPlayerInitials('Jean  Luc')).toBe('JL');
   });
 
-  it('handles single-char local part', () => {
-    expect(getPlayerInitials('j@x.io')).toBe('J');
+  it('handles single-char display name', () => {
+    expect(getPlayerInitials('K')).toBe('K');
   });
 });
 

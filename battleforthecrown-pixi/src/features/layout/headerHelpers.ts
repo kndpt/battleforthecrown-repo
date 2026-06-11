@@ -18,15 +18,14 @@ export function toResultMap<T>(
   );
 }
 
-export function getPlayerInitials(email: string | null | undefined): string {
-  const source = email?.trim();
+export function getPlayerInitials(displayName: string | null | undefined): string {
+  const source = displayName?.trim();
   if (!source) return '—';
-  const localPart = source.split('@')[0] ?? source;
-  const parts = localPart.split(/[._-]+/).filter(Boolean);
+  const parts = source.split(/\s+/).filter(Boolean);
   const letters =
     parts.length >= 2
       ? `${parts[0]?.[0] ?? ''}${parts[1]?.[0] ?? ''}`
-      : localPart.slice(0, 2);
+      : source.slice(0, 2);
 
   return letters.toUpperCase();
 }

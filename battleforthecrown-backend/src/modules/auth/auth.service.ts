@@ -5,6 +5,12 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Prisma } from '@prisma/client';
+import {
+  DISPLAY_NAME_COLLISION_MESSAGE,
+  normalizeDisplayName,
+  type AuthRefreshResponse,
+  type AuthSessionWireResponse,
+} from '@battleforthecrown/shared/auth';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -21,13 +27,26 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(dto: RegisterDto) {
+  async register(dto: RegisterDto): Promise<AuthSessionWireResponse> {
     const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const displayName = normalizeDisplayName(dto.displayName);
 
     try {
       return await this.prisma.$transaction(async (tx) => {
+        const existingName = await tx.user.findFirst({
+          where: { displayName: { equals: displayName, mode: 'insensitive' } },
+          select: { id: true },
+        });
+        if (existingName) {
+          throw new ConflictException(DISPLAY_NAME_COLLISION_MESSAGE);
+        }
+
         const user = await tx.user.create({
-          data: { email: dto.email, password: hashedPassword },
+          data: {
+            email: dto.email,
+            displayName,
+            password: hashedPassword,
+          },
         });
 
         const { accessToken, refreshToken } = await this.generateTokens(
@@ -35,25 +54,30 @@ export class AuthService {
           tx,
         );
 
-        return {
-          accessToken,
-          refreshToken,
-          userId: user.id,
-          email: user.email,
-        };
+        return this.toSessionResponse(user, { accessToken, refreshToken });
       });
     } catch (error) {
+      if (error instanceof ConflictException) throw error;
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
+        const targetField = error.meta?.target;
+        const target = Array.isArray(targetField)
+          ? targetField.join(',')
+          : typeof targetField === 'string'
+            ? targetField
+            : '';
+        if (target.includes('display_name')) {
+          throw new ConflictException(DISPLAY_NAME_COLLISION_MESSAGE);
+        }
         throw new ConflictException('Email already registered');
       }
       throw error;
     }
   }
 
-  async login(dto: LoginDto) {
+  async login(dto: LoginDto): Promise<AuthSessionWireResponse> {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
       include: {
@@ -67,12 +91,24 @@ export class AuthService {
     }
 
     const { accessToken, refreshToken } = await this.generateTokens(user.id);
-    return {
+    return this.toSessionResponse(user, {
       accessToken,
       refreshToken,
+      villageId: user.villages[0]?.id,
+    });
+  }
+
+  private toSessionResponse(
+    user: { id: string; email: string; displayName: string },
+    tokens: { accessToken: string; refreshToken: string; villageId?: string },
+  ): AuthSessionWireResponse {
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
       userId: user.id,
       email: user.email,
-      villageId: user.villages[0]?.id,
+      displayName: user.displayName,
+      villageId: tokens.villageId,
     };
   }
 
@@ -100,7 +136,7 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async refresh(dto: RefreshDto) {
+  async refresh(dto: RefreshDto): Promise<AuthRefreshResponse> {
     let decoded: { sub: string };
     try {
       decoded = this.jwtService.verify(dto.refreshToken);

@@ -13,6 +13,7 @@ import type { OpenConquestDto } from '@battleforthecrown/shared/combat';
 import { useTickingNow } from '@/lib/useTickingNow';
 import { formatRemaining } from '@/features/village/constructionProgress';
 import { computeProgress } from '@/features/combat/kingdomActivitiesViewModel';
+import { mapEntityCalloutSubtitle } from './mapEntityLabels';
 import { buildTroopsSection, summarizePresentTroops } from './selectedEntityTroops';
 
 interface SelectedEntityPanelProps {
@@ -23,24 +24,6 @@ interface SelectedEntityPanelProps {
   onCaravan?: (entity: MapEntity) => void;
   onScout?: (entity: MapEntity) => void;
   onGoToVillage?: (entity: MapEntity) => void;
-}
-
-const TIER_LABEL: Record<NonNullable<MapEntity['tier']>, string> = {
-  T1: 'Tier 1',
-  T2: 'Tier 2',
-  T3: 'Tier 3',
-  T4: 'Tier 4',
-  T5: 'Tier 5',
-};
-
-function typeLabel(entity: MapEntity): string {
-  if (entity.kind === 'BARBARIAN_VILLAGE') {
-    return entity.tier ? TIER_LABEL[entity.tier] : 'Village barbare';
-  }
-  if (entity.kind === 'PLAYER_VILLAGE') {
-    return entity.isMine ? 'Mon village' : 'Village joueur';
-  }
-  return 'Entité';
 }
 
 export function SelectedEntityPanel({
@@ -158,17 +141,12 @@ export function SelectedEntityPanel({
       coordinates={`${entity.x}|${entity.y}`}
       sections={sections}
       stats={stats}
-      subtitle={subtitleFor(entity)}
+      subtitle={mapEntityCalloutSubtitle(entity)}
       tier={entity.tier ? { label: `★ ${entity.tier}` } : undefined}
       title={entity.name}
       titleIcon={isBarbarian ? '★' : undefined}
     />
   );
-}
-
-function subtitleFor(entity: MapEntity): string {
-  if (entity.kind === 'BARBARIAN_VILLAGE') return 'Inhabité · pillable';
-  return typeLabel(entity);
 }
 
 function captureSectionFor(
