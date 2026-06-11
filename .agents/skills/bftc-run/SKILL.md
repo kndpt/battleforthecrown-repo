@@ -20,7 +20,7 @@ Noms d'agents selon harness :
 | Review indépendante (conditionnelle) | `reviewer` | `reviewer` | `reviewer` |
 | Review 5 axes par défaut | lead direct | lead direct | lead direct |
 
-**Source de vérité mission sub-agent** : `.claude/agents/<name>.md` (Mission, Inputs, Procédure, Limites, Output). Cursor consomme le même fichier via `.cursor/agents/` (symlink). Valable pour **tous** les harness — pas d'improvisation lead.
+**Source de vérité mission sub-agent** : corps de prompt dans `.claude/agents/<name>.md` (Mission, Inputs, Procédure, Limites, Output). Cursor : `.cursor/agents/<name>.md` (même corps, frontmatter Composer dédié). Codex : `.codex/agents/<name>.toml`. Valable pour **tous** les harness — pas d'improvisation lead.
 
 ## Routage
 
@@ -91,7 +91,7 @@ Avant **chaque** spawn sub-agent :
 2. **Lead** : relire le fichier agent si le scope est sensible (reviewer, gros diff) pour vérifier que le contrat run couvre tous les inputs requis.
 3. **Vérifier le rapport** retourné contre le bloc Output obligatoire du fichier agent (`=== RAPPORT EXEC ===`, `=== CARTE MODULE ===`, `VERDICT:`, etc.). Mismatch ou bloc absent → retry 1× puis dérogation lead.
 
-**Cursor** : déléguer via sub-agent natif (`.cursor/agents/<name>.md`, symlink → `.claude/agents/`) ou `Task` avec `subagent_type` = colonne Cursor. Le harness charge le **corps du `.md`** comme system prompt — le lead n'a pas à recopier la mission. Le `prompt` / message de délégation contient **uniquement** le contrat run :
+**Cursor** : déléguer via sub-agent natif (`.cursor/agents/<name>.md`) ou `Task` avec `subagent_type` = colonne Cursor. Le harness charge le **corps du `.md`** comme system prompt — le lead n'a pas à recopier la mission. Modèles Cursor : `composer-2.5-fast` (carto, tests), `composer-2.5` (impl, test-writer, doc), thinking pour `reviewer` / `run-planner`. Le `prompt` / message de délégation contient **uniquement** le contrat run :
 
 ```text
 --- CONTRAT RUN (lead) ---

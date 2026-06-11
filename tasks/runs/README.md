@@ -20,6 +20,7 @@ Même source de vérité dans les deux harnesses, conventions de nommage des sub
 
 - **Source unique** : [`.agents/skills/bftc-run/SKILL.md`](../../.agents/skills/bftc-run/SKILL.md) et [`.agents/skills/bftc-plan/SKILL.md`](../../.agents/skills/bftc-plan/SKILL.md).
 - **Claude Code** : consomme les skills via le symlink `.claude/skills/`; sub-agents [`.claude/agents/*.md`](../../.claude/agents/) en kebab-case, ex `code-mapper`.
+- **Cursor** : sub-agents [`.cursor/agents/*.md`](../../.cursor/agents/) (corps aligné sur `.claude/agents/`, frontmatter Composer dédié).
 - **Codex** : consomme les skills via le symlink `.codex/skills/`; sub-agents [`.codex/agents/*.toml`](../../.codex/agents/) en snake_case, ex `code_mapper`.
 
 ## Pipeline d'un run (étapes 1-10b)
