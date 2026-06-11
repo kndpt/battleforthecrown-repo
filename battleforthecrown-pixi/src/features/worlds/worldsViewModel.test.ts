@@ -171,6 +171,52 @@ describe("worldsViewModel", () => {
     expect(loading.personalStats).toBeNull();
   });
 
+  it("shows 'Revenir' CTA for joined world with 0 villages", () => {
+    const villageCountByWorldId = new Map([["joined-world", 0]]);
+    const model = toWorldCardViewModel(
+      makeWorld({ id: "joined-world" }),
+      new Set(["joined-world"]),
+      now,
+      new Map(),
+      villageCountByWorldId,
+    );
+
+    expect(model.isJoined).toBe(true);
+    expect(model.ctaKind).toBe("rejoin");
+    expect(model.ctaLabel).toBe("Revenir");
+  });
+
+  it("shows 'Entrer' CTA for joined world with at least 1 village", () => {
+    const villageCountByWorldId = new Map([["joined-world", 2]]);
+    const model = toWorldCardViewModel(
+      makeWorld({ id: "joined-world" }),
+      new Set(["joined-world"]),
+      now,
+      new Map(),
+      villageCountByWorldId,
+    );
+
+    expect(model.isJoined).toBe(true);
+    expect(model.ctaKind).toBe("joined");
+    expect(model.ctaLabel).toBe("Entrer");
+  });
+
+  it("shows 'Revenir' CTA for eliminated member on a LOCKED world", () => {
+    const villageCountByWorldId = new Map([["joined-locked", 0]]);
+    const model = toWorldCardViewModel(
+      makeWorld({ id: "joined-locked", status: "LOCKED" }),
+      new Set(["joined-locked"]),
+      now,
+      new Map(),
+      villageCountByWorldId,
+    );
+
+    expect(model.isJoined).toBe(true);
+    expect(model.ctaKind).toBe("rejoin");
+    expect(model.ctaLabel).toBe("Revenir");
+    expect(model.statusLabel).toBe("INSCRIPTIONS CLOSES");
+  });
+
   it("keeps legacy OPEN worlds explicit when lifecycle start dates are missing", () => {
     const model = toWorldCardViewModel(
       makeWorld({

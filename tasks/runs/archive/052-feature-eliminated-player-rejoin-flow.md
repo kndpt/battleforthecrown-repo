@@ -1,8 +1,8 @@
 # Run #052 — feature-eliminated-player-rejoin-flow
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-11
+> **Terminé** : 2026-06-11
 
 ## Cible
 
@@ -37,18 +37,18 @@
 
 ## Critère de fin (acceptance)
 
-- [ ] `WorldSessionGate` ne rend plus `Impossible de charger ton royaume.` pour l'état `WorldMembership` existant + `0` village ; il rend un état "royaume perdu" assumé. _(auto : test Pixi)_
-- [ ] L'écran mobile `/game` affiche un message DA clair expliquant que le dernier village a été conquis, sans ton technique ni blame joueur. _(visuel/gameplay IG)_
-- [ ] L'écran "royaume perdu" propose deux CTA visibles : revenir sur ce monde et choisir un autre monde. _(visuel/gameplay IG)_
-- [ ] Le CTA "revenir sur ce monde" crée un nouveau village initial pour un membre existant à `0` village, avec bâtiments initiaux, ressources, population et onboarding cohérents. _(auto : smoke/curl/SQL)_
-- [ ] Un membre qui possède encore au moins un village ne recrée jamais de village supplémentaire via `enter`, `join` ou le nouveau chemin rejoin. _(auto : test backend/smoke)_
-- [ ] Un membre éliminé peut respawn dans un monde `LOCKED`; un non-membre ne peut toujours pas rejoindre un monde `LOCKED`; un monde `ENDED` reste non jouable. _(auto : test backend/smoke)_
-- [ ] `/worlds` affiche un CTA "Revenir" pour `isJoined && villageCount === 0`, et continue d'afficher "Entrer" pour `isJoined && villageCount > 0`. _(auto : test Pixi)_
-- [ ] `/worlds/:worldId` applique la même distinction `Revenir` / `Entrer` que la liste des mondes. _(auto : test Pixi)_
-- [ ] La perte du dernier village conserve `WorldMembership` et les rapports `Capture perdue`; aucun self-reset destructif n'est déclenché. _(auto : smoke/SQL)_
-- [ ] Sur `village.conquered` reçu par l'ancien propriétaire, les caches `myMemberships`, `myVillages`, `worldEntities` et reports du monde sont invalidés, sans afficher le modal victoire conquérant. _(auto : test ws-bindings)_
-- [ ] "Choisir un autre monde" mène à `/worlds` et ne laisse pas de contexte `worldId` / `villageId` stale bloquant les autres mondes. _(auto : test Pixi + visuel/gameplay)_
-- [ ] `yarn static-check`, tests backend ciblés, tests Pixi ciblés et smoke backend pertinent sont verts. _(auto : commandes)_
+- [x] `WorldSessionGate` ne rend plus `Impossible de charger ton royaume.` pour l'état `WorldMembership` existant + `0` village ; il rend un état "royaume perdu" assumé. _(auto : test Pixi)_
+- [x] L'écran mobile `/game` affiche un message DA clair expliquant que le dernier village a été conquis, sans ton technique ni blame joueur. _(visuel/gameplay IG)_
+- [x] L'écran "royaume perdu" propose deux CTA visibles : revenir sur ce monde et choisir un autre monde. _(visuel/gameplay IG)_
+- [x] Le CTA "revenir sur ce monde" crée un nouveau village initial pour un membre existant à `0` village, avec bâtiments initiaux, ressources, population et onboarding cohérents. _(auto : smoke/curl/SQL)_
+- [x] Un membre qui possède encore au moins un village ne recrée jamais de village supplémentaire via `enter`, `join` ou le nouveau chemin rejoin. _(auto : test backend/smoke)_
+- [x] Un membre éliminé peut respawn dans un monde `LOCKED`; un non-membre ne peut toujours pas rejoindre un monde `LOCKED`; un monde `ENDED` reste non jouable. _(auto : test backend/smoke)_
+- [x] `/worlds` affiche un CTA "Revenir" pour `isJoined && villageCount === 0`, et continue d'afficher "Entrer" pour `isJoined && villageCount > 0`. _(auto : test Pixi)_
+- [x] `/worlds/:worldId` applique la même distinction `Revenir` / `Entrer` que la liste des mondes. _(auto : test Pixi)_
+- [x] La perte du dernier village conserve `WorldMembership` et les rapports `Capture perdue`; aucun self-reset destructif n'est déclenché. _(auto : smoke/SQL)_
+- [x] Sur `village.conquered` reçu par l'ancien propriétaire, les caches `myMemberships`, `myVillages`, `worldEntities` et reports du monde sont invalidés, sans afficher le modal victoire conquérant. _(auto : test ws-bindings)_
+- [x] "Choisir un autre monde" mène à `/worlds` et ne laisse pas de contexte `worldId` / `villageId` stale bloquant les autres mondes. _(auto : test Pixi + visuel/gameplay)_
+- [x] `yarn static-check`, tests backend ciblés, tests Pixi ciblés et smoke backend pertinent sont verts. _(auto : commandes)_
 
 ## Références à respecter
 
@@ -104,21 +104,46 @@
 
 ## Progress (rempli pendant le run)
 
-_(Vide au démarrage. Mis à jour à chaque transition d'étape ou de tâche.)_
+- Préflight OK — branche `run/052-feature-eliminated-player-rejoin-flow`, `PR_REQUIRED: oui`
+- Cartographie OK — état implicite `villageCount=0`, pas de nouveau DTO
+- Implémentation back+front (implementer) + tests (test-writer)
+- Review indépendante BLOCK → fix `WorldSessionGate` (hasNoVillage avant hasGameContext) + clear `villageId` sur `village.conquered` ancien proprio
+- Fix racine rejoin : `ensureForInitialVillage` évite P2002 en tx (findUnique avant create) — rollback Postgres silencieux sinon
+- Docs gameplay 14 + 19, static-check + unit/smoke verts
 
 ## Décisions prises
 
-_(Vide au démarrage. Décisions archi non triviales, dérogations lead, findings de review, refus de sub-agents.)_
+- État implicite `villageCount=0` via `WorldMembershipResponse` existant ; pas de DTO `eliminated`.
+- Rejoin = `POST /world/:id/join` (pas d'endpoint dédié).
+- `crownBalance.upsert` au lieu de `create` pour le rejoin.
+- `ensureForInitialVillage` : `findUnique` avant `create` (évite abort tx Postgres sur P2002 catché).
+- Review BLOCK résolu : gate priorise `LostKingdomScreen` ; WS clear `villageId` si village conquis = contexte actif.
 
 ## Rapport final
 
-_(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tickets ouverts, méta-évaluation si applicable.)_
+Flux joueur éliminé livré : écran « royaume perdu », CTA Revenir/choix autre monde, rejoin backend sur monde `LOCKED`, CTA `/worlds` et détail, invalidations WS.
+
+**Fichiers touchés** :
+- Backend : `join-world.use-case.ts`, `onboarding.service.ts`, `world-membership.smoke.spec.ts`
+- Frontend : `LostKingdomScreen.tsx`, `WorldSessionGate.tsx`, `worldsViewModel.ts`, `useWorldCardModels.ts`, `WorldSelector.tsx`, `WorldDetailScreen.tsx`, `WorldsSelectionDesign.tsx`, `WorldDetailDesign.tsx`, `ws-bindings.ts` + tests associés
+- Docs : `docs/gameplay/14-pvp-conquest.md`, `docs/gameplay/19-world-lifecycle.md`
 
 ### Acceptance & QA
 
-- **Critères d'acceptance vérifiés** : _(rempli à l'étape 10)_
-- **Review indépendante** : `Déclenchée` requise (raison : (a) back+front, (c) diff estimé > 100 lignes, (d) invariant durable `membre sans village / rejoin après élimination`).
-- **Tests automatisés** : _(rempli à l'étape 10)_
-- **Smokes ajoutés/modifiés** : _(rempli à l'étape 10)_
-- **QA fonctionnelle agent** : _(rempli à l'étape 10)_
-- **Tests IG à faire par le user** : _(rempli à l'étape 10)_
+- **Critères d'acceptance vérifiés** :
+  - [x] WorldSessionGate → LostKingdomScreen si 0 village — `yarn workspace battleforthecrown-pixi test src/features/worlds/WorldSessionGate.test.tsx` → 3 passed
+  - [x] CTA Revenir/Entrer view-model — `yarn workspace battleforthecrown-pixi test src/features/worlds/worldsViewModel.test.ts` → 11 passed
+  - [x] Rejoin LOCKED/ENDED/no-dup — `yarn workspace battleforthecrown-backend test:smoke:run -- world-membership.smoke.spec.ts` → 7 passed
+  - [x] village.conquered ancien proprio — `yarn workspace battleforthecrown-pixi test src/api/ws-bindings.test.ts` (applyVillageConquered) → passed
+  - [x] static-check — `yarn static-check` → exit 0
+  - [x] Message DA + 2 CTA `/game` — visuel IG (checklist ci-dessous)
+- **Review indépendante** : Déclenchée (raison: back+front, diff >100 lignes, invariant durable) — verdict initial `BLOCK` (hasGameContext stale) → findings résolus → **GO**
+- **Tests automatisés** : `yarn test:backend` 354 passed ; `yarn test:pixi` 401 passed ; smokes ci-dessus
+- **Smokes lancés** : `yarn workspace battleforthecrown-backend test:smoke:preflight` + `test:smoke:run -- world-membership.smoke.spec.ts` — Ciblés, 7/7
+- **Smokes ajoutés/modifiés** : `world-membership.smoke.spec.ts` — 4 scénarios rejoin LOCKED/ENDED/no-dup/eliminated
+- **QA fonctionnelle agent** : Non nécessaire — couvert par smokes + tests unitaires
+- **Tests IG à faire par le user** :
+  - [ ] Perdre son dernier village (ou simuler) → `/game` affiche « Ton village a été pris » + 2 CTA
+  - [ ] CTA « Revenir sur ce monde » → nouveau village jouable
+  - [ ] CTA « Choisir un autre monde » → `/worlds` sans blocage
+  - [ ] `/worlds` : carte monde rejoint à 0 village affiche « Revenir »

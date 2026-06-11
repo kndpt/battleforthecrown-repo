@@ -41,10 +41,6 @@ export function WorldSelector() {
   };
 
   const onJoin = (world: WorldCardViewModel) => {
-    if (world.isJoined) {
-      onEnter(world);
-      return;
-    }
     if (join.isPending) return;
     setError(null);
     join.mutate(

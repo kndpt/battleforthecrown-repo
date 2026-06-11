@@ -41,6 +41,10 @@ export function useWorldCardModels() {
     () => new Set(joinedMemberships.map((membership) => membership.worldId)),
     [joinedMemberships],
   );
+  const villageCountByWorldId = useMemo(
+    () => new Map(joinedMemberships.map((m) => [m.worldId, m.villageCount] as const)),
+    [joinedMemberships],
+  );
   const personalStatsByWorldId = useMemo(
     () =>
       new Map(
@@ -61,8 +65,9 @@ export function useWorldCardModels() {
       joinedWorldIds,
       undefined,
       personalStatsByWorldId,
+      villageCountByWorldId,
     )),
-    [joinedWorldIds, personalStatsByWorldId, worlds.data],
+    [joinedWorldIds, personalStatsByWorldId, villageCountByWorldId, worlds.data],
   );
 
   return {

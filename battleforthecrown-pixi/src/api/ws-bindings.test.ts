@@ -580,6 +580,7 @@ describe('applyVillageConquered', () => {
     ]);
     const queryClient = new QueryClient();
     queryClient.setQueryData(['memberships'], []);
+    queryClient.setQueryData(queryKeys.myMemberships('previous-owner'), []);
     queryClient.setQueryData(['villages'], []);
     queryClient.setQueryData(['world-entities'], []);
     queryClient.setQueryData(queryKeys.openConquests('previous-owner', 'world-1'), []);
@@ -603,7 +604,36 @@ describe('applyVillageConquered', () => {
     expect(useWorldMapStore.getState().entities['v-target']).toBeUndefined();
     expect(queryClient.getQueryState(['villages'])?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(['world-entities'])?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.myMemberships('previous-owner'))?.isInvalidated).toBe(true);
     expectPowerQueriesInvalidated(queryClient, 'v-target', 'previous-owner');
+  });
+
+  it('clears the active village context when the previous owner loses that village', () => {
+    useAuthStore.getState().setSession({
+      accessToken: 'access',
+      refreshToken: 'refresh',
+      user: { displayName: 'Previous Owner', id: 'previous-owner' },
+    });
+    useGameStore.getState().setContext({ worldId: 'world-1', villageId: 'v-target' });
+    const queryClient = new QueryClient();
+    seedPowerQueries(queryClient, 'v-target', 'previous-owner');
+
+    applyVillageConquered(
+      {
+        villageId: 'v-target',
+        villageName: 'Cravia',
+        newOwnerId: 'user-1',
+        previousOwnerId: 'previous-owner',
+        previousTier: null,
+        x: 42,
+        y: 88,
+        buildingsKept: 6,
+      },
+      { queryClient },
+    );
+
+    expect(useGameStore.getState().worldId).toBe('world-1');
+    expect(useGameStore.getState().villageId).toBeNull();
   });
 });
 

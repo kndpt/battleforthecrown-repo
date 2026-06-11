@@ -1,4 +1,4 @@
-import { Bell, Check, ChevronLeft, Lock, ScrollText, UserPlus, Users } from 'lucide-react';
+import { Bell, Check, ChevronLeft, Lock, RotateCcw, ScrollText, UserPlus, Users } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { publicAsset } from '@/lib/publicAsset';
 import type { WorldCardViewModel, WorldsTab, WorldThemeTokens } from '@/features/worlds/worldsViewModel';
@@ -173,7 +173,13 @@ function CtaButton({
     : world.ctaKind === 'join'
       ? 'border-[#3a6c1f] bg-[linear-gradient(to_bottom,#6ebf49,#4a8c2a)]'
       : 'border-[#9e7b0d] bg-[linear-gradient(to_bottom,#f6d57b,#c59e3f)] text-[#3a2a00] [text-shadow:0_1px_0_rgba(255,255,255,.35)]';
-  const Icon = world.ctaKind === 'notify' ? Bell : world.ctaKind === 'joined' ? Check : UserPlus;
+  const Icon = world.ctaKind === 'notify'
+    ? Bell
+    : world.ctaKind === 'join'
+      ? UserPlus
+      : world.ctaKind === 'rejoin'
+        ? RotateCcw
+        : Check;
 
   return (
     <button
@@ -185,6 +191,7 @@ function CtaButton({
       onClick={() => {
         if (world.ctaKind === 'notify') onNotify(world);
         if (world.ctaKind === 'join') onJoin(world);
+        if (world.ctaKind === 'rejoin') onJoin(world);
         if (world.ctaKind === 'joined') onEnter(world);
       }}
       type="button"

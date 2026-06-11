@@ -222,6 +222,21 @@ Mécanique d'onboarding pour combler l'angle mort du `puissance ÷ 3` : deux nou
 
 🎯 **Lecture design** : tout reflet social au MVP serait une complexité ajoutée pour un gain incertain. La puissance suffit comme signal de progression dans cette phase. Les axes diplomatie/réputation sont volontairement gardés ouverts post-MVP — leur design dépend de la mécanique d'alliances, qui n'existe pas avant la spec 21.
 
+## Perte du dernier village — état éliminé
+
+**Décidé (MVP)** : quand un joueur perd son **dernier village** par conquête PvP, son `WorldMembership` est **conservé**. L'élimination est un état métier valide, pas une erreur technique.
+
+| Élément | Comportement à l'élimination |
+| --- | --- |
+| `WorldMembership` | **Conservé** — historique, rapports de capture et contexte de monde préservés |
+| Rapports `Capture perdue` | **Conservés** dans l'inbox du joueur |
+| Self-reset | **Non déclenché** — la perte PvP involontaire et le reset volontaire sont deux chemins distincts |
+| Bouclier post-perte | **Aucun** — cf. § Bouclier post-perte ci-dessous (non retenu) |
+| Cooldown de re-conquête | **Aucun** — cf. § Cooldown de re-conquête, décision stable |
+| Retour sur le monde | **Autorisé**, y compris si le monde est `LOCKED` — cf. [`19-world-lifecycle.md` § Membre éliminé](./19-world-lifecycle.md#membre-éliminé--retour-sur-le-monde) |
+
+🎯 **Lecture design** : préserver `WorldMembership` garantit que la perte est un revers récupérable, pas une fin de compte. Le joueur garde ses rapports de combat, son contexte de monde et la possibilité de revenir — même si le monde a basculé en `LOCKED` depuis son arrivée. Cohérent avec le principe « pas de bouclier post-perte, pas de cooldown » (cf. § ci-dessous) : la récupération passe par l'action, pas par une protection passive.
+
 ## Pistes envisagées, non retenues au MVP
 
 ### Bouclier post-perte (12 h)
