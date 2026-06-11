@@ -6,7 +6,7 @@ Server-authoritative. Le backend est la seule source de vérité de l'identité 
 
 ### REST
 
-- `POST /auth/register` | `/auth/login` → `{ accessToken (15min), refreshToken (7d), userId, email }`.
+- `POST /auth/register` | `/auth/login` → `{ accessToken (15min), refreshToken (7d), userId, email, displayName }`. L'inscription exige `displayName` (3–20 car., unique case-insensitive) ; l'email reste l'identifiant de login uniquement.
 - `POST /auth/refresh` → `{ accessToken, refreshToken }` à partir du refresh token (le refresh token est renvoyé tel quel — pas de rotation).
 - Toutes les autres routes : header `Authorization: Bearer <accessToken>`.
 

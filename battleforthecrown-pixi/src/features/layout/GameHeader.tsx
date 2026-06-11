@@ -216,7 +216,7 @@ export function GameHeader({
           className="relative shrink-0"
         >
           <span className="flex size-11 items-center justify-center rounded-full border-2 border-[#8b6f47] bg-[radial-gradient(circle_at_30%_25%,#7a5a38,#3a2210)] font-game text-[13px] font-bold text-[#f0e0c0] [text-shadow:0_1px_2px_rgba(0,0,0,.8)]">
-            {getPlayerInitials(user?.email)}
+            {getPlayerInitials(user?.displayName ?? 'Joueur')}
           </span>
           <span className="absolute -bottom-0.5 -right-0.5 flex size-[18px] items-center justify-center rounded-full border border-[#7a5200] bg-gradient-to-b from-[#f6d57b] to-[#c9900c] font-game text-[8.5px] font-black text-[#3a2a00]">
             {PLAYER_PROFILE_LEVEL}

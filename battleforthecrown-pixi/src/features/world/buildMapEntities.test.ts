@@ -17,7 +17,13 @@ const playerEntity: WorldEntityDto = {
   kind: 'PLAYER_VILLAGE',
   x: 240,
   y: 250,
-  data: { name: 'Other Player', userId: 'other-user', villageId: 'p1', castleLevel: 8 },
+  data: {
+    name: 'Other Player',
+    userId: 'other-user',
+    ownerDisplayName: 'Foreign Lord',
+    villageId: 'p1',
+    castleLevel: 8,
+  },
 };
 
 const myVillage: WorldVillageDto = {

@@ -53,7 +53,10 @@ export class PowerService {
   async getLeaderboard(type: LeaderboardType, limit = 20, worldId: string) {
     const villages = await this.prisma.village.findMany({
       where: { worldId, userId: { not: null } },
-      include: { buildings: true },
+      include: {
+        buildings: true,
+        user: { select: { displayName: true } },
+      },
     });
     const armyPowerByVillage = await this.getArmyPowerByOriginVillage(
       villages.map((village) => village.id),
@@ -78,7 +81,8 @@ export class PowerService {
       );
       const current = byUser.get(village.userId) ?? {
         userId: village.userId,
-        playerName: this.toPublicPlayerName(village.userId),
+        playerName:
+          village.user?.displayName ?? `Joueur ${village.userId.slice(-6)}`,
         total: 0,
         building: 0,
         army: 0,
@@ -98,10 +102,6 @@ export class PowerService {
     });
 
     return sorted.slice(0, limit);
-  }
-
-  private toPublicPlayerName(userId: string): string {
-    return `Joueur ${userId.slice(-6)}`;
   }
 
   private computeScores(

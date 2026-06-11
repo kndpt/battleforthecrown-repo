@@ -12,10 +12,9 @@ import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
 import { toWorldCardViewModel } from './worldsViewModel';
 
-function defaultVillageName(email?: string): string {
-  if (!email) return 'Royaume du joueur';
-  const handle = email.split('@')[0] ?? 'joueur';
-  return `Royaume de ${handle}`;
+function defaultVillageName(displayName?: string): string {
+  if (!displayName) return 'Royaume du joueur';
+  return `Royaume de ${displayName}`;
 }
 
 export function useWorldCardModels() {
@@ -24,7 +23,7 @@ export function useWorldCardModels() {
   const enter = useEnterWorldMutation();
   const join = useJoinWorldMutation();
   const user = useAuthStore((state) => state.user);
-  const userEmail = user?.email;
+  const userDisplayName = user?.displayName;
   const userId = user?.id ?? null;
   const currentWorldId = useGameStore((state) => state.worldId);
 
@@ -68,7 +67,7 @@ export function useWorldCardModels() {
 
   return {
     currentWorldId,
-    defaultVillageName: defaultVillageName(userEmail),
+    defaultVillageName: defaultVillageName(userDisplayName),
     enter,
     join,
     memberships,

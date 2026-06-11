@@ -18,9 +18,10 @@ function makeQueryClient() {
   });
 }
 
-function authResponse(email: string) {
+function authResponse(email: string, displayName = 'Sire Test') {
   return {
     accessToken: 'access-token',
+    displayName,
     email,
     refreshToken: 'refresh-token',
     userId: 'user-1',
@@ -67,7 +68,7 @@ describe('auth design-system runtime screens', () => {
     useAuthStore.getState().setSession({
       accessToken: 'access',
       refreshToken: 'refresh',
-      user: { email: 'player@example.test', id: 'user-1' },
+      user: { displayName: 'Player', id: 'user-1' },
     });
 
     renderAuthRoute('/');
@@ -98,7 +99,7 @@ describe('auth design-system runtime screens', () => {
     await waitFor(() => {
       expect(screen.getByTestId('location-path')).toHaveTextContent('/game');
     });
-    expect(useAuthStore.getState().user?.email).toBe('player@example.test');
+    expect(useAuthStore.getState().user?.displayName).toBe('Sire Test');
   });
 
   it('shows the server login error without navigating', async () => {
@@ -115,14 +116,15 @@ describe('auth design-system runtime screens', () => {
     expect(screen.getByTestId('location-path')).toHaveTextContent('/auth/login');
   });
 
-  it('submits register with email and password only after local confirmation', async () => {
+  it('submits register with display name, email and password after local confirmation', async () => {
     const user = userEvent.setup();
     const post = vi
       .spyOn(apiClient, 'post')
-      .mockResolvedValue(authResponse('new-player@example.test'));
+      .mockResolvedValue(authResponse('new-player@example.test', 'New Player'));
 
     renderAuthRoute('/auth/register');
 
+    await user.type(screen.getByLabelText('Nom de joueur'), 'New Player');
     await user.type(screen.getByLabelText('Email'), 'new-player@example.test');
     await user.type(screen.getByLabelText('Mot de passe'), 'Strongpass1');
     await user.type(screen.getByLabelText('Confirmation'), 'Strongpass1');
@@ -131,7 +133,11 @@ describe('auth design-system runtime screens', () => {
     await waitFor(() => {
       expect(post).toHaveBeenCalledWith(
         '/auth/register',
-        { email: 'new-player@example.test', password: 'Strongpass1' },
+        {
+          displayName: 'New Player',
+          email: 'new-player@example.test',
+          password: 'Strongpass1',
+        },
         { skipAuth: true },
       );
     });

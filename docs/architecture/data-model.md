@@ -8,7 +8,7 @@
 
 | Table | Rôle |
 |-------|------|
-| `User` | compte joueur, email/password hash, `crownsBalance` |
+| `User` | compte joueur, `email` (login privé), `displayName` (nom public global unique case-insensitive), password hash, `crownsBalance` |
 | `RefreshToken` | rotation des refresh tokens, lié à un `User` |
 
 ### Mondes

@@ -77,7 +77,7 @@ describe('buildPlayerProfileSheetData', () => {
     const data = buildPlayerProfileSheetData({
       kingdomPower,
       crownBalance: 1234.9,
-      user: { email: 'jane.doe@example.com' },
+      user: { displayName: 'Jane Doe' },
       villagesCount: 3,
       activePublicWorld: undefined,
       activeMembership: undefined,
@@ -88,7 +88,7 @@ describe('buildPlayerProfileSheetData', () => {
     expect(data.stats.crowns).toBe((1234).toLocaleString('fr-FR'));
     expect(data.stats.villages).toBe(3);
     expect(data.player.online).toBe(true);
-    expect(data.player.name).toBe('jane.doe@example.com');
+    expect(data.player.name).toBe('Jane Doe');
   });
 
   it('uses em dash power/crowns and offline player when data is absent', () => {
@@ -113,7 +113,7 @@ describe('buildPlayerProfileSheetData', () => {
     const withMembership = buildPlayerProfileSheetData({
       kingdomPower,
       crownBalance: 0,
-      user: { email: 'a@b.c' },
+      user: null,
       villagesCount: 1,
       activePublicWorld: undefined,
       activeMembership: { worldName: 'Royaume Test' } as never,
@@ -124,7 +124,7 @@ describe('buildPlayerProfileSheetData', () => {
     const worldIdOnly = buildPlayerProfileSheetData({
       kingdomPower,
       crownBalance: 0,
-      user: { email: 'a@b.c' },
+      user: null,
       villagesCount: 1,
       activePublicWorld: undefined,
       activeMembership: undefined,

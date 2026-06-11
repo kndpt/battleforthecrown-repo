@@ -57,7 +57,7 @@ export function buildProfileVillages({
 export interface ProfileSheetDataParams {
   kingdomPower: KingdomPowerDto | undefined;
   crownBalance: number | null | undefined;
-  user: { email?: string | null } | null | undefined;
+  user: { displayName?: string | null } | null | undefined;
   villagesCount: number;
   activePublicWorld: PublicWorld | undefined;
   activeMembership: WorldMembership | undefined;
@@ -81,9 +81,9 @@ export function buildPlayerProfileSheetData({
 
   return {
     player: {
-      initials: getPlayerInitials(user?.email),
+      initials: getPlayerInitials(user?.displayName ?? 'Joueur'),
       level: PLAYER_PROFILE_LEVEL,
-      name: user?.email ?? 'Joueur',
+      name: user?.displayName ?? 'Joueur',
       online: Boolean(user),
       tribe: { cap: 0, members: 0, name: 'Sans tribu', role: 'À venir', tag: '—' },
     },
