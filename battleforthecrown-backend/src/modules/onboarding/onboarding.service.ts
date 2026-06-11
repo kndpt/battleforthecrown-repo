@@ -94,17 +94,23 @@ export class OnboardingService {
     const existing = await tx.onboardingState.findUnique({
       where: { userId_worldId: { userId, worldId } },
     });
-    if (existing) return;
 
-    await tx.onboardingState.create({
-      data: {
-        userId,
-        worldId,
-        firstVillageId: villageId,
-        currentStep: 'UPGRADE_CASTLE_LEVEL_2',
-        initialRewardApplied: false,
-      },
-    });
+    if (!existing) {
+      await tx.onboardingState.create({
+        data: {
+          userId,
+          worldId,
+          firstVillageId: villageId,
+          currentStep: 'UPGRADE_CASTLE_LEVEL_2',
+          initialRewardApplied: false,
+        },
+      });
+    } else {
+      await tx.onboardingState.update({
+        where: { userId_worldId: { userId, worldId } },
+        data: { firstVillageId: villageId },
+      });
+    }
 
     const stock = await tx.resourceStock.findUniqueOrThrow({
       where: { villageId },

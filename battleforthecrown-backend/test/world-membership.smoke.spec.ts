@@ -288,6 +288,20 @@ describe('world membership smoke', () => {
       },
     });
     expect(village?.name).toBe('revenant-village');
+
+    const resourceStock = await ctx.prisma.resourceStock.findUniqueOrThrow({
+      where: { villageId: village!.id },
+    });
+    expect(resourceStock).toMatchObject({
+      wood: 1850,
+      stone: 1850,
+      iron: 1850,
+    });
+
+    const crownBalance = await ctx.prisma.crownBalance.findUniqueOrThrow({
+      where: { userId_worldId: { userId: user.userId, worldId: world.id } },
+    });
+    expect(crownBalance.balance).toBe(200);
   });
 
   it('POST /world/:id/join — non-member cannot join a LOCKED world', async () => {

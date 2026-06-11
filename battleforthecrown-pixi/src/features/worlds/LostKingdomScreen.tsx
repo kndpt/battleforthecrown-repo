@@ -35,6 +35,7 @@ export function LostKingdomScreen({ worldId }: LostKingdomScreenProps) {
   };
 
   const handleChooseOther = () => {
+    if (join.isPending) return;
     clearGame();
     void navigate('/worlds');
   };
@@ -75,7 +76,8 @@ export function LostKingdomScreen({ worldId }: LostKingdomScreenProps) {
             Revenir sur ce monde
           </button>
           <button
-            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border-2 border-[#5d4a32] bg-[linear-gradient(to_bottom,#fef9f0,#d8c298)] font-game text-[11px] font-extrabold uppercase tracking-[.08em] text-[#3d2f1f] shadow-[inset_0_1px_0_rgba(255,255,255,.45),0_3px_0_rgba(60,38,25,.18)] active:translate-y-px"
+            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border-2 border-[#5d4a32] bg-[linear-gradient(to_bottom,#fef9f0,#d8c298)] font-game text-[11px] font-extrabold uppercase tracking-[.08em] text-[#3d2f1f] shadow-[inset_0_1px_0_rgba(255,255,255,.45),0_3px_0_rgba(60,38,25,.18)] active:translate-y-px disabled:opacity-60"
+            disabled={join.isPending}
             onClick={handleChooseOther}
             type="button"
           >
