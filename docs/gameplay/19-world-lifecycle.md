@@ -75,9 +75,26 @@ Déclenchement : job planifié à `startedAt + 10 j` (default 🔧 — `inscript
 
 À ce moment :
 - Le monde disparaît de la liste publique des mondes joignables
-- `JoinWorldUseCase` rejette les nouvelles arrivées (déjà câblé, cf. `join-world.use-case.ts:40` — `if (world.status === 'LOCKED' || world.status === 'ENDED') throw BadRequestException`)
+- `JoinWorldUseCase` rejette les **nouveaux entrants** (non-membres) ; les membres existants à 0 village (éliminés) peuvent réintégrer — cf. § Membre éliminé ci-dessous
 - Aucun impact sur les joueurs déjà inscrits — gameplay continue normalement
 - Notification serveur : « La fenêtre d'inscription est fermée. Le monde tourne maintenant entre ses {N} joueurs jusqu'au {endsAt}. »
+
+### Membre éliminé — retour sur le monde
+
+Un joueur membre d'un monde peut perdre son **dernier village** par conquête PvP (cf. [`14-pvp-conquest.md` § Perte du dernier village](./14-pvp-conquest.md#perte-du-dernier-village--état-éliminé)). Son `WorldMembership` est conservé ; il se retrouve dans un état `villageCount = 0`.
+
+**Règle** : un membre existant à `villageCount = 0` peut **réintégrer le même monde**, même si ce monde est `LOCKED`.
+
+| Cas | Comportement |
+| --- | --- |
+| Membre éliminé (`villageCount = 0`) sur monde `OPEN` | ✅ Retour autorisé — nouveau village initial créé |
+| Membre éliminé (`villageCount = 0`) sur monde `LOCKED` | ✅ Retour autorisé — nouveau village initial créé |
+| **Non-membre** sur monde `LOCKED` | ❌ Bloqué — `LOCKED` interdit les nouvelles inscriptions |
+| Tout joueur sur monde `ENDED` | ❌ Bloqué — monde non jouable |
+
+**Invariant** : `LOCKED` bloque les **nouveaux entrants**, pas le retour d'un membre déjà inscrit. `ENDED` reste non jouable dans tous les cas.
+
+Le retour passe par `JoinWorldUseCase` : si le membre n'a aucun village et fournit un `villageName`, un village initial est créé avec les bâtiments, ressources et population d'onboarding standards — la même source de vérité que la première arrivée sur le monde. Aucun village supplémentaire n'est créé si le membre possède encore au moins un village (garde idempotente).
 
 ### `LOCKED → ENDED`
 
@@ -116,6 +133,7 @@ Cette spec **débloque ou impacte** plusieurs autres docs.
 | **Snowball production** ([`02-economy-and-progression.md`](./02-economy-and-progression.md)) | Borné par 60 j + tempo compressé. La courbe `1.4^n` reste agressive mais l'écart ne s'accumule plus indéfiniment. Pas de modification de la courbe — c'est le tempo qui change le rythme d'accumulation, cf. [`23`](./23-world-tempo-and-multipliers.md). |
 | **Couronnes** ([`02-economy-and-progression.md` § Couronnes](./02-economy-and-progression.md#couronnes)) | Le calage cible (« 3 j de revenu pour 5 000 couronnes ») est exprimé à `tempo.global = 1.0`. À recalibrer dans la passe d'ajustement des chiffres absolus (cf. [`23` § Impacts à recalibrer](./23-world-tempo-and-multipliers.md#7-impacts-à-recalibrer-dans-les-autres-docs)). |
 | **Tempo intérieur** ([`23-world-tempo-and-multipliers.md`](./23-world-tempo-and-multipliers.md)) | Source de vérité pour les vitesses (construction, training, capture, régen, production, couronnes). Cette spec gère la **fenêtre temporelle**, le `23` gère le **rythme intérieur**. |
+| **État éliminé / retour après conquête** ([`14-pvp-conquest.md` § Perte du dernier village](./14-pvp-conquest.md#perte-du-dernier-village--état-éliminé)) | Perte du dernier village → `WorldMembership` conservé, retour possible y compris en `LOCKED`. Cf. § Membre éliminé ci-dessus. |
 
 ## Questions ouvertes (à trancher en playtest, pas bloquantes pour le MVP)
 
@@ -137,5 +155,6 @@ Cette spec **débloque ou impacte** plusieurs autres docs.
 - [`09-power-and-rankings.md`](./09-power-and-rankings.md) — puissance.
 - [`24-rankings.md`](./24-rankings.md) — classements et leaderboard final.
 - [`14-pvp-conquest.md` § Bouclier débutant](./14-pvp-conquest.md#3-bouclier-débutant--48-h-à-larrivée-sur-le-monde) — protection 48 h, indépendante du cycle de monde mais activée à chaque arrivée.
+- [`14-pvp-conquest.md` § Perte du dernier village](./14-pvp-conquest.md#perte-du-dernier-village--état-éliminé) — comportement à l'élimination PvP, `WorldMembership` conservé, pas de bouclier ni self-reset.
 - [`18-inactivity-and-abandonment.md`](./18-inactivity-and-abandonment.md) — abandon 14 j, à recalibrer si nécessaire post-MVP.
-- Backend : `world.controller.ts` + `join-world.use-case.ts` — déjà câblés pour rejeter `LOCKED`/`ENDED`. Champs `world.startedAt` / `world.endsAt` / `world.status` / `world.plannedOpenAt` en schéma. `GET /worlds/public` expose l'identité, le lifecycle dérivé, les durées de sous-phase d'inscription (`inscriptionMainDays`, `inscriptionLateDays`), la durée du bouclier débutant (`newbieShieldHours`), les dimensions publiques de carte (`gridWidth × gridHeight`) et les mondes `PLANNED | OPEN | LOCKED` pour l'écran de sélection et la page détail.
+- Backend : `world.controller.ts` + `join-world.use-case.ts` — `ENDED` toujours bloqué ; `LOCKED` bloque les non-membres mais autorise le retour d'un membre existant. Champs `world.startedAt` / `world.endsAt` / `world.status` / `world.plannedOpenAt` en schéma. `GET /worlds/public` expose l'identité, le lifecycle dérivé, les durées de sous-phase d'inscription (`inscriptionMainDays`, `inscriptionLateDays`), la durée du bouclier débutant (`newbieShieldHours`), les dimensions publiques de carte (`gridWidth × gridHeight`) et les mondes `PLANNED | OPEN | LOCKED` pour l'écran de sélection et la page détail.

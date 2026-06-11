@@ -1,7 +1,7 @@
 import type { PublicWorld } from "@battleforthecrown/shared/world";
 
 export type WorldsTab = "open" | "planned" | "locked";
-export type WorldCtaKind = "join" | "notify" | "locked" | "joined";
+export type WorldCtaKind = "join" | "notify" | "locked" | "joined" | "rejoin";
 
 export interface WorldThemeTokens {
   border: string;
@@ -134,6 +134,7 @@ const tierLabels: Record<PublicWorld["identity"]["tier"], string> = {
 
 const formatter = new Intl.NumberFormat("fr-FR");
 const EMPTY_PERSONAL_STATS = new Map<string, WorldPersonalStatsInput>();
+const EMPTY_VILLAGE_COUNTS = new Map<string, number>();
 
 function formatCountdown(
   plannedOpenAt: string | null,
@@ -152,7 +153,9 @@ function formatCountdown(
 function ctaFor(
   world: PublicWorld,
   isJoined: boolean,
+  villageCount?: number,
 ): Pick<WorldCardViewModel, "ctaKind" | "ctaLabel"> {
+  if (isJoined && villageCount === 0) return { ctaKind: "rejoin", ctaLabel: "Revenir" };
   if (isJoined) return { ctaKind: "joined", ctaLabel: "Entrer" };
   if (world.status === "PLANNED")
     return { ctaKind: "notify", ctaLabel: "Me prévenir à l'ouverture" };
@@ -173,9 +176,11 @@ export function toWorldCardViewModel(
     string,
     WorldPersonalStatsInput
   > = EMPTY_PERSONAL_STATS,
+  villageCountByWorldId: ReadonlyMap<string, number> = EMPTY_VILLAGE_COUNTS,
 ): WorldCardViewModel {
   const isJoined = joinedWorldIds.has(world.id);
-  const cta = ctaFor(world, isJoined);
+  const villageCount = isJoined ? villageCountByWorldId.get(world.id) : undefined;
+  const cta = ctaFor(world, isJoined, villageCount);
   const opensIn = formatCountdown(world.lifecycle.plannedOpenAt, nowMs);
   const day = world.status === "PLANNED" ? null : world.lifecycle.day;
   const personalStats = isJoined

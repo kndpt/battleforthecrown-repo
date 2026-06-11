@@ -4,6 +4,7 @@ import { useMyMembershipsQuery, useMyVillagesQuery } from '@/api/queries';
 import { useGameStore } from '@/stores/game';
 import { Panel, Spinner } from '@/ui';
 import { pickDefaultVillage, pickLastPlayedMembership } from './worldResume';
+import { LostKingdomScreen } from './LostKingdomScreen';
 
 interface WorldSessionGateProps {
   children: ReactNode;
@@ -33,8 +34,6 @@ export function WorldSessionGate({ children }: WorldSessionGateProps) {
     setContext({ worldId: targetWorldId, villageId: selectedVillage.id });
   }, [hasGameContext, selectedVillage, setContext, targetWorldId]);
 
-  if (hasGameContext) return <>{children}</>;
-
   if (memberships.isLoading || (targetWorldId && villages.isLoading)) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -43,7 +42,7 @@ export function WorldSessionGate({ children }: WorldSessionGateProps) {
     );
   }
 
-  if (memberships.isError || villages.isError || hasNoVillage) {
+  if (memberships.isError || villages.isError) {
     return (
       <div className="flex h-full items-center justify-center p-4">
         <Panel variant="danger" padding="md">
@@ -52,6 +51,12 @@ export function WorldSessionGate({ children }: WorldSessionGateProps) {
       </div>
     );
   }
+
+  if (hasNoVillage && targetWorldId) {
+    return <LostKingdomScreen worldId={targetWorldId} />;
+  }
+
+  if (hasGameContext) return <>{children}</>;
 
   if (!targetWorldId) {
     return <Navigate to="/worlds" replace />;

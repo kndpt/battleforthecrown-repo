@@ -34,11 +34,11 @@ Politique PR `$bftc-run` :
 ### Runs actifs
 
 - [054 — Cible barbare narrative d'onboarding](./runs/054-feature-onboarding-narrative-barbarian-target.md) — 📋 `PLANNED`. Remplacer la garantie T1 globale par une cible affaiblie dédiée au tutoriel, tout en préservant les T1 standards.
-- [052 — Retour joueur après perte du dernier village](./runs/052-feature-eliminated-player-rejoin-flow.md) — 📋 `PLANNED`. État "membre sans village" après conquête PvP : écran DA, CTA revenir sur le monde, choix autre monde et rejoin contrôlé.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés
 
+- [052 — Retour joueur après perte du dernier village](./runs/archive/052-feature-eliminated-player-rejoin-flow.md) — ✅ `DONE` (2026-06-11). État membre sans village : écran royaume perdu, rejoin `LOCKED`, CTA Revenir/Entrer `/worlds`, fix onboarding tx rejoin.
 - [053 — Nom public de joueur global](./runs/archive/053-feature-player-display-name.md) — ✅ `DONE` (2026-06-11). `User.displayName` global unique case-insensitive, inscription/login, surfaces publiques sans email, profil HUD et backprop SPEC V8.
 - [052 — Rapports persistants de caravanes](./runs/archive/052-feature-caravan-reports.md) — ✅ `DONE` (2026-06-10). `CaravanReport` + inbox `CARAVAN` pour arrivée nominale et retour rappelé, REST list/detail/read/delete, badge/messages, invalidations WS, docs report/inbox/outbox et smokes caravane.
 - [051 — Classements Gloire d'Assaut / Rempart](./runs/archive/051-feature-rankings-glory.md) — ✅ `DONE` (2026-06-09). Ledger Gloire PvP, snapshots de puissance, leaderboards publics world-scoped et écran minimal des trois signaux sans rewards économiques.

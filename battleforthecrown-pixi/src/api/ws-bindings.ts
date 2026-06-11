@@ -590,7 +590,7 @@ function invalidateVillageVisualQueries(ctx: BindingsContext): void {
 
 export function applyVillageConquered(payload: VillageConqueredPayload, ctx: BindingsContext): void {
   const userId = useAuthStore.getState().user?.id ?? null;
-  ctx.queryClient.invalidateQueries({ queryKey: ['memberships'] });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.myMemberships(userId) });
   ctx.queryClient.invalidateQueries({ queryKey: ['villages'] });
   ctx.queryClient.invalidateQueries({ queryKey: ['world-entities'] });
   invalidatePowerQueries(ctx, payload.villageId);
@@ -599,6 +599,13 @@ export function applyVillageConquered(payload: VillageConqueredPayload, ctx: Bin
   // Mark the entity as conquered on the map by simply removing it; the next
   // refetch will reinsert it under the new owner.
   useWorldMapStore.getState().removeEntity(payload.villageId);
+  if (
+    userId === payload.previousOwnerId &&
+    useGameStore.getState().villageId === payload.villageId
+  ) {
+    const { worldId } = useGameStore.getState();
+    useGameStore.getState().setContext({ worldId, villageId: null });
+  }
   if (userId === payload.newOwnerId) {
     useUiStore.getState().pushVictoryModal({
       villageId: payload.villageId,

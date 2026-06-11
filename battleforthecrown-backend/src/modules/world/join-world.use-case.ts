@@ -39,10 +39,21 @@ export class JoinWorldUseCase {
         throw new NotFoundException(`World ${worldId} not found`);
       }
 
-      if (world.status === 'LOCKED' || world.status === 'ENDED') {
+      if (world.status === 'ENDED') {
         throw new BadRequestException(
           `World ${worldId} is not open for joining`,
         );
+      }
+
+      if (world.status === 'LOCKED') {
+        const existingMembership = await tx.worldMembership.findUnique({
+          where: { userId_worldId: { userId, worldId } },
+        });
+        if (!existingMembership) {
+          throw new BadRequestException(
+            `World ${worldId} is not open for joining`,
+          );
+        }
       }
 
       const membership = await tx.worldMembership.upsert({
@@ -138,8 +149,10 @@ export class JoinWorldUseCase {
       },
     });
 
-    await tx.crownBalance.create({
-      data: { userId, worldId, balance: 0, lastUpdateTs: new Date() },
+    await tx.crownBalance.upsert({
+      where: { userId_worldId: { userId, worldId } },
+      create: { userId, worldId, balance: 0, lastUpdateTs: new Date() },
+      update: {},
     });
 
     await this.onboarding.ensureForInitialVillage(tx, {

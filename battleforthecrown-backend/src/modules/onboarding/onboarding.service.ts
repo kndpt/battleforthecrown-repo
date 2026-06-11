@@ -91,20 +91,19 @@ export class OnboardingService {
   ): Promise<void> {
     const { userId, worldId, villageId } = params;
 
-    try {
-      await tx.onboardingState.create({
-        data: {
-          userId,
-          worldId,
-          firstVillageId: villageId,
-          currentStep: 'UPGRADE_CASTLE_LEVEL_2',
-          initialRewardApplied: false,
-        },
-      });
-    } catch (error) {
-      if (isUniqueConstraintError(error)) return;
-      throw error;
-    }
+    await tx.onboardingState.upsert({
+      where: { userId_worldId: { userId, worldId } },
+      create: {
+        userId,
+        worldId,
+        firstVillageId: villageId,
+        currentStep: 'UPGRADE_CASTLE_LEVEL_2',
+        initialRewardApplied: false,
+      },
+      update: {
+        firstVillageId: villageId,
+      },
+    });
 
     const stock = await tx.resourceStock.findUniqueOrThrow({
       where: { villageId },

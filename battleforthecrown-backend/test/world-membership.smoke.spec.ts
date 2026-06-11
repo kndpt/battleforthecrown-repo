@@ -7,6 +7,29 @@ import {
   type SmokeContext,
 } from './helpers';
 
+/** Simule la perte du dernier village : le joueur n'a plus de village possédé dans ce monde. */
+async function simulateEliminatedPlayer(
+  ctx: SmokeContext,
+  userId: string,
+  worldId: string,
+): Promise<void> {
+  const villages = await ctx.prisma.village.findMany({
+    where: { userId, worldId },
+    select: { id: true },
+  });
+  if (villages.length === 0) {
+    throw new Error(
+      `simulateEliminatedPlayer: no villages found for ${userId} in ${worldId}`,
+    );
+  }
+  for (const { id } of villages) {
+    await ctx.prisma.village.update({
+      where: { id },
+      data: { userId: null },
+    });
+  }
+}
+
 describe('world membership smoke', () => {
   let ctx: SmokeContext;
 
@@ -229,5 +252,115 @@ describe('world membership smoke', () => {
         where: { userId_worldId: scope },
       }),
     ).resolves.toMatchObject({ balance: 100 });
+  });
+
+  it('POST /world/:id/join — eliminated member (0 villages) can rejoin a LOCKED world', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const user = await registerUser(ctx.server);
+
+    await joinWorld(ctx.server, user.accessToken, world.id, 'first-village');
+    await simulateEliminatedPlayer(ctx, user.userId, world.id);
+    await ctx.prisma.world.update({
+      where: { id: world.id },
+      data: { status: 'LOCKED' },
+    });
+
+    const remaining = await ctx.prisma.village.count({
+      where: { userId: user.userId, worldId: world.id },
+    });
+    expect(remaining).toBe(0);
+
+    const rejoin = await request(ctx.server)
+      .post(`/world/${world.id}/join`)
+      .set('Authorization', `Bearer ${user.accessToken}`)
+      .send({ villageName: 'revenant-village' });
+    expect(rejoin.status).toBeLessThan(300);
+    const rejoinBody = rejoin.body as {
+      village?: { id?: string; name?: string } | null;
+    };
+    expect(rejoinBody.village?.name).toBe('revenant-village');
+
+    const village = await ctx.prisma.village.findFirst({
+      where: {
+        userId: user.userId,
+        worldId: world.id,
+        name: 'revenant-village',
+      },
+    });
+    expect(village?.name).toBe('revenant-village');
+
+    const resourceStock = await ctx.prisma.resourceStock.findUniqueOrThrow({
+      where: { villageId: village!.id },
+    });
+    expect(resourceStock).toMatchObject({
+      wood: 1850,
+      stone: 1850,
+      iron: 1850,
+    });
+
+    const crownBalance = await ctx.prisma.crownBalance.findUniqueOrThrow({
+      where: { userId_worldId: { userId: user.userId, worldId: world.id } },
+    });
+    expect(crownBalance.balance).toBe(200);
+  });
+
+  it('POST /world/:id/join — non-member cannot join a LOCKED world', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    await ctx.prisma.world.update({
+      where: { id: world.id },
+      data: { status: 'LOCKED' },
+    });
+    const outsider = await registerUser(ctx.server);
+
+    const rejected = await request(ctx.server)
+      .post(`/world/${world.id}/join`)
+      .set('Authorization', `Bearer ${outsider.accessToken}`)
+      .send({ villageName: 'outsider-village' });
+    expect(rejected.status).toBe(400);
+  });
+
+  it('POST /world/:id/join — ENDED world is rejected even for existing member', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const user = await registerUser(ctx.server);
+    await joinWorld(
+      ctx.server,
+      user.accessToken,
+      world.id,
+      'ended-join-village',
+    );
+    await simulateEliminatedPlayer(ctx, user.userId, world.id);
+    await ctx.prisma.world.update({
+      where: { id: world.id },
+      data: { status: 'ENDED' },
+    });
+
+    const rejected = await request(ctx.server)
+      .post(`/world/${world.id}/join`)
+      .set('Authorization', `Bearer ${user.accessToken}`)
+      .send({ villageName: 'should-not-exist' });
+    expect(rejected.status).toBe(400);
+  });
+
+  it('POST /world/:id/join — member with existing villages does not get an extra village', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const user = await registerUser(ctx.server);
+    const first = await joinWorld(
+      ctx.server,
+      user.accessToken,
+      world.id,
+      'active-village',
+    );
+
+    const rejoin = await request(ctx.server)
+      .post(`/world/${world.id}/join`)
+      .set('Authorization', `Bearer ${user.accessToken}`)
+      .send({ villageName: 'should-not-duplicate' });
+    expect(rejoin.status).toBeLessThan(300);
+
+    const villages = await ctx.prisma.village.findMany({
+      where: { userId: user.userId, worldId: world.id },
+    });
+    expect(villages).toHaveLength(1);
+    expect(villages[0]?.id).toBe(first.village.id);
   });
 });
