@@ -1,3 +1,8 @@
+---
+description: Format de commits, règles git et pre-push hook.
+alwaysApply: true
+---
+
 # Git & commits
 
 ## Format

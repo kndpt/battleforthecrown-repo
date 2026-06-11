@@ -1,3 +1,8 @@
+---
+description: Ton et langue des réponses agent (FR, concis, preuves).
+alwaysApply: true
+---
+
 # Communication agent
 
 - Répondre en français.

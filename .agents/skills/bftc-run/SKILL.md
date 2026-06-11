@@ -10,15 +10,17 @@ Tu orchestres une cible BFTC passée en **path de fichier obligatoire** (`@` opt
 
 Noms d'agents selon harness :
 
-| Rôle | Codex | Claude Code |
-|---|---|---|
-| Cartographie | `code_mapper` | `code-mapper` |
-| Implémentation | `implementer` | `implementer` |
-| Tests écrits | `test_writer` | `test-writer` |
-| Tests lancés | `test_runner` | `test-runner` |
-| Documentation | `doc_writer` | `doc-writer` |
-| Review indépendante (conditionnelle) | `reviewer` | `reviewer` |
-| Review 5 axes par défaut | lead direct | lead direct |
+| Rôle | Codex | Claude Code | Cursor (`Task`) |
+|---|---|---|---|
+| Cartographie | `code_mapper` | `code-mapper` | `code-mapper` |
+| Implémentation | `implementer` | `implementer` | `implementer` |
+| Tests écrits | `test_writer` | `test-writer` | `test-writer` |
+| Tests lancés | `test_runner` | `test-runner` | `test-runner` |
+| Documentation | `doc_writer` | `doc-writer` | `doc-writer` |
+| Review indépendante (conditionnelle) | `reviewer` | `reviewer` | `reviewer` |
+| Review 5 axes par défaut | lead direct | lead direct | lead direct |
+
+**Source de vérité mission sub-agent** : `.claude/agents/<name>.md` (Mission, Inputs, Procédure, Limites, Output). Cursor consomme le même fichier via `.cursor/agents/` (symlink). Valable pour **tous** les harness — pas d'improvisation lead.
 
 ## Routage
 
@@ -81,7 +83,24 @@ Si le scope explose, repasser en mode complet et loguer la décision.
 
 ## Délégation
 
-Pour spawn un sub-agent, donne un scope borné et dis explicitement : `spawn the <agent> agent with the following prompt: ...`
+### Règle inviolable (tous harness, Cursor inclus)
+
+Avant **chaque** spawn sub-agent :
+
+1. **Ne pas improviser** la mission : le sub-agent exécute la Mission + Procédure + Limites + format Output de `.claude/agents/<agent>.md`, complétées par le contrat run ci-dessous.
+2. **Lead** : relire le fichier agent si le scope est sensible (reviewer, gros diff) pour vérifier que le contrat run couvre tous les inputs requis.
+3. **Vérifier le rapport** retourné contre le bloc Output obligatoire du fichier agent (`=== RAPPORT EXEC ===`, `=== CARTE MODULE ===`, `VERDICT:`, etc.). Mismatch ou bloc absent → retry 1× puis dérogation lead.
+
+**Cursor** : déléguer via sub-agent natif (`.cursor/agents/<name>.md`, symlink → `.claude/agents/`) ou `Task` avec `subagent_type` = colonne Cursor. Le harness charge le **corps du `.md`** comme system prompt — le lead n'a pas à recopier la mission. Le `prompt` / message de délégation contient **uniquement** le contrat run :
+
+```text
+--- CONTRAT RUN (lead) ---
+<contrat ci-dessous, rempli>
+```
+
+**Claude Code / Codex** : `spawn the <agent> agent with the following prompt: ...` — même contrat run ; la mission vient du fichier agent du harness respectif.
+
+### Contrat run (à coller sous le contrat agent)
 
 Contrat minimal implementer/test-writer/doc-writer :
 

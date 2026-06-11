@@ -1,3 +1,9 @@
+---
+description: Invariants NestJS backend (controllers, services, Prisma, Zod, auth).
+globs: battleforthecrown-backend/**
+alwaysApply: false
+---
+
 # NestJS — règle courte
 
 Gardien léger des conventions backend. Charger les skills spécialisés dès que le scope le demande : `bftc-prisma`, `bftc-workers-outbox`, `bftc-tests-policy`, `bftc-qa`.

@@ -1,3 +1,8 @@
+---
+description: Périmètre QA agent (pas de QA IG browser ; checklist concise pour Kelvin).
+alwaysApply: true
+---
+
 # QA agent
 
 - Ne pas faire de QA in-game avec le browser côté agent.

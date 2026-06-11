@@ -1,3 +1,8 @@
+---
+description: Conventions techniques transversales (TS strict, yarn, server-authoritative, Outbox, static-check).
+alwaysApply: true
+---
+
 # Conventions techniques
 
 Ces règles s'appliquent à **tout le repo**, sauf cas explicite documenté dans le `CLAUDE.md` du workspace concerné.

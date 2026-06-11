@@ -1,3 +1,8 @@
+---
+description: Hiérarchie doc et vérification d'impact documentation en fin de tâche.
+alwaysApply: true
+---
+
 # Documentation — où ça vit et quand la mettre à jour
 
 ## Vérification obligatoire en fin de tâche
