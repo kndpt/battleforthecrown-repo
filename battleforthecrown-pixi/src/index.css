@@ -273,7 +273,7 @@ canvas {
 /* Keyframes reference --bftc-onboarding-drag-x/y set as inline style on   */
 /* the element, preserving the current drag offset during animation.        */
 
-@keyframes bftcOnboardingSelectPulse {
+@keyframes bftc-onboarding-select-pulse {
   0% {
     transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) scale(1);
     filter: brightness(1);
@@ -288,7 +288,7 @@ canvas {
   }
 }
 
-@keyframes bftcOnboardingAdvancePulse {
+@keyframes bftc-onboarding-advance-pulse {
   0% {
     transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) translateY(0) scale(1);
     filter: brightness(1);
@@ -308,10 +308,8 @@ canvas {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-advancing='true'] {
-    animation: none !important;
-  }
-  [data-selected='true'] {
+  [data-bftc-onboarding-fab='true'][data-advancing='true'],
+  [data-bftc-onboarding-fab='true'][data-selected='true'] {
     animation: none !important;
   }
 }
