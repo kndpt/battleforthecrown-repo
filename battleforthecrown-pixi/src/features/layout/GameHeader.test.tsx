@@ -425,7 +425,7 @@ describe('GameHeader player profile sheet', () => {
       expect(profileButton).toHaveAttribute('aria-expanded', 'true');
     });
     expect(container.querySelector('[style*="max-height: 64vh"]')).toBeInTheDocument();
-    expect(await screen.findByText('u@example.test')).toBeInTheDocument();
+    expect(await screen.findByText('Test User')).toBeInTheDocument();
     expect(await screen.findByText('Solstice')).toBeInTheDocument();
     expect(await screen.findByText('Inscription ouverte')).toBeInTheDocument();
     expect(await screen.findByText('✦')).toBeInTheDocument();
@@ -455,7 +455,7 @@ describe('GameHeader player profile sheet', () => {
     const profileButton = await screen.findByRole('button', { name: 'Profil joueur' });
     fireEvent.click(profileButton);
 
-    const dragRegion = await screen.findByText('u@example.test');
+    const dragRegion = await screen.findByText('Test User');
     fireEvent.pointerDown(dragRegion, { clientY: 20, pointerId: 1, pointerType: 'touch' });
     fireEvent.pointerMove(dragRegion, { clientY: 150, pointerId: 1, pointerType: 'touch' });
     fireEvent.pointerUp(dragRegion, { clientY: 150, pointerId: 1, pointerType: 'touch' });
