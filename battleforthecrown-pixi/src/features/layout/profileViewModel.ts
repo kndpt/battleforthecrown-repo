@@ -57,7 +57,7 @@ export function buildProfileVillages({
 export interface ProfileSheetDataParams {
   kingdomPower: KingdomPowerDto | undefined;
   crownBalance: number | null | undefined;
-  user: { displayName?: string | null; email?: string | null } | null | undefined;
+  user: { displayName?: string | null } | null | undefined;
   villagesCount: number;
   activePublicWorld: PublicWorld | undefined;
   activeMembership: WorldMembership | undefined;

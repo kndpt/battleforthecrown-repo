@@ -68,7 +68,7 @@ describe('auth design-system runtime screens', () => {
     useAuthStore.getState().setSession({
       accessToken: 'access',
       refreshToken: 'refresh',
-      user: { displayName: 'Player', email: 'player@example.test', id: 'user-1' },
+      user: { displayName: 'Player', id: 'user-1' },
     });
 
     renderAuthRoute('/');
@@ -99,7 +99,7 @@ describe('auth design-system runtime screens', () => {
     await waitFor(() => {
       expect(screen.getByTestId('location-path')).toHaveTextContent('/game');
     });
-    expect(useAuthStore.getState().user?.email).toBe('player@example.test');
+    expect(useAuthStore.getState().user?.displayName).toBe('Sire Test');
   });
 
   it('shows the server login error without navigating', async () => {

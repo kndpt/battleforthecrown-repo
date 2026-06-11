@@ -77,7 +77,7 @@ describe('buildPlayerProfileSheetData', () => {
     const data = buildPlayerProfileSheetData({
       kingdomPower,
       crownBalance: 1234.9,
-      user: { displayName: 'Jane Doe', email: 'jane.doe@example.com' },
+      user: { displayName: 'Jane Doe' },
       villagesCount: 3,
       activePublicWorld: undefined,
       activeMembership: undefined,
@@ -113,7 +113,7 @@ describe('buildPlayerProfileSheetData', () => {
     const withMembership = buildPlayerProfileSheetData({
       kingdomPower,
       crownBalance: 0,
-      user: { email: 'a@b.c' },
+      user: null,
       villagesCount: 1,
       activePublicWorld: undefined,
       activeMembership: { worldName: 'Royaume Test' } as never,
@@ -124,7 +124,7 @@ describe('buildPlayerProfileSheetData', () => {
     const worldIdOnly = buildPlayerProfileSheetData({
       kingdomPower,
       crownBalance: 0,
-      user: { email: 'a@b.c' },
+      user: null,
       villagesCount: 1,
       activePublicWorld: undefined,
       activeMembership: undefined,

@@ -27,8 +27,7 @@ export function toAuthSession(payload: AuthSessionResponse): AuthSession {
     refreshToken: payload.refreshToken,
     user: {
       id: payload.userId,
-      email: payload.email,
-      displayName: payload.displayName ?? 'Joueur',
+      displayName: payload.displayName,
     },
   };
 }

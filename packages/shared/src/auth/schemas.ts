@@ -17,20 +17,22 @@ export const refreshSchema = z.object({
   refreshToken: z.string().min(1, 'Refresh token requis'),
 });
 
-/** POST /auth/login | /auth/register response — private session contract (includes email for account UI). */
+/** POST /auth/login | /auth/register — client parse strips wire-only fields (e.g. email). */
 export const authSessionResponseSchema = z
   .object({
     accessToken: z.string().min(1),
     refreshToken: z.string().min(1),
     userId: z.string().min(1),
-    email: z.string().email(),
     displayName: displayNameSchema.optional(),
     villageId: z.string().optional(),
   })
   .transform(
     (data): AuthSessionResponse => ({
-      ...data,
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken,
+      userId: data.userId,
       displayName: data.displayName ?? 'Joueur',
+      villageId: data.villageId,
     }),
   );
 

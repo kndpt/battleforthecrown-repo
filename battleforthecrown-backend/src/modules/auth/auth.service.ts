@@ -9,7 +9,7 @@ import {
   DISPLAY_NAME_COLLISION_MESSAGE,
   normalizeDisplayName,
   type AuthRefreshResponse,
-  type AuthSessionResponse,
+  type AuthSessionWireResponse,
 } from '@battleforthecrown/shared/auth';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
@@ -27,7 +27,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(dto: RegisterDto): Promise<AuthSessionResponse> {
+  async register(dto: RegisterDto): Promise<AuthSessionWireResponse> {
     const hashedPassword = await bcrypt.hash(dto.password, 10);
     const displayName = normalizeDisplayName(dto.displayName);
 
@@ -77,7 +77,7 @@ export class AuthService {
     }
   }
 
-  async login(dto: LoginDto): Promise<AuthSessionResponse> {
+  async login(dto: LoginDto): Promise<AuthSessionWireResponse> {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
       include: {
@@ -101,7 +101,7 @@ export class AuthService {
   private toSessionResponse(
     user: { id: string; email: string; displayName: string },
     tokens: { accessToken: string; refreshToken: string; villageId?: string },
-  ): AuthSessionResponse {
+  ): AuthSessionWireResponse {
     return {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
