@@ -222,26 +222,13 @@ export class RetentionService {
     if (existing) return;
 
     try {
-      const scaling = getDailyCardScaling(
-        await getPlayerMaxCastleLevel(this.prisma, userId, worldId),
+      const cardData = await this.buildDailyCardPayload(
+        this.prisma,
+        userId,
+        worldId,
       );
       await this.prisma.dailyCard.create({
-        data: {
-          userId,
-          worldId,
-          dayKey,
-          rewardWood: scaling.reward.wood,
-          rewardStone: scaling.reward.stone,
-          rewardIron: scaling.reward.iron,
-          tasks: {
-            create: scaling.tasks.map((task) => ({
-              type: task.type,
-              label: task.label,
-              target: task.target,
-              metadata: task.metadata as Prisma.InputJsonObject,
-            })),
-          },
-        },
+        data: { userId, worldId, dayKey, ...cardData },
       });
     } catch (error) {
       if (
@@ -343,19 +330,19 @@ export class RetentionService {
     });
     if (!card) return;
 
-    const task = card.tasks.find(
-      (candidate) =>
-        candidate.type === type &&
-        !candidate.completedAt &&
-        calculateTaskProgressUpdate(candidate, completedQty, targetTier) !==
-          null,
-    );
-    if (!task) return;
-
-    const update = calculateTaskProgressUpdate(task, completedQty, targetTier);
-    if (!update) return;
-    const progress = update.progress;
-    const taskCompletedAt = update.isComplete ? completedAt : null;
+    let taskUpdate: ReturnType<typeof calculateTaskProgressUpdate> = null;
+    const task = card.tasks.find((candidate) => {
+      if (candidate.type !== type || candidate.completedAt) return false;
+      taskUpdate = calculateTaskProgressUpdate(
+        candidate,
+        completedQty,
+        targetTier,
+      );
+      return taskUpdate !== null;
+    });
+    if (!task || !taskUpdate) return;
+    const { progress, isComplete } = taskUpdate;
+    const taskCompletedAt = isComplete ? completedAt : null;
     await tx.dailyCardTask.update({
       where: { id: task.id },
       data: { progress, completedAt: taskCompletedAt },
@@ -380,30 +367,36 @@ export class RetentionService {
     worldId: string,
     dayKey: string,
   ): Promise<void> {
-    const scaling = getDailyCardScaling(
-      await getPlayerMaxCastleLevel(tx, userId, worldId),
-    );
+    const cardData = await this.buildDailyCardPayload(tx, userId, worldId);
     await tx.dailyCard.upsert({
       where: { userId_worldId_dayKey: { userId, worldId, dayKey } },
       update: {},
-      create: {
-        userId,
-        worldId,
-        dayKey,
-        rewardWood: scaling.reward.wood,
-        rewardStone: scaling.reward.stone,
-        rewardIron: scaling.reward.iron,
-        tasks: {
-          create: scaling.tasks.map((task) => ({
-            type: task.type,
-            label: task.label,
-            target: task.target,
-            metadata: task.metadata as Prisma.InputJsonObject,
-          })),
-        },
-      },
+      create: { userId, worldId, dayKey, ...cardData },
       select: { id: true },
     });
+  }
+
+  private async buildDailyCardPayload(
+    reader: CastleLevelReader,
+    userId: string,
+    worldId: string,
+  ) {
+    const scaling = getDailyCardScaling(
+      await getPlayerMaxCastleLevel(reader, userId, worldId),
+    );
+    return {
+      rewardWood: scaling.reward.wood,
+      rewardStone: scaling.reward.stone,
+      rewardIron: scaling.reward.iron,
+      tasks: {
+        create: scaling.tasks.map((task) => ({
+          type: task.type,
+          label: task.label,
+          target: task.target,
+          metadata: task.metadata as Prisma.InputJsonObject,
+        })),
+      },
+    };
   }
 
   private async expireStaleCards(
