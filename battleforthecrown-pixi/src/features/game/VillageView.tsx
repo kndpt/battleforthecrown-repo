@@ -84,6 +84,8 @@ import { villageVisualTierFromCastleLevel } from '@battleforthecrown/shared/worl
 
 const HERO_SCROLL_FADE_DISTANCE = 340;
 const HERO_EXPANDED_HEIGHT = 368;
+const HERO_INTERACTIVE_SELECTOR =
+  'button, a, input, textarea, select, [role="button"], [data-bftc-hero-no-swipe]';
 
 const RESOURCE_BUILDING_BY_TYPE: Record<'iron' | 'stone' | 'wood', string> = {
   iron: BUILDING_TYPES.IRON,
@@ -376,15 +378,32 @@ export function VillageView() {
     setVillage(villages[nextIndex].id);
   }, [activeVillageIndex, setVillage, villages]);
 
+  const releaseHeroPointerCapture = useCallback(
+    (element: HTMLDivElement, pointerId: number) => {
+      if (
+        typeof element.hasPointerCapture === 'function' &&
+        element.hasPointerCapture(pointerId)
+      ) {
+        element.releasePointerCapture(pointerId);
+      }
+    },
+    [],
+  );
+
   const handleHeroPointerDown = useCallback(
     (event: PointerEvent<HTMLDivElement>) => {
       if (villages.length <= 1) return;
+      const target = event.target instanceof Element ? event.target : null;
+      if (target?.closest(HERO_INTERACTIVE_SELECTOR)) return;
+
       heroSwipeRef.current = {
         pointerId: event.pointerId,
         startX: event.clientX,
         startY: event.clientY,
       };
-      event.currentTarget.setPointerCapture(event.pointerId);
+      if (typeof event.currentTarget.setPointerCapture === 'function') {
+        event.currentTarget.setPointerCapture(event.pointerId);
+      }
     },
     [villages.length],
   );
@@ -392,6 +411,9 @@ export function VillageView() {
   const handleHeroPointerUp = useCallback(
     (event: PointerEvent<HTMLDivElement>) => {
       const swipe = heroSwipeRef.current;
+      if (swipe?.pointerId === event.pointerId) {
+        releaseHeroPointerCapture(event.currentTarget, event.pointerId);
+      }
       heroSwipeRef.current = null;
       if (!swipe || swipe.pointerId !== event.pointerId) return;
 
@@ -406,14 +428,18 @@ export function VillageView() {
       }, 0);
       switchVillage(deltaX < 0 ? 1 : -1);
     },
-    [switchVillage],
+    [releaseHeroPointerCapture, switchVillage],
   );
 
-  const handleHeroPointerCancel = useCallback((event: PointerEvent<HTMLDivElement>) => {
-    if (heroSwipeRef.current?.pointerId === event.pointerId) {
-      heroSwipeRef.current = null;
-    }
-  }, []);
+  const handleHeroPointerCancel = useCallback(
+    (event: PointerEvent<HTMLDivElement>) => {
+      if (heroSwipeRef.current?.pointerId === event.pointerId) {
+        releaseHeroPointerCapture(event.currentTarget, event.pointerId);
+        heroSwipeRef.current = null;
+      }
+    },
+    [releaseHeroPointerCapture],
+  );
 
   const handleHeroClickCapture = useCallback((event: PointerEvent<HTMLDivElement>) => {
     if (!suppressHeroClickRef.current) return;
@@ -785,15 +811,12 @@ export function VillageView() {
 
         {/* ═══════════════════════ OVERLAYS & PORTALS ═══════════════════════ */}
 
-        {/* Tutorial guidance (floating FAB) — pointer-events-none wrapper so only the FAB/modal capture taps */}
-        <div className="pointer-events-none fixed inset-0 z-[35]">
-          <OnboardingGuidance
-            guidance={onboardingGuidance}
-            isLoading={onboardingSummary.isLoading || !villageId || buildingsQuery.isLoading}
-            onAction={runVillageAction}
-            onNavigate={navigate}
-          />
-        </div>
+        <OnboardingGuidance
+          guidance={onboardingGuidance}
+          isLoading={onboardingSummary.isLoading || !villageId || buildingsQuery.isLoading}
+          onAction={runVillageAction}
+          onNavigate={navigate}
+        />
 
         {/* Bottom navigation */}
         <BottomNavigationBar

@@ -33,19 +33,10 @@ export function OnboardingGuidance({
       return undefined;
     }
 
+    setIsOpen(false);
     setIsAdvancing(true);
     const timeout = window.setTimeout(() => setIsAdvancing(false), 900);
     return () => window.clearTimeout(timeout);
-  }, [guidance?.step]);
-
-  useEffect(() => {
-    if (!guidance || isLoading) {
-      setIsOpen(false);
-    }
-  }, [guidance, isLoading]);
-
-  useEffect(() => {
-    setIsOpen(false);
   }, [guidance?.step]);
 
   if (!guidance || isLoading) return null;
