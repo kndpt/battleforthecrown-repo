@@ -143,7 +143,9 @@ interface LoginInput {
   password: string;
 }
 
-type RegisterInput = LoginInput;
+interface RegisterInput extends LoginInput {
+  displayName: string;
+}
 
 export function useLoginMutation() {
   const setSession = useAuthStore((state) => state.setSession);

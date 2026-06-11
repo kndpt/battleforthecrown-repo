@@ -18,6 +18,7 @@ export interface WorldEntityDto {
     name?: string;
     villageId?: string;
     userId?: string;
+    ownerDisplayName?: string;
     castleLevel?: number;
     captureWindow?: {
       status: 'OPEN';

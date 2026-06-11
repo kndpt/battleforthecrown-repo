@@ -92,7 +92,7 @@ beforeEach(() => {
   useAuthStore.getState().setSession({
     accessToken: 'access',
     refreshToken: 'refresh',
-    user: { id: 'u1', email: 'u@example.test' },
+    user: { displayName: 'Test User', id: 'u1', email: 'u@example.test' },
   });
   useGameStore.getState().setContext({ worldId: 'w1', villageId: 'v1' });
 });

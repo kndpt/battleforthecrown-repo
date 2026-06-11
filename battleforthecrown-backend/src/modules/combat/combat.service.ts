@@ -1224,7 +1224,7 @@ export class CombatService {
           select: {
             id: true,
             name: true,
-            user: { select: { email: true } },
+            user: { select: { displayName: true } },
           },
         })
       : [];
@@ -1232,7 +1232,10 @@ export class CombatService {
       villages.map((village) => [village.id, village.name]),
     );
     const playerNames = new Map(
-      villages.map((village) => [village.id, village.user?.email ?? null]),
+      villages.map((village) => [
+        village.id,
+        village.user?.displayName ?? null,
+      ]),
     );
 
     return garrisons.map((garrison) => ({

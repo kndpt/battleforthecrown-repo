@@ -1,6 +1,7 @@
 export interface AuthUser {
   id: string;
   email: string;
+  displayName: string;
 }
 
 export interface AuthTokens {
@@ -13,6 +14,7 @@ export interface AuthSessionResponse {
   refreshToken: string;
   userId: string;
   email: string;
+  displayName: string;
   villageId?: string;
 }
 

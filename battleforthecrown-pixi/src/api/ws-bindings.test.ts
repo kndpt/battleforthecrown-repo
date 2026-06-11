@@ -53,7 +53,7 @@ function setCurrentWorldSession(): void {
   useAuthStore.getState().setSession({
     accessToken: 'access',
     refreshToken: 'refresh',
-    user: { id: 'user-1', email: 'user@example.test' },
+    user: { displayName: 'User One', id: 'user-1', email: 'user@example.test' },
   });
   useGameStore.getState().setContext({ worldId: 'world-1', villageId: 'v-att' });
 }
@@ -237,7 +237,7 @@ describe('applyBuildingCompleted', () => {
     useAuthStore.getState().setSession({
       accessToken: 'access',
       refreshToken: 'refresh',
-      user: { id: 'user-1', email: 'user@example.test' },
+      user: { displayName: 'User One', id: 'user-1', email: 'user@example.test' },
     });
     useGameStore.getState().setContext({ worldId: 'w1', villageId: 'v1' });
     const queryClient = new QueryClient();
@@ -563,7 +563,7 @@ describe('applyVillageConquered', () => {
     useAuthStore.getState().setSession({
       accessToken: 'access',
       refreshToken: 'refresh',
-      user: { id: 'previous-owner', email: 'previous@example.test' },
+      user: { displayName: 'Previous Owner', id: 'previous-owner', email: 'previous@example.test' },
     });
     useGameStore.getState().setContext({ worldId: 'world-1', villageId: 'v-old' });
     useWorldMapStore.getState().setEntities([
@@ -612,7 +612,7 @@ describe('applyVillageAttacked', () => {
     useAuthStore.getState().setSession({
       accessToken: 'access',
       refreshToken: 'refresh',
-      user: { id: 'defender-1', email: 'd@example.test' },
+      user: { displayName: 'Defender', id: 'defender-1', email: 'd@example.test' },
     });
     useGameStore.getState().setContext({ worldId: 'world-1', villageId: 'v-def' });
     const queryClient = new QueryClient();

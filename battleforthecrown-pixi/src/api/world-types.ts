@@ -32,6 +32,7 @@ export interface MapEntity {
   id: string;
   kind: "PLAYER_VILLAGE" | "BARBARIAN_VILLAGE" | "OTHER" | "fogged";
   ownerId?: string;
+  ownerDisplayName?: string;
   isMine: boolean;
   x: number;
   y: number;
@@ -61,10 +62,15 @@ export function entityFromWorldDto(
         : "OTHER";
   const ownerId =
     typeof dto.data.userId === "string" ? dto.data.userId : undefined;
+  const ownerDisplayName =
+    typeof dto.data.ownerDisplayName === "string"
+      ? dto.data.ownerDisplayName
+      : undefined;
   return {
     id: dto.id,
     kind,
     ownerId,
+    ownerDisplayName,
     isMine: !!myUserId && ownerId === myUserId,
     x: dto.x,
     y: dto.y,

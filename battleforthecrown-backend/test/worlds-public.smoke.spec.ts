@@ -231,6 +231,7 @@ describe('public worlds smoke', () => {
       const user = await ctx.prisma.user.create({
         data: {
           email: `${id}-${i}@smoke.local`,
+          displayName: `Smoke_${id}_${i}`.slice(0, 20),
           password: 'hashed-password',
         },
       });

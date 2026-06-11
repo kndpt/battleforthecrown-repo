@@ -33,6 +33,7 @@ export function RegisterScreen() {
   const register = useRegisterMutation();
   const { errors, validate, clearErrors } = useZodForm(registerFormSchema);
 
+  const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -52,11 +53,11 @@ export function RegisterScreen() {
     event.preventDefault();
     setSubmitError(null);
 
-    const data = validate({ email, password, confirmPassword });
+    const data = validate({ displayName, email, password, confirmPassword });
     if (!data) return;
 
     register.mutate(
-      { email: data.email, password: data.password },
+      { displayName: data.displayName, email: data.email, password: data.password },
       {
         onSuccess: () => navigate('/worlds'),
         onError: (err) => {
@@ -87,6 +88,22 @@ export function RegisterScreen() {
         </div>
 
         <form className="grid gap-3" noValidate onSubmit={onSubmit}>
+          <AuthField
+            autoComplete="nickname"
+            disabled={register.isPending}
+            error={errors.displayName}
+            icon="♛"
+            id="register-display-name"
+            label="Nom de joueur"
+            name="displayName"
+            onChange={(value) => {
+              clearFormErrors();
+              setDisplayName(value);
+            }}
+            placeholder="Sire Kelvin"
+            required
+            value={displayName}
+          />
           <AuthField
             autoComplete="email"
             disabled={register.isPending}

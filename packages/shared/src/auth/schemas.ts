@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { displayNameSchema } from './display-name';
 
 export const loginSchema = z.object({
   email: z.string().email('Email invalide'),
@@ -6,6 +7,7 @@ export const loginSchema = z.object({
 });
 
 export const registerSchema = z.object({
+  displayName: displayNameSchema,
   email: z.string().email('Email invalide'),
   password: z.string().min(8, 'Mot de passe : 8 caractères minimum'),
 });

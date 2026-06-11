@@ -5,6 +5,10 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Prisma } from '@prisma/client';
+import {
+  DISPLAY_NAME_COLLISION_MESSAGE,
+  normalizeDisplayName,
+} from '@battleforthecrown/shared/auth';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -23,11 +27,24 @@ export class AuthService {
 
   async register(dto: RegisterDto) {
     const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const displayName = normalizeDisplayName(dto.displayName);
 
     try {
       return await this.prisma.$transaction(async (tx) => {
+        const existingName = await tx.user.findFirst({
+          where: { displayName: { equals: displayName, mode: 'insensitive' } },
+          select: { id: true },
+        });
+        if (existingName) {
+          throw new ConflictException(DISPLAY_NAME_COLLISION_MESSAGE);
+        }
+
         const user = await tx.user.create({
-          data: { email: dto.email, password: hashedPassword },
+          data: {
+            email: dto.email,
+            displayName,
+            password: hashedPassword,
+          },
         });
 
         const { accessToken, refreshToken } = await this.generateTokens(
@@ -35,18 +52,23 @@ export class AuthService {
           tx,
         );
 
-        return {
-          accessToken,
-          refreshToken,
-          userId: user.id,
-          email: user.email,
-        };
+        return this.toSessionResponse(user, { accessToken, refreshToken });
       });
     } catch (error) {
+      if (error instanceof ConflictException) throw error;
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002'
       ) {
+        const targetField = error.meta?.target;
+        const target = Array.isArray(targetField)
+          ? targetField.join(',')
+          : typeof targetField === 'string'
+            ? targetField
+            : '';
+        if (target.includes('display_name')) {
+          throw new ConflictException(DISPLAY_NAME_COLLISION_MESSAGE);
+        }
         throw new ConflictException('Email already registered');
       }
       throw error;
@@ -67,12 +89,24 @@ export class AuthService {
     }
 
     const { accessToken, refreshToken } = await this.generateTokens(user.id);
-    return {
+    return this.toSessionResponse(user, {
       accessToken,
       refreshToken,
+      villageId: user.villages[0]?.id,
+    });
+  }
+
+  private toSessionResponse(
+    user: { id: string; email: string; displayName: string },
+    tokens: { accessToken: string; refreshToken: string; villageId?: string },
+  ) {
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
       userId: user.id,
       email: user.email,
-      villageId: user.villages[0]?.id,
+      displayName: user.displayName,
+      villageId: tokens.villageId,
     };
   }
 

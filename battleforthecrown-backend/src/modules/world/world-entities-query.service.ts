@@ -31,6 +31,7 @@ type BarbarianVillageEntity = {
 
 const playerVillageDataSchema = z.object({
   userId: z.string(),
+  ownerDisplayName: z.string(),
   name: z.string(),
   villageId: z.string(),
   castleLevel: z.number().int().min(1).max(10),
@@ -215,6 +216,7 @@ export class WorldEntitiesQueryService {
         y: true,
         name: true,
         userId: true,
+        user: { select: { displayName: true } },
         buildings: {
           where: { type: 'CASTLE' },
           select: { level: true },
@@ -246,6 +248,9 @@ export class WorldEntitiesQueryService {
         y: village.y,
         data: playerVillageDataSchema.parse({
           userId: village.userId,
+          ownerDisplayName:
+            village.user?.displayName ??
+            `Joueur ${village.userId?.slice(-6) ?? '?'}`,
           name: village.name,
           villageId: village.id,
           castleLevel,
@@ -274,7 +279,7 @@ const VILLAGE_SUMMARY_SELECT = {
   isBarbarian: true,
   tier: true,
   createdAt: true,
-  user: { select: { email: true } },
+  user: { select: { displayName: true } },
 } as const;
 
 const byCoord = (a: { x: number; y: number }, b: { x: number; y: number }) =>

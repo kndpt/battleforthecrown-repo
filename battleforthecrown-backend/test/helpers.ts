@@ -106,10 +106,11 @@ export async function registerUser(server: Server, suffix?: string) {
   const tag =
     suffix ?? `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
   const email = `smoke-${tag}@test.local`;
+  const displayName = `Smoke_${tag.replace(/[^A-Za-z0-9_]/g, '_').slice(0, 14)}`;
   const password = 'smoke-password-123';
   const res = await request(server)
     .post('/auth/register')
-    .send({ email, password });
+    .send({ email, displayName, password });
   if (res.status >= 300)
     throw new Error(
       `register failed: ${res.status} ${JSON.stringify(res.body)}`,
@@ -119,6 +120,7 @@ export async function registerUser(server: Server, suffix?: string) {
     refreshToken: string;
     userId: string;
     email: string;
+    displayName: string;
   };
 }
 
