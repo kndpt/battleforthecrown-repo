@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { PublicWorldsResponseSchema } from '@battleforthecrown/shared/world';
 import { WorldLifecycleWorker } from '../src/workers/world-lifecycle.worker';
-import { bootSmokeApp, type SmokeContext } from './helpers';
+import { bootSmokeApp, smokeDisplayName, type SmokeContext } from './helpers';
 import { SMOKE_WORLD_CONFIG } from './fixtures/smoke-world-config';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -231,7 +231,7 @@ describe('public worlds smoke', () => {
       const user = await ctx.prisma.user.create({
         data: {
           email: `${id}-${i}@smoke.local`,
-          displayName: `Smoke_${id}_${i}`.slice(0, 20),
+          displayName: smokeDisplayName(),
           password: 'hashed-password',
         },
       });

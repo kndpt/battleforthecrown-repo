@@ -20,7 +20,7 @@ describe('auth smoke', () => {
       accessToken: t1,
       refreshToken,
     } = await registerUser(ctx.server);
-    expect(displayName).toMatch(/^Smoke_/);
+    expect(displayName).toMatch(/^Smk[a-f0-9]{17}$/);
 
     const r1 = await request(ctx.server)
       .get('/world/me/memberships')
