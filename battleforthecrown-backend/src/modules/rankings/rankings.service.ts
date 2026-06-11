@@ -9,6 +9,7 @@ import {
   type RankingsLeaderboardResponse,
 } from '@battleforthecrown/shared/rankings';
 import type { UnitMap } from '@battleforthecrown/shared/army';
+import { MS_PER_DAY } from '@battleforthecrown/shared/time';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { PowerService } from '../power/power.service';
 import type { PrismaClientOrTx } from '../../common/prisma.types';
@@ -58,7 +59,7 @@ export class RankingsService {
 
     const occurredAt = input.occurredAt ?? new Date();
     const pairKey = this.toPairKey(input.scorerUserId, input.opponentUserId);
-    const since = new Date(occurredAt.getTime() - 24 * 60 * 60 * 1000);
+    const since = new Date(occurredAt.getTime() - MS_PER_DAY);
     const previous = await tx.gloryLedger.aggregate({
       where: {
         worldId: input.worldId,
@@ -258,6 +259,6 @@ export class RankingsService {
   }
 
   private getWeeklyCutoff(): Date {
-    return new Date(Date.now() - GLORY_WEEKLY_DAYS * 24 * 60 * 60 * 1000);
+    return new Date(Date.now() - GLORY_WEEKLY_DAYS * MS_PER_DAY);
   }
 }

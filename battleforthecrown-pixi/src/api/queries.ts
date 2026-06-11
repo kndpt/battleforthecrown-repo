@@ -582,6 +582,10 @@ export function useRankingsSummaryQuery(worldId: string | null) {
     },
     enabled: Boolean(worldId),
     staleTime: 30_000,
+    // Poll while in a world so the leaderboard self-heals after WS drop.
+    // applyRankingsChanged only fires on glory writes; power changes are
+    // covered by invalidatePowerQueries, but a dropped socket covers neither.
+    refetchInterval: 30_000,
   });
 }
 

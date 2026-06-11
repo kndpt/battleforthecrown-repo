@@ -8,6 +8,103 @@ New PRs use branch `maint/refactor-backend/<short-topic>` and PR title
 
 ---
 
+## Run 2026-06-11 — branch `claude/awesome-mendel-fxzr0b`
+
+**Model:** claude-sonnet-4-6
+**Scan commit:** `16f51b3`
+
+> Branch note: harness pinned to `claude/awesome-mendel-fxzr0b` (same precedence rule as Run 2026-06-02). PR title/body follow `maint(refactor-backend)` convention.
+
+---
+
+### Prior findings status (Run 2026-06-10)
+
+| ID | Status | Note |
+|----|--------|------|
+| V1 | **RESOLVED** | PR #72 (`1e0d8f9`) — caravan utils extracted. |
+| W1 | **RESOLVED** | PR #72 (`1e0d8f9`) — serializable retry extracted. |
+| O1/B6 | **RESOLVED** | PR #69 (`f825025`) — DefenderVillage alias now used in `applyDefenderLosses` + `getCaptureDurationMs`. |
+| B3 | **STILL OPEN** | `getUserIdByVillage` N+1 in outbox dispatch — now ~22+ call-sites after caravan + rankings events added. 11th run. |
+| C6 | **STILL OPEN** | Recursive `this.getResources` at `resources.service.ts:50`. |
+| D4 | **STILL OPEN** | `expedition.create` block repeated 4× in `combat.service.ts`. |
+| D5 | **STILL OPEN** | `buildBarbarianDefender`/`buildPlayerDefender` garrison loop duplication. |
+| N3 | **STILL OPEN** | `getVillagesInRadius` missing upper-bound clamp (`world-entities-query.service.ts:101`). |
+| R1 | **RESOLVED** | `calculateTaskProgressUpdate` double call eliminated — this run. |
+| R2 | **RESOLVED** | `buildDailyCardPayload` factory extracted — this run. |
+| R3 | **STILL OPEN** | `retention.service.ts` mixes class + 14 pure utility exports. |
+| R4 | **STILL OPEN** | Fractional crown carry — needs Prisma migration. |
+| V3 | **STILL OPEN** | Resource deduction order in `initiateCaravan` (cosmetic). |
+
+---
+
+### Module structure (mental model)
+
+New commits since `9b7c2dc`: run(051) glory rankings — `combat.worker.ts` +196 LOC (now 1817), `combat.service.ts` +71 (now 1284), new `rankings.service.ts` (248 LOC), `rankings.controller.ts` (72 LOC). run(052) caravan reports — `combat.worker.ts` +170, `return.worker.ts` +70 (now 353), new `caravan-report.service.ts` (102 LOC), `caravan-report.presenter.ts` (72 LOC), `combat.controller.ts` +57 (now 341). Layering remains clean. Zero `as any`, zero `console.*`, zero `@ts-ignore` in production code. Combat module still dominates by size and churn (`combat.worker.ts` 1817, `combat.service.ts` 1284).
+
+---
+
+### Findings
+
+| ID | Category | Location | Description | Severity | Effort |
+|----|----------|----------|-------------|----------|--------|
+| R1 | Performance | `retention.service.ts:346-358` (pre-fix) | **RESOLVED** — `progressMatchingTaskForDay` called `calculateTaskProgressUpdate(candidate, ...)` twice per matching task: once in `.find()` predicate (result discarded), once to read the update. Fixed: closure in `.find()` captures the result via `taskUpdate`, eliminating the redundant call. | Low | S |
+| R2 | Duplication | `retention.service.ts:213-255 vs 377-407` (pre-fix) | **RESOLVED** — `ensureDailyCard` and `ensureDailyCardInTransaction` duplicated the daily card payload construction (`getDailyCardScaling(getPlayerMaxCastleLevel(...))` + `rewardWood/Stone/Iron + tasks.create` mapping). Extracted to `buildDailyCardPayload(reader, userId, worldId)` private helper. | Medium | S |
+| G1 | Performance | `combat.service.ts:986-992` | `snapshotDefenderKingdomPowers` uses a `for...of` loop with sequential `await this.powerService.getKingdomPowerValue(...)` per defender userId. Each call does `village.findMany(include:{buildings}) + getArmyPowerByOriginVillage(...)` (2+ queries). For 3 garrison origins, that's 3× sequential multi-query chains on the attack initiation path. Fix: `Promise.all`. | Medium | M |
+| C7 | Correctness | `return.worker.ts:235-243` | `handleCaravanReturn` (recalled path) does absolute write `currentStock.wood + returnedResources.wood` under READ COMMITTED isolation. Race with production tick or other resource mutations for the same village — identical to the crown lost-update fixed in Run 2026-06-08. Fix: upgrade to SERIALIZABLE + `withSerializableRetry`, or restructure to use atomic increments. | Medium | M |
+| C8 | Duplication | `caravan-report.service.ts:35-48, 57-66, 84-93` | `getCaravanReport`, `markCaravanReportAsRead`, and `deleteCaravanReport` repeat the same `prisma.inboxEntry.findFirst({where: {userId, worldId, kind: 'CARAVAN', caravanReportId: reportId, hidden: false}, include: {caravanReport: true}})` + not-found guard (~12 LOC × 3). Extract to `findCaravanEntry(userId, reportId, worldId)` private helper. | Low | S |
+| B3 | Performance | `event-outbox.service.ts:600` | N+1 `getUserIdByVillage` — now ~22+ call-sites after caravan + rankings events. 11th run. | Medium | M |
+| D4 | Duplication | `combat.service.ts:176,249,335,517` | `expedition.create` repeated 4×. | Medium | M |
+| D5 | Duplication | `combat.worker.ts:1112-1169, 1172-1240` | `buildBarbarianDefender`/`buildPlayerDefender` garrison loop. | Low | M |
+| N3 | Correctness | `world-entities-query.service.ts:101` | `getVillagesInRadius` missing upper-bound clamp. | Low | S |
+| R3 | Service design | `retention.service.ts:455-623` | File mixes class + 14 pure utility exports. | Medium | M |
+| R4 | Correctness | `crowns.service.ts:264-272` | Fractional crown carry — needs Prisma migration. | High | M |
+| C6 | Readability | `resources.service.ts:50` | Recursive `this.getResources`. Terminates. Cosmetic. | Low | S |
+| V3 | Style | `combat.service.ts:480-515` | Caravan `initiateCaravan` deduction precedes capacity check (tx rollback makes it safe). Low, cosmetic. | Low | S |
+
+---
+
+### Looks bad but is actually fine
+
+- **`handleCaravanArrival` absolute write** (`combat.worker.ts:1718-1726`) — inside `withSerializableRetry` + `SERIALIZABLE` transaction. Safe; sibling `handleCaravanReturn` is the unfixed path (C7).
+- **`getWeeklyCutoff` rolling 7d** (`rankings.service.ts:245`) — returns `Date.now() - 7×24h`. "Rolling 7-day window" is the intended design per gameplay docs; not a calendar-week reset.
+- **`getGloryLeaderboard` anonymous player names** (`rankings.service.ts:210`) — `toPublicPlayerName` returns `Joueur ${userId.slice(-6)}`. Intentional per run(051): public leaderboard anonymizes names.
+- **`snapshotDefenderKingdomPowers` concurrent Promise.all fix** (G1) — cannot use `Promise.all` trivially if `getKingdomPowerValue` internally uses the tx client passed as `reader`. `getKingdomPowerForUser` at power.service.ts:141 calls `reader.village.findMany` + `getArmyPowerByOriginVillage(reader)` where `getArmyPowerByOriginVillage` uses the same reader for further queries. Parallelizing is safe (Prisma tx clients handle concurrent awaits on the same client). Actual fix is straightforward but deferred as medium effort.
+- **B3 N+1 remains** — at current scale unchanged verdict. 11th run.
+- **C6 recursive `getResources`** — terminates in 2 calls exactly. Cosmetic.
+
+---
+
+### Selected theme: R1 + R2 — retention service cleanup
+
+**Evidence:**
+- `progressMatchingTaskForDay` (pre-fix): `.find()` called `calculateTaskProgressUpdate(candidate, completedQty, targetTier)` as a boolean predicate (result discarded), then called it again on the found task to read `{ progress, isComplete }`. Pure function, two identical calls per matching task.
+- `ensureDailyCard` (lines 225-244, pre-fix): `getDailyCardScaling(await getPlayerMaxCastleLevel(this.prisma, userId, worldId))` + full card payload construction verbatim.
+- `ensureDailyCardInTransaction` (lines 383-404, pre-fix): same `getDailyCardScaling(await getPlayerMaxCastleLevel(tx, userId, worldId))` + identical payload construction. Both use the `CastleLevelReader` interface already defined in the file.
+
+**Why this theme over alternatives:**
+- R1+R2 are both in the same file (retention.service.ts), making the PR coherent.
+- Both are S effort, fully behavior-preserving, verified by existing test suite.
+- R1 + R2 have been open since Run 2026-06-08 (R1 Low, R2 Medium).
+- G1/C7 deferred — both M effort, require more careful handling of concurrent patterns (C7 involves changing transaction isolation in a worker).
+- C8 deferred — S effort but caravan-report.service.ts is brand new; best left to stabilize.
+
+### Files changed
+
+- `battleforthecrown-backend/src/modules/retention/retention.service.ts` — R1: `.find()` closure captures `taskUpdate`, eliminates second `calculateTaskProgressUpdate` call; R2: new private `buildDailyCardPayload(reader, userId, worldId)` helper, both `ensureDailyCard` and `ensureDailyCardInTransaction` delegate payload construction to it.
+
+### Verification
+
+```shell
+yarn static-check   → ✅ tsc (backend+pixi) + eslint --quiet, 0 errors
+yarn test:backend   → ✅ 344 passed, 32 suites
+```
+
+### Docs impact
+
+Aucun changement nécessaire — refactor interne d'un service (extraction de helper privé + élimination d'appel redondant), pas de changement d'API REST, d'event WS, de modèle Prisma ni de règle gameplay. Findings B3/C6/D4/D5/N3/R3/R4/V3 restent ouverts. Nouveaux findings G1/C7/C8 ouverts pour runs futurs.
+
+---
+
 ## Run 2026-06-10 — branch `maint/refactor-backend/caravan-utils-dedup`
 
 **Model:** claude-sonnet-4-6

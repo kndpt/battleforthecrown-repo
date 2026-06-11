@@ -905,3 +905,86 @@ yarn test:pixi      → 67 test files, 378 tests passed (aucun test cassé)
 ```
 
 **Diff :** `queries.ts` +2 LOC (2 invalidations ajoutées), `caravanLaunchState.ts` +1 mot-clé (`export`), `CaravanLaunchModal.tsx` −1 LOC (déclaration locale supprimée). Net : +1 LOC dans les fichiers modifiés.
+
+---
+
+## Run 2026-06-11 — commit 16f51b3
+
+**Scan date:** 2026-06-11
+**Commit SHA:** 16f51b3dad2abb903ee107085e83f35e5bfff200
+
+### Prior findings update
+
+- A1–A6 (ws-bindings query keys) : **RESOLVED**
+- B1, B2 : **RESOLVED**
+- N1, N2 : **RESOLVED**
+- S1, S2, S3 (session teardown) : **RESOLVED**
+- C1 (GameHeader god-component) : **RESOLVED**
+- D2 (headerHelpers tests) : **RESOLVED**
+- D3 (VillageView inline `<style>` block) : **RESOLVED**
+- F1, F4 (capture event correctness & Pixi tick) : **RESOLVED**
+- G1, G2 (computeProgress duplication / formatTime tests) : **RESOLVED**
+- H1, H2 (armyTraining refetchInterval / BuildingDetailModal polling) : **RESOLVED**
+- I1, I5 (world join/enter error tests) : **RESOLVED**
+- J1, J2 (dead ternary / minTargetTier test) : **RESOLVED**
+- K1, K2 (caravan recall WS-drop gap / RESOURCE_KEYS DRY) : **RESOLVED**
+- **L3 (OnboardingFab inline `<style>` block) : RESOLVED (ce run)**
+- **L5 (useRankingsSummaryQuery no refetchInterval) : RESOLVED (ce run)**
+- C2 (SpecializedBuildingDetailModal 643 LOC) : STILL OPEN — organisé, faible risque
+- C3 (ArmyScreen garrison derivations) : STILL OPEN — 30 lignes plates
+- D4 (magic number 60_000 optimistic) : STILL OPEN — acceptable
+- F2 (DailyRetentionWidget expiresInValue hardcoded) : STILL OPEN — bloqué côté serveur
+- J3 (villageTierFromPower test) : NOTED — candidat `bftc-maint-debt`
+- J4 → L4 (ReportDetailModal backdrop ×4) : NOTED — candidat `bftc-maint-debt`
+
+### Mental model
+
+Frontend propre et discipliné. Commits depuis run 2026-06-10 :
+- `16f51b3` (run 052) : feature `caravan reports` — `caravanReportView.ts` (175 LOC pur), `ReportDetailModal.tsx` (+216 LOC, 4 sub-composants), `caravanReportView.test.ts` (119 LOC, 6 tests), WS-bindings tests (+12 LOC).
+- `39a93fc` (run 051) : feature `glory rankings` — `RankingsScreen.tsx` (228 LOC), `rankingsFormat.ts` (9 LOC), `RankingsScreen.test.tsx` (16 LOC).
+- `78051a7` : fix `OnboardingFab` — drag interaction complète (579 LOC), `OnboardingFab.test.tsx` (+62 LOC).
+
+**Server-authoritative** : 0 violation. Rankings display-only, caravan reports display-only depuis DTO serveur.  
+**Type debt** : 0 `as any`, 0 `@ts-ignore`, 0 `fetch`/`axios` hors `src/api/`.  
+**Stores Zustand** : inchangés, teardown centralisé confirmé.  
+**TanStack Query** : `useRankingsSummaryQuery` manquait `refetchInterval` (L5, corrigé ce run).
+
+### New findings
+
+| ID | Category | Location | Description | Severity | Effort | Status |
+|----|----------|----------|-------------|----------|--------|--------|
+| L3 | Component design | `OnboardingFab.tsx:533-577` | Bloc `<style>` inline — 2 keyframes + `@media` block référençant `--bftc-onboarding-drag-x/y`. Régression directe de D3 résolu run 2026-06-08. CSS custom properties résolues au niveau de l'élément → keyframes déplaçables dans `index.css`. | Medium | S | **RESOLVED** (ce run) |
+| L5 | TanStack Query | `api/queries.ts:571-583` | `useRankingsSummaryQuery` sans `refetchInterval`. `applyRankingsChanged` ne couvre que les glory writes ; si WS drop, le leaderboard reste stale. Parallèle de H1 (armyTraining, run 2026-06-06). | Medium | S | **RESOLVED** (ce run) |
+| L1 | Dead code | `features/rankings/rankingsFormat.ts:5-9` | `periodLabel` exporté + testé mais jamais importé en production. `RankingsScreen.tsx:179` redéfinit une `const periodLabel` locale avec des strings UI différentes ("7 derniers jours" ≠ "Hebdomadaire"). | Low | S | STILL OPEN |
+| L4 | Component design | `features/combat/ReportDetailModal.tsx` | Backdrop div verbatim ×4 (Scout, Caravan, Reinforcement, Combat). Était J4 (×3), caravane ajoute le 4e. | Low | S | NOTED — candidat `bftc-maint-debt` |
+
+### "Looks bad but is actually fine" (this run)
+
+| Pattern | Verdict |
+|---------|---------|
+| `applyCaravanRecalled` n'appelle pas `invalidateCaravanReports` | ✅ Reports créés sur `arrived`/`returned` uniquement — correct |
+| `['combat', 'caravan-report']` prefix match large dans `invalidateCaravanReports` | ✅ Invalide tous les détails cachés sur nouvelle arrivée — intentionnel (analogue combat) |
+| `NUMBER_FORMATTER` défini dans 3 fichiers (`caravanReportView`, `ReportDetailModal`, `ReportsList`) | ✅ Module-level const standard React — pas de couplage |
+| `formatDate` dans 2 fichiers (ReportsList / ReportCard) avec options légèrement différentes | ✅ ReportCard affiche heure+minute dans les dates passées ; ReportsList affiche seulement jour/mois — variation intentionnelle |
+| `RankingsScreen` `useRankingsSummaryQuery` sans `refetchInterval` (partiellement mitigé par `invalidatePowerQueries`) | ⚠️ Ne couvre pas glory-only changes ni WS drop → **traité par L5** |
+| `OnboardingFab` `<style>` block avec CSS custom properties dynamiques | ⚠️ Custom properties résolues au niveau élément par spec → même pattern que D3 → **traité par L3** |
+
+### Selected theme: **L3 + L5 — OnboardingFab style migration + rankings `refetchInterval`**
+
+**Rationale :**
+- L3 est une régression directe de D3 (run 2026-06-08, 3 jours) : les keyframes `bftcOnboardingSelectPulse`/`bftcOnboardingAdvancePulse` utilisent le même pattern CSS-custom-property que les keyframes VillageView migrées dans ce run. Avoir 1 `<style>` inline dans le codebase signale que c'est acceptable — nous venons de confirmer que ce n'est pas le cas.
+- L5 ferme un gap de correctness identique à H1 (`armyTraining` run 2026-06-06) : le leaderboard peut rester stale si WS drop pendant la session. L'ajout `refetchInterval: 30_000` correspond au `staleTime: 30_000` existant.
+- Thème cohérent (qualité des features nouvelles), scope total S, 0 changement backend.
+
+**Rejected :**
+- L1 (`periodLabel` dead export) : décision produit sur les labels ("7 derniers jours" vs "Hebdomadaire"), hors scope refactoring.
+- L4 (ReportDetailModal backdrop ×4) : cosmétique, candidat `bftc-maint-debt`.
+
+### Verification
+
+```text
+yarn static-check   → green (tsc backend + pixi, ESLint backend + pixi --quiet)
+yarn test:pixi      → 69 test files, 389 tests passed (aucun test cassé)
+```
+
+**Diff :** `queries.ts` +5 LOC (`refetchInterval` + commentaire), `OnboardingFab.tsx` −47 LOC (style block supprimé), `index.css` +52 LOC (keyframes + media). Net : −47 / +57 dans les fichiers modifiés.

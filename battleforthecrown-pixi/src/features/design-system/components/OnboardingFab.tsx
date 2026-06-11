@@ -417,13 +417,14 @@ export function OnboardingFab({
             'scale-[1.02] -rotate-[0.35deg] brightness-[1.05] duration-0 shadow-[0_0_0_1px_rgba(255,225,128,.92),0_9px_18px_rgba(0,0,0,.36),inset_0_1px_0_rgba(255,255,255,.58)]',
           isSelected &&
             !isDragging &&
-            'animate-[bftcOnboardingSelectPulse_180ms_cubic-bezier(.2,.9,.2,1)_1] shadow-[0_0_0_1px_rgba(255,225,128,.9),inset_0_1px_0_rgba(255,255,255,.58),0_5px_11px_rgba(0,0,0,.34)]',
+            'animate-[bftc-onboarding-select-pulse_180ms_cubic-bezier(.2,.9,.2,1)_1] shadow-[0_0_0_1px_rgba(255,225,128,.9),inset_0_1px_0_rgba(255,255,255,.58),0_5px_11px_rgba(0,0,0,.34)]',
           isAdvancing &&
-            'animate-[bftcOnboardingAdvancePulse_520ms_ease-out_1] shadow-[0_0_0_1px_rgba(212,160,23,.95),inset_0_1px_0_rgba(255,255,255,.58),0_6px_13px_rgba(0,0,0,.38)]',
+            'animate-[bftc-onboarding-advance-pulse_520ms_ease-out_1] shadow-[0_0_0_1px_rgba(212,160,23,.95),inset_0_1px_0_rgba(255,255,255,.58),0_6px_13px_rgba(0,0,0,.38)]',
           rootPlacement,
           className,
         )}
         data-advancing={isAdvancing ? 'true' : undefined}
+        data-bftc-onboarding-fab="true"
         data-dragging={isDragging ? 'true' : undefined}
         data-selected={isSelected ? 'true' : undefined}
         disabled={isDisabled}
@@ -529,51 +530,6 @@ export function OnboardingFab({
           </section>
         </div>
       ) : null}
-
-      <style>{`
-        @keyframes bftcOnboardingSelectPulse {
-          0% {
-            transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) scale(1);
-            filter: brightness(1);
-          }
-          42% {
-            transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) scale(1.02) rotate(-0.35deg);
-            filter: brightness(1.06);
-          }
-          100% {
-            transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) scale(1);
-            filter: brightness(1);
-          }
-        }
-
-        @keyframes bftcOnboardingAdvancePulse {
-          0% {
-            transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) translateY(0) scale(1);
-            filter: brightness(1);
-          }
-          28% {
-            transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) translateY(-2px) scale(1.025);
-            filter: brightness(1.08);
-          }
-          58% {
-            transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) translateY(1px) scale(.995);
-            filter: brightness(1.04);
-          }
-          100% {
-            transform: translate(var(--bftc-onboarding-drag-x), var(--bftc-onboarding-drag-y)) translateY(0) scale(1);
-            filter: brightness(1);
-          }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          [data-advancing='true'] {
-            animation: none !important;
-          }
-          [data-selected='true'] {
-            animation: none !important;
-          }
-        }
-      `}</style>
     </>
   );
 }
