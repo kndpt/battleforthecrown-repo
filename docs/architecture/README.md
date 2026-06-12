@@ -11,6 +11,7 @@ Documentation technique de référence (humaine) pour les agents et les contribu
 - [`auth.md`](./auth.md) — JWT global, `@Public()` opt-out, `OwnershipService`, handshake WS, modèle de menace.
 - [`db-setup.md`](./db-setup.md) — bootstrap Postgres + Prisma, snippets SQL de debug, reset.
 - [`codex-cloud.md`](./codex-cloud.md) — setup Codex Cloud pour `bftc-run`, DB dev, smokes et QA `curl`.
+- [`cursor-cloud.md`](./cursor-cloud.md) — setup Cursor Cloud Agents (`.cursor/environment.json`), harness identique, PR GitHub.
 - [`worktree-dev.md`](./worktree-dev.md) — référence humaine pour lancer backend/frontend depuis un worktree parallèle. Les agents utilisent le skill `bftc-worktree-qa` comme point d'entrée opérationnel.
 - [`smoke-tests.md`](./smoke-tests.md) — stratégie smokes orchestration/I/O : flows couverts, comment ajouter, anti-patterns.
 - [`balance-and-tempo.md`](./balance-and-tempo.md) — guide ops : où vivent les constantes de durées/coûts/productions, comment éditer le seed `world.config`, workflow rebuild.

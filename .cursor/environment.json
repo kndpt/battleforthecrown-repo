@@ -1,0 +1,27 @@
+{
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "install": "bash scripts/cursor-cloud-setup.sh",
+  "start": "bash scripts/cursor-cloud-start.sh",
+  "terminals": [
+    {
+      "name": "backend",
+      "command": "yarn workspace battleforthecrown-backend start:dev"
+    }
+  ],
+  "env": {
+    "BFTC_CLOUD_RUNTIME": "cursor",
+    "BFTC_POSTGRES_MODE": "native",
+    "PG_VERSION": "16",
+    "DATABASE_URL": "postgresql://postgres:postgres@localhost:5432/battleforthecrown",
+    "JWT_ACCESS_SECRET": "cursor-dev-access-secret",
+    "JWT_REFRESH_SECRET": "cursor-dev-refresh-secret",
+    "PORT": "15001",
+    "FRONTEND_URL": "http://localhost:5173",
+    "VITE_API_BASE_URL": "http://localhost:15001",
+    "VITE_WS_URL": "http://localhost:15001",
+    "SMOKE_TEMPLATE_DB": "battleforthecrown_smoke"
+  }
+}

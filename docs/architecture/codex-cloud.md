@@ -14,6 +14,8 @@ cd "$CODEX_WORKTREE_PATH"
 
 Ne pas maintenir de logique longue dans `.codex/environments/environment.toml` : il est généré par l'UI Codex. Si ce fichier est versionné, il doit rester un simple appel sourcé à `scripts/codex-cloud-setup.sh`, sinon les variables exportées ne sont pas capturées pour la phase agent.
 
+Bootstrap partagé avec Cursor Cloud et Claude web : [`scripts/lib/bftc-cloud-bootstrap.sh`](../../scripts/lib/bftc-cloud-bootstrap.sh). Codex force `BFTC_POSTGRES_MODE=docker` ; Cursor/Claude utilisent Postgres natif.
+
 ## Ce que le script prépare
 
 [`scripts/codex-cloud-setup.sh`](../../scripts/codex-cloud-setup.sh) fait le bootstrap non destructif :
