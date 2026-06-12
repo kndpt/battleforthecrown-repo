@@ -206,6 +206,12 @@ export const formatHeaderCompactAmount = (amount: number): string => {
   return value.toString();
 };
 
+export function formatCompactNumber(n: number): string {
+  if (n >= 10_000) return `${Math.round(n / 1000)}K`;
+  if (n >= 1_000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}K`;
+  return String(Math.floor(n));
+}
+
 /**
  * Obtenir la couleur d'alerte selon le pourcentage de stockage
  */

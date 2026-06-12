@@ -2,6 +2,7 @@ import type { HTMLAttributes, ReactNode } from 'react';
 import type { VillageStrategyType } from '@battleforthecrown/shared/village';
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
+import { formatCompactNumber } from '@/lib/resourceConfig';
 import { GameBottomSheetPanel } from './GameBottomSheetPanel';
 import { SegmentedControl } from './SegmentedControl';
 import { villageStyleOptions } from './villageStyleData';
@@ -153,12 +154,6 @@ const resourceMeta: Record<MultiVillageResourceKind, { icon: string; label: stri
 };
 
 const strategyOptionsById = Object.fromEntries(villageStyleOptions.map((option) => [option.id, option]));
-
-function formatCompactNumber(n: number) {
-  if (n >= 10000) return `${Math.round(n / 1000)}K`;
-  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}K`;
-  return String(n);
-}
 
 function tierFromPower(power: string) {
   const value = Number.parseInt(String(power).replace(/\D/g, ''), 10) || 0;
