@@ -5,6 +5,13 @@ escalation logic for overlapping work.
 
 ---
 
+## State vs archive
+
+Preflight skills maint/refactor : lire **uniquement** `*.state.md` sous `.agents/maintenance/`.
+Rapports narratifs → `archive/<topic>/YYYY-MM-DD-full.md` (jamais en preflight). Voir `.agents/rules/harness.md`.
+
+---
+
 ## Overview
 
 | Skill | Type | Frequency | Output |
@@ -130,7 +137,7 @@ listed, pick a different gameplay gap.
 
 - A `bftc-maint-debt` or `bftc-maint-new-commits` run that identifies a **structural** issue
   (god service, server-authoritative violation, store coupling) should add it to the relevant
-  refactor report (`refactor-{backend,pixi,shared}-report.md`) as a candidate, NOT try to fix it
+  `refactor-{backend,pixi,shared}.state.md` OPEN table as a candidate, NOT fix inline
   inline. Leave it for the weekly `bftc-refactor-*` run.
 
 - After a large feature merges, manually trigger `bftc-maint-new-commits` immediately rather

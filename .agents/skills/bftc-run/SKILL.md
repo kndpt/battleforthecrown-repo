@@ -10,17 +10,17 @@ Tu orchestres une cible BFTC passée en **path de fichier obligatoire** (`@` opt
 
 Noms d'agents selon harness :
 
-| Rôle | Codex | Claude Code | Cursor (`Task`) |
-|---|---|---|---|
-| Cartographie | `code_mapper` | `code-mapper` | `code-mapper` |
-| Implémentation | `implementer` | `implementer` | `implementer` |
-| Tests écrits | `test_writer` | `test-writer` | `test-writer` |
-| Tests lancés | `test_runner` | `test-runner` | `test-runner` |
-| Documentation | `doc_writer` | `doc-writer` | `doc-writer` |
-| Review indépendante (conditionnelle) | `reviewer` | `reviewer` | `reviewer` |
-| Review 5 axes par défaut | lead direct | lead direct | lead direct |
+| Rôle | Codex | Claude Code |
+|---|---|---|
+| Cartographie | `code_mapper` | `code-mapper` |
+| Implémentation | `implementer` | `implementer` |
+| Tests écrits | `test_writer` | `test-writer` |
+| Tests lancés | `test_runner` | `test-runner` |
+| Documentation | `doc_writer` | `doc-writer` |
+| Review indépendante (conditionnelle) | `reviewer` | `reviewer` |
+| Review 5 axes par défaut | lead direct | lead direct |
 
-**Source de vérité mission sub-agent** : corps de prompt dans `.claude/agents/<name>.md` (Mission, Inputs, Procédure, Limites, Output). Cursor : `.cursor/agents/<name>.md` (même corps, frontmatter Composer dédié). Codex : `.codex/agents/<name>.toml`. Valable pour **tous** les harness — pas d'improvisation lead.
+**Source de vérité mission sub-agent** : corps de prompt dans `.claude/agents/<name>.md` (Mission, Inputs, Procédure, Limites, Output) pour Claude Code ; `.codex/agents/<name>.toml` pour Codex. Valable pour **tous** les harness — pas d'improvisation lead.
 
 ## Routage
 
@@ -35,7 +35,7 @@ Préflight commun :
 1. `git status` doit être clean, sinon abort.
 2. Lire la cible entière.
 3. Lire la spec source citée, mais seulement la section utile si l'ancre est claire.
-4. Lire `.agents/rules/{conventions,docs,git}.md`, `SPEC.md`, et le briefing workspace concerné.
+4. Rules `alwaysApply` + `AGENTS.md` déjà injectés — **ne pas relire** sauf ambiguïté. Lire `SPEC.md` (section ancrée) + briefing workspace si scope backend/pixi.
 5. Déterminer la politique PR **avant toute écriture** :
    - Mode `run` (`tasks/runs/...`) : PR obligatoire, ready for review, sauf dérogation explicite du user dans le message de démarrage du run (`pas de PR`, `no PR`, `sans PR`, `ne push pas`).
    - Mode `ticket` (`tasks/<id>-...`) : pas de PR par défaut ; ouvrir une PR seulement si le user le demande explicitement dans le message de démarrage ou après livraison.
@@ -64,7 +64,7 @@ Préflight commun :
 8. **Retest + static-check** — tests adaptés au scope, puis `yarn static-check`.
 8c. **Backprop SPEC** — ajouter §V/§B seulement si un invariant durable ou bug subtil/récurrent a été révélé.
 9. **Documentation** — décider l'impact doc via `.agents/rules/docs.md`; déléguer au doc writer si non trivial.
-10. **Archive + commit** — `DONE`, archive via `git mv`, maj `tasks/README.md`, commit unique EN `<type>(<scope>): <subject>`.
+10. **Archive + commit** — compacter fiche (cf. `.agents/rules/harness.md` : strip `Progress`/`Décisions`, `Rapport final` = QA + ≤3 lignes synthèse) → `DONE`, `git mv` vers `runs/archive/`, maj index `tasks/README.md` (lien seulement, pas de prose), commit unique EN `<type>(<scope>): <subject>`.
 10b. **Publication PR conditionnelle** — si `PR_REQUIRED: oui`, push la branche et ouvrir une PR **ready for review** vers `main` avec titre `run(<id>): ...` ou `task(<id>): ...`, résumé, root cause/impact et validations. Si `PR_REQUIRED: non`, pas de push et pas de PR.
 11. **Démarrage IG conditionnel** — seulement si le rapport final contient des `Tests IG à faire par le user` non vides : utiliser `bftc-worktree-qa` pour démarrer backend + frontend depuis le worktree courant, puis inclure les URLs dans le rapport final.
 
@@ -83,7 +83,7 @@ Si le scope explose, repasser en mode complet et loguer la décision.
 
 ## Délégation
 
-### Règle inviolable (tous harness, Cursor inclus)
+### Règle inviolable (tous harness)
 
 Avant **chaque** spawn sub-agent :
 
@@ -91,14 +91,12 @@ Avant **chaque** spawn sub-agent :
 2. **Lead** : relire le fichier agent si le scope est sensible (reviewer, gros diff) pour vérifier que le contrat run couvre tous les inputs requis.
 3. **Vérifier le rapport** retourné contre le bloc Output obligatoire du fichier agent (`=== RAPPORT EXEC ===`, `=== CARTE MODULE ===`, `VERDICT:`, etc.). Mismatch ou bloc absent → retry 1× puis dérogation lead.
 
-**Cursor** : déléguer via sub-agent natif (`.cursor/agents/<name>.md`) ou `Task` avec `subagent_type` = colonne Cursor. Le harness charge le **corps du `.md`** comme system prompt — le lead n'a pas à recopier la mission. Modèles Cursor : `composer-2.5-fast` (carto, tests), `composer-2.5` (impl, test-writer, doc), thinking pour `reviewer` / `run-planner`. Le `prompt` / message de délégation contient **uniquement** le contrat run :
+**Claude Code / Codex** : `spawn the <agent> agent with the following prompt: ...` — la mission vient du fichier agent du harness respectif ; le message de délégation contient le contrat run :
 
 ```text
 --- CONTRAT RUN (lead) ---
 <contrat ci-dessous, rempli>
 ```
-
-**Claude Code / Codex** : `spawn the <agent> agent with the following prompt: ...` — même contrat run ; la mission vient du fichier agent du harness respectif.
 
 ### Contrat run (à coller sous le contrat agent)
 
