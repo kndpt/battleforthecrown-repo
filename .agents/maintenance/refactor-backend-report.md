@@ -8,6 +8,106 @@ New PRs use branch `maint/refactor-backend/<short-topic>` and PR title
 
 ---
 
+## Run 2026-06-12 — branch `maint/refactor-backend/caravan-return-race-dedup`
+
+**Model:** claude-sonnet-4-6
+**Scan commit:** `0b03b4f`
+
+---
+
+### Prior findings status (Run 2026-06-11)
+
+| ID | Status | Note |
+|----|--------|------|
+| R1 | **RESOLVED** | PR #75 (`6639c0a`) — `calculateTaskProgressUpdate` double call eliminated. |
+| R2 | **RESOLVED** | PR #75 (`6639c0a`) — `buildDailyCardPayload` factory extracted. |
+| B3 | **STILL OPEN** | `getUserIdByVillage` N+1 in outbox dispatch — ~22+ call-sites. 12th run. |
+| C6 | **STILL OPEN** | Recursive `this.getResources` at `resources.service.ts:50`. Cosmetic. |
+| C7 | **RESOLVED** | `handleCaravanReturn` race — this run. |
+| C8 | **RESOLVED** | `caravan-report.service.ts` repeated `findFirst` — this run. |
+| D4 | **STILL OPEN** | `expedition.create` repeated 4× in `combat.service.ts`. Deferred. |
+| D5 | **STILL OPEN** | `buildBarbarianDefender`/`buildPlayerDefender` garrison loop duplication. Deferred. |
+| G1 | **STILL OPEN** | `snapshotDefenderKingdomPowers` sequential awaits. Deferred. |
+| N3 | **STILL OPEN** | `getVillagesInRadius` missing upper-bound clamp. |
+| R3 | **STILL OPEN** | `retention.service.ts` mixes class + 14 pure utility exports. |
+| R4 | **STILL OPEN** | Fractional crown carry — needs Prisma migration. |
+| V3 | **STILL OPEN** | Resource deduction order in `initiateCaravan` (cosmetic). |
+
+---
+
+### Module structure (mental model)
+
+New commits since `16f51b3`: run(052) eliminated player rejoin — `onboarding.service.ts` +refactored (408 LOC), `join-world.use-case.ts` +19 lines; run(053) global display name — `auth.service.ts` +new displayName field (184 LOC), `display-name.spec.ts` (58 LOC), `auth-schemas.spec.ts` (32 LOC). No change to combat module, outbox, or rankings since last scan. Layering remains clean. Zero `as any`, zero `console.*`, zero `@ts-ignore` in production code.
+
+---
+
+### Findings
+
+| ID | Category | Location | Description | Severity | Effort |
+|----|----------|----------|-------------|----------|--------|
+| C7 | Correctness | `return.worker.ts:53` | **RESOLVED** — `handleReturn` ran all paths (including `handleCaravanReturn`) under plain READ COMMITTED `$transaction`. `handleCaravanReturn` reads `originVillage.resourceStock` then writes `currentStock.wood + returnedResources.wood` as an absolute value — exact same lost-update race as the crowns bug fixed in Run 2026-06-08. Fixed: wrapped `$transaction` in `withSerializableRetry` + `Prisma.TransactionIsolationLevel.Serializable`. Non-caravan paths use only atomic `{ increment }`/`{ decrement }` so SERIALIZABLE isolation adds no semantic change, just potential retry on conflict. | Medium | M |
+| C8 | Duplication | `caravan-report.service.ts:35-48, 57-66, 84-93` | **RESOLVED** — `getCaravanReport`, `markCaravanReportAsRead`, and `deleteCaravanReport` each repeated the same `prisma.inboxEntry.findFirst({where:{userId,worldId,kind:'CARAVAN',caravanReportId:reportId,hidden:false},include:{caravanReport:true}})` + not-found guard (~12 LOC × 3). Extracted to `findCaravanEntry(userId, reportId, worldId)` private helper. | Low | S |
+| A1 | Type debt | `auth.service.ts:36-41` | Redundant `findFirst` displayName pre-check inside `$transaction` before `user.create`. The P2002 catch at lines 62-76 already handles `display_name` collisions correctly via `target.includes('display_name')`. The explicit pre-check adds an extra DB query per registration without preventing races (two concurrent transactions can both pass the guard). Fix: remove the `findFirst` pre-check and rely on P2002. | Low | S |
+| N4 | Observability | `join-world.use-case.ts:177` | `this.logger.log(...)` in barbarian seeding completion callback. Per-join, not a hot path; borderline but consistent with the project's log hygiene convention (`log` = startup/init only). Fix: `logger.debug`. | Low | S |
+| B3 | Performance | `event-outbox.service.ts:600` | N+1 `getUserIdByVillage` — now ~22+ call-sites. 12th run. | Medium | M |
+| D4 | Duplication | `combat.service.ts:176,249,335,517` | `expedition.create` repeated 4×. Deferred. | Medium | M |
+| D5 | Duplication | `combat.worker.ts:1112-1170, 1172-1240` | `buildBarbarianDefender`/`buildPlayerDefender` garrison loop. Deferred. | Low | M |
+| G1 | Performance | `combat.service.ts:986-992` | `snapshotDefenderKingdomPowers` sequential `for...of` with `await getKingdomPowerValue(...)` per userId. Fix: `Promise.all`. Deferred (safe with Prisma tx client). | Medium | M |
+| N3 | Correctness | `world-entities-query.service.ts:101-104` | `getVillagesInRadius` missing `Math.min(maxX, 499)` / `Math.min(maxY, 499)` clamp — sibling `getEntitiesInRadius` has it (line 64). | Low | S |
+| R3 | Service design | `retention.service.ts:455-623` | File mixes class + 14 pure utility exports. | Medium | M |
+| R4 | Correctness | `crowns.service.ts:264-272` | Fractional crown carry — needs Prisma migration. | High | M |
+| C6 | Readability | `resources.service.ts:50` | Recursive `this.getResources`. Terminates. Cosmetic. | Low | S |
+| V3 | Style | `combat.service.ts:480-515` | Resource deduction precedes capacity check in `initiateCaravan`. Cosmetic. | Low | S |
+
+---
+
+### Looks bad but is actually fine
+
+- **Non-caravan return path under SERIALIZABLE** — `handleReturn` non-CARAVAN path uses only atomic `{ increment }`/`{ decrement }` for all resource/population writes. SERIALIZABLE adds no lost-update risk for atomic operations; the only behavioral change is potential retry on P2034 serialization failure, which `withSerializableRetry` handles. Verified: 354 unit tests green.
+- **`handleCaravanArrival` absolute write** (`combat.worker.ts:1718-1726`) — already inside `withSerializableRetry` + SERIALIZABLE. Safe; sibling path (C7) now fixed.
+- **`getRankingsSummary` leaderboard fetch** (`rankings.service.ts:121-147`) — uses `Promise.all` for all 5 leaderboard queries. No N+1. `loadDisplayNamesByUserIds` does a single batch `findMany(where: id in [...])` per leaderboard call. Efficient.
+- **`auth.service.ts` double displayName guard** (A1) — the code is correct and handles races; the `findFirst` pre-check is redundant but not unsafe. Deferred to a future maintenance run.
+- **B3 N+1 remains** — 12th run. At current scale unchanged verdict.
+- **C6 recursive `getResources`** — terminates in 2 calls exactly. Cosmetic.
+
+---
+
+### Selected theme: C7 + C8 — caravan subsystem: fix return race and deduplicate report lookup
+
+**Evidence (C7):**
+- `return.worker.ts:53-193` (pre-fix): all return paths (caravan + battle + scout) ran under a plain `this.prisma.$transaction(async (tx) => {...})` with default READ COMMITTED isolation.
+- `handleCaravanReturn` at lines 200-243 (pre-fix): reads `originVillage.resourceStock` + computes `calculateCurrentResources`, then writes `currentStock.wood + returnedResources.wood` (absolute). Under READ COMMITTED, a concurrent production tick could increment `wood` between the read and the write, causing the tick's production to be silently overwritten (lost update). Identical class of bug to the crowns race fixed in Run 2026-06-08 (`accumulateCrowns` absolute write → atomic `{ increment }`) and to `handleCaravanArrival` which was wrapped in SERIALIZABLE from the start.
+- The fix uses `withSerializableRetry` (already in `common/serializable-retry.utils.ts`) with `Prisma.TransactionIsolationLevel.Serializable`, exactly mirroring `handleCombatResolution` in `combat.worker.ts:150-214`.
+
+**Evidence (C8):**
+- `getCaravanReport`, `markCaravanReportAsRead`, `deleteCaravanReport` each contained verbatim `prisma.inboxEntry.findFirst({where:{userId,worldId,kind:'CARAVAN',caravanReportId:reportId,hidden:false},include:{caravanReport:true}})` + `if (!entry?.caravanReport) throw new NotFoundException(...)` — ~12 LOC × 3 = 36 LOC.
+- Extracted to `findCaravanEntry(userId, reportId, worldId)` private helper (~12 LOC). Net: −24 LOC in service body.
+
+**Why this theme over alternatives:**
+- C7 is a correctness bug in a financial/resource flow — caravans carry resources, a lost-update silently discards production. Same class as E1 (strategy TOCTOU, Run 2026-06-03) and the crowns race (Run 2026-06-08); pattern is well-established in this codebase.
+- C8 is in the same caravan subsystem (coherent PR scope), S effort, pure extraction.
+- G1 (Promise.all in snapshotDefenderKingdomPowers) deferred — Medium effort, needs validation that Prisma tx client handles concurrent awaits safely (documented in Run 2026-06-11 "looks bad but actually fine" — it does, but requires more careful testing at the combat resolution level).
+- B3, D4, D5 deferred as in prior runs.
+- N3, A1, N4 deferred — S effort but cosmetic/minor; not worth a standalone PR.
+
+### Files changed
+
+- `battleforthecrown-backend/src/modules/combat/return.worker.ts` — C7: add `Prisma` + `withSerializableRetry` imports; wrap `$transaction` in `withSerializableRetry` with `Prisma.TransactionIsolationLevel.Serializable`
+- `battleforthecrown-backend/src/modules/combat/caravan-report.service.ts` — C8: extract `findCaravanEntry` private helper; `getCaravanReport`, `markCaravanReportAsRead`, `deleteCaravanReport` delegate to it
+
+### Verification
+
+```shell
+yarn static-check   → ✅ tsc (backend+pixi) + eslint --quiet, 0 errors
+yarn test:backend   → ✅ 354 passed, 34 suites
+```
+
+### Docs impact
+
+Aucun changement nécessaire — refactor interne (worker + service), pas de changement d'API REST, d'event WS, de modèle Prisma ni de règle gameplay. Findings B3/C6/D4/D5/G1/N3/R3/R4/V3 restent ouverts. Nouveaux findings A1/N4 ouverts pour runs futurs.
+
+---
+
 ## Run 2026-06-11 — branch `claude/awesome-mendel-fxzr0b`
 
 **Model:** claude-sonnet-4-6

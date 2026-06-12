@@ -32,20 +32,8 @@ export class CaravanReportService {
     worldId: string,
   ): Promise<CaravanReportResponse> {
     await this.ownership.assertWorldMember(worldId, userId);
-    const entry = await this.prisma.inboxEntry.findFirst({
-      where: {
-        userId,
-        worldId,
-        kind: 'CARAVAN',
-        caravanReportId: reportId,
-        hidden: false,
-      },
-      include: { caravanReport: true },
-    });
-    if (!entry?.caravanReport) {
-      throw new NotFoundException('Caravan report not found');
-    }
-    return presentCaravanReport(entry.caravanReport, entry.isRead);
+    const entry = await this.findCaravanEntry(userId, reportId, worldId);
+    return presentCaravanReport(entry.caravanReport!, entry.isRead);
   }
 
   async markCaravanReportAsRead(
@@ -54,24 +42,12 @@ export class CaravanReportService {
     worldId: string,
   ): Promise<CaravanReportResponse> {
     await this.ownership.assertWorldMember(worldId, userId);
-    const entry = await this.prisma.inboxEntry.findFirst({
-      where: {
-        userId,
-        worldId,
-        kind: 'CARAVAN',
-        caravanReportId: reportId,
-        hidden: false,
-      },
-      include: { caravanReport: true },
-    });
-    if (!entry?.caravanReport) {
-      throw new NotFoundException('Caravan report not found');
-    }
+    const entry = await this.findCaravanEntry(userId, reportId, worldId);
     await this.prisma.inboxEntry.update({
       where: { id: entry.id },
       data: { isRead: true },
     });
-    return presentCaravanReport(entry.caravanReport, true);
+    return presentCaravanReport(entry.caravanReport!, true);
   }
 
   async deleteCaravanReport(
@@ -80,6 +56,19 @@ export class CaravanReportService {
     worldId: string,
   ): Promise<{ message: string }> {
     await this.ownership.assertWorldMember(worldId, userId);
+    const entry = await this.findCaravanEntry(userId, reportId, worldId);
+    await this.prisma.inboxEntry.update({
+      where: { id: entry.id },
+      data: { hidden: true },
+    });
+    return { message: 'Caravan report deleted successfully' };
+  }
+
+  private async findCaravanEntry(
+    userId: string,
+    reportId: string,
+    worldId: string,
+  ) {
     const entry = await this.prisma.inboxEntry.findFirst({
       where: {
         userId,
@@ -93,10 +82,6 @@ export class CaravanReportService {
     if (!entry?.caravanReport) {
       throw new NotFoundException('Caravan report not found');
     }
-    await this.prisma.inboxEntry.update({
-      where: { id: entry.id },
-      data: { hidden: true },
-    });
-    return { message: 'Caravan report deleted successfully' };
+    return entry;
   }
 }
