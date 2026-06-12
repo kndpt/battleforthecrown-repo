@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { BuildingDto } from '@/api';
 import type { DisplayResources } from '@/lib/interpolation';
+import { formatCompactNumber } from '@/lib/resourceConfig';
 import { BUILDING_TYPES } from '@battleforthecrown/shared/village/buildings';
 import {
   canAffordNextBuildingLevel,
   computeQueueProgress,
   computeResourceRatios,
-  formatCompactNumber,
   formatQueueTime,
 } from './VillageViewSectionHelpers';
 
