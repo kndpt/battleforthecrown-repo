@@ -33,6 +33,7 @@ Politique PR `$bftc-run` :
 
 ### Runs actifs
 
+- [057 — Producer Oyez runtime + influence carte](./runs/057-feature-oyez-runtime-producer.md) — 📋 `PLANNED`. Worker pg-boss cron 04:00 Europe/Paris qui crée des `DailyOyez` idempotents par monde, catalogue 4 thèmes typés (`OyezTheme`), 4ᵉ tâche thématique sous Oyez sans bonus de récompense.
 - [055 — Carnet d'intel minimal](./runs/055-feature-intel-notebook.md) — 📋 `PLANNED`. Persister la dernière info connue par village cible (scout ou combat victorieux), exposer via REST/WS, surface dans le panneau d'entité.
 - [054 — Cible barbare narrative d'onboarding](./runs/054-feature-onboarding-narrative-barbarian-target.md) — 📋 `PLANNED`. Remplacer la garantie T1 globale par une cible affaiblie dédiée au tutoriel, tout en préservant les T1 standards.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
