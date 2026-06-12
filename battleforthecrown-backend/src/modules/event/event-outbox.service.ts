@@ -3,6 +3,7 @@ import type { EventOutbox } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { GameGateway } from './game.gateway';
 import { parseEventPayload } from './codecs';
+import { collectVillageIdsFromPayload } from './event-outbox-village-ids';
 import { RetentionService } from '../retention/retention.service';
 import { OnboardingService } from '../onboarding/onboarding.service';
 import {
@@ -46,6 +47,7 @@ function isEventKind(kind: string): kind is EventKind {
 @Injectable()
 export class EventOutboxService {
   private readonly logger = new Logger(EventOutboxService.name);
+  private villageUserIdByVillageId: Map<string, string | null> | null = null;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -71,33 +73,38 @@ export class EventOutboxService {
       `📦 [Outbox] ${events.length} events à dispatcher (fetch: ${fetchEndTime - fetchStartTime}ms)`,
     );
 
-    for (const event of events) {
-      const eventDispatchStart = Date.now();
-      const eventAge = eventDispatchStart - event.createdAt.getTime();
+    this.villageUserIdByVillageId = await this.prefetchVillageUserIds(events);
+    try {
+      for (const event of events) {
+        const eventDispatchStart = Date.now();
+        const eventAge = eventDispatchStart - event.createdAt.getTime();
 
-      this.logger.debug(`📨 [Outbox] Dispatch event ${event.kind}:`, {
-        eventId: event.id,
-        kind: event.kind,
-        createdAt: event.createdAt.toISOString(),
-        createdAtTimestamp: event.createdAt.getTime(),
-        dispatchingAt: eventDispatchStart,
-        eventAge,
-      });
-
-      try {
-        await this.dispatchEvent(event);
-        await this.prisma.eventOutbox.update({
-          where: { id: event.id },
-          data: { dispatchedAt: new Date() },
+        this.logger.debug(`📨 [Outbox] Dispatch event ${event.kind}:`, {
+          eventId: event.id,
+          kind: event.kind,
+          createdAt: event.createdAt.toISOString(),
+          createdAtTimestamp: event.createdAt.getTime(),
+          dispatchingAt: eventDispatchStart,
+          eventAge,
         });
 
-        const eventDispatchEnd = Date.now();
-        this.logger.debug(
-          `✅ [Outbox] Event ${event.kind} dispatché en ${eventDispatchEnd - eventDispatchStart}ms`,
-        );
-      } catch (error) {
-        this.logger.error(`Failed to dispatch event ${event.id}:`, error);
+        try {
+          await this.dispatchEvent(event);
+          await this.prisma.eventOutbox.update({
+            where: { id: event.id },
+            data: { dispatchedAt: new Date() },
+          });
+
+          const eventDispatchEnd = Date.now();
+          this.logger.debug(
+            `✅ [Outbox] Event ${event.kind} dispatché en ${eventDispatchEnd - eventDispatchStart}ms`,
+          );
+        } catch (error) {
+          this.logger.error(`Failed to dispatch event ${event.id}:`, error);
+        }
       }
+    } finally {
+      this.villageUserIdByVillageId = null;
     }
   }
 
@@ -597,7 +604,52 @@ export class EventOutboxService {
     this.gateway.notifyUser(userId, 'garrison.added', payload);
   }
 
+  private async prefetchVillageUserIds(
+    events: EventOutbox[],
+  ): Promise<Map<string, string | null>> {
+    const villageIds = new Set<string>();
+
+    for (const event of events) {
+      if (!isEventKind(event.kind)) continue;
+
+      try {
+        const payload = parseEventPayload(event.kind, event.payload);
+        for (const villageId of collectVillageIdsFromPayload(
+          payload as unknown as Record<string, unknown>,
+        )) {
+          villageIds.add(villageId);
+        }
+      } catch {
+        // Malformed payloads fail later in dispatchEvent.
+      }
+    }
+
+    if (villageIds.size === 0) {
+      return new Map();
+    }
+
+    const villages = await this.prisma.village.findMany({
+      where: { id: { in: [...villageIds] } },
+      select: { id: true, userId: true },
+    });
+
+    const villageUserIdByVillageId = new Map<string, string | null>();
+    for (const villageId of villageIds) {
+      villageUserIdByVillageId.set(villageId, null);
+    }
+    for (const village of villages) {
+      villageUserIdByVillageId.set(village.id, village.userId);
+    }
+
+    return villageUserIdByVillageId;
+  }
+
   private async getUserIdByVillage(villageId: string): Promise<string | null> {
+    const cachedUserId = this.villageUserIdByVillageId?.get(villageId);
+    if (cachedUserId !== undefined) {
+      return cachedUserId;
+    }
+
     const village = await this.prisma.village.findUnique({
       where: { id: villageId },
       select: { userId: true },
