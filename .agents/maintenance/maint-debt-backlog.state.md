@@ -7,7 +7,6 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 | area | note |
 |------|------|
-| pixi/WorldMapScene.ts | small render/input cleanup |
 | pixi magic 3600 + formatDuration dup | UI text differs — need product call before dedupe |
 | VillageCanvas + VillageScene pipeline | zero importers — needs retire-canvas decision, too broad |
 
