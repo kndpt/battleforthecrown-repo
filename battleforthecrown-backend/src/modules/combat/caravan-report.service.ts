@@ -1,8 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import { presentCaravanReport } from './caravan-report.presenter';
 import type { CaravanReportResponse } from '@battleforthecrown/shared/combat';
+
+type CaravanEntryWithReport = Prisma.InboxEntryGetPayload<{
+  include: { caravanReport: true };
+}> & {
+  caravanReport: NonNullable<
+    Prisma.InboxEntryGetPayload<{
+      include: { caravanReport: true };
+    }>['caravanReport']
+  >;
+};
 
 @Injectable()
 export class CaravanReportService {
@@ -32,19 +43,7 @@ export class CaravanReportService {
     worldId: string,
   ): Promise<CaravanReportResponse> {
     await this.ownership.assertWorldMember(worldId, userId);
-    const entry = await this.prisma.inboxEntry.findFirst({
-      where: {
-        userId,
-        worldId,
-        kind: 'CARAVAN',
-        caravanReportId: reportId,
-        hidden: false,
-      },
-      include: { caravanReport: true },
-    });
-    if (!entry?.caravanReport) {
-      throw new NotFoundException('Caravan report not found');
-    }
+    const entry = await this.findCaravanEntry(userId, reportId, worldId);
     return presentCaravanReport(entry.caravanReport, entry.isRead);
   }
 
@@ -54,19 +53,7 @@ export class CaravanReportService {
     worldId: string,
   ): Promise<CaravanReportResponse> {
     await this.ownership.assertWorldMember(worldId, userId);
-    const entry = await this.prisma.inboxEntry.findFirst({
-      where: {
-        userId,
-        worldId,
-        kind: 'CARAVAN',
-        caravanReportId: reportId,
-        hidden: false,
-      },
-      include: { caravanReport: true },
-    });
-    if (!entry?.caravanReport) {
-      throw new NotFoundException('Caravan report not found');
-    }
+    const entry = await this.findCaravanEntry(userId, reportId, worldId);
     await this.prisma.inboxEntry.update({
       where: { id: entry.id },
       data: { isRead: true },
@@ -80,6 +67,19 @@ export class CaravanReportService {
     worldId: string,
   ): Promise<{ message: string }> {
     await this.ownership.assertWorldMember(worldId, userId);
+    const entry = await this.findCaravanEntry(userId, reportId, worldId);
+    await this.prisma.inboxEntry.update({
+      where: { id: entry.id },
+      data: { hidden: true },
+    });
+    return { message: 'Caravan report deleted successfully' };
+  }
+
+  private async findCaravanEntry(
+    userId: string,
+    reportId: string,
+    worldId: string,
+  ): Promise<CaravanEntryWithReport> {
     const entry = await this.prisma.inboxEntry.findFirst({
       where: {
         userId,
@@ -93,10 +93,6 @@ export class CaravanReportService {
     if (!entry?.caravanReport) {
       throw new NotFoundException('Caravan report not found');
     }
-    await this.prisma.inboxEntry.update({
-      where: { id: entry.id },
-      data: { hidden: true },
-    });
-    return { message: 'Caravan report deleted successfully' };
+    return entry as CaravanEntryWithReport;
   }
 }
