@@ -16,6 +16,7 @@ export interface WorldEntityDto {
   data: Record<string, unknown> & {
     tier?: 'T1' | 'T2' | 'T3' | string;
     name?: string;
+    isOnboardingNarrativeTarget?: boolean;
     villageId?: string;
     userId?: string;
     ownerDisplayName?: string;

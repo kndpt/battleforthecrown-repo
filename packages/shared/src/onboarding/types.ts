@@ -25,6 +25,13 @@ export interface OnboardingStepDto {
   completedAt: string;
 }
 
+export interface OnboardingNarrativeTargetDto {
+  villageId: string;
+  x: number;
+  y: number;
+  name: string;
+}
+
 export interface OnboardingSummaryDto {
   worldId: string;
   firstVillageId: string | null;
@@ -34,5 +41,6 @@ export interface OnboardingSummaryDto {
   initialRewardApplied: boolean;
   initialRewardAppliedAt: string | null;
   initialReward: OnboardingRewardDto;
+  narrativeTarget: OnboardingNarrativeTargetDto | null;
   completedAt: string | null;
 }

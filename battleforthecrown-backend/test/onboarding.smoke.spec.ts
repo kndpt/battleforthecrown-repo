@@ -13,10 +13,12 @@ import {
 } from '@battleforthecrown/shared';
 import { ONBOARDING_TRAIN_TROOPS_TARGET } from '@battleforthecrown/shared/onboarding';
 import type { OnboardingSummaryDto } from '@battleforthecrown/shared/onboarding';
+import { ONBOARDING_NARRATIVE_TARGET_NAME } from '@battleforthecrown/shared/onboarding';
 import { EventOutboxService } from '../src/modules/event/event-outbox.service';
 import {
   bootSmokeApp,
   joinWorld,
+  outboxDispatched,
   registerUser,
   seedSmokeWorld,
   type SmokeContext,
@@ -196,14 +198,6 @@ describe('scripted onboarding smoke', () => {
 
     await setBuildingLevel(ctx, villageId, BUILDING_TYPES.CASTLE, 3);
     await setBuildingLevel(ctx, villageId, BUILDING_TYPES.WATCHTOWER, 1);
-    await createVictoriousBarbarianReport(
-      ctx,
-      world.id,
-      player.userId,
-      villageId,
-      join.village.x + 1,
-      join.village.y,
-    );
     await ctx.prisma.eventOutbox.createMany({
       data: [
         {
@@ -226,28 +220,51 @@ describe('scripted onboarding smoke', () => {
             level: 1,
           },
         },
-        {
-          kind: 'battle.resolved',
-          aggregateId: 'onboarding-battle',
-          payload: {
-            expeditionId: 'onboarding-battle',
-            reportId: 'onboarding-report',
-            villageId,
-            villageName: join.village.name,
-            targetKind: 'BARBARIAN_VILLAGE',
-            targetName: 'Barbares T1',
-            targetTier: 'T1',
-            targetX: join.village.x + 1,
-            targetY: join.village.y,
-            isVictory: true,
-            loot: { resources: { wood: 10, stone: 0, iron: 0 } },
-            lossesAttacker: {},
-            casualtyRate: 0,
-            survivingUnits: { MILITIA: ONBOARDING_TRAIN_TROOPS_TARGET },
-            returnAt: new Date(now.getTime() + 60_000).toISOString(),
-          },
-        },
       ],
+    });
+
+    await ctx.app.get(EventOutboxService).dispatchPendingEvents();
+
+    const narrativeTarget = await ctx.prisma.village.findFirstOrThrow({
+      where: {
+        worldId: world.id,
+        isOnboardingNarrativeTarget: true,
+      },
+    });
+    expect(narrativeTarget.name).toBe(ONBOARDING_NARRATIVE_TARGET_NAME);
+
+    await createVictoriousBarbarianReport(
+      ctx,
+      world.id,
+      player.userId,
+      villageId,
+      narrativeTarget.id,
+      narrativeTarget.x,
+      narrativeTarget.y,
+    );
+    await ctx.prisma.eventOutbox.create({
+      data: {
+        kind: 'battle.resolved',
+        aggregateId: 'onboarding-battle',
+        payload: {
+          expeditionId: 'onboarding-battle',
+          reportId: 'onboarding-report',
+          villageId,
+          villageName: join.village.name,
+          targetKind: 'BARBARIAN_VILLAGE',
+          targetName: narrativeTarget.name,
+          targetRefId: narrativeTarget.id,
+          targetTier: 'T1',
+          targetX: narrativeTarget.x,
+          targetY: narrativeTarget.y,
+          isVictory: true,
+          loot: { resources: { wood: 10, stone: 0, iron: 0 } },
+          lossesAttacker: {},
+          casualtyRate: 0,
+          survivingUnits: { MILITIA: ONBOARDING_TRAIN_TROOPS_TARGET },
+          returnAt: new Date(now.getTime() + 60_000).toISOString(),
+        },
+      },
     });
 
     await ctx.app.get(EventOutboxService).dispatchPendingEvents();
@@ -339,13 +356,23 @@ describe('scripted onboarding smoke', () => {
       },
       update: { quantity: ONBOARDING_TRAIN_TROOPS_TARGET },
     });
+    const primingSummary = await request(ctx.server)
+      .get('/onboarding')
+      .query({ worldId: world.id })
+      .set('Authorization', `Bearer ${player.accessToken}`);
+    expect(primingSummary.status).toBe(200);
+
+    const narrativeTarget = await ctx.prisma.village.findFirstOrThrow({
+      where: { worldId: world.id, isOnboardingNarrativeTarget: true },
+    });
     await createVictoriousBarbarianReport(
       ctx,
       world.id,
       player.userId,
       villageId,
-      join.village.x + 1,
-      join.village.y,
+      narrativeTarget.id,
+      narrativeTarget.x,
+      narrativeTarget.y,
     );
 
     const summary = await request(ctx.server)
@@ -365,6 +392,136 @@ describe('scripted onboarding smoke', () => {
       'BUILD_WATCHTOWER',
       'ATTACK_BARBARIAN',
     ]);
+  });
+
+  it('reveals a weakened narrative target after watchtower level 1 and completes ATTACK_BARBARIAN on victory', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const player = await registerUser(
+      ctx.server,
+      'onboarding-narrative-player',
+    );
+    const join = await joinWorld(
+      ctx.server,
+      player.accessToken,
+      world.id,
+      'onboarding-narrative-home',
+    );
+    const villageId = join.village.id;
+
+    await setBuildingLevel(ctx, villageId, BUILDING_TYPES.CASTLE, 3);
+    await setBuildingLevel(ctx, villageId, BUILDING_TYPES.WATCHTOWER, 1);
+    await ctx.prisma.unitInventory.upsert({
+      where: {
+        villageId_unitType: { villageId, unitType: UNIT_TYPES.MILITIA },
+      },
+      create: {
+        villageId,
+        unitType: UNIT_TYPES.MILITIA,
+        quantity: ONBOARDING_TRAIN_TROOPS_TARGET,
+      },
+      update: { quantity: ONBOARDING_TRAIN_TROOPS_TARGET },
+    });
+
+    await ctx.prisma.eventOutbox.create({
+      data: {
+        kind: 'building.completed',
+        aggregateId: 'onboarding-narrative-watchtower',
+        payload: {
+          buildingId: 'onboarding-narrative-watchtower',
+          villageId,
+          buildingType: 'WATCHTOWER',
+          level: 1,
+        },
+      },
+    });
+    await ctx.app.get(EventOutboxService).dispatchPendingEvents();
+
+    const summaryAfterWatchtower = await request(ctx.server)
+      .get('/onboarding')
+      .query({ worldId: world.id })
+      .set('Authorization', `Bearer ${player.accessToken}`);
+    expect(summaryAfterWatchtower.status).toBe(200);
+    const summaryBody = summaryAfterWatchtower.body as OnboardingSummaryDto;
+    expect(summaryBody).toMatchObject({
+      status: 'ACTIVE',
+      currentStep: 'ATTACK_BARBARIAN',
+      narrativeTarget: {
+        name: ONBOARDING_NARRATIVE_TARGET_NAME,
+      },
+    });
+
+    const narrativeTarget = summaryBody.narrativeTarget;
+    expect(narrativeTarget).not.toBeNull();
+
+    const entitiesRes = await request(ctx.server)
+      .get(`/world/${world.id}/entities`)
+      .set('Authorization', `Bearer ${player.accessToken}`);
+    expect(entitiesRes.status).toBe(200);
+    const narrativeEntity = (
+      entitiesRes.body as {
+        entities: Array<{
+          id: string;
+          data: { isOnboardingNarrativeTarget?: boolean };
+        }>;
+      }
+    ).entities.find((entity) => entity.id === narrativeTarget!.villageId);
+    expect(narrativeEntity?.data.isOnboardingNarrativeTarget).toBe(true);
+
+    const targetMilitia = await ctx.prisma.unitInventory.findUniqueOrThrow({
+      where: {
+        villageId_unitType: {
+          villageId: narrativeTarget!.villageId,
+          unitType: UNIT_TYPES.MILITIA,
+        },
+      },
+    });
+    expect(targetMilitia.quantity).toBe(2);
+
+    await ctx.prisma.world.update({
+      where: { id: world.id },
+      data: {
+        config: {
+          ...SMOKE_WORLD_CONFIG,
+          tempo: {
+            ...SMOKE_WORLD_CONFIG.tempo,
+            overrides: {
+              ...SMOKE_WORLD_CONFIG.tempo.overrides,
+              travelSpeed: 0.000001,
+            },
+          },
+        },
+      },
+    });
+
+    const attackRes = await request(ctx.server)
+      .post('/combat/attack')
+      .set('Authorization', `Bearer ${player.accessToken}`)
+      .send({
+        villageId,
+        targetX: narrativeTarget!.x,
+        targetY: narrativeTarget!.y,
+        targetKind: 'BARBARIAN_VILLAGE',
+        targetRefId: narrativeTarget!.villageId,
+        units: { MILITIA: ONBOARDING_TRAIN_TROOPS_TARGET },
+      });
+    expect(attackRes.status).toBeLessThan(300);
+
+    const resolved = await outboxDispatched(
+      ctx.prisma,
+      { kind: 'battle.resolved', aggregateId: villageId },
+      { timeoutMs: 15_000 },
+    );
+    expect(resolved?.dispatchedAt).toBeTruthy();
+
+    const completedSummary = await request(ctx.server)
+      .get('/onboarding')
+      .query({ worldId: world.id })
+      .set('Authorization', `Bearer ${player.accessToken}`);
+    expect(completedSummary.status).toBe(200);
+    expect(completedSummary.body).toMatchObject({
+      status: 'COMPLETED',
+      currentStep: null,
+    });
   });
 });
 
@@ -397,6 +554,7 @@ async function createVictoriousBarbarianReport(
   worldId: string,
   attackerUserId: string,
   attackerVillageId: string,
+  targetVillageId: string,
   targetX: number,
   targetY: number,
 ) {
@@ -405,6 +563,7 @@ async function createVictoriousBarbarianReport(
       worldId,
       attackerUserId,
       attackerVillageId,
+      defenderVillageId: targetVillageId,
       targetKind: 'BARBARIAN_VILLAGE',
       targetX,
       targetY,

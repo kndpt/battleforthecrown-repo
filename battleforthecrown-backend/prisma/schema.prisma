@@ -160,6 +160,7 @@ model Village {
   x                          Int
   y                          Int
   isBarbarian                Boolean       @default(false) @map("is_barbarian")
+  isOnboardingNarrativeTarget Boolean      @default(false) @map("is_onboarding_narrative_target")
   tier                       String?
   label                      VillageLabel?
   barbarianTroopsLastRegenTs DateTime?     @map("barbarian_troops_last_regen_ts") @db.Timestamptz(3)
@@ -178,12 +179,14 @@ model Village {
   sentReinforcements     Garrison[]             @relation("OriginVillageGarrison")
   pendingConquestAttacks PendingConquest[]      @relation("PendingConquestAttacker")
   pendingConquestTargets PendingConquest[]      @relation("PendingConquestTarget")
+  onboardingNarrativeTargetFor OnboardingState? @relation("OnboardingNarrativeTarget")
 
   @@unique([worldId, x, y])
   @@index([userId])
   @@index([worldId])
   @@index([worldId, userId])
   @@index([worldId, isBarbarian])
+  @@index([worldId, isOnboardingNarrativeTarget])
   @@index([worldId, tier])
   @@map("village")
 }
@@ -392,12 +395,14 @@ model OnboardingState {
   currentStep            OnboardingStep   @default(UPGRADE_CASTLE_LEVEL_2) @map("current_step")
   initialRewardApplied   Boolean          @default(false) @map("initial_reward_applied")
   initialRewardAppliedAt DateTime?        @map("initial_reward_applied_at") @db.Timestamptz(3)
+  narrativeTargetVillageId String?        @unique @map("narrative_target_village_id")
   completedAt            DateTime?        @map("completed_at") @db.Timestamptz(3)
   createdAt              DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt              DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   user  User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   world World                    @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  narrativeTarget Village?         @relation("OnboardingNarrativeTarget", fields: [narrativeTargetVillageId], references: [id], onDelete: SetNull)
   steps OnboardingStepProgress[]
 
   @@unique([userId, worldId])

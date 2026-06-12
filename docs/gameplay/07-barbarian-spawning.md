@@ -10,7 +10,7 @@ Les BV (cf. [`06-barbarians.md`](./06-barbarians.md)) sont **générés à l'arr
 
 - Pas de pool fixe au lancement du monde.
 - Pas de spawn déconnecté des joueurs.
-- Un joueur qui rejoint un monde **trouve toujours des cibles barbares à proximité**, même si le monde est ancien. Au moins une cible T1 doit être dans le rayon de Watchtower niveau 1 du village initial pour rester visible et attaquable pendant l'onboarding.
+- Un joueur qui rejoint un monde **trouve toujours des cibles barbares à proximité**, même si le monde est ancien. La **première cible jouable garantie** pendant l'onboarding est une **cible narrative affaiblie** créée à la Tour de guet L1 (cf. [`15-onboarding.md`](./15-onboarding.md)), pas une garantie du seeding global.
 - **Mais** : pas de submersion à mesure que les arrivées s'accumulent (sinon la carte devient une mer de BV, le PvP se dilue, l'identité des zones disparaît).
 
 L'algorithme s'adapte donc à **deux variables vivantes** :
@@ -93,16 +93,9 @@ L'anneau est calculé via `getChunksInRings(centerX, centerY, rMin, rMax, chunkS
 
 > 💡 La fonction `samplePositions` lit les villages présents dans le **chunk + halo `minSpacing`** (en lecture directe DB, transactionnelle) avant de proposer une position. Pas de rolling : si la position échoue les contraintes, on retire jusqu'à `need × 20` tentatives, puis on s'arrête.
 
-### Garantie T1 atteignable Watchtower L1
+### Hors scope seeding global — cible narrative onboarding
 
-Après le seeding normal des chunks proches, le backend vérifie si un village barbare T1 existe déjà dans le rayon de Watchtower niveau 1 du village joueur. Si aucun T1 n'est visible, il crée **au plus une** cible T1 dans l'anneau atteignable `[rMin, radius Watchtower L1]`, en respectant :
-
-- collisions et unicité `(worldId, x, y)` ;
-- `playerExclusion` autour des villages joueurs ;
-- `minSpacing` vis-à-vis des villages déjà présents ;
-- idempotence : relancer le seeding ne crée rien si un T1 atteignable existe déjà.
-
-Cette garantie ne remplace pas l'anti-submersion par chunk pour la distribution normale : elle borne seulement la première cible jouable nécessaire à l'onboarding.
+Le seeding global **ne garantit plus** qu'un T1 standard soit visible dans le rayon Watchtower L1. Cette responsabilité appartient au runtime onboarding : à la construction de la Tour de guet L1, une cible narrative affaiblie est créée de façon idempotente (cf. [`15-onboarding.md` § Cible narrative affaiblie](./15-onboarding.md#cible-narrative-affaiblie)).
 
 ## Distribution des tiers
 

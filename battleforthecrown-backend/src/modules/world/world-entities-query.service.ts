@@ -15,6 +15,7 @@ const barbarianVillageDataSchema = z.object({
   tier: z.string().nullable(),
   name: z.string(),
   villageId: z.string(),
+  isOnboardingNarrativeTarget: z.boolean().optional(),
   captureWindow: captureWindowSchema,
 });
 
@@ -148,6 +149,7 @@ export class WorldEntitiesQueryService {
         y: true,
         name: true,
         tier: true,
+        isOnboardingNarrativeTarget: true,
         pendingConquestTargets: {
           where: { status: 'OPEN' },
           select: {
@@ -174,6 +176,9 @@ export class WorldEntitiesQueryService {
           tier: b.tier,
           name: b.name,
           villageId: b.id,
+          ...(b.isOnboardingNarrativeTarget
+            ? { isOnboardingNarrativeTarget: true }
+            : {}),
           ...(capture
             ? {
                 captureWindow: {

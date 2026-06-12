@@ -34,11 +34,11 @@ Politique PR `$bftc-run` :
 ### Runs actifs
 
 - [055 — Carnet d'intel minimal](./runs/055-feature-intel-notebook.md) — 📋 `PLANNED`. Persister la dernière info connue par village cible (scout ou combat victorieux), exposer via REST/WS, surface dans le panneau d'entité.
-- [054 — Cible barbare narrative d'onboarding](./runs/054-feature-onboarding-narrative-barbarian-target.md) — 📋 `PLANNED`. Remplacer la garantie T1 globale par une cible affaiblie dédiée au tutoriel, tout en préservant les T1 standards.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
 
 ### Runs archivés
 
+- [054 — Cible barbare narrative d'onboarding](./runs/archive/054-feature-onboarding-narrative-barbarian-target.md) — ✅ `DONE` (2026-06-12). Cible narrative affaiblie à la Tour de guet L1, retrait garantie T1 global du seeding, `ATTACK_BARBARIAN` lié à la cible dédiée.
 - [052 — Retour joueur après perte du dernier village](./runs/archive/052-feature-eliminated-player-rejoin-flow.md) — ✅ `DONE` (2026-06-11). État membre sans village : écran royaume perdu, rejoin `LOCKED`, CTA Revenir/Entrer `/worlds`, fix onboarding tx rejoin.
 - [053 — Nom public de joueur global](./runs/archive/053-feature-player-display-name.md) — ✅ `DONE` (2026-06-11). `User.displayName` global unique case-insensitive, inscription/login, surfaces publiques sans email, profil HUD et backprop SPEC V8.
 - [052 — Rapports persistants de caravanes](./runs/archive/052-feature-caravan-reports.md) — ✅ `DONE` (2026-06-10). `CaravanReport` + inbox `CARAVAN` pour arrivée nominale et retour rappelé, REST list/detail/read/delete, badge/messages, invalidations WS, docs report/inbox/outbox et smokes caravane.

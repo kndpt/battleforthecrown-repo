@@ -16,6 +16,13 @@ export const OnboardingStepDtoSchema = z.object({
   completedAt: z.string(),
 });
 
+export const OnboardingNarrativeTargetSchema = z.object({
+  villageId: z.string(),
+  x: z.number(),
+  y: z.number(),
+  name: z.string(),
+});
+
 export const OnboardingSummarySchema = z.object({
   worldId: z.string(),
   firstVillageId: z.string().nullable(),
@@ -25,5 +32,6 @@ export const OnboardingSummarySchema = z.object({
   initialRewardApplied: z.boolean(),
   initialRewardAppliedAt: z.string().nullable(),
   initialReward: OnboardingRewardSchema,
+  narrativeTarget: OnboardingNarrativeTargetSchema.nullable(),
   completedAt: z.string().nullable(),
 });

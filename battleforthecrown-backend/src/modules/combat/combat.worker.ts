@@ -573,7 +573,9 @@ export class CombatWorker implements OnModuleInit {
         attackerY: attackerVillage.y,
         attackerUserId: attackerVillage.userId!, // Guaranteed non-null for player attacks
         defenderVillageId:
-          expedition.targetKind === 'PLAYER_VILLAGE' || occupationDefense
+          expedition.targetKind === 'BARBARIAN_VILLAGE' ||
+          expedition.targetKind === 'PLAYER_VILLAGE' ||
+          occupationDefense
             ? expedition.targetRefId
             : null,
         defenderVillageName: defenderVillage?.name ?? null,
@@ -980,6 +982,10 @@ export class CombatWorker implements OnModuleInit {
         villageName: attackerVillage.name,
         targetKind: expedition.targetKind,
         targetName: defenderVillage?.name || '',
+        targetRefId:
+          expedition.targetKind === 'BARBARIAN_VILLAGE'
+            ? expedition.targetRefId
+            : null,
         targetTier:
           expedition.targetKind === 'BARBARIAN_VILLAGE'
             ? (defenderVillage?.tier ?? null)

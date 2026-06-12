@@ -42,6 +42,7 @@ const BattleResolvedPayloadSchema = z.object({
   villageName: z.string(),
   targetKind: z.string(),
   targetName: z.string(),
+  targetRefId: z.string().nullable().optional(),
   targetTier: z.string().nullable().optional(),
   targetX: z.number(),
   targetY: z.number(),

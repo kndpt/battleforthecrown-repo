@@ -7,6 +7,10 @@ import {
   getWarehouseLevel,
   rollInitialBarbarianUnits,
 } from './barbarian-tier-templates';
+import {
+  ONBOARDING_NARRATIVE_TARGET_NAME,
+  ONBOARDING_NARRATIVE_TARGET_UNITS,
+} from '@battleforthecrown/shared/onboarding';
 import { generateBarbarianName } from '@battleforthecrown/shared/world';
 
 @Injectable()
@@ -47,6 +51,66 @@ export class BarbarianVillageFactory {
 
     const units = rollInitialBarbarianUnits(tier);
     const unitRows = Object.entries(units)
+      .filter(([, quantity]) => quantity > 0)
+      .map(([unitType, quantity]) => ({
+        villageId: village.id,
+        unitType,
+        quantity,
+      }));
+    await tx.unitInventory.createMany({ data: unitRows });
+
+    const resources = this.generateResources(worldId, tier);
+    await tx.resourceStock.create({
+      data: {
+        villageId: village.id,
+        wood: resources.wood,
+        stone: resources.stone,
+        iron: resources.iron,
+        maxPerType: resources.maxPerType,
+        lastUpdateTs: now,
+      },
+    });
+
+    await tx.population.create({
+      data: {
+        villageId: village.id,
+        used: 0,
+        max: getPopulationMax(tier),
+      },
+    });
+
+    return village;
+  }
+
+  async createNarrativeOnboardingTarget(
+    tx: PrismaClientOrTx,
+    params: { worldId: string; x: number; y: number },
+  ) {
+    const { worldId, x, y } = params;
+    const tier = 'T1';
+    const now = new Date();
+    const village = await tx.village.create({
+      data: {
+        worldId,
+        userId: null,
+        isBarbarian: true,
+        isOnboardingNarrativeTarget: true,
+        tier,
+        barbarianTroopsLastRegenTs: now,
+        name: ONBOARDING_NARRATIVE_TARGET_NAME,
+        x,
+        y,
+      },
+    });
+
+    const buildings = getBuildingTemplate(tier).map((b) => ({
+      villageId: village.id,
+      type: b.type,
+      level: b.level,
+    }));
+    await tx.building.createMany({ data: buildings });
+
+    const unitRows = Object.entries(ONBOARDING_NARRATIVE_TARGET_UNITS)
       .filter(([, quantity]) => quantity > 0)
       .map(([unitType, quantity]) => ({
         villageId: village.id,

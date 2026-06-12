@@ -12,6 +12,7 @@ function summary(currentStep: OnboardingSummaryDto['currentStep']): OnboardingSu
     initialRewardApplied: true,
     initialRewardAppliedAt: '2026-05-26T08:00:00.000Z',
     initialReward: { wood: 850, stone: 850, iron: 850, crowns: 100 },
+    narrativeTarget: null,
     completedAt: currentStep ? null : '2026-05-26T08:05:00.000Z',
   };
 }
@@ -44,7 +45,7 @@ describe('getOnboardingGuidance', () => {
       total: 6,
     });
     expect(getOnboardingGuidance(summary('ATTACK_BARBARIAN'))).toMatchObject({
-      title: 'Attaquer un village barbare',
+      title: 'Vaincre le campement du débutant',
       gameActionId: 'open-world-map',
       imageSrc: '/assets/world/entity/barbarian-village-tier1.png',
       route: '/game/world',
@@ -53,6 +54,23 @@ describe('getOnboardingGuidance', () => {
       pillLabel: 'Tutoriel · 6/6',
       step: 6,
       total: 6,
+    });
+  });
+
+  it('highlights the narrative target coordinates on the final step', () => {
+    expect(
+      getOnboardingGuidance({
+        ...summary('ATTACK_BARBARIAN'),
+        narrativeTarget: {
+          villageId: 'target-1',
+          name: 'Campement du débutant',
+          x: 12,
+          y: 34,
+        },
+      }),
+    ).toMatchObject({
+      description:
+        'Sur la carte, attaque Campement du débutant (12|34) avec tes milices. Les autres villages barbares restent de vrais adversaires.',
     });
   });
 

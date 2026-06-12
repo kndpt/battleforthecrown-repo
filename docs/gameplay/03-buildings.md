@@ -114,7 +114,7 @@ La Caserne porte aussi une **réduction du temps d'entraînement** par niveau (c
 
 - Vision = **union des disques** de toutes les Watchtower du joueur. Aucune tour seule ne révèle toute la carte.
 - Vision **offensive/exploratoire uniquement** — n'augmente pas la défense (voir Rempart, post-MVP).
-- La Watchtower niveau 1 doit révéler au moins une cible barbare T1 créée pour le joueur fraîchement arrivé (invariant d'onboarding : cible visible et attaquable sans brouillard). La portée reste finie ; les niveaux suivants élargissent progressivement le disque sans révélation globale.
+- Pendant l'onboarding, la Watchtower niveau 1 révèle la **cible narrative affaiblie** créée à la fin de sa construction (cf. [`15-onboarding.md`](./15-onboarding.md)). Les T1 globaux du seeding restent des adversaires réels et ne sont pas garantis dans ce rayon. La portée reste finie ; les niveaux suivants élargissent progressivement le disque sans révélation globale.
 
 ### Effet sur le brouillard de guerre
 

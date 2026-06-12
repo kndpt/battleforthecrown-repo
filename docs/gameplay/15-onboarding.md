@@ -21,7 +21,7 @@ L'`01-overview.md` listait initialement la « Campagne solo » comme extension *
 
 Cette récompense est distincte du stock initial de join (`1000/1000/1000`). Avec les valeurs par défaut, le stock immédiatement après join est donc `1850/1850/1850`, plafonné par le stockage courant.
 
-Cible confirmée après recalibration tempo : couvrir une session ≤ 10 min qui fait passer le joueur par les boucles principales (économie, militaire, exploration, attaque barbare). Les timers compressés rendent cette cible atteignable sans raccourci spécial, grâce au prérequis livré par le run 035 : une Watchtower niveau 1 révèle au moins un village barbare T1 attaquable.
+Cible confirmée après recalibration tempo : couvrir une session ≤ 10 min qui fait passer le joueur par les boucles principales (économie, militaire, exploration, attaque barbare). Les timers compressés rendent cette cible atteignable sans raccourci spécial : la **première victoire barbare garantie** appartient à l'onboarding via une **cible narrative affaiblie**, pas au seeding global des villages barbares T1 standards.
 
 | # | Étape | Boucle exercée |
 | ---: | --- | --- |
@@ -44,8 +44,8 @@ Le tutoriel doit écouter des faits gameplay server-side plutôt que des états 
 | Caserne construite | `building.completed` avec `buildingType=BARRACKS`, `level>=1` |
 | 5 Milices paysannes recrutées | `unit.trained` avec `unitType=MILITIA`, puis inventaire `MILITIA>=5` |
 | Château niveau 3 terminé | `building.completed` avec `buildingType=CASTLE`, `level>=3` |
-| Tour de guet construite | `building.completed` avec `buildingType=WATCHTOWER`, `level>=1` |
-| Premier raid barbare victorieux | `battle.resolved` avec `targetKind=BARBARIAN_VILLAGE`, `isVictory=true` |
+| Tour de guet construite | `building.completed` avec `buildingType=WATCHTOWER`, `level>=1` → crée ou révèle la cible narrative affaiblie (`isOnboardingNarrativeTarget`) dans le rayon Watchtower L1 |
+| Premier raid barbare victorieux | `battle.resolved` avec `targetKind=BARBARIAN_VILLAGE`, `isVictory=true` **contre la cible narrative liée** (`OnboardingState.narrativeTargetVillageId`) |
 
 La projection suit l'ordre du script, mais elle se réconcilie sur les faits serveur déjà atteints. Si un joueur effectue une action plus tardive avant l'étape attendue, le tutoriel rattrape automatiquement toutes les étapes satisfaites jusqu'à la première condition encore manquante.
 
@@ -56,6 +56,18 @@ Idempotence :
 - `OnboardingProgressEvent` garde un ledger par `EventOutbox.id` pour qu'un replay d'Outbox ne double pas la progression.
 
 L'onboarding est distinct des cartes quotidiennes : il consomme certains mêmes facts Outbox, mais possède ses propres tables, son propre endpoint et son propre statut `ACTIVE|COMPLETED`.
+
+### Cible narrative affaiblie
+
+Quand la Tour de guet niveau 1 est terminée pendant un onboarding `ACTIVE`, le backend crée **au plus une** cible barbare narrative dédiée :
+
+- marquée `Village.isOnboardingNarrativeTarget = true` ;
+- liée à `OnboardingState.narrativeTargetVillageId` (idempotente : un rejoin ne recrée pas de doublon) ;
+- placée dans l'anneau atteignable Watchtower L1 (`[rMin, portée L1]`) ;
+- défense fixe affaiblie (`2` milices) pour que `5` milices paysannes gagnent de façon fiable ;
+- exposée dans `GET /onboarding` (`narrativeTarget`) et dans le feed carte (`data.isOnboardingNarrativeTarget`).
+
+Les villages barbares T1 globaux issus du seeding restent des adversaires réels (roll initial `60-100 %` du blueprint T1). L'étape `ATTACK_BARBARIAN` ne se complète **pas** sur une victoire contre un T1 global ni sur une défaite.
 
 ## Liens
 

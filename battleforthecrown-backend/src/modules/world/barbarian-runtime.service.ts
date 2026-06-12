@@ -25,7 +25,7 @@ export class BarbarianRuntimeService {
       include: { resourceStock: true, unitInventory: true },
     });
 
-    if (!village.isBarbarian) {
+    if (!village.isBarbarian || village.isOnboardingNarrativeTarget) {
       return {
         units: toUnitMap(village.unitInventory),
         resources: village.resourceStock

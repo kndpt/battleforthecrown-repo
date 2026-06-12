@@ -7,9 +7,11 @@ import { BUILDING_TYPES } from '@battleforthecrown/shared/village';
 import { UNIT_TYPES, type UnitMap } from '@battleforthecrown/shared/army';
 import { isVictoryForAttacker } from '@battleforthecrown/shared/combat';
 import type {
+  OnboardingNarrativeTargetDto,
   OnboardingStep,
   OnboardingSummaryDto,
 } from '@battleforthecrown/shared/onboarding';
+import { OnboardingNarrativeTargetService } from './onboarding-narrative-target.service';
 import { ONBOARDING_TRAIN_TROOPS_TARGET } from '@battleforthecrown/shared/onboarding';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
@@ -44,6 +46,7 @@ export class OnboardingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ownership: OwnershipService,
+    private readonly narrativeTarget: OnboardingNarrativeTargetService,
   ) {}
 
   async getSummary(
@@ -54,7 +57,12 @@ export class OnboardingService {
 
     const state = await this.prisma.onboardingState.findUnique({
       where: { userId_worldId: { userId, worldId } },
-      include: { steps: { orderBy: { completedAt: 'asc' } } },
+      include: {
+        steps: { orderBy: { completedAt: 'asc' } },
+        narrativeTarget: {
+          select: { id: true, x: true, y: true, name: true },
+        },
+      },
     });
 
     if (!state) {
@@ -67,16 +75,23 @@ export class OnboardingService {
         initialRewardApplied: false,
         initialRewardAppliedAt: null,
         initialReward: ONBOARDING_INITIAL_REWARD,
+        narrativeTarget: null,
         completedAt: null,
       };
     }
 
     if (state.status === 'ACTIVE') {
+      await this.narrativeTarget.ensureForActiveOnboarding(userId, worldId);
       await this.reconcileActiveStateFromFacts(userId, worldId);
       const reconciledState =
         await this.prisma.onboardingState.findUniqueOrThrow({
           where: { userId_worldId: { userId, worldId } },
-          include: { steps: { orderBy: { completedAt: 'asc' } } },
+          include: {
+            steps: { orderBy: { completedAt: 'asc' } },
+            narrativeTarget: {
+              select: { id: true, x: true, y: true, name: true },
+            },
+          },
         });
 
       return mapOnboardingState(reconciledState);
@@ -154,7 +169,7 @@ export class OnboardingService {
     await this.prisma.$transaction(async (tx) => {
       const village = await tx.village.findUnique({
         where: { id: projection.villageId },
-        select: { userId: true, worldId: true },
+        select: { userId: true, worldId: true, x: true, y: true },
       });
       if (!village?.userId) return;
 
@@ -168,10 +183,43 @@ export class OnboardingService {
         include: { steps: true },
       });
       if (!state || state.status !== 'ACTIVE') return;
-      await reconcileStateFromFacts(tx, state, {
-        eventOutboxId,
-        step: projection.step,
-      });
+
+      if (projection.step === 'BUILD_WATCHTOWER') {
+        await this.narrativeTarget.ensureForWatchtowerReveal(tx, {
+          userId: village.userId,
+          worldId: village.worldId,
+          villageId: projection.villageId,
+          villageX: village.x,
+          villageY: village.y,
+        });
+      }
+
+      if (
+        projection.step === 'ATTACK_BARBARIAN' &&
+        kind === 'battle.resolved'
+      ) {
+        const battlePayload = payload as BattleResolvedPayload;
+        if (
+          !state.narrativeTargetVillageId ||
+          battlePayload.targetRefId !== state.narrativeTargetVillageId
+        ) {
+          return;
+        }
+      }
+
+      await reconcileStateFromFacts(
+        tx,
+        {
+          id: state.id,
+          firstVillageId: state.firstVillageId,
+          currentStep: state.currentStep,
+          narrativeTargetVillageId: state.narrativeTargetVillageId,
+        },
+        {
+          eventOutboxId,
+          step: projection.step,
+        },
+      );
     });
   }
 
@@ -183,7 +231,12 @@ export class OnboardingService {
       });
       if (!state || state.status !== 'ACTIVE') return;
 
-      await reconcileStateFromFacts(tx, state);
+      await reconcileStateFromFacts(tx, {
+        id: state.id,
+        firstVillageId: state.firstVillageId,
+        currentStep: state.currentStep,
+        narrativeTargetVillageId: state.narrativeTargetVillageId,
+      });
     });
   }
 }
@@ -252,6 +305,7 @@ async function reconcileStateFromFacts(
     id: string;
     firstVillageId: string;
     currentStep: OnboardingStep;
+    narrativeTargetVillageId: string | null;
   },
   trigger?: { eventOutboxId: string; step: OnboardingStep },
 ): Promise<void> {
@@ -261,7 +315,12 @@ async function reconcileStateFromFacts(
 
   while (
     currentStep &&
-    (await isStepSatisfied(tx, state.firstVillageId, currentStep))
+    (await isStepSatisfied(
+      tx,
+      state.firstVillageId,
+      currentStep,
+      state.narrativeTargetVillageId,
+    ))
   ) {
     const eventOutboxId =
       trigger?.step === currentStep && !triggerWasRecorded
@@ -302,6 +361,7 @@ async function isStepSatisfied(
   tx: Tx,
   villageId: string,
   step: OnboardingStep,
+  narrativeTargetVillageId: string | null,
 ): Promise<boolean> {
   switch (step) {
     case 'UPGRADE_CASTLE_LEVEL_2':
@@ -315,7 +375,11 @@ async function isStepSatisfied(
     case 'BUILD_WATCHTOWER':
       return hasBuildingLevel(tx, villageId, BUILDING_TYPES.WATCHTOWER, 1);
     case 'ATTACK_BARBARIAN':
-      return hasVictoriousBarbarianAttack(tx, villageId);
+      return hasVictoriousBarbarianAttack(
+        tx,
+        villageId,
+        narrativeTargetVillageId,
+      );
   }
 }
 
@@ -350,11 +414,15 @@ async function hasMilitiaTarget(tx: Tx, villageId: string): Promise<boolean> {
 async function hasVictoriousBarbarianAttack(
   tx: Tx,
   villageId: string,
+  narrativeTargetVillageId: string | null,
 ): Promise<boolean> {
+  if (!narrativeTargetVillageId) return false;
+
   const reports = await tx.combatReport.findMany({
     where: {
       attackerVillageId: villageId,
       targetKind: 'BARBARIAN_VILLAGE',
+      defenderVillageId: narrativeTargetVillageId,
     },
     select: { totalUnitsAttacker: true, lossesAttacker: true },
     orderBy: { createdAt: 'desc' },
@@ -383,7 +451,23 @@ function mapOnboardingState(state: {
   initialRewardAppliedAt: Date | null;
   completedAt: Date | null;
   steps: Array<{ step: OnboardingStep; completedAt: Date }>;
+  narrativeTarget: {
+    id: string;
+    x: number;
+    y: number;
+    name: string;
+  } | null;
 }): OnboardingSummaryDto {
+  const narrativeTarget: OnboardingNarrativeTargetDto | null =
+    state.narrativeTarget
+      ? {
+          villageId: state.narrativeTarget.id,
+          x: state.narrativeTarget.x,
+          y: state.narrativeTarget.y,
+          name: state.narrativeTarget.name,
+        }
+      : null;
+
   return {
     worldId: state.worldId,
     firstVillageId: state.firstVillageId,
@@ -396,6 +480,7 @@ function mapOnboardingState(state: {
     initialRewardApplied: state.initialRewardApplied,
     initialRewardAppliedAt: state.initialRewardAppliedAt?.toISOString() ?? null,
     initialReward: ONBOARDING_INITIAL_REWARD,
+    narrativeTarget,
     completedAt: state.completedAt?.toISOString() ?? null,
   };
 }

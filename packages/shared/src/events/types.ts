@@ -40,6 +40,7 @@ export interface BattleResolvedPayload {
   villageName: string;
   targetKind: string;
   targetName: string;
+  targetRefId?: string | null;
   targetTier?: string | null;
   targetX: number;
   targetY: number;

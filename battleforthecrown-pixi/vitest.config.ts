@@ -8,6 +8,14 @@ const sharedSrc = path.resolve(here, '../packages/shared/src');
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    'import.meta.env.VITE_API_BASE_URL': JSON.stringify(
+      process.env.VITE_API_BASE_URL ?? 'http://localhost:15001',
+    ),
+    'import.meta.env.VITE_WS_URL': JSON.stringify(
+      process.env.VITE_WS_URL ?? 'http://localhost:15001',
+    ),
+  },
   resolve: {
     alias: [
       { find: '@', replacement: path.resolve(here, 'src') },

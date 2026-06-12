@@ -80,14 +80,16 @@ const STEP_GUIDANCE: Record<
   },
   BUILD_WATCHTOWER: {
     title: 'Élever la Tour de guet',
-    description: 'Construis une Tour de guet pour révéler une cible barbare proche.',
+    description:
+      'Construis une Tour de guet pour révéler le campement barbare affaibli du tutoriel.',
     ctaLabel: 'Voir les bâtiments',
     imageSrc: '/assets/watchtower.png',
     route: '/game',
   },
   ATTACK_BARBARIAN: {
-    title: 'Attaquer un village barbare',
-    description: 'Passe sur la carte, sélectionne un village barbare révélé et lance l’attaque.',
+    title: 'Vaincre le campement du débutant',
+    description:
+      'Sur la carte, repère le campement barbare affaibli révélé par ta Tour de guet et lance l’attaque avec tes milices.',
     ctaLabel: 'Ouvrir la carte',
     imageSrc: '/assets/world/entity/barbarian-village-tier1.png',
     route: '/game/world',
@@ -100,7 +102,13 @@ export function getOnboardingGuidance(
   if (!summary || summary.status === 'COMPLETED' || !summary.currentStep) {
     return null;
   }
-  const guidance = STEP_GUIDANCE[summary.currentStep];
+  const guidance = { ...STEP_GUIDANCE[summary.currentStep] };
+  if (
+    summary.currentStep === 'ATTACK_BARBARIAN' &&
+    summary.narrativeTarget
+  ) {
+    guidance.description = `Sur la carte, attaque ${summary.narrativeTarget.name} (${summary.narrativeTarget.x}|${summary.narrativeTarget.y}) avec tes milices. Les autres villages barbares restent de vrais adversaires.`;
+  }
   const action = getOnboardingStepGameAction(summary.currentStep);
   const step = STEP_INDEX[summary.currentStep];
   const total = TOTAL_STEPS;
