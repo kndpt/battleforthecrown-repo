@@ -1,6 +1,6 @@
 ---
 name: bftc-refactor-backend
-description: Deep code quality audit + structural refactor of battleforthecrown-backend. Two phases: annotated findings report, then one scoped PR ready for review. Runs weekly Saturday night via Routine.
+description: Audit + structural refactor of battleforthecrown-backend. Two phases: findings report, then scoped PR. Runs Saturday night.
 ---
 
 # Refactor Backend
