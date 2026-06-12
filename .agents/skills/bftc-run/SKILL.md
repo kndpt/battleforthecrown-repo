@@ -35,7 +35,7 @@ Préflight commun :
 1. `git status` doit être clean, sinon abort.
 2. Lire la cible entière.
 3. Lire la spec source citée, mais seulement la section utile si l'ancre est claire.
-4. Lire `.agents/rules/{conventions,docs,git}.md`, `SPEC.md`, et le briefing workspace concerné.
+4. Rules `alwaysApply` + `AGENTS.md` déjà injectés — **ne pas relire** sauf ambiguïté. Lire `SPEC.md` (section ancrée) + briefing workspace si scope backend/pixi.
 5. Déterminer la politique PR **avant toute écriture** :
    - Mode `run` (`tasks/runs/...`) : PR obligatoire, ready for review, sauf dérogation explicite du user dans le message de démarrage du run (`pas de PR`, `no PR`, `sans PR`, `ne push pas`).
    - Mode `ticket` (`tasks/<id>-...`) : pas de PR par défaut ; ouvrir une PR seulement si le user le demande explicitement dans le message de démarrage ou après livraison.
@@ -64,7 +64,7 @@ Préflight commun :
 8. **Retest + static-check** — tests adaptés au scope, puis `yarn static-check`.
 8c. **Backprop SPEC** — ajouter §V/§B seulement si un invariant durable ou bug subtil/récurrent a été révélé.
 9. **Documentation** — décider l'impact doc via `.agents/rules/docs.md`; déléguer au doc writer si non trivial.
-10. **Archive + commit** — `DONE`, archive via `git mv`, maj `tasks/README.md`, commit unique EN `<type>(<scope>): <subject>`.
+10. **Archive + commit** — compacter fiche (cf. `.agents/rules/harness.md` : strip `Progress`/`Décisions`, `Rapport final` = QA + ≤3 lignes synthèse) → `DONE`, `git mv` vers `runs/archive/`, maj index `tasks/README.md` (lien seulement, pas de prose), commit unique EN `<type>(<scope>): <subject>`.
 10b. **Publication PR conditionnelle** — si `PR_REQUIRED: oui`, push la branche et ouvrir une PR **ready for review** vers `main` avec titre `run(<id>): ...` ou `task(<id>): ...`, résumé, root cause/impact et validations. Si `PR_REQUIRED: non`, pas de push et pas de PR.
 11. **Démarrage IG conditionnel** — seulement si le rapport final contient des `Tests IG à faire par le user` non vides : utiliser `bftc-worktree-qa` pour démarrer backend + frontend depuis le worktree courant, puis inclure les URLs dans le rapport final.
 
