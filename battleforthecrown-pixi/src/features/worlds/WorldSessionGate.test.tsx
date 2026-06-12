@@ -151,6 +151,29 @@ describe('WorldSessionGate — village conquis (joueur sans village)', () => {
     );
   });
 
+  it('utilise le nom générique quand displayName est absent', async () => {
+    const user = userEvent.setup();
+    useAuthStore.getState().setSession({
+      accessToken: 'access',
+      refreshToken: 'refresh',
+      user: { id: 'u1', displayName: '' },
+    });
+
+    const queryClient = makeQueryClient();
+    seedEliminatedPlayerQueries(queryClient);
+    renderGate(queryClient);
+
+    await user.click(screen.getByRole('button', { name: 'Revenir sur ce monde' }));
+
+    expect(joinMutateMock).toHaveBeenCalledWith(
+      { worldId: 'w1', villageName: 'Royaume du joueur' },
+      expect.objectContaining({
+        onError: expect.any(Function),
+        onSuccess: expect.any(Function),
+      }),
+    );
+  });
+
   it('efface le contexte jeu et navigue vers /worlds au clic sur Choisir un autre monde', async () => {
     const user = userEvent.setup();
     useAuthStore.getState().setSession({

@@ -988,3 +988,89 @@ yarn test:pixi      → 69 test files, 389 tests passed (aucun test cassé)
 ```
 
 **Diff :** `queries.ts` +5 LOC (`refetchInterval` + commentaire), `OnboardingFab.tsx` −47 LOC (style block supprimé), `index.css` +52 LOC (keyframes + media). Net : −47 / +57 dans les fichiers modifiés.
+
+---
+
+## Run 2026-06-12 — commit d8b2fee
+
+**Scan date:** 2026-06-12  
+**Commit SHA:** d8b2fee7e0ac2fef7e459091a8b29e3239b4c42d
+
+### Prior findings update
+
+- A1–A6 (ws-bindings query keys) : **RESOLVED**
+- B1, B2 : **RESOLVED**
+- N1, N2 : **RESOLVED**
+- S1, S2, S3 (session teardown) : **RESOLVED**
+- C1 (GameHeader god-component) : **RESOLVED**
+- D2 (headerHelpers tests) : **RESOLVED**
+- D3 (VillageView inline `<style>` block) : **RESOLVED**
+- F1, F4 (capture event correctness & Pixi tick) : **RESOLVED**
+- G1, G2 (computeProgress duplication / formatTime tests) : **RESOLVED**
+- H1, H2 (armyTraining refetchInterval / BuildingDetailModal polling) : **RESOLVED**
+- I1, I5 (world join/enter error tests) : **RESOLVED**
+- J1, J2 (dead ternary / minTargetTier test) : **RESOLVED**
+- K1, K2 (caravan recall WS-drop gap / RESOURCE_KEYS DRY) : **RESOLVED**
+- L3, L5 (OnboardingFab style / rankings refetchInterval) : **RESOLVED**
+- **L1 (rankingsFormat `periodLabel` dead export) : SELECTED (ce run) → M1**
+- L4 (ReportDetailModal backdrop ×4) : STILL OPEN — candidat `bftc-maint-debt`
+- C2 (SpecializedBuildingDetailModal 643 LOC) : STILL OPEN — organisé, faible risque
+- C3 (ArmyScreen garrison derivations) : STILL OPEN — 30 lignes plates
+- D4 (magic number 60_000) : STILL OPEN — acceptable
+- F2 (DailyRetentionWidget expiresInValue hardcoded) : STILL OPEN — bloqué côté serveur
+- J3 (villageTierFromPower test) : NOTED — candidat `bftc-maint-debt`
+
+### Mental model
+
+Frontend propre et discipliné. Commits depuis run 2026-06-11 :
+- `2dedff0` : `maint(refactor-pixi)` run 2026-06-11 (OnboardingFab style + rankings refetchInterval) — PR #76 mergée.
+- `8332545` (run 053) : `User.displayName` global, `mapEntityLabels.ts` (pure, testée), `authSessionResponseSchema` Zod boundary, email retiré de `AuthUser`. `RegisterScreen` étendu, `SelectedEntityPanel` simplifié.
+- `0b03b4f` (run 052) : `LostKingdomScreen` (joueur éliminé), `applyVillageConquered` étendu (clears `villageId` store), `WorldSessionGate.test.tsx` (5 tests).
+- `11b4d1a` (fix #79) : `BottomSheet` unmount-on-close (retourne `null` quand fermé), hero pointer capture corrigé, `BottomSheet.test.tsx` ajouté.
+- `d8b2fee` (maint debt #80) : `formatCompactNumber` centralisé dans `lib/resourceConfig.ts`, doublon `MultiVillageBottomSheet` supprimé.
+
+**Server-authoritative** : 0 violation. Aucun calcul local autoritatif introduit.  
+**Type debt** : 0 `as any`, 0 `@ts-ignore`, 0 `fetch`/`axios` hors `src/api/`.  
+**Stores Zustand** : inchangés, teardown centralisé confirmé.  
+**TanStack Query** : `useRankingsSummaryQuery` a son `refetchInterval: 30_000` (L5 fixé).  
+**Pixi scenes** : `WorldMapScene.ts` inchangé, ticker correct.
+
+### New findings
+
+| ID | Category | Location | Description | Severity | Effort | Status |
+|----|----------|----------|-------------|----------|--------|--------|
+| M1 | Dead code / Test debt | `features/rankings/rankingsFormat.ts:5-9` + `RankingsScreen.test.tsx:11-15` | `periodLabel` export jamais importé en production. `RankingsScreen.tsx:179` redéfinit son propre `periodLabel` local avec des strings différentes (`"7 derniers jours"` vs `"Hebdomadaire"`). Le test en ligne 11-15 testait une fonction morte avec des strings qui ne correspondent pas à l'UI. | **Medium** | S | **RESOLVED** (ce run) |
+| M2 | Test gap | `features/worlds/LostKingdomScreen.tsx:13-16` | `defaultVillageName(undefined)` → `'Royaume du joueur'`. Branche non testée via `WorldSessionGate.test.tsx` (tous les cas seedaient `displayName: 'Alice'`). | Low | S | **RESOLVED** (ce run) |
+
+### "Looks bad but is actually fine" (this run)
+
+| Pattern | Verdict |
+|---------|---------|
+| `LostKingdomScreen` importe `joinErrorMessage` depuis `useWorldCardModels` | ✅ fonction pure exportée, aucun hook invoqué — couplage de fichier sans couplage de hook |
+| `applyVillageConquered` `setContext({ worldId, villageId: null })` sans redirect | ✅ `WorldSessionGate` réagit au `villageId → null` via re-render + `hasNoVillage` |
+| `BottomSheet` unmount-on-close (`return null` quand `!isOpen`) | ✅ intentionnel — sheets BFTC stateless ou rechargent depuis TanStack Query |
+| `WorldSessionGate` `hasNoVillage = isSuccess && !selectedVillage` | ✅ guard correct — ne se déclenche pas sur loading/error |
+| `RankingsScreen.tsx:179` `const periodLabel` locale (vs `rankingsFormat.periodLabel` supprimé) | ✅ strings intentionnellement différentes — format court "7 derniers jours" vs "Hebdomadaire" |
+| `RegisterScreen` : `useZodForm` + `useState` séparés | ✅ pattern établi (`LoginScreen` identique) |
+| `ws-bindings.test.ts` couvrant `applyVillageConquered` + `previousOwnerId` | ✅ couverture correcte de la branche `villageId: null` |
+
+### Selected theme: **M1 + M2 — Dead export `periodLabel` + test gap `defaultVillageName` fallback**
+
+**Rationale :**
+- M1 est un export mort dont le test diverge de la production (les strings ne correspondent pas). Maintenir ce test crée une fausse confiance et induit en erreur quiconque cherche d'où vient `"Hebdomadaire"` dans l'UI (réponse : nulle part). Suppression propre en 2 fichiers.
+- M2 couvre la branche `displayName` absent de `defaultVillageName` — un utilisateur éliminé sans displayName obtiendrait `'Royaume du joueur'` comme nom de village. La branche était non couverte dans tous les cas de test existants qui seedaient toujours `displayName: 'Alice'`.
+- Thème cohérent : nettoyage du test debt introduit par les features récentes (run-051 rankings, run-052 rejoin).
+
+**Rejected :**
+- C2/C3 : churn sans impact comportemental.
+- D4/F2 : cosmétiques ou bloqués côté serveur.
+- L4 (ReportDetailModal backdrop ×4) : candidat `bftc-maint-debt`.
+
+### Verification
+
+```text
+yarn static-check   → green (tsc backend + pixi, ESLint backend + pixi --quiet)
+yarn test:pixi      → 71 test files, 404 tests passed (net 0 : −1 periodLabel test, +1 defaultVillageName test)
+```
+
+**Diff :** `rankingsFormat.ts` −5 LOC (periodLabel supprimé), `RankingsScreen.test.tsx` −4 LOC (import + test morts), `WorldSessionGate.test.tsx` +20 LOC (+1 test `displayName` absent). Net : −9 / +20 dans les fichiers modifiés.
