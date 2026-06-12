@@ -38,7 +38,6 @@ Hook `pre-push` (husky) léger : `yarn static-check` + unit backend + unit pixi 
 - **Mémoires** : chaque outil agentique a son store auto-chargé (Claude Code → `~/.claude/projects/<repo-hash>/memory/` ; Codex → `~/.codex/memories/`). Pas de store partagé entre outils — c'est managé par chaque harness.
 - Si une instruction ici contredit ton training data ou le code observé, **fais confiance au code observé** et signale la contradiction.
 - **QA IG** : l'agent ne fait pas de QA in-game avec le browser. Il peut faire smokes, curls, logs, healthchecks serveur/front. Si une validation IG est requise, il donne uniquement une checklist concise à Kelvin.
-- **Cloud (Cursor / Codex / Claude web)** : harness bootstrap via [`scripts/lib/bftc-cloud-bootstrap.sh`](./scripts/lib/bftc-cloud-bootstrap.sh). Cursor : [`.cursor/environment.json`](./.cursor/environment.json) + [`docs/architecture/cursor-cloud.md`](./docs/architecture/cursor-cloud.md). En remote, prouver backend (smokes/curl) avant PR quand le diff le touche.
 
 ## Layout `.agents/`, `.cursor/`, `.claude/`, `.codex/`
 
@@ -47,7 +46,7 @@ Le repo suit le standard ouvert [agentskills.io](https://agentskills.io) :
 - **Source de vérité** : `.agents/{rules,skills}/`. Rules = court/injectable ; skills = détaillé/à la demande.
 - **Compat outils** : `.cursor/{rules,skills}`, `.claude/{rules,skills}` et `.codex/{rules,skills}` sont des **symlinks** vers `.agents/` (rules : symlinks fichier par fichier en `.mdc` côté Cursor). Modifier la source = modifier pour tous les harness.
 - **Skills workspace** : `bftc-run` et `bftc-plan` vivent uniquement dans `.agents/skills/`; Claude Code, Codex et Cursor les consomment via leurs symlinks de compat. Ne pas recréer de slash commands dupliquées dans `.claude/commands/`. Préfixe `bftc-` choisi pour éviter la collision avec le plugin `agent-skills` qui expose un `/plan` global.
-- **Spécifique Cursor** : `.cursor/rules/*.mdc` → `.agents/rules/*.md` (extension + frontmatter YAML `alwaysApply` / `globs` dans la source). `.cursor/agents/*.md` = sub-agents dédiés Cursor (frontmatter `model` / `readonly` ; corps aligné sur `.claude/agents/`). `.cursor/environment.json` + `.cursor/Dockerfile` = harness Cloud Agents. Priorité `.cursor/` > `.claude/` si conflit de nom.
+- **Spécifique Cursor** : `.cursor/rules/*.mdc` → `.agents/rules/*.md` (extension + frontmatter YAML `alwaysApply` / `globs` dans la source). `.cursor/agents/*.md` = sub-agents dédiés Cursor (frontmatter `model` / `readonly` ; corps aligné sur `.claude/agents/`). Priorité `.cursor/` > `.claude/` si conflit de nom.
 - **Spécifique Claude** : `.claude/{agents,agent-memory}/` + `settings.local.json` restent dans `.claude/` (formats propriétaires).
 - **Spécifique Codex** : `.codex/agents/*.toml` (6 agents convertis depuis `.claude/agents/*.md` — `code_mapper`, `test_runner`, `run_planner`, `doc_writer`, `implementer`, `test_writer`. Format TOML, modèles OpenAI).
 - `CLAUDE.md` à chaque niveau est un simple `@AGENTS.md` (import du standard).
