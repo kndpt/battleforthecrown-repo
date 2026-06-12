@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "description": "Sujets gameplay déjà cadrés par la routine bftc-routine-gameplay-plan. Source d'exclusion pour éviter les doublons au prochain passage. Une entrée = un sujet planifié (ticket ou fiche de run).",
+  "description": "Registre d'exclusion des sujets gameplay déjà planifiés pour éviter les doublons au prochain passage bftc-plan.",
   "subjects": [
     {
       "specPath": "docs/gameplay/11-scouting.md",
