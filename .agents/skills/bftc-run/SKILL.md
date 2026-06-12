@@ -10,17 +10,17 @@ Tu orchestres une cible BFTC passée en **path de fichier obligatoire** (`@` opt
 
 Noms d'agents selon harness :
 
-| Rôle | Codex | Claude Code | Cursor (`Task`) |
-|---|---|---|---|
-| Cartographie | `code_mapper` | `code-mapper` | `code-mapper` |
-| Implémentation | `implementer` | `implementer` | `implementer` |
-| Tests écrits | `test_writer` | `test-writer` | `test-writer` |
-| Tests lancés | `test_runner` | `test-runner` | `test-runner` |
-| Documentation | `doc_writer` | `doc-writer` | `doc-writer` |
-| Review indépendante (conditionnelle) | `reviewer` | `reviewer` | `reviewer` |
-| Review 5 axes par défaut | lead direct | lead direct | lead direct |
+| Rôle | Codex | Claude Code |
+|---|---|---|
+| Cartographie | `code_mapper` | `code-mapper` |
+| Implémentation | `implementer` | `implementer` |
+| Tests écrits | `test_writer` | `test-writer` |
+| Tests lancés | `test_runner` | `test-runner` |
+| Documentation | `doc_writer` | `doc-writer` |
+| Review indépendante (conditionnelle) | `reviewer` | `reviewer` |
+| Review 5 axes par défaut | lead direct | lead direct |
 
-**Source de vérité mission sub-agent** : corps de prompt dans `.claude/agents/<name>.md` (Mission, Inputs, Procédure, Limites, Output). Cursor : `.cursor/agents/<name>.md` (même corps, frontmatter Composer dédié). Codex : `.codex/agents/<name>.toml`. Valable pour **tous** les harness — pas d'improvisation lead.
+**Source de vérité mission sub-agent** : corps de prompt dans `.claude/agents/<name>.md` (Mission, Inputs, Procédure, Limites, Output) pour Claude Code ; `.codex/agents/<name>.toml` pour Codex. Valable pour **tous** les harness — pas d'improvisation lead.
 
 ## Routage
 
@@ -83,7 +83,7 @@ Si le scope explose, repasser en mode complet et loguer la décision.
 
 ## Délégation
 
-### Règle inviolable (tous harness, Cursor inclus)
+### Règle inviolable (tous harness)
 
 Avant **chaque** spawn sub-agent :
 
@@ -91,14 +91,12 @@ Avant **chaque** spawn sub-agent :
 2. **Lead** : relire le fichier agent si le scope est sensible (reviewer, gros diff) pour vérifier que le contrat run couvre tous les inputs requis.
 3. **Vérifier le rapport** retourné contre le bloc Output obligatoire du fichier agent (`=== RAPPORT EXEC ===`, `=== CARTE MODULE ===`, `VERDICT:`, etc.). Mismatch ou bloc absent → retry 1× puis dérogation lead.
 
-**Cursor** : déléguer via sub-agent natif (`.cursor/agents/<name>.md`) ou `Task` avec `subagent_type` = colonne Cursor. Le harness charge le **corps du `.md`** comme system prompt — le lead n'a pas à recopier la mission. Modèles Cursor : `composer-2.5-fast` (carto, tests), `composer-2.5` (impl, test-writer, doc), thinking pour `reviewer` / `run-planner`. Le `prompt` / message de délégation contient **uniquement** le contrat run :
+**Claude Code / Codex** : `spawn the <agent> agent with the following prompt: ...` — la mission vient du fichier agent du harness respectif ; le message de délégation contient le contrat run :
 
 ```text
 --- CONTRAT RUN (lead) ---
 <contrat ci-dessous, rempli>
 ```
-
-**Claude Code / Codex** : `spawn the <agent> agent with the following prompt: ...` — même contrat run ; la mission vient du fichier agent du harness respectif.
 
 ### Contrat run (à coller sous le contrat agent)
 
