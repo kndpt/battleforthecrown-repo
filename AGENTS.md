@@ -49,3 +49,15 @@ Le repo suit le standard ouvert [agentskills.io](https://agentskills.io) :
 - **Spécifique Claude** : `.claude/{agents,agent-memory}/` + `settings.local.json` restent dans `.claude/` (formats propriétaires).
 - **Spécifique Codex** : `.codex/agents/*.toml` (6 agents convertis depuis `.claude/agents/*.md` — `code_mapper`, `test_runner`, `run_planner`, `doc_writer`, `implementer`, `test_writer`. Format TOML, modèles OpenAI).
 - `CLAUDE.md` à chaque niveau est un simple `@AGENTS.md` (import du standard).
+
+## Cursor Cloud specific instructions
+
+L'update script auto (au démarrage) ne fait que `yarn install --frozen-lockfile` + `prisma generate`. Le reste (Postgres, migrations, services) est à lancer manuellement — notes non-évidentes ci-dessous.
+
+- **Postgres NATIF, pas Docker** : les VM Cursor Cloud n'ont pas de daemon Docker. Postgres 16 est installé en natif (cluster `16/main`, user `postgres`/`postgres`, db `battleforthecrown` + `battleforthecrown_smoke`). Ignorer le `docker compose up -d` de la doc générale.
+- **Démarrer Postgres à chaque session** (le cluster ne démarre pas tout seul) : `sudo pg_ctlcluster 16 main start`. Vérifier : `pg_isready -p 5432`.
+- **Env vars persistées** : `~/.bftc-cursor-env` (sourcé par `~/.bashrc`) exporte `DATABASE_URL`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `PORT=15001`, `FRONTEND_URL=http://localhost:5173`, `VITE_API_BASE_URL`/`VITE_WS_URL=http://localhost:15001`. Les frontends Pixi **throw** si les `VITE_*` manquent ; toujours `source ~/.bftc-cursor-env` dans un nouveau shell non-login.
+- **Le schéma DB + le seed monde par défaut persistent dans le snapshot.** Après un pull qui ajoute une migration, rejouer : `yarn workspace battleforthecrown-backend prisma migrate deploy` (le seed `prisma/seed-default-world-config.sql` est déjà appliqué).
+- **Lancer le stack** : `yarn dev` (front :5173 + back :15001 via concurrently) après Postgres up. Ou séparément : `PORT=15001 yarn workspace battleforthecrown-backend start:dev` puis `yarn workspace battleforthecrown-pixi dev --port 5173 --strictPort`.
+- **Healthcheck** : `curl http://localhost:15001/health` → `{"status":"ok",...,"database":{"status":"up"}}`.
+- Lint/test/build : voir « Commandes essentielles » + `package.json` racine (`yarn static-check`, `yarn test:backend`, `yarn test:pixi`, `yarn build`). Les smokes (`yarn test:smoke`) requièrent la template DB `battleforthecrown_smoke` (déjà migrée).
