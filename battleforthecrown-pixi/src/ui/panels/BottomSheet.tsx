@@ -24,7 +24,6 @@ export interface BottomSheetProps extends HTMLAttributes<HTMLDivElement> {
 const SWIPE_HANDLE_HEIGHT = 76;
 const SWIPE_CLOSE_DISTANCE = 96;
 const SWIPE_CLOSE_VELOCITY = 0.45;
-const CLOSED_SHEET_SHADOW_OFFSET = 40;
 const SWIPE_INTERACTIVE_SELECTOR = 'button, a, input, textarea, select, [role="button"], [data-bottom-sheet-no-drag]';
 const SWIPE_DRAG_REGION_SELECTOR = '[data-bottom-sheet-drag-region]';
 const SWIPE_SCROLL_REGION_SELECTOR = '[data-bottom-sheet-scrollable]';
@@ -119,20 +118,20 @@ export const BottomSheet = forwardRef<HTMLDivElement, BottomSheetProps>(
 
     const isDragging = dragStartRef.current !== null;
 
+    if (!isOpen) {
+      return null;
+    }
+
     return (
       <div
         ref={rootRef}
-        className={`fixed inset-0 ${
-          isOpen ? 'pointer-events-auto' : 'pointer-events-none'
-        }`}
+        className="pointer-events-auto fixed inset-0"
         style={{ zIndex, ...style }}
         {...props}
       >
         {/* Overlay - Fade uniquement */}
         <div
-          className={`absolute inset-0 bg-black transition-opacity duration-300 ${
-            isOpen ? 'opacity-50' : 'opacity-0'
-          }`}
+          className="absolute inset-0 bg-black opacity-50 transition-opacity duration-300"
           onClick={onClose}
           aria-hidden="true"
         />
@@ -148,9 +147,7 @@ export const BottomSheet = forwardRef<HTMLDivElement, BottomSheetProps>(
           onPointerUp={handlePointerEnd}
           style={{
             maxHeight,
-            transform: isOpen
-              ? `translateY(${dragY}px)`
-              : `translateY(calc(100% + ${CLOSED_SHEET_SHADOW_OFFSET}px))`,
+            transform: `translateY(${dragY}px)`,
           }}
         >
           {children}

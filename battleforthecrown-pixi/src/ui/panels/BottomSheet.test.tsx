@@ -48,6 +48,18 @@ function renderSheet(onClose = vi.fn()) {
   return { ...result, onClose, panel };
 }
 
+describe('BottomSheet pointer events', () => {
+  it('does not mount any overlay when closed', () => {
+    const { container } = render(
+      <BottomSheet isOpen={false} onClose={() => undefined}>
+        <div>Sheet content</div>
+      </BottomSheet>,
+    );
+
+    expect(container.firstChild).toBeNull();
+  });
+});
+
 describe('BottomSheet mobile gestures', () => {
   beforeEach(() => installPointerCaptureStubs());
 

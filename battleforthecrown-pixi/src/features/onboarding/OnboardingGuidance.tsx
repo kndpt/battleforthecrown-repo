@@ -33,6 +33,7 @@ export function OnboardingGuidance({
       return undefined;
     }
 
+    setIsOpen(false);
     setIsAdvancing(true);
     const timeout = window.setTimeout(() => setIsAdvancing(false), 900);
     return () => window.clearTimeout(timeout);

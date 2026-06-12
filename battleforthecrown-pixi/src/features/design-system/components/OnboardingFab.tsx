@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
 
@@ -407,6 +408,70 @@ export function OnboardingFab({
     keepSelectedBriefly();
   }
 
+  const modal = open ? (
+    <div
+      className={cn(
+        'pointer-events-auto inset-0 z-[2000] flex items-center justify-center bg-[rgba(0,0,0,.55)] p-3.5 backdrop-blur-[3px]',
+        overlayPlacement,
+      )}
+      data-bftc-onboarding-modal="true"
+      onClick={() => onOpenChange(false)}
+      role="presentation"
+    >
+      <section
+        aria-modal="true"
+        className="flex w-[320px] max-w-[94%] flex-col overflow-hidden rounded-2xl border-4 border-[#3c2619] bg-[linear-gradient(to_bottom,#fef9f0,#e8d4a8)] shadow-[0_0_0_2px_#d4a017,0_12px_32px_rgba(0,0,0,.6),inset_0_2px_0_rgba(255,255,255,.55)]"
+        onClick={(event) => event.stopPropagation()}
+        role="dialog"
+      >
+        <div className="h-2 border-b border-[rgba(0,0,0,.25)] bg-[linear-gradient(to_right,#f1c40f,#d4a017)]" />
+
+        <div className="flex items-center gap-3 px-3.5 pb-2 pt-3">
+          <TutoOrb size={48} step={step} total={total} />
+          <div className="min-w-0 flex-1">
+            <div className="font-game text-[9.5px] font-bold uppercase tracking-[.3em] text-[#6d5838]">
+              {modalLabel}
+            </div>
+            <h2 className="font-game text-[17px] font-extrabold leading-[1.15] tracking-[.02em] text-[#3d2f1f] [text-shadow:0_1px_0_rgba(255,255,255,.5)]">
+              {title}
+            </h2>
+          </div>
+          <button
+            aria-label={closeLabel}
+            className="h-7 w-7 shrink-0 cursor-pointer rounded-lg border-2 border-[#5d4a32] bg-[linear-gradient(to_bottom,#b6a78a,#8b7355)] font-game text-sm font-extrabold leading-none text-white shadow-[inset_0_1px_0_rgba(255,255,255,.3),0_2px_0_rgba(0,0,0,.2)] [text-shadow:1px_1px_1px_rgba(0,0,0,.5)]"
+            onClick={() => onOpenChange(false)}
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="mx-3.5 h-px bg-[rgba(93,74,50,.35)]" />
+
+        <div className="flex flex-col gap-3 p-3.5">
+          <TutoHero alt={imageAlt} badgeLabel={imageBadgeLabel} src={imageSrc} />
+          <TutoStepDots step={step} total={total} />
+          <p className="m-0 font-game text-[13.5px] leading-[1.45] text-[#6d5838]">{body}</p>
+
+          <div className="flex gap-2">
+            {secondaryLabel && onSecondaryAction ? (
+              <button
+                className="shrink-0 cursor-pointer border-0 bg-transparent px-3.5 py-[9px] font-game text-xs font-bold tracking-[.04em] text-[#6d5838] underline underline-offset-[3px]"
+                onClick={() => onSecondaryAction(payload)}
+                type="button"
+              >
+                {secondaryLabel}
+              </button>
+            ) : null}
+            <PixelActionButton disabled={isDisabled} onClick={() => onPrimaryAction(payload)}>
+              {ctaLabel}
+            </PixelActionButton>
+          </div>
+        </div>
+      </section>
+    </div>
+  ) : null;
+
   return (
     <>
       <button
@@ -459,77 +524,9 @@ export function OnboardingFab({
         </span>
       </button>
 
-      {open ? (
-        <div
-          className={cn(
-            'pointer-events-auto inset-0 z-[2000] flex items-center justify-center bg-[rgba(0,0,0,.55)] p-3.5 backdrop-blur-[3px]',
-            overlayPlacement,
-          )}
-          onClick={() => onOpenChange(false)}
-          role="presentation"
-        >
-          <section
-            aria-modal="true"
-            className="flex w-[320px] max-w-[94%] flex-col overflow-hidden rounded-2xl border-4 border-[#3c2619] bg-[linear-gradient(to_bottom,#fef9f0,#e8d4a8)] shadow-[0_0_0_2px_#d4a017,0_12px_32px_rgba(0,0,0,.6),inset_0_2px_0_rgba(255,255,255,.55)]"
-            onClick={(event) => event.stopPropagation()}
-            role="dialog"
-          >
-            <div className="h-2 border-b border-[rgba(0,0,0,.25)] bg-[linear-gradient(to_right,#f1c40f,#d4a017)]" />
-
-            <div className="flex items-center gap-3 px-3.5 pb-2 pt-3">
-              <TutoOrb size={48} step={step} total={total} />
-              <div className="min-w-0 flex-1">
-                <div className="font-game text-[9.5px] font-bold uppercase tracking-[.3em] text-[#6d5838]">
-                  {modalLabel}
-                </div>
-                <h2 className="font-game text-[17px] font-extrabold leading-[1.15] tracking-[.02em] text-[#3d2f1f] [text-shadow:0_1px_0_rgba(255,255,255,.5)]">
-                  {title}
-                </h2>
-              </div>
-              <button
-                aria-label={closeLabel}
-                className="h-7 w-7 shrink-0 cursor-pointer rounded-lg border-2 border-[#5d4a32] bg-[linear-gradient(to_bottom,#b6a78a,#8b7355)] font-game text-sm font-extrabold leading-none text-white shadow-[inset_0_1px_0_rgba(255,255,255,.3),0_2px_0_rgba(0,0,0,.2)] [text-shadow:1px_1px_1px_rgba(0,0,0,.5)]"
-                onClick={() => onOpenChange(false)}
-                type="button"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="mx-3.5 h-px bg-[rgba(93,74,50,.35)]" />
-
-            <div className="flex flex-col gap-3 p-3.5">
-              <TutoHero
-                alt={imageAlt}
-                badgeLabel={imageBadgeLabel}
-                src={imageSrc}
-              />
-              <TutoStepDots step={step} total={total} />
-              <p className="m-0 font-game text-[13.5px] leading-[1.45] text-[#6d5838]">
-                {body}
-              </p>
-
-              <div className="flex gap-2">
-                {secondaryLabel && onSecondaryAction ? (
-                  <button
-                    className="shrink-0 cursor-pointer border-0 bg-transparent px-3.5 py-[9px] font-game text-xs font-bold tracking-[.04em] text-[#6d5838] underline underline-offset-[3px]"
-                    onClick={() => onSecondaryAction(payload)}
-                    type="button"
-                  >
-                    {secondaryLabel}
-                  </button>
-                ) : null}
-                <PixelActionButton
-                  disabled={isDisabled}
-                  onClick={() => onPrimaryAction(payload)}
-                >
-                  {ctaLabel}
-                </PixelActionButton>
-              </div>
-            </div>
-          </section>
-        </div>
-      ) : null}
+      {placement === 'viewport' && modal
+        ? createPortal(modal, document.body)
+        : modal}
     </>
   );
 }
