@@ -297,6 +297,23 @@ New proposed entries use branch `maint/debt/<short-topic>` and PR title
     - army.service: explicit Promise<UnitTraining[]> return type on getTraining
   verification: yarn static-check ✓ · 232 backend tests ✓ · 222 pixi tests ✓
 
+- status: proposed
+  area: >
+    battleforthecrown-pixi/src/lib/resourceConfig.ts,
+    battleforthecrown-pixi/src/features/game/VillageViewSectionHelpers.ts,
+    battleforthecrown-pixi/src/features/design-system/components/MultiVillageBottomSheet.tsx
+  branch: maint/debt/dedup-format-compact-number
+  title: "maint(debt): move formatCompactNumber to lib/resourceConfig, drop local duplicate"
+  note: >
+    formatCompactNumber defined twice with divergent behavior: VillageViewSectionHelpers
+    exported version uses Math.floor for n < 1000; MultiVillageBottomSheet inline version
+    returns String(n) (no floor). Behavioral divergence is latent (mapResources already
+    floors values), but duplication is a maintenance hazard and the local copy violates
+    design-system → lib layering. Fix: canonical def in lib/resourceConfig (alongside
+    formatResourceAmount / formatHeaderCompactAmount), re-export from VillageViewSectionHelpers
+    (zero consumer breakage), import in MultiVillageBottomSheet. PR #80.
+  verification: yarn static-check ✓ · 354 backend tests ✓ · 403 pixi tests ✓
+
 ## Runs
 
 - 2026-05-29: initialized with known high-value candidate areas; outcome: baseline-only.

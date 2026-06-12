@@ -1,10 +1,13 @@
 import type { BuildingDto, QueueEntryDto } from '@/api';
 import type { DisplayResources } from '@/lib/interpolation';
+import { formatCompactNumber } from '@/lib/resourceConfig';
 import {
   BUILDING_DEFINITIONS,
   type BuildingType,
 } from '@battleforthecrown/shared/village/buildings';
 import type { VillageResourceType } from './VillageViewSections';
+
+export { formatCompactNumber };
 
 export function formatQueueTime(ms: number): string {
   const totalSec = Math.max(0, Math.floor(ms / 1_000));
@@ -13,12 +16,6 @@ export function formatQueueTime(ms: number): string {
   const s = totalSec % 60;
   if (h > 0) return `${h}:${m.toString().padStart(2, '0')}`;
   return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
-export function formatCompactNumber(n: number): string {
-  if (n >= 10_000) return `${Math.round(n / 1000)}K`;
-  if (n >= 1_000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}K`;
-  return String(Math.floor(n));
 }
 
 export function computeQueueProgress(
