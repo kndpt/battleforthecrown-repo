@@ -14,6 +14,7 @@ escalation logic for overlapping work.
 | `bftc-refactor-backend` | Deep structural | Weekly, Saturday night 01:00 | Ready PR |
 | `bftc-refactor-pixi` | Deep structural | Weekly, Saturday night 02:00 | Ready PR |
 | `bftc-refactor-shared` | Deep structural | Weekly, Saturday night 03:00 | Ready PR |
+| `bftc-routine-gameplay-plan` | Proactive (gameplay backlog) | Daily (prompt Routine) | Ticket + JSON ledger + PR |
 
 ---
 
@@ -107,6 +108,22 @@ Offset from backend to avoid two heavy sessions competing for the same repo stat
 
 **Trigger**: Schedule — weekly on Sunday at 01:00 UTC (= Sunday 03:00 CEST).
 
+### bftc-routine-gameplay-plan
+
+**Purpose**: Find one unimplemented gameplay spec in `docs/gameplay/`, create a ticket/run via
+`$bftc-plan`, append the subject to `.agents/maintenance/gameplay-plan-subjects.json`, open a PR.
+
+**Ledger**: `.agents/maintenance/gameplay-plan-subjects.json` — source of truth for subjects
+already picked (merged on `main` + entries from open routine PRs read at preflight).
+
+**Prompt**: see full Routine prompt in repo discussions / paste from maint docs. Token PR body :
+`bftc-routine-gameplay-plan`. Branch : `plan/gameplay/<slug>`.
+
+**Trigger**: Schedule — daily (e.g. 04:00 UTC = 06:00 Paris CEST).
+
+**Behavior with open PRs**: do **not** hard stop. Read open PRs + JSON, exclude subjects already
+listed, pick a different gameplay gap.
+
 ---
 
 ## Manual escalation rules
@@ -132,6 +149,7 @@ Offset from backend to avoid two heavy sessions competing for the same repo stat
 | `bftc-maint-debt` open PR(s) + new run | Read existing PRs, pick a different candidate. |
 | `bftc-refactor-*` open PR + new run | Hard stop. Wait for merge or close. |
 | `bftc-maint-*` open + `bftc-refactor-*` run | Fine. Different scopes, no conflict. |
+| `bftc-routine-gameplay-plan` open PR(s) + new run | Read JSON from `main` + open PR branches, exclude listed subjects, continue on a different spec. |
 
 ---
 
