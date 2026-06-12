@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "description": "Registre d'exclusion des sujets gameplay déjà planifiés pour éviter les doublons au prochain passage bftc-plan.",
+  "subjects": [
+    {
+      "specPath": "docs/gameplay/11-scouting.md",
+      "slug": "intel-notebook",
+      "title": "Carnet d'intel minimal (Phase 4 — MVP léger)",
+      "keywords": ["intel", "carnet", "scout", "menace", "threat"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/055-feature-intel-notebook.md",
+      "artefactId": "055",
+      "status": "proposed",
+      "prBranch": "plan/gameplay/intel-notebook",
+      "gapSummary": "La spec 11-scouting.md déclare le carnet d'intel comme MVP léger, mais les runs 016/017 se sont limités au producer ScoutReport et à son UI inbox. Pas de table dédiée, pas de fiche `dernière info connue`, pas d'âge sourcé multi-rapports côté joueur.",
+      "codeEvidence": [
+        "rg -l 'intel|carnet' battleforthecrown-backend/src → 0",
+        "rg -l 'intel|carnet' battleforthecrown-pixi/src → 0",
+        "grep [Cc]arnet|[Ii]ntel|[Mm]enace|threat tasks/runs/archive/016-feature-scouting-backend-shared.md → 0",
+        "grep [Cc]arnet|[Ii]ntel|[Mm]enace|threat tasks/runs/archive/017-feature-scouting-frontend-inbox.md → 0",
+        "docs/gameplay/lab/tickets/11-intel-notebook.md statut: promu MVP léger dans 11-scouting.md, non implémenté"
+      ],
+      "addedAt": "2026-06-12"
+    }
+  ]
+}
