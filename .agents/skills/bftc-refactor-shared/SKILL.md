@@ -31,4 +31,4 @@ Dimensions : pure formulas, DTO/Zod contracts, cross-workspace duplication, forb
 
 1. Append full → `archive/refactor-shared/YYYY-MM-DD-full.md`
 2. Réécrire `refactor-shared.state.md` (≤80L)
-3. PR `maint/refactor-shared/<topic>` ready.
+3. PR `maint/refactor-shared/<topic>` ready to review..

@@ -28,4 +28,4 @@ Skills zone : `bftc-prisma`, `bftc-workers-outbox`, `bftc-pixi-scene`, `bftc-rea
 1. Append détail → `archive/maint-debt/YYYY-MM-DD-full.md` si narratif long
 2. **Réécrire** `maint-debt-backlog.state.md` : candidats actifs only, ≤20 rows — `harness.md`
 3. `yarn static-check` + tests ciblés ; smokes si backend `src/`
-4. PR `maint/debt/<topic>` ready
+4. PR `maint/debt/<topic>` ready to review
