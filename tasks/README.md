@@ -33,6 +33,7 @@ Politique PR `$bftc-run` :
 
 ### Runs actifs
 
+- [056 — Bouclier débutant PvP 48h](./runs/056-feature-pvp-newbie-shield-48h.md) — 📋 `PLANNED`. Enforcer le garde-fou 48 h à l'arrivée sur un monde : bloquer les attaques PvP entrantes, rompre le shield sur attaque PvP sortante, exposer le state via REST/WS et UI (CTA grisé + badge).
 - [055 — Carnet d'intel minimal](./runs/055-feature-intel-notebook.md) — 📋 `PLANNED`. Persister la dernière info connue par village cible (scout ou combat victorieux), exposer via REST/WS, surface dans le panneau d'entité.
 - [054 — Cible barbare narrative d'onboarding](./runs/054-feature-onboarding-narrative-barbarian-target.md) — 📋 `PLANNED`. Remplacer la garantie T1 globale par une cible affaiblie dédiée au tutoriel, tout en préservant les T1 standards.
 - [029 — Migration design-system des modales bâtiment restantes](./runs/029-migrate-building-modals-design-system.md) — 📋 `PLANNED`. Migrer les bâtiments actifs encore legacy et cadrer leurs contenus métier validés.
