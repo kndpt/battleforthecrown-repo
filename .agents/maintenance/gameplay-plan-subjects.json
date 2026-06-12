@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 1,
-  "description": "Registre d'exclusion des sujets gameplay déjà planifiés pour éviter les doublons au prochain passage bftc-plan.",
+  "version": 1,
+  "routineToken": "bftc-routine-gameplay-plan",
   "subjects": [
     {
       "specPath": "docs/gameplay/11-scouting.md",
@@ -19,6 +19,27 @@
         "grep [Cc]arnet|[Ii]ntel|[Mm]enace|threat tasks/runs/archive/016-feature-scouting-backend-shared.md → 0",
         "grep [Cc]arnet|[Ii]ntel|[Mm]enace|threat tasks/runs/archive/017-feature-scouting-frontend-inbox.md → 0",
         "docs/gameplay/lab/tickets/11-intel-notebook.md statut: promu MVP léger dans 11-scouting.md, non implémenté"
+      ],
+      "addedAt": "2026-06-12"
+    },
+    {
+      "specPath": "docs/gameplay/14-pvp-conquest.md",
+      "slug": "pvp-newbie-shield-48h",
+      "title": "Bouclier débutant PvP — 48h à l'arrivée sur le monde",
+      "keywords": ["bouclier", "newbie-shield", "pvp", "guardrail", "protection", "débutant"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/056-feature-pvp-newbie-shield-48h.md",
+      "artefactId": "056",
+      "status": "proposed",
+      "prBranch": "plan/gameplay/pvp-newbie-shield-48h",
+      "gapSummary": "La spec 14-pvp-conquest.md § 3 acte un bouclier débutant 48h tranché MVP. WorldConfig.lifecycle.newbieShieldHours est déjà câblé en config et exposé par GET /worlds/public (run 032), mais aucun guard runtime ne le consomme dans initiateAttack, aucun schéma de rupture (shieldBrokenAt) n'existe, et aucune UI ne grise les CTA d'attaque ou n'affiche un badge timer.",
+      "codeEvidence": [
+        "battleforthecrown-backend/src/modules/combat/combat.service.ts:82 initiateAttack — aucun check shield ni guard PvP",
+        "battleforthecrown-backend/src/modules/world/world.service.ts:121 — seul callsite de newbieShieldHours (exposition publique uniquement)",
+        "battleforthecrown-backend/prisma/schema.prisma — pas de colonne shieldBrokenAt sur WorldMembership",
+        "packages/shared/src/pvp/ — répertoire absent, pas de helper isShieldActive",
+        "battleforthecrown-pixi/src/features/world/SelectedEntityPanel.tsx — pas de chemin CTA grisée + message bouclier débutant",
+        "tasks/archive/23-pvp-snowball-no-cooldown-no-shield.md ne couvre que cooldown re-conquête et bouclier POST-perte, pas le bouclier DÉBUTANT à l'arrivée"
       ],
       "addedAt": "2026-06-12"
     }
