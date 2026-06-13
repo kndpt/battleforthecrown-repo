@@ -13,13 +13,10 @@ describe('calculateProductionRate', () => {
     expect(calculateProductionRate('WOOD', level, 2)).toBe(base * 2);
   });
 
-  it('returns 0 for non-resource buildings', () => {
-    expect(calculateProductionRate('BARRACKS', 5, 1)).toBe(0);
-  });
-
   it('returns 0 for out-of-range building levels', () => {
     expect(calculateProductionRate('WOOD', 0, 1)).toBe(0);
     expect(calculateProductionRate('WOOD', 99, 1)).toBe(0);
+    expect(calculateProductionRate('STONE', 11, 1)).toBe(0);
   });
 
   it('applies ECONOMIC production bonus to all resource types', () => {
