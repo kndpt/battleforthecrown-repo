@@ -54,9 +54,7 @@ describe('payload.codec', () => {
         level: 3,
       };
 
-      expect(encodeEventPayload('building.completed', payload)).toEqual(
-        payload,
-      );
+      expect(encodeEventPayload(payload)).toEqual(payload);
     });
   });
 });
