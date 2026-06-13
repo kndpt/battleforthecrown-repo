@@ -42,6 +42,27 @@
         "tasks/archive/23-pvp-snowball-no-cooldown-no-shield.md ne couvre que cooldown re-conquête et bouclier POST-perte, pas le bouclier DÉBUTANT à l'arrivée"
       ],
       "addedAt": "2026-06-12"
+    },
+    {
+      "specPath": "docs/gameplay/11-scouting.md",
+      "slug": "threat-estimate-pre-attack",
+      "title": "Menace estimée avant attaque — label Inconnue / Faible / Moyenne / Élevée (Phase 4 — MVP léger)",
+      "keywords": ["menace", "threat", "estimate", "pre-attack", "scout", "intel"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/059-feature-threat-estimate-pre-attack.md",
+      "artefactId": "059",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/threat-estimate-pre-attack",
+      "gapSummary": "La spec 11-scouting.md § Menace estimée avant attaque (lignes 82-118) acte un label Inconnue / Faible / Moyenne / Élevée en MVP léger, dérivé de la puissance bâtiment publique + dernier scout/combat connu + fraîcheur de l'intel + composition d'armée envoyée. Le run 055-feature-intel-notebook le déclare explicitement comme successeur à planifier dès qu'il est DONE. Côté code : aucun helper computeThreatLabel, aucun répertoire packages/shared/src/threat/, AttackDetailModal n'affiche que la Puissance estimée de l'attaquant et la fenêtre de capture, jamais un signal de risque pour la cible.",
+      "codeEvidence": [
+        "battleforthecrown-pixi/src/features/combat/AttackDetailModal.tsx:343-379 — pas de section 'Menace estimée', uniquement 'Puissance estimée' de l'attaquant et badge 'Fenêtre de capture'",
+        "packages/shared/src/threat/ — répertoire absent, pas de helper computeThreatLabel ni de constantes INTEL_FRESHNESS_THRESHOLDS_MS",
+        "battleforthecrown-backend/src — aucune occurrence de 'menace', 'threat', 'threatEstimate', 'computeThreat' (rg sur src + packages/shared)",
+        "battleforthecrown-pixi/src — aucune occurrence de 'estimateThreat', 'threatLabel', 'menaceEstimee'",
+        "tasks/runs/055-feature-intel-notebook.md:92 — explicite 'Après : run Menace estimée avant attaque (consumer du carnet, spec 11-scouting.md lignes 82-118) — à planifier dès que ce run est DONE'",
+        "tasks/00-mvp-roadmap.md:58 — Phase 4 livrable 'Menace estimée avant attaque : label Inconnue / Faible / Moyenne / Élevée basé sur infos publiques + dernier scout disponible' non couvert par les runs 016 / 017"
+      ],
+      "addedAt": "2026-06-13"
     }
   ]
 }
