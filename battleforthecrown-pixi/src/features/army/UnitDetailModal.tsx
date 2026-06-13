@@ -1,5 +1,6 @@
 import { useWorldConfigQuery } from '@/api/queries';
 import type { ArmyUnitDto } from '@/api/queries';
+import { ModalBackdrop } from '@/ui';
 import {
   TROOP_DETAIL_FIELD_MAX,
   TROOP_DETAIL_LABELS_FR,
@@ -98,33 +99,26 @@ export function UnitDetailModal({
   });
 
   return (
-    <div
-      aria-modal="true"
-      className="fixed inset-0 z-50 grid place-items-center bg-[rgba(0,0,0,.62)] p-3 [backdrop-filter:blur(3px)]"
-      onClick={onClose}
-      role="dialog"
-    >
-      <div className="flex w-full justify-center" onClick={(event) => event.stopPropagation()}>
-        <DesignTroopDetailModal
-          archetype={role.archetype}
-          closeLabel="Fermer"
-          cost={troopCost}
-          fieldMax={TROOP_DETAIL_FIELD_MAX}
-          labels={TROOP_DETAIL_LABELS_FR}
-          name={meta.name}
-          onClose={onClose}
-          populationCost={cost.population}
-          portraitFallback={meta.emoji}
-          portraitSrc={meta.iconPath}
-          roleLabel={role.label}
-          roleTone={role.tone}
-          stats={stats}
-          stock={stock}
-          tagline={`« ${meta.description} »`}
-          tierBadge={roman(Math.min(requiredLevel, 10))}
-          trainingTime={formatDuration(perUnitSeconds)}
-        />
-      </div>
-    </div>
+    <ModalBackdrop onClose={onClose}>
+      <DesignTroopDetailModal
+        archetype={role.archetype}
+        closeLabel="Fermer"
+        cost={troopCost}
+        fieldMax={TROOP_DETAIL_FIELD_MAX}
+        labels={TROOP_DETAIL_LABELS_FR}
+        name={meta.name}
+        onClose={onClose}
+        populationCost={cost.population}
+        portraitFallback={meta.emoji}
+        portraitSrc={meta.iconPath}
+        roleLabel={role.label}
+        roleTone={role.tone}
+        stats={stats}
+        stock={stock}
+        tagline={`« ${meta.description} »`}
+        tierBadge={roman(Math.min(requiredLevel, 10))}
+        trainingTime={formatDuration(perUnitSeconds)}
+      />
+    </ModalBackdrop>
   );
 }
