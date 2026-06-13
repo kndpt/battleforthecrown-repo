@@ -10,8 +10,7 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | pixi magic 3600 + formatDuration dup | UI text differs — need product call before dedupe |
 | VillageCanvas + VillageScene pipeline | zero importers — needs retire-canvas decision, too broad |
 | pixi/WorldMapScene.ts | open PR #89 — background tap + exit cleanup |
-| shared/logic/training-time.ts | calculateTrainingTime has no direct unit spec (used by recruit flows) |
-| shared/logic/production.ts | calculateProductionRate has no direct unit spec |
+| shared/logic/training-time.ts | open PRs #99–#101 — calculateTrainingTime unit spec |
 
 ## rules
 
