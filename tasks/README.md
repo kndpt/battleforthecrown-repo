@@ -17,6 +17,7 @@ Skills : `$bftc-plan` | `$bftc-run` — détail [`runs/README.md`](./runs/README
 
 ### Actifs
 
+- [059 — Menace estimée avant attaque](./runs/059-feature-threat-estimate-pre-attack.md) — PLANNED
 - [056 — Bouclier débutant PvP 48h](./runs/056-feature-pvp-newbie-shield-48h.md) — PLANNED
 - [055 — Carnet intel](./runs/055-feature-intel-notebook.md) — PLANNED
 - [054 — Cible barbare onboarding](./runs/054-feature-onboarding-narrative-barbarian-target.md) — PLANNED
