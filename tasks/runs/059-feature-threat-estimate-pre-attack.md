@@ -9,13 +9,13 @@
 - **Phase roadmap** : Phase 4 — Scouting (aide MVP léger : menace estimée avant attaque, déclarée mais non livrée par les runs 016/017 ; successeur direct annoncé par le run 055).
 - **Spec source** : [`docs/gameplay/11-scouting.md`](../../docs/gameplay/11-scouting.md) §§ « Menace estimée avant attaque (MVP léger) » (lignes 82-118).
 - **Type** : `feature`
-- **Modules backend** : optionnel selon T1 — soit aucun (formule pure côté shared consommée par le front), soit un endpoint léger `GET /combat/threat-estimate` sur `combat.controller.ts` pour homogénéiser le calcul. Tranché en refinement.
+- **Modules backend** : **aucun**. Décision tranchée : pas d'endpoint, pas de second code path. Le label est dérivé exclusivement côté shared (formule pure) à partir de données déjà exposées au front (carnet d'intel + puissance bâtiments publique). Évite la divergence entre serveur et UI, supprime un hop réseau, et conserve la politique « ne pas révéler ce que le joueur n'a pas obtenu » (le serveur n'enverrait rien que le front ne sache déjà calculer).
 - **Modules frontend** : `features/combat/AttackDetailModal.tsx` (section nouvelle « Menace estimée »), nouveau viewmodel `threatEstimateView.ts`, branchement query `useVillageIntelQuery` (issu du run 055) + `usePowerQuery` (déjà existant pour la puissance bâtiments publique).
 - **Modules shared** : nouveau `packages/shared/src/threat/` (constants `THREAT_LEVELS`, `INTEL_FRESHNESS_THRESHOLDS_MS`, formule pure `computeThreatLabel`).
 
 ## Dépendances
 
-- **Bloquant** : run [`055-feature-intel-notebook`](055-feature-intel-notebook.md) **DONE** (source de vérité du carnet d'intel — la formule consomme `VillageIntelDto.units/resources/wallLevel/seenAt`).
+- **Bloquant** : run [`055-feature-intel-notebook`](055-feature-intel-notebook.md) — statut actuel `PLANNED` ; **doit être `DONE` avant le démarrage de ce run** (la formule consomme `VillageIntelDto.units/resources/wallLevel/seenAt` produit par le carnet d'intel). Ne pas démarrer 059 tant que 055 n'est pas archivé.
 - **Recommandé avant** : run [`058-feature-pvp-power-third-attack-guard`](058-feature-pvp-power-third-attack-guard.md) (PR #87 ouverte) car le badge menace doit gracefully coexister avec le chemin CTA grisée « Puissance trop faible — protection serveur ». Pas un bloqueur fonctionnel, mais coordination nécessaire si exécutés rapprochés (ordre d'affichage badge menace vs message guard).
 - Phase 4 Scouting livrée : runs [`016`](archive/016-feature-scouting-backend-shared.md) + [`017`](archive/017-feature-scouting-frontend-inbox.md) — `ScoutReport` + UI inbox déjà en place.
 
@@ -46,7 +46,7 @@
 
 _(Pré-rempli par `bftc-plan` ; le lead peut affiner à l'étape 3.)_
 
-- **T1** — Décision archi (refinement) : formule **shared pure** consommée côté front uniquement vs endpoint backend `GET /combat/threat-estimate` partagé entre HUD et future API publique. Recommandation initiale : **shared pure** (pas de fuite serveur, pas de hop réseau, alignement avec `compute*` existants côté `packages/shared`).
+- **T1** — Cadrage technique (formule shared pure tranchée, pas de second code path) : confirmer la signature de `computeThreatLabel` (paramètres, types, valeur retour), valider le seuil `STALE_THRESHOLD_MS` (default 7j) et la grille `INTEL_FRESHNESS_THRESHOLDS_MS`, lister explicitement les sources autorisées par la spec (puissance bâtiments publique + intel datée + composition d'armée + type de cible + distance comme tooltip secondaire). Pas de décision archi entre 2+ pistes — la formule reste pure et locale au front (cf. § Cible).
 - **T2** — `packages/shared/src/threat/` : `constants.ts` (`THREAT_LEVELS`, `INTEL_FRESHNESS_THRESHOLDS_MS`, `STALE_THRESHOLD_MS`), `formula.ts` (`computeThreatLabel`, `formatIntelFreshness`), `types.ts` (`ThreatLabel`, `ThreatEstimateInput`), barrel `index.ts` + tests `formula.spec.ts`.
 - **T3** — Frontend viewmodel `features/combat/threatEstimateView.ts` : adapter `VillageIntelDto + MapEntity (publicBuildingPower) + armyComposition → ThreatEstimateInput`, gérer la dérivation `intelAgeMs = now - seenAt`, mapper sortie vers libellés UI (badge couleur + tooltip + mention fraîcheur). Tests Vitest `threatEstimateView.test.ts`.
 - **T4** — Intégration `AttackDetailModal.tsx` : nouvelle section `Menace estimée` en mode `attack` (ordre : sous la sélection d'unités, au-dessus du résumé `Puissance estimée`), conditionnelle au mode `attack` uniquement, en lecture `useVillageIntelQuery(target.refId)` (run 055) + `target.kingdomPowerSnapshot.buildings` (déjà exposé via `WorldEntityDto`).
@@ -72,8 +72,8 @@ _(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tick
 - **Critères d'acceptance vérifiés** : à remplir à l'étape 10.
 - **Review indépendante** : `Déclenchée (raison : (d) invariant durable — formule UX-gameplay qui dicte la lecture du risque pré-attaque + politique de non-révélation d'info ; ne pas casser le contrat « ne pas révéler ce que le joueur n'a pas obtenu »). Diff probablement < 100 lignes (formule pure + 1 modal), pas de couplage back+front (T1 valide la formule shared pure), pas de modif SPEC.md durable.`
 - **Tests automatisés** : unit `packages/shared/src/threat/formula.spec.ts`, vitest `threatEstimateView.test.ts`, extension `AttackDetailModal.test.tsx`.
-- **Smokes ajoutés/modifiés** : `Aucun` si T1 retient la formule shared pure (pas de chemin serveur). Si endpoint backend retenu : ajouter `threat-estimate.smoke.spec.ts` couvrant cible barbare / cible joueur sans intel / cible joueur intel récente.
-- **QA fonctionnelle agent** : `yarn test:pixi` (vitest) + `yarn test:shared` ; pas de `curl` requis sauf endpoint backend retenu (T1).
+- **Smokes ajoutés/modifiés** : `Aucun`. La décision archi (formule shared pure, pas de second code path) supprime tout chemin serveur — donc pas de smoke backend pertinent. Couverture intégrale par unit shared + vitest UI.
+- **QA fonctionnelle agent** : `yarn test:pixi` (vitest) + `yarn test:shared` ; pas de `curl` requis (pas d'endpoint backend ajouté).
 - **Tests IG à faire par le user** : checklist mobile ≤ 5 items — ouvrir attack modal sur barbare T1 (badge `Faible`/`Moyenne`), sur barbare T5 (badge `Élevée`), sur joueur jamais scouté (`Inconnue` + tooltip CTA scout), sur joueur scouté récemment (label + mention `Estimation basée sur scout du …`), bascule mode `scout` (badge absent).
 
 ## Points d'attention (notes du plan)
