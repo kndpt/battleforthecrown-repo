@@ -145,4 +145,10 @@ describe('getCaravanResourceCapacity', () => {
       iron: 11_600,
     });
   });
+
+  it('floors fractional per-resource capacity', () => {
+    expect(
+      getCaravanResourceCapacity({ wood: 999, stone: 1001, iron: 4 }),
+    ).toEqual({ wood: 199, stone: 200, iron: 0 });
+  });
 });
