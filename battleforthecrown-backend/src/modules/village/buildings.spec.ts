@@ -7,6 +7,7 @@ import {
   isBuildingEnabled,
   getBuildingLevelValues,
   getBarracksTrainingSpeedMultiplier,
+  getQuarterPopulationLimit,
   WATCHTOWER_VISION_LEVELS,
 } from '@battleforthecrown/shared/village';
 import type {
@@ -122,6 +123,37 @@ describe('warehouse storage', () => {
     expect(limits.wood).toBe(3000);
     expect(limits.stone).toBe(3000);
     expect(limits.iron).toBe(3000);
+  });
+});
+
+describe('quarter population limits', () => {
+  it('returns correct limits for level 1', () => {
+    expect(getQuarterPopulationLimit(1)).toBe(250);
+  });
+
+  it('returns correct limits for level 5', () => {
+    expect(getQuarterPopulationLimit(5)).toBe(385);
+  });
+
+  it('returns correct limits for level 10', () => {
+    expect(getQuarterPopulationLimit(10)).toBe(665);
+  });
+
+  it('clamps level 0 to level 1 limit', () => {
+    expect(getQuarterPopulationLimit(0)).toBe(250);
+  });
+
+  it('clamps level 99 to level 10 limit', () => {
+    expect(getQuarterPopulationLimit(99)).toBe(665);
+  });
+
+  it('floors fractional levels before clamping', () => {
+    expect(getQuarterPopulationLimit(7.9)).toBe(480);
+  });
+
+  it('falls back to level 1 for non-finite input', () => {
+    expect(getQuarterPopulationLimit(Number.NaN)).toBe(250);
+    expect(getQuarterPopulationLimit(Number.POSITIVE_INFINITY)).toBe(250);
   });
 });
 
