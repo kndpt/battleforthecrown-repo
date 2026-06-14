@@ -12,7 +12,6 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | pixi/WorldMapScene.ts | open PR #89 — background tap + exit cleanup |
 | shared/logic/training-time.ts | open PRs #99–101 — calculateTrainingTime spec |
 | shared/logic/production.ts | open PR #102 — calculateProductionRate spec |
-| pixi console.error stubs | ReportDetailModal has 4 bare console.error on mutation failures — replace with logger |
 | pixi formatTime variants | QueueBottomSheet + UnitCard + UnitDetailModal — 3 local formatTime/Duration, diff styles |
 
 ## rules
