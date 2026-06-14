@@ -84,6 +84,28 @@
         "tasks/archive/21-power-guardrail-leaks-defender-power.md — ticket d'archive sur le tradeoff de fuite assumé, confirme que le guard lui-même n'est pas implémenté"
       ],
       "addedAt": "2026-06-12"
+    },
+    {
+      "specPath": "docs/gameplay/14-pvp-conquest.md",
+      "slug": "pvp-capture-duration-preview",
+      "title": "Pré-affichage de la durée de capture PvP — panneau village + rapport scout",
+      "keywords": ["capture", "fenêtre", "castleLevel", "preview", "pvp", "scout"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/060-feature-pvp-capture-duration-preview.md",
+      "artefactId": "060",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/pvp-capture-duration-preview",
+      "gapSummary": "La spec 14-pvp-conquest § Période de capture variable selon le niveau du Château tranche MVP : 'Visibilité de la durée : pré-affichée sur le panneau d'info du village ennemi et dans le rapport de scout. Aligné sur la spec barbare.' Le preview barbare est livré (run 019), le PvP ne l'est pas. Backend a la table PVP_CAPTURE_DURATIONS_MS mais aucun helper shared, le presenter scout n'expose pas castleLevel, AttackDetailModal n'affiche la fenêtre que pour barbares, SelectedEntityPanel n'a aucun badge pour cibles joueur. Ticket archivé tasks/archive/25-capture-duration-visibility-asymmetry.md confirme la dette : décision design tranchée, implémentation reportée au câblage UI conquête, désormais possible.",
+      "codeEvidence": [
+        "battleforthecrown-backend/src/modules/combat/capture-duration.ts:12-34 — PVP_CAPTURE_DURATIONS_MS + getPvpCaptureDurationMs existent backend, jamais ré-exportés vers shared",
+        "packages/shared/src/combat/ — aucun helper getPvpCaptureDurationMs ni getPvpCaptureDurationLabel, pas de table partagée",
+        "battleforthecrown-pixi/src/features/combat/AttackDetailModal.tsx:118 — captureDuration dérive uniquement de getBarbarianCaptureDurationLabel(target.tier), aucun chemin PvP via target.castleLevel",
+        "battleforthecrown-pixi/src/features/world/SelectedEntityPanel.tsx — aucune ligne ou badge 'Fenêtre de capture' pour cible joueur (uniquement l'état actif via activeCapture)",
+        "battleforthecrown-backend/src/modules/combat/scout-report.presenter.ts:22-35 — details n'expose que wallLevel, jamais castleLevel pour cible joueur",
+        "packages/shared/src/combat/dtos.ts:118 — ScoutReportResponse.details typé { scoutLosses?, scoutUnits?, wallLevel? }, pas de castleLevel",
+        "tasks/archive/25-capture-duration-visibility-asymmetry.md — Résolu côté doc 2026-05-09, implémentation explicitement reportée : 'à intégrer dans le panneau d'info village (front + DTO world-entities) le jour où la conquête PvP/barbare sera câblée côté UI'"
+      ],
+      "addedAt": "2026-06-14"
     }
   ]
 }

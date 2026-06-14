@@ -17,6 +17,7 @@ Skills : `$bftc-plan` | `$bftc-run` — détail [`runs/README.md`](./runs/README
 
 ### Actifs
 
+- [060 — Pré-affichage durée capture PvP](./runs/060-feature-pvp-capture-duration-preview.md) — PLANNED
 - [059 — Menace estimée avant attaque](./runs/059-feature-threat-estimate-pre-attack.md) — PLANNED
 - [058 — Garde-fou PvP puissance ÷ 3](./runs/058-feature-pvp-power-third-attack-guard.md) — PLANNED
 - [056 — Bouclier débutant PvP 48h](./runs/056-feature-pvp-newbie-shield-48h.md) — PLANNED
