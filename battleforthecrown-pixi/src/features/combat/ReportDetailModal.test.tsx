@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CombatReportDto } from '@/api/queries';
 import type { CaravanReportResponse } from '@battleforthecrown/shared/combat';
+import { ToastProvider } from '@/ui';
 import { ReportDetailModal } from './ReportDetailModal';
 
 const mocks = vi.hoisted(() => ({
@@ -96,7 +97,7 @@ describe('ReportDetailModal', () => {
   it('opens the world map focused on the combat report target', async () => {
     const onClose = vi.fn();
 
-    render(<ReportDetailModal reportId={combatReport.id} reportKind="combat" onClose={onClose} />);
+    render(<ToastProvider><ReportDetailModal reportId={combatReport.id} reportKind="combat" onClose={onClose} /></ToastProvider>);
 
     expect(screen.queryByRole('button', { name: 'Carte' })).not.toBeInTheDocument();
 
@@ -115,7 +116,7 @@ describe('ReportDetailModal', () => {
     const onClose = vi.fn();
     mocks.deleteReport.mockResolvedValue(undefined);
 
-    render(<ReportDetailModal reportId={caravanReport.id} reportKind="caravan" onClose={onClose} />);
+    render(<ToastProvider><ReportDetailModal reportId={caravanReport.id} reportKind="caravan" onClose={onClose} /></ToastProvider>);
 
     expect(await screen.findByText('Livraison partielle')).toBeInTheDocument();
     expect(screen.queryByText('Rapport caravane')).not.toBeInTheDocument();

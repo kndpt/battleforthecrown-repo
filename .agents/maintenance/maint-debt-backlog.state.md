@@ -1,6 +1,6 @@
 # maint-debt — candidats (réécrit chaque run)
 
-last: 2026-06-14 | archive: `archive/maint-debt/2026-06-14-full.md`
+last: 2026-06-15 | archive: `archive/maint-debt/2026-06-15-full.md`
 branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 ## candidate
@@ -12,10 +12,8 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | pixi/WorldMapScene.ts | open PR #89 — background tap + exit cleanup |
 | shared/logic/training-time.ts | open PRs #99–101 — calculateTrainingTime spec |
 | shared/logic/production.ts | open PR #102 — calculateProductionRate spec |
-| pixi console.error stubs | ReportDetailModal has 4 bare console.error on mutation failures — replace with logger |
 | pixi formatTime variants | QueueBottomSheet + UnitCard + UnitDetailModal — 3 local formatTime/Duration, diff styles |
 
 ## rules
 
 - max 20 rows here ; `fixed`/`rejected` → archive only, not this file
-- pick 1 candidate/run ; ≤5 files ; no destructive prisma / balance change

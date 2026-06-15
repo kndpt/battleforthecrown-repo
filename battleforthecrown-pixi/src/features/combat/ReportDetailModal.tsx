@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, Trash2 } from 'lucide-react';
-import { ModalBackdrop, Spinner } from '@/ui';
+import { ModalBackdrop, Spinner, useToast } from '@/ui';
 import {
   useCaravanReportQuery,
   useDeleteScoutReportMutation,
@@ -86,6 +86,7 @@ function ScoutReportDetail({
   const report = useScoutReportQuery(reportId);
   const { mutate: markRead } = useMarkScoutReportReadMutation();
   const { mutateAsync: deleteReport } = useDeleteScoutReportMutation();
+  const { addToast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
@@ -98,8 +99,8 @@ function ScoutReportDetail({
     try {
       await deleteReport({ reportId });
       onClose();
-    } catch (err) {
-      console.error('Erreur lors de la suppression du rapport scout:', err);
+    } catch {
+      addToast({ variant: 'error', message: 'Impossible de supprimer le rapport scout.' });
     } finally {
       setIsDeleting(false);
     }
@@ -226,6 +227,7 @@ function CaravanReportDetail({
   const report = useCaravanReportQuery(reportId);
   const { mutate: markRead } = useMarkCaravanReportReadMutation();
   const { mutateAsync: deleteReport } = useDeleteCaravanReportMutation();
+  const { addToast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
@@ -238,8 +240,8 @@ function CaravanReportDetail({
     try {
       await deleteReport({ reportId });
       onClose();
-    } catch (err) {
-      console.error('Erreur lors de la suppression du rapport de caravane:', err);
+    } catch {
+      addToast({ variant: 'error', message: 'Impossible de supprimer le rapport de caravane.' });
     } finally {
       setIsDeleting(false);
     }
@@ -363,6 +365,7 @@ function ReinforcementReportDetail({
   const report = useReinforcementReportQuery(reportId);
   const { mutate: markRead } = useMarkReinforcementReportReadMutation();
   const { mutateAsync: deleteReport } = useDeleteReinforcementReportMutation();
+  const { addToast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
@@ -375,8 +378,8 @@ function ReinforcementReportDetail({
     try {
       await deleteReport({ reportId });
       onClose();
-    } catch (err) {
-      console.error('Erreur lors de la suppression du rapport de renfort:', err);
+    } catch {
+      addToast({ variant: 'error', message: 'Impossible de supprimer le rapport de renfort.' });
     } finally {
       setIsDeleting(false);
     }
@@ -450,6 +453,7 @@ function CombatReportDetail({
   const { mutate: markRead } = useMarkReportReadMutation();
   const { mutateAsync: deleteReport } = useDeleteReportMutation();
   const { navigateToWorldMapFocus } = useWorldMapNavigation();
+  const { addToast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
@@ -462,8 +466,8 @@ function CombatReportDetail({
     try {
       await deleteReport({ reportId });
       onClose();
-    } catch (err) {
-      console.error('Erreur lors de la suppression:', err);
+    } catch {
+      addToast({ variant: 'error', message: 'Impossible de supprimer le rapport.' });
     } finally {
       setIsDeleting(false);
     }
