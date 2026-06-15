@@ -10,10 +10,11 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | pixi magic 3600 + formatDuration dup | UI text differs — need product call before dedupe |
 | VillageCanvas + VillageScene pipeline | zero importers — needs retire-canvas decision, too broad |
 | pixi/WorldMapScene.ts | open PR #89 — background tap + exit cleanup |
-| shared/logic/training-time.ts | open PRs #99–101, #110 — calculateTrainingTime spec |
+| shared/logic/training-time.ts | open PR #110 — calculateTrainingTime spec |
 | shared/logic/production.ts | open PR #102 — calculateProductionRate spec |
-| pixi console.error stubs | open PR #116 — ReportDetailModal error toasts |
-| pixi formatTime variants | open PR #114 — army formatDuration dedupe; QueueBottomSheet clock-style kept |
+| pixi QueueBottomSheet formatTime | clock-style mm:ss vs formatRemaining human labels — keep local until product aligns village queue display |
+| shared/utils/level.ts | open PR #112 — clampBuildingLevel spec |
+| shared/world/entities.ts normalizeTier | open PR #108 — normalizeTier spec |
 | shared/world/entities.ts isFoggedEntity | type guard used by world map — no direct unit spec |
 | shared/resources/production.ts | isResourceBuildingType + getBuildingProduction — only indirect via calculateProductionRate |
 | shared/village/strategy.ts getVillageStrategyPlan | constant plan accessor — low value unless plan becomes configurable |

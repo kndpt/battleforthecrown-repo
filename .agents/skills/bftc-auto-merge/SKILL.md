@@ -23,7 +23,6 @@ Repo    : kndpt/battleforthecrown-repo
 - `reviewDecision === "APPROVED"` — approuvé, aucun `CHANGES_REQUESTED` actif
 - Tous les `statusCheckRollup` à `conclusion/state === "SUCCESS"`
 - Aucun check `IN_PROGRESS` / `QUEUED` / `PENDING`
-- Non-draft
 
 **Sinon → skip. Passage humain requis.**
 
@@ -39,3 +38,4 @@ gh pr merge <number> --squash --delete-branch
 
 Afficher un résumé : PRs mergées / ignorées (raison courte par PR ignorée).
 Ne jamais commenter une PR, ne jamais modifier de fichier state.
+Si une PR est en draft, tu peux la mettre en mode ready for review automatiquement et la traiter comme une PR ordinaire.
