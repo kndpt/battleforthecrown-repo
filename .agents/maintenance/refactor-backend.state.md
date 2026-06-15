@@ -8,7 +8,6 @@ full: `archive/refactor-backend/2026-06-14-full.md`
 | ID | Sev | Where | Note |
 |----|-----|-------|------|
 | R4 | High | crowns.service.ts ~264 | fractional carry — needs migration |
-| E1 | Med | event-outbox.service.ts:600 | getUserIdByVillage ×21 sans batching |
 | D4 | Med | combat.service.ts | `expedition.create` ×5 |
 | G1 | Med | combat.service.ts ~986 | sequential kingdom power snapshot |
 | O2 | Low | onboarding.service.ts:191 | getOnboardingProjection fn pure dans service (même pattern R3) |
@@ -20,4 +19,4 @@ full: `archive/refactor-backend/2026-06-14-full.md`
 
 ## skip unless theme
 
-B3 → PR #91 fermée (E1 remplace) | G1 intentionnel (tx safety) | D4 no factory value
+B3/E1 → PR #91 mergée | G1 intentionnel (tx safety) | D4 no factory value
