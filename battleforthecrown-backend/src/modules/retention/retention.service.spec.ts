@@ -6,7 +6,7 @@ import {
   getPlayerMaxCastleLevel,
   getTaskProjection,
   isWithinClaimGrace,
-} from './retention.service';
+} from './retention.utils';
 
 describe('getTaskProjection', () => {
   it('projects a victorious barbarian battle as the daily barbarian task', () => {

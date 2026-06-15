@@ -30,7 +30,6 @@ import {
   GameBottomSheetPanel,
   type ArmyQueueItem,
   type ArmyRecruitPopupLabels,
-  type ArmySupportRow,
   type ArmyTroop,
   type ArmyVillageRow,
 } from '@/features/design-system/components';
@@ -49,6 +48,7 @@ import {
   findArmyUnitByTroopId,
   type ArmyFilterId,
 } from './armyViewModel';
+import { useGarrisonSelection } from './useGarrisonSelection';
 
 type ArmyRuntimeTab = 'barracks' | 'army';
 
@@ -293,25 +293,6 @@ function GarrisonSheetTitle({
   );
 }
 
-function formatGarrisonOriginsSubtitle(lines: GarrisonLine[]): string | null {
-  const origins = new Map<string, { playerName: string | null; villageName: string }>();
-
-  for (const line of lines) {
-    origins.set(line.originVillageId, {
-      playerName: line.originPlayerName ?? null,
-      villageName: line.originVillageName ?? `Village ${line.originVillageId}`,
-    });
-  }
-
-  if (origins.size === 0) return null;
-  if (origins.size > 1) return `${origins.size} villages alliés`;
-
-  const origin = Array.from(origins.values())[0];
-  return origin.playerName
-    ? `${origin.villageName} · ${origin.playerName}`
-    : origin.villageName;
-}
-
 export function ArmyScreen() {
   const navigate = useNavigate();
   const worldId = useGameStore((state) => state.worldId);
@@ -319,7 +300,7 @@ export function ArmyScreen() {
   const buildings = useVillageBuildingsQuery(villageId);
   const inventory = useArmyInventoryQuery(villageId);
   const training = useArmyTrainingQuery(villageId);
-  const garrison = useGarrisonQuery(villageId);
+  const garrisonQuery = useGarrisonQuery(villageId);
   const population = usePopulationQuery(villageId);
   const worldConfig = useWorldConfigQuery(worldId);
   const onboardingSummary = useOnboardingSummaryQuery(worldId);
@@ -360,9 +341,6 @@ export function ArmyScreen() {
   const [recruitTroopId, setRecruitTroopId] = useState<string | null>(null);
   const [recruitValue, setRecruitValue] = useState(1);
   const [cancelTrainingId, setCancelTrainingId] = useState<string | null>(null);
-  const [selectedGarrisonVillageId, setSelectedGarrisonVillageId] = useState<string | null>(null);
-  const [selectedGarrisonDirection, setSelectedGarrisonDirection] = useState<GarrisonLine['direction'] | null>(null);
-  const [selectedGarrisonTroopId, setSelectedGarrisonTroopId] = useState<string | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<ArmyUnitDto | null>(null);
 
   const barracks = buildings.data?.find((b) => b.type === 'BARRACKS');
@@ -370,7 +348,7 @@ export function ArmyScreen() {
 
   const units = inventory.data ?? [];
   const trainings = training.data ?? [];
-  const garrisonLines = garrison.data ?? EMPTY_GARRISON_LINES;
+  const garrisonLines = garrisonQuery.data ?? EMPTY_GARRISON_LINES;
   const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data);
 
   const armyModel = useMemo(
@@ -399,6 +377,8 @@ export function ArmyScreen() {
     ],
   );
 
+  const garrison = useGarrisonSelection(garrisonLines, armyModel.troops);
+
   const recruitTroop = recruitTroopId
     ? armyModel.troops.find((troop) => troop.id === recruitTroopId) ?? null
     : null;
@@ -408,36 +388,9 @@ export function ArmyScreen() {
   const boundedRecruitValue = recruitMax <= 0
     ? 0
     : Math.max(1, Math.min(recruitMax, recruitValue));
-  const selectedGarrisonLines = selectedGarrisonVillageId
-    ? garrisonLines.filter(
-      (line) =>
-        line.direction === 'OUTGOING' &&
-        line.villageId === selectedGarrisonVillageId,
-    )
-    : selectedGarrisonTroopId
-      ? garrisonLines.filter(
-        (line) =>
-          line.unitType === selectedGarrisonTroopId &&
-          (!selectedGarrisonDirection || line.direction === selectedGarrisonDirection),
-      )
-      : [];
-  const selectedGarrisonTroop = selectedGarrisonTroopId
-    ? armyModel.troops.find((troop) => troop.id === selectedGarrisonTroopId) ?? null
-    : null;
   const selectedCancelTraining = cancelTrainingId
     ? trainings.find((candidate) => candidate.id === cancelTrainingId) ?? null
     : null;
-  const selectedGarrisonTitle =
-    selectedGarrisonVillageId
-      ? selectedGarrisonLines[0]?.hostVillageName ?? 'Stationnées ailleurs'
-      : selectedGarrisonDirection === 'INCOMING' && selectedGarrisonTroop
-        ? `${selectedGarrisonTroop.name} alliés`
-        : selectedGarrisonTroop?.name;
-  const selectedGarrisonSubtitle = selectedGarrisonVillageId
-    ? selectedGarrisonLines[0]?.hostPlayerName ?? null
-    : selectedGarrisonDirection === 'INCOMING'
-      ? formatGarrisonOriginsSubtitle(selectedGarrisonLines)
-      : null;
   const pendingRecallKey = recallReinforcement.variables
     ? `${recallReinforcement.variables.villageId}:${recallReinforcement.variables.originVillageId}:${Object.keys(recallReinforcement.variables.units)[0]}`
     : null;
@@ -518,8 +471,7 @@ export function ArmyScreen() {
   };
 
   const handleTroopSelect = (troop: ArmyTroop) => {
-    setSelectedGarrisonVillageId(null);
-    setSelectedGarrisonDirection(null);
+    garrison.clear();
     if (activeRuntimeTab === 'barracks') {
       setSelectedUnit(toDetailUnit(troop, units));
       return;
@@ -527,32 +479,16 @@ export function ArmyScreen() {
     const hasGarrisonActions =
       (troop.fromAllies ?? 0) > 0 || (troop.supportingElsewhere ?? 0) > 0;
     if (hasGarrisonActions) {
-      setSelectedGarrisonTroopId(troop.id);
+      garrison.selectTroop(troop.id);
       return;
     }
     setSelectedUnit(toDetailUnit(troop, units));
   };
 
-  const handleSupportRowSelect = (row: ArmySupportRow) => {
-    setSelectedGarrisonDirection(null);
-    setSelectedGarrisonTroopId(null);
-    setSelectedGarrisonVillageId(row.id);
-  };
-
-  const handleVillageRowSelect = (row: ArmyVillageRow) => {
-    setSelectedGarrisonVillageId(null);
-    if (row.alliedQuantity > 0) {
-      setSelectedGarrisonDirection('INCOMING');
-      setSelectedGarrisonTroopId(row.id);
-    }
-  };
-
   const handleVillageRowIconSelect = (row: ArmyVillageRow) => {
     const troop = armyModel.troops.find((candidate) => candidate.id === row.id);
     if (!troop) return;
-    setSelectedGarrisonVillageId(null);
-    setSelectedGarrisonDirection(null);
-    setSelectedGarrisonTroopId(null);
+    garrison.clear();
     setSelectedUnit(toDetailUnit(troop, units));
   };
 
@@ -579,7 +515,7 @@ export function ArmyScreen() {
             onboardingSummary.isLoading ||
             inventory.isLoading ||
             training.isLoading ||
-            garrison.isLoading
+            garrisonQuery.isLoading
           }
           onAction={runArmyAction}
           onNavigate={navigate}
@@ -602,10 +538,10 @@ export function ArmyScreen() {
             onFilterChange={(id) => setActiveFilterId(id as ArmyFilterId)}
             onTroopDragEnd={() => setDraggedTroopId(null)}
             onTroopDragStart={(troop) => setDraggedTroopId(troop.id)}
-            onSupportRowSelect={handleSupportRowSelect}
+            onSupportRowSelect={garrison.onSupportRowSelect}
             onTroopSelect={handleTroopSelect}
             onVillageRowIconSelect={handleVillageRowIconSelect}
-            onVillageRowSelect={handleVillageRowSelect}
+            onVillageRowSelect={garrison.onVillageRowSelect}
             recruitSheet={{
               ...armyModel.recruitSheet,
               cancelQueueDisabled: cancelTraining.isPending,
@@ -666,29 +602,25 @@ export function ArmyScreen() {
       </BottomSheet>
 
       <BottomSheet
-        isOpen={Boolean(selectedGarrisonTitle && selectedGarrisonLines.length > 0)}
+        isOpen={garrison.isGarrisonOpen}
         maxHeight="72vh"
-        onClose={() => {
-          setSelectedGarrisonVillageId(null);
-          setSelectedGarrisonDirection(null);
-          setSelectedGarrisonTroopId(null);
-        }}
+        onClose={garrison.clear}
         zIndex={80}
       >
         <GameBottomSheetPanel
           eyebrow="Garnison"
           title={
             <GarrisonSheetTitle
-              subtitle={selectedGarrisonSubtitle}
-              title={selectedGarrisonTitle}
+              subtitle={garrison.selectedGarrisonSubtitle}
+              title={garrison.selectedGarrisonTitle}
             />
           }
           scrollable
         >
-          {selectedGarrisonLines.length > 0 ? (
+          {garrison.selectedGarrisonLines.length > 0 ? (
             <GarrisonActions
               isPending={recallReinforcement.isPending}
-              lines={selectedGarrisonLines}
+              lines={garrison.selectedGarrisonLines}
               onRecall={handleRecallLine}
               pendingRecallKey={pendingRecallKey}
             />
