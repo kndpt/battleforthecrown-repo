@@ -1,12 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LootManager } from './loot.manager';
 import { ResourceLootProvider } from './providers/resource-loot.provider';
-import {
-  CombatContext,
-  CombatConfig,
-} from '../interfaces/combat-context.interface';
-import type { Expedition } from '@prisma/client';
+import { CombatContext } from '../interfaces/combat-context.interface';
 import type { UnitMap } from '@battleforthecrown/shared/army';
+import { DEFAULT_COMBAT_RULES } from '@battleforthecrown/shared/combat';
+import {
+  makeExpeditionFixture,
+  makeCombatConfigFixture,
+} from '../combat-fixtures';
 
 // Carry capacity is read from UNIT_STATS (shared) via getUnitStats().
 // Reference values used by the tests below: MILITIA=25, CAVALRY=100.
@@ -15,44 +16,41 @@ const buildContext = (overrides: {
   units: UnitMap;
   resources: { wood: number; stone: number; iron: number };
   lootFactor?: number;
-}): CombatContext =>
-  ({
-    worldId: 'world-1',
-    expedition: {} as unknown as Expedition,
-    attacker: {
-      village: {
-        id: 'v1',
-        name: 'V1',
-        x: 0,
-        y: 0,
-        userId: 'u1',
-        isBarbarian: false,
-      },
-      units: overrides.units,
+}): CombatContext => ({
+  worldId: 'world-1',
+  expedition: makeExpeditionFixture(),
+  attacker: {
+    village: {
+      id: 'v1',
+      name: 'V1',
+      x: 0,
+      y: 0,
+      userId: 'u1',
+      isBarbarian: false,
     },
-    defender: {
-      kind: 'BARBARIAN_VILLAGE',
-      village: {
-        id: 'barb-1',
-        name: 'Barb',
-        x: 10,
-        y: 20,
-        userId: null,
-        isBarbarian: true,
-      },
-      units: {},
-      resources: overrides.resources,
+    units: overrides.units,
+  },
+  defender: {
+    kind: 'BARBARIAN_VILLAGE',
+    village: {
+      id: 'barb-1',
+      name: 'Barb',
+      x: 10,
+      y: 20,
+      userId: null,
+      isBarbarian: true,
     },
-    config: {
-      combat: {
-        attackBonus: 1.0,
-        defenseBonus: 1.0,
-        lootFactor: overrides.lootFactor ?? 0.5,
-      },
-      _distance: 14,
-      _travelTime: 14000,
-    } as unknown as CombatConfig,
-  }) as CombatContext;
+    units: {},
+    resources: overrides.resources,
+    participants: [{ villageId: 'barb-1', units: {} }],
+  },
+  config: makeCombatConfigFixture({
+    combat: {
+      ...DEFAULT_COMBAT_RULES,
+      lootFactor: overrides.lootFactor ?? DEFAULT_COMBAT_RULES.lootFactor,
+    },
+  }),
+});
 
 describe('LootManager', () => {
   let lootManager: LootManager;

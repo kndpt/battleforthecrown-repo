@@ -25,12 +25,6 @@ export interface BuildingLevelDefinition {
   timeSeconds: number;
 }
 
-/**
- * @deprecated Use {@link BuildingLevelDefinition} directly. Kept as a zero-cost
- * alias to preserve the public `@battleforthecrown/shared/village` type surface.
- */
-export type BuildingLevelCost = BuildingLevelDefinition;
-
 export interface BuildingDefinition {
   enabled: boolean;
   unlockCastleLevel?: number;
@@ -517,13 +511,6 @@ export const getBuildingLevelValues = (
   if (level < 1) return null;
   const definition = getBuildingDefinition(buildingType);
   return definition.levels[level] ?? null;
-};
-
-export const getBuildingLevelCost = (
-  buildingType: string,
-  level: number
-): BuildingLevelDefinition | null => {
-  return getBuildingLevelValues(buildingType, level);
 };
 
 export const getBuildingMaxLevel = (buildingType: string): number => {

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, Trash2 } from 'lucide-react';
-import {
-  Spinner,
-} from '@/ui';
+import { ApiError } from '@/api';
+import { ModalBackdrop, Spinner } from '@/ui';
+import { useUiStore } from '@/stores/ui';
 import {
   useCaravanReportQuery,
   useDeleteScoutReportMutation,
@@ -43,6 +43,15 @@ interface ReportDetailModalProps {
 const REPORT_MODAL_FOOTER_CLASS =
   'border-t border-[rgba(93,74,50,.24)] bg-[linear-gradient(to_bottom,rgba(255,250,238,.96),rgba(232,212,168,.92))] px-3 pb-3 pt-2.5';
 const NUMBER_FORMATTER = new Intl.NumberFormat('fr-FR');
+
+function notifyReportDeleteError(err: unknown, fallback: string) {
+  useUiStore.getState().pushToast({
+    tone: 'error',
+    title: 'Suppression impossible',
+    description: err instanceof ApiError ? err.message : fallback,
+    ttlMs: 4000,
+  });
+}
 
 function ReportModalFooter({
   deleteLabel,
@@ -101,66 +110,59 @@ function ScoutReportDetail({
       await deleteReport({ reportId });
       onClose();
     } catch (err) {
-      console.error('Erreur lors de la suppression du rapport scout:', err);
+      notifyReportDeleteError(err, 'Échec de la suppression du rapport scout');
     } finally {
       setIsDeleting(false);
     }
   };
 
   return (
-    <div
-      aria-modal="true"
-      className="fixed inset-0 z-50 grid place-items-center bg-[rgba(0,0,0,.62)] p-3 [backdrop-filter:blur(3px)]"
-      onClick={onClose}
-      role="dialog"
-    >
-      <div className="flex w-full justify-center" onClick={(event) => event.stopPropagation()}>
-        <BaseModal
-          bodyClassName="flex min-h-0 flex-1 flex-col overflow-y-auto p-0"
-          footer={
-            report.data ? (
-              <ReportModalFooter
-                deleteLabel="Supprimer le rapport scout"
-                disabled={isDeleting}
-                onClose={onClose}
-                onDelete={handleDelete}
-              />
-            ) : null
-          }
-          footerClassName={REPORT_MODAL_FOOTER_CLASS}
-          headerClassName="px-4 py-4"
-          maxHeight="min(90dvh, 760px)"
-          onClose={onClose}
-          title={
-            <span className="flex items-center gap-3 uppercase tracking-[.08em] text-[#3d2f1f]">
-              <img alt="" className="size-[26px]" src={publicAsset('/assets/lupa.png')} />
-              Rapport scout
-            </span>
-          }
-          tone="blue"
-          width={360}
-        >
-          {report.isLoading || !report.data ? (
-            <div className="flex min-h-[320px] flex-1 items-center justify-center">
-              <Spinner size="lg" />
-            </div>
-          ) : (
-            <ScoutReportCard
-              {...buildScoutReportCardProps(report.data, handleDelete, isDeleting)}
-              className="min-h-full w-full max-w-none rounded-none border-0 shadow-none"
-              hideFooter
-              hideHeader
+    <ModalBackdrop onClose={onClose}>
+      <BaseModal
+        bodyClassName="flex min-h-0 flex-1 flex-col overflow-y-auto p-0"
+        footer={
+          report.data ? (
+            <ReportModalFooter
+              deleteLabel="Supprimer le rapport scout"
+              disabled={isDeleting}
+              onClose={onClose}
+              onDelete={handleDelete}
             />
-          )}
+          ) : null
+        }
+        footerClassName={REPORT_MODAL_FOOTER_CLASS}
+        headerClassName="px-4 py-4"
+        maxHeight="min(90dvh, 760px)"
+        onClose={onClose}
+        title={
+          <span className="flex items-center gap-3 uppercase tracking-[.08em] text-[#3d2f1f]">
+            <img alt="" className="size-[26px]" src={publicAsset('/assets/lupa.png')} />
+            Rapport scout
+          </span>
+        }
+        tone="blue"
+        width={360}
+      >
+        {report.isLoading || !report.data ? (
+          <div className="flex min-h-[320px] flex-1 items-center justify-center">
+            <Spinner size="lg" />
+          </div>
+        ) : (
+          <ScoutReportCard
+            {...buildScoutReportCardProps(report.data, handleDelete, isDeleting)}
+            className="min-h-full w-full max-w-none rounded-none border-0 shadow-none"
+            hideFooter
+            hideHeader
+          />
+        )}
 
-          {report.error && (
-            <div className="p-4 text-sm text-game-red-dark font-game text-center">
-              Impossible de charger le rapport scout.
-            </div>
-          )}
-        </BaseModal>
-      </div>
-    </div>
+        {report.error && (
+          <div className="p-4 text-sm text-game-red-dark font-game text-center">
+            Impossible de charger le rapport scout.
+          </div>
+        )}
+      </BaseModal>
+    </ModalBackdrop>
   );
 }
 
@@ -248,7 +250,7 @@ function CaravanReportDetail({
       await deleteReport({ reportId });
       onClose();
     } catch (err) {
-      console.error('Erreur lors de la suppression du rapport de caravane:', err);
+      notifyReportDeleteError(err, 'Échec de la suppression du rapport de caravane');
     } finally {
       setIsDeleting(false);
     }
@@ -263,17 +265,11 @@ function CaravanReportDetail({
   const routeDestination = data?.type === 'RETURNED' ? originVillage : targetVillage;
 
   return (
-    <div
-      aria-modal="true"
-      className="fixed inset-0 z-50 grid place-items-center bg-[rgba(0,0,0,.62)] p-3 [backdrop-filter:blur(3px)]"
-      onClick={onClose}
-      role="dialog"
-    >
-      <div className="flex w-full justify-center" onClick={(event) => event.stopPropagation()}>
-        <BaseModal
-          bodyClassName="flex min-h-0 flex-1 flex-col overflow-y-auto p-0"
-          className="relative"
-          footer={
+    <ModalBackdrop onClose={onClose}>
+      <BaseModal
+        bodyClassName="flex min-h-0 flex-1 flex-col overflow-y-auto p-0"
+        className="relative"
+        footer={
             data ? (
               <ReportModalFooter
                 deleteLabel="Supprimer le rapport de caravane"
@@ -363,9 +359,8 @@ function CaravanReportDetail({
               Impossible de charger le rapport de caravane.
             </div>
           )}
-        </BaseModal>
-      </div>
-    </div>
+      </BaseModal>
+    </ModalBackdrop>
   );
 }
 
@@ -392,7 +387,7 @@ function ReinforcementReportDetail({
       await deleteReport({ reportId });
       onClose();
     } catch (err) {
-      console.error('Erreur lors de la suppression du rapport de renfort:', err);
+      notifyReportDeleteError(err, 'Échec de la suppression du rapport de renfort');
     } finally {
       setIsDeleting(false);
     }
@@ -401,64 +396,57 @@ function ReinforcementReportDetail({
   const data = report.data;
 
   return (
-    <div
-      aria-modal="true"
-      className="fixed inset-0 z-50 grid place-items-center bg-[rgba(0,0,0,.62)] p-3 [backdrop-filter:blur(3px)]"
-      onClick={onClose}
-      role="dialog"
-    >
-      <div className="flex w-full justify-center" onClick={(event) => event.stopPropagation()}>
-        {report.isLoading || !data ? (
-          <BaseModal
-            bodyClassName="flex min-h-0 flex-1 flex-col overflow-y-auto p-0"
-            headerClassName="px-4 py-4"
-            maxHeight="min(90dvh, 760px)"
-            onClose={onClose}
-            title={
-              <span className="flex items-center gap-3 uppercase tracking-[.08em] text-[#3d2f1f]">
-                <img alt="" className="size-[26px]" src={publicAsset('/assets/defense.png')} />
-                Rapport de renfort
-              </span>
-            }
-            tone="green"
-            width={360}
-          >
-            <div className="flex min-h-[320px] flex-1 items-center justify-center">
-              <Spinner size="lg" />
+    <ModalBackdrop onClose={onClose}>
+      {report.isLoading || !data ? (
+        <BaseModal
+          bodyClassName="flex min-h-0 flex-1 flex-col overflow-y-auto p-0"
+          headerClassName="px-4 py-4"
+          maxHeight="min(90dvh, 760px)"
+          onClose={onClose}
+          title={
+            <span className="flex items-center gap-3 uppercase tracking-[.08em] text-[#3d2f1f]">
+              <img alt="" className="size-[26px]" src={publicAsset('/assets/defense.png')} />
+              Rapport de renfort
+            </span>
+          }
+          tone="green"
+          width={360}
+        >
+          <div className="flex min-h-[320px] flex-1 items-center justify-center">
+            <Spinner size="lg" />
+          </div>
+          {report.error && (
+            <div className="p-4 text-center font-game text-sm text-game-red-dark">
+              Impossible de charger le rapport de renfort.
             </div>
-            {report.error && (
-              <div className="p-4 text-center font-game text-sm text-game-red-dark">
-                Impossible de charger le rapport de renfort.
-              </div>
-            )}
-          </BaseModal>
-        ) : (
-          <ReinforcementReportModal
-            {...buildReinforcementReportModalProps(
-              data,
-              [
-                {
-                  disabled: isDeleting,
-                  id: 'delete',
-                  label: isDeleting ? 'Suppression...' : 'Supprimer',
-                  tone: 'danger',
-                },
-                { id: 'close', label: 'Fermer', tone: 'neutral' },
-              ],
-              async (action) => {
-                if (action.id === 'delete') {
-                  await handleDelete();
-                  return;
-                }
-                if (action.id === 'close') {
-                  onClose();
-                }
+          )}
+        </BaseModal>
+      ) : (
+        <ReinforcementReportModal
+          {...buildReinforcementReportModalProps(
+            data,
+            [
+              {
+                disabled: isDeleting,
+                id: 'delete',
+                label: isDeleting ? 'Suppression...' : 'Supprimer',
+                tone: 'danger',
               },
-            )}
-          />
-        )}
-      </div>
-    </div>
+              { id: 'close', label: 'Fermer', tone: 'neutral' },
+            ],
+            async (action) => {
+              if (action.id === 'delete') {
+                await handleDelete();
+                return;
+              }
+              if (action.id === 'close') {
+                onClose();
+              }
+            },
+          )}
+        />
+      )}
+    </ModalBackdrop>
   );
 }
 
@@ -486,7 +474,7 @@ function CombatReportDetail({
       await deleteReport({ reportId });
       onClose();
     } catch (err) {
-      console.error('Erreur lors de la suppression:', err);
+      notifyReportDeleteError(err, 'Échec de la suppression du rapport');
     } finally {
       setIsDeleting(false);
     }
@@ -509,56 +497,49 @@ function CombatReportDetail({
   };
 
   return (
-    <div
-      aria-modal="true"
-      className="fixed inset-0 z-50 grid place-items-center bg-[rgba(0,0,0,.62)] p-3 [backdrop-filter:blur(3px)]"
-      onClick={onClose}
-      role="dialog"
-    >
-      <div className="flex w-full justify-center" onClick={(event) => event.stopPropagation()}>
-        {report.isLoading || !data ? (
-          <BaseModal
-            bodyClassName="flex min-h-0 flex-1 flex-col overflow-y-auto p-0"
-            headerClassName="px-4 py-4"
-            maxHeight="min(90dvh, 760px)"
-            onClose={onClose}
-            title={
-              <span className="flex items-center gap-3 uppercase tracking-[.08em] text-[#3d2f1f]">
-                <img alt="" className="size-[26px]" src={publicAsset('/assets/army/cavalry.png')} />
-                Rapport de combat
-              </span>
-            }
-            tone="red"
-            width={360}
-          >
-            <div className="flex min-h-[320px] flex-1 items-center justify-center">
-              <Spinner size="lg" />
+    <ModalBackdrop onClose={onClose}>
+      {report.isLoading || !data ? (
+        <BaseModal
+          bodyClassName="flex min-h-0 flex-1 flex-col overflow-y-auto p-0"
+          headerClassName="px-4 py-4"
+          maxHeight="min(90dvh, 760px)"
+          onClose={onClose}
+          title={
+            <span className="flex items-center gap-3 uppercase tracking-[.08em] text-[#3d2f1f]">
+              <img alt="" className="size-[26px]" src={publicAsset('/assets/army/cavalry.png')} />
+              Rapport de combat
+            </span>
+          }
+          tone="red"
+          width={360}
+        >
+          <div className="flex min-h-[320px] flex-1 items-center justify-center">
+            <Spinner size="lg" />
+          </div>
+          {report.error && (
+            <div className="p-4 text-center font-game text-sm text-game-red-dark">
+              Impossible de charger le rapport.
             </div>
-            {report.error && (
-              <div className="p-4 text-center font-game text-sm text-game-red-dark">
-                Impossible de charger le rapport.
-              </div>
-            )}
-          </BaseModal>
-        ) : (
-          <CombatReportModal
-            {...buildCombatReportModalProps(
-              data,
-              [
-                {
-                  disabled: isDeleting,
-                  id: 'delete',
-                  label: isDeleting ? 'Suppression...' : 'Supprimer',
-                  tone: 'danger',
-                },
-                { id: 'close', label: 'Fermer', tone: 'neutral' },
-              ],
-              handleAction,
-            )}
-            targetAction={{ id: 'view-map', label: 'Position', tone: 'success' }}
-          />
-        )}
-      </div>
-    </div>
+          )}
+        </BaseModal>
+      ) : (
+        <CombatReportModal
+          {...buildCombatReportModalProps(
+            data,
+            [
+              {
+                disabled: isDeleting,
+                id: 'delete',
+                label: isDeleting ? 'Suppression...' : 'Supprimer',
+                tone: 'danger',
+              },
+              { id: 'close', label: 'Fermer', tone: 'neutral' },
+            ],
+            handleAction,
+          )}
+          targetAction={{ id: 'view-map', label: 'Position', tone: 'success' }}
+        />
+      )}
+    </ModalBackdrop>
   );
 }

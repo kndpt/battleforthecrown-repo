@@ -1,7 +1,7 @@
 export { Button, type ButtonProps, IconButton, type IconButtonProps } from './buttons';
 export { FloatingButton, type FloatingButtonProps } from './floating-buttons';
 export { Avatar, type AvatarProps } from './avatars';
-export { Modal, type ModalProps, ModalBody, type ModalBodyProps, ModalFooter, type ModalFooterProps } from './modals';
+export { Modal, type ModalProps, ModalBackdrop, type ModalBackdropProps, ModalBody, type ModalBodyProps, ModalFooter, type ModalFooterProps } from './modals';
 export { Card, type CardProps, CardBanner, type CardBannerProps, CardBody, type CardBodyProps, CardFooter, type CardFooterProps, CardImage, type CardImageProps, CardTitle, type CardTitleProps, CardStats, type CardStatsProps, StatsContent, type StatsContentProps } from './cards';
 export { Input, type InputProps, InputLabel, type InputLabelProps, InputHelperText, type InputHelperTextProps, Checkbox, type CheckboxProps, Radio, type RadioProps, Textarea, type TextareaProps } from './inputs';
 export { Select, type SelectProps } from './selects';

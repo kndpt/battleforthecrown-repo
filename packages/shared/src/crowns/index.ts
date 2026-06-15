@@ -8,9 +8,6 @@ export const DEFAULT_CROWNS: CrownsSettings = {
   enabled: true,
 };
 
-// Legacy alias
-export type CrownsConfig = CrownsSettings;
-
 export interface CrownBalanceResponse {
   userId: string;
   worldId: string;
