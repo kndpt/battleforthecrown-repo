@@ -1,7 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ApiError } from '@/api';
 import type { CombatReportDto } from '@/api/queries';
 import type { CaravanReportResponse } from '@battleforthecrown/shared/combat';
+import { useUiStore } from '@/stores/ui';
 import { ReportDetailModal } from './ReportDetailModal';
 
 const mocks = vi.hoisted(() => ({
@@ -90,6 +92,7 @@ vi.mock('@/features/world/worldMapNavigation', () => ({
 
 afterEach(() => {
   vi.clearAllMocks();
+  useUiStore.getState().clearToasts();
 });
 
 describe('ReportDetailModal', () => {
@@ -137,6 +140,25 @@ describe('ReportDetailModal', () => {
     await waitFor(() => {
       expect(mocks.deleteReport).toHaveBeenCalledWith({ reportId: caravanReport.id });
       expect(onClose).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('shows an error toast when caravan report deletion fails', async () => {
+    const onClose = vi.fn();
+    mocks.deleteReport.mockRejectedValue(new ApiError('Rapport introuvable', 404));
+
+    render(<ReportDetailModal reportId={caravanReport.id} reportKind="caravan" onClose={onClose} />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Supprimer le rapport de caravane' }));
+
+    await waitFor(() => {
+      expect(mocks.deleteReport).toHaveBeenCalledWith({ reportId: caravanReport.id });
+      expect(onClose).not.toHaveBeenCalled();
+      const toasts = useUiStore.getState().toasts;
+      expect(toasts).toHaveLength(1);
+      expect(toasts[0].tone).toBe('error');
+      expect(toasts[0].title).toBe('Suppression impossible');
+      expect(toasts[0].description).toBe('Rapport introuvable');
     });
   });
 });
