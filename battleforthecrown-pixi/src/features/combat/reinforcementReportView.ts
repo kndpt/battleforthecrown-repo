@@ -7,6 +7,7 @@ import type {
   ReinforcementReportPlace,
   ReinforcementReportUnit,
 } from '@/features/design-system/components';
+import { formatCoord, shortReportId } from './report-view-utils';
 
 export type { ReinforcementReportResponse };
 
@@ -32,16 +33,8 @@ export function reinforcementReportUnitTotal(report: ReinforcementReportResponse
   return Object.values(report.units ?? {}).reduce((sum, qty) => sum + qty, 0);
 }
 
-function formatCoord(x: number, y: number): string {
-  return `${x}|${y}`;
-}
-
 function villageLabel(name: string | null | undefined, x: number, y: number): string {
   return name?.trim() || `Village ${formatCoord(x, y)}`;
-}
-
-function shortReportId(reportId: string): string {
-  return `#${reportId.slice(0, 6).toUpperCase()}`;
 }
 
 function formatUnitTotal(total: number): string {

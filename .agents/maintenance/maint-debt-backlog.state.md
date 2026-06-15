@@ -12,7 +12,6 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | pixi/WorldMapScene.ts | open PR #89 — background tap + exit cleanup |
 | pixi QueueBottomSheet formatTime | clock-style mm:ss vs formatRemaining human labels — keep local until product aligns village queue display |
 | shared/world/entities.ts isFoggedEntity | type guard used by world map — no direct unit spec |
-| combat report view helpers | formatCoord/shortReportId duplicated across combat/reinforcement/caravan report views |
 | shared/village/strategy.ts getVillageStrategyPlan | constant plan accessor — low value unless plan becomes configurable |
 
 ## rules
