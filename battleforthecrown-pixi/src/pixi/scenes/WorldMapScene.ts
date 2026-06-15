@@ -7,6 +7,7 @@ import type { ExpeditionSnapshot } from '@/stores/expeditions';
 import type { VisionDisk } from '@battleforthecrown/shared/world';
 import { createExpeditionVisual, type ExpeditionVisualHandle } from '@/pixi/entities/ExpeditionVisual';
 import { createBlipSprite, type BlipSpriteHandle } from '@/pixi/entities/BlipSprite';
+import { isMapBackgroundTap } from './worldMapBackgroundTap';
 
 export interface WorldMapOptions {
   gridWidth: number;
@@ -83,26 +84,6 @@ interface EntityVisual {
   sprite: Sprite;
   label: Text;
   data: MapEntity;
-}
-
-function isDescendantOf(node: unknown, ancestor: Container): boolean {
-  let current = node as Container | null;
-  while (current) {
-    if (current === ancestor) return true;
-    current = current.parent;
-  }
-  return false;
-}
-
-function isMapBackgroundTap(
-  target: FederatedPointerEvent['target'],
-  viewport: Viewport,
-  mapGroundLayer: Container,
-  fogContainer: Container,
-): boolean {
-  if (target === viewport || target === mapGroundLayer) return true;
-  if (isDescendantOf(target, mapGroundLayer)) return true;
-  return target === fogContainer || isDescendantOf(target, fogContainer);
 }
 
 function aliasFor(entity: MapEntity): string | null {
