@@ -12,7 +12,6 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | pixi/WorldMapScene.ts | open PR #89 — background tap + exit cleanup |
 | shared/logic/production.ts | open PR #102 — calculateProductionRate spec |
 | pixi QueueBottomSheet formatTime | clock-style mm:ss vs formatRemaining human labels — keep local until product aligns village queue display |
-| shared/utils/level.ts | open PR #112 — clampBuildingLevel spec |
 | shared/world/entities.ts normalizeTier | open PR #108 — normalizeTier spec |
 | shared/world/entities.ts isFoggedEntity | type guard used by world map — no direct unit spec |
 | combat report view helpers | formatCoord/shortReportId duplicated across combat/reinforcement/caravan report views |
