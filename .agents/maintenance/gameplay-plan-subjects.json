@@ -10,7 +10,7 @@
       "artefactType": "run",
       "artefactPath": "tasks/runs/055-feature-intel-notebook.md",
       "artefactId": "055",
-      "status": "proposed",
+      "status": "PLANNED",
       "prBranch": "plan/gameplay/intel-notebook",
       "gapSummary": "La spec 11-scouting.md déclare le carnet d'intel comme MVP léger, mais les runs 016/017 se sont limités au producer ScoutReport et à son UI inbox. Pas de table dédiée, pas de fiche `dernière info connue`, pas d'âge sourcé multi-rapports côté joueur.",
       "codeEvidence": [
