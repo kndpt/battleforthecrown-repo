@@ -1,7 +1,7 @@
 # refactor-pixi — état (réécrit chaque run)
 
-last: 2026-06-13 | sha `150cb89` | theme ModalBackdrop extraction | branch `maint/refactor-pixi/modal-backdrop`
-full: `archive/refactor-pixi/2026-06-13-full.md`
+last: 2026-06-15 | sha `ac695bd` | theme querykeys-prefix | branch `maint/refactor-pixi/querykeys-prefix`
+full: `archive/refactor-pixi/2026-06-15-full.md`
 
 ## OPEN
 
