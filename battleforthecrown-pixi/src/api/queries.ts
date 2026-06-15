@@ -136,6 +136,17 @@ export const queryKeys = {
   retentionSummary: (userId: string | null, worldId: string | null) => ['retention', 'summary', userId, worldId] as const,
   onboardingSummary: (userId: string | null, worldId: string | null) => ['onboarding', 'summary', userId, worldId] as const,
   rankingsSummary: (worldId: string | null) => ['rankings', 'summary', worldId] as const,
+  // Broad-invalidation prefixes (omit trailing discriminants to match across worlds/users).
+  membershipsPrefix: () => ['memberships'] as const,
+  villagesPrefix: () => ['villages'] as const,
+  worldEntitiesPrefix: () => ['world-entities'] as const,
+  onboardingPrefix: () => ['onboarding'] as const,
+  kingdomPowerPrefix: (userId: string | null) => ['power', 'kingdom', userId] as const,
+  combatReportsPrefix: (userId: string | null) => ['combat', 'reports', userId] as const,
+  scoutReportsPrefix: (userId: string | null) => ['combat', 'scout-reports', userId] as const,
+  reinforcementReportsPrefix: (userId: string | null) => ['combat', 'reinforcement-reports', userId] as const,
+  caravanReportsPrefix: (userId: string | null) => ['combat', 'caravan-reports', userId] as const,
+  caravanReportPrefix: () => ['combat', 'caravan-report'] as const,
 };
 
 interface LoginInput {
@@ -229,9 +240,9 @@ export function useJoinWorldMutation() {
     },
     onSuccess: (result) => {
       setContext({ worldId: result.membership.worldId, villageId: result.village?.id ?? null });
-      queryClient.invalidateQueries({ queryKey: ['memberships'] });
-      queryClient.invalidateQueries({ queryKey: ['villages'] });
-      queryClient.invalidateQueries({ queryKey: ['onboarding'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.membershipsPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.villagesPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.onboardingPrefix() });
     },
   });
 }
@@ -244,7 +255,7 @@ export function useEnterWorldMutation() {
       apiClient.post<WorldMembership>(`/world/${worldId}/enter`),
     onSuccess: (membership) => {
       setContext({ worldId: membership.worldId, villageId: null });
-      queryClient.invalidateQueries({ queryKey: ['memberships'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.membershipsPrefix() });
     },
   });
 }
