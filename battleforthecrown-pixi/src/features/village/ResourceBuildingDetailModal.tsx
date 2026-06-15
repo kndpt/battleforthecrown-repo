@@ -1,5 +1,6 @@
 import type { BuildingDto } from '@/api';
 import type { DisplayResources } from '@/lib/interpolation';
+import { ModalBackdrop } from '@/ui';
 import {
   ResourceBuildingModal,
   type ResourceBuildingAccent,
@@ -234,14 +235,8 @@ export function ResourceBuildingDetailModal({
   };
 
   return (
-    <div
-      aria-modal="true"
-      className="fixed inset-0 z-50 grid place-items-center bg-[rgba(0,0,0,.62)] p-3 [backdrop-filter:blur(3px)]"
-      onClick={onClose}
-      role="dialog"
-    >
-      <div className="flex w-full justify-center" onClick={(event) => event.stopPropagation()}>
-        <ResourceBuildingModal
+    <ModalBackdrop onClose={onClose}>
+      <ResourceBuildingModal
           accent={RESOURCE_BUILDING_ACCENTS[resourceKey]}
           buildingIcon={`/assets/${resourceKey}.png`}
           closeLabel="Fermer"
@@ -318,7 +313,6 @@ export function ResourceBuildingDetailModal({
           upgradeDisabledLabel={upgradeDisabledLabel}
           upgradeTime={effectiveTimeMs !== null ? formatRemaining(effectiveTimeMs) : '—'}
         />
-      </div>
-    </div>
+    </ModalBackdrop>
   );
 }

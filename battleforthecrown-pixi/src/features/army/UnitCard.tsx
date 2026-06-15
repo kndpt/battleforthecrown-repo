@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Clock, Lock, Swords, XCircle } from "lucide-react";
+import { formatRemaining } from "@/features/village/constructionProgress";
 import { clamp } from "@/lib/math";
 import {
   Badge,
@@ -47,16 +48,6 @@ function formatProgressTime(ms: number): string {
   const minutes = Math.floor(safe / 60000);
   const seconds = Math.floor((safe % 60000) / 1000);
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-}
-
-function formatDuration(seconds: number): string {
-  const safe = Math.max(0, Math.floor(seconds));
-  const hours = Math.floor(safe / 3600);
-  const minutes = Math.floor((safe % 3600) / 60);
-  const secs = safe % 60;
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  if (minutes > 0) return `${minutes}m ${secs}s`;
-  return `${secs}s`;
 }
 
 const HARD_MAX = 500;
@@ -366,7 +357,7 @@ export function UnitCard({
                 <div className="flex items-center justify-center gap-1.5 text-xs text-kingdom-600 pt-1 border-t border-kingdom-300/50">
                   <Clock size={12} className="text-kingdom-500" />
                   <span className="font-medium">
-                    {formatDuration(totalCost.timeSeconds)}
+                    {formatRemaining(totalCost.timeSeconds * 1000)}
                   </span>
                 </div>
               </div>

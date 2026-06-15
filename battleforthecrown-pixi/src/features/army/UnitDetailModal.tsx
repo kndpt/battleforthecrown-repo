@@ -1,11 +1,13 @@
 import { useWorldConfigQuery } from '@/api/queries';
 import type { ArmyUnitDto } from '@/api/queries';
+import { ModalBackdrop } from '@/ui';
 import {
   TROOP_DETAIL_FIELD_MAX,
   TROOP_DETAIL_LABELS_FR,
   TroopDetailModal as DesignTroopDetailModal,
   type TroopDetailRoleTone,
 } from '@/features/design-system/components';
+import { formatRemaining } from '@/features/village/constructionProgress';
 import { useDisplayCrowns, useDisplayResources } from '@/features/resources/useDisplayResources';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
@@ -31,16 +33,6 @@ function isUnitType(value: string): value is UnitType {
 function roman(value: number): string {
   const safe = Math.max(1, Math.min(10, value));
   return ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'][safe - 1] ?? 'I';
-}
-
-function formatDuration(seconds: number): string {
-  const safe = Math.max(0, Math.floor(seconds));
-  const hours = Math.floor(safe / 3600);
-  const minutes = Math.floor((safe % 3600) / 60);
-  const secs = safe % 60;
-  if (hours > 0) return `${hours} h ${minutes} m`;
-  if (minutes > 0) return `${minutes} m ${secs} s`;
-  return `${secs} s`;
 }
 
 function roleFor(type: UnitType, stats: typeof UNIT_STATS[UnitType]): { archetype: string; label: string; tone: TroopDetailRoleTone } {
@@ -98,33 +90,26 @@ export function UnitDetailModal({
   });
 
   return (
-    <div
-      aria-modal="true"
-      className="fixed inset-0 z-50 grid place-items-center bg-[rgba(0,0,0,.62)] p-3 [backdrop-filter:blur(3px)]"
-      onClick={onClose}
-      role="dialog"
-    >
-      <div className="flex w-full justify-center" onClick={(event) => event.stopPropagation()}>
-        <DesignTroopDetailModal
-          archetype={role.archetype}
-          closeLabel="Fermer"
-          cost={troopCost}
-          fieldMax={TROOP_DETAIL_FIELD_MAX}
-          labels={TROOP_DETAIL_LABELS_FR}
-          name={meta.name}
-          onClose={onClose}
-          populationCost={cost.population}
-          portraitFallback={meta.emoji}
-          portraitSrc={meta.iconPath}
-          roleLabel={role.label}
-          roleTone={role.tone}
-          stats={stats}
-          stock={stock}
-          tagline={`« ${meta.description} »`}
-          tierBadge={roman(Math.min(requiredLevel, 10))}
-          trainingTime={formatDuration(perUnitSeconds)}
-        />
-      </div>
-    </div>
+    <ModalBackdrop onClose={onClose}>
+      <DesignTroopDetailModal
+        archetype={role.archetype}
+        closeLabel="Fermer"
+        cost={troopCost}
+        fieldMax={TROOP_DETAIL_FIELD_MAX}
+        labels={TROOP_DETAIL_LABELS_FR}
+        name={meta.name}
+        onClose={onClose}
+        populationCost={cost.population}
+        portraitFallback={meta.emoji}
+        portraitSrc={meta.iconPath}
+        roleLabel={role.label}
+        roleTone={role.tone}
+        stats={stats}
+        stock={stock}
+        tagline={`« ${meta.description} »`}
+        tierBadge={roman(Math.min(requiredLevel, 10))}
+        trainingTime={formatRemaining(perUnitSeconds * 1000)}
+      />
+    </ModalBackdrop>
   );
 }

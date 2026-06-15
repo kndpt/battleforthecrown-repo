@@ -51,6 +51,7 @@ import {
 import { typedEntries } from '@battleforthecrown/shared/utils';
 import { getCaptureDurationMs } from './capture-duration';
 import { RankingsService } from '../rankings/rankings.service';
+import { mergeGarrisonsIntoParticipants } from './garrison-merge.utils';
 
 interface PendingConquestToSchedule {
   id: string;
@@ -1139,26 +1140,7 @@ export class CombatWorker implements OnModuleInit {
     ];
     const totalUnits: UnitMap = { ...units };
 
-    for (const g of garrisons) {
-      const gUnits: UnitMap = { [g.unitType as UnitType]: g.quantity };
-      const existingParticipant = participants.find(
-        (p) => p.villageId === g.originVillageId,
-      );
-
-      if (existingParticipant) {
-        existingParticipant.units[g.unitType as UnitType] =
-          (existingParticipant.units[g.unitType as UnitType] ?? 0) + g.quantity;
-      } else {
-        participants.push({
-          villageId: g.originVillageId,
-          units: gUnits,
-          strategy: g.originVillage?.strategyConfig?.strategy,
-        });
-      }
-
-      totalUnits[g.unitType as UnitType] =
-        (totalUnits[g.unitType as UnitType] ?? 0) + g.quantity;
-    }
+    mergeGarrisonsIntoParticipants(garrisons, participants, totalUnits);
 
     return {
       kind: 'BARBARIAN_VILLAGE' as const,
@@ -1203,26 +1185,7 @@ export class CombatWorker implements OnModuleInit {
 
     const totalUnits: UnitMap = { ...localUnits };
 
-    for (const g of garrisons) {
-      const gUnits: UnitMap = { [g.unitType as UnitType]: g.quantity };
-      const existingParticipant = participants.find(
-        (p) => p.villageId === g.originVillageId,
-      );
-
-      if (existingParticipant) {
-        existingParticipant.units[g.unitType as UnitType] =
-          (existingParticipant.units[g.unitType as UnitType] ?? 0) + g.quantity;
-      } else {
-        participants.push({
-          villageId: g.originVillageId,
-          units: gUnits,
-          strategy: g.originVillage?.strategyConfig?.strategy,
-        });
-      }
-
-      totalUnits[g.unitType as UnitType] =
-        (totalUnits[g.unitType as UnitType] ?? 0) + g.quantity;
-    }
+    mergeGarrisonsIntoParticipants(garrisons, participants, totalUnits);
 
     return {
       kind: 'PLAYER_VILLAGE' as const,

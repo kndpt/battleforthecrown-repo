@@ -54,6 +54,7 @@ docs/
 | Doc UI frontend (catalogue composants, design system, writing style) | `battleforthecrown-pixi/docs/ui-{library,design-system,writing-style}.md`. |
 | Mécanique gameplay | `docs/gameplay/`. |
 | Convention projet (transversale) | `.agents/rules/conventions.md`. |
+| Concision harness (state/archive) | `.agents/rules/harness.md`. |
 | Convention workspace | `<workspace>/AGENTS.md` ou rule courte dédiée si elle doit être toujours chargée. |
 | Procédure détaillée agent | `.agents/skills/<skill>/SKILL.md`. |
 | Briefing AI agent | `<workspace>/AGENTS.md`. |

@@ -11,7 +11,7 @@ import {
 import { computeUnitTrainingProgress } from '@/features/army/trainingProgress';
 import { unitMetaFor } from '@/features/army/unitConfig';
 import { publicAsset } from '@/lib/publicAsset';
-import { Button, InputHelperText, ProgressBar, ResourceIcon, Spinner } from '@/ui';
+import { Button, InputHelperText, ModalBackdrop, ProgressBar, ResourceIcon, Spinner } from '@/ui';
 import { UNIT_COSTS, UNIT_TYPES } from '@battleforthecrown/shared/army';
 import { MAX_CONSTRUCTION_QUEUE } from '@battleforthecrown/shared/village/buildings';
 import type { BuildingLevelDefinition, BuildingType } from '@battleforthecrown/shared/village/buildings';
@@ -597,47 +597,40 @@ export function SpecializedBuildingDetailModal(props: SpecializedBuildingDetailM
   };
 
   return (
-    <div
-      aria-modal="true"
-      className="fixed inset-0 z-50 grid place-items-center bg-[rgba(0,0,0,.62)] p-3 [backdrop-filter:blur(3px)]"
-      onClick={onClose}
-      role="dialog"
-    >
-      <div className="flex w-full justify-center" onClick={(event) => event.stopPropagation()}>
-        <BuildingModal
-          accent={accent}
-          actions={actions}
-          buildingIcon={meta.iconPath ?? '/assets/castle.png'}
-          construction={construction}
-          eyebrow="Bâtiment"
-          footerClassName="px-3.5 pb-3 pt-2.5"
-          footerContent={lockState.state !== 'in-progress' && !isMaxLevel && !isLockedByCastle ? (
-            <UpgradeCostStrip
-              availablePopulation={availablePopulation}
-              cost={nextCost}
-              displayResources={displayResources}
-              label={`${upgradeActionLabel} · Niv. ${building.level} → ${building.level + 1}`}
-              time={effectiveTimeMs !== null ? formatRemaining(effectiveTimeMs) : '—'}
-            />
-          ) : null}
-          footerHint={isQueueFull && lockState.state !== 'in-progress' ? `File pleine (${queueLength}/${MAX_CONSTRUCTION_QUEUE})` : undefined}
-          labels={{ close: 'Fermer', subtitle: 'Bâtiment' }}
-          level={building.level}
-          name={meta.label}
-          notice={notice}
-          onAction={handleAction}
-          summaryBadges={[buildingBadge(building.type)]}
-          summaryLabel={isMaxLevel ? 'Niveau maximal' : undefined}
-          tagline={meta.description}
-        >
-          <BuildingSpecificContent {...props} accent={accent} />
-          {error ? (
-            <div className="mx-3.5 mb-3" role="alert">
-              <InputHelperText variant="error">{error}</InputHelperText>
-            </div>
-          ) : null}
-        </BuildingModal>
-      </div>
-    </div>
+    <ModalBackdrop onClose={onClose}>
+      <BuildingModal
+        accent={accent}
+        actions={actions}
+        buildingIcon={meta.iconPath ?? '/assets/castle.png'}
+        construction={construction}
+        eyebrow="Bâtiment"
+        footerClassName="px-3.5 pb-3 pt-2.5"
+        footerContent={lockState.state !== 'in-progress' && !isMaxLevel && !isLockedByCastle ? (
+          <UpgradeCostStrip
+            availablePopulation={availablePopulation}
+            cost={nextCost}
+            displayResources={displayResources}
+            label={`${upgradeActionLabel} · Niv. ${building.level} → ${building.level + 1}`}
+            time={effectiveTimeMs !== null ? formatRemaining(effectiveTimeMs) : '—'}
+          />
+        ) : null}
+        footerHint={isQueueFull && lockState.state !== 'in-progress' ? `File pleine (${queueLength}/${MAX_CONSTRUCTION_QUEUE})` : undefined}
+        labels={{ close: 'Fermer', subtitle: 'Bâtiment' }}
+        level={building.level}
+        name={meta.label}
+        notice={notice}
+        onAction={handleAction}
+        summaryBadges={[buildingBadge(building.type)]}
+        summaryLabel={isMaxLevel ? 'Niveau maximal' : undefined}
+        tagline={meta.description}
+      >
+        <BuildingSpecificContent {...props} accent={accent} />
+        {error ? (
+          <div className="mx-3.5 mb-3" role="alert">
+            <InputHelperText variant="error">{error}</InputHelperText>
+          </div>
+        ) : null}
+      </BuildingModal>
+    </ModalBackdrop>
   );
 }
