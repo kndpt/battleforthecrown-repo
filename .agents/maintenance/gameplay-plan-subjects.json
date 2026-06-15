@@ -106,6 +106,27 @@
         "tasks/archive/25-capture-duration-visibility-asymmetry.md — Résolu côté doc 2026-05-09, implémentation explicitement reportée : 'à intégrer dans le panneau d'info village (front + DTO world-entities) le jour où la conquête PvP/barbare sera câblée côté UI'"
       ],
       "addedAt": "2026-06-14"
+    },
+    {
+      "specPath": "docs/gameplay/19-world-lifecycle.md",
+      "slug": "world-ended-lifecycle",
+      "title": "World ENDED — snapshot leaderboard final + lecture seule (Phase 11)",
+      "keywords": ["world-lifecycle", "ended", "leaderboard", "snapshot", "world-status", "read-only"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/061-feature-world-ended-lifecycle.md",
+      "artefactId": "061",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/world-ended-lifecycle",
+      "gapSummary": "La spec 19-world-lifecycle.md § LOCKED → ENDED + Phase 11 roadmap tranchent MVP : à ENDED le serveur doit (1) snapshotter le leaderboard final des trois classements (Puissance du Royaume + Gloire d'Assaut + Gloire du Rempart, déjà runtime via run 051), (2) basculer le monde en lecture seule. Le worker actuel ne fait que flipper le status, aucun snapshot persisté, et seul JoinWorldUseCase rejette ENDED — toutes les autres mutations (attaque, scout, training, construction, caravane, style, claim carte) continuent à fonctionner sur monde ENDED. Run 032 avait explicitement reporté ces livrables vers un ticket dédié — ce run.",
+      "codeEvidence": [
+        "battleforthecrown-backend/src/workers/world-lifecycle.worker.ts:115 endExpiredWorlds → 133 transitionWorld(LOCKED, ENDED) — aucune écriture de snapshot",
+        "battleforthecrown-backend/src/modules/world/world.service.ts:194 + join-world.use-case.ts:42 — seuls callsites qui rejettent ENDED, aucun guard transverse sur mutations métier",
+        "battleforthecrown-backend/prisma/schema.prisma — pas de modèle WorldFinalRankingSnapshot ni table de gel des classements",
+        "battleforthecrown-backend/src/modules/rankings/rankings.service.ts — runtime des 3 classements exposé (run 051) mais jamais snapshotté à ENDED",
+        "tasks/runs/archive/032-world-lifecycle-foundation-and-identity.md:71 — explicite 'Snapshot leaderboard / wipe hors scope (post-MVP, ticket dédié si requis)' — ce run est le ticket dédié",
+        "tasks/00-mvp-roadmap.md:134 — Phase 11 livrable 'snapshot leaderboard à ENDED + wipe + récompenses cosmétiques permanentes' non livré"
+      ],
+      "addedAt": "2026-06-15"
     }
   ]
 }
