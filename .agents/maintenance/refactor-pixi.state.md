@@ -1,7 +1,7 @@
 # refactor-pixi — état (réécrit chaque run)
 
-last: 2026-06-14 | sha `d9ecd9a` | theme useGarrisonSelection hook | branch `claude/affectionate-ptolemy-nk2dbd`
-full: `archive/refactor-pixi/2026-06-14-full.md`
+last: 2026-06-15 | sha `ac695bd` | theme querykeys-prefix | branch `maint/refactor-pixi/querykeys-prefix`
+full: `archive/refactor-pixi/2026-06-15-full.md`
 
 ## OPEN
 

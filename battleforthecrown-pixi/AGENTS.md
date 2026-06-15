@@ -48,6 +48,7 @@ Couverture actuelle Vitest (jsdom) :
 - `stores/` (worldMap, expeditions).
 - `pixi/entities/` math (Bezier, progress).
 - `features/world/` (buildMapEntities), `pixi/scenes/` (villageLayout invariants).
+- `packages/shared/src/**/*.spec.ts` — specs pures shared (rankings formulas, display-name).
 
 Lance `yarn workspace battleforthecrown-pixi test`.
 

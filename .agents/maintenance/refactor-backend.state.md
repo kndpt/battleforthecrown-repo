@@ -1,6 +1,6 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-06-15 | theme O2 onboarding.utils | branch claude/ecstatic-dijkstra-en591r (PR à ouvrir)
+last: 2026-06-15 | theme O2 onboarding.utils | PR #125 maint(refactor-backend): extract onboarding pure utils
 full: `archive/refactor-backend/2026-06-15-full.md`
 
 ## OPEN
@@ -8,7 +8,6 @@ full: `archive/refactor-backend/2026-06-15-full.md`
 | ID | Sev | Where | Note |
 |----|-----|-------|------|
 | R4 | High | crowns.service.ts ~264 | fractional carry — needs migration |
-| E1 | Med | event-outbox.service.ts:600 | getUserIdByVillage ×21 — PR #91 OUVERTE (`kndpt/outbox-village-batch-lookup-9d5c`) |
 | D4 | Med | combat.service.ts | `expedition.create` ×5 — no factory value (reconfirmé) |
 | G1 | Med | combat.service.ts ~986 | sequential kingdom power snapshot — intentionnel tx |
 | U1 | Med | combat.worker.ts ~1488,1747 | inbox.create loop ×N — `createMany` possible (~2 recipients/exp, ROI bas) |
@@ -20,8 +19,7 @@ full: `archive/refactor-backend/2026-06-15-full.md`
 | V3 | Low | combat.service.ts ~480 | caravan deduct order cosmetic |
 | A1 | Low | auth.service.ts:36 | redundant displayName pre-check (P2002 handler couvre) |
 | F1 | Low | combat.worker.ts ~1442 | garrison.findMany include ×2 cosmetic |
-| T1 | Low | onboarding.utils.ts | mapOnboardingState/getNextStep non testés isolément |
 
 ## skip unless theme
 
-E1 → attendre merge PR #91 avant d'extraire helper notifyByVillage (conflit) | G1 intentionnel (tx safety) | D4 no factory value reconfirmé | event-outbox notify\* helper extraction bloqué par PR #91
+B3/E1 → PR #91 mergée | G1 intentionnel (tx safety) | D4 no factory value reconfirmé

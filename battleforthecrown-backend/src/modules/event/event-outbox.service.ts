@@ -3,6 +3,11 @@ import type { EventOutbox } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { GameGateway } from './game.gateway';
 import { parseEventPayload } from './codecs';
+import {
+  collectVillageIdsFromOutboxEvents,
+  resolveVillageUserIdCache,
+  type VillageUserIdCache,
+} from './event-outbox-prefetch';
 import { RetentionService } from '../retention/retention.service';
 import { OnboardingService } from '../onboarding/onboarding.service';
 import {
@@ -71,6 +76,16 @@ export class EventOutboxService {
       `📦 [Outbox] ${events.length} events à dispatcher (fetch: ${fetchEndTime - fetchStartTime}ms)`,
     );
 
+    const villageUserIdCache = await resolveVillageUserIdCache(
+      () => this.prefetchVillageUserIds(events),
+      (error) => {
+        this.logger.warn(
+          'Outbox village→user prefetch failed; continuing with fallback village lookups.',
+          error,
+        );
+      },
+    );
+
     for (const event of events) {
       const eventDispatchStart = Date.now();
       const eventAge = eventDispatchStart - event.createdAt.getTime();
@@ -85,7 +100,7 @@ export class EventOutboxService {
       });
 
       try {
-        await this.dispatchEvent(event);
+        await this.dispatchEvent(event, villageUserIdCache);
         await this.prisma.eventOutbox.update({
           where: { id: event.id },
           data: { dispatchedAt: new Date() },
@@ -101,7 +116,10 @@ export class EventOutboxService {
     }
   }
 
-  private async dispatchEvent(event: EventOutbox) {
+  private async dispatchEvent(
+    event: EventOutbox,
+    villageUserIdCache: VillageUserIdCache,
+  ) {
     if (!isEventKind(event.kind)) {
       this.logger.warn(`Unknown event kind: ${event.kind}`);
       return;
@@ -116,39 +134,70 @@ export class EventOutboxService {
     await this.onboarding.recordOutboxEvent(event.id, event.kind, payload);
     switch (event.kind) {
       case 'building.completed':
-        await this.notifyBuildingCompleted(payload as BuildingCompletedPayload);
+        await this.notifyBuildingCompleted(
+          payload as BuildingCompletedPayload,
+          villageUserIdCache,
+        );
         break;
       case 'unit.training.completed':
         await this.notifyUnitTrainingCompleted(
           payload as UnitTrainingCompletedPayload,
+          villageUserIdCache,
         );
         break;
       case 'unit.trained':
-        await this.notifyUnitTrained(payload as UnitTrainedPayload);
+        await this.notifyUnitTrained(
+          payload as UnitTrainedPayload,
+          villageUserIdCache,
+        );
         break;
       case 'battle.sent':
-        await this.notifyBattleSent(payload as BattleSentPayload);
+        await this.notifyBattleSent(
+          payload as BattleSentPayload,
+          villageUserIdCache,
+        );
         break;
       case 'battle.resolved':
-        await this.notifyBattleResolved(payload as BattleResolvedPayload);
+        await this.notifyBattleResolved(
+          payload as BattleResolvedPayload,
+          villageUserIdCache,
+        );
         break;
       case 'battle.returned':
-        await this.notifyBattleReturned(payload as BattleReturnedPayload);
+        await this.notifyBattleReturned(
+          payload as BattleReturnedPayload,
+          villageUserIdCache,
+        );
         break;
       case 'scout.sent':
-        await this.notifyScoutSent(payload as ScoutSentPayload);
+        await this.notifyScoutSent(
+          payload as ScoutSentPayload,
+          villageUserIdCache,
+        );
         break;
       case 'scout.reported':
-        await this.notifyScoutReported(payload as ScoutReportedPayload);
+        await this.notifyScoutReported(
+          payload as ScoutReportedPayload,
+          villageUserIdCache,
+        );
         break;
       case 'scout.returned':
-        await this.notifyScoutReturned(payload as ScoutReturnedPayload);
+        await this.notifyScoutReturned(
+          payload as ScoutReturnedPayload,
+          villageUserIdCache,
+        );
         break;
       case 'resources.changed':
-        await this.notifyResourcesChanged(payload as ResourcesChangedPayload);
+        await this.notifyResourcesChanged(
+          payload as ResourcesChangedPayload,
+          villageUserIdCache,
+        );
         break;
       case 'village.attacked':
-        await this.notifyVillageAttacked(payload as VillageAttackedPayload);
+        await this.notifyVillageAttacked(
+          payload as VillageAttackedPayload,
+          villageUserIdCache,
+        );
         break;
       case 'village.conquered':
         this.notifyVillageConquered(payload as VillageConqueredPayload);
@@ -172,42 +221,64 @@ export class EventOutboxService {
         this.notifyNobleKilled(payload as NobleKilledPayload);
         break;
       case 'reinforcement.sent':
-        await this.notifyReinforcementSent(payload as ReinforcementSentPayload);
+        await this.notifyReinforcementSent(
+          payload as ReinforcementSentPayload,
+          villageUserIdCache,
+        );
         break;
       case 'reinforcement.recalled':
         await this.notifyReinforcementRecalled(
           payload as ReinforcementRecalledPayload,
+          villageUserIdCache,
         );
         break;
       case 'reinforcement.returned':
         await this.notifyReinforcementReturned(
           payload as ReinforcementReturnedPayload,
+          villageUserIdCache,
         );
         break;
       case 'caravan.sent':
-        await this.notifyCaravanSent(payload as CaravanSentPayload);
+        await this.notifyCaravanSent(
+          payload as CaravanSentPayload,
+          villageUserIdCache,
+        );
         break;
       case 'caravan.arrived':
-        await this.notifyCaravanArrived(payload as CaravanArrivedPayload);
+        await this.notifyCaravanArrived(
+          payload as CaravanArrivedPayload,
+          villageUserIdCache,
+        );
         break;
       case 'caravan.recalled':
-        await this.notifyCaravanRecalled(payload as CaravanRecalledPayload);
+        await this.notifyCaravanRecalled(
+          payload as CaravanRecalledPayload,
+          villageUserIdCache,
+        );
         break;
       case 'caravan.returned':
-        await this.notifyCaravanReturned(payload as CaravanReturnedPayload);
+        await this.notifyCaravanReturned(
+          payload as CaravanReturnedPayload,
+          villageUserIdCache,
+        );
         break;
       case 'expedition.recalled':
         await this.notifyExpeditionRecalled(
           payload as ExpeditionRecalledPayload,
+          villageUserIdCache,
         );
         break;
       case 'expedition.returned':
         await this.notifyExpeditionReturned(
           payload as ExpeditionReturnedPayload,
+          villageUserIdCache,
         );
         break;
       case 'garrison.added':
-        await this.notifyGarrisonAdded(payload as GarrisonAddedPayload);
+        await this.notifyGarrisonAdded(
+          payload as GarrisonAddedPayload,
+          villageUserIdCache,
+        );
         break;
       case 'crowns.changed':
         this.notifyCrownsChanged(payload as CrownsChangedPayload);
@@ -229,8 +300,14 @@ export class EventOutboxService {
     this.gateway.notifyWorld(payload.worldId, 'rankings.changed', payload);
   }
 
-  private async notifyBuildingCompleted(payload: BuildingCompletedPayload) {
-    const userId = await this.getUserIdByVillage(payload.villageId);
+  private async notifyBuildingCompleted(
+    payload: BuildingCompletedPayload,
+    villageUserIdCache: VillageUserIdCache,
+  ) {
+    const userId = await this.getUserIdByVillage(
+      payload.villageId,
+      villageUserIdCache,
+    );
     if (!userId) return;
 
     const notifyTime = Date.now();
@@ -253,8 +330,12 @@ export class EventOutboxService {
 
   private async notifyUnitTrainingCompleted(
     payload: UnitTrainingCompletedPayload,
+    villageUserIdCache: VillageUserIdCache,
   ) {
-    const userId = await this.getUserIdByVillage(payload.villageId);
+    const userId = await this.getUserIdByVillage(
+      payload.villageId,
+      villageUserIdCache,
+    );
     if (!userId) return;
 
     this.logger.debug(`✅ [Outbox] Envoi WebSocket unit.training.completed:`, {
@@ -273,22 +354,40 @@ export class EventOutboxService {
     });
   }
 
-  private async notifyUnitTrained(payload: UnitTrainedPayload) {
-    const userId = await this.getUserIdByVillage(payload.villageId);
+  private async notifyUnitTrained(
+    payload: UnitTrainedPayload,
+    villageUserIdCache: VillageUserIdCache,
+  ) {
+    const userId = await this.getUserIdByVillage(
+      payload.villageId,
+      villageUserIdCache,
+    );
     if (!userId) return;
 
     this.gateway.notifyUser(userId, 'unit.trained', payload);
   }
 
-  private async notifyResourcesChanged(payload: ResourcesChangedPayload) {
-    const userId = await this.getUserIdByVillage(payload.villageId);
+  private async notifyResourcesChanged(
+    payload: ResourcesChangedPayload,
+    villageUserIdCache: VillageUserIdCache,
+  ) {
+    const userId = await this.getUserIdByVillage(
+      payload.villageId,
+      villageUserIdCache,
+    );
     if (!userId) return;
 
     this.gateway.notifyUser(userId, 'resources.changed', payload);
   }
 
-  private async notifyBattleSent(payload: BattleSentPayload) {
-    const userId = await this.getUserIdByVillage(payload.villageId);
+  private async notifyBattleSent(
+    payload: BattleSentPayload,
+    villageUserIdCache: VillageUserIdCache,
+  ) {
+    const userId = await this.getUserIdByVillage(
+      payload.villageId,
+      villageUserIdCache,
+    );
     if (!userId) return;
 
     this.logger.debug(`⚔️ [Outbox] Envoi WebSocket battle.sent:`, {
@@ -307,8 +406,14 @@ export class EventOutboxService {
     });
   }
 
-  private async notifyBattleResolved(payload: BattleResolvedPayload) {
-    const userId = await this.getUserIdByVillage(payload.villageId);
+  private async notifyBattleResolved(
+    payload: BattleResolvedPayload,
+    villageUserIdCache: VillageUserIdCache,
+  ) {
+    const userId = await this.getUserIdByVillage(
+      payload.villageId,
+      villageUserIdCache,
+    );
     if (!userId) return;
 
     this.logger.debug(`⚔️ [Outbox] Envoi WebSocket battle.resolved:`, {
@@ -338,8 +443,14 @@ export class EventOutboxService {
     });
   }
 
-  private async notifyBattleReturned(payload: BattleReturnedPayload) {
-    const userId = await this.getUserIdByVillage(payload.villageId);
+  private async notifyBattleReturned(
+    payload: BattleReturnedPayload,
+    villageUserIdCache: VillageUserIdCache,
+  ) {
+    const userId = await this.getUserIdByVillage(
+      payload.villageId,
+      villageUserIdCache,
+    );
     if (!userId) return;
 
     this.logger.debug(`⚔️ [Outbox] Envoi WebSocket battle.returned:`, {
@@ -356,35 +467,56 @@ export class EventOutboxService {
     });
   }
 
-  private async notifyScoutSent(payload: ScoutSentPayload) {
-    const userId = await this.getUserIdByVillage(payload.villageId);
+  private async notifyScoutSent(
+    payload: ScoutSentPayload,
+    villageUserIdCache: VillageUserIdCache,
+  ) {
+    const userId = await this.getUserIdByVillage(
+      payload.villageId,
+      villageUserIdCache,
+    );
     if (!userId) return;
 
     this.gateway.notifyUser(userId, 'scout.sent', payload);
   }
 
-  private async notifyScoutReported(payload: ScoutReportedPayload) {
-    const userId = await this.getUserIdByVillage(payload.villageId);
+  private async notifyScoutReported(
+    payload: ScoutReportedPayload,
+    villageUserIdCache: VillageUserIdCache,
+  ) {
+    const userId = await this.getUserIdByVillage(
+      payload.villageId,
+      villageUserIdCache,
+    );
     if (!userId) return;
 
     this.gateway.notifyUser(userId, 'scout.reported', payload);
   }
 
-  private async notifyScoutReturned(payload: ScoutReturnedPayload) {
-    const userId = await this.getUserIdByVillage(payload.villageId);
+  private async notifyScoutReturned(
+    payload: ScoutReturnedPayload,
+    villageUserIdCache: VillageUserIdCache,
+  ) {
+    const userId = await this.getUserIdByVillage(
+      payload.villageId,
+      villageUserIdCache,
+    );
     if (!userId) return;
 
     this.gateway.notifyUser(userId, 'scout.returned', payload);
   }
 
-  private async notifyVillageAttacked(payload: VillageAttackedPayload) {
+  private async notifyVillageAttacked(
+    payload: VillageAttackedPayload,
+    villageUserIdCache: VillageUserIdCache,
+  ) {
     // Pour PvP : notifier le défenseur
     const defenderVillageId = payload.defenderVillageId;
     if (!defenderVillageId) return;
 
     const userId =
       payload.defenderUserId ??
-      (await this.getUserIdByVillage(defenderVillageId));
+      (await this.getUserIdByVillage(defenderVillageId, villageUserIdCache));
     if (!userId) return;
 
     this.logger.debug(`🛡️ [Outbox] Envoi WebSocket village.attacked:`, {
@@ -515,8 +647,14 @@ export class EventOutboxService {
     this.gateway.notifyWorld(payload.worldId, 'world.status.changed', payload);
   }
 
-  private async notifyReinforcementSent(payload: ReinforcementSentPayload) {
-    const userId = await this.getUserIdByVillage(payload.villageId);
+  private async notifyReinforcementSent(
+    payload: ReinforcementSentPayload,
+    villageUserIdCache: VillageUserIdCache,
+  ) {
+    const userId = await this.getUserIdByVillage(
+      payload.villageId,
+      villageUserIdCache,
+    );
     if (!userId) return;
 
     this.gateway.notifyUser(userId, 'reinforcement.sent', payload);
@@ -524,8 +662,12 @@ export class EventOutboxService {
 
   private async notifyReinforcementRecalled(
     payload: ReinforcementRecalledPayload,
+    villageUserIdCache: VillageUserIdCache,
   ) {
-    const userId = await this.getUserIdByVillage(payload.villageId);
+    const userId = await this.getUserIdByVillage(
+      payload.villageId,
+      villageUserIdCache,
+    );
     if (!userId) return;
 
     this.gateway.notifyUser(userId, 'reinforcement.recalled', payload);
@@ -533,8 +675,10 @@ export class EventOutboxService {
 
   private async notifyReinforcementReturned(
     payload: ReinforcementReturnedPayload,
+    villageUserIdCache: VillageUserIdCache,
   ) {
     const recipientIds = await this.getUniqueUserIdsByVillages(
+      villageUserIdCache,
       payload.villageId,
       payload.hostVillageId,
     );
@@ -544,15 +688,25 @@ export class EventOutboxService {
     }
   }
 
-  private async notifyCaravanSent(payload: CaravanSentPayload) {
-    const userId = await this.getUserIdByVillage(payload.villageId);
+  private async notifyCaravanSent(
+    payload: CaravanSentPayload,
+    villageUserIdCache: VillageUserIdCache,
+  ) {
+    const userId = await this.getUserIdByVillage(
+      payload.villageId,
+      villageUserIdCache,
+    );
     if (!userId) return;
 
     this.gateway.notifyUser(userId, 'caravan.sent', payload);
   }
 
-  private async notifyCaravanArrived(payload: CaravanArrivedPayload) {
+  private async notifyCaravanArrived(
+    payload: CaravanArrivedPayload,
+    villageUserIdCache: VillageUserIdCache,
+  ) {
     const recipientIds = await this.getUniqueUserIdsByVillages(
+      villageUserIdCache,
       payload.villageId,
       payload.targetVillageId,
     );
@@ -562,47 +716,112 @@ export class EventOutboxService {
     }
   }
 
-  private async notifyCaravanRecalled(payload: CaravanRecalledPayload) {
-    const userId = await this.getUserIdByVillage(payload.villageId);
+  private async notifyCaravanRecalled(
+    payload: CaravanRecalledPayload,
+    villageUserIdCache: VillageUserIdCache,
+  ) {
+    const userId = await this.getUserIdByVillage(
+      payload.villageId,
+      villageUserIdCache,
+    );
     if (!userId) return;
 
     this.gateway.notifyUser(userId, 'caravan.recalled', payload);
   }
 
-  private async notifyCaravanReturned(payload: CaravanReturnedPayload) {
-    const userId = await this.getUserIdByVillage(payload.villageId);
+  private async notifyCaravanReturned(
+    payload: CaravanReturnedPayload,
+    villageUserIdCache: VillageUserIdCache,
+  ) {
+    const userId = await this.getUserIdByVillage(
+      payload.villageId,
+      villageUserIdCache,
+    );
     if (!userId) return;
 
     this.gateway.notifyUser(userId, 'caravan.returned', payload);
   }
 
-  private async notifyExpeditionRecalled(payload: ExpeditionRecalledPayload) {
-    const userId = await this.getUserIdByVillage(payload.villageId);
+  private async notifyExpeditionRecalled(
+    payload: ExpeditionRecalledPayload,
+    villageUserIdCache: VillageUserIdCache,
+  ) {
+    const userId = await this.getUserIdByVillage(
+      payload.villageId,
+      villageUserIdCache,
+    );
     if (!userId) return;
 
     this.gateway.notifyUser(userId, 'expedition.recalled', payload);
   }
 
-  private async notifyExpeditionReturned(payload: ExpeditionReturnedPayload) {
-    const userId = await this.getUserIdByVillage(payload.villageId);
+  private async notifyExpeditionReturned(
+    payload: ExpeditionReturnedPayload,
+    villageUserIdCache: VillageUserIdCache,
+  ) {
+    const userId = await this.getUserIdByVillage(
+      payload.villageId,
+      villageUserIdCache,
+    );
     if (!userId) return;
 
     this.gateway.notifyUser(userId, 'expedition.returned', payload);
   }
 
-  private async notifyGarrisonAdded(payload: GarrisonAddedPayload) {
-    const userId = await this.getUserIdByVillage(payload.villageId);
+  private async notifyGarrisonAdded(
+    payload: GarrisonAddedPayload,
+    villageUserIdCache: VillageUserIdCache,
+  ) {
+    const userId = await this.getUserIdByVillage(
+      payload.villageId,
+      villageUserIdCache,
+    );
     if (!userId) return;
 
     this.gateway.notifyUser(userId, 'garrison.added', payload);
   }
 
-  private async getUserIdByVillage(villageId: string): Promise<string | null> {
+  private async prefetchVillageUserIds(
+    events: EventOutbox[],
+  ): Promise<Map<string, string | null>> {
+    const villageIds = collectVillageIdsFromOutboxEvents(events);
+
+    if (villageIds.length === 0) {
+      return new Map();
+    }
+
+    const villages = await this.prisma.village.findMany({
+      where: { id: { in: villageIds } },
+      select: { id: true, userId: true },
+    });
+
+    const villageUserIdByVillageId = new Map<string, string | null>();
+    for (const villageId of villageIds) {
+      villageUserIdByVillageId.set(villageId, null);
+    }
+    for (const village of villages) {
+      villageUserIdByVillageId.set(village.id, village.userId);
+    }
+
+    return villageUserIdByVillageId;
+  }
+
+  private async getUserIdByVillage(
+    villageId: string,
+    villageUserIdCache: VillageUserIdCache,
+  ): Promise<string | null> {
+    const cachedUserId = villageUserIdCache.get(villageId);
+    if (cachedUserId !== undefined) {
+      return cachedUserId;
+    }
+
     const village = await this.prisma.village.findUnique({
       where: { id: villageId },
       select: { userId: true },
     });
-    return village?.userId || null;
+    const userId = village?.userId || null;
+    villageUserIdCache.set(villageId, userId);
+    return userId;
   }
 
   private async getAttackerUserIdByConquest(
@@ -616,13 +835,16 @@ export class EventOutboxService {
   }
 
   private async getUniqueUserIdsByVillages(
+    villageUserIdCache: VillageUserIdCache,
     ...villageIds: Array<string | undefined>
   ): Promise<string[]> {
     const uniqueVillageIds = [
       ...new Set(villageIds.filter(Boolean)),
     ] as string[];
     const userIds = await Promise.all(
-      uniqueVillageIds.map((villageId) => this.getUserIdByVillage(villageId)),
+      uniqueVillageIds.map((villageId) =>
+        this.getUserIdByVillage(villageId, villageUserIdCache),
+      ),
     );
     return [
       ...new Set(userIds.filter((userId): userId is string => Boolean(userId))),
