@@ -26,10 +26,11 @@
 - [ ] Migration Prisma crée `WorldFinalRankingSnapshot` avec au minimum : `worldId`, `userId`, `signal` (POWER / OFFENSE_GLORY / DEFENSE_GLORY), `rank`, `score`, `snapshotAt`. Unique `(worldId, signal, userId)`, index `(worldId, signal, rank)`.
 - [ ] À la transition `LOCKED → ENDED` dans `WorldLifecycleWorker.transitionWorld`, **dans la même transaction Prisma** que l'update status + l'outbox event, un snapshot complet des 3 classements est persisté pour tous les `WorldMembership` du monde (y compris membres éliminés à `villageCount = 0`).
 - [ ] Échec du snapshot ⇒ rollback transactionnel de la transition (jamais de monde ENDED sans snapshot).
-- [ ] Helper backend `assertWorldWritable(worldId)` (ou guard NestJS équivalent) rejette toute mutation sur monde `ENDED` avec HTTP 403 + code d'erreur lisible (`WORLD_READ_ONLY`).
+- [ ] Helper backend `assertWorldWritable(worldId)` (ou guard NestJS équivalent) rejette toute **nouvelle action joueur** sur monde `ENDED` avec HTTP 403 + code d'erreur lisible (`WORLD_READ_ONLY`).
 - [ ] Mutations protégées (liste minimale) : `initiateAttack`, `scout`, `training` (army), construction de bâtiment, dispatch caravane, changement de style de village, claim carte quotidienne. Inventaire exhaustif tranché à l'étape 1 (Refinement).
+- [ ] **Opérations explicitement autorisées sur monde ENDED** (carve-out anti-état-cassé) : `recallExpedition` (rappel d'armée en vol), finalisation des jobs déjà en queue (training, construction, retour d'armée, livraison/retour caravane). Sans ce carve-out, les expéditions en vol au moment de la transition resteraient bloquées à jamais. La liste blanche est tranchée à l'étape 1 (Refinement) en même temps que la liste noire des mutations.
 - [ ] Lectures non impactées : `GET /worlds/:id`, `GET /villages`, inbox, rapports, classements restent 200 sur monde ENDED.
-- [ ] Smoke backend : fast-forward d'un monde (config tempo + `endsAt` manipulé) → après tick worker : monde `ENDED`, snapshot non vide en DB, mutation refusée 403, lecture 200.
+- [ ] Smoke backend : fast-forward d'un monde (config tempo + `endsAt` manipulé) avec une expédition en vol au moment de la transition → après tick worker : monde `ENDED`, snapshot non vide en DB, `initiateAttack` refusée 403, `recallExpedition` sur l'expédition en vol autorisée et restitue les troupes, lecture 200.
 - [ ] Unit pure-logic (Vitest, ≥ 1) sur le tri/tiebreaker du snapshot (ordre déterministe sur égalité de score, inclus membres à score = 0).
 - [ ] `yarn static-check` + `yarn test:backend` + `yarn test:smoke` verts.
 
@@ -58,8 +59,7 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 - **Membres éliminés (`villageCount = 0`)** : doivent-ils apparaître dans le snapshot POWER (score 0, rang dernier ex æquo) ou être exclus ? Spec 24 silencieuse. Proposition : inclus, audit historique plus complet.
 - **Coût performance** : 3 classements × N membres en une seule tx peut être lourd sur grand monde. Vérifier compute < quelques secondes ; sinon paginer (compromis sur l'atomicité).
 - **Code d'erreur** : `WORLD_READ_ONLY` (403) ou `WORLD_ENDED` (409) ? 403 sémantiquement correct si on traite la lecture seule comme une permission. Trancher au refinement.
-- **`recallExpedition`** : faut-il bloquer ? Une armée en vol au moment du ENDED doit pouvoir revenir (cohérence données). Lister explicitement actions autorisées.
-- **Jobs en cours (training, construction enqueuées avant ENDED)** : laisser finir (pas de nouvelle action, mais jobs en queue terminent) — sinon scope explose.
+- **Jobs en cours (training, construction enqueuées avant ENDED)** : laisser finir (pas de nouvelle action, mais jobs en queue terminent) — sinon scope explose. Cf. critère « Opérations explicitement autorisées » ci-dessus.
 - **Achats couronnes** : transaction globale (compte) ou liée à monde précis ? Si globale, le check ne s'applique pas. Clarifier au refinement.
 
 ## Hors scope explicite
