@@ -1,0 +1,126 @@
+{
+  "strictness": 4,
+  "instructions": "Only actionable findings with real impact: bugs, security, data loss, regressions, architecture violations, missing tests. No wording, style, naming, formatting nitpicks or low-value comments. If the finding would be labeled Nitpick, Trivial, Low value, or cosmetic, do not post it.",
+  "ignoreKeywords": "WIP\nwip\n[skip review]",
+  "ignorePatterns": "node_modules/**\ndist/**\nbuild/**\n.yarn/**\nyarn.lock\ncoverage/**\n.prisma/**\n**/generated/**\n.context-memory/**\ntasks/todo.md\ntasks/lessons.md\n.agents/maintenance/*-report.md\n.agents/maintenance/*-ledger.md\n.agents/maintenance/*-backlog.md",
+  "triggerOnUpdates": true,
+  "statusCheck": true,
+  "statusCommentsEnabled": true,
+  "summarySection": {
+    "included": true,
+    "collapsible": false,
+    "defaultOpen": true
+  },
+  "issuesTableSection": {
+    "included": true,
+    "collapsible": false,
+    "defaultOpen": true
+  },
+  "confidenceScoreSection": {
+    "included": true,
+    "collapsible": false,
+    "defaultOpen": false
+  },
+  "sequenceDiagramSection": {
+    "included": false
+  },
+  "customContext": {
+    "rules": [
+      {
+        "rule": "BLOCK `as any` and `: any` parameter types — require proper typing (generics, narrowing, type guards). BLOCK untyped return values on public methods/functions. BLOCK `eslint-disable` without an inline justification comment. BLOCK `npm` references — project uses `yarn` exclusively.",
+        "scope": ["**/*.ts", "**/*.tsx"]
+      },
+      {
+        "rule": "Any new function computing a formula, applying a rule, or transforming data requires a unit test. Flag new non-test source files in services/, stores/, lib/, view-model*/ with zero co-located tests.",
+        "scope": ["**/*.ts", "**/*.tsx"]
+      },
+      {
+        "rule": "If the change affects gameplay mechanics, API contracts, data model, or architecture decisions, a corresponding update in docs/ is mandatory. Flag if missing. When existing docs/gameplay documentation defines the behavior touched by the PR, verify the implementation still matches — flag mismatches as correctness issues.",
+        "scope": ["**/*.ts", "**/*.tsx"]
+      },
+      {
+        "rule": "CRITICAL — Controllers must ONLY: validate input via DTO + call one service method + return. Business logic (if/else rules, domain object construction, multi-step orchestration) in a controller is a BLOCKING violation. `this.prisma.*` in *.controller.ts or *.gateway.ts is a BLOCKING violation. Flag circular module dependencies.",
+        "scope": ["battleforthecrown-backend/src/**/*.controller.ts"]
+      },
+      {
+        "rule": "CRITICAL — Every write producing a domain event MUST create an EventOutbox record in the SAME prisma.$transaction(). Flag any transaction that writes domain data but omits the outbox entry. Flag direct this.server.emit() or socket.emit() from services/workers — all socket events must flow through OutboxWorker, never emitted directly.",
+        "scope": ["battleforthecrown-backend/src/**/*.ts"]
+      },
+      {
+        "rule": "Flag N+1 patterns: a loop containing .findUnique(), .findFirst(), or .findMany() without batching via include, Promise.all, or a single scoped query. Flag multi-table writes outside prisma.$transaction(). Flag $queryRaw/$executeRaw where a typed Prisma query is feasible.",
+        "scope": ["battleforthecrown-backend/src/**/*.ts"]
+      },
+      {
+        "rule": "BLOCK empty catch blocks. BLOCK catch that only logs without rethrowing or wrapping. All HTTP errors must use NestJS HttpException subclasses or a typed exception filter. All controller inputs must use a DTO class with class-validator decorators.",
+        "scope": ["battleforthecrown-backend/src/**/*.ts"]
+      },
+      {
+        "rule": "Flag service files > 400 LOC or > 8 public methods — must be split by domain. Flag a single service managing unrelated domains (e.g., combat AND resources). Public service methods must have explicit return types (including Promise<void>). `process.env.*` outside ConfigModule/ConfigService is a violation — use configService.get<T>('KEY').",
+        "scope": ["battleforthecrown-backend/src/**/*.service.ts"]
+      },
+      {
+        "rule": "pg-boss job handlers must be idempotent: running the same job twice must not produce duplicate side effects. Workers must not contain business logic — they orchestrate, services compute.",
+        "scope": ["battleforthecrown-backend/src/**/*.ts"]
+      },
+      {
+        "rule": "New service methods touching combat calculations, resource production, population, economy, or crown balance require a unit test. Flag it.skip / xit without a '// TODO: reason' comment.",
+        "scope": ["battleforthecrown-backend/src/**/*.ts"]
+      },
+      {
+        "rule": "CRITICAL — The frontend NEVER computes authoritative state. Resource balances, troop counts, crown balances, combat results must come from the server (REST response or WebSocket event). Display interpolation is allowed but the interpolated value MUST NOT be written back to a store as authoritative truth. Flag mutations that update a Zustand store directly without going through REST → TanStack Query invalidation.",
+        "scope": ["battleforthecrown-pixi/src/**/*.ts", "battleforthecrown-pixi/src/**/*.tsx"]
+      },
+      {
+        "rule": "Raw fetch() or axios.* outside src/api/ is a violation. All HTTP calls must go through src/api/client.ts. Mutations must invalidate relevant query keys in onSuccess or onSettled. useEffect used to trigger data fetching is a violation — use enabled conditions. Frequently-read queries missing staleTime or gcTime are a performance violation.",
+        "scope": ["battleforthecrown-pixi/src/**/*.ts", "battleforthecrown-pixi/src/**/*.tsx"]
+      },
+      {
+        "rule": "API response shapes at the trust boundary must be validated with Zod. Types must be imported from packages/shared/, NOT from battleforthecrown-backend/. No untyped WebSocket message handlers.",
+        "scope": ["battleforthecrown-pixi/src/**/*.ts", "battleforthecrown-pixi/src/**/*.tsx"]
+      },
+      {
+        "rule": "Every optimistic mutation MUST implement all three handlers: onMutate (snapshot + local update), onError (rollback via context), onSettled (invalidate related keys). Flag any optimistic pattern missing one of the three handlers.",
+        "scope": ["battleforthecrown-pixi/src/**/*.tsx"]
+      },
+      {
+        "rule": "Flag god stores managing more than one domain. Derived state must NOT be stored in the store — use selectors or view-models. Direct .setState() calls from outside the store module are a violation. Flag stores missing a reset action for logout/disconnect. Flag state duplicated between a Zustand store and a TanStack Query cache.",
+        "scope": ["battleforthecrown-pixi/src/**/*.tsx"]
+      },
+      {
+        "rule": "Business logic (derivations, rule checks, calculations) must not appear in JSX — belongs in view-models, custom hooks, or stores. A component with > 2 clear responsibilities must be split. Prop drilling > 2 levels where a store or context is appropriate is a violation. Async panels and the Pixi canvas must be wrapped in error boundaries.",
+        "scope": ["battleforthecrown-pixi/src/**/*.tsx"]
+      },
+      {
+        "rule": "Scenes must NOT mix rendering + input handling + game state. Direct Zustand store reads inside Pixi tick loops (app.ticker.add(...)) are a violation — pass snapshots to the tick callback. Asset loading inside update() or ticker callbacks is a violation — load in the preload/init phase. Scene destroy() MUST clean up: remove all event listeners, stop tickers, release textures. Flag any destroy() that is empty or missing.",
+        "scope": ["battleforthecrown-pixi/src/pixi/**/*.ts"]
+      },
+      {
+        "rule": "NO imports from battleforthecrown-backend/ or battleforthecrown-pixi/. NO side effects: no console.log, no fetch, no DOM access, no Node.js APIs. All exported functions must be pure (same input → same output, no mutation of arguments). All formulas encoding a game rule require a matching test in a co-located *.spec.ts or __tests__/ directory. Explicit return types mandatory on all exported functions.",
+        "scope": ["packages/shared/**/*.ts"]
+      },
+      {
+        "rule": "Do NOT flag magic numbers or hardcoded strings in test files — inline literal fixtures are expected. Tests must assert behavior (output given input), NOT implementation (mock call chain order). BLOCK it.skip or xit without a '// TODO: reason — <ticket or issue>' comment. No `as any` to silence TypeScript. No mocking of Prisma, pg-boss, or setInterval in unit tests — if infrastructure is required, it is an integration test and must be labeled as such.",
+        "scope": ["**/*.spec.ts", "**/*.test.ts", "**/*.spec.tsx", "**/*.test.tsx"]
+      },
+      {
+        "rule": "Schema changes MUST have a matching migration file — flag schema edits without a new migration. New models and fields must be documented in docs/architecture/data-model.md. Flag: missing @@index on foreign key fields, nullable fields that should be non-nullable, enum values without a corresponding TypeScript type in packages/shared/.",
+        "scope": ["prisma/schema.prisma"]
+      },
+      {
+        "rule": "Agent skills are project governance — review with extra care. Flag: hardcoded file paths that may have drifted, rules contradicting docs/architecture/decisions.md, skill description fields > 160 characters (they load on every agent context window).",
+        "scope": [".agents/**"]
+      }
+    ],
+    "files": [
+      {
+        "scope": [
+          "battleforthecrown-backend/src/**/*.ts",
+          "battleforthecrown-pixi/src/**/*.ts",
+          "battleforthecrown-pixi/src/**/*.tsx"
+        ],
+        "path": "docs/architecture/decisions.md",
+        "description": "Architecture decisions — reference before flagging structural violations"
+      }
+    ]
+  }
+}

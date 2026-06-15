@@ -4,7 +4,7 @@ import { EventOutboxService } from '../src/modules/event/event-outbox.service';
 import {
   getParisDailyKey,
   getPreviousParisDailyKey,
-} from '../src/modules/retention/retention.service';
+} from '../src/modules/retention/retention.utils';
 import {
   bootSmokeApp,
   joinWorld,
