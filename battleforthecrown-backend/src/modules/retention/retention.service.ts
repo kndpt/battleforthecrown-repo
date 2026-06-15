@@ -12,20 +12,10 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
-import type {
-  BattleResolvedPayload,
-  BuildingCompletedPayload,
-  EventKind,
-  PayloadForKind,
-  UnitTrainedPayload,
-} from '../event/event-types';
+import type { EventKind, PayloadForKind } from '../event/event-types';
 import { createOutboxEvent } from '../event/event.utils';
 import { ResourcesService } from '../resources/resources.service';
-import {
-  compareBarbarianTier,
-  getDailyCardScaling,
-  type DailyTaskMetadata,
-} from './retention-scaling';
+import { getDailyCardScaling } from './retention-scaling';
 import type {
   ClaimDailyCardResponse,
   DailyCardDto,
@@ -33,9 +23,18 @@ import type {
   DailyOyezDto,
   RetentionSummaryDto,
 } from '@battleforthecrown/shared/retention';
+import {
+  type CastleLevelReader,
+  calculateTaskProgressUpdate,
+  getClaimableDayKeys,
+  getParisDailyKey,
+  getPlayerMaxCastleLevel,
+  getTaskProjection,
+  isWithinClaimGrace,
+  parseTaskMetadata,
+} from './retention.utils';
 
 const DAILY_CARD_LIMIT = 1;
-const PARIS_RESET_HOUR = 4;
 
 type CardWithTasks = DailyCard & { tasks: DailyCardTask[] };
 
@@ -445,173 +444,12 @@ export class RetentionService {
   }
 }
 
-export function getTaskProjection<K extends EventKind>(
-  kind: K,
-  payload: PayloadForKind<K>,
-): {
-  villageId: string;
-  type: DailyCardTaskType;
-  completedQty: number;
-  targetTier: string | null;
-} | null {
-  switch (kind) {
-    case 'unit.trained': {
-      const eventPayload = payload as UnitTrainedPayload;
-      return {
-        villageId: eventPayload.villageId,
-        type: 'TRAIN_UNITS',
-        completedQty: eventPayload.completedQty,
-        targetTier: null,
-      };
-    }
-    case 'building.completed': {
-      const eventPayload = payload as BuildingCompletedPayload;
-      return {
-        villageId: eventPayload.villageId,
-        type: 'COMPLETE_BUILDING',
-        completedQty: 1,
-        targetTier: null,
-      };
-    }
-    case 'battle.resolved': {
-      const eventPayload = payload as BattleResolvedPayload;
-      return eventPayload.targetKind === 'BARBARIAN_VILLAGE' &&
-        eventPayload.isVictory
-        ? {
-            villageId: eventPayload.villageId,
-            type: 'RAID_BARBARIAN',
-            completedQty: 1,
-            targetTier: eventPayload.targetTier ?? null,
-          }
-        : null;
-    }
-    default:
-      return null;
-  }
-}
-
-interface CastleLevelReader {
-  building: {
-    aggregate(args: {
-      where: { type: string; village: { userId: string; worldId: string } };
-      _max: { level: true };
-    }): Promise<{ _max: { level: number | null } }>;
-  };
-}
-
-export async function getPlayerMaxCastleLevel(
-  prisma: CastleLevelReader,
-  userId: string,
-  worldId: string,
-): Promise<number> {
-  const result = await prisma.building.aggregate({
-    where: {
-      type: 'CASTLE',
-      village: { userId, worldId },
-    },
-    _max: { level: true },
-  });
-
-  return result._max.level ?? 1;
-}
-
-export function calculateTaskProgressUpdate(
-  task: Pick<DailyCardTask, 'progress' | 'target' | 'metadata'>,
-  eventCompletedQty: number,
-  targetTier: string | null,
-): { progress: number; isComplete: boolean } | null {
-  if (eventCompletedQty <= 0) return null;
-  const metadata = parseTaskMetadata(task.metadata);
-  if (
-    metadata.minTargetTier &&
-    compareBarbarianTier(targetTier, metadata.minTargetTier) < 0
-  ) {
-    return null;
-  }
-  const completedQty = metadata.completedQty ?? eventCompletedQty;
-  const progress = Math.min(task.progress + completedQty, task.target);
-  return { progress, isComplete: progress >= task.target };
-}
-
-export function parseTaskMetadata(
-  metadata: Prisma.JsonValue,
-): DailyTaskMetadata {
-  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
-    return {};
-  }
-  const raw = metadata as Record<string, unknown>;
-  return {
-    completedQty:
-      typeof raw.completedQty === 'number' && Number.isFinite(raw.completedQty)
-        ? Math.max(1, Math.floor(raw.completedQty))
-        : undefined,
-    minTargetTier:
-      typeof raw.minTargetTier === 'string' &&
-      /^T[1-5]$/.test(raw.minTargetTier)
-        ? (raw.minTargetTier as DailyTaskMetadata['minTargetTier'])
-        : undefined,
-  };
-}
-
 function allTasksComplete(
   tasks: Array<{ progress: number; target: number; completedAt: Date | null }>,
 ): boolean {
   return tasks.every(
     (task) => task.completedAt || task.progress >= task.target,
   );
-}
-
-export function getParisDailyKey(now: Date): string {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Europe/Paris',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    hourCycle: 'h23',
-  }).formatToParts(now);
-  const values = Object.fromEntries(
-    parts.map((part) => [part.type, part.value]),
-  );
-  const year = Number(values.year);
-  const month = Number(values.month);
-  const day = Number(values.day);
-  const hour = Number(values.hour);
-
-  if (hour >= PARIS_RESET_HOUR) {
-    return formatDayKey(year, month, day);
-  }
-  return previousDayKey(year, month, day);
-}
-
-export function getPreviousParisDailyKey(now: Date): string {
-  return previousDayKeyFromKey(getParisDailyKey(now));
-}
-
-export function getClaimableDayKeys(now: Date): string[] {
-  return [getParisDailyKey(now), getPreviousParisDailyKey(now)];
-}
-
-export function isWithinClaimGrace(dayKey: string, now: Date): boolean {
-  return getClaimableDayKeys(now).includes(dayKey);
-}
-
-function formatDayKey(year: number, month: number, day: number): string {
-  return [
-    year.toString().padStart(4, '0'),
-    month.toString().padStart(2, '0'),
-    day.toString().padStart(2, '0'),
-  ].join('-');
-}
-
-function previousDayKey(year: number, month: number, day: number): string {
-  const previousDate = new Date(Date.UTC(year, month - 1, day - 1));
-  return previousDate.toISOString().slice(0, 10);
-}
-
-function previousDayKeyFromKey(dayKey: string): string {
-  const [year, month, day] = dayKey.split('-').map(Number);
-  return previousDayKey(year, month, day);
 }
 
 function mapTask(task: DailyCardTask): DailyCardTaskDto {
