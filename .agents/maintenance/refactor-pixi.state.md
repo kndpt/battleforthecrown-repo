@@ -1,6 +1,6 @@
 # refactor-pixi — état (réécrit chaque run)
 
-last: 2026-06-15 | sha `0ae9a55` | theme ws-bindings cache invalidation | branch `claude/great-gates-vcplv1`
+last: 2026-06-15 | sha `dc910ab` | theme ws-bindings cache invalidation | branch `claude/great-gates-vcplv1`
 full: `archive/refactor-pixi/2026-06-15-full.md`
 
 ## OPEN
@@ -16,3 +16,4 @@ full: `archive/refactor-pixi/2026-06-15-full.md`
 | C2 | Low | SpecializedBuildingDetailModal ~640L | organized, low risk |
 | D4 | Low | queries.ts 60_000 staleTime | optimistic OK, server replaces <1s |
 | F2 | Low | DailyRetentionWidget:301 | hardcoded expiresInValue="04h00"; needs backend resetAt in DTO |
+| J3 | Low | villageTierFromPower | test gap — debt candidate |

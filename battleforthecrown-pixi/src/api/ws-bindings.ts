@@ -534,19 +534,19 @@ export function applyVillageAttacked(
 
 function invalidateCombatReports(ctx: BindingsContext): void {
   const userId = useAuthStore.getState().user?.id ?? null;
-  ctx.queryClient.invalidateQueries({ queryKey: ['combat', 'reports', userId] });
-  ctx.queryClient.invalidateQueries({ queryKey: ['combat', 'scout-reports', userId] });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.combatReportsPrefix(userId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.scoutReportsPrefix(userId) });
 }
 
 function invalidateReinforcementReports(ctx: BindingsContext): void {
   const userId = useAuthStore.getState().user?.id ?? null;
-  ctx.queryClient.invalidateQueries({ queryKey: ['combat', 'reinforcement-reports', userId] });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.reinforcementReportsPrefix(userId) });
 }
 
 function invalidateCaravanReports(ctx: BindingsContext): void {
   const userId = useAuthStore.getState().user?.id ?? null;
-  ctx.queryClient.invalidateQueries({ queryKey: ['combat', 'caravan-reports', userId] });
-  ctx.queryClient.invalidateQueries({ queryKey: ['combat', 'caravan-report'] });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.caravanReportsPrefix(userId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.caravanReportPrefix() });
 }
 
 function invalidateOpenConquests(ctx: BindingsContext): void {
@@ -565,7 +565,7 @@ function invalidatePowerQueries(ctx: BindingsContext, villageId: string): void {
   const userId = useAuthStore.getState().user?.id ?? null;
   const worldId = useGameStore.getState().worldId;
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.villagePower(villageId) });
-  ctx.queryClient.invalidateQueries({ queryKey: ['power', 'kingdom', userId] });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.kingdomPowerPrefix(userId) });
   // The rankings summary embeds the live POWER leaderboard; refresh it whenever
   // kingdom power shifts (build/train/combat/conquest), since the backend only
   // emits rankings.changed on glory writes, not power changes.
@@ -594,8 +594,8 @@ function invalidateVillageVisualQueries(ctx: BindingsContext): void {
 export function applyVillageConquered(payload: VillageConqueredPayload, ctx: BindingsContext): void {
   const userId = useAuthStore.getState().user?.id ?? null;
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.myMemberships(userId) });
-  ctx.queryClient.invalidateQueries({ queryKey: ['villages'] });
-  ctx.queryClient.invalidateQueries({ queryKey: ['world-entities'] });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.villagesPrefix() });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.worldEntitiesPrefix() });
   invalidatePowerQueries(ctx, payload.villageId);
   invalidateOpenConquests(ctx);
   invalidateCombatReports(ctx);
@@ -625,7 +625,7 @@ export function applyVillageCaptureWindowOpened(
   payload: VillageCaptureWindowOpenedPayload,
   ctx: BindingsContext,
 ): void {
-  ctx.queryClient.invalidateQueries({ queryKey: ['world-entities'] });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.worldEntitiesPrefix() });
   invalidateConquestAttackerState(ctx, payload.attackerVillageId);
   invalidateOpenConquests(ctx);
   invalidateOpenExpeditions(ctx);
@@ -641,9 +641,9 @@ export function applyVillageCaptureWindowCompleted(
   _payload: VillageCaptureWindowCompletedPayload,
   ctx: BindingsContext,
 ): void {
-  ctx.queryClient.invalidateQueries({ queryKey: ['memberships'] });
-  ctx.queryClient.invalidateQueries({ queryKey: ['villages'] });
-  ctx.queryClient.invalidateQueries({ queryKey: ['world-entities'] });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.membershipsPrefix() });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.villagesPrefix() });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.worldEntitiesPrefix() });
   invalidateOpenConquests(ctx);
   invalidateCombatReports(ctx);
   useUiStore.getState().pushToast({
@@ -658,7 +658,7 @@ export function applyVillageCaptureWindowInterrupted(
   payload: VillageCaptureWindowInterruptedPayload,
   ctx: BindingsContext,
 ): void {
-  ctx.queryClient.invalidateQueries({ queryKey: ['world-entities'] });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.worldEntitiesPrefix() });
   invalidateOpenConquests(ctx);
   useUiStore.getState().pushToast({
     tone: 'error',
