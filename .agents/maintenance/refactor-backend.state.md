@@ -1,23 +1,22 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-06-12 | sha `0c9f43b` | theme B3 outbox batch | PR kndpt/outbox-village-batch-lookup-9d5c
-full: `archive/refactor-backend/2026-06-12-full.md`
+last: 2026-06-14 | theme R3 retention-utils | PR #109 maint/refactor-backend/retention-utils
+full: `archive/refactor-backend/2026-06-14-full.md`
 
 ## OPEN
 
 | ID | Sev | Where | Note |
 |----|-----|-------|------|
-| D4 | Med | combat.service.ts ~163 | expedition.create ×4 |
-| D5 | Med | combat.worker.ts | garrison loop dup |
-| G1 | Med | combat.service.ts ~956 | sequential kingdom power snapshot |
-| R3 | Med | retention.service.ts | class + 14 util exports |
 | R4 | High | crowns.service.ts ~264 | fractional carry — needs migration |
-| N3 | Low | world-entities-query.service.ts ~95 | radius clamp missing |
+| D4 | Med | combat.service.ts | `expedition.create` ×5 |
+| G1 | Med | combat.service.ts ~986 | sequential kingdom power snapshot |
+| O2 | Low | onboarding.service.ts:191 | getOnboardingProjection fn pure dans service (même pattern R3) |
+| N3 | Low | world-entities-query.service.ts ~101 | radius clamp missing |
 | C6 | Low | resources.service.ts:50 | recursive getResources, cosmetic |
 | V3 | Low | combat.service.ts ~480 | caravan deduct order cosmetic |
 | A1 | Low | auth.service.ts:36 | redundant displayName pre-check |
-| N4 | Low | join-world.use-case.ts:177 | logger.log → debug |
+| F1 | Low | combat.worker.ts | garrison.findMany include ×2 cosmetic |
 
 ## skip unless theme
 
-deferred themes in last full report
+B3/E1 → PR #91 mergée | G1 intentionnel (tx safety) | D4 no factory value

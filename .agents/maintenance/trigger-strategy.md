@@ -22,6 +22,7 @@ Rapports narratifs → `archive/<topic>/YYYY-MM-DD-full.md` (jamais en preflight
 | `bftc-refactor-pixi` | Deep structural | Weekly, Saturday night 02:00 | Ready PR |
 | `bftc-refactor-shared` | Deep structural | Weekly, Saturday night 03:00 | Ready PR |
 | `bftc-routine-gameplay-plan` | Proactive (gameplay backlog) | Daily (prompt Routine) | Ticket + JSON ledger + PR |
+| `bftc-auto-merge` | Housekeeping (merges ready PRs) | Hourly | Merge log |
 
 ---
 

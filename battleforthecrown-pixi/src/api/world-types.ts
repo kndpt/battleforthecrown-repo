@@ -1,4 +1,5 @@
 import {
+  isFoggedEntity,
   normalizeTier,
   villageVisualTierFromCastleLevel,
   type WorldTier,
@@ -9,20 +10,15 @@ import {
 import { VILLAGE_LABEL_DISPLAY, type VillageLabel } from "@battleforthecrown/shared/village";
 import { clampBuildingLevel } from "@battleforthecrown/shared/utils";
 
-export type {
-  WorldEntityKind,
-  WorldEntityDto,
-  WorldEntityFogged,
-  WorldEntityResponse,
-  WorldEntitiesResponse,
-  WorldVillageDto,
+export {
+  isFoggedEntity,
+  type WorldEntityKind,
+  type WorldEntityDto,
+  type WorldEntityFogged,
+  type WorldEntityResponse,
+  type WorldEntitiesResponse,
+  type WorldVillageDto,
 } from "@battleforthecrown/shared/world";
-
-export function isFoggedEntity(
-  entity: WorldEntityResponse,
-): entity is WorldEntityFogged {
-  return entity.kind === "fogged";
-}
 
 /** Domain entity used by the WorldMap scene. Already normalized between
  *  the entities feed (barbarians, etc.) and the player villages feed.
