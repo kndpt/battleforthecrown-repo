@@ -340,7 +340,7 @@ export function ArmyScreen() {
       queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.villagePower(villageId) });
-      queryClient.invalidateQueries({ queryKey: ['power', 'kingdom', userId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.kingdomPowerPrefix(userId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.retentionSummary(userId, worldId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.onboardingSummary(userId, worldId) });
     }
