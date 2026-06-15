@@ -15,6 +15,12 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | combat report view helpers | formatCoord/shortReportId duplicated across combat/reinforcement/caravan report views |
 | shared/village/strategy.ts getVillageStrategyPlan | constant plan accessor — low value unless plan becomes configurable |
 
+## done (this run)
+
+| area | PR |
+|------|-----|
+| packages/shared/src/resources/affordability.ts dead code | `#93` — canAffordCost, costIncludesPopulation, getResourceCostsOnly, getPopulationCostOnly; PlayerResources, Cost, AffordabilityCheck; 0 importers, deleted |
+
 ## rules
 
 - max 20 rows here ; `fixed`/`rejected` → archive only, not this file
