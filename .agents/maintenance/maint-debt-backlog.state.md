@@ -12,7 +12,6 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | pixi/WorldMapScene.ts | open PR #89 — background tap + exit cleanup |
 | shared/logic/training-time.ts | open PRs #99–101 — calculateTrainingTime spec |
 | shared/logic/production.ts | open PR #102 — calculateProductionRate spec |
-| pixi console.error stubs | open PR #113 — ReportDetailModal delete error toasts |
 | pixi QueueBottomSheet formatTime | clock-style mm:ss vs formatRemaining human labels — keep local until product aligns village queue display |
 
 ## rules
