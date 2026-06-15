@@ -1,6 +1,6 @@
 # maint-debt — candidats (réécrit chaque run)
 
-last: 2026-06-14 | archive: `archive/maint-debt/2026-06-14-full.md`
+last: 2026-06-15 | archive: `archive/maint-debt/2026-06-15-full.md`
 branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 ## candidate
@@ -10,10 +10,11 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | pixi magic 3600 + formatDuration dup | UI text differs — need product call before dedupe |
 | VillageCanvas + VillageScene pipeline | zero importers — needs retire-canvas decision, too broad |
 | pixi/WorldMapScene.ts | open PR #89 — background tap + exit cleanup |
-| shared/logic/training-time.ts | open PRs #99–101 — calculateTrainingTime spec |
+| shared/logic/training-time.ts | open PRs #99–101, #110 — calculateTrainingTime spec |
 | shared/logic/production.ts | open PR #102 — calculateProductionRate spec |
-| pixi console.error stubs | ReportDetailModal has 4 bare console.error on mutation failures — replace with logger |
-| pixi formatTime variants | QueueBottomSheet + UnitCard + UnitDetailModal — 3 local formatTime/Duration, diff styles |
+| pixi console.error stubs | open PR #116 — ReportDetailModal error toasts |
+| pixi formatTime variants | open PR #114 — army formatDuration dedupe; QueueBottomSheet clock-style kept |
+| combat report view helpers | formatCoord/shortReportId duplicated across combat/reinforcement/caravan report views |
 
 ## rules
 
