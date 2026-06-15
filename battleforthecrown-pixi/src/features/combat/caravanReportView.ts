@@ -1,4 +1,5 @@
 import type { CaravanReportResponse } from '@battleforthecrown/shared/combat';
+import { formatCoord } from './report-view-utils';
 
 export type CaravanReportResourcesDto = CaravanReportResponse['resources'];
 
@@ -57,10 +58,6 @@ export function caravanReportStateLabel(report: CaravanReportResponse): string {
 
 export function caravanReportResourceTotal(resources: CaravanReportResourcesDto): number {
   return resources.wood + resources.stone + resources.iron;
-}
-
-function formatCoord(x: number, y: number): string {
-  return `${x}|${y}`;
 }
 
 export function caravanReportVillageLabel(village: CaravanReportVillageView): string {

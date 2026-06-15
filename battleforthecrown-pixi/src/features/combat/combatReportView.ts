@@ -11,6 +11,7 @@ import type {
   CombatReportParticipant,
   CombatReportUnit,
 } from '@/features/design-system/components';
+import { formatCoord, shortReportId } from './report-view-utils';
 
 export const combatReportLabels: CombatReportModalLabels = {
   attackerTitle: 'Attaquant',
@@ -32,14 +33,6 @@ const RESOURCE_ICONS = {
   stone: '/assets/resources/stone.png',
   wood: '/assets/resources/wood.png',
 } as const;
-
-function formatCoord(x?: number, y?: number): string {
-  return typeof x === 'number' && typeof y === 'number' ? `${x}|${y}` : '—';
-}
-
-function shortReportId(reportId: string): string {
-  return `#${reportId.slice(0, 6).toUpperCase()}`;
-}
 
 function targetLabel(report: CombatReportDto): string {
   if (report.targetKind === 'BARBARIAN_VILLAGE') {
