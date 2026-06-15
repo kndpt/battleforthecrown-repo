@@ -3,7 +3,11 @@ import type { EventOutbox } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { GameGateway } from './game.gateway';
 import { parseEventPayload } from './codecs';
-import { collectVillageIdsFromPayload } from './event-outbox-village-ids';
+import {
+  collectVillageIdsFromOutboxEvents,
+  resolveVillageUserIdCache,
+  type VillageUserIdCache,
+} from './event-outbox-prefetch';
 import { RetentionService } from '../retention/retention.service';
 import { OnboardingService } from '../onboarding/onboarding.service';
 import {
@@ -44,15 +48,6 @@ function isEventKind(kind: string): kind is EventKind {
   return kind in EVENT_PAYLOAD_SCHEMAS;
 }
 
-type VillageUserIdCache = Map<string, string | null>;
-
-function isInvalidEventPayloadError(error: unknown): boolean {
-  return (
-    error instanceof Error &&
-    error.message.startsWith('Invalid EventOutbox payload for kind')
-  );
-}
-
 @Injectable()
 export class EventOutboxService {
   private readonly logger = new Logger(EventOutboxService.name);
@@ -81,16 +76,15 @@ export class EventOutboxService {
       `📦 [Outbox] ${events.length} events à dispatcher (fetch: ${fetchEndTime - fetchStartTime}ms)`,
     );
 
-    let villageUserIdCache: VillageUserIdCache;
-    try {
-      villageUserIdCache = await this.prefetchVillageUserIds(events);
-    } catch (error) {
-      this.logger.warn(
-        'Outbox village→user prefetch failed; continuing with fallback village lookups.',
-        error,
-      );
-      villageUserIdCache = new Map();
-    }
+    const villageUserIdCache = await resolveVillageUserIdCache(
+      () => this.prefetchVillageUserIds(events),
+      (error) => {
+        this.logger.warn(
+          'Outbox village→user prefetch failed; continuing with fallback village lookups.',
+          error,
+        );
+      },
+    );
 
     for (const event of events) {
       const eventDispatchStart = Date.now();
@@ -790,33 +784,14 @@ export class EventOutboxService {
   private async prefetchVillageUserIds(
     events: EventOutbox[],
   ): Promise<Map<string, string | null>> {
-    const villageIds = new Set<string>();
+    const villageIds = collectVillageIdsFromOutboxEvents(events);
 
-    for (const event of events) {
-      if (!isEventKind(event.kind)) continue;
-
-      try {
-        const payload = parseEventPayload(event.kind, event.payload);
-        for (const villageId of collectVillageIdsFromPayload(
-          payload as unknown as Record<string, unknown>,
-        )) {
-          villageIds.add(villageId);
-        }
-      } catch (error) {
-        if (isInvalidEventPayloadError(error)) {
-          // Malformed payloads fail later in dispatchEvent.
-          continue;
-        }
-        throw error;
-      }
-    }
-
-    if (villageIds.size === 0) {
+    if (villageIds.length === 0) {
       return new Map();
     }
 
     const villages = await this.prisma.village.findMany({
-      where: { id: { in: [...villageIds] } },
+      where: { id: { in: villageIds } },
       select: { id: true, userId: true },
     });
 
