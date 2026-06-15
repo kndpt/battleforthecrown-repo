@@ -332,6 +332,35 @@ describe('applyUnitTrainingCompleted', () => {
     expect(toasts[0].description).toBe('1 Seigneur');
     expect(toasts[1].description).toBe('3 Milices de paysans');
   });
+
+  it('invalidates power, retention and onboarding queries alongside training caches', () => {
+    setCurrentWorldSession();
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.armyTraining('v1'), []);
+    queryClient.setQueryData(queryKeys.armyInventory('v1'), []);
+    queryClient.setQueryData(queryKeys.population('v1'), { used: 1, max: 10, available: 9 });
+    seedPowerQueries(queryClient, 'v1');
+    queryClient.setQueryData(queryKeys.retentionSummary('user-1', 'world-1'), {});
+    queryClient.setQueryData(queryKeys.onboardingSummary('user-1', 'world-1'), {});
+
+    applyUnitTrainingCompleted(
+      {
+        trainingId: 'training-1',
+        villageId: 'v1',
+        unitType: 'MILITIA',
+        completedQty: 5,
+        totalQty: 5,
+      },
+      { queryClient },
+    );
+
+    expect(queryClient.getQueryState(queryKeys.armyTraining('v1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.armyInventory('v1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.population('v1'))?.isInvalidated).toBe(true);
+    expectPowerQueriesInvalidated(queryClient, 'v1');
+    expect(queryClient.getQueryState(queryKeys.retentionSummary('user-1', 'world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.onboardingSummary('user-1', 'world-1'))?.isInvalidated).toBe(true);
+  });
 });
 
 describe('applyUnitTrained', () => {
