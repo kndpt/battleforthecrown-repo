@@ -16,7 +16,7 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | shared/utils/level.ts | open PR #112 — clampBuildingLevel spec |
 | shared/world/entities.ts normalizeTier | open PR #108 — normalizeTier spec |
 | shared/world/entities.ts isFoggedEntity | type guard used by world map — no direct unit spec |
-| shared/resources/production.ts | isResourceBuildingType + getBuildingProduction — only indirect via calculateProductionRate |
+| combat report view helpers | formatCoord/shortReportId duplicated across combat/reinforcement/caravan report views |
 | shared/village/strategy.ts getVillageStrategyPlan | constant plan accessor — low value unless plan becomes configurable |
 
 ## rules
