@@ -1,4 +1,4 @@
-import { getOnboardingProjection } from './onboarding.service';
+import { getOnboardingProjection } from './onboarding.utils';
 
 describe('getOnboardingProjection', () => {
   it('maps scripted onboarding facts to the matching sequential steps', () => {
