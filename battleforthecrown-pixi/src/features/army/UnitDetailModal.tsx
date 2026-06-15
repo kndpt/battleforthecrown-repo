@@ -7,6 +7,7 @@ import {
   TroopDetailModal as DesignTroopDetailModal,
   type TroopDetailRoleTone,
 } from '@/features/design-system/components';
+import { formatRemaining } from '@/features/village/constructionProgress';
 import { useDisplayCrowns, useDisplayResources } from '@/features/resources/useDisplayResources';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
@@ -32,16 +33,6 @@ function isUnitType(value: string): value is UnitType {
 function roman(value: number): string {
   const safe = Math.max(1, Math.min(10, value));
   return ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'][safe - 1] ?? 'I';
-}
-
-function formatDuration(seconds: number): string {
-  const safe = Math.max(0, Math.floor(seconds));
-  const hours = Math.floor(safe / 3600);
-  const minutes = Math.floor((safe % 3600) / 60);
-  const secs = safe % 60;
-  if (hours > 0) return `${hours} h ${minutes} m`;
-  if (minutes > 0) return `${minutes} m ${secs} s`;
-  return `${secs} s`;
 }
 
 function roleFor(type: UnitType, stats: typeof UNIT_STATS[UnitType]): { archetype: string; label: string; tone: TroopDetailRoleTone } {
@@ -117,7 +108,7 @@ export function UnitDetailModal({
         stock={stock}
         tagline={`« ${meta.description} »`}
         tierBadge={roman(Math.min(requiredLevel, 10))}
-        trainingTime={formatDuration(perUnitSeconds)}
+        trainingTime={formatRemaining(perUnitSeconds * 1000)}
       />
     </ModalBackdrop>
   );

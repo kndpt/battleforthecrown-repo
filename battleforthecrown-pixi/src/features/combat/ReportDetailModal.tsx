@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, Trash2 } from 'lucide-react';
+import { ApiError } from '@/api';
 import { ModalBackdrop, Spinner } from '@/ui';
+import { useUiStore } from '@/stores/ui';
 import {
   useCaravanReportQuery,
   useDeleteScoutReportMutation,
@@ -41,6 +43,15 @@ interface ReportDetailModalProps {
 const REPORT_MODAL_FOOTER_CLASS =
   'border-t border-[rgba(93,74,50,.24)] bg-[linear-gradient(to_bottom,rgba(255,250,238,.96),rgba(232,212,168,.92))] px-3 pb-3 pt-2.5';
 const NUMBER_FORMATTER = new Intl.NumberFormat('fr-FR');
+
+function notifyReportDeleteError(err: unknown, fallback: string) {
+  useUiStore.getState().pushToast({
+    tone: 'error',
+    title: 'Suppression impossible',
+    description: err instanceof ApiError ? err.message : fallback,
+    ttlMs: 4000,
+  });
+}
 
 function ReportModalFooter({
   deleteLabel,
@@ -99,7 +110,7 @@ function ScoutReportDetail({
       await deleteReport({ reportId });
       onClose();
     } catch (err) {
-      console.error('Erreur lors de la suppression du rapport scout:', err);
+      notifyReportDeleteError(err, 'Échec de la suppression du rapport scout');
     } finally {
       setIsDeleting(false);
     }
@@ -239,7 +250,7 @@ function CaravanReportDetail({
       await deleteReport({ reportId });
       onClose();
     } catch (err) {
-      console.error('Erreur lors de la suppression du rapport de caravane:', err);
+      notifyReportDeleteError(err, 'Échec de la suppression du rapport de caravane');
     } finally {
       setIsDeleting(false);
     }
@@ -376,7 +387,7 @@ function ReinforcementReportDetail({
       await deleteReport({ reportId });
       onClose();
     } catch (err) {
-      console.error('Erreur lors de la suppression du rapport de renfort:', err);
+      notifyReportDeleteError(err, 'Échec de la suppression du rapport de renfort');
     } finally {
       setIsDeleting(false);
     }
@@ -463,7 +474,7 @@ function CombatReportDetail({
       await deleteReport({ reportId });
       onClose();
     } catch (err) {
-      console.error('Erreur lors de la suppression:', err);
+      notifyReportDeleteError(err, 'Échec de la suppression du rapport');
     } finally {
       setIsDeleting(false);
     }
