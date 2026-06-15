@@ -153,6 +153,9 @@ export function applyUnitTrainingCompleted(
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyTraining(payload.villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
+  invalidatePowerQueries(ctx, payload.villageId);
+  invalidateRetentionSummary(ctx);
+  invalidateOnboardingSummary(ctx);
   useUiStore.getState().pushToast({
     tone: 'success',
     title: 'Entraînement terminé',
