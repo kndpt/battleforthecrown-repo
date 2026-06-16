@@ -92,6 +92,11 @@ enum OnboardingStep {
   ATTACK_BARBARIAN
 }
 
+enum VillageOriginKind {
+  STANDARD
+  ONBOARDING_NARRATIVE
+}
+
 model User {
   id          String   @id @default(cuid())
   email       String   @unique
@@ -160,6 +165,7 @@ model Village {
   x                          Int
   y                          Int
   isBarbarian                Boolean       @default(false) @map("is_barbarian")
+  originKind                 VillageOriginKind @default(STANDARD) @map("origin_kind")
   tier                       String?
   label                      VillageLabel?
   barbarianTroopsLastRegenTs DateTime?     @map("barbarian_troops_last_regen_ts") @db.Timestamptz(3)
@@ -384,17 +390,18 @@ model DailyOyez {
 }
 
 model OnboardingState {
-  id                     String           @id @default(cuid())
-  userId                 String           @map("user_id")
-  worldId                String           @map("world_id")
-  firstVillageId         String           @map("first_village_id")
-  status                 OnboardingStatus @default(ACTIVE)
-  currentStep            OnboardingStep   @default(UPGRADE_CASTLE_LEVEL_2) @map("current_step")
-  initialRewardApplied   Boolean          @default(false) @map("initial_reward_applied")
-  initialRewardAppliedAt DateTime?        @map("initial_reward_applied_at") @db.Timestamptz(3)
-  completedAt            DateTime?        @map("completed_at") @db.Timestamptz(3)
-  createdAt              DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt              DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  id                        String           @id @default(cuid())
+  userId                    String           @map("user_id")
+  worldId                   String           @map("world_id")
+  firstVillageId            String           @map("first_village_id")
+  narrativeTargetVillageId  String?          @unique @map("narrative_target_village_id")
+  status                    OnboardingStatus @default(ACTIVE)
+  currentStep               OnboardingStep   @default(UPGRADE_CASTLE_LEVEL_2) @map("current_step")
+  initialRewardApplied      Boolean          @default(false) @map("initial_reward_applied")
+  initialRewardAppliedAt    DateTime?        @map("initial_reward_applied_at") @db.Timestamptz(3)
+  completedAt               DateTime?        @map("completed_at") @db.Timestamptz(3)
+  createdAt                 DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt                 DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   user  User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   world World                    @relation(fields: [worldId], references: [id], onDelete: Cascade)

@@ -6,6 +6,7 @@ function summary(currentStep: OnboardingSummaryDto['currentStep']): OnboardingSu
   return {
     worldId: 'world-1',
     firstVillageId: 'village-1',
+    narrativeTargetVillageId: null,
     status: currentStep ? 'ACTIVE' : 'COMPLETED',
     currentStep,
     completedSteps: [],
@@ -44,7 +45,9 @@ describe('getOnboardingGuidance', () => {
       total: 6,
     });
     expect(getOnboardingGuidance(summary('ATTACK_BARBARIAN'))).toMatchObject({
-      title: 'Attaquer un village barbare',
+      title: 'Attaquer le campement révélé',
+      description:
+        'Ouvre la carte, vise le campement barbare révélé par la Tour de guet et lance ton attaque avec tes 5 miliciens.',
       gameActionId: 'open-world-map',
       imageSrc: '/assets/world/entity/barbarian-village-tier1.png',
       route: '/game/world',

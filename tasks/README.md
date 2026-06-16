@@ -26,7 +26,6 @@ Skills : `$bftc-plan` | `$bftc-run` — détail [`runs/README.md`](./runs/README
 - [057 — Producer Oyez runtime + influence carte](./runs/057-feature-oyez-runtime-producer.md) — PLANNED
 - [056 — Bouclier débutant PvP 48h](./runs/056-feature-pvp-newbie-shield-48h.md) — PLANNED
 - [055 — Carnet intel](./runs/055-feature-intel-notebook.md) — PLANNED
-- [054 — Cible barbare onboarding](./runs/054-feature-onboarding-narrative-barbarian-target.md) — PLANNED
 - [029 — Modales bâtiment design-system](./runs/029-migrate-building-modals-design-system.md) — PLANNED
 
 ### Archivés

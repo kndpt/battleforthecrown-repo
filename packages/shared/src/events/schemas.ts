@@ -43,6 +43,7 @@ const BattleResolvedPayloadSchema = z.object({
   targetKind: z.string(),
   targetName: z.string(),
   targetTier: z.string().nullable().optional(),
+  targetOriginKind: z.enum(['STANDARD', 'ONBOARDING_NARRATIVE']).optional(),
   targetX: z.number(),
   targetY: z.number(),
   isVictory: z.boolean(),

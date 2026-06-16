@@ -18,6 +18,8 @@ Les villages barbares sont des **mini-joueurs IA** persistants sur la carte. Ils
 | Conquête par le joueur | ✅ Oui — spec dédiée [`13-barbarian-conquest.md`](./13-barbarian-conquest.md) |
 | Style stratégique | ❌ Aucun — réservé aux villages joueurs (cf. [`12-village-styles.md`](./12-village-styles.md)) |
 
+> La quasi-totalité des villages barbares sont d'`originKind` `STANDARD` (adversaires de la pool globale). Le runtime onboarding peut spawner **une seule** cible `ONBOARDING_NARRATIVE` par compte × monde — T1 affaibli (5 MILICE, loot réduit à ≈ 40 % du cap), invisible au seeding global et distincte de la pool standard. Cf. [`15-onboarding.md`](./15-onboarding.md) pour le détail.
+
 ## Blueprint d'armée
 
 Le tier détermine **deux choses** : la quantité totale d'unités, **et** le nombre de types disponibles. Un T1 est un campement basique (que des miliciens) ; un T5 est une garnison complète. Le blueprint est calé sur les unités de base et défensives — pas de CAVALIER, BÉLIER, CATAPULTE, ESPION ou SEIGNEUR (cf. catalogue [`08-units.md`](./08-units.md)).

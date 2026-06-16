@@ -14,6 +14,7 @@ import {
 import { ONBOARDING_TRAIN_TROOPS_TARGET } from '@battleforthecrown/shared/onboarding';
 import type { OnboardingSummaryDto } from '@battleforthecrown/shared/onboarding';
 import { EventOutboxService } from '../src/modules/event/event-outbox.service';
+import { OnboardingNarrativeTargetService } from '../src/modules/world/onboarding-narrative-target.service';
 import {
   bootSmokeApp,
   joinWorld,
@@ -196,14 +197,10 @@ describe('scripted onboarding smoke', () => {
 
     await setBuildingLevel(ctx, villageId, BUILDING_TYPES.CASTLE, 3);
     await setBuildingLevel(ctx, villageId, BUILDING_TYPES.WATCHTOWER, 1);
-    await createVictoriousBarbarianReport(
-      ctx,
-      world.id,
-      player.userId,
-      villageId,
-      join.village.x + 1,
-      join.village.y,
-    );
+
+    // BUILD_WATCHTOWER L1 event triggers the OnboardingNarrativeTargetService:
+    // it spawns the weakened barbarian target and stores its id on the state.
+    // Dispatch this event first so the next reconciliation sees the target.
     await ctx.prisma.eventOutbox.createMany({
       data: [
         {
@@ -226,6 +223,56 @@ describe('scripted onboarding smoke', () => {
             level: 1,
           },
         },
+      ],
+    });
+    await ctx.app.get(EventOutboxService).dispatchPendingEvents();
+
+    const stateAfterWatchtower =
+      await ctx.prisma.onboardingState.findUniqueOrThrow({
+        where: {
+          userId_worldId: { userId: player.userId, worldId: world.id },
+        },
+        select: { narrativeTargetVillageId: true },
+      });
+    expect(stateAfterWatchtower.narrativeTargetVillageId).not.toBeNull();
+    const narrativeTargetId = stateAfterWatchtower.narrativeTargetVillageId!;
+
+    const narrativeTarget = await ctx.prisma.village.findUniqueOrThrow({
+      where: { id: narrativeTargetId },
+      include: { unitInventory: true },
+    });
+    // Spec : weak T1 narrative target, fixed garnison of 5 militia (5 newly
+    // trained militiamen must win), placed within Watchtower L1 reach.
+    expect(narrativeTarget.originKind).toBe('ONBOARDING_NARRATIVE');
+    expect(narrativeTarget.tier).toBe('T1');
+    expect(narrativeTarget.isBarbarian).toBe(true);
+    const militia = narrativeTarget.unitInventory.find(
+      (u) => u.unitType === UNIT_TYPES.MILITIA,
+    );
+    expect(militia?.quantity).toBe(ONBOARDING_TRAIN_TROOPS_TARGET);
+    const distanceToAnchor = Math.hypot(
+      narrativeTarget.x - join.village.x,
+      narrativeTarget.y - join.village.y,
+    );
+    expect(distanceToAnchor).toBeLessThanOrEqual(
+      WATCHTOWER_VISION_LEVELS[1].visibilityRadius,
+    );
+
+    // Now run the final battle.resolved over the narrative target. Pass null
+    // for defenderVillageId to mirror prod (combat.worker sets it to null on
+    // BARBARIAN_VILLAGE) — the runtime resolves the narrative origin via
+    // (worldId, targetX, targetY) instead.
+    await createVictoriousBarbarianReport(
+      ctx,
+      world.id,
+      player.userId,
+      villageId,
+      narrativeTarget.x,
+      narrativeTarget.y,
+      null,
+    );
+    await ctx.prisma.eventOutbox.createMany({
+      data: [
         {
           kind: 'battle.resolved',
           aggregateId: 'onboarding-battle',
@@ -235,10 +282,11 @@ describe('scripted onboarding smoke', () => {
             villageId,
             villageName: join.village.name,
             targetKind: 'BARBARIAN_VILLAGE',
-            targetName: 'Barbares T1',
+            targetName: narrativeTarget.name,
             targetTier: 'T1',
-            targetX: join.village.x + 1,
-            targetY: join.village.y,
+            targetOriginKind: 'ONBOARDING_NARRATIVE',
+            targetX: narrativeTarget.x,
+            targetY: narrativeTarget.y,
             isVictory: true,
             loot: { resources: { wood: 10, stone: 0, iron: 0 } },
             lossesAttacker: {},
@@ -339,13 +387,25 @@ describe('scripted onboarding smoke', () => {
       },
       update: { quantity: ONBOARDING_TRAIN_TROOPS_TARGET },
     });
+    // No Watchtower event was dispatched here — drive the narrative target
+    // creation explicitly so the catchup path can still see a valid report.
+    const narrativeTargetId = await ctx.app
+      .get(OnboardingNarrativeTargetService)
+      .ensureForVillage(villageId);
+    if (!narrativeTargetId) {
+      throw new Error('Failed to spawn onboarding narrative target');
+    }
+    const narrativeTarget = await ctx.prisma.village.findUniqueOrThrow({
+      where: { id: narrativeTargetId },
+    });
     await createVictoriousBarbarianReport(
       ctx,
       world.id,
       player.userId,
       villageId,
-      join.village.x + 1,
-      join.village.y,
+      narrativeTarget.x,
+      narrativeTarget.y,
+      null,
     );
 
     const summary = await request(ctx.server)
@@ -357,6 +417,7 @@ describe('scripted onboarding smoke', () => {
     const body = summary.body as OnboardingSummaryDto;
     expect(body.status).toBe('COMPLETED');
     expect(body.currentStep).toBeNull();
+    expect(body.narrativeTargetVillageId).toBe(narrativeTargetId);
     expect(body.completedSteps.map((step) => step.step)).toEqual([
       'UPGRADE_CASTLE_LEVEL_2',
       'BUILD_BARRACKS',
@@ -365,6 +426,73 @@ describe('scripted onboarding smoke', () => {
       'BUILD_WATCHTOWER',
       'ATTACK_BARBARIAN',
     ]);
+  });
+
+  // Run 054 — a victory on a STANDARD T1 barbarian must NOT complete
+  // ATTACK_BARBARIAN. The runtime filters on Village.originKind so the global
+  // T1 pool keeps its identity as a real adversary.
+  it('does not complete ATTACK_BARBARIAN on a victory against a standard T1 barbarian', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const player = await registerUser(ctx.server, 'onboarding-standard-t1');
+    const join = await joinWorld(
+      ctx.server,
+      player.accessToken,
+      world.id,
+      'onboarding-standard-t1-home',
+    );
+    const villageId = join.village.id;
+
+    await setBuildingLevel(ctx, villageId, BUILDING_TYPES.CASTLE, 3);
+    await setBuildingLevel(ctx, villageId, BUILDING_TYPES.BARRACKS, 1);
+    await setBuildingLevel(ctx, villageId, BUILDING_TYPES.WATCHTOWER, 1);
+    await ctx.prisma.unitInventory.upsert({
+      where: {
+        villageId_unitType: { villageId, unitType: UNIT_TYPES.MILITIA },
+      },
+      create: {
+        villageId,
+        unitType: UNIT_TYPES.MILITIA,
+        quantity: ONBOARDING_TRAIN_TROOPS_TARGET,
+      },
+      update: { quantity: ONBOARDING_TRAIN_TROOPS_TARGET },
+    });
+
+    // Create a STANDARD barbarian village nearby and a victorious report on it.
+    const standardBarbarian = await ctx.prisma.village.create({
+      data: {
+        worldId: world.id,
+        isBarbarian: true,
+        originKind: 'STANDARD',
+        tier: 'T1',
+        name: 'Standard T1',
+        x: join.village.x + 5,
+        y: join.village.y,
+      },
+    });
+    await createVictoriousBarbarianReport(
+      ctx,
+      world.id,
+      player.userId,
+      villageId,
+      standardBarbarian.x,
+      standardBarbarian.y,
+      null,
+    );
+
+    const summary = await request(ctx.server)
+      .get('/onboarding')
+      .query({ worldId: world.id })
+      .set('Authorization', `Bearer ${player.accessToken}`);
+
+    expect(summary.status).toBe(200);
+    const body = summary.body as OnboardingSummaryDto;
+    expect(body.status).toBe('ACTIVE');
+    // Reconciliation advances through all preceding steps but stops here —
+    // a STANDARD T1 victory does not satisfy ATTACK_BARBARIAN.
+    expect(body.currentStep).toBe('ATTACK_BARBARIAN');
+    expect(body.completedSteps.map((s) => s.step)).not.toContain(
+      'ATTACK_BARBARIAN',
+    );
   });
 });
 
@@ -399,12 +527,14 @@ async function createVictoriousBarbarianReport(
   attackerVillageId: string,
   targetX: number,
   targetY: number,
+  defenderVillageId: string | null,
 ) {
   await ctx.prisma.combatReport.create({
     data: {
       worldId,
       attackerUserId,
       attackerVillageId,
+      defenderVillageId,
       targetKind: 'BARBARIAN_VILLAGE',
       targetX,
       targetY,

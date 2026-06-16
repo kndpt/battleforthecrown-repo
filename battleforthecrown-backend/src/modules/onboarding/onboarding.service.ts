@@ -43,6 +43,7 @@ export class OnboardingService {
       return {
         worldId,
         firstVillageId: null,
+        narrativeTargetVillageId: null,
         status: 'COMPLETED',
         currentStep: null,
         completedSteps: [],
@@ -275,20 +276,52 @@ async function hasVictoriousBarbarianAttack(
   tx: Tx,
   villageId: string,
 ): Promise<boolean> {
+  // Only victories against the onboarding narrative target complete the step.
+  // Defeats fail `isVictoryForAttacker`, and victories against STANDARD T1
+  // villages are filtered out by the originKind check — keeping the global
+  // barbarian pool as real adversaries (cf. run 054, spec 15-onboarding §
+  // Déclencheurs runtime).
+  //
+  // CombatReport.defenderVillageId is null for BARBARIAN_VILLAGE targets
+  // (cf. combat.worker.ts), so we cannot join on it. We resolve narrative
+  // defenders via (worldId, targetX, targetY) — that triple is unique on
+  // Village via @@unique([worldId, x, y]).
   const reports = await tx.combatReport.findMany({
     where: {
       attackerVillageId: villageId,
       targetKind: 'BARBARIAN_VILLAGE',
     },
-    select: { totalUnitsAttacker: true, lossesAttacker: true },
+    select: {
+      worldId: true,
+      targetX: true,
+      targetY: true,
+      totalUnitsAttacker: true,
+      lossesAttacker: true,
+    },
     orderBy: { createdAt: 'desc' },
     take: 10,
   });
 
-  return reports.some((report) =>
+  const victorious = reports.filter((report) =>
     isVictoryForAttacker(
       report.lossesAttacker as UnitMap,
       report.totalUnitsAttacker as UnitMap,
     ),
   );
+  if (victorious.length === 0) return false;
+
+  const narrativeTargets = await tx.village.findMany({
+    where: {
+      originKind: 'ONBOARDING_NARRATIVE',
+      isBarbarian: true,
+      OR: victorious.map((report) => ({
+        worldId: report.worldId,
+        x: report.targetX,
+        y: report.targetY,
+      })),
+    },
+    select: { worldId: true, x: true, y: true },
+  });
+
+  return narrativeTargets.length > 0;
 }

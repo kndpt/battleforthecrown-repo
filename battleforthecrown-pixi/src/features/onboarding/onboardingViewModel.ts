@@ -86,8 +86,11 @@ const STEP_GUIDANCE: Record<
     route: '/game',
   },
   ATTACK_BARBARIAN: {
-    title: 'Attaquer un village barbare',
-    description: 'Passe sur la carte, sélectionne un village barbare révélé et lance l’attaque.',
+    // The narrative target is the only barbarian that completes this step
+    // (cf. run 054). Other T1 villages remain real adversaries, so guidance
+    // must point at the revealed campement, not "any T1".
+    title: 'Attaquer le campement révélé',
+    description: `Ouvre la carte, vise le campement barbare révélé par la Tour de guet et lance ton attaque avec tes ${ONBOARDING_TRAIN_TROOPS_TARGET} miliciens.`,
     ctaLabel: 'Ouvrir la carte',
     imageSrc: '/assets/world/entity/barbarian-village-tier1.png',
     route: '/game/world',

@@ -21,7 +21,7 @@ L'`01-overview.md` listait initialement la « Campagne solo » comme extension *
 
 Cette récompense est distincte du stock initial de join (`1000/1000/1000`). Avec les valeurs par défaut, le stock immédiatement après join est donc `1850/1850/1850`, plafonné par le stockage courant.
 
-Cible confirmée après recalibration tempo : couvrir une session ≤ 10 min qui fait passer le joueur par les boucles principales (économie, militaire, exploration, attaque barbare). Les timers compressés rendent cette cible atteignable sans raccourci spécial, grâce au prérequis livré par le run 035 : une Watchtower niveau 1 révèle au moins un village barbare T1 attaquable.
+Cible confirmée après recalibration tempo : couvrir une session ≤ 10 min qui fait passer le joueur par les boucles principales (économie, militaire, exploration, attaque barbare). Les timers compressés rendent cette cible atteignable sans raccourci spécial, grâce à la cible narrative dédiée que l'onboarding pose dans le rayon de la Watchtower L1.
 
 | # | Étape | Boucle exercée |
 | ---: | --- | --- |
@@ -45,7 +45,18 @@ Le tutoriel doit écouter des faits gameplay server-side plutôt que des états 
 | 5 Milices paysannes recrutées | `unit.trained` avec `unitType=MILITIA`, puis inventaire `MILITIA>=5` |
 | Château niveau 3 terminé | `building.completed` avec `buildingType=CASTLE`, `level>=3` |
 | Tour de guet construite | `building.completed` avec `buildingType=WATCHTOWER`, `level>=1` |
-| Premier raid barbare victorieux | `battle.resolved` avec `targetKind=BARBARIAN_VILLAGE`, `isVictory=true` |
+| Premier raid barbare victorieux | `battle.resolved` avec `targetKind=BARBARIAN_VILLAGE`, `targetOriginKind=ONBOARDING_NARRATIVE`, `isVictory=true` |
+
+> Une victoire sur un village barbare `STANDARD` ne complète pas cette étape — seule la cible narrative dédiée compte.
+
+### Cible barbare narrative
+
+La construction de la Tour de guet L1 (`building.completed` `WATCHTOWER L1`) déclenche server-side la création d'une **cible barbare narrative** : un village barbare T1 d'`originKind` `ONBOARDING_NARRATIVE`, posé dans le rayon de vision de la Watchtower. Ses caractéristiques sont fixes :
+
+- Garnison : **5 MILICE** (battables avec les `ONBOARDING_TRAIN_TROOPS_TARGET = 5` miliciens fraîchement entraînés).
+- Loot : stock initial réduit à **≈ 40 % du cap T1** (au lieu du roll standard 30-100 %).
+
+L'idempotence est portée par `OnboardingState.narrativeTargetVillageId` (FK unique vers `Village`, SET NULL à la destruction) : un rejoin ou un replay d'Outbox ne crée pas de doublon. L'id de cette cible est exposé dans `GET /onboarding` (`narrativeTargetVillageId`) pour la guidance frontend.
 
 La projection suit l'ordre du script, mais elle se réconcilie sur les faits serveur déjà atteints. Si un joueur effectue une action plus tardive avant l'étape attendue, le tutoriel rattrape automatiquement toutes les étapes satisfaites jusqu'à la première condition encore manquante.
 

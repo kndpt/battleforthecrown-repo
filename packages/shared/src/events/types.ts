@@ -41,6 +41,13 @@ export interface BattleResolvedPayload {
   targetKind: string;
   targetName: string;
   targetTier?: string | null;
+  /**
+   * Origin of the target village (STANDARD vs ONBOARDING_NARRATIVE). Only
+   * meaningful when `targetKind === 'BARBARIAN_VILLAGE'`. Optional for
+   * backward compat with reports replayed from before the onboarding
+   * narrative target was introduced.
+   */
+  targetOriginKind?: 'STANDARD' | 'ONBOARDING_NARRATIVE';
   targetX: number;
   targetY: number;
   isVictory: boolean;

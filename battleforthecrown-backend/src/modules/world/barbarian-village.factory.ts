@@ -1,4 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { UNIT_TYPES } from '@battleforthecrown/shared/army';
+import type { VillageOriginKind } from '@battleforthecrown/shared/village';
+import { generateBarbarianName } from '@battleforthecrown/shared/world';
 import { WorldConfigService } from './world-config.service';
 import { PrismaClientOrTx } from '../../common/prisma.types';
 import {
@@ -7,7 +10,20 @@ import {
   getWarehouseLevel,
   rollInitialBarbarianUnits,
 } from './barbarian-tier-templates';
-import { generateBarbarianName } from '@battleforthecrown/shared/world';
+
+/**
+ * Fixed garrison for the onboarding narrative target: the smoke contract
+ * (`ONBOARDING_TRAIN_TROOPS_TARGET = 5`) lets 5 freshly trained militia win
+ * against this specific village. Standard T1 villages stay at 9-15 militia
+ * (rollInitialBarbarianUnits) so they remain genuine adversaries — see
+ * `docs/gameplay/06-barbarians.md` and run 054.
+ */
+const ONBOARDING_NARRATIVE_MILITIA_COUNT = 5;
+/**
+ * Loot fill ratio for the narrative target. Lower than the standard 30-100%
+ * roll so the first victory feels rewarding without skewing the early economy.
+ */
+const ONBOARDING_NARRATIVE_RESOURCE_FILL = 0.4;
 
 @Injectable()
 export class BarbarianVillageFactory {
@@ -17,12 +33,23 @@ export class BarbarianVillageFactory {
    * Creates a barbarian village with its buildings, units, resources and
    * population. Idempotency at the position level is the caller's responsibility
    * (handled via P2002 in BarbarianSeedingService.seedChunk).
+   *
+   * When `originKind === 'ONBOARDING_NARRATIVE'`, the village is built with a
+   * fixed weak garrison (5 militia, reduced loot) so the final onboarding step
+   * can complete deterministically. All other paths keep the standard roll.
    */
   async create(
     tx: PrismaClientOrTx,
-    params: { worldId: string; tier: string; x: number; y: number },
+    params: {
+      worldId: string;
+      tier: string;
+      x: number;
+      y: number;
+      originKind?: VillageOriginKind;
+    },
   ) {
-    const { worldId, tier, x, y } = params;
+    const { worldId, tier, x, y, originKind = 'STANDARD' } = params;
+    const isNarrative = originKind === 'ONBOARDING_NARRATIVE';
 
     const now = new Date();
     const village = await tx.village.create({
@@ -30,6 +57,7 @@ export class BarbarianVillageFactory {
         worldId,
         userId: null,
         isBarbarian: true,
+        originKind,
         tier,
         barbarianTroopsLastRegenTs: now,
         name: generateBarbarianName(tier, x, y),
@@ -45,7 +73,9 @@ export class BarbarianVillageFactory {
     }));
     await tx.building.createMany({ data: buildings });
 
-    const units = rollInitialBarbarianUnits(tier);
+    const units = isNarrative
+      ? { [UNIT_TYPES.MILITIA]: ONBOARDING_NARRATIVE_MILITIA_COUNT }
+      : rollInitialBarbarianUnits(tier);
     const unitRows = Object.entries(units)
       .filter(([, quantity]) => quantity > 0)
       .map(([unitType, quantity]) => ({
@@ -55,7 +85,9 @@ export class BarbarianVillageFactory {
       }));
     await tx.unitInventory.createMany({ data: unitRows });
 
-    const resources = this.generateResources(worldId, tier);
+    const resources = isNarrative
+      ? this.generateNarrativeResources(worldId, tier)
+      : this.generateResources(worldId, tier);
     await tx.resourceStock.create({
       data: {
         villageId: village.id,
@@ -90,6 +122,22 @@ export class BarbarianVillageFactory {
     // spec's 30% floor for iron only): iron is the bottleneck resource (cf. run 001
     // audit-economy-progression) and the spec leaves per-resource ratios unconstrained.
     const fillRatio = 0.3 + Math.random() * 0.7;
+
+    return {
+      wood: Math.floor(maxPerType * fillRatio),
+      stone: Math.floor(maxPerType * fillRatio),
+      iron: Math.floor(maxPerType * fillRatio * 0.7),
+      maxPerType,
+    };
+  }
+
+  private generateNarrativeResources(worldId: string, tier: string) {
+    const warehouseLevel = getWarehouseLevel(tier);
+    const maxPerType = this.worldConfig.getStorageLimit(
+      worldId,
+      warehouseLevel,
+    );
+    const fillRatio = ONBOARDING_NARRATIVE_RESOURCE_FILL;
 
     return {
       wood: Math.floor(maxPerType * fillRatio),

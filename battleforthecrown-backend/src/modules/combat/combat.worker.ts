@@ -989,6 +989,10 @@ export class CombatWorker implements OnModuleInit {
           expedition.targetKind === 'BARBARIAN_VILLAGE'
             ? (defenderVillage?.tier ?? null)
             : null,
+        targetOriginKind:
+          expedition.targetKind === 'BARBARIAN_VILLAGE'
+            ? (defenderVillage?.originKind ?? 'STANDARD')
+            : undefined,
         targetX: expedition.targetX,
         targetY: expedition.targetY,
         isVictory,
