@@ -10,15 +10,36 @@
       "artefactType": "run",
       "artefactPath": "tasks/runs/055-feature-intel-notebook.md",
       "artefactId": "055",
-      "status": "proposed",
+      "status": "PLANNED",
       "prBranch": "plan/gameplay/intel-notebook",
       "gapSummary": "La spec 11-scouting.md déclare le carnet d'intel comme MVP léger, mais les runs 016/017 se sont limités au producer ScoutReport et à son UI inbox. Pas de table dédiée, pas de fiche `dernière info connue`, pas d'âge sourcé multi-rapports côté joueur.",
       "codeEvidence": [
-        "rg -l 'intel|carnet' battleforthecrown-backend/src → 0",
-        "rg -l 'intel|carnet' battleforthecrown-pixi/src → 0",
-        "grep [Cc]arnet|[Ii]ntel|[Mm]enace|threat tasks/runs/archive/016-feature-scouting-backend-shared.md → 0",
-        "grep [Cc]arnet|[Ii]ntel|[Mm]enace|threat tasks/runs/archive/017-feature-scouting-frontend-inbox.md → 0",
+        "battleforthecrown-backend/src — aucune mention de 'intel' ou 'carnet' (rg -l: 0)",
+        "battleforthecrown-pixi/src — aucune mention de 'intel' ou 'carnet' (rg -l: 0)",
+        "tasks/runs/archive/016-feature-scouting-backend-shared.md — aucun mot-clé carnet/intel/menace/threat",
+        "tasks/runs/archive/017-feature-scouting-frontend-inbox.md — aucun mot-clé carnet/intel/menace/threat",
         "docs/gameplay/lab/tickets/11-intel-notebook.md statut: promu MVP léger dans 11-scouting.md, non implémenté"
+      ],
+      "addedAt": "2026-06-12"
+    },
+    {
+      "specPath": "docs/gameplay/05-daily-cards-and-oyez.md",
+      "slug": "oyez-runtime-producer",
+      "title": "Producer Oyez runtime + influence carte (Phase 10)",
+      "keywords": ["oyez", "daily-oyez", "producer", "scheduler", "retention", "royal-duty"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/057-feature-oyez-runtime-producer.md",
+      "artefactId": "057",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/oyez-runtime-producer",
+      "gapSummary": "Phase 10 expose l'Oyez côté lecteur (model DailyOyez + DTO + fetch getActiveOyez + UI OyezBanner et 'Oyez · en cours' dans DailyRetentionWidget) mais aucun producer/scheduler ne crée jamais un DailyOyez en runtime — la table reste vide en production. La spec § Interaction avec les cartes ('ajouter 1 tâche thématique à la carte du jour') n'a aucune implémentation, et la génération de carte ignore l'Oyez actif.",
+      "codeEvidence": [
+        "battleforthecrown-backend/src/workers/ — aucun worker oyez ou daily-cards (construction, crown-production, outbox, production, training, world-lifecycle uniquement)",
+        "battleforthecrown-backend/src/modules/retention/retention.service.ts — `oyez` est lu via getActiveOyez/mapOyez, jamais créé en runtime",
+        "battleforthecrown-backend/test/daily-retention.smoke.spec.ts:71 — le smoke insère un DailyOyez manuellement (preuve qu'aucun runtime ne le fait)",
+        "packages/shared/src/retention/types.ts — DailyOyezDto.theme typé string, pas d'enum OyezTheme",
+        "packages/shared/src/world/schemas.ts — WorldConfigSchema n'expose aucune section oyez (cadence/durée)",
+        "tasks/00-mvp-roadmap.md:122 — Phase 10 livrable inclut 'Oyez léger qui influence la priorité du jour' non livré"
       ],
       "addedAt": "2026-06-12"
     },
@@ -30,7 +51,7 @@
       "artefactType": "run",
       "artefactPath": "tasks/runs/056-feature-pvp-newbie-shield-48h.md",
       "artefactId": "056",
-      "status": "proposed",
+      "status": "PLANNED",
       "prBranch": "plan/gameplay/pvp-newbie-shield-48h",
       "gapSummary": "La spec 14-pvp-conquest.md § 3 acte un bouclier débutant 48h tranché MVP. WorldConfig.lifecycle.newbieShieldHours est déjà câblé en config et exposé par GET /worlds/public (run 032), mais aucun guard runtime ne le consomme dans initiateAttack, aucun schéma de rupture (shieldBrokenAt) n'existe, et aucune UI ne grise les CTA d'attaque ou n'affiche un badge timer.",
       "codeEvidence": [
@@ -40,6 +61,27 @@
         "packages/shared/src/pvp/ — répertoire absent, pas de helper isShieldActive",
         "battleforthecrown-pixi/src/features/world/SelectedEntityPanel.tsx — pas de chemin CTA grisée + message bouclier débutant",
         "tasks/archive/23-pvp-snowball-no-cooldown-no-shield.md ne couvre que cooldown re-conquête et bouclier POST-perte, pas le bouclier DÉBUTANT à l'arrivée"
+      ],
+      "addedAt": "2026-06-12"
+    },
+    {
+      "specPath": "docs/gameplay/14-pvp-conquest.md",
+      "slug": "pvp-power-third-attack-guard",
+      "title": "Garde-fou PvP par puissance ÷ 3 — refus serveur des attaques sous seuil",
+      "keywords": ["puissance", "power", "ratio", "garde-fou", "guardrail", "pvp", "snowball", "protection"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/058-feature-pvp-power-third-attack-guard.md",
+      "artefactId": "058",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/pvp-power-third-attack-guard",
+      "gapSummary": "La spec 14-pvp-conquest § 2 (Garde-fous anti-snowball — Garde-fou par puissance) tranche MVP : toute attaque PvP est interdite quand la puissance du défenseur est strictement inférieure à 1/3 de celle de l'attaquant. Le snapshot des puissances attaquant/défenseur est déjà calculé dans initiateAttack pour le rapport de combat, mais aucun guard ne refuse l'attaque. Aucun helper shared isAttackAllowedByPowerRatio, aucun chemin grisé CTA + message 'Puissance trop faible — protection serveur' côté SelectedEntityPanel. Conséquence : un top-player peut farm sans limite des joueurs sous le seuil.",
+      "codeEvidence": [
+        "battleforthecrown-backend/src/modules/combat/combat.service.ts:133-144 — attackerKingdomPowerSnapshot et defenderKingdomPowerSnapshot calculés pour le rapport, aucun guard ne consomme la comparaison",
+        "battleforthecrown-backend/src/modules/power/power.service.ts:127 — getKingdomPowerValue déjà exposé et tx-compatible, prêt à être réutilisé par le guard",
+        "packages/shared/src/pvp/ — répertoire absent, pas de helper isAttackAllowedByPowerRatio ni de constante POWER_RATIO_DIVISOR",
+        "battleforthecrown-pixi/src/features/world/SelectedEntityPanel.tsx — CTA Attaquer sans chemin grisé/erreur 'Puissance trop faible — protection serveur'",
+        "tasks/runs/056-feature-pvp-newbie-shield-48h.md:97 — explicite hors scope du newbie shield, attend un run dédié pour le ratio puissance",
+        "tasks/archive/21-power-guardrail-leaks-defender-power.md — ticket d'archive sur le tradeoff de fuite assumé, confirme que le guard lui-même n'est pas implémenté"
       ],
       "addedAt": "2026-06-12"
     },
@@ -63,27 +105,6 @@
         "tasks/00-mvp-roadmap.md:58 — Phase 4 livrable 'Menace estimée avant attaque : label Inconnue / Faible / Moyenne / Élevée basé sur infos publiques + dernier scout disponible' non couvert par les runs 016 / 017"
       ],
       "addedAt": "2026-06-13"
-    },
-    {
-      "specPath": "docs/gameplay/14-pvp-conquest.md",
-      "slug": "pvp-power-third-attack-guard",
-      "title": "Garde-fou PvP par puissance ÷ 3 — refus serveur des attaques sous seuil",
-      "keywords": ["puissance", "power", "ratio", "garde-fou", "guardrail", "pvp", "snowball", "protection"],
-      "artefactType": "run",
-      "artefactPath": "tasks/runs/058-feature-pvp-power-third-attack-guard.md",
-      "artefactId": "058",
-      "status": "PLANNED",
-      "prBranch": "plan/gameplay/pvp-power-third-attack-guard",
-      "gapSummary": "La spec 14-pvp-conquest § 2 (Garde-fous anti-snowball — Garde-fou par puissance) tranche MVP : toute attaque PvP est interdite quand la puissance du défenseur est strictement inférieure à 1/3 de celle de l'attaquant. Le snapshot des puissances attaquant/défenseur est déjà calculé dans initiateAttack pour le rapport de combat, mais aucun guard ne refuse l'attaque. Aucun helper shared isAttackAllowedByPowerRatio, aucun chemin grisé CTA + message 'Puissance trop faible — protection serveur' côté SelectedEntityPanel. Conséquence : un top-player peut farm sans limite des joueurs sous le seuil.",
-      "codeEvidence": [
-        "battleforthecrown-backend/src/modules/combat/combat.service.ts:133-144 — attackerKingdomPowerSnapshot et defenderKingdomPowerSnapshot calculés pour le rapport, aucun guard ne consomme la comparaison",
-        "battleforthecrown-backend/src/modules/power/power.service.ts:127 — getKingdomPowerValue déjà exposé et tx-compatible, prêt à être réutilisé par le guard",
-        "packages/shared/src/pvp/ — répertoire absent, pas de helper isAttackAllowedByPowerRatio ni de constante POWER_RATIO_DIVISOR",
-        "battleforthecrown-pixi/src/features/world/SelectedEntityPanel.tsx — CTA Attaquer sans chemin grisé/erreur 'Puissance trop faible — protection serveur'",
-        "tasks/runs/056-feature-pvp-newbie-shield-48h.md:97 — explicite hors scope du newbie shield, attend un run dédié pour le ratio puissance",
-        "tasks/archive/21-power-guardrail-leaks-defender-power.md — ticket d'archive sur le tradeoff de fuite assumé, confirme que le guard lui-même n'est pas implémenté"
-      ],
-      "addedAt": "2026-06-12"
     },
     {
       "specPath": "docs/gameplay/14-pvp-conquest.md",
