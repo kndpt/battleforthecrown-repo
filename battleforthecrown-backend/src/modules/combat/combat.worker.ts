@@ -52,6 +52,10 @@ import { typedEntries } from '@battleforthecrown/shared/utils';
 import { getCaptureDurationMs } from './capture-duration';
 import { RankingsService } from '../rankings/rankings.service';
 import { mergeGarrisonsIntoParticipants } from './garrison-merge.utils';
+import {
+  dedupedRecipientUserIds,
+  loadReportVillageSnapshot,
+} from './combat-report.utils';
 
 interface PendingConquestToSchedule {
   id: string;
@@ -1439,14 +1443,8 @@ export class CombatWorker implements OnModuleInit {
       : expedition.targetRefId;
 
     const [originVillageSnap, hostVillageSnap] = await Promise.all([
-      tx.village.findUnique({
-        where: { id: reportOriginVillageId },
-        select: { id: true, name: true, x: true, y: true, userId: true },
-      }),
-      tx.village.findUnique({
-        where: { id: reportHostVillageId },
-        select: { id: true, name: true, x: true, y: true, userId: true },
-      }),
+      loadReportVillageSnapshot(tx, reportOriginVillageId),
+      loadReportVillageSnapshot(tx, reportHostVillageId),
     ]);
 
     if (!originVillageSnap) {
@@ -1477,13 +1475,10 @@ export class CombatWorker implements OnModuleInit {
       },
     });
 
-    const recipientIds = [
-      ...new Set(
-        [originVillageSnap.userId, hostVillageSnap.userId].filter(
-          (id): id is string => Boolean(id),
-        ),
-      ),
-    ];
+    const recipientIds = dedupedRecipientUserIds(
+      originVillageSnap.userId,
+      hostVillageSnap.userId,
+    );
 
     for (const recipientUserId of recipientIds) {
       await tx.inboxEntry.create({
@@ -1697,10 +1692,10 @@ export class CombatWorker implements OnModuleInit {
       },
     });
 
-    const originVillage = await tx.village.findUnique({
-      where: { id: expedition.attackerVillageId },
-      select: { id: true, name: true, x: true, y: true, userId: true },
-    });
+    const originVillage = await loadReportVillageSnapshot(
+      tx,
+      expedition.attackerVillageId,
+    );
     if (!originVillage?.userId) {
       throw new Error(
         `Caravan report origin village not found: originVillageId=${expedition.attackerVillageId}, worldId=${expedition.worldId}`,
@@ -1736,13 +1731,10 @@ export class CombatWorker implements OnModuleInit {
       update: {},
     });
 
-    const recipientIds = [
-      ...new Set(
-        [originVillage.userId, targetVillage.userId].filter(
-          (id): id is string => Boolean(id),
-        ),
-      ),
-    ];
+    const recipientIds = dedupedRecipientUserIds(
+      originVillage.userId,
+      targetVillage.userId,
+    );
 
     for (const recipientUserId of recipientIds) {
       await tx.inboxEntry.upsert({
