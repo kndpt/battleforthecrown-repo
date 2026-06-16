@@ -11,7 +11,7 @@
  *   - un profil joueur (sommeil + intervalle de check)
  *   - **(v1.5)** le stock de ressources (Wood/Stone/Iron) : production passive
  *     des mines (`RESOURCE_PRODUCTION_PER_MINUTE`), plafonné par l'Entrepôt
- *     (`WAREHOUSE_STORAGE_LIMITS`), débité au lancement de chaque upgrade.
+ *     (`getWarehouseStorageLimit`), débité au lancement de chaque upgrade.
  *     Une upgrade reste en file d'attente tant que le stock n'a pas atteint
  *     son coût.
  *
@@ -53,7 +53,7 @@ const {
 } = require("@battleforthecrown/shared/village/buildings");
 const {
   RESOURCE_PRODUCTION_PER_MINUTE,
-  WAREHOUSE_STORAGE_LIMITS,
+  getWarehouseStorageLimit,
 } = require("@battleforthecrown/shared/resources");
 
 const SECONDS_PER_DAY = 86_400;
@@ -101,7 +101,7 @@ function productionPerSecond(level) {
 
 // Capacité d'entrepôt pour un niveau donné (les 3 ressources partagent la même).
 function warehouseCap(level) {
-  const limits = WAREHOUSE_STORAGE_LIMITS[level] ?? WAREHOUSE_STORAGE_LIMITS[1];
+  const limits = getWarehouseStorageLimit(level);
   return limits.wood; // les 3 ressources ont la même cap par niveau
 }
 
