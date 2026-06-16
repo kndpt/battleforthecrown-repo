@@ -1,6 +1,6 @@
 import type { StorageLimits } from './types';
 
-export const WAREHOUSE_STORAGE_LIMITS: Readonly<
+const WAREHOUSE_STORAGE_LIMITS: Readonly<
   Record<number, StorageLimits>
 > = Object.freeze({
   1: { wood: 3000, stone: 3000, iron: 3000 },

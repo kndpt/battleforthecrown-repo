@@ -31,7 +31,7 @@ export const RESOURCE_PRODUCTION_PER_MINUTE: Readonly<Record<number, number>> =
     )
   );
 
-export const RESOURCE_BUILDING_PRODUCTION_RATES: Readonly<
+const RESOURCE_BUILDING_PRODUCTION_RATES: Readonly<
   Record<ResourceBuildingType, Readonly<Record<number, number>>>
 > = Object.freeze({
   WOOD: RESOURCE_PRODUCTION_PER_MINUTE,

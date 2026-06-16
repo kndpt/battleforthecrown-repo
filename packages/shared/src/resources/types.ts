@@ -12,7 +12,3 @@ export interface StorageLimits {
   stone: number;
   iron: number;
 }
-
-export interface ResourcesConfig {
-  storageLimits: Record<number, StorageLimits>;
-}

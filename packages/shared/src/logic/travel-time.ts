@@ -12,7 +12,7 @@ import type { UnitMap } from "../army/unit-map";
 export const REFERENCE_SPEED = 6;
 export const CARAVAN_SPEED = 20;
 export const CARRY_PER_PORTER = 500;
-export const CARAVAN_CAPACITY_SHARE = 0.2;
+const CARAVAN_CAPACITY_SHARE = 0.2;
 
 export type CaravanResourceCapacity = {
   wood: number;
