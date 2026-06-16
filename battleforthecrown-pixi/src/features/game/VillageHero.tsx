@@ -12,6 +12,7 @@ interface VillageHeroProps {
   availablePopulation: number | undefined;
   canOpenVillageStyle: boolean;
   crownsDisplay: string;
+  isVillageSheetOpen: boolean;
   onOpenProfile: () => void;
   onOpenPower: () => void;
   onOpenVillageSheet: () => void;
@@ -35,6 +36,7 @@ export function VillageHero({
   availablePopulation,
   canOpenVillageStyle,
   crownsDisplay,
+  isVillageSheetOpen,
   onOpenProfile,
   onOpenPower,
   onOpenVillageSheet,
@@ -188,6 +190,7 @@ export function VillageHero({
                   if (villageCount > 1) onOpenVillageSheet();
                 }}
                 disabled={villageCount <= 1}
+                aria-expanded={isVillageSheetOpen}
                 className="mx-auto flex max-w-full items-center justify-center gap-2 disabled:cursor-default"
               >
                 <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap align-bottom text-[16px] font-bold uppercase tracking-[.04em] text-[#f6d57b] [text-shadow:0_2px_6px_rgba(0,0,0,.9)]">

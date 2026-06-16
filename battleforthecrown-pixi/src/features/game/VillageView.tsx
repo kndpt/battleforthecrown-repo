@@ -336,6 +336,7 @@ export function VillageView() {
             availablePopulation={populationQuery.data?.available}
             canOpenVillageStyle={canOpenVillageStyle}
             crownsDisplay={crownsDisplay}
+            isVillageSheetOpen={isVillageSheetOpen}
             onOpenProfile={() => {
               setProfileTab('profile');
               setIsProfileOpen(true);
