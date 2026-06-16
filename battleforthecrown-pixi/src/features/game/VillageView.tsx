@@ -2,11 +2,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
-  type CSSProperties,
-  type PointerEvent,
-  type UIEvent,
 } from 'react';
 import { useNavigate } from 'react-router';
 import { BottomSheet } from '@/ui';
@@ -56,8 +52,9 @@ import {
   type VillageResourceType,
 } from './VillageViewSections';
 import { categorizeVillageBuildings } from './VillageViewData';
+import { VillageHero } from './VillageHero';
+import { useHeroParallax } from './useHeroParallax';
 
-import { publicAsset } from '@/lib/publicAsset';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
 import { useTickingNow } from '@/lib/useTickingNow';
@@ -77,27 +74,14 @@ import {
 } from '@/api/queries';
 import type { BuildingDto } from '@/api';
 import { BUILDING_TYPES } from '@battleforthecrown/shared/village/buildings';
-import { VILLAGE_LABEL_DISPLAY } from '@battleforthecrown/shared/village';
 import { villageVisualTierFromCastleLevel } from '@battleforthecrown/shared/world';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
-
-const HERO_SCROLL_FADE_DISTANCE = 340;
-const HERO_EXPANDED_HEIGHT = 368;
-const HERO_INTERACTIVE_SELECTOR =
-  'button, a, input, textarea, select, [role="button"], [data-bftc-hero-no-swipe]';
 
 const RESOURCE_BUILDING_BY_TYPE: Record<'iron' | 'stone' | 'wood', string> = {
   iron: BUILDING_TYPES.IRON,
   stone: BUILDING_TYPES.STONE,
   wood: BUILDING_TYPES.WOOD,
-};
-
-
-type HeroSwipeState = {
-  pointerId: number;
-  startX: number;
-  startY: number;
 };
 
 type VillageTransitionDirection = -1 | 0 | 1;
@@ -136,6 +120,9 @@ export function VillageView() {
   const now = useTickingNow(1_000);
 
   // UI state
+  // Hero parallax scroll
+  const { styles: heroParallaxStyles, handleScroll: handleVillageScroll } = useHeroParallax();
+
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingDto | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isPowerOpen, setIsPowerOpen] = useState(false);
@@ -145,13 +132,8 @@ export function VillageView() {
   const [profileTab, setProfileTab] = useState<PlayerProfileSheetTab>('profile');
   const [villageFilter, setVillageFilter] = useState<MultiVillageFilter>('all');
   const [sortAscending, setSortAscending] = useState(true);
-  const [heroScrollProgress, setHeroScrollProgress] = useState(0);
   const [villageTransitionDirection, setVillageTransitionDirection] =
     useState<VillageTransitionDirection>(0);
-  const heroSwipeRef = useRef<HeroSwipeState | null>(null);
-  const pendingHeroScrollTopRef = useRef(0);
-  const heroScrollFrameRef = useRef<number | null>(null);
-  const suppressHeroClickRef = useRef(false);
 
   // ── Derived data ────────────────────────────────────────────────────────────
 
@@ -259,96 +241,6 @@ export function VillageView() {
     }
   }, [fallbackVillageId, setVillage, villageId, villages]);
 
-  useEffect(
-    () => () => {
-      if (heroScrollFrameRef.current !== null) {
-        window.cancelAnimationFrame(heroScrollFrameRef.current);
-      }
-    },
-    [],
-  );
-
-  const handleVillageScroll = useCallback((event: UIEvent<HTMLDivElement>) => {
-    pendingHeroScrollTopRef.current = event.currentTarget.scrollTop;
-    if (heroScrollFrameRef.current !== null) return;
-
-    heroScrollFrameRef.current = window.requestAnimationFrame(() => {
-      heroScrollFrameRef.current = null;
-      const nextProgress = Math.min(
-        1,
-        Math.max(0, pendingHeroScrollTopRef.current / HERO_SCROLL_FADE_DISTANCE),
-      );
-      const easedProgress = nextProgress ** 1.55;
-      setHeroScrollProgress((currentProgress) =>
-        Math.abs(currentProgress - easedProgress) < 0.01 ? currentProgress : easedProgress,
-      );
-    });
-  }, []);
-
-  const heroShellStyle = useMemo<CSSProperties>(
-    () => ({
-      height: HERO_EXPANDED_HEIGHT,
-    }),
-    [],
-  );
-
-  const heroBackgroundStyle = useMemo<CSSProperties>(
-    () => ({
-      filter: `brightness(${1 - heroScrollProgress * 0.2}) saturate(${
-        1 - heroScrollProgress * 0.16
-      })`,
-      transform: `translate3d(0, ${heroScrollProgress * 42}px, 0) scale(${
-        1 + heroScrollProgress * 0.22
-      })`,
-    }),
-    [heroScrollProgress],
-  );
-
-  const heroGlowStyle = useMemo<CSSProperties>(
-    () => ({
-      opacity: 1 - heroScrollProgress * 0.65,
-      transform: `translate3d(0, ${-heroScrollProgress * 42}px, 0) scale(${
-        1 + heroScrollProgress * 0.22
-      })`,
-    }),
-    [heroScrollProgress],
-  );
-
-  const heroChromeStyle = useMemo<CSSProperties>(
-    () => ({
-      opacity: 1 - heroScrollProgress * 0.95,
-      transform: `translate3d(0, ${-heroScrollProgress * 70}px, 0) scale(${
-        1 - heroScrollProgress * 0.04
-      })`,
-    }),
-    [heroScrollProgress],
-  );
-
-  const heroAssetParallaxStyle = useMemo<CSSProperties>(
-    () => ({
-      filter: `drop-shadow(0 ${4 + heroScrollProgress * 10}px ${
-        16 + heroScrollProgress * 14
-      }px rgba(0,0,0,.65)) brightness(${1 - heroScrollProgress * 0.08})`,
-      opacity: 1 - heroScrollProgress * 0.82,
-      transform: `translate3d(0, ${heroScrollProgress * 18}px, ${
-        heroScrollProgress * 22
-      }px) scale(${1 + heroScrollProgress * 0.2}) rotate(${
-        -heroScrollProgress * 0.45
-      }deg)`,
-    }),
-    [heroScrollProgress],
-  );
-
-  const heroIdentityParallaxStyle = useMemo<CSSProperties>(
-    () => ({
-      opacity: 1 - heroScrollProgress * 0.96,
-      transform: `translate3d(0, ${-heroScrollProgress * 26}px, ${
-        heroScrollProgress * 20
-      }px) scale(${1 - heroScrollProgress * 0.05})`,
-    }),
-    [heroScrollProgress],
-  );
-
   const villageTransitionClass =
     villageTransitionDirection < 0
       ? 'village-enter-from-left'
@@ -377,76 +269,6 @@ export function VillageView() {
     setVillageTransitionDirection(direction);
     setVillage(villages[nextIndex].id);
   }, [activeVillageIndex, setVillage, villages]);
-
-  const releaseHeroPointerCapture = useCallback(
-    (element: HTMLDivElement, pointerId: number) => {
-      if (
-        typeof element.hasPointerCapture === 'function' &&
-        element.hasPointerCapture(pointerId)
-      ) {
-        element.releasePointerCapture(pointerId);
-      }
-    },
-    [],
-  );
-
-  const handleHeroPointerDown = useCallback(
-    (event: PointerEvent<HTMLDivElement>) => {
-      if (villages.length <= 1) return;
-      const target = event.target instanceof Element ? event.target : null;
-      if (target?.closest(HERO_INTERACTIVE_SELECTOR)) return;
-
-      heroSwipeRef.current = {
-        pointerId: event.pointerId,
-        startX: event.clientX,
-        startY: event.clientY,
-      };
-      if (typeof event.currentTarget.setPointerCapture === 'function') {
-        event.currentTarget.setPointerCapture(event.pointerId);
-      }
-    },
-    [villages.length],
-  );
-
-  const handleHeroPointerUp = useCallback(
-    (event: PointerEvent<HTMLDivElement>) => {
-      const swipe = heroSwipeRef.current;
-      if (swipe?.pointerId === event.pointerId) {
-        releaseHeroPointerCapture(event.currentTarget, event.pointerId);
-      }
-      heroSwipeRef.current = null;
-      if (!swipe || swipe.pointerId !== event.pointerId) return;
-
-      const deltaX = event.clientX - swipe.startX;
-      const deltaY = event.clientY - swipe.startY;
-      const isHorizontalSwipe = Math.abs(deltaX) >= 52 && Math.abs(deltaX) > Math.abs(deltaY) * 1.35;
-      if (!isHorizontalSwipe) return;
-
-      suppressHeroClickRef.current = true;
-      window.setTimeout(() => {
-        suppressHeroClickRef.current = false;
-      }, 0);
-      switchVillage(deltaX < 0 ? 1 : -1);
-    },
-    [releaseHeroPointerCapture, switchVillage],
-  );
-
-  const handleHeroPointerCancel = useCallback(
-    (event: PointerEvent<HTMLDivElement>) => {
-      if (heroSwipeRef.current?.pointerId === event.pointerId) {
-        releaseHeroPointerCapture(event.currentTarget, event.pointerId);
-        heroSwipeRef.current = null;
-      }
-    },
-    [releaseHeroPointerCapture],
-  );
-
-  const handleHeroClickCapture = useCallback((event: PointerEvent<HTMLDivElement>) => {
-    if (!suppressHeroClickRef.current) return;
-    suppressHeroClickRef.current = false;
-    event.preventDefault();
-    event.stopPropagation();
-  }, []);
 
   const handleSelectBuilding = (building: BuildingDto) => {
     if (
@@ -508,267 +330,44 @@ export function VillageView() {
             paddingBottom: 'calc(var(--bftc-bottom-nav-height, 64px) + 8px)',
           }}
         >
-          {/* ═══════════════════════ HERO SECTION ═══════════════════════ */}
-          <div
-            className="relative shrink-0 touch-pan-y overflow-hidden [overflow-anchor:none] [perspective:900px]"
-            onClickCapture={handleHeroClickCapture}
-            onPointerCancel={handleHeroPointerCancel}
-            onPointerDown={handleHeroPointerDown}
-            onPointerUp={handleHeroPointerUp}
-            style={heroShellStyle}
-          >
-            <div className="absolute inset-x-0 top-0 h-[368px]">
-          {/* Backgrounds */}
-          <div
-            className="absolute inset-[-18px] bg-[linear-gradient(180deg,#0d2218_0%,#1b3a1a_40%,#2c1a0a_100%)] will-change-[filter,transform]"
-            style={heroBackgroundStyle}
+          <VillageHero
+            activeVillage={activeVillage}
+            activeVillagePower={activeVillagePower}
+            availablePopulation={populationQuery.data?.available}
+            canOpenVillageStyle={canOpenVillageStyle}
+            crownsDisplay={crownsDisplay}
+            onOpenProfile={() => {
+              setProfileTab('profile');
+              setIsProfileOpen(true);
+            }}
+            onOpenPower={() => setIsPowerOpen(true)}
+            onOpenVillageSheet={() => setIsVillageSheetOpen(true)}
+            onOpenVillageStyle={() => setIsVillageStyleOpen(true)}
+            parallaxStyles={heroParallaxStyles}
+            playerInitials={getPlayerInitials(user?.displayName ?? 'Joueur')}
+            playerLevel={PLAYER_PROFILE_LEVEL}
+            retentionSlot={
+              <DailyRetentionWidget
+                activeVillageId={villageId}
+                className="shrink-0"
+                isClaiming={claimDailyCard.isPending}
+                isLoading={retentionSummary.isLoading}
+                onAction={runVillageAction}
+                onClaim={(input) => claimDailyCard.mutate(input)}
+                onNavigate={navigate}
+                sealSize={40}
+                summary={retentionSummary.data}
+                villages={myVillages.data ?? []}
+              />
+            }
+            strategyOption={strategyOption}
+            switchVillage={switchVillage}
+            totalKingdomPower={totalKingdomPower}
+            villageCount={villages.length}
+            villageId={villageId}
+            villageTier={villageTier}
+            villageTransitionClass={villageTransitionClass}
           />
-          <div
-            className="absolute inset-[-28px] bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(246,213,123,.18),transparent_65%)] will-change-[opacity,transform]"
-            style={heroGlowStyle}
-          />
-
-          {/* Village image */}
-          <div
-            className="absolute inset-x-0 top-[58px] bottom-[138px] flex items-center justify-center px-6 py-2 will-change-[filter,opacity,transform]"
-            style={heroAssetParallaxStyle}
-          >
-            <div
-              key={`village-asset-${activeVillage?.id ?? villageId}`}
-              className={`village-asset-enter ${villageTransitionClass}`}
-            >
-              <img
-                src={publicAsset(`/assets/world/entity/village-tier${villageTier}.png`)}
-                alt="Village"
-                className="h-[178px] object-contain"
-                loading="lazy"
-                decoding="async"
-              />
-            </div>
-          </div>
-
-          {/* Top / bottom vignettes */}
-          <div className="absolute inset-x-0 top-0 h-20 bg-[linear-gradient(180deg,rgba(0,0,0,.65)_0%,transparent_100%)]" />
-          <div className="absolute inset-x-0 bottom-0 h-28 bg-[linear-gradient(0deg,rgba(26,15,8,1)_0%,transparent_100%)]" />
-
-          {/* ── Header row ── */}
-          <div
-            className="absolute inset-x-0 top-0 flex items-center gap-2.5 px-3 pb-2 pt-3 will-change-[opacity,transform]"
-            style={heroChromeStyle}
-          >
-            {/* Profile avatar */}
-            <button
-              type="button"
-              aria-label="Ouvrir le profil"
-              onClick={() => {
-                setProfileTab('profile');
-                setIsProfileOpen(true);
-              }}
-              className="relative shrink-0"
-            >
-              <div className="flex size-11 items-center justify-center rounded-full border-2 border-[#8b6f47] bg-[radial-gradient(circle_at_30%_25%,#7a5a38,#3a2210)] text-[13px] font-bold text-[#f0e0c0] [text-shadow:0_1px_2px_rgba(0,0,0,.8)]">
-                {getPlayerInitials(user?.displayName ?? 'Joueur')}
-              </div>
-              <div className="absolute -bottom-0.5 -right-0.5 flex size-[18px] items-center justify-center rounded-full border border-[#7a5200] bg-gradient-to-b from-[#f6d57b] to-[#c9900c] text-[8.5px] font-black text-[#3a2a00]">
-                {PLAYER_PROFILE_LEVEL}
-              </div>
-            </button>
-
-            {/* Power pill */}
-            <button
-              type="button"
-              aria-label="Puissance du royaume"
-              onClick={() => setIsPowerOpen(true)}
-              className="flex items-center gap-1.5 rounded-full border border-[#1a120a] bg-[linear-gradient(180deg,#4a3a28,#2a1f14)] px-2.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,.1)]"
-            >
-              <img
-                    src={publicAsset('/assets/power.png')}
-                alt="Force"
-                className="size-[14px] object-contain"
-                loading="lazy"
-                decoding="async"
-              />
-              <span className="tabular-nums text-[12px] font-bold text-[#f0e0c0] [text-shadow:0_1px_1px_rgba(0,0,0,.6)]">
-                {integerFormatter.format(totalKingdomPower)}
-              </span>
-            </button>
-
-            <div className="flex-1" />
-
-            {/* Crown balance */}
-            <div className="flex items-center gap-1.5 rounded-full border-2 border-[#7a5200] bg-gradient-to-b from-[#f6d57b] to-[#c9900c] px-3 py-1.5 shadow-[0_2px_0_rgba(0,0,0,.25),inset_0_1px_0_rgba(255,255,255,.45)]">
-              <img
-                src={publicAsset('/assets/casual-icons/crown.png')}
-                alt="Couronnes"
-                className="size-4 object-contain"
-                loading="lazy"
-                decoding="async"
-              />
-              <span className="tabular-nums text-[13px] font-extrabold text-[#3a2a00]">
-                {crownsDisplay}
-              </span>
-            </div>
-
-            {/* Devoir royal */}
-            <DailyRetentionWidget
-              activeVillageId={villageId}
-              className="shrink-0"
-              isClaiming={claimDailyCard.isPending}
-              isLoading={retentionSummary.isLoading}
-              onAction={runVillageAction}
-              onClaim={(input) => claimDailyCard.mutate(input)}
-              onNavigate={navigate}
-              sealSize={40}
-              summary={retentionSummary.data}
-              villages={myVillages.data ?? []}
-            />
-          </div>
-
-          {/* ── Village identity and controls ── */}
-          <div
-            className="absolute inset-x-0 bottom-0 h-[138px] px-3 will-change-[opacity,transform]"
-            style={heroIdentityParallaxStyle}
-          >
-            <div
-              key={`village-info-${activeVillage?.id ?? villageId}`}
-              className="village-info-enter absolute inset-x-0 bottom-0 h-full text-center"
-            >
-              <div className="absolute inset-x-3 bottom-[74px] px-2">
-                <div className="mb-1 flex items-center justify-center gap-2 text-[9px] font-bold uppercase tracking-[.32em] text-[#9a7a5a]">
-                  <span>Village</span>
-                  {activeVillage?.isCapital && (
-                    <span
-                      className="flex size-[17px] items-center justify-center rounded-full border border-[rgba(246,213,123,.35)] bg-[rgba(246,213,123,.16)]"
-                      aria-label="Capitale"
-                      title="Capitale"
-                    >
-                      <img
-                        src={publicAsset('/assets/casual-icons/crown.png')}
-                        alt=""
-                        className="size-[10px] object-contain"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    </span>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (villages.length > 1) setIsVillageSheetOpen(true);
-                  }}
-                  disabled={villages.length <= 1}
-                  aria-expanded={isVillageSheetOpen}
-                  className="mx-auto flex max-w-full items-center justify-center gap-2 disabled:cursor-default"
-                >
-                  <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap align-bottom text-[16px] font-bold uppercase tracking-[.04em] text-[#f6d57b] [text-shadow:0_2px_6px_rgba(0,0,0,.9)]">
-                    {activeVillage?.name ?? '—'}
-                  </span>
-                  {villages.length > 1 && (
-                    <svg
-                      width="10"
-                      height="7"
-                      viewBox="0 0 10 7"
-                      fill="none"
-                      className="shrink-0"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M1 1L5 5L9 1"
-                        stroke="#f6d57b"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  )}
-                </button>
-              </div>
-
-              <div className="absolute inset-x-0 bottom-5 flex h-10 items-center justify-center px-16">
-                <div className="flex min-w-0 items-center justify-center gap-1.5 overflow-hidden whitespace-nowrap">
-                  {strategyOption && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (canOpenVillageStyle) setIsVillageStyleOpen(true);
-                      }}
-                      disabled={!canOpenVillageStyle}
-                      className="flex min-w-0 items-center gap-1 rounded-full border border-[rgba(205,184,138,.35)] bg-[rgba(0,0,0,.38)] px-2 py-1 disabled:cursor-default disabled:opacity-80"
-                      aria-label="Changer le style du village"
-                      title={
-                        canOpenVillageStyle
-                          ? 'Changer le style du village'
-                          : 'Construisez la Salle du Conseil pour changer de style'
-                      }
-                    >
-                      <img
-                        src={publicAsset(strategyOption.shield)}
-                        alt=""
-                        className="size-[14px] object-contain"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                      <span className="min-w-0 truncate text-[9.5px] font-bold tracking-[.06em] text-[#d4b87a]">
-                        {strategyOption.name}
-                      </span>
-                    </button>
-                  )}
-                  {activeVillage?.label && (
-                    <span className="shrink-0 rounded-full border border-[rgba(246,213,123,.45)] bg-[rgba(246,213,123,.18)] px-2 py-1 text-[9.5px] uppercase tracking-[.1em] text-[#f6d57b]">
-                      {VILLAGE_LABEL_DISPLAY[activeVillage.label]}
-                    </span>
-                  )}
-                  <span
-                    aria-label={`Villageois disponibles ${populationQuery.data?.available ?? '—'}`}
-                    className="flex shrink-0 items-center gap-1 tabular-nums text-[12px] text-[#cdb88a]"
-                  >
-                    <img
-                      src={publicAsset('/assets/resources/population.png')}
-                      alt=""
-                      className="size-[13px] object-contain"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    <b className="text-[#fef9f0]">{populationQuery.data?.available ?? '—'}</b>
-                  </span>
-                  <span className="shrink-0 text-[12px] text-[#cdb88a] opacity-40">·</span>
-                  <span className="flex shrink-0 items-center gap-1 tabular-nums text-[12px] text-[#cdb88a]">
-                    <img
-                      src={publicAsset('/assets/power.png')}
-                      alt=""
-                      className="size-[12px] object-contain"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    {integerFormatter.format(activeVillagePower)}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => switchVillage(-1)}
-              disabled={villages.length <= 1}
-              aria-label="Village précédent"
-              className="absolute bottom-5 left-3 flex size-10 shrink-0 items-center justify-center rounded-[10px] border-[1.5px] border-[#0e0805] bg-[linear-gradient(180deg,#3a2a1f,#1f1308)] text-xl font-bold text-[#cdb88a] shadow-[0_2px_0_rgba(0,0,0,.35),inset_0_1px_0_rgba(255,255,255,.12)] disabled:opacity-30"
-            >
-              ‹
-            </button>
-
-            <button
-              type="button"
-              onClick={() => switchVillage(1)}
-              disabled={villages.length <= 1}
-              aria-label="Village suivant"
-              className="absolute bottom-5 right-3 flex size-10 shrink-0 items-center justify-center rounded-[10px] border-[1.5px] border-[#0e0805] bg-[linear-gradient(180deg,#3a2a1f,#1f1308)] text-xl font-bold text-[#cdb88a] shadow-[0_2px_0_rgba(0,0,0,.35),inset_0_1px_0_rgba(255,255,255,.12)] disabled:opacity-30"
-            >
-              ›
-            </button>
-          </div>
-            </div>
-          </div>
 
           {/* ═══════════════════════ SCROLLABLE CONTENT ═══════════════════════ */}
           {buildingsQuery.isLoading ? (

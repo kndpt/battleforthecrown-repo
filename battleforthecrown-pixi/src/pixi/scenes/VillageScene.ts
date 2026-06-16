@@ -98,6 +98,7 @@ export function createVillageScene(app: Application, options: VillageSceneOption
 
   const exit = () => {
     app.renderer.off('resize', handleResize);
+    viewport.removeAllListeners();
     sprites.forEach((sprite) => sprite.destroy());
     sprites.clear();
   };
