@@ -127,6 +127,28 @@
         "tasks/00-mvp-roadmap.md:134 — Phase 11 livrable 'snapshot leaderboard à ENDED + wipe + récompenses cosmétiques permanentes' non livré"
       ],
       "addedAt": "2026-06-15"
+    },
+    {
+      "specPath": "docs/gameplay/20-defensive-friends.md",
+      "slug": "defensive-friends-list",
+      "title": "Liste d'amis défensifs MVP — renforts cross-joueur minimal (Phase 12)",
+      "keywords": ["defensive-friends", "amis-defensifs", "friendship", "renforts", "cooperation", "phase-12"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/063-feature-defensive-friends-list.md",
+      "artefactId": "063",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/defensive-friends-list",
+      "gapSummary": "La spec 20-defensive-friends.md acte un compromis MVP minimaliste : cap 5 amis défensifs réciproques + renforts mutuels uniquement, étendant le pattern de renfort intra-joueur déjà livré (run 010/044). User a tranché 'à la rigueur la liste d'amis pour le MVP ok'. Côté code : aucun modèle Friendship en DB, le guard de initiateReinforce refuse explicitement toute cible cross-joueur via ForbiddenException, aucun module friendship/, aucune UI d'ajout/retrait, et le rapport de scout n'expose pas la liste d'amis défensifs (question tranchée 'oui' par la spec).",
+      "codeEvidence": [
+        "battleforthecrown-backend/prisma/schema.prisma — aucun modèle Friendship, aucune relation d'amitié défensive entre WorldMembership",
+        "battleforthecrown-backend/src/modules/combat/combat.service.ts:303 — ForbiddenException 'You can only reinforce your own villages for now' avec commentaire explicite 'Architecture supports other players, but business rule limits it here'",
+        "battleforthecrown-backend/prisma/schema.prisma:643-656 — modèle Garrison supporte déjà originVillageId ≠ villageId propriétaire (architecture cross-joueur dormante)",
+        "battleforthecrown-backend/src/modules — aucun module friendship/ ni endpoint /worlds/:id/friendships/*",
+        "battleforthecrown-backend/src/modules/combat/scout-report.presenter.ts — details n'expose ni defensiveFriendsDisplayNames ni liste d'amis du joueur ciblé (révélation tranchée 'oui' par la spec § Questions à trancher)",
+        "battleforthecrown-pixi/src/features — aucun écran DefensiveFriendsSheet ni point d'entrée HUD pour gérer les amis défensifs",
+        "tasks/00-mvp-roadmap.md:142 — Phase 12 'Ajouts mineurs MVP' liste 20-defensive-friends.md comme candidat MVP, non livré"
+      ],
+      "addedAt": "2026-06-16"
     }
   ]
 }

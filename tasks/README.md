@@ -17,6 +17,7 @@ Skills : `$bftc-plan` | `$bftc-run` — détail [`runs/README.md`](./runs/README
 
 ### Actifs
 
+- [063 — Liste d'amis défensifs MVP (renforts cross-joueur)](./runs/063-feature-defensive-friends-list.md) — 📋 `PLANNED`
 - [062 — Queue d'entraînement multi-type Caserne](./runs/062-fix-training-multi-type-queue.md) — 📋 `PLANNED`
 - [061 — World ENDED lifecycle (snapshot + lecture seule)](./runs/061-feature-world-ended-lifecycle.md) — PLANNED
 - [060 — Pré-affichage durée capture PvP](./runs/060-feature-pvp-capture-duration-preview.md) — PLANNED
