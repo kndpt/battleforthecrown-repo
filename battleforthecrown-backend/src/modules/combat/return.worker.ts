@@ -16,6 +16,7 @@ import {
   parseCaravanResources,
   sumCaravanResources,
 } from './caravan.utils';
+import { loadReportVillageSnapshot } from './combat-report.utils';
 
 interface ReturnJob {
   expeditionId: string;
@@ -278,14 +279,8 @@ export class ReturnWorker implements OnModuleInit {
 
     if (expedition.recalled) {
       const [originVillage, targetVillage] = await Promise.all([
-        tx.village.findUnique({
-          where: { id: expedition.attackerVillageId },
-          select: { id: true, name: true, x: true, y: true, userId: true },
-        }),
-        tx.village.findUnique({
-          where: { id: expedition.targetRefId },
-          select: { id: true, name: true, x: true, y: true },
-        }),
+        loadReportVillageSnapshot(tx, expedition.attackerVillageId),
+        loadReportVillageSnapshot(tx, expedition.targetRefId),
       ]);
 
       if (!originVillage?.userId) {
