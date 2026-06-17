@@ -53,7 +53,7 @@ Le tutoriel doit écouter des faits gameplay server-side plutôt que des états 
 
 La construction de la Tour de guet L1 (`building.completed` `WATCHTOWER L1`) déclenche server-side la création d'une **cible barbare narrative** : un village barbare T1 d'`originKind` `ONBOARDING_NARRATIVE`, posé dans le rayon de vision de la Watchtower. Ses caractéristiques sont fixes :
 
-- Garnison : **5 MILICE** (battables avec les `ONBOARDING_TRAIN_TROOPS_TARGET = 5` miliciens fraîchement entraînés).
+- Garnison : **3 MILICE** (battables avec les `ONBOARDING_TRAIN_TROOPS_TARGET = 5` miliciens fraîchement entraînés ; la formule combat exige `attaque > défense`).
 - Loot : stock initial réduit à **≈ 40 % du cap T1** (au lieu du roll standard 30-100 %).
 
 L'idempotence est portée par `OnboardingState.narrativeTargetVillageId` (FK unique vers `Village`, SET NULL à la destruction) : un rejoin ou un replay d'Outbox ne crée pas de doublon. L'id de cette cible est exposé dans `GET /onboarding` (`narrativeTargetVillageId`) pour la guidance frontend.
@@ -67,6 +67,21 @@ Idempotence :
 - `OnboardingProgressEvent` garde un ledger par `EventOutbox.id` pour qu'un replay d'Outbox ne double pas la progression.
 
 L'onboarding est distinct des cartes quotidiennes : il consomme certains mêmes facts Outbox, mais possède ses propres tables, son propre endpoint et son propre statut `ACTIVE|COMPLETED`.
+
+### Cible narrative post-victoire
+
+La cible barbare affaiblie (`ONBOARDING_NARRATIVE`) est créée lors de la construction de la Tour de guet niveau 1 et supprimée dès que l'étape `ATTACK_BARBARIAN` complète le tutoriel. La suppression libère la case de grille et émet un event `village.removed` pour resynchroniser la carte. Les villages narratifs orphelins (joueurs ayant complété avant ce cleanup) peuvent être purgés via :
+
+```sql
+DELETE FROM village
+WHERE origin_kind = 'ONBOARDING_NARRATIVE'
+  AND id NOT IN (
+    SELECT narrative_target_village_id
+    FROM onboarding_state
+    WHERE narrative_target_village_id IS NOT NULL
+      AND status = 'ACTIVE'
+  );
+```
 
 ## Liens
 

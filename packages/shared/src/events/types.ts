@@ -121,6 +121,13 @@ export interface VillageConqueredPayload {
   buildingsKept: number;
 }
 
+export interface VillageRemovedPayload {
+  worldId: string;
+  villageId: string;
+  x: number;
+  y: number;
+}
+
 export interface VillageCaptureWindowOpenedPayload {
   pendingConquestId: string;
   targetVillageId: string;
@@ -281,6 +288,7 @@ export type OutboxEventPayload =
   | { kind: "scout.returned"; payload: ScoutReturnedPayload }
   | { kind: "village.attacked"; payload: VillageAttackedPayload }
   | { kind: "village.conquered"; payload: VillageConqueredPayload }
+  | { kind: "village.removed"; payload: VillageRemovedPayload }
   | {
       kind: "village.capture-window-opened";
       payload: VillageCaptureWindowOpenedPayload;
@@ -328,6 +336,7 @@ export type AnyEventPayload =
   | ScoutReturnedPayload
   | VillageAttackedPayload
   | VillageConqueredPayload
+  | VillageRemovedPayload
   | VillageCaptureWindowOpenedPayload
   | VillageCaptureWindowCompletedPayload
   | VillageCaptureWindowInterruptedPayload
@@ -362,6 +371,7 @@ export interface ServerEvents {
   "scout.returned": ScoutReturnedPayload;
   "village.attacked": VillageAttackedPayload;
   "village.conquered": VillageConqueredPayload;
+  "village.removed": VillageRemovedPayload;
   "village.capture-window-opened": VillageCaptureWindowOpenedPayload;
   "village.capture-window-completed": VillageCaptureWindowCompletedPayload;
   "village.capture-window-interrupted": VillageCaptureWindowInterruptedPayload;

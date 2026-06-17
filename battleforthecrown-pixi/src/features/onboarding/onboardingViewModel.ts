@@ -2,12 +2,24 @@ import type {
   OnboardingStep,
   OnboardingSummaryDto,
 } from '@battleforthecrown/shared/onboarding';
+import { getOnboardingNarrativeLoot } from '@battleforthecrown/shared/onboarding';
 import { ONBOARDING_TRAIN_TROOPS_TARGET } from '@battleforthecrown/shared/onboarding';
 import {
   getOnboardingStepGameAction,
   type GameActionId,
   type GameActionRoute,
 } from '@/features/game-actions/gameActions';
+import { formatResourceAmount } from '@/lib/resourceConfig';
+
+export interface OnboardingLootPreviewItem {
+  icon: string;
+  value: string;
+}
+
+export interface OnboardingLootPreview {
+  label: string;
+  items: OnboardingLootPreviewItem[];
+}
 
 export interface OnboardingGuidance {
   title: string;
@@ -16,6 +28,7 @@ export interface OnboardingGuidance {
   imageBadgeLabel?: string;
   gameActionId: GameActionId;
   imageSrc: string;
+  lootPreview?: OnboardingLootPreview;
   modalLabel: string;
   pillLabel: string;
   route: GameActionRoute;
@@ -35,6 +48,19 @@ const STEP_INDEX: Record<OnboardingStep, number> = {
 };
 
 const TOTAL_STEPS = 6;
+
+const ONBOARDING_NARRATIVE_LOOT_PREVIEW: OnboardingLootPreview = (() => {
+  const loot = getOnboardingNarrativeLoot('T1');
+
+  return {
+    label: 'Butin à récupérer',
+    items: [
+      { icon: '/assets/resources/wood.png', value: formatResourceAmount(loot.wood) },
+      { icon: '/assets/resources/stone.png', value: formatResourceAmount(loot.stone) },
+      { icon: '/assets/resources/iron.png', value: formatResourceAmount(loot.iron) },
+    ],
+  };
+})();
 
 const STEP_GUIDANCE: Record<
   OnboardingStep,
@@ -83,6 +109,7 @@ const STEP_GUIDANCE: Record<
     description: 'Construis une Tour de guet pour révéler une cible barbare proche.',
     ctaLabel: 'Voir les bâtiments',
     imageSrc: '/assets/watchtower.png',
+    lootPreview: ONBOARDING_NARRATIVE_LOOT_PREVIEW,
     route: '/game',
   },
   ATTACK_BARBARIAN: {
@@ -93,6 +120,7 @@ const STEP_GUIDANCE: Record<
     description: `Ouvre la carte, vise le campement barbare révélé par la Tour de guet et lance ton attaque avec tes ${ONBOARDING_TRAIN_TROOPS_TARGET} miliciens.`,
     ctaLabel: 'Ouvrir la carte',
     imageSrc: '/assets/world/entity/barbarian-village-tier1.png',
+    lootPreview: ONBOARDING_NARRATIVE_LOOT_PREVIEW,
     route: '/game/world',
   },
 };

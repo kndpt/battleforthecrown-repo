@@ -184,6 +184,7 @@ const PLANNERS: Record<EventKind, AnyPlanner> = {
   'garrison.added': userByVillage('villageId'),
   'village.attacked': planVillageAttacked,
   'village.conquered': planVillageConquered,
+  'village.removed': directWorld('worldId'),
   'village.capture-window-opened': planCaptureWindowOpened,
   'village.capture-window-interrupted': planCaptureWindowInterrupted,
   'village.capture-window-completed': directUser('newOwnerUserId'),

@@ -9,6 +9,7 @@ import type { OnboardingStep } from '@battleforthecrown/shared/onboarding';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import type { EventKind, PayloadForKind } from '../event/event-types';
+import { createOutboxEvent } from '../event/event.utils';
 import {
   ONBOARDING_INITIAL_REWARD,
   getNextStep,
@@ -175,8 +176,10 @@ async function reconcileStateFromFacts(
   tx: Tx,
   state: {
     id: string;
+    worldId: string;
     firstVillageId: string;
     currentStep: OnboardingStep;
+    narrativeTargetVillageId: string | null;
   },
   trigger?: { eventOutboxId: string; step: OnboardingStep },
 ): Promise<void> {
@@ -215,12 +218,61 @@ async function reconcileStateFromFacts(
 
   if (!advanced) return;
 
-  await tx.onboardingState.update({
-    where: { id: state.id },
-    data: currentStep
-      ? { currentStep }
-      : { status: 'COMPLETED', completedAt: new Date() },
+  const completed = currentStep === null;
+
+  if (completed) {
+    await tx.onboardingState.update({
+      where: { id: state.id },
+      data: {
+        status: 'COMPLETED',
+        completedAt: new Date(),
+        narrativeTargetVillageId: null,
+      },
+    });
+  } else if (currentStep) {
+    await tx.onboardingState.update({
+      where: { id: state.id },
+      data: { currentStep },
+    });
+  }
+
+  if (completed && state.narrativeTargetVillageId) {
+    await deleteOnboardingNarrativeTargetVillage(tx, {
+      worldId: state.worldId,
+      villageId: state.narrativeTargetVillageId,
+    });
+  }
+}
+
+async function deleteOnboardingNarrativeTargetVillage(
+  tx: Tx,
+  params: { worldId: string; villageId: string },
+): Promise<void> {
+  const village = await tx.village.findUnique({
+    where: { id: params.villageId },
+    select: {
+      id: true,
+      worldId: true,
+      x: true,
+      y: true,
+      originKind: true,
+    },
   });
+  if (
+    !village ||
+    village.worldId !== params.worldId ||
+    village.originKind !== 'ONBOARDING_NARRATIVE'
+  ) {
+    return;
+  }
+
+  await createOutboxEvent(tx, 'village.removed', village.id, {
+    worldId: village.worldId,
+    villageId: village.id,
+    x: village.x,
+    y: village.y,
+  });
+  await tx.village.delete({ where: { id: village.id } });
 }
 
 async function isStepSatisfied(

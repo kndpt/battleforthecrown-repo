@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UNIT_TYPES } from '@battleforthecrown/shared/army';
 import type { VillageOriginKind } from '@battleforthecrown/shared/village';
+import { getOnboardingNarrativeLoot } from '@battleforthecrown/shared/onboarding';
 import { generateBarbarianName } from '@battleforthecrown/shared/world';
 import { WorldConfigService } from './world-config.service';
 import { PrismaClientOrTx } from '../../common/prisma.types';
@@ -13,17 +14,11 @@ import {
 
 /**
  * Fixed garrison for the onboarding narrative target: the smoke contract
- * (`ONBOARDING_TRAIN_TROOPS_TARGET = 5`) lets 5 freshly trained militia win
- * against this specific village. Standard T1 villages stay at 9-15 militia
- * (rollInitialBarbarianUnits) so they remain genuine adversaries — see
- * `docs/gameplay/06-barbarians.md` and run 054.
+ * (`ONBOARDING_TRAIN_TROOPS_TARGET = 5`) can win against this specific village.
+ * Standard T1 villages stay at 9-15 militia (rollInitialBarbarianUnits) so they
+ * remain genuine adversaries — see `docs/gameplay/06-barbarians.md` and run 054.
  */
-const ONBOARDING_NARRATIVE_MILITIA_COUNT = 5;
-/**
- * Loot fill ratio for the narrative target. Lower than the standard 30-100%
- * roll so the first victory feels rewarding without skewing the early economy.
- */
-const ONBOARDING_NARRATIVE_RESOURCE_FILL = 0.4;
+const ONBOARDING_NARRATIVE_MILITIA_COUNT = 3;
 
 @Injectable()
 export class BarbarianVillageFactory {
@@ -35,7 +30,7 @@ export class BarbarianVillageFactory {
    * (handled via P2002 in BarbarianSeedingService.seedChunk).
    *
    * When `originKind === 'ONBOARDING_NARRATIVE'`, the village is built with a
-   * fixed weak garrison (5 militia, reduced loot) so the final onboarding step
+   * fixed weak garrison (3 militia, reduced loot) so the final onboarding step
    * can complete deterministically. All other paths keep the standard roll.
    */
   async create(
@@ -137,12 +132,10 @@ export class BarbarianVillageFactory {
       worldId,
       warehouseLevel,
     );
-    const fillRatio = ONBOARDING_NARRATIVE_RESOURCE_FILL;
+    const loot = getOnboardingNarrativeLoot(tier);
 
     return {
-      wood: Math.floor(maxPerType * fillRatio),
-      stone: Math.floor(maxPerType * fillRatio),
-      iron: Math.floor(maxPerType * fillRatio * 0.7),
+      ...loot,
       maxPerType,
     };
   }

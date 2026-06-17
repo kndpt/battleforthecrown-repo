@@ -117,6 +117,13 @@ const VillageConqueredPayloadSchema = z.object({
   buildingsKept: z.number(),
 });
 
+const VillageRemovedPayloadSchema = z.object({
+  worldId: z.string(),
+  villageId: z.string(),
+  x: z.number().int(),
+  y: z.number().int(),
+});
+
 const VillageCaptureWindowOpenedPayloadSchema = z.object({
   pendingConquestId: z.string(),
   targetVillageId: z.string(),
@@ -275,6 +282,7 @@ export const EVENT_PAYLOAD_SCHEMAS = {
   "scout.returned": ScoutReturnedPayloadSchema,
   "village.attacked": VillageAttackedPayloadSchema,
   "village.conquered": VillageConqueredPayloadSchema,
+  "village.removed": VillageRemovedPayloadSchema,
   "village.capture-window-opened": VillageCaptureWindowOpenedPayloadSchema,
   "village.capture-window-completed":
     VillageCaptureWindowCompletedPayloadSchema,

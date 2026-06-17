@@ -120,12 +120,23 @@ describe('OnboardingFab', () => {
     const onSecondaryAction = vi.fn();
     renderFab({
       imageBadgeLabel: 'x5',
+      lootPreview: {
+        label: 'Butin à récupérer',
+        items: [
+          { icon: '/assets/resources/wood.png', value: '1.2K' },
+          { icon: '/assets/resources/stone.png', value: '1.2K' },
+          { icon: '/assets/resources/iron.png', value: '840' },
+        ],
+      },
       onPrimaryAction,
       onSecondaryAction,
       open: true,
     });
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText('Butin à récupérer')).toBeInTheDocument();
+    expect(screen.getAllByText('1.2K')).toHaveLength(2);
+    expect(screen.getByText('840')).toBeInTheDocument();
     expect(screen.getByText('TUTORIEL · Étape 2/5')).toBeInTheDocument();
     expect(screen.getByAltText('Construire la Caserne')).toHaveAttribute('src', '/assets/barracks.png');
     expect(screen.getByText('x5')).toBeInTheDocument();
