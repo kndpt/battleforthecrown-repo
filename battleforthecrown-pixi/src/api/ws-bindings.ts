@@ -184,6 +184,8 @@ export function applyBattleSent(
     arrivalAt: Date.parse(payload.arrivalAt),
   };
   useExpeditionsStore.getState().add(snapshot);
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
   invalidateOpenExpeditions(ctx);
 }
 
@@ -255,6 +257,8 @@ export function applyScoutSent(
     arrivalAt: Date.parse(payload.arrivalAt),
   };
   useExpeditionsStore.getState().add(snapshot);
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
   invalidateOpenExpeditions(ctx);
 }
 

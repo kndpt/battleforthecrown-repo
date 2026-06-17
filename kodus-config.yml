@@ -1,0 +1,59 @@
+# Kodus configuration — Battle for the Crown
+# Mirrors .coderabbit.yaml and greptile.json review policy.
+# Every rule maps to a concrete audit dimension in .agents/skills/bftc-refactor-{backend,pixi} or conventions.md.
+# Enable "Auto-sync rules from repo" in Kodus settings so .kody/rules/**/*.md sync automatically on merge.
+
+version: '1.2'
+
+summary:
+  generatePRSummary: true
+  behaviourForExistingDescription: concatenate
+  customInstructions: |
+    Generate a concise bullet-point summary (max 8 bullets).
+    Format: `<type>(<scope>): <what changed and why>`.
+    Flag if the PR: touches critical paths (combat, resources, economy) without tests,
+    bypasses the Outbox pattern, or introduces server-authoritative violations.
+
+ignorePaths:
+  - node_modules/**
+  - dist/**
+  - build/**
+  - .yarn/**
+  - yarn.lock
+  - coverage/**
+  - .prisma/**
+  - "**/generated/**"
+  - .context-memory/**
+  - tasks/todo.md
+  - tasks/lessons.md
+  - .agents/maintenance/*-report.md
+  - .agents/maintenance/*-ledger.md
+  - .agents/maintenance/*-backlog.md
+
+ignoredTitleKeywords:
+  - WIP
+  - wip
+  - "[skip review]"
+
+reviewOptions:
+  security: true
+  code_style: false
+  kody_rules: true
+  refactoring: true
+  error_handling: true
+  maintainability: true
+  potential_issues: true
+  documentation_and_comments: true
+  performance_and_optimization: true
+  business_logic: true
+
+suggestionControl:
+  groupingMode: full
+  limitationType: pr
+  maxSuggestions: 9
+  severityLevelFilter: medium
+
+automatedReviewActive: true
+isRequestChangesActive: true
+pullRequestApprovalActive: false
+llmGeneratedMemoriesRequireApproval: false
