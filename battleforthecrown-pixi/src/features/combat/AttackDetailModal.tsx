@@ -15,8 +15,8 @@ import {
   calculateDistance,
   calculateTravelTime,
   findSlowestUnitSpeed,
-  formatTravelTime,
-} from '@/lib/combatHelpers';
+} from '@battleforthecrown/shared/logic';
+import { formatTravelTime } from '@/lib/combatHelpers';
 import {
   useArmyInventoryQuery,
   useInitiateAttackMutation,
@@ -90,7 +90,7 @@ export function AttackDetailModal({
     if (slowest === 0) return 0;
     return Math.round(
       TempoService.applyDuration(
-        calculateTravelTime(distance, slowest, 1),
+        calculateTravelTime(distance, 1, slowest),
         tempo,
         'travelSpeed',
       ),
