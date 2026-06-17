@@ -4,6 +4,7 @@ Tickets post-audit. User tranche, agent exécute.
 
 ## Actifs
 
+- [078 — Étape finale onboarding (acquittement butin)](./078-feature-onboarding-completion-step.md) — 🆕 Ouvert
 - [077 — Cleanup village narrative post-victoire](./077-cleanup-narrative-village-post-victory.md) — ✅ Fait
 - [66 — Inbox tag VICTOIRE/DÉFAITE faux](./66-inbox-report-outcome-uses-losses-heuristic.md) — 🟡
 - [57 — Lifecycle bâtiments joueur](./57-player-village-building-lifecycle-roster.md) — 🟡

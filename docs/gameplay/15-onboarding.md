@@ -53,7 +53,7 @@ Le tutoriel doit écouter des faits gameplay server-side plutôt que des états 
 
 La construction de la Tour de guet L1 (`building.completed` `WATCHTOWER L1`) déclenche server-side la création d'une **cible barbare narrative** : un village barbare T1 d'`originKind` `ONBOARDING_NARRATIVE`, posé dans le rayon de vision de la Watchtower. Ses caractéristiques sont fixes :
 
-- Garnison : **5 MILICE** (battables avec les `ONBOARDING_TRAIN_TROOPS_TARGET = 5` miliciens fraîchement entraînés).
+- Garnison : **3 MILICE** (battables avec les `ONBOARDING_TRAIN_TROOPS_TARGET = 5` miliciens fraîchement entraînés ; la formule combat exige `attaque > défense`).
 - Loot : stock initial réduit à **≈ 40 % du cap T1** (au lieu du roll standard 30-100 %).
 
 L'idempotence est portée par `OnboardingState.narrativeTargetVillageId` (FK unique vers `Village`, SET NULL à la destruction) : un rejoin ou un replay d'Outbox ne crée pas de doublon. L'id de cette cible est exposé dans `GET /onboarding` (`narrativeTargetVillageId`) pour la guidance frontend.

@@ -1,6 +1,7 @@
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { BUILDING_DEFINITIONS, BUILDING_TYPES, type BuildingType } from '@battleforthecrown/shared/village/buildings';
 import { RESOURCE_PRODUCTION_PER_HOUR } from '@battleforthecrown/shared/resources';
+import { getOnboardingNarrativeLoot } from '@battleforthecrown/shared/onboarding';
 import { Button } from '@/ui/buttons/Button';
 import { VictoryModal } from '@/ui/modals/VictoryModal';
 import { cn } from '@/lib/cn';
@@ -966,18 +967,27 @@ const multiVillageFixture: MultiVillageItem[] = [
   },
 ];
 
+const onboardingNarrativeLoot = getOnboardingNarrativeLoot('T1');
+
 const onboardingPreviewStep = {
-  body: 'Entraîne 5 miliciens paysans depuis l’écran Armée.',
+  body: 'Construis une Tour de guet pour révéler une cible barbare proche.',
   closeLabel: 'Fermer',
-  ctaLabel: 'Former',
-  imageAlt: 'Former la milice',
-  imageBadgeLabel: 'x5',
-  imageSrc: '/assets/army/militia.png',
-  modalLabel: 'TUTORIEL · Étape 3/6',
-  pillLabel: 'Tutoriel · 3/6',
+  ctaLabel: 'Voir les bâtiments',
+  imageAlt: 'Élever la Tour de guet',
+  imageSrc: '/assets/watchtower.png',
+  lootPreview: {
+    label: 'Butin à récupérer',
+    items: [
+      { icon: '/assets/resources/wood.png', value: String(onboardingNarrativeLoot.wood) },
+      { icon: '/assets/resources/stone.png', value: String(onboardingNarrativeLoot.stone) },
+      { icon: '/assets/resources/iron.png', value: String(onboardingNarrativeLoot.iron) },
+    ],
+  },
+  modalLabel: 'TUTORIEL · Étape 5/6',
+  pillLabel: 'Tutoriel · 5/6',
   secondaryLabel: 'Plus tard',
-  step: 3,
-  title: 'Former la milice',
+  step: 5,
+  title: 'Élever la Tour de guet',
   total: 6,
 };
 

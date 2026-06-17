@@ -241,15 +241,15 @@ describe('scripted onboarding smoke', () => {
       where: { id: narrativeTargetId },
       include: { unitInventory: true },
     });
-    // Spec : weak T1 narrative target, fixed garnison of 5 militia (5 newly
-    // trained militiamen must win), placed within Watchtower L1 reach.
+    // Spec : weak T1 narrative target, fixed garnison of 3 militia (5 freshly
+    // trained militiamen must win via combat attack > defense).
     expect(narrativeTarget.originKind).toBe('ONBOARDING_NARRATIVE');
     expect(narrativeTarget.tier).toBe('T1');
     expect(narrativeTarget.isBarbarian).toBe(true);
     const militia = narrativeTarget.unitInventory.find(
       (u) => u.unitType === UNIT_TYPES.MILITIA,
     );
-    expect(militia?.quantity).toBe(ONBOARDING_TRAIN_TROOPS_TARGET);
+    expect(militia?.quantity).toBe(3);
     const distanceToAnchor = Math.hypot(
       narrativeTarget.x - join.village.x,
       narrativeTarget.y - join.village.y,
