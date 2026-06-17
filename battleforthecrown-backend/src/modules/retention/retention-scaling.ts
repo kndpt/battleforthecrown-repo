@@ -1,5 +1,6 @@
 import type { DailyCardTaskType } from '@prisma/client';
 import { RESOURCE_PRODUCTION_PER_HOUR } from '@battleforthecrown/shared/resources';
+import { clampBuildingLevel } from '@battleforthecrown/shared/utils';
 
 export type BarbarianTier = 'T1' | 'T2' | 'T3' | 'T4' | 'T5';
 
@@ -23,8 +24,6 @@ export interface DailyCardScaling {
   tasks: ScaledTaskTemplate[];
 }
 
-const MIN_CASTLE_LEVEL = 1;
-const MAX_CASTLE_LEVEL = 10;
 const DAILY_REWARD_CAP_RATIO = 0.12;
 const REWARD_WEIGHT_TOTAL = 4;
 
@@ -42,7 +41,7 @@ const BAND_TASKS: Record<number, ScaledTaskTemplate[]> = {
 };
 
 export function getDailyCardScaling(castleLevel: number): DailyCardScaling {
-  const band = clampCastleLevel(castleLevel);
+  const band = clampBuildingLevel(castleLevel);
   const rewardCapPerResource = getRewardCapPerResource(band);
   const tasks = BAND_TASKS[band];
   const weightedReward = tasks.reduce(
@@ -66,16 +65,8 @@ export function getDailyCardScaling(castleLevel: number): DailyCardScaling {
   };
 }
 
-export function clampCastleLevel(level: number): number {
-  if (!Number.isFinite(level)) return MIN_CASTLE_LEVEL;
-  return Math.min(
-    MAX_CASTLE_LEVEL,
-    Math.max(MIN_CASTLE_LEVEL, Math.floor(level)),
-  );
-}
-
 export function getRewardCapPerResource(castleLevel: number): number {
-  const band = clampCastleLevel(castleLevel);
+  const band = clampBuildingLevel(castleLevel);
   const hourlyProduction = RESOURCE_PRODUCTION_PER_HOUR[band];
   return Math.round(hourlyProduction * 24 * DAILY_REWARD_CAP_RATIO);
 }

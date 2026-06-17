@@ -1,6 +1,6 @@
 # maint-debt — candidats (réécrit chaque run)
 
-last: 2026-06-16 | archive: `archive/maint-debt/2026-06-15-full.md`
+last: 2026-06-17 | archive: `archive/maint-debt/2026-06-15-full.md`
 branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 ## candidate
@@ -12,12 +12,14 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | pixi QueueBottomSheet formatTime | clock-style mm:ss vs formatRemaining human labels — keep local until product aligns village queue display |
 | shared/world/entities.ts isFoggedEntity | type guard used by world map — no direct unit spec |
 | shared/village/strategy.ts getVillageStrategyPlan | constant plan accessor — low value unless plan becomes configurable |
+| pixi combatHelpers wrappers | 1:1 wrappers over shared travel/distance fns — remove indirection, update 8+ callers |
+| shared typedKeys dead export | exported but zero importers — remove |
 
 ## done (this run)
 
 | area | PR |
 |------|-----|
-| packages/shared dead exports — RESOURCE_BUILDING_PRODUCTION_RATES, WAREHOUSE_STORAGE_LIMITS, CARAVAN_CAPACITY_SHARE unexported; ResourcesConfig deleted | `#127` |
+| retention-scaling clampCastleLevel duplicate — replaced with shared clampBuildingLevel | pending |
 
 ## rules
 
