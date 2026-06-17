@@ -10,6 +10,7 @@ import {
 } from './event-outbox-prefetch';
 import { RetentionService } from '../retention/retention.service';
 import { OnboardingService } from '../onboarding/onboarding.service';
+import { OnboardingNarrativeTargetService } from '../world/onboarding-narrative-target.service';
 import {
   planNotifications,
   type NotificationPlannerDeps,
@@ -33,6 +34,7 @@ export class EventOutboxService {
     private readonly gateway: GameGateway,
     private readonly retention: RetentionService,
     private readonly onboarding: OnboardingService,
+    private readonly onboardingNarrativeTarget: OnboardingNarrativeTargetService,
   ) {}
 
   async dispatchPendingEvents(): Promise<void> {
@@ -108,6 +110,17 @@ export class EventOutboxService {
       event.createdAt,
     );
     await this.onboarding.recordOutboxEvent(event.id, event.kind, payload);
+    // Narrative target creation is a side-effect, not an invariant of dispatch.
+    // Swallow errors so a transient failure does not stall the WS gateway nor
+    // hot-loop on the same Outbox row at the next poll.
+    try {
+      await this.onboardingNarrativeTarget.handleEvent(event.kind, payload);
+    } catch (error) {
+      this.logger.error(
+        `OnboardingNarrativeTargetService.handleEvent failed for event ${event.id}: ${(error as Error).message}`,
+      );
+    }
+
     await this.emitToRecipients(event.kind, payload, villageUserIdCache);
   }
 

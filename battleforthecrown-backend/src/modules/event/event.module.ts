@@ -7,6 +7,7 @@ import { OutboxPublisher } from './outbox-publisher.service';
 import { ResourcesModule } from '../resources/resources.module';
 import { RetentionModule } from '../retention/retention.module';
 import { OnboardingModule } from '../onboarding/onboarding.module';
+import { WorldModule } from '../world/world.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { OnboardingModule } from '../onboarding/onboarding.module';
     ResourcesModule,
     RetentionModule,
     OnboardingModule,
+    WorldModule,
   ],
   providers: [GameGateway, EventOutboxService, OutboxPublisher],
   exports: [GameGateway, EventOutboxService, OutboxPublisher],

@@ -65,6 +65,7 @@ describe('getOnboardingProjection', () => {
         villageName: 'Home',
         targetKind: 'BARBARIAN_VILLAGE',
         targetName: 'Barbares',
+        targetOriginKind: 'ONBOARDING_NARRATIVE',
         targetX: 1,
         targetY: 2,
         isVictory: true,
@@ -105,6 +106,73 @@ describe('getOnboardingProjection', () => {
       }),
     ).toBeNull();
   });
+
+  // Run 054 — keep ATTACK_BARBARIAN from completing on victories against
+  // standard T1 villages (which are real adversaries) or on defeats.
+  it('ignores victories on non-narrative barbarian villages', () => {
+    expect(
+      getOnboardingProjection('battle.resolved', {
+        expeditionId: 'battle',
+        reportId: 'report',
+        villageId: 'v1',
+        villageName: 'Home',
+        targetKind: 'BARBARIAN_VILLAGE',
+        targetName: 'Standard T1',
+        targetOriginKind: 'STANDARD',
+        targetX: 1,
+        targetY: 2,
+        isVictory: true,
+        loot: { resources: { wood: 0, stone: 0, iron: 0 } },
+        lossesAttacker: {},
+        casualtyRate: 0,
+        survivingUnits: {},
+        returnAt: null,
+      }),
+    ).toBeNull();
+  });
+
+  it('ignores victories on barbarian villages without an originKind hint', () => {
+    expect(
+      getOnboardingProjection('battle.resolved', {
+        expeditionId: 'battle',
+        reportId: 'report',
+        villageId: 'v1',
+        villageName: 'Home',
+        targetKind: 'BARBARIAN_VILLAGE',
+        targetName: 'Legacy report',
+        targetX: 1,
+        targetY: 2,
+        isVictory: true,
+        loot: { resources: { wood: 0, stone: 0, iron: 0 } },
+        lossesAttacker: {},
+        casualtyRate: 0,
+        survivingUnits: {},
+        returnAt: null,
+      }),
+    ).toBeNull();
+  });
+
+  it('ignores defeats on the narrative target', () => {
+    expect(
+      getOnboardingProjection('battle.resolved', {
+        expeditionId: 'battle',
+        reportId: 'report',
+        villageId: 'v1',
+        villageName: 'Home',
+        targetKind: 'BARBARIAN_VILLAGE',
+        targetName: 'Narrative',
+        targetOriginKind: 'ONBOARDING_NARRATIVE',
+        targetX: 1,
+        targetY: 2,
+        isVictory: false,
+        loot: { resources: { wood: 0, stone: 0, iron: 0 } },
+        lossesAttacker: {},
+        casualtyRate: 0,
+        survivingUnits: {},
+        returnAt: null,
+      }),
+    ).toBeNull();
+  });
 });
 
 describe('getNextStep', () => {
@@ -130,6 +198,7 @@ describe('mapOnboardingState', () => {
       mapOnboardingState({
         worldId: 'w1',
         firstVillageId: 'v1',
+        narrativeTargetVillageId: 'narrative-1',
         status: 'ACTIVE',
         currentStep: 'BUILD_BARRACKS',
         initialRewardApplied: true,
@@ -140,6 +209,7 @@ describe('mapOnboardingState', () => {
     ).toEqual({
       worldId: 'w1',
       firstVillageId: 'v1',
+      narrativeTargetVillageId: 'narrative-1',
       status: 'ACTIVE',
       currentStep: 'BUILD_BARRACKS',
       completedSteps: [
@@ -159,6 +229,7 @@ describe('mapOnboardingState', () => {
       mapOnboardingState({
         worldId: 'w1',
         firstVillageId: 'v1',
+        narrativeTargetVillageId: null,
         status: 'COMPLETED',
         currentStep: 'ATTACK_BARBARIAN',
         initialRewardApplied: true,

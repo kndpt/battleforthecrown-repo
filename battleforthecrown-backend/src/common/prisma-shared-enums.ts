@@ -6,6 +6,7 @@ import type {
   OnboardingStep as PrismaOnboardingStep,
   ReinforcementReportType as PrismaReinforcementReportType,
   TargetKind as PrismaTargetKind,
+  VillageOriginKind as PrismaVillageOriginKind,
   VillageStrategy as PrismaVillageStrategy,
 } from '@prisma/client';
 import type {
@@ -15,7 +16,10 @@ import type {
   ReinforcementReportType,
   TargetKind,
 } from '@battleforthecrown/shared/combat';
-import type { VillageStrategyType } from '@battleforthecrown/shared/village';
+import type {
+  VillageOriginKind,
+  VillageStrategyType,
+} from '@battleforthecrown/shared/village';
 import type {
   OnboardingStatus,
   OnboardingStep,
@@ -115,6 +119,21 @@ export const _villageStrategyToPrisma: Record<
   RAIDERS: 'RAIDERS',
   ECONOMIC: 'ECONOMIC',
   BALANCED: 'BALANCED',
+};
+
+export const _villageOriginKindFromPrisma: Record<
+  PrismaVillageOriginKind,
+  VillageOriginKind
+> = {
+  STANDARD: 'STANDARD',
+  ONBOARDING_NARRATIVE: 'ONBOARDING_NARRATIVE',
+};
+export const _villageOriginKindToPrisma: Record<
+  VillageOriginKind,
+  PrismaVillageOriginKind
+> = {
+  STANDARD: 'STANDARD',
+  ONBOARDING_NARRATIVE: 'ONBOARDING_NARRATIVE',
 };
 
 export const _onboardingStatusFromPrisma: Record<

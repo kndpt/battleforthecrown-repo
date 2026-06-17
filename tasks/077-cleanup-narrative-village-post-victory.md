@@ -1,7 +1,7 @@
 # 077 — Cleanup village narrative onboarding post-victoire
 
 **Sévérité** : 🟠 Moyen
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ Fait
 **Spec amont** : [`docs/gameplay/15-onboarding.md`](../docs/gameplay/15-onboarding.md)
 
 ## Symptome
@@ -49,9 +49,9 @@ Point d'insertion : dans `reconcileStateFromFacts()` (`onboarding.service.ts` L2
 
 ## Criteres de succes
 
-- [ ] Village `ONBOARDING_NARRATIVE` supprime de la table `Village` apres completion `ATTACK_BARBARIAN` (test unitaire)
-- [ ] `narrativeTargetVillageId` null apres completion (test unitaire)
-- [ ] Donnees liees supprimees en cascade (test unitaire)
-- [ ] Case de grille liberee (test unitaire / smoke)
-- [ ] Aucune regression sur le flow onboarding complet (smoke existant)
+- [x] Village `ONBOARDING_NARRATIVE` supprime de la table `Village` apres completion `ATTACK_BARBARIAN` (smoke)
+- [x] `narrativeTargetVillageId` null apres completion (smoke)
+- [x] Donnees liees supprimees en cascade (smoke)
+- [x] Case de grille liberee (smoke)
+- [x] Aucune regression sur le flow onboarding complet (smoke existant)
 - [ ] Frontend : village disparait de la carte (checklist QA IG)
