@@ -276,52 +276,40 @@ async function hasVictoriousBarbarianAttack(
   tx: Tx,
   villageId: string,
 ): Promise<boolean> {
-  // Only victories against the onboarding narrative target complete the step.
-  // Defeats fail `isVictoryForAttacker`, and victories against STANDARD T1
-  // villages are filtered out by the originKind check — keeping the global
-  // barbarian pool as real adversaries (cf. run 054, spec 15-onboarding §
-  // Déclencheurs runtime).
-  //
-  // CombatReport.defenderVillageId is null for BARBARIAN_VILLAGE targets
-  // (cf. combat.worker.ts), so we cannot join on it. We resolve narrative
-  // defenders via (worldId, targetX, targetY) — that triple is unique on
-  // Village via @@unique([worldId, x, y]).
+  // Resolve the player's own narrative target via OnboardingState.
+  // This scopes the check to THIS player's target — not any ONBOARDING_NARRATIVE
+  // village in the world (which would let Player A complete by attacking Player B's target).
+  const state = await tx.onboardingState.findFirst({
+    where: { firstVillageId: villageId },
+    select: { narrativeTargetVillageId: true },
+  });
+  if (!state?.narrativeTargetVillageId) return false;
+
+  const target = await tx.village.findUnique({
+    where: { id: state.narrativeTargetVillageId },
+    select: { worldId: true, x: true, y: true },
+  });
+  if (!target) return false;
+
+  const { worldId, x, y } = target;
+
   const reports = await tx.combatReport.findMany({
     where: {
       attackerVillageId: villageId,
       targetKind: 'BARBARIAN_VILLAGE',
+      worldId,
+      targetX: x,
+      targetY: y,
     },
-    select: {
-      worldId: true,
-      targetX: true,
-      targetY: true,
-      totalUnitsAttacker: true,
-      lossesAttacker: true,
-    },
+    select: { totalUnitsAttacker: true, lossesAttacker: true },
     orderBy: { createdAt: 'desc' },
     take: 10,
   });
 
-  const victorious = reports.filter((report) =>
+  return reports.some((report) =>
     isVictoryForAttacker(
       report.lossesAttacker as UnitMap,
       report.totalUnitsAttacker as UnitMap,
     ),
   );
-  if (victorious.length === 0) return false;
-
-  const narrativeTargets = await tx.village.findMany({
-    where: {
-      originKind: 'ONBOARDING_NARRATIVE',
-      isBarbarian: true,
-      OR: victorious.map((report) => ({
-        worldId: report.worldId,
-        x: report.targetX,
-        y: report.targetY,
-      })),
-    },
-    select: { worldId: true, x: true, y: true },
-  });
-
-  return narrativeTargets.length > 0;
 }
