@@ -31,7 +31,7 @@ Les choix structurants (stack, Outbox, reconciliation Pixi, optimistic UI, etc.)
 
 ## Filet automatisé
 
-Hook `pre-push` (husky) léger : `yarn static-check` + unit backend + unit pixi (~10-15 s). Les smokes sont portés par le skill `/run` en fin de tâche, pas par le hook. Détail, motivation et bypass : [`docs/architecture/local-ci.md`](./docs/architecture/local-ci.md).
+Hook `pre-push` (husky) léger : skip si push doc-only ; sinon `yarn static-check` + unit backend + unit pixi (~10-15 s). Les smokes sont portés par le skill `/run` en fin de tâche, pas par le hook. Détail, motivation et bypass : [`docs/architecture/local-ci.md`](./docs/architecture/local-ci.md).
 
 ## Notes pour les agents
 

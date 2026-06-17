@@ -10,7 +10,9 @@ Le projet est solo + agent IA. Le filet anti-régression est réparti en trois c
 
 ## TL;DR
 
-À chaque `git push`, husky lance :
+À chaque `git push`, husky inspecte d'abord les fichiers du push. Si **aucun fichier code impacté** n'est touché (doc seule, `tasks/`, `.agents/`, design system, configs outil, etc.), le hook skip la suite et le push part immédiatement.
+
+Sinon, husky lance :
 
 ```
 yarn static-check  → tsc --noEmit + eslint --quiet (backend + pixi)   (~5-10 s)
@@ -18,6 +20,8 @@ yarn test:backend  → Jest unit pure-logic                              (~1 s)
 yarn test:pixi     → Vitest jsdom                                      (~3 s)
                                                                 total ~10-15 s
 ```
+
+Fichiers qui **déclenchent** le hook : tout sous `battleforthecrown-backend/`, `battleforthecrown-pixi/`, `packages/` (hors `*.md` / `*.txt`), plus `package.json`, `yarn.lock` et `tsconfig*.json` à la racine ou dans un workspace.
 
 Si une étape échoue, le push est bloqué. Les **smokes ne tournent pas** dans le hook. En local, `/run` lance les smokes ciblés par impact backend ; la CI PR lance la suite smoke complète.
 
