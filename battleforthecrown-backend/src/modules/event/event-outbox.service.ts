@@ -25,6 +25,7 @@ import {
   type ScoutReturnedPayload,
   type VillageAttackedPayload,
   type VillageConqueredPayload,
+  type VillageRemovedPayload,
   type VillageCaptureWindowOpenedPayload,
   type VillageCaptureWindowCompletedPayload,
   type VillageCaptureWindowInterruptedPayload,
@@ -213,6 +214,9 @@ export class EventOutboxService {
         break;
       case 'village.conquered':
         this.notifyVillageConquered(payload as VillageConqueredPayload);
+        break;
+      case 'village.removed':
+        this.notifyVillageRemoved(payload as VillageRemovedPayload);
         break;
       case 'village.capture-window-opened':
         await this.notifyVillageCaptureWindowOpened(
@@ -598,6 +602,10 @@ export class EventOutboxService {
         payloadForClient,
       );
     }
+  }
+
+  private notifyVillageRemoved(payload: VillageRemovedPayload) {
+    this.gateway.notifyWorld(payload.worldId, 'village.removed', payload);
   }
 
   private async notifyVillageCaptureWindowOpened(

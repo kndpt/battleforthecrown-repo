@@ -308,6 +308,7 @@ describe('scripted onboarding smoke', () => {
     const body = completedSummary.body as OnboardingSummaryDto;
     expect(body.status).toBe('COMPLETED');
     expect(body.currentStep).toBeNull();
+    expect(body.narrativeTargetVillageId).toBeNull();
     expect(body.completedSteps.map((step) => step.step)).toEqual([
       'UPGRADE_CASTLE_LEVEL_2',
       'BUILD_BARRACKS',
@@ -316,6 +317,46 @@ describe('scripted onboarding smoke', () => {
       'BUILD_WATCHTOWER',
       'ATTACK_BARBARIAN',
     ]);
+
+    const completedState = await ctx.prisma.onboardingState.findUniqueOrThrow({
+      where: {
+        userId_worldId: { userId: player.userId, worldId: world.id },
+      },
+      select: { narrativeTargetVillageId: true },
+    });
+    expect(completedState.narrativeTargetVillageId).toBeNull();
+    expect(
+      await ctx.prisma.village.findUnique({ where: { id: narrativeTargetId } }),
+    ).toBeNull();
+    expect(
+      await ctx.prisma.building.count({
+        where: { villageId: narrativeTargetId },
+      }),
+    ).toBe(0);
+    expect(
+      await ctx.prisma.resourceStock.count({
+        where: { villageId: narrativeTargetId },
+      }),
+    ).toBe(0);
+    expect(
+      await ctx.prisma.unitInventory.count({
+        where: { villageId: narrativeTargetId },
+      }),
+    ).toBe(0);
+    expect(
+      await ctx.prisma.village.count({
+        where: {
+          worldId: world.id,
+          x: narrativeTarget.x,
+          y: narrativeTarget.y,
+        },
+      }),
+    ).toBe(0);
+    expect(
+      await ctx.prisma.eventOutbox.findFirst({
+        where: { kind: 'village.removed', aggregateId: narrativeTargetId },
+      }),
+    ).not.toBeNull();
 
     const dailyCard = await ctx.prisma.dailyCard.findFirstOrThrow({
       where: { userId: player.userId, worldId: world.id },
@@ -417,7 +458,7 @@ describe('scripted onboarding smoke', () => {
     const body = summary.body as OnboardingSummaryDto;
     expect(body.status).toBe('COMPLETED');
     expect(body.currentStep).toBeNull();
-    expect(body.narrativeTargetVillageId).toBe(narrativeTargetId);
+    expect(body.narrativeTargetVillageId).toBeNull();
     expect(body.completedSteps.map((step) => step.step)).toEqual([
       'UPGRADE_CASTLE_LEVEL_2',
       'BUILD_BARRACKS',
@@ -426,6 +467,9 @@ describe('scripted onboarding smoke', () => {
       'BUILD_WATCHTOWER',
       'ATTACK_BARBARIAN',
     ]);
+    expect(
+      await ctx.prisma.village.findUnique({ where: { id: narrativeTargetId } }),
+    ).toBeNull();
   });
 
   // Run 054 — a victory on a STANDARD T1 barbarian must NOT complete

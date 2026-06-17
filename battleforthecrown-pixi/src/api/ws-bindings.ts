@@ -21,6 +21,7 @@ import type {
   VillageCaptureWindowInterruptedPayload,
   VillageCaptureWindowOpenedPayload,
   VillageConqueredPayload,
+  VillageRemovedPayload,
   WorldStatusChangedPayload,
 } from './ws-types';
 import { useResourcesStore } from '@/stores/resources';
@@ -621,6 +622,12 @@ export function applyVillageConquered(payload: VillageConqueredPayload, ctx: Bin
   }
 }
 
+export function applyVillageRemoved(payload: VillageRemovedPayload, ctx: BindingsContext): void {
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.worldEntities(payload.worldId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.worldEntitiesPrefix() });
+  useWorldMapStore.getState().removeEntity(payload.villageId);
+}
+
 export function applyVillageCaptureWindowOpened(
   payload: VillageCaptureWindowOpenedPayload,
   ctx: BindingsContext,
@@ -788,6 +795,7 @@ const bindings: ServerEventBindings = {
   'garrison.added': applyGarrisonAdded,
   'village.attacked': applyVillageAttacked,
   'village.conquered': applyVillageConquered,
+  'village.removed': applyVillageRemoved,
   'village.capture-window-opened': applyVillageCaptureWindowOpened,
   'village.capture-window-completed': applyVillageCaptureWindowCompleted,
   'village.capture-window-interrupted': applyVillageCaptureWindowInterrupted,
