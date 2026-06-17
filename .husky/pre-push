@@ -1,4 +1,6 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
+# husky 9 invokes hooks via `sh -e`; re-exec with bash for process substitution and pipefail
+[ -z "$BASH_VERSION" ] && exec bash "$0" "$@"
 set -euo pipefail
 
 zero="0000000000000000000000000000000000000000"
