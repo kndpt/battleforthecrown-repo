@@ -170,6 +170,28 @@
         "tasks/00-mvp-roadmap.md:142 — Phase 12 'Ajouts mineurs MVP' liste 20-defensive-friends.md comme candidat MVP, non livré"
       ],
       "addedAt": "2026-06-16"
+    },
+    {
+      "specPath": "docs/gameplay/19-world-lifecycle.md",
+      "slug": "world-ended-archive-wipe",
+      "title": "World ENDED → Archive — wipe destructeur + 7j de lecture seule (Phase 11)",
+      "keywords": ["world-lifecycle", "archive", "wipe", "purge", "phase-11", "ended"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/065-feature-world-ended-archive-wipe.md",
+      "artefactId": "065",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/world-ended-archive-wipe",
+      "gapSummary": "La spec 19-world-lifecycle.md § Wipe et récompenses fin de monde + § LOCKED→ENDED tranchent MVP : à endsAt+7j, le royaume du joueur (villages, bâtiments, armée, ressources, couronnes) doit être purgé, le monde rendu inaccessible depuis l'UI, mais les rapports et le snapshot leaderboard conservés pour stats globales. Le run 061 livre la transition LOCKED→ENDED + lecture seule + snapshot mais déclare explicitement le wipe destructeur hors scope (« partie Mode lecture seule uniquement »). Conséquence : la table World n'a pas de status ARCHIVED, aucune logique de purge n'existe, le WorldLifecycleWorker ne fait que 3 axes (open/lock/end) sans archive, et un monde ENDED reste consultable indéfiniment au lieu d'être purgé après 7 j.",
+      "codeEvidence": [
+        "battleforthecrown-backend/prisma/schema.prisma — enum WorldStatus { PLANNED, OPEN, LOCKED, ENDED } sans ARCHIVED, pas de colonne archivedAt sur world",
+        "battleforthecrown-backend/src/workers/world-lifecycle.worker.ts:47-63 handleLifecycleTick — 3 axes seulement (openPlannedWorlds, lockExpiredRegistrationWindows, endExpiredWorlds), aucun archiveEndedWorlds",
+        "battleforthecrown-backend/src — aucune occurrence de wipe / archive / purge hors une mention isolée dans onboarding-narrative-target.service.ts (cas FK SET NULL, sans rapport)",
+        "tasks/runs/061-feature-world-ended-lifecycle.md:11 — explicite « partie Mode lecture seule uniquement (wipe destructeur hors scope) »",
+        "tasks/runs/061-feature-world-ended-lifecycle.md:68 — explicite « UI front Monde terminé + run wipe destructeur endsAt+7j » comme runs successeurs",
+        "packages/shared/src/world/schemas.ts — WorldLifecycleSchema n'expose pas archiveAfterDays (default 7 attendu par la spec)",
+        "tasks/00-mvp-roadmap.md:134 — Phase 11 livrable « snapshot leaderboard à ENDED + wipe + récompenses cosmétiques permanentes » non livré côté wipe"
+      ],
+      "addedAt": "2026-06-17"
     }
   ]
 }
