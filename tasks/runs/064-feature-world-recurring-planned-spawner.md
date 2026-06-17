@@ -30,8 +30,8 @@
 - [ ] Idempotence : deux ticks rapprochés ne créent jamais deux mondes `PLANNED` simultanés. Le check `count(status=PLANNED) === 0` reste l'invariant primaire.
 - [ ] Concurrence multi-instance : la création est protégée par un guard atomique (advisory lock pg-boss ou `INSERT ... ON CONFLICT` sur une clé déterministe `world.name`/`displayOrder`). Pattern tranché à l'étape 1.
 - [ ] Pas de création si le système est saturé en mondes `OPEN | LOCKED | PLANNED` au-delà d'un seuil de sécurité (proposition : `< 50` mondes actifs). Garde-fou souple pour éviter de noyer la liste publique en cas de bug.
-- [ ] Event Outbox `world.planned.created` émis dans la même transaction Prisma que la création, payload `{ worldId, plannedOpenAt, source: 'auto' | 'manual' }`.
-- [ ] La création **manuelle** (admin / seed) reste possible et n'est jamais bloquée par ce worker — le worker ne fait que combler le trou si la cadence n'a pas été honorée à la main.
+- [ ] Event Outbox `world.planned.created` émis dans la même transaction Prisma que la création par le worker, payload `{ worldId, plannedOpenAt, source: 'auto' }`. La constante `source` est un littéral aujourd'hui — l'extension à `'manual'` (côté seed / admin) est explicitement hors scope de ce run pour éviter une union morte (cf. § Hors scope).
+- [ ] La création **manuelle** (admin / seed) reste possible et n'est jamais bloquée par ce worker — le worker ne fait que combler le trou si la cadence n'a pas été honorée à la main. Le seed/admin n'émet **pas** `world.planned.created` au MVP (statu quo : aucun outbox event sur le chemin manuel aujourd'hui).
 - [ ] Smoke backend : seed un monde déjà en `OPEN` avec `startedAt = now - 8j` et aucun `PLANNED` → après tick worker : un monde `PLANNED` apparaît avec `plannedOpenAt` ≤ `now`, le tick suivant le passe en `OPEN` ; second tick rapproché ne crée pas de doublon. Cas bootstrap : DB vide → tick crée 1 seul monde `PLANNED`.
 - [ ] Unit pure-logic (Vitest, ≥ 2) sur le calcul `nextPlannedOpenAt(lastStartedAt, newWorldEverydays, now)` : cadence respectée, retard rattrapé sans accumulation (un seul monde même si retard de plusieurs cadences), bootstrap renvoie `now`.
 - [ ] `GET /worlds/public` continue d'exposer le nouveau monde `PLANNED` sans changement de contrat DTO.
@@ -66,6 +66,7 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 ## Hors scope explicite
 
 - UI admin pour piloter manuellement la cadence ou désactiver le spawner — pas de cas d'usage MVP, manipulation directe DB suffit.
+- Émission de `world.planned.created` avec `source: 'manual'` sur le chemin seed / admin — tant qu'aucun consommateur downstream n'en a besoin, on garde la payload littérale `'auto'`. Si un futur run ajoute un consommateur (ex : notification admin de nouveau monde), il ajoutera le `'manual'` et son chemin d'émission dans son propre scope.
 - Notification serveur aux joueurs « un nouveau monde s'ouvre dans X jours » — relève de la spec `16-notifications.md` (encore en chantier).
 - Wipe destructeur à `endsAt + 7j` — run successeur dédié (déjà signalé hors scope dans run 061).
 - Modification du contrat `GET /worlds/public` ou de la sélection UI front — ce run garantit uniquement que la donnée existe en DB.
