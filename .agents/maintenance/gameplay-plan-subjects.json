@@ -170,6 +170,27 @@
         "tasks/00-mvp-roadmap.md:142 — Phase 12 'Ajouts mineurs MVP' liste 20-defensive-friends.md comme candidat MVP, non livré"
       ],
       "addedAt": "2026-06-16"
+    },
+    {
+      "specPath": "docs/gameplay/19-world-lifecycle.md",
+      "slug": "world-recurring-planned-spawner",
+      "title": "Création récurrente de mondes PLANNED — cadence newWorldEverydays (Phase 11)",
+      "keywords": ["world-lifecycle", "world-spawner", "planned", "recurring", "newWorldEverydays", "multi-monde", "cadence"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/064-feature-world-recurring-planned-spawner.md",
+      "artefactId": "064",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/world-recurring-planned-spawner",
+      "gapSummary": "La spec 19-world-lifecycle.md § Paramètres MVP tranche MVP la cadence 'newWorldEverydays = 7' avec la promesse 'Un nouveau monde PLANNED → OPEN toutes les ~7 j pour qu'un latecomer trouve toujours un monde frais à rejoindre'. Le run 032 a livré le paramètre dans WorldConfig mais a explicitement reporté son worker ('doc seulement, pas de worker MVP'). Côté code : WorldLifecycleWorker ne fait que transitionner les mondes existants (PLANNED→OPEN, OPEN→LOCKED, LOCKED→ENDED), aucun chemin ne crée jamais un nouveau monde PLANNED automatiquement. Conséquence : sans seed manuel régulier, la liste publique se vide à mesure que les mondes basculent en LOCKED et un latecomer ne trouve plus rien à rejoindre.",
+      "codeEvidence": [
+        "battleforthecrown-backend/src/workers/world-lifecycle.worker.ts:47-63 handleLifecycleTick — trois axes seulement (openPlannedWorlds, lockExpiredRegistrationWindows, endExpiredWorlds), aucun axe ensurePlannedPipeline",
+        "battleforthecrown-backend/src/workers/world-lifecycle.worker.ts:65-86 openPlannedWorlds — ne crée jamais, elle attend qu'un PLANNED existe déjà via plannedOpenAt en base",
+        "battleforthecrown-backend/src/modules/world/world.service.ts — aucune méthode createWorld/spawnWorld appelée par un worker, seules les transitions sont pilotées",
+        "packages/shared/src/world/schemas.ts:23,37 — newWorldEverydays default 7 défini, mais lu uniquement à la lecture de WorldConfig (jamais consommé pour planifier une création)",
+        "tasks/runs/archive/032-world-lifecycle-foundation-and-identity.md:47 — explicite 'newWorldEverydays (default 7, doc seulement, pas de worker MVP)' — ce run est le ticket de couverture",
+        "tasks/00-mvp-roadmap.md — Phase 11 lifecycle ne mentionne pas de livrable spawner récurrent, dette implicite tracée dans la spec 19"
+      ],
+      "addedAt": "2026-06-17"
     }
   ]
 }
