@@ -53,6 +53,43 @@ function notifyReportDeleteError(err: unknown, fallback: string) {
   });
 }
 
+function useReportLifecycle({
+  reportId,
+  isRead,
+  markRead,
+  deleteAsync,
+  onClose,
+  deleteErrorLabel,
+}: {
+  reportId: string;
+  isRead: boolean | undefined;
+  markRead: (args: { reportId: string }) => void;
+  deleteAsync: (args: { reportId: string }) => Promise<unknown>;
+  onClose: () => void;
+  deleteErrorLabel: string;
+}) {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    if (isRead !== false) return;
+    markRead({ reportId });
+  }, [isRead, reportId, markRead]);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteAsync({ reportId });
+      onClose();
+    } catch (err) {
+      notifyReportDeleteError(err, deleteErrorLabel);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return { isDeleting, handleDelete };
+}
+
 function ReportModalFooter({
   deleteLabel,
   disabled,
@@ -96,25 +133,15 @@ function ScoutReportDetail({
 }) {
   const report = useScoutReportQuery(reportId);
   const { mutate: markRead } = useMarkScoutReportReadMutation();
-  const { mutateAsync: deleteReport } = useDeleteScoutReportMutation();
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    if (!report.data || report.data.isRead) return;
-    markRead({ reportId });
-  }, [report.data, reportId, markRead]);
-
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    try {
-      await deleteReport({ reportId });
-      onClose();
-    } catch (err) {
-      notifyReportDeleteError(err, 'Échec de la suppression du rapport scout');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+  const { mutateAsync: deleteAsync } = useDeleteScoutReportMutation();
+  const { isDeleting, handleDelete } = useReportLifecycle({
+    reportId,
+    isRead: report.data?.isRead,
+    markRead,
+    deleteAsync,
+    onClose,
+    deleteErrorLabel: 'Échec de la suppression du rapport scout',
+  });
 
   return (
     <ModalBackdrop onClose={onClose}>
@@ -236,25 +263,15 @@ function CaravanReportDetail({
 }) {
   const report = useCaravanReportQuery(reportId);
   const { mutate: markRead } = useMarkCaravanReportReadMutation();
-  const { mutateAsync: deleteReport } = useDeleteCaravanReportMutation();
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    if (!report.data || report.data.isRead) return;
-    markRead({ reportId });
-  }, [report.data, reportId, markRead]);
-
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    try {
-      await deleteReport({ reportId });
-      onClose();
-    } catch (err) {
-      notifyReportDeleteError(err, 'Échec de la suppression du rapport de caravane');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+  const { mutateAsync: deleteAsync } = useDeleteCaravanReportMutation();
+  const { isDeleting, handleDelete } = useReportLifecycle({
+    reportId,
+    isRead: report.data?.isRead,
+    markRead,
+    deleteAsync,
+    onClose,
+    deleteErrorLabel: 'Échec de la suppression du rapport de caravane',
+  });
 
   const data = report.data;
   const originVillage = data ? caravanReportOriginVillage(data) : null;
@@ -373,25 +390,15 @@ function ReinforcementReportDetail({
 }) {
   const report = useReinforcementReportQuery(reportId);
   const { mutate: markRead } = useMarkReinforcementReportReadMutation();
-  const { mutateAsync: deleteReport } = useDeleteReinforcementReportMutation();
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    if (!report.data || report.data.isRead) return;
-    markRead({ reportId });
-  }, [report.data, reportId, markRead]);
-
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    try {
-      await deleteReport({ reportId });
-      onClose();
-    } catch (err) {
-      notifyReportDeleteError(err, 'Échec de la suppression du rapport de renfort');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+  const { mutateAsync: deleteAsync } = useDeleteReinforcementReportMutation();
+  const { isDeleting, handleDelete } = useReportLifecycle({
+    reportId,
+    isRead: report.data?.isRead,
+    markRead,
+    deleteAsync,
+    onClose,
+    deleteErrorLabel: 'Échec de la suppression du rapport de renfort',
+  });
 
   const data = report.data;
 
@@ -459,26 +466,16 @@ function CombatReportDetail({
 }) {
   const report = useCombatReportQuery(reportId);
   const { mutate: markRead } = useMarkReportReadMutation();
-  const { mutateAsync: deleteReport } = useDeleteReportMutation();
+  const { mutateAsync: deleteAsync } = useDeleteReportMutation();
   const { navigateToWorldMapFocus } = useWorldMapNavigation();
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    if (!report.data || report.data.isRead) return;
-    markRead({ reportId });
-  }, [report.data, reportId, markRead]);
-
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    try {
-      await deleteReport({ reportId });
-      onClose();
-    } catch (err) {
-      notifyReportDeleteError(err, 'Échec de la suppression du rapport');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+  const { isDeleting, handleDelete } = useReportLifecycle({
+    reportId,
+    isRead: report.data?.isRead,
+    markRead,
+    deleteAsync,
+    onClose,
+    deleteErrorLabel: 'Échec de la suppression du rapport',
+  });
 
   const data = report.data;
   const handleAction = async (action: { id: string }) => {

@@ -1,7 +1,7 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-06-18 | theme D4 shared findBuildingByType/getBuildingLevel | PR maint(refactor-backend): centralize buildings.find by type
-full: `archive/refactor-backend/2026-06-18-full.md`
+last: 2026-06-18b | theme D1 strategy-bonus context table | PR maint(refactor-backend): collapse strategy bonus switch into typed context table
+full: `archive/refactor-backend/2026-06-18b-full.md`
 
 ## OPEN
 
@@ -10,7 +10,6 @@ full: `archive/refactor-backend/2026-06-18-full.md`
 | R4 | High | crowns.service.ts ~264 | fractional carry — needs migration |
 | W1 | Med | combat/combat.worker.ts | 1776 L, 4 kinds cohabitent — split par kind L effort |
 | W2 | Med | combat/combat.service.ts | 1287 L, 4 initiate* partagent loadOwnedVillage→verify→timing→create — extraction possible |
-| D1 | Low | strategy/village-strategy.service.ts:316–380 | getStrategyBonus switch 6 contextes → table possible |
 | D2 | Low | gameplay/{upgrade-building,recruit-troops,recruit-noble}.use-case.ts | Promise.all quintette répété ×3 |
 | D3 | Low | resources.service.ts:233–269 | fetchBuildingRates triple WOOD/STONE/IRON — table |
 | U1 | Low | combat.worker.ts ~1488,1747 | inbox.create loop ×N — createMany possible (ROI bas) |
@@ -26,4 +25,4 @@ full: `archive/refactor-backend/2026-06-18-full.md`
 
 ## skip unless theme
 
-D4 ce run | OB1/OB2 traité PR #134 | B3/E1/U2 déjà traités runs précédents | G1 intentionnel (tx safety)
+D1 ce run | D4 PR #142 | OB1/OB2 PR #134 | B3/E1/U2 déjà traités runs précédents | G1 intentionnel (tx safety)

@@ -10,11 +10,11 @@ import {
   type VillageBuildingCategoryDef,
   type VillageBuildingCategoryKey,
 } from './VillageViewData';
+import { formatCompactNumber } from '@/lib/resourceConfig';
 import {
   canAffordNextBuildingLevel,
   computeQueueProgress,
   computeResourceRatios,
-  formatCompactNumber,
   formatQueueTime,
 } from './VillageViewSectionHelpers';
 

@@ -212,22 +212,3 @@ export function formatCompactNumber(n: number): string {
   return String(Math.floor(n));
 }
 
-/**
- * Obtenir la couleur d'alerte selon le pourcentage de stockage
- */
-export const getResourceStorageAlertColor = (
-  current: number, 
-  max: number, 
-  alertThreshold = 0.9
-): {
-  text: string;
-  shouldAlert: boolean;
-} => {
-  const percentage = max > 0 ? current / max : 0;
-  const shouldAlert = percentage >= alertThreshold;
-  
-  return {
-    text: shouldAlert ? 'text-red-200' : 'text-green-200',
-    shouldAlert,
-  };
-};

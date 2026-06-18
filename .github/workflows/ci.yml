@@ -24,26 +24,68 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
     outputs:
-      code: ${{ steps.filter.outputs.code }}
+      code: ${{ steps.detect.outputs.code }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
         with:
-          filters: |
-            code:
-              - 'battleforthecrown-backend/**'
-              - 'battleforthecrown-pixi/**'
-              - 'packages/**'
-              - '!**/*.md'
-              - '!**/*.txt'
-              - 'package.json'
-              - 'yarn.lock'
-              - 'tsconfig.base.json'
-              - '**/tsconfig*.json'
-              - '.github/workflows/ci.yml'
+          fetch-depth: 0
+      - name: Detect code changes
+        id: detect
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_AFTER: ${{ github.sha }}
+        run: |
+          set -eu
+          zero="0000000000000000000000000000000000000000"
+
+          # Exact mirror of the pre-push hook's is_code_change(). paths-filter
+          # was dropped because its default 'some' quantifier makes negation
+          # patterns (!**/*.md) match every non-md file, flagging doc-only PRs
+          # as code. Plain shell removes that ambiguity.
+          is_code_change() {
+            case "$1" in
+              battleforthecrown-backend/*|battleforthecrown-pixi/*|packages/*)
+                case "$1" in
+                  *.md|*.txt) return 1 ;;
+                  *) return 0 ;;
+                esac ;;
+              package.json|yarn.lock|tsconfig.base.json) return 0 ;;
+              */package.json|*/tsconfig.json|*/tsconfig.*.json) return 0 ;;
+              .github/workflows/ci.yml) return 0 ;;
+              *) return 1 ;;
+            esac
+          }
+
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            files=$(git diff --name-only "$PR_BASE_SHA...$PR_HEAD_SHA")
+          else
+            if [ "$PUSH_BEFORE" = "$zero" ] || ! git cat-file -e "${PUSH_BEFORE}^{commit}" 2>/dev/null; then
+              base=$(git merge-base "$PUSH_AFTER" origin/main 2>/dev/null || true)
+            else
+              base="$PUSH_BEFORE"
+            fi
+            if [ -z "${base:-}" ]; then
+              echo "code=true" >> "$GITHUB_OUTPUT"
+              echo "No merge base found — defaulting code=true"
+              exit 0
+            fi
+            files=$(git diff --name-only "$base" "$PUSH_AFTER")
+          fi
+
+          code=false
+          for file in $files; do
+            if is_code_change "$file"; then
+              code=true
+              echo "code file: $file"
+              break
+            fi
+          done
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          echo "Detected code=$code"
 
   # ── Job 1: static analysis + unit tests (no DB) ───────────────────────────
   # Mirrors the pre-push hook exactly: tsc + eslint + jest:backend + vitest:pixi

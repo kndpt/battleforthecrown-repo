@@ -1,13 +1,10 @@
 import type { BuildingDto, QueueEntryDto } from '@/api';
 import type { DisplayResources } from '@/lib/interpolation';
-import { formatCompactNumber } from '@/lib/resourceConfig';
 import {
   BUILDING_DEFINITIONS,
   type BuildingType,
 } from '@battleforthecrown/shared/village/buildings';
 import type { VillageResourceType } from './VillageViewSections';
-
-export { formatCompactNumber };
 
 export function formatQueueTime(ms: number): string {
   const totalSec = Math.max(0, Math.floor(ms / 1_000));
