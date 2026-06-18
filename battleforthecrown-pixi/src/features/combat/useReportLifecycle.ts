@@ -11,6 +11,11 @@ function notifyReportDeleteError(err: unknown, fallback: string) {
   });
 }
 
+type UseReportLifecycleResult = {
+  isDeleting: boolean;
+  handleDelete: () => Promise<void>;
+};
+
 export function useReportLifecycle({
   reportId,
   isRead,
@@ -25,7 +30,7 @@ export function useReportLifecycle({
   deleteAsync: (args: { reportId: string }) => Promise<unknown>;
   onClose: () => void;
   deleteErrorLabel: string;
-}) {
+}): UseReportLifecycleResult {
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
