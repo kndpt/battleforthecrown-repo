@@ -19,7 +19,7 @@
 ## Dépendances
 
 - Run [`032-world-lifecycle-foundation-and-identity`](archive/032-world-lifecycle-foundation-and-identity.md) — DONE. A livré les 4 paramètres lifecycle dans `WorldConfig` (dont `newWorldEverydays`, default 7) et le worker `WorldLifecycleWorker` qui pilote `PLANNED → OPEN → LOCKED → ENDED`. Le rapport final reconnaît explicitement : « `newWorldEverydays` (default 7, doc seulement, pas de worker MVP) ». Ce run est la suite directe.
-- Run [`061-feature-world-ended-lifecycle`](../runs/061-feature-world-ended-lifecycle.md) — PLANNED. Indépendant (touche `LOCKED → ENDED` + snapshot leaderboard, pas la création de PLANNED). Pas de conflit de scope.
+- Run [`061-feature-world-ended-lifecycle`](061-feature-world-ended-lifecycle.md) — PLANNED. Indépendant (touche `LOCKED → ENDED` + snapshot leaderboard, pas la création de PLANNED). Pas de conflit de scope.
 
 ## Critère de fin (acceptance)
 
