@@ -462,7 +462,7 @@ export const getBuildingMaxLevel = (buildingType: string): number => {
 
 export const isBuildingEnabled = (buildingType: string): boolean => {
   const definition = BUILDING_DEFINITIONS[buildingType as BuildingType];
-  return definition?.enabled !== false;
+  return definition?.enabled === true;
 };
 
 export const findBuildingByType = <T extends { type: string }>(
