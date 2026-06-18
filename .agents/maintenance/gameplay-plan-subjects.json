@@ -213,6 +213,29 @@
         "tasks/00-mvp-roadmap.md:134 — Phase 11 livrable « snapshot leaderboard à ENDED + wipe + récompenses cosmétiques permanentes » non livré côté wipe"
       ],
       "addedAt": "2026-06-17"
+    },
+    {
+      "specPath": "docs/gameplay/19-world-lifecycle.md",
+      "slug": "world-ended-readonly-ui",
+      "title": "Écran « Monde terminé » — UI lecture seule + consultation leaderboard final (Phase 11)",
+      "keywords": ["world-ended", "monde-terminé", "read-only", "leaderboard-final", "hall-of-fame", "phase-11"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/066-feature-world-ended-readonly-ui.md",
+      "artefactId": "066",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/world-ended-readonly-ui",
+      "gapSummary": "La spec 19-world-lifecycle.md § LOCKED → ENDED tranche MVP : mode lecture seule + consultation du leaderboard final pendant 7j en ENDED. Run 061 livre la table snapshot + le helper backend `assertWorldWritable` mais déclare explicitement hors scope l'UI front « Monde terminé » et le run successeur n'a jamais été créé. Conséquence : `WorldStatus.ENDED` est invisible côté worldsViewModel (`ctaFor` retombe sur la branche par défaut 'S'inscrire'), aucun écran `EndedWorldView` n'existe, aucun helper `isWorldReadOnly` ne grise les CTAs HUD mutants et il n'y a pas d'endpoint REST de consultation du `WorldFinalRankingSnapshot`.",
+      "codeEvidence": [
+        "battleforthecrown-pixi/src/features/worlds/worldsViewModel.ts:153-165 ctaFor — gère PLANNED et LOCKED, aucun cas pour ENDED, fallback sur \"S'inscrire\"",
+        "battleforthecrown-pixi/src — aucun écran EndedWorldView / WorldEndedScreen / FinalRankingsScreen ni helper isWorldReadOnly (rg sur 'ENDED' renvoie uniquement SceneManager/application/NumericKeypad sans rapport)",
+        "battleforthecrown-pixi/src/features/worlds — WorldSessionGate ne traite pas le status ENDED comme cas distinct",
+        "battleforthecrown-pixi/src/api/queries.ts — aucun useFinalRankingsQuery (les seules queries rankings appellent /worlds/:id/rankings qui calcule live, pas le snapshot)",
+        "battleforthecrown-backend/src/modules/rankings/rankings.controller.ts — pas de route GET /worlds/:id/rankings/final consommant WorldFinalRankingSnapshot",
+        "packages/shared/src/rankings — pas de type WorldFinalRankingSnapshotEntry exposé pour consommation front",
+        "tasks/runs/061-feature-world-ended-lifecycle.md:69 — explicite « UI front « Monde terminé » (écran lecture seule de consultation du leaderboard final) — run successeur. La table snapshot livrée ici suffit aux 3 runs aval. »",
+        "tasks/runs/061-feature-world-ended-lifecycle.md:74 — explicite « À faire après : run UI « Monde terminé » (consomme le snapshot), run wipe destructeur endsAt + 7j... » — ce run est ce run successeur"
+      ],
+      "addedAt": "2026-06-18"
     }
   ]
 }
