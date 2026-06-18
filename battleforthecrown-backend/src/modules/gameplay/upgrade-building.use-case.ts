@@ -13,6 +13,7 @@ import { WorldConfigService } from '../world/world-config.service';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
 import { applyPopulationBonus } from '../population/population-capacity';
 import {
+  findBuildingByType,
   getBuildingMaxLevel,
   getBuildingUnlockRequirement,
   getStrategyBonusValue,
@@ -68,8 +69,8 @@ export class UpgradeBuildingUseCase {
       if (currentLevel === 0) {
         const requiredCastleLevel = getBuildingUnlockRequirement(buildingType);
         if (requiredCastleLevel) {
-          const castle = allBuildings.find((b) => b.type === 'CASTLE');
-          const castleLevel = castle?.level ?? 1;
+          const castleLevel =
+            findBuildingByType(allBuildings, 'CASTLE')?.level ?? 1;
           if (castleLevel < requiredCastleLevel) {
             throw new BadRequestException(
               `Castle level ${requiredCastleLevel} required`,
@@ -93,8 +94,8 @@ export class UpgradeBuildingUseCase {
         throw new ConflictException('Building already under construction');
       }
 
-      const castle = allBuildings.find((b) => b.type === 'CASTLE');
-      const castleLevel = castle?.level ?? 1;
+      const castleLevel =
+        findBuildingByType(allBuildings, 'CASTLE')?.level ?? 1;
       const currentStrategy = strategyConfig?.strategy;
 
       const cost = await this.worldConfig.getCost(

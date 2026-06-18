@@ -16,6 +16,7 @@ import {
   StrategyBonus,
   VillageStrategyChangeCost,
   VillageStrategyType,
+  getBuildingLevel,
   getVillageStrategyChangeCost,
   getStrategyBonusValue,
   getVillageStrategyPlan,
@@ -85,7 +86,7 @@ export class VillageStrategyService {
     const lastChangedAt = village.strategyConfig?.lastChangedAt || new Date();
     const cooldownEndsAt = village.strategyConfig?.cooldownEndsAt || null;
     const now = new Date();
-    const castleLevel = this.getBuildingLevel(
+    const castleLevel = getBuildingLevel(
       village.buildings,
       BUILDING_TYPES.CASTLE,
     );
@@ -170,7 +171,7 @@ export class VillageStrategyService {
       throw new NotFoundException('Village resources not found');
     }
 
-    const castleLevel = this.getBuildingLevel(
+    const castleLevel = getBuildingLevel(
       village.buildings,
       BUILDING_TYPES.CASTLE,
     );
@@ -388,15 +389,8 @@ export class VillageStrategyService {
     };
   }
 
-  private getBuildingLevel(
-    buildings: Array<{ type: string; level: number }>,
-    buildingType: string,
-  ): number {
-    return buildings.find((b) => b.type === buildingType)?.level ?? 0;
-  }
-
   private hasCouncilHall(buildings: Array<{ type: string; level: number }>) {
-    return this.getBuildingLevel(buildings, BUILDING_TYPES.COUNCIL_HALL) >= 1;
+    return getBuildingLevel(buildings, BUILDING_TYPES.COUNCIL_HALL) >= 1;
   }
 
   private getStorageLimitForStrategy(
@@ -406,7 +400,7 @@ export class VillageStrategyService {
     },
     strategy: VillageStrategyType,
   ): number {
-    const warehouseLevel = this.getBuildingLevel(
+    const warehouseLevel = getBuildingLevel(
       village.buildings,
       BUILDING_TYPES.WAREHOUSE,
     );
@@ -426,18 +420,12 @@ export class VillageStrategyService {
     },
     strategy: VillageStrategyType,
   ) {
-    const woodLevel = this.getBuildingLevel(
-      village.buildings,
-      BUILDING_TYPES.WOOD,
-    );
-    const stoneLevel = this.getBuildingLevel(
+    const woodLevel = getBuildingLevel(village.buildings, BUILDING_TYPES.WOOD);
+    const stoneLevel = getBuildingLevel(
       village.buildings,
       BUILDING_TYPES.STONE,
     );
-    const ironLevel = this.getBuildingLevel(
-      village.buildings,
-      BUILDING_TYPES.IRON,
-    );
+    const ironLevel = getBuildingLevel(village.buildings, BUILDING_TYPES.IRON);
 
     return {
       wood: woodLevel
