@@ -49,7 +49,7 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 - T1 — Pure-logic : `computeNextPlannedOpenAt(lastStartedAt, newWorldEverydays, now)` dans `world-lifecycle.worker.ts` ou helper séparé. Unit Vitest sur cadence + retard + bootstrap.
 - T2 — `WorldLifecycleWorker.ensurePlannedPipeline(now)` : check `count(status=PLANNED) > 0` → skip ; sinon lire le dernier `startedAt` (worlds `OPEN | LOCKED | ENDED`), calculer `plannedOpenAt`, créer le monde avec guard atomique. Câblage dans `handleLifecycleTick` avant `openPlannedWorlds`.
 - T3 — Dérivation identité monde (`name`, `sigil`, `themeColor`, `displayOrder`) : pattern déterministe basé sur `count(world)` ou `max(displayOrder)+1`. Helper dans `WorldService` ou inline worker. Trancher au refinement.
-- T4 — Outbox event `world.planned.created` dans la tx de création.
+- T4 — Outbox event `world.planned.created` dans la tx de création. **Pattern à trancher au refinement** (ADR-12 § « Use cases gameplay et `OutboxPublisher` ») : soit délégation à `OutboxPublisher` (préféré si le pattern est jugé applicable hors gameplay use-cases), soit appel direct à `createOutboxEvent(tx, ...)` (cohérent avec les autres workers lifecycle qui restent inline aujourd'hui — cf. `world-lifecycle.worker.ts` actuel). Justifier le choix dans le décisions prises du run.
 - T5 — Smoke backend `world-lifecycle-spawner.smoke.spec.ts` : 3 scénarios (cadence respectée, retard rattrapé, bootstrap).
 - T6 — Doc impact : `docs/architecture/backend-modules.md` (mention worker spawner), `docs/architecture/realtime.md` (event `world.planned.created`). Pas de mise à jour spec gameplay nécessaire (`19-world-lifecycle.md` est déjà la source).
 
