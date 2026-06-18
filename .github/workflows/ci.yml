@@ -14,10 +14,40 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ── Job 0: detect code changes ────────────────────────────────────────────
+  # Mirrors the pre-push hook's is_code_change(): only backend/pixi/packages
+  # (non-doc), root manifests and any tsconfig count as "code". Doc-only / tasks
+  # / .agents / design-system pushes skip unit + smokes (skipped jobs satisfy
+  # required status checks, so PRs are not blocked).
+  changes:
+    name: Detect code changes
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            code:
+              - 'battleforthecrown-backend/**'
+              - 'battleforthecrown-pixi/**'
+              - 'packages/**'
+              - '!**/*.md'
+              - '!**/*.txt'
+              - 'package.json'
+              - 'yarn.lock'
+              - 'tsconfig.base.json'
+              - '**/tsconfig*.json'
+              - '.github/workflows/ci.yml'
+
   # ── Job 1: static analysis + unit tests (no DB) ───────────────────────────
   # Mirrors the pre-push hook exactly: tsc + eslint + jest:backend + vitest:pixi
   unit:
     name: Static check & unit tests
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -56,7 +86,8 @@ jobs:
   # Postgres default of 100 on the 2-CPU CI runner.
   smokes:
     name: Smoke tests
-    needs: unit
+    needs: [changes, unit]
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
 
     services:
