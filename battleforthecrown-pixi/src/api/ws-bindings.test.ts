@@ -1076,6 +1076,7 @@ describe('applyExpeditionRecalled', () => {
   afterEach(() => vi.useRealTimers());
 
   it('keeps the expedition visible as a RETURNING trip from its current outbound position', () => {
+    setCurrentWorldSession();
     useExpeditionsStore.getState().add({
       expeditionId: 'recall-attack-1',
       kind: 'ATTACK',
@@ -1087,13 +1088,19 @@ describe('applyExpeditionRecalled', () => {
       arrivalAt: Date.parse('2026-05-04T22:00:10.000Z'),
     });
 
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.resources('v1'), {});
+    queryClient.setQueryData(queryKeys.population('v1'), { used: 5, max: 20, available: 15 });
+    queryClient.setQueryData(queryKeys.activeExpeditions('v1'), []);
+    queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
+
     applyExpeditionRecalled(
       {
         expeditionId: 'recall-attack-1',
         villageId: 'v1',
         returnAt: '2026-05-04T22:00:10.000Z',
       },
-      { queryClient: new QueryClient() },
+      { queryClient },
     );
 
     const recalled = useExpeditionsStore.getState().byId['recall-attack-1'];
@@ -1105,6 +1112,10 @@ describe('applyExpeditionRecalled', () => {
     expect(recalled.target).not.toEqual({ x: 10, y: 0 });
     expect(recalled.target.x).toBeGreaterThan(0);
     expect(recalled.target.x).toBeLessThan(10);
+    expect(queryClient.getQueryState(queryKeys.resources('v1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.population('v1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.activeExpeditions('v1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
   });
 });
 
@@ -1255,13 +1266,14 @@ describe('applyReinforcementReturned', () => {
 });
 
 describe('applyBattleSent', () => {
-  it('adds an EN_ROUTE ATTACK snapshot and invalidates armyInventory + population', () => {
+  it('adds an EN_ROUTE ATTACK snapshot and invalidates armyInventory + activeExpeditions + population', () => {
     setCurrentWorldSession();
     useWorldMapStore.getState().setEntities([
       { id: 'v-att', kind: 'PLAYER_VILLAGE', isMine: true, x: 2, y: 3, name: 'Attacker', tier: null },
     ]);
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.armyInventory('v-att'), []);
+    queryClient.setQueryData(queryKeys.activeExpeditions('v-att'), []);
     queryClient.setQueryData(queryKeys.population('v-att'), { used: 5, max: 20, available: 15 });
     queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
 
@@ -1286,19 +1298,21 @@ describe('applyBattleSent', () => {
       arrivalAt: Date.parse('2026-05-04T22:10:00.000Z'),
     });
     expect(queryClient.getQueryState(queryKeys.armyInventory('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.activeExpeditions('v-att'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.population('v-att'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
   });
 });
 
 describe('applyScoutSent', () => {
-  it('adds an EN_ROUTE SCOUT snapshot and invalidates armyInventory + population', () => {
+  it('adds an EN_ROUTE SCOUT snapshot and invalidates armyInventory + activeExpeditions + population', () => {
     setCurrentWorldSession();
     useWorldMapStore.getState().setEntities([
       { id: 'v-att', kind: 'PLAYER_VILLAGE', isMine: true, x: 2, y: 3, name: 'Scout Origin', tier: null },
     ]);
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.armyInventory('v-att'), []);
+    queryClient.setQueryData(queryKeys.activeExpeditions('v-att'), []);
     queryClient.setQueryData(queryKeys.population('v-att'), { used: 3, max: 20, available: 17 });
     queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
 
@@ -1323,6 +1337,7 @@ describe('applyScoutSent', () => {
       arrivalAt: Date.parse('2026-05-04T22:15:00.000Z'),
     });
     expect(queryClient.getQueryState(queryKeys.armyInventory('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.activeExpeditions('v-att'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.population('v-att'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
   });
@@ -1453,5 +1468,45 @@ describe('applyExpeditionReturned', () => {
 
     vi.advanceTimersByTime(RETURNED_TO_CLEANUP_DELAY_MS);
     expect(useExpeditionsStore.getState().byId['exp-ret-1']).toBeUndefined();
+  });
+});
+
+describe('applyCaravanSent', () => {
+  it('adds an EN_ROUTE CARAVAN snapshot and invalidates resources + activeExpeditions + population', () => {
+    setCurrentWorldSession();
+    useWorldMapStore.getState().setEntities([
+      { id: 'v-att', kind: 'PLAYER_VILLAGE', isMine: true, x: 2, y: 3, name: 'Sender', tier: null },
+    ]);
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.resources('v-att'), { wood: 500 });
+    queryClient.setQueryData(queryKeys.activeExpeditions('v-att'), []);
+    queryClient.setQueryData(queryKeys.population('v-att'), { used: 5, max: 20, available: 15 });
+    queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
+
+    applyCaravanSent(
+      {
+        expeditionId: 'caravan-sent-1',
+        villageId: 'v-att',
+        targetVillageId: 'v-target',
+        targetX: 8,
+        targetY: 9,
+        resources: { wood: 100, stone: 0, iron: 0 },
+        porters: 2,
+        arrivalAt: '2026-05-04T22:30:00.000Z',
+      },
+      { queryClient },
+    );
+
+    expect(useExpeditionsStore.getState().byId['caravan-sent-1']).toMatchObject({
+      expeditionId: 'caravan-sent-1',
+      kind: 'CARAVAN',
+      villageId: 'v-att',
+      phase: 'EN_ROUTE',
+      target: { x: 8, y: 9 },
+    });
+    expect(queryClient.getQueryState(queryKeys.resources('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.activeExpeditions('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.population('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
   });
 });
