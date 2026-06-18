@@ -1,8 +1,5 @@
-import { useEffect, useState } from 'react';
 import { ArrowRight, Trash2 } from 'lucide-react';
-import { ApiError } from '@/api';
 import { ModalBackdrop, Spinner } from '@/ui';
-import { useUiStore } from '@/stores/ui';
 import {
   useCaravanReportQuery,
   useDeleteScoutReportMutation,
@@ -33,6 +30,7 @@ import {
   type CaravanReportSummary,
 } from './caravanReportView';
 import { useWorldMapNavigation } from '@/features/world/worldMapNavigation';
+import { useReportLifecycle } from './useReportLifecycle';
 
 interface ReportDetailModalProps {
   reportId: string;
@@ -43,52 +41,6 @@ interface ReportDetailModalProps {
 const REPORT_MODAL_FOOTER_CLASS =
   'border-t border-[rgba(93,74,50,.24)] bg-[linear-gradient(to_bottom,rgba(255,250,238,.96),rgba(232,212,168,.92))] px-3 pb-3 pt-2.5';
 const NUMBER_FORMATTER = new Intl.NumberFormat('fr-FR');
-
-function notifyReportDeleteError(err: unknown, fallback: string) {
-  useUiStore.getState().pushToast({
-    tone: 'error',
-    title: 'Suppression impossible',
-    description: err instanceof ApiError ? err.message : fallback,
-    ttlMs: 4000,
-  });
-}
-
-function useReportLifecycle({
-  reportId,
-  isRead,
-  markRead,
-  deleteAsync,
-  onClose,
-  deleteErrorLabel,
-}: {
-  reportId: string;
-  isRead: boolean | undefined;
-  markRead: (args: { reportId: string }) => void;
-  deleteAsync: (args: { reportId: string }) => Promise<unknown>;
-  onClose: () => void;
-  deleteErrorLabel: string;
-}) {
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    if (isRead !== false) return;
-    markRead({ reportId });
-  }, [isRead, reportId, markRead]);
-
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    try {
-      await deleteAsync({ reportId });
-      onClose();
-    } catch (err) {
-      notifyReportDeleteError(err, deleteErrorLabel);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  return { isDeleting, handleDelete };
-}
 
 function ReportModalFooter({
   deleteLabel,
