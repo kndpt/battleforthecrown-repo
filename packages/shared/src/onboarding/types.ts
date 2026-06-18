@@ -35,4 +35,12 @@ export interface OnboardingSummaryDto {
   initialRewardAppliedAt: string | null;
   initialReward: OnboardingRewardDto;
   completedAt: string | null;
+  /**
+   * Identifier of the weakened barbarian village created by the onboarding
+   * runtime once the player builds Watchtower L1. `null` until that step
+   * fires, or for accounts that joined before the feature shipped.
+   * Exposed so the frontend can center the world map on the revealed target
+   * for the final `ATTACK_BARBARIAN` step.
+   */
+  narrativeTargetVillageId: string | null;
 }

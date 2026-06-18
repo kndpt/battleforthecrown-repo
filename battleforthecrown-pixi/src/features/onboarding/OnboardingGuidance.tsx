@@ -50,6 +50,7 @@ export function OnboardingGuidance({
       imageBadgeLabel={guidance.imageBadgeLabel}
       imageSrc={guidance.imageSrc}
       isAdvancing={isAdvancing}
+      lootPreview={guidance.lootPreview}
       modalLabel={guidance.modalLabel}
       onOpenChange={setIsOpen}
       onPrimaryAction={() => {

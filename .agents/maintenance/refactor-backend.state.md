@@ -1,24 +1,29 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-06-16 | theme U2 report-builder utils | PR maint(refactor-backend): extract combat report builder utils
-full: `archive/refactor-backend/2026-06-16-full.md`
+last: 2026-06-18 | theme D4 shared findBuildingByType/getBuildingLevel | PR maint(refactor-backend): centralize buildings.find by type
+full: `archive/refactor-backend/2026-06-18-full.md`
 
 ## OPEN
 
 | ID | Sev | Where | Note |
 |----|-----|-------|------|
 | R4 | High | crowns.service.ts ~264 | fractional carry — needs migration |
-| U1 | Med | combat.worker.ts ~1488,1747 | inbox.create loop ×N — `createMany` possible (~2 recipients/exp, ROI bas) |
-| D4 | Med | combat.service.ts | `expedition.create` ×5 — no factory value (reconfirmé) |
-| G1 | Med | combat.service.ts ~986 | sequential kingdom power snapshot — intentionnel tx |
+| W1 | Med | combat/combat.worker.ts | 1776 L, 4 kinds cohabitent — split par kind L effort |
+| W2 | Med | combat/combat.service.ts | 1287 L, 4 initiate* partagent loadOwnedVillage→verify→timing→create — extraction possible |
+| D1 | Low | strategy/village-strategy.service.ts:316–380 | getStrategyBonus switch 6 contextes → table possible |
+| D2 | Low | gameplay/{upgrade-building,recruit-troops,recruit-noble}.use-case.ts | Promise.all quintette répété ×3 |
+| D3 | Low | resources.service.ts:233–269 | fetchBuildingRates triple WOOD/STONE/IRON — table |
+| U1 | Low | combat.worker.ts ~1488,1747 | inbox.create loop ×N — createMany possible (ROI bas) |
 | U3 | Low | world-entities-query.service.ts:125,192 | fetchBarb/Player partagent bounds+capture-window |
-| U4 | Low | resources.service.ts:88,205 | applyStrategyStorageBonus via strategyConfig dupliqué ×2 |
-| N3 | Low | world-entities-query.service.ts ~101 | radius clamp missing (getVillagesInRadius asymétrique) |
-| C6 | Low | resources.service.ts:50 | recursive getResources, cosmetic |
-| V3 | Low | combat.service.ts ~480 | caravan deduct order cosmetic |
-| A1 | Low | auth.service.ts:36 | redundant displayName pre-check (P2002 handler couvre) |
+| U4 | Low | resources.service.ts:88,205 | applyStrategyStorageBonus dupliqué ×2 |
+| G1 | Med | combat.service.ts ~986 | sequential kingdom power snapshot — intentionnel tx |
+| N1 | Low | combat.worker.ts:1209–1321 | applyDefenderLosses 113 L — complexité inhérente |
+| N3 | Low | world-entities-query.service.ts ~101 | radius clamp missing |
+| C1 | Low | resources.service.ts:50 | recursive getResources, cosmetic |
+| A1 | Low | auth.service.ts:36 | redundant displayName pre-check |
 | F1 | Low | combat.worker.ts ~1130,1165 | garrison.findMany include ×2 cosmetic |
+| Z1 | Low | world/join-world.use-case.ts:188 | process.env[key] lecture dynamique — config service ferait mieux |
 
 ## skip unless theme
 
-B3/E1 → PR #91 mergée | U2/recipient-dedup → PR ce run | G1 intentionnel (tx safety) | D4 no factory value reconfirmé
+D4 ce run | OB1/OB2 traité PR #134 | B3/E1/U2 déjà traités runs précédents | G1 intentionnel (tx safety)

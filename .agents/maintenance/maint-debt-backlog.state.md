@@ -1,6 +1,6 @@
 # maint-debt — candidats (réécrit chaque run)
 
-last: 2026-06-16 | archive: `archive/maint-debt/2026-06-15-full.md`
+last: 2026-06-18 | archive: `archive/maint-debt/2026-06-15-full.md`
 branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 ## candidate
@@ -17,7 +17,7 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 | area | PR |
 |------|-----|
-| packages/shared dead exports — RESOURCE_BUILDING_PRODUCTION_RATES, WAREHOUSE_STORAGE_LIMITS, CARAVAN_CAPACITY_SHARE unexported; ResourcesConfig deleted | `#127` |
+| shared typedKeys dead export + pixi calculateExpeditionTravelTime dead fn | pending |
 
 ## rules
 

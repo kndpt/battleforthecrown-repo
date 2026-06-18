@@ -21,6 +21,7 @@ import type {
   VillageCaptureWindowInterruptedPayload,
   VillageCaptureWindowOpenedPayload,
   VillageConqueredPayload,
+  VillageRemovedPayload,
   WorldStatusChangedPayload,
 } from './ws-types';
 import { useResourcesStore } from '@/stores/resources';
@@ -183,6 +184,9 @@ export function applyBattleSent(
     arrivalAt: Date.parse(payload.arrivalAt),
   };
   useExpeditionsStore.getState().add(snapshot);
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
   invalidateOpenExpeditions(ctx);
 }
 
@@ -254,6 +258,9 @@ export function applyScoutSent(
     arrivalAt: Date.parse(payload.arrivalAt),
   };
   useExpeditionsStore.getState().add(snapshot);
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
   invalidateOpenExpeditions(ctx);
 }
 
@@ -313,6 +320,9 @@ export function applyExpeditionRecalled(
     description: `Retour prévu à ${new Date(payload.returnAt).toLocaleTimeString()}`,
     ttlMs: 4000,
   });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(payload.villageId) });
   invalidateOpenExpeditions(ctx);
 }
 
@@ -428,6 +438,7 @@ export function applyCaravanSent(
   };
   useExpeditionsStore.getState().add(snapshot);
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(payload.villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
   invalidateOpenExpeditions(ctx);
 }
@@ -621,6 +632,12 @@ export function applyVillageConquered(payload: VillageConqueredPayload, ctx: Bin
   }
 }
 
+export function applyVillageRemoved(payload: VillageRemovedPayload, ctx: BindingsContext): void {
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.worldEntities(payload.worldId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.worldEntitiesPrefix() });
+  useWorldMapStore.getState().removeEntity(payload.villageId);
+}
+
 export function applyVillageCaptureWindowOpened(
   payload: VillageCaptureWindowOpenedPayload,
   ctx: BindingsContext,
@@ -788,6 +805,7 @@ const bindings: ServerEventBindings = {
   'garrison.added': applyGarrisonAdded,
   'village.attacked': applyVillageAttacked,
   'village.conquered': applyVillageConquered,
+  'village.removed': applyVillageRemoved,
   'village.capture-window-opened': applyVillageCaptureWindowOpened,
   'village.capture-window-completed': applyVillageCaptureWindowCompleted,
   'village.capture-window-interrupted': applyVillageCaptureWindowInterrupted,

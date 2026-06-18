@@ -33,7 +33,10 @@ import {
   subtractCaravanResources,
 } from './caravan.utils';
 import { withSerializableRetry } from '../../common/serializable-retry.utils';
-import { getStrategyBonusValue } from '@battleforthecrown/shared/village';
+import {
+  findBuildingByType,
+  getStrategyBonusValue,
+} from '@battleforthecrown/shared/village';
 import { calculateDistance } from '@battleforthecrown/shared/logic';
 import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
 import {
@@ -989,6 +992,10 @@ export class CombatWorker implements OnModuleInit {
           expedition.targetKind === 'BARBARIAN_VILLAGE'
             ? (defenderVillage?.tier ?? null)
             : null,
+        targetOriginKind:
+          expedition.targetKind === 'BARBARIAN_VILLAGE'
+            ? (defenderVillage?.originKind ?? 'STANDARD')
+            : undefined,
         targetX: expedition.targetX,
         targetY: expedition.targetY,
         isVictory,
@@ -1326,8 +1333,7 @@ export class CombatWorker implements OnModuleInit {
   ): number {
     const castleLevel = targetVillage.isBarbarian
       ? null
-      : targetVillage.buildings.find((building) => building.type === 'CASTLE')
-          ?.level;
+      : (findBuildingByType(targetVillage.buildings, 'CASTLE')?.level ?? null);
 
     return getCaptureDurationMs({
       castleLevel,
@@ -1551,8 +1557,7 @@ export class CombatWorker implements OnModuleInit {
               : { wood: 0, stone: 0, iron: 0 },
           };
     const wallLevel =
-      targetVillage.buildings.find((building) => building.type === 'WALL')
-        ?.level ?? 0;
+      findBuildingByType(targetVillage.buildings, 'WALL')?.level ?? 0;
 
     const report = await tx.scoutReport.create({
       data: {
@@ -1646,8 +1651,7 @@ export class CombatWorker implements OnModuleInit {
 
     const carried = parseCaravanResources(expedition);
     const warehouseLevel =
-      targetVillage.buildings.find((building) => building.type === 'WAREHOUSE')
-        ?.level ?? 1;
+      findBuildingByType(targetVillage.buildings, 'WAREHOUSE')?.level ?? 1;
     const limits = getWarehouseStorageLimit(warehouseLevel);
     const now = new Date();
     const currentStock = await this.resources.calculateCurrentResources({

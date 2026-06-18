@@ -43,6 +43,7 @@ const BattleResolvedPayloadSchema = z.object({
   targetKind: z.string(),
   targetName: z.string(),
   targetTier: z.string().nullable().optional(),
+  targetOriginKind: z.enum(['STANDARD', 'ONBOARDING_NARRATIVE']).optional(),
   targetX: z.number(),
   targetY: z.number(),
   isVictory: z.boolean(),
@@ -114,6 +115,13 @@ const VillageConqueredPayloadSchema = z.object({
   x: z.number(),
   y: z.number(),
   buildingsKept: z.number(),
+});
+
+const VillageRemovedPayloadSchema = z.object({
+  worldId: z.string(),
+  villageId: z.string(),
+  x: z.number().int(),
+  y: z.number().int(),
 });
 
 const VillageCaptureWindowOpenedPayloadSchema = z.object({
@@ -274,6 +282,7 @@ export const EVENT_PAYLOAD_SCHEMAS = {
   "scout.returned": ScoutReturnedPayloadSchema,
   "village.attacked": VillageAttackedPayloadSchema,
   "village.conquered": VillageConqueredPayloadSchema,
+  "village.removed": VillageRemovedPayloadSchema,
   "village.capture-window-opened": VillageCaptureWindowOpenedPayloadSchema,
   "village.capture-window-completed":
     VillageCaptureWindowCompletedPayloadSchema,

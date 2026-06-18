@@ -2,7 +2,8 @@
 # CodeRabbit configuration — Battle for the Crown
 # Every rule maps to a concrete audit dimension in .agents/skills/bftc-refactor-{backend,pixi} or conventions.md.
 
-language: fr-FR
+language: "fr-FR"
+early_access: true
 
 tone_instructions: "Only actionable findings with real impact: bugs, security, data loss, regressions, architecture, missing tests. No wording/style/naming/formatting nitpicks or low-value comments."
 
@@ -40,7 +41,7 @@ reviews:
   auto_review:
     enabled: true
     auto_incremental_review: true
-    drafts: false
+    drafts: true
     ignore_title_keywords:
       - "WIP"
       - "wip"

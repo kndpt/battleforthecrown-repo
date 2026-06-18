@@ -80,8 +80,13 @@ export function getOnboardingProjection<K extends EventKind>(
     }
     case 'battle.resolved': {
       const eventPayload = payload as BattleResolvedPayload;
+      // The final onboarding step completes only on a victorious raid against
+      // the dedicated narrative target — not against a standard T1 barbarian
+      // (which keeps its full 9-15 militia garrison and stays a real challenge).
+      // Defeats and victories on STANDARD targets never satisfy the step.
       return eventPayload.targetKind === 'BARBARIAN_VILLAGE' &&
-        eventPayload.isVictory
+        eventPayload.isVictory &&
+        eventPayload.targetOriginKind === 'ONBOARDING_NARRATIVE'
         ? { villageId: eventPayload.villageId, step: 'ATTACK_BARBARIAN' }
         : null;
     }
@@ -98,6 +103,7 @@ export function getNextStep(step: OnboardingStep): PrismaOnboardingStep | null {
 export function mapOnboardingState(state: {
   worldId: string;
   firstVillageId: string;
+  narrativeTargetVillageId: string | null;
   status: 'ACTIVE' | 'COMPLETED';
   currentStep: OnboardingStep;
   initialRewardApplied: boolean;
@@ -108,6 +114,7 @@ export function mapOnboardingState(state: {
   return {
     worldId: state.worldId,
     firstVillageId: state.firstVillageId,
+    narrativeTargetVillageId: state.narrativeTargetVillageId,
     status: state.status,
     currentStep: state.status === 'ACTIVE' ? state.currentStep : null,
     completedSteps: state.steps.map((step) => ({

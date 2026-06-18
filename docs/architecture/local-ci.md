@@ -10,7 +10,9 @@ Le projet est solo + agent IA. Le filet anti-régression est réparti en trois c
 
 ## TL;DR
 
-À chaque `git push` touchant du `.ts`/`.tsx`, husky lance (sinon skip — cf. filtre code-only plus bas) :
+À chaque `git push`, husky inspecte d'abord les fichiers du push. Si **aucun fichier code impacté** n'est touché (doc seule, `tasks/`, `.agents/`, design system, configs outil, etc.), le hook skip la suite et le push part immédiatement.
+
+Sinon, husky lance :
 
 ```
 yarn static-check  → tsc --noEmit + eslint --quiet (backend + pixi)   (~5-10 s)
@@ -19,9 +21,9 @@ yarn test:pixi     → Vitest jsdom                                      (~3 s)
                                                                 total ~10-15 s
 ```
 
-Si une étape échoue, le push est bloqué. Les **smokes ne tournent pas** dans le hook. En local, `/run` lance les smokes ciblés par impact backend ; la CI PR lance la suite smoke complète.
+Fichiers qui **déclenchent** le hook : tout sous `battleforthecrown-backend/`, `battleforthecrown-pixi/`, `packages/` (hors `*.md` / `*.txt`), plus `package.json`, `yarn.lock` et `tsconfig*.json` à la racine ou dans un workspace.
 
-**Filtre code-only** : le hook compare les fichiers du range poussé (`git diff --name-only <remote>..<local>`). Si **aucun `.ts`/`.tsx`** n'a changé (push doc/plan/config-only), il skip immédiatement (`exit 0`). Une nouvelle branche sans base distante fiable lance les checks par sécurité. But : ne pas payer ~10-15 s sur un push qui ne touche pas de code compilable/testé.
+Si une étape échoue, le push est bloqué. Les **smokes ne tournent pas** dans le hook. En local, `/run` lance les smokes ciblés par impact backend ; la CI PR lance la suite smoke complète.
 
 ## Pourquoi sortir les smokes du hook
 

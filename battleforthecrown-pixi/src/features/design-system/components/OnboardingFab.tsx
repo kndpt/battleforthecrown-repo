@@ -11,6 +11,16 @@ export interface OnboardingFabActionPayload {
 
 export type OnboardingFabPlacement = 'container' | 'viewport';
 
+export interface OnboardingLootPreviewItem {
+  icon: string;
+  value: string;
+}
+
+export interface OnboardingLootPreview {
+  label: string;
+  items: OnboardingLootPreviewItem[];
+}
+
 export interface OnboardingFabProps {
   body: string;
   closeLabel: string;
@@ -18,6 +28,7 @@ export interface OnboardingFabProps {
   imageAlt: string;
   imageBadgeLabel?: string;
   imageSrc: string;
+  lootPreview?: OnboardingLootPreview;
   modalLabel: string;
   onOpenChange: (open: boolean) => void;
   onPrimaryAction: (payload: OnboardingFabActionPayload) => void;
@@ -243,6 +254,33 @@ function TutoHero({
   );
 }
 
+function TutoLootPreview({ preview }: { preview: OnboardingLootPreview }) {
+  return (
+    <div className="rounded-xl border border-[rgba(93,74,50,.2)] bg-[linear-gradient(to_bottom,rgba(255,255,255,.28),rgba(93,74,50,.06))] px-2.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,.35)]">
+      <div className="mb-1.5 text-center font-game text-[9px] font-bold uppercase tracking-[.24em] text-[#8a7358]">
+        {preview.label}
+      </div>
+      <div className="flex items-center justify-center gap-2.5">
+        {preview.items.map((item) => (
+          <div
+            className="flex min-w-[72px] items-center justify-center gap-1 rounded-full border border-[rgba(93,74,50,.16)] bg-[rgba(255,255,255,.22)] px-2 py-1 opacity-70 grayscale"
+            key={item.icon}
+          >
+            <img
+              alt=""
+              className="size-[18px] object-contain opacity-80"
+              src={publicAsset(item.icon)}
+            />
+            <span className="font-game text-[12px] font-bold tabular-nums text-[#6d5838]">
+              {item.value}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function OnboardingFab({
   body,
   className,
@@ -254,6 +292,7 @@ export function OnboardingFab({
   imageSrc,
   isAdvancing = false,
   loading = false,
+  lootPreview,
   modalLabel,
   onOpenChange,
   onPrimaryAction,
@@ -452,6 +491,8 @@ export function OnboardingFab({
           <TutoHero alt={imageAlt} badgeLabel={imageBadgeLabel} src={imageSrc} />
           <TutoStepDots step={step} total={total} />
           <p className="m-0 font-game text-[13.5px] leading-[1.45] text-[#6d5838]">{body}</p>
+
+          {lootPreview ? <TutoLootPreview preview={lootPreview} /> : null}
 
           <div className="flex gap-2">
             {secondaryLabel && onSecondaryAction ? (

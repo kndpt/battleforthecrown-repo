@@ -1,31 +1,73 @@
-set -e
+#!/usr/bin/env sh
+set -eu
 
-# Determine the set of files being pushed. Run checks only if any code
-# file (.ts/.tsx) changed — doc/plan/config-only pushes skip the hook.
-range=""
+zero="0000000000000000000000000000000000000000"
+needs_check=false
+had_ref=false
+
+is_code_change() {
+  case "$1" in
+    battleforthecrown-backend/*|battleforthecrown-pixi/*|packages/*)
+      case "$1" in
+        *.md|*.txt) return 1 ;;
+        *) return 0 ;;
+      esac
+      ;;
+    package.json|yarn.lock|tsconfig.base.json)
+      return 0
+      ;;
+    */package.json|*/tsconfig.json|*/tsconfig.*.json)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+collect_push_files() {
+  _local_ref="$1"
+  _local_sha="$2"
+  _remote_sha="$4"
+
+  case "$_local_ref" in
+    refs/tags/*) return ;;
+  esac
+
+  had_ref=true
+
+  if [ "$_remote_sha" = "$zero" ]; then
+    _base=$(git merge-base "$_local_sha" main 2>/dev/null || true)
+    if [ -z "$_base" ]; then
+      _base=$(git merge-base "$_local_sha" master 2>/dev/null || true)
+    fi
+    if [ -z "$_base" ]; then
+      needs_check=true
+      return
+    fi
+    git diff --name-only "$_base" "$_local_sha"
+    return
+  fi
+
+  git diff --name-only "$_remote_sha" "$_local_sha"
+}
+
 while read -r local_ref local_sha remote_ref remote_sha; do
-  if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
-    # New branch on remote: no reliable base → run checks to be safe.
-    range=""
-    break
-  fi
-  # Both endpoints must exist locally, else the range is invalid → run checks.
-  if ! git rev-parse --verify --quiet "$remote_sha^{commit}" >/dev/null \
-    || ! git rev-parse --verify --quiet "$local_sha^{commit}" >/dev/null; then
-    range=""
-    break
-  fi
-  range="$remote_sha..$local_sha"
+  for file in $(collect_push_files "$local_ref" "$local_sha" "$remote_ref" "$remote_sha" 2>/dev/null || true); do
+    [ -z "$file" ] && continue
+    if is_code_change "$file"; then
+      needs_check=true
+      break 2
+    fi
+  done
 done
 
-if [ -z "$range" ]; then
-  changed=""
-else
-  changed=$(git diff --name-only "$range" -- '*.ts' '*.tsx')
+if [ "$had_ref" = false ]; then
+  needs_check=true
 fi
 
-if [ -n "$range" ] && [ -z "$changed" ]; then
-  echo "[pre-push] No .ts/.tsx changes — skipping static-check + unit tests."
+if [ "$needs_check" = false ]; then
+  echo "[pre-push] Aucun fichier code impacté (doc, tasks, config outil, etc.) — skip static-check et tests."
   exit 0
 fi
 

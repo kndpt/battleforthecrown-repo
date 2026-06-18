@@ -10,38 +10,15 @@ import {
 } from './event-outbox-prefetch';
 import { RetentionService } from '../retention/retention.service';
 import { OnboardingService } from '../onboarding/onboarding.service';
+import { OnboardingNarrativeTargetService } from '../world/onboarding-narrative-target.service';
+import {
+  planNotifications,
+  type NotificationPlannerDeps,
+} from './event-outbox-notification-planner';
 import {
   EVENT_PAYLOAD_SCHEMAS,
   type EventKind,
-  type BuildingCompletedPayload,
-  type UnitTrainingCompletedPayload,
-  type UnitTrainedPayload,
-  type BattleSentPayload,
-  type BattleResolvedPayload,
-  type BattleReturnedPayload,
-  type ScoutSentPayload,
-  type ScoutReportedPayload,
-  type ScoutReturnedPayload,
-  type VillageAttackedPayload,
-  type VillageConqueredPayload,
-  type VillageCaptureWindowOpenedPayload,
-  type VillageCaptureWindowCompletedPayload,
-  type VillageCaptureWindowInterruptedPayload,
-  type NobleKilledPayload,
-  type ReinforcementSentPayload,
-  type ReinforcementRecalledPayload,
-  type ReinforcementReturnedPayload,
-  type CaravanSentPayload,
-  type CaravanArrivedPayload,
-  type CaravanRecalledPayload,
-  type CaravanReturnedPayload,
-  type ExpeditionRecalledPayload,
-  type ExpeditionReturnedPayload,
-  type GarrisonAddedPayload,
-  type ResourcesChangedPayload,
-  type CrownsChangedPayload,
-  type RankingsChangedPayload,
-  type WorldStatusChangedPayload,
+  type PayloadForKind,
 } from './event-types';
 
 function isEventKind(kind: string): kind is EventKind {
@@ -57,6 +34,7 @@ export class EventOutboxService {
     private readonly gateway: GameGateway,
     private readonly retention: RetentionService,
     private readonly onboarding: OnboardingService,
+    private readonly onboardingNarrativeTarget: OnboardingNarrativeTargetService,
   ) {}
 
   async dispatchPendingEvents(): Promise<void> {
@@ -132,653 +110,49 @@ export class EventOutboxService {
       event.createdAt,
     );
     await this.onboarding.recordOutboxEvent(event.id, event.kind, payload);
-    switch (event.kind) {
-      case 'building.completed':
-        await this.notifyBuildingCompleted(
-          payload as BuildingCompletedPayload,
-          villageUserIdCache,
-        );
-        break;
-      case 'unit.training.completed':
-        await this.notifyUnitTrainingCompleted(
-          payload as UnitTrainingCompletedPayload,
-          villageUserIdCache,
-        );
-        break;
-      case 'unit.trained':
-        await this.notifyUnitTrained(
-          payload as UnitTrainedPayload,
-          villageUserIdCache,
-        );
-        break;
-      case 'battle.sent':
-        await this.notifyBattleSent(
-          payload as BattleSentPayload,
-          villageUserIdCache,
-        );
-        break;
-      case 'battle.resolved':
-        await this.notifyBattleResolved(
-          payload as BattleResolvedPayload,
-          villageUserIdCache,
-        );
-        break;
-      case 'battle.returned':
-        await this.notifyBattleReturned(
-          payload as BattleReturnedPayload,
-          villageUserIdCache,
-        );
-        break;
-      case 'scout.sent':
-        await this.notifyScoutSent(
-          payload as ScoutSentPayload,
-          villageUserIdCache,
-        );
-        break;
-      case 'scout.reported':
-        await this.notifyScoutReported(
-          payload as ScoutReportedPayload,
-          villageUserIdCache,
-        );
-        break;
-      case 'scout.returned':
-        await this.notifyScoutReturned(
-          payload as ScoutReturnedPayload,
-          villageUserIdCache,
-        );
-        break;
-      case 'resources.changed':
-        await this.notifyResourcesChanged(
-          payload as ResourcesChangedPayload,
-          villageUserIdCache,
-        );
-        break;
-      case 'village.attacked':
-        await this.notifyVillageAttacked(
-          payload as VillageAttackedPayload,
-          villageUserIdCache,
-        );
-        break;
-      case 'village.conquered':
-        this.notifyVillageConquered(payload as VillageConqueredPayload);
-        break;
-      case 'village.capture-window-opened':
-        await this.notifyVillageCaptureWindowOpened(
-          payload as VillageCaptureWindowOpenedPayload,
-        );
-        break;
-      case 'village.capture-window-completed':
-        this.notifyVillageCaptureWindowCompleted(
-          payload as VillageCaptureWindowCompletedPayload,
-        );
-        break;
-      case 'village.capture-window-interrupted':
-        await this.notifyVillageCaptureWindowInterrupted(
-          payload as VillageCaptureWindowInterruptedPayload,
-        );
-        break;
-      case 'noble.killed':
-        this.notifyNobleKilled(payload as NobleKilledPayload);
-        break;
-      case 'reinforcement.sent':
-        await this.notifyReinforcementSent(
-          payload as ReinforcementSentPayload,
-          villageUserIdCache,
-        );
-        break;
-      case 'reinforcement.recalled':
-        await this.notifyReinforcementRecalled(
-          payload as ReinforcementRecalledPayload,
-          villageUserIdCache,
-        );
-        break;
-      case 'reinforcement.returned':
-        await this.notifyReinforcementReturned(
-          payload as ReinforcementReturnedPayload,
-          villageUserIdCache,
-        );
-        break;
-      case 'caravan.sent':
-        await this.notifyCaravanSent(
-          payload as CaravanSentPayload,
-          villageUserIdCache,
-        );
-        break;
-      case 'caravan.arrived':
-        await this.notifyCaravanArrived(
-          payload as CaravanArrivedPayload,
-          villageUserIdCache,
-        );
-        break;
-      case 'caravan.recalled':
-        await this.notifyCaravanRecalled(
-          payload as CaravanRecalledPayload,
-          villageUserIdCache,
-        );
-        break;
-      case 'caravan.returned':
-        await this.notifyCaravanReturned(
-          payload as CaravanReturnedPayload,
-          villageUserIdCache,
-        );
-        break;
-      case 'expedition.recalled':
-        await this.notifyExpeditionRecalled(
-          payload as ExpeditionRecalledPayload,
-          villageUserIdCache,
-        );
-        break;
-      case 'expedition.returned':
-        await this.notifyExpeditionReturned(
-          payload as ExpeditionReturnedPayload,
-          villageUserIdCache,
-        );
-        break;
-      case 'garrison.added':
-        await this.notifyGarrisonAdded(
-          payload as GarrisonAddedPayload,
-          villageUserIdCache,
-        );
-        break;
-      case 'crowns.changed':
-        this.notifyCrownsChanged(payload as CrownsChangedPayload);
-        break;
-      case 'rankings.changed':
-        this.notifyRankingsChanged(payload as RankingsChangedPayload);
-        break;
-      case 'world.status.changed':
-        this.notifyWorldStatusChanged(payload as WorldStatusChangedPayload);
-        break;
-      default: {
-        const exhaustiveCheck: never = event.kind;
-        this.logger.warn(`Unknown event kind: ${String(exhaustiveCheck)}`);
-      }
-    }
-  }
-
-  private notifyRankingsChanged(payload: RankingsChangedPayload) {
-    this.gateway.notifyWorld(payload.worldId, 'rankings.changed', payload);
-  }
-
-  private async notifyBuildingCompleted(
-    payload: BuildingCompletedPayload,
-    villageUserIdCache: VillageUserIdCache,
-  ) {
-    const userId = await this.getUserIdByVillage(
-      payload.villageId,
-      villageUserIdCache,
-    );
-    if (!userId) return;
-
-    const notifyTime = Date.now();
-    this.logger.debug(
-      `🔔 [Outbox] Envoi WebSocket building.completed à ${notifyTime}:`,
-      {
-        userId,
-        buildingId: payload.buildingId,
-        level: payload.level,
-      },
-    );
-
-    this.gateway.notifyUser(userId, 'building.completed', {
-      buildingId: payload.buildingId,
-      villageId: payload.villageId,
-      buildingType: payload.buildingType,
-      level: payload.level,
-    });
-  }
-
-  private async notifyUnitTrainingCompleted(
-    payload: UnitTrainingCompletedPayload,
-    villageUserIdCache: VillageUserIdCache,
-  ) {
-    const userId = await this.getUserIdByVillage(
-      payload.villageId,
-      villageUserIdCache,
-    );
-    if (!userId) return;
-
-    this.logger.debug(`✅ [Outbox] Envoi WebSocket unit.training.completed:`, {
-      userId,
-      trainingId: payload.trainingId,
-      unitType: payload.unitType,
-      totalQty: payload.totalQty,
-    });
-
-    this.gateway.notifyUser(userId, 'unit.training.completed', {
-      trainingId: payload.trainingId,
-      villageId: payload.villageId,
-      unitType: payload.unitType,
-      completedQty: payload.completedQty,
-      totalQty: payload.totalQty,
-    });
-  }
-
-  private async notifyUnitTrained(
-    payload: UnitTrainedPayload,
-    villageUserIdCache: VillageUserIdCache,
-  ) {
-    const userId = await this.getUserIdByVillage(
-      payload.villageId,
-      villageUserIdCache,
-    );
-    if (!userId) return;
-
-    this.gateway.notifyUser(userId, 'unit.trained', payload);
-  }
-
-  private async notifyResourcesChanged(
-    payload: ResourcesChangedPayload,
-    villageUserIdCache: VillageUserIdCache,
-  ) {
-    const userId = await this.getUserIdByVillage(
-      payload.villageId,
-      villageUserIdCache,
-    );
-    if (!userId) return;
-
-    this.gateway.notifyUser(userId, 'resources.changed', payload);
-  }
-
-  private async notifyBattleSent(
-    payload: BattleSentPayload,
-    villageUserIdCache: VillageUserIdCache,
-  ) {
-    const userId = await this.getUserIdByVillage(
-      payload.villageId,
-      villageUserIdCache,
-    );
-    if (!userId) return;
-
-    this.logger.debug(`⚔️ [Outbox] Envoi WebSocket battle.sent:`, {
-      userId,
-      expeditionId: payload.expeditionId,
-      targetKind: payload.targetKind,
-    });
-
-    this.gateway.notifyUser(userId, 'battle.sent', {
-      expeditionId: payload.expeditionId,
-      villageId: payload.villageId,
-      targetX: payload.targetX,
-      targetY: payload.targetY,
-      targetKind: payload.targetKind,
-      arrivalAt: payload.arrivalAt,
-    });
-  }
-
-  private async notifyBattleResolved(
-    payload: BattleResolvedPayload,
-    villageUserIdCache: VillageUserIdCache,
-  ) {
-    const userId = await this.getUserIdByVillage(
-      payload.villageId,
-      villageUserIdCache,
-    );
-    if (!userId) return;
-
-    this.logger.debug(`⚔️ [Outbox] Envoi WebSocket battle.resolved:`, {
-      userId,
-      expeditionId: payload.expeditionId,
-      reportId: payload.reportId,
-      isVictory: payload.isVictory,
-      casualtyRate: payload.casualtyRate,
-    });
-
-    this.gateway.notifyUser(userId, 'battle.resolved', {
-      expeditionId: payload.expeditionId,
-      reportId: payload.reportId,
-      villageId: payload.villageId,
-      villageName: payload.villageName,
-      targetKind: payload.targetKind,
-      targetName: payload.targetName,
-      targetTier: payload.targetTier,
-      targetX: payload.targetX,
-      targetY: payload.targetY,
-      isVictory: payload.isVictory,
-      loot: payload.loot,
-      lossesAttacker: payload.lossesAttacker,
-      casualtyRate: payload.casualtyRate,
-      survivingUnits: payload.survivingUnits,
-      returnAt: payload.returnAt,
-    });
-  }
-
-  private async notifyBattleReturned(
-    payload: BattleReturnedPayload,
-    villageUserIdCache: VillageUserIdCache,
-  ) {
-    const userId = await this.getUserIdByVillage(
-      payload.villageId,
-      villageUserIdCache,
-    );
-    if (!userId) return;
-
-    this.logger.debug(`⚔️ [Outbox] Envoi WebSocket battle.returned:`, {
-      userId,
-      expeditionId: payload.expeditionId,
-    });
-
-    this.gateway.notifyUser(userId, 'battle.returned', {
-      expeditionId: payload.expeditionId,
-      reportId: payload.reportId,
-      villageId: payload.villageId,
-      survivingUnits: payload.survivingUnits,
-      loot: payload.loot,
-    });
-  }
-
-  private async notifyScoutSent(
-    payload: ScoutSentPayload,
-    villageUserIdCache: VillageUserIdCache,
-  ) {
-    const userId = await this.getUserIdByVillage(
-      payload.villageId,
-      villageUserIdCache,
-    );
-    if (!userId) return;
-
-    this.gateway.notifyUser(userId, 'scout.sent', payload);
-  }
-
-  private async notifyScoutReported(
-    payload: ScoutReportedPayload,
-    villageUserIdCache: VillageUserIdCache,
-  ) {
-    const userId = await this.getUserIdByVillage(
-      payload.villageId,
-      villageUserIdCache,
-    );
-    if (!userId) return;
-
-    this.gateway.notifyUser(userId, 'scout.reported', payload);
-  }
-
-  private async notifyScoutReturned(
-    payload: ScoutReturnedPayload,
-    villageUserIdCache: VillageUserIdCache,
-  ) {
-    const userId = await this.getUserIdByVillage(
-      payload.villageId,
-      villageUserIdCache,
-    );
-    if (!userId) return;
-
-    this.gateway.notifyUser(userId, 'scout.returned', payload);
-  }
-
-  private async notifyVillageAttacked(
-    payload: VillageAttackedPayload,
-    villageUserIdCache: VillageUserIdCache,
-  ) {
-    // Pour PvP : notifier le défenseur
-    const defenderVillageId = payload.defenderVillageId;
-    if (!defenderVillageId) return;
-
-    const userId =
-      payload.defenderUserId ??
-      (await this.getUserIdByVillage(defenderVillageId, villageUserIdCache));
-    if (!userId) return;
-
-    this.logger.debug(`🛡️ [Outbox] Envoi WebSocket village.attacked:`, {
-      userId,
-      attackerVillageId: payload.attackerVillageId,
-      isDefenseSuccessful: payload.isDefenseSuccessful,
-      casualtyRate: payload.casualtyRate,
-    });
-
-    const payloadForClient = {
-      defenderVillageId: payload.defenderVillageId,
-      defenderUserId: payload.defenderUserId,
-      attackerVillageId: payload.attackerVillageId,
-      attackerVillageName: payload.attackerVillageName,
-      attackerX: payload.attackerX,
-      attackerY: payload.attackerY,
-      defenderVillageName: payload.defenderVillageName,
-      isDefenseSuccessful: payload.isDefenseSuccessful,
-      losses: payload.losses,
-      reinforcementOriginVillageIds: payload.reinforcementOriginVillageIds,
-      casualtyRate: payload.casualtyRate,
-      resourcesLost: payload.resourcesLost,
-      timestamp: payload.timestamp,
-    };
-
-    this.gateway.notifyUser(userId, 'village.attacked', payloadForClient);
-    if (payload.observerUserId && payload.observerUserId !== userId) {
-      this.gateway.notifyUser(payload.observerUserId, 'village.attacked', {
-        ...payloadForClient,
-        observerUserId: payload.observerUserId,
-      });
-    }
-  }
-
-  private notifyVillageConquered(payload: VillageConqueredPayload) {
-    this.logger.debug(`🏰 [Outbox] Envoi WebSocket village.conquered:`, {
-      newOwnerId: payload.newOwnerId,
-      previousOwnerId: payload.previousOwnerId,
-      villageId: payload.villageId,
-      x: payload.x,
-      y: payload.y,
-    });
-
-    const payloadForClient = {
-      villageId: payload.villageId,
-      villageName: payload.villageName,
-      newOwnerId: payload.newOwnerId,
-      previousOwnerId: payload.previousOwnerId,
-      previousTier: payload.previousTier,
-      x: payload.x,
-      y: payload.y,
-      buildingsKept: payload.buildingsKept,
-    };
-
-    this.gateway.notifyUser(
-      payload.newOwnerId,
-      'village.conquered',
-      payloadForClient,
-    );
-    if (
-      payload.previousOwnerId &&
-      payload.previousOwnerId !== payload.newOwnerId
-    ) {
-      this.gateway.notifyUser(
-        payload.previousOwnerId,
-        'village.conquered',
-        payloadForClient,
+    // Narrative target creation is a side-effect, not an invariant of dispatch.
+    // Swallow errors so a transient failure does not stall the WS gateway nor
+    // hot-loop on the same Outbox row at the next poll.
+    try {
+      await this.onboardingNarrativeTarget.handleEvent(event.kind, payload);
+    } catch (error) {
+      this.logger.error(
+        `OnboardingNarrativeTargetService.handleEvent failed for event ${event.id}: ${(error as Error).message}`,
       );
     }
+
+    await this.emitToRecipients(event.kind, payload, villageUserIdCache);
   }
 
-  private async notifyVillageCaptureWindowOpened(
-    payload: VillageCaptureWindowOpenedPayload,
-  ) {
-    const attackerUserId =
-      payload.attackerUserId ??
-      (await this.getAttackerUserIdByConquest(payload.pendingConquestId));
-    if (!attackerUserId) return;
-    this.gateway.notifyUser(
-      attackerUserId,
-      'village.capture-window-opened',
-      payload,
-    );
-  }
-
-  private notifyVillageCaptureWindowCompleted(
-    payload: VillageCaptureWindowCompletedPayload,
-  ) {
-    this.gateway.notifyUser(
-      payload.newOwnerUserId,
-      'village.capture-window-completed',
-      payload,
-    );
-  }
-
-  private async notifyVillageCaptureWindowInterrupted(
-    payload: VillageCaptureWindowInterruptedPayload,
-  ) {
-    const attackerUserId =
-      payload.attackerUserId ??
-      (await this.getAttackerUserIdByConquest(payload.pendingConquestId));
-    if (!attackerUserId) return;
-    this.gateway.notifyUser(
-      attackerUserId,
-      'village.capture-window-interrupted',
-      payload,
-    );
-  }
-
-  private notifyNobleKilled(payload: NobleKilledPayload) {
-    this.gateway.notifyUser(payload.attackerUserId, 'noble.killed', payload);
-  }
-
-  private notifyCrownsChanged(payload: CrownsChangedPayload) {
-    const userId = payload.userId;
-    if (!userId) return;
-
-    this.gateway.notifyUser(userId, 'crowns.changed', {
-      userId: payload.userId,
-      worldId: payload.worldId,
-      balance: payload.balance,
-      productionRate: payload.productionRate,
-      lastUpdateTs: payload.lastUpdateTs,
-    });
-  }
-
-  private notifyWorldStatusChanged(payload: WorldStatusChangedPayload) {
-    this.gateway.notifyWorld(payload.worldId, 'world.status.changed', payload);
-  }
-
-  private async notifyReinforcementSent(
-    payload: ReinforcementSentPayload,
+  private async emitToRecipients<K extends EventKind>(
+    kind: K,
+    payload: PayloadForKind<K>,
     villageUserIdCache: VillageUserIdCache,
   ) {
-    const userId = await this.getUserIdByVillage(
-      payload.villageId,
+    const deps: NotificationPlannerDeps = {
       villageUserIdCache,
-    );
-    if (!userId) return;
+      getUserIdByVillage: (villageId) =>
+        this.getUserIdByVillage(villageId, villageUserIdCache),
+      getAttackerUserIdByConquest: (pendingConquestId) =>
+        this.getAttackerUserIdByConquest(pendingConquestId),
+    };
 
-    this.gateway.notifyUser(userId, 'reinforcement.sent', payload);
-  }
-
-  private async notifyReinforcementRecalled(
-    payload: ReinforcementRecalledPayload,
-    villageUserIdCache: VillageUserIdCache,
-  ) {
-    const userId = await this.getUserIdByVillage(
-      payload.villageId,
-      villageUserIdCache,
-    );
-    if (!userId) return;
-
-    this.gateway.notifyUser(userId, 'reinforcement.recalled', payload);
-  }
-
-  private async notifyReinforcementReturned(
-    payload: ReinforcementReturnedPayload,
-    villageUserIdCache: VillageUserIdCache,
-  ) {
-    const recipientIds = await this.getUniqueUserIdsByVillages(
-      villageUserIdCache,
-      payload.villageId,
-      payload.hostVillageId,
-    );
-
-    for (const userId of recipientIds) {
-      this.gateway.notifyUser(userId, 'reinforcement.returned', payload);
+    const plans = await planNotifications(kind, payload, deps);
+    for (const plan of plans) {
+      if (plan.recipient.kind === 'user') {
+        this.gateway.notifyUser(
+          plan.recipient.id,
+          kind,
+          plan.payload as PayloadForKind<K>,
+        );
+      } else {
+        this.gateway.notifyWorld(
+          plan.recipient.id,
+          kind,
+          plan.payload as PayloadForKind<K>,
+        );
+      }
     }
-  }
-
-  private async notifyCaravanSent(
-    payload: CaravanSentPayload,
-    villageUserIdCache: VillageUserIdCache,
-  ) {
-    const userId = await this.getUserIdByVillage(
-      payload.villageId,
-      villageUserIdCache,
-    );
-    if (!userId) return;
-
-    this.gateway.notifyUser(userId, 'caravan.sent', payload);
-  }
-
-  private async notifyCaravanArrived(
-    payload: CaravanArrivedPayload,
-    villageUserIdCache: VillageUserIdCache,
-  ) {
-    const recipientIds = await this.getUniqueUserIdsByVillages(
-      villageUserIdCache,
-      payload.villageId,
-      payload.targetVillageId,
-    );
-
-    for (const userId of recipientIds) {
-      this.gateway.notifyUser(userId, 'caravan.arrived', payload);
-    }
-  }
-
-  private async notifyCaravanRecalled(
-    payload: CaravanRecalledPayload,
-    villageUserIdCache: VillageUserIdCache,
-  ) {
-    const userId = await this.getUserIdByVillage(
-      payload.villageId,
-      villageUserIdCache,
-    );
-    if (!userId) return;
-
-    this.gateway.notifyUser(userId, 'caravan.recalled', payload);
-  }
-
-  private async notifyCaravanReturned(
-    payload: CaravanReturnedPayload,
-    villageUserIdCache: VillageUserIdCache,
-  ) {
-    const userId = await this.getUserIdByVillage(
-      payload.villageId,
-      villageUserIdCache,
-    );
-    if (!userId) return;
-
-    this.gateway.notifyUser(userId, 'caravan.returned', payload);
-  }
-
-  private async notifyExpeditionRecalled(
-    payload: ExpeditionRecalledPayload,
-    villageUserIdCache: VillageUserIdCache,
-  ) {
-    const userId = await this.getUserIdByVillage(
-      payload.villageId,
-      villageUserIdCache,
-    );
-    if (!userId) return;
-
-    this.gateway.notifyUser(userId, 'expedition.recalled', payload);
-  }
-
-  private async notifyExpeditionReturned(
-    payload: ExpeditionReturnedPayload,
-    villageUserIdCache: VillageUserIdCache,
-  ) {
-    const userId = await this.getUserIdByVillage(
-      payload.villageId,
-      villageUserIdCache,
-    );
-    if (!userId) return;
-
-    this.gateway.notifyUser(userId, 'expedition.returned', payload);
-  }
-
-  private async notifyGarrisonAdded(
-    payload: GarrisonAddedPayload,
-    villageUserIdCache: VillageUserIdCache,
-  ) {
-    const userId = await this.getUserIdByVillage(
-      payload.villageId,
-      villageUserIdCache,
-    );
-    if (!userId) return;
-
-    this.gateway.notifyUser(userId, 'garrison.added', payload);
   }
 
   private async prefetchVillageUserIds(
@@ -832,22 +206,5 @@ export class EventOutboxService {
       select: { attackerUserId: true },
     });
     return conquest?.attackerUserId ?? null;
-  }
-
-  private async getUniqueUserIdsByVillages(
-    villageUserIdCache: VillageUserIdCache,
-    ...villageIds: Array<string | undefined>
-  ): Promise<string[]> {
-    const uniqueVillageIds = [
-      ...new Set(villageIds.filter(Boolean)),
-    ] as string[];
-    const userIds = await Promise.all(
-      uniqueVillageIds.map((villageId) =>
-        this.getUserIdByVillage(villageId, villageUserIdCache),
-      ),
-    );
-    return [
-      ...new Set(userIds.filter((userId): userId is string => Boolean(userId))),
-    ];
   }
 }

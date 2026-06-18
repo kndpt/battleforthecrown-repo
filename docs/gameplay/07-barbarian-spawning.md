@@ -10,7 +10,8 @@ Les BV (cf. [`06-barbarians.md`](./06-barbarians.md)) sont **générés à l'arr
 
 - Pas de pool fixe au lancement du monde.
 - Pas de spawn déconnecté des joueurs.
-- Un joueur qui rejoint un monde **trouve toujours des cibles barbares à proximité**, même si le monde est ancien. Au moins une cible T1 doit être dans le rayon de Watchtower niveau 1 du village initial pour rester visible et attaquable pendant l'onboarding.
+- Un joueur qui rejoint un monde **trouve toujours des cibles barbares à proximité**, même si le monde est ancien.
+- La garantie de cible jouable pendant l'onboarding est portée par une **cible narrative dédiée** créée par le runtime onboarding (cf. [`15-onboarding.md`](./15-onboarding.md)), hors du seeding global décrit ici.
 - **Mais** : pas de submersion à mesure que les arrivées s'accumulent (sinon la carte devient une mer de BV, le PvP se dilue, l'identité des zones disparaît).
 
 L'algorithme s'adapte donc à **deux variables vivantes** :
@@ -93,17 +94,6 @@ L'anneau est calculé via `getChunksInRings(centerX, centerY, rMin, rMax, chunkS
 
 > 💡 La fonction `samplePositions` lit les villages présents dans le **chunk + halo `minSpacing`** (en lecture directe DB, transactionnelle) avant de proposer une position. Pas de rolling : si la position échoue les contraintes, on retire jusqu'à `need × 20` tentatives, puis on s'arrête.
 
-### Garantie T1 atteignable Watchtower L1
-
-Après le seeding normal des chunks proches, le backend vérifie si un village barbare T1 existe déjà dans le rayon de Watchtower niveau 1 du village joueur. Si aucun T1 n'est visible, il crée **au plus une** cible T1 dans l'anneau atteignable `[rMin, radius Watchtower L1]`, en respectant :
-
-- collisions et unicité `(worldId, x, y)` ;
-- `playerExclusion` autour des villages joueurs ;
-- `minSpacing` vis-à-vis des villages déjà présents ;
-- idempotence : relancer le seeding ne crée rien si un T1 atteignable existe déjà.
-
-Cette garantie ne remplace pas l'anti-submersion par chunk pour la distribution normale : elle borne seulement la première cible jouable nécessaire à l'onboarding.
-
 ## Distribution des tiers
 
 **Concentrique, basée uniquement sur la distance** au spawn du nouveau joueur. Aucune adaptation au level / puissance / âge du joueur (cible MVP).
@@ -173,6 +163,10 @@ Ces points restent ouverts, à reprendre lorsque le playtest aura donné des sig
 | Contrainte unique `(worldId, x, y)` sur `Village` | Un BV ne peut pas être créé deux fois sur la même tile (P2002 silencieusement skipé). |
 | `MAX_SYNC_CHUNKS = 4` | La requête `/join` finit en quelques secondes ; le reste est délégué au catchup. |
 | Catchup `BarbarianSeedingCatchupWorker` (1×/jour) | Repasse sur les villages joueurs créés `< 1 h` avant et complète les chunks restants. **Pas un cron de régulation.** |
+
+### Hors scope : cible narrative onboarding
+
+Le runtime onboarding peut créer **une seule** cible barbare marquée `originKind = ONBOARDING_NARRATIVE` par compte × monde. Cette cible **n'est pas générée par l'algorithme décrit ici** : elle est créée par `OnboardingNarrativeTargetService` au moment de la construction de la Tour de guet L1, n'affecte ni la densité par chunk ni l'anti-submersion, et n'est pas comptabilisée dans `ChunkSpawnState`. Pour le détail, cf. [`15-onboarding.md`](./15-onboarding.md).
 
 ## Liens
 

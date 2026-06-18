@@ -9,6 +9,7 @@ import type { OnboardingStep } from '@battleforthecrown/shared/onboarding';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import type { EventKind, PayloadForKind } from '../event/event-types';
+import { createOutboxEvent } from '../event/event.utils';
 import {
   ONBOARDING_INITIAL_REWARD,
   getNextStep,
@@ -43,6 +44,7 @@ export class OnboardingService {
       return {
         worldId,
         firstVillageId: null,
+        narrativeTargetVillageId: null,
         status: 'COMPLETED',
         currentStep: null,
         completedSteps: [],
@@ -174,8 +176,10 @@ async function reconcileStateFromFacts(
   tx: Tx,
   state: {
     id: string;
+    worldId: string;
     firstVillageId: string;
     currentStep: OnboardingStep;
+    narrativeTargetVillageId: string | null;
   },
   trigger?: { eventOutboxId: string; step: OnboardingStep },
 ): Promise<void> {
@@ -214,12 +218,61 @@ async function reconcileStateFromFacts(
 
   if (!advanced) return;
 
-  await tx.onboardingState.update({
-    where: { id: state.id },
-    data: currentStep
-      ? { currentStep }
-      : { status: 'COMPLETED', completedAt: new Date() },
+  const completed = currentStep === null;
+
+  if (completed) {
+    await tx.onboardingState.update({
+      where: { id: state.id },
+      data: {
+        status: 'COMPLETED',
+        completedAt: new Date(),
+        narrativeTargetVillageId: null,
+      },
+    });
+  } else if (currentStep) {
+    await tx.onboardingState.update({
+      where: { id: state.id },
+      data: { currentStep },
+    });
+  }
+
+  if (completed && state.narrativeTargetVillageId) {
+    await deleteOnboardingNarrativeTargetVillage(tx, {
+      worldId: state.worldId,
+      villageId: state.narrativeTargetVillageId,
+    });
+  }
+}
+
+async function deleteOnboardingNarrativeTargetVillage(
+  tx: Tx,
+  params: { worldId: string; villageId: string },
+): Promise<void> {
+  const village = await tx.village.findUnique({
+    where: { id: params.villageId },
+    select: {
+      id: true,
+      worldId: true,
+      x: true,
+      y: true,
+      originKind: true,
+    },
   });
+  if (
+    !village ||
+    village.worldId !== params.worldId ||
+    village.originKind !== 'ONBOARDING_NARRATIVE'
+  ) {
+    return;
+  }
+
+  await createOutboxEvent(tx, 'village.removed', village.id, {
+    worldId: village.worldId,
+    villageId: village.id,
+    x: village.x,
+    y: village.y,
+  });
+  await tx.village.delete({ where: { id: village.id } });
 }
 
 async function isStepSatisfied(
@@ -275,10 +328,30 @@ async function hasVictoriousBarbarianAttack(
   tx: Tx,
   villageId: string,
 ): Promise<boolean> {
+  // Resolve the player's own narrative target via OnboardingState.
+  // This scopes the check to THIS player's target — not any ONBOARDING_NARRATIVE
+  // village in the world (which would let Player A complete by attacking Player B's target).
+  const state = await tx.onboardingState.findFirst({
+    where: { firstVillageId: villageId },
+    select: { narrativeTargetVillageId: true },
+  });
+  if (!state?.narrativeTargetVillageId) return false;
+
+  const target = await tx.village.findUnique({
+    where: { id: state.narrativeTargetVillageId },
+    select: { worldId: true, x: true, y: true },
+  });
+  if (!target) return false;
+
+  const { worldId, x, y } = target;
+
   const reports = await tx.combatReport.findMany({
     where: {
       attackerVillageId: villageId,
       targetKind: 'BARBARIAN_VILLAGE',
+      worldId,
+      targetX: x,
+      targetY: y,
     },
     select: { totalUnitsAttacker: true, lossesAttacker: true },
     orderBy: { createdAt: 'desc' },
