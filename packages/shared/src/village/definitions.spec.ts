@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  findBuildingByType,
   getBuildingDefinition,
+  getBuildingLevel,
   getBuildingLevelValues,
   getBuildingMaxLevel,
   getBuildingUnlockRequirement,
@@ -74,5 +76,35 @@ describe('getBuildingUnlockRequirement', () => {
 
   it('returns null for an unknown type', () => {
     expect(getBuildingUnlockRequirement('UNKNOWN')).toBeNull();
+  });
+});
+
+describe('findBuildingByType', () => {
+  const buildings = [
+    { type: 'CASTLE', level: 4 },
+    { type: 'WOOD', level: 7 },
+  ];
+
+  it('returns the matching building', () => {
+    expect(findBuildingByType(buildings, 'WOOD')).toEqual({ type: 'WOOD', level: 7 });
+  });
+
+  it('returns undefined when not found', () => {
+    expect(findBuildingByType(buildings, 'IRON')).toBeUndefined();
+  });
+});
+
+describe('getBuildingLevel', () => {
+  const buildings = [
+    { type: 'CASTLE', level: 4 },
+    { type: 'WOOD', level: 7 },
+  ];
+
+  it('returns the level when found', () => {
+    expect(getBuildingLevel(buildings, 'CASTLE')).toBe(4);
+  });
+
+  it('returns 0 when not found', () => {
+    expect(getBuildingLevel(buildings, 'IRON')).toBe(0);
   });
 });
