@@ -1,18 +1,14 @@
 #!/usr/bin/env sh
-# husky 9 invokes hooks via `sh -e`; re-exec with bash for process substitution and pipefail
-[ -z "$BASH_VERSION" ] && exec bash "$0" "$@"
-set -euo pipefail
+set -eu
 
 zero="0000000000000000000000000000000000000000"
 needs_check=false
 had_ref=false
 
 is_code_change() {
-  local file="$1"
-
-  case "$file" in
+  case "$1" in
     battleforthecrown-backend/*|battleforthecrown-pixi/*|packages/*)
-      case "$file" in
+      case "$1" in
         *.md|*.txt) return 1 ;;
         *) return 0 ;;
       esac
@@ -30,42 +26,40 @@ is_code_change() {
 }
 
 collect_push_files() {
-  local local_ref="$1"
-  local local_sha="$2"
-  local remote_ref="$3"
-  local remote_sha="$4"
+  _local_ref="$1"
+  _local_sha="$2"
+  _remote_sha="$4"
 
-  case "$local_ref" in
+  case "$_local_ref" in
     refs/tags/*) return ;;
   esac
 
   had_ref=true
 
-  if [ "$remote_sha" = "$zero" ]; then
-    local base=""
-    base=$(git merge-base "$local_sha" main 2>/dev/null || true)
-    if [ -z "$base" ]; then
-      base=$(git merge-base "$local_sha" master 2>/dev/null || true)
+  if [ "$_remote_sha" = "$zero" ]; then
+    _base=$(git merge-base "$_local_sha" main 2>/dev/null || true)
+    if [ -z "$_base" ]; then
+      _base=$(git merge-base "$_local_sha" master 2>/dev/null || true)
     fi
-    if [ -z "$base" ]; then
+    if [ -z "$_base" ]; then
       needs_check=true
       return
     fi
-    git diff --name-only "$base" "$local_sha"
+    git diff --name-only "$_base" "$_local_sha"
     return
   fi
 
-  git diff --name-only "$remote_sha" "$local_sha"
+  git diff --name-only "$_remote_sha" "$_local_sha"
 }
 
 while read -r local_ref local_sha remote_ref remote_sha; do
-  while IFS= read -r file; do
+  for file in $(collect_push_files "$local_ref" "$local_sha" "$remote_ref" "$remote_sha" 2>/dev/null || true); do
     [ -z "$file" ] && continue
     if is_code_change "$file"; then
       needs_check=true
       break 2
     fi
-  done < <(collect_push_files "$local_ref" "$local_sha" "$remote_ref" "$remote_sha" || true)
+  done
 done
 
 if [ "$had_ref" = false ]; then

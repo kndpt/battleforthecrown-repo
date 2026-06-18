@@ -21,8 +21,8 @@ import { useGameStore } from "@/stores/game";
 import {
   calculateDistance,
   calculateTravelTime,
-  formatTravelTime,
-} from "@/lib/combatHelpers";
+} from "@battleforthecrown/shared/logic";
+import { formatTravelTime } from "@/lib/combatHelpers";
 import {
   CARAVAN_SPEED,
   getCaravanResourceCapacity,
@@ -138,7 +138,7 @@ export function CaravanLaunchModal({
     if (!tempo || totalVolume <= 0) return 0;
     return Math.round(
       TempoService.applyDuration(
-        calculateTravelTime(distance, CARAVAN_SPEED, 1),
+        calculateTravelTime(distance, 1, CARAVAN_SPEED),
         tempo,
         "travelSpeed",
       ),

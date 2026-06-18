@@ -185,6 +185,7 @@ export function applyBattleSent(
   };
   useExpeditionsStore.getState().add(snapshot);
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(payload.villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
   invalidateOpenExpeditions(ctx);
 }
@@ -258,6 +259,7 @@ export function applyScoutSent(
   };
   useExpeditionsStore.getState().add(snapshot);
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(payload.villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
   invalidateOpenExpeditions(ctx);
 }
@@ -318,6 +320,9 @@ export function applyExpeditionRecalled(
     description: `Retour prévu à ${new Date(payload.returnAt).toLocaleTimeString()}`,
     ttlMs: 4000,
   });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(payload.villageId) });
   invalidateOpenExpeditions(ctx);
 }
 
@@ -433,6 +438,7 @@ export function applyCaravanSent(
   };
   useExpeditionsStore.getState().add(snapshot);
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(payload.villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
   invalidateOpenExpeditions(ctx);
 }
