@@ -7,6 +7,7 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import { WorldConfigService } from '../world/world-config.service';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
+import { findBuildingByType } from '@battleforthecrown/shared/village';
 
 export interface CancelConstructionResult {
   success: true;
@@ -56,8 +57,8 @@ export class CancelConstructionUseCase {
       const allBuildings = await tx.building.findMany({
         where: { villageId: building.villageId },
       });
-      const castle = allBuildings.find((b) => b.type === 'CASTLE');
-      const castleLevel = castle?.level ?? 1;
+      const castleLevel =
+        findBuildingByType(allBuildings, 'CASTLE')?.level ?? 1;
       const strategyConfig = await tx.villageStrategyConfig.findUnique({
         where: { villageId: building.villageId },
       });

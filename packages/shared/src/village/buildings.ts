@@ -522,3 +522,13 @@ export const isBuildingEnabled = (buildingType: string): boolean => {
   const definition = BUILDING_DEFINITIONS[buildingType as BuildingType];
   return definition?.enabled !== false;
 };
+
+export const findBuildingByType = <T extends { type: string }>(
+  buildings: ReadonlyArray<T>,
+  buildingType: string
+): T | undefined => buildings.find((building) => building.type === buildingType);
+
+export const getBuildingLevel = (
+  buildings: ReadonlyArray<{ type: string; level: number }>,
+  buildingType: string
+): number => findBuildingByType(buildings, buildingType)?.level ?? 0;

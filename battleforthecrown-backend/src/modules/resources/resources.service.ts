@@ -5,6 +5,8 @@ import { WorldConfigService } from '../world/world-config.service';
 import { VillageStrategyService } from '../strategy/village-strategy.service';
 import {
   VillageStrategyType,
+  findBuildingByType,
+  getBuildingLevel,
   getStrategyBonusValue,
 } from '@battleforthecrown/shared/village';
 import { MS_PER_MINUTE } from '@battleforthecrown/shared/time';
@@ -78,8 +80,8 @@ export class ResourcesService {
       const worldId = village.worldId;
 
       // Get current storage limit based on Warehouse level
-      const warehouse = village.buildings.find((b) => b.type === 'WAREHOUSE');
-      const warehouseLevel = warehouse?.level || 1;
+      const warehouseLevel =
+        getBuildingLevel(village.buildings, 'WAREHOUSE') || 1;
       const baseStorageLimit = this.worldConfig.getStorageLimit(
         worldId,
         warehouseLevel,
@@ -236,9 +238,9 @@ export class ResourcesService {
     strategy?: VillageStrategyType,
   ): Promise<{ wood: number; stone: number; iron: number }> {
     const config = await this.worldConfig.getConfig(worldId);
-    const woodBuilding = buildings.find((b) => b.type === 'WOOD');
-    const stoneBuilding = buildings.find((b) => b.type === 'STONE');
-    const ironBuilding = buildings.find((b) => b.type === 'IRON');
+    const woodBuilding = findBuildingByType(buildings, 'WOOD');
+    const stoneBuilding = findBuildingByType(buildings, 'STONE');
+    const ironBuilding = findBuildingByType(buildings, 'IRON');
 
     return {
       wood: woodBuilding
