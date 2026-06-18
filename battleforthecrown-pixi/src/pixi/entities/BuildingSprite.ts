@@ -287,6 +287,7 @@ export function createBuildingSprite(
       flashGraphic.alpha = 1;
     },
     destroy() {
+      container.removeAllListeners();
       container.destroy({ children: true });
     },
   };
