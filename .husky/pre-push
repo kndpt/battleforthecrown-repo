@@ -1,5 +1,28 @@
 set -e
 
+# Determine the set of files being pushed. Run checks only if any code
+# file (.ts/.tsx) changed — doc/plan/config-only pushes skip the hook.
+range=""
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
+    # New branch on remote: no reliable base → run checks to be safe.
+    range=""
+    break
+  fi
+  range="$remote_sha..$local_sha"
+done
+
+if [ -z "$range" ]; then
+  changed=""
+else
+  changed=$(git diff --name-only "$range" -- '*.ts' '*.tsx')
+fi
+
+if [ -n "$range" ] && [ -z "$changed" ]; then
+  echo "[pre-push] No .ts/.tsx changes — skipping static-check + unit tests."
+  exit 0
+fi
+
 echo "[pre-push] Running static-check + unit tests (backend + pixi)…"
 yarn static-check
 yarn test:backend
