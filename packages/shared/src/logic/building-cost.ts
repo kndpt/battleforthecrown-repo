@@ -1,6 +1,5 @@
-import { getBuildingLevelValues } from '../village/buildings';
+import { getBuildingLevelValues, CASTLE_CONSTRUCTION_SPEED_BONUS } from '../village/buildings';
 import { getStrategyBonusValue, VillageStrategyType } from '../village/strategy';
-import { CASTLE_CONSTRUCTION_SPEED_BONUS } from '../village/buildings';
 import { MS_PER_SECOND } from '../time';
 
 export interface BuildingCostResult {
@@ -36,11 +35,11 @@ export function calculateBuildingCost(
     const buildingCostReduction = getStrategyBonusValue(
       strategy,
       'buildingCostReduction'
-    ) as number;
+    );
     const constructionSpeedBonus = getStrategyBonusValue(
       strategy,
       'constructionSpeedBonus'
-    ) as number;
+    );
 
     if (buildingCostReduction !== 1.0) {
       cost = {
