@@ -17,7 +17,7 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 | area | PR |
 |------|-----|
-| pixi dead code: getResourceStorageAlertColor + formatCompactNumber re-export + ui/layout barrel | pending |
+| pixi dead code: getResourceStorageAlertColor + formatCompactNumber re-export + ui/layout barrel | #147 merged |
 
 ## rules
 
