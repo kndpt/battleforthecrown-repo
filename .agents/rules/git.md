@@ -37,4 +37,4 @@ fix(pixi-frontend/ws): clear refresh token on auth failure
 
 ## Pre-push hook
 
-`git push` déclenche `.husky/pre-push` qui lance `yarn static-check` + `yarn test:backend` + `yarn test:pixi` (~10-15 s, pas de Docker requis). Les smokes sont déportés sur le skill `/run` (Hard Gate `Acceptance & QA`), pas sur le hook. Détail et motivation : [`docs/architecture/local-ci.md`](../../docs/architecture/local-ci.md). Bypass `--no-verify` interdit sans demande user explicite.
+`git push` déclenche `.husky/pre-push` qui lance `yarn static-check` + `yarn test:backend` + `yarn test:pixi` (~10-15 s, pas de Docker requis) — **skippé si le push ne touche aucun fichier code** (doc seule, `tasks/`, `.agents/`, design system, configs outil). Les smokes sont déportés sur le skill `/run` (Hard Gate `Acceptance & QA`), pas sur le hook. Détail et motivation : [`docs/architecture/local-ci.md`](../../docs/architecture/local-ci.md). Bypass `--no-verify` interdit sans demande user explicite.
