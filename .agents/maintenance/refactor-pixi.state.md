@@ -1,7 +1,7 @@
 # refactor-pixi — état (réécrit chaque run)
 
-last: 2026-06-18 | theme report-modal-dry+building-listener-leak | PR pending `claude/focused-galileo-ltqzq8`
-full: `archive/refactor-pixi/2026-06-18-full.md`
+last: 2026-06-19 | theme report-query-factory | PR #152 `claude/focused-galileo-abmngx`
+full: `archive/refactor-pixi/2026-06-19-full.md`
 
 ## OPEN
 
@@ -17,12 +17,15 @@ full: `archive/refactor-pixi/2026-06-18-full.md`
 | F10 | High | WorldMapScene.ts | 760L, 0 tests |
 | F11 | Med | BuildingSprite.ts | 294L, 0 tests |
 | F12 | Minor | resources.ts:29, crowns.ts:29 | Unused selectors |
-| F13 | Major | queries.ts:1088 | deleteCaravanReport removeQueries vs invalidateQueries |
 | F14 | Minor | queries.ts:330 | Resources staleTime:0 aggressive |
+| F15 | Med | GameHeader.tsx:189-207 | Inline `<style>` keyframe injection on every render |
+| F16 | Med | WorldMapScene.ts:267 | fogContainer.cacheAsTexture no explicit uncache in exit() |
+| F17 | Med | queries.ts:191,198 | useWorldsQuery/usePublicWorldsQuery missing staleTime + enabled |
+| F18 | Med | queries.ts reject/resolve | Inconsistent queryFn error handling (reject vs resolve empty) |
 
 ## CLOSED this run
 
 | ID | Fix |
 |----|-----|
-| F1 | BuildingSprite: added removeAllListeners() before destroy() |
-| F2 | ReportDetailModal: extracted useReportLifecycle hook (mark-read + delete + error toast) |
+| F13 | queries.ts: deleteCaravanReport removeQueries → invalidateQueries (aligned with other 3 deletes) |
+| F19 | queries.ts: 4×4 report hooks → createReportHooks factory (-106 lines) |
