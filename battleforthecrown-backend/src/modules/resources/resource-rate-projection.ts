@@ -38,17 +38,20 @@ export function applyResourceCatchup(
   elapsedMinutes: number,
   cap: number,
 ): ResourceTriple {
+  // Clamp negative elapsed time (clock skew / DB-vs-app drift) to 0 so the
+  // catch-up never silently decrements stocks below their persisted value.
+  const safeElapsedMinutes = Math.max(0, elapsedMinutes);
   return {
     wood: Math.min(
-      stock.wood + Math.floor(ratesPerMinute.wood * elapsedMinutes),
+      stock.wood + Math.floor(ratesPerMinute.wood * safeElapsedMinutes),
       cap,
     ),
     stone: Math.min(
-      stock.stone + Math.floor(ratesPerMinute.stone * elapsedMinutes),
+      stock.stone + Math.floor(ratesPerMinute.stone * safeElapsedMinutes),
       cap,
     ),
     iron: Math.min(
-      stock.iron + Math.floor(ratesPerMinute.iron * elapsedMinutes),
+      stock.iron + Math.floor(ratesPerMinute.iron * safeElapsedMinutes),
       cap,
     ),
   };

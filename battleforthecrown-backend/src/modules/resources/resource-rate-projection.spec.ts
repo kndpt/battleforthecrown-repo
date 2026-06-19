@@ -75,4 +75,14 @@ describe('applyResourceCatchup', () => {
     );
     expect(result).toEqual(stock);
   });
+
+  it('clamps negative elapsed minutes to 0 so the stock is never decremented', () => {
+    const result = applyResourceCatchup(
+      stock,
+      { wood: 10, stone: 10, iron: 10 },
+      -5,
+      10_000,
+    );
+    expect(result).toEqual(stock);
+  });
 });
