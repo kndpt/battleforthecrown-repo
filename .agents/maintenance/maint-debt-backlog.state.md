@@ -1,6 +1,6 @@
 # maint-debt — candidats (réécrit chaque run)
 
-last: 2026-06-18 | archive: `archive/maint-debt/2026-06-15-full.md`
+last: 2026-06-19 | archive: `archive/maint-debt/2026-06-15-full.md`
 branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 ## candidate
@@ -17,7 +17,7 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 | area | PR |
 |------|-----|
-| pixi dead code: getResourceStorageAlertColor + formatCompactNumber re-export + ui/layout barrel | #147 merged |
+| pixi lib/types.ts dead legacy types | pending |
 
 ## rules
 
