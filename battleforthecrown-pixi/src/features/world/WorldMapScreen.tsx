@@ -14,6 +14,7 @@ import { CaravanLaunchModal } from './CaravanLaunchModal';
 import { KingdomActivitiesBottomSheet } from '@/features/combat/KingdomActivitiesBottomSheet';
 import { OnboardingGuidance } from '@/features/onboarding/OnboardingGuidance';
 import { getOnboardingGuidance } from '@/features/onboarding/onboardingViewModel';
+import { useOnboardingCompletionAck } from '@/features/onboarding/onboardingCompletion';
 import { runGameAction, type GameActionId } from '@/features/game-actions/gameActions';
 import { useBuildingsForLockCheck } from '@/features/layout/useBuildingsForLockCheck';
 import {
@@ -97,7 +98,10 @@ export function WorldMapScreen() {
   const urlFocus = useMemo(() => parseWorldMapFocusSearch(searchParams), [searchParams]);
   const activeFocus = urlFocus ?? pendingFocus;
   const expeditionSnapshots = useMemo(() => Object.values(expeditions), [expeditions]);
-  const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data);
+  const onboardingCompletion = useOnboardingCompletionAck(worldId);
+  const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data, {
+    completionAcknowledged: onboardingCompletion.acknowledged,
+  });
 
   useEffect(() => {
     setEntities(visibleEntities);
@@ -236,6 +240,7 @@ export function WorldMapScreen() {
                   worldEntities.isLoading ||
                   myVillages.isLoading
                 }
+                onAcknowledge={onboardingCompletion.acknowledge}
                 onAction={runWorldAction}
                 onNavigate={navigate}
               />

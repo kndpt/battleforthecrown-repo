@@ -20,6 +20,7 @@ import type { ArmyTrainingDto, ArmyUnitDto } from '@/api/queries';
 import { BottomSheet, Button, Panel, Spinner } from '@/ui';
 import { OnboardingGuidance } from '@/features/onboarding/OnboardingGuidance';
 import { getOnboardingGuidance } from '@/features/onboarding/onboardingViewModel';
+import { useOnboardingCompletionAck } from '@/features/onboarding/onboardingCompletion';
 import { runGameAction, type GameActionId } from '@/features/game-actions/gameActions';
 import {
   ArmyContentDesign,
@@ -349,7 +350,10 @@ export function ArmyScreen() {
   const units = inventory.data ?? [];
   const trainings = training.data ?? [];
   const garrisonLines = garrisonQuery.data ?? EMPTY_GARRISON_LINES;
-  const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data);
+  const onboardingCompletion = useOnboardingCompletionAck(worldId);
+  const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data, {
+    completionAcknowledged: onboardingCompletion.acknowledged,
+  });
 
   const armyModel = useMemo(
     () =>
@@ -517,6 +521,7 @@ export function ArmyScreen() {
             training.isLoading ||
             garrisonQuery.isLoading
           }
+          onAcknowledge={onboardingCompletion.acknowledge}
           onAction={runArmyAction}
           onNavigate={navigate}
         />

@@ -26,16 +26,20 @@ export interface OnboardingGuidance {
   description: string;
   ctaLabel: string;
   imageBadgeLabel?: string;
-  gameActionId: GameActionId;
+  /** Absent on the completion screen: the final CTA only acknowledges. */
+  gameActionId?: GameActionId;
   imageSrc: string;
   lootPreview?: OnboardingLootPreview;
   modalLabel: string;
   pillLabel: string;
-  route: GameActionRoute;
+  /** Absent on the completion screen: the final CTA does not navigate. */
+  route?: GameActionRoute;
   progressLabel: string;
-  secondaryLabel: string;
+  secondaryLabel?: string;
   step: number;
   total: number;
+  /** Post-victory closing screen — primary CTA acknowledges and dismisses. */
+  isCompletion?: boolean;
 }
 
 const STEP_INDEX: Record<OnboardingStep, number> = {
@@ -125,10 +129,37 @@ const STEP_GUIDANCE: Record<
   },
 };
 
+const COMPLETION_GUIDANCE: OnboardingGuidance = {
+  title: 'Campement barbare vaincu !',
+  description:
+    'Bravo, tu maîtrises les bases du royaume. Tes troupes rapportent le butin pillé — récupère-le et lance-toi à la conquête.',
+  ctaLabel: 'Récupérer le butin',
+  imageSrc: '/assets/world/entity/barbarian-village-tier1.png',
+  lootPreview: ONBOARDING_NARRATIVE_LOOT_PREVIEW,
+  modalLabel: 'TUTORIEL · Terminé',
+  pillLabel: 'Tutoriel · Terminé',
+  progressLabel: `${TOTAL_STEPS} / ${TOTAL_STEPS}`,
+  step: TOTAL_STEPS,
+  total: TOTAL_STEPS,
+  isCompletion: true,
+};
+
+export interface GetOnboardingGuidanceOptions {
+  /** Player already dismissed the post-victory completion modal this session. */
+  completionAcknowledged?: boolean;
+}
+
 export function getOnboardingGuidance(
   summary: OnboardingSummaryDto | undefined,
+  options: GetOnboardingGuidanceOptions = {},
 ): OnboardingGuidance | null {
-  if (!summary || summary.status === 'COMPLETED' || !summary.currentStep) {
+  if (!summary) {
+    return null;
+  }
+  if (summary.status === 'COMPLETED') {
+    return options.completionAcknowledged ? null : COMPLETION_GUIDANCE;
+  }
+  if (!summary.currentStep) {
     return null;
   }
   const guidance = STEP_GUIDANCE[summary.currentStep];

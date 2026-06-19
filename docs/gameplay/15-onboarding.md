@@ -83,6 +83,10 @@ WHERE origin_kind = 'ONBOARDING_NARRATIVE'
   );
 ```
 
+### Écran de clôture post-victoire (front-only)
+
+À la victoire narrative, le backend passe `COMPLETED` (inchangé). Le frontend affiche alors une dernière guidance « completion » (même `OnboardingFab`, preview butin via `getOnboardingNarrativeLoot('T1')`) dont le CTA « Récupérer le butin » acquitte et masque définitivement le tutoriel. L'acquittement est purement front (`sessionStorage`, clé `userId × worldId`, cf. `onboardingCompletion.ts`) : one-shot, pas de re-trigger au refresh/rejoin, aucun crédit butin (le pipeline combat/retour reste la source de vérité du loot).
+
 ## Liens
 
 - [`01-overview.md`](./01-overview.md) — vision globale, boucles de gameplay, philosophie mobile.

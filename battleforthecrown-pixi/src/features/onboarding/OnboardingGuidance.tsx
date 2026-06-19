@@ -6,13 +6,15 @@ import type { OnboardingGuidance as OnboardingGuidanceModel } from './onboarding
 export interface OnboardingGuidanceProps {
   guidance: OnboardingGuidanceModel | null;
   isLoading?: boolean;
+  onAcknowledge?: () => void;
   onAction?: (actionId: GameActionId) => void;
-  onNavigate: (route: OnboardingGuidanceModel['route']) => void;
+  onNavigate: (route: NonNullable<OnboardingGuidanceModel['route']>) => void;
 }
 
 export function OnboardingGuidance({
   guidance,
   isLoading = false,
+  onAcknowledge,
   onAction,
   onNavigate,
 }: OnboardingGuidanceProps) {
@@ -55,11 +57,17 @@ export function OnboardingGuidance({
       onOpenChange={setIsOpen}
       onPrimaryAction={() => {
         setIsOpen(false);
-        if (onAction) {
+        if (guidance.isCompletion) {
+          onAcknowledge?.();
+          return;
+        }
+        if (onAction && guidance.gameActionId) {
           onAction(guidance.gameActionId);
           return;
         }
-        onNavigate(guidance.route);
+        if (guidance.route) {
+          onNavigate(guidance.route);
+        }
       }}
       onSecondaryAction={() => setIsOpen(false)}
       open={isOpen}

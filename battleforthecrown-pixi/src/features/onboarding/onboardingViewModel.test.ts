@@ -75,7 +75,28 @@ describe('getOnboardingGuidance', () => {
     });
   });
 
-  it('hides guidance once onboarding is complete', () => {
-    expect(getOnboardingGuidance(summary(null))).toBeNull();
+  it('surfaces the completion screen once onboarding is COMPLETED', () => {
+    expect(getOnboardingGuidance(summary(null))).toMatchObject({
+      isCompletion: true,
+      ctaLabel: 'Récupérer le butin',
+      modalLabel: 'TUTORIEL · Terminé',
+      progressLabel: '6 / 6',
+      step: 6,
+      total: 6,
+      lootPreview: {
+        label: 'Butin à récupérer',
+        items: [
+          { icon: '/assets/resources/wood.png', value: '1.2K' },
+          { icon: '/assets/resources/stone.png', value: '1.2K' },
+          { icon: '/assets/resources/iron.png', value: '840' },
+        ],
+      },
+    });
+  });
+
+  it('hides the completion screen once acknowledged', () => {
+    expect(
+      getOnboardingGuidance(summary(null), { completionAcknowledged: true }),
+    ).toBeNull();
   });
 });

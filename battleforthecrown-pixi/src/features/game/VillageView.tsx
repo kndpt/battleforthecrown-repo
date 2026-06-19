@@ -14,6 +14,7 @@ import { metaFor } from '@/features/village/buildingMeta';
 import { DailyRetentionWidget } from '@/features/retention/DailyRetentionWidget';
 import { OnboardingGuidance } from '@/features/onboarding/OnboardingGuidance';
 import { getOnboardingGuidance } from '@/features/onboarding/onboardingViewModel';
+import { useOnboardingCompletionAck } from '@/features/onboarding/onboardingCompletion';
 import { PowerBottomSheet } from '@/features/power/PowerBottomSheet';
 import { BottomNavigationBar } from '@/features/layout/BottomNavigationBar';
 import {
@@ -182,7 +183,10 @@ export function VillageView() {
     (activeVillagePowerId ? powerByVillageId.get(activeVillagePowerId) : undefined) ?? 0;
   const totalKingdomPower = kingdomPower?.kingdomPower ?? 0;
 
-  const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data);
+  const onboardingCompletion = useOnboardingCompletionAck(worldId);
+  const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data, {
+    completionAcknowledged: onboardingCompletion.acknowledged,
+  });
   const crownsDisplay = Number.isFinite(crownBalance ?? NaN)
     ? integerFormatter.format(Math.floor(crownBalance ?? 0))
     : '0';
@@ -414,6 +418,7 @@ export function VillageView() {
         <OnboardingGuidance
           guidance={onboardingGuidance}
           isLoading={onboardingSummary.isLoading || !villageId || buildingsQuery.isLoading}
+          onAcknowledge={onboardingCompletion.acknowledge}
           onAction={runVillageAction}
           onNavigate={navigate}
         />

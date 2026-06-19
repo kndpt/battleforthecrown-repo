@@ -4,7 +4,6 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-- [078 — Étape finale onboarding (acquittement butin)](./078-feature-onboarding-completion-step.md) — 🟠 Moyen. Afficher une dernière modale de clôture après victoire narrative, avec preview butin et acquittement local.
 - [66 — Inbox combat : tag VICTOIRE/DÉFAITE faux dans la liste](./66-inbox-report-outcome-uses-losses-heuristic.md) — 🟡 Majeur. La liste de l'inbox calcule l'issue via une heuristique de pertes, divergente de la règle canonique utilisée par le modal.
 - [57 — Source canonique du lifecycle des bâtiments joueur](./57-player-village-building-lifecycle-roster.md) — 🟡 Majeur. Centraliser la politique join/conquête/backfill des bâtiments pour éviter les oublis à chaque nouveau bâtiment activé.
 
