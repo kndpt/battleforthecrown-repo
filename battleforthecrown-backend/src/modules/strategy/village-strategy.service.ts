@@ -11,7 +11,6 @@ import { WorldConfigService } from '../world/world-config.service';
 import { createOutboxEvent } from '../event/event.utils';
 import { Prisma, VillageStrategy } from '@prisma/client';
 import {
-  BASE_VILLAGE_STRATEGY_BONUS,
   BUILDING_TYPES,
   StrategyBonus,
   VillageStrategyChangeCost,
@@ -21,6 +20,11 @@ import {
   getStrategyBonusValue,
   getVillageStrategyPlan,
 } from '@battleforthecrown/shared/village';
+import {
+  StrategyBonusContext,
+  projectStrategyBonusForContext,
+} from './strategy-bonus-projection';
+import { projectResourceRates } from '../resources/resource-rate-projection';
 import { MS_PER_HOUR } from '@battleforthecrown/shared/time';
 
 export interface StrategyChangeResult {
@@ -316,13 +320,7 @@ export class VillageStrategyService {
 
   async getStrategyBonus(
     villageId: string,
-    context:
-      | 'combat'
-      | 'production'
-      | 'construction'
-      | 'training'
-      | 'storage'
-      | 'population',
+    context: StrategyBonusContext,
   ): Promise<StrategyBonus | null> {
     const village = await this.prisma.village.findUnique({
       where: { id: villageId },
@@ -334,50 +332,7 @@ export class VillageStrategyService {
       return null;
     }
 
-    switch (context) {
-      case 'combat':
-        return {
-          ...BASE_VILLAGE_STRATEGY_BONUS,
-          attackBonus: getStrategyBonusValue(strategy, 'attackBonus'),
-          defenseBonus: getStrategyBonusValue(strategy, 'defenseBonus'),
-          lootBonus: getStrategyBonusValue(strategy, 'lootBonus'),
-        };
-      case 'training':
-        return {
-          ...BASE_VILLAGE_STRATEGY_BONUS,
-          trainingSpeedBonus: getStrategyBonusValue(
-            strategy,
-            'trainingSpeedBonus',
-          ),
-          unitCostReduction: getStrategyBonusValue(
-            strategy,
-            'unitCostReduction',
-          ),
-        };
-      case 'production':
-        return {
-          ...BASE_VILLAGE_STRATEGY_BONUS,
-          productionBonus: getStrategyBonusValue(strategy, 'productionBonus'),
-        };
-      case 'construction':
-        return {
-          ...BASE_VILLAGE_STRATEGY_BONUS,
-          constructionSpeedBonus: getStrategyBonusValue(
-            strategy,
-            'constructionSpeedBonus',
-          ),
-        };
-      case 'storage':
-        return {
-          ...BASE_VILLAGE_STRATEGY_BONUS,
-          storageBonus: getStrategyBonusValue(strategy, 'storageBonus'),
-        };
-      case 'population':
-        return {
-          ...BASE_VILLAGE_STRATEGY_BONUS,
-          populationBonus: getStrategyBonusValue(strategy, 'populationBonus'),
-        };
-    }
+    return projectStrategyBonusForContext(strategy, context);
   }
 
   private calculateChangeCosts(castleLevel: number) {
@@ -420,38 +375,14 @@ export class VillageStrategyService {
     },
     strategy: VillageStrategyType,
   ) {
-    const woodLevel = getBuildingLevel(village.buildings, BUILDING_TYPES.WOOD);
-    const stoneLevel = getBuildingLevel(
-      village.buildings,
-      BUILDING_TYPES.STONE,
+    const config = await this.worldConfig.getConfig(village.worldId);
+    const ratesPerMin = projectResourceRates(village.buildings, (type, level) =>
+      this.worldConfig.computeProductionRate(config, type, level, strategy),
     );
-    const ironLevel = getBuildingLevel(village.buildings, BUILDING_TYPES.IRON);
-
     return {
-      wood: woodLevel
-        ? (await this.worldConfig.getProductionRate(
-            village.worldId,
-            'WOOD',
-            woodLevel,
-            strategy,
-          )) * 60
-        : 0,
-      stone: stoneLevel
-        ? (await this.worldConfig.getProductionRate(
-            village.worldId,
-            'STONE',
-            stoneLevel,
-            strategy,
-          )) * 60
-        : 0,
-      iron: ironLevel
-        ? (await this.worldConfig.getProductionRate(
-            village.worldId,
-            'IRON',
-            ironLevel,
-            strategy,
-          )) * 60
-        : 0,
+      wood: ratesPerMin.wood * 60,
+      stone: ratesPerMin.stone * 60,
+      iron: ratesPerMin.iron * 60,
     };
   }
 

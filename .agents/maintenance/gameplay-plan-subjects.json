@@ -213,6 +213,51 @@
         "tasks/00-mvp-roadmap.md:134 — Phase 11 livrable « snapshot leaderboard à ENDED + wipe + récompenses cosmétiques permanentes » non livré côté wipe"
       ],
       "addedAt": "2026-06-17"
+    },
+    {
+      "specPath": "docs/gameplay/19-world-lifecycle.md",
+      "slug": "world-ended-readonly-ui",
+      "title": "Écran « Monde terminé » — UI lecture seule + consultation leaderboard final (Phase 11)",
+      "keywords": ["world-ended", "monde-terminé", "read-only", "leaderboard-final", "hall-of-fame", "phase-11"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/066-feature-world-ended-readonly-ui.md",
+      "artefactId": "066",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/world-ended-readonly-ui",
+      "gapSummary": "La spec 19-world-lifecycle.md § LOCKED → ENDED tranche MVP : mode lecture seule + consultation du leaderboard final pendant 7j en ENDED. Run 061 livre la table snapshot + le helper backend `assertWorldWritable` mais déclare explicitement hors scope l'UI front « Monde terminé » et le run successeur n'a jamais été créé. Conséquence : `WorldStatus.ENDED` est invisible côté worldsViewModel (`ctaFor` retombe sur la branche par défaut 'S'inscrire'), aucun écran `EndedWorldView` n'existe, aucun helper `isWorldReadOnly` ne grise les CTAs HUD mutants et il n'y a pas d'endpoint REST de consultation du `WorldFinalRankingSnapshot`.",
+      "codeEvidence": [
+        "battleforthecrown-pixi/src/features/worlds/worldsViewModel.ts:153-165 ctaFor — gère PLANNED et LOCKED, aucun cas pour ENDED, fallback sur \"S'inscrire\"",
+        "battleforthecrown-pixi/src — aucun écran EndedWorldView / WorldEndedScreen / FinalRankingsScreen ni helper isWorldReadOnly (rg sur 'ENDED' renvoie uniquement SceneManager/application/NumericKeypad sans rapport)",
+        "battleforthecrown-pixi/src/features/worlds — WorldSessionGate ne traite pas le status ENDED comme cas distinct",
+        "battleforthecrown-pixi/src/api/queries.ts — aucun useFinalRankingsQuery (les seules queries rankings appellent /worlds/:id/rankings qui calcule live, pas le snapshot)",
+        "battleforthecrown-backend/src/modules/rankings/rankings.controller.ts — pas de route GET /worlds/:id/rankings/final consommant WorldFinalRankingSnapshot",
+        "packages/shared/src/rankings — pas de type WorldFinalRankingSnapshotEntry exposé pour consommation front",
+        "tasks/runs/061-feature-world-ended-lifecycle.md:69 — explicite « UI front « Monde terminé » (écran lecture seule de consultation du leaderboard final) — run successeur. La table snapshot livrée ici suffit aux 3 runs aval. »",
+        "tasks/runs/061-feature-world-ended-lifecycle.md:74 — explicite « À faire après : run UI « Monde terminé » (consomme le snapshot), run wipe destructeur endsAt + 7j... » — ce run est ce run successeur"
+      ],
+      "addedAt": "2026-06-18"
+    },
+    {
+      "specPath": "docs/gameplay/19-world-lifecycle.md",
+      "slug": "world-ended-cosmetic-permanent-rewards",
+      "title": "Récompenses cosmétiques permanentes à ENDED — titres top 1 des 3 classements (Phase 11)",
+      "keywords": ["cosmetic", "cosmétique", "titre", "champion", "vainqueur", "award", "permanent", "ended-rewards", "phase-11"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/067-feature-world-ended-cosmetic-permanent-rewards.md",
+      "artefactId": "067",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/world-ended-cosmetic-permanent-rewards",
+      "gapSummary": "La spec 19-world-lifecycle.md § LOCKED→ENDED + § Wipe et récompenses fin de monde tranche MVP : à ENDED, les récompenses cosmétiques (titre du monde, bannière, badge profil) sont permanentes et attachées au compte global, distinctes du wipe destructeur qui purge le royaume. Run 061 (world-ended-lifecycle) déclare cette feature explicitement hors scope (« Catalogue précis à définir avec le travail UI/UX. Pas bloquant. »). Aucune table cosmetic n'existe en DB, aucun endpoint d'exposition des awards globaux, et PlayerProfileSheet n'a aucune section récompenses. Conséquence : à la première fin de monde MVP, les vainqueurs n'ont aucune trace permanente — la promesse spec « titre, bannière, badge » est cassée.",
+      "codeEvidence": [
+        "battleforthecrown-backend/prisma/schema.prisma — aucun modèle UserWorldCosmeticAward / CosmeticAward, aucune enum CosmeticAwardKind",
+        "battleforthecrown-backend/src/modules — aucun module cosmetic/ ni endpoint /users/me/cosmetic-awards",
+        "battleforthecrown-backend/src/workers/world-lifecycle.worker.ts — la transition LOCKED→ENDED ne distribue aucune récompense, seul le status flip est géré",
+        "battleforthecrown-pixi/src/features/layout/PlayerProfileSheet.tsx — aucune section Récompenses / Awards / Titres, profile sheet expose uniquement les villages et stats live",
+        "packages/shared/src/rankings — pas de type CosmeticAwardResponse ni libellés FR Vainqueur/Conquérant/Sentinelle",
+        "tasks/runs/061-feature-world-ended-lifecycle.md:67 — explicite « Récompenses cosmétiques permanentes (titre / bannière / badge profil) — la spec 19 § Questions ouvertes acte « Catalogue précis à définir avec le travail UI/UX. Pas bloquant. » → ticket dédié quand le catalogue UI sera tranché. »",
+        "tasks/runs/061-feature-world-ended-lifecycle.md:74 — explicite « ticket post-MVP « cosmétiques permanentes » (dépend catalogue UI) » — ce run est le ticket dédié, minimum viable titres-only"
+      ],
+      "addedAt": "2026-06-19"
     }
   ]
 }

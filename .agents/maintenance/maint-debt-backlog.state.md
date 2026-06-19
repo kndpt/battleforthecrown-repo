@@ -17,7 +17,7 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 | area | PR |
 |------|-----|
-| shared typedKeys dead export + pixi calculateExpeditionTravelTime dead fn | pending |
+| pixi dead code: getResourceStorageAlertColor + formatCompactNumber re-export + ui/layout barrel | #147 merged |
 
 ## rules
 
