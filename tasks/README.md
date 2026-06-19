@@ -43,6 +43,7 @@ Politique PR `$bftc-run` :
 
 ### Runs archivés
 
+- [062 — Fix file d'entraînement multi-type](./runs/archive/062-fix-training-multi-type-queue.md) — ✅ `DONE` (2026-06-19). `@@unique([villageId, building])` → `@@index` : file séquentielle (1 row/type, tête = oldest). Scheduling pg-boss différé (seule la tête a un job), worker/cancel promeuvent le suivant, `pg_advisory_xact_lock` par `(village, building)` restaure la sérialisation. Review GO, static-check + smoke 7/7 verts.
 - [077 — Cleanup village narrative post-victoire](./runs/archive/077-cleanup-narrative-village-post-victory.md) — ✅ `DONE` (#136). Village `ONBOARDING_NARRATIVE` supprimé après complétion `ATTACK_BARBARIAN` (cascade Prisma), `narrativeTargetVillageId` → null, event WS `village.removed`. QA IG frontend restante.
 - [049 — Devoir royal : scaling par niveau du joueur](./runs/archive/049-feature-royal-duty-level-scaling.md) — ✅ `DONE` (2026-06-07). Missions/récompenses de carte quotidienne scalées par château max joueur, RAID floor tier via `battle.resolved.targetTier`, metadata de tâche, récompense ressources plafonnée et HUD lisible.
 - [048 — Map focus links](./runs/archive/048-feature-map-focus-links.md) — ✅ `DONE` (2026-06-07). Primitive `useWorldMapNavigation` avec contrat URL `/game/world?focusX&focusY`, consommation unique dans `WorldMapScreen`, action carte des rapports combat, CTA victoire migré et doc technique.

@@ -43,6 +43,12 @@ export class RecruitNobleUseCase {
     const requiredCrowns = unitCost.crowns ?? 0;
 
     return this.prisma.$transaction(async (tx) => {
+      // Serialize concurrent noble recruits on the Throne Hall: the dropped
+      // @@unique([villageId, building]) used to block a 2nd THRONE_HALL row at
+      // the DB; this advisory lock (released at tx end) keeps the canRecruitNoble
+      // gate race-free so at most one noble training exists (run 062).
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`training:${villageId}:THRONE_HALL`}))`;
+
       const [
         village,
         throneHall,

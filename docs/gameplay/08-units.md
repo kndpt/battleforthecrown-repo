@@ -58,9 +58,9 @@ L'objectif est de garder un seul levier de matchup lisible : les trois colonnes 
 
 ## Mécanique d'entraînement
 
-- **File d'attente** : une seule formation à la fois (file parallèle prévue post-MVP).
-- **Consommation de population** : les unités en formation occupent de la population.
-- **Annulation** : remboursement complet ressources + population.
+- **File d'attente séquentielle (MVP)** : plusieurs formations de types différents peuvent être empilées sur un même bâtiment (Caserne, Salle du Trône), mais **une seule s'entraîne à la fois** — la plus ancienne (tête de file). Les suivantes attendent sans consommer de tick ; à la complétion ou à l'annulation de la tête, la formation suivante démarre automatiquement. La **file parallèle** (plusieurs types entraînés simultanément) reste prévue post-MVP.
+- **Consommation de population** : les unités en formation occupent de la population dès la mise en file (y compris les formations en attente).
+- **Annulation** : remboursement complet ressources + population. Annuler la tête de file promeut la formation suivante ; annuler une formation en attente ne perturbe pas la tête active.
 - **Déblocage progressif** : plus la Caserne monte, plus d'unités deviennent disponibles.
 
 Détail des paliers de déblocage : [`03-buildings.md` § Caserne](./03-buildings.md#caserne-barracks).
