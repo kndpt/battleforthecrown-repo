@@ -5,12 +5,15 @@ import { WorldConfigService } from '../world/world-config.service';
 import { VillageStrategyService } from '../strategy/village-strategy.service';
 import {
   VillageStrategyType,
-  findBuildingByType,
   getBuildingLevel,
   getStrategyBonusValue,
 } from '@battleforthecrown/shared/village';
 import { MS_PER_MINUTE } from '@battleforthecrown/shared/time';
 import { PRODUCTION_CATCHUP_THRESHOLD_MS } from './resources.constants';
+import {
+  applyResourceCatchup,
+  projectResourceRates,
+} from './resource-rate-projection';
 
 @Injectable()
 export class ResourcesService {
@@ -97,41 +100,23 @@ export class ResourcesService {
       const elapsedMs = now.getTime() - lastUpdate.getTime();
       const elapsedMinutes = elapsedMs / MS_PER_MINUTE;
 
-      const {
-        wood: woodRate,
-        stone: stoneRate,
-        iron: ironRate,
-      } = await this.fetchBuildingRates(
+      const ratesPerMinute = await this.fetchBuildingRates(
         worldId,
         village.buildings,
         storageStrategy,
       );
 
-      const woodGain = woodRate * elapsedMinutes;
-      const stoneGain = stoneRate * elapsedMinutes;
-      const ironGain = ironRate * elapsedMinutes;
-
-      const stock = village.resourceStock;
-
-      const newWood = Math.min(
-        stock.wood + Math.floor(woodGain),
-        currentStorageLimit,
-      );
-      const newStone = Math.min(
-        stock.stone + Math.floor(stoneGain),
-        currentStorageLimit,
-      );
-      const newIron = Math.min(
-        stock.iron + Math.floor(ironGain),
+      const updatedTotals = applyResourceCatchup(
+        village.resourceStock,
+        ratesPerMinute,
+        elapsedMinutes,
         currentStorageLimit,
       );
 
       const updated = await tx.resourceStock.update({
         where: { villageId },
         data: {
-          wood: newWood,
-          stone: newStone,
-          iron: newIron,
+          ...updatedTotals,
           maxPerType: currentStorageLimit,
           lastUpdateTs: now,
         },
@@ -163,26 +148,18 @@ export class ResourcesService {
     const elapsedMs = now.getTime() - resourceStock.lastUpdateTs.getTime();
     const elapsedMinutes = elapsedMs / MS_PER_MINUTE;
 
-    const {
-      wood: woodRate,
-      stone: stoneRate,
-      iron: ironRate,
-    } = await this.fetchBuildingRates(worldId, buildings, strategy);
+    const ratesPerMinute = await this.fetchBuildingRates(
+      worldId,
+      buildings,
+      strategy,
+    );
 
-    // Calculate gains
-    const woodGain = Math.floor(woodRate * elapsedMinutes);
-    const stoneGain = Math.floor(stoneRate * elapsedMinutes);
-    const ironGain = Math.floor(ironRate * elapsedMinutes);
-
-    // Apply storage limits
-    return {
-      wood: Math.min(resourceStock.wood + woodGain, resourceStock.maxPerType),
-      stone: Math.min(
-        resourceStock.stone + stoneGain,
-        resourceStock.maxPerType,
-      ),
-      iron: Math.min(resourceStock.iron + ironGain, resourceStock.maxPerType),
-    };
+    return applyResourceCatchup(
+      resourceStock,
+      ratesPerMinute,
+      elapsedMinutes,
+      resourceStock.maxPerType,
+    );
   }
 
   /**
@@ -238,36 +215,9 @@ export class ResourcesService {
     strategy?: VillageStrategyType,
   ): Promise<{ wood: number; stone: number; iron: number }> {
     const config = await this.worldConfig.getConfig(worldId);
-    const woodBuilding = findBuildingByType(buildings, 'WOOD');
-    const stoneBuilding = findBuildingByType(buildings, 'STONE');
-    const ironBuilding = findBuildingByType(buildings, 'IRON');
-
-    return {
-      wood: woodBuilding
-        ? this.worldConfig.computeProductionRate(
-            config,
-            'WOOD',
-            woodBuilding.level,
-            strategy,
-          )
-        : 0,
-      stone: stoneBuilding
-        ? this.worldConfig.computeProductionRate(
-            config,
-            'STONE',
-            stoneBuilding.level,
-            strategy,
-          )
-        : 0,
-      iron: ironBuilding
-        ? this.worldConfig.computeProductionRate(
-            config,
-            'IRON',
-            ironBuilding.level,
-            strategy,
-          )
-        : 0,
-    };
+    return projectResourceRates(buildings, (type, level) =>
+      this.worldConfig.computeProductionRate(config, type, level, strategy),
+    );
   }
 
   /**
@@ -298,7 +248,6 @@ export class ResourcesService {
       strategyType,
     );
 
-    // Convert to per hour (frontend expects per hour)
     return {
       wood: ratesPerMin.wood * 60,
       stone: ratesPerMin.stone * 60,

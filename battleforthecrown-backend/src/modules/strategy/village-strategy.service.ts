@@ -24,6 +24,7 @@ import {
   StrategyBonusContext,
   projectStrategyBonusForContext,
 } from './strategy-bonus-projection';
+import { projectResourceRates } from '../resources/resource-rate-projection';
 import { MS_PER_HOUR } from '@battleforthecrown/shared/time';
 
 export interface StrategyChangeResult {
@@ -374,38 +375,14 @@ export class VillageStrategyService {
     },
     strategy: VillageStrategyType,
   ) {
-    const woodLevel = getBuildingLevel(village.buildings, BUILDING_TYPES.WOOD);
-    const stoneLevel = getBuildingLevel(
-      village.buildings,
-      BUILDING_TYPES.STONE,
+    const config = await this.worldConfig.getConfig(village.worldId);
+    const ratesPerMin = projectResourceRates(village.buildings, (type, level) =>
+      this.worldConfig.computeProductionRate(config, type, level, strategy),
     );
-    const ironLevel = getBuildingLevel(village.buildings, BUILDING_TYPES.IRON);
-
     return {
-      wood: woodLevel
-        ? (await this.worldConfig.getProductionRate(
-            village.worldId,
-            'WOOD',
-            woodLevel,
-            strategy,
-          )) * 60
-        : 0,
-      stone: stoneLevel
-        ? (await this.worldConfig.getProductionRate(
-            village.worldId,
-            'STONE',
-            stoneLevel,
-            strategy,
-          )) * 60
-        : 0,
-      iron: ironLevel
-        ? (await this.worldConfig.getProductionRate(
-            village.worldId,
-            'IRON',
-            ironLevel,
-            strategy,
-          )) * 60
-        : 0,
+      wood: ratesPerMin.wood * 60,
+      stone: ratesPerMin.stone * 60,
+      iron: ratesPerMin.iron * 60,
     };
   }
 
