@@ -12,6 +12,7 @@ function ackKey(userId: string, worldId: string): string {
   return `bftc:onboarding:completion-ack:${userId}:${worldId}`;
 }
 
+/** True if the player already dismissed the completion modal for this `userId × worldId`. */
 export function isOnboardingCompletionAcknowledged(
   userId: string | null,
   worldId: string | null,
@@ -25,10 +26,18 @@ export function isOnboardingCompletionAcknowledged(
 }
 
 export interface OnboardingCompletionAck {
+  /** Whether the completion modal has been dismissed for the current identity. */
   acknowledged: boolean;
+  /** Dismiss the completion modal one-shot (persists in `sessionStorage`). */
   acknowledge: () => void;
 }
 
+/**
+ * React binding around the completion acknowledgement: reads the current
+ * `userId` from the auth store and exposes `acknowledged` / `acknowledge` for
+ * the current `worldId`. Falls back to in-memory state if `sessionStorage`
+ * writes fail so the modal still dismisses for the session.
+ */
 export function useOnboardingCompletionAck(worldId: string | null): OnboardingCompletionAck {
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const [ackedKey, setAckedKey] = useState<string | null>(null);
