@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import PgBoss from 'pg-boss';
+import type { UnitTraining } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import { WorldService } from '../world/world.service';
@@ -33,7 +34,7 @@ export class RecruitNobleUseCase {
     @Inject('PG_BOSS') private readonly boss: PgBoss,
   ) {}
 
-  async execute(villageId: string, userId: string) {
+  async execute(villageId: string, userId: string): Promise<UnitTraining> {
     await this.ownership.assertVillageOwnedBy(villageId, userId);
 
     const worldId = await this.worldService.getWorldIdFromVillage(villageId);

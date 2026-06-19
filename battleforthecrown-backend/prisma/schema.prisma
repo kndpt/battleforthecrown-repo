@@ -280,6 +280,7 @@ model UnitTraining {
 
   village Village @relation(fields: [villageId], references: [id], onDelete: Cascade)
 
+  @@unique([villageId, building, unitType])
   @@index([villageId])
   @@index([villageId, building])
   @@map("unit_training")

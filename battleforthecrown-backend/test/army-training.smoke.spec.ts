@@ -350,10 +350,11 @@ describe('army training smoke', () => {
       .send({ unitType: UNIT_TYPES.WARRIOR, quantity: 1 });
     expect(trainB.status).toBeLessThan(300);
 
-    // Both rows coexist (the @@unique([villageId, building]) was dropped).
+    // Both rows coexist (the @@unique([villageId, building]) was dropped; one
+    // row per unit type is still enforced by @@unique([..., unitType])).
     const rows = await ctx.prisma.unitTraining.findMany({
       where: { villageId, building: 'BARRACKS' },
-      orderBy: { createdAt: 'asc' },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
     expect(rows.map((row) => row.unitType)).toEqual([
       UNIT_TYPES.MILITIA,
@@ -396,6 +397,54 @@ describe('army training smoke', () => {
       where: { villageId, building: 'BARRACKS' },
     });
     expect(remaining).toBe(0);
+  });
+
+  it('training: rejects a second training of the same unit type (one row per type)', async () => {
+    const world = await seedSmokeWorld(ctx.prisma, `train-dup-${Date.now()}`);
+    const user = await registerUser(ctx.server, 'train-dup');
+    const join = await joinWorld(
+      ctx.server,
+      user.accessToken,
+      world.id,
+      'train-dup-village',
+    );
+    const villageId = join.village.id;
+
+    await ctx.prisma.building.updateMany({
+      where: { villageId, type: 'BARRACKS' },
+      data: { level: 1 },
+    });
+    await ctx.prisma.resourceStock.update({
+      where: { villageId },
+      data: {
+        wood: 100_000,
+        stone: 100_000,
+        iron: 100_000,
+        maxPerType: 1_000_000,
+      },
+    });
+    await ctx.prisma.population.update({
+      where: { villageId },
+      data: { used: 0, max: 1000 },
+    });
+
+    const first = await request(ctx.server)
+      .post(`/army/${villageId}/train`)
+      .set('Authorization', `Bearer ${user.accessToken}`)
+      .send({ unitType: UNIT_TYPES.MILITIA, quantity: 1 });
+    expect(first.status).toBeLessThan(300);
+
+    const second = await request(ctx.server)
+      .post(`/army/${villageId}/train`)
+      .set('Authorization', `Bearer ${user.accessToken}`)
+      .send({ unitType: UNIT_TYPES.MILITIA, quantity: 1 });
+    expect(second.status).toBe(400);
+
+    // Only the first MILITIA row exists; no duplicate persisted.
+    const militiaRows = await ctx.prisma.unitTraining.count({
+      where: { villageId, building: 'BARRACKS', unitType: UNIT_TYPES.MILITIA },
+    });
+    expect(militiaRows).toBe(1);
   });
 
   it('training: cancelling the active head promotes the next queued unit type', async () => {
