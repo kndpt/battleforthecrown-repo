@@ -1,8 +1,8 @@
 # 077 — Cleanup village narrative onboarding post-victoire
 
 **Sévérité** : 🟠 Moyen
-**Statut** : ✅ Fait
-**Spec amont** : [`docs/gameplay/15-onboarding.md`](../docs/gameplay/15-onboarding.md)
+**Statut** : ✅ Fait (livré via `afb7783` task(077) #136)
+**Spec amont** : [`docs/gameplay/15-onboarding.md`](../../../docs/gameplay/15-onboarding.md)
 
 ## Symptome
 
