@@ -5,7 +5,6 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 ## Tickets actifs
 
 - [078 — Étape finale onboarding (acquittement butin)](./078-feature-onboarding-completion-step.md) — 🟠 Moyen. Afficher une dernière modale de clôture après victoire narrative, avec preview butin et acquittement local.
-- [077 — Cleanup village narrative post-victoire](./077-cleanup-narrative-village-post-victory.md) — ✅ Fait. Village `ONBOARDING_NARRATIVE` supprimé après complétion et map resynchronisée via `village.removed`.
 - [66 — Inbox combat : tag VICTOIRE/DÉFAITE faux dans la liste](./66-inbox-report-outcome-uses-losses-heuristic.md) — 🟡 Majeur. La liste de l'inbox calcule l'issue via une heuristique de pertes, divergente de la règle canonique utilisée par le modal.
 - [57 — Source canonique du lifecycle des bâtiments joueur](./57-player-village-building-lifecycle-roster.md) — 🟡 Majeur. Centraliser la politique join/conquête/backfill des bâtiments pour éviter les oublis à chaque nouveau bâtiment activé.
 
@@ -44,6 +43,7 @@ Politique PR `$bftc-run` :
 
 ### Runs archivés
 
+- [077 — Cleanup village narrative post-victoire](./runs/archive/077-cleanup-narrative-village-post-victory.md) — ✅ `DONE` (#136). Village `ONBOARDING_NARRATIVE` supprimé après complétion `ATTACK_BARBARIAN` (cascade Prisma), `narrativeTargetVillageId` → null, event WS `village.removed`. QA IG frontend restante.
 - [049 — Devoir royal : scaling par niveau du joueur](./runs/archive/049-feature-royal-duty-level-scaling.md) — ✅ `DONE` (2026-06-07). Missions/récompenses de carte quotidienne scalées par château max joueur, RAID floor tier via `battle.resolved.targetTier`, metadata de tâche, récompense ressources plafonnée et HUD lisible.
 - [048 — Map focus links](./runs/archive/048-feature-map-focus-links.md) — ✅ `DONE` (2026-06-07). Primitive `useWorldMapNavigation` avec contrat URL `/game/world?focusX&focusY`, consommation unique dans `WorldMapScreen`, action carte des rapports combat, CTA victoire migré et doc technique.
 - [047 — Rapports de capture](./runs/archive/047-feature-capture-reports.md) — ✅ `DONE` (2026-06-07). Matrice capture documentée, `CombatReport` à trois rôles, rapports finalisation capture, labels inbox et invalidations WS.
