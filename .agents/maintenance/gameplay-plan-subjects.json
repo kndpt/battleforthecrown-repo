@@ -236,6 +236,28 @@
         "tasks/runs/061-feature-world-ended-lifecycle.md:74 — explicite « À faire après : run UI « Monde terminé » (consomme le snapshot), run wipe destructeur endsAt + 7j... » — ce run est ce run successeur"
       ],
       "addedAt": "2026-06-18"
+    },
+    {
+      "specPath": "docs/gameplay/19-world-lifecycle.md",
+      "slug": "world-ended-cosmetic-permanent-rewards",
+      "title": "Récompenses cosmétiques permanentes à ENDED — titres top 1 des 3 classements (Phase 11)",
+      "keywords": ["cosmetic", "cosmétique", "titre", "champion", "vainqueur", "award", "permanent", "ended-rewards", "phase-11"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/067-feature-world-ended-cosmetic-permanent-rewards.md",
+      "artefactId": "067",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/world-ended-cosmetic-permanent-rewards",
+      "gapSummary": "La spec 19-world-lifecycle.md § LOCKED→ENDED + § Wipe et récompenses fin de monde tranche MVP : à ENDED, les récompenses cosmétiques (titre du monde, bannière, badge profil) sont permanentes et attachées au compte global, distinctes du wipe destructeur qui purge le royaume. Run 061 (world-ended-lifecycle) déclare cette feature explicitement hors scope (« Catalogue précis à définir avec le travail UI/UX. Pas bloquant. »). Aucune table cosmetic n'existe en DB, aucun endpoint d'exposition des awards globaux, et PlayerProfileSheet n'a aucune section récompenses. Conséquence : à la première fin de monde MVP, les vainqueurs n'ont aucune trace permanente — la promesse spec « titre, bannière, badge » est cassée.",
+      "codeEvidence": [
+        "battleforthecrown-backend/prisma/schema.prisma — aucun modèle UserWorldCosmeticAward / CosmeticAward, aucune enum CosmeticAwardKind",
+        "battleforthecrown-backend/src/modules — aucun module cosmetic/ ni endpoint /users/me/cosmetic-awards",
+        "battleforthecrown-backend/src/workers/world-lifecycle.worker.ts — la transition LOCKED→ENDED ne distribue aucune récompense, seul le status flip est géré",
+        "battleforthecrown-pixi/src/features/layout/PlayerProfileSheet.tsx — aucune section Récompenses / Awards / Titres, profile sheet expose uniquement les villages et stats live",
+        "packages/shared/src/rankings — pas de type CosmeticAwardResponse ni libellés FR Vainqueur/Conquérant/Sentinelle",
+        "tasks/runs/061-feature-world-ended-lifecycle.md:67 — explicite « Récompenses cosmétiques permanentes (titre / bannière / badge profil) — la spec 19 § Questions ouvertes acte « Catalogue précis à définir avec le travail UI/UX. Pas bloquant. » → ticket dédié quand le catalogue UI sera tranché. »",
+        "tasks/runs/061-feature-world-ended-lifecycle.md:74 — explicite « ticket post-MVP « cosmétiques permanentes » (dépend catalogue UI) » — ce run est le ticket dédié, minimum viable titres-only"
+      ],
+      "addedAt": "2026-06-19"
     }
   ]
 }
