@@ -857,238 +857,132 @@ export interface CombatReportDto {
   createdAt: string;
 }
 
-export function useCombatReportsQuery() {
-  const userId = useAuthStore((state) => state.user?.id ?? null);
-  const worldId = useGameStore((state) => state.worldId);
-  return useQuery<CombatReportDto[]>({
-    queryKey: queryKeys.combatReports(userId, worldId),
-    queryFn: () => {
-      if (!userId || !worldId) return Promise.resolve([] as CombatReportDto[]);
-      return apiClient.get<CombatReportDto[]>('/combat/reports');
-    },
-    enabled: Boolean(userId && worldId),
-    staleTime: 10_000,
-  });
+interface ReportHooksConfig<TList, TDetail> {
+  listPath: string;
+  detailPath: (id: string) => string;
+  readPath: (id: string) => string;
+  deletePath: (id: string) => string;
+  listKey: (a: string | null, b: string | null) => readonly unknown[];
+  detailKey: (a: string | null, b: string | null) => readonly unknown[];
+  parseList?: (raw: unknown) => TList[];
+  parseDetail?: (raw: unknown) => TDetail;
 }
 
-export function useCombatReportQuery(reportId: string | null) {
-  const userId = useAuthStore((state) => state.user?.id ?? null);
-  const worldId = useGameStore((state) => state.worldId);
-  return useQuery<CombatReportDto>({
-    queryKey: queryKeys.combatReport(reportId, worldId),
-    queryFn: () => {
-      if (!reportId || !worldId) return Promise.reject(new Error('Missing report'));
-      return apiClient.get<CombatReportDto>(`/combat/report/${reportId}`);
-    },
-    enabled: Boolean(reportId && userId && worldId),
-    staleTime: 60_000,
-  });
+function createReportHooks<TList, TDetail>(cfg: ReportHooksConfig<TList, TDetail>) {
+  function useListQuery() {
+    const userId = useAuthStore((s) => s.user?.id ?? null);
+    const worldId = useGameStore((s) => s.worldId);
+    return useQuery<TList[]>({
+      queryKey: cfg.listKey(userId, worldId),
+      queryFn: async () => {
+        if (!userId || !worldId) return [] as TList[];
+        const raw = await apiClient.get<unknown>(cfg.listPath);
+        return cfg.parseList ? cfg.parseList(raw) : (raw as TList[]);
+      },
+      enabled: Boolean(userId && worldId),
+      staleTime: 10_000,
+    });
+  }
+
+  function useDetailQuery(reportId: string | null) {
+    const userId = useAuthStore((s) => s.user?.id ?? null);
+    const worldId = useGameStore((s) => s.worldId);
+    return useQuery<TDetail>({
+      queryKey: cfg.detailKey(reportId, worldId),
+      queryFn: async () => {
+        if (!reportId || !worldId) return Promise.reject(new Error('Missing report'));
+        const raw = await apiClient.get<unknown>(cfg.detailPath(reportId));
+        return cfg.parseDetail ? cfg.parseDetail(raw) : (raw as TDetail);
+      },
+      enabled: Boolean(reportId && userId && worldId),
+      staleTime: 60_000,
+    });
+  }
+
+  function useMarkReadMutation() {
+    const queryClient = useQueryClient();
+    const userId = useAuthStore((s) => s.user?.id ?? null);
+    const worldId = useGameStore((s) => s.worldId);
+    return useMutation<TDetail, Error, { reportId: string }>({
+      mutationFn: async ({ reportId }) => {
+        const raw = await apiClient.patch<unknown>(cfg.readPath(reportId));
+        return cfg.parseDetail ? cfg.parseDetail(raw) : (raw as TDetail);
+      },
+      onSettled: (_data, _err, { reportId }) => {
+        queryClient.invalidateQueries({ queryKey: cfg.listKey(userId, worldId) });
+        queryClient.invalidateQueries({ queryKey: cfg.detailKey(reportId, worldId) });
+      },
+    });
+  }
+
+  function useDeleteMutation() {
+    const queryClient = useQueryClient();
+    const userId = useAuthStore((s) => s.user?.id ?? null);
+    const worldId = useGameStore((s) => s.worldId);
+    return useMutation<unknown, Error, { reportId: string }>({
+      mutationFn: ({ reportId }) => apiClient.delete<unknown>(cfg.deletePath(reportId)),
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey: cfg.listKey(userId, worldId) });
+      },
+    });
+  }
+
+  return { useListQuery, useDetailQuery, useMarkReadMutation, useDeleteMutation };
 }
 
-export function useScoutReportsQuery() {
-  const userId = useAuthStore((state) => state.user?.id ?? null);
-  const worldId = useGameStore((state) => state.worldId);
-  return useQuery<ScoutReportResponse[]>({
-    queryKey: queryKeys.scoutReports(userId, worldId),
-    queryFn: () => {
-      if (!userId || !worldId) return Promise.resolve([] as ScoutReportResponse[]);
-      return apiClient.get<ScoutReportResponse[]>('/combat/scout-reports');
-    },
-    enabled: Boolean(userId && worldId),
-    staleTime: 10_000,
-  });
-}
+const combatReport = createReportHooks<CombatReportDto, CombatReportDto>({
+  listPath: '/combat/reports',
+  detailPath: (id) => `/combat/report/${id}`,
+  readPath: (id) => `/combat/report/${id}/read`,
+  deletePath: (id) => `/combat/report/${id}`,
+  listKey: queryKeys.combatReports,
+  detailKey: queryKeys.combatReport,
+});
+export const useCombatReportsQuery = combatReport.useListQuery;
+export const useCombatReportQuery = combatReport.useDetailQuery;
+export const useMarkReportReadMutation = combatReport.useMarkReadMutation;
+export const useDeleteReportMutation = combatReport.useDeleteMutation;
 
-export function useScoutReportQuery(reportId: string | null) {
-  const userId = useAuthStore((state) => state.user?.id ?? null);
-  const worldId = useGameStore((state) => state.worldId);
-  return useQuery<ScoutReportResponse>({
-    queryKey: queryKeys.scoutReport(reportId, worldId),
-    queryFn: () => {
-      if (!reportId || !worldId) return Promise.reject(new Error('Missing scout report'));
-      return apiClient.get<ScoutReportResponse>(`/combat/scout-report/${reportId}`);
-    },
-    enabled: Boolean(reportId && userId && worldId),
-    staleTime: 60_000,
-  });
-}
+const scoutReport = createReportHooks<ScoutReportResponse, ScoutReportResponse>({
+  listPath: '/combat/scout-reports',
+  detailPath: (id) => `/combat/scout-report/${id}`,
+  readPath: (id) => `/combat/scout-report/${id}/read`,
+  deletePath: (id) => `/combat/scout-report/${id}`,
+  listKey: queryKeys.scoutReports,
+  detailKey: queryKeys.scoutReport,
+});
+export const useScoutReportsQuery = scoutReport.useListQuery;
+export const useScoutReportQuery = scoutReport.useDetailQuery;
+export const useMarkScoutReportReadMutation = scoutReport.useMarkReadMutation;
+export const useDeleteScoutReportMutation = scoutReport.useDeleteMutation;
 
-interface MarkReportReadInput {
-  reportId: string;
-}
+const reinforcementReport = createReportHooks<ReinforcementReportResponse, ReinforcementReportResponse>({
+  listPath: '/combat/reinforcement-reports',
+  detailPath: (id) => `/combat/reinforcement-report/${id}`,
+  readPath: (id) => `/combat/reinforcement-report/${id}/read`,
+  deletePath: (id) => `/combat/reinforcement-report/${id}`,
+  listKey: queryKeys.reinforcementReports,
+  detailKey: queryKeys.reinforcementReport,
+});
+export const useReinforcementReportsQuery = reinforcementReport.useListQuery;
+export const useReinforcementReportQuery = reinforcementReport.useDetailQuery;
+export const useMarkReinforcementReportReadMutation = reinforcementReport.useMarkReadMutation;
+export const useDeleteReinforcementReportMutation = reinforcementReport.useDeleteMutation;
 
-export function useMarkReportReadMutation() {
-  const queryClient = useQueryClient();
-  const userId = useAuthStore((state) => state.user?.id ?? null);
-  const worldId = useGameStore((state) => state.worldId);
-  return useMutation<CombatReportDto, Error, MarkReportReadInput>({
-    mutationFn: ({ reportId }) =>
-      apiClient.patch<CombatReportDto>(`/combat/report/${reportId}/read`),
-    onSettled: (_data, _err, { reportId }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.combatReports(userId, worldId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.combatReport(reportId, worldId) });
-    },
-  });
-}
-
-export function useMarkScoutReportReadMutation() {
-  const queryClient = useQueryClient();
-  const userId = useAuthStore((state) => state.user?.id ?? null);
-  const worldId = useGameStore((state) => state.worldId);
-  return useMutation<ScoutReportResponse, Error, MarkReportReadInput>({
-    mutationFn: ({ reportId }) =>
-      apiClient.patch<ScoutReportResponse>(`/combat/scout-report/${reportId}/read`),
-    onSettled: (_data, _err, { reportId }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.scoutReports(userId, worldId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.scoutReport(reportId, worldId) });
-    },
-  });
-}
-
-interface DeleteReportInput {
-  reportId: string;
-}
-
-export function useDeleteReportMutation() {
-  const queryClient = useQueryClient();
-  const userId = useAuthStore((state) => state.user?.id ?? null);
-  const worldId = useGameStore((state) => state.worldId);
-  return useMutation<unknown, Error, DeleteReportInput>({
-    mutationFn: ({ reportId }) =>
-      apiClient.delete<unknown>(`/combat/report/${reportId}`),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.combatReports(userId, worldId) });
-    },
-  });
-}
-
-export function useDeleteScoutReportMutation() {
-  const queryClient = useQueryClient();
-  const userId = useAuthStore((state) => state.user?.id ?? null);
-  const worldId = useGameStore((state) => state.worldId);
-  return useMutation<unknown, Error, DeleteReportInput>({
-    mutationFn: ({ reportId }) =>
-      apiClient.delete<unknown>(`/combat/scout-report/${reportId}`),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.scoutReports(userId, worldId) });
-    },
-  });
-}
-
-export function useReinforcementReportsQuery() {
-  const userId = useAuthStore((state) => state.user?.id ?? null);
-  const worldId = useGameStore((state) => state.worldId);
-  return useQuery<ReinforcementReportResponse[]>({
-    queryKey: queryKeys.reinforcementReports(userId, worldId),
-    queryFn: () => {
-      if (!userId || !worldId) return Promise.resolve([] as ReinforcementReportResponse[]);
-      return apiClient.get<ReinforcementReportResponse[]>('/combat/reinforcement-reports');
-    },
-    enabled: Boolean(userId && worldId),
-    staleTime: 10_000,
-  });
-}
-
-export function useReinforcementReportQuery(reportId: string | null) {
-  const userId = useAuthStore((state) => state.user?.id ?? null);
-  const worldId = useGameStore((state) => state.worldId);
-  return useQuery<ReinforcementReportResponse>({
-    queryKey: queryKeys.reinforcementReport(reportId, worldId),
-    queryFn: () => {
-      if (!reportId || !worldId) return Promise.reject(new Error('Missing reinforcement report'));
-      return apiClient.get<ReinforcementReportResponse>(`/combat/reinforcement-report/${reportId}`);
-    },
-    enabled: Boolean(reportId && userId && worldId),
-    staleTime: 60_000,
-  });
-}
-
-export function useMarkReinforcementReportReadMutation() {
-  const queryClient = useQueryClient();
-  const userId = useAuthStore((state) => state.user?.id ?? null);
-  const worldId = useGameStore((state) => state.worldId);
-  return useMutation<ReinforcementReportResponse, Error, MarkReportReadInput>({
-    mutationFn: ({ reportId }) =>
-      apiClient.patch<ReinforcementReportResponse>(`/combat/reinforcement-report/${reportId}/read`),
-    onSettled: (_data, _err, { reportId }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.reinforcementReports(userId, worldId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.reinforcementReport(reportId, worldId) });
-    },
-  });
-}
-
-export function useDeleteReinforcementReportMutation() {
-  const queryClient = useQueryClient();
-  const userId = useAuthStore((state) => state.user?.id ?? null);
-  const worldId = useGameStore((state) => state.worldId);
-  return useMutation<unknown, Error, DeleteReportInput>({
-    mutationFn: ({ reportId }) =>
-      apiClient.delete<unknown>(`/combat/reinforcement-report/${reportId}`),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.reinforcementReports(userId, worldId) });
-    },
-  });
-}
-
-export function useCaravanReportsQuery() {
-  const userId = useAuthStore((state) => state.user?.id ?? null);
-  const worldId = useGameStore((state) => state.worldId);
-  return useQuery<CaravanReportResponse[]>({
-    queryKey: queryKeys.caravanReports(userId, worldId),
-    queryFn: async () => {
-      if (!userId || !worldId) return Promise.resolve([] as CaravanReportResponse[]);
-      const raw = await apiClient.get<unknown>('/combat/caravan-reports');
-      return CaravanReportsResponseSchema.parse(raw);
-    },
-    enabled: Boolean(userId && worldId),
-    staleTime: 10_000,
-  });
-}
-
-export function useCaravanReportQuery(reportId: string | null) {
-  const userId = useAuthStore((state) => state.user?.id ?? null);
-  const worldId = useGameStore((state) => state.worldId);
-  return useQuery<CaravanReportResponse>({
-    queryKey: queryKeys.caravanReport(reportId, worldId),
-    queryFn: async () => {
-      if (!reportId || !worldId) return Promise.reject(new Error('Missing caravan report'));
-      const raw = await apiClient.get<unknown>(`/combat/caravan-report/${reportId}`);
-      return CaravanReportResponseSchema.parse(raw);
-    },
-    enabled: Boolean(reportId && userId && worldId),
-    staleTime: 60_000,
-  });
-}
-
-export function useMarkCaravanReportReadMutation() {
-  const queryClient = useQueryClient();
-  const userId = useAuthStore((state) => state.user?.id ?? null);
-  const worldId = useGameStore((state) => state.worldId);
-  return useMutation<CaravanReportResponse, Error, MarkReportReadInput>({
-    mutationFn: async ({ reportId }) => {
-      const raw = await apiClient.patch<unknown>(`/combat/caravan-report/${reportId}/read`);
-      return CaravanReportResponseSchema.parse(raw);
-    },
-    onSettled: (_data, _err, { reportId }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.caravanReports(userId, worldId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.caravanReport(reportId, worldId) });
-    },
-  });
-}
-
-export function useDeleteCaravanReportMutation() {
-  const queryClient = useQueryClient();
-  const userId = useAuthStore((state) => state.user?.id ?? null);
-  const worldId = useGameStore((state) => state.worldId);
-  return useMutation<unknown, Error, DeleteReportInput>({
-    mutationFn: ({ reportId }) =>
-      apiClient.delete<unknown>(`/combat/caravan-report/${reportId}`),
-    onSettled: (_data, _err, { reportId }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.caravanReports(userId, worldId) });
-      queryClient.removeQueries({ queryKey: queryKeys.caravanReport(reportId, worldId) });
-    },
-  });
-}
+const caravanReport = createReportHooks<CaravanReportResponse, CaravanReportResponse>({
+  listPath: '/combat/caravan-reports',
+  detailPath: (id) => `/combat/caravan-report/${id}`,
+  readPath: (id) => `/combat/caravan-report/${id}/read`,
+  deletePath: (id) => `/combat/caravan-report/${id}`,
+  listKey: queryKeys.caravanReports,
+  detailKey: queryKeys.caravanReport,
+  parseList: (raw) => CaravanReportsResponseSchema.parse(raw),
+  parseDetail: (raw) => CaravanReportResponseSchema.parse(raw),
+});
+export const useCaravanReportsQuery = caravanReport.useListQuery;
+export const useCaravanReportQuery = caravanReport.useDetailQuery;
+export const useMarkCaravanReportReadMutation = caravanReport.useMarkReadMutation;
+export const useDeleteCaravanReportMutation = caravanReport.useDeleteMutation;
 
 export function useWorldConfigQuery(worldId: string | null) {
   return useQuery<WorldConfig>({
