@@ -1,10 +1,12 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '@/api';
 import type { CombatReportDto } from '@/api/queries';
 import type { CaravanReportResponse } from '@battleforthecrown/shared/combat';
 import { useUiStore } from '@/stores/ui';
 import { ReportDetailModal } from './ReportDetailModal';
+import { useReportLifecycle } from './useReportLifecycle';
 
 const mocks = vi.hoisted(() => ({
   deleteReport: vi.fn(),
@@ -93,6 +95,99 @@ vi.mock('@/features/world/worldMapNavigation', () => ({
 afterEach(() => {
   vi.clearAllMocks();
   useUiStore.getState().clearToasts();
+});
+
+describe('useReportLifecycle', () => {
+  it('calls markRead only when isRead is false', () => {
+    const markRead = vi.fn();
+    const opts = {
+      reportId: 'r1',
+      isRead: false as boolean | undefined,
+      markRead,
+      deleteAsync: vi.fn(),
+      onClose: vi.fn(),
+      deleteErrorLabel: 'err',
+    };
+
+    const { rerender } = renderHook(
+      (props) => useReportLifecycle(props),
+      { initialProps: opts },
+    );
+    expect(markRead).toHaveBeenCalledWith({ reportId: 'r1' });
+
+    markRead.mockClear();
+    rerender({ ...opts, isRead: true });
+    expect(markRead).not.toHaveBeenCalled();
+
+    markRead.mockClear();
+    rerender({ ...opts, isRead: undefined });
+    expect(markRead).not.toHaveBeenCalled();
+  });
+
+  it('calls onClose after successful delete', async () => {
+    const onClose = vi.fn();
+    const deleteAsync = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderHook(() =>
+      useReportLifecycle({
+        reportId: 'r1',
+        isRead: true,
+        markRead: vi.fn(),
+        deleteAsync,
+        onClose,
+        deleteErrorLabel: 'err',
+      }),
+    );
+
+    await act(() => result.current.handleDelete());
+
+    expect(deleteAsync).toHaveBeenCalledWith({ reportId: 'r1' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(result.current.isDeleting).toBe(false);
+  });
+
+  it('pushes error toast and resets isDeleting on delete failure', async () => {
+    const onClose = vi.fn();
+    const deleteAsync = vi.fn().mockRejectedValue(new ApiError('Not found', 404));
+    const { result } = renderHook(() =>
+      useReportLifecycle({
+        reportId: 'r1',
+        isRead: true,
+        markRead: vi.fn(),
+        deleteAsync,
+        onClose,
+        deleteErrorLabel: 'Suppression échouée',
+      }),
+    );
+
+    await act(() => result.current.handleDelete());
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(result.current.isDeleting).toBe(false);
+    const toasts = useUiStore.getState().toasts;
+    expect(toasts).toHaveLength(1);
+    expect(toasts[0].tone).toBe('error');
+    expect(toasts[0].description).toBe('Not found');
+  });
+
+  it('uses fallback label when error is not ApiError', async () => {
+    const deleteAsync = vi.fn().mockRejectedValue(new Error('network'));
+    const { result } = renderHook(() =>
+      useReportLifecycle({
+        reportId: 'r1',
+        isRead: true,
+        markRead: vi.fn(),
+        deleteAsync,
+        onClose: vi.fn(),
+        deleteErrorLabel: 'Fallback message',
+      }),
+    );
+
+    await act(() => result.current.handleDelete());
+
+    const toasts = useUiStore.getState().toasts;
+    expect(toasts).toHaveLength(1);
+    expect(toasts[0].description).toBe('Fallback message');
+  });
 });
 
 describe('ReportDetailModal', () => {
