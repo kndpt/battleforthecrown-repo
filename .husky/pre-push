@@ -34,8 +34,6 @@ collect_push_files() {
     refs/tags/*) return ;;
   esac
 
-  had_ref=true
-
   if [ "$_remote_sha" = "$zero" ]; then
     _base=$(git merge-base "$_local_sha" main 2>/dev/null || true)
     if [ -z "$_base" ]; then
@@ -53,6 +51,10 @@ collect_push_files() {
 }
 
 while read -r local_ref local_sha remote_ref remote_sha; do
+  case "$local_ref" in
+    refs/tags/*) continue ;;
+  esac
+  had_ref=true
   for file in $(collect_push_files "$local_ref" "$local_sha" "$remote_ref" "$remote_sha" 2>/dev/null || true); do
     [ -z "$file" ] && continue
     if is_code_change "$file"; then
