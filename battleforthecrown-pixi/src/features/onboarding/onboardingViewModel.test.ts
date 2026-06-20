@@ -18,6 +18,23 @@ function summary(currentStep: OnboardingSummaryDto['currentStep']): OnboardingSu
 }
 
 describe('getOnboardingGuidance', () => {
+  it('surfaces the narrative loot from the very first step as a carrot', () => {
+    for (const step of [
+      'UPGRADE_CASTLE_LEVEL_2',
+      'BUILD_BARRACKS',
+      'TRAIN_TROOPS',
+    ] as const) {
+      expect(getOnboardingGuidance(summary(step))?.lootPreview).toMatchObject({
+        label: 'Butin à récupérer',
+        items: [
+          { icon: '/assets/resources/wood.png', value: '1.0K' },
+          { icon: '/assets/resources/stone.png', value: '1.7K' },
+          { icon: '/assets/resources/iron.png', value: '900' },
+        ],
+      });
+    }
+  });
+
   it('maps the current scripted step to a CTA', () => {
     expect(getOnboardingGuidance(summary('TRAIN_TROOPS'))).toMatchObject({
       title: 'Former la milice',
@@ -47,9 +64,9 @@ describe('getOnboardingGuidance', () => {
     expect(getOnboardingGuidance(summary('BUILD_WATCHTOWER'))?.lootPreview).toMatchObject({
       label: 'Butin à récupérer',
       items: [
-        { icon: '/assets/resources/wood.png', value: '1.2K' },
-        { icon: '/assets/resources/stone.png', value: '1.2K' },
-        { icon: '/assets/resources/iron.png', value: '840' },
+        { icon: '/assets/resources/wood.png', value: '1.0K' },
+        { icon: '/assets/resources/stone.png', value: '1.7K' },
+        { icon: '/assets/resources/iron.png', value: '900' },
       ],
     });
     expect(getOnboardingGuidance(summary('ATTACK_BARBARIAN'))).toMatchObject({
@@ -61,9 +78,9 @@ describe('getOnboardingGuidance', () => {
       lootPreview: {
         label: 'Butin à récupérer',
         items: [
-          { icon: '/assets/resources/wood.png', value: '1.2K' },
-          { icon: '/assets/resources/stone.png', value: '1.2K' },
-          { icon: '/assets/resources/iron.png', value: '840' },
+          { icon: '/assets/resources/wood.png', value: '1.0K' },
+          { icon: '/assets/resources/stone.png', value: '1.7K' },
+          { icon: '/assets/resources/iron.png', value: '900' },
         ],
       },
       route: '/game/world',
@@ -86,9 +103,9 @@ describe('getOnboardingGuidance', () => {
       lootPreview: {
         label: 'Butin à récupérer',
         items: [
-          { icon: '/assets/resources/wood.png', value: '1.2K' },
-          { icon: '/assets/resources/stone.png', value: '1.2K' },
-          { icon: '/assets/resources/iron.png', value: '840' },
+          { icon: '/assets/resources/wood.png', value: '1.0K' },
+          { icon: '/assets/resources/stone.png', value: '1.7K' },
+          { icon: '/assets/resources/iron.png', value: '900' },
         ],
       },
     });

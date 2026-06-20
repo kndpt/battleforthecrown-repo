@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, HttpCode, Post, Query } from '@nestjs/common';
 import { CurrentUser, type AuthenticatedUser } from '../../common/auth';
 import { OnboardingService } from './onboarding.service';
 
@@ -12,5 +12,15 @@ export class OnboardingController {
     @Query('worldId') worldId: string,
   ) {
     return this.onboarding.getSummary(user.id, worldId);
+  }
+
+  /** Credits the guaranteed completion loot — triggered by the closing CTA. */
+  @Post('claim-completion-reward')
+  @HttpCode(204)
+  claimCompletionReward(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('worldId') worldId: string,
+  ) {
+    return this.onboarding.claimCompletionReward(user.id, worldId);
   }
 }

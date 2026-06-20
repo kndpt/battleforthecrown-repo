@@ -7,6 +7,8 @@ Composants UI stylisés "Clash-like" pour le HUD React. Tailwind CSS + thème m�
 > **Conventions de création** : [`ui-design-system.md`](./ui-design-system.md) (palette, typo, espacements, template CVA, checklist).
 >
 > **Tone & writing** des micro-copies : [`ui-writing-style.md`](./ui-writing-style.md).
+>
+> **Coachmarks / hints animés** (drag, tap, ready) pour tutoriels : [`ui-onboarding-hints.md`](./ui-onboarding-hints.md).
 
 ## Structure
 

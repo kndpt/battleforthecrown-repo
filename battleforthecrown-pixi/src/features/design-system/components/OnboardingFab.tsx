@@ -41,6 +41,9 @@ export interface OnboardingFabProps {
   disabled?: boolean;
   isAdvancing?: boolean;
   loading?: boolean;
+  /** Controlled drag offset; when provided the FAB does not own its position. */
+  offset?: DragOffset;
+  onOffsetChange?: (offset: DragOffset) => void;
   onSecondaryAction?: (payload: OnboardingFabActionPayload) => void;
   placement?: OnboardingFabPlacement;
   secondaryLabel?: string;
@@ -256,19 +259,26 @@ function TutoHero({
 
 function TutoLootPreview({ preview }: { preview: OnboardingLootPreview }) {
   return (
-    <div className="rounded-xl border border-[rgba(93,74,50,.2)] bg-[linear-gradient(to_bottom,rgba(255,255,255,.28),rgba(93,74,50,.06))] px-2.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,.35)]">
-      <div className="mb-1.5 text-center font-game text-[9px] font-bold uppercase tracking-[.24em] text-[#8a7358]">
-        {preview.label}
+    <div className="relative rounded-xl border border-[rgba(176,137,60,.5)] bg-[linear-gradient(to_bottom,rgba(255,233,176,.55),rgba(214,176,92,.18))] px-2.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,.6),0_1px_3px_rgba(93,74,50,.18)]">
+      <div className="mb-1.5 flex items-center justify-center gap-1.5">
+        <img
+          alt=""
+          className="size-[14px] object-contain drop-shadow-[0_1px_1px_rgba(93,74,50,.35)]"
+          src={publicAsset('/assets/lock.png')}
+        />
+        <span className="font-game text-[9px] font-bold uppercase tracking-[.24em] text-[#8a6d2f]">
+          {preview.label}
+        </span>
       </div>
       <div className="flex items-center justify-center gap-2.5">
         {preview.items.map((item) => (
           <div
-            className="flex min-w-[72px] items-center justify-center gap-1 rounded-full border border-[rgba(93,74,50,.16)] bg-[rgba(255,255,255,.22)] px-2 py-1 opacity-70 grayscale"
+            className="flex min-w-[72px] items-center justify-center gap-1 rounded-full border border-[rgba(176,137,60,.4)] bg-[rgba(255,255,255,.55)] px-2 py-1 shadow-[inset_0_1px_0_rgba(255,255,255,.7)]"
             key={item.icon}
           >
             <img
               alt=""
-              className="size-[18px] object-contain opacity-80"
+              className="size-[18px] object-contain drop-shadow-[0_1px_1px_rgba(93,74,50,.25)]"
               src={publicAsset(item.icon)}
             />
             <span className="font-game text-[12px] font-bold tabular-nums text-[#6d5838]">
@@ -294,6 +304,8 @@ export function OnboardingFab({
   loading = false,
   lootPreview,
   modalLabel,
+  offset,
+  onOffsetChange,
   onOpenChange,
   onPrimaryAction,
   onSecondaryAction,
@@ -307,7 +319,9 @@ export function OnboardingFab({
 }: OnboardingFabProps) {
   const payload = buildPayload({ step, title, total });
   const isDisabled = disabled || loading;
-  const [floatingOffset, setFloatingOffset] = useState<DragOffset>({ x: 0, y: 0 });
+  const [internalOffset, setInternalOffset] = useState<DragOffset>({ x: 0, y: 0 });
+  const floatingOffset = offset ?? internalOffset;
+  const setFloatingOffset = onOffsetChange ?? setInternalOffset;
   const [isDragging, setIsDragging] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
   const dragStateRef = useRef<FloatingDragState | null>(null);
@@ -316,8 +330,8 @@ export function OnboardingFab({
   const suppressClickTimeoutRef = useRef<number | null>(null);
   const rootPlacement =
     placement === 'viewport'
-      ? 'fixed bottom-[calc(var(--bftc-bottom-nav-height,72px)+var(--bftc-bottom-nav-gap,18px))] left-[6px]'
-      : 'absolute bottom-[calc(var(--bftc-bottom-nav-height,58px)+var(--bftc-bottom-nav-gap,18px))] left-[6px]';
+      ? 'fixed top-[calc(env(safe-area-inset-top,0px)+8px)] right-[6px]'
+      : 'absolute top-[8px] right-[6px]';
   const overlayPlacement = placement === 'viewport' ? 'fixed' : 'absolute';
   const floatingStyle = {
     '--bftc-onboarding-drag-x': `${floatingOffset.x}px`,

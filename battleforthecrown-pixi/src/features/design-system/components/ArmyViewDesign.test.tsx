@@ -157,6 +157,56 @@ describe('ArmyViewDesign training queue', () => {
   });
 });
 
+describe('ArmyViewDesign onboarding drag hint', () => {
+  it('renders the looping drag hint when an onboarding troop id is provided', () => {
+    const { container } = renderArmyContent({ onboardingDragHintTroopId: militia.id });
+    expect(container.querySelector('[data-drag-hint]')).not.toBeNull();
+  });
+
+  it('does not render the drag hint without the onboarding prop', () => {
+    const { container } = renderArmyContent();
+    expect(container.querySelector('[data-drag-hint]')).toBeNull();
+  });
+});
+
+describe('ArmyRecruitPopup onboarding "5 or nothing" gate', () => {
+  function renderPopup(value: number, onRecruit = vi.fn()) {
+    return {
+      onRecruit,
+      ...render(
+        <ArmyRecruitPopup
+          embedded
+          labels={recruitLabels}
+          max={5}
+          onChange={vi.fn()}
+          onRecruit={onRecruit}
+          quickValues={[{ label: '5', value: 5 }]}
+          requiredValue={5}
+          showHandle={false}
+          stock={recruitStock}
+          troop={militia}
+          value={value}
+        />,
+      ),
+    };
+  }
+
+  it('disables the recruit button below the required value and shows the guide', () => {
+    const { container } = renderPopup(3);
+    expect(screen.getByRole('button', { name: /Entraîner/ })).toBeDisabled();
+    expect(container.querySelector('[data-onboarding-recruit-guide]')).not.toBeNull();
+  });
+
+  it('enables the recruit button at exactly the required value and recruits 5', () => {
+    const { onRecruit, container } = renderPopup(5);
+    const button = screen.getByRole('button', { name: /Entraîner/ });
+    expect(button).toBeEnabled();
+    expect(container.querySelector('[data-onboarding-recruit-guide]')).toBeNull();
+    fireEvent.click(button);
+    expect(onRecruit).toHaveBeenCalledWith(5);
+  });
+});
+
 describe('ArmyRecruitPopup embedded sheet content', () => {
   it('lets the shared bottom sheet own the surface and swipe header', () => {
     const { container } = render(

@@ -1,5 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createElement, type ReactNode } from 'react';
 import { useAuthStore } from '@/stores/auth';
 import {
   isOnboardingCompletionAcknowledged,
@@ -7,6 +9,11 @@ import {
 } from './onboardingCompletion';
 
 const KEY = 'bftc:onboarding:completion-ack:user-1:world-1';
+
+const queryClient = new QueryClient();
+function wrapper({ children }: { children: ReactNode }) {
+  return createElement(QueryClientProvider, { client: queryClient }, children);
+}
 
 function setUser(id: string | null) {
   useAuthStore.setState({
@@ -43,7 +50,7 @@ describe('isOnboardingCompletionAcknowledged', () => {
 
 describe('useOnboardingCompletionAck', () => {
   it('starts un-acknowledged then persists the acknowledgement', () => {
-    const { result } = renderHook(() => useOnboardingCompletionAck('world-1'));
+    const { result } = renderHook(() => useOnboardingCompletionAck('world-1'), { wrapper });
 
     expect(result.current.acknowledged).toBe(false);
 
@@ -55,7 +62,7 @@ describe('useOnboardingCompletionAck', () => {
 
   it('reflects a pre-existing acknowledgement from sessionStorage', () => {
     sessionStorage.setItem(KEY, '1');
-    const { result } = renderHook(() => useOnboardingCompletionAck('world-1'));
+    const { result } = renderHook(() => useOnboardingCompletionAck('world-1'), { wrapper });
 
     expect(result.current.acknowledged).toBe(true);
   });
@@ -65,7 +72,7 @@ describe('useOnboardingCompletionAck', () => {
       throw new DOMException('QuotaExceededError');
     });
 
-    const { result } = renderHook(() => useOnboardingCompletionAck('world-1'));
+    const { result } = renderHook(() => useOnboardingCompletionAck('world-1'), { wrapper });
     act(() => result.current.acknowledge());
 
     // Write threw, so nothing persisted — but the modal still dismisses.
@@ -76,7 +83,7 @@ describe('useOnboardingCompletionAck', () => {
     sessionStorage.setItem(KEY, '1');
     const { result, rerender } = renderHook(
       ({ worldId }) => useOnboardingCompletionAck(worldId),
-      { initialProps: { worldId: 'world-1' } },
+      { initialProps: { worldId: 'world-1' }, wrapper },
     );
 
     expect(result.current.acknowledged).toBe(true);
@@ -87,7 +94,7 @@ describe('useOnboardingCompletionAck', () => {
 
   it('does nothing when there is no authenticated user', () => {
     setUser(null);
-    const { result } = renderHook(() => useOnboardingCompletionAck('world-1'));
+    const { result } = renderHook(() => useOnboardingCompletionAck('world-1'), { wrapper });
 
     act(() => result.current.acknowledge());
 

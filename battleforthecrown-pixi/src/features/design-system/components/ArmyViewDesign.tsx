@@ -9,6 +9,7 @@ import type {
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
 import { clamp } from '@/lib/math';
+import { DragHintOverlay } from './DragHintOverlay';
 
 export type ArmyFilterTone = 'wood' | 'green' | 'blue' | 'gold';
 export type ArmyNavTone = 'wood' | 'gold';
@@ -186,6 +187,8 @@ export interface ArmyContentDesignProps {
   onTroopSelect?: (troop: ArmyTroop) => void;
   onVillageRowIconSelect?: (row: ArmyVillageRow) => void;
   onVillageRowSelect?: (row: ArmyVillageRow) => void;
+  /** Onboarding-only: animates a looping drag hint from this troop's tile to the queue drop zone. */
+  onboardingDragHintTroopId?: string | null;
   recruitSheet: ArmyRecruitSheetProps;
   sections?: ArmyTroopSection[];
   showFilters?: boolean;
@@ -230,6 +233,8 @@ export interface ArmyRecruitPopupProps {
   onChange: (value: number) => void;
   onRecruit?: (value: number) => void;
   quickValues: ArmyRecruitQuickValue[];
+  /** Onboarding-only: gate recruit to this exact value and guide the user toward it. */
+  requiredValue?: number;
   showHandle?: boolean;
   stock: ArmyRecruitStock;
   troop: ArmyTroop;
@@ -721,6 +726,7 @@ function PortraitTile({
   return (
     <button
       className="relative flex aspect-[.82/1] cursor-pointer flex-col overflow-hidden rounded-[14px] p-0 text-left shadow-[var(--shadow-card-inner-light),0_2px_0_rgba(0,0,0,.18)]"
+      data-troop-id={troop.id}
       onClick={(event) => {
         if (suppressClickRef.current) {
           suppressClickRef.current = false;
@@ -1013,6 +1019,7 @@ export function ArmyContentDesign({
   onTroopSelect,
   onVillageRowIconSelect,
   onVillageRowSelect,
+  onboardingDragHintTroopId,
   recruitSheet,
   sections,
   showFilters = true,
@@ -1022,6 +1029,14 @@ export function ArmyContentDesign({
   const recruitSheetRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [dragPreview, setDragPreview] = useState<{ point: TroopDragPoint; troop: ArmyTroop } | null>(null);
+
+  const dragHintTroop =
+    onboardingDragHintTroopId && showRecruitSheet && !sections && !dragPreview
+      ? troops.find(
+          (candidate) =>
+            candidate.id === onboardingDragHintTroopId && candidate.unlocked,
+        ) ?? null
+      : null;
 
   const handleTroopPointerDragStart = (troop: ArmyTroop) => {
     onTroopDragStart?.(troop);
@@ -1051,7 +1066,9 @@ export function ArmyContentDesign({
     if (isInsideDropZone) onDropTroop(troop.id);
   };
 
-  const recruitSheetDragState = Boolean(recruitSheet.isDragging || dragPreview);
+  const recruitSheetDragState = Boolean(
+    recruitSheet.isDragging || dragPreview || dragHintTroop,
+  );
 
   return (
     <div
@@ -1124,6 +1141,17 @@ export function ArmyContentDesign({
         ) : null}
         {dragPreview ? <TroopDragGhost point={dragPreview.point} troop={dragPreview.troop} /> : null}
       </div>
+      {dragHintTroop ? (
+        <DragHintOverlay
+          fromSelector={`[data-troop-id="${dragHintTroop.id}"]`}
+          showHalo
+          toRef={recruitSheetRef}
+        >
+          <div className="rotate-[-7deg] scale-[1.12] drop-shadow-[0_10px_16px_rgba(0,0,0,.45)]">
+            <GhostChip troop={dragHintTroop} />
+          </div>
+        </DragHintOverlay>
+      ) : null}
     </div>
   );
 }
@@ -1471,13 +1499,16 @@ export function ArmyRecruitPopup({
   onChange,
   onRecruit,
   quickValues,
+  requiredValue,
   showHandle = true,
   stock,
   troop,
   value,
 }: ArmyRecruitPopupProps) {
   const boundedValue = clampQuantity(value, max);
-  const canRecruit = boundedValue > 0 && max > 0;
+  const hasRequirement = requiredValue != null;
+  const meetsRequirement = !hasRequirement || boundedValue === requiredValue;
+  const canRecruit = boundedValue > 0 && max > 0 && meetsRequirement;
   const cat = CAT_COLOR[troop.category];
   const cost = {
     iron: troop.cost.iron * boundedValue,
@@ -1489,6 +1520,8 @@ export function ArmyRecruitPopup({
   const populationTight = afterPopulation === 0;
   const atMax = boundedValue >= max;
   const update = (nextValue: number) => onChange(clampQuantity(nextValue, max));
+  const showQuantityGuide = hasRequirement && boundedValue < (requiredValue ?? 0);
+  const highlightRecruit = hasRequirement && meetsRequirement;
 
   return (
     <div
@@ -1531,7 +1564,15 @@ export function ArmyRecruitPopup({
             {troop.short} {boundedValue > 1 ? '× ' : ''}
           </div>
         </div>
-        <StepperButton disabled={boundedValue >= max} label="+1" onClick={() => update(boundedValue + 1)} size={40} />
+        <div className="relative shrink-0">
+          <StepperButton disabled={boundedValue >= max} label="+1" onClick={() => update(boundedValue + 1)} size={40} />
+          {showQuantityGuide ? (
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-[-3px] rounded-xl border-2 border-[var(--game-gold-glow)] animate-[bftc-hint-tap_1.2s_ease-in-out_infinite]"
+            />
+          ) : null}
+        </div>
         <StepperButton disabled={boundedValue >= max} label="+10" onClick={() => update(boundedValue + 10)} />
       </div>
       <Slider max={max} onChange={update} value={boundedValue} />
@@ -1547,6 +1588,15 @@ export function ArmyRecruitPopup({
           />
         ))}
       </div>
+      {showQuantityGuide ? (
+        <div
+          className="flex items-center justify-center gap-1.5 rounded-[12px] border-2 border-[var(--game-gold-border)] bg-[linear-gradient(180deg,var(--wood-deep),var(--wood-bark))] px-2.5 py-2 font-game text-[11.5px] font-extrabold uppercase tracking-[.1em] text-[var(--game-gold-glow)] shadow-[inset_0_1px_0_rgba(255,255,255,.12),0_2px_0_rgba(0,0,0,.28)] [text-shadow:1px_1px_1px_rgba(0,0,0,.6)]"
+          data-onboarding-recruit-guide="true"
+        >
+          <span aria-hidden>👆</span>
+          Monte jusqu’à {requiredValue} pour former
+        </div>
+      ) : null}
       <div className="flex flex-col gap-[5px] rounded-xl border-[1.5px] border-[var(--parchment-500)] bg-[rgba(0,0,0,.05)] px-2.5 py-2">
         <ResourceBar have={stock.wood} icon="/assets/resources/wood.png" label={labels.resourceWood} tone="#a67c52" used={cost.wood} />
         <ResourceBar have={stock.stone} icon="/assets/resources/stone.png" label={labels.resourceStone} tone="#8a99a8" used={cost.stone} />
@@ -1565,7 +1615,10 @@ export function ArmyRecruitPopup({
           {labels.cancel}
         </button>
         <button
-          className="inline-flex flex-1 cursor-pointer items-center justify-center rounded-xl border-2 px-3 py-[13px] font-game font-extrabold shadow-[inset_0_1px_0_rgba(255,255,255,.32),0_3px_0_rgba(0,0,0,.26)] disabled:cursor-not-allowed disabled:opacity-[.55]"
+          className={cn(
+            'inline-flex flex-1 cursor-pointer items-center justify-center rounded-xl border-2 px-3 py-[13px] font-game font-extrabold shadow-[inset_0_1px_0_rgba(255,255,255,.32),0_3px_0_rgba(0,0,0,.26)] disabled:cursor-not-allowed disabled:opacity-[.55]',
+            highlightRecruit && !disabled && 'animate-[bftc-hint-ready_1.1s_ease-in-out_infinite]',
+          )}
           disabled={!canRecruit || disabled}
           onClick={() => {
             if (canRecruit && !disabled) onRecruit?.(boundedValue);

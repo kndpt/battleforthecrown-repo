@@ -8,7 +8,11 @@ import { WorldLockedScreen } from './WorldLockedScreen';
 import { WorldMiniMap } from './WorldMiniMap';
 import { WorldEntityTooltip } from './WorldEntityTooltip';
 import { clearWorldMapFocusSearch, parseWorldMapFocusSearch } from './worldMapNavigation';
-import { buildMapEntities, filterEntitiesByVision } from './buildMapEntities';
+import {
+  buildMapEntities,
+  filterEntitiesByVision,
+  filterEntitiesForNarrativeTarget,
+} from './buildMapEntities';
 import { AttackDetailModal } from '@/features/combat/AttackDetailModal';
 import { CaravanLaunchModal } from './CaravanLaunchModal';
 import { KingdomActivitiesBottomSheet } from '@/features/combat/KingdomActivitiesBottomSheet';
@@ -91,14 +95,23 @@ export function WorldMapScreen() {
     [worldEntities.data?.entities, myVillages.data, userId],
   );
 
-  const visibleEntities: MapEntity[] = useMemo(
-    () => filterEntitiesByVision(allEntities, visionDisks, fogOfWarEnabled),
-    [allEntities, visionDisks, fogOfWarEnabled],
-  );
+  // During onboarding step 6, hide every barbarian except the scripted target.
+  const onboardingNarrativeTargetId =
+    onboardingSummary.data?.status === 'ACTIVE' &&
+    onboardingSummary.data.currentStep === 'ATTACK_BARBARIAN'
+      ? onboardingSummary.data.narrativeTargetVillageId
+      : null;
+
+  const visibleEntities: MapEntity[] = useMemo(() => {
+    const visible = filterEntitiesByVision(allEntities, visionDisks, fogOfWarEnabled);
+    return onboardingNarrativeTargetId
+      ? filterEntitiesForNarrativeTarget(visible, onboardingNarrativeTargetId)
+      : visible;
+  }, [allEntities, visionDisks, fogOfWarEnabled, onboardingNarrativeTargetId]);
   const urlFocus = useMemo(() => parseWorldMapFocusSearch(searchParams), [searchParams]);
   const activeFocus = urlFocus ?? pendingFocus;
   const expeditionSnapshots = useMemo(() => Object.values(expeditions), [expeditions]);
-  const onboardingCompletion = useOnboardingCompletionAck(worldId);
+  const onboardingCompletion = useOnboardingCompletionAck(worldId, currentVillageId);
   const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data, {
     completionAcknowledged: onboardingCompletion.acknowledged,
   });

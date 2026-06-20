@@ -34,6 +34,13 @@ Cible confirmée après recalibration tempo : couvrir une session ≤ 10 min qui
 
 Hors scope MVP actuel : skip tutoriel, replay tutoriel, campagne solo narrative, récompenses intermédiaires par étape.
 
+### Guidage front spécifique (par étape)
+
+Le guidage visuel reste **front-only** (n'avance jamais l'état server-authoritative) :
+
+- **Étapes 1 / 2 / 4 / 5** (Château L2/L3, Caserne, Tour de guet) : le CTA de la guidance ouvre directement la modale du bâtiment ciblé, depuis n'importe quel écran (cf. `onboardingViewModel.ts` → `targetBuildingType` ; signal porté par le store `pendingBuildingModal`, consommé par `VillageView`).
+- **Étape 3** (5 Milices) : hint de drag & drop animé (carte milice → file) tant qu'aucune milice n'est formée ni en file ; la modale de recrutement guide vers la quantité **restante pour atteindre 5** (= `ONBOARDING_TRAIN_TROOPS_TARGET − milices au village − milices en file`) et bloque la formation hors de cette valeur exacte. Le restant est recalculé dynamiquement : annuler un batch partiel ré-ajuste la cible (ex. 1 déjà formée → la modale demande 4). Mécanique UI : [`battleforthecrown-pixi/docs/ui-onboarding-hints.md`](../../battleforthecrown-pixi/docs/ui-onboarding-hints.md).
+
 ### Déclencheurs runtime
 
 Le tutoriel doit écouter des faits gameplay server-side plutôt que des états purement visuels :
@@ -57,6 +64,8 @@ La construction de la Tour de guet L1 (`building.completed` `WATCHTOWER L1`) dé
 - Loot : stock initial réduit à **≈ 40 % du cap T1** (au lieu du roll standard 30-100 %).
 
 L'idempotence est portée par `OnboardingState.narrativeTargetVillageId` (FK unique vers `Village`, SET NULL à la destruction) : un rejoin ou un replay d'Outbox ne crée pas de doublon. L'id de cette cible est exposé dans `GET /onboarding` (`narrativeTargetVillageId`) pour la guidance frontend.
+
+À l'étape 6 (`ATTACK_BARBARIAN`), le frontend **masque tous les autres barbares** sur la carte et n'affiche que les villages du joueur + cette cible narrative (`filterEntitiesForNarrativeTarget`, `WorldMapScreen.tsx`), pour éviter que le joueur attaque le mauvais village et gâche ses 5 miliciens. Filtre purement visuel ; appliqué uniquement tant que `narrativeTargetVillageId` est connu et l'étape active.
 
 La projection suit l'ordre du script, mais elle se réconcilie sur les faits serveur déjà atteints. Si un joueur effectue une action plus tardive avant l'étape attendue, le tutoriel rattrape automatiquement toutes les étapes satisfaites jusqu'à la première condition encore manquante.
 
@@ -85,7 +94,14 @@ WHERE origin_kind = 'ONBOARDING_NARRATIVE'
 
 ### Écran de clôture post-victoire (front-only)
 
-À la victoire narrative, le backend passe `COMPLETED` (inchangé). Le frontend affiche alors une dernière guidance « completion » (même `OnboardingFab`, preview butin via `getOnboardingNarrativeLoot('T1')`) dont le CTA « Récupérer le butin » acquitte et masque définitivement le tutoriel. L'acquittement est purement front (`sessionStorage`, clé `userId × worldId`, cf. `onboardingCompletion.ts`) : one-shot, pas de re-trigger au refresh/rejoin, aucun crédit butin (le pipeline combat/retour reste la source de vérité du loot).
+À la victoire narrative, le backend passe `COMPLETED` (la bascule **ne crédite rien** par elle-même).
+
+Le frontend affiche alors une dernière guidance « completion » (même `OnboardingFab`, preview butin via `ONBOARDING_COMPLETION_REWARD`) dont le CTA « Récupérer le butin » :
+
+1. **Crédite le butin de complétion garanti** : `POST /onboarding/claim-completion-reward` → `OnboardingService.claimCompletionReward` crédite `ONBOARDING_COMPLETION_REWARD` (1000 bois / 1700 pierre / 900 fer — source de vérité unique partagée backend + preview front) au premier village, plafonné par le stockage, idempotent via `OnboardingState.completionRewardApplied`. Le crédit se fait donc **au clic du CTA**, pas à la résolution du combat. C'est distinct du loot de combat (plafonné par les survivants) et du stock du barbare (`getOnboardingNarrativeLoot`) : le tutoriel garantit une récompense même si le joueur a perdu des miliciens.
+2. Acquitte et masque le tutoriel : persistance front (`sessionStorage`, clé `userId × worldId`) — one-shot, pas de re-trigger au refresh/rejoin. Le front invalide `resources` à la réussite du claim pour faire apparaître le butin (`onboardingCompletion.ts`).
+
+Si le joueur ferme la modale sans cliquer le CTA (croix), rien n'est crédité ni acquitté : la guidance « completion » se ré-affiche (le crédit n'est jamais perdu, le claim reste disponible).
 
 ## Liens
 

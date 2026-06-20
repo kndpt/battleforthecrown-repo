@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { OnboardingGuidance } from './OnboardingGuidance';
+import { usePendingBuildingModalStore } from '@/stores/pendingBuildingModal';
 import type { OnboardingGuidance as OnboardingGuidanceModel } from './onboardingViewModel';
 
 const completionGuidance: OnboardingGuidanceModel = {
@@ -23,6 +24,80 @@ const completionGuidance: OnboardingGuidanceModel = {
   total: 6,
   isCompletion: true,
 };
+
+const castleStepGuidance: OnboardingGuidanceModel = {
+  title: 'Renforcer le Château',
+  description: 'Passe le Château au niveau 2 pour accélérer les prochaines constructions.',
+  ctaLabel: 'Ouvrir le Château',
+  imageSrc: '/assets/castle.png',
+  gameActionId: 'open-building-management',
+  route: '/game',
+  targetBuildingType: 'CASTLE',
+  modalLabel: 'TUTORIEL · Étape 1/6',
+  pillLabel: 'Tutoriel · 1/6',
+  progressLabel: '1 / 6',
+  secondaryLabel: 'Plus tard',
+  step: 1,
+  total: 6,
+};
+
+const trainStepGuidance: OnboardingGuidanceModel = {
+  title: 'Former la milice',
+  description: 'Entraîne 5 miliciens.',
+  ctaLabel: 'Former',
+  imageSrc: '/assets/army/militia.png',
+  gameActionId: 'open-army-training',
+  route: '/game/army',
+  modalLabel: 'TUTORIEL · Étape 3/6',
+  pillLabel: 'Tutoriel · 3/6',
+  progressLabel: '3 / 6',
+  secondaryLabel: 'Plus tard',
+  step: 3,
+  total: 6,
+};
+
+describe('OnboardingGuidance — building step', () => {
+  afterEach(() => usePendingBuildingModalStore.getState().consume());
+
+  it('queues the target building modal and routes to the village from any screen', () => {
+    const onAction = vi.fn();
+    const onNavigate = vi.fn();
+
+    render(
+      <OnboardingGuidance
+        guidance={castleStepGuidance}
+        onAction={onAction}
+        onNavigate={onNavigate}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Renforcer le Château/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ouvrir le Château' }));
+
+    expect(usePendingBuildingModalStore.getState().buildingType).toBe('CASTLE');
+    expect(onNavigate).toHaveBeenCalledWith('/game');
+    expect(onAction).not.toHaveBeenCalled();
+  });
+
+  it('runs the game action for steps without a target building', () => {
+    const onAction = vi.fn();
+    const onNavigate = vi.fn();
+
+    render(
+      <OnboardingGuidance
+        guidance={trainStepGuidance}
+        onAction={onAction}
+        onNavigate={onNavigate}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Former la milice/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Former' }));
+
+    expect(onAction).toHaveBeenCalledWith('open-army-training');
+    expect(usePendingBuildingModalStore.getState().buildingType).toBeNull();
+  });
+});
 
 describe('OnboardingGuidance — completion', () => {
   it('renders the loot preview and acknowledges without navigating', () => {

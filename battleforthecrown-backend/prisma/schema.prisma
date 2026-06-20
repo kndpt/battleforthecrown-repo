@@ -401,6 +401,8 @@ model OnboardingState {
   currentStep              OnboardingStep   @default(UPGRADE_CASTLE_LEVEL_2) @map("current_step")
   initialRewardApplied     Boolean          @default(false) @map("initial_reward_applied")
   initialRewardAppliedAt   DateTime?        @map("initial_reward_applied_at") @db.Timestamptz(3)
+  completionRewardApplied  Boolean          @default(false) @map("completion_reward_applied")
+  completionRewardAppliedAt DateTime?       @map("completion_reward_applied_at") @db.Timestamptz(3)
   completedAt              DateTime?        @map("completed_at") @db.Timestamptz(3)
   createdAt                DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt                DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)

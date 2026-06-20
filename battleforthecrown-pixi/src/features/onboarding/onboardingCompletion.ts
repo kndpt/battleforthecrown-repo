@@ -1,5 +1,8 @@
 import { useCallback, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth';
+import { apiClient } from '@/api';
+import { queryKeys } from '@/api/queries';
 
 /**
  * One-shot acknowledgement of the post-victory onboarding completion modal.
@@ -38,8 +41,12 @@ export interface OnboardingCompletionAck {
  * the current `worldId`. Falls back to in-memory state if `sessionStorage`
  * writes fail so the modal still dismisses for the session.
  */
-export function useOnboardingCompletionAck(worldId: string | null): OnboardingCompletionAck {
+export function useOnboardingCompletionAck(
+  worldId: string | null,
+  villageId?: string | null,
+): OnboardingCompletionAck {
   const userId = useAuthStore((state) => state.user?.id ?? null);
+  const queryClient = useQueryClient();
   const [ackedKey, setAckedKey] = useState<string | null>(null);
 
   const acknowledged =
@@ -58,7 +65,23 @@ export function useOnboardingCompletionAck(worldId: string | null): OnboardingCo
       }
     }
     setAckedKey(key);
-  }, [userId, worldId]);
+    // Credit the guaranteed completion loot on the CTA (idempotent server-side),
+    // then refetch resources so the player sees it land. Cf. 15-onboarding.md.
+    void apiClient
+      .post('/onboarding/claim-completion-reward', undefined, { query: { worldId } })
+      .then(() => {
+        if (villageId) {
+          queryClient.invalidateQueries({ queryKey: queryKeys.resources(villageId) });
+        }
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.onboardingSummary(userId, worldId),
+        });
+      })
+      .catch(() => {
+        // Idempotent claim — a transient failure can be retried by reopening the
+        // completion screen (the ack does not gate the credit server-side).
+      });
+  }, [queryClient, userId, villageId, worldId]);
 
   return { acknowledged, acknowledge };
 }

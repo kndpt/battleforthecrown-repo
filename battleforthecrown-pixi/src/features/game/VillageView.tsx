@@ -58,6 +58,7 @@ import { useHeroParallax } from './useHeroParallax';
 
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
+import { usePendingBuildingModalStore } from '@/stores/pendingBuildingModal';
 import { useTickingNow } from '@/lib/useTickingNow';
 import {
   useClaimDailyCardMutation,
@@ -98,6 +99,8 @@ export function VillageView() {
   const villageId = useGameStore((s) => s.villageId);
   const worldId = useGameStore((s) => s.worldId);
   const setVillage = useGameStore((s) => s.setVillage);
+  const pendingBuildingType = usePendingBuildingModalStore((s) => s.buildingType);
+  const consumePendingBuilding = usePendingBuildingModalStore((s) => s.consume);
   const logout = useLogout();
 
   // Village data
@@ -183,7 +186,7 @@ export function VillageView() {
     (activeVillagePowerId ? powerByVillageId.get(activeVillagePowerId) : undefined) ?? 0;
   const totalKingdomPower = kingdomPower?.kingdomPower ?? 0;
 
-  const onboardingCompletion = useOnboardingCompletionAck(worldId);
+  const onboardingCompletion = useOnboardingCompletionAck(worldId, villageId);
   const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data, {
     completionAcknowledged: onboardingCompletion.acknowledged,
   });
@@ -303,6 +306,13 @@ export function VillageView() {
       openBuildingManagement: () => navigate('/game'),
     });
   };
+
+  // A building-modal request queued by an onboarding CTA (possibly from another
+  // screen) resolves to a building once loaded — derived, no effect/setState.
+  const pendingBuilding = pendingBuildingType
+    ? buildings.find((b) => b.type === pendingBuildingType) ?? null
+    : null;
+  const activeBuildingModal = selectedBuilding ?? pendingBuilding;
 
   const handleCancelConstruction = (buildingId: string) => {
     if (!villageId) return;
@@ -514,11 +524,14 @@ export function VillageView() {
         </BottomSheet>
 
         {/* Building detail modal */}
-        {selectedBuilding && (
+        {activeBuildingModal && (
           <BuildingDetailModal
             villageId={villageId}
-            building={selectedBuilding}
-            onClose={() => setSelectedBuilding(null)}
+            building={activeBuildingModal}
+            onClose={() => {
+              setSelectedBuilding(null);
+              if (pendingBuildingType) consumePendingBuilding();
+            }}
           />
         )}
 

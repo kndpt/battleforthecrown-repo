@@ -307,6 +307,54 @@ canvas {
   }
 }
 
+/* ── Coachmark hints (generic) ───────────────────────────────────────────── */
+/* Looping ghost that travels from a source to a target. Coordinates are       */
+/* injected as CSS vars by DragHintOverlay (relative to the overlay origin).   */
+@keyframes bftc-hint-drag {
+  0% {
+    transform: translate(var(--bftc-hint-from-x), var(--bftc-hint-from-y)) scale(0.82);
+    opacity: 0;
+  }
+  12% {
+    transform: translate(var(--bftc-hint-from-x), var(--bftc-hint-from-y)) scale(1);
+    opacity: 1;
+  }
+  68% {
+    transform: translate(var(--bftc-hint-to-x), var(--bftc-hint-to-y)) scale(1.04);
+    opacity: 1;
+  }
+  84% {
+    transform: translate(var(--bftc-hint-to-x), var(--bftc-hint-to-y)) scale(0.8);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(var(--bftc-hint-to-x), var(--bftc-hint-to-y)) scale(0.8);
+    opacity: 0;
+  }
+}
+
+/* Expanding ring used to draw attention to a control (e.g. a + stepper). */
+@keyframes bftc-hint-tap {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(250, 224, 120, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(250, 224, 120, 0);
+  }
+}
+
+/* Soft brightness pulse signalling an action is now ready. */
+@keyframes bftc-hint-ready {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.12);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   [data-bftc-onboarding-fab='true'][data-advancing='true'],
   [data-bftc-onboarding-fab='true'][data-selected='true'] {

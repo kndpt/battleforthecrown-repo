@@ -4,7 +4,10 @@ import { BUILDING_TYPES } from '@battleforthecrown/shared/village';
 import { UNIT_TYPES, type UnitMap } from '@battleforthecrown/shared/army';
 import { isVictoryForAttacker } from '@battleforthecrown/shared/combat';
 import type { OnboardingSummaryDto } from '@battleforthecrown/shared/onboarding';
-import { ONBOARDING_TRAIN_TROOPS_TARGET } from '@battleforthecrown/shared/onboarding';
+import {
+  ONBOARDING_TRAIN_TROOPS_TARGET,
+  ONBOARDING_COMPLETION_REWARD,
+} from '@battleforthecrown/shared/onboarding';
 import type { OnboardingStep } from '@battleforthecrown/shared/onboarding';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
@@ -168,6 +171,63 @@ export class OnboardingService {
       if (!state || state.status !== 'ACTIVE') return;
 
       await reconcileStateFromFacts(tx, state);
+    });
+  }
+
+  /**
+   * Grants the guaranteed onboarding completion loot (the advertised narrative
+   * butin) to the player's first village, capped by storage — triggered by the
+   * player tapping the completion screen CTA, NOT automatically at battle
+   * resolution. Idempotent via `completionRewardApplied`. The caller refetches
+   * resources to surface the credit (cf. onboardingCompletion.ts).
+   */
+  async claimCompletionReward(userId: string, worldId: string): Promise<void> {
+    await this.ownership.assertWorldMember(worldId, userId);
+
+    await this.prisma.$transaction(async (tx) => {
+      const state = await tx.onboardingState.findUnique({
+        where: { userId_worldId: { userId, worldId } },
+      });
+      if (
+        !state ||
+        state.status !== 'COMPLETED' ||
+        state.completionRewardApplied
+      ) {
+        return;
+      }
+      await this.applyCompletionReward(tx, state);
+    });
+  }
+
+  private async applyCompletionReward(
+    tx: Tx,
+    state: {
+      id: string;
+      firstVillageId: string;
+      completionRewardApplied: boolean;
+    },
+  ): Promise<void> {
+    if (state.completionRewardApplied) return;
+
+    const stock = await tx.resourceStock.findUnique({
+      where: { villageId: state.firstVillageId },
+    });
+    if (!stock) return;
+
+    const reward = ONBOARDING_COMPLETION_REWARD;
+    const now = new Date();
+    await tx.resourceStock.update({
+      where: { villageId: state.firstVillageId },
+      data: {
+        wood: Math.min(stock.wood + reward.wood, stock.maxPerType),
+        stone: Math.min(stock.stone + reward.stone, stock.maxPerType),
+        iron: Math.min(stock.iron + reward.iron, stock.maxPerType),
+        lastUpdateTs: now,
+      },
+    });
+    await tx.onboardingState.update({
+      where: { id: state.id },
+      data: { completionRewardApplied: true, completionRewardAppliedAt: now },
     });
   }
 }
