@@ -127,6 +127,12 @@ export function applyBuildingCompleted(
   if (payload.buildingType === 'CASTLE') {
     invalidateVillageVisualQueries(ctx);
   }
+  // World-map unlock is player-level (any village with a watchtower). Refresh
+  // the villages list so the bottom nav unlocks even when the watchtower is
+  // built in a non-current village.
+  if (payload.buildingType === 'WATCHTOWER') {
+    ctx.queryClient.invalidateQueries({ queryKey: queryKeys.villagesPrefix() });
+  }
   useUiStore.getState().pushToast({
     tone: 'success',
     title: 'Construction terminée',

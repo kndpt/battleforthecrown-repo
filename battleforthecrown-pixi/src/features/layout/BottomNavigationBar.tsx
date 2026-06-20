@@ -192,7 +192,8 @@ export function BottomNavigationBar({
   unreadCount = 0,
 }: BottomNavigationBarProps) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const { isBarracksBuilt, isWatchtowerBuilt } = useBuildingsForLockCheck();
+  const { isBarracksBuilt, isWatchtowerBuiltAnywhere } =
+    useBuildingsForLockCheck();
   const [shouldShowActive, setShouldShowActive] =
     useState(!animateActiveOnMount);
 
@@ -314,7 +315,7 @@ export function BottomNavigationBar({
             icon={Globe}
             label="Monde"
             active={animatedActiveTab === "world"}
-            locked={!isWatchtowerBuilt}
+            locked={!isWatchtowerBuiltAnywhere}
             lockHint="Construisez la tour de guet pour débloquer"
             hint="Explorer la carte du monde"
             onClick={onWorldClick}

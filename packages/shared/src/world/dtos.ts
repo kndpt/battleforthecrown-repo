@@ -73,6 +73,8 @@ export interface JoinedVillage {
   conqueredAt?: string | null;
   label?: VillageLabel | null;
   isCapital?: boolean;
+  /** Highest watchtower level in this village (0 = none). Drives world-map unlock. */
+  watchtowerLevel?: number;
 }
 
 export interface WorldMembershipResponse {

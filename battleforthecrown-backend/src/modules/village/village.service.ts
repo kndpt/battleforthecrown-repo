@@ -19,10 +19,9 @@ export class VillageService {
       where: { worldId, userId },
       include: {
         buildings: {
-          where: { type: 'CASTLE' },
-          select: { level: true },
+          where: { type: { in: ['CASTLE', 'WATCHTOWER'] } },
+          select: { type: true, level: true },
           orderBy: [{ level: 'desc' }, { createdAt: 'asc' }],
-          take: 1,
         },
       },
       orderBy: [{ conqueredAt: 'asc' }, { createdAt: 'asc' }],
@@ -36,7 +35,9 @@ export class VillageService {
       x: v.x,
       y: v.y,
       userId: v.userId ?? undefined,
-      castleLevel: v.buildings[0]?.level ?? 1,
+      castleLevel: v.buildings.find((b) => b.type === 'CASTLE')?.level ?? 1,
+      watchtowerLevel:
+        v.buildings.find((b) => b.type === 'WATCHTOWER')?.level ?? 0,
       createdAt: v.createdAt,
       conqueredAt: v.conqueredAt,
       label: v.label,

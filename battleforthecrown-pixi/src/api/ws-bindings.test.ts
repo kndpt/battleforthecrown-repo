@@ -306,6 +306,24 @@ describe('applyBuildingCompleted', () => {
     expect(queryClient.getQueryState(queryKeys.myVillages('user-1', 'world-1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.worldEntities('world-1'))?.isInvalidated).toBe(true);
   });
+
+  it('invalidates the villages list when a watchtower completes so the world unlocks player-wide', () => {
+    setCurrentWorldSession();
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.myVillages('user-1', 'world-1'), []);
+
+    applyBuildingCompleted(
+      {
+        buildingId: 'watchtower-1',
+        villageId: 'v-other',
+        buildingType: 'WATCHTOWER',
+        level: 1,
+      },
+      { queryClient },
+    );
+
+    expect(queryClient.getQueryState(queryKeys.myVillages('user-1', 'world-1'))?.isInvalidated).toBe(true);
+  });
 });
 
 describe('applyUnitTrainingCompleted', () => {
