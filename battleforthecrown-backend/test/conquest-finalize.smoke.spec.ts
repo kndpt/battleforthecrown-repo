@@ -1,3 +1,4 @@
+import request from 'supertest';
 import {
   bootSmokeApp,
   joinWorld,
@@ -229,6 +230,113 @@ describe('conquest finalize smoke', () => {
       { kind: 'village.conquered', aggregateId: target.id },
       { timeoutMs: 10_000 },
     );
+  }, 30_000);
+
+  it('enriches the player-village loss with conqueror pseudo + castle snapshot and persists readByDefender', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const attacker = await registerUser(
+      ctx.server,
+      `pvp-attacker-${Date.now()}`,
+    );
+    const victim = await registerUser(ctx.server, `pvp-victim-${Date.now()}`);
+    const attackerJoin = await joinWorld(
+      ctx.server,
+      attacker.accessToken,
+      world.id,
+      'pvp-attacker-origin',
+    );
+    const victimJoin = await joinWorld(
+      ctx.server,
+      victim.accessToken,
+      world.id,
+      'pvp-victim-target',
+    );
+
+    // Snapshot a non-trivial castle level on the lost village so the asset tier
+    // carried by the event/report is meaningful (not the default level 1).
+    const SNAPSHOT_CASTLE_LEVEL = 3;
+    const upgraded = await ctx.prisma.building.updateMany({
+      where: { villageId: victimJoin.village.id, type: 'CASTLE' },
+      data: { level: SNAPSHOT_CASTLE_LEVEL },
+    });
+    expect(upgraded.count).toBe(1);
+
+    await ctx.prisma.garrison.create({
+      data: {
+        villageId: victimJoin.village.id,
+        originVillageId: attackerJoin.village.id,
+        unitType: UNIT_TYPES.NOBLE,
+        quantity: 1,
+      },
+    });
+    await ctx.prisma.population.update({
+      where: { villageId: attackerJoin.village.id },
+      data: { used: { increment: UNIT_COSTS[UNIT_TYPES.NOBLE].population } },
+    });
+
+    const conquest = ctx.app.get(ConquestService);
+    const pending = await conquest.openCaptureWindow({
+      attackerVillageId: attackerJoin.village.id,
+      targetVillageId: victimJoin.village.id,
+      attackerUserId: attacker.userId,
+      captureUntil: new Date(Date.now() + 100),
+    });
+
+    await waitFor(
+      () =>
+        ctx.prisma.pendingConquest.findFirst({
+          where: { id: pending.id, status: 'COMPLETED' },
+        }),
+      { timeoutMs: 15_000 },
+    );
+
+    // 1) The village.conquered event carries the conqueror pseudo + castle snapshot.
+    const conqueredEvent = await outboxDispatched(
+      ctx.prisma,
+      { kind: 'village.conquered', aggregateId: victimJoin.village.id },
+      { timeoutMs: 10_000 },
+    );
+    const payload = conqueredEvent?.payload as {
+      newOwnerId: string;
+      newOwnerName: string;
+      previousOwnerId: string | null;
+      villageCastleLevel: number | null;
+    };
+    expect(payload.newOwnerId).toBe(attacker.userId);
+    expect(payload.newOwnerName).toBe(attacker.displayName);
+    expect(payload.previousOwnerId).toBe(victim.userId);
+    expect(payload.villageCastleLevel).toBe(SNAPSHOT_CASTLE_LEVEL);
+
+    // 2) The captureFinalized report mirrors the enrichment for boot hydration.
+    const finalReport = await ctx.prisma.combatReport.findFirstOrThrow({
+      where: {
+        attackerUserId: attacker.userId,
+        defenderVillageId: victimJoin.village.id,
+        details: {
+          path: ['captureFinalized', 'pendingConquestId'],
+          equals: pending.id,
+        },
+      },
+    });
+    expect(finalReport.defenderUserId).toBe(victim.userId);
+    expect(finalReport.readByDefender).toBe(false);
+    const details = finalReport.details as {
+      captureFinalized: { newOwnerName?: string; castleLevel?: number | null };
+    };
+    expect(details.captureFinalized.newOwnerName).toBe(attacker.displayName);
+    expect(details.captureFinalized.castleLevel).toBe(SNAPSHOT_CASTLE_LEVEL);
+
+    // 3) Acknowledgement (PISTE B): defender marks the report read → persisted.
+    const ackRes = await request(ctx.server)
+      .patch(`/combat/report/${finalReport.id}/read`)
+      .set('Authorization', `Bearer ${victim.accessToken}`)
+      .set('x-world-id', world.id);
+    expect(ackRes.status).toBeLessThan(300);
+
+    const reread = await ctx.prisma.combatReport.findUniqueOrThrow({
+      where: { id: finalReport.id },
+    });
+    expect(reread.readByDefender).toBe(true);
   }, 30_000);
 
   it('interrupts an open capture window and finalization becomes a no-op', async () => {

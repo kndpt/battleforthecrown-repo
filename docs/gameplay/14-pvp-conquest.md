@@ -151,6 +151,8 @@ La capture PvP utilise `CombatReport` comme archive persistante, avec un état l
 
 Les événements temps réel existants continuent à déclencher le rafraîchissement des surfaces : `battle.resolved` côté assaillant, `village.attacked` côté défense/observateur de capture, puis `village.capture-window-completed` et `village.conquered` à la finalisation.
 
+**Modal défaite côté victime.** À la finalisation, le joueur qui perd le village voit une **modal carrousel** (un item par village perdu, ajout à chaud + dédup par `villageId`) portant l'asset exact du village perdu (snapshot du niveau Château au moment T → `village.conquered.villageCastleLevel`), le pseudo du conquérant (`newOwnerName`) et un CTA « Voir sur la carte ». Le conquérant ne voit que la modal victoire. L'acquittement est **serveur-autoritatif** (PISTE B) : « Valider » appelle `PATCH /combat/report/:id/read` (rôle defender → `readByDefender=true`), et au boot/reconnexion le carrousel se reconstruit uniquement à partir des rapports `captureFinalized` **non lus** côté défenseur — la modal ne réapparaît donc plus après refresh. Perte du **dernier** village : la modal s'affiche normalement, le contexte de jeu passe à `villageId=null` (état éliminé valide, retour autorisé).
+
 ### Garde-fous anti-snowball
 
 Mécaniques structurelles pour empêcher qu'un top-player domine le serveur. Décidées au MVP comme suit.

@@ -114,8 +114,21 @@ export interface VillageConqueredPayload {
   villageId: string;
   villageName: string;
   newOwnerId: string;
+  /**
+   * Display name (pseudo) of the conqueror, resolved at finalization. Optional on
+   * the wire: rows queued before the 2026-06-20 deploy lack it (consumers fall
+   * back). Always set by the producer for new events.
+   */
+  newOwnerName?: string;
   previousOwnerId: string | null;
   previousTier: string | null;
+  /**
+   * Castle level of the lost village at the moment of finalization (T), before
+   * any rebuild on the new owner side. Lets the defeated player render the exact
+   * village asset they lost. `null` for barbarian targets (no castle); absent on
+   * rows queued before the 2026-06-20 deploy.
+   */
+  villageCastleLevel?: number | null;
   x: number;
   y: number;
   buildingsKept: number;

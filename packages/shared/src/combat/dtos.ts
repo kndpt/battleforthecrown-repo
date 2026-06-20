@@ -95,6 +95,10 @@ export interface CombatReportResponse {
       pendingConquestId?: string;
       villageId?: string;
       villageName?: string;
+      /** Display name (pseudo) of the conqueror. */
+      newOwnerName?: string;
+      /** Castle level of the lost village at finalization (T), for asset render. */
+      castleLevel?: number | null;
       openedAt?: string;
       completedAt?: string;
       outcome?: string;

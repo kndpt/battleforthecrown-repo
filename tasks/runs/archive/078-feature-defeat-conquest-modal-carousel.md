@@ -1,8 +1,8 @@
 # Run #078 — feature-defeat-conquest-modal-carousel
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-20
+> **Terminé** : 2026-06-20
 
 ## Cible
 
@@ -58,21 +58,33 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 - **T6 — [asset] Helper React** de résolution de l'asset village par tier visuel pour l'item carrousel (équivalent React de `aliasFor`, dérivé de `villageVisualTierFromCastleLevel` + snapshot T1). (≤2 fichiers)
 - **T7 — [tests] Smoke backend** non-régression routing victime + acquittement `readByDefender`. (≤2 fichiers)
 
-## Progress
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
-## Décisions prises
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
 ## Rapport final
+
+Synthèse : payload `village.conquered` + report `captureFinalized` enrichis (pseudo conquérant `newOwnerName` + snapshot castle level `villageCastleLevel` lu pré-transfert) ; slice store `defeatCarousel` (hot-add + dédup villageId + backfill reportId + ack index) ; `DefeatModal`/`DefeatModalHost` carrousel monté 1× dans `App.tsx` ; acquittement PISTE B via `PATCH /combat/report/:id/read` + hydratation boot des rapports non lus. Champs d'enrichissement rendus optionnels sur le wire (Zod + interface) pour décoder les rows Outbox antérieures au deploy (fix du finding majeur reviewer).
 
 ### Acceptance & QA
 
-_(Vide au démarrage.)_
+**Critères d'acceptance vérifiés :**
 
-- [ ] <critère> — `<cmd>` → <résultat>
-- **Review indépendante** : **requise** — enrichit un payload shared multi-surfaces, touche le flux émotionnellement critique de finalisation conquête, acquittement persistant cross-session. Garder un œil sur la dédup live/boot et la garde « conquérant ne voit pas la modal ».
-- **Tests automatisés** : …
-- **Tests IG user** : checklist Kelvin (modal carrousel mobile, esprit Salle du Conseil, perte dernier village).
+- [x] [smoke] previousOwner reçoit `village.conquered` (village joueur) — `yarn workspace battleforthecrown-backend test:smoke:run -- conquest-finalize.smoke` → `payload.previousOwnerId===victim.userId`, 3/3 pass.
+- [x] [unit] `applyVillageConquered` push défaite si `userId===previousOwnerId`, jamais si `newOwnerId` — `yarn workspace battleforthecrown-pixi test run src/api/ws-bindings.test.ts` → assert `defeatItems` length 0 (conquérant) / 1 (victime).
+- [x] [unit store] 2e item à chaud n'ferme pas la modal ni ne reset `defeatActiveIndex` — `… test run src/stores/ui.test.ts` → index préservé à 1.
+- [x] [unit store] Dédup deux `village.conquered` même `villageId` → 1 item — idem ui.test.ts.
+- [x] [unit] Boot reconstruit depuis rapports `captureFinalized` non lus défenseur + dédup live (id stable) — `… test run src/features/combat/useDefeatCarouselHydration.test.tsx`.
+- [x] [smoke] « Valider » → `PATCH /combat/report/:id/read` (defender) → `readByDefender=true` — conquest-finalize.smoke (PATCH réel + reread DB `readByDefender===true`).
+- [x] [unit] Item expose asset/nom/message/pseudo conquérant/CTA map — `DefeatModal.tsx` + ws-bindings.test.ts `toMatchObject({newOwnerName, castleLevel, x, y})`.
+- [x] [smoke/unit] Payload + report portent pseudo conquérant + snapshot castle T — smoke (`payload.villageCastleLevel===3`, `details.captureFinalized.castleLevel===3`).
+- [ ] [visuel — Kelvin] Modal esprit « Salle du Conseil », carrousel lisible mobile — `visuel` → QA IG.
+- [ ] [visuel — Kelvin] Perte du **dernier** village : modal OK, aucune erreur `villageId=null`, état éliminé valide — `visuel` (logique : `setContext({villageId:null})` couvert) → QA IG.
+
+- **Review indépendante** : Déclenchée (raison : back+front + payload shared multi-surfaces + diff >100 lignes + invariant durable). Verdict initial **BLOCK** (1 majeur : champs Zod `required` → hot-loop possible sur rows Outbox `village.conquered` en file pré-deploy). **Résolu** : champs rendus `.optional()` (schéma + interface) + fallbacks consumer (`newOwnerName ?? 'Un seigneur ennemi'`, `villageCastleLevel ?? null`) — mitigation exacte prescrite par le reviewer ; mineur villageAsset (`Math.max` redondant) simplifié ; mineur ack-sans-reportId accepté (conforme PISTE B, fenêtre ~1s backfillée par hydratation). Re-test vert.
+- **Tests automatisés** : `yarn static-check` ✓ ; pixi `503 passed` (dont ui/ws-bindings/hydration +12) ; backend `event-outbox-notification-planner` `17 passed`.
+- **Smokes lancés** : `test:smoke:preflight` ✓ puis `test:smoke:run -- conquest-finalize.smoke` → `3 passed`. **Ciblés** (diff conquest isolé ; full smoke = CI PR).
+- **Smokes ajoutés/modifiés** : `conquest-finalize.smoke.spec.ts` — nouveau test village joueur : enrichissement payload+report (pseudo + castle snapshot=3) + acquittement `PATCH /read` → `readByDefender=true`.
+- **QA fonctionnelle agent** : smoke = serveur réel + REST PATCH + lecture Outbox/DB. OK.
+- **Tests IG à faire par le user** : checklist Kelvin ci-dessous. Serveurs **non démarrés** (run autonome planifié, pas d'utilisateur présent).
+  1. Perdre un village joueur → modal « Village perdu » s'affiche avec l'asset du village + pseudo du conquérant.
+  2. Perdre 2 villages rapprochés → carrousel (flèches/points), ajout à chaud sans fermer la modal.
+  3. « Valider » → modal disparaît ; après F5 elle ne réapparaît pas.
+  4. « Voir sur la carte » → recentre la carte sur le village perdu.
+  5. Perte du **dernier** village → modal OK, aucune erreur, état « éliminé » cohérent.

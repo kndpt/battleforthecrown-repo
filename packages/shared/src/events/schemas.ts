@@ -110,8 +110,12 @@ const VillageConqueredPayloadSchema = z.object({
   villageId: z.string(),
   villageName: z.string(),
   newOwnerId: z.string(),
+  // Enrichment fields added 2026-06-20; kept optional so village.conquered rows
+  // already queued in the Outbox before that deploy still decode (no hot-loop).
+  newOwnerName: z.string().optional(),
   previousOwnerId: z.string().nullable(),
   previousTier: z.string().nullable(),
+  villageCastleLevel: z.number().nullable().optional(),
   x: z.number(),
   y: z.number(),
   buildingsKept: z.number(),

@@ -845,6 +845,8 @@ export interface CombatReportDto {
       pendingConquestId?: string;
       villageId?: string;
       villageName?: string;
+      newOwnerName?: string;
+      castleLevel?: number | null;
       openedAt?: string;
       completedAt?: string;
       outcome?: string;

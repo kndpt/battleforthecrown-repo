@@ -615,12 +615,22 @@ export function applyVillageConquered(payload: VillageConqueredPayload, ctx: Bin
   // Mark the entity as conquered on the map by simply removing it; the next
   // refetch will reinsert it under the new owner.
   useWorldMapStore.getState().removeEntity(payload.villageId);
-  if (
-    userId === payload.previousOwnerId &&
-    useGameStore.getState().villageId === payload.villageId
-  ) {
-    const { worldId } = useGameStore.getState();
-    useGameStore.getState().setContext({ worldId, villageId: null });
+  if (userId === payload.previousOwnerId) {
+    if (useGameStore.getState().villageId === payload.villageId) {
+      const { worldId } = useGameStore.getState();
+      useGameStore.getState().setContext({ worldId, villageId: null });
+    }
+    // Victim sees the defeat carousel. Hot-add: dedup by villageId, never closes
+    // an open modal. The conqueror (newOwnerId) only gets the victory modal.
+    useUiStore.getState().pushDefeatItem({
+      villageId: payload.villageId,
+      villageName: payload.villageName,
+      x: payload.x,
+      y: payload.y,
+      // Fallbacks cover pre-2026-06-20 queued rows that lack the enrichment.
+      newOwnerName: payload.newOwnerName ?? 'Un seigneur ennemi',
+      castleLevel: payload.villageCastleLevel ?? null,
+    });
   }
   if (userId === payload.newOwnerId) {
     useUiStore.getState().pushVictoryModal({

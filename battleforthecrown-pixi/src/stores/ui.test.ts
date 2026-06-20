@@ -4,6 +4,23 @@ import { useUiStore } from './ui';
 beforeEach(() => {
   useUiStore.getState().clearToasts();
   useUiStore.getState().clearVictoryModals();
+  useUiStore.getState().clearDefeatItems();
+});
+
+const defeatItem = (overrides: { villageId: string } & Partial<{
+  villageName: string;
+  x: number;
+  y: number;
+  newOwnerName: string;
+  castleLevel: number | null;
+  reportId: string;
+}>) => ({
+  villageName: 'Cravia',
+  x: 1,
+  y: 2,
+  newOwnerName: 'Roi',
+  castleLevel: 4,
+  ...overrides,
 });
 
 describe('useUiStore — victory modals queue', () => {
@@ -81,5 +98,60 @@ describe('useUiStore — victory modals queue', () => {
 
     useUiStore.getState().clearVictoryModals();
     expect(useUiStore.getState().victoryModals).toHaveLength(0);
+  });
+});
+
+describe('useUiStore — defeat carousel', () => {
+  it('hot-adds a second item without closing the modal or resetting the index', () => {
+    const store = useUiStore.getState();
+    store.pushDefeatItem(defeatItem({ villageId: 'v1' }));
+    store.pushDefeatItem(defeatItem({ villageId: 'v2', villageName: 'Othrys' }));
+    // User had navigated to the 2nd item before a 3rd loss arrives hot.
+    useUiStore.getState().setDefeatActiveIndex(1);
+    store.pushDefeatItem(defeatItem({ villageId: 'v3', villageName: 'Mycenae' }));
+
+    const state = useUiStore.getState();
+    expect(state.defeatItems.map((i) => i.villageId)).toEqual(['v1', 'v2', 'v3']);
+    // Adding hot must not reset the active index nor close the carousel.
+    expect(state.defeatActiveIndex).toBe(1);
+  });
+
+  it('dedups two pushes for the same villageId into one item', () => {
+    const store = useUiStore.getState();
+    store.pushDefeatItem(defeatItem({ villageId: 'v1' }));
+    store.pushDefeatItem(defeatItem({ villageId: 'v1' }));
+    expect(useUiStore.getState().defeatItems).toHaveLength(1);
+  });
+
+  it('backfills reportId on a live item when the hydration push knows it', () => {
+    const store = useUiStore.getState();
+    // Live WS push (no reportId yet).
+    store.pushDefeatItem(defeatItem({ villageId: 'v1' }));
+    expect(useUiStore.getState().defeatItems[0].reportId).toBeUndefined();
+    // Boot hydration dedups by villageId and backfills the stable reportId.
+    store.pushDefeatItem(defeatItem({ villageId: 'v1', reportId: 'r-1' }));
+    const items = useUiStore.getState().defeatItems;
+    expect(items).toHaveLength(1);
+    expect(items[0].reportId).toBe('r-1');
+  });
+
+  it('acknowledge removes the item and keeps the active index in range', () => {
+    const store = useUiStore.getState();
+    store.pushDefeatItem(defeatItem({ villageId: 'v1' }));
+    store.pushDefeatItem(defeatItem({ villageId: 'v2' }));
+    store.pushDefeatItem(defeatItem({ villageId: 'v3' }));
+    useUiStore.getState().setDefeatActiveIndex(2);
+
+    // Acknowledge an item before the active one → index shifts left, stays valid.
+    useUiStore.getState().acknowledgeDefeatItem('defeat-v1');
+    let state = useUiStore.getState();
+    expect(state.defeatItems.map((i) => i.villageId)).toEqual(['v2', 'v3']);
+    expect(state.defeatActiveIndex).toBe(1);
+
+    // Acknowledge the (now) last/active item → index clamps to the new last.
+    useUiStore.getState().acknowledgeDefeatItem('defeat-v3');
+    state = useUiStore.getState();
+    expect(state.defeatItems.map((i) => i.villageId)).toEqual(['v2']);
+    expect(state.defeatActiveIndex).toBe(0);
   });
 });

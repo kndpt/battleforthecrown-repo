@@ -18,6 +18,7 @@ import {
 } from '@battleforthecrown/shared/army';
 import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
 import {
+  getBuildingLevel,
   getBuildingLevelValues,
   getQuarterPopulationLimit,
   type BuildingType,
@@ -228,6 +229,8 @@ export class ConquestService {
         pending,
         previousOwnerUserId: conquestResult.previousOwnerId,
         villageName: conquestResult.name,
+        newOwnerName: conquestResult.newOwnerName,
+        castleLevel: conquestResult.villageCastleLevel,
       });
 
       await this.installNobleInConqueredVillage(tx, pending);
@@ -365,6 +368,8 @@ export class ConquestService {
     buildings: number;
     previousOwnerId: string | null;
     tier?: string;
+    newOwnerName: string;
+    villageCastleLevel: number | null;
   }> {
     const { attackerVillageId, targetVillageId, attackerUserId } = params;
     const target = await tx.village.findUnique({
@@ -387,6 +392,17 @@ export class ConquestService {
     if (!attacker) {
       throw new NotFoundException('Attacker village not found');
     }
+
+    // Snapshot the conqueror pseudo + lost-village castle level at T (before the
+    // transfer mutates ownership / barbarian rebuild) so the defeated player can
+    // render the exact asset they lost. Barbarian targets have no player castle.
+    const newOwner = await tx.user.findUniqueOrThrow({
+      where: { id: attackerUserId },
+      select: { displayName: true },
+    });
+    const villageCastleLevel = target.isBarbarian
+      ? null
+      : getBuildingLevel(target.buildings, 'CASTLE');
 
     if (attacker.userId !== attackerUserId) {
       throw new ForbiddenException('Attacker village does not belong to user');
@@ -484,8 +500,10 @@ export class ConquestService {
       villageId: targetVillageId,
       villageName: target.name,
       newOwnerId: attackerUserId,
+      newOwnerName: newOwner.displayName,
       previousOwnerId: target.userId,
       previousTier: target.tier,
+      villageCastleLevel,
       x: target.x,
       y: target.y,
       buildingsKept,
@@ -502,6 +520,8 @@ export class ConquestService {
       buildings: buildingsKept,
       previousOwnerId: target.userId,
       tier: target.tier || undefined,
+      newOwnerName: newOwner.displayName,
+      villageCastleLevel,
     };
   }
 
@@ -519,9 +539,17 @@ export class ConquestService {
       };
       previousOwnerUserId: string | null;
       villageName: string;
+      newOwnerName: string;
+      castleLevel: number | null;
     },
   ): Promise<void> {
-    const { pending, previousOwnerUserId, villageName } = args;
+    const {
+      pending,
+      previousOwnerUserId,
+      villageName,
+      newOwnerName,
+      castleLevel,
+    } = args;
     const [attacker, target] = await Promise.all([
       tx.village.findUniqueOrThrow({
         where: { id: pending.attackerVillageId },
@@ -562,6 +590,8 @@ export class ConquestService {
             pendingConquestId: pending.id,
             villageId: pending.targetVillageId,
             villageName,
+            newOwnerName,
+            castleLevel,
             openedAt: pending.openedAt.toISOString(),
             completedAt: new Date().toISOString(),
             outcome: 'COMPLETED',

@@ -48,6 +48,7 @@ beforeEach(() => {
   useCrownsStore.getState().clear();
   useUiStore.getState().clearToasts();
   useUiStore.getState().clearVictoryModals();
+  useUiStore.getState().clearDefeatItems();
   useAuthStore.getState().clearSession();
   useExpeditionsStore.getState().clear();
   useGameStore.getState().clear();
@@ -570,8 +571,10 @@ describe('applyVillageConquered', () => {
         villageId: 'v-target',
         villageName: 'Cravia',
         newOwnerId: 'user-1',
+        newOwnerName: 'Conquérant',
         previousOwnerId: null,
         previousTier: 'T2',
+        villageCastleLevel: 5,
         x: 42,
         y: 88,
         buildingsKept: 6,
@@ -591,6 +594,8 @@ describe('applyVillageConquered', () => {
     });
 
     expect(useUiStore.getState().toasts).toHaveLength(0);
+    // The conqueror must never see the defeat carousel.
+    expect(useUiStore.getState().defeatItems).toHaveLength(0);
     expect(useWorldMapStore.getState().entities['v-target']).toBeUndefined();
     expect(queryClient.getQueryState(['villages'])?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(['world-entities'])?.isInvalidated).toBe(true);
@@ -629,8 +634,10 @@ describe('applyVillageConquered', () => {
         villageId: 'v-target',
         villageName: 'Cravia',
         newOwnerId: 'user-1',
+        newOwnerName: 'Conquérant',
         previousOwnerId: 'previous-owner',
         previousTier: null,
+        villageCastleLevel: 5,
         x: 42,
         y: 88,
         buildingsKept: 6,
@@ -639,6 +646,18 @@ describe('applyVillageConquered', () => {
     );
 
     expect(useUiStore.getState().victoryModals).toHaveLength(0);
+    // The victim gets a defeat carousel item carrying the conqueror pseudo and
+    // the lost-village castle-level snapshot for the asset.
+    const defeat = useUiStore.getState().defeatItems;
+    expect(defeat).toHaveLength(1);
+    expect(defeat[0]).toMatchObject({
+      villageId: 'v-target',
+      villageName: 'Cravia',
+      newOwnerName: 'Conquérant',
+      castleLevel: 5,
+      x: 42,
+      y: 88,
+    });
     expect(useWorldMapStore.getState().entities['v-target']).toBeUndefined();
     expect(queryClient.getQueryState(['villages'])?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(['world-entities'])?.isInvalidated).toBe(true);
@@ -661,8 +680,10 @@ describe('applyVillageConquered', () => {
         villageId: 'v-target',
         villageName: 'Cravia',
         newOwnerId: 'user-1',
+        newOwnerName: 'Conquérant',
         previousOwnerId: 'previous-owner',
         previousTier: null,
+        villageCastleLevel: 5,
         x: 42,
         y: 88,
         buildingsKept: 6,
