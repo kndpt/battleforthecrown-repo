@@ -117,6 +117,11 @@ export function villageSpriteAliasForEntity(entity: MapEntity): string {
   return `world.village.t${tier}`;
 }
 
+export function villageImageSrcForVisualTier(tier: number): string {
+  const clamped = Math.min(6, Math.max(1, Math.round(tier))) as 1 | 2 | 3 | 4 | 5 | 6;
+  return `/assets/world/entity/village-tier${clamped}.png`;
+}
+
 function normalizeCaptureWindow(value: unknown): MapEntity["captureWindow"] {
   if (!value || typeof value !== "object") return undefined;
   const data = value as Record<string, unknown>;

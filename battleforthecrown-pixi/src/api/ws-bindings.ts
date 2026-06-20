@@ -638,6 +638,16 @@ export function applyVillageConquered(payload: VillageConqueredPayload, ctx: Bin
       previousTier: payload.previousTier,
     });
   }
+  if (payload.previousOwnerId !== null && userId === payload.previousOwnerId) {
+    useUiStore.getState().pushDefeatItem({
+      villageId: payload.villageId,
+      villageName: payload.villageName,
+      x: payload.x,
+      y: payload.y,
+      conquerorName: payload.newOwnerName,
+      visualTier: payload.lostVillageVisualTier,
+    });
+  }
 }
 
 export function applyVillageRemoved(payload: VillageRemovedPayload, ctx: BindingsContext): void {

@@ -118,7 +118,7 @@ Chaque payload est validé runtime par `parseEventPayload(kind, raw)` (backend `
 | `village.capture-window-completed` | `userId` (nouveau propriétaire) | `pendingConquestId, targetVillageId, newOwnerUserId` | `ConquestFinalizeWorker` via `ConquestService.finalizeCaptureWindow` |
 | `village.capture-window-interrupted` | `userId` (attaquant) | `pendingConquestId, targetVillageId, reason` | `ConquestService.interruptCaptureWindow` |
 | `noble.killed` | `userId` (attaquant) | `attackerVillageId, attackerUserId, combatId` | `CombatWorker` quand une tentative de conquête gagne le combat mais perd son Seigneur |
-| `village.conquered` | `userId` (nouveau propriétaire + ancien propriétaire si PvP) | `villageId, villageName, newOwnerId, previousOwnerId, previousTier, x, y, buildingsKept` | `ConquestService` |
+| `village.conquered` | `userId` (nouveau propriétaire + ancien propriétaire si PvP) | `villageId, villageName, newOwnerId, newOwnerName, previousOwnerId, previousTier, lostVillageVisualTier, x, y, buildingsKept` | `ConquestService` (`newOwnerName` = pseudo conquérant ; `lostVillageVisualTier` = tier visuel 1-6 du village perdu, snapshot au moment T — alimente la modal défaite carrousel côté victime) |
 | `world.status.changed` | `worldId` | `worldId, from, to, at` | `WorldLifecycleWorker` quand un monde passe `PLANNED → OPEN`, `OPEN → LOCKED` ou `LOCKED → ENDED` |
 
 Pour les renforts et caravanes, la forme exacte des payloads reste dérivée des schémas partagés (`packages/shared/src/events/{schemas,types}.ts`). Cette table ne liste que les champs discriminants utiles pour lire le flux fonctionnel.

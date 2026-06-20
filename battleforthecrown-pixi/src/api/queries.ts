@@ -848,6 +848,8 @@ export interface CombatReportDto {
       openedAt?: string;
       completedAt?: string;
       outcome?: string;
+      conquerorName?: string;
+      visualTier?: number;
     };
   };
   isRead: boolean;

@@ -48,6 +48,7 @@ beforeEach(() => {
   useCrownsStore.getState().clear();
   useUiStore.getState().clearToasts();
   useUiStore.getState().clearVictoryModals();
+  useUiStore.getState().clearDefeatItems();
   useAuthStore.getState().clearSession();
   useExpeditionsStore.getState().clear();
   useGameStore.getState().clear();
@@ -593,6 +594,8 @@ describe('applyVillageConquered', () => {
         x: 42,
         y: 88,
         buildingsKept: 6,
+        newOwnerName: 'Conqueror',
+        lostVillageVisualTier: 4,
       },
       { queryClient },
     );
@@ -652,6 +655,8 @@ describe('applyVillageConquered', () => {
         x: 42,
         y: 88,
         buildingsKept: 6,
+        newOwnerName: 'Conqueror',
+        lostVillageVisualTier: 4,
       },
       { queryClient },
     );
@@ -684,12 +689,82 @@ describe('applyVillageConquered', () => {
         x: 42,
         y: 88,
         buildingsKept: 6,
+        newOwnerName: 'Conqueror',
+        lostVillageVisualTier: 4,
       },
       { queryClient },
     );
 
     expect(useGameStore.getState().worldId).toBe('world-1');
     expect(useGameStore.getState().villageId).toBeNull();
+  });
+
+  it('pushes a defeat item when userId === previousOwnerId', () => {
+    useAuthStore.getState().setSession({
+      accessToken: 'access',
+      refreshToken: 'refresh',
+      user: { displayName: 'Previous Owner', id: 'previous-owner' },
+    });
+    useGameStore.getState().setContext({ worldId: 'world-1', villageId: 'v-old' });
+    const queryClient = new QueryClient();
+    seedPowerQueries(queryClient, 'v-target', 'previous-owner');
+
+    applyVillageConquered(
+      {
+        villageId: 'v-target',
+        villageName: 'Cravia',
+        newOwnerId: 'user-1',
+        previousOwnerId: 'previous-owner',
+        previousTier: null,
+        x: 42,
+        y: 88,
+        buildingsKept: 6,
+        newOwnerName: 'Conqueror',
+        lostVillageVisualTier: 4,
+      },
+      { queryClient },
+    );
+
+    const defeatItems = useUiStore.getState().defeatItems;
+    expect(defeatItems).toHaveLength(1);
+    expect(defeatItems[0]).toMatchObject({
+      villageId: 'v-target',
+      villageName: 'Cravia',
+      x: 42,
+      y: 88,
+      conquerorName: 'Conqueror',
+      visualTier: 4,
+    });
+    expect(useUiStore.getState().victoryModals).toHaveLength(0);
+  });
+
+  it('does NOT push a defeat item when userId === newOwnerId', () => {
+    setCurrentWorldSession();
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(['memberships'], []);
+    queryClient.setQueryData(['villages'], []);
+    queryClient.setQueryData(['world-entities'], []);
+    queryClient.setQueryData(queryKeys.openConquests('user-1', 'world-1'), []);
+    seedPowerQueries(queryClient, 'v-target');
+
+    applyVillageConquered(
+      {
+        villageId: 'v-target',
+        villageName: 'Cravia',
+        newOwnerId: 'user-1',
+        previousOwnerId: 'other-player',
+        previousTier: null,
+        x: 42,
+        y: 88,
+        buildingsKept: 6,
+        newOwnerName: 'user-1',
+        lostVillageVisualTier: 4,
+      },
+      { queryClient },
+    );
+
+    expect(useUiStore.getState().defeatItems).toHaveLength(0);
+    expect(useUiStore.getState().victoryModals).toHaveLength(1);
   });
 });
 

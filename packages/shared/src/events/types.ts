@@ -114,8 +114,10 @@ export interface VillageConqueredPayload {
   villageId: string;
   villageName: string;
   newOwnerId: string;
+  newOwnerName: string;
   previousOwnerId: string | null;
   previousTier: string | null;
+  lostVillageVisualTier: number;
   x: number;
   y: number;
   buildingsKept: number;

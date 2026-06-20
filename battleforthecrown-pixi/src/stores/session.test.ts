@@ -43,6 +43,14 @@ function seedAllSessionStores() {
     buildingsKept: 3,
     previousTier: null,
   });
+  useUiStore.getState().pushDefeatItem({
+    villageId: 'v2',
+    villageName: 'Doomhaven',
+    x: 3,
+    y: 4,
+    conquerorName: 'X',
+    visualTier: 3,
+  });
   useWorldMapStore.getState().upsertEntity({
     id: 'v1',
     name: 'Cravia',

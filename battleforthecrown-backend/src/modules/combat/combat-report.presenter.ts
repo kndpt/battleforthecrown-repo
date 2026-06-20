@@ -19,7 +19,13 @@ type CombatReportVisibilityInput = {
 };
 
 type CombatReportDetails = {
-  captureFinalized?: { outcome?: string };
+  captureFinalized?: {
+    outcome?: string;
+    conquerorName?: string;
+    visualTier?: number;
+    villageName?: string;
+    villageId?: string;
+  };
   occupationDefense?: unknown;
   targetTier?: string;
 };

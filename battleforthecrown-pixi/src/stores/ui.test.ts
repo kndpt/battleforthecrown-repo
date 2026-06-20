@@ -4,6 +4,7 @@ import { useUiStore } from './ui';
 beforeEach(() => {
   useUiStore.getState().clearToasts();
   useUiStore.getState().clearVictoryModals();
+  useUiStore.getState().clearDefeatItems();
 });
 
 describe('useUiStore — victory modals queue', () => {
@@ -81,5 +82,76 @@ describe('useUiStore — victory modals queue', () => {
 
     useUiStore.getState().clearVictoryModals();
     expect(useUiStore.getState().victoryModals).toHaveLength(0);
+  });
+});
+
+describe('useUiStore — defeat carousel', () => {
+  it('(a) push 2 items différents → 2 entrées, defeatActiveIndex reste 0', () => {
+    const store = useUiStore.getState();
+    store.pushDefeatItem({ villageId: 'v1', villageName: 'Alpha', x: 1, y: 2, conquerorName: 'C1', visualTier: 2 });
+    store.pushDefeatItem({ villageId: 'v2', villageName: 'Beta', x: 3, y: 4, conquerorName: 'C2', visualTier: 3 });
+
+    const state = useUiStore.getState();
+    expect(state.defeatItems).toHaveLength(2);
+    expect(state.defeatItems[0].villageId).toBe('v1');
+    expect(state.defeatItems[1].villageId).toBe('v2');
+    expect(state.defeatActiveIndex).toBe(0);
+  });
+
+  it('(b) push pendant modal ouverte (activeIndex=1) → append sans reset de defeatActiveIndex', () => {
+    const store = useUiStore.getState();
+    store.pushDefeatItem({ villageId: 'v1', villageName: 'Alpha', x: 1, y: 2, conquerorName: 'C1', visualTier: 1 });
+    store.pushDefeatItem({ villageId: 'v2', villageName: 'Beta', x: 3, y: 4, conquerorName: 'C2', visualTier: 2 });
+    store.setDefeatActiveIndex(1);
+
+    store.pushDefeatItem({ villageId: 'v3', villageName: 'Gamma', x: 5, y: 6, conquerorName: 'C3', visualTier: 3 });
+
+    const state = useUiStore.getState();
+    expect(state.defeatItems).toHaveLength(3);
+    expect(state.defeatActiveIndex).toBe(1);
+  });
+
+  it('(c) dédup : deux push même villageId → 1 seul item, reportId fusionné si fourni au 2ème', () => {
+    const store = useUiStore.getState();
+    store.pushDefeatItem({ villageId: 'v1', villageName: 'Alpha', x: 1, y: 2, conquerorName: 'C1', visualTier: 2 });
+
+    // 2ème push sans reportId → pas de changement
+    store.pushDefeatItem({ villageId: 'v1', villageName: 'Alpha', x: 1, y: 2, conquerorName: 'C1', visualTier: 2 });
+    expect(useUiStore.getState().defeatItems).toHaveLength(1);
+    expect(useUiStore.getState().defeatItems[0].reportId).toBeUndefined();
+
+    // 3ème push avec reportId → fusion
+    store.pushDefeatItem({ villageId: 'v1', villageName: 'Alpha', x: 1, y: 2, conquerorName: 'C1', visualTier: 2, reportId: 'rpt-42' });
+    expect(useUiStore.getState().defeatItems).toHaveLength(1);
+    expect(useUiStore.getState().defeatItems[0].reportId).toBe('rpt-42');
+
+    // 4ème push avec reportId différent → ancien reportId conservé
+    store.pushDefeatItem({ villageId: 'v1', villageName: 'Alpha', x: 1, y: 2, conquerorName: 'C1', visualTier: 2, reportId: 'rpt-99' });
+    expect(useUiStore.getState().defeatItems).toHaveLength(1);
+    expect(useUiStore.getState().defeatItems[0].reportId).toBe('rpt-42');
+  });
+
+  it("(d) acknowledgeDefeatItem retire l'item et clamp l'index", () => {
+    const store = useUiStore.getState();
+    store.pushDefeatItem({ villageId: 'v1', villageName: 'Alpha', x: 1, y: 2, conquerorName: 'C1', visualTier: 1 });
+    store.pushDefeatItem({ villageId: 'v2', villageName: 'Beta', x: 3, y: 4, conquerorName: 'C2', visualTier: 2 });
+    store.pushDefeatItem({ villageId: 'v3', villageName: 'Gamma', x: 5, y: 6, conquerorName: 'C3', visualTier: 3 });
+    store.setDefeatActiveIndex(2); // pointe sur v3
+
+    // Supprimer v3 (index courant 2, nouveau max = 1)
+    store.acknowledgeDefeatItem('v3');
+    expect(useUiStore.getState().defeatItems).toHaveLength(2);
+    expect(useUiStore.getState().defeatActiveIndex).toBe(1); // clampé à 1
+
+    // Supprimer v1 → reste v2 à index 0
+    store.acknowledgeDefeatItem('v1');
+    expect(useUiStore.getState().defeatItems).toHaveLength(1);
+    expect(useUiStore.getState().defeatItems[0].villageId).toBe('v2');
+    expect(useUiStore.getState().defeatActiveIndex).toBe(0);
+
+    // Supprimer v2 → vide, index 0
+    store.acknowledgeDefeatItem('v2');
+    expect(useUiStore.getState().defeatItems).toHaveLength(0);
+    expect(useUiStore.getState().defeatActiveIndex).toBe(0);
   });
 });
