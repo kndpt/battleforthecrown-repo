@@ -357,7 +357,10 @@ canvas {
 
 @media (prefers-reduced-motion: reduce) {
   [data-bftc-onboarding-fab='true'][data-advancing='true'],
-  [data-bftc-onboarding-fab='true'][data-selected='true'] {
+  [data-bftc-onboarding-fab='true'][data-selected='true'],
+  /* Onboarding coachmark hints (bftc-hint-drag / -tap / -ready) — honour the
+     user's reduced-motion preference instead of looping forever. */
+  [data-bftc-hint-anim='true'] {
     animation: none !important;
   }
 }

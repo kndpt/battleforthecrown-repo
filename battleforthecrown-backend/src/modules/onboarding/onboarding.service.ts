@@ -185,49 +185,42 @@ export class OnboardingService {
     await this.ownership.assertWorldMember(worldId, userId);
 
     await this.prisma.$transaction(async (tx) => {
+      const now = new Date();
+      // Atomic claim: flip the flag with a conditional updateMany so two
+      // concurrent claims can't both pass an in-memory check and double-credit
+      // (READ_COMMITTED). Only the winning row (count === 1) credits resources.
+      const claimed = await tx.onboardingState.updateMany({
+        where: {
+          userId,
+          worldId,
+          status: 'COMPLETED',
+          completionRewardApplied: false,
+        },
+        data: { completionRewardApplied: true, completionRewardAppliedAt: now },
+      });
+      if (claimed.count !== 1) return;
+
       const state = await tx.onboardingState.findUnique({
         where: { userId_worldId: { userId, worldId } },
+        select: { firstVillageId: true },
       });
-      if (
-        !state ||
-        state.status !== 'COMPLETED' ||
-        state.completionRewardApplied
-      ) {
-        return;
-      }
-      await this.applyCompletionReward(tx, state);
-    });
-  }
+      if (!state) return;
 
-  private async applyCompletionReward(
-    tx: Tx,
-    state: {
-      id: string;
-      firstVillageId: string;
-      completionRewardApplied: boolean;
-    },
-  ): Promise<void> {
-    if (state.completionRewardApplied) return;
+      const stock = await tx.resourceStock.findUnique({
+        where: { villageId: state.firstVillageId },
+      });
+      if (!stock) return;
 
-    const stock = await tx.resourceStock.findUnique({
-      where: { villageId: state.firstVillageId },
-    });
-    if (!stock) return;
-
-    const reward = ONBOARDING_COMPLETION_REWARD;
-    const now = new Date();
-    await tx.resourceStock.update({
-      where: { villageId: state.firstVillageId },
-      data: {
-        wood: Math.min(stock.wood + reward.wood, stock.maxPerType),
-        stone: Math.min(stock.stone + reward.stone, stock.maxPerType),
-        iron: Math.min(stock.iron + reward.iron, stock.maxPerType),
-        lastUpdateTs: now,
-      },
-    });
-    await tx.onboardingState.update({
-      where: { id: state.id },
-      data: { completionRewardApplied: true, completionRewardAppliedAt: now },
+      const reward = ONBOARDING_COMPLETION_REWARD;
+      await tx.resourceStock.update({
+        where: { villageId: state.firstVillageId },
+        data: {
+          wood: Math.min(stock.wood + reward.wood, stock.maxPerType),
+          stone: Math.min(stock.stone + reward.stone, stock.maxPerType),
+          iron: Math.min(stock.iron + reward.iron, stock.maxPerType),
+          lastUpdateTs: now,
+        },
+      });
     });
   }
 }

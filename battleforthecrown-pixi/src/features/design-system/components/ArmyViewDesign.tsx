@@ -1570,6 +1570,7 @@ export function ArmyRecruitPopup({
             <span
               aria-hidden
               className="pointer-events-none absolute inset-[-3px] rounded-xl border-2 border-[var(--game-gold-glow)] animate-[bftc-hint-tap_1.2s_ease-in-out_infinite]"
+              data-bftc-hint-anim="true"
             />
           ) : null}
         </div>
@@ -1619,6 +1620,7 @@ export function ArmyRecruitPopup({
             'inline-flex flex-1 cursor-pointer items-center justify-center rounded-xl border-2 px-3 py-[13px] font-game font-extrabold shadow-[inset_0_1px_0_rgba(255,255,255,.32),0_3px_0_rgba(0,0,0,.26)] disabled:cursor-not-allowed disabled:opacity-[.55]',
             highlightRecruit && !disabled && 'animate-[bftc-hint-ready_1.1s_ease-in-out_infinite]',
           )}
+          data-bftc-hint-anim={highlightRecruit && !disabled ? 'true' : undefined}
           disabled={!canRecruit || disabled}
           onClick={() => {
             if (canRecruit && !disabled) onRecruit?.(boundedValue);

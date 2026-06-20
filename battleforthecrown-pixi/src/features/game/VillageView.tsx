@@ -529,8 +529,13 @@ export function VillageView() {
             villageId={villageId}
             building={activeBuildingModal}
             onClose={() => {
+              // Only consume the pending request when the modal currently shown
+              // is the pending one (selectedBuilding takes priority); otherwise a
+              // manually-opened building would swallow the queued request unseen.
+              if (!selectedBuilding && pendingBuildingType) {
+                consumePendingBuilding();
+              }
               setSelectedBuilding(null);
-              if (pendingBuildingType) consumePendingBuilding();
             }}
           />
         )}

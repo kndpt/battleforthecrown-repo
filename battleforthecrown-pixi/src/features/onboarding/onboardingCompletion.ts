@@ -78,8 +78,17 @@ export function useOnboardingCompletionAck(
         });
       })
       .catch(() => {
-        // Idempotent claim — a transient failure can be retried by reopening the
-        // completion screen (the ack does not gate the credit server-side).
+        // Claim failed — roll back the optimistic ack so the completion screen
+        // re-shows and the player can retry. The credit is gated server-side
+        // (idempotent), so a retry never double-credits.
+        if (typeof sessionStorage !== 'undefined') {
+          try {
+            sessionStorage.removeItem(key);
+          } catch {
+            // ignore — in-memory rollback below still re-shows the screen
+          }
+        }
+        setAckedKey((current) => (current === key ? null : current));
       });
   }, [queryClient, userId, villageId, worldId]);
 

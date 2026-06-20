@@ -78,9 +78,14 @@ export function DragHintOverlay({
         ? requestAnimationFrame(measure)
         : 0;
     window.addEventListener('resize', measure);
+    // Source/target can sit inside a scrollable list (e.g. the army roster) —
+    // re-measure on scroll of any ancestor (capture phase) so the ghost keeps
+    // tracking them, not just on resize.
+    window.addEventListener('scroll', measure, true);
     return () => {
       if (raf) cancelAnimationFrame(raf);
       window.removeEventListener('resize', measure);
+      window.removeEventListener('scroll', measure, true);
     };
   }, [fromSelector, toRef]);
 
@@ -107,6 +112,7 @@ export function DragHintOverlay({
       {path ? (
         <div
           className="absolute left-0 top-0 animate-[bftc-hint-drag_2400ms_ease-in-out_infinite]"
+          data-bftc-hint-anim="true"
           style={pathStyle}
         >
           <div className="absolute -translate-x-1/2 -translate-y-1/2">{children}</div>

@@ -20,7 +20,7 @@ export class OnboardingController {
   claimCompletionReward(
     @CurrentUser() user: AuthenticatedUser,
     @Query('worldId') worldId: string,
-  ) {
+  ): Promise<void> {
     return this.onboarding.claimCompletionReward(user.id, worldId);
   }
 }

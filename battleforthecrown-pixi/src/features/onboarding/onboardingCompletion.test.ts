@@ -1,8 +1,9 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createElement, type ReactNode } from 'react';
 import { useAuthStore } from '@/stores/auth';
+import { apiClient } from '@/api';
 import {
   isOnboardingCompletionAcknowledged,
   useOnboardingCompletionAck,
@@ -24,6 +25,8 @@ function setUser(id: string | null) {
 beforeEach(() => {
   sessionStorage.clear();
   setUser('user-1');
+  // Default: the completion-reward claim succeeds so the optimistic ack sticks.
+  vi.spyOn(apiClient, 'post').mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -100,5 +103,21 @@ describe('useOnboardingCompletionAck', () => {
 
     expect(result.current.acknowledged).toBe(false);
     expect(sessionStorage.getItem(KEY)).toBeNull();
+  });
+
+  it('rolls back the acknowledgement when the reward claim fails', async () => {
+    vi.spyOn(apiClient, 'post').mockRejectedValue(new Error('network'));
+    const { result } = renderHook(
+      () => useOnboardingCompletionAck('world-1', 'village-1'),
+      { wrapper },
+    );
+
+    act(() => result.current.acknowledge());
+    // Optimistic ack is written synchronously…
+    expect(sessionStorage.getItem(KEY)).toBe('1');
+
+    // …then rolled back once the claim rejects, so the screen can re-show.
+    await waitFor(() => expect(sessionStorage.getItem(KEY)).toBeNull());
+    expect(result.current.acknowledged).toBe(false);
   });
 });
