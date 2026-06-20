@@ -338,11 +338,12 @@ describe('applyUnitTrainingCompleted', () => {
     expect(toasts[1].description).toBe('3 Milices de paysans');
   });
 
-  it('invalidates power, retention and onboarding queries alongside training caches', () => {
+  it('invalidates power, retention, onboarding and resources queries alongside training caches', () => {
     setCurrentWorldSession();
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.armyTraining('v1'), []);
     queryClient.setQueryData(queryKeys.armyInventory('v1'), []);
+    queryClient.setQueryData(queryKeys.resources('v1'), { wood: 500, stone: 300, iron: 100 });
     queryClient.setQueryData(queryKeys.population('v1'), { used: 1, max: 10, available: 9 });
     seedPowerQueries(queryClient, 'v1');
     queryClient.setQueryData(queryKeys.retentionSummary('user-1', 'world-1'), {});
@@ -361,6 +362,7 @@ describe('applyUnitTrainingCompleted', () => {
 
     expect(queryClient.getQueryState(queryKeys.armyTraining('v1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.armyInventory('v1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.resources('v1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.population('v1'))?.isInvalidated).toBe(true);
     expectPowerQueriesInvalidated(queryClient, 'v1');
     expect(queryClient.getQueryState(queryKeys.retentionSummary('user-1', 'world-1'))?.isInvalidated).toBe(true);
@@ -369,11 +371,12 @@ describe('applyUnitTrainingCompleted', () => {
 });
 
 describe('applyUnitTrained', () => {
-  it('invalidates training, inventory, population and power queries without pushing a toast', () => {
+  it('invalidates training, inventory, resources, population and power queries without pushing a toast', () => {
     setCurrentWorldSession();
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.armyTraining('v1'), []);
     queryClient.setQueryData(queryKeys.armyInventory('v1'), []);
+    queryClient.setQueryData(queryKeys.resources('v1'), { wood: 500, stone: 300, iron: 100 });
     queryClient.setQueryData(queryKeys.population('v1'), { used: 1, max: 10, available: 9 });
     queryClient.setQueryData(queryKeys.villagePower('v1'), { total: 1 });
     queryClient.setQueryData(queryKeys.kingdomPower('user-1', 'world-1'), { kingdomPower: 1 });
@@ -391,6 +394,7 @@ describe('applyUnitTrained', () => {
 
     expect(queryClient.getQueryState(queryKeys.armyTraining('v1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.armyInventory('v1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.resources('v1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.population('v1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.villagePower('v1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.kingdomPower('user-1', 'world-1'))?.isInvalidated).toBe(true);

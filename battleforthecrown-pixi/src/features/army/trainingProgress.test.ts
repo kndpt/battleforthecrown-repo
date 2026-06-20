@@ -65,4 +65,22 @@ describe('computeUnitTrainingProgress', () => {
 
     expect(progress.displayedCompletedQty).toBe(2);
   });
+
+  it('renders a waiting (non-head) row as not started, ignoring its placeholder ETA', () => {
+    // Waiting row: backend persists a stale nextUnitEta in the past relative to
+    // now, which would otherwise make it look finished. isActive=false must keep
+    // it at 0% with the full duration ahead.
+    const nowMs = Date.parse('2026-05-14T10:05:00Z');
+    const progress = computeUnitTrainingProgress(
+      { completedQty: 0, createdAt: '2026-05-14T10:00:00Z', nextUnitEta: '2026-05-14T10:01:00Z', timePerUnitMs: 60_000, totalQty: 3 },
+      nowMs,
+      false,
+    );
+
+    expect(progress.percent).toBe(0);
+    expect(progress.displayedCompletedQty).toBe(0);
+    expect(progress.totalRemainingMs).toBe(180_000);
+    expect(progress.currentUnitRemainingMs).toBe(60_000);
+    expect(progress.finishedAtMs).toBe(nowMs + 180_000);
+  });
 });

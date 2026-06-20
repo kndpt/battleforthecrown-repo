@@ -59,16 +59,16 @@ export function InboxTabs({ className, onChange, options, value }: InboxTabsProp
         return (
           <button
             className={cn(
-              'flex flex-1 items-center justify-center gap-[5px] rounded-[7px] border-0 bg-transparent px-2 py-[5px] font-game text-[11px] font-bold text-[#6d5838]',
+              'flex min-w-0 flex-1 items-center justify-center gap-[5px] rounded-[7px] border-0 bg-transparent px-2 py-[5px] font-game text-[11px] font-bold text-[#6d5838]',
               active ? 'bg-[linear-gradient(to_bottom,#fef9f0,#e8d4a8)] text-[#3d2f1f] shadow-[0_1px_0_rgba(0,0,0,.18),inset_0_1px_0_rgba(255,255,255,.5)]' : '',
             )}
             key={option.value}
             onClick={() => onChange(option.value)}
             type="button"
           >
-            {option.label}
+            <span className="truncate">{option.label}</span>
             {option.count ? (
-              <span className="rounded-full bg-[rgba(231,76,60,.85)] px-[5px] py-px text-[9.5px] font-extrabold text-white">{option.count}</span>
+              <span className="flex-shrink-0 rounded-full bg-[rgba(231,76,60,.85)] px-[5px] py-px text-[9.5px] font-extrabold text-white">{option.count}</span>
             ) : null}
           </button>
         );

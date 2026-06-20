@@ -4,6 +4,7 @@ import type { PixiScene } from './SceneManager';
 import { villageSpriteAliasForEntity, type MapEntity } from '@/api/world-types';
 import { mapEntityCanvasLabel } from '@/features/world/mapEntityLabels';
 import type { ExpeditionSnapshot } from '@/stores/expeditions';
+import { villageVisualTierFromCastleLevel } from '@battleforthecrown/shared/world';
 import type { VisionDisk } from '@battleforthecrown/shared/world';
 import { createExpeditionVisual, type ExpeditionVisualHandle } from '@/pixi/entities/ExpeditionVisual';
 import { createBlipSprite, type BlipSpriteHandle } from '@/pixi/entities/BlipSprite';
@@ -32,8 +33,21 @@ export interface WorldMapCameraSnapshot {
 
 const DEFAULT_TILE_SIZE = 32;
 const DEFAULT_CONTINENT_SIZE = 100;
-const SPRITE_SIZE = 64;
-const PLAYER_SPRITE_SIZE = 72;
+const BASE_PLAYER_SIZE = 56;
+const BASE_BARBARIAN_SIZE = 46;
+const HALO_RADIUS = 45;
+
+function spriteSizeFor(entity: MapEntity): number {
+  if (entity.kind === 'PLAYER_VILLAGE') {
+    const tier = villageVisualTierFromCastleLevel(entity.castleLevel ?? 1);
+    return Math.round(BASE_PLAYER_SIZE * Math.pow(1.1, tier - 1));
+  }
+  if (entity.kind === 'BARBARIAN_VILLAGE') {
+    const idx = entity.tier === 'T3' ? 2 : entity.tier === 'T2' ? 1 : 0;
+    return Math.round(BASE_BARBARIAN_SIZE * Math.pow(1.1, idx));
+  }
+  return BASE_BARBARIAN_SIZE;
+}
 
 const COLOR = {
   background: 0x6b8c3a,
@@ -370,7 +384,7 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     const pulse = (Math.sin(nowMs / 240) + 1) / 2;
     activeVillageHalo.visible = true;
     activeVillageHalo
-      .circle(px, py, PLAYER_SPRITE_SIZE * 0.62)
+      .circle(px, py, HALO_RADIUS)
       .fill({ color: COLOR.myVillage, alpha: 0.18 })
       .stroke({ color: COLOR.myVillage, width: 4, alpha: 0.45 + pulse * 0.3 });
   };
@@ -408,10 +422,11 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     if (texture) {
       sprite.texture = texture;
       sprite.visible = true;
-      const size = data.kind === 'PLAYER_VILLAGE' ? PLAYER_SPRITE_SIZE : SPRITE_SIZE;
+      const size = spriteSizeFor(data);
       sprite.width = size;
       sprite.height = size;
       sprite.tint = 0xffffff;
+      visual.label.position.set(0, -size * 0.6);
       // Subtle ring under the sprite for a halo effect.
       graphic
         .circle(0, 0, size * 0.55)
@@ -456,9 +471,7 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
 
     const alias = aliasFor(data);
     const texture = alias ? Assets.get<Texture>(alias) : null;
-    const size = texture
-      ? (data.kind === 'PLAYER_VILLAGE' ? PLAYER_SPRITE_SIZE : SPRITE_SIZE)
-      : styleFor(data).radius * 2;
+    const size = texture ? spriteSizeFor(data) : styleFor(data).radius * 2;
     const baseRadius = size * 0.58;
     const pulse = (Math.sin(nowMs / 360) + 1) / 2;
     const outerRadius = baseRadius + 6 + pulse * 7;
@@ -524,7 +537,7 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
       },
     });
     label.anchor.set(0.5, 1);
-    label.position.set(0, -PLAYER_SPRITE_SIZE * 0.6);
+    label.position.set(0, -spriteSizeFor(entity) * 0.6);
     label.visible = false;
     container.addChild(label);
 
@@ -594,6 +607,7 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     cameraRaf = 0;
     cameraListeners.clear();
     app.renderer.off('resize', handleResize);
+    fogContainer.cacheAsTexture(false);
     viewport.removeAllListeners();
     visuals.forEach((visual) => {
       entitiesLayer.removeChild(visual.container);

@@ -258,6 +258,28 @@
         "tasks/runs/061-feature-world-ended-lifecycle.md:74 — explicite « ticket post-MVP « cosmétiques permanentes » (dépend catalogue UI) » — ce run est le ticket dédié, minimum viable titres-only"
       ],
       "addedAt": "2026-06-19"
+    },
+    {
+      "specPath": "docs/gameplay/24-rankings.md",
+      "slug": "rankings-weekly-cycle-close-and-titles",
+      "title": "Clôture hebdomadaire des classements de Gloire + titre temporaire & badge fiche publique",
+      "keywords": ["rankings", "gloire", "weekly", "cycle", "titre", "champion-hebdo", "cycle-close"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/068-feature-rankings-weekly-cycle-close-and-titles.md",
+      "artefactId": "068",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/rankings-weekly-cycle-close-and-titles",
+      "gapSummary": "La spec 24-rankings.md § Cycles + § Rewards tranche MVP : cycle court hebdomadaire + titre temporaire sur le cycle suivant + badge public sur la fiche joueur. Le runtime des 3 leaderboards est livré (run 051) mais `getGloryLeaderboard` s'appuie sur un cutoff glissant 7j (`getWeeklyCutoff`), jamais aligné sur une frontière wall-clock figée, aucune persistance des champions hebdo, aucun titre temporaire attribué, aucun badge public sur `PlayerProfileSheet`, aucun bandeau « cycle en cours / champion sortant » sur `RankingsScreen`.",
+      "codeEvidence": [
+        "battleforthecrown-backend/src/modules/rankings/rankings.service.ts:18,261-263 — GLORY_WEEKLY_DAYS = 7 + getWeeklyCutoff() glissant now-7j, jamais aligné Lundi 00:00 UTC ni persistant",
+        "battleforthecrown-backend/src/workers/ — aucun worker rankings-cycle / gloryWeeklyClose (workers présents : construction, crown-production, outbox, production, training, world-lifecycle)",
+        "battleforthecrown-backend/prisma/schema.prisma — aucun modèle GloryCycleSnapshot ni RankingCycleTitleAward, pas de relation cosmetic-like sur User ou WorldMembership",
+        "packages/shared/src/rankings/ — pas de type RankingCycleTitleDto ni GloryCycleSnapshotDto, pas de constante WEEKLY_CYCLE_DEFAULT_RESET_DAY_UTC, pas de helper computeCycleBoundaries",
+        "battleforthecrown-pixi/src/features/design-system/components/PlayerProfileSheet.tsx — pas de section Titres / Champion Gloire, aucun badge cosmétique de cycle exposé sur la fiche publique",
+        "battleforthecrown-pixi/src/features/rankings/RankingsScreen.tsx:21-22,70-75 — toggle WEEKLY/ALL_TIME existe mais pointe sur le cutoff glissant, aucun bandeau Semaine N ni lien Champion sortant",
+        "tasks/runs/archive/051-feature-rankings-glory.md — couvre ledger + leaderboards live ; ne livre ni clôture hebdo ni récompense cosmétique de cycle"
+      ],
+      "addedAt": "2026-06-20"
     }
   ]
 }
