@@ -353,8 +353,9 @@ function buildArmyQueue(
   trainings: ArmyTrainingDto[],
   nowMs: number,
 ): { queue: ArmyQueueItem[]; summaryLabel: string } {
+  // Only the head (index 0) is actually training; the rest wait in the queue.
   const queue = trainings.map((training, index) => {
-    const progress = computeUnitTrainingProgress(training, nowMs);
+    const progress = computeUnitTrainingProgress(training, nowMs, index === 0);
     return {
       active: index === 0,
       id: training.id,
@@ -370,8 +371,9 @@ function buildArmyQueue(
 
   const totalQuantity = queue.reduce((sum, item) => sum + item.quantity, 0);
   const remainingMs = trainings.reduce(
-    (sum, training) =>
-      sum + computeUnitTrainingProgress(training, nowMs).totalRemainingMs,
+    (sum, training, index) =>
+      sum +
+      computeUnitTrainingProgress(training, nowMs, index === 0).totalRemainingMs,
     0,
   );
 

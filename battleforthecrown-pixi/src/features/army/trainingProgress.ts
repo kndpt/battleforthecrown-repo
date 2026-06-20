@@ -14,6 +14,11 @@ export function computeUnitTrainingProgress(
     'completedQty' | 'createdAt' | 'nextUnitEta' | 'timePerUnitMs' | 'totalQty'
   >,
   nowMs: number,
+  // Sequential queue (backend run 062): only the head row is actually training.
+  // Waiting rows persist a placeholder `nextUnitEta` that would otherwise make
+  // them appear to tick down immediately — so they are rendered as "not started"
+  // (0%, full duration remaining) until the backend promotes them to head.
+  isActive = true,
 ): UnitTrainingProgress {
   const perUnitMs = Math.max(1, training.timePerUnitMs);
   const totalQty = Math.max(0, training.totalQty);
@@ -29,6 +34,18 @@ export function computeUnitTrainingProgress(
       finishedAtMs: Number.isFinite(startedAtMs) ? startedAtMs : nowMs,
       percent: 0,
       totalRemainingMs: 0,
+    };
+  }
+
+  if (!isActive && pendingQty > 0) {
+    // Queued behind the head: hasn't started, full duration still ahead.
+    const totalRemainingMs = pendingQty * perUnitMs;
+    return {
+      currentUnitRemainingMs: perUnitMs,
+      displayedCompletedQty: completedQty,
+      finishedAtMs: nowMs + totalRemainingMs,
+      percent: 0,
+      totalRemainingMs,
     };
   }
 
