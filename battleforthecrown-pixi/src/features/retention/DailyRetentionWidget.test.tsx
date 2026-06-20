@@ -277,6 +277,48 @@ describe("DailyRetentionWidget", () => {
     expect(screen.getByText("Devoir royal")).toBeInTheDocument();
   });
 
+  it("maps the Oyez theme to its banner icon", () => {
+    // The sheet renders through a portal into document.body, so query there.
+    const { rerender } = render(
+      <DailyRetentionWidget
+        activeVillageId="v1"
+        hideButton
+        onClaim={vi.fn()}
+        onNavigate={vi.fn()}
+        open
+        summary={summary}
+        villages={villages}
+      />,
+    );
+
+    // Default fixture theme is WATCH → watchtower icon.
+    expect(
+      document.body.querySelector('img[src*="watchtower.png"]'),
+    ).toBeInTheDocument();
+
+    rerender(
+      <DailyRetentionWidget
+        activeVillageId="v1"
+        hideButton
+        onClaim={vi.fn()}
+        onNavigate={vi.fn()}
+        open
+        summary={{
+          ...summary,
+          oyez: { ...summary.oyez!, theme: "BUILDERS" },
+        }}
+        villages={villages}
+      />,
+    );
+
+    expect(
+      document.body.querySelector('img[src*="castle.png"]'),
+    ).toBeInTheDocument();
+    expect(
+      document.body.querySelector('img[src*="watchtower.png"]'),
+    ).not.toBeInTheDocument();
+  });
+
   it("uses server-provided label for tiered tasks (minTargetTier bypasses local override)", () => {
     const tieredSummary: RetentionSummaryDto = {
       ...summary,

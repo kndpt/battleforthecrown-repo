@@ -57,7 +57,7 @@ export class RetentionService {
     const now = new Date();
     const currentDayKey = getParisDailyKey(now);
     await this.expireStaleCards(userId, worldId, currentDayKey, now);
-    await this.ensureDailyCard(userId, worldId, currentDayKey);
+    await this.ensureDailyCard(userId, worldId, currentDayKey, now);
     const claimableDayKeys = getClaimableDayKeys(now);
 
     const [cards, latestClaim, oyez] = await Promise.all([
@@ -83,7 +83,7 @@ export class RetentionService {
         orderBy: { claimedAt: 'desc' },
         select: { rewardVillageId: true },
       }),
-      this.getActiveOyez(worldId),
+      this.getActiveOyez(worldId, now),
     ]);
 
     return {
@@ -216,6 +216,7 @@ export class RetentionService {
     userId: string,
     worldId: string,
     dayKey: string,
+    now: Date,
   ): Promise<void> {
     const existing = await this.prisma.dailyCard.findUnique({
       where: { userId_worldId_dayKey: { userId, worldId, dayKey } },
@@ -224,7 +225,11 @@ export class RetentionService {
     if (existing) return;
 
     try {
-      const oyezTheme = await this.resolveActiveOyezTheme(this.prisma, worldId);
+      const oyezTheme = await this.resolveActiveOyezTheme(
+        this.prisma,
+        worldId,
+        now,
+      );
       const cardData = await this.buildDailyCardPayload(
         this.prisma,
         userId,
@@ -247,8 +252,8 @@ export class RetentionService {
 
   private getActiveOyez(
     worldId: string,
+    now: Date,
     client: Prisma.TransactionClient = this.prisma,
-    now: Date = new Date(),
   ) {
     return client.dailyOyez.findFirst({
       where: {
@@ -260,11 +265,15 @@ export class RetentionService {
     });
   }
 
+  // `reference` anchors the theme on the card's own day, not wall-clock now:
+  // a card built for a past `dayKey` (delayed Outbox event, or around the 04:00
+  // reset) must reflect the Oyez active that day, never today's.
   private async resolveActiveOyezTheme(
     client: Prisma.TransactionClient,
     worldId: string,
+    reference: Date,
   ): Promise<OyezTheme | null> {
-    const oyez = await this.getActiveOyez(worldId, client);
+    const oyez = await this.getActiveOyez(worldId, reference, client);
     return oyez && isOyezTheme(oyez.theme) ? oyez.theme : null;
   }
 
@@ -289,6 +298,7 @@ export class RetentionService {
       village.userId,
       village.worldId,
       eventDayKey,
+      eventCreatedAt,
     );
     await this.progressMatchingTaskForDay(
       tx,
@@ -313,6 +323,7 @@ export class RetentionService {
         village.userId,
         village.worldId,
         currentDayKey,
+        now,
       );
     }
   }
@@ -381,8 +392,9 @@ export class RetentionService {
     userId: string,
     worldId: string,
     dayKey: string,
+    reference: Date,
   ): Promise<void> {
-    const oyezTheme = await this.resolveActiveOyezTheme(tx, worldId);
+    const oyezTheme = await this.resolveActiveOyezTheme(tx, worldId, reference);
     const cardData = await this.buildDailyCardPayload(
       tx,
       userId,
