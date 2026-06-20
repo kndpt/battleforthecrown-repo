@@ -197,8 +197,8 @@ export class WorldService {
         worldId: m.worldId,
         worldName: m.world.name,
         role: m.role,
-        joinedAt: m.joinedAt,
-        lastLoginAt: m.lastLoginAt,
+        joinedAt: m.joinedAt.toISOString(),
+        lastLoginAt: m.lastLoginAt ? m.lastLoginAt.toISOString() : null,
         villageCount: countByWorld.get(m.worldId) ?? 0,
         newbieShield,
       };

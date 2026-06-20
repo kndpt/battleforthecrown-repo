@@ -154,8 +154,8 @@ const NobleKilledPayloadSchema = z.object({
 const PvpShieldBrokenPayloadSchema = z.object({
   userId: z.string(),
   worldId: z.string(),
-  brokenAt: z.string(),
-  endsAt: z.string(),
+  brokenAt: z.string().datetime(),
+  endsAt: z.string().datetime(),
 });
 
 const ReinforcementSentPayloadSchema = z.object({

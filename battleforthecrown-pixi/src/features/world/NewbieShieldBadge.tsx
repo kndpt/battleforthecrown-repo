@@ -8,7 +8,9 @@ interface NewbieShieldBadgeProps {
 
 export function NewbieShieldBadge({ endsAt, className }: NewbieShieldBadgeProps) {
   const now = useTickingNow(1_000);
-  const remainingMs = Date.parse(endsAt) - now;
+  const endsAtMs = Date.parse(endsAt);
+  if (!Number.isFinite(endsAtMs)) return null;
+  const remainingMs = endsAtMs - now;
   if (remainingMs <= 0) return null;
 
   return (

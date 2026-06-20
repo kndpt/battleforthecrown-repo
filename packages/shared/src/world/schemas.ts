@@ -43,8 +43,8 @@ export const WorldLifecycleSchema = z.strictObject({
 });
 
 export const newbieShieldStateSchema = z.object({
-  endsAt: z.string(),
-  brokenAt: z.string().nullable(),
+  endsAt: z.string().datetime(),
+  brokenAt: z.string().datetime().nullable(),
   active: z.boolean(),
 });
 

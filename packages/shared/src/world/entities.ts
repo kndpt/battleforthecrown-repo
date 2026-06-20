@@ -1,5 +1,6 @@
 import type { VillageLabel } from '../village';
 import type { VisionDisk } from './vision';
+import type { NewbieShieldState } from './dtos';
 
 export type WorldEntityKind =
   | 'BARBARIAN_VILLAGE'
@@ -26,11 +27,7 @@ export interface WorldEntityDto {
       attackerVillageId: string;
       captureUntil: string;
     };
-    newbieShield?: {
-      endsAt: string;
-      brokenAt: string | null;
-      active: boolean;
-    };
+    newbieShield?: NewbieShieldState;
   };
 }
 
