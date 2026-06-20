@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { publicAsset } from '@/lib/publicAsset';
 import { integerFormatter } from '@/features/layout/headerHelpers';
 import { VILLAGE_LABEL_DISPLAY, type VillageLabel } from '@battleforthecrown/shared/village';
+import { NewbieShieldIcon, NewbieShieldTimer } from '@/features/world/NewbieShieldIcon';
 import type { HeroParallaxStyles } from './useHeroParallax';
 import { HERO_EXPANDED_HEIGHT } from './useHeroParallax';
 import { useHeroSwipe } from './useHeroSwipe';
@@ -13,6 +14,7 @@ interface VillageHeroProps {
   canOpenVillageStyle: boolean;
   crownsDisplay: string;
   isVillageSheetOpen: boolean;
+  newbieShieldEndsAt?: string | null;
   onOpenProfile: () => void;
   onOpenPower: () => void;
   onOpenVillageSheet: () => void;
@@ -37,6 +39,7 @@ export function VillageHero({
   canOpenVillageStyle,
   crownsDisplay,
   isVillageSheetOpen,
+  newbieShieldEndsAt,
   onOpenProfile,
   onOpenPower,
   onOpenVillageSheet,
@@ -182,6 +185,12 @@ export function VillageHero({
                       decoding="async"
                     />
                   </span>
+                )}
+                {newbieShieldEndsAt && (
+                  <>
+                    <NewbieShieldIcon endsAt={newbieShieldEndsAt} size={18} />
+                    <NewbieShieldTimer endsAt={newbieShieldEndsAt} />
+                  </>
                 )}
               </div>
               <button

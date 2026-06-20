@@ -337,6 +337,11 @@ export function VillageView() {
             canOpenVillageStyle={canOpenVillageStyle}
             crownsDisplay={crownsDisplay}
             isVillageSheetOpen={isVillageSheetOpen}
+            newbieShieldEndsAt={
+              activeMembership?.newbieShield?.active
+                ? activeMembership.newbieShield.endsAt
+                : null
+            }
             onOpenProfile={() => {
               setProfileTab('profile');
               setIsProfileOpen(true);
