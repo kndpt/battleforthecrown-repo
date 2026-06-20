@@ -91,41 +91,14 @@ export class CombatService {
 
       const worldId = village.worldId;
 
-      // 2. Verify target exists
-      let targetRefId: string;
-      let targetX: number;
-      let targetY: number;
-      let defenderUserId: string | null = null;
-
-      if (dto.targetKind === 'BARBARIAN_VILLAGE') {
-        // Phase 2: Barbarian villages are now in Village table with isBarbarian=true
-        const barbarian = await tx.village.findUnique({
-          where: { id: dto.targetRefId },
-        });
-        if (!barbarian || !barbarian.isBarbarian) {
-          throw new BadRequestException('Barbarian village not found');
-        }
-        targetRefId = barbarian.id;
-        targetX = barbarian.x;
-        targetY = barbarian.y;
-      } else {
-        const targetVillage = await tx.village.findUnique({
-          where: { id: dto.targetRefId },
-        });
-        if (!targetVillage || targetVillage.worldId !== worldId) {
-          throw new BadRequestException('Target village not found');
-        }
-        targetRefId = targetVillage.id;
-        targetX = targetVillage.x;
-        targetY = targetVillage.y;
-        defenderUserId = targetVillage.userId;
-      }
+      // 2. Resolve target (validates kind/world/coords match the live row)
+      const target = await this.resolveTargetVillage(tx, worldId, dto);
 
       // 3. Enforce fog of war: a target seen as a blip cannot be attacked.
       await this.assertTargetInVision(
         userId,
         worldId,
-        { x: targetX, y: targetY },
+        { x: target.x, y: target.y },
         'attack',
       );
 
@@ -135,13 +108,9 @@ export class CombatService {
       const defenderPowerSnapshot = await this.snapshotDefenderKingdomPowers(
         tx,
         worldId,
-        targetRefId,
-        defenderUserId,
+        target.id,
+        target.userId,
       );
-      const defenderKingdomPowerSnapshot = defenderPowerSnapshot.primaryUserId
-        ? (defenderPowerSnapshot.values[defenderPowerSnapshot.primaryUserId] ??
-          null)
-        : null;
 
       // 5. Verify and deduct units
       await this.verifyAndDeductUnits(tx, dto.villageId, dto.units);
@@ -153,8 +122,8 @@ export class CombatService {
           worldId,
           village.x,
           village.y,
-          targetX,
-          targetY,
+          target.x,
+          target.y,
           dto.units,
           dto.villageId,
         );
@@ -166,16 +135,16 @@ export class CombatService {
           attackerVillageId: dto.villageId,
           kind: ExpeditionKind.ATTACK,
           targetKind: dto.targetKind,
-          targetRefId,
-          targetX,
-          targetY,
+          targetRefId: target.id,
+          targetX: target.x,
+          targetY: target.y,
           units: encodeUnitMap(dto.units),
           status: 'EN_ROUTE',
           departAt: now,
           arrivalAt,
           outboundTravelMs: travelTimeMs,
           attackerKingdomPowerSnapshot,
-          defenderKingdomPowerSnapshot,
+          defenderKingdomPowerSnapshot: defenderPowerSnapshot.primaryValue,
           defenderKingdomPowerSnapshots: defenderPowerSnapshot.values,
         },
       });
@@ -184,8 +153,8 @@ export class CombatService {
       await createOutboxEvent(tx, 'battle.sent', dto.villageId, {
         expeditionId: expedition.id,
         villageId: dto.villageId,
-        targetX,
-        targetY,
+        targetX: target.x,
+        targetY: target.y,
         targetKind: dto.targetKind,
         arrivalAt: arrivalAt.toISOString(),
       });
@@ -958,7 +927,11 @@ export class CombatService {
     worldId: string,
     targetVillageId: string,
     primaryDefenderUserId: string | null,
-  ): Promise<{ primaryUserId: string | null; values: Record<string, number> }> {
+  ): Promise<{
+    primaryUserId: string | null;
+    primaryValue: number | null;
+    values: Record<string, number>;
+  }> {
     const userIds = new Set<string>();
 
     const [garrisons, pendingCapture] = await Promise.all([
@@ -990,7 +963,10 @@ export class CombatService {
         tx,
       );
     }
-    return { primaryUserId, values: snapshots };
+    const primaryValue = primaryUserId
+      ? (snapshots[primaryUserId] ?? null)
+      : null;
+    return { primaryUserId, primaryValue, values: snapshots };
   }
 
   /**
