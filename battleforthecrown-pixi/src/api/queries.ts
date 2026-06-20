@@ -4,6 +4,7 @@ import {
   useQuery,
   useQueryClient,
   type UseMutationResult,
+  type UseQueryResult,
 } from "@tanstack/react-query";
 import { z } from "zod";
 import {
@@ -68,7 +69,10 @@ import type {
   ReinforcementReportResponse,
   ScoutReportResponse,
 } from "@battleforthecrown/shared/combat";
-import type { VillageIntelDto } from "@battleforthecrown/shared/world";
+import {
+  VillageIntelDtoSchema,
+  type VillageIntelDto,
+} from "@battleforthecrown/shared/world";
 import type { OnboardingSummaryDto } from "@battleforthecrown/shared/onboarding";
 import {
   RankingsSummaryResponseSchema,
@@ -1665,17 +1669,17 @@ export function useVillageIntelQuery(
   worldId: string | null,
   villageId: string | null,
   enabled = true,
-) {
+): UseQueryResult<VillageIntelDto | null> {
   return useQuery<VillageIntelDto | null>({
     queryKey: ["intel", worldId, villageId],
     queryFn: async () => {
       if (!worldId || !villageId) return null;
       // The endpoint replies 200 with an empty body when no intel exists; the
       // client yields `undefined` there, which TanStack Query forbids → null.
-      const intel = await apiClient.get<VillageIntelDto | null>(
+      const raw = await apiClient.get<unknown>(
         `/worlds/${worldId}/intel/${villageId}`,
       );
-      return intel ?? null;
+      return VillageIntelDtoSchema.nullable().parse(raw ?? null);
     },
     enabled: Boolean(worldId && villageId && enabled),
     staleTime: 30_000,

@@ -855,12 +855,9 @@ describe('intel smoke', () => {
     await accelerateTravel(ctx, world.id);
 
     // Attendre que l'outbox intel.updated soit dispatché (aggregateId = barbarian.id)
-    const intelEvent = await waitFor(
-      () =>
-        ctx.prisma.eventOutbox.findFirst({
-          where: { kind: 'intel.updated', aggregateId: barbarian.id },
-          orderBy: { createdAt: 'desc' },
-        }),
+    const intelEvent = await outboxDispatched(
+      ctx.prisma,
+      { kind: 'intel.updated', aggregateId: barbarian.id },
       { timeoutMs: 20_000 },
     );
 

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import type { VillageLabel } from "../village";
 import type { UnitMap } from "../army/unit-map";
+import { UnitMapSchema } from "../army/unit-map";
 import type { VillageStrategyType } from "../village/strategy";
 import { WorldIdentitySchema } from "./schemas";
 import { InscriptionPhase } from "./lifecycle";
@@ -23,6 +24,27 @@ export interface VillageIntelDto {
   targetTier: string | null;
   seenAt: string;
 }
+
+/** Runtime validation of the intel endpoint response at the client boundary. */
+export const VillageIntelDtoSchema = z.object({
+  targetVillageId: z.string(),
+  worldId: z.string(),
+  sourceKind: z.enum(["SCOUT", "COMBAT_WIN"]),
+  sourceReportId: z.string(),
+  units: UnitMapSchema,
+  resources: z.object({
+    wood: z.number(),
+    stone: z.number(),
+    iron: z.number(),
+  }),
+  wallLevel: z.number().nullable(),
+  strategy: z.enum(["FORTRESS", "RAIDERS", "ECONOMIC", "BALANCED"]).nullable(),
+  targetName: z.string().nullable(),
+  targetX: z.number(),
+  targetY: z.number(),
+  targetTier: z.string().nullable(),
+  seenAt: z.string(),
+}) satisfies z.ZodType<VillageIntelDto>;
 
 export const PublicWorldStatusSchema = z.enum(["PLANNED", "OPEN", "LOCKED"]);
 export const WorldTempoProfileSchema = z.enum(["standard", "custom"]);

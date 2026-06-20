@@ -337,7 +337,9 @@ export class CombatWorker implements OnModuleInit {
                   sourceKind: 'COMBAT_WIN',
                   sourceReportId: report.id,
                   units: context.defender.units ?? {},
-                  resources: resolution.loot.resources ?? EMPTY_LOOT,
+                  // Observed stock, not the loot (which is capped by hauling
+                  // capacity / lootFactor and would depend on the attacking army).
+                  resources: context.defender.resources ?? EMPTY_LOOT,
                   wallLevel: null,
                   strategy: null,
                   targetName: defenderVillage?.name ?? null,

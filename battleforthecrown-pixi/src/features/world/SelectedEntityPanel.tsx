@@ -117,9 +117,12 @@ export function SelectedEntityPanel({
   );
   const captureSection = captureSectionFor(entity, activeCapture, now);
   const shieldSection = shieldSectionFor(entity, now);
-  const intelSection = isEnemyVillage
-    ? intelSectionFor(intelQuery.data ?? null)
-    : null;
+  // Only render the section once the query has resolved — `?? null` during
+  // loading would flash a misleading "Aucune intel".
+  const intelSection =
+    isEnemyVillage && intelQuery.isSuccess
+      ? intelSectionFor(intelQuery.data ?? null)
+      : null;
   const sections = [
     captureSection,
     shieldSection,
