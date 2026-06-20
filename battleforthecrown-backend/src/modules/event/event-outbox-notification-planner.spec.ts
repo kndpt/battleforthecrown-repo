@@ -271,6 +271,8 @@ describe('planNotifications', () => {
           x: 0,
           y: 0,
           buildingsKept: 3,
+          newOwnerName: 'Conqueror',
+          lostVillageVisualTier: 3,
         },
         makeDeps(),
       );
@@ -292,6 +294,8 @@ describe('planNotifications', () => {
           x: 0,
           y: 0,
           buildingsKept: 3,
+          newOwnerName: 'Conqueror',
+          lostVillageVisualTier: 3,
         },
         makeDeps(),
       );
@@ -310,6 +314,8 @@ describe('planNotifications', () => {
           x: 0,
           y: 0,
           buildingsKept: 1,
+          newOwnerName: 'Conqueror',
+          lostVillageVisualTier: 1,
         },
         makeDeps(),
       );

@@ -1,3 +1,4 @@
+import request from 'supertest';
 import {
   bootSmokeApp,
   joinWorld,
@@ -230,6 +231,117 @@ describe('conquest finalize smoke', () => {
       { timeoutMs: 10_000 },
     );
   }, 30_000);
+
+  it('conquers a player-owned village: routing victim, enriched event+report, readByDefender ack', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const attacker = await registerUser(
+      ctx.server,
+      `conq-player-atk-${Date.now()}`,
+    );
+    const victim = await registerUser(
+      ctx.server,
+      `conq-player-vic-${Date.now()}`,
+    );
+
+    const joinA = await joinWorld(
+      ctx.server,
+      attacker.accessToken,
+      world.id,
+      'conq-player-atk-village',
+    );
+    const joinB = await joinWorld(
+      ctx.server,
+      victim.accessToken,
+      world.id,
+      'conq-player-vic-village',
+    );
+
+    // Install noble from A in garrison on village B
+    await ctx.prisma.garrison.create({
+      data: {
+        villageId: joinB.village.id,
+        originVillageId: joinA.village.id,
+        unitType: UNIT_TYPES.NOBLE,
+        quantity: 1,
+      },
+    });
+    await ctx.prisma.population.update({
+      where: { villageId: joinA.village.id },
+      data: { used: { increment: UNIT_COSTS[UNIT_TYPES.NOBLE].population } },
+    });
+
+    const conquest = ctx.app.get(ConquestService);
+    const pending = await conquest.openCaptureWindow({
+      attackerVillageId: joinA.village.id,
+      targetVillageId: joinB.village.id,
+      attackerUserId: attacker.userId,
+      captureUntil: new Date(Date.now() + 100),
+    });
+
+    await outboxDispatched(
+      ctx.prisma,
+      { kind: 'village.capture-window-opened', aggregateId: joinB.village.id },
+      { timeoutMs: 10_000 },
+    );
+
+    await waitFor(
+      () =>
+        ctx.prisma.pendingConquest.findFirst({
+          where: { id: pending.id, status: 'COMPLETED' },
+        }),
+      { timeoutMs: 15_000 },
+    );
+
+    // --- Assertion 1 : routing victim ---
+    const conqueredVillage = await ctx.prisma.village.findUniqueOrThrow({
+      where: { id: joinB.village.id },
+    });
+    expect(conqueredVillage.userId).toBe(attacker.userId);
+
+    // --- Assertion 2 : event village.conquered enrichi ---
+    const conqueredEvent = await outboxDispatched(
+      ctx.prisma,
+      { kind: 'village.conquered', aggregateId: joinB.village.id },
+      { timeoutMs: 10_000 },
+    );
+    const eventPayload = conqueredEvent.payload as Record<string, unknown>;
+    expect(eventPayload['previousOwnerId']).toBe(victim.userId);
+    expect(eventPayload['newOwnerName']).toBe(attacker.displayName);
+    expect(typeof eventPayload['lostVillageVisualTier']).toBe('number');
+    expect(
+      eventPayload['lostVillageVisualTier'] as number,
+    ).toBeGreaterThanOrEqual(1);
+
+    // --- Assertion 3 : report enrichi + routing defender ---
+    const finalReport = await ctx.prisma.combatReport.findFirstOrThrow({
+      where: {
+        attackerUserId: attacker.userId,
+        defenderVillageId: joinB.village.id,
+        details: {
+          path: ['captureFinalized', 'pendingConquestId'],
+          equals: pending.id,
+        },
+      },
+    });
+    expect(finalReport.defenderUserId).toBe(victim.userId);
+    const captureDetails = (
+      finalReport.details as Record<string, Record<string, unknown>>
+    )['captureFinalized'];
+    expect(captureDetails['conquerorName']).toBe(attacker.displayName);
+    expect(typeof captureDetails['visualTier']).toBe('number');
+
+    // --- Assertion 4 : acquittement readByDefender ---
+    const readRes = await request(ctx.server)
+      .patch(`/combat/report/${finalReport.id}/read`)
+      .set('Authorization', `Bearer ${victim.accessToken}`)
+      .set('x-world-id', world.id);
+    expect(readRes.status).toBeLessThan(300);
+
+    const reportAfterRead = await ctx.prisma.combatReport.findUniqueOrThrow({
+      where: { id: finalReport.id },
+    });
+    expect(reportAfterRead.readByDefender).toBe(true);
+  }, 40_000);
 
   it('interrupts an open capture window and finalization becomes a no-op', async () => {
     const world = await seedSmokeWorld(ctx.prisma);

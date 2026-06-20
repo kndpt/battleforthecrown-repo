@@ -1,8 +1,8 @@
 # Run #078 — feature-defeat-conquest-modal-carousel
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-20
+> **Terminé** : 2026-06-20
 
 ## Cible
 
@@ -60,19 +60,33 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 
 ## Progress
 
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
+_(git history)_
 
 ## Décisions prises
 
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
+_(git history)_
 
 ## Rapport final
 
+Modal défaite carrousel livrée full-stack : payload `village.conquered` + report `captureFinalized` enrichis (`newOwnerName`/`conquerorName` + `lostVillageVisualTier`/`visualTier`, snapshot au moment T), slice store `defeatCarousel` (ajout à chaud + dédup `villageId`), `DefeatModal`/`DefeatModalHost` montés dans `App.tsx`, hydratation boot des reports non lus côté défenseur + acquittement serveur-authoritatif via `PATCH /combat/report/:id/read` (résolution `reportId` par refetch impératif pour les items live). Aucune migration.
+
 ### Acceptance & QA
 
-_(Vide au démarrage.)_
+- [x] Finalisation capture village joueur → previousOwner reçoit `village.conquered` — `test:smoke:run -- conquest-finalize` → 3/3, assert `previousOwnerId === victim.userId`.
+- [x] `applyVillageConquered` pousse défaite si `userId===previousOwnerId`, jamais si `newOwnerId` — `vitest run src/api/ws-bindings.test.ts` → vert ([ws-bindings.ts:635](battleforthecrown-pixi/src/api/ws-bindings.ts)).
+- [x] 2ᵉ item pendant modal ouverte → append sans reset `defeatActiveIndex` — `vitest run src/stores/ui.test.ts` → vert.
+- [x] Dédup : deux pushes même `villageId` → 1 item carrousel — `vitest run src/stores/ui.test.ts` → vert.
+- [x] Boot/reconnexion charge reports `captureFinalized` non lus défenseur + dédup live — `vitest run src/ui/modals/DefeatModalHost.test.tsx` → tests (a)/(a bis) verts.
+- [x] « Valider » → `PATCH /combat/report/:id/read` → `readByDefender=true` (ne réapparaît plus) — smoke assert `readByDefender===true` ; host tests (b)/(d) verts (refetch résout reportId des items live).
+- [x] Item expose asset exact + nom + message perte + pseudo conquérant + CTA `navigateToWorldMapFocus` — `DefeatModal.tsx` + host test (c) → `pendingFocus` posé.
+- [x] Payload + report portent pseudo + snapshot tier au moment T — smoke assert `newOwnerName`/`lostVillageVisualTier`/`conquerorName`/`visualTier` ; lecture **avant** transfert ([conquest.service.ts](battleforthecrown-backend/src/modules/combat/conquest.service.ts)).
+- [ ] **[Kelvin/IG]** Modal esprit « Salle du Conseil / Voie du village », carrousel lisible mobile — `visuel`.
+- [ ] **[Kelvin/IG]** Perte du **dernier village** : modal s'affiche, aucune erreur avec `villageId=null` contexte, état « éliminé » valide — `visuel` (item utilise `payload.villageId`, jamais le contexte nullifié ; couvert en logique par ws-bindings.test.ts).
 
-- [ ] <critère> — `<cmd>` → <résultat>
-- **Review indépendante** : **requise** — enrichit un payload shared multi-surfaces, touche le flux émotionnellement critique de finalisation conquête, acquittement persistant cross-session. Garder un œil sur la dédup live/boot et la garde « conquérant ne voit pas la modal ».
-- **Tests automatisés** : …
-- **Tests IG user** : checklist Kelvin (modal carrousel mobile, esprit Salle du Conseil, perte dernier village).
+- **Review indépendante** : Déclenchée (raison: back+front, payload shared multi-surfaces, diff >100 lignes, invariant acquittement cross-session). 1ᵉ passe `BLOCK` (ack item live sans reportId non persisté) → fix (refetch impératif + test (d)) → 2ᵉ passe `GO`. 2 mineurs résiduels non-bloquants (markRead idempotent ; edge refetch sans match hors archi).
+- **Tests automatisés** : `vitest` pixi (modals + stores/ui + ws-bindings + session) → 57 verts ; backend unit `event-outbox-notification-planner` → 17 verts.
+- **Smokes lancés** : Ciblés — `test:smoke:preflight` OK + `test:smoke:run -- conquest-finalize` → 3/3 (nouveau scénario cible joueur + ack readByDefender). Full smoke = CI PR.
+- **Smokes ajoutés/modifiés** : `test/conquest-finalize.smoke.spec.ts` (+1 `it` : conquête village joueur → routing victime + enrichissement payload/report + `PATCH /read` → `readByDefender`).
+- **QA fonctionnelle agent** : couverte par smoke (Outbox + DB + REST réels).
+- **Static-check** : `yarn static-check` → vert.
+- **Tests IG à faire par le user** : checklist Kelvin (2 items visuels ci-dessus : esprit modal/lisibilité mobile + perte dernier village).
