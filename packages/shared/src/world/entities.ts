@@ -26,6 +26,11 @@ export interface WorldEntityDto {
       attackerVillageId: string;
       captureUntil: string;
     };
+    newbieShield?: {
+      endsAt: string;
+      brokenAt: string | null;
+      active: boolean;
+    };
   };
 }
 

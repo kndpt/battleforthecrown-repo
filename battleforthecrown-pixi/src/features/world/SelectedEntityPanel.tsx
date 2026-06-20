@@ -71,6 +71,14 @@ export function SelectedEntityPanel({
   const showGoToVillage = isOwnedPlayerVillage
     && entity.id !== currentVillageId
     && Boolean(onGoToVillage);
+  const shield = entity.newbieShield;
+  const shieldEndsMs = shield ? Date.parse(shield.endsAt) : Number.NaN;
+  const shieldRemainingMs = Number.isFinite(shieldEndsMs)
+    ? Math.max(0, shieldEndsMs - now)
+    : 0;
+  const shieldActive = Boolean(shield?.active && shieldRemainingMs > 0);
+  const shieldBlocksAttack = shieldActive && isPlayerVillage;
+
   const troopSection = troopsSectionFor(
     isOwnedPlayerVillage,
     armyInventory.data ?? [],
@@ -79,7 +87,8 @@ export function SelectedEntityPanel({
     armyInventory.isError || garrison.isError,
   );
   const captureSection = captureSectionFor(entity, activeCapture, now);
-  const sections = [captureSection, troopSection].filter(
+  const shieldSection = shieldSectionFor(entity, now);
+  const sections = [captureSection, shieldSection, troopSection].filter(
     (section): section is MapEntityCalloutSection => Boolean(section),
   );
   const actions = [
@@ -87,9 +96,12 @@ export function SelectedEntityPanel({
       ? [
           {
             icon: '⚔',
-            label: 'Attaquer',
+            label: shieldBlocksAttack
+              ? `Joueur protégé — bouclier débutant (${formatRemaining(shieldRemainingMs)} restantes)`
+              : 'Attaquer',
             tone: 'attack' as const,
-            onClick: () => onAttack?.(entity),
+            disabled: shieldBlocksAttack ? true : undefined,
+            onClick: shieldBlocksAttack ? undefined : () => onAttack?.(entity),
           },
         ]
       : []),
@@ -204,6 +216,27 @@ function captureSectionFor(
       {
         icon: '/assets/clock.png',
         label: 'Reste',
+        value: formatRemaining(remainingMs),
+      },
+    ],
+  };
+}
+
+function shieldSectionFor(
+  entity: MapEntity,
+  nowMs: number,
+): MapEntityCalloutSection | null {
+  const shield = entity.newbieShield;
+  if (!shield?.active) return null;
+  const endsAt = Date.parse(shield.endsAt);
+  const remainingMs = Number.isFinite(endsAt) ? Math.max(0, endsAt - nowMs) : 0;
+  if (remainingMs <= 0) return null;
+  return {
+    title: 'Bouclier débutant',
+    rows: [
+      {
+        icon: '/assets/clock.png',
+        label: 'Joueur protégé',
         value: formatRemaining(remainingMs),
       },
     ],

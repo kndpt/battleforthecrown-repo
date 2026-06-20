@@ -27,6 +27,7 @@ export function buildMapEntities(
     result.set(village.id, {
       ...entityFromMyVillage(village, myUserId),
       captureWindow: worldEntity?.captureWindow,
+      newbieShield: worldEntity?.newbieShield,
     });
   }
   return Array.from(result.values());

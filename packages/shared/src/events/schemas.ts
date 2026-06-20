@@ -151,6 +151,13 @@ const NobleKilledPayloadSchema = z.object({
   combatId: z.string(),
 });
 
+const PvpShieldBrokenPayloadSchema = z.object({
+  userId: z.string(),
+  worldId: z.string(),
+  brokenAt: z.string(),
+  endsAt: z.string(),
+});
+
 const ReinforcementSentPayloadSchema = z.object({
   expeditionId: z.string(),
   villageId: z.string(),
@@ -303,6 +310,7 @@ export const EVENT_PAYLOAD_SCHEMAS = {
   "crowns.changed": CrownsChangedPayloadSchema,
   "rankings.changed": RankingsChangedPayloadSchema,
   "world.status.changed": WorldStatusChangedPayloadSchema,
+  "pvp.shield.broken": PvpShieldBrokenPayloadSchema,
 } as const satisfies Record<EventKind, z.ZodType>;
 
 export type EventPayloadSchema<K extends EventKind> = z.ZodType<

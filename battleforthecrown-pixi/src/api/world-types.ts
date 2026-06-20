@@ -43,6 +43,11 @@ export interface MapEntity {
     attackerVillageId: string;
     captureUntil: string;
   };
+  newbieShield?: {
+    endsAt: string;
+    brokenAt: string | null;
+    active: boolean;
+  };
 }
 
 export function entityFromWorldDto(
@@ -77,6 +82,7 @@ export function entityFromWorldDto(
     label: ownerId === myUserId ? normalizeVillageLabel(dto.data.label) : undefined,
     isCapital: ownerId === myUserId ? dto.data.isCapital === true : undefined,
     captureWindow: normalizeCaptureWindow(dto.data.captureWindow),
+    newbieShield: normalizeNewbieShield(dto.data.newbieShield),
   };
 }
 
@@ -134,6 +140,17 @@ function normalizeCaptureWindow(value: unknown): MapEntity["captureWindow"] {
     pendingConquestId: data.pendingConquestId,
     attackerVillageId: data.attackerVillageId,
     captureUntil: data.captureUntil,
+  };
+}
+
+function normalizeNewbieShield(value: unknown): MapEntity["newbieShield"] {
+  if (!value || typeof value !== "object") return undefined;
+  const data = value as Record<string, unknown>;
+  if (data.active !== true || typeof data.endsAt !== "string") return undefined;
+  return {
+    endsAt: data.endsAt,
+    brokenAt: typeof data.brokenAt === "string" ? data.brokenAt : null,
+    active: true,
   };
 }
 

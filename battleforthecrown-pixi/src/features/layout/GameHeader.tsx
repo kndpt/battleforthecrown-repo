@@ -36,6 +36,7 @@ import {
   profileSheetLabels,
   profileSheetSettings,
 } from './profileSheetData';
+import { NewbieShieldBadge } from '@/features/world/NewbieShieldBadge';
 
 interface GameHeaderProps {
   onPowerClick?: () => void;
@@ -234,6 +235,10 @@ export function GameHeader({
             {integerFormatter.format(totalPower)}
           </span>
         </button>
+
+        {activeMembership?.newbieShield?.active && (
+          <NewbieShieldBadge endsAt={activeMembership.newbieShield.endsAt} />
+        )}
 
         <div className="flex-1" />
 

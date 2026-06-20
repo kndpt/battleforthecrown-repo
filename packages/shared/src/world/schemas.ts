@@ -42,6 +42,12 @@ export const WorldLifecycleSchema = z.strictObject({
   ),
 });
 
+export const newbieShieldStateSchema = z.object({
+  endsAt: z.string(),
+  brokenAt: z.string().nullable(),
+  active: z.boolean(),
+});
+
 export const WorldSigilSchema = z.enum([
   'crown',
   'tree',

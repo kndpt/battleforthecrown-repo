@@ -259,6 +259,13 @@ export interface CrownsChangedPayload {
   lastUpdateTs: string;
 }
 
+export interface PvpShieldBrokenPayload {
+  userId: string;
+  worldId: string;
+  brokenAt: string;
+  endsAt: string;
+}
+
 export interface WorldStatusChangedPayload {
   worldId: string;
   from: "PLANNED" | "OPEN" | "LOCKED" | "ENDED";
@@ -315,7 +322,8 @@ export type OutboxEventPayload =
   | { kind: "resources.changed"; payload: ResourcesChangedPayload }
   | { kind: "crowns.changed"; payload: CrownsChangedPayload }
   | { kind: "rankings.changed"; payload: RankingsChangedPayload }
-  | { kind: "world.status.changed"; payload: WorldStatusChangedPayload };
+  | { kind: "world.status.changed"; payload: WorldStatusChangedPayload }
+  | { kind: "pvp.shield.broken"; payload: PvpShieldBrokenPayload };
 
 export type EventKind = OutboxEventPayload["kind"];
 
@@ -354,7 +362,8 @@ export type AnyEventPayload =
   | ResourcesChangedPayload
   | CrownsChangedPayload
   | RankingsChangedPayload
-  | WorldStatusChangedPayload;
+  | WorldStatusChangedPayload
+  | PvpShieldBrokenPayload;
 
 export interface ServerEvents {
   "resources.changed": ResourcesChangedPayload;
@@ -387,6 +396,7 @@ export interface ServerEvents {
   "expedition.returned": ExpeditionReturnedPayload;
   "garrison.added": GarrisonAddedPayload;
   "world.status.changed": WorldStatusChangedPayload;
+  "pvp.shield.broken": PvpShieldBrokenPayload;
 }
 
 export type ServerEventName = keyof ServerEvents;

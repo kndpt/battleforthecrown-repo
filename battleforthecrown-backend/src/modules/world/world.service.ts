@@ -16,6 +16,11 @@ import {
   type WorldConfig,
   type WorldMembershipResponse,
 } from '@battleforthecrown/shared/world';
+import {
+  isShieldActive,
+  shieldEndsAt,
+  type NewbieShieldState,
+} from '@battleforthecrown/shared';
 
 @Injectable()
 export class WorldService {
@@ -169,14 +174,35 @@ export class WorldService {
       villageCounts.map((c) => [c.worldId, c._count._all]),
     );
 
-    return memberships.map((m) => ({
-      worldId: m.worldId,
-      worldName: m.world.name,
-      role: m.role,
-      joinedAt: m.joinedAt,
-      lastLoginAt: m.lastLoginAt,
-      villageCount: countByWorld.get(m.worldId) ?? 0,
-    }));
+    const now = new Date();
+    return memberships.map((m) => {
+      // Reuse the already-loaded world row (include: { world: true }) instead
+      // of re-fetching config per membership — avoids an N+1 on this list route.
+      const shieldHours = this.parseWorldConfig(m.worldId, m.world.config)
+        .lifecycle.newbieShieldHours;
+      const newbieShield: NewbieShieldState = {
+        endsAt: shieldEndsAt({
+          joinedAt: m.joinedAt,
+          newbieShieldHours: shieldHours,
+        }).toISOString(),
+        brokenAt: m.shieldBrokenAt ? m.shieldBrokenAt.toISOString() : null,
+        active: isShieldActive({
+          joinedAt: m.joinedAt,
+          brokenAt: m.shieldBrokenAt,
+          newbieShieldHours: shieldHours,
+          now,
+        }),
+      };
+      return {
+        worldId: m.worldId,
+        worldName: m.world.name,
+        role: m.role,
+        joinedAt: m.joinedAt,
+        lastLoginAt: m.lastLoginAt,
+        villageCount: countByWorld.get(m.worldId) ?? 0,
+        newbieShield,
+      };
+    });
   }
 
   async touchUserMembership(
