@@ -9,6 +9,7 @@ import type { UnitTraining } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import { WorldService } from '../world/world.service';
+import { WorldAccessService } from '../world/world-access.service';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
 import { VillageStrategyService } from '../strategy/village-strategy.service';
 import { applyPopulationBonus } from '../population/population-capacity';
@@ -29,6 +30,7 @@ export class RecruitTroopsUseCase {
     private readonly prisma: PrismaService,
     private readonly ownership: OwnershipService,
     private readonly worldService: WorldService,
+    private readonly worldAccess: WorldAccessService,
     private readonly outbox: OutboxPublisher,
     private readonly villageStrategy: VillageStrategyService,
     @Inject('PG_BOSS') private readonly boss: PgBoss,
@@ -46,6 +48,7 @@ export class RecruitTroopsUseCase {
     }
 
     const worldId = await this.worldService.getWorldIdFromVillage(villageId);
+    await this.worldAccess.assertWorldWritable(worldId);
     const config = await this.worldService.getWorldConfig(worldId);
 
     if (!isValidUnitType(unitType)) {

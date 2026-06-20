@@ -42,6 +42,12 @@ enum RankingSignal {
   RAMPART_GLORY
 }
 
+enum FinalRankingSignal {
+  POWER
+  ASSAULT_GLORY
+  RAMPART_GLORY
+}
+
 enum TrainingBuilding {
   BARRACKS
   THRONE_HALL
@@ -104,13 +110,14 @@ model User {
   password    String
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  sessions         Session[]
-  villages         Village[]
-  worldSeeds       WorldSeedState[]
-  worldMemberships WorldMembership[]
-  crownBalances    CrownBalance[]
-  onboardingStates OnboardingState[]
-  gloryLedgers     GloryLedger[]
+  sessions              Session[]
+  villages              Village[]
+  worldSeeds            WorldSeedState[]
+  worldMemberships      WorldMembership[]
+  crownBalances         CrownBalance[]
+  onboardingStates      OnboardingState[]
+  gloryLedgers          GloryLedger[]
+  finalRankingSnapshots WorldFinalRankingSnapshot[]
 
   @@map("user")
 }
@@ -142,14 +149,15 @@ model World {
   plannedOpenAt   DateTime?   @map("planned_open_at") @db.Timestamptz(3)
   createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  villages         Village[]
-  memberships      WorldMembership[]
-  seedStates       WorldSeedState[]
-  chunkStates      ChunkSpawnState[]
-  zoneCapacities   ZoneCapacity[]
-  pendingConquests PendingConquest[]
-  onboardingStates OnboardingState[]
-  gloryLedgers     GloryLedger[]
+  villages               Village[]
+  memberships            WorldMembership[]
+  seedStates             WorldSeedState[]
+  chunkStates            ChunkSpawnState[]
+  zoneCapacities         ZoneCapacity[]
+  pendingConquests       PendingConquest[]
+  onboardingStates       OnboardingState[]
+  gloryLedgers           GloryLedger[]
+  finalRankingSnapshots  WorldFinalRankingSnapshot[]
 
   @@index([status, plannedOpenAt])
   @@index([status, startedAt])
@@ -763,4 +771,22 @@ model InboxEntry {
   @@index([userId, worldId])
   @@index([timestamp])
   @@map("inbox_entry")
+}
+
+model WorldFinalRankingSnapshot {
+  id         String             @id @default(cuid())
+  worldId    String             @map("world_id")
+  userId     String             @map("user_id")
+  signal     FinalRankingSignal
+  rank       Int
+  score      Int
+  snapshotAt DateTime           @map("snapshot_at") @db.Timestamptz(3)
+  createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([worldId, signal, userId], map: "world_final_ranking_snapshot_world_signal_user_key")
+  @@index([worldId, signal, rank])
+  @@map("world_final_ranking_snapshot")
 }

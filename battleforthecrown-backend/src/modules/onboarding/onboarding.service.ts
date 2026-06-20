@@ -11,6 +11,7 @@ import {
 import type { OnboardingStep } from '@battleforthecrown/shared/onboarding';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
+import { WorldAccessService } from '../world/world-access.service';
 import type { EventKind, PayloadForKind } from '../event/event-types';
 import { createOutboxEvent } from '../event/event.utils';
 import {
@@ -30,6 +31,7 @@ export class OnboardingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ownership: OwnershipService,
+    private readonly worldAccess: WorldAccessService,
   ) {}
 
   async getSummary(
@@ -183,6 +185,7 @@ export class OnboardingService {
    */
   async claimCompletionReward(userId: string, worldId: string): Promise<void> {
     await this.ownership.assertWorldMember(worldId, userId);
+    await this.worldAccess.assertWorldWritable(worldId);
 
     await this.prisma.$transaction(async (tx) => {
       const now = new Date();

@@ -1,8 +1,8 @@
 # Run #061 — world-ended-lifecycle
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-20
+> **Terminé** : 2026-06-20
 
 ## Cible
 
@@ -79,17 +79,30 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 
 ## Progress
 
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
+_(git history)_
 
 ## Décisions prises
 
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
+_(git history — synthèse dans Rapport final)_
 
 ## Rapport final
 
+Snapshot final des 3 classements (`WorldFinalRankingSnapshot`) persisté dans la **même `$transaction`** que la transition `LOCKED → ENDED` du `WorldLifecycleWorker` (rollback atomique). Invariant lecture-seule via `@Global WorldAccessService.assertWorldWritable` → 403 `WORLD_READ_ONLY` sur 10 mutations joueur ; carve-outs (recall/cancel/produce/reports/rename/join-leave) non gardés. Enum aligné code (`FinalRankingSignal {POWER, ASSAULT_GLORY, RAMPART_GLORY}`), éliminés inclus score 0, tiebreaker userId. Pas de front (runs 066/067 consomment le snapshot via REST).
+
 ### Acceptance & QA
 
-- [ ] <critère> — `<cmd>` → <résultat>
-- **Review indépendante** : oui (critères déclencheurs : invariant durable + diff estimé > 100 lignes + impact transverse sur 6+ modules).
-- **Tests automatisés** : Vitest unit (snapshot tri/tiebreaker) + smoke backend (fast-forward + mutation 403 + lecture 200).
-- **Tests IG user** : `Aucun` (entièrement automatisable — pas d'UI front dans ce run).
+- [x] Migration `WorldFinalRankingSnapshot` (worldId, userId, signal, rank, score, snapshotAt ; unique (worldId,signal,userId) ; index (worldId,signal,rank)) — `prisma/migrations/20260620211102_world_final_ranking_snapshot/migration.sql` → CREATE TYPE + TABLE non-destructif.
+- [x] Snapshot des 3 classements dans la même tx que status+outbox, tous WorldMembership inclus (éliminés score 0) — `world-lifecycle.worker.ts` branche ENDED + `rankings.service.ts:snapshotFinalRankings(tx,…)` ; smoke assert 6 lignes (2 membres × 3 signaux).
+- [x] Rollback si échec snapshot — appel dans la `$transaction` du worker (un throw rollback la transition).
+- [x] `assertWorldWritable` → 403 `WORLD_READ_ONLY` — `grep -rn assertWorldWritable src/modules | grep -v world-access.service | wc -l` → 10 call-sites.
+- [x] Mutations bloquées (attack/scout/reinforce/caravan, train+recruit-noble, upgrade, strategy, daily card, onboarding reward) ; carve-out recall/cancel/produce/finalisations autorisés — sweep exhaustif des routes POST/PATCH/DELETE.
+- [x] Lectures 200 sur ENDED — aucune route GET gardée ; smoke `GET /world/:id/details` → 200.
+- [x] Smoke fast-forward + expédition en vol → ENDED + snapshot non vide + attack 403 + recall autorisé (troupes restituées) + lecture 200 — `test:smoke:run -- world-ended-lifecycle` → 1 passed.
+- [x] Unit pure-logic tri/tiebreaker (score=0 inclus) — `packages/shared/.../final-ranking-snapshot.spec.ts` → 5 passed.
+- [x] `yarn static-check` + `yarn test:backend` verts ; `test:smoke` ciblé vert — 474 unit + smoke OK.
+- **Review indépendante** : Déclenchée (raison : (c) diff > 100 lignes + (d) invariant durable transverse). Cycle 1 `BLOCK` (recruit-noble non gardé + claimCompletionReward + N+1 POWER) → 3 findings fixés → cycle 2 `GO`.
+- **Tests automatisés** : `yarn test:backend` → 474 passed ; shared vitest → 5/5 ; `yarn workspace battleforthecrown-backend test:smoke:run -- world-ended-lifecycle` → 1 passed.
+- **Smokes** : Ciblé `world-ended-lifecycle.smoke.spec.ts` (préflight + run) vert. Complet déféré à la CI PR.
+- **Smokes ajoutés** : `test/world-ended-lifecycle.smoke.spec.ts` (fast-forward ENDED + snapshot + 403 + recall + GET 200).
+- **QA fonctionnelle agent** : couverte par le smoke (boot AppModule réel = DI guards validée, curl-équivalents supertest).
+- **Tests IG user** : `Aucun` (pas d'UI front dans ce run ; entièrement automatisé).

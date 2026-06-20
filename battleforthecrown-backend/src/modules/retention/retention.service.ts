@@ -12,6 +12,7 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
+import { WorldAccessService } from '../world/world-access.service';
 import type { EventKind, PayloadForKind } from '../event/event-types';
 import { createOutboxEvent } from '../event/event.utils';
 import { ResourcesService } from '../resources/resources.service';
@@ -43,6 +44,7 @@ export class RetentionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ownership: OwnershipService,
+    private readonly worldAccess: WorldAccessService,
     private readonly resources: ResourcesService,
   ) {}
 
@@ -133,6 +135,8 @@ export class RetentionService {
       ) {
         throw new BadRequestException('Invalid reward village');
       }
+
+      await this.worldAccess.assertWorldWritable(village.worldId, tx);
 
       const stock = await tx.resourceStock.findUnique({ where: { villageId } });
       if (!stock) {

@@ -9,6 +9,7 @@ import type { UnitTraining } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import { WorldService } from '../world/world.service';
+import { WorldAccessService } from '../world/world-access.service';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
 import { VillageStrategyService } from '../strategy/village-strategy.service';
 import { applyPopulationBonus } from '../population/population-capacity';
@@ -28,6 +29,7 @@ export class RecruitNobleUseCase {
     private readonly prisma: PrismaService,
     private readonly ownership: OwnershipService,
     private readonly worldService: WorldService,
+    private readonly worldAccess: WorldAccessService,
     private readonly outbox: OutboxPublisher,
     private readonly villageStrategy: VillageStrategyService,
     private readonly crowns: CrownsService,
@@ -38,6 +40,7 @@ export class RecruitNobleUseCase {
     await this.ownership.assertVillageOwnedBy(villageId, userId);
 
     const worldId = await this.worldService.getWorldIdFromVillage(villageId);
+    await this.worldAccess.assertWorldWritable(worldId);
     const config = await this.worldService.getWorldConfig(worldId);
     const unitCost = UNIT_CATALOG.costs[UNIT_TYPES.NOBLE];
     const requiredThroneHallLevel = unitCost.requiredThroneHallLevel ?? 1;
