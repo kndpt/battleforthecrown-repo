@@ -1,9 +1,11 @@
 # 11 — Carnet d'intel
 
-**Statut** : promu MVP léger dans [`11-scouting.md`](../../11-scouting.md#carnet-dintel-minimal-mvp-léger)
+**Statut** : ✅ livré — run [`055-feature-intel-notebook`](../../../../tasks/runs/archive/055-feature-intel-notebook.md). Promu MVP léger dans [`11-scouting.md`](../../11-scouting.md#carnet-dintel-minimal-mvp-léger)
 **Ratio bénéfice / coût** : bon
 
 > Ce ticket est conservé pour trace. Il n'est plus source de vérité.
+
+> **Tranché au run 055** : fiche **par village** (pas par joueur) · pas de péremption (intel datée, âge affiché) · accessible depuis le **panneau d'entité** de la carte · **strictement privée** (pas de partage tribu MVP).
 
 ## Opportunité
 

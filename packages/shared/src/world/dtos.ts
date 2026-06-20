@@ -1,11 +1,31 @@
-import { z } from 'zod';
+import { z } from "zod";
 
-import type { VillageLabel } from '../village';
-import { WorldIdentitySchema } from './schemas';
-import { InscriptionPhase } from './lifecycle';
+import type { VillageLabel } from "../village";
+import type { UnitMap } from "../army/unit-map";
+import type { VillageStrategyType } from "../village/strategy";
+import { WorldIdentitySchema } from "./schemas";
+import { InscriptionPhase } from "./lifecycle";
 
-export const PublicWorldStatusSchema = z.enum(['PLANNED', 'OPEN', 'LOCKED']);
-export const WorldTempoProfileSchema = z.enum(['standard', 'custom']);
+export type IntelSourceKind = "SCOUT" | "COMBAT_WIN";
+
+export interface VillageIntelDto {
+  targetVillageId: string;
+  worldId: string;
+  sourceKind: IntelSourceKind;
+  sourceReportId: string;
+  units: UnitMap;
+  resources: { wood: number; stone: number; iron: number };
+  wallLevel: number | null;
+  strategy: VillageStrategyType | null;
+  targetName: string | null;
+  targetX: number;
+  targetY: number;
+  targetTier: string | null;
+  seenAt: string;
+}
+
+export const PublicWorldStatusSchema = z.enum(["PLANNED", "OPEN", "LOCKED"]);
+export const WorldTempoProfileSchema = z.enum(["standard", "custom"]);
 
 export const InscriptionPhaseSchema = z.enum([
   InscriptionPhase.MAIN,
