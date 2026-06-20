@@ -594,6 +594,7 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     cameraRaf = 0;
     cameraListeners.clear();
     app.renderer.off('resize', handleResize);
+    fogContainer.cacheAsTexture(false);
     viewport.removeAllListeners();
     visuals.forEach((visual) => {
       entitiesLayer.removeChild(visual.container);
