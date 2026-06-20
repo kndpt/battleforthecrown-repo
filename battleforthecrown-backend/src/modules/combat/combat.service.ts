@@ -359,6 +359,13 @@ export class CombatService {
       () =>
         this.prisma.$transaction(
           async (tx) => {
+            // Pessimistic lock on the origin stock row: concurrent caravan sends
+            // from the same village serialize here in FIFO order instead of
+            // racing under SSI (which can abort *both* txns symmetrically and
+            // livelock the serializable retry). One holder runs the capacity
+            // check at a time → deterministic 201 then 400.
+            await this.lockOriginResourceStock(tx, dto.villageId);
+
             const village = await this.loadOwnedVillage(
               tx,
               dto.villageId,
@@ -692,6 +699,13 @@ export class CombatService {
               throw new NotFoundException('Expedition not found');
             }
 
+            // Serialize against concurrent caravan sends from the same origin
+            // (both mutate this stock row); see lockOriginResourceStock.
+            await this.lockOriginResourceStock(
+              tx,
+              expedition.attackerVillageId,
+            );
+
             // 2. Verify ownership (attacker village must be owned by user)
             const village = await tx.village.findFirst({
               where: { id: expedition.attackerVillageId, userId },
@@ -926,6 +940,21 @@ export class CombatService {
   }
 
   /** Load a village the caller must own, or throw. Shared by the expedition creators. */
+  /**
+   * Acquires a row-level exclusive lock on the origin village's resource stock.
+   * Forces concurrent caravan sends from the same origin to serialize at this
+   * point (FIFO) rather than racing under serializable snapshot isolation, which
+   * can abort both transactions and exhaust the serializable retry budget.
+   */
+  private async lockOriginResourceStock(
+    tx: PrismaClientOrTx,
+    villageId: string,
+  ): Promise<void> {
+    await tx.$queryRaw`
+      SELECT 1 FROM resource_stock WHERE village_id = ${villageId} FOR UPDATE
+    `;
+  }
+
   private async loadOwnedVillage(
     tx: PrismaClientOrTx,
     villageId: string,

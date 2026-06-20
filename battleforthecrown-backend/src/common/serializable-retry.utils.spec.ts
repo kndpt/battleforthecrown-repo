@@ -20,6 +20,35 @@ describe('serializable-retry.utils', () => {
       expect(isSerializationFailure({ code: 'P2002' })).toBe(false);
     });
 
+    it('returns true for a P2010 raw-query error with SQLSTATE 40001 in meta.code', () => {
+      expect(
+        isSerializationFailure({ code: 'P2010', meta: { code: '40001' } }),
+      ).toBe(true);
+    });
+
+    it('returns true for a P2010 raw-query error with deadlock 40P01 in meta.code', () => {
+      expect(
+        isSerializationFailure({ code: 'P2010', meta: { code: '40P01' } }),
+      ).toBe(true);
+    });
+
+    it('returns true for a P2010 error whose meta.message reports a serialization conflict', () => {
+      expect(
+        isSerializationFailure({
+          code: 'P2010',
+          meta: {
+            message: 'could not serialize access due to concurrent update',
+          },
+        }),
+      ).toBe(true);
+    });
+
+    it('returns false for a P2010 error with an unrelated SQLSTATE', () => {
+      expect(
+        isSerializationFailure({ code: 'P2010', meta: { code: '23505' } }),
+      ).toBe(false);
+    });
+
     it('returns false for a plain Error object (no code)', () => {
       expect(isSerializationFailure(new Error('oops'))).toBe(false);
     });
