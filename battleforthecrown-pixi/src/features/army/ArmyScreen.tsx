@@ -20,6 +20,7 @@ import type { ArmyTrainingDto, ArmyUnitDto } from '@/api/queries';
 import { BottomSheet, Button, Panel, Spinner } from '@/ui';
 import { OnboardingGuidance } from '@/features/onboarding/OnboardingGuidance';
 import { getOnboardingGuidance } from '@/features/onboarding/onboardingViewModel';
+import { useOnboardingCompletionAck } from '@/features/onboarding/onboardingCompletion';
 import { runGameAction, type GameActionId } from '@/features/game-actions/gameActions';
 import {
   ArmyContentDesign,
@@ -34,6 +35,8 @@ import {
   type ArmyVillageRow,
 } from '@/features/design-system/components';
 import { useDisplayResources } from '@/features/resources/useDisplayResources';
+import { UNIT_TYPES } from '@battleforthecrown/shared/army';
+import { ONBOARDING_TRAIN_TROOPS_TARGET } from '@battleforthecrown/shared/onboarding';
 import type { GarrisonLine } from '@/lib/types';
 import { publicAsset } from '@/lib/publicAsset';
 import { useTickingNow } from '@/lib/useTickingNow';
@@ -349,7 +352,10 @@ export function ArmyScreen() {
   const units = inventory.data ?? [];
   const trainings = training.data ?? [];
   const garrisonLines = garrisonQuery.data ?? EMPTY_GARRISON_LINES;
-  const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data);
+  const onboardingCompletion = useOnboardingCompletionAck(worldId, villageId);
+  const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data, {
+    completionAcknowledged: onboardingCompletion.acknowledged,
+  });
 
   const armyModel = useMemo(
     () =>
@@ -382,9 +388,41 @@ export function ArmyScreen() {
   const recruitTroop = recruitTroopId
     ? armyModel.troops.find((troop) => troop.id === recruitTroopId) ?? null
     : null;
-  const recruitMax = recruitTroop
+  const isOnboardingTrainStep =
+    onboardingSummary.data?.currentStep === 'TRAIN_TROOPS';
+  const militiaInVillage =
+    units.find((unit) => unit.type === UNIT_TYPES.MILITIA)?.quantity ?? 0;
+  const militiaInQueue = trainings
+    .filter((entry) => entry.unitType === UNIT_TYPES.MILITIA)
+    .reduce((sum, entry) => sum + Math.max(0, entry.totalQty - entry.completedQty), 0);
+  // Militia still needed to reach the onboarding target, counting what's already
+  // in the village + queue — so cancelling a partial batch recomputes the gate
+  // (e.g. 1 already formed → the modal now requires 4, not 5).
+  const militiaRemaining = Math.max(
+    0,
+    ONBOARDING_TRAIN_TROOPS_TARGET - militiaInVillage - militiaInQueue,
+  );
+  const isOnboardingMilitiaRecruit =
+    isOnboardingTrainStep &&
+    recruitTroop?.id === UNIT_TYPES.MILITIA &&
+    militiaRemaining > 0;
+  // Drag hint stays until the player has any militia formed or queued.
+  const showOnboardingDragHint =
+    isOnboardingTrainStep &&
+    activeRuntimeTab === 'barracks' &&
+    !recruitTroop &&
+    militiaInVillage === 0 &&
+    militiaInQueue === 0;
+  const rawRecruitMax = recruitTroop
     ? computeArmyRecruitMax(recruitTroop, armyModel.stock)
     : 0;
+  // Onboarding "exactly enough": cap to the remaining count and require exactly it.
+  const recruitMax = isOnboardingMilitiaRecruit
+    ? Math.min(rawRecruitMax, militiaRemaining)
+    : rawRecruitMax;
+  const recruitRequiredValue = isOnboardingMilitiaRecruit
+    ? militiaRemaining
+    : undefined;
   const boundedRecruitValue = recruitMax <= 0
     ? 0
     : Math.max(1, Math.min(recruitMax, recruitValue));
@@ -424,6 +462,7 @@ export function ArmyScreen() {
 
   const handleRecruit = (quantity: number) => {
     if (!villageId || !recruitTroop || quantity <= 0 || train.isPending) return;
+    if (isOnboardingMilitiaRecruit && quantity !== militiaRemaining) return;
     train.mutate(
       { villageId, unitType: recruitTroop.id, quantity },
       {
@@ -517,6 +556,7 @@ export function ArmyScreen() {
             training.isLoading ||
             garrisonQuery.isLoading
           }
+          onAcknowledge={onboardingCompletion.acknowledge}
           onAction={runArmyAction}
           onNavigate={navigate}
         />
@@ -542,6 +582,9 @@ export function ArmyScreen() {
             onTroopSelect={handleTroopSelect}
             onVillageRowIconSelect={handleVillageRowIconSelect}
             onVillageRowSelect={garrison.onVillageRowSelect}
+            onboardingDragHintTroopId={
+              showOnboardingDragHint ? UNIT_TYPES.MILITIA : null
+            }
             recruitSheet={{
               ...armyModel.recruitSheet,
               cancelQueueDisabled: cancelTraining.isPending,
@@ -592,6 +635,7 @@ export function ArmyScreen() {
               onChange={setRecruitValue}
               onRecruit={handleRecruit}
               quickValues={buildArmyRecruitQuickValues(recruitMax)}
+              requiredValue={recruitRequiredValue}
               showHandle={false}
               stock={armyModel.stock}
               troop={recruitTroop}

@@ -4,6 +4,8 @@ import { useCrownsStore } from './crowns';
 import { useExpeditionsStore } from './expeditions';
 import { useUiStore } from './ui';
 import { useWorldMapStore } from './worldMap';
+import { useOnboardingFabStore } from './onboardingFab';
+import { usePendingBuildingModalStore } from './pendingBuildingModal';
 
 /**
  * Resets every game-session-scoped Zustand store in one place.
@@ -26,4 +28,8 @@ export function resetGameSessionStores(): void {
   useExpeditionsStore.getState().clear();
   useUiStore.getState().clear();
   useWorldMapStore.getState().clear();
+  // Persisted in localStorage — reset so a new user on the same device doesn't
+  // inherit the previous player's onboarding FAB position.
+  useOnboardingFabStore.getState().reset();
+  usePendingBuildingModalStore.getState().consume();
 }

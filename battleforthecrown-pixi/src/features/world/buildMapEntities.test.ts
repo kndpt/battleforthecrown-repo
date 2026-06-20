@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { buildMapEntities, filterEntitiesByVision } from './buildMapEntities';
+import {
+  buildMapEntities,
+  filterEntitiesByVision,
+  filterEntitiesForNarrativeTarget,
+} from './buildMapEntities';
 import type { MapEntity, WorldEntityDto, WorldVillageDto } from '@/api/world-types';
 
 const barbarian: WorldEntityDto = {
@@ -198,5 +202,12 @@ describe('filterEntitiesByVision', () => {
 
   it('does not locally filter entities when server fog is disabled', () => {
     expect(filterEntitiesByVision([mine, inside], [], false)).toEqual([mine, inside]);
+  });
+
+  it('keeps only own entities and the narrative target during onboarding step 6', () => {
+    expect(filterEntitiesForNarrativeTarget([mine, inside, outside], 'inside')).toEqual([
+      mine,
+      inside,
+    ]);
   });
 });

@@ -13,6 +13,25 @@ export type OnboardingStep = (typeof ONBOARDING_STEPS)[number];
 
 export const ONBOARDING_TRAIN_TROOPS_TARGET = 5;
 
+export interface OnboardingCompletionReward {
+  wood: number;
+  stone: number;
+  iron: number;
+}
+
+/**
+ * Guaranteed loot granted when the player claims the onboarding completion CTA.
+ * Distinct from the narrative barbarian's lootable stock
+ * (`getOnboardingNarrativeLoot`) and from the join reward
+ * (`ONBOARDING_INITIAL_REWARD`). Single source of truth for the credit
+ * (backend) and the advertised preview (frontend).
+ */
+export const ONBOARDING_COMPLETION_REWARD: OnboardingCompletionReward = {
+  wood: 1000,
+  stone: 1700,
+  iron: 900,
+};
+
 export interface OnboardingRewardDto {
   wood: number;
   stone: number;

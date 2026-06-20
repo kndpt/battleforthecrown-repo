@@ -1,24 +1,31 @@
 import { useEffect, useRef, useState } from 'react';
 import { OnboardingFab } from '@/features/design-system/components';
 import type { GameActionId } from '@/features/game-actions/gameActions';
+import { useOnboardingFabStore } from '@/stores/onboardingFab';
+import { usePendingBuildingModalStore } from '@/stores/pendingBuildingModal';
 import type { OnboardingGuidance as OnboardingGuidanceModel } from './onboardingViewModel';
 
 export interface OnboardingGuidanceProps {
   guidance: OnboardingGuidanceModel | null;
   isLoading?: boolean;
+  onAcknowledge?: () => void;
   onAction?: (actionId: GameActionId) => void;
-  onNavigate: (route: OnboardingGuidanceModel['route']) => void;
+  onNavigate: (route: NonNullable<OnboardingGuidanceModel['route']>) => void;
 }
 
 export function OnboardingGuidance({
   guidance,
   isLoading = false,
+  onAcknowledge,
   onAction,
   onNavigate,
 }: OnboardingGuidanceProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isAdvancing, setIsAdvancing] = useState(false);
   const previousStepRef = useRef<number | null>(null);
+  const fabOffset = useOnboardingFabStore((s) => s.offset);
+  const setFabOffset = useOnboardingFabStore((s) => s.setOffset);
+  const requestBuildingModal = usePendingBuildingModalStore((s) => s.request);
 
   useEffect(() => {
     if (!guidance) {
@@ -52,14 +59,29 @@ export function OnboardingGuidance({
       isAdvancing={isAdvancing}
       lootPreview={guidance.lootPreview}
       modalLabel={guidance.modalLabel}
+      offset={fabOffset}
+      onOffsetChange={setFabOffset}
       onOpenChange={setIsOpen}
       onPrimaryAction={() => {
         setIsOpen(false);
-        if (onAction) {
+        if (guidance.isCompletion) {
+          onAcknowledge?.();
+          return;
+        }
+        if (guidance.targetBuildingType) {
+          // Queue the modal then ensure we're on the village screen — VillageView
+          // consumes the request on mount, so this works from any screen.
+          requestBuildingModal(guidance.targetBuildingType);
+          onNavigate('/game');
+          return;
+        }
+        if (onAction && guidance.gameActionId) {
           onAction(guidance.gameActionId);
           return;
         }
-        onNavigate(guidance.route);
+        if (guidance.route) {
+          onNavigate(guidance.route);
+        }
       }}
       onSecondaryAction={() => setIsOpen(false)}
       open={isOpen}

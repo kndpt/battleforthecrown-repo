@@ -14,6 +14,7 @@ import { metaFor } from '@/features/village/buildingMeta';
 import { DailyRetentionWidget } from '@/features/retention/DailyRetentionWidget';
 import { OnboardingGuidance } from '@/features/onboarding/OnboardingGuidance';
 import { getOnboardingGuidance } from '@/features/onboarding/onboardingViewModel';
+import { useOnboardingCompletionAck } from '@/features/onboarding/onboardingCompletion';
 import { PowerBottomSheet } from '@/features/power/PowerBottomSheet';
 import { BottomNavigationBar } from '@/features/layout/BottomNavigationBar';
 import {
@@ -57,6 +58,7 @@ import { useHeroParallax } from './useHeroParallax';
 
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
+import { usePendingBuildingModalStore } from '@/stores/pendingBuildingModal';
 import { useTickingNow } from '@/lib/useTickingNow';
 import {
   useClaimDailyCardMutation,
@@ -97,6 +99,8 @@ export function VillageView() {
   const villageId = useGameStore((s) => s.villageId);
   const worldId = useGameStore((s) => s.worldId);
   const setVillage = useGameStore((s) => s.setVillage);
+  const pendingBuildingType = usePendingBuildingModalStore((s) => s.buildingType);
+  const consumePendingBuilding = usePendingBuildingModalStore((s) => s.consume);
   const logout = useLogout();
 
   // Village data
@@ -182,7 +186,10 @@ export function VillageView() {
     (activeVillagePowerId ? powerByVillageId.get(activeVillagePowerId) : undefined) ?? 0;
   const totalKingdomPower = kingdomPower?.kingdomPower ?? 0;
 
-  const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data);
+  const onboardingCompletion = useOnboardingCompletionAck(worldId, villageId);
+  const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data, {
+    completionAcknowledged: onboardingCompletion.acknowledged,
+  });
   const crownsDisplay = Number.isFinite(crownBalance ?? NaN)
     ? integerFormatter.format(Math.floor(crownBalance ?? 0))
     : '0';
@@ -300,6 +307,13 @@ export function VillageView() {
     });
   };
 
+  // A building-modal request queued by an onboarding CTA (possibly from another
+  // screen) resolves to a building once loaded — derived, no effect/setState.
+  const pendingBuilding = pendingBuildingType
+    ? buildings.find((b) => b.type === pendingBuildingType) ?? null
+    : null;
+  const activeBuildingModal = selectedBuilding ?? pendingBuilding;
+
   const handleCancelConstruction = (buildingId: string) => {
     if (!villageId) return;
     cancelConstruction.mutate({ villageId, buildingId });
@@ -414,6 +428,7 @@ export function VillageView() {
         <OnboardingGuidance
           guidance={onboardingGuidance}
           isLoading={onboardingSummary.isLoading || !villageId || buildingsQuery.isLoading}
+          onAcknowledge={onboardingCompletion.acknowledge}
           onAction={runVillageAction}
           onNavigate={navigate}
         />
@@ -509,11 +524,19 @@ export function VillageView() {
         </BottomSheet>
 
         {/* Building detail modal */}
-        {selectedBuilding && (
+        {activeBuildingModal && (
           <BuildingDetailModal
             villageId={villageId}
-            building={selectedBuilding}
-            onClose={() => setSelectedBuilding(null)}
+            building={activeBuildingModal}
+            onClose={() => {
+              // Only consume the pending request when the modal currently shown
+              // is the pending one (selectedBuilding takes priority); otherwise a
+              // manually-opened building would swallow the queued request unseen.
+              if (!selectedBuilding && pendingBuildingType) {
+                consumePendingBuilding();
+              }
+              setSelectedBuilding(null);
+            }}
           />
         )}
 

@@ -57,6 +57,8 @@ export {
 export {
   computeArmyRecruitMax,
 } from './ArmyViewDesign.utils';
+export { DragHintOverlay } from './DragHintOverlay';
+export type { DragHintOverlayProps } from './DragHintOverlay';
 export type {
   ArmyBottomNavItem,
   ArmyBottomNavProps,

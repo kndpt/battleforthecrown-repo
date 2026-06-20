@@ -4,7 +4,10 @@ import { BUILDING_TYPES } from '@battleforthecrown/shared/village';
 import { UNIT_TYPES, type UnitMap } from '@battleforthecrown/shared/army';
 import { isVictoryForAttacker } from '@battleforthecrown/shared/combat';
 import type { OnboardingSummaryDto } from '@battleforthecrown/shared/onboarding';
-import { ONBOARDING_TRAIN_TROOPS_TARGET } from '@battleforthecrown/shared/onboarding';
+import {
+  ONBOARDING_TRAIN_TROOPS_TARGET,
+  ONBOARDING_COMPLETION_REWARD,
+} from '@battleforthecrown/shared/onboarding';
 import type { OnboardingStep } from '@battleforthecrown/shared/onboarding';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
@@ -168,6 +171,56 @@ export class OnboardingService {
       if (!state || state.status !== 'ACTIVE') return;
 
       await reconcileStateFromFacts(tx, state);
+    });
+  }
+
+  /**
+   * Grants the guaranteed onboarding completion loot (the advertised narrative
+   * butin) to the player's first village, capped by storage — triggered by the
+   * player tapping the completion screen CTA, NOT automatically at battle
+   * resolution. Idempotent via `completionRewardApplied`. The caller refetches
+   * resources to surface the credit (cf. onboardingCompletion.ts).
+   */
+  async claimCompletionReward(userId: string, worldId: string): Promise<void> {
+    await this.ownership.assertWorldMember(worldId, userId);
+
+    await this.prisma.$transaction(async (tx) => {
+      const now = new Date();
+      // Atomic claim: flip the flag with a conditional updateMany so two
+      // concurrent claims can't both pass an in-memory check and double-credit
+      // (READ_COMMITTED). Only the winning row (count === 1) credits resources.
+      const claimed = await tx.onboardingState.updateMany({
+        where: {
+          userId,
+          worldId,
+          status: 'COMPLETED',
+          completionRewardApplied: false,
+        },
+        data: { completionRewardApplied: true, completionRewardAppliedAt: now },
+      });
+      if (claimed.count !== 1) return;
+
+      const state = await tx.onboardingState.findUnique({
+        where: { userId_worldId: { userId, worldId } },
+        select: { firstVillageId: true },
+      });
+      if (!state) return;
+
+      const stock = await tx.resourceStock.findUnique({
+        where: { villageId: state.firstVillageId },
+      });
+      if (!stock) return;
+
+      const reward = ONBOARDING_COMPLETION_REWARD;
+      await tx.resourceStock.update({
+        where: { villageId: state.firstVillageId },
+        data: {
+          wood: Math.min(stock.wood + reward.wood, stock.maxPerType),
+          stone: Math.min(stock.stone + reward.stone, stock.maxPerType),
+          iron: Math.min(stock.iron + reward.iron, stock.maxPerType),
+          lastUpdateTs: now,
+        },
+      });
     });
   }
 }

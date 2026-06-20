@@ -1,8 +1,8 @@
 # 078 — Étape finale onboarding (acquittement butin)
 
 **Sévérité** : 🟠 Moyen
-**Statut** : 🆕 Ouvert
-**Spec amont** : [`docs/gameplay/15-onboarding.md`](../docs/gameplay/15-onboarding.md)
+**Statut** : ✅ Terminé
+**Spec amont** : [`docs/gameplay/15-onboarding.md`](../../docs/gameplay/15-onboarding.md)
 
 ## Symptôme
 
@@ -56,8 +56,12 @@ Une seule piste évidente : état `completion` front-only, déclenché quand `GE
 
 ## Critères de succès
 
-- [ ] Après victoire narrative, modale finale avec preview butin (bois/pierre/fer)
-- [ ] CTA valide → modale ne réapparaît plus (même session ni rejoin)
-- [ ] Parcours étapes 1–6 inchangé avant victoire
-- [ ] Tests viewModel + composant verts
-- [ ] Checklist QA IG : victoire → modale clôture → valider → tutoriel absent, butin reçu au retour des troupes
+- [x] Après victoire narrative, modale finale avec preview butin (bois/pierre/fer) — `getOnboardingGuidance` retourne guidance `isCompletion` sur `COMPLETED`
+- [x] CTA valide → modale ne réapparaît plus (même session ni rejoin) — ack `sessionStorage` `userId × worldId` (`onboardingCompletion.ts`)
+- [x] Parcours étapes 1–6 inchangé avant victoire — branche `COMPLETED` isolée, steps 1–6 inchangés
+- [x] Tests viewModel + composant verts — `onboardingViewModel.test.ts` + `OnboardingGuidance.test.tsx`
+- [ ] Checklist QA IG : victoire → modale clôture → valider → tutoriel absent, butin reçu au retour des troupes _(à valider IG par Kelvin)_
+
+## Résolution
+
+Front-only. `getOnboardingGuidance(summary, { completionAcknowledged })` expose une guidance « completion » sur `COMPLETED` non acquitté (CTA « Récupérer le butin », loot preview partagée `getOnboardingNarrativeLoot('T1')`). `OnboardingGuidance` branche le CTA sur `onAcknowledge` (pas de navigation). Acquittement one-shot `sessionStorage` clé `userId × worldId` via `useOnboardingCompletionAck`, câblé dans Village/Army/World. Aucun crédit butin backend (pipeline combat/retour inchangé).

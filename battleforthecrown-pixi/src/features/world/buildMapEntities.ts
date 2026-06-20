@@ -53,3 +53,15 @@ export function filterEntitiesByVision(
     (e) => e.isMine || e.kind === 'fogged' || isPointInAnyVisionDisk(e, visionDisks),
   );
 }
+
+/**
+ * Onboarding step 6 ("attack the revealed camp"): show only the player's own
+ * entities and the scripted narrative target, so the player can't accidentally
+ * attack the wrong barbarian and waste their 5 starter militia.
+ */
+export function filterEntitiesForNarrativeTarget(
+  entities: MapEntity[],
+  narrativeTargetId: string,
+): MapEntity[] {
+  return entities.filter((e) => e.isMine || e.id === narrativeTargetId);
+}
