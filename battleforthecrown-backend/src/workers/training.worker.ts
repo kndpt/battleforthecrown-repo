@@ -1,4 +1,5 @@
 import { Injectable, Logger, Inject, OnModuleInit } from '@nestjs/common';
+import type { Prisma, TrainingBuilding } from '@prisma/client';
 import { PrismaService } from '../infra/prisma/prisma.service';
 import { OutboxPublisher } from '../modules/event/outbox-publisher.service';
 import PgBoss from 'pg-boss';
@@ -114,6 +115,15 @@ export class TrainingWorker implements OnModuleInit {
           this.logger.log(
             `Training ${data.trainingId} completed: ${training.totalQty} ${data.unitType}`,
           );
+
+          // Promote the next queued training for the same building (sequential
+          // queue, run 062): the oldest remaining row becomes head and gets its
+          // first pg-boss tick. Deferred rows had no job until now.
+          await this.scheduleNextInQueue(
+            tx,
+            training.villageId,
+            training.building,
+          );
         } else {
           // Schedule next tick
           const nextUnitEta = new Date(Date.now() + training.timePerUnitMs);
@@ -152,5 +162,42 @@ export class TrainingWorker implements OnModuleInit {
       );
       throw error; // pg-boss will retry
     }
+  }
+
+  /**
+   * Promote the oldest remaining training of `(villageId, building)` to head:
+   * refresh its `nextUnitEta` and schedule its first pg-boss tick. No-op when
+   * the queue is empty. Called inside the completing transaction so the just
+   * deleted head is excluded from the lookup.
+   */
+  private async scheduleNextInQueue(
+    tx: Prisma.TransactionClient,
+    villageId: string,
+    building: TrainingBuilding,
+  ) {
+    const next = await tx.unitTraining.findFirst({
+      where: { villageId, building },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
+    if (!next) return;
+
+    const nextUnitEta = new Date(Date.now() + next.timePerUnitMs);
+    await tx.unitTraining.update({
+      where: { id: next.id },
+      data: { nextUnitEta },
+    });
+
+    await this.boss.send(
+      'training:tick',
+      { trainingId: next.id, villageId, unitType: next.unitType },
+      {
+        startAfter: nextUnitEta,
+        singletonKey: `training:${next.id}`,
+      },
+    );
+
+    this.logger.log(
+      `Promoted next training ${next.id} (${next.unitType}) for village ${villageId}`,
+    );
   }
 }

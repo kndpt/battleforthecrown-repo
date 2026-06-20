@@ -2,7 +2,9 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Inject,
 } from '@nestjs/common';
+import PgBoss from 'pg-boss';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
@@ -32,6 +34,7 @@ export class CancelRecruitmentUseCase {
     private readonly ownership: OwnershipService,
     private readonly outbox: OutboxPublisher,
     private readonly crowns: CrownsService,
+    @Inject('PG_BOSS') private readonly boss: PgBoss,
   ) {}
 
   async execute(
@@ -56,6 +59,15 @@ export class CancelRecruitmentUseCase {
       if (!isValidUnitType(training.unitType)) {
         throw new BadRequestException('Invalid unit type');
       }
+
+      // Sequential queue (run 062): only the head row has an active pg-boss job.
+      // Cancelling the head must promote the next queued training; cancelling a
+      // waiting row leaves the head untouched.
+      const head = await tx.unitTraining.findFirst({
+        where: { villageId: training.villageId, building: training.building },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      });
+      const wasHead = head?.id === training.id;
 
       const unitCost: UnitCost = UNIT_CATALOG.costs[training.unitType];
       const remainingQty = training.totalQty - training.completedQty;
@@ -93,6 +105,32 @@ export class CancelRecruitmentUseCase {
       }
 
       await tx.unitTraining.delete({ where: { id: trainingId } });
+
+      if (wasHead) {
+        const next = await tx.unitTraining.findFirst({
+          where: { villageId: training.villageId, building: training.building },
+          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        });
+        if (next) {
+          const nextUnitEta = new Date(Date.now() + next.timePerUnitMs);
+          await tx.unitTraining.update({
+            where: { id: next.id },
+            data: { nextUnitEta },
+          });
+          await this.boss.send(
+            'training:tick',
+            {
+              trainingId: next.id,
+              villageId: training.villageId,
+              unitType: next.unitType,
+            },
+            {
+              startAfter: nextUnitEta,
+              singletonKey: `training:${next.id}`,
+            },
+          );
+        }
+      }
 
       // Same fix as cancel-construction: emit a resources.changed so the frontend
       // sees the refund without waiting on TanStack Query invalidation alone.

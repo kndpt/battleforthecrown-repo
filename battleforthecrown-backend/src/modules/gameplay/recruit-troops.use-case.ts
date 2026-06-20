@@ -5,6 +5,7 @@ import {
   Inject,
 } from '@nestjs/common';
 import PgBoss from 'pg-boss';
+import type { UnitTraining } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import { WorldService } from '../world/world.service';
@@ -38,7 +39,7 @@ export class RecruitTroopsUseCase {
     unitType: string,
     quantity: number,
     userId: string,
-  ) {
+  ): Promise<UnitTraining> {
     await this.ownership.assertVillageOwnedBy(villageId, userId);
     if (quantity <= 0) {
       throw new BadRequestException('Quantity must be positive');
@@ -58,16 +59,33 @@ export class RecruitTroopsUseCase {
     const unitCost: UnitCost = UNIT_CATALOG.costs[unitType];
 
     return this.prisma.$transaction(async (tx) => {
-      const [village, barracks, stock, population, activeTraining] =
-        await Promise.all([
-          tx.village.findUnique({ where: { id: villageId } }),
-          tx.building.findFirst({ where: { villageId, type: 'BARRACKS' } }),
-          tx.resourceStock.findUnique({ where: { villageId } }),
-          tx.population.findUnique({ where: { villageId } }),
-          tx.unitTraining.findFirst({
-            where: { villageId, building: 'BARRACKS' },
-          }),
-        ]);
+      // Serialize concurrent recruits on the same (village, building): without
+      // it, two near-simultaneous calls both read activeTraining=null and both
+      // schedule a job, breaking the "one active training" invariant. The
+      // dropped @@unique([villageId, building]) used to enforce this at the DB;
+      // this advisory lock (released at tx end) restores the guarantee (run 062).
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`training:${villageId}:BARRACKS`}))`;
+
+      const [
+        village,
+        barracks,
+        stock,
+        population,
+        activeTraining,
+        sameTypeTraining,
+      ] = await Promise.all([
+        tx.village.findUnique({ where: { id: villageId } }),
+        tx.building.findFirst({ where: { villageId, type: 'BARRACKS' } }),
+        tx.resourceStock.findUnique({ where: { villageId } }),
+        tx.population.findUnique({ where: { villageId } }),
+        tx.unitTraining.findFirst({
+          where: { villageId, building: 'BARRACKS' },
+          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        }),
+        tx.unitTraining.findFirst({
+          where: { villageId, building: 'BARRACKS', unitType },
+        }),
+      ]);
 
       if (!village) throw new NotFoundException('Village not found');
       if (!barracks) throw new BadRequestException('Barracks not found');
@@ -78,9 +96,22 @@ export class RecruitTroopsUseCase {
       }
       if (!stock) throw new NotFoundException('Resource stock not found');
       if (!population) throw new NotFoundException('Population not found');
-      if (activeTraining) {
-        throw new BadRequestException('Training already in progress');
+      // One row per unit type (enforced by @@unique([villageId, building,
+      // unitType])): reject a same-type enqueue with a clean 400 instead of
+      // surfacing a raw P2002. The advisory lock above keeps this check
+      // race-free.
+      if (sameTypeTraining) {
+        throw new BadRequestException(
+          'This unit type is already in the training queue',
+        );
       }
+
+      // Sequential queue: the Barracks holds one row per unit type. Only the
+      // head of the queue (oldest createdAt) gets a pg-boss job; the others
+      // start deferred — the worker (on completion) or cancel (on head removal)
+      // schedules the next one. `activeTraining` already present ⇒ this row is
+      // queued, not head.
+      const isFirstInQueue = !activeTraining;
 
       const [strategyBonus, populationStrategyBonus] = await Promise.all([
         this.villageStrategy.getStrategyBonus(villageId, 'training'),
@@ -174,14 +205,16 @@ export class RecruitTroopsUseCase {
         },
       });
 
-      await this.boss.send(
-        'training:tick',
-        { trainingId: training.id, villageId, unitType },
-        {
-          startAfter: nextUnitEta,
-          singletonKey: `training:${training.id}`,
-        },
-      );
+      if (isFirstInQueue) {
+        await this.boss.send(
+          'training:tick',
+          { trainingId: training.id, villageId, unitType },
+          {
+            startAfter: nextUnitEta,
+            singletonKey: `training:${training.id}`,
+          },
+        );
+      }
 
       await this.outbox.resourcesChanged(villageId, tx);
 

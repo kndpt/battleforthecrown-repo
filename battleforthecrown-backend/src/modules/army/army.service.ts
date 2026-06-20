@@ -21,7 +21,9 @@ export class ArmyService {
       where: { id: villageId },
       include: {
         unitInventory: true,
-        unitTraining: true,
+        // Deterministic head-of-queue: the oldest row is the active training
+        // surfaced below via `.find()` (run 062, sequential queue).
+        unitTraining: { orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] },
       },
     });
 
@@ -80,7 +82,7 @@ export class ArmyService {
 
     return this.prisma.unitTraining.findMany({
       where: { villageId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
   }
 }
