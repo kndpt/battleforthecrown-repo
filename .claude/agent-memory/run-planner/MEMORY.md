@@ -8,3 +8,4 @@
 - [Pattern toast remboursement ressources](pattern_resource_refund_toast.md) — variant riche du toast système, déclenché au niveau mutation (pas par callsite) ; réutiliser ResourceIcon ; asymétrie payload cancel construction vs training
 - [Pattern scaling cartes rétention](pattern_retention_card_scaling.md) — Devoir royal scalé par château max ; 2 chemins de génération, metadata Json inexploité, tier déjà dans combat.worker mais pas dans payload shared
 - [Pattern nouveau flux d'expédition](pattern_expedition_new_flow.md) — cloner REINFORCE pour CARAVAN/SUPPLY : enum 2 endroits, combat.service send/recall, combat.worker dispatch par kind, return.worker libère pop+crédite, storage cap helper
+- [Pattern modal proactive + queue](pattern_proactive_modal_queue.md) — pousser un signal proactif à la victime sur event WS : réutiliser VictoryModal host + worldMapNavigation + readByDefender (acquittement serveur sans migration) ; deltas pseudo/asset dans payload shared
