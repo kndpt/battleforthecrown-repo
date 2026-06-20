@@ -8,6 +8,7 @@ import { villageVisualTierFromCastleLevel } from '@battleforthecrown/shared/worl
 import type { VisionDisk } from '@battleforthecrown/shared/world';
 import { createExpeditionVisual, type ExpeditionVisualHandle } from '@/pixi/entities/ExpeditionVisual';
 import { createBlipSprite, type BlipSpriteHandle } from '@/pixi/entities/BlipSprite';
+import { createShieldDome, type ShieldDomeHandle } from '@/pixi/entities/ShieldDome';
 import { isMapBackgroundTap } from './worldMapBackgroundTap';
 
 export interface WorldMapOptions {
@@ -97,6 +98,7 @@ interface EntityVisual {
   captureIcon: Sprite;
   sprite: Sprite;
   label: Text;
+  dome: ShieldDomeHandle | null;
   data: MapEntity;
 }
 
@@ -499,6 +501,32 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     }
   };
 
+  // Glassy newbie-shield dome over protected player villages. Added above the
+  // sprite (translucent) but below the label/capture icon so they stay legible.
+  const syncShieldDome = (visual: EntityVisual) => {
+    const active =
+      visual.data.kind === 'PLAYER_VILLAGE' && visual.data.newbieShield?.active === true;
+    if (active) {
+      const size = spriteSizeFor(visual.data);
+      if (!visual.dome) {
+        const dome = createShieldDome();
+        visual.container.addChild(dome.container);
+        visual.container.setChildIndex(
+          dome.container,
+          visual.container.getChildIndex(visual.sprite) + 1,
+        );
+        visual.dome = dome;
+      }
+      visual.dome.setSize(size);
+      // Drop the base so the village sits at the dome's vertical center
+      // (dome rises ~ryTop above the base; half of that re-centers the sprite).
+      visual.dome.container.position.set(0, size * 0.55);
+    } else if (visual.dome) {
+      visual.dome.destroy();
+      visual.dome = null;
+    }
+  };
+
   const ensureVisual = (entity: MapEntity): EntityVisual => {
     let visual = visuals.get(entity.id);
     if (visual) {
@@ -506,6 +534,7 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
       const { px, py } = tileToWorld(entity.x, entity.y);
       visual.container.position.set(px, py);
       drawEntity(visual);
+      syncShieldDome(visual);
       return visual;
     }
 
@@ -559,9 +588,10 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
 
     entitiesLayer.addChild(container);
 
-    visual = { container, graphic, captureMarker, captureIcon, sprite, label, data: entity };
+    visual = { container, graphic, captureMarker, captureIcon, sprite, label, dome: null, data: entity };
     visuals.set(entity.id, visual);
     drawEntity(visual);
+    syncShieldDome(visual);
     return visual;
   };
 
@@ -759,6 +789,7 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
       drawActiveVillageHalo(now);
       visuals.forEach((visual) => {
         if (visual.data.captureWindow) drawCaptureMarker(visual, now);
+        if (visual.dome) visual.dome.tick(now);
       });
       expeditionVisuals.forEach((visual) => visual.tick(now));
       textureRetryAccumulator += deltaMs;

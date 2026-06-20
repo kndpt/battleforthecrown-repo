@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { z } from 'zod';
+import { isShieldActive, shieldEndsAt } from '@battleforthecrown/shared';
 import { PrismaService } from '../../infra/prisma/prisma.service';
+import { WorldConfigService } from './world-config.service';
 
 const captureWindowSchema = z
   .object({
@@ -36,6 +38,13 @@ const playerVillageDataSchema = z.object({
   villageId: z.string(),
   castleLevel: z.number().int().min(1).max(10),
   captureWindow: captureWindowSchema,
+  newbieShield: z
+    .object({
+      endsAt: z.string(),
+      brokenAt: z.string().nullable(),
+      active: z.boolean(),
+    })
+    .optional(),
 });
 
 type PlayerVillageData = z.infer<typeof playerVillageDataSchema>;
@@ -51,7 +60,10 @@ type PlayerVillageEntity = {
 
 @Injectable()
 export class WorldEntitiesQueryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly worldConfig: WorldConfigService,
+  ) {}
 
   async getEntitiesInRadius(
     worldId: string,
@@ -216,7 +228,15 @@ export class WorldEntitiesQueryService {
         y: true,
         name: true,
         userId: true,
-        user: { select: { displayName: true } },
+        user: {
+          select: {
+            displayName: true,
+            worldMemberships: {
+              where: { worldId },
+              select: { joinedAt: true, shieldBrokenAt: true },
+            },
+          },
+        },
         buildings: {
           where: { type: 'CASTLE' },
           select: { level: true },
@@ -236,9 +256,33 @@ export class WorldEntitiesQueryService {
       orderBy: [{ y: 'asc' }, { x: 'asc' }],
     });
 
+    const shieldHours = (await this.worldConfig.getConfig(worldId)).lifecycle
+      .newbieShieldHours;
+    const now = new Date();
+
     return villages.map((village) => {
       const castleLevel = village.buildings[0]?.level ?? 1;
       const capture = village.pendingConquestTargets[0];
+      const membership = village.user?.worldMemberships?.[0];
+      const newbieShield =
+        membership &&
+        isShieldActive({
+          joinedAt: membership.joinedAt,
+          brokenAt: membership.shieldBrokenAt,
+          newbieShieldHours: shieldHours,
+          now,
+        })
+          ? {
+              endsAt: shieldEndsAt({
+                joinedAt: membership.joinedAt,
+                newbieShieldHours: shieldHours,
+              }).toISOString(),
+              brokenAt: membership.shieldBrokenAt
+                ? membership.shieldBrokenAt.toISOString()
+                : null,
+              active: true as const,
+            }
+          : undefined;
 
       return {
         id: village.id,
@@ -264,6 +308,7 @@ export class WorldEntitiesQueryService {
                 },
               }
             : {}),
+          ...(newbieShield ? { newbieShield } : {}),
         }),
       };
     });

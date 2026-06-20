@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { normalizeTier } from '@battleforthecrown/shared/world';
+import { entityFromWorldDto } from './world-types';
 
 describe('normalizeTier', () => {
   it.each(['T1', 'T2', 'T3', 'T4', 'T5'] as const)(
@@ -25,4 +26,47 @@ describe('normalizeTier', () => {
       expect(normalizeTier(value)).toBeNull();
     },
   );
+});
+
+function makeVillageDto(dataOverrides: Record<string, unknown> = {}) {
+  return {
+    id: 'v-test',
+    worldId: 'world-1',
+    kind: 'PLAYER_VILLAGE' as const,
+    x: 10,
+    y: 20,
+    data: {
+      name: 'Test Village',
+      userId: 'user-42',
+      ...dataOverrides,
+    },
+  };
+}
+
+describe('entityFromWorldDto — newbieShield mapping', () => {
+  it('maps an active shield with endsAt to entity.newbieShield', () => {
+    const dto = makeVillageDto({
+        newbieShield: { active: true, endsAt: '2026-06-22T00:00:00.000Z', brokenAt: null },
+    });
+    const entity = entityFromWorldDto(dto, null);
+    expect(entity.newbieShield).toEqual({
+      active: true,
+      endsAt: '2026-06-22T00:00:00.000Z',
+      brokenAt: null,
+    });
+  });
+
+  it('returns undefined when active is false', () => {
+    const dto = makeVillageDto({
+      newbieShield: { active: false, endsAt: '2026-06-22T00:00:00.000Z', brokenAt: null },
+    });
+    const entity = entityFromWorldDto(dto, null);
+    expect(entity.newbieShield).toBeUndefined();
+  });
+
+  it('returns undefined when newbieShield is absent', () => {
+    const dto = makeVillageDto();
+    const entity = entityFromWorldDto(dto, null);
+    expect(entity.newbieShield).toBeUndefined();
+  });
 });

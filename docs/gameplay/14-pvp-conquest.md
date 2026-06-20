@@ -198,6 +198,8 @@ Mécanique d'onboarding pour combler l'angle mort du `puissance ÷ 3` : deux nou
 
 **Effet conjoint avec `puissance ÷ 3`** : un joueur sortant du bouclier à H+48 reste protégé par `puissance ÷ 3` contre les comptes très anciens. Les deux garde-fous se relayent — le bouclier couvre la fenêtre de découverte, le ratio prend le relais en continu.
 
+> **Implémentation (MVP)** : durée = `WorldConfig.lifecycle.newbieShieldHours` (pas de constante en dur). État dérivé par le helper pur `isShieldActive` / `shieldEndsAt` (`packages/shared/src/pvp/shield.ts`) depuis `WorldMembership.joinedAt` + `shieldBrokenAt`. Garde serveur dans `CombatService.initiateAttack` (403 `NEWBIE_SHIELD_ACTIVE` en entrant ; rupture en sortant via `NewbieShieldService`). Rupture diffusée par l'event WS `pvp.shield.broken` (cf. [`realtime.md`](../architecture/realtime.md)). Surfaces UI : panneau cible (CTA grisé + countdown) + badge header self. _Reporté en suivi : badge sur le rapport de scout + fiche publique joueur (route inexistante)._
+
 #### 4. Cooldown de re-conquête
 
 ❌ **Pas de cooldown au MVP**. Un village juste conquis est immédiatement re-conquérable.

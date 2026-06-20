@@ -101,6 +101,23 @@ export async function seedSmokeWorld(
   });
 }
 
+/**
+ * Antidates `joinedAt` of every membership in a world beyond the newbie shield
+ * window so PvP combat against player villages is not blocked by the beginner
+ * shield guard (`NEWBIE_SHIELD_ACTIVE`). Smoke worlds exercise combat mechanics,
+ * not the shield itself — that is covered by `pvp-newbie-shield.smoke.spec.ts`.
+ * Call after players have joined and before issuing player-vs-player attacks.
+ */
+export async function expireNewbieShield(
+  prisma: PrismaService,
+  worldId: string,
+): Promise<void> {
+  await prisma.worldMembership.updateMany({
+    where: { worldId },
+    data: { joinedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 365) },
+  });
+}
+
 type Server = SmokeContext['server'];
 
 /** Unique smoke display name (case-insensitive index). Never truncate a human label. */

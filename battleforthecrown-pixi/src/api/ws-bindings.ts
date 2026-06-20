@@ -7,6 +7,7 @@ import type {
   BattleSentPayload,
   BuildingCompletedPayload,
   CrownsChangedPayload,
+  PvpShieldBrokenPayload,
   RankingsChangedPayload,
   ResourcesChangedPayload,
   ScoutReportedPayload,
@@ -650,6 +651,14 @@ export function applyVillageConquered(payload: VillageConqueredPayload, ctx: Bin
   }
 }
 
+export function applyPvpShieldBroken(
+  _payload: PvpShieldBrokenPayload,
+  ctx: BindingsContext,
+): void {
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.membershipsPrefix() });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.worldEntitiesPrefix() });
+}
+
 export function applyVillageRemoved(payload: VillageRemovedPayload, ctx: BindingsContext): void {
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.worldEntities(payload.worldId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.worldEntitiesPrefix() });
@@ -828,6 +837,7 @@ const bindings: ServerEventBindings = {
   'village.capture-window-completed': applyVillageCaptureWindowCompleted,
   'village.capture-window-interrupted': applyVillageCaptureWindowInterrupted,
   'noble.killed': applyNobleKilled,
+  'pvp.shield.broken': applyPvpShieldBroken,
 };
 
 export function bindServerEvents(ctx: BindingsContext): () => void {
