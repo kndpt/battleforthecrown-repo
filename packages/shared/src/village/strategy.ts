@@ -180,7 +180,7 @@ export const getStrategyDefinition = (
   return DEFAULT_VILLAGE_STRATEGY.strategies[strategy] ?? fallbackStrategy;
 };
 
-export const getStrategyBonuses = (
+const getStrategyBonuses = (
   strategy: VillageStrategyType,
 ): Required<StrategyBonus> => {
   const definition = getStrategyDefinition(strategy);

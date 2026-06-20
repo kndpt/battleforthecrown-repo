@@ -4,7 +4,7 @@ export interface VisionDisk {
   radius: number;
 }
 
-export function isPointInVisionDisk(
+function isPointInVisionDisk(
   point: { x: number; y: number },
   disk: VisionDisk,
 ): boolean {
