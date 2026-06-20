@@ -20,7 +20,6 @@ export {
 } from './entities';
 
 export {
-  isPointInVisionDisk,
   isPointInAnyVisionDisk,
   type VisionDisk,
 } from './vision';

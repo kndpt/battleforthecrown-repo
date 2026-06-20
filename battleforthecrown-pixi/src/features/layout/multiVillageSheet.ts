@@ -136,8 +136,9 @@ function mapTroopActivities(training: ArmyTrainingDto[] | undefined, now: number
   return (training ?? [])
     .filter((item) => item.unitType !== UNIT_TYPES.NOBLE)
     .slice(0, 2)
-    .map((item) => {
-      const progress = computeUnitTrainingProgress(item, now);
+    .map((item, index) => {
+      // Sequential queue: only the first non-noble row (Barracks head) trains.
+      const progress = computeUnitTrainingProgress(item, now, index === 0);
       const meta = unitMetaFor(item.unitType);
 
       return {

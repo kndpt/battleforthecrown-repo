@@ -141,6 +141,7 @@ export function applyUnitTrained(
 ): void {
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyTraining(payload.villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
   invalidatePowerQueries(ctx, payload.villageId);
   invalidateRetentionSummary(ctx);
@@ -153,6 +154,7 @@ export function applyUnitTrainingCompleted(
 ): void {
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyTraining(payload.villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
   invalidatePowerQueries(ctx, payload.villageId);
   invalidateRetentionSummary(ctx);

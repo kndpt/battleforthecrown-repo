@@ -1,8 +1,8 @@
 # Run #062 — fix-training-multi-type-queue
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-19
+> **Terminé** : 2026-06-19
 
 ## Cible
 
@@ -56,21 +56,46 @@
 
 ## Progress
 
-_(Vide au démarrage. Rempli pendant le run.)_
+_(git history)_
 
 ## Décisions prises
 
-_(Vide au démarrage. Rempli pendant le run.)_
+_(git history)_
 
 ## Rapport final
 
+Synthèse : `@@unique([villageId, building])` remplacé par `@@index` → file séquentielle (1 row/type, tête = oldest `createdAt,id`). Seule la tête a un job pg-boss ; worker (complétion) et cancel (retrait tête) promeuvent le suivant. Garantie de sérialisation restaurée par `pg_advisory_xact_lock` par `(village, building)` dans recruit-troops + recruit-noble (compense la perte du garde-fou unique DB). Noble inchangé côté queue (gate `canRecruitNoble` + lock).
+
 ### Acceptance & QA
 
-- [ ] `POST /army/:villageId/train` (type A) → 201 — `curl`
-- [ ] `POST /army/:villageId/train` (type B, A actif) → 201, 2 rows en DB — `curl` + SQL
-- [ ] `GET /army/:villageId/training` → 2 items ordonnés — `curl`
-- [ ] Smoke multi-type vert — `yarn workspace battleforthecrown-backend test:smoke -- army`
-- [ ] `yarn static-check` vert
-- **Review indépendante** : oui (back+front, migration schema, diff > 100 lignes, invariant durable)
-- **Tests automatisés** : smoke `army-training.smoke.spec.ts` multi-type
-- **Tests IG user** : checklist courte (voir `$bftc-qa`)
+**Critères d'acceptance vérifiés**
+
+- [x] DB accepte ≥2 `UnitTraining` même `(villageId, building)` — `migration drop_unit_training_unique_building` + smoke `queues a second unit type` (`rows == [MILITIA, WARRIOR]`) → 2 rows coexistent.
+- [x] Type A puis B ne renvoie plus `'Training already in progress'`, 2 rows — smoke `queues a second unit type` (`trainB.status < 300`) → vert.
+- [x] Un seul job actif (tête), 2e sans job — smoke assert `militiaSlot.trainingStartTime` truthy & `warriorSlot.trainingStartTime` falsy → vert.
+- [x] À complétion, worker démarre le suivant — smoke : WARRIOR atteint l'inventaire sans re-POST → vert.
+- [x] Annuler la tête démarre le suivant — smoke `cancelling the active head promotes the next` → WARRIOR entraîné → vert.
+- [x] Annuler un training en attente ne perturbe pas l'actif — smoke `cancelling a waiting unit leaves the active head untouched` → MILITIA complète, WARRIOR qty 0 → vert.
+- [x] `getInventory` expose la tête déterministe — `army.service.ts` `orderBy [{createdAt asc},{id asc}]` + smoke `trainingStartTime` sur MILITIA.
+- [x] `yarn static-check` vert — `yarn static-check` → Done, 0 erreur.
+- [x] Smoke multi-type vert — `yarn workspace battleforthecrown-backend test:smoke:run -- army-training.smoke` → 7/7 passed.
+
+**Review indépendante** : Déclenchée (raison: diff > 100 lignes + invariant durable « file séquentielle »). Cycle 1 → `BLOCK` (2 majeurs : régression garantie concurrence ; critère L25 non testé). Fix : advisory lock + smoke cancel-waiting + tie-break `getTraining`. Cycle 2 → `GO`.
+
+**Tests automatisés** : `test:smoke:run -- army-training.smoke` → 7/7 (4 existants + 3 nouveaux). `yarn static-check` → vert.
+
+**Smokes lancés** : Ciblés — `yarn workspace battleforthecrown-backend test:smoke:run -- army-training.smoke` → 7/7. (Diff backend non transversal : pas de full smoke local ; CI PR couvre la suite complète.)
+
+**Smokes ajoutés/modifiés** : `test/army-training.smoke.spec.ts` — 3 cas : queue multi-type + auto-start ; cancel tête → promotion ; cancel attente → tête intacte.
+
+**QA fonctionnelle agent** : couverte par les smokes (boot app réelle + REST + worker pg-boss + outbox + DB). Pas de QA manuelle séparée nécessaire.
+
+**Tests IG à faire par le user** :
+- [ ] Caserne : lancer MILICE puis GUERRIER → les 2 apparaissent dans la file, MILICE s'entraîne, GUERRIER en attente.
+- [ ] À la fin de MILICE, GUERRIER démarre seul sans action.
+- [ ] Annuler la formation active → la suivante démarre ; annuler une en attente → l'active continue.
+
+### Dette notée (hors scope)
+
+- Résilience reboot : crash worker entre `delete` tête et `boss.send` suivant ⇒ suivant orphelin sans job (MVP, fiche L54).
+- Drift pré-existant repo : FK `onboarding_state_narrative_target_village_id_fkey` présent en migration mais sans `@relation` dans le schema → restauré à l'identique, non traité ici.

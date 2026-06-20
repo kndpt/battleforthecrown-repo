@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import PgBoss from 'pg-boss';
+import type { UnitTraining } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import { WorldService } from '../world/world.service';
@@ -33,7 +34,7 @@ export class RecruitNobleUseCase {
     @Inject('PG_BOSS') private readonly boss: PgBoss,
   ) {}
 
-  async execute(villageId: string, userId: string) {
+  async execute(villageId: string, userId: string): Promise<UnitTraining> {
     await this.ownership.assertVillageOwnedBy(villageId, userId);
 
     const worldId = await this.worldService.getWorldIdFromVillage(villageId);
@@ -43,6 +44,12 @@ export class RecruitNobleUseCase {
     const requiredCrowns = unitCost.crowns ?? 0;
 
     return this.prisma.$transaction(async (tx) => {
+      // Serialize concurrent noble recruits on the Throne Hall: the dropped
+      // @@unique([villageId, building]) used to block a 2nd THRONE_HALL row at
+      // the DB; this advisory lock (released at tx end) keeps the canRecruitNoble
+      // gate race-free so at most one noble training exists (run 062).
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`training:${villageId}:THRONE_HALL`}))`;
+
       const [
         village,
         throneHall,

@@ -1,7 +1,6 @@
 import type { UnitType } from '../army/types';
-import type { PowerConfig } from '../world';
 
-export const BUILDING_POWER_WEIGHTS = Object.freeze({
+const BUILDING_POWER_WEIGHTS = Object.freeze({
   CASTLE: 40,
   WOOD: 15,
   STONE: 15,
@@ -39,13 +38,3 @@ export const getBuildingPowerWeight = (type: string): number =>
 export const getUnitPowerWeight = (type: string): number =>
   UNIT_POWER_WEIGHTS[type as keyof typeof UNIT_POWER_WEIGHTS] ??
   DEFAULT_UNIT_POWER_WEIGHT;
-
-export const POWER_PROFILE: PowerConfig = {
-  buildingWeights: BUILDING_POWER_WEIGHTS,
-  unitSoftCapThreshold: 100,
-  unitSoftCapDecay: 0.98,
-  defaultWeights: {
-    kingdom: 1,
-    army: 1,
-  },
-};

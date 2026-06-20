@@ -178,4 +178,3 @@ export type PlayerVillagePlacementPlan = z.infer<
 export type PlayerVillagePlacementConfig = PlayerVillagePlacementPlan;
 export type PlayerVillageZone = z.infer<typeof PlayerVillageZoneSchema>;
 export type FogOfWarSettings = z.infer<typeof FogOfWarSettingsSchema>;
-export type WorldSettings = WorldConfig;
