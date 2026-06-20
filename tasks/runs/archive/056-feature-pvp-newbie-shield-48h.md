@@ -1,8 +1,8 @@
 # Run #056 — feature-pvp-newbie-shield-48h
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-20
+> **Terminé** : 2026-06-20
 
 ## Cible
 
@@ -66,24 +66,37 @@ Chaque tâche reste ≤ 5 fichiers.
 
 ## Progress (rempli pendant le run)
 
-_(Vide au démarrage. Mis à jour à chaque transition d'étape ou de tâche.)_
+_(git history)_
 
 ## Décisions prises
 
-_(Vide au démarrage. Décisions archi non triviales, dérogations lead, findings de review, refus de sub-agents.)_
+_(git history)_
 
 ## Rapport final
 
-_(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tickets ouverts, méta-évaluation si applicable.)_
+Garde-fou bouclier débutant livré : guard serveur `CombatService.initiateAttack` (403 `NEWBIE_SHIELD_ACTIVE` entrant + rupture `shieldBrokenAt` sortante, même tx + Outbox `pvp.shield.broken`), helper pur shared `isShieldActive`/`shieldEndsAt`, enrichissement `WorldEntityDto.newbieShield` (carte) + `me/memberships.newbieShield`, CTA grisé + countdown + badge header self. Durée toujours via `WorldConfig.lifecycle.newbieShieldHours` (aucun `48` en dur). Reportés (ticket `task_56e23ad7`) : badge rapport de scout + fiche publique joueur (route inexistante).
 
 ### Acceptance & QA
 
-- **Critères d'acceptance vérifiés** : à remplir à l'étape 10.
-- **Review indépendante** : `Déclenchée (raison : (a) back+front+shared simultanés ; (d) invariant durable — garde-fou PvP qui touche toutes les attaques entrantes/sortantes)`.
-- **Tests automatisés** : unit `shield.test.ts` (shared), unit `combat.service.spec.ts` (extension), smoke `pvp-newbie-shield.smoke.spec.ts`, vitest `SelectedEntityPanel.test.tsx` + `NewbieShieldBadge.test.tsx`.
-- **Smokes ajoutés/modifiés** : `battleforthecrown-backend/test/pvp-newbie-shield.smoke.spec.ts` (à créer) — scénarios curl + SQL : raid PvP entrant bloqué, raid barbare entrant OK, scout entrant OK, attaque sortante rompt, attaque post-rupture autorisée.
-- **QA fonctionnelle agent** : `curl` séquencé sur stack locale (POST attack PvP refusé 403 → SELECT membership.shieldBrokenAt NULL ; POST attack PvP sortante par attaquant sous shield → 200 + shieldBrokenAt posé) + observation event WS via tail Outbox.
-- **Tests IG à faire par le user** : checklist mobile ≤ 5 items — créer un nouveau monde, créer 2 comptes test, vérifier (a) CTA Attaquer grisé + message timer côté attaquant ciblant le défenseur protégé, (b) badge bouclier visible sur fiche cible et bandeau scout, (c) attaque PvP sortante du protégé brise son propre badge en temps réel, (d) attaque barbare ne brise pas le badge, (e) après expiration naturelle, plus de message ni badge.
+- [x] **[SQL]** `shieldBrokenAt DateTime?` ajouté, aucun `shieldEndsAt` — `cat …/20260620102649_add_newbie_shield_broken_at/migration.sql` → `ALTER TABLE "world_membership" ADD COLUMN "shield_broken_at" TIMESTAMPTZ(3);`
+- [x] **[smoke]** Attaque PvP entrante vs défenseur protégé → 403 `NEWBIE_SHIELD_ACTIVE`, 0 Expedition, unités inchangées — `test:smoke:run -- pvp-newbie-shield` cas 1 ✓
+- [x] **[smoke]** Attaque barbare par attaquant sous shield → 200, `shieldBrokenAt` NULL — cas 2 ✓
+- [x] **[smoke]** Attaque PvP sortante par attaquant sous shield → 200 + `shieldBrokenAt` posé (même tx) + ligne `EventOutbox` `pvp.shield.broken` — cas 4 ✓
+- [x] **[smoke]** Scout PvP entrant vs protégé → 200, `shieldBrokenAt` NULL — cas 3 ✓
+- [x] **[smoke]** Attaque PvP entrante post-rupture → 200 — cas 5 ✓
+- [x] **[curl/smoke]** `GET /world/me/memberships` porte `newbieShield {endsAt,brokenAt,active}` — `world.service.getUserMemberships` + smoke `world-membership` (7/7) ✓
+- [~] **[curl]** Fiche publique joueur tierce porte `newbieShield` — **reporté** (aucune route profil public ; état cible exposé via `WorldEntityDto` carte à la place). Ticket `task_56e23ad7`.
+- [x] **[smoke/WS]** Event Outbox `pvp.shield.broken` (chaîne initiateAttack → Outbox → planner `directUser('userId')`) — cas 4 asserte la row ; binding front exhaustif ✓
+- [x] **[grep]** Aucun `48` en dur shield — `grep -rn 48 …/combat …/world | grep -iE shield|newbie` → vide ✓
+- [ ] **[visuel — Kelvin]** CTA `Attaquer` grisé + texte « Joueur protégé — bouclier débutant (HH:MM restantes) » + countdown live (panneau cible)
+- [ ] **[visuel — Kelvin]** Badge bouclier (icône + timer) visible header self + section panneau village
+- [ ] **[visuel — Kelvin]** Perte du dernier village (`villageId=null`) : aucune régression, joueur reste en état éliminé valide
+- **Review indépendante** : `Déclenchée (raison : (a) back+front+shared ; (c) diff >100 lignes ; (d) invariant durable garde-fou PvP)`. Cycle 1 `BLOCK` (prettier smoke + texte CTA + N+1 getConfig) → 3 findings fixés → cycle 2 `GO`.
+- **Tests automatisés** : unit shared `pvp/shield.spec.ts` (5) + pixi `world-types.test.ts` (3) + `ws-bindings.test.ts` (1) ; backend unit 474 ✓ ; pixi 505 ✓ ; `yarn static-check` exit 0.
+- **Smokes** : `Ciblés` — `test:smoke:run -- pvp-newbie-shield world-membership` → 12/12 ✓ (preflight OK). CI PR lance la suite complète.
+- **Smokes ajoutés/modifiés** : `battleforthecrown-backend/test/pvp-newbie-shield.smoke.spec.ts` (5 scénarios curl+SQL+Outbox).
+- **QA fonctionnelle agent** : couverte par le smoke réel (boot app Nest + Postgres `battleforthecrown_smoke`, asserts HTTP + SELECT DB + EventOutbox row).
+- **Tests IG à faire par le user** : checklist mobile — 2 comptes test, vérifier (a) CTA grisé + message timer côté attaquant vs défenseur protégé, (b) badge bouclier header + panneau, (c) attaque PvP sortante du protégé brise son badge en temps réel, (d) attaque barbare ne brise pas, (e) après expiration, plus de message ni badge.
 
 ## Points d'attention (notes du plan)
 

@@ -453,6 +453,7 @@ model WorldMembership {
   role        WorldRole @default(PLAYER)
   joinedAt    DateTime  @default(now()) @map("joined_at") @db.Timestamptz(3)
   lastLoginAt DateTime? @map("last_login_at") @db.Timestamptz(3)
+  shieldBrokenAt DateTime? @map("shield_broken_at") @db.Timestamptz(3)
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   world World @relation(fields: [worldId], references: [id], onDelete: Cascade)

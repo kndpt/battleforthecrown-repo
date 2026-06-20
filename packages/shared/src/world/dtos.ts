@@ -77,6 +77,12 @@ export interface JoinedVillage {
   watchtowerLevel?: number;
 }
 
+export interface NewbieShieldState {
+  endsAt: string;
+  brokenAt: string | null;
+  active: boolean;
+}
+
 export interface WorldMembershipResponse {
   worldId: string;
   worldName: string;
@@ -84,6 +90,7 @@ export interface WorldMembershipResponse {
   joinedAt: string;
   lastLoginAt: string | null;
   villageCount: number;
+  newbieShield?: NewbieShieldState;
 }
 
 export interface WorldSummary {

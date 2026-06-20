@@ -1,6 +1,7 @@
 import request from 'supertest';
 import {
   bootSmokeApp,
+  expireNewbieShield,
   joinWorld,
   registerUser,
   seedSmokeWorld,
@@ -283,6 +284,7 @@ describe('village strategy smoke', () => {
     await ctx.prisma.villageStrategyConfig.create({
       data: { villageId: fortressDefender.village.id, strategy: 'FORTRESS' },
     });
+    await expireNewbieShield(ctx.prisma, world.id);
 
     const balancedReport = await attackPlayer({
       token: balancedAttacker.user.accessToken,

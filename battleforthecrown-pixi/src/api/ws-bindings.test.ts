@@ -29,6 +29,7 @@ import {
   applyVillageAttacked,
   applyVillageConquered,
   applyWorldStatusChanged,
+  applyPvpShieldBroken,
 } from './ws-bindings';
 import { queryKeys } from './queries';
 import { useResourcesStore } from '@/stores/resources';
@@ -1605,5 +1606,26 @@ describe('applyCaravanSent', () => {
     expect(queryClient.getQueryState(queryKeys.activeExpeditions('v-att'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.population('v-att'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
+  });
+});
+
+describe('applyPvpShieldBroken', () => {
+  it('invalidates memberships and world-entities prefix caches', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(['memberships'], []);
+    queryClient.setQueryData(['world-entities'], []);
+
+    applyPvpShieldBroken(
+      {
+        userId: 'user-1',
+        worldId: 'world-1',
+        brokenAt: '2026-06-20T10:00:00.000Z',
+        endsAt: '2026-06-22T00:00:00.000Z',
+      },
+      { queryClient },
+    );
+
+    expect(queryClient.getQueryState(['memberships'])?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(['world-entities'])?.isInvalidated).toBe(true);
   });
 });

@@ -16,6 +16,7 @@ import { BarbarianSeedingCatchupWorker } from './barbarian-seeding-catchup.worke
 import { OnboardingNarrativeTargetService } from './onboarding-narrative-target.service';
 import { VillagePlacementService } from './village-placement.service';
 import { VisionService } from './vision.service';
+import { NewbieShieldService } from './newbie-shield.service';
 import { OnboardingModule } from '../onboarding/onboarding.module';
 
 @Module({
@@ -39,6 +40,7 @@ import { OnboardingModule } from '../onboarding/onboarding.module';
     OnboardingNarrativeTargetService,
     VillagePlacementService,
     VisionService,
+    NewbieShieldService,
   ],
   exports: [
     WorldService,
@@ -49,6 +51,7 @@ import { OnboardingModule } from '../onboarding/onboarding.module';
     OnboardingNarrativeTargetService,
     VillagePlacementService,
     VisionService,
+    NewbieShieldService,
   ],
 })
 export class WorldModule {}

@@ -50,6 +50,7 @@ import { OwnershipService } from '../../common/auth';
 import { PowerService } from '../power/power.service';
 import { ResourcesService } from '../resources/resources.service';
 import { WorldAccessService } from '../world/world-access.service';
+import { NewbieShieldService } from '../world/newbie-shield.service';
 
 export interface GarrisonLineDto {
   villageId: string;
@@ -78,6 +79,7 @@ export class CombatService {
     private readonly outbox: OutboxPublisher,
     private readonly resourcesService: ResourcesService,
     private readonly worldAccess: WorldAccessService,
+    private readonly newbieShield: NewbieShieldService,
     @Inject('PG_BOSS') private readonly boss: PgBoss,
   ) {}
 
@@ -104,6 +106,15 @@ export class CombatService {
         { x: target.x, y: target.y },
         'attack',
       );
+
+      // 3b. Newbie shield: block PvP attack against a protected defender.
+      if (dto.targetKind === 'PLAYER_VILLAGE' && target.userId) {
+        await this.newbieShield.assertCanAttackTarget(
+          target.userId,
+          worldId,
+          tx,
+        );
+      }
 
       // 4. Snapshot kingdom power before the outbound army mutates inventory.
       const attackerKingdomPowerSnapshot =
@@ -161,6 +172,16 @@ export class CombatService {
         targetKind: dto.targetKind,
         arrivalAt: arrivalAt.toISOString(),
       });
+
+      // 8b. Break attacker's newbie shield if active (PvP only).
+      if (dto.targetKind === 'PLAYER_VILLAGE') {
+        await this.newbieShield.breakAttackerShieldIfActive(
+          userId,
+          worldId,
+          tx,
+          now,
+        );
+      }
 
       // 9. Schedule combat resolution worker
       await this.scheduleResolution(expedition.id, arrivalAt);

@@ -1,6 +1,7 @@
 import request from 'supertest';
 import {
   bootSmokeApp,
+  expireNewbieShield,
   joinWorld,
   outboxDispatched,
   registerUser,
@@ -146,7 +147,8 @@ describe('reinforcements smoke', () => {
       data: { level: 1 },
     });
 
-    // Attack B with C
+    // Attack B with C — clear newbie shields so the PvP attack is not blocked.
+    await expireNewbieShield(ctx.prisma, world.id);
     const attackRes = await request(ctx.server)
       .post('/combat/attack')
       .set('Authorization', `Bearer ${userC.accessToken}`)

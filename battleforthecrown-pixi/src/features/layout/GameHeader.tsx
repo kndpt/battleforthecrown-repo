@@ -36,6 +36,7 @@ import {
   profileSheetLabels,
   profileSheetSettings,
 } from './profileSheetData';
+import { NewbieShieldIcon, NewbieShieldTimer } from '@/features/world/NewbieShieldIcon';
 
 interface GameHeaderProps {
   onPowerClick?: () => void;
@@ -293,6 +294,12 @@ export function GameHeader({
                 >
                   <img alt="" className="size-[10px] object-contain" src={publicAsset('/assets/casual-icons/crown.png')} />
                 </span>
+              )}
+              {activeMembership?.newbieShield?.active && (
+                <>
+                  <NewbieShieldIcon endsAt={activeMembership.newbieShield.endsAt} size={18} />
+                  <NewbieShieldTimer endsAt={activeMembership.newbieShield.endsAt} />
+                </>
               )}
             </span>
             <span className="flex max-w-full min-w-0 items-center justify-center gap-1.5 text-[13px] font-bold uppercase tracking-[.04em] text-[#f6d57b] [text-shadow:0_2px_6px_rgba(0,0,0,.9)]">
