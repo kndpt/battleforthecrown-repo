@@ -311,6 +311,9 @@ describe('conquest finalize smoke', () => {
     expect(
       eventPayload['lostVillageVisualTier'] as number,
     ).toBeGreaterThanOrEqual(1);
+    expect(eventPayload['lostVillageVisualTier'] as number).toBeLessThanOrEqual(
+      6,
+    );
 
     // --- Assertion 3 : report enrichi + routing defender ---
     const finalReport = await ctx.prisma.combatReport.findFirstOrThrow({
@@ -329,6 +332,8 @@ describe('conquest finalize smoke', () => {
     )['captureFinalized'];
     expect(captureDetails['conquerorName']).toBe(attacker.displayName);
     expect(typeof captureDetails['visualTier']).toBe('number');
+    expect(captureDetails['visualTier'] as number).toBeGreaterThanOrEqual(1);
+    expect(captureDetails['visualTier'] as number).toBeLessThanOrEqual(6);
 
     // --- Assertion 4 : acquittement readByDefender ---
     const readRes = await request(ctx.server)

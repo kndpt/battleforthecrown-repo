@@ -113,7 +113,7 @@ const VillageConqueredPayloadSchema = z.object({
   newOwnerName: z.string(),
   previousOwnerId: z.string().nullable(),
   previousTier: z.string().nullable(),
-  lostVillageVisualTier: z.number(),
+  lostVillageVisualTier: z.number().int().min(1).max(6),
   x: z.number(),
   y: z.number(),
   buildingsKept: z.number(),

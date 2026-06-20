@@ -28,9 +28,10 @@ export const DefeatModal = ({
   // le scroll de fond tant que la modal est montée.
   useEffect(() => {
     if (!item) return;
+    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = previousOverflow;
     };
   }, [item]);
 

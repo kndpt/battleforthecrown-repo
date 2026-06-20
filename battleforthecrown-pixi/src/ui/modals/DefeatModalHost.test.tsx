@@ -15,6 +15,8 @@ const mocks = vi.hoisted(() => ({
   refetchReports: [] as CombatReportDto[],
 }));
 
+type MarkReadOpts = { onSuccess?: () => void; onError?: (e: unknown) => void };
+
 vi.mock('@/api/queries', () => ({
   useCombatReportsQuery: () => ({
     data: mocks.reports,
@@ -79,6 +81,12 @@ beforeEach(() => {
   mocks.reports = [];
   mocks.refetchReports = [];
   mocks.markRead.mockReset();
+  // Comportement par défaut : le PATCH réussit → onSuccess déclenché (retrait local).
+  mocks.markRead.mockImplementation(
+    (_vars: { reportId: string }, opts?: MarkReadOpts) => {
+      opts?.onSuccess?.();
+    },
+  );
   mocks.navigateToWorldMapFocus.mockReset();
   useUiStore.getState().clearDefeatItems();
   useWorldMapStore.getState().setPendingFocus(null);
@@ -118,7 +126,10 @@ describe('DefeatModalHost', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Valider' }));
 
     await waitFor(() => {
-      expect(mocks.markRead).toHaveBeenCalledWith({ reportId: 'report-defeat-001' });
+      expect(mocks.markRead).toHaveBeenCalledWith(
+        { reportId: 'report-defeat-001' },
+        expect.objectContaining({ onSuccess: expect.any(Function) }),
+      );
     });
 
     await waitFor(() => {
@@ -215,10 +226,37 @@ describe('DefeatModalHost', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Valider' }));
 
     await waitFor(() => {
-      expect(mocks.markRead).toHaveBeenCalledWith({ reportId: 'report-defeat-001' });
+      expect(mocks.markRead).toHaveBeenCalledWith(
+        { reportId: 'report-defeat-001' },
+        expect.objectContaining({ onSuccess: expect.any(Function) }),
+      );
     });
     await waitFor(() => {
       expect(useUiStore.getState().defeatItems).toHaveLength(0);
     });
+  });
+
+  it('(e) échec serveur du markRead : l\'item reste présent (pas de retrait local silencieux)', async () => {
+    mocks.reports = [defeatReport];
+    // Le PATCH échoue : onSuccess n'est jamais appelé → l'item ne doit PAS être retiré.
+    mocks.markRead.mockImplementation(
+      (_vars: { reportId: string }, opts?: MarkReadOpts) => {
+        opts?.onError?.(new Error('network'));
+      },
+    );
+
+    render(
+      <MemoryRouter>
+        <DefeatModalHost />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Valider' }));
+
+    await waitFor(() => {
+      expect(mocks.markRead).toHaveBeenCalled();
+    });
+    // L'acquittement serveur a échoué → l'item est conservé pour réessai.
+    expect(useUiStore.getState().defeatItems).toHaveLength(1);
   });
 });

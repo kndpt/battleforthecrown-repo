@@ -71,10 +71,20 @@ export const DefeatModalHost = () => {
             r.defenderVillageId === item.villageId),
       )?.id;
     }
-    if (reportId) {
-      markRead.mutate({ reportId });
-    }
-    acknowledgeDefeatItem(item.villageId);
+    // Acquittement serveur-authoritatif : on ne retire l'item localement
+    // qu'APRÈS confirmation du PATCH. Si le report reste introuvable ou si le
+    // serveur échoue, l'item est conservé pour réessai — sinon la modal
+    // réapparaîtrait au prochain boot (report toujours non lu) alors qu'elle a
+    // disparu côté client (divergence silencieuse).
+    if (!reportId) return;
+    markRead.mutate(
+      { reportId },
+      {
+        onSuccess: () => {
+          acknowledgeDefeatItem(item.villageId);
+        },
+      },
+    );
   };
 
   const handleViewVillage = (item: DefeatModalItem) => {
