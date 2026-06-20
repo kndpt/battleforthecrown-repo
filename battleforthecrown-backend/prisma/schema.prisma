@@ -158,32 +158,33 @@ model World {
 }
 
 model Village {
-  id                         String        @id @default(cuid())
-  worldId                    String        @map("world_id")
-  userId                     String?       @map("user_id")
+  id                         String            @id @default(cuid())
+  worldId                    String            @map("world_id")
+  userId                     String?           @map("user_id")
   name                       String
   x                          Int
   y                          Int
-  isBarbarian                Boolean       @default(false) @map("is_barbarian")
+  isBarbarian                Boolean           @default(false) @map("is_barbarian")
   originKind                 VillageOriginKind @default(STANDARD) @map("origin_kind")
   tier                       String?
   label                      VillageLabel?
-  barbarianTroopsLastRegenTs DateTime?     @map("barbarian_troops_last_regen_ts") @db.Timestamptz(3)
-  conqueredAt                DateTime?     @map("conquered_at") @db.Timestamptz(3)
-  createdAt                  DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  barbarianTroopsLastRegenTs DateTime?         @map("barbarian_troops_last_regen_ts") @db.Timestamptz(3)
+  conqueredAt                DateTime?         @map("conquered_at") @db.Timestamptz(3)
+  createdAt                  DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  world                  World                  @relation(fields: [worldId], references: [id], onDelete: Cascade)
-  user                   User?                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  buildings              Building[]
-  resourceStock          ResourceStock?
-  population             Population?
-  unitInventory          UnitInventory[]
-  unitTraining           UnitTraining[]
-  strategyConfig         VillageStrategyConfig?
-  garrisons              Garrison[]             @relation("VillageGarrison")
-  sentReinforcements     Garrison[]             @relation("OriginVillageGarrison")
-  pendingConquestAttacks PendingConquest[]      @relation("PendingConquestAttacker")
-  pendingConquestTargets PendingConquest[]      @relation("PendingConquestTarget")
+  world                     World                  @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  user                      User?                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  buildings                 Building[]
+  resourceStock             ResourceStock?
+  population                Population?
+  unitInventory             UnitInventory[]
+  unitTraining              UnitTraining[]
+  strategyConfig            VillageStrategyConfig?
+  garrisons                 Garrison[]             @relation("VillageGarrison")
+  sentReinforcements        Garrison[]             @relation("OriginVillageGarrison")
+  pendingConquestAttacks    PendingConquest[]      @relation("PendingConquestAttacker")
+  pendingConquestTargets    PendingConquest[]      @relation("PendingConquestTarget")
+  onboardingNarrativeTarget OnboardingState?       @relation("OnboardingNarrativeTarget")
 
   @@unique([worldId, x, y])
   @@index([userId])
@@ -391,22 +392,23 @@ model DailyOyez {
 }
 
 model OnboardingState {
-  id                        String           @id @default(cuid())
-  userId                    String           @map("user_id")
-  worldId                   String           @map("world_id")
-  firstVillageId            String           @map("first_village_id")
-  narrativeTargetVillageId  String?          @unique @map("narrative_target_village_id")
-  status                    OnboardingStatus @default(ACTIVE)
-  currentStep               OnboardingStep   @default(UPGRADE_CASTLE_LEVEL_2) @map("current_step")
-  initialRewardApplied      Boolean          @default(false) @map("initial_reward_applied")
-  initialRewardAppliedAt    DateTime?        @map("initial_reward_applied_at") @db.Timestamptz(3)
-  completedAt               DateTime?        @map("completed_at") @db.Timestamptz(3)
-  createdAt                 DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt                 DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  id                       String           @id @default(cuid())
+  userId                   String           @map("user_id")
+  worldId                  String           @map("world_id")
+  firstVillageId           String           @map("first_village_id")
+  narrativeTargetVillageId String?          @unique @map("narrative_target_village_id")
+  status                   OnboardingStatus @default(ACTIVE)
+  currentStep              OnboardingStep   @default(UPGRADE_CASTLE_LEVEL_2) @map("current_step")
+  initialRewardApplied     Boolean          @default(false) @map("initial_reward_applied")
+  initialRewardAppliedAt   DateTime?        @map("initial_reward_applied_at") @db.Timestamptz(3)
+  completedAt              DateTime?        @map("completed_at") @db.Timestamptz(3)
+  createdAt                DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt                DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  user  User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  world World                    @relation(fields: [worldId], references: [id], onDelete: Cascade)
-  steps OnboardingStepProgress[]
+  user                   User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  world                  World                    @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  narrativeTargetVillage Village?                 @relation("OnboardingNarrativeTarget", fields: [narrativeTargetVillageId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  steps                  OnboardingStepProgress[]
 
   @@unique([userId, worldId])
   @@index([worldId, status])
