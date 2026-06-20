@@ -380,6 +380,7 @@ model DailyCardProgressEvent {
 model DailyOyez {
   id          String   @id @default(cuid())
   worldId     String   @map("world_id")
+  dayKey      String?  @map("day_key")
   title       String
   description String
   theme       String
@@ -387,6 +388,7 @@ model DailyOyez {
   endsAt      DateTime @map("ends_at") @db.Timestamptz(3)
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
+  @@unique([worldId, dayKey])
   @@index([worldId, startsAt, endsAt])
   @@map("daily_oyez")
 }

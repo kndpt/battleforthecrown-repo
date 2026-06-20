@@ -61,7 +61,7 @@ const summary: RetentionSummaryDto = {
     endsAt: "2026-05-16T02:00:00.000Z",
     id: "oyez-1",
     startsAt: "2026-05-15T02:00:00.000Z",
-    theme: "SCOUTING",
+    theme: "WATCH",
     title: "Oeil du Guet",
     worldId: "w1",
   },

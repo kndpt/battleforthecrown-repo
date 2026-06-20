@@ -3,6 +3,7 @@ import {
   DEFAULT_BARBARIAN_SEEDING_PLAN,
   DEFAULT_WORLD_IDENTITY_CONFIG,
   DEFAULT_WORLD_LIFECYCLE_CONFIG,
+  DEFAULT_WORLD_OYEZ_CONFIG,
   DEFAULT_PLAYER_VILLAGE_PLACEMENT_PLAN,
 } from '@battleforthecrown/shared/world';
 import { DEFAULT_COMBAT_RULES } from '@battleforthecrown/shared/combat';
@@ -50,6 +51,7 @@ const BASE_COMBAT_CONFIG: CombatConfig = {
   barbarianSeeding: DEFAULT_BARBARIAN_SEEDING_PLAN,
   playerVillagePlacement: DEFAULT_PLAYER_VILLAGE_PLACEMENT_PLAN,
   fogOfWar: { enabled: false },
+  oyez: DEFAULT_WORLD_OYEZ_CONFIG,
   _distance: 14,
   _travelTime: 14000,
 };

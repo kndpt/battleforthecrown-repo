@@ -47,6 +47,7 @@ src/
     ├── training.worker.ts
     ├── crown-production.worker.ts
     ├── world-lifecycle.worker.ts
+    ├── oyez.worker.ts            # cron 04:00 Europe/Paris → OyezProducerService (mondes OPEN)
     └── outbox.worker.ts
 ```
 

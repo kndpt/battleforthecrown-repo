@@ -16,12 +16,15 @@ import type { EventKind, PayloadForKind } from '../event/event-types';
 import { createOutboxEvent } from '../event/event.utils';
 import { ResourcesService } from '../resources/resources.service';
 import { getDailyCardScaling } from './retention-scaling';
-import type {
-  ClaimDailyCardResponse,
-  DailyCardDto,
-  DailyCardTaskDto,
-  DailyOyezDto,
-  RetentionSummaryDto,
+import { getOyezThematicTask } from './retention-oyez';
+import {
+  isOyezTheme,
+  type ClaimDailyCardResponse,
+  type DailyCardDto,
+  type DailyCardTaskDto,
+  type DailyOyezDto,
+  type OyezTheme,
+  type RetentionSummaryDto,
 } from '@battleforthecrown/shared/retention';
 import {
   type CastleLevelReader,
@@ -90,7 +93,7 @@ export class RetentionService {
       claimableCount: cards.filter((card) => card.status === 'CLAIMABLE')
         .length,
       defaultRewardVillageId: latestClaim?.rewardVillageId ?? null,
-      oyez: oyez ? mapOyez(oyez) : null,
+      oyez: oyez && isOyezTheme(oyez.theme) ? mapOyez(oyez, oyez.theme) : null,
       cards: cards.map(mapCard),
     };
   }
@@ -221,10 +224,12 @@ export class RetentionService {
     if (existing) return;
 
     try {
+      const oyezTheme = await this.resolveActiveOyezTheme(this.prisma, worldId);
       const cardData = await this.buildDailyCardPayload(
         this.prisma,
         userId,
         worldId,
+        oyezTheme,
       );
       await this.prisma.dailyCard.create({
         data: { userId, worldId, dayKey, ...cardData },
@@ -240,9 +245,12 @@ export class RetentionService {
     }
   }
 
-  private getActiveOyez(worldId: string) {
-    const now = new Date();
-    return this.prisma.dailyOyez.findFirst({
+  private getActiveOyez(
+    worldId: string,
+    client: Prisma.TransactionClient = this.prisma,
+    now: Date = new Date(),
+  ) {
+    return client.dailyOyez.findFirst({
       where: {
         worldId,
         startsAt: { lte: now },
@@ -250,6 +258,14 @@ export class RetentionService {
       },
       orderBy: { startsAt: 'desc' },
     });
+  }
+
+  private async resolveActiveOyezTheme(
+    client: Prisma.TransactionClient,
+    worldId: string,
+  ): Promise<OyezTheme | null> {
+    const oyez = await this.getActiveOyez(worldId, client);
+    return oyez && isOyezTheme(oyez.theme) ? oyez.theme : null;
   }
 
   private async progressOldestMatchingTask(
@@ -366,7 +382,13 @@ export class RetentionService {
     worldId: string,
     dayKey: string,
   ): Promise<void> {
-    const cardData = await this.buildDailyCardPayload(tx, userId, worldId);
+    const oyezTheme = await this.resolveActiveOyezTheme(tx, worldId);
+    const cardData = await this.buildDailyCardPayload(
+      tx,
+      userId,
+      worldId,
+      oyezTheme,
+    );
     await tx.dailyCard.upsert({
       where: { userId_worldId_dayKey: { userId, worldId, dayKey } },
       update: {},
@@ -379,16 +401,23 @@ export class RetentionService {
     reader: CastleLevelReader,
     userId: string,
     worldId: string,
+    oyezTheme: OyezTheme | null,
   ) {
     const scaling = getDailyCardScaling(
       await getPlayerMaxCastleLevel(reader, userId, worldId),
     );
+    // Reward stays computed from the 3 natural scaling tasks only; the thematic
+    // task carries rewardWeight 0 so an active Oyez never stacks a reward bonus
+    // (run 046 #9). Card = 4 tasks under Oyez, 3 otherwise.
+    const tasks = oyezTheme
+      ? [...scaling.tasks, getOyezThematicTask(oyezTheme)]
+      : scaling.tasks;
     return {
       rewardWood: scaling.reward.wood,
       rewardStone: scaling.reward.stone,
       rewardIron: scaling.reward.iron,
       tasks: {
-        create: scaling.tasks.map((task) => ({
+        create: tasks.map((task) => ({
           type: task.type,
           label: task.label,
           target: task.target,
@@ -483,21 +512,23 @@ function mapCard(card: CardWithTasks): DailyCardDto {
   };
 }
 
-function mapOyez(oyez: {
-  id: string;
-  worldId: string;
-  title: string;
-  description: string;
-  theme: string;
-  startsAt: Date;
-  endsAt: Date;
-}): DailyOyezDto {
+function mapOyez(
+  oyez: {
+    id: string;
+    worldId: string;
+    title: string;
+    description: string;
+    startsAt: Date;
+    endsAt: Date;
+  },
+  theme: OyezTheme,
+): DailyOyezDto {
   return {
     id: oyez.id,
     worldId: oyez.worldId,
     title: oyez.title,
     description: oyez.description,
-    theme: oyez.theme,
+    theme,
     startsAt: oyez.startsAt.toISOString(),
     endsAt: oyez.endsAt.toISOString(),
   };

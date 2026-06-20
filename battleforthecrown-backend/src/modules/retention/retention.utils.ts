@@ -8,6 +8,8 @@ import type {
   BuildingCompletedPayload,
   EventKind,
   PayloadForKind,
+  ReinforcementSentPayload,
+  ScoutReportedPayload,
   UnitTrainedPayload,
 } from '../event/event-types';
 import {
@@ -65,6 +67,24 @@ export function getTaskProjection<K extends EventKind>(
             targetTier: eventPayload.targetTier ?? null,
           }
         : null;
+    }
+    case 'scout.reported': {
+      const eventPayload = payload as ScoutReportedPayload;
+      return {
+        villageId: eventPayload.villageId,
+        type: 'SCOUT_TARGET',
+        completedQty: 1,
+        targetTier: null,
+      };
+    }
+    case 'reinforcement.sent': {
+      const eventPayload = payload as ReinforcementSentPayload;
+      return {
+        villageId: eventPayload.villageId,
+        type: 'SEND_REINFORCEMENT',
+        completedQty: 1,
+        targetTier: null,
+      };
     }
     default:
       return null;

@@ -93,20 +93,26 @@ Préférer :
 
 L'Oyez est le **contexte monde** : un signal partagé qui oriente légèrement la méta pendant une courte période.
 
-| Élément         | Règle cible                                                 |
-| --------------- | ----------------------------------------------------------- |
-| Actif simultané | 1 seul Oyez                                                 |
-| Cadence         | À tester : 1 à 2 par semaine, ou plus rare                  |
-| Début           | 04:00 Europe/Paris                                          |
-| Effet           | Léger, lisible, non cumulatif avec même catégorie           |
-| Rôle principal  | Influencer les cartes quotidiennes et la priorité du moment |
+| Élément         | Règle cible                                                                                   |
+| --------------- | -------------------------------------------------------------------------------------------- |
+| Actif simultané | 1 seul Oyez (garanti DB : index unique `daily_oyez(world_id, day_key)`, durée < 24 h)         |
+| Cadence         | ~2 par semaine par défaut, configurable via `WorldConfig.oyez.weeklyCadence` (0–7)            |
+| Début           | 04:00 Europe/Paris (worker pg-boss `retention:oyez`, cron `0 4 * * *`)                        |
+| Durée           | `WorldConfig.oyez.defaultDurationHours` (défaut 18 h)                                          |
+| Effet           | Léger, lisible, non cumulatif avec même catégorie                                            |
+| Rôle principal  | Influencer les cartes quotidiennes et la priorité du moment                                  |
+
+La production runtime est automatique et **idempotente** : un planning déterministe (`seed(worldId, semaine ISO)`) tire exactement `weeklyCadence` jours d'Oyez par semaine et par monde, et choisit le thème du jour. Seuls les mondes `OPEN` sont concernés.
 
 ### Interaction avec les cartes
 
-Un Oyez peut :
+Sous Oyez actif, la **carte du jour passe à 4 tâches** : les 3 tâches naturelles du scaling + 1 tâche thématique cohérente avec le thème. Sans Oyez, la carte reste à 3 tâches.
+
+La tâche thématique suit les mêmes règles de récompense que les 3 naturelles : **aucun bonus de récompense empilable** (la récompense ressources reste calculée sur les 3 tâches naturelles et plafonnée à 12 %/jour selon le scaling). Voir le garde-fou [run 046 #9](../../tasks/runs/archive/046-refactor-royal-duty-light-fomo.md) : l'Oyez reste une variation douce.
+
+Un Oyez peut donc :
 
 - ajouter 1 tâche thématique à la carte du jour ;
-- augmenter légèrement la probabilité de certaines tâches ;
 - proposer un choix de récompense cohérent ;
 - donner une direction commune au monde.
 
@@ -114,12 +120,14 @@ Il ne doit pas rendre les cartes obligatoires ni créer un avantage massif pour 
 
 ### Exemples
 
-| Oyez                | Effet léger                       | Carte associée                                 |
-| ------------------- | --------------------------------- | ---------------------------------------------- |
-| Jour des bâtisseurs | Construction légèrement favorisée | Lancer / finir des upgrades                    |
-| Marche forcée       | Expéditions légèrement favorisées | Envoyer une armée, rappeler, lire un retour    |
-| Oeil du Guet        | Exploration favorisée             | Scout, Watchtower, carte                       |
-| Jour des barbares   | PVM favorisé                      | Raids barbares, scout barbare, préparation PVM |
+Le catalogue runtime expose exactement **4 thèmes**, chacun mappé sur un event métier déjà consommé par les daily cards :
+
+| Thème (`OyezTheme`) | Oyez                | Tâche thématique ajoutée   | Event métier      |
+| ------------------- | ------------------- | -------------------------- | ----------------- |
+| `BUILDERS`          | Jour des bâtisseurs | Terminer une construction  | `building.completed` |
+| `MARCH`             | Marche forcée       | Envoyer un renfort         | `reinforcement.sent` |
+| `WATCH`             | Oeil du Guet        | Scouter une cible          | `scout.reported`     |
+| `BARBARIANS`        | Jour des barbares   | Vaincre un village barbare | `battle.resolved` (cible barbare) |
 
 ## UX attendue
 
@@ -147,6 +155,6 @@ Le joueur doit comprendre en une lecture : quoi faire, pourquoi maintenant, ce q
 
 - Faut-il réintroduire plus tard une grâce payante ou sociale pour les très longues absences ? Hors scope MVP.
 - Récompense fixe ou choix à la fin de la carte ?
-- Oyez cadence hebdo ou semi-hebdo ?
+- ~~Oyez cadence hebdo ou semi-hebdo ?~~ Tranché (run #057) : ~2/semaine par défaut, configurable `WorldConfig.oyez.weeklyCadence`.
 - Les cartes peuvent-elles cibler des sites d'exploitation quand cette feature existe ?
 - Les cartes sont-elles par monde uniquement ? Reco actuelle : oui.
