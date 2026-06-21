@@ -9,7 +9,7 @@
 - **Phase roadmap** : Phase 11 — World lifecycle (complément Phase 11 / lifecycle dérivé, après run 032 + run 033 + run 042)
 - **Spec source** : [`docs/gameplay/19-world-lifecycle.md` § Bascule cohorte principale → retardataires](../../docs/gameplay/19-world-lifecycle.md)
 - **Type** : feature
-- **Modules** : backend `world.controller.ts` (DTO `freshAlternativeWorldId`) | shared `world/lifecycle.ts` (helpers purs `formatWorldLaunchAgeFr` + `pickFreshAlternativeWorld`) | frontend `features/worlds/worldsViewModel.ts` + `features/design-system/worlds/WorldsSelectionDesign.tsx` (bandeau + CTA "Rejoindre plutôt un monde plus frais")
+- **Modules** : shared `world/lifecycle.ts` (helpers purs `formatWorldLaunchAgeFr` + `pickFreshAlternativeWorld` — aucun changement backend requis, `pickFreshAlternativeWorld` calcule la cible côté client à partir du `PublicWorld[]` existant) | frontend `features/worlds/worldsViewModel.ts` + `features/design-system/worlds/WorldsSelectionDesign.tsx` (bandeau + CTA "Rejoindre plutôt un monde plus frais")
 
 ## Dépendances
 
@@ -43,7 +43,7 @@
 _(Lead étape 3 — tâches ≤5 fichiers)_
 
 - **T1 — Helpers purs shared** : ajouter `formatWorldLaunchAgeFr` + `pickFreshAlternativeWorld` dans `packages/shared/src/world/lifecycle.ts` + export via `index.ts` + tests vitest. Sources de vérité MVP FR.
-- **T2 — Backend DTO enrichi** : `GET /worlds/public` retourne déjà la liste complète des mondes ; un consommateur calcule lui-même `freshAlternativeWorldId` côté front via le helper shared. Donc **pas de change backend obligatoire** — à confirmer en exécution. Garder le scope T2 pour : décision finale + smoke `worlds-public.smoke.spec.ts` non régressé.
+- **T2 — Confirmation pas-de-change-backend** : `GET /worlds/public` retourne déjà la liste complète des mondes ; le consommateur calcule lui-même `freshAlternativeWorldId` côté front via le helper shared. Aucun ajout DTO requis. Garder le scope T2 pour : confirmation explicite à l'exécution + check rapide que `worlds-public.smoke.spec.ts` reste vert après les ajouts shared.
 - **T3 — Viewmodel front** : étendre `WorldCardViewModel` (`worldsViewModel.ts`) avec `launchAgeLabel: string | null` + `freshAlternativeWorldId: string | null`. Calcul via helpers shared. Tests `worldsViewModel.test.ts`.
 - **T4 — UI bandeau + CTA secondaire** : `WorldsSelectionDesign.tsx` rend bandeau « Lancé il y a {N} j » sur card `late` + CTA secondaire « Rejoindre plutôt un monde plus frais » câblé sur `onSelectFreshAlternative(worldId)`. Style aligné palette gold/late existante.
 - **T5 — Tests UI + static-check** : test rendu composant (3 scénarios), `yarn static-check`, vérification regression existante `WorldsSelectionDesign.test.tsx`.
@@ -63,7 +63,7 @@ _(Vide au démarrage.)_
 ### Acceptance & QA
 
 - [ ] _(rempli à l'exécution)_
-- **Review indépendante** : oui si diff > 100 lignes ou si T2 change le DTO public (back + front + spec) — à trancher en étape 5 du run. Sinon GO direct.
+- **Review indépendante** : oui si diff > 100 lignes (probable étant donné helpers shared + UI). Pas de back + front simultané attendu (UI-only + helpers shared purs). À trancher en étape 5 du run.
 - **Tests automatisés** : vitest helpers shared (`lifecycle.spec.ts`), vitest viewmodel (`worldsViewModel.test.ts`), vitest UI (`WorldsSelectionDesign.test.tsx`), `static-check`.
 - **Tests IG user** : checklist Kelvin (Cursor cloud) — vérifier (a) en monde `main` pur : aucun bandeau ; (b) en monde `late` avec un `main` dispo : bandeau visible + CTA secondaire fonctionnel ; (c) en monde `late` sans `main` : bandeau seul.
 
