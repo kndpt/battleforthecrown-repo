@@ -47,7 +47,7 @@ export interface BattleResolvedPayload {
    * backward compat with reports replayed from before the onboarding
    * narrative target was introduced.
    */
-  targetOriginKind?: 'STANDARD' | 'ONBOARDING_NARRATIVE';
+  targetOriginKind?: "STANDARD" | "ONBOARDING_NARRATIVE";
   targetX: number;
   targetY: number;
   isVictory: boolean;
@@ -285,6 +285,12 @@ export interface RankingsChangedPayload {
   occurredAt: string;
 }
 
+export interface IntelUpdatedPayload {
+  userId: string;
+  worldId: string;
+  villageId: string;
+}
+
 export type OutboxEventPayload =
   | { kind: "building.completed"; payload: BuildingCompletedPayload }
   | { kind: "unit.training.completed"; payload: UnitTrainingCompletedPayload }
@@ -325,7 +331,8 @@ export type OutboxEventPayload =
   | { kind: "crowns.changed"; payload: CrownsChangedPayload }
   | { kind: "rankings.changed"; payload: RankingsChangedPayload }
   | { kind: "world.status.changed"; payload: WorldStatusChangedPayload }
-  | { kind: "pvp.shield.broken"; payload: PvpShieldBrokenPayload };
+  | { kind: "pvp.shield.broken"; payload: PvpShieldBrokenPayload }
+  | { kind: "intel.updated"; payload: IntelUpdatedPayload };
 
 export type EventKind = OutboxEventPayload["kind"];
 
@@ -365,7 +372,8 @@ export type AnyEventPayload =
   | CrownsChangedPayload
   | RankingsChangedPayload
   | WorldStatusChangedPayload
-  | PvpShieldBrokenPayload;
+  | PvpShieldBrokenPayload
+  | IntelUpdatedPayload;
 
 export interface ServerEvents {
   "resources.changed": ResourcesChangedPayload;
@@ -399,6 +407,7 @@ export interface ServerEvents {
   "garrison.added": GarrisonAddedPayload;
   "world.status.changed": WorldStatusChangedPayload;
   "pvp.shield.broken": PvpShieldBrokenPayload;
+  "intel.updated": IntelUpdatedPayload;
 }
 
 export type ServerEventName = keyof ServerEvents;

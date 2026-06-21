@@ -1,4 +1,4 @@
-import { Assets, Container, Graphics, Sprite, Text, Texture, type Application, type FederatedPointerEvent } from 'pixi.js';
+import { Assets, Container, Graphics, Point, Sprite, Text, Texture, type Application, type FederatedPointerEvent } from 'pixi.js';
 import { Viewport } from 'pixi-viewport';
 import type { PixiScene } from './SceneManager';
 import { villageSpriteAliasForEntity, type MapEntity } from '@/api/world-types';
@@ -10,6 +10,7 @@ import { createExpeditionVisual, type ExpeditionVisualHandle } from '@/pixi/enti
 import { createBlipSprite, type BlipSpriteHandle } from '@/pixi/entities/BlipSprite';
 import { createShieldDome, type ShieldDomeHandle } from '@/pixi/entities/ShieldDome';
 import { isMapBackgroundTap } from './worldMapBackgroundTap';
+import { computeFocusCenter } from './focusCamera';
 
 export interface WorldMapOptions {
   gridWidth: number;
@@ -119,6 +120,13 @@ export interface WorldMapHandle {
   reconcileExpeditions: (expeditions: ExpeditionSnapshot[]) => void;
   setSelected: (entityId: string | null) => void;
   centerOn: (worldX: number, worldY: number) => void;
+  /** Pan (animé) pour caler un point monde sous une ancre écran précise. */
+  focusOn: (
+    worldX: number,
+    worldY: number,
+    screenAnchor?: { x: number; y: number },
+    animated?: boolean,
+  ) => void;
   onCameraChange: (callback: (camera: WorldMapCameraSnapshot) => void) => () => void;
   /** Update the active village halo and authoritative vision disks. */
   setVision: (
@@ -749,6 +757,42 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     scheduleCameraChange();
   };
 
+  // Pan (animé par défaut) pour amener un point monde sous une ancre écran
+  // précise — au lieu de le centrer. `screenAnchor` est en pixels écran (même
+  // espace que `worldToScreen`). Utilisé pour caler le village sélectionné sous
+  // le bec du panneau fixe.
+  const focusOn = (
+    worldX: number,
+    worldY: number,
+    screenAnchor?: { x: number; y: number },
+    animated = true,
+  ) => {
+    const { px, py } = tileToWorld(worldX, worldY);
+    // Math pure extraite dans `computeFocusCenter` (testée) : conversion ancre
+    // fenêtre → repère canvas + calcul du centre de viewport cible.
+    const canvasRect = app.canvas.getBoundingClientRect();
+    const { x: targetX, y: targetY } = computeFocusCenter({
+      worldX: px,
+      worldY: py,
+      scale: viewport.scale.x || 1,
+      screenWidth: app.screen.width,
+      screenHeight: app.screen.height,
+      canvasRect,
+      screenAnchor,
+    });
+    if (animated) {
+      viewport.animate({
+        position: new Point(targetX, targetY),
+        time: 480,
+        ease: 'easeInOutSine',
+        removeOnInterrupt: true,
+      });
+    } else {
+      viewport.moveCenter(targetX, targetY);
+    }
+    scheduleCameraChange();
+  };
+
   const onCameraChange = (callback: (camera: WorldMapCameraSnapshot) => void) => {
     cameraListeners.add(callback);
     callback(readCamera());
@@ -800,5 +844,5 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     },
   };
 
-  return { scene, reconcile, reconcileExpeditions, setSelected, centerOn, onCameraChange, setVision, worldToScreen };
+  return { scene, reconcile, reconcileExpeditions, setSelected, centerOn, focusOn, onCameraChange, setVision, worldToScreen };
 }

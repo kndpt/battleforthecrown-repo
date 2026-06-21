@@ -1,8 +1,8 @@
 # Run #055 — feature-intel-notebook
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-20
+> **Terminé** : 2026-06-20
 
 ## Cible
 
@@ -56,24 +56,35 @@ Chaque tâche reste ≤ 5 fichiers.
 
 ## Progress (rempli pendant le run)
 
-_(Vide au démarrage. Mis à jour à chaque transition d'étape ou de tâche.)_
+_(git history)_
 
 ## Décisions prises
 
-_(Vide au démarrage. Décisions archi non triviales, dérogations lead, findings de review, refus de sub-agents.)_
+_(git history — synthèse durable dans `docs/architecture/data-model.md` § Combat `VillageIntel` et `docs/architecture/realtime.md` § `intel.updated`.)_
 
 ## Rapport final
 
-_(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tickets ouverts, méta-évaluation si applicable.)_
+Carnet d'intel MVP livré bout-en-bout : table `VillageIntel` (upsert privé par observateur, sémantique par-champ « si révélé »), endpoint `GET /worlds/:worldId/intel/:villageId`, producteurs scout + combat-win dans `CombatWorker`, event WS `intel.updated` (privé à l'observateur), et section « Dernière intel » + CTA rapport source dans `SelectedEntityPanel`. Review indépendante : BLOCK cycle 1 (combat écrasait wall/style du scout) → fix par-champ + régression smoke → GO cycle 2.
 
 ### Acceptance & QA
 
-- **Critères d'acceptance vérifiés** : à remplir à l'étape 10.
-- **Review indépendante** : `Déclenchée (raison : (a) back+front simultanés, (c) diff estimé > 100 lignes, (d) invariant durable — table privée par utilisateur, source de vérité pour la future Menace estimée)`.
-- **Tests automatisés** : unit `intel.service.spec.ts`, smoke `intel.smoke.spec.ts`, vitest `intelView.test.ts`.
-- **Smokes ajoutés/modifiés** : `battleforthecrown-backend/test/intel.smoke.spec.ts` (à créer) — scénario scout → GET intel ; combat victorieux → upsert ; combat perdu → pas d'upsert.
-- **QA fonctionnelle agent** : `curl` séquencé sur stack locale (POST scout → finalize via worker → GET intel ; POST attaque → resolve → GET intel) + `SELECT` sur `village_intel` pour vérifier unicité et `seenAt`.
-- **Tests IG à faire par le user** : checklist mobile ≤ 5 items — ouvrir panneau d'entité d'un village scouté (Dernière intel visible + âge), d'un village attaqué+gagné (Dernière intel mise à jour, source = combat), et d'un village jamais observé (`Aucune intel`).
+- **Critères d'acceptance vérifiés** :
+  - [x] GET intel 200 + dernier snapshot après scout — `yarn workspace battleforthecrown-backend test:smoke:run -- intel.smoke.spec.ts` → 8/8 (scénario scout→GET)
+  - [x] Combat gagné → `seenAt` maj + `sourceKind=COMBAT_WIN` + `sourceReportId`=CombatReport — `intel.smoke.spec.ts` (scénario combat-win)
+  - [x] Combat perdu / occupation défensive → pas d'upsert — `intel.smoke.spec.ts` (régression : garde `isVictory && !occupationDefense`)
+  - [x] GET cible jamais observée → réponse binaire stable **200 + `null`** (tranché T1) — `intel.smoke.spec.ts` + front `client.ts` (body vide→null) + `queries.ts` (`?? null`)
+  - [x] Unique `(userId, worldId, targetVillageId)` ; double scout = upsert — `intel.smoke.spec.ts` (`villageIntel.count`==1, `seenAt` croissant) + migration `@@unique`
+  - [x] Event `intel.updated` même tx, payload `{userId,worldId,villageId}` — `intel.smoke.spec.ts` (`eventOutbox.findFirst kind='intel.updated'`)
+  - [x] Aucun Prisma `villageIntel` depuis un controller — `rg "villageIntel" battleforthecrown-backend/src/modules/intel/intel.controller.ts` → 0 match (controller délègue au service)
+  - [ ] **Visuel** panneau « Dernière intel » (armée/stock/rempart/style + âge) ou « Aucune intel » — IG Kelvin
+  - [ ] **Visuel** CTA « Voir rapport source » ouvre `ReportDetailModal` du scout/combat sourceur — IG Kelvin
+  - [x] Vitest `intelView` âge mn/h/j — `yarn workspace battleforthecrown-pixi test -- intelView` → vert (bascules 60mn=1h, 24h=1j)
+- **Review indépendante** : `Déclenchée (raison : (a) back+front, (c) diff > 100 lignes, (d) invariant durable VillageIntel)` → cycle 1 `BLOCK` (1 majeur : COMBAT_WIN écrasait wall/style) → findings résolus (update par-champ + régression smoke) → cycle 2 `GO`.
+- **Tests automatisés** : `yarn static-check` → vert (shared+back+pixi). `yarn workspace battleforthecrown-pixi test -- intelView SelectedEntityPanel client` → 29/29.
+- **Smokes lancés** : `test:smoke:preflight` + `test:smoke:run -- intel.smoke.spec.ts` → **8/8** (Ciblés ; diff backend `src/` localisé intel + hooks combat, pas transversal).
+- **Smokes ajoutés/modifiés** : `battleforthecrown-backend/test/intel.smoke.spec.ts` (créé) — scout→GET, never-observed→null, double scout=1 row, combat-win→COMBAT_WIN, combat-perdu→pas d'upsert (+ intel scout préalable inchangée), outbox `intel.updated`, et régression scout(wall+style)→combat-win conserve wall/style.
+- **QA fonctionnelle agent** : couverte par le smoke (worker scout + worker combat réels + GET HTTP + `eventOutbox`/`villageIntel` DB). Pas de curl manuel séparé — le smoke exécute le triptyque bout-en-bout.
+- **Tests IG à faire par le user** : 1) village ennemi **scouté** → panneau « Dernière intel » avec armée/stock/rempart/style + âge ; 2) village **attaqué & gagné** → intel maj, CTA ouvre le rapport combat ; 3) village **jamais observé** → « Aucune intel ».
 
 ## Points d'attention (notes du plan)
 

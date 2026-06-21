@@ -1,5 +1,5 @@
-import { env } from '@/lib/env';
-import type { AuthTokens } from './types';
+import { env } from "@/lib/env";
+import type { AuthTokens } from "./types";
 
 export class ApiError extends Error {
   readonly status: number;
@@ -7,7 +7,7 @@ export class ApiError extends Error {
 
   constructor(message: string, status: number, data?: unknown) {
     super(message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
     this.status = status;
     this.data = data;
   }
@@ -36,13 +36,13 @@ export interface ApiClientOptions {
   fetchImpl?: typeof fetch;
 }
 
-export interface RequestOptions extends Omit<RequestInit, 'body'> {
+export interface RequestOptions extends Omit<RequestInit, "body"> {
   query?: Record<string, string | number | boolean | undefined | null>;
   body?: unknown;
   skipAuth?: boolean;
 }
 
-const REFRESH_PATH = '/auth/refresh';
+const REFRESH_PATH = "/auth/refresh";
 
 export class ApiClient {
   private readonly baseUrl: string;
@@ -52,7 +52,7 @@ export class ApiClient {
   private refreshInflight: Promise<AuthTokens | null> | null = null;
 
   constructor(options: ApiClientOptions) {
-    this.baseUrl = options.baseUrl.replace(/\/+$/, '');
+    this.baseUrl = options.baseUrl.replace(/\/+$/, "");
     this.auth = options.auth;
     this.gameContext = options.gameContext;
     this.fetchImpl = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
@@ -72,20 +72,34 @@ export class ApiClient {
     return this.parse<T>(response);
   }
 
-  get<T>(path: string, options: Omit<RequestOptions, 'body' | 'method'> = {}): Promise<T> {
-    return this.request<T>(path, { ...options, method: 'GET' });
+  get<T>(
+    path: string,
+    options: Omit<RequestOptions, "body" | "method"> = {},
+  ): Promise<T> {
+    return this.request<T>(path, { ...options, method: "GET" });
   }
 
-  post<T>(path: string, body?: unknown, options: Omit<RequestOptions, 'body' | 'method'> = {}): Promise<T> {
-    return this.request<T>(path, { ...options, method: 'POST', body });
+  post<T>(
+    path: string,
+    body?: unknown,
+    options: Omit<RequestOptions, "body" | "method"> = {},
+  ): Promise<T> {
+    return this.request<T>(path, { ...options, method: "POST", body });
   }
 
-  patch<T>(path: string, body?: unknown, options: Omit<RequestOptions, 'body' | 'method'> = {}): Promise<T> {
-    return this.request<T>(path, { ...options, method: 'PATCH', body });
+  patch<T>(
+    path: string,
+    body?: unknown,
+    options: Omit<RequestOptions, "body" | "method"> = {},
+  ): Promise<T> {
+    return this.request<T>(path, { ...options, method: "PATCH", body });
   }
 
-  delete<T>(path: string, options: Omit<RequestOptions, 'body' | 'method'> = {}): Promise<T> {
-    return this.request<T>(path, { ...options, method: 'DELETE' });
+  delete<T>(
+    path: string,
+    options: Omit<RequestOptions, "body" | "method"> = {},
+  ): Promise<T> {
+    return this.request<T>(path, { ...options, method: "DELETE" });
   }
 
   private async send(path: string, options: RequestOptions): Promise<Response> {
@@ -93,7 +107,7 @@ export class ApiClient {
     const headers = this.buildHeaders(options);
 
     const init: RequestInit = {
-      method: options.method ?? 'GET',
+      method: options.method ?? "GET",
       headers,
       signal: options.signal,
       credentials: options.credentials,
@@ -103,14 +117,17 @@ export class ApiClient {
     };
 
     if (options.body !== undefined) {
-      init.body = typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
+      init.body =
+        typeof options.body === "string"
+          ? options.body
+          : JSON.stringify(options.body);
     }
 
     return this.fetchImpl(url, init);
   }
 
-  private buildUrl(path: string, query?: RequestOptions['query']): string {
-    const fullPath = path.startsWith('/') ? path : `/${path}`;
+  private buildUrl(path: string, query?: RequestOptions["query"]): string {
+    const fullPath = path.startsWith("/") ? path : `/${path}`;
     const url = new URL(`${this.baseUrl}${fullPath}`);
     if (query) {
       for (const [key, value] of Object.entries(query)) {
@@ -124,19 +141,19 @@ export class ApiClient {
 
   private buildHeaders(options: RequestOptions): Headers {
     const headers = new Headers(options.headers);
-    if (options.body !== undefined && !headers.has('Content-Type')) {
-      headers.set('Content-Type', 'application/json');
+    if (options.body !== undefined && !headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json");
     }
     if (!options.skipAuth) {
       const { accessToken } = this.auth.getTokens();
       if (accessToken) {
-        headers.set('Authorization', `Bearer ${accessToken}`);
+        headers.set("Authorization", `Bearer ${accessToken}`);
       }
       if (this.gameContext) {
         const worldId = this.gameContext.getWorldId();
         const villageId = this.gameContext.getVillageId();
-        if (worldId) headers.set('x-world-id', worldId);
-        if (villageId) headers.set('x-village-id', villageId);
+        if (worldId) headers.set("x-world-id", worldId);
+        if (villageId) headers.set("x-village-id", villageId);
       }
     }
     return headers;
@@ -150,7 +167,13 @@ export class ApiClient {
     if (response.status === 204) {
       return undefined as T;
     }
-    return (await response.json()) as T;
+    // A 200 with an empty body (e.g. a handler returning `null`) is not valid
+    // JSON — read text first so `response.json()` never throws on emptiness.
+    const text = await response.text();
+    if (text.trim().length === 0) {
+      return undefined as T;
+    }
+    return JSON.parse(text) as T;
   }
 
   private async tryRefresh(): Promise<AuthTokens | null> {
@@ -167,8 +190,8 @@ export class ApiClient {
       try {
         const url = this.buildUrl(REFRESH_PATH);
         const response = await this.fetchImpl(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ refreshToken }),
         });
         if (!response.ok) {
@@ -193,9 +216,11 @@ export class ApiClient {
   }
 }
 
-async function readError(response: Response): Promise<{ message?: string; data?: unknown }> {
-  const contentType = response.headers.get('Content-Type') ?? '';
-  if (!contentType.includes('application/json')) {
+async function readError(
+  response: Response,
+): Promise<{ message?: string; data?: unknown }> {
+  const contentType = response.headers.get("Content-Type") ?? "";
+  if (!contentType.includes("application/json")) {
     return {};
   }
   try {
@@ -206,6 +231,11 @@ async function readError(response: Response): Promise<{ message?: string; data?:
   }
 }
 
-export function createApiClient(options: Omit<ApiClientOptions, 'baseUrl'> & { baseUrl?: string }): ApiClient {
-  return new ApiClient({ baseUrl: options.baseUrl ?? env.apiBaseUrl, ...options });
+export function createApiClient(
+  options: Omit<ApiClientOptions, "baseUrl"> & { baseUrl?: string },
+): ApiClient {
+  return new ApiClient({
+    baseUrl: options.baseUrl ?? env.apiBaseUrl,
+    ...options,
+  });
 }

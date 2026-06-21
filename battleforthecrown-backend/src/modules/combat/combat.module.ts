@@ -20,6 +20,7 @@ import { PgBossModule } from '../../infra/pg-boss/pg-boss.module';
 import { EventModule } from '../event/event.module';
 import { PowerModule } from '../power/power.module';
 import { RankingsModule } from '../rankings/rankings.module';
+import { IntelModule } from '../intel/intel.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { RankingsModule } from '../rankings/rankings.module';
     EventModule,
     PowerModule,
     RankingsModule,
+    IntelModule,
   ],
   controllers: [CombatController],
   providers: [

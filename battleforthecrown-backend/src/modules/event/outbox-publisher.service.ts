@@ -103,4 +103,17 @@ export class OutboxPublisher {
     const client: PrismaClientOrTx = tx ?? this.prisma;
     await createOutboxEvent(client, 'unit.trained', payload.villageId, payload);
   }
+
+  async intelUpdated(
+    payload: { userId: string; worldId: string; villageId: string },
+    tx?: PrismaClientOrTx,
+  ): Promise<void> {
+    const client: PrismaClientOrTx = tx ?? this.prisma;
+    await createOutboxEvent(
+      client,
+      'intel.updated',
+      payload.villageId,
+      payload,
+    );
+  }
 }

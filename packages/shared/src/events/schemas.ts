@@ -43,7 +43,7 @@ const BattleResolvedPayloadSchema = z.object({
   targetKind: z.string(),
   targetName: z.string(),
   targetTier: z.string().nullable().optional(),
-  targetOriginKind: z.enum(['STANDARD', 'ONBOARDING_NARRATIVE']).optional(),
+  targetOriginKind: z.enum(["STANDARD", "ONBOARDING_NARRATIVE"]).optional(),
   targetX: z.number(),
   targetY: z.number(),
   isVictory: z.boolean(),
@@ -279,6 +279,12 @@ const RankingsChangedPayloadSchema = z.object({
   occurredAt: z.string().datetime(),
 });
 
+const IntelUpdatedPayloadSchema = z.object({
+  userId: z.string(),
+  worldId: z.string(),
+  villageId: z.string(),
+});
+
 export const EVENT_PAYLOAD_SCHEMAS = {
   "building.completed": BuildingCompletedPayloadSchema,
   "unit.training.completed": UnitTrainingCompletedPayloadSchema,
@@ -313,6 +319,7 @@ export const EVENT_PAYLOAD_SCHEMAS = {
   "rankings.changed": RankingsChangedPayloadSchema,
   "world.status.changed": WorldStatusChangedPayloadSchema,
   "pvp.shield.broken": PvpShieldBrokenPayloadSchema,
+  "intel.updated": IntelUpdatedPayloadSchema,
 } as const satisfies Record<EventKind, z.ZodType>;
 
 export type EventPayloadSchema<K extends EventKind> = z.ZodType<
