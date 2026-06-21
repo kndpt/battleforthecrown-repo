@@ -226,14 +226,15 @@ function reliefShade(tx: number, ty: number, seed: number, e: number): number {
 }
 
 /**
- * Coastline jitter: perturb the shoreline with two noise octaves so the water
- * edge follows organic bays/points instead of the field's smooth iso-contour.
+ * Coastline jitter: perturb the shoreline with ONE gentle low-frequency octave
+ * so the water edge follows organic bays instead of the field's smooth
+ * iso-contour. Deliberately low-frequency + low-amplitude: earlier versions
+ * added tile-scale octaves (freq 0.5) that carved thin land isthmuses which
+ * nearly pinched lakes in two (the "cut lake" artifact), so the shoreline now
+ * only wiggles on a ~16-tile wavelength — large smooth bays, never slivers.
  */
 function coastJitter(tx: number, ty: number, seed: number): number {
-  return (
-    (fbm(tx * 0.18, ty * 0.18, (seed + 555) | 0) - 0.5) * 0.12 +
-    (fbm(tx * 0.5, ty * 0.5, (seed + 777) | 0) - 0.5) * 0.04
-  );
+  return (fbm(tx * 0.06, ty * 0.06, (seed + 555) | 0) - 0.5) * 0.06;
 }
 
 /**
