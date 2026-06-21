@@ -61,7 +61,7 @@ const summary: RetentionSummaryDto = {
     endsAt: "2026-05-16T02:00:00.000Z",
     id: "oyez-1",
     startsAt: "2026-05-15T02:00:00.000Z",
-    theme: "SCOUTING",
+    theme: "WATCH",
     title: "Oeil du Guet",
     worldId: "w1",
   },
@@ -99,6 +99,40 @@ describe("DailyRetentionWidget", () => {
 
     expect(onClaim).toHaveBeenCalledWith({ cardId: "card-1", villageId: "v2" });
   });
+
+  it.each([
+    ["WATCH", "assets/watchtower.png"],
+    ["BUILDERS", "assets/castle.png"],
+    ["MARCH", "assets/army-power.png"],
+    ["BARBARIANS", "assets/attack.png"],
+  ] as const)(
+    "renders the %s Oyez theme with its mapped icon",
+    (theme, expectedIcon) => {
+      render(
+        <DailyRetentionWidget
+          activeVillageId="v1"
+          onClaim={vi.fn()}
+          onNavigate={vi.fn()}
+          summary={{
+            ...summary,
+            oyez: { ...summary.oyez!, theme },
+          }}
+          villages={villages}
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: /Devoir royal, 1 carte à réclamer/i,
+        }),
+      );
+
+      // The sheet is rendered through createPortal into document.body.
+      expect(
+        document.body.querySelector(`img[src$="${expectedIcon}"]`),
+      ).not.toBeNull();
+    },
+  );
 
   it("does not render a backlog or missed-days catch-up copy", () => {
     render(
@@ -275,6 +309,48 @@ describe("DailyRetentionWidget", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(onAction).toHaveBeenCalledWith("open-building-management");
     expect(screen.getByText("Devoir royal")).toBeInTheDocument();
+  });
+
+  it("maps the Oyez theme to its banner icon", () => {
+    // The sheet renders through a portal into document.body, so query there.
+    const { rerender } = render(
+      <DailyRetentionWidget
+        activeVillageId="v1"
+        hideButton
+        onClaim={vi.fn()}
+        onNavigate={vi.fn()}
+        open
+        summary={summary}
+        villages={villages}
+      />,
+    );
+
+    // Default fixture theme is WATCH → watchtower icon.
+    expect(
+      document.body.querySelector('img[src*="watchtower.png"]'),
+    ).toBeInTheDocument();
+
+    rerender(
+      <DailyRetentionWidget
+        activeVillageId="v1"
+        hideButton
+        onClaim={vi.fn()}
+        onNavigate={vi.fn()}
+        open
+        summary={{
+          ...summary,
+          oyez: { ...summary.oyez!, theme: "BUILDERS" },
+        }}
+        villages={villages}
+      />,
+    );
+
+    expect(
+      document.body.querySelector('img[src*="castle.png"]'),
+    ).toBeInTheDocument();
+    expect(
+      document.body.querySelector('img[src*="watchtower.png"]'),
+    ).not.toBeInTheDocument();
   });
 
   it("uses server-provided label for tiered tasks (minTargetTier bypasses local override)", () => {

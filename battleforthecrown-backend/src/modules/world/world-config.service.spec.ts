@@ -3,6 +3,7 @@ import {
   DEFAULT_BARBARIAN_SEEDING_PLAN,
   DEFAULT_WORLD_IDENTITY_CONFIG,
   DEFAULT_WORLD_LIFECYCLE_CONFIG,
+  DEFAULT_WORLD_OYEZ_CONFIG,
   DEFAULT_PLAYER_VILLAGE_PLACEMENT_PLAN,
   TempoService,
   type WorldConfig,
@@ -42,6 +43,7 @@ describe('WorldConfigService', () => {
     barbarianSeeding: DEFAULT_BARBARIAN_SEEDING_PLAN,
     playerVillagePlacement: DEFAULT_PLAYER_VILLAGE_PLACEMENT_PLAN,
     fogOfWar: { enabled: true },
+    oyez: DEFAULT_WORLD_OYEZ_CONFIG,
   };
 
   const mockWorld = (configOverride: Partial<WorldConfig> = {}) => {
