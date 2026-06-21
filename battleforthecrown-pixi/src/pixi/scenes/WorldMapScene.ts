@@ -1,12 +1,8 @@
 import {
   Assets,
-  BlurFilter,
   Container,
   Culler,
   Graphics,
-  Particle,
-  ParticleContainer,
-  Rectangle,
   Sprite,
   Text,
   Texture,
@@ -16,16 +12,12 @@ import {
 } from 'pixi.js';
 import { Viewport } from 'pixi-viewport';
 import type { PixiScene } from './SceneManager';
-import {
-  buildTerrainChunks,
-  coastValueAt,
-  decorationsForChunk,
-  landTintAt,
-  terrainSeed,
-} from './worldTerrain';
+import { coastValueAt, terrainSeed } from './worldTerrain';
 import { createTerrainTextures } from './worldTerrainTextures';
+import { createWorldTerrainLayer } from './worldTerrainLayer';
 import { extractWaterContours, pointInLoop, smoothLoops } from './waterContours';
 import {
+  isoBoundsToTileBox,
   isoEllipseRadii,
   isoToTile,
   isoWorldSize,
@@ -189,75 +181,60 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
   background.rect(0, 0, worldPx, worldPy).fill(COLOR.background);
   mapGroundLayer.addChild(background);
 
-  // === Procedural per-tile terrain ===
-  // Replaces the legacy flat fill + "Continent x,y" checkerboard. One diamond
-  // particle per tile, tinted by a continuous biome+relief field, so biomes
-  // blend smoothly (no chunk edges) and the flat iso ground reads as rolling,
-  // directionally-lit terrain. Deterministic and purely cosmetic — gameplay
-  // stays server-authoritative. Single draw call for the whole ground.
+  // === Procedural per-tile terrain (viewport-virtualized) ===
+  // Replaces the legacy flat fill + "Continent x,y" checkerboard. The ground is
+  // diamond particles tinted by a continuous biome+relief field, so biomes
+  // blend smoothly and the flat iso ground reads as rolling, directionally-lit
+  // terrain. Deterministic and purely cosmetic — gameplay stays
+  // server-authoritative.
+  //
+  // The world is 500×500 (250k tiles) but only ~30×30 are ever on screen, so
+  // the ground + decorations are virtualized into chunks by `worldTerrainLayer`
+  // and only the chunks near the camera are kept mounted (see updateViewport).
   const seed = terrainSeed(options.gridWidth, options.gridHeight);
   const chunkTiles = 20;
-  const chunks = buildTerrainChunks({
-    gridWidth: options.gridWidth,
-    gridHeight: options.gridHeight,
-    chunkTiles,
-    seed,
-  });
   const terrainTextures = createTerrainTextures(app, { halfW: iso.halfW, halfH: iso.halfH });
 
-  // Ground = one static ParticleContainer of land-coloured diamonds (water bodies
-  // are NOT tiles — they're drawn on top as smooth vector polygons, so the tile
-  // grid never defines the coastline). Tiles under water get a wet-sand lakebed
-  // colour. Single draw call, no per-frame work.
-  const tileBounds = new Rectangle(0, 0, worldPx, worldPy);
-  const terrainLayer = new ParticleContainer({
-    texture: terrainTextures.tileDiamond,
-    boundsArea: tileBounds,
-    dynamicProperties: { vertex: false, position: false, rotation: false, uvs: false, color: false },
-  });
-  terrainLayer.eventMode = 'none';
-
-  // Terrain quality knob: render at SUBDIV× the gameplay grid resolution.
-  // Smaller diamonds → finer biome detail + smoother relief. Purely a
-  // quality/perf trade-off — world size, object scale and gameplay coords are
-  // unchanged (sub-tiles align exactly with the main projection). Particle
-  // count = (grid·SUBDIV)². SUBDIV=1 restores the 1-tile rendering.
+  // SUBDIV× the gameplay grid resolution → finer biome detail + smoother relief.
+  // Purely a quality knob; world size, object scale and gameplay coords are
+  // unchanged (sub-tiles align exactly with the main projection).
   const SUBDIV = 2;
-  const subW = options.gridWidth * SUBDIV;
-  const subH = options.gridHeight * SUBDIV;
-  const subIso = makeIsoConfig(subW, subH, tileSize / SUBDIV);
-  const subScale = 1.02 / SUBDIV; // sub-tile size + 2% overlap to hide AA seams
 
-  // Build back-to-front (sx+sy ascending) so the slight tile overlap composites
-  // correctly.
-  for (let depth = 0; depth <= subW + subH - 2; depth++) {
-    const sxMin = Math.max(0, depth - (subH - 1));
-    const sxMax = Math.min(subW - 1, depth);
-    for (let sx = sxMin; sx <= sxMax; sx++) {
-      const sy = depth - sx;
-      const pos = tileToIso(sx, sy, subIso);
-      terrainLayer.addParticle(
-        new Particle({
-          texture: terrainTextures.tileDiamond,
-          x: pos.x,
-          y: pos.y,
-          anchorX: 0.5,
-          anchorY: 0,
-          scaleX: subScale,
-          scaleY: subScale,
-          tint: landTintAt(sx / SUBDIV, sy / SUBDIV, seed),
-        }),
-      );
-    }
-  }
-  mapGroundLayer.addChild(terrainLayer);
+  // World-objects layer (decorations + entities), depth-sorted. Created here so
+  // the virtualized terrain layer can mount its decoration sprites into it
+  // (a tree in front of a village must occlude it and vice-versa); added to the
+  // viewport later, above the ground/water, to fix its render order.
+  const entitiesLayer = new Container();
+  entitiesLayer.sortableChildren = true;
+
+  const terrainLayer = createWorldTerrainLayer({
+    gridWidth: options.gridWidth,
+    gridHeight: options.gridHeight,
+    tileSize,
+    seed,
+    iso,
+    subdiv: SUBDIV,
+    chunkTiles,
+    textures: terrainTextures,
+    decorLayer: entitiesLayer,
+  });
+  mapGroundLayer.addChild(terrainLayer.root);
 
   // === Water bodies (smooth vector polygons) ===
   // Marching squares on the shoreline field → smooth, feathered lakes/seas drawn
   // over the land. No tile stair-stepping; the coast is a continuous curve.
+  //
+  // The extraction scans the whole 250k-cell field once, so it's built lazily
+  // (deferred to after the first terrain paint in `enter`) to keep the map from
+  // janking on load. The soft coast is faked with concentric translucent shore
+  // strokes instead of a world-sized BlurFilter — a full-world filterArea would
+  // allocate a render texture larger than the GPU max texture size.
   const waterLayer = new Graphics();
   waterLayer.eventMode = 'none';
-  {
+  let waterBuilt = false;
+  const buildWater = () => {
+    if (waterBuilt) return;
+    waterBuilt = true;
     const loops = smoothLoops(
       extractWaterContours(options.gridWidth, options.gridHeight, (tx, ty) =>
         coastValueAt(tx, ty, seed),
@@ -280,17 +257,18 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     const bodies = loops.filter((l) => depthOf(l) % 2 === 0);
     const holes = loops.filter((l) => depthOf(l) % 2 === 1);
     for (const body of bodies) {
-      waterLayer.poly(toIso(body)).fill({ color: WATER_FILL, alpha: 1 });
+      const isoBody = toIso(body);
+      waterLayer.poly(isoBody).fill({ color: WATER_FILL, alpha: 1 });
       for (const hole of holes) {
         if (pointInLoop(hole[0], body)) waterLayer.poly(toIso(hole)).cut();
       }
-      // Soft shore highlight along the coast.
-      waterLayer.poly(toIso(body)).stroke({ color: SHORE, width: 3, alpha: 0.5 });
+      // Soft shore: a crisp highlight plus two wider, fainter strokes fake a
+      // feathered coast without a (world-sized, GPU-killing) blur filter.
+      waterLayer.poly(isoBody).stroke({ color: SHORE, width: 3, alpha: 0.5 });
+      waterLayer.poly(isoBody).stroke({ color: SHORE, width: 8, alpha: 0.16 });
+      waterLayer.poly(isoBody).stroke({ color: SHORE, width: 14, alpha: 0.07 });
     }
-  }
-  // Feather the (already smooth) coast a touch; clipToViewport bounds the cost.
-  waterLayer.filterArea = tileBounds;
-  waterLayer.filters = [new BlurFilter({ strength: 3, quality: 2, resolution: 0.5 })];
+  };
 
   // === World border (iso diamond outline) ===
   const worldBorder = new Graphics();
@@ -327,29 +305,10 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
   // === World objects layer (decorations + entities), depth-sorted, BELOW fog ===
   // Trees and villages share ONE sortableChildren container keyed by iso depth
   // (tileX+tileY), so a tree in front of a village occludes it and vice-versa.
-  // Sits above the ground/water but below the fog veil (ambient decor fades in
-  // unexplored areas; in-vision objects show through the fog holes).
-  const entitiesLayer = new Container();
-  entitiesLayer.sortableChildren = true;
+  // Sits above the ground/water but below the fog veil. Created above (so the
+  // virtualized terrain layer mounts its decoration sprites into it); attached
+  // here to fix its render order above the ground/water.
   viewport.addChild(entitiesLayer);
-
-  // Decorations = individual sprites (not particles) so they sort against
-  // villages. Per-sprite culling keeps the draw cost to what's on screen.
-  const placements = chunks.flatMap((chunk) => decorationsForChunk(chunk, seed));
-  for (const placement of placements) {
-    // Skip decorations that landed on water (no floating trees on lakes).
-    if (coastValueAt(placement.tileX, placement.tileY, seed) < 0) continue;
-    const decor = terrainTextures.decor[placement.kind];
-    const pos = tileToIso(placement.tileX, placement.tileY, iso);
-    const sprite = new Sprite(decor.texture);
-    sprite.anchor.set(decor.anchorX, decor.anchorY);
-    sprite.position.set(pos.x, pos.y);
-    sprite.scale.set(placement.scale);
-    sprite.eventMode = 'none';
-    sprite.cullable = true;
-    sprite.zIndex = (placement.tileX + placement.tileY) * 16;
-    entitiesLayer.addChild(sprite);
-  }
 
   // === Fog-of-war overlay ===
   // Above the ground + world-objects (so unexplored terrain/decor/villages are
@@ -421,15 +380,20 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     };
   };
 
-  // Cull off-screen world objects (mainly the many decoration sprites) so only
-  // what's visible is batched/drawn. Runs on camera changes (RAF-debounced).
-  const cullObjects = () => {
+  // Mount/unmount terrain + decoration chunks so only the region around the
+  // camera is materialized, then fine-cull whatever's mounted to the screen.
+  const syncViewport = () => {
+    const b = viewport.getVisibleBounds();
+    terrainLayer.updateViewport(
+      isoBoundsToTileBox(b.x, b.y, b.x + b.width, b.y + b.height, iso),
+    );
+    Culler.shared.cull(terrainLayer.root, app.screen);
     Culler.shared.cull(entitiesLayer, app.screen);
   };
 
   const notifyCameraChange = () => {
     cameraRaf = 0;
-    cullObjects();
+    syncViewport();
     const camera = readCamera();
     cameraListeners.forEach((listener) => listener(camera));
   };
@@ -725,7 +689,12 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     viewport.moveCenter(centerPx.px, centerPx.py);
     drawActiveVillageHalo();
     drawFog();
-    cullObjects();
+    // Mount the visible terrain chunks before the first paint…
+    syncViewport();
+    // …then build the (whole-world, one-shot) water polygons on the next frame
+    // so the ground shows instantly instead of janking on the marching-squares
+    // scan.
+    requestAnimationFrame(buildWater);
     scheduleCameraChange();
   };
 
@@ -753,6 +722,7 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     blipVisuals.clear();
     expeditionVisuals.forEach((v) => v.destroy());
     expeditionVisuals.clear();
+    terrainLayer.destroy();
     terrainTextures.destroy();
   };
 

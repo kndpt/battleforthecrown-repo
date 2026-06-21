@@ -382,6 +382,24 @@ Question posée : faut-il aligner BFTC sur cette granularité (passer à 30 leve
 
 ---
 
+## ADR-19 — Rendu de la carte monde virtualisé par chunks
+
+**Contexte (2026-06-21).** Le rework isométrique de la `WorldMapScene` (terrain procédural, eau vectorielle, décorations) rendait **tout le monde d'un coup** au `enter` : un monde fait 500×500 = 250 000 tiles, le terrain était sous-divisé ×2 → **1 000 000 de `Particle`** allouées en boucle synchrone, ~40 000 sprites de décoration créés d'avance, et la couche d'eau portait un `BlurFilter` sur un `filterArea` couvrant tout le monde (32000×16000 px → render texture > taille max GPU). Résultat : freeze de chargement et landmine mémoire. La structure des modules (`isoProjection`, `worldTerrain`, `waterContours`, tous purs et testés) était saine ; seule la **stratégie de matérialisation** ne passait pas à l'échelle.
+
+**Décision.**
+
+1. **Virtualiser terrain + décor au viewport** (`worldTerrainLayer.ts`) : le monde est découpé en chunks de 20 tiles. Chaque chunk porte **un** `ParticleContainer` statique de diamants + ses sprites de décor, construit **paresseusement** au premier montage. À chaque changement caméra (RAF-debounced), `updateViewport(tileBox)` monte les chunks couvrant le viewport + 1 anneau de marge et démonte les autres. Les chunks démontés restent **tièdes dans un pool LRU** (budget 96 chunks) → revisite instantanée, mémoire bornée. Visuel identique (mêmes sous-tiles, teintes, ordre de profondeur `zIndex = cx+cy`, placement décor).
+2. **Décorations dans la couche partagée** : montées/démontées dans `entitiesLayer` (avec les villages) en conservant `zIndex = (tileX+tileY)*16`, donc un arbre occlude toujours un village et vice-versa.
+3. **Eau** : extraction marching-squares globale conservée mais **déférée** d'une frame après le premier paint terrain (plus de jank au chargement) ; le `BlurFilter` plein-monde est **supprimé**, le feather de côte est refait avec des strokes concentriques translucides (pas de render texture géante).
+
+**Conséquences.**
+
+- Coût au montage ≈ quelques chunks × ~1600 particules (sub-ms) au lieu de 1M d'un coup. Mémoire plafonnée par le budget LRU, pas par la taille du monde.
+- **Invariant pour les futures features** : tout overlay par tile (routes, ownership, brouillard fin, ressources de case…) doit se brancher **au niveau du chunk** (monté/démonté avec lui), jamais matérialiser le monde entier. Helpers purs testés : `isoBoundsToTileBox` (`isoProjection`), `chunkRangeForTileBox` (`worldTerrainLayer`).
+- Le knob qualité `SUBDIV` reste ; un LOD par zoom (réduire la sous-division en dézoom fort) est une amélioration future identifiée mais non requise.
+
+---
+
 ## Maintenance de ce document
 
 - Une décision **structurante** (qui change la façon dont on pense le projet) → nouvelle entrée ADR.

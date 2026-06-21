@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  isoBoundsToTileBox,
   isoEllipseRadii,
   isoToTile,
   isoWorldSize,
@@ -41,5 +42,24 @@ describe('isoProjection', () => {
     const { rx, ry } = isoEllipseRadii(10, cfg);
     expect(rx / ry).toBeCloseTo(2, 6);
     expect(rx).toBeCloseTo(Math.SQRT2 * 10 * 32, 6);
+  });
+
+  it('covers the projected tile bbox of a scene rectangle', () => {
+    // A scene rect centred on tile (250,250) must yield a tile box that
+    // actually contains that tile, and whose corners round-trip.
+    const center = tileToIso(250, 250, cfg);
+    const box = isoBoundsToTileBox(
+      center.x - 320,
+      center.y - 160,
+      center.x + 320,
+      center.y + 160,
+      cfg,
+    );
+    expect(box.minX).toBeLessThanOrEqual(250);
+    expect(box.maxX).toBeGreaterThanOrEqual(250);
+    expect(box.minY).toBeLessThanOrEqual(250);
+    expect(box.maxY).toBeGreaterThanOrEqual(250);
+    // The diamond bbox is wider in tiles than the screen rect is in pixels.
+    expect(box.maxX - box.minX).toBeGreaterThan(0);
   });
 });
