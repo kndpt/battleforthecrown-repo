@@ -3,6 +3,7 @@ import type { World, WorldStatus } from '@prisma/client';
 import PgBoss from 'pg-boss';
 import { PrismaService } from '../infra/prisma/prisma.service';
 import { createOutboxEvent } from '../modules/event/event.utils';
+import { RankingsService } from '../modules/rankings/rankings.service';
 import {
   WorldConfigSchema,
   resolveWorldLifecycleConfig,
@@ -18,6 +19,7 @@ export class WorldLifecycleWorker implements OnModuleInit {
   constructor(
     @Inject('PG_BOSS') private readonly boss: PgBoss,
     private readonly prisma: PrismaService,
+    private readonly rankings: RankingsService,
   ) {}
 
   async onModuleInit() {
@@ -157,6 +159,14 @@ export class WorldLifecycleWorker implements OnModuleInit {
         to,
         at: params.at.toISOString(),
       });
+
+      // Snapshot final des 3 classements dans la MÊME transaction que la
+      // transition : un monde ne peut jamais devenir ENDED sans son snapshot
+      // (échec ⇒ rollback atomique). Source des cosmétiques permanents (run 067)
+      // et de l'UI lecture seule (run 066).
+      if (to === 'ENDED') {
+        await this.rankings.snapshotFinalRankings(tx, worldId, params.at);
+      }
 
       return 1;
     });

@@ -101,9 +101,9 @@ Le retour passe par `JoinWorldUseCase` : si le membre n'a aucun village et fourn
 Déclenchement : job planifié à `endsAt` (= `startedAt + 60 j`, default 🔧).
 
 À ce moment :
-- Snapshot du leaderboard final (cf. [`24-rankings.md`](./24-rankings.md) — Puissance du Royaume, Gloire d'Assaut et Gloire du Rempart).
+- Snapshot du leaderboard final persisté dans `WorldFinalRankingSnapshot` (cf. [`24-rankings.md` § Données sources](./24-rankings.md#donnees-sources) et [`data-model.md` § Classements finaux](../architecture/data-model.md#classements-finaux)) — 3 signaux : Puissance du Royaume, Gloire d'Assaut, Gloire du Rempart. Snapshot dans la même transaction Prisma que le changement de statut (rollback atomique si échec).
 - Attribution des **récompenses cosmétiques permanentes** (titre, bannière du monde, badge profil global). Pas de carry-over de ressources, couronnes, ou progression entre mondes.
-- Mode lecture seule : les joueurs peuvent encore consulter leur royaume mais plus d'action (raid, upgrade, conquête).
+- Mode lecture seule : les joueurs peuvent encore consulter leur royaume mais plus d'action (raid, upgrade, conquête). `WorldAccessService.assertWorldWritable` appliqué sur toutes les mutations joueur — `ForbiddenException` 403 `WORLD_READ_ONLY` (cf. [`backend-modules.md` § Invariant monde ENDED](../architecture/backend-modules.md#invariant-monde-ended--lecture-seule)).
 - Le monde reste consultable 🔧 7 j en `ENDED` puis archivé (données conservées pour stats globales, plus accessibles depuis l'UI).
 
 ## Wipe et récompenses fin de monde

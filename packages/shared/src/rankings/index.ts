@@ -2,6 +2,9 @@ import { z } from "zod";
 import type { UnitType } from "../army/types";
 import type { UnitMap } from "../army/unit-map";
 
+export type { SnapshotRankInput, SnapshotRankEntry } from "./final-ranking-snapshot";
+export { rankSnapshotEntries } from "./final-ranking-snapshot";
+
 export const RANKING_SIGNAL_LABELS = Object.freeze({
   POWER: "Puissance du Royaume",
   ASSAULT_GLORY: "Gloire d'Assaut",
