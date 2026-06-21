@@ -1,6 +1,6 @@
 # maint-debt — candidats (réécrit chaque run)
 
-last: 2026-06-20 | archive: `archive/maint-debt/2026-06-15-full.md`
+last: 2026-06-21 | archive: `archive/maint-debt/2026-06-15-full.md`
 branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 ## candidate
@@ -12,15 +12,15 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | pixi QueueBottomSheet formatTime | clock-style mm:ss vs formatRemaining human labels — keep local until product aligns village queue display |
 | shared/world/entities.ts isFoggedEntity | type guard used by world map — no direct unit spec |
 | shared/village/strategy.ts getVillageStrategyPlan | constant plan accessor — low value unless plan becomes configurable |
-| QUARTER_POPULATION_LIMITS export | used internally only, export unnecessary — very small |
-| VILLAGE_ORIGIN_KINDS export | used for type derivation only, never imported — very small |
-| ONBOARDING_NARRATIVE_RESOURCE_FILL export | used internally only — very small |
+| conquest openCaptureWindow/interruptCaptureWindow/conquerVillage wrappers | used only in smoke tests, not prod code — public API for test convenience, low debt |
+| buildRefundToastItems export | exported for test import only — valid pattern, skip |
+| GarrisonLineDto export | used locally in combat.service.ts, export unnecessary but trivial |
 
 ## done (this run)
 
 | area | PR |
 |------|-----|
-| shared dead exports + unexport internal-only (CrownBalanceResponse, WorldSettings, isPointInVisionDisk, getStrategyBonuses, BUILDING_POWER_WEIGHTS, POWER_PROFILE) | pending |
+| dead store selectors (selectIsAuthenticated, selectVillageResources, selectCrowns) + unexport crownsKey + remove canConquer dead method | [#169](https://github.com/kndpt/battleforthecrown-repo/pull/169) |
 
 ## rules
 
