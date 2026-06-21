@@ -388,6 +388,7 @@ model DailyCardProgressEvent {
 model DailyOyez {
   id          String   @id @default(cuid())
   worldId     String   @map("world_id")
+  dayKey      String?  @map("day_key")
   title       String
   description String
   theme       String
@@ -395,6 +396,7 @@ model DailyOyez {
   endsAt      DateTime @map("ends_at") @db.Timestamptz(3)
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
 
+  @@unique([worldId, dayKey])
   @@index([worldId, startsAt, endsAt])
   @@map("daily_oyez")
 }
@@ -659,6 +661,35 @@ model VillageStrategyConfig {
   @@index([villageId])
   @@index([strategy])
   @@map("village_strategy_config")
+}
+
+enum IntelSourceKind {
+  SCOUT
+  COMBAT_WIN
+}
+
+model VillageIntel {
+  id              String           @id @default(cuid())
+  userId          String           @map("user_id")
+  worldId         String           @map("world_id")
+  targetVillageId String           @map("target_village_id")
+  sourceKind      IntelSourceKind  @map("source_kind")
+  sourceReportId  String           @map("source_report_id")
+  units           Json
+  resources       Json
+  wallLevel       Int?             @map("wall_level")
+  strategy        VillageStrategy?
+  targetName      String?          @map("target_name")
+  targetX         Int              @map("target_x")
+  targetY         Int              @map("target_y")
+  targetTier      String?          @map("target_tier")
+  seenAt          DateTime         @map("seen_at") @db.Timestamptz(3)
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([userId, worldId, targetVillageId])
+  @@index([userId, worldId])
+  @@map("village_intel")
 }
 
 model Garrison {

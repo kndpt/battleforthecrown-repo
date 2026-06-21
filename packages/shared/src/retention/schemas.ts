@@ -3,11 +3,13 @@ import {
   DAILY_CARD_STATUSES,
   DAILY_CARD_TASK_TYPES,
   DAILY_REWARD_TYPES,
+  OYEZ_THEMES,
 } from "./types";
 
 export const DailyCardStatusSchema = z.enum(DAILY_CARD_STATUSES);
 export const DailyCardTaskTypeSchema = z.enum(DAILY_CARD_TASK_TYPES);
 export const DailyRewardTypeSchema = z.enum(DAILY_REWARD_TYPES);
+export const OyezThemeSchema = z.enum(OYEZ_THEMES);
 
 export const DailyCardTaskMetadataSchema = z.object({
   completedQty: z.number().optional(),
@@ -48,7 +50,7 @@ export const DailyOyezSchema = z.object({
   worldId: z.string(),
   title: z.string(),
   description: z.string(),
-  theme: z.string(),
+  theme: OyezThemeSchema,
   startsAt: z.string(),
   endsAt: z.string(),
 });

@@ -1,11 +1,18 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ComponentProps } from 'react';
-import { apiClient } from '@/api';
-import type { MapEntity } from '@/api/world-types';
-import type { OpenConquestDto } from '@battleforthecrown/shared/combat';
-import { SelectedEntityPanel } from './SelectedEntityPanel';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { ComponentProps } from "react";
+import { apiClient } from "@/api";
+import type { MapEntity } from "@/api/world-types";
+import type { OpenConquestDto } from "@battleforthecrown/shared/combat";
+import type { VillageIntelDto } from "@battleforthecrown/shared/world";
+import { useAuthStore } from "@/stores/auth";
+import { useGameStore } from "@/stores/game";
+import { SelectedEntityPanel } from "./SelectedEntityPanel";
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function makeQueryClient() {
   return new QueryClient({
@@ -18,7 +25,7 @@ function makeQueryClient() {
 
 function renderPanel(
   entity: MapEntity,
-  currentVillageId = 'active-village',
+  currentVillageId = "active-village",
   overrides: Partial<ComponentProps<typeof SelectedEntityPanel>> = {},
 ) {
   return render(
@@ -27,6 +34,9 @@ function renderPanel(
         currentVillageId={currentVillageId}
         entity={entity}
         onAttack={() => undefined}
+        onScout={() => undefined}
+        onGoToVillage={overrides.onGoToVillage}
+        onCaravan={overrides.onCaravan}
         {...overrides}
       />
     </QueryClientProvider>,
@@ -35,10 +45,10 @@ function renderPanel(
 
 function playerVillage(overrides: Partial<MapEntity> = {}): MapEntity {
   return {
-    id: 'village-1',
+    id: "village-1",
     isMine: true,
-    kind: 'PLAYER_VILLAGE',
-    name: 'Boisjoli',
+    kind: "PLAYER_VILLAGE",
+    name: "Boisjoli",
     tier: null,
     x: 10,
     y: 20,
@@ -46,216 +56,428 @@ function playerVillage(overrides: Partial<MapEntity> = {}): MapEntity {
   };
 }
 
-function mockTroopApi({
-  garrison = [],
-  inventory = [],
-}: {
-  garrison?: unknown[];
-  inventory?: unknown[];
-}) {
-  return vi.spyOn(apiClient, 'get').mockImplementation(async (path) => {
-    if (path === '/army/village-1/inventory') return inventory;
-    if (path === '/combat/village-1/garrison') return garrison;
-    if (path === '/power/village/village-1/public') return { villageId: 'village-1', buildings: 500 };
-    throw new Error(`Unexpected GET ${path}`);
-  });
-}
+// ---------------------------------------------------------------------------
+// Fixtures
+// ---------------------------------------------------------------------------
+
+const enemyVillage: MapEntity = {
+  id: "v-enemy",
+  kind: "PLAYER_VILLAGE",
+  isMine: false,
+  x: 5,
+  y: 10,
+  name: "Roc-d-Acier",
+  ownerDisplayName: "Sire Kelvin",
+  ownerId: "u-foreign",
+  tier: null,
+};
+
+// seenAt = 30 min ago → "il y a 30mn", fresh = true (<1h)
+const intelDto: VillageIntelDto = {
+  targetVillageId: "v-enemy",
+  worldId: "w1",
+  sourceKind: "SCOUT",
+  sourceReportId: "report-abc",
+  units: { MILITIA: 5, ARCHER: 0 },
+  resources: { wood: 100, stone: 50, iron: 25 },
+  wallLevel: 3,
+  strategy: "FORTRESS",
+  targetName: "Roc-d-Acier",
+  targetX: 5,
+  targetY: 10,
+  targetTier: null,
+  seenAt: new Date(Date.now() - 30 * 60_000).toISOString(),
+};
+
+// ---------------------------------------------------------------------------
+// Teardown
+// ---------------------------------------------------------------------------
 
 afterEach(() => {
   vi.restoreAllMocks();
-  vi.useRealTimers();
+  useGameStore.setState({ worldId: null });
+  useAuthStore.setState({ user: null });
 });
 
-describe('SelectedEntityPanel owned village troops', () => {
-  it('shows native troops plus incoming reinforcements on an owned inactive village', async () => {
-    mockTroopApi({
-      inventory: [{ id: 'militia-1', type: 'MILITIA', quantity: 12, populationCost: 1 }],
-      garrison: [
-        {
-          direction: 'INCOMING',
-          hostVillageName: 'Boisjoli',
-          originVillageId: 'origin-1',
-          originVillageName: 'Origin',
-          quantity: 8,
-          unitType: 'MILITIA',
-          villageId: 'village-1',
-        },
-      ],
+// ---------------------------------------------------------------------------
+// describe: owned village (mine)
+// ---------------------------------------------------------------------------
+
+describe("owned village (mine)", () => {
+  it("1. troupes natives + renforts incoming → header Armée + total 20 unités + boutons enabled", async () => {
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/army/village-1/inventory")
+        return [{ id: "m-1", type: "MILITIA", quantity: 12, populationCost: 1 }];
+      if (path === "/combat/village-1/garrison")
+        return [
+          {
+            direction: "INCOMING",
+            hostVillageName: "Boisjoli",
+            originVillageId: "origin-1",
+            originVillageName: "Origin",
+            quantity: 8,
+            unitType: "MILITIA",
+            villageId: "village-1",
+          },
+        ];
+      if (path === "/power/village/village-1/public")
+        return { villageId: "village-1", buildings: 500 };
+      throw new Error(`Unexpected GET ${path}`);
     });
 
-    renderPanel(playerVillage(), 'another-village');
-
-    expect(await screen.findByText('Milice de paysans')).toBeInTheDocument();
-    expect(screen.getByText('Troupes présentes')).toBeInTheDocument();
-    expect(screen.getByText('20')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Renforcer/i })).toBeInTheDocument();
-  });
-
-  it('shows a go-to action on an owned inactive village', async () => {
     const onGoToVillage = vi.fn();
-    mockTroopApi({});
+    renderPanel(playerVillage(), "another-village", { onGoToVillage });
 
-    renderPanel(playerVillage(), 'another-village', { onGoToVillage });
-
-    const button = await screen.findByRole('button', { name: /Aller à ce village/i });
-    fireEvent.click(button);
-
-    expect(onGoToVillage).toHaveBeenCalledWith(expect.objectContaining({ id: 'village-1' }));
+    // header section Armée
+    expect(await screen.findByText("Armée")).toBeInTheDocument();
+    // total = 12 + 8 = 20
+    expect(screen.getByText("20 unités")).toBeInTheDocument();
+    // footer bouton Entrer enabled (isOtherOwned = true, onGoToVillage fourni)
+    expect(screen.getByRole("button", { name: /Entrer/ })).toBeEnabled();
+    // footer bouton Renfort présent et enabled
+    expect(screen.getByRole("button", { name: /Renfort/ })).toBeEnabled();
   });
 
-  it('shows troops on the active village without the reinforce action', async () => {
-    mockTroopApi({
-      inventory: [{ id: 'archer-1', type: 'ARCHER', quantity: 4, populationCost: 1 }],
-    });
-
-    renderPanel(playerVillage(), 'village-1', { onGoToVillage: vi.fn() });
-
-    expect(await screen.findByText('Archer')).toBeInTheDocument();
-    expect(screen.getByText('Troupes présentes')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Renforcer/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Aller à ce village/i })).not.toBeInTheDocument();
-  });
-
-  it('shows an explicit empty state for an owned empty village', async () => {
-    mockTroopApi({});
-
-    renderPanel(playerVillage());
-
-    expect(await screen.findByText('Aucune troupe')).toBeInTheDocument();
-  });
-
-  it('shows the foreign owner display name in the callout subtitle', async () => {
-    vi.spyOn(apiClient, 'get').mockImplementation(async (path) => {
-      if (path === '/power/village/enemy-1/public') return { villageId: 'enemy-1', buildings: 880 };
+  it("2. clic Entrer sur village inactif → onGoToVillage appelé avec {id:'village-1'}", async () => {
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/army/village-1/inventory") return [];
+      if (path === "/combat/village-1/garrison") return [];
+      if (path === "/power/village/village-1/public")
+        return { villageId: "village-1", buildings: 500 };
       throw new Error(`Unexpected GET ${path}`);
     });
 
-    renderPanel(
-      playerVillage({
-        id: 'enemy-1',
-        isMine: false,
-        name: 'Royaume de helper.brutom',
-        ownerDisplayName: 'Sire Kelvin',
-        ownerId: 'u-foreign',
-      }),
-      'village-1',
+    const onGoToVillage = vi.fn();
+    renderPanel(playerVillage(), "another-village", { onGoToVillage });
+
+    const btn = await screen.findByRole("button", { name: /Entrer/ });
+    fireEvent.click(btn);
+
+    expect(onGoToVillage).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "village-1" }),
     );
-
-    expect(await screen.findByText('Sire Kelvin · Village joueur')).toBeInTheDocument();
-    expect(screen.getByText('Royaume de helper.brutom')).toBeInTheDocument();
   });
 
-  it('shows building power but never troops for a village the player does not own', async () => {
-    const getSpy = vi.spyOn(apiClient, 'get').mockImplementation(async (path) => {
-      if (path === '/power/village/enemy-1/public') return { villageId: 'enemy-1', buildings: 880 };
+  it("3. village actif (currentVillageId='village-1') → boutons Entrer/Renfort/Envoyer disabled", async () => {
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/army/village-1/inventory") return [];
+      if (path === "/combat/village-1/garrison") return [];
+      if (path === "/power/village/village-1/public")
+        return { villageId: "village-1", buildings: 500 };
       throw new Error(`Unexpected GET ${path}`);
     });
 
-    renderPanel(playerVillage({ id: 'enemy-1', isMine: false }), 'village-1', { onGoToVillage: vi.fn() });
+    const onGoToVillage = vi.fn();
+    renderPanel(playerVillage(), "village-1", { onGoToVillage });
 
-    expect(await screen.findByText('880')).toBeInTheDocument();
-    expect(screen.queryByText('Troupes présentes')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Aller à ce village/i })).not.toBeInTheDocument();
-    // Building power is public; troop endpoints must never be queried for a foreign village.
+    // isOtherOwned = false → onEnter undefined → disabled
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Entrer/ })).toBeDisabled();
+    });
+    expect(screen.getByRole("button", { name: /Renfort/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Envoyer ressources/ })).toBeDisabled();
+  });
+
+  it("4. village vide owned → dossier armée vide OK, bouton Entrer rendu", async () => {
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/army/village-1/inventory") return [];
+      if (path === "/combat/village-1/garrison") return [];
+      if (path === "/power/village/village-1/public")
+        return { villageId: "village-1", buildings: 500 };
+      throw new Error(`Unexpected GET ${path}`);
+    });
+
+    renderPanel(playerVillage(), "another-village", { onGoToVillage: vi.fn() });
+
+    // Le dossier Armée n'affiche rien quand army=[] dans FullIntelPanel
+    // Pas de "Aucune troupe" (c'est l'ancien DOM supprimé)
+    await waitFor(() => {
+      expect(screen.queryByText("Aucune troupe")).not.toBeInTheDocument();
+    });
+    // Le bouton Entrer est bien rendu (footer mine toujours présent)
+    expect(screen.getByRole("button", { name: /Entrer/ })).toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// describe: enemy player
+// ---------------------------------------------------------------------------
+
+describe("enemy player", () => {
+  beforeEach(() => {
+    useGameStore.setState({ worldId: "w1" });
+  });
+
+  it("5. unscouted (intel null) → tag Joueur, 'Village non espionné', power 880, boutons Espionner+Attaquer", async () => {
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/worlds/w1/intel/v-enemy") return null;
+      if (path === "/power/village/v-enemy/public")
+        return { villageId: "v-enemy", buildings: 880 };
+      throw new Error(`Unexpected GET ${path}`);
+    });
+
+    renderPanel(enemyVillage, "v-mine");
+
+    expect(await screen.findByText("Village non espionné")).toBeInTheDocument();
+    // TypeTag "Joueur"
+    expect(screen.getByText("Joueur")).toBeInTheDocument();
+    // display name
+    expect(screen.getByText("Sire Kelvin")).toBeInTheDocument();
+    // power bâtiments (la query s'est settlée puisque findByText a résolu)
+    expect(await screen.findByText("880")).toBeInTheDocument();
+    // footer
+    expect(screen.getByRole("button", { name: /Espionner/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Attaquer/ })).toBeInTheDocument();
+  });
+
+  it("6. unscouted → power public visible, endpoints armée jamais appelés, pas de dossier armée", async () => {
+    const getSpy = vi
+      .spyOn(apiClient, "get")
+      .mockImplementation(async (path) => {
+        if (path === "/worlds/w1/intel/v-enemy") return null;
+        if (path === "/power/village/v-enemy/public")
+          return { villageId: "v-enemy", buildings: 880 };
+        throw new Error(`Unexpected GET ${path}`);
+      });
+
+    renderPanel(enemyVillage, "v-mine");
+
+    expect(await screen.findByText("880")).toBeInTheDocument();
+    // "Armée" est présent dans le texte UnscoutedPanel ("Armée, butin et défenses inconnus…")
+    // mais PAS comme header du dossier FullIntelPanel (qui n'est pas rendu en unscouted).
+    // On vérifie l'absence du résumé troupes "X unités" qui signale le dossier armée complet.
+    expect(screen.queryByText(/unités/)).not.toBeInTheDocument();
+    // endpoints troupes jamais appelés
     const paths = getSpy.mock.calls.map((call) => call[0]);
-    expect(paths).not.toContain('/army/enemy-1/inventory');
-    expect(paths).not.toContain('/combat/enemy-1/garrison');
+    expect(paths).not.toContain("/army/v-enemy/inventory");
+    expect(paths).not.toContain("/combat/v-enemy/garrison");
   });
 
-  it('previews the PvP capture window from the castle level on an enemy village', async () => {
-    vi.spyOn(apiClient, 'get').mockImplementation(async (path) => {
-      if (path === '/power/village/enemy-1/public') return { villageId: 'enemy-1', buildings: 880 };
+  it("previews the PvP capture window from the castle level on an enemy village", async () => {
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/worlds/w1/intel/v-enemy") return null;
+      if (path === "/power/village/v-enemy/public")
+        return { villageId: "v-enemy", buildings: 880 };
       throw new Error(`Unexpected GET ${path}`);
     });
 
-    renderPanel(
-      playerVillage({ id: 'enemy-1', isMine: false, castleLevel: 7 }),
-      'village-1',
-    );
+    renderPanel({ ...enemyVillage, castleLevel: 7 }, "v-mine");
 
-    expect(await screen.findByText('Fenêtre de capture')).toBeInTheDocument();
-    expect(screen.getByText('3h')).toBeInTheDocument();
+    expect(await screen.findByText("Fenêtre de capture")).toBeInTheDocument();
+    expect(screen.getByText("3h")).toBeInTheDocument();
   });
 
-  it('hides the capture preview while a capture is already active', async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-06-03T12:00:00.000Z'));
-    vi.spyOn(apiClient, 'get').mockImplementation(async (path) => {
-      if (path === '/power/village/enemy-1/public') return { villageId: 'enemy-1', buildings: 880 };
+  it("hides the capture preview while a capture is already active", async () => {
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/worlds/w1/intel/v-enemy") return null;
+      if (path === "/power/village/v-enemy/public")
+        return { villageId: "v-enemy", buildings: 880 };
       throw new Error(`Unexpected GET ${path}`);
     });
     const activeCapture: OpenConquestDto = {
-      attackerVillageId: 'origin-village',
-      attackerVillageName: 'Royaume de dupont.kelvin',
-      captureStartedAt: '2026-06-03T11:30:00.000Z',
-      captureUntil: '2026-06-03T12:30:00.000Z',
-      pendingConquestId: 'pc-1',
-      status: 'OPEN',
+      attackerVillageId: "origin-village",
+      attackerVillageName: "Royaume de dupont.kelvin",
+      captureStartedAt: "2026-06-03T11:30:00.000Z",
+      captureUntil: "2026-06-03T12:30:00.000Z",
+      pendingConquestId: "pc-1",
+      status: "OPEN",
       targetCastleLevel: 7,
-      targetKind: 'PLAYER_VILLAGE',
-      targetName: 'enemy',
+      targetKind: "PLAYER_VILLAGE",
+      targetName: "enemy",
       targetTier: null,
-      targetVillageId: 'enemy-1',
+      targetVillageId: "v-enemy",
       targetX: 1,
       targetY: 2,
     };
 
-    renderPanel(
-      playerVillage({ id: 'enemy-1', isMine: false, castleLevel: 7 }),
-      'village-1',
-      { activeCapture },
-    );
+    renderPanel({ ...enemyVillage, castleLevel: 7 }, "v-mine", { activeCapture });
 
-    expect(screen.getByText('Capture')).toBeInTheDocument();
-    expect(screen.queryByText('Fenêtre de capture')).not.toBeInTheDocument();
+    expect(await screen.findByText("880")).toBeInTheDocument();
+    expect(screen.queryByText("Fenêtre de capture")).not.toBeInTheDocument();
   });
 
-  it('shows capture details on a captured village without exposing troops', async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2026-06-03T12:00:00.000Z'));
-    const getSpy = vi.spyOn(apiClient, 'get').mockImplementation(async (path) => {
-      if (path === '/power/village/enemy-1/public') return { villageId: 'enemy-1', buildings: 880 };
+  it("7. scouted (intelDto) → style 'Forteresse', mur 'Niv. 3', loot '100', freshness 'il y a', bouton rapport", async () => {
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/worlds/w1/intel/v-enemy") return intelDto;
+      if (path === "/power/village/v-enemy/public")
+        return { villageId: "v-enemy", buildings: 300 };
       throw new Error(`Unexpected GET ${path}`);
     });
-    const activeCapture: OpenConquestDto = {
-      attackerVillageId: 'origin-village',
-      attackerVillageName: 'Royaume de dupont.kelvin',
-      captureStartedAt: '2026-06-03T11:30:00.000Z',
-      captureUntil: '2026-06-03T12:30:00.000Z',
-      pendingConquestId: 'pc-1',
-      status: 'OPEN',
-      targetCastleLevel: 10,
-      targetKind: 'PLAYER_VILLAGE',
-      targetName: 'Royaume de airstyle59',
-      targetTier: null,
-      targetVillageId: 'enemy-1',
-      targetX: 265,
-      targetY: 241,
+
+    renderPanel(enemyVillage, "v-mine");
+
+    // style
+    expect(await screen.findByText("Forteresse")).toBeInTheDocument();
+    // mur
+    expect(screen.getByText("Niv. 3")).toBeInTheDocument();
+    // loot wood = 100
+    expect(screen.getByText("100")).toBeInTheDocument();
+    // freshness "il y a 30mn" (seenAt = 30 min ago)
+    expect(screen.getByText(/il y a/)).toBeInTheDocument();
+    // bouton rapport
+    const reportBtn = screen.getByRole("button", { name: "Voir rapport source" });
+    expect(reportBtn).toBeInTheDocument();
+
+    // Clic → ouverture du modal rapport SCOUT (intelDto.sourceKind === "SCOUT"
+    // doit router vers reportKind 'scout', pas combat).
+    fireEvent.click(reportBtn);
+    expect(await screen.findByText("Rapport scout")).toBeInTheDocument();
+  });
+
+  it("8. ratio ÷3 bloqué (defender 100 vs attacker 3000, unscouted) → bouton Attaquer disabled + texte 'Puissance trop faible'", async () => {
+    useAuthStore.setState({ user: { id: "me", displayName: "Moi" } });
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/worlds/w1/intel/v-enemy") return null;
+      if (path === "/power/village/v-enemy/public")
+        return { villageId: "v-enemy", buildings: 200 };
+      if (path === "/power/kingdom")
+        return {
+          userId: "me",
+          kingdomPower: 3000,
+          villageCount: 1,
+          villages: [],
+          totalBuildings: 3000,
+          totalArmy: 0,
+        };
+      if (path === "/power/kingdom/u-foreign/public")
+        return { userId: "u-foreign", kingdomPower: 100 };
+      throw new Error(`Unexpected GET ${path}`);
+    });
+
+    renderPanel(enemyVillage, "v-mine");
+
+    // Attendre que les deux queries power se settlent et que le bouton devienne disabled
+    await waitFor(() => {
+      const btn = screen.getByRole("button", { name: /Attaquer/ });
+      expect(btn).toBeDisabled();
+    });
+    // message bloqué
+    expect(screen.getByText(/Puissance trop faible/)).toBeInTheDocument();
+  });
+
+  it("9. ratio OK (defender 1000 vs 3000) → bouton Attaquer enabled", async () => {
+    useAuthStore.setState({ user: { id: "me", displayName: "Moi" } });
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/worlds/w1/intel/v-enemy") return null;
+      if (path === "/power/village/v-enemy/public")
+        return { villageId: "v-enemy", buildings: 200 };
+      if (path === "/power/kingdom")
+        return {
+          userId: "me",
+          kingdomPower: 3000,
+          villageCount: 1,
+          villages: [],
+          totalBuildings: 3000,
+          totalArmy: 0,
+        };
+      if (path === "/power/kingdom/u-foreign/public")
+        return { userId: "u-foreign", kingdomPower: 1000 };
+      throw new Error(`Unexpected GET ${path}`);
+    });
+
+    renderPanel(enemyVillage, "v-mine");
+
+    await screen.findByText("Village non espionné");
+    const btn = screen.getByRole("button", { name: /^Attaquer$/ });
+    expect(btn).toBeEnabled();
+  });
+
+  it("10. shield actif (newbieShield active, enemy, unscouted) → Attaquer disabled + texte /Bouclier débutant/", async () => {
+    useGameStore.setState({ worldId: "w1" });
+    const shieldedEnemy: MapEntity = {
+      ...enemyVillage,
+      newbieShield: {
+        active: true,
+        endsAt: new Date(Date.now() + 48 * 3_600_000).toISOString(),
+        brokenAt: null,
+      },
     };
 
-    renderPanel(
-      playerVillage({
-        id: 'enemy-1',
-        isMine: false,
-        name: 'Royaume de airstyle59',
-        x: 265,
-        y: 241,
-      }),
-      'village-1',
-      { activeCapture },
-    );
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/worlds/w1/intel/v-enemy") return null;
+      if (path === "/power/village/v-enemy/public")
+        return { villageId: "v-enemy", buildings: 400 };
+      throw new Error(`Unexpected GET ${path}`);
+    });
 
-    expect(screen.getByText('Capture')).toBeInTheDocument();
-    expect(screen.getByText('Depuis')).toBeInTheDocument();
-    expect(screen.getByText('Royaume de dupont.kelvin')).toBeInTheDocument();
-    expect(screen.getByText('Écoulé')).toBeInTheDocument();
-    expect(screen.getByText('Reste')).toBeInTheDocument();
-    expect(screen.getAllByText('30m 00s')).toHaveLength(2);
-    expect(screen.getByText('50%')).toBeInTheDocument();
-    expect(screen.queryByText('Troupes présentes')).not.toBeInTheDocument();
-    // Troop endpoints stay untouched for a foreign village, even mid-capture.
+    renderPanel(shieldedEnemy, "v-mine");
+
+    await screen.findByText("Village non espionné");
+    const btn = screen.getByRole("button", { name: /Attaquer/ });
+    expect(btn).toBeDisabled();
+    expect(screen.getByText(/Bouclier débutant/)).toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// describe: barbarian
+// ---------------------------------------------------------------------------
+
+describe("barbarian", () => {
+  beforeEach(() => {
+    useGameStore.setState({ worldId: "w1" });
+  });
+
+  it("11. kind BARBARIAN_VILLAGE tier T3 → label 'Garnison', médaillon 'T3', boutons Espionner+Attaquer", async () => {
+    const barb: MapEntity = {
+      id: "barb-1",
+      kind: "BARBARIAN_VILLAGE",
+      isMine: false,
+      x: 30,
+      y: 40,
+      name: "Camp barbare",
+      tier: "T3",
+    };
+
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/worlds/w1/intel/barb-1") return null;
+      if (path === "/power/village/barb-1/public")
+        return { villageId: "barb-1", buildings: 600 };
+      throw new Error(`Unexpected GET ${path}`);
+    });
+
+    renderPanel(barb, "v-mine");
+
+    // label T3 = "Garnison" (TIER_META)
+    expect(await screen.findByText("Garnison")).toBeInTheDocument();
+    // médaillon T3 (et l'échelle en contient aussi, donc au moins 1)
+    expect(screen.getAllByText("T3").length).toBeGreaterThanOrEqual(1);
+    // footer
+    expect(screen.getByRole("button", { name: /Espionner/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Attaquer/ })).toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// describe: intel — isMine ne déclenche jamais l'endpoint intel
+// ---------------------------------------------------------------------------
+
+describe("intel endpoint isolation", () => {
+  beforeEach(() => {
+    useGameStore.setState({ worldId: "w1" });
+  });
+
+  it("12. isMine → endpoint intel jamais appelé, pas de section scouted", async () => {
+    const getSpy = vi
+      .spyOn(apiClient, "get")
+      .mockImplementation(async (path) => {
+        if (path === "/army/village-1/inventory") return [];
+        if (path === "/combat/village-1/garrison") return [];
+        if (path === "/power/village/village-1/public")
+          return { villageId: "village-1", buildings: 200 };
+        throw new Error(`Unexpected GET ${path}`);
+      });
+
+    renderPanel(playerVillage(), "another-village", { onGoToVillage: vi.fn() });
+
+    // attendre que les queries se posent
+    await screen.findByRole("button", { name: /Entrer/ });
+
+    // endpoint intel jamais appelé
     const paths = getSpy.mock.calls.map((call) => call[0]);
-    expect(paths).not.toContain('/army/enemy-1/inventory');
-    expect(paths).not.toContain('/combat/enemy-1/garrison');
+    expect(paths).not.toContain("/worlds/w1/intel/village-1");
+    // pas de contenu scouted (Forteresse, Niv., Voir rapport)
+    expect(screen.queryByText("Forteresse")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Voir rapport source" })).not.toBeInTheDocument();
   });
 });

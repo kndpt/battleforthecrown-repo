@@ -187,28 +187,9 @@ export function GameHeader({
 
   return (
     <div className="relative flex flex-col overflow-hidden border-b border-[rgba(246,213,123,.16)] bg-[linear-gradient(180deg,#07150f_0%,#142816_46%,#2b170b_100%)] text-[#f0e0c0] shadow-[0_10px_26px_rgba(0,0,0,.3)]">
-      <style>{`
-        @keyframes gameTopbarAccountDock {
-          from { opacity: 0; transform: translate3d(0,-18px,0) scale(.98); }
-          to { opacity: 1; transform: translate3d(0,0,0) scale(1); }
-        }
-        @keyframes gameTopbarVillageDock {
-          from { opacity: 0; transform: translate3d(0,22px,0) scale(1.025); filter: blur(1.4px); }
-          to { opacity: 1; transform: translate3d(0,0,0) scale(1); filter: blur(0); }
-        }
-        @keyframes gameTopbarResourcesDock {
-          from { opacity: 0; transform: translate3d(0,18px,0); }
-          to { opacity: 1; transform: translate3d(0,0,0); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .game-topbar-account,
-          .game-topbar-village,
-          .game-topbar-resources { animation: none; }
-        }
-      `}</style>
       <div className="absolute inset-x-0 top-0 h-16 bg-[radial-gradient(ellipse_75%_80%_at_50%_-20%,rgba(246,213,123,.2),transparent_72%)]" />
 
-      <div className="game-topbar-account relative flex items-center gap-2.5 px-3 pb-2 pt-3 [animation:gameTopbarAccountDock_.34s_cubic-bezier(.16,1,.24,1)_both]">
+      <div className="game-topbar-account relative flex items-center gap-2.5 px-3 pb-2 pt-3 [animation:bftc-topbar-account-dock_.34s_cubic-bezier(.16,1,.24,1)_both]">
         <button
           type="button"
           aria-expanded={isProfileOpen}
@@ -263,7 +244,7 @@ export function GameHeader({
       </div>
 
       {showVillageSwitcher && activeVillage && (
-        <div className="game-topbar-village relative flex min-h-[68px] items-center justify-center px-3 pb-2 [animation:gameTopbarVillageDock_.38s_cubic-bezier(.16,1,.24,1)_.04s_both]">
+        <div className="game-topbar-village relative flex min-h-[68px] items-center justify-center px-3 pb-2 [animation:bftc-topbar-village-dock_.38s_cubic-bezier(.16,1,.24,1)_.04s_both]">
           <button
             type="button"
             onClick={() => switchVillage(-1)}
@@ -328,7 +309,7 @@ export function GameHeader({
       )}
 
       {showResources && (
-        <div className="game-topbar-resources relative grid grid-cols-3 divide-x divide-[rgba(166,124,82,.28)] border-t border-[rgba(246,213,123,.1)] bg-[linear-gradient(180deg,rgba(44,26,10,.74),rgba(31,19,9,.66))] shadow-[0_-1px_0_rgba(255,255,255,.04)_inset] backdrop-blur-md backdrop-saturate-150 [animation:gameTopbarResourcesDock_.36s_cubic-bezier(.16,1,.24,1)_.09s_both]">
+        <div className="game-topbar-resources relative grid grid-cols-3 divide-x divide-[rgba(166,124,82,.28)] border-t border-[rgba(246,213,123,.1)] bg-[linear-gradient(180deg,rgba(44,26,10,.74),rgba(31,19,9,.66))] shadow-[0_-1px_0_rgba(255,255,255,.04)_inset] backdrop-blur-md backdrop-saturate-150 [animation:bftc-topbar-resources-dock_.36s_cubic-bezier(.16,1,.24,1)_.09s_both]">
           {resources.map((resource) => (
             <div
               key={resource.label}

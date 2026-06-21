@@ -1,8 +1,8 @@
 # Run #057 — feature-oyez-runtime-producer
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-20
+> **Terminé** : 2026-06-20
 
 ## Cible
 
@@ -67,38 +67,43 @@
 
 ## Progress (rempli pendant le run)
 
-_(Vide au démarrage. Mis à jour à chaque transition d'étape ou de tâche.)_
+_(git history)_
 
 ## Décisions prises
 
-_(Vide au démarrage. Décisions archi non triviales, dérogations lead, findings de review, refus de sub-agents.)_
+_(git history + ADR-18)_ — Déviation clé : le schéma `DailyOyez` n'a pas de colonne `status` ; l'invariant « 1 actif/monde » est enforce via colonne `day_key` + index unique `(world_id, day_key)` + durée < 24h, pas via un index `WHERE status='ACTIVE'` (plan). Implémentation lead direct (slice verticale couplée) actée comme dérogation.
 
 ## Rapport final
 
-_(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tickets ouverts, méta-évaluation si applicable.)_
+Producer Oyez runtime livré : worker pg-boss cron 04:00 Europe/Paris → `OyezProducerService` (déterministe, idempotent, mondes OPEN) ; catalogue 4 thèmes mappés sur events runtime (`scout.reported`/`reinforcement.sent` câblés) ; carte = 4 tâches sous Oyez sans bonus de récompense ; `OyezTheme` typé end-to-end shared↔back↔front ; docs (gameplay + ADR-18 + backend-modules) + SPEC §V9.
 
 ### Acceptance & QA
 
-- **Critères d'acceptance vérifiés** (commande exécutable obligatoire si automatisable, preuve textuelle uniquement si visuel/gameplay/UX) :
-  - [ ] `DailyOyez` créé en runtime par worker — `yarn workspace battleforthecrown-backend test test/daily-retention.smoke.spec.ts -t "oyez producer"` → <résultat>
-  - [ ] 1 seul Oyez actif simultané par monde — smoke double-appel
-  - [ ] Idempotence producer — smoke second-call
-  - [ ] Cadence ~2/sem par default — unit selector
-  - [ ] Catalogue 4 thèmes — `rg "OyezTheme\\.(BUILDERS|MARCH|WATCH|BARBARIANS)" packages/shared`
-  - [ ] `DailyOyezDto.theme` typé enum — `yarn workspace @battleforthecrown/shared build`
-  - [ ] Carte = 4 tâches sous Oyez — smoke
-  - [ ] Carte = 3 tâches sans Oyez (régression) — smoke existant
-  - [ ] Récompense plafonnée 12 %/jour inchangée — assertion smoke
-  - [ ] Cron DST Europe/Paris — unit ou QA backend
-  - [ ] Spec actée — `rg "weeklyCadence|4 tâches sous Oyez" docs/gameplay/05-daily-cards-and-oyez.md`
-  - [ ] UI inchangée — checklist QA Kelvin
-- **Review indépendante** : `Déclenchée (raison : (a) back + shared + front-types coordonnés ; (b) spec gameplay canonique Phase 10 modifiée ; (d) invariant durable Phase 10 — idempotence par monde + cron 04:00 Europe/Paris + carte 4 tâches sous Oyez)` — verdict à remplir.
-- **Tests automatisés** : commandes exactes + résultat synthétique à remplir.
-- **Smokes ajoutés/modifiés** : `test/daily-retention.smoke.spec.ts` (extension).
-- **QA fonctionnelle agent** : déclenchement manuel handler producer + lecture DB + curl `GET /retention` après production, à exécuter en étape 10.
+- **Critères d'acceptance vérifiés** :
+  - [x] `DailyOyez` créé en runtime par worker — `yarn workspace battleforthecrown-backend test:smoke:run -- daily-retention` (test « produces the Oyez of the day for an OPEN world ») → 6/6 passed
+  - [x] 1 seul Oyez actif simultané par monde — smoke assertion `activeCount === 1` + index unique `daily_oyez(world_id, day_key)` → passed
+  - [x] Idempotence producer — smoke « stays idempotent » (`second.created === false`, 1 row) → passed
+  - [x] Cadence ~2/sem par default (exactement `weeklyCadence`/semaine ISO) — `yarn workspace battleforthecrown-backend test src/modules/retention/retention-oyez.spec.ts` (`toHaveLength(2)`) → 7/7 passed
+  - [x] Catalogue 4 thèmes — `rg "BUILDERS|MARCH|WATCH|BARBARIANS" packages/shared/src/retention/types.ts` → `OYEZ_THEMES` = ces 4 ; labels FR dans `retention-oyez.ts` `OYEZ_CATALOGUE`
+  - [x] `DailyOyezDto.theme` typé enum — `yarn static-check` (tsc strict back+front+shared) → green
+  - [x] Carte = 4 tâches sous Oyez — smoke (`card.tasks.toHaveLength(4)` + `SCOUT_TARGET` présent) → passed
+  - [x] Carte = 3 tâches sans Oyez (régression) — smokes existants (`tasks.toHaveLength(3)`) → passed
+  - [x] Récompense plafonnée 12 %/jour inchangée — smoke `card.reward` === `getDailyCardScaling(level).reward` (tâche thématique `rewardWeight: 0`) → passed
+  - [x] Cron DST Europe/Paris — unit `retention-oyez.spec.ts` (spring-forward 2026-03-29 + fall-back 2026-10-25 sur le boundary 04:00) → passed
+  - [x] Spec actée — `rg "weeklyCadence|4 tâches sous Oyez" docs/gameplay/05-daily-cards-and-oyez.md` → présents (§ Oyez + § Interaction)
+  - [ ] UI `Oyez · en cours` inchangée — visuel → checklist QA Kelvin ci-dessous
+- **Review indépendante** : `Déclenchée (raison : (a) back + shared + front-types ; (b) spec gameplay canonique modifiée ; (d) invariant durable Phase 10)` — **VERDICT: GO** (0 bloquant/majeur ; 4 nits mineurs, 3 corrigés : type `OyezTheme` sur le résultat producer, cap durée `< 24h` (max 23), test DST fall-back ; nit migration sans backfill = non-action, NULLs distincts en Postgres).
+- **Tests automatisés** :
+  - `yarn workspace battleforthecrown-backend test` → 486 passed
+  - `yarn workspace battleforthecrown-backend test src/modules/retention/retention-oyez.spec.ts` → 7 passed
+  - `yarn workspace battleforthecrown-pixi test src/features/retention` → 7 passed
+  - `yarn static-check` → green
+- **Smokes lancés** : `yarn workspace battleforthecrown-backend test:smoke:preflight` puis `test:smoke:run -- daily-retention` → 6 passed. **Ciblés** (diff backend `src/` non transversal : nouveau worker + module retention, pas de changement Outbox/auth/schema global hors `daily_oyez`). Full smoke couvert par CI PR.
+- **Smokes ajoutés/modifiés** : `test/daily-retention.smoke.spec.ts` — test #1 étendu (Oyez WATCH → carte 4 tâches + assertion reward cap), + 2 tests producer (idempotence, filtre non-OPEN).
+- **QA fonctionnelle agent** : producer exercé end-to-end via smoke (insertion DB + `GET /retention` + claim). Boot DI + `onModuleInit` du worker validés par le boot smoke. Non exécuté en serveur live séparé : redondant avec le smoke.
 - **Tests IG à faire par le user** (≤ 5 items) :
-  - [ ] Ouvrir la sheet Devoir royal sur un monde test où un `DailyOyez` est inséré par le producer.
-  - [ ] Vérifier que la bannière `Oyez · en cours` s'affiche.
+  - [ ] Ouvrir la sheet Devoir royal sur un monde où un `DailyOyez` est actif (producer ou insertion manuelle).
+  - [ ] Vérifier que la bannière `Oyez · en cours` s'affiche avec l'icône du thème.
   - [ ] Vérifier que la carte du jour montre 4 tâches dont 1 thématique.
-  - [ ] Vérifier l'absence de bannière quand aucun Oyez n'est actif (carte = 3 tâches).
-  - [ ] Vérifier mobile : pas d'emprise excessive de la bannière.
+  - [ ] Vérifier l'absence de bannière + carte = 3 tâches quand aucun Oyez actif.
+  - [ ] Mobile : pas d'emprise excessive de la bannière.

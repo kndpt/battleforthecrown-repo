@@ -193,6 +193,7 @@ const PLANNERS: Record<EventKind, AnyPlanner> = {
   'rankings.changed': directWorld('worldId'),
   'world.status.changed': directWorld('worldId'),
   'pvp.shield.broken': directUser('userId'),
+  'intel.updated': directUser('userId'),
 };
 
 export async function planNotifications<K extends EventKind>(

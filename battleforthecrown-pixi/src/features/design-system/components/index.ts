@@ -94,6 +94,8 @@ export { BASE_MODAL_DEFAULT_MAX_HEIGHT, BASE_MODAL_DEFAULT_WIDTH, BaseModal } fr
 export type { BaseModalProps, BaseModalTone } from './BaseModal';
 export { BftcButton } from './BftcButton';
 export type { BftcButtonProps, BftcButtonSize, BftcButtonState, BftcButtonVariant } from './BftcButton';
+export { VillageMapPanel } from './villageMapPanel';
+export type { VillageMapPanelProps, VillageMapVariant, VillageMapTypeTag, TroopCategory, BarbarianTier, FullIntelPanelProps, FullIntelArmyEntry } from './villageMapPanel';
 export { BorderStrokeTile } from './BorderStrokeTile';
 export type { BorderStrokeTileProps, BorderStrokeTone } from './BorderStrokeTile';
 export { BuildingCard } from './BuildingCard';
@@ -193,8 +195,6 @@ export type {
   KingdomActivityHudBadgesProps,
   KingdomActivityTab,
 } from './KingdomActivitiesPanel';
-export { MapEntityCallout } from './MapEntityCallout';
-export type { MapEntityCalloutAction, MapEntityCalloutActionTone, MapEntityCalloutProps, MapEntityCalloutSection, MapEntityCalloutSectionRow, MapEntityCalloutStat, MapEntityCalloutTier } from './MapEntityCallout';
 export { MultiVillageBottomSheet, MultiVillagePhoneFrame } from './MultiVillageBottomSheet';
 export type {
   MultiVillageActivityKind,

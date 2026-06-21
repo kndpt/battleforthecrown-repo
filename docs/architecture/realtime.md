@@ -105,6 +105,7 @@ Chaque payload est validé runtime par `parseEventPayload(kind, raw)` (backend `
 | `scout.sent` | `userId` (scout owner) | `expeditionId, villageId, targetX, targetY, targetKind, arrivalAt` | `CombatService.initiateScout` |
 | `scout.reported` | `userId` (scout owner) | `expeditionId, reportId, villageId, targetKind, targetName, targetX, targetY, returnAt` | `CombatWorker` quand une expédition `SCOUT` arrive |
 | `scout.returned` | `userId` (scout owner) | `expeditionId, reportId` nullable, `villageId, survivingUnits (UnitMap)` | `ReturnWorker` quand les ESPIONs rentrent |
+| `intel.updated` | `userId` (observateur) | `userId, worldId, villageId` (= cible observée) | `OutboxPublisher.intelUpdated` (dans la tx `IntelService.recordIntel`) à chaque scout résolu et chaque combat offensif gagné. Routé `directUser('userId')` — **privé à l'observateur**, jamais le propriétaire de la cible. Le front n'invalide que la query `['intel', worldId, villageId]`. |
 | `reinforcement.sent` | `userId` (village d'origine) | `expeditionId, villageId, targetVillageId, arrivalAt` | `CombatService.initiateReinforce` |
 | `reinforcement.recalled` | `userId` (village hôte ou d'origine) | `expeditionId, villageId, originVillageId, arrivalAt` | `CombatService.initiateRecall` |
 | `reinforcement.returned` | `userId` (village hôte ou d'origine) | `expeditionId, villageId, originVillageId, units` | `CombatWorker` quand un renfort repart vers son village d'origine |

@@ -157,6 +157,31 @@ const FogOfWarSettingsSchema = z.strictObject({
   enabled: z.boolean(),
 });
 
+export const DEFAULT_WORLD_OYEZ_CONFIG = {
+  enabled: true,
+  weeklyCadence: 2,
+  defaultDurationHours: 18,
+} as const;
+
+export const WorldOyezSchema = z.strictObject({
+  enabled: z.boolean().default(DEFAULT_WORLD_OYEZ_CONFIG.enabled),
+  weeklyCadence: z
+    .number()
+    .int()
+    .min(0)
+    .max(7)
+    .default(DEFAULT_WORLD_OYEZ_CONFIG.weeklyCadence),
+  // Capped < 24h so at most one Oyez window is active per world per day
+  // (the `(world_id, day_key)` unique index then guarantees ≤ 1 active). See
+  // ADR-18.
+  defaultDurationHours: z
+    .number()
+    .int()
+    .positive()
+    .max(23)
+    .default(DEFAULT_WORLD_OYEZ_CONFIG.defaultDurationHours),
+});
+
 export const WorldConfigSchema = z.strictObject({
   tempo: TempoSchema,
   lifecycle: WorldLifecycleSchema.default(DEFAULT_WORLD_LIFECYCLE_CONFIG),
@@ -165,6 +190,7 @@ export const WorldConfigSchema = z.strictObject({
   barbarianSeeding: BarbarianSeedingPlanSchema,
   playerVillagePlacement: PlayerVillagePlacementPlanSchema,
   fogOfWar: FogOfWarSettingsSchema,
+  oyez: WorldOyezSchema.default(DEFAULT_WORLD_OYEZ_CONFIG),
 });
 
 export type WorldConfig = z.infer<typeof WorldConfigSchema>;
@@ -184,3 +210,4 @@ export type PlayerVillagePlacementPlan = z.infer<
 export type PlayerVillagePlacementConfig = PlayerVillagePlacementPlan;
 export type PlayerVillageZone = z.infer<typeof PlayerVillageZoneSchema>;
 export type FogOfWarSettings = z.infer<typeof FogOfWarSettingsSchema>;
+export type WorldOyezConfig = z.infer<typeof WorldOyezSchema>;

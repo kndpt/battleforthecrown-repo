@@ -18,6 +18,21 @@ export type DailyCardTaskType = (typeof DAILY_CARD_TASK_TYPES)[number];
 export const DAILY_REWARD_TYPES = ["RESOURCES"] as const;
 export type DailyRewardType = (typeof DAILY_REWARD_TYPES)[number];
 
+export const OYEZ_THEMES = [
+  "BUILDERS",
+  "MARCH",
+  "WATCH",
+  "BARBARIANS",
+] as const;
+export type OyezTheme = (typeof OYEZ_THEMES)[number];
+
+export function isOyezTheme(value: unknown): value is OyezTheme {
+  return (
+    typeof value === "string" &&
+    (OYEZ_THEMES as readonly string[]).includes(value)
+  );
+}
+
 export interface DailyCardTaskMetadataDto {
   completedQty?: number;
   minTargetTier?: "T1" | "T2" | "T3" | "T4" | "T5";
@@ -57,7 +72,7 @@ export interface DailyOyezDto {
   worldId: string;
   title: string;
   description: string;
-  theme: string;
+  theme: OyezTheme;
   startsAt: string;
   endsAt: string;
 }

@@ -1,6 +1,8 @@
 import request from 'supertest';
 import type { RetentionSummaryDto } from '@battleforthecrown/shared/retention';
 import { EventOutboxService } from '../src/modules/event/event-outbox.service';
+import { OyezProducerService } from '../src/modules/retention/oyez-producer.service';
+import { getDailyCardScaling } from '../src/modules/retention/retention-scaling';
 import {
   getParisDailyKey,
   getPreviousParisDailyKey,
@@ -68,12 +70,14 @@ describe('daily retention smoke', () => {
     );
     const now = new Date();
 
+    // Active Oyez (WATCH) adds a 4th thematic SCOUT_TARGET task to the card.
     await ctx.prisma.dailyOyez.create({
       data: {
         worldId: world.id,
-        title: 'Jour des bâtisseurs',
-        description: 'Les bâtisseurs orientent les devoirs du jour.',
-        theme: 'BUILDERS',
+        dayKey: getParisDailyKey(now),
+        title: 'Oeil du Guet',
+        description: 'L’exploration est favorisée aujourd’hui.',
+        theme: 'WATCH',
         startsAt: new Date(now.getTime() - 60_000),
         endsAt: new Date(now.getTime() + 60 * 60_000),
       },
@@ -129,8 +133,8 @@ describe('daily retention smoke', () => {
           kind: 'scout.reported',
           aggregateId: villageId,
           payload: {
-            expeditionId: 'scout-retention-ignored',
-            reportId: 'scout-report-retention-ignored',
+            expeditionId: 'scout-retention-thematic',
+            reportId: 'scout-report-retention-thematic',
             villageId,
             targetKind: 'BARBARIAN_VILLAGE',
             targetName: 'Barbares',
@@ -151,21 +155,38 @@ describe('daily retention smoke', () => {
     expect(completedSummary.status).toBe(200);
     const completedSummaryBody = completedSummary.body as RetentionSummaryDto;
     expect(completedSummaryBody.oyez).toMatchObject({
-      title: 'Jour des bâtisseurs',
-      theme: 'BUILDERS',
+      title: 'Oeil du Guet',
+      theme: 'WATCH',
     });
     expect(completedSummaryBody.cards).toHaveLength(1);
     expect(completedSummaryBody.backlogLimit).toBe(1);
-    expect(completedSummaryBody.cards[0].tasks).toHaveLength(3);
-    const cardId = completedSummaryBody.cards[0].id;
-    expect(completedSummaryBody.cards[0]).toMatchObject({
-      status: 'CLAIMABLE',
-    });
+    const card = completedSummaryBody.cards[0];
+    // Card = 4 tasks under Oyez (3 natural + 1 thematic SCOUT_TARGET for WATCH).
+    expect(card.tasks).toHaveLength(4);
+    expect(card.tasks.some((task) => task.type === 'SCOUT_TARGET')).toBe(true);
+    const cardId = card.id;
+    expect(card).toMatchObject({ status: 'CLAIMABLE' });
     expect(
-      completedSummaryBody.cards[0].tasks.every(
-        (task: { completedAt: string | null }) => Boolean(task.completedAt),
+      card.tasks.every((task: { completedAt: string | null }) =>
+        Boolean(task.completedAt),
       ),
     ).toBe(true);
+
+    // Acceptance #9: the thematic task carries no reward; the card reward stays
+    // capped by the 3 natural scaling tasks (run 046 #9 — no stackable bonus).
+    const castle = await ctx.prisma.building.aggregate({
+      where: {
+        type: 'CASTLE',
+        village: { userId: player.userId, worldId: world.id },
+      },
+      _max: { level: true },
+    });
+    const expectedReward = getDailyCardScaling(castle._max.level ?? 1).reward;
+    expect(card.reward).toMatchObject({
+      wood: expectedReward.wood,
+      stone: expectedReward.stone,
+      iron: expectedReward.iron,
+    });
 
     const beforeClaim = await ctx.prisma.resourceStock.findUniqueOrThrow({
       where: { villageId },
@@ -397,5 +418,52 @@ describe('daily retention smoke', () => {
       .set('Authorization', `Bearer ${player.accessToken}`)
       .send({ villageId: join.village.id });
     expect(expiredClaim.status).toBe(400);
+  });
+
+  it('produces the Oyez of the day for an OPEN world and stays idempotent', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const producer = ctx.app.get(OyezProducerService);
+    const now = new Date();
+    const dayKey = getParisDailyKey(now);
+
+    const first = await producer.produceForWorld(world.id, now);
+    expect(first.created).toBe(true);
+    expect(first.theme).toBeTruthy();
+
+    // Second call while an Oyez is active is a no-op (run #057 idempotence).
+    const second = await producer.produceForWorld(world.id, now);
+    expect(second.created).toBe(false);
+
+    const oyezRows = await ctx.prisma.dailyOyez.findMany({
+      where: { worldId: world.id },
+    });
+    expect(oyezRows).toHaveLength(1);
+    expect(oyezRows[0]).toMatchObject({ dayKey, theme: first.theme });
+
+    // At most 1 active Oyez per world at any instant.
+    const activeCount = await ctx.prisma.dailyOyez.count({
+      where: {
+        worldId: world.id,
+        startsAt: { lte: now },
+        endsAt: { gt: now },
+      },
+    });
+    expect(activeCount).toBe(1);
+  });
+
+  it('does not produce an Oyez for a non-OPEN world', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    await ctx.prisma.world.update({
+      where: { id: world.id },
+      data: { status: 'LOCKED' },
+    });
+    const producer = ctx.app.get(OyezProducerService);
+
+    const result = await producer.produceForWorld(world.id, new Date());
+    expect(result.created).toBe(false);
+    expect(result.reason).toBe('not-open');
+    expect(
+      await ctx.prisma.dailyOyez.count({ where: { worldId: world.id } }),
+    ).toBe(0);
   });
 });

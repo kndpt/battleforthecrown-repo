@@ -54,6 +54,7 @@ import {
 import { typedEntries } from '@battleforthecrown/shared/utils';
 import { getCaptureDurationMs } from './capture-duration';
 import { RankingsService } from '../rankings/rankings.service';
+import { IntelService } from '../intel/intel.service';
 import { mergeGarrisonsIntoParticipants } from './garrison-merge.utils';
 import {
   dedupedRecipientUserIds,
@@ -134,6 +135,7 @@ export class CombatWorker implements OnModuleInit {
     private readonly outbox: OutboxPublisher,
     private readonly conquest: ConquestService,
     private readonly rankings: RankingsService,
+    private readonly intelService: IntelService,
   ) {}
 
   async onModuleInit() {
@@ -324,6 +326,29 @@ export class CombatWorker implements OnModuleInit {
                   report,
                   isVictory,
                 });
+
+              // 10b. Carnet d'intel : un combat offensif gagné révèle la cible côté attaquant.
+              // Exclut combat perdu + occupation défensive (cf. run 055).
+              if (isVictory && !occupationDefense && attackerVillage.userId) {
+                await this.intelService.recordIntel(tx, {
+                  userId: attackerVillage.userId,
+                  worldId: expedition.worldId,
+                  targetVillageId: expedition.targetRefId,
+                  sourceKind: 'COMBAT_WIN',
+                  sourceReportId: report.id,
+                  units: context.defender.units ?? {},
+                  // Observed stock, not the loot (which is capped by hauling
+                  // capacity / lootFactor and would depend on the attacking army).
+                  resources: context.defender.resources ?? EMPTY_LOOT,
+                  wallLevel: null,
+                  strategy: null,
+                  targetName: defenderVillage?.name ?? null,
+                  targetX: expedition.targetX,
+                  targetY: expedition.targetY,
+                  targetTier: defenderVillage?.tier ?? null,
+                  seenAt: report.timestamp,
+                });
+              }
 
               // 11. Compute what returns home (units + loot withheld during a capture).
               const { returningLoot, expeditionLoot, returnAt } =
@@ -1591,6 +1616,26 @@ export class CombatWorker implements OnModuleInit {
           ...(castleLevel !== undefined ? { castleLevel } : {}),
         },
       },
+    });
+
+    await this.intelService.recordIntel(tx, {
+      userId: attackerVillage.userId,
+      worldId: expedition.worldId,
+      targetVillageId: targetVillage.id,
+      sourceKind: 'SCOUT',
+      sourceReportId: report.id,
+      units: snapshot.units,
+      resources: snapshot.resources,
+      wallLevel,
+      strategy:
+        expedition.targetKind === 'PLAYER_VILLAGE'
+          ? (targetVillage.strategyConfig?.strategy ?? null)
+          : null,
+      targetName: targetVillage.name,
+      targetX: expedition.targetX,
+      targetY: expedition.targetY,
+      targetTier: targetVillage.tier,
+      seenAt: report.timestamp,
     });
 
     const returnAt = new Date(Date.now() + expedition.outboundTravelMs);

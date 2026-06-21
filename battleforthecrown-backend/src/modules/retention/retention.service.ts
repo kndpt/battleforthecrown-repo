@@ -17,12 +17,15 @@ import type { EventKind, PayloadForKind } from '../event/event-types';
 import { createOutboxEvent } from '../event/event.utils';
 import { ResourcesService } from '../resources/resources.service';
 import { getDailyCardScaling } from './retention-scaling';
-import type {
-  ClaimDailyCardResponse,
-  DailyCardDto,
-  DailyCardTaskDto,
-  DailyOyezDto,
-  RetentionSummaryDto,
+import { getOyezThematicTask } from './retention-oyez';
+import {
+  isOyezTheme,
+  type ClaimDailyCardResponse,
+  type DailyCardDto,
+  type DailyCardTaskDto,
+  type DailyOyezDto,
+  type OyezTheme,
+  type RetentionSummaryDto,
 } from '@battleforthecrown/shared/retention';
 import {
   type CastleLevelReader,
@@ -56,7 +59,7 @@ export class RetentionService {
     const now = new Date();
     const currentDayKey = getParisDailyKey(now);
     await this.expireStaleCards(userId, worldId, currentDayKey, now);
-    await this.ensureDailyCard(userId, worldId, currentDayKey);
+    await this.ensureDailyCard(userId, worldId, currentDayKey, now);
     const claimableDayKeys = getClaimableDayKeys(now);
 
     const [cards, latestClaim, oyez] = await Promise.all([
@@ -82,7 +85,7 @@ export class RetentionService {
         orderBy: { claimedAt: 'desc' },
         select: { rewardVillageId: true },
       }),
-      this.getActiveOyez(worldId),
+      this.getActiveOyez(worldId, now),
     ]);
 
     return {
@@ -92,7 +95,7 @@ export class RetentionService {
       claimableCount: cards.filter((card) => card.status === 'CLAIMABLE')
         .length,
       defaultRewardVillageId: latestClaim?.rewardVillageId ?? null,
-      oyez: oyez ? mapOyez(oyez) : null,
+      oyez: oyez && isOyezTheme(oyez.theme) ? mapOyez(oyez, oyez.theme) : null,
       cards: cards.map(mapCard),
     };
   }
@@ -217,6 +220,7 @@ export class RetentionService {
     userId: string,
     worldId: string,
     dayKey: string,
+    now: Date,
   ): Promise<void> {
     const existing = await this.prisma.dailyCard.findUnique({
       where: { userId_worldId_dayKey: { userId, worldId, dayKey } },
@@ -225,10 +229,16 @@ export class RetentionService {
     if (existing) return;
 
     try {
+      const oyezTheme = await this.resolveActiveOyezTheme(
+        this.prisma,
+        worldId,
+        now,
+      );
       const cardData = await this.buildDailyCardPayload(
         this.prisma,
         userId,
         worldId,
+        oyezTheme,
       );
       await this.prisma.dailyCard.create({
         data: { userId, worldId, dayKey, ...cardData },
@@ -244,9 +254,12 @@ export class RetentionService {
     }
   }
 
-  private getActiveOyez(worldId: string) {
-    const now = new Date();
-    return this.prisma.dailyOyez.findFirst({
+  private getActiveOyez(
+    worldId: string,
+    now: Date,
+    client: Prisma.TransactionClient = this.prisma,
+  ) {
+    return client.dailyOyez.findFirst({
       where: {
         worldId,
         startsAt: { lte: now },
@@ -254,6 +267,18 @@ export class RetentionService {
       },
       orderBy: { startsAt: 'desc' },
     });
+  }
+
+  // `reference` anchors the theme on the card's own day, not wall-clock now:
+  // a card built for a past `dayKey` (delayed Outbox event, or around the 04:00
+  // reset) must reflect the Oyez active that day, never today's.
+  private async resolveActiveOyezTheme(
+    client: Prisma.TransactionClient,
+    worldId: string,
+    reference: Date,
+  ): Promise<OyezTheme | null> {
+    const oyez = await this.getActiveOyez(worldId, reference, client);
+    return oyez && isOyezTheme(oyez.theme) ? oyez.theme : null;
   }
 
   private async progressOldestMatchingTask(
@@ -277,6 +302,7 @@ export class RetentionService {
       village.userId,
       village.worldId,
       eventDayKey,
+      eventCreatedAt,
     );
     await this.progressMatchingTaskForDay(
       tx,
@@ -301,6 +327,7 @@ export class RetentionService {
         village.userId,
         village.worldId,
         currentDayKey,
+        now,
       );
     }
   }
@@ -369,8 +396,15 @@ export class RetentionService {
     userId: string,
     worldId: string,
     dayKey: string,
+    reference: Date,
   ): Promise<void> {
-    const cardData = await this.buildDailyCardPayload(tx, userId, worldId);
+    const oyezTheme = await this.resolveActiveOyezTheme(tx, worldId, reference);
+    const cardData = await this.buildDailyCardPayload(
+      tx,
+      userId,
+      worldId,
+      oyezTheme,
+    );
     await tx.dailyCard.upsert({
       where: { userId_worldId_dayKey: { userId, worldId, dayKey } },
       update: {},
@@ -383,16 +417,23 @@ export class RetentionService {
     reader: CastleLevelReader,
     userId: string,
     worldId: string,
+    oyezTheme: OyezTheme | null,
   ) {
     const scaling = getDailyCardScaling(
       await getPlayerMaxCastleLevel(reader, userId, worldId),
     );
+    // Reward stays computed from the 3 natural scaling tasks only; the thematic
+    // task carries rewardWeight 0 so an active Oyez never stacks a reward bonus
+    // (run 046 #9). Card = 4 tasks under Oyez, 3 otherwise.
+    const tasks = oyezTheme
+      ? [...scaling.tasks, getOyezThematicTask(oyezTheme)]
+      : scaling.tasks;
     return {
       rewardWood: scaling.reward.wood,
       rewardStone: scaling.reward.stone,
       rewardIron: scaling.reward.iron,
       tasks: {
-        create: scaling.tasks.map((task) => ({
+        create: tasks.map((task) => ({
           type: task.type,
           label: task.label,
           target: task.target,
@@ -487,21 +528,23 @@ function mapCard(card: CardWithTasks): DailyCardDto {
   };
 }
 
-function mapOyez(oyez: {
-  id: string;
-  worldId: string;
-  title: string;
-  description: string;
-  theme: string;
-  startsAt: Date;
-  endsAt: Date;
-}): DailyOyezDto {
+function mapOyez(
+  oyez: {
+    id: string;
+    worldId: string;
+    title: string;
+    description: string;
+    startsAt: Date;
+    endsAt: Date;
+  },
+  theme: OyezTheme,
+): DailyOyezDto {
   return {
     id: oyez.id,
     worldId: oyez.worldId,
     title: oyez.title,
     description: oyez.description,
-    theme: oyez.theme,
+    theme,
     startsAt: oyez.startsAt.toISOString(),
     endsAt: oyez.endsAt.toISOString(),
   };

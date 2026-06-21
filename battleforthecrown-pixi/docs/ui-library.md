@@ -2,7 +2,9 @@
 
 Composants UI stylisés "Clash-like" pour le HUD React. Tailwind CSS + thème médiéval (cf. [`tailwind.config.ts`](../tailwind.config.ts)) + `class-variance-authority` (CVA) pour les variants.
 
-> **Démo interactive** : route `/ui-test` (cf. `src/features/ui-test/UiTestScreen.tsx`). Lance `yarn workspace battleforthecrown-pixi dev` puis ouvre `http://localhost:5173/ui-test`.
+> **Démo interactive (primitives `src/ui/`)** : route `/ui-test` (cf. `src/features/ui-test/UiTestScreen.tsx`). Lance `yarn workspace battleforthecrown-pixi dev` puis ouvre `http://localhost:5173/ui-test`.
+>
+> **Démo interactive (composants `src/features/design-system/`)** : route `/design-system` (cf. `src/features/design-system/DesignSystemPreview.tsx`).
 >
 > **Conventions de création** : [`ui-design-system.md`](./ui-design-system.md) (palette, typo, espacements, template CVA, checklist).
 >
@@ -111,6 +113,55 @@ function VillageCard({ village, onSelect }: Props) {
   );
 }
 ```
+
+## Composants `features/design-system`
+
+Composants composites et écrans design métier. Source : `src/features/design-system/components/`. Exportés depuis `@/features/design-system/components`. Visibles à `/design-system`.
+
+| Composant | Dossier | Variants / tailles | Notes |
+|---|---|---|---|
+| **BftcButton** | `BftcButton.tsx` | variants : `success`, `info`, `danger`, `warning`, `neutral`, `wood` ; tailles : `xs`, `sm`, `md`, `lg` | Bouton jeu avec effet 3D ; remplace `Button` de `src/ui/` dans les contextes métier |
+| **VillageMapPanel** | `villageMapPanel/` | `mine`, `unscouted`, `scouted`, `barbare` (prop `variant`) | Carte parchemin flottante (carte du monde) — voir ci-dessous |
+
+### VillageMapPanel
+
+Panneau de sélection de village sur la carte du monde. Carte parchemin flottante avec tête commune (nom, coords, tag de type, puissance village/joueur) et corps variable selon la variante.
+
+**4 variantes** (prop `variant`) :
+
+| Variante | Contexte | CTA principaux |
+|---|---|---|
+| `mine` | Mon propre village | Entrer / Envoyer ressources / Renfort |
+| `unscouted` | Village ennemi non espionné | Espionner / Attaquer |
+| `scouted` | Village ennemi espionné | Voir rapport source + garde attaque (`attackBlocked` / `attackBlockedReason`) |
+| `barbare` | Village barbare | Lecture par tier T1→T5 (prop `tier`) |
+
+**Props** (toutes passées par le caller — composant idiote) :
+
+```ts
+variant: VillageMapVariant
+name: string
+coords: string
+typeTag: VillageMapTypeTag
+owner?: string | null
+villagePower?: number | null
+ownerPower?: number | null
+intel?: FullIntelPanelProps        // variante scouted uniquement
+tier?: BarbarianTier               // variante barbare uniquement
+attackBlocked?: boolean
+attackBlockedReason?: string | null
+onClose?(): void
+onEnter?(): void
+onSendResources?(): void
+onReinforce?(): void
+onScout?(): void
+onAttack?(): void
+onViewReport?(): void
+```
+
+**Primitives internes** (sous `villageMapPanel/`) : `Dossier`, `VillageTile`, `CoordPill`, `TypeTag`, `PowerCell`, `FreshnessPill`, `LootChip`, `TroopChip`, `WallStat`, `StyleStat`, `ArmySummary`. Bodies : `UnscoutedPanel`, `FullIntelPanel`, `TierPanel`. Ne pas instancier directement — utiliser `VillageMapPanel`.
+
+---
 
 ## Règles d'or
 

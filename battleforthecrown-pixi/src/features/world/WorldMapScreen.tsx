@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { Compass, Map as MapIcon, X } from 'lucide-react';
 import { BottomSheet, IconButton, Spinner, Tooltip } from '@/ui';
@@ -6,7 +6,6 @@ import { WorldMapCanvas, type WorldMapCanvasController } from './WorldMapCanvas'
 import { SelectedEntityPanel } from './SelectedEntityPanel';
 import { WorldLockedScreen } from './WorldLockedScreen';
 import { WorldMiniMap } from './WorldMiniMap';
-import { WorldEntityTooltip } from './WorldEntityTooltip';
 import { clearWorldMapFocusSearch, parseWorldMapFocusSearch } from './worldMapNavigation';
 import {
   buildMapEntities,
@@ -42,6 +41,10 @@ import {
 } from '@/features/design-system/components';
 
 const FALLBACK_GRID = { gridWidth: 500, gridHeight: 500 };
+// Décalage vertical (px) entre le bas du panneau et le village ciblé : assez
+// pour que le sprite + l'anneau de sélection soient entièrement visibles sous
+// la carte. Augmenter = village plus bas dans la vue.
+const VILLAGE_REVEAL_GAP_PX = 65;
 const EMPTY_VISION_DISKS: readonly VisionDisk[] = [];
 const FALLBACK_VIEWPORT_TILES = { width: 30, height: 30 };
 
@@ -72,13 +75,13 @@ export function WorldMapScreen() {
   const [isMiniMapVisible, setIsMiniMapVisible] = useState(false);
   const [isKingdomActivitiesOpen, setIsKingdomActivitiesOpen] = useState(false);
   const [kingdomActivityTab, setKingdomActivityTab] = useState<KingdomActivityTab>('expeditions');
-  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
   const [canvasReady, setCanvasReady] = useState(false);
   const [camera, setCamera] = useState<WorldMapCameraSnapshot>({
     center: { x: FALLBACK_GRID.gridWidth / 2, y: FALLBACK_GRID.gridHeight / 2 },
     viewportTiles: FALLBACK_VIEWPORT_TILES,
   });
   const canvasRef = useRef<WorldMapCanvasController | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
   const latestCameraRef = useRef(camera);
   const hasCameraSnapshotRef = useRef(false);
   const visionDisks = worldEntities.data?.visionDisks ?? EMPTY_VISION_DISKS;
@@ -137,24 +140,35 @@ export function WorldMapScreen() {
     ? openConquests.data?.find((conquest) => conquest.targetVillageId === selectedEntity.id) ?? null
     : null;
 
-  // Update tooltip screen-space position whenever the selection changes. We
-  // declare this *before* any early return so React keeps the hook order stable.
-  useEffect(() => {
-    if (!selectedEntity) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setTooltipPosition(null);
-      return;
-    }
-    let raf = 0;
-    const tick = () => {
-      const pos = canvasRef.current?.worldToScreen(selectedEntity.x, selectedEntity.y);
-
-      if (pos) setTooltipPosition(pos);
-      raf = requestAnimationFrame(tick);
+  // Le panneau de sélection est FIXE sur la vue (bottom-anchored). À la
+  // sélection, on pan la caméra (animé) pour caler le village sous le bec du
+  // panneau, de sorte qu'il pointe toujours sur la cible. On mesure le bec
+  // après layout ; le panneau étant ancré par le bas, son bec reste à un Y
+  // stable même si le corps grandit (intel chargée en différé). Hook déclaré
+  // avant tout early return pour garder l'ordre des hooks stable.
+  useLayoutEffect(() => {
+    if (!selectedEntity || !canvasReady) return;
+    const el = panelRef.current;
+    const ctrl = canvasRef.current;
+    if (!el || !ctrl) return;
+    const rect = el.getBoundingClientRect();
+    // Ancre écran sous le panneau : on cale le village plus bas que la pointe du
+    // bec (~13px) pour qu'il soit entièrement dégagé sous la carte, pas à moitié
+    // masqué derrière. La caméra descend d'autant.
+    const anchor = {
+      x: rect.left + rect.width / 2,
+      y: rect.bottom + VILLAGE_REVEAL_GAP_PX,
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [selectedEntity]);
+    ctrl.focusOn(selectedEntity.x, selectedEntity.y, anchor, true);
+    // On veut paner UNIQUEMENT quand la cible change (id) ou que le canvas devient
+    // prêt — pas à chaque rafraîchissement de données. `selectedEntity` est un
+    // objet recalculé par `.find()` à chaque render et muté par les ticks
+    // (ressources, etc.) ; l'inclure relancerait le pan en boucle. On le lit donc
+    // sans le mettre en deps.
+    // Retrait possible quand l'effet dérivera les coords de scalaires stables
+    // (ex. `selectedEntity.x/.y` figés dans un ref) au lieu de capturer l'objet.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedEntityId, canvasReady]);
 
   useEffect(() => {
     if (hasCameraSnapshotRef.current) return;
@@ -320,8 +334,14 @@ export function WorldMapScreen() {
               </div>
             </div>
 
-            {selectedEntity && tooltipPosition && (
-              <WorldEntityTooltip screenPosition={tooltipPosition}>
+            {selectedEntity && (
+              <div
+                ref={panelRef}
+                className="pointer-events-auto fixed left-1/2 z-30 -translate-x-1/2"
+                // Ancré par le bas : le bec reste à un Y stable et la caméra cale
+                // le village dans la zone dégagée sous le panneau.
+                style={{ bottom: '24vh' }}
+              >
                 <SelectedEntityPanel
                   activeCapture={selectedCapture}
                   entity={selectedEntity}
@@ -341,8 +361,9 @@ export function WorldMapScreen() {
                     setSelectedEntity(null);
                   }}
                   onGoToVillage={goToVillage}
+                  onClose={() => setSelectedEntity(null)}
                 />
-              </WorldEntityTooltip>
+              </div>
             )}
           </main>
         </div>

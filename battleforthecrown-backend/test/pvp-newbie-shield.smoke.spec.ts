@@ -103,6 +103,11 @@ describe('pvp newbie-shield smoke', () => {
         },
       },
     });
+    // Give the defender real kingdom power so the ÷3 power guard (run 058) never
+    // pre-empts the newbie-shield behaviour these cases isolate.
+    await ctx.prisma.unitInventory.create({
+      data: { villageId: village.id, unitType: 'MILITIA', quantity: 1000 },
+    });
     // Membership is required so shield check finds it.
     await ctx.prisma.worldMembership.create({
       data: {

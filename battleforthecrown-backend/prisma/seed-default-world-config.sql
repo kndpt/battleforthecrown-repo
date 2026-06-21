@@ -124,6 +124,11 @@ SET config = '{
   },
   "fogOfWar": {
     "enabled": true
+  },
+  "oyez": {
+    "enabled": true,
+    "weeklyCadence": 2,
+    "defaultDurationHours": 18
   }
 }'::jsonb
 WHERE id = 'default';
