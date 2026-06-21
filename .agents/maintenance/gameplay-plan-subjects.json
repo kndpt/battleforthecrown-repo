@@ -280,6 +280,27 @@
         "tasks/runs/archive/051-feature-rankings-glory.md — couvre ledger + leaderboards live ; ne livre ni clôture hebdo ni récompense cosmétique de cycle"
       ],
       "addedAt": "2026-06-20"
+    },
+    {
+      "specPath": "docs/gameplay/19-world-lifecycle.md",
+      "slug": "worlds-selection-late-phase-warning",
+      "title": "Avertissement phase OPEN late + proposition d'un monde frais (Phase 11)",
+      "keywords": ["world-lifecycle", "inscription-phase", "late", "retardataires", "worlds-selection", "warning", "fresh-world"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/069-feature-worlds-selection-late-phase-warning.md",
+      "artefactId": "069",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/worlds-selection-late-phase-warning",
+      "gapSummary": "La spec 19-world-lifecycle.md § Bascule cohorte principale → retardataires tranche MVP : à `startedAt + inscriptionMainDays`, l'UI de sélection des mondes doit afficher un avertissement « lancé il y a {N} j » sur la card du monde concerné et proposer côte à côte un monde frais en phase `main` si disponible. Le run 033 a livré la card mais ne distingue les phases que par la tonalité (gold vs green) — aucun bandeau texte, aucun CTA secondaire pointant vers un monde plus frais. Conséquence : un joueur découvrant le jeu en phase late n'est pas explicitement averti du retard et ne reçoit aucun pointeur vers une alternative — exactement le risque que la spec voulait éviter.",
+      "codeEvidence": [
+        "battleforthecrown-pixi/src/features/design-system/worlds/WorldsSelectionDesign.tsx:60-66 — `inscriptionPhase === 'late'` change uniquement les tokens de couleur (gold), aucun bandeau « Lancé il y a {N} j » ni CTA secondaire",
+        "battleforthecrown-pixi/src/features/worlds/worldsViewModel.ts:23-48 — `WorldCardViewModel` expose `inscriptionPhase` + `lifecycleInscriptionLateDays/MainDays` mais aucun `launchAgeLabel` ni `freshAlternativeWorldId`",
+        "packages/shared/src/world/lifecycle.ts — `deriveInscriptionPhase` exposé mais aucun helper `formatWorldLaunchAgeFr` ni `pickFreshAlternativeWorld`",
+        "tasks/runs/archive/033-feature-worlds-selection-screen.md:143 — explicite « La card n'affiche pas l'`inscriptionPhase` brut (`main|late|closed`) ; seules les métriques joueurs + tier sont visibles » — confirme que le warning n'a pas été livré par run 033",
+        "tasks/runs/archive/032-world-lifecycle-foundation-and-identity.md — livre `inscriptionLateDays` (default 3) + worker transition mais aucun guide UI ni notification serveur",
+        "docs/gameplay/19-world-lifecycle.md:67-71 — explicite « L'UI de sélection de monde affiche un avertissement (« lancé il y a {N} j ») et propose côte à côte un monde frais en phase `main` si disponible »"
+      ],
+      "addedAt": "2026-06-21"
     }
   ]
 }
