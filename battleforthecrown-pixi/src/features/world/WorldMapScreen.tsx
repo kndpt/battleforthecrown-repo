@@ -1,26 +1,39 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { BottomSheet, Spinner } from '@/ui';
-import { WorldMapCanvas, type WorldMapCanvasController } from './WorldMapCanvas';
-import { MapZoomControls, ZOOM_IN_FACTOR, ZOOM_OUT_FACTOR } from './MapZoomControls';
-import { SelectedEntityPanel } from './SelectedEntityPanel';
-import { WorldLockedScreen } from './WorldLockedScreen';
-import { WorldMiniMap } from './WorldMiniMap';
-import { clearWorldMapFocusSearch, parseWorldMapFocusSearch } from './worldMapNavigation';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { BottomSheet, Spinner } from "@/ui";
+import {
+  WorldMapCanvas,
+  type WorldMapCanvasController,
+} from "./WorldMapCanvas";
+import {
+  MapZoomControls,
+  ZOOM_IN_FACTOR,
+  ZOOM_OUT_FACTOR,
+} from "./MapZoomControls";
+import { SelectedEntityPanel } from "./SelectedEntityPanel";
+import { WorldLockedScreen } from "./WorldLockedScreen";
+import { WorldMiniMap } from "./WorldMiniMap";
+import {
+  clearWorldMapFocusSearch,
+  parseWorldMapFocusSearch,
+} from "./worldMapNavigation";
 import {
   buildMapEntities,
   filterEntitiesByVision,
   filterEntitiesForNarrativeTarget,
-} from './buildMapEntities';
-import { AttackDetailModal } from '@/features/combat/AttackDetailModal';
-import { CaravanLaunchModal } from './CaravanLaunchModal';
-import { KingdomActivitiesBottomSheet } from '@/features/combat/KingdomActivitiesBottomSheet';
-import { OnboardingGuidance } from '@/features/onboarding/OnboardingGuidance';
-import { getOnboardingGuidance } from '@/features/onboarding/onboardingViewModel';
-import { useOnboardingCompletionAck } from '@/features/onboarding/onboardingCompletion';
-import { runGameAction, type GameActionId } from '@/features/game-actions/gameActions';
-import { useBuildingsForLockCheck } from '@/features/layout/useBuildingsForLockCheck';
+} from "./buildMapEntities";
+import { AttackDetailModal } from "@/features/combat/AttackDetailModal";
+import { CaravanLaunchModal } from "./CaravanLaunchModal";
+import { KingdomActivitiesBottomSheet } from "@/features/combat/KingdomActivitiesBottomSheet";
+import { OnboardingGuidance } from "@/features/onboarding/OnboardingGuidance";
+import { getOnboardingGuidance } from "@/features/onboarding/onboardingViewModel";
+import { useOnboardingCompletionAck } from "@/features/onboarding/onboardingCompletion";
+import {
+  runGameAction,
+  type GameActionId,
+} from "@/features/game-actions/gameActions";
+import { useBuildingsForLockCheck } from "@/features/layout/useBuildingsForLockCheck";
 import {
   useMyVillagesQuery,
   useOnboardingSummaryQuery,
@@ -28,18 +41,18 @@ import {
   useOpenExpeditionsQuery,
   useWorldDetailsQuery,
   useWorldEntitiesQuery,
-} from '@/api/queries';
-import { useGameStore } from '@/stores/game';
-import { useAuthStore } from '@/stores/auth';
-import { useExpeditionsStore } from '@/stores/expeditions';
-import { useWorldMapStore } from '@/stores/worldMap';
-import type { MapEntity } from '@/api/world-types';
-import type { VisionDisk } from '@battleforthecrown/shared/world';
-import type { WorldMapCameraSnapshot } from '@/pixi/scenes/WorldMapScene';
+} from "@/api/queries";
+import { useGameStore } from "@/stores/game";
+import { useAuthStore } from "@/stores/auth";
+import { useExpeditionsStore } from "@/stores/expeditions";
+import { useWorldMapStore } from "@/stores/worldMap";
+import type { MapEntity } from "@/api/world-types";
+import type { VisionDisk } from "@battleforthecrown/shared/world";
+import type { WorldMapCameraSnapshot } from "@/pixi/scenes/WorldMapScene";
 import {
   KingdomActivityHudBadges,
   type KingdomActivityTab,
-} from '@/features/design-system/components';
+} from "@/features/design-system/components";
 
 const FALLBACK_GRID = { gridWidth: 500, gridHeight: 500 };
 // Décalage vertical (px) entre le bas du panneau et le village ciblé : assez
@@ -67,15 +80,20 @@ export function WorldMapScreen() {
   const setEntities = useWorldMapStore((state) => state.setEntities);
   const setVillage = useGameStore((state) => state.setVillage);
   const selectedEntityId = useWorldMapStore((state) => state.selectedEntityId);
-  const setSelectedEntity = useWorldMapStore((state) => state.setSelectedEntity);
+  const setSelectedEntity = useWorldMapStore(
+    (state) => state.setSelectedEntity,
+  );
   const pendingFocus = useWorldMapStore((state) => state.pendingFocus);
   const setPendingFocus = useWorldMapStore((state) => state.setPendingFocus);
   const [attackTarget, setAttackTarget] = useState<MapEntity | null>(null);
   const [caravanTarget, setCaravanTarget] = useState<MapEntity | null>(null);
-  const [attackInitialMode, setAttackInitialMode] = useState<'attack' | 'scout'>('attack');
+  const [attackInitialMode, setAttackInitialMode] = useState<
+    "attack" | "scout"
+  >("attack");
   const [isKingdomActivitiesOpen, setIsKingdomActivitiesOpen] = useState(false);
   const [isMiniMapOpen, setIsMiniMapOpen] = useState(false);
-  const [kingdomActivityTab, setKingdomActivityTab] = useState<KingdomActivityTab>('expeditions');
+  const [kingdomActivityTab, setKingdomActivityTab] =
+    useState<KingdomActivityTab>("expeditions");
   const [canvasReady, setCanvasReady] = useState(false);
   const [camera, setCamera] = useState<WorldMapCameraSnapshot>({
     center: { x: FALLBACK_GRID.gridWidth / 2, y: FALLBACK_GRID.gridHeight / 2 },
@@ -95,27 +113,45 @@ export function WorldMapScreen() {
     : FALLBACK_GRID;
 
   const allEntities: MapEntity[] = useMemo(
-    () => buildMapEntities(worldEntities.data?.entities ?? [], myVillages.data ?? [], userId),
+    () =>
+      buildMapEntities(
+        worldEntities.data?.entities ?? [],
+        myVillages.data ?? [],
+        userId,
+      ),
     [worldEntities.data?.entities, myVillages.data, userId],
   );
 
   // During onboarding step 6, hide every barbarian except the scripted target.
   const onboardingNarrativeTargetId =
-    onboardingSummary.data?.status === 'ACTIVE' &&
-    onboardingSummary.data.currentStep === 'ATTACK_BARBARIAN'
+    onboardingSummary.data?.status === "ACTIVE" &&
+    onboardingSummary.data.currentStep === "ATTACK_BARBARIAN"
       ? onboardingSummary.data.narrativeTargetVillageId
       : null;
 
   const visibleEntities: MapEntity[] = useMemo(() => {
-    const visible = filterEntitiesByVision(allEntities, visionDisks, fogOfWarEnabled);
+    const visible = filterEntitiesByVision(
+      allEntities,
+      visionDisks,
+      fogOfWarEnabled,
+    );
     return onboardingNarrativeTargetId
       ? filterEntitiesForNarrativeTarget(visible, onboardingNarrativeTargetId)
       : visible;
   }, [allEntities, visionDisks, fogOfWarEnabled, onboardingNarrativeTargetId]);
-  const urlFocus = useMemo(() => parseWorldMapFocusSearch(searchParams), [searchParams]);
+  const urlFocus = useMemo(
+    () => parseWorldMapFocusSearch(searchParams),
+    [searchParams],
+  );
   const activeFocus = urlFocus ?? pendingFocus;
-  const expeditionSnapshots = useMemo(() => Object.values(expeditions), [expeditions]);
-  const onboardingCompletion = useOnboardingCompletionAck(worldId, currentVillageId);
+  const expeditionSnapshots = useMemo(
+    () => Object.values(expeditions),
+    [expeditions],
+  );
+  const onboardingCompletion = useOnboardingCompletionAck(
+    worldId,
+    currentVillageId,
+  );
   const onboardingGuidance = getOnboardingGuidance(onboardingSummary.data, {
     completionAcknowledged: onboardingCompletion.acknowledged,
   });
@@ -131,14 +167,17 @@ export function WorldMapScreen() {
     };
   }, []);
 
-  const myVillage = visibleEntities.find((e) => e.id === currentVillageId && e.isMine)
-    ?? visibleEntities.find((e) => e.isMine)
-    ?? null;
+  const myVillage =
+    visibleEntities.find((e) => e.id === currentVillageId && e.isMine) ??
+    visibleEntities.find((e) => e.isMine) ??
+    null;
   const selectedEntity = selectedEntityId
-    ? visibleEntities.find((e) => e.id === selectedEntityId) ?? null
+    ? (visibleEntities.find((e) => e.id === selectedEntityId) ?? null)
     : null;
   const selectedCapture = selectedEntity
-    ? openConquests.data?.find((conquest) => conquest.targetVillageId === selectedEntity.id) ?? null
+    ? (openConquests.data?.find(
+        (conquest) => conquest.targetVillageId === selectedEntity.id,
+      ) ?? null)
     : null;
 
   // Le panneau de sélection est FIXE sur la vue (bottom-anchored). À la
@@ -174,7 +213,8 @@ export function WorldMapScreen() {
   useEffect(() => {
     if (hasCameraSnapshotRef.current) return;
     const fallbackCamera = {
-      center: activeFocus ?? myVillage ?? { x: dims.gridWidth / 2, y: dims.gridHeight / 2 },
+      center: activeFocus ??
+        myVillage ?? { x: dims.gridWidth / 2, y: dims.gridHeight / 2 },
       viewportTiles: FALLBACK_VIEWPORT_TILES,
     };
     setCamera(fallbackCamera);
@@ -195,9 +235,20 @@ export function WorldMapScreen() {
       setPendingFocus(null);
     }
     if (urlFocus) {
-      setSearchParams(clearWorldMapFocusSearch(searchParams), { replace: true });
+      setSearchParams(clearWorldMapFocusSearch(searchParams), {
+        replace: true,
+      });
     }
-  }, [activeFocus, canvasReady, pendingFocus, searchParams, setPendingFocus, setSearchParams, setSelectedEntity, urlFocus]);
+  }, [
+    activeFocus,
+    canvasReady,
+    pendingFocus,
+    searchParams,
+    setPendingFocus,
+    setSearchParams,
+    setSelectedEntity,
+    urlFocus,
+  ]);
 
   // À l'ouverture, resynchronise le state caméra avec le dernier snapshot capté
   // pendant que la minimap était fermée (sinon viewbox figée à l'ouverture).
@@ -205,7 +256,8 @@ export function WorldMapScreen() {
     if (isMiniMapOpen) setCamera(latestCameraRef.current);
   }, [isMiniMapOpen]);
 
-  const canViewWorld = !fogOfWarEnabled || isWatchtowerBuilt || visionDisks.length > 0;
+  const canViewWorld =
+    !fogOfWarEnabled || isWatchtowerBuilt || visionDisks.length > 0;
   if (!worldEntities.isLoading && !canViewWorld) {
     return <WorldLockedScreen />;
   }
@@ -218,7 +270,7 @@ export function WorldMapScreen() {
 
   const goToVillage = (target: MapEntity) => {
     setVillage(target.id);
-    navigate('/game');
+    navigate("/game");
     setSelectedEntity(null);
   };
 
@@ -266,7 +318,7 @@ export function WorldMapScreen() {
             {!worldEntities.isLoading && !myVillages.isLoading && (
               <div
                 className={`pointer-events-none absolute inset-x-0 top-0 z-20 h-1/2 transition-transform duration-300 ease-out ${
-                  isMiniMapOpen ? 'translate-y-0' : '-translate-y-full'
+                  isMiniMapOpen ? "translate-y-0" : "-translate-y-full"
                 }`}
               >
                 <div className="pointer-events-auto h-full w-full overflow-hidden border-b-2 border-game-gold-border bg-[#2e2112] shadow-xl">
@@ -285,7 +337,9 @@ export function WorldMapScreen() {
                 <button
                   type="button"
                   onClick={() => setIsMiniMapOpen((open) => !open)}
-                  aria-label={isMiniMapOpen ? 'Fermer la minimap' : 'Ouvrir la minimap'}
+                  aria-label={
+                    isMiniMapOpen ? "Fermer la minimap" : "Ouvrir la minimap"
+                  }
                   className="pointer-events-auto absolute left-1/2 top-full flex -translate-x-1/2 items-center gap-1.5 rounded-b-xl border-2 border-t-0 border-game-gold-border bg-gradient-to-b from-[#5a4424] to-[#2e2112] px-4 py-1.5 font-game text-xs font-bold uppercase tracking-wide text-game-gold-light shadow-lg transition-all hover:brightness-110 active:translate-y-px"
                 >
                   {isMiniMapOpen ? (
@@ -293,7 +347,7 @@ export function WorldMapScreen() {
                   ) : (
                     <ChevronDown size={16} strokeWidth={2.5} />
                   )}
-                  {isMiniMapOpen ? 'Fermer minimap' : 'Ouvrir minimap'}
+                  {isMiniMapOpen ? "Fermer" : "Minimap"}
                 </button>
               </div>
             )}
@@ -316,15 +370,15 @@ export function WorldMapScreen() {
                   badges={[
                     {
                       count: openExpeditions.data?.length ?? 0,
-                      label: 'Expéditions',
-                      onClick: () => openKingdomActivities('expeditions'),
-                      tone: 'stone',
+                      label: "Expéditions",
+                      onClick: () => openKingdomActivities("expeditions"),
+                      tone: "stone",
                     },
                     {
                       count: openConquests.data?.length ?? 0,
-                      label: 'Captures',
-                      onClick: () => openKingdomActivities('captures'),
-                      tone: 'gold',
+                      label: "Captures",
+                      onClick: () => openKingdomActivities("captures"),
+                      tone: "gold",
                     },
                   ]}
                 />
@@ -346,19 +400,19 @@ export function WorldMapScreen() {
                 className="pointer-events-auto fixed left-1/2 z-30 -translate-x-1/2"
                 // Ancré par le bas : le bec reste à un Y stable et la caméra cale
                 // le village dans la zone dégagée sous le panneau.
-                style={{ bottom: '24vh' }}
+                style={{ bottom: "24vh" }}
               >
                 <SelectedEntityPanel
                   activeCapture={selectedCapture}
                   entity={selectedEntity}
                   currentVillageId={currentVillageId}
                   onAttack={(target) => {
-                    setAttackInitialMode('attack');
+                    setAttackInitialMode("attack");
                     setAttackTarget(target);
                     setSelectedEntity(null);
                   }}
                   onScout={(target) => {
-                    setAttackInitialMode('scout');
+                    setAttackInitialMode("scout");
                     setAttackTarget(target);
                     setSelectedEntity(null);
                   }}
