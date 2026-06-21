@@ -1,33 +1,35 @@
 # refactor-pixi — état (réécrit chaque run)
 
-last: 2026-06-20 | theme ws-invalidation-completeness + fog-texture-leak | PR pending `claude/focused-galileo-8xkrkd`
-full: `archive/refactor-pixi/2026-06-20-full.md`
+last: 2026-06-21 | theme ws-invalidation-completeness-2 + tq-staleTime-hygiene + inline-style-extraction | PR `claude/focused-galileo-8if3w1`
+full: `archive/refactor-pixi/2026-06-21-full.md`
 
 ## OPEN
 
 | ID | Sev | Where | Note |
 |----|-----|-------|------|
-| F4 | Major | ws-bindings.ts:422-457 | applyCaravanSent missing resources(targetVillageId) — REST mutation does both origin+target |
-| F5 | High | VillageView.tsx:530L | 8 useState (not 21 — downgraded), mixed concerns but horizontally organized |
-| F6 | High | ArmyScreen.tsx:637L | 5 useState (not 9), training polling via useEffect+ref |
-| F7 | High | WorldMapScene.ts:759L | closure state mutations bypass Zustand subscriber patterns |
-| F8 | High | GameHeader.tsx:65-69 | profileTab/villageFilter/sortAscending dup from VillageView:132-134 |
+| F5 | High | VillageView.tsx:558L | 8 useState, mixed concerns but horizontally organized |
+| F6 | High | ArmyScreen.tsx:681L | 8 useState, training polling via useEffect+ref |
+| F7 | High | WorldMapScene.ts:804L | closure state mutations bypass Zustand subscriber patterns |
+| F8 | High | GameHeader.tsx:65-69 | profileTab/villageFilter/sortAscending dup from VillageView:136-138 |
 | F9 | Med | resources.ts, crowns.ts | Parallel Zustand/TQ state, no sync mechanism |
-| F10 | High | WorldMapScene.ts | 759L, 0 tests |
+| F10 | High | WorldMapScene.ts | 804L, 0 tests |
 | F11 | Med | BuildingSprite.ts | Listener leak fixed PR#146, still 0 tests |
-| F12 | Minor | resources.ts:29, crowns.ts:29 | Unused selectors selectVillageResources/selectCrowns |
-| F14 | High | queries.ts:338 | Resources staleTime:0 + refetchOnMount:'always' — aggressive |
-| F15 | Med | GameHeader.tsx:189-207 | Inline `<style>` keyframe injection on every render |
-| F17 | Med | queries.ts:191-207 | useWorldsQuery/usePublicWorldsQuery missing staleTime |
 | F18 | Med | queries.ts:877-894 | createReportHooks: list resolves [] vs detail rejects — inconsistent |
-| N1 | High | AttackDetailModal.tsx:84-105 | Local travel time + carry capacity calculation — server-authoritative violation |
-| N2 | Med | UnitCard.tsx:436L | 6 state sources, 3 useEffect, manual cache polling on training completion |
-| N3 | Minor | GameHeader.tsx imports | ChevronLeft/ChevronRight imported but unused |
+| N1 | High | AttackDetailModal.tsx:85-112 | Local travel time + carry capacity + attack power — server-authoritative violation |
+| N2 | Med | UnitCard.tsx:436L | 3 useState, training progress polling via useEffect |
+| N4 | High | CaravanLaunchModal.tsx:136-146 | Local caravan travel time calculation — server-authoritative violation |
 | N5 | Med | resources.ts/crowns.ts | Unbounded byVillageId maps — no TTL/eviction |
+| N6 | Med | armyViewModel.ts:278,315 | Local unit power weight calculation — display-only but drifts |
 
 ## CLOSED this run
 
 | ID | Fix |
 |----|-----|
-| F3 | ws-bindings.ts: applyUnitTrained/Completed now invalidate resources(villageId) — aligned with REST useTrainUnitsMutation |
-| F16 | WorldMapScene.ts: fogContainer.cacheAsTexture(false) in exit() — GPU texture leak fixed |
+| F4 | ws-bindings.ts: applyCaravanSent now invalidates resources(targetVillageId) — aligned with REST |
+| F14 | queries.ts: resourcesQueryOptions staleTime 0→5_000, removed refetchOnMount:'always' |
+| F15 | GameHeader.tsx: inline `<style>` keyframes extracted to index.css as bftc-topbar-*-dock |
+| F17 | queries.ts: useWorldsQuery(30s), usePublicWorldsQuery(30s), useMyMembershipsQuery(10s) staleTime added |
+| F19 | ws-bindings.ts: applyVillageAttacked now invalidates resources(defenderVillageId) |
+| F20 | ws-bindings.ts: applyCaravanArrived now invalidates population(targetVillageId) |
+| F12 | Dead selectors removed by maint-debt PR#169 (previous run) |
+| N3 | Unused ChevronLeft/ChevronRight imports removed by maint-debt PR#169 |

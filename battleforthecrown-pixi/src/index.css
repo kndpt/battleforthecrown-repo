@@ -355,12 +355,30 @@ canvas {
   }
 }
 
+/* ── GameHeader topbar animations ──────────────────────────────────────── */
+
+@keyframes bftc-topbar-account-dock {
+  from { opacity: 0; transform: translate3d(0, -18px, 0) scale(0.98); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes bftc-topbar-village-dock {
+  from { opacity: 0; transform: translate3d(0, 22px, 0) scale(1.025); filter: blur(1.4px); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
+}
+@keyframes bftc-topbar-resources-dock {
+  from { opacity: 0; transform: translate3d(0, 18px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   [data-bftc-onboarding-fab='true'][data-advancing='true'],
   [data-bftc-onboarding-fab='true'][data-selected='true'],
   /* Onboarding coachmark hints (bftc-hint-drag / -tap / -ready) — honour the
      user's reduced-motion preference instead of looping forever. */
-  [data-bftc-hint-anim='true'] {
+  [data-bftc-hint-anim='true'],
+  .game-topbar-account,
+  .game-topbar-village,
+  .game-topbar-resources {
     animation: none !important;
   }
 }

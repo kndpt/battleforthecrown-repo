@@ -447,6 +447,7 @@ export function applyCaravanSent(
   };
   useExpeditionsStore.getState().add(snapshot);
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.targetVillageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(payload.villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
   invalidateOpenExpeditions(ctx);
@@ -461,6 +462,7 @@ export function applyCaravanArrived(
     returnAt: Date.parse(payload.returnAt),
   });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.targetVillageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.targetVillageId) });
   invalidateCaravanReports(ctx);
   invalidateOpenExpeditions(ctx);
 }
@@ -537,6 +539,7 @@ export function applyVillageAttacked(
   ctx: BindingsContext,
 ): void {
   // Defender lost units → population was released server-side. Refresh the HUD.
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.defenderVillageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.defenderVillageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.defenderVillageId) });
   invalidatePowerQueries(ctx, payload.defenderVillageId);
