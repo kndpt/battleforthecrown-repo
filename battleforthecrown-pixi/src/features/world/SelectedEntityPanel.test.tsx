@@ -271,9 +271,13 @@ describe("enemy player", () => {
     // freshness "il y a 30mn" (seenAt = 30 min ago)
     expect(screen.getByText(/il y a/)).toBeInTheDocument();
     // bouton rapport
-    expect(
-      screen.getByRole("button", { name: "Voir rapport source" }),
-    ).toBeInTheDocument();
+    const reportBtn = screen.getByRole("button", { name: "Voir rapport source" });
+    expect(reportBtn).toBeInTheDocument();
+
+    // Clic → ouverture du modal rapport SCOUT (intelDto.sourceKind === "SCOUT"
+    // doit router vers reportKind 'scout', pas combat).
+    fireEvent.click(reportBtn);
+    expect(await screen.findByText("Rapport scout")).toBeInTheDocument();
   });
 
   it("8. ratio ÷3 bloqué (defender 100 vs attacker 3000, unscouted) → bouton Attaquer disabled + texte 'Puissance trop faible'", async () => {

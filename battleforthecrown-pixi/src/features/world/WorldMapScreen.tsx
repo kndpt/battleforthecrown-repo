@@ -160,7 +160,13 @@ export function WorldMapScreen() {
       y: rect.bottom + VILLAGE_REVEAL_GAP_PX,
     };
     ctrl.focusOn(selectedEntity.x, selectedEntity.y, anchor, true);
-    // selectedEntity est recalculé à chaque render ; on déclenche sur l'id + readiness.
+    // On veut paner UNIQUEMENT quand la cible change (id) ou que le canvas devient
+    // prêt — pas à chaque rafraîchissement de données. `selectedEntity` est un
+    // objet recalculé par `.find()` à chaque render et muté par les ticks
+    // (ressources, etc.) ; l'inclure relancerait le pan en boucle. On le lit donc
+    // sans le mettre en deps.
+    // Retrait possible quand l'effet dérivera les coords de scalaires stables
+    // (ex. `selectedEntity.x/.y` figés dans un ref) au lieu de capturer l'objet.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEntityId, canvasReady]);
 

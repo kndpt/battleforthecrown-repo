@@ -235,19 +235,21 @@ function tierToNumber(tier: WorldTier | null): BarbarianTier | undefined {
   return n >= 1 && n <= 5 ? (n as BarbarianTier) : undefined;
 }
 
+// Sprite générique pour les unités sans icône dédiée (CATAPULT, RAM) : on garde
+// la ligne et son compteur plutôt que de les dropper — sinon le total « N unités »
+// serait sous-compté et l'unité disparaîtrait du dossier.
+const FALLBACK_UNIT_ICON = "/assets/army-power.png";
+
 function toPanelArmy(
   rows: { unitType: string; quantity: number }[],
 ): FullIntelArmyEntry[] {
-  return rows.reduce<FullIntelArmyEntry[]>((acc, row) => {
+  return rows.map((row) => {
     const meta = unitMetaFor(row.unitType);
-    if (meta.iconPath) {
-      acc.push({
-        icon: meta.iconPath,
-        count: row.quantity,
-        category: unitCategoryFor(row.unitType),
-        name: meta.name,
-      });
-    }
-    return acc;
-  }, []);
+    return {
+      icon: meta.iconPath ?? FALLBACK_UNIT_ICON,
+      count: row.quantity,
+      category: unitCategoryFor(row.unitType),
+      name: meta.name,
+    };
+  });
 }

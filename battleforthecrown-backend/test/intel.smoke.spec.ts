@@ -840,6 +840,34 @@ describe('intel smoke', () => {
       update: { quantity: 500 },
     });
 
+    // The PvP power-ratio guard (run 058) forbids attacking a defender whose
+    // kingdom power is below attacker/3. Calibrate villageB's garrison so the
+    // ratio is satisfied (MILITIA = 2 power), then drop its wall to 0: the scout
+    // already captured wallLevel 3 into the intel row (asserted above), so the
+    // combat here only needs a guaranteed win — it is not meant to exercise wall
+    // defence.
+    const powRes = await request(ctx.server)
+      .get(`/power/kingdom/${playerA.userId}/public`)
+      .query({ worldId: world.id });
+    expect(powRes.status).toBeLessThan(300);
+    const powBody = powRes.body as { kingdomPower: number };
+    const defenderMilitia = Math.ceil(Math.ceil(powBody.kingdomPower / 3) / 2);
+    await ctx.prisma.unitInventory.upsert({
+      where: {
+        villageId_unitType: { villageId: villageB.id, unitType: 'MILITIA' },
+      },
+      create: {
+        villageId: villageB.id,
+        unitType: 'MILITIA',
+        quantity: defenderMilitia,
+      },
+      update: { quantity: defenderMilitia },
+    });
+    await ctx.prisma.building.updateMany({
+      where: { villageId: villageB.id, type: 'WALL' },
+      data: { level: 0 },
+    });
+
     const attackRes = await request(ctx.server)
       .post('/combat/attack')
       .set('Authorization', `Bearer ${playerA.accessToken}`)

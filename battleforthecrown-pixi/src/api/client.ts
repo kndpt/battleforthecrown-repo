@@ -170,7 +170,7 @@ export class ApiClient {
     // A 200 with an empty body (e.g. a handler returning `null`) is not valid
     // JSON — read text first so `response.json()` never throws on emptiness.
     const text = await response.text();
-    if (text.length === 0) {
+    if (text.trim().length === 0) {
       return undefined as T;
     }
     return JSON.parse(text) as T;

@@ -92,6 +92,20 @@ export class IntelService {
       seenAt,
     } = input;
 
+    // Garde temporelle : un job retardé/rejoué (pg-boss) ne doit pas faire
+    // régresser une observation plus récente déjà enregistrée. On ne bloque que
+    // le strictement plus ancien — l'égalité reste idempotente et la sémantique
+    // par-champ « si révélé » ci-dessous préserve déjà les valeurs riches.
+    const existing = await tx.villageIntel.findUnique({
+      where: {
+        userId_worldId_targetVillageId: { userId, worldId, targetVillageId },
+      },
+      select: { seenAt: true },
+    });
+    if (existing && new Date(seenAt).getTime() < existing.seenAt.getTime()) {
+      return;
+    }
+
     await tx.villageIntel.upsert({
       where: {
         userId_worldId_targetVillageId: { userId, worldId, targetVillageId },

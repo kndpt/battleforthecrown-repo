@@ -10,6 +10,7 @@ import { createExpeditionVisual, type ExpeditionVisualHandle } from '@/pixi/enti
 import { createBlipSprite, type BlipSpriteHandle } from '@/pixi/entities/BlipSprite';
 import { createShieldDome, type ShieldDomeHandle } from '@/pixi/entities/ShieldDome';
 import { isMapBackgroundTap } from './worldMapBackgroundTap';
+import { computeFocusCenter } from './focusCamera';
 
 export interface WorldMapOptions {
   gridWidth: number;
@@ -767,23 +768,18 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     animated = true,
   ) => {
     const { px, py } = tileToWorld(worldX, worldY);
-    const scale = viewport.scale.x || 1;
-    // `screenAnchor` arrive en coords fenêtre (getBoundingClientRect). Le repère
-    // de `viewport.toScreen` / `app.screen` est local au canvas : on convertit
-    // en soustrayant l'origine du canvas dans la fenêtre (chrome, marges du
-    // shell centré). Sans ça le pan se désaligne dès que le canvas n'est pas
-    // collé au coin haut-gauche de la fenêtre.
+    // Math pure extraite dans `computeFocusCenter` (testée) : conversion ancre
+    // fenêtre → repère canvas + calcul du centre de viewport cible.
     const canvasRect = app.canvas.getBoundingClientRect();
-    const ratioX = canvasRect.width ? app.screen.width / canvasRect.width : 1;
-    const ratioY = canvasRect.height ? app.screen.height / canvasRect.height : 1;
-    const anchorX = screenAnchor
-      ? (screenAnchor.x - canvasRect.left) * ratioX
-      : app.screen.width / 2;
-    const anchorY = screenAnchor
-      ? (screenAnchor.y - canvasRect.top) * ratioY
-      : app.screen.height / 2;
-    const targetX = px + (app.screen.width / 2 - anchorX) / scale;
-    const targetY = py + (app.screen.height / 2 - anchorY) / scale;
+    const { x: targetX, y: targetY } = computeFocusCenter({
+      worldX: px,
+      worldY: py,
+      scale: viewport.scale.x || 1,
+      screenWidth: app.screen.width,
+      screenHeight: app.screen.height,
+      canvasRect,
+      screenAnchor,
+    });
     if (animated) {
       viewport.animate({
         position: new Point(targetX, targetY),
