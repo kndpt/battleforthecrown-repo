@@ -114,6 +114,14 @@ describe('world-ended lifecycle smoke', () => {
       },
     });
 
+    // Guard the "2 memberships → 6 snapshot rows" assumption below: if an extra
+    // member ever leaked into the world the snapshot count check would fail with
+    // a misleading message instead of pointing at the real cause.
+    const membershipCount = await ctx.prisma.worldMembership.count({
+      where: { worldId },
+    });
+    expect(membershipCount).toBe(2);
+
     // 7. Trigger the lifecycle worker → should transition LOCKED → ENDED + snapshot
     const worker = ctx.app.get(WorldLifecycleWorker);
     const result = await worker.handleLifecycleTick(new Date());

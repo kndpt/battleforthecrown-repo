@@ -48,7 +48,6 @@ export class RecruitTroopsUseCase {
     }
 
     const worldId = await this.worldService.getWorldIdFromVillage(villageId);
-    await this.worldAccess.assertWorldWritable(worldId);
     const config = await this.worldService.getWorldConfig(worldId);
 
     if (!isValidUnitType(unitType)) {
@@ -62,6 +61,9 @@ export class RecruitTroopsUseCase {
     const unitCost: UnitCost = UNIT_CATALOG.costs[unitType];
 
     return this.prisma.$transaction(async (tx) => {
+      // Read-only world guard inside the tx so a concurrent LOCKED → ENDED
+      // transition can't commit a recruit after the world ended (run 061).
+      await this.worldAccess.assertWorldWritable(worldId, tx);
       // Serialize concurrent recruits on the same (village, building): without
       // it, two near-simultaneous calls both read activeTraining=null and both
       // schedule a job, breaking the "one active training" invariant. The

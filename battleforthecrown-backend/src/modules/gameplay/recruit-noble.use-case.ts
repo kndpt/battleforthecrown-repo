@@ -40,13 +40,15 @@ export class RecruitNobleUseCase {
     await this.ownership.assertVillageOwnedBy(villageId, userId);
 
     const worldId = await this.worldService.getWorldIdFromVillage(villageId);
-    await this.worldAccess.assertWorldWritable(worldId);
     const config = await this.worldService.getWorldConfig(worldId);
     const unitCost = UNIT_CATALOG.costs[UNIT_TYPES.NOBLE];
     const requiredThroneHallLevel = unitCost.requiredThroneHallLevel ?? 1;
     const requiredCrowns = unitCost.crowns ?? 0;
 
     return this.prisma.$transaction(async (tx) => {
+      // Read-only world guard inside the tx so a concurrent LOCKED → ENDED
+      // transition can't commit a recruit after the world ended (run 061).
+      await this.worldAccess.assertWorldWritable(worldId, tx);
       // Serialize concurrent noble recruits on the Throne Hall: the dropped
       // @@unique([villageId, building]) used to block a 2nd THRONE_HALL row at
       // the DB; this advisory lock (released at tx end) keeps the canRecruitNoble

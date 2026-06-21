@@ -134,8 +134,6 @@ export class VillageStrategyService {
       throw new NotFoundException('Village not found');
     }
 
-    await this.worldAccess.assertWorldWritable(village.worldId);
-
     const strategyConfig = getVillageStrategyPlan();
 
     if (!strategyConfig) {
@@ -191,6 +189,9 @@ export class VillageStrategyService {
     );
 
     return this.prisma.$transaction(async (tx) => {
+      // Read-only world guard inside the tx so a concurrent world end can't let
+      // a strategy change commit after the world flips to ENDED (run 061).
+      await this.worldAccess.assertWorldWritable(village.worldId, tx);
       // ── Cooldown guard (atomic, fail-fast) ────────────────────────────────
       // Fold the cooldown check into a conditional UPDATE so Postgres evaluates
       // it at row-lock time. Without this, two requests that both passed the

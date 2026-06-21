@@ -185,9 +185,11 @@ export class OnboardingService {
    */
   async claimCompletionReward(userId: string, worldId: string): Promise<void> {
     await this.ownership.assertWorldMember(worldId, userId);
-    await this.worldAccess.assertWorldWritable(worldId);
 
     await this.prisma.$transaction(async (tx) => {
+      // Read-only world guard inside the tx to close the TOCTOU window where the
+      // world flips to ENDED between the check and the reward write (run 061).
+      await this.worldAccess.assertWorldWritable(worldId, tx);
       const now = new Date();
       // Atomic claim: flip the flag with a conditional updateMany so two
       // concurrent claims can't both pass an in-memory check and double-credit
