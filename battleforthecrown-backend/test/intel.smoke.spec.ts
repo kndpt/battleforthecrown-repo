@@ -450,6 +450,81 @@ describe('intel smoke', () => {
   });
 
   // ─────────────────────────────────────────────────────────────────────────
+  // Scénario 4b : Victoire mais occupation défensive → PAS d'intel COMBAT_WIN
+  // (règle `isVictory && !occupationDefense` du CombatWorker, cf. run 055)
+  // ─────────────────────────────────────────────────────────────────────────
+  it('intel: winning combat under defensive occupation → no intel row created', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const playerA = await registerUser(ctx.server);
+    const joinA = await joinWorld(
+      ctx.server,
+      playerA.accessToken,
+      world.id,
+      'intel-occ-a',
+    );
+    const villageA = joinA.village;
+
+    await ctx.prisma.unitInventory.upsert({
+      where: {
+        villageId_unitType: { villageId: villageA.id, unitType: 'MILITIA' },
+      },
+      create: { villageId: villageA.id, unitType: 'MILITIA', quantity: 200 },
+      update: { quantity: 200 },
+    });
+
+    const barbarian = await seedAdjacentBarbarian(ctx, world.id, villageA, {
+      wood: 500,
+      stone: 400,
+      iron: 300,
+      militia: 5,
+    });
+
+    // Open capture window on the target → the CombatWorker reads it as a
+    // defensive occupation, which must suppress COMBAT_WIN intel even on a win.
+    // A militia-only army never opens a capture itself, so this seeded row is
+    // the only `occupationDefense` signal in play.
+    await ctx.prisma.pendingConquest.create({
+      data: {
+        attackerVillageId: villageA.id,
+        attackerUserId: playerA.userId,
+        targetVillageId: barbarian.id,
+        worldId: world.id,
+        captureUntil: new Date(Date.now() + 60 * 60 * 1000),
+        status: 'OPEN',
+      },
+    });
+
+    const attackRes = await request(ctx.server)
+      .post('/combat/attack')
+      .set('Authorization', `Bearer ${playerA.accessToken}`)
+      .send({
+        villageId: villageA.id,
+        targetX: barbarian.x,
+        targetY: barbarian.y,
+        targetKind: 'BARBARIAN_VILLAGE',
+        targetRefId: barbarian.id,
+        units: { MILITIA: 200 },
+      });
+    expect(attackRes.status).toBeLessThan(300);
+
+    await accelerateTravel(ctx, world.id);
+
+    const resolved = await outboxDispatched(
+      ctx.prisma,
+      { kind: 'battle.resolved', aggregateId: villageA.id },
+      { timeoutMs: 20_000 },
+    );
+    expect((resolved.payload as { isVictory: boolean }).isVictory).toBe(true);
+
+    // Victory, yet no intel because the target was under defensive occupation.
+    const intelRes = await request(ctx.server)
+      .get(`/worlds/${world.id}/intel/${barbarian.id}`)
+      .set('Authorization', `Bearer ${playerA.accessToken}`);
+    expect(intelRes.status).toBe(200);
+    expect(intelRes.text === 'null' || intelRes.text === '').toBe(true);
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
   // Scénario 5 : Combat PERDU → pas d'upsert
   // ─────────────────────────────────────────────────────────────────────────
   it('intel: losing combat → no intel row created', async () => {
