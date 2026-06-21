@@ -43,6 +43,7 @@ import {
   profileSheetLabels,
   profileSheetSettings,
 } from '@/features/layout/profileSheetData';
+import { useRenownLevelUp } from '@/features/layout/useRenownLevelUp';
 import { useDisplayResources, useDisplayCrowns } from '@/features/resources/useDisplayResources';
 import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
 import { runGameAction, type GameActionId } from '@/features/game-actions/gameActions';
@@ -102,6 +103,7 @@ export function VillageView() {
   const pendingBuildingType = usePendingBuildingModalStore((s) => s.buildingType);
   const consumePendingBuilding = usePendingBuildingModalStore((s) => s.consume);
   const logout = useLogout();
+  const { renown, justLeveledUp, acknowledge: acknowledgeRenown } = useRenownLevelUp();
 
   // Village data
   const buildingsQuery = useVillageBuildingsQuery(villageId);
@@ -232,8 +234,9 @@ export function VillageView() {
         activePublicWorld,
         activeMembership,
         worldId,
+        renownLevel: renown?.level ?? null,
       }),
-    [activeMembership, activePublicWorld, crownBalance, kingdomPower, user, villages.length, worldId],
+    [activeMembership, activePublicWorld, crownBalance, kingdomPower, renown?.level, user, villages.length, worldId],
   );
 
   // ── Effects ─────────────────────────────────────────────────────────────────
@@ -322,6 +325,9 @@ export function VillageView() {
   const closeProfile = () => {
     setIsProfileOpen(false);
     setProfileTab('profile');
+    // Acquittement à la fermeture : le feedback de level-up reste visible
+    // pendant toute la consultation du profil, puis est consommé.
+    acknowledgeRenown();
   };
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -365,7 +371,7 @@ export function VillageView() {
             onOpenVillageStyle={() => setIsVillageStyleOpen(true)}
             parallaxStyles={heroParallaxStyles}
             playerInitials={getPlayerInitials(user?.displayName ?? 'Joueur')}
-            playerLevel={PLAYER_PROFILE_LEVEL}
+            playerLevel={renown?.level ?? PLAYER_PROFILE_LEVEL}
             retentionSlot={
               <DailyRetentionWidget
                 activeVillageId={villageId}
@@ -521,6 +527,7 @@ export function VillageView() {
               navigate('/worlds');
             }}
             player={profileSheetData.player}
+            renown={renown ? { level: renown.level, xpIntoLevel: renown.xpIntoLevel, xpForNextLevel: renown.xpForNextLevel, justLeveledUp } : undefined}
             settings={profileSheetSettings}
             stats={profileSheetData.stats}
             villages={profileVillages}

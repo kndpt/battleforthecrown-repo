@@ -123,6 +123,16 @@ export function applyWorldStatusChanged(
   });
 }
 
+/**
+ * Renommée = niveau de compte cross-monde, créditée server-side sur
+ * building.completed / village.conquered / combat. Aucun event WS dédié : on
+ * rafraîchit la query (montée en continu via le header) sur les events qui en
+ * portent un gain, pour un affichage live sans refresh complet du jeu.
+ */
+function invalidateRenown(ctx: BindingsContext): void {
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.renownPrefix() });
+}
+
 export function applyBuildingCompleted(
   payload: BuildingCompletedPayload,
   ctx: BindingsContext,
@@ -145,6 +155,7 @@ export function applyBuildingCompleted(
   invalidatePowerQueries(ctx, payload.villageId);
   invalidateRetentionSummary(ctx);
   invalidateOnboardingSummary(ctx);
+  invalidateRenown(ctx);
   if (payload.buildingType === "CASTLE") {
     invalidateVillageVisualQueries(ctx);
   }
@@ -281,6 +292,8 @@ export function applyBattleResolved(
   invalidateOpenExpeditions(ctx);
   invalidateRetentionSummary(ctx);
   invalidateOnboardingSummary(ctx);
+  // Gloire d'assaut PvP → Renommée combat (barbares = 0, refetch inoffensif).
+  invalidateRenown(ctx);
   useUiStore.getState().pushToast({
     tone: payload.isVictory ? "success" : "error",
     title: payload.isVictory ? "Victoire" : "Défaite",
@@ -650,6 +663,8 @@ export function applyVillageAttacked(
     invalidatePowerQueries(ctx, originVillageId);
   }
   invalidateCombatReports(ctx);
+  // Gloire du rempart PvP côté défenseur → Renommée combat.
+  invalidateRenown(ctx);
   useUiStore.getState().pushToast({
     tone: payload.isDefenseSuccessful ? "success" : "error",
     title: payload.isDefenseSuccessful
@@ -773,6 +788,8 @@ export function applyVillageConquered(
     useGameStore.getState().setContext({ worldId, villageId: null });
   }
   if (userId === payload.newOwnerId) {
+    // Le conquérant gagne de la Renommée (conquête) → refresh live.
+    invalidateRenown(ctx);
     useUiStore.getState().pushVictoryModal({
       villageId: payload.villageId,
       villageName: payload.villageName,

@@ -54,6 +54,7 @@ import {
 import { typedEntries } from '@battleforthecrown/shared/utils';
 import { getCaptureDurationMs } from './capture-duration';
 import { RankingsService } from '../rankings/rankings.service';
+import { RenownService } from '../renown/renown.service';
 import { IntelService } from '../intel/intel.service';
 import { mergeGarrisonsIntoParticipants } from './garrison-merge.utils';
 import {
@@ -135,6 +136,7 @@ export class CombatWorker implements OnModuleInit {
     private readonly outbox: OutboxPublisher,
     private readonly conquest: ConquestService,
     private readonly rankings: RankingsService,
+    private readonly renown: RenownService,
     private readonly intelService: IntelService,
   ) {}
 
@@ -716,7 +718,7 @@ export class CombatWorker implements OnModuleInit {
     }
 
     for (const [defenderUserId, participantLosses] of assaultLossesByDefender) {
-      await this.rankings.creditGlory(tx, {
+      const assaultLedger = await this.rankings.creditGlory(tx, {
         worldId: expedition.worldId,
         signal: RankingSignal.ASSAULT_GLORY,
         scorerUserId: attackerUserId,
@@ -726,6 +728,16 @@ export class CombatWorker implements OnModuleInit {
         scorerPowerSnapshot: expedition.attackerKingdomPowerSnapshot,
         opponentPowerSnapshot: defenderPowerSnapshots[defenderUserId] ?? null,
       });
+      if (assaultLedger) {
+        await this.renown.creditCombat(tx, {
+          userId: assaultLedger.scorerUserId,
+          opponentUserId: assaultLedger.opponentUserId,
+          gloryPoints: assaultLedger.points,
+          combatReportId: assaultLedger.combatReportId,
+          signal: assaultLedger.signal,
+          worldId: assaultLedger.worldId,
+        });
+      }
     }
 
     const rampartRawPoints = calculateRawBattleValue(resolution.lossesAttacker);
@@ -748,7 +760,7 @@ export class CombatWorker implements OnModuleInit {
       rampartRawPoints,
       rampartWeights,
     )) {
-      await this.rankings.creditGlory(tx, {
+      const rampartLedger = await this.rankings.creditGlory(tx, {
         worldId: expedition.worldId,
         signal: RankingSignal.RAMPART_GLORY,
         scorerUserId: split.id,
@@ -758,6 +770,16 @@ export class CombatWorker implements OnModuleInit {
         scorerPowerSnapshot: defenderPowerSnapshots[split.id] ?? null,
         opponentPowerSnapshot: expedition.attackerKingdomPowerSnapshot,
       });
+      if (rampartLedger) {
+        await this.renown.creditCombat(tx, {
+          userId: rampartLedger.scorerUserId,
+          opponentUserId: rampartLedger.opponentUserId,
+          gloryPoints: rampartLedger.points,
+          combatReportId: rampartLedger.combatReportId,
+          signal: rampartLedger.signal,
+          worldId: rampartLedger.worldId,
+        });
+      }
     }
   }
 

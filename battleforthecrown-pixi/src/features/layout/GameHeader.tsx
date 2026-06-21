@@ -37,6 +37,7 @@ import {
   profileSheetSettings,
 } from './profileSheetData';
 import { NewbieShieldIcon, NewbieShieldTimer } from '@/features/world/NewbieShieldIcon';
+import { useRenownLevelUp } from './useRenownLevelUp';
 
 interface GameHeaderProps {
   onPowerClick?: () => void;
@@ -63,6 +64,7 @@ export function GameHeader({
   const claimDailyCard = useClaimDailyCardMutation();
   const { display, hasSnapshot } = useDisplayResources(villageId);
   const { balance: crownBalance } = useDisplayCrowns(userId, worldId);
+  const { renown, justLeveledUp, acknowledge: acknowledgeRenown } = useRenownLevelUp();
   const [isVillageSheetOpen, setIsVillageSheetOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profileTab, setProfileTab] = useState<PlayerProfileSheetTab>('profile');
@@ -111,8 +113,9 @@ export function GameHeader({
         activePublicWorld,
         activeMembership,
         worldId,
+        renownLevel: renown?.level ?? null,
       }),
-    [activeMembership, activePublicWorld, crownBalance, kingdomPower, user, villages.length, worldId],
+    [activeMembership, activePublicWorld, crownBalance, kingdomPower, renown?.level, user, villages.length, worldId],
   );
 
   useEffect(() => {
@@ -180,6 +183,9 @@ export function GameHeader({
   const closeProfile = () => {
     setIsProfileOpen(false);
     setProfileTab('profile');
+    // Acquittement à la fermeture : le feedback de level-up reste visible
+    // pendant toute la consultation du profil, puis est consommé.
+    acknowledgeRenown();
   };
   const runHeaderAction = (actionId: GameActionId) => {
     runGameAction(actionId, { navigate });
@@ -201,7 +207,7 @@ export function GameHeader({
             {getPlayerInitials(user?.displayName ?? 'Joueur')}
           </span>
           <span className="absolute -bottom-0.5 -right-0.5 flex size-[18px] items-center justify-center rounded-full border border-[#7a5200] bg-gradient-to-b from-[#f6d57b] to-[#c9900c] font-game text-[8.5px] font-black text-[#3a2a00]">
-            {PLAYER_PROFILE_LEVEL}
+            {renown?.level ?? PLAYER_PROFILE_LEVEL}
           </span>
         </button>
 
@@ -386,6 +392,7 @@ export function GameHeader({
             navigate('/worlds');
           }}
           player={profileSheetData.player}
+          renown={renown ? { level: renown.level, xpIntoLevel: renown.xpIntoLevel, xpForNextLevel: renown.xpForNextLevel, justLeveledUp } : undefined}
           settings={profileSheetSettings}
           stats={profileSheetData.stats}
           villages={profileVillages}

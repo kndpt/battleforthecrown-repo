@@ -33,6 +33,8 @@ describe('planNotifications', () => {
           villageId: 'v1',
           buildingType: 'CASTLE',
           level: 2,
+          ownerId: 'u1',
+          worldId: 'w1',
         },
         deps,
       );
@@ -44,6 +46,8 @@ describe('planNotifications', () => {
             villageId: 'v1',
             buildingType: 'CASTLE',
             level: 2,
+            ownerId: 'u1',
+            worldId: 'w1',
           },
         },
       ]);

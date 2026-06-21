@@ -8,6 +8,8 @@ const BuildingCompletedPayloadSchema = z.object({
   villageId: z.string(),
   buildingType: z.string(),
   level: z.number(),
+  ownerId: z.string().nullable(),
+  worldId: z.string(),
 });
 
 const UnitTrainingCompletedPayloadSchema = z.object({

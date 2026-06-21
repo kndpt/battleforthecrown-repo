@@ -62,6 +62,8 @@ export interface ProfileSheetDataParams {
   activePublicWorld: PublicWorld | undefined;
   activeMembership: WorldMembership | undefined;
   worldId: string | null;
+  /** Niveau de Renommée account-global (badge avatar). Fallback placeholder si absent. */
+  renownLevel?: number | null;
 }
 
 /** Pure transform: session/world data → `PlayerProfileSheet` player/stats/world props. */
@@ -73,6 +75,7 @@ export function buildPlayerProfileSheetData({
   activePublicWorld,
   activeMembership,
   worldId,
+  renownLevel,
 }: ProfileSheetDataParams): Pick<PlayerProfileSheetProps, 'player' | 'stats' | 'world'> {
   const power = kingdomPower ? integerFormatter.format(kingdomPower.kingdomPower) : '—';
   const crowns = Number.isFinite(crownBalance ?? NaN)
@@ -82,7 +85,7 @@ export function buildPlayerProfileSheetData({
   return {
     player: {
       initials: getPlayerInitials(user?.displayName ?? 'Joueur'),
-      level: PLAYER_PROFILE_LEVEL,
+      level: renownLevel ?? PLAYER_PROFILE_LEVEL,
       name: user?.displayName ?? 'Joueur',
       online: Boolean(user),
       tribe: { cap: 0, members: 0, name: 'Sans tribu', role: 'À venir', tag: '—' },

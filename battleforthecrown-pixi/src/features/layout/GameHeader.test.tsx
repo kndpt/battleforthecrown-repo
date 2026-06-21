@@ -179,6 +179,16 @@ function mockApi() {
         },
       ];
     }
+    if (path === '/users/me/renown') {
+      return {
+        xp: 1750,
+        level: 3,
+        currentLevelXp: 1500,
+        nextLevelXp: 3000,
+        xpIntoLevel: 250,
+        xpForNextLevel: 1500,
+      };
+    }
     if (path === '/power/kingdom') {
       return {
         kingdomPower: 320,

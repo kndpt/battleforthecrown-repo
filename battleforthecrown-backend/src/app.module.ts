@@ -23,6 +23,7 @@ import { RetentionModule } from './modules/retention/retention.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { RankingsModule } from './modules/rankings/rankings.module';
 import { IntelModule } from './modules/intel/intel.module';
+import { RenownModule } from './modules/renown/renown.module';
 import { WorkersModule } from './workers/workers.module';
 import { HealthController } from './health.controller';
 import { RequestLoggerMiddleware } from './common/request-logger.middleware';
@@ -74,6 +75,7 @@ import { RequestLoggerMiddleware } from './common/request-logger.middleware';
     OnboardingModule,
     RankingsModule,
     IntelModule,
+    RenownModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],

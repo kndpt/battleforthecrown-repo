@@ -106,6 +106,8 @@ describe('daily retention smoke', () => {
             villageId,
             buildingType: 'WOOD',
             level: 2,
+            ownerId: player.userId,
+            worldId: world.id,
           },
         },
         {

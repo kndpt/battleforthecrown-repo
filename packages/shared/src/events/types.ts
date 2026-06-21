@@ -6,6 +6,10 @@ export interface BuildingCompletedPayload {
   villageId: string;
   buildingType: string;
   level: number;
+  /** Propriétaire du village à la complétion (capture immuable, null si barbare). */
+  ownerId: string | null;
+  /** Monde du village à la complétion (capture immuable). */
+  worldId: string;
 }
 
 export interface UnitTrainingCompletedPayload {

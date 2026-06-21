@@ -8,6 +8,8 @@ describe('payload.codec', () => {
         villageId: 'v1',
         buildingType: 'WOOD',
         level: 3,
+        ownerId: 'u1',
+        worldId: 'w1',
       };
 
       expect(parseEventPayload('building.completed', raw)).toEqual(raw);
@@ -52,6 +54,8 @@ describe('payload.codec', () => {
         villageId: 'v1',
         buildingType: 'WOOD',
         level: 3,
+        ownerId: 'u1',
+        worldId: 'w1',
       };
 
       expect(encodeEventPayload(payload)).toEqual(payload);

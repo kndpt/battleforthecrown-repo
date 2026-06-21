@@ -1,8 +1,8 @@
 # Run #080 — feature-account-renown
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-21
+> **Terminé** : 2026-06-21
 
 ## Cible
 
@@ -69,21 +69,27 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 3. **Backend bonus fin de monde** : crédit palier à `LOCKED→ENDED` (coordination 067 sur l'infra account-global).
 4. **Frontend** : Renommée sur `PlayerProfileSheet` (niveau + barre), feedback level-up, ébauche track cosmétique.
 
-## Progress
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
-## Décisions prises
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
 ## Rapport final
+
+**Synthèse** : Renommée account-global livrée — spec `25`, shared `renown/` (constantes + courbe inversible + fns pures, 9 specs), `User.renownXp` + `RenownLedger` idempotent (migration additive), crédit live (construction/conquête×barbare/combat réutilisant `GloryLedger.points`) + batch classement à `LOCKED→ENDED`, `GET /users/me/renown`, bloc Renommée + barre + feedback level-up sur `PlayerProfileSheet`. Invariant respecté : zéro effet in-world. Bug d'idempotence combat (dedupKey sans `opponentUserId`) et N+1 dans la tx de transition corrigés en review.
 
 ### Acceptance & QA
 
-_(Vide au démarrage.)_
+- [x] Spec `25-account-renown.md` + index README + entrée `data-model.md` — `ls docs/gameplay/25-account-renown.md && grep -c "25-account-renown\|RenownLedger" docs/gameplay/README.md docs/architecture/data-model.md` → fichier présent + entrées OK
+- [x] `shared/renown` constantes + courbe + fns pures couvertes — `vitest run packages/shared/src/renown` → 9/9 verts (round-trip 50 niveaux, barbare ×1/3, ranking tiers)
+- [x] `User.renownXp` + `RenownLedger` idempotent, replay Outbox ne double pas — `test:smoke:run -- renown.smoke` scénario 1 (double recordOutboxEvent même eventId → XP inchangée)
+- [x] XP live construction (poids×niveau) / conquête (PvP 500, barbare 167) / combat (`GloryLedger.points`, barbares 0) — smoke scénarios 1/2/3 + `combat.worker.ts:728-779` (réutilise `ledger.points`)
+- [x] Bonus classement crédité une fois à `LOCKED→ENDED` dans la tx — smoke scénario 4 (re-run → inchangé) + `world-lifecycle.worker.ts:170`
+- [x] `GET /users/me/renown` expose niveau + XP + seuils — `renown.controller.ts` + `getStatus` → `renownStatusForXp`
+- [ ] `PlayerProfileSheet` niveau + barre + feedback level-up — `visuel` → checklist IG user ci-dessous
+- [x] Aucun effet in-world — `rg "renownXp" battleforthecrown-backend/src` → seul lecteur = `getStatus` (cosmétique) ; review confirme
+- [x] `yarn static-check` vert ; review indépendante GO — voir ci-dessous
 
-- [ ] <critère> — `<cmd>` → <résultat>
-- **Review indépendante** : … (requise — back+front, crée SPEC, diff > 100 lignes, invariant durable)
-- **Tests automatisés** : …
-- **Tests IG user** : checklist Renommée (niveau visible sur fiche profil, level-up ressenti) — l'agent ne fait pas de QA IG
+- **Review indépendante** : Déclenchée (raison : back+front, crée SPEC, diff > 100 lignes, invariant durable). Cycle 1 `BLOCK` (1 majeur N+1 tx transition + 2 mineurs) → fix batch + doc → cycle 2 `VERDICT: GO`.
+- **Tests automatisés** : `vitest packages/shared/src/renown` 9/9 ; `yarn workspace battleforthecrown-pixi test` 646/646 ; `yarn static-check` vert (tsc + eslint backend+pixi).
+- **Smokes lancés** : `test:smoke:preflight` + `test:smoke:run -- renown.smoke` → 5/5 verts. Ciblés (diff backend non transversal : nouveau module isolé + hooks additifs). Full smoke suite couverte par CI PR.
+- **Smokes ajoutés** : `test/renown.smoke.spec.ts` (5 scénarios : construction+idempotence, conquête PvP/barbare, combat dedup granulaire, bonus classement+idempotence, getStatus).
+- **QA fonctionnelle agent** : crédit/idempotence exercés via smoke réel (RenownService contre Postgres smoke). Endpoint REST non curl-é à la main (couvert par getStatus + dérivation shared testée).
+- **Tests IG à faire par le user** :
+  - [ ] Ouvrir la fiche profil → onglet Profil : bloc « Renommée » avec niveau + barre de progression cohérente.
+  - [ ] Après un gain de XP qui fait monter de niveau, rouvrir le profil → feedback « Niveau supérieur ! » visible puis acquitté.

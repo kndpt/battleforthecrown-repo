@@ -1,5 +1,6 @@
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
+import { ProgressBar } from '@/ui/feedback/ProgressBar';
 import { GameBottomSheetPanel } from './GameBottomSheetPanel';
 import { SegmentedControl } from './SegmentedControl';
 
@@ -87,6 +88,13 @@ export interface PlayerProfileSheetPlayer {
   tribe: PlayerProfileSheetTribe;
 }
 
+export interface PlayerProfileSheetRenown {
+  level: number;
+  xpIntoLevel: number;
+  xpForNextLevel: number;
+  justLeveledUp?: boolean;
+}
+
 export interface PlayerProfileSheetProps {
   activeTab: PlayerProfileSheetTab;
   className?: string;
@@ -98,6 +106,7 @@ export interface PlayerProfileSheetProps {
   onVillageSelect?: (village: PlayerProfileSheetVillage) => void;
   onWorldSelect?: () => void;
   player: PlayerProfileSheetPlayer;
+  renown?: PlayerProfileSheetRenown;
   settings: PlayerProfileSheetSetting[];
   stats: PlayerProfileSheetStats;
   villages: PlayerProfileSheetVillage[];
@@ -266,15 +275,50 @@ function WorldPanel({
   );
 }
 
+function RenownBlock({ renown }: { renown: PlayerProfileSheetRenown }) {
+  const ratio = renown.xpForNextLevel > 0
+    ? Math.min(1, Math.max(0, renown.xpIntoLevel / renown.xpForNextLevel))
+    : 1;
+
+  return (
+    <div
+      className={cn(
+        'rounded-[10px] border-2 border-[#a67c52] bg-[linear-gradient(to_bottom,rgba(255,255,255,.45),rgba(213,182,128,.45))] px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,.3),0_2px_0_rgba(0,0,0,.18)]',
+        renown.justLeveledUp && 'animate-pulse border-[#c9900c] shadow-[inset_0_1px_0_rgba(255,255,255,.3),0_2px_0_rgba(0,0,0,.18),0_0_10px_rgba(246,213,123,.5)]',
+      )}
+    >
+      <div className="mb-1.5 flex items-center justify-between">
+        <span className="font-game text-[9.5px] font-bold uppercase tracking-[.3em] text-[#6d5838]">
+          Renommée
+        </span>
+        <span className="font-game text-sm font-extrabold text-[#3d2f1f] [text-shadow:0_1px_0_rgba(255,255,255,.45)]">
+          Niv. {renown.level}
+        </span>
+        {renown.justLeveledUp ? (
+          <span className="animate-pulse rounded-full border border-[#c9900c] bg-[linear-gradient(to_bottom,#f6d57b,#c9900c)] px-2 py-px font-game text-[8.5px] font-extrabold text-[#3a2a00]">
+            Niveau supérieur&nbsp;!
+          </span>
+        ) : null}
+      </div>
+      <ProgressBar value={ratio * 100} variant="warning" size="sm" />
+      <div className="mt-1 text-right font-game text-[8.5px] text-[#6d5838]">
+        {renown.xpIntoLevel} / {renown.xpForNextLevel} XP
+      </div>
+    </div>
+  );
+}
+
 function ProfilePane({
   icons,
   labels,
   onWorldSelect,
+  renown,
   stats,
   world,
-}: Pick<PlayerProfileSheetProps, 'icons' | 'labels' | 'onWorldSelect' | 'stats' | 'world'>) {
+}: Pick<PlayerProfileSheetProps, 'icons' | 'labels' | 'onWorldSelect' | 'renown' | 'stats' | 'world'>) {
   return (
     <div className="flex flex-col gap-2.5">
+      {renown ? <RenownBlock renown={renown} /> : null}
       <WorldPanel labels={labels} onWorldSelect={onWorldSelect} world={world} />
       <div className="flex gap-1.5">
         <StatTile icon={icons.armyPower} label="Puissance" value={stats.power} />
@@ -443,6 +487,7 @@ export function PlayerProfileSheet({
   onVillageSelect,
   onWorldSelect,
   player,
+  renown,
   settings,
   stats,
   villages,
@@ -486,6 +531,7 @@ export function PlayerProfileSheet({
           icons={icons}
           labels={labels}
           onWorldSelect={onWorldSelect}
+          renown={renown}
           stats={stats}
           world={world}
         />

@@ -120,6 +120,8 @@ describe('scripted onboarding smoke', () => {
             villageId,
             buildingType: 'CASTLE',
             level: 2,
+            ownerId: player.userId,
+            worldId: world.id,
           },
         },
         {
@@ -130,6 +132,8 @@ describe('scripted onboarding smoke', () => {
             villageId,
             buildingType: 'BARRACKS',
             level: 1,
+            ownerId: player.userId,
+            worldId: world.id,
           },
         },
         {
@@ -211,6 +215,8 @@ describe('scripted onboarding smoke', () => {
             villageId,
             buildingType: 'CASTLE',
             level: 3,
+            ownerId: player.userId,
+            worldId: world.id,
           },
         },
         {
@@ -221,6 +227,8 @@ describe('scripted onboarding smoke', () => {
             villageId,
             buildingType: 'WATCHTOWER',
             level: 1,
+            ownerId: player.userId,
+            worldId: world.id,
           },
         },
       ],
