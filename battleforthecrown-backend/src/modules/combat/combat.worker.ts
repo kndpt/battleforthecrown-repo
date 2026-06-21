@@ -1583,6 +1583,13 @@ export class CombatWorker implements OnModuleInit {
           };
     const wallLevel =
       findBuildingByType(targetVillage.buildings, 'WALL')?.level ?? 0;
+    // Snapshot du niveau de Château au moment du scout → dérive la fenêtre de
+    // capture PvP côté UI (preview). Cibles barbares : pas de Château hérité.
+    const castleLevel =
+      expedition.targetKind === 'PLAYER_VILLAGE'
+        ? (findBuildingByType(targetVillage.buildings, 'CASTLE')?.level ??
+          undefined)
+        : undefined;
 
     const report = await tx.scoutReport.create({
       data: {
@@ -1606,6 +1613,7 @@ export class CombatWorker implements OnModuleInit {
           scoutLosses: {},
           scoutUnits: parseUnitMap(expedition.units, 'expedition.units'),
           wallLevel,
+          ...(castleLevel !== undefined ? { castleLevel } : {}),
         },
       },
     });

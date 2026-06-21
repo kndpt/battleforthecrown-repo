@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ComponentProps } from "react";
 import { apiClient } from "@/api";
 import type { MapEntity } from "@/api/world-types";
+import type { OpenConquestDto } from "@battleforthecrown/shared/combat";
 import type { VillageIntelDto } from "@battleforthecrown/shared/world";
 import { useAuthStore } from "@/stores/auth";
 import { useGameStore } from "@/stores/game";
@@ -250,6 +251,49 @@ describe("enemy player", () => {
     const paths = getSpy.mock.calls.map((call) => call[0]);
     expect(paths).not.toContain("/army/v-enemy/inventory");
     expect(paths).not.toContain("/combat/v-enemy/garrison");
+  });
+
+  it("previews the PvP capture window from the castle level on an enemy village", async () => {
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/worlds/w1/intel/v-enemy") return null;
+      if (path === "/power/village/v-enemy/public")
+        return { villageId: "v-enemy", buildings: 880 };
+      throw new Error(`Unexpected GET ${path}`);
+    });
+
+    renderPanel({ ...enemyVillage, castleLevel: 7 }, "v-mine");
+
+    expect(await screen.findByText("Fenêtre de capture")).toBeInTheDocument();
+    expect(screen.getByText("3h")).toBeInTheDocument();
+  });
+
+  it("hides the capture preview while a capture is already active", async () => {
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/worlds/w1/intel/v-enemy") return null;
+      if (path === "/power/village/v-enemy/public")
+        return { villageId: "v-enemy", buildings: 880 };
+      throw new Error(`Unexpected GET ${path}`);
+    });
+    const activeCapture: OpenConquestDto = {
+      attackerVillageId: "origin-village",
+      attackerVillageName: "Royaume de dupont.kelvin",
+      captureStartedAt: "2026-06-03T11:30:00.000Z",
+      captureUntil: "2026-06-03T12:30:00.000Z",
+      pendingConquestId: "pc-1",
+      status: "OPEN",
+      targetCastleLevel: 7,
+      targetKind: "PLAYER_VILLAGE",
+      targetName: "enemy",
+      targetTier: null,
+      targetVillageId: "v-enemy",
+      targetX: 1,
+      targetY: 2,
+    };
+
+    renderPanel({ ...enemyVillage, castleLevel: 7 }, "v-mine", { activeCapture });
+
+    expect(await screen.findByText("880")).toBeInTheDocument();
+    expect(screen.queryByText("Fenêtre de capture")).not.toBeInTheDocument();
   });
 
   it("7. scouted (intelDto) → style 'Forteresse', mur 'Niv. 3', loot '100', freshness 'il y a', bouton rapport", async () => {

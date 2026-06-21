@@ -8,6 +8,7 @@ import {
   TypeTag,
   PowerCell,
   CloseBtn,
+  ClockGlyph,
 } from './primitives';
 import { UnscoutedPanel, FullIntelPanel, TierPanel } from './bodies';
 import type { FullIntelPanelProps } from './bodies';
@@ -32,6 +33,8 @@ export interface VillageMapPanelProps {
   ownerPower?: number | null;
   intel?: FullIntelPanelProps;
   tier?: BarbarianTier;
+  /** Preview lecture seule de la durée de fenêtre de capture PvP (ex `4h30`). */
+  captureWindowLabel?: string | null;
   attackBlocked?: boolean;
   attackBlockedReason?: string | null;
   onClose?: () => void;
@@ -72,6 +75,35 @@ function ScrollGlyph({ size = 16, color = '#fff' }: { size?: number; color?: str
       <path d="M19 17V5a2 2 0 0 0-2-2H4"/>
       <path d="M2 5v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2H6"/>
     </svg>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// CaptureWindowRow — preview lecture seule de la fenêtre de capture PvP
+// ---------------------------------------------------------------------------
+
+function CaptureWindowRow({ label }: { label: string }) {
+  return (
+    <div style={{ padding: '0 11px 9px' }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 6,
+        padding: '4px 10px',
+        borderRadius: 999,
+        background: 'linear-gradient(to bottom, #fff7e6, #ecd9ab)',
+        border: '1.5px solid #b08d5a',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,.6), 0 1px 0 rgba(0,0,0,.1)',
+      }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontWeight: 700, fontSize: 8.5, color: '#6d5838', letterSpacing: '.14em', textTransform: 'uppercase' }}>
+          <ClockGlyph size={12} color="#9e7b0d"/> Fenêtre de capture
+        </span>
+        <span style={{ fontWeight: 800, fontSize: 14, color: '#3d2f1f', fontVariantNumeric: 'tabular-nums', textShadow: '0 1px 0 rgba(255,255,255,.5)' }}>
+          {label}
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -191,6 +223,7 @@ export function VillageMapPanel({
   ownerPower,
   intel,
   tier,
+  captureWindowLabel,
   attackBlocked,
   attackBlockedReason,
   onClose,
@@ -242,6 +275,9 @@ export function VillageMapPanel({
           {villagePower != null && <PowerCell label="Village" value={villagePower}/>}
           {!barbare && ownerPower != null && <PowerCell label="Joueur" value={ownerPower}/>}
         </div>
+
+        {/* Fenêtre de capture (preview, village joueur ennemi) */}
+        {captureWindowLabel && <CaptureWindowRow label={captureWindowLabel}/>}
 
         {/* Corps */}
         <div style={{ padding: '0 11px 10px' }}>

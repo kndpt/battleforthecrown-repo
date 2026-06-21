@@ -23,6 +23,7 @@ function reportDetails(value: unknown): ScoutReportResponse['details'] {
   if (!value || typeof value !== 'object') return undefined;
   const details = value as Record<string, unknown>;
   const wallLevel = details.wallLevel;
+  const castleLevel = details.castleLevel;
   return {
     ...(details.scoutLosses && typeof details.scoutLosses === 'object'
       ? { scoutLosses: details.scoutLosses }
@@ -31,6 +32,7 @@ function reportDetails(value: unknown): ScoutReportResponse['details'] {
       ? { scoutUnits: details.scoutUnits }
       : {}),
     ...(typeof wallLevel === 'number' ? { wallLevel } : {}),
+    ...(typeof castleLevel === 'number' ? { castleLevel } : {}),
   };
 }
 

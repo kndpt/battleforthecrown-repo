@@ -11,7 +11,7 @@
 - `docs/gameplay/13-barbarian-conquest.md` § Visibilité de la durée : passage de *« n'est pas affichée avant l'installation »* à *« pré-affichée sur le panneau d'info »*. Suppression de l'argument *« flou ludique »*. Référence croisée vers la spec PvP.
 - `docs/gameplay/14-pvp-conquest.md` § Période de capture / Visibilité : suppression de la note d'asymétrie *« différent de la spec barbare »* — c'est désormais aligné.
 
-**Implémentation** : à intégrer dans le panneau d'info village (front + DTO `world-entities`) le jour où la conquête PvP/barbare sera câblée côté UI.
+**Implémentation** : livrée par le run [`060-feature-pvp-capture-duration-preview`](../runs/archive/060-feature-pvp-capture-duration-preview.md) — helper shared `getPvpCaptureDurationLabel` (source unique de la courbe), preview « Fenêtre de capture » sur `AttackDetailModal` + `SelectedEntityPanel` + rapport scout (`castleLevel` snapshot au scout). La dette UX de pré-affichage PvP est close.
 
 ## Symptôme
 

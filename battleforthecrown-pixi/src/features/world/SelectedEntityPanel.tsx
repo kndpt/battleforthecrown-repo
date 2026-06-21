@@ -17,7 +17,10 @@ import {
   useVillageIntelQuery,
 } from "@/api/queries";
 import type { MapEntity } from "@/api/world-types";
-import type { OpenConquestDto } from "@battleforthecrown/shared/combat";
+import {
+  getPvpCaptureDurationLabel,
+  type OpenConquestDto,
+} from "@battleforthecrown/shared/combat";
 import type { WorldTier } from "@battleforthecrown/shared/world";
 import { isAttackAllowedByPowerRatio } from "@battleforthecrown/shared";
 import { useGameStore } from "@/stores/game";
@@ -43,6 +46,7 @@ interface SelectedEntityPanelProps {
 }
 
 export function SelectedEntityPanel({
+  activeCapture,
   entity,
   currentVillageId,
   onAttack,
@@ -180,6 +184,14 @@ export function SelectedEntityPanel({
     });
   };
 
+  // Preview lecture seule de la fenêtre de capture PvP sur un village joueur
+  // ennemi (durée de base dérivée du Château, sans tempo). Masquée pendant une
+  // capture déjà active ou en fenêtre. Le castleLevel est public (taille carte).
+  const captureWindowLabel =
+    isPlayerVillage && !activeCapture && !entity.captureWindow
+      ? getPvpCaptureDurationLabel(entity.castleLevel ?? null)
+      : null;
+
   return (
     <>
       <VillageMapPanel
@@ -192,6 +204,7 @@ export function SelectedEntityPanel({
         ownerPower={ownerPower}
         intel={intel}
         tier={tier}
+        captureWindowLabel={captureWindowLabel}
         attackBlocked={attackBlocked}
         attackBlockedReason={attackBlockedReason}
         onClose={onClose}

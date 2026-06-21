@@ -131,6 +131,7 @@ describe('scouting smoke', () => {
           create: { wood: 456, stone: 345, iron: 234, maxPerType: 100_000 },
         },
         strategyConfig: { create: { strategy: 'RAIDERS' } },
+        buildings: { create: { type: 'CASTLE', level: 6 } },
       },
     });
     await ctx.prisma.unitInventory.create({
@@ -257,6 +258,9 @@ describe('scouting smoke', () => {
     expect((playerReport.units as Record<string, number>).SQUIRE).toBe(3);
     expect((playerReport.resources as Record<string, number>).iron).toBe(234);
     expect(playerReport.strategy).toBe('RAIDERS');
+    // Castle level is snapshot at scout time → derives the PvP capture window preview.
+    const playerDetails = playerReport.details as Record<string, number>;
+    expect(playerDetails.castleLevel).toBe(6);
 
     const farBarbarian = await ctx.prisma.village.create({
       data: {

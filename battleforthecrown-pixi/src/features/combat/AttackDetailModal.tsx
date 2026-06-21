@@ -32,6 +32,7 @@ import { SegmentedControl } from '@/features/design-system/components';
 import { publicAsset } from '@/lib/publicAsset';
 import type { MapEntity } from '@/api/world-types';
 import { getBarbarianCaptureDurationLabel } from '@/features/world/barbarianConquest';
+import { getPvpCaptureDurationLabel } from '@battleforthecrown/shared/combat';
 
 interface AttackDetailModalProps {
   target: MapEntity;
@@ -116,6 +117,9 @@ export function AttackDetailModal({
     activeMode === 'attack' &&
     selectedNobleCount > 0;
   const captureDuration = getBarbarianCaptureDurationLabel(target.tier);
+  const isEnemyPlayerVillage =
+    target.kind === 'PLAYER_VILLAGE' && !target.isMine;
+  const pvpCaptureDuration = getPvpCaptureDurationLabel(target.castleLevel);
   const missionAccentClass =
     activeMode === 'reinforce'
       ? 'from-game-green-light to-game-green-dark border-game-green-border'
@@ -352,6 +356,22 @@ export function AttackDetailModal({
                 {isBarbarianConquest
                   ? 'Un Noble sélectionné ouvrira cette fenêtre si le combat est gagné et qu’il survit.'
                   : 'Ajoute un Noble à l’attaque pour transformer cette mission en conquête.'}
+              </p>
+            </div>
+          )}
+
+          {isEnemyPlayerVillage && activeMode === 'attack' && (
+            <div className="p-3 bg-game-gold-light/10 border-2 border-game-gold-border/30 rounded-lg text-sm text-kingdom-800">
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-semibold">Fenêtre de capture</span>
+                <Badge variant={pvpCaptureDuration ? 'warning' : 'neutral'} size="sm">
+                  {pvpCaptureDuration ?? 'Inconnue'}
+                </Badge>
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-kingdom-700">
+                {pvpCaptureDuration
+                  ? 'Durée pendant laquelle un Seigneur capturera ce village. Tes voisins peuvent intervenir.'
+                  : 'Envoie un espion pour estimer la fenêtre de capture (niveau du Château inconnu).'}
               </p>
             </div>
           )}
