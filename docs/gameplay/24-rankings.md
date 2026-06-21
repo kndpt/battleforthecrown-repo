@@ -161,6 +161,8 @@ Le scoring se derive des rapports de combat :
 
 Pour les renforts multi-proprietaires futurs, le rapport ou l'evenement de resolution devra conserver la repartition des defenseurs par proprietaire afin de distribuer la Gloire du Rempart proprement.
 
+**Vue monde entier** : a la transition `LOCKED → ENDED`, les 3 classements sont figes dans `WorldFinalRankingSnapshot` (table Prisma — cf. [`data-model.md` § Classements finaux](../architecture/data-model.md#classements-finaux)). Cette table est la source de verite pour les runs UI et awards aval ; les formules live ci-dessus ne sont pas recalculees a la lecture.
+
 ## Noms UI
 
 Noms retenus pour la spec :

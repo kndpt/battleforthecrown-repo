@@ -50,6 +50,7 @@ import { PrismaClientOrTx } from '../../common/prisma.types';
 import { OwnershipService } from '../../common/auth';
 import { PowerService } from '../power/power.service';
 import { ResourcesService } from '../resources/resources.service';
+import { WorldAccessService } from '../world/world-access.service';
 import { NewbieShieldService } from '../world/newbie-shield.service';
 
 export interface GarrisonLineDto {
@@ -78,6 +79,7 @@ export class CombatService {
     private readonly powerService: PowerService,
     private readonly outbox: OutboxPublisher,
     private readonly resourcesService: ResourcesService,
+    private readonly worldAccess: WorldAccessService,
     private readonly newbieShield: NewbieShieldService,
     @Inject('PG_BOSS') private readonly boss: PgBoss,
   ) {}
@@ -93,6 +95,7 @@ export class CombatService {
       const village = await this.loadOwnedVillage(tx, dto.villageId, userId);
 
       const worldId = village.worldId;
+      await this.worldAccess.assertWorldWritable(worldId, tx);
 
       // 2. Resolve target (validates kind/world/coords match the live row)
       const target = await this.resolveTargetVillage(tx, worldId, dto);
@@ -226,6 +229,7 @@ export class CombatService {
       this.assertScoutUnitsOnly(dto.units);
 
       const worldId = village.worldId;
+      await this.worldAccess.assertWorldWritable(worldId, tx);
       const target = await this.resolveTargetVillage(tx, worldId, dto);
 
       await this.assertTargetInVision(
@@ -301,6 +305,7 @@ export class CombatService {
       );
 
       const worldId = village.worldId;
+      await this.worldAccess.assertWorldWritable(worldId, tx);
 
       // 2. Verify target village exists
       const targetVillage = await tx.village.findUnique({
@@ -396,6 +401,7 @@ export class CombatService {
               'Origin village not found or not owned',
             );
             const worldId = village.worldId;
+            await this.worldAccess.assertWorldWritable(worldId, tx);
 
             if (dto.targetVillageId === dto.villageId) {
               throw new BadRequestException('Target village must be different');

@@ -10,6 +10,7 @@ import PgBoss from 'pg-boss';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import { WorldConfigService } from '../world/world-config.service';
+import { WorldAccessService } from '../world/world-access.service';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
 import { applyPopulationBonus } from '../population/population-capacity';
 import {
@@ -29,6 +30,7 @@ export class UpgradeBuildingUseCase {
     private readonly prisma: PrismaService,
     private readonly ownership: OwnershipService,
     private readonly worldConfig: WorldConfigService,
+    private readonly worldAccess: WorldAccessService,
     private readonly outbox: OutboxPublisher,
     @Inject('PG_BOSS') private readonly boss: PgBoss,
   ) {}
@@ -58,6 +60,8 @@ export class UpgradeBuildingUseCase {
       if (!village || !stock || !population) {
         throw new NotFoundException('Village not found');
       }
+
+      await this.worldAccess.assertWorldWritable(village.worldId, tx);
 
       if (!isBuildingEnabled(buildingType)) {
         throw new BadRequestException('This building is temporarily disabled');
