@@ -14,3 +14,4 @@ export * from './dtos';
 export * from './utils';
 export * from './loot';
 export * from './schemas';
+export * from './capture-duration';

@@ -78,19 +78,31 @@ describe('presentScoutReport', () => {
     });
   });
 
-  it('includes all three detail fields when all are present', () => {
+  it('includes castleLevel when present in details', () => {
+    const report = { ...baseReport, details: { castleLevel: 6 } };
+    expect(presentScoutReport(report).details).toEqual({ castleLevel: 6 });
+  });
+
+  it('omits castleLevel when it is not a number', () => {
+    const report = { ...baseReport, details: { castleLevel: 'six' } };
+    expect(presentScoutReport(report).details).toEqual({});
+  });
+
+  it('includes all detail fields when all are present', () => {
     const report = {
       ...baseReport,
       details: {
         scoutLosses: { SPY: 1 },
         scoutUnits: { SPY: 3 },
         wallLevel: 7,
+        castleLevel: 8,
       },
     };
     expect(presentScoutReport(report).details).toEqual({
       scoutLosses: { SPY: 1 },
       scoutUnits: { SPY: 3 },
       wallLevel: 7,
+      castleLevel: 8,
     });
   });
 

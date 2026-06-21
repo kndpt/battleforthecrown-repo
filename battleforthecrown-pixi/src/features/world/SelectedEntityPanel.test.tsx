@@ -162,6 +162,54 @@ describe('SelectedEntityPanel owned village troops', () => {
     expect(paths).not.toContain('/combat/enemy-1/garrison');
   });
 
+  it('previews the PvP capture window from the castle level on an enemy village', async () => {
+    vi.spyOn(apiClient, 'get').mockImplementation(async (path) => {
+      if (path === '/power/village/enemy-1/public') return { villageId: 'enemy-1', buildings: 880 };
+      throw new Error(`Unexpected GET ${path}`);
+    });
+
+    renderPanel(
+      playerVillage({ id: 'enemy-1', isMine: false, castleLevel: 7 }),
+      'village-1',
+    );
+
+    expect(await screen.findByText('Fenêtre de capture')).toBeInTheDocument();
+    expect(screen.getByText('3h')).toBeInTheDocument();
+  });
+
+  it('hides the capture preview while a capture is already active', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-03T12:00:00.000Z'));
+    vi.spyOn(apiClient, 'get').mockImplementation(async (path) => {
+      if (path === '/power/village/enemy-1/public') return { villageId: 'enemy-1', buildings: 880 };
+      throw new Error(`Unexpected GET ${path}`);
+    });
+    const activeCapture: OpenConquestDto = {
+      attackerVillageId: 'origin-village',
+      attackerVillageName: 'Royaume de dupont.kelvin',
+      captureStartedAt: '2026-06-03T11:30:00.000Z',
+      captureUntil: '2026-06-03T12:30:00.000Z',
+      pendingConquestId: 'pc-1',
+      status: 'OPEN',
+      targetCastleLevel: 7,
+      targetKind: 'PLAYER_VILLAGE',
+      targetName: 'enemy',
+      targetTier: null,
+      targetVillageId: 'enemy-1',
+      targetX: 1,
+      targetY: 2,
+    };
+
+    renderPanel(
+      playerVillage({ id: 'enemy-1', isMine: false, castleLevel: 7 }),
+      'village-1',
+      { activeCapture },
+    );
+
+    expect(screen.getByText('Capture')).toBeInTheDocument();
+    expect(screen.queryByText('Fenêtre de capture')).not.toBeInTheDocument();
+  });
+
   it('shows capture details on a captured village without exposing troops', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-06-03T12:00:00.000Z'));

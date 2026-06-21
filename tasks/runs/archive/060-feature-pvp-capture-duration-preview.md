@@ -1,8 +1,34 @@
 # Run #060 — feature-pvp-capture-duration-preview
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-21
+> **Terminé** : 2026-06-21
+
+## Rapport final
+
+Synthèse : helper shared `getPvpCaptureDurationLabel`/`getPvpCaptureDurationMs` (source unique de la courbe PvP, ré-exportée par le backend) ; preview « Fenêtre de capture » sur `AttackDetailModal` (mode attack, cible joueur), `SelectedEntityPanel` (lecture seule, masquée si capture active) et rapport scout. `castleLevel` snapshot au scout (`combat.worker` + presenter + DTO, PLAYER only, pas de migration — `details` Json).
+
+### Acceptance & QA
+
+**Critères d'acceptance vérifiés**
+- [x] Helper shared + label, 5 paliers + fallback — `yarn workspace battleforthecrown-pixi test --run capture-duration` → 16 assertions vertes (paliers 1h/1h30/2h15/3h/4h30, fallback castle 0, null→`null`).
+- [x] Table backend ré-exporte/consomme le shared (zéro duplication) — `grep -rn "PVP_CAPTURE_DURATIONS_MS = \[" battleforthecrown-backend/src` → aucun match (table déplacée dans shared).
+- [x] Tempo backend-only, label front = base — `capture-duration.ts:41` garde `TempoService.applyDuration` ; helpers shared sans tempo.
+- [x] `AttackDetailModal` section PvP en mode attack, `Inconnue` si castleLevel null — `AttackDetailModal.tsx:362` gate `isEnemyPlayerVillage && activeMode === 'attack'`.
+- [x] `SelectedEntityPanel` ligne preview lecture seule, masquée si capture active — `SelectedEntityPanel.test.tsx` (2 tests : preview castle 7 → `3h` ; masquée si activeCapture).
+- [x] Rapport scout expose castleLevel (DTO + presenter + snapshot) — smoke `scouting.smoke` assert `details.castleLevel === 6`.
+- [x] Pas de migration Prisma (`details` Json) — aucun fichier `prisma/migrations` au diff.
+- [x] Non-divergence durée backend vs preview — source unique partagée + `combat-conquest-hook.smoke` (6/6) verts.
+- [x] Mode scout du modal sans badge capture PvP — gate `activeMode === 'attack'`.
+- [x] Pas de régression preview barbare — `barbarianConquest.test.ts` vert, bloc barbare modal intact.
+- [x] Doc archive 25 → run 060 — `grep -n "060" tasks/archive/25-capture-duration-visibility-asymmetry.md` → match ligne 14.
+
+**Review indépendante** : Déclenchée (raison: critères (a) back+front + (d) invariant durable affiché). Verdict initial `BLOCK` (1 majeur: pointeur doc archive 25 manquant) → résolu (pointeur ajouté, vérifié grep). Mineur scoutReportView `Inconnue` : conforme au critère d'acceptance (affichage demandé), gardé.
+**Tests automatisés** : `test:backend` capture-duration+presenter (16/16), `test:pixi` capture-duration/scoutReportView/SelectedEntityPanel/barbarianConquest (25/25), `yarn static-check` vert.
+**Smokes lancés** : Ciblés — `scouting.smoke` (1/1, +assertion castleLevel), `combat-conquest-hook.smoke` (6/6). Full smoke couvert par CI PR.
+**Smokes ajoutés/modifiés** : `scouting.smoke.spec.ts` — CASTLE niv.6 sur la cible joueur + assertion `details.castleLevel === 6`.
+**QA fonctionnelle agent** : couverte par smoke (scout runtime → snapshot DB).
+**Tests IG à faire par le user** : preview visuel — voir checklist ci-dessous.
 
 ## Cible
 

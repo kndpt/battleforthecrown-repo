@@ -9,7 +9,10 @@ import {
   usePublicVillagePowerQuery,
 } from '@/api/queries';
 import type { MapEntity } from '@/api/world-types';
-import type { OpenConquestDto } from '@battleforthecrown/shared/combat';
+import {
+  getPvpCaptureDurationLabel,
+  type OpenConquestDto,
+} from '@battleforthecrown/shared/combat';
 import { useTickingNow } from '@/lib/useTickingNow';
 import { formatRemaining } from '@/features/village/constructionProgress';
 import { computeProgress } from '@/features/combat/kingdomActivitiesViewModel';
@@ -87,10 +90,18 @@ export function SelectedEntityPanel({
     armyInventory.isError || garrison.isError,
   );
   const captureSection = captureSectionFor(entity, activeCapture, now);
-  const shieldSection = shieldSectionFor(entity, now);
-  const sections = [captureSection, shieldSection, troopSection].filter(
-    (section): section is MapEntityCalloutSection => Boolean(section),
+  const capturePreviewSection = capturePreviewSectionFor(
+    entity,
+    isPlayerVillage,
+    activeCapture,
   );
+  const shieldSection = shieldSectionFor(entity, now);
+  const sections = [
+    captureSection,
+    capturePreviewSection,
+    shieldSection,
+    troopSection,
+  ].filter((section): section is MapEntityCalloutSection => Boolean(section));
   const actions = [
     ...(showAttack
       ? [
@@ -217,6 +228,32 @@ function captureSectionFor(
         icon: '/assets/clock.png',
         label: 'Reste',
         value: formatRemaining(remainingMs),
+      },
+    ],
+  };
+}
+
+/**
+ * Preview lecture seule de la fenêtre de capture PvP sur le panneau d'info d'un
+ * village joueur ennemi (durée de base dérivée du niveau de Château, sans tempo).
+ * Masquée si une capture est déjà active ou en fenêtre (couvertes par `captureSectionFor`).
+ */
+function capturePreviewSectionFor(
+  entity: MapEntity,
+  isPlayerVillage: boolean,
+  activeCapture: OpenConquestDto | null | undefined,
+): MapEntityCalloutSection | null {
+  if (!isPlayerVillage) return null;
+  if (activeCapture || entity.captureWindow) return null;
+  const label = getPvpCaptureDurationLabel(entity.castleLevel);
+  if (!label) return null;
+  return {
+    title: 'Fenêtre de capture',
+    rows: [
+      {
+        icon: '/assets/clock.png',
+        label: 'Durée',
+        value: label,
       },
     ],
   };

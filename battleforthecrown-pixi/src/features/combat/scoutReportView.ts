@@ -2,7 +2,10 @@ import type {
   ScoutReportCardProps,
   ScoutReportSection,
 } from '@/features/design-system/components/ScoutReportCard';
-import type { ScoutReportResponse } from '@battleforthecrown/shared/combat';
+import {
+  getPvpCaptureDurationLabel,
+  type ScoutReportResponse,
+} from '@battleforthecrown/shared/combat';
 import { unitMetaFor } from '@/features/army/unitConfig';
 import { formatResourceAmount } from '@/lib/resourceConfig';
 import { DEFAULT_VILLAGE_STRATEGY, type VillageStrategyType } from '@battleforthecrown/shared/village';
@@ -127,6 +130,18 @@ export function buildScoutReportCardProps(
                 icon: '/assets/strategy-icons/spritesheet.png',
                 label: 'Style',
                 value: scoutReportStrategyLabel(report.strategy),
+              },
+            ],
+          },
+          {
+            title: 'Fenêtre de capture',
+            items: [
+              {
+                icon: '/assets/clock.png',
+                label: 'Durée',
+                value:
+                  getPvpCaptureDurationLabel(report.details?.castleLevel) ??
+                  'Inconnue',
               },
             ],
           },

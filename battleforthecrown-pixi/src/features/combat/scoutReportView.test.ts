@@ -91,8 +91,46 @@ describe('scoutReportView', () => {
     };
 
     expect(scoutReportTargetLabel(barbarianReport)).toBe('Village barbare T2');
-    expect(buildScoutReportCardProps(barbarianReport, undefined, false).sections).not.toEqual(
+    const barbarianSections = buildScoutReportCardProps(
+      barbarianReport,
+      undefined,
+      false,
+    ).sections;
+    expect(barbarianSections).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ title: 'Style stratégique' })]),
+    );
+    expect(barbarianSections).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ title: 'Fenêtre de capture' })]),
+    );
+  });
+
+  it('derives the PvP capture window from the scouted castle level', () => {
+    const withCastle: ScoutReportResponse = {
+      ...report,
+      details: { ...report.details, castleLevel: 6 },
+    };
+    expect(
+      buildScoutReportCardProps(withCastle, undefined, false).sections,
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: 'Fenêtre de capture',
+          items: [expect.objectContaining({ label: 'Durée', value: '2h15' })],
+        }),
+      ]),
+    );
+  });
+
+  it('shows the capture window as Inconnue when the castle level is unknown', () => {
+    expect(
+      buildScoutReportCardProps(report, undefined, false).sections,
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: 'Fenêtre de capture',
+          items: [expect.objectContaining({ label: 'Durée', value: 'Inconnue' })],
+        }),
+      ]),
     );
   });
 });
