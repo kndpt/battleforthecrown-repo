@@ -58,19 +58,18 @@ export class RenownService {
   ): Promise<void> {
     if (kind === 'building.completed') {
       const p = payload as BuildingCompletedPayload;
-      const v = await this.prisma.village.findUnique({
-        where: { id: p.villageId },
-        select: { userId: true, worldId: true },
-      });
-      if (!v?.userId) return;
+      // Propriétaire/monde capturés à la complétion (immuables) → attribution
+      // correcte même si le village est conquis avant le dispatch Outbox.
+      const ownerId = p.ownerId;
+      if (!ownerId) return;
 
       const xp = renownConstructionXp(p.buildingType, p.level);
       await this.prisma.$transaction((tx) =>
         this.creditInTx(tx, {
-          userId: v.userId as string,
+          userId: ownerId,
           source: RenownSource.CONSTRUCTION,
           xp,
-          worldId: v.worldId,
+          worldId: p.worldId,
           dedupKey: `outbox:${eventId}`,
         }),
       );
@@ -161,6 +160,13 @@ export class RenownService {
     // Crédit batché (vs N+1 par snapshot) — aligné sur le voisin
     // snapshotFinalRankings appelé dans la même tx LOCKED→ENDED.
     // Idempotence : on ne crédite que les entrées absentes du ledger.
+    //
+    // Concurrence : le pré-filtre `fresh` puis l'incrément depuis `fresh` sont
+    // sûrs car cette méthode est structurellement sérialisée par monde — la
+    // transition LOCKED→ENDED est gardée par `updateMany({where:{status:from}})`
+    // (world-lifecycle.worker.ts) qui ne laisse passer qu'une seule tx (count===1).
+    // Deux transitions concurrentes du même monde sont donc impossibles ; le
+    // skipDuplicates reste un backstop pour les rejeux d'une transition échouée.
     const existing = await tx.renownLedger.findMany({
       where: { dedupKey: { in: entries.map((entry) => entry.dedupKey) } },
       select: { dedupKey: true },

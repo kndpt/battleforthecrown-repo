@@ -51,6 +51,8 @@ describe('renown smoke', () => {
       villageId,
       buildingType,
       level,
+      ownerId: user.userId,
+      worldId: world.id,
     });
 
     const expectedXp = renownConstructionXp(buildingType, level);
@@ -75,6 +77,8 @@ describe('renown smoke', () => {
       villageId,
       buildingType,
       level,
+      ownerId: user.userId,
+      worldId: world.id,
     });
 
     const afterReplay = await ctx.prisma.user.findUniqueOrThrow({
@@ -335,6 +339,8 @@ describe('renown smoke', () => {
       villageId,
       buildingType: 'CASTLE',
       level: 5,
+      ownerId: user.userId,
+      worldId: world.id,
     });
     await svc.recordOutboxEvent('evt-status-conq', 'village.conquered', {
       villageId,

@@ -267,6 +267,8 @@ describe('applyBuildingCompleted', () => {
         villageId: 'v1',
         buildingType: 'WOOD',
         level: 3,
+        ownerId: 'u1',
+        worldId: 'w1',
       },
       { queryClient },
     );
@@ -301,6 +303,8 @@ describe('applyBuildingCompleted', () => {
         villageId: 'v-att',
         buildingType: 'CASTLE',
         level: 10,
+        ownerId: 'u1',
+        worldId: 'w1',
       },
       { queryClient },
     );
@@ -320,6 +324,8 @@ describe('applyBuildingCompleted', () => {
         villageId: 'v-other',
         buildingType: 'WATCHTOWER',
         level: 1,
+        ownerId: 'u1',
+        worldId: 'w1',
       },
       { queryClient },
     );

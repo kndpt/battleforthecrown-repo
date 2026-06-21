@@ -59,6 +59,8 @@ export class OutboxPublisher {
       villageId: string;
       buildingType: string;
       level: number;
+      ownerId: string | null;
+      worldId: string;
     },
     tx?: PrismaClientOrTx,
   ): Promise<void> {

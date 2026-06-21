@@ -324,6 +324,9 @@ export function VillageView() {
   const closeProfile = () => {
     setIsProfileOpen(false);
     setProfileTab('profile');
+    // Acquittement à la fermeture : le feedback de level-up reste visible
+    // pendant toute la consultation du profil, puis est consommé.
+    acknowledgeRenown();
   };
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -361,7 +364,6 @@ export function VillageView() {
             onOpenProfile={() => {
               setProfileTab('profile');
               setIsProfileOpen(true);
-              acknowledgeRenown();
             }}
             onOpenPower={() => setIsPowerOpen(true)}
             onOpenVillageSheet={() => setIsVillageSheetOpen(true)}

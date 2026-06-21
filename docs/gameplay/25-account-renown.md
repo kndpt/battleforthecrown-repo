@@ -37,8 +37,8 @@ Raison : un effet in-world rendrait la Renommée **snowball cross-monde**, ce qu
 ### Mode de crédit
 
 - **Live** (sources 1-3) : crédit idempotent au moment de l'event.
-  - Sources 1-2 : consommées dans `EventOutboxService.dispatchEvent()` (même hook que retention/onboarding), idempotence par `eventOutboxId`.
-  - Source 3 : créditée dans la **même transaction** que l'écriture `GloryLedger` (`CombatWorker.creditCombatGlory`), idempotence par `combatReportId+signal+scorer`.
+  - Sources 1-2 : consommées dans `EventOutboxService.dispatchEvent()` (même hook que retention/onboarding), idempotence par `eventOutboxId`. Le propriétaire/monde sont **capturés dans le payload à la production de l'event** (`building.completed` porte `ownerId`/`worldId` ; `village.conquered` porte `newOwnerId`) → l'attribution reste correcte même si le village change de main pendant la fenêtre Outbox.
+  - Source 3 : créditée dans la **même transaction** que l'écriture `GloryLedger` (`CombatWorker.creditCombatGlory`), idempotence par `combatReportId+signal+scorer+opponent`.
 - **Batch** (source 4) : crédité dans la **transaction** de transition `LOCKED→ENDED` (`WorldLifecycleWorker.transitionWorld`), juste après `snapshotFinalRankings`, idempotence par `worldId+signal+userId`.
 
 ## 4. Courbe de niveau

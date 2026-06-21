@@ -178,11 +178,13 @@ export function GameHeader({
   const openProfile = () => {
     setProfileTab('profile');
     setIsProfileOpen(true);
-    acknowledgeRenown();
   };
   const closeProfile = () => {
     setIsProfileOpen(false);
     setProfileTab('profile');
+    // Acquittement à la fermeture : le feedback de level-up reste visible
+    // pendant toute la consultation du profil, puis est consommé.
+    acknowledgeRenown();
   };
   const runHeaderAction = (actionId: GameActionId) => {
     runGameAction(actionId, { navigate });

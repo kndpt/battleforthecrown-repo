@@ -78,6 +78,9 @@ export class ConstructionWorker implements OnModuleInit {
         // Get building and verify it exists
         const building = await tx.building.findUnique({
           where: { id: data.buildingId },
+          include: {
+            village: { select: { userId: true, worldId: true } },
+          },
         });
 
         if (!building) {
@@ -141,6 +144,11 @@ export class ConstructionWorker implements OnModuleInit {
             villageId: data.villageId,
             buildingType: data.buildingType,
             level: data.targetLevel,
+            // Capture immuable : attribue la Renommée au propriétaire au
+            // moment de la complétion, pas à l'état courant au dispatch
+            // (le village peut être conquis dans la fenêtre Outbox ~1s).
+            ownerId: building.village.userId,
+            worldId: building.village.worldId,
           },
           tx,
         );

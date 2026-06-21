@@ -13,6 +13,8 @@ describe('getOnboardingProjection', () => {
         villageId: 'v1',
         buildingType: 'CASTLE',
         level: 2,
+        ownerId: 'u1',
+        worldId: 'w1',
       }),
     ).toEqual({ villageId: 'v1', step: 'UPGRADE_CASTLE_LEVEL_2' });
     expect(
@@ -21,6 +23,8 @@ describe('getOnboardingProjection', () => {
         villageId: 'v1',
         buildingType: 'CASTLE',
         level: 3,
+        ownerId: 'u1',
+        worldId: 'w1',
       }),
     ).toEqual({ villageId: 'v1', step: 'UPGRADE_CASTLE_LEVEL_3' });
     expect(
@@ -29,6 +33,8 @@ describe('getOnboardingProjection', () => {
         villageId: 'v1',
         buildingType: 'BARRACKS',
         level: 1,
+        ownerId: 'u1',
+        worldId: 'w1',
       }),
     ).toEqual({ villageId: 'v1', step: 'BUILD_BARRACKS' });
     expect(
@@ -55,6 +61,8 @@ describe('getOnboardingProjection', () => {
         villageId: 'v1',
         buildingType: 'WATCHTOWER',
         level: 1,
+        ownerId: 'u1',
+        worldId: 'w1',
       }),
     ).toEqual({ villageId: 'v1', step: 'BUILD_WATCHTOWER' });
     expect(
@@ -85,6 +93,8 @@ describe('getOnboardingProjection', () => {
         villageId: 'v1',
         buildingType: 'WOOD',
         level: 2,
+        ownerId: 'u1',
+        worldId: 'w1',
       }),
     ).toBeNull();
     expect(
