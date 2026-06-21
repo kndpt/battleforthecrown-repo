@@ -15,7 +15,7 @@ interface CrownsState {
   clear: () => void;
 }
 
-export const crownsKey = (userId: string, worldId: string) => `${userId}:${worldId}`;
+const crownsKey = (userId: string, worldId: string) => `${userId}:${worldId}`;
 
 export const useCrownsStore = create<CrownsState>((set) => ({
   byKey: {},
@@ -25,10 +25,3 @@ export const useCrownsStore = create<CrownsState>((set) => ({
     })),
   clear: () => set({ byKey: {} }),
 }));
-
-export function selectCrowns(userId: string | null, worldId: string | null) {
-  return (state: CrownsState): CrownsSnapshot | undefined => {
-    if (!userId || !worldId) return undefined;
-    return state.byKey[crownsKey(userId, worldId)];
-  };
-}

@@ -4,6 +4,7 @@ import type {
   DailyCardDto,
   DailyCardTaskDto,
   DailyCardTaskType,
+  OyezTheme,
   RetentionSummaryDto,
 } from "@battleforthecrown/shared/retention";
 import { VILLAGE_LABEL_DISPLAY } from "@battleforthecrown/shared/village";
@@ -49,6 +50,13 @@ export interface DailyRetentionWidgetProps {
 
 const taskLabelOverride: Partial<Record<DailyCardTaskType, string>> = {
   RAID_BARBARIAN: "Vaincre un village barbare",
+};
+
+const OYEZ_THEME_ICON: Record<OyezTheme, string> = {
+  BUILDERS: "/assets/castle.png",
+  MARCH: "/assets/army-power.png",
+  WATCH: "/assets/watchtower.png",
+  BARBARIANS: "/assets/attack.png",
 };
 
 const rewardFormatter = new Intl.NumberFormat("fr-FR", {
@@ -114,7 +122,7 @@ function mapOyez(summary: RetentionSummaryDto): DailyQuestOyez | undefined {
   return {
     effect: summary.oyez.description,
     eyebrow: "Oyez · en cours",
-    icon: "/assets/crown.png",
+    icon: OYEZ_THEME_ICON[summary.oyez.theme] ?? "/assets/crown.png",
     title: summary.oyez.title,
   };
 }

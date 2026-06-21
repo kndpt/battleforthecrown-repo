@@ -41,7 +41,3 @@ export const useAuthStore = create<AuthState>()(
     },
   ),
 );
-
-export function selectIsAuthenticated(state: AuthState): boolean {
-  return Boolean(state.accessToken && state.user);
-}

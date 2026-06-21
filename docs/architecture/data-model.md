@@ -127,6 +127,12 @@ Calcul à la volée côté `power.service.ts` :
 - Power armée : somme des `unit.power × quantity`.
 - Power royaume : somme des powers de tous les villages du user.
 
+### Classements finaux
+
+| Table | Rôle |
+|-------|------|
+| `WorldFinalRankingSnapshot` | snapshot des 3 classements (`FinalRankingSignal` : `POWER`, `ASSAULT_GLORY`, `RAMPART_GLORY`) à la transition `LOCKED → ENDED`. Champs : `worldId`, `userId`, `signal`, `rank`, `score`, `snapshotAt`. Contrainte unique `(worldId, signal, userId)` ; index `(worldId, signal, rank)`. Inclut tous les `WorldMembership`, y compris les éliminés (score 0). Tiebreaker : `userId` lexicographique. Source de vérité pour les runs UI/awards aval. |
+
 ### Outbox (temps réel)
 
 | Table | Rôle |

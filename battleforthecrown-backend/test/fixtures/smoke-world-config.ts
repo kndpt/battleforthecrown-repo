@@ -5,6 +5,8 @@ import type { WorldConfig } from '@battleforthecrown/shared/world';
 //   collapses to the hard 1s minimum. Travel = 0.001 for short hops.
 // - barbarianSeeding.enabled = false (each smoke seeds its own barbarians)
 // - resourceProduction tempo stays at 1 (rate is observed, not the trigger speed)
+// - oyez.weeklyCadence = 7 so the deterministic scheduler fires an Oyez every
+//   day, making Oyez producer smokes independent of the calendar date.
 export const SMOKE_WORLD_CONFIG: WorldConfig = {
   tempo: {
     global: 1,
@@ -123,4 +125,5 @@ export const SMOKE_WORLD_CONFIG: WorldConfig = {
     ],
   },
   fogOfWar: { enabled: true },
+  oyez: { enabled: true, weeklyCadence: 7, defaultDurationHours: 18 },
 };

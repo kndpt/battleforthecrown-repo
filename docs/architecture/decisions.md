@@ -363,6 +363,25 @@ Question posée : faut-il aligner BFTC sur cette granularité (passer à 30 leve
 
 ---
 
+## ADR-18 — Producer Oyez runtime déterministe et idempotent
+
+**Contexte (2026-06-20).** L'Oyez (contexte monde, doc [`05-daily-cards-and-oyez.md`](../gameplay/05-daily-cards-and-oyez.md)) existait en modèle + DTO + UI (runs 026/027) mais sans production automatique : aucun `DailyOyez` n'était créé en runtime. Il fallait un producer périodique respectant l'invariant « 1 seul Oyez actif par monde » sans empiler de récompense (garde-fou run 046 #9).
+
+**Décision.**
+
+1. **Worker pg-boss `retention:oyez`** schedulé cron `0 4 * * *` `tz: 'Europe/Paris'` (aligné sur le reset des cartes), itère sur les mondes `OPEN` et délègue à `OyezProducerService.produceForWorld`.
+2. **Planning déterministe** (`selectOyezForDay(worldId, dayKey, weeklyCadence)`) : un seed `hash(worldId, année/semaine ISO)` tire exactement `weeklyCadence` jours d'Oyez par semaine ISO (défaut 2, configurable `WorldConfig.oyez.weeklyCadence`). Le `dayKey` est déjà résolu en heure de Paris → DST-stable, pas d'arithmétique wall-clock.
+3. **Idempotence garantie en DB** : le schéma `DailyOyez` n'a **pas** de colonne `status` (l'« actif » est dérivé de la fenêtre `startsAt`/`endsAt`). Plutôt qu'introduire un `status` (impact DTO/front), on ajoute `day_key` + index unique `daily_oyez(world_id, day_key)`. Avec une durée < 24 h (défaut 18 h), cela garantit ≤ 1 Oyez par monde et par jour → ≤ 1 actif simultané, et un second appel du producer le même jour est un no-op (P2002 rattrapé). Le `findFirst` de la transaction est une garde supplémentaire, pas l'unique verrou.
+4. **Carte = 4 tâches sous Oyez** : la tâche thématique (catalogue 4 thèmes `BUILDERS | MARCH | WATCH | BARBARIANS`) est appendée aux 3 tâches naturelles avec `rewardWeight: 0` — la récompense reste calculée sur les 3 naturelles et plafonnée à 12 %/jour (pas de bonus empilable).
+
+**Conséquences.**
+
+- `WATCH` et `MARCH` ont nécessité de câbler `scout.reported` → `SCOUT_TARGET` et `reinforcement.sent` → `SEND_REINFORCEMENT` dans `getTaskProjection`, rendant ces thèmes vérifiables end-to-end.
+- `DailyOyezDto.theme` est désormais typé `OyezTheme` (shared), consommé tel quel back + front.
+- Déviation assumée vs plan du run (qui évoquait un index `WHERE status='ACTIVE'`) : le schéma observé n'a pas de `status`, on enforce l'invariant via `(world_id, day_key)`.
+
+---
+
 ## Maintenance de ce document
 
 - Une décision **structurante** (qui change la façon dont on pense le projet) → nouvelle entrée ADR.

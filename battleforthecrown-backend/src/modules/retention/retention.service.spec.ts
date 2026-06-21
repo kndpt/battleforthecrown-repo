@@ -95,7 +95,7 @@ describe('getTaskProjection', () => {
     ).toBeNull();
   });
 
-  it('ignores event kinds that are no longer daily task templates', () => {
+  it('projects scout.reported to a SCOUT_TARGET task (WATCH Oyez, run #057)', () => {
     expect(
       getTaskProjection('scout.reported', {
         expeditionId: 'scout-1',
@@ -107,7 +107,15 @@ describe('getTaskProjection', () => {
         targetY: 11,
         returnAt: new Date().toISOString(),
       }),
-    ).toBeNull();
+    ).toEqual({
+      villageId: 'village-1',
+      type: 'SCOUT_TARGET',
+      completedQty: 1,
+      targetTier: null,
+    });
+  });
+
+  it('projects reinforcement.sent to a SEND_REINFORCEMENT task (MARCH Oyez, run #057)', () => {
     expect(
       getTaskProjection('reinforcement.sent', {
         expeditionId: 'reinforcement-1',
@@ -115,7 +123,15 @@ describe('getTaskProjection', () => {
         targetVillageId: 'target-village-1',
         arrivalAt: new Date().toISOString(),
       }),
-    ).toBeNull();
+    ).toEqual({
+      villageId: 'village-1',
+      type: 'SEND_REINFORCEMENT',
+      completedQty: 1,
+      targetTier: null,
+    });
+  });
+
+  it('ignores event kinds that are not daily task templates', () => {
     expect(
       getTaskProjection('garrison.added', {
         villageId: 'host-village-1',

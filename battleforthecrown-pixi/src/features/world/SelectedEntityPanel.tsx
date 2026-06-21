@@ -4,15 +4,20 @@ import {
   type MapEntityCalloutSection,
   type MapEntityCalloutStat,
 } from "@/features/design-system/components";
+import { useQuery } from "@tanstack/react-query";
 import {
+  publicKingdomPowerQueryOptions,
   useArmyInventoryQuery,
   useGarrisonQuery,
+  useKingdomPowerQuery,
   usePublicVillagePowerQuery,
   useVillageIntelQuery,
 } from "@/api/queries";
 import type { MapEntity } from "@/api/world-types";
 import type { OpenConquestDto } from "@battleforthecrown/shared/combat";
 import type { VillageIntelDto } from "@battleforthecrown/shared/world";
+import { isAttackAllowedByPowerRatio } from "@battleforthecrown/shared";
+import { useGameStore } from "@/stores/game";
 import { useTickingNow } from "@/lib/useTickingNow";
 import { formatRemaining } from "@/features/village/constructionProgress";
 import { computeProgress } from "@/features/combat/kingdomActivitiesViewModel";
@@ -23,7 +28,6 @@ import {
 } from "./selectedEntityTroops";
 import { formatIntelAge, toIntelView } from "./intelView";
 import { ReportDetailModal } from "@/features/combat/ReportDetailModal";
-import { useGameStore } from "@/stores/game";
 
 interface SelectedEntityPanelProps {
   activeCapture?: OpenConquestDto | null;
@@ -68,9 +72,20 @@ export function SelectedEntityPanel({
     isEnemyVillage,
   );
 
+  // Enemy player owner — used to fetch defender kingdom power for the ÷3 guard.
+  const defenderUserId =
+    entity?.kind === "PLAYER_VILLAGE" && !entity.isMine
+      ? (entity.ownerId ?? null)
+      : null;
+
   const armyInventory = useArmyInventoryQuery(ownedVillageId);
   const garrison = useGarrisonQuery(ownedVillageId);
   const villagePower = usePublicVillagePowerQuery(villagePowerId);
+  const myKingdomPower = useKingdomPowerQuery();
+  const defenderKingdomPower = useQuery({
+    ...publicKingdomPowerQueryOptions(defenderUserId, worldId ?? ''),
+    enabled: defenderUserId !== null && Boolean(worldId),
+  });
 
   if (!entity) return null;
 
@@ -108,6 +123,26 @@ export function SelectedEntityPanel({
   const shieldActive = Boolean(shield?.active && shieldRemainingMs > 0);
   const shieldBlocksAttack = shieldActive && isPlayerVillage;
 
+  // Anti-snowball power guard (spec 14 §2). Pre-check mirrors the server: the
+  // attack is forbidden when the defender's kingdom power is below 1/3 of ours.
+  // Only computed for enemy player villages with both powers loaded; the server
+  // remains authoritative (403 POWER_RATIO_FORBIDDEN intercepted at send time).
+  const attackerPower = myKingdomPower.data?.kingdomPower;
+  const defenderPower = defenderKingdomPower.data?.kingdomPower;
+  const ratioBlocksAttack =
+    isPlayerVillage
+    && !shieldBlocksAttack
+    && attackerPower !== undefined
+    && defenderPower !== undefined
+    && !isAttackAllowedByPowerRatio({ attackerPower, defenderPower });
+
+  const attackBlockLabel = shieldBlocksAttack
+    ? `Joueur protégé — bouclier débutant (${formatRemaining(shieldRemainingMs)} restantes)`
+    : ratioBlocksAttack
+      ? 'Puissance trop faible'
+      : null;
+  const attackBlocked = attackBlockLabel !== null;
+
   const troopSection = troopsSectionFor(
     isOwnedPlayerVillage,
     armyInventory.data ?? [],
@@ -134,12 +169,10 @@ export function SelectedEntityPanel({
       ? [
           {
             icon: "⚔",
-            label: shieldBlocksAttack
-              ? `Joueur protégé — bouclier débutant (${formatRemaining(shieldRemainingMs)} restantes)`
-              : "Attaquer",
+            label: attackBlockLabel ?? "Attaquer",
             tone: "attack" as const,
-            disabled: shieldBlocksAttack ? true : undefined,
-            onClick: shieldBlocksAttack ? undefined : () => onAttack?.(entity),
+            disabled: attackBlocked ? true : undefined,
+            onClick: attackBlocked ? undefined : () => onAttack?.(entity),
           },
         ]
       : []),

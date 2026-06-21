@@ -6,6 +6,7 @@ import { apiClient } from "@/api";
 import type { MapEntity } from "@/api/world-types";
 import type { VillageIntelDto } from "@battleforthecrown/shared/world";
 import type { OpenConquestDto } from "@battleforthecrown/shared/combat";
+import { useAuthStore } from "@/stores/auth";
 import { useGameStore } from "@/stores/game";
 import { SelectedEntityPanel } from "./SelectedEntityPanel";
 
@@ -67,6 +68,8 @@ function mockTroopApi({
 afterEach(() => {
   vi.restoreAllMocks();
   vi.useRealTimers();
+  useGameStore.setState({ worldId: null });
+  useAuthStore.setState({ user: null });
 });
 
 describe("SelectedEntityPanel owned village troops", () => {
@@ -187,6 +190,70 @@ describe("SelectedEntityPanel owned village troops", () => {
     const paths = getSpy.mock.calls.map((call) => call[0]);
     expect(paths).not.toContain("/army/enemy-1/inventory");
     expect(paths).not.toContain("/combat/enemy-1/garrison");
+  });
+
+  it("greys the attack CTA with the power-guard message when the defender is below 1/3 of our power", async () => {
+    useGameStore.setState({ worldId: "w1" });
+    useAuthStore.setState({ user: { id: "me", displayName: "Moi" } });
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/power/village/enemy-1/public")
+        return { villageId: "enemy-1", buildings: 200 };
+      if (path === "/power/kingdom") {
+        return {
+          userId: "me",
+          kingdomPower: 3000,
+          villageCount: 1,
+          villages: [],
+          totalBuildings: 3000,
+          totalArmy: 0,
+        };
+      }
+      if (path === "/power/kingdom/u-foreign/public") {
+        return { userId: "u-foreign", kingdomPower: 100 };
+      }
+      throw new Error(`Unexpected GET ${path}`);
+    });
+
+    renderPanel(
+      playerVillage({ id: "enemy-1", isMine: false, ownerId: "u-foreign" }),
+      "village-1",
+    );
+
+    const button = await screen.findByRole("button", {
+      name: /Puissance trop faible/i,
+    });
+    expect(button).toBeDisabled();
+  });
+
+  it("keeps the attack CTA enabled when the defender meets the 1/3 threshold", async () => {
+    useGameStore.setState({ worldId: "w1" });
+    useAuthStore.setState({ user: { id: "me", displayName: "Moi" } });
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/power/village/enemy-1/public")
+        return { villageId: "enemy-1", buildings: 200 };
+      if (path === "/power/kingdom") {
+        return {
+          userId: "me",
+          kingdomPower: 3000,
+          villageCount: 1,
+          villages: [],
+          totalBuildings: 3000,
+          totalArmy: 0,
+        };
+      }
+      if (path === "/power/kingdom/u-foreign/public") {
+        return { userId: "u-foreign", kingdomPower: 1000 };
+      }
+      throw new Error(`Unexpected GET ${path}`);
+    });
+
+    renderPanel(
+      playerVillage({ id: "enemy-1", isMine: false, ownerId: "u-foreign" }),
+      "village-1",
+    );
+
+    const button = await screen.findByRole("button", { name: /^Attaquer$/i });
+    expect(button).toBeEnabled();
   });
 
   it("shows capture details on a captured village without exposing troops", async () => {

@@ -26,6 +26,7 @@ import {
 } from '@battleforthecrown/shared/logic';
 import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
 import { UNIT_TYPES } from '@battleforthecrown/shared/army';
+import { isAttackAllowedByPowerRatio } from '@battleforthecrown/shared';
 import type {
   OpenConquestDto,
   OpenExpeditionDto,
@@ -49,6 +50,7 @@ import { PrismaClientOrTx } from '../../common/prisma.types';
 import { OwnershipService } from '../../common/auth';
 import { PowerService } from '../power/power.service';
 import { ResourcesService } from '../resources/resources.service';
+import { WorldAccessService } from '../world/world-access.service';
 import { NewbieShieldService } from '../world/newbie-shield.service';
 
 export interface GarrisonLineDto {
@@ -77,6 +79,7 @@ export class CombatService {
     private readonly powerService: PowerService,
     private readonly outbox: OutboxPublisher,
     private readonly resourcesService: ResourcesService,
+    private readonly worldAccess: WorldAccessService,
     private readonly newbieShield: NewbieShieldService,
     @Inject('PG_BOSS') private readonly boss: PgBoss,
   ) {}
@@ -92,6 +95,7 @@ export class CombatService {
       const village = await this.loadOwnedVillage(tx, dto.villageId, userId);
 
       const worldId = village.worldId;
+      await this.worldAccess.assertWorldWritable(worldId, tx);
 
       // 2. Resolve target (validates kind/world/coords match the live row)
       const target = await this.resolveTargetVillage(tx, worldId, dto);
@@ -122,6 +126,28 @@ export class CombatService {
         target.id,
         target.userId,
       );
+
+      // 4b. Anti-snowball power guard (spec 14 §2): a PvP attack (raid or
+      // conquest) is forbidden when the defender's kingdom power is below 1/3 of
+      // the attacker's. The "defender" is the village *owner* (spec §2), which is
+      // also what the client pre-check uses (entity.ownerId) — keeping both sides
+      // consistent. Reuses the snapshot value when the owner is already computed
+      // (no extra DB read in the common case); only reads when absent, e.g. an
+      // open capture window snapshots the conqueror, not the owner. Barbarian
+      // villages are out of scope. Checked at launch only, never re-evaluated.
+      if (dto.targetKind === 'PLAYER_VILLAGE' && target.userId) {
+        const defenderOwnerPower =
+          defenderPowerSnapshot.values[target.userId] ??
+          (await this.powerService.getKingdomPowerValue(
+            target.userId,
+            worldId,
+            tx,
+          ));
+        this.assertAttackAllowedByPower(
+          attackerKingdomPowerSnapshot,
+          defenderOwnerPower,
+        );
+      }
 
       // 5. Verify and deduct units
       await this.verifyAndDeductUnits(tx, dto.villageId, dto.units);
@@ -203,6 +229,7 @@ export class CombatService {
       this.assertScoutUnitsOnly(dto.units);
 
       const worldId = village.worldId;
+      await this.worldAccess.assertWorldWritable(worldId, tx);
       const target = await this.resolveTargetVillage(tx, worldId, dto);
 
       await this.assertTargetInVision(
@@ -278,6 +305,7 @@ export class CombatService {
       );
 
       const worldId = village.worldId;
+      await this.worldAccess.assertWorldWritable(worldId, tx);
 
       // 2. Verify target village exists
       const targetVillage = await tx.village.findUnique({
@@ -373,6 +401,7 @@ export class CombatService {
               'Origin village not found or not owned',
             );
             const worldId = village.worldId;
+            await this.worldAccess.assertWorldWritable(worldId, tx);
 
             if (dto.targetVillageId === dto.villageId) {
               throw new BadRequestException('Target village must be different');
@@ -970,6 +999,26 @@ export class CombatService {
     }
 
     return village;
+  }
+
+  /**
+   * Anti-snowball guard (spec 14 §2). Throws `POWER_RATIO_FORBIDDEN` when the
+   * defender's kingdom power is strictly below 1/3 of the attacker's. Only the
+   * attacker is bounded (heroic asymmetry). A null defender power (no resolvable
+   * owner) is treated as 0 so an attack on an empty target stays blocked unless
+   * the attacker is also at 0.
+   */
+  private assertAttackAllowedByPower(
+    attackerPower: number,
+    defenderPower: number | null,
+  ): void {
+    const allowed = isAttackAllowedByPowerRatio({
+      attackerPower,
+      defenderPower: defenderPower ?? 0,
+    });
+    if (!allowed) {
+      throw new ForbiddenException('POWER_RATIO_FORBIDDEN');
+    }
   }
 
   private async snapshotDefenderKingdomPowers(

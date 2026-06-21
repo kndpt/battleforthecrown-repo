@@ -1,8 +1,8 @@
 # Run #058 — feature-pvp-power-third-attack-guard
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-20
+> **Terminé** : 2026-06-20
 
 ## Cible
 
@@ -74,24 +74,37 @@ Chaque tâche reste ≤ 5 fichiers.
 
 ## Progress (rempli pendant le run)
 
-_(Vide au démarrage. Mis à jour à chaque transition d'étape ou de tâche.)_
+_(git history)_
 
 ## Décisions prises
 
-_(Vide au démarrage. Décisions archi non triviales, dérogations lead, findings de review, refus de sub-agents.)_
+_(git history)_
 
 ## Rapport final
 
-_(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tickets ouverts, méta-évaluation si applicable.)_
+Garde-fou anti-snowball PvP (spec §2) livré : helper pur shared + garde serveur dans `initiateAttack` + pré-check UX front. T4 simplifié — la route publique `GET /power/kingdom/:userId/public` existait déjà (pas de nouvelle route). Review indépendante : 1 majeur (divergence front/back du « défenseur » en fenêtre de capture) → corrigé (le garde utilise la puissance du **propriétaire** `target.userId`, aligné sur le front). Re-review : `GO`.
+
+**Fichiers** : `packages/shared/src/pvp/power-ratio.ts` (+ `index.ts`, `power-ratio.spec.ts`) ; `combat/combat.service.ts` (garde + `assertAttackAllowedByPower`) ; `test/pvp-power-third-guard.smoke.spec.ts` (nouveau) ; `test/pvp-newbie-shield.smoke.spec.ts` (défenseur doté d'une armée pour ne pas pré-empter le garde) ; `SelectedEntityPanel.tsx` (+ test) ; `combatErrorMessage.ts` (+ test) ; `AttackDetailModal.tsx`.
 
 ### Acceptance & QA
 
-- **Critères d'acceptance vérifiés** : à remplir à l'étape 10.
-- **Review indépendante** : `Déclenchée (raisons : (a) back + front + shared simultanés — combat.service + SelectedEntityPanel + packages/shared/src/pvp/ ; (c) point d'entrée runtime critique du PvP — refus serveur-authoritatif d'attaques, doit couvrir raid, conquête, scout, barbare, asymétrie héroïque ; (d) invariant durable — garde-fou anti-snowball structurel MVP actif sur toute la durée de vie d'un monde)`.
-- **Tests automatisés** : unit shared (`power-ratio.test.ts`), unit backend `combat.service.spec.ts` (extension), smoke `pvp-power-third-guard.smoke.spec.ts`, vitest `SelectedEntityPanel.test.tsx`.
-- **Smokes ajoutés/modifiés** : `battleforthecrown-backend/test/pvp-power-third-guard.smoke.spec.ts` (à créer).
-- **QA fonctionnelle agent** : `curl` séquencé sur stack locale (POST attack PvP sous seuil refusé 403 + SELECT Expedition COUNT(*)=0 ; POST attack PvP à seuil exact OK ; POST attack BARBARIAN_VILLAGE OK quel que soit le ratio ; POST scout PvP OK).
-- **Tests IG à faire par le user** : checklist mobile ≤ 5 items — (a) `SelectedEntityPanel` ciblant un défenseur sous seuil : CTA grisé + message exact ; (b) attaque PvP envoyée → 403 → toast lisible ; (c) attaque barbare jamais bloquée ; (d) attaque PvP par un petit joueur sur un gros toujours autorisée ; (e) le message ne fuit pas la puissance défensive précise (tradeoff assumé : seul le seuil est dérivable).
+- **Critères d'acceptance vérifiés** :
+  - [x] Helper shared (seuil exact/sous/sur seuil, `attacker=0`, anti-rounding) — `vitest power-ratio.spec.ts` → 7 tests verts.
+  - [x] `POWER_RATIO_DIVISOR = 3` déclaré une seule fois, pas de `/3` parasite — `grep -rn "POWER_RATIO_DIVISOR" packages/shared/src/pvp` → 1 déclaration ; pas de `÷3` en dur ailleurs.
+  - [x] Attaque PvP sous seuil → `403 POWER_RATIO_FORBIDDEN`, 0 `Expedition`, `UnitInventory` inchangé — smoke case 1 (assertions SQL `expedition.count` + inventory before/after).
+  - [x] Seuil exact (`>=`) autorisé → `200` + expedition + déduction — smoke case 2.
+  - [x] Conquête PvP (NOBLE) couverte par le même garde — structurel : garde non conditionné au NOBLE, `initiateAttack` = entrée unique raid+conquête.
+  - [x] Cible `BARBARIAN_VILLAGE` jamais bloquée — smoke case 3 (`targetKind === 'PLAYER_VILLAGE'` seul).
+  - [x] Petit→gros (asymétrie héroïque) autorisée — smoke case 4.
+  - [x] Scout hors périmètre — `initiateScout` sans garde (vérifié code) + smoke shield case 3 (scout PvP OK).
+  - [x] CTA grisé + message exact `« Puissance trop faible — protection serveur »` — `vitest SelectedEntityPanel.test.tsx` (2 nouveaux cas : grisé sous seuil / actif au seuil).
+  - [x] Motif explicite, pas de masquage — `combatErrorMessage.test.ts` (mapping 403 → message lisible).
+- **Review indépendante** : `Déclenchée (raisons : (a) back + front + shared simultanés ; (c) point d'entrée runtime critique PvP ; (d) invariant durable anti-snowball)`. Verdict initial `BLOCK` (1 majeur : divergence front/back « défenseur » en fenêtre de capture) → fix (garde sur puissance du propriétaire `target.userId`) → re-review `GO`.
+- **Tests automatisés** : `yarn workspace battleforthecrown-pixi test --run power-ratio.spec.ts SelectedEntityPanel.test.tsx combatErrorMessage.test.ts` → 13 verts. `yarn workspace battleforthecrown-backend type-check` → 0 erreur. `yarn static-check` → vert.
+- **Smokes lancés** : `Ciblés` — `test:smoke:preflight` puis `test:smoke:run -- pvp-power-third-guard pvp-newbie-shield combat-attack` → 2+2 suites, power-guard 4/4, régression shield+attack 9/9. Périmètre ciblé suffisant : diff backend `src/` limité à `combat.service.ts initiateAttack` ; full smoke couvert par CI PR.
+- **Smokes ajoutés/modifiés** : ajouté `pvp-power-third-guard.smoke.spec.ts` (4 cas : refus sous seuil, autorisation seuil, barbare, asymétrie héroïque) ; modifié `pvp-newbie-shield.smoke.spec.ts` (défenseur doté d'une armée pour isoler le comportement shield du nouveau garde puissance).
+- **QA fonctionnelle agent** : couverte par les smokes E2E (boot app réel + POST `/combat/attack` + assertions SQL `Expedition`/`UnitInventory` + lecture puissance via endpoint public). Pas de curl manuel séparé nécessaire.
+- **Tests IG à faire par le user** : checklist mobile ≤ 5 items — (a) `SelectedEntityPanel` ciblant un défenseur sous seuil : CTA grisé + message exact ; (b) attaque PvP envoyée → 403 → toast lisible ; (c) attaque barbare jamais bloquée ; (d) attaque PvP petit→gros toujours autorisée ; (e) le message ne fuit pas la puissance défensive précise (seul le seuil est dérivable).
 
 ## Points d'attention (notes du plan)
 

@@ -11,6 +11,7 @@ import { ResourcesModule } from './modules/resources/resources.module';
 import { VillageModule } from './modules/village/village.module';
 import { ArmyModule } from './modules/army/army.module';
 import { WorldModule } from './modules/world/world.module';
+import { WorldAccessModule } from './modules/world/world-access.module';
 import { PowerModule } from './modules/power/power.module';
 import { PopulationModule } from './modules/population/population.module';
 import { StrategyModule } from './modules/strategy/strategy.module';
@@ -61,6 +62,7 @@ import { RequestLoggerMiddleware } from './common/request-logger.middleware';
     VillageModule,
     ArmyModule,
     WorldModule,
+    WorldAccessModule,
     PowerModule,
     PopulationModule,
     StrategyModule,
