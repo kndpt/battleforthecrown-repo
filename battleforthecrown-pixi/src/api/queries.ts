@@ -174,6 +174,7 @@ export const queryKeys = {
     ["rankings", "summary", worldId] as const,
   renown: (userId: string | null) => ["renown", userId] as const,
   // Broad-invalidation prefixes (omit trailing discriminants to match across worlds/users).
+  renownPrefix: () => ["renown"] as const,
   membershipsPrefix: () => ["memberships"] as const,
   villagesPrefix: () => ["villages"] as const,
   worldEntitiesPrefix: () => ["world-entities"] as const,
