@@ -59,16 +59,19 @@ export function useWorldCardModels() {
       ),
     [joinedMemberships, kingdomPowerByWorld],
   );
-  const worldModels = useMemo(
-    () => (worlds.data ?? []).map((world) => toWorldCardViewModel(
-      world,
-      joinedWorldIds,
-      undefined,
-      personalStatsByWorldId,
-      villageCountByWorldId,
-    )),
-    [joinedWorldIds, personalStatsByWorldId, villageCountByWorldId, worlds.data],
-  );
+  const worldModels = useMemo(() => {
+    const allWorlds = worlds.data ?? [];
+    return allWorlds.map((world) =>
+      toWorldCardViewModel(
+        world,
+        joinedWorldIds,
+        undefined,
+        personalStatsByWorldId,
+        villageCountByWorldId,
+        allWorlds,
+      ),
+    );
+  }, [joinedWorldIds, personalStatsByWorldId, villageCountByWorldId, worlds.data]);
 
   return {
     currentWorldId,

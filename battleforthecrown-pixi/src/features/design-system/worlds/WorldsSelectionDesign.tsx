@@ -1,4 +1,4 @@
-import { Bell, Check, ChevronLeft, Lock, RotateCcw, ScrollText, UserPlus, Users } from 'lucide-react';
+import { Bell, Check, ChevronLeft, Clock, Lock, RotateCcw, ScrollText, Sparkles, UserPlus, Users } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { publicAsset } from '@/lib/publicAsset';
 import type { WorldCardViewModel, WorldsTab, WorldThemeTokens } from '@/features/worlds/worldsViewModel';
@@ -33,6 +33,7 @@ export interface WorldsSelectionDesignProps {
   onEnter: (world: WorldCardViewModel) => void;
   onJoin: (world: WorldCardViewModel) => void;
   onNotify: (world: WorldCardViewModel) => void;
+  onSelectFreshAlternative?: (worldId: string) => void;
   onTabChange: (tab: WorldsTab) => void;
   totalCount: number;
   variants: SeasonVariant[];
@@ -207,16 +208,21 @@ export function WorldCard({
   onEnter,
   onJoin,
   onNotify,
+  onSelectFreshAlternative,
   world,
 }: {
   onDetails: (world: WorldCardViewModel) => void;
   onEnter: (world: WorldCardViewModel) => void;
   onJoin: (world: WorldCardViewModel) => void;
   onNotify: (world: WorldCardViewModel) => void;
+  onSelectFreshAlternative?: (worldId: string) => void;
   world: WorldCardViewModel;
 }) {
   return (
-    <article className="shrink-0 overflow-hidden rounded-[14px] border-[2.5px] border-[#8b7355] bg-[linear-gradient(to_bottom,#fef9f0,#f5e6d3)] shadow-[0_4px_10px_rgba(60,38,25,.18),inset_0_2px_0_rgba(255,255,255,.5),inset_0_-10px_16px_rgba(60,38,25,.06)]">
+    <article
+      className="shrink-0 overflow-hidden rounded-[14px] border-[2.5px] border-[#8b7355] bg-[linear-gradient(to_bottom,#fef9f0,#f5e6d3)] shadow-[0_4px_10px_rgba(60,38,25,.18),inset_0_2px_0_rgba(255,255,255,.5),inset_0_-10px_16px_rgba(60,38,25,.06)]"
+      id={`world-card-${world.id}`}
+    >
       <div
         className="relative min-h-[46px] border-b-[1.5px] border-[rgba(60,38,25,.35)] py-[7px] pl-14 pr-2.5"
         style={{
@@ -287,6 +293,24 @@ export function WorldCard({
           </button>
           <CtaButton onEnter={onEnter} onJoin={onJoin} onNotify={onNotify} world={world} />
         </div>
+        {world.launchAgeLabel ? (
+          <div className="flex flex-col gap-1.5 rounded-[9px] border-[1.5px] border-[#9e7b0d] bg-[rgba(246,213,123,.22)] px-2.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,.4)]">
+            <p className="flex items-center gap-1.5 font-game text-[10.5px] font-extrabold leading-tight text-[#6d4f0d]">
+              <Clock aria-hidden="true" className="size-3.5 shrink-0 stroke-[2.4]" />
+              {world.launchAgeLabel} · cohorte principale presque close
+            </p>
+            {world.freshAlternativeWorldId && onSelectFreshAlternative ? (
+              <button
+                className="inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-lg border-2 border-[#3a6c1f] bg-[linear-gradient(to_bottom,#6ebf49,#4a8c2a)] px-2.5 font-game text-[10.5px] font-extrabold uppercase tracking-[.06em] text-white shadow-[inset_0_1px_0_rgba(255,255,255,.28),0_2px_0_rgba(0,0,0,.2)] [text-shadow:1px_1px_1px_rgba(0,0,0,.45)] active:translate-y-px"
+                onClick={() => onSelectFreshAlternative(world.freshAlternativeWorldId!)}
+                type="button"
+              >
+                <Sparkles aria-hidden="true" className="size-3.5 shrink-0 stroke-[2.4]" />
+                Rejoindre plutôt un monde plus frais
+              </button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </article>
   );
@@ -352,6 +376,7 @@ export function WorldsSelectionDesign({
   onEnter,
   onJoin,
   onNotify,
+  onSelectFreshAlternative,
   onTabChange,
   totalCount,
   variants,
@@ -482,7 +507,7 @@ export function WorldsSelectionDesign({
               ) : (
                 <div className="flex flex-col gap-2">
                   {worlds.map((world) => (
-                    <WorldCard key={world.id} onDetails={onDetails} onEnter={onEnter} onJoin={onJoin} onNotify={onNotify} world={world} />
+                    <WorldCard key={world.id} onDetails={onDetails} onEnter={onEnter} onJoin={onJoin} onNotify={onNotify} onSelectFreshAlternative={onSelectFreshAlternative} world={world} />
                   ))}
                   <div className="sticky -bottom-3 h-[30px] shrink-0 bg-[linear-gradient(to_bottom,transparent,#d4c094)]" />
                 </div>

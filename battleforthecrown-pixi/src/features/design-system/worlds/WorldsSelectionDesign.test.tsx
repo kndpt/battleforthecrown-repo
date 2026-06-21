@@ -10,10 +10,12 @@ function makeCard(overrides: Partial<WorldCardViewModel> = {}): WorldCardViewMod
     ctaLabel: "S'inscrire",
     dayLabel: 'J. 5 / 60',
     displayName: 'Aubeforge',
+    freshAlternativeWorldId: null,
     id: 'world-open',
     inscriptionPhase: 'main',
     isJoined: false,
     joinedCountLabel: '8 420',
+    launchAgeLabel: null,
     lifecycleDay: 5,
     lifecycleInscriptionLateDays: 3,
     lifecycleInscriptionMainDays: 7,
@@ -173,6 +175,65 @@ describe('WorldCard', () => {
     expect(screen.queryByText('Votre royaume')).not.toBeInTheDocument();
     expect(normalizedText(container)).not.toContain('1 234 567');
     expect(container.querySelector('img[src="/assets/power.png"]')).not.toBeInTheDocument();
+  });
+
+  it('shows the launch-age banner and fresh-alternative CTA on a late world', () => {
+    const onSelectFreshAlternative = vi.fn();
+    render(
+      <WorldCard
+        onDetails={() => undefined}
+        onEnter={() => undefined}
+        onJoin={() => undefined}
+        onNotify={() => undefined}
+        onSelectFreshAlternative={onSelectFreshAlternative}
+        world={makeCard({
+          freshAlternativeWorldId: 'fresh-main',
+          inscriptionPhase: 'late',
+          launchAgeLabel: 'Lancé il y a 8 j',
+        })}
+      />,
+    );
+
+    expect(screen.getByText(/Lancé il y a 8 j/)).toBeInTheDocument();
+    const freshCta = screen.getByRole('button', { name: /monde plus frais/i });
+    fireEvent.click(freshCta);
+    expect(onSelectFreshAlternative).toHaveBeenCalledWith('fresh-main');
+  });
+
+  it('shows the launch-age banner but no CTA when no fresh world exists', () => {
+    const onSelectFreshAlternative = vi.fn();
+    render(
+      <WorldCard
+        onDetails={() => undefined}
+        onEnter={() => undefined}
+        onJoin={() => undefined}
+        onNotify={() => undefined}
+        onSelectFreshAlternative={onSelectFreshAlternative}
+        world={makeCard({
+          freshAlternativeWorldId: null,
+          inscriptionPhase: 'late',
+          launchAgeLabel: 'Lancé il y a 8 j',
+        })}
+      />,
+    );
+
+    expect(screen.getByText(/Lancé il y a 8 j/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /monde plus frais/i })).not.toBeInTheDocument();
+  });
+
+  it('renders no launch-age banner on a main-phase world', () => {
+    render(
+      <WorldCard
+        onDetails={() => undefined}
+        onEnter={() => undefined}
+        onJoin={() => undefined}
+        onNotify={() => undefined}
+        world={makeCard({ freshAlternativeWorldId: null, inscriptionPhase: 'main', launchAgeLabel: null })}
+      />,
+    );
+
+    expect(screen.queryByText(/Lancé il y a/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /monde plus frais/i })).not.toBeInTheDocument();
   });
 
   it('keeps the details action separate from the join CTA', () => {
