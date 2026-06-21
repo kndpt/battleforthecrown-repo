@@ -148,6 +148,14 @@ gameplay/
 
 Chaque use case = une transaction Prisma qui orchestre plusieurs domaines (Village + Resources + Population + Outbox), expose une seule méthode `execute(...)`, et est appelé directement depuis les controllers correspondants. Cela résout les `forwardRef` historiques entre `Village ↔ Resources` et `Army ↔ Resources` (cf. ADR-12 et l'audit ticket 05).
 
+## Invariant monde ENDED — lecture seule
+
+`WorldAccessService` (`@Global`, `src/modules/world/world-access.service.ts`) expose `assertWorldWritable(worldId)` : lève `ForbiddenException` 403 code `WORLD_READ_ONLY` si le monde est `ENDED`.
+
+Mutations gardées (appel obligatoire) : attack, scout, reinforce, caravan, train, recruit-noble, upgrade building, change strategy, claim daily card, claim onboarding completion reward.
+
+Carve-outs autorisés sans garde : recall, cancel construction/training, produce/settle, report read/delete, rename cosmétique, join/enter/leave.
+
 ## Modules globaux
 
 - **ConfigModule** (`@nestjs/config`) — lecture `.env`.

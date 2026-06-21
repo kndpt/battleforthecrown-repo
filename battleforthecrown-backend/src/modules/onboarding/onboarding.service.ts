@@ -11,6 +11,7 @@ import {
 import type { OnboardingStep } from '@battleforthecrown/shared/onboarding';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
+import { WorldAccessService } from '../world/world-access.service';
 import type { EventKind, PayloadForKind } from '../event/event-types';
 import { createOutboxEvent } from '../event/event.utils';
 import {
@@ -30,6 +31,7 @@ export class OnboardingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ownership: OwnershipService,
+    private readonly worldAccess: WorldAccessService,
   ) {}
 
   async getSummary(
@@ -185,6 +187,9 @@ export class OnboardingService {
     await this.ownership.assertWorldMember(worldId, userId);
 
     await this.prisma.$transaction(async (tx) => {
+      // Read-only world guard inside the tx to close the TOCTOU window where the
+      // world flips to ENDED between the check and the reward write (run 061).
+      await this.worldAccess.assertWorldWritable(worldId, tx);
       const now = new Date();
       // Atomic claim: flip the flag with a conditional updateMany so two
       // concurrent claims can't both pass an in-memory check and double-credit
