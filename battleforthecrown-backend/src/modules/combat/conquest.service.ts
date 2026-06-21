@@ -336,25 +336,6 @@ export class ConquestService {
     );
   }
 
-  /**
-   * Check if a village can be conquered.
-   */
-  async canConquer(villageId: string): Promise<{
-    canConquer: boolean;
-    reason?: string;
-  }> {
-    const village = await this.prisma.village.findUnique({
-      where: { id: villageId },
-      select: { isBarbarian: true, userId: true },
-    });
-
-    if (!village) {
-      return { canConquer: false, reason: 'Village not found' };
-    }
-
-    return { canConquer: true };
-  }
-
   private async conquerVillageInTx(
     tx: PrismaClientOrTx,
     params: {

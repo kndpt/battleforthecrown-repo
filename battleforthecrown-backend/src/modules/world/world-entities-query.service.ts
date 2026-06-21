@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { z } from 'zod';
-import { isShieldActive, shieldEndsAt } from '@battleforthecrown/shared';
+import { buildShieldState } from '@battleforthecrown/shared';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WorldConfigService } from './world-config.service';
 
@@ -264,25 +264,15 @@ export class WorldEntitiesQueryService {
       const castleLevel = village.buildings[0]?.level ?? 1;
       const capture = village.pendingConquestTargets[0];
       const membership = village.user?.worldMemberships?.[0];
-      const newbieShield =
-        membership &&
-        isShieldActive({
-          joinedAt: membership.joinedAt,
-          brokenAt: membership.shieldBrokenAt,
-          newbieShieldHours: shieldHours,
-          now,
-        })
-          ? {
-              endsAt: shieldEndsAt({
-                joinedAt: membership.joinedAt,
-                newbieShieldHours: shieldHours,
-              }).toISOString(),
-              brokenAt: membership.shieldBrokenAt
-                ? membership.shieldBrokenAt.toISOString()
-                : null,
-              active: true as const,
-            }
-          : undefined;
+      const shieldState = membership
+        ? buildShieldState({
+            joinedAt: membership.joinedAt,
+            brokenAt: membership.shieldBrokenAt,
+            newbieShieldHours: shieldHours,
+            now,
+          })
+        : null;
+      const newbieShield = shieldState?.active ? shieldState : undefined;
 
       return {
         id: village.id,

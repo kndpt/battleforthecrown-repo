@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { GloryLedger, RankingSignal } from '@prisma/client';
+import { FinalRankingSignal, GloryLedger, RankingSignal } from '@prisma/client';
 import {
   RANKING_SIGNAL_LABELS,
   applyPairDiminishingReturns,
   calculateOpponentMultiplier,
   calculateRawBattleValue,
+  rankSnapshotEntries,
   type RankingSignal as PublicRankingSignal,
   type RankingsLeaderboardResponse,
 } from '@battleforthecrown/shared/rankings';
@@ -236,6 +237,98 @@ export class RankingsService {
       period,
       limit,
     );
+  }
+
+  async snapshotFinalRankings(
+    tx: PrismaClientOrTx,
+    worldId: string,
+    at: Date,
+  ): Promise<number> {
+    const members = await tx.worldMembership.findMany({
+      where: { worldId },
+      select: { userId: true },
+    });
+    if (members.length === 0) return 0;
+
+    // POWER — un seul passage batch (évite le N+1 par membre dans la tx de
+    // transition). getLeaderboard calcule la puissance de tous les villages du
+    // monde en une requête ; les membres éliminés (0 village) absents du résultat
+    // retombent à 0 via le fill ci-dessous.
+    const powerRows = await this.powerService.getLeaderboard(
+      'total',
+      members.length,
+      worldId,
+      tx,
+    );
+    const powerMap = new Map(powerRows.map((row) => [row.userId, row.total]));
+    const powerEntries = members.map(({ userId }) => ({
+      userId,
+      score: powerMap.get(userId) ?? 0,
+    }));
+
+    // GLORY — agrégation en une seule requête
+    const grouped = await tx.gloryLedger.groupBy({
+      by: ['scorerUserId', 'signal'],
+      where: { worldId },
+      _sum: { points: true },
+    });
+
+    const assaultMap = new Map<string, number>();
+    const rampartMap = new Map<string, number>();
+    for (const row of grouped) {
+      const pts = row._sum.points ?? 0;
+      if (row.signal === RankingSignal.ASSAULT_GLORY) {
+        assaultMap.set(
+          row.scorerUserId,
+          (assaultMap.get(row.scorerUserId) ?? 0) + pts,
+        );
+      } else if (row.signal === RankingSignal.RAMPART_GLORY) {
+        rampartMap.set(
+          row.scorerUserId,
+          (rampartMap.get(row.scorerUserId) ?? 0) + pts,
+        );
+      }
+    }
+
+    const assaultEntries = members.map(({ userId }) => ({
+      userId,
+      score: assaultMap.get(userId) ?? 0,
+    }));
+    const rampartEntries = members.map(({ userId }) => ({
+      userId,
+      score: rampartMap.get(userId) ?? 0,
+    }));
+
+    // Rank + build rows
+    const rows = [
+      ...rankSnapshotEntries(powerEntries).map((e) => ({
+        worldId,
+        userId: e.userId,
+        signal: FinalRankingSignal.POWER,
+        rank: e.rank,
+        score: e.score,
+        snapshotAt: at,
+      })),
+      ...rankSnapshotEntries(assaultEntries).map((e) => ({
+        worldId,
+        userId: e.userId,
+        signal: FinalRankingSignal.ASSAULT_GLORY,
+        rank: e.rank,
+        score: e.score,
+        snapshotAt: at,
+      })),
+      ...rankSnapshotEntries(rampartEntries).map((e) => ({
+        worldId,
+        userId: e.userId,
+        signal: FinalRankingSignal.RAMPART_GLORY,
+        rank: e.rank,
+        score: e.score,
+        snapshotAt: at,
+      })),
+    ];
+
+    await tx.worldFinalRankingSnapshot.createMany({ data: rows });
+    return members.length;
   }
 
   private toPairKey(left: string, right: string): string {

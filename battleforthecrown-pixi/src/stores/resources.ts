@@ -25,8 +25,3 @@ export const useResourcesStore = create<ResourcesState>((set) => ({
     })),
   clear: () => set({ byVillageId: {} }),
 }));
-
-export function selectVillageResources(villageId: string | null) {
-  return (state: ResourcesState): ResourcesSnapshot | undefined =>
-    villageId ? state.byVillageId[villageId] : undefined;
-}
