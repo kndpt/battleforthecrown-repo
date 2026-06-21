@@ -1,5 +1,6 @@
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
+import { ProgressBar } from '@/ui/feedback/ProgressBar';
 import { GameBottomSheetPanel } from './GameBottomSheetPanel';
 import { SegmentedControl } from './SegmentedControl';
 
@@ -299,12 +300,7 @@ function RenownBlock({ renown }: { renown: PlayerProfileSheetRenown }) {
           </span>
         ) : null}
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-[rgba(93,74,50,.34)]">
-        <div
-          className="h-full origin-left rounded-full bg-[linear-gradient(90deg,#c9900c,#f6d57b)] transition-[width] duration-500"
-          style={{ width: `${ratio * 100}%` }}
-        />
-      </div>
+      <ProgressBar value={ratio * 100} variant="warning" size="sm" />
       <div className="mt-1 text-right font-game text-[8.5px] text-[#6d5838]">
         {renown.xpIntoLevel} / {renown.xpForNextLevel} XP
       </div>
