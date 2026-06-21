@@ -6,7 +6,7 @@ import { ApiError } from '@/api';
  * mapping the raw code would leak into the UI.
  */
 const COMBAT_ERROR_MESSAGES: Record<string, string> = {
-  POWER_RATIO_FORBIDDEN: 'Puissance trop faible — protection serveur',
+  POWER_RATIO_FORBIDDEN: 'Puissance trop faible',
   NEWBIE_SHIELD_ACTIVE: 'Joueur protégé par le bouclier débutant',
 };
 

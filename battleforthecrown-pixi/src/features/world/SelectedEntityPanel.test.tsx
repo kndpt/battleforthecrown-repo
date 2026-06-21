@@ -193,7 +193,7 @@ describe('SelectedEntityPanel owned village troops', () => {
     );
 
     const button = await screen.findByRole('button', {
-      name: /Puissance trop faible — protection serveur/i,
+      name: /Puissance trop faible/i,
     });
     expect(button).toBeDisabled();
   });

@@ -6,7 +6,7 @@ describe('combatErrorMessage', () => {
   it('translates POWER_RATIO_FORBIDDEN to the power-guard message', () => {
     const err = new ApiError('POWER_RATIO_FORBIDDEN', 403);
     expect(combatErrorMessage(err, 'fallback')).toBe(
-      'Puissance trop faible — protection serveur',
+      'Puissance trop faible',
     );
   });
 

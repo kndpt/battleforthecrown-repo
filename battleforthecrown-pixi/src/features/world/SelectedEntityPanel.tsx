@@ -111,7 +111,7 @@ export function SelectedEntityPanel({
   const attackBlockLabel = shieldBlocksAttack
     ? `Joueur protégé — bouclier débutant (${formatRemaining(shieldRemainingMs)} restantes)`
     : ratioBlocksAttack
-      ? 'Puissance trop faible — protection serveur'
+      ? 'Puissance trop faible'
       : null;
   const attackBlocked = attackBlockLabel !== null;
 
