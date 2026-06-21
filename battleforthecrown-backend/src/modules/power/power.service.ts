@@ -50,8 +50,13 @@ export class PowerService {
     return { villageId, buildings };
   }
 
-  async getLeaderboard(type: LeaderboardType, limit = 20, worldId: string) {
-    const villages = await this.prisma.village.findMany({
+  async getLeaderboard(
+    type: LeaderboardType,
+    limit = 20,
+    worldId: string,
+    reader: PrismaPowerReader = this.prisma,
+  ) {
+    const villages = await reader.village.findMany({
       where: { worldId, userId: { not: null } },
       include: {
         buildings: true,
@@ -60,6 +65,7 @@ export class PowerService {
     });
     const armyPowerByVillage = await this.getArmyPowerByOriginVillage(
       villages.map((village) => village.id),
+      reader,
     );
     const byUser = new Map<
       string,
