@@ -30,6 +30,9 @@ export interface Vec2 {
   y: number;
 }
 
+// `_gridWidth` ne participe pas au calcul (seul `gridHeight` décale `offsetX`),
+// mais reste dans la signature pour rester homogène avec les autres helpers iso
+// qui prennent la paire (gridWidth, gridHeight). Préfixe `_` = inutilisé assumé.
 export function makeIsoConfig(_gridWidth: number, gridHeight: number, tileSize: number): IsoConfig {
   const halfW = tileSize;
   const halfH = tileSize / 2;

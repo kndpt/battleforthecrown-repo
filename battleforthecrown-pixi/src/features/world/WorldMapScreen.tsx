@@ -84,6 +84,7 @@ export function WorldMapScreen() {
   const canvasRef = useRef<WorldMapCanvasController | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const hasCameraSnapshotRef = useRef(false);
+  const latestCameraRef = useRef(camera);
   const visionDisks = worldEntities.data?.visionDisks ?? EMPTY_VISION_DISKS;
   const fogOfWarEnabled = worldEntities.data?.fogOfWarEnabled ?? true;
   const dims = worldDetails.data
@@ -198,6 +199,12 @@ export function WorldMapScreen() {
     }
   }, [activeFocus, canvasReady, pendingFocus, searchParams, setPendingFocus, setSearchParams, setSelectedEntity, urlFocus]);
 
+  // À l'ouverture, resynchronise le state caméra avec le dernier snapshot capté
+  // pendant que la minimap était fermée (sinon viewbox figée à l'ouverture).
+  useEffect(() => {
+    if (isMiniMapOpen) setCamera(latestCameraRef.current);
+  }, [isMiniMapOpen]);
+
   const canViewWorld = !fogOfWarEnabled || isWatchtowerBuilt || visionDisks.length > 0;
   if (!worldEntities.isLoading && !canViewWorld) {
     return <WorldLockedScreen />;
@@ -242,7 +249,11 @@ export function WorldMapScreen() {
                 fogOfWarEnabled={fogOfWarEnabled}
                 onCameraChange={(nextCamera) => {
                   hasCameraSnapshotRef.current = true;
-                  setCamera(nextCamera);
+                  latestCameraRef.current = nextCamera;
+                  // La minimap (repliée par défaut) se redessine à chaque update
+                  // caméra. Tant qu'elle est fermée, on n'écrit pas le snapshot
+                  // dans le state React → pas de re-render/redraw pendant pan/zoom.
+                  if (isMiniMapOpen) setCamera(nextCamera);
                 }}
                 onControllerReady={setCanvasReady}
                 controllerRef={canvasRef}

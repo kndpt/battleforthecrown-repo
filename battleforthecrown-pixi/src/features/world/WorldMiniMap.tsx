@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import { clamp } from '@/lib/math';
+import { fitGeometry, screenToTile } from './worldMiniMapGeometry';
 import type { MapEntity } from '@/api/world-types';
 import type { ExpeditionSnapshot } from '@/stores/expeditions';
 import type { VisionDisk } from '@battleforthecrown/shared/world';
@@ -41,12 +41,6 @@ const EXPEDITION_COLOR: Record<string, string> = {
   REINFORCE: 'rgba(96, 190, 224, 0.9)',
 };
 
-/** Geometry of the (square) world drawn "contain"-fitted into a w×h panel. */
-function fitGeometry(w: number, h: number) {
-  const drawSize = Math.min(w, h);
-  return { drawSize, offX: (w - drawSize) / 2, offY: (h - drawSize) / 2 };
-}
-
 /**
  * Full-width cartographic mini-map filling its parent (the top half of the
  * world view). Canvas2D — markers are tiny dots, doesn't warrant a 2nd Pixi
@@ -83,11 +77,12 @@ export function WorldMiniMap({
   const recenterFromPointer = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     if (!onRecenter || !box.w || !box.h) return;
     const rect = event.currentTarget.getBoundingClientRect();
-    const { drawSize, offX, offY } = fitGeometry(box.w, box.h);
-    const px = event.clientX - rect.left - offX;
-    const py = event.clientY - rect.top - offY;
-    const tileX = clamp((px / drawSize) * gridWidth, 0, gridWidth);
-    const tileY = clamp((py / drawSize) * gridHeight, 0, gridHeight);
+    const { tileX, tileY } = screenToTile(
+      event.clientX - rect.left,
+      event.clientY - rect.top,
+      box,
+      { width: gridWidth, height: gridHeight },
+    );
     onRecenter(tileX, tileY);
   };
 
