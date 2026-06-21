@@ -41,6 +41,7 @@ export class ResetWorldUseCase {
       await tx.scoutReport.deleteMany({
         where: { worldId, scoutUserId: userId },
       });
+      await tx.villageIntel.deleteMany({ where: { worldId, userId } });
       await tx.onboardingState.deleteMany({ where: { userId, worldId } });
       await tx.village.deleteMany({ where: { userId, worldId } });
       await tx.crownBalance.deleteMany({ where: { userId, worldId } });

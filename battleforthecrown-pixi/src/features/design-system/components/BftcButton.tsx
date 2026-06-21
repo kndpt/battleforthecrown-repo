@@ -1,8 +1,8 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
-export type BftcButtonVariant = 'success' | 'info' | 'danger' | 'warning' | 'neutral';
-export type BftcButtonSize = 'xs' | 'md' | 'lg';
+export type BftcButtonVariant = 'success' | 'info' | 'danger' | 'warning' | 'neutral' | 'wood';
+export type BftcButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 export type BftcButtonState = 'default' | 'hover' | 'pressed' | 'disabled';
 
 export interface BftcButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -18,10 +18,12 @@ const variantClass: Record<BftcButtonVariant, string> = {
   danger: 'border-[#a93226] bg-gradient-to-b from-[#e74c3c] to-[#c0392b]',
   warning: 'border-[#9e7b0d] bg-gradient-to-b from-[#f1c40f] to-[#d4a017] text-[#3a2a00] [text-shadow:none]',
   neutral: 'border-[#5d6d6e] bg-gradient-to-b from-[#95a5a6] to-[#7f8c8d]',
+  wood: 'border-[#3c2619] bg-gradient-to-b from-[#a67c52] to-[#5d4a32]',
 };
 
 const sizeClass: Record<BftcButtonSize, string> = {
   xs: 'px-2 py-1 text-[11px]',
+  sm: 'px-3 py-1.5 text-xs',
   md: 'px-4 py-2 text-sm',
   lg: 'px-6 py-3 text-lg',
 };

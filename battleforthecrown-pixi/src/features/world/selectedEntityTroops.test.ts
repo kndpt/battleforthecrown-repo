@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ArmyUnitDto } from '@/api/queries';
 import type { GarrisonLine } from '@/lib/types';
-import { buildTroopsSection, summarizePresentTroops } from './selectedEntityTroops';
+import { summarizePresentTroops } from './selectedEntityTroops';
 
 function unit(type: string, quantity: number): ArmyUnitDto {
   return {
@@ -44,27 +44,5 @@ describe('selected entity troops', () => {
       expect.objectContaining({ label: 'Milice de paysans', quantity: 20, unitType: 'MILITIA' }),
       expect.objectContaining({ label: 'Écuyer', quantity: 5, unitType: 'SQUIRE' }),
     ]);
-  });
-
-  it('builds an explicit empty section when no troops are present', () => {
-    expect(buildTroopsSection([])).toEqual({
-      title: 'Troupes présentes',
-      rows: [{ label: 'Aucune troupe', value: '' }],
-    });
-  });
-
-  it('formats quantities for the compact callout section', () => {
-    expect(buildTroopsSection([
-      { icon: '/assets/army/militia.png', label: 'Milice de paysans', quantity: 1200, unitType: 'MILITIA' },
-    ])).toEqual({
-      title: 'Troupes présentes',
-      rows: [
-        {
-          icon: '/assets/army/militia.png',
-          label: 'Milice de paysans',
-          value: '1 200',
-        },
-      ],
-    });
   });
 });

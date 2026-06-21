@@ -782,6 +782,7 @@ describe('applyVillageAttacked', () => {
     queryClient.setQueryData(queryKeys.scoutReports('defender-1', 'world-1'), []);
     queryClient.setQueryData(queryKeys.combatReports('defender-1', 'world-old'), []);
     queryClient.setQueryData(queryKeys.scoutReports('defender-1', 'world-old'), []);
+    queryClient.setQueryData(queryKeys.resources('v-def'), { wood: 500, stone: 300, iron: 200 });
     seedPowerQueries(queryClient, 'v-def', 'defender-1');
     seedPowerQueries(queryClient, 'v-origin', 'defender-1');
     queryClient.setQueryData(queryKeys.kingdomPower('defender-1', 'world-old'), { kingdomPower: 1 });
@@ -804,6 +805,7 @@ describe('applyVillageAttacked', () => {
       { queryClient },
     );
 
+    expect(queryClient.getQueryState(queryKeys.resources('v-def'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.combatReports('defender-1', 'world-1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.scoutReports('defender-1', 'world-1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.combatReports('defender-1', 'world-old'))?.isInvalidated).toBe(true);
@@ -952,6 +954,7 @@ describe('caravan websocket bindings', () => {
     ]);
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.resources('origin-village'), { wood: 100 });
+    queryClient.setQueryData(queryKeys.resources('target-village'), { wood: 200 });
     queryClient.setQueryData(queryKeys.population('origin-village'), { used: 1, max: 10, available: 9 });
     queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
 
@@ -982,6 +985,7 @@ describe('caravan websocket bindings', () => {
       arrivalAt: Date.parse('2026-05-04T22:05:00.000Z'),
     });
     expect(queryClient.getQueryState(queryKeys.resources('origin-village'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.resources('target-village'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.population('origin-village'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
   });
@@ -1002,6 +1006,7 @@ describe('caravan websocket bindings', () => {
     });
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.resources('target-village'), { wood: 100 });
+    queryClient.setQueryData(queryKeys.population('target-village'), { used: 5, max: 20, available: 15 });
     queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
     queryClient.setQueryData(queryKeys.caravanReports('user-1', 'world-1'), []);
     queryClient.setQueryData(queryKeys.caravanReports('user-1', 'world-old'), []);
@@ -1024,6 +1029,7 @@ describe('caravan websocket bindings', () => {
       returnAt: Date.parse('2026-05-04T22:10:00.000Z'),
     });
     expect(queryClient.getQueryState(queryKeys.resources('target-village'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.population('target-village'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.caravanReports('user-1', 'world-1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.caravanReports('user-1', 'world-old'))?.isInvalidated).toBe(true);
@@ -1577,6 +1583,7 @@ describe('applyCaravanSent', () => {
     ]);
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.resources('v-att'), { wood: 500 });
+    queryClient.setQueryData(queryKeys.resources('v-target'), { wood: 200 });
     queryClient.setQueryData(queryKeys.activeExpeditions('v-att'), []);
     queryClient.setQueryData(queryKeys.population('v-att'), { used: 5, max: 20, available: 15 });
     queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
@@ -1603,6 +1610,7 @@ describe('applyCaravanSent', () => {
       target: { x: 8, y: 9 },
     });
     expect(queryClient.getQueryState(queryKeys.resources('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.resources('v-target'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.activeExpeditions('v-att'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.population('v-att'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
