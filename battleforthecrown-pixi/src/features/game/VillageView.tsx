@@ -43,6 +43,7 @@ import {
   profileSheetLabels,
   profileSheetSettings,
 } from '@/features/layout/profileSheetData';
+import { useRenownLevelUp } from '@/features/layout/useRenownLevelUp';
 import { useDisplayResources, useDisplayCrowns } from '@/features/resources/useDisplayResources';
 import { useUnreadReportsCount } from '@/features/combat/useUnreadReportsCount';
 import { runGameAction, type GameActionId } from '@/features/game-actions/gameActions';
@@ -102,6 +103,7 @@ export function VillageView() {
   const pendingBuildingType = usePendingBuildingModalStore((s) => s.buildingType);
   const consumePendingBuilding = usePendingBuildingModalStore((s) => s.consume);
   const logout = useLogout();
+  const { renown, justLeveledUp, acknowledge: acknowledgeRenown } = useRenownLevelUp();
 
   // Village data
   const buildingsQuery = useVillageBuildingsQuery(villageId);
@@ -359,6 +361,7 @@ export function VillageView() {
             onOpenProfile={() => {
               setProfileTab('profile');
               setIsProfileOpen(true);
+              acknowledgeRenown();
             }}
             onOpenPower={() => setIsPowerOpen(true)}
             onOpenVillageSheet={() => setIsVillageSheetOpen(true)}
@@ -521,6 +524,7 @@ export function VillageView() {
               navigate('/worlds');
             }}
             player={profileSheetData.player}
+            renown={renown ? { level: renown.level, xpIntoLevel: renown.xpIntoLevel, xpForNextLevel: renown.xpForNextLevel, justLeveledUp } : undefined}
             settings={profileSheetSettings}
             stats={profileSheetData.stats}
             villages={profileVillages}

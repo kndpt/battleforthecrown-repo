@@ -133,6 +133,13 @@ Calcul à la volée côté `power.service.ts` :
 |-------|------|
 | `WorldFinalRankingSnapshot` | snapshot des 3 classements (`FinalRankingSignal` : `POWER`, `ASSAULT_GLORY`, `RAMPART_GLORY`) à la transition `LOCKED → ENDED`. Champs : `worldId`, `userId`, `signal`, `rank`, `score`, `snapshotAt`. Contrainte unique `(worldId, signal, userId)` ; index `(worldId, signal, rank)`. Inclut tous les `WorldMembership`, y compris les éliminés (score 0). Tiebreaker : `userId` lexicographique. Source de vérité pour les runs UI/awards aval. |
 
+### Renommée de compte (account renown)
+
+| Table / champ | Rôle |
+|-------|------|
+| `User.renownXp` | XP de Renommée cumulée cross-monde (`Int`, défaut 0). Source d'autorité du niveau (le niveau est dérivé, jamais stocké). Cosmétique uniquement — **zéro effet in-world** (cf. [`gameplay/25-account-renown.md`](../gameplay/25-account-renown.md)). |
+| `RenownLedger` | journal de crédit idempotent. Champs : `userId`, `source` (`RenownSource` : `CONSTRUCTION`, `CONQUEST`, `COMBAT`, `RANKING_BONUS`), `xp`, `worldId?`, `dedupKey`, `createdAt`. Contrainte unique `dedupKey` ; index `userId`. Idempotence par `dedupKey` (`outbox:<eventId>` live, `combat:<reportId>:<signal>:<scorer>:<opponent>`, `ranking:<worldId>:<signal>:<userId>`). Crédit via `createMany({skipDuplicates})` + increment conditionnel → un replay d'Outbox ne double pas la XP. Formules : [`@battleforthecrown/shared` → `src/renown/`](../../packages/shared/src/renown/). |
+
 ### Outbox (temps réel)
 
 | Table | Rôle |

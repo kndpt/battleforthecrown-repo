@@ -4,6 +4,7 @@ import PgBoss from 'pg-boss';
 import { PrismaService } from '../infra/prisma/prisma.service';
 import { createOutboxEvent } from '../modules/event/event.utils';
 import { RankingsService } from '../modules/rankings/rankings.service';
+import { RenownService } from '../modules/renown/renown.service';
 import {
   WorldConfigSchema,
   resolveWorldLifecycleConfig,
@@ -20,6 +21,7 @@ export class WorldLifecycleWorker implements OnModuleInit {
     @Inject('PG_BOSS') private readonly boss: PgBoss,
     private readonly prisma: PrismaService,
     private readonly rankings: RankingsService,
+    private readonly renown: RenownService,
   ) {}
 
   async onModuleInit() {
@@ -166,6 +168,7 @@ export class WorldLifecycleWorker implements OnModuleInit {
       // et de l'UI lecture seule (run 066).
       if (to === 'ENDED') {
         await this.rankings.snapshotFinalRankings(tx, worldId, params.at);
+        await this.renown.creditRankingBonuses(tx, worldId);
       }
 
       return 1;

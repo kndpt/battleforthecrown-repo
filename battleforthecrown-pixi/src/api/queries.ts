@@ -62,6 +62,7 @@ import {
   type ClaimDailyCardResponse,
   type RetentionSummaryDto,
 } from "@battleforthecrown/shared/retention";
+import type { RenownStatus } from "@battleforthecrown/shared";
 import type {
   OpenConquestDto,
   OpenExpeditionDto,
@@ -171,6 +172,7 @@ export const queryKeys = {
     ["onboarding", "summary", userId, worldId] as const,
   rankingsSummary: (worldId: string | null) =>
     ["rankings", "summary", worldId] as const,
+  renown: (userId: string | null) => ["renown", userId] as const,
   // Broad-invalidation prefixes (omit trailing discriminants to match across worlds/users).
   membershipsPrefix: () => ["memberships"] as const,
   villagesPrefix: () => ["villages"] as const,
@@ -1684,6 +1686,16 @@ export function useVillageIntelQuery(
       return VillageIntelDtoSchema.nullable().parse(raw ?? null);
     },
     enabled: Boolean(worldId && villageId && enabled),
+    staleTime: 30_000,
+  });
+}
+
+export function useRenownQuery() {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  return useQuery<RenownStatus>({
+    queryKey: queryKeys.renown(userId),
+    queryFn: () => apiClient.get<RenownStatus>("/users/me/renown"),
+    enabled: Boolean(userId),
     staleTime: 30_000,
   });
 }

@@ -29,6 +29,7 @@ Documentation gameplay consolidée. Vision design, mécaniques, formules d'équi
 22. [`22-village-roles-and-navigation.md`](./22-village-roles-and-navigation.md) — rôles privés et favoris de villages : navigation multi-village MVP légère, sans bonus mécanique.
 23. [`23-world-tempo-and-multipliers.md`](./23-world-tempo-and-multipliers.md) — **pivot compressed-async + tempo world-scoped**. Pourquoi BFTC n'est pas un slow-MMORTS, monde Standard 60 j, multipliers `WorldConfig.tempo` (global + overrides), garde-fous, impacts à recalibrer. **Pièce centrale du gameplay.**
 24. [`24-rankings.md`](./24-rankings.md) — classements Puissance du Royaume, Gloire d'Assaut et Gloire du Rempart ; scoring PvP, cycles, rewards non-snowballants.
+25. [`25-account-renown.md`](./25-account-renown.md) — **Renommée** : niveau de compte persistant cross-monde (vétérance LoL), cosmétique only (zéro effet in-world). 4 sources de XP (construction, conquête, combat, classement fin de monde), courbe de niveau, ledger idempotent.
 
 ### Laboratoire
 

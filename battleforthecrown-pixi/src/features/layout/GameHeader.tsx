@@ -37,6 +37,7 @@ import {
   profileSheetSettings,
 } from './profileSheetData';
 import { NewbieShieldIcon, NewbieShieldTimer } from '@/features/world/NewbieShieldIcon';
+import { useRenownLevelUp } from './useRenownLevelUp';
 
 interface GameHeaderProps {
   onPowerClick?: () => void;
@@ -63,6 +64,7 @@ export function GameHeader({
   const claimDailyCard = useClaimDailyCardMutation();
   const { display, hasSnapshot } = useDisplayResources(villageId);
   const { balance: crownBalance } = useDisplayCrowns(userId, worldId);
+  const { renown, justLeveledUp, acknowledge: acknowledgeRenown } = useRenownLevelUp();
   const [isVillageSheetOpen, setIsVillageSheetOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profileTab, setProfileTab] = useState<PlayerProfileSheetTab>('profile');
@@ -176,6 +178,7 @@ export function GameHeader({
   const openProfile = () => {
     setProfileTab('profile');
     setIsProfileOpen(true);
+    acknowledgeRenown();
   };
   const closeProfile = () => {
     setIsProfileOpen(false);
@@ -386,6 +389,7 @@ export function GameHeader({
             navigate('/worlds');
           }}
           player={profileSheetData.player}
+          renown={renown ? { level: renown.level, xpIntoLevel: renown.xpIntoLevel, xpForNextLevel: renown.xpForNextLevel, justLeveledUp } : undefined}
           settings={profileSheetSettings}
           stats={profileSheetData.stats}
           villages={profileVillages}

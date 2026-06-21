@@ -8,6 +8,7 @@ import { ResourcesModule } from '../resources/resources.module';
 import { RetentionModule } from '../retention/retention.module';
 import { OnboardingModule } from '../onboarding/onboarding.module';
 import { WorldModule } from '../world/world.module';
+import { RenownModule } from '../renown/renown.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { WorldModule } from '../world/world.module';
     RetentionModule,
     OnboardingModule,
     WorldModule,
+    RenownModule,
   ],
   providers: [GameGateway, EventOutboxService, OutboxPublisher],
   exports: [GameGateway, EventOutboxService, OutboxPublisher],
