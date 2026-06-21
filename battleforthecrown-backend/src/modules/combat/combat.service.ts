@@ -26,6 +26,7 @@ import {
 } from '@battleforthecrown/shared/logic';
 import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
 import { UNIT_TYPES } from '@battleforthecrown/shared/army';
+import { isAttackAllowedByPowerRatio } from '@battleforthecrown/shared';
 import type {
   OpenConquestDto,
   OpenExpeditionDto,
@@ -125,6 +126,28 @@ export class CombatService {
         target.id,
         target.userId,
       );
+
+      // 4b. Anti-snowball power guard (spec 14 §2): a PvP attack (raid or
+      // conquest) is forbidden when the defender's kingdom power is below 1/3 of
+      // the attacker's. The "defender" is the village *owner* (spec §2), which is
+      // also what the client pre-check uses (entity.ownerId) — keeping both sides
+      // consistent. Reuses the snapshot value when the owner is already computed
+      // (no extra DB read in the common case); only reads when absent, e.g. an
+      // open capture window snapshots the conqueror, not the owner. Barbarian
+      // villages are out of scope. Checked at launch only, never re-evaluated.
+      if (dto.targetKind === 'PLAYER_VILLAGE' && target.userId) {
+        const defenderOwnerPower =
+          defenderPowerSnapshot.values[target.userId] ??
+          (await this.powerService.getKingdomPowerValue(
+            target.userId,
+            worldId,
+            tx,
+          ));
+        this.assertAttackAllowedByPower(
+          attackerKingdomPowerSnapshot,
+          defenderOwnerPower,
+        );
+      }
 
       // 5. Verify and deduct units
       await this.verifyAndDeductUnits(tx, dto.villageId, dto.units);
@@ -976,6 +999,26 @@ export class CombatService {
     }
 
     return village;
+  }
+
+  /**
+   * Anti-snowball guard (spec 14 §2). Throws `POWER_RATIO_FORBIDDEN` when the
+   * defender's kingdom power is strictly below 1/3 of the attacker's. Only the
+   * attacker is bounded (heroic asymmetry). A null defender power (no resolvable
+   * owner) is treated as 0 so an attack on an empty target stays blocked unless
+   * the attacker is also at 0.
+   */
+  private assertAttackAllowedByPower(
+    attackerPower: number,
+    defenderPower: number | null,
+  ): void {
+    const allowed = isAttackAllowedByPowerRatio({
+      attackerPower,
+      defenderPower: defenderPower ?? 0,
+    });
+    if (!allowed) {
+      throw new ForbiddenException('POWER_RATIO_FORBIDDEN');
+    }
   }
 
   private async snapshotDefenderKingdomPowers(

@@ -24,7 +24,7 @@ import {
   useInitiateScoutMutation,
   useWorldConfigQuery,
 } from '@/api/queries';
-import { ApiError } from '@/api';
+import { combatErrorMessage } from './combatErrorMessage';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
 import { unitMetaFor } from '@/features/army/unitConfig';
@@ -178,7 +178,7 @@ export function AttackDetailModal({
         {
           onSuccess: () => onClose(),
           onError: (err) => {
-            setError(err instanceof ApiError ? err.message : 'Échec du renfort');
+            setError(combatErrorMessage(err, 'Échec du renfort'));
           },
         },
       );
@@ -204,7 +204,7 @@ export function AttackDetailModal({
         onSuccess: () => onClose(),
         onError: (err) => {
           const fallback = activeMode === 'scout' ? 'Échec du scout' : "Échec de l'attaque";
-          setError(err instanceof ApiError ? err.message : fallback);
+          setError(combatErrorMessage(err, fallback));
         },
       },
     );
