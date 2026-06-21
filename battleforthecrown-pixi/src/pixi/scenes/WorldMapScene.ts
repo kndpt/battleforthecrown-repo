@@ -1,4 +1,4 @@
-import { Assets, Container, Graphics, Sprite, Text, Texture, type Application, type FederatedPointerEvent } from 'pixi.js';
+import { Assets, Container, Graphics, Point, Sprite, Text, Texture, type Application, type FederatedPointerEvent } from 'pixi.js';
 import { Viewport } from 'pixi-viewport';
 import type { PixiScene } from './SceneManager';
 import { villageSpriteAliasForEntity, type MapEntity } from '@/api/world-types';
@@ -119,6 +119,13 @@ export interface WorldMapHandle {
   reconcileExpeditions: (expeditions: ExpeditionSnapshot[]) => void;
   setSelected: (entityId: string | null) => void;
   centerOn: (worldX: number, worldY: number) => void;
+  /** Pan (animé) pour caler un point monde sous une ancre écran précise. */
+  focusOn: (
+    worldX: number,
+    worldY: number,
+    screenAnchor?: { x: number; y: number },
+    animated?: boolean,
+  ) => void;
   onCameraChange: (callback: (camera: WorldMapCameraSnapshot) => void) => () => void;
   /** Update the active village halo and authoritative vision disks. */
   setVision: (
@@ -749,6 +756,47 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     scheduleCameraChange();
   };
 
+  // Pan (animé par défaut) pour amener un point monde sous une ancre écran
+  // précise — au lieu de le centrer. `screenAnchor` est en pixels écran (même
+  // espace que `worldToScreen`). Utilisé pour caler le village sélectionné sous
+  // le bec du panneau fixe.
+  const focusOn = (
+    worldX: number,
+    worldY: number,
+    screenAnchor?: { x: number; y: number },
+    animated = true,
+  ) => {
+    const { px, py } = tileToWorld(worldX, worldY);
+    const scale = viewport.scale.x || 1;
+    // `screenAnchor` arrive en coords fenêtre (getBoundingClientRect). Le repère
+    // de `viewport.toScreen` / `app.screen` est local au canvas : on convertit
+    // en soustrayant l'origine du canvas dans la fenêtre (chrome, marges du
+    // shell centré). Sans ça le pan se désaligne dès que le canvas n'est pas
+    // collé au coin haut-gauche de la fenêtre.
+    const canvasRect = app.canvas.getBoundingClientRect();
+    const ratioX = canvasRect.width ? app.screen.width / canvasRect.width : 1;
+    const ratioY = canvasRect.height ? app.screen.height / canvasRect.height : 1;
+    const anchorX = screenAnchor
+      ? (screenAnchor.x - canvasRect.left) * ratioX
+      : app.screen.width / 2;
+    const anchorY = screenAnchor
+      ? (screenAnchor.y - canvasRect.top) * ratioY
+      : app.screen.height / 2;
+    const targetX = px + (app.screen.width / 2 - anchorX) / scale;
+    const targetY = py + (app.screen.height / 2 - anchorY) / scale;
+    if (animated) {
+      viewport.animate({
+        position: new Point(targetX, targetY),
+        time: 480,
+        ease: 'easeInOutSine',
+        removeOnInterrupt: true,
+      });
+    } else {
+      viewport.moveCenter(targetX, targetY);
+    }
+    scheduleCameraChange();
+  };
+
   const onCameraChange = (callback: (camera: WorldMapCameraSnapshot) => void) => {
     cameraListeners.add(callback);
     callback(readCamera());
@@ -800,5 +848,5 @@ export function createWorldMapScene(app: Application, options: WorldMapOptions):
     },
   };
 
-  return { scene, reconcile, reconcileExpeditions, setSelected, centerOn, onCameraChange, setVision, worldToScreen };
+  return { scene, reconcile, reconcileExpeditions, setSelected, centerOn, focusOn, onCameraChange, setVision, worldToScreen };
 }

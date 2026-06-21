@@ -17,6 +17,12 @@ const EMPTY_VISION_DISKS: readonly VisionDisk[] = [];
 
 export interface WorldMapCanvasController {
   centerOn: (worldX: number, worldY: number) => void;
+  focusOn: (
+    worldX: number,
+    worldY: number,
+    screenAnchor?: { x: number; y: number },
+    animated?: boolean,
+  ) => void;
   onCameraChange: (callback: (camera: WorldMapCameraSnapshot) => void) => () => void;
   worldToScreen: (tileX: number, tileY: number) => { x: number; y: number };
 }
@@ -73,6 +79,7 @@ export function WorldMapCanvas({
       if (controllerRef) {
         controllerRef.current = {
           centerOn: handle.centerOn,
+          focusOn: handle.focusOn,
           onCameraChange: handle.onCameraChange,
           worldToScreen: handle.worldToScreen,
         };

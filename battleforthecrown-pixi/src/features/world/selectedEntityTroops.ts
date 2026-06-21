@@ -1,7 +1,6 @@
 import type { ArmyUnitDto } from '@/api/queries';
 import type { GarrisonLine, UnitType } from '@/lib/types';
 import { unitMetaFor } from '@/features/army/unitConfig';
-import type { MapEntityCalloutSection } from '@/features/design-system/components';
 
 export interface TroopSummaryRow {
   icon?: string;
@@ -38,19 +37,6 @@ export function summarizePresentTroops(
         unitType,
       };
     });
-}
-
-export function buildTroopsSection(rows: TroopSummaryRow[]): MapEntityCalloutSection {
-  return {
-    title: 'Troupes présentes',
-    rows: rows.length > 0
-      ? rows.map((row) => ({
-          icon: row.icon,
-          label: row.label,
-          value: row.quantity.toLocaleString('fr-FR'),
-        }))
-      : [{ label: 'Aucune troupe', value: '' }],
-  };
 }
 
 function addQuantity(

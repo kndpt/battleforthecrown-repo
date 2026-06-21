@@ -65,7 +65,6 @@ import {
   LeaderboardRow,
   LevelChip,
   MailInboxItem,
-  MapEntityCallout,
   MultiVillageBottomSheet,
   MultiVillagePhoneFrame,
   NumberStepper,
@@ -94,6 +93,7 @@ import {
   TROOP_DETAIL_LABELS_FR,
   TroopRow,
   TroopStepper,
+  VillageMapPanel,
   VillageStyleModal,
   VillageStyleTrigger,
   computeArmyRecruitMax,
@@ -1873,16 +1873,18 @@ export function DesignSystemPreview() {
           <h2 className="font-game text-2xl font-bold text-[#1f2937]">Buttons</h2>
           <div className="flex w-full flex-col items-stretch gap-2.5">
             <div className="flex w-full flex-wrap items-center gap-2.5">
-              <span className="min-w-[78px] font-mono text-[10px] text-[#5d4a32]">5 variants</span>
+              <span className="min-w-[78px] font-mono text-[10px] text-[#5d4a32]">6 variants</span>
               <BftcButton>OK</BftcButton>
               <BftcButton variant="info">ACCEPTER</BftcButton>
               <BftcButton variant="danger">NON</BftcButton>
               <BftcButton variant="warning">ATTENTION</BftcButton>
               <BftcButton variant="neutral">Retour</BftcButton>
+              <BftcButton variant="wood">Bois</BftcButton>
             </div>
             <div className="flex w-full flex-wrap items-center gap-2.5">
-              <span className="min-w-[78px] font-mono text-[10px] text-[#5d4a32]">sm/md/lg</span>
-              <BftcButton size="xs">Small</BftcButton>
+              <span className="min-w-[78px] font-mono text-[10px] text-[#5d4a32]">xs/sm/md/lg</span>
+              <BftcButton size="xs">XSmall</BftcButton>
+              <BftcButton variant="success" size="sm">Small</BftcButton>
               <BftcButton variant="info">Medium</BftcButton>
               <BftcButton size="lg" variant="warning">Large</BftcButton>
             </div>
@@ -2728,52 +2730,6 @@ export function DesignSystemPreview() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="font-game text-2xl font-bold text-[#1f2937]">Map entity callout</h2>
-          <div className="flex w-full flex-wrap items-start gap-6 bg-[#f5e6d3] p-[18px]">
-            <span className="min-w-[100px] font-mono text-[10px] text-[#5d4a32]">
-              callout · barbare T4
-            </span>
-            <MapEntityCallout
-              actions={[
-                { icon: '⚔', label: 'Attaquer', tone: 'attack' },
-                { icon: '/assets/lupa.png', label: 'Espionner', tone: 'scout' },
-              ]}
-              coordinates="312|488"
-              stats={[
-                { icon: '/assets/casual-icons/crown.png', value: '8.420' },
-                { icon: '/assets/watchtower.png', value: 'Niv. 6' },
-              ]}
-              sections={[
-                {
-                  title: 'Capture',
-                  rows: [
-                    { label: 'Durée de conquête', value: '9h' },
-                    { label: 'Statut', value: 'Disponible' },
-                  ],
-                },
-              ]}
-              subtitle="Inhabité · pillable"
-              tier={{ label: '★ T4 OR' }}
-              title="Camp barbare"
-              titleIcon="★"
-            />
-            <MapEntityCallout
-              actions={[
-                { icon: '🛡', label: 'Soutenir', tone: 'support' },
-                { icon: '✉', label: 'Message', tone: 'scout' },
-              ]}
-              coordinates="312|490"
-              stats={[
-                { icon: '/assets/casual-icons/crown.png', value: '12.480' },
-                { icon: '/assets/castle.png', value: 'Château Niv. 4' },
-              ]}
-              subtitle="Sire_Robert · [BFC] allié"
-              title="Roc-d'Acier"
-            />
-          </div>
-        </section>
-
-        <section className="space-y-4">
           <h2 className="font-game text-2xl font-bold text-[#1f2937]">Player profile sheet</h2>
           <div className="flex w-full justify-center">
             <div className="relative h-[640px] w-full max-w-[390px] overflow-hidden rounded-2xl border-2 border-[#3c2619] bg-[radial-gradient(circle_at_50%_10%,#5d8a39,#2f5125_45%,#1a1a2e)] shadow-[0_12px_28px_rgba(60,38,25,.22)]">
@@ -3258,6 +3214,111 @@ export function DesignSystemPreview() {
               quantity="—"
               stats={[{ label: '🔒 Caserne niv. 5 requise', tone: 'locked' }]}
             />
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="font-game text-2xl font-bold text-[#1f2937]">VillageMapPanel</h2>
+            <span className="font-mono text-[10px] text-[#5d4a32]">carte monde · popover village · 4 variantes</span>
+          </div>
+          <div className="flex flex-wrap gap-6">
+            <div className="flex flex-col gap-1">
+              <span className="font-mono text-[10px] text-[#5d4a32]">mine</span>
+              <div className="relative flex justify-center rounded-lg bg-[#1a1a2e] p-7" style={{ width: 380 }}>
+                <VillageMapPanel
+                  variant="mine"
+                  name="Castelfort"
+                  coords="271 | 230"
+                  typeTag="mine"
+                  owner="airstyle59"
+                  villagePower={312}
+                  ownerPower={1240}
+                  intel={{
+                    loot: { wood: 8420, stone: 6900, iron: 5310 },
+                    wall: 4,
+                    style: 'Forteresse',
+                    army: [
+                      { icon: '/assets/army/militia.png', count: 120, category: 'inf', name: 'Milicien' },
+                      { icon: '/assets/army/archer.png', count: 64, category: 'tir', name: 'Archer' },
+                      { icon: '/assets/army/squire.png', count: 40, category: 'inf', name: 'Écuyer' },
+                      { icon: '/assets/army/savage.png', count: 12, category: 'spe', name: 'Mercenaire' },
+                      { icon: '/assets/army/templar.png', count: 9, category: 'eli', name: 'Templier' },
+                    ],
+                  }}
+                  onClose={() => {}}
+                  onEnter={() => {}}
+                  onSendResources={() => {}}
+                  onReinforce={() => {}}
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="font-mono text-[10px] text-[#5d4a32]">unscouted</span>
+              <div className="relative flex justify-center rounded-lg bg-[#1a1a2e] p-7" style={{ width: 380 }}>
+                <VillageMapPanel
+                  variant="unscouted"
+                  name="Bourg-le-Comte"
+                  coords="258 | 241"
+                  typeTag="player"
+                  owner="DarkLord_88"
+                  villagePower={410}
+                  ownerPower={2890}
+                  onClose={() => {}}
+                  onScout={() => {}}
+                  onAttack={() => {}}
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="font-mono text-[10px] text-[#5d4a32]">scouted · attaque bloquée</span>
+              <div className="relative flex justify-center rounded-lg bg-[#1a1a2e] p-7" style={{ width: 380 }}>
+                <VillageMapPanel
+                  variant="scouted"
+                  name="QA Refacto"
+                  coords="263 | 234"
+                  typeTag="player"
+                  owner="Joueur_nu001t"
+                  villagePower={195}
+                  ownerPower={1240}
+                  attackBlocked={true}
+                  attackBlockedReason="Puissance trop faible"
+                  intel={{
+                    freshness: { ago: '2 min', fresh: true },
+                    loot: { wood: 3000, stone: 3000, iron: 3000 },
+                    wall: 0,
+                    style: 'Économique',
+                    army: [
+                      { icon: '/assets/army/militia.png', count: 48, category: 'inf', name: 'Milicien' },
+                      { icon: '/assets/army/archer.png', count: 22, category: 'tir', name: 'Archer' },
+                      { icon: '/assets/army/squire.png', count: 14, category: 'inf', name: 'Écuyer' },
+                      { icon: '/assets/army/savage.png', count: 6, category: 'spe', name: 'Mercenaire' },
+                      { icon: '/assets/army/templar.png', count: 3, category: 'eli', name: 'Templier' },
+                    ],
+                  }}
+                  onClose={() => {}}
+                  onScout={() => {}}
+                  onViewReport={() => {}}
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="font-mono text-[10px] text-[#5d4a32]">barbare · tier 3</span>
+              <div className="relative flex justify-center rounded-lg bg-[#1a1a2e] p-7" style={{ width: 380 }}>
+                <VillageMapPanel
+                  variant="barbare"
+                  name="Camp barbare"
+                  coords="266 | 239"
+                  typeTag="pvm"
+                  owner={null}
+                  villagePower={88}
+                  tier={3}
+                  onClose={() => {}}
+                  onScout={() => {}}
+                  onAttack={() => {}}
+                />
+              </div>
+            </div>
           </div>
         </section>
 
