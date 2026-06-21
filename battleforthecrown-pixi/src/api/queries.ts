@@ -232,6 +232,7 @@ export function useWorldsQuery() {
   return useQuery<World[]>({
     queryKey: queryKeys.worlds(),
     queryFn: () => apiClient.get<World[]>("/world"),
+    staleTime: 30_000,
   });
 }
 
@@ -244,6 +245,7 @@ export function usePublicWorldsQuery() {
       });
       return PublicWorldsResponseSchema.parse(raw);
     },
+    staleTime: 30_000,
   });
 }
 
@@ -258,6 +260,7 @@ export function useMyMembershipsQuery() {
       return apiClient.get<WorldMembership[]>("/world/me/memberships");
     },
     enabled: Boolean(userId),
+    staleTime: 10_000,
   });
 }
 
@@ -395,8 +398,7 @@ export const resourcesQueryOptions = (villageId: string | null) =>
       return apiClient.get<ResourcesPayload>(`/resources/${villageId}`);
     },
     enabled: Boolean(villageId),
-    staleTime: 0,
-    refetchOnMount: "always" as const,
+    staleTime: 5_000,
   });
 
 export function useResourcesQuery(villageId: string | null) {

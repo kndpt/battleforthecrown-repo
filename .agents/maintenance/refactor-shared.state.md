@@ -1,14 +1,14 @@
 # refactor-shared — état (réécrit chaque run)
 
-last: 2026-06-18b | thème: logic/ — suppression casts as-number superflus + import dupliqué
-full: `archive/refactor-shared/2026-06-18b-full.md`
+last: 2026-06-21 | thème: shared specs pour formules pures sans couverture dans shared
+full: `archive/refactor-shared/2026-06-21-full.md`
 
 ## OPEN
 
-PR #145 `maint(refactor-shared): remove redundant as-number casts + merge duplicate import in logic/` — en review (CodeRabbit en cours)
+PR #174 `maint(refactor-shared): add shared specs for pure formula modules` — en review
 
 ## Candidats prochains runs
 
-1. **test gap `logic/`** — consumer tests backend couvrent tout, mais zéro spec dans shared pour `calculateTravelTime`, `calculateBuildingCost`. Valeur faible si backend suffit.
-2. **`combat/utils.ts`** — `calculateCasualtyStats` / `isVictoryForAttacker` n'ont pas de spec shared (testé via consumer backend `combat.utils.spec.ts`).
-3. **`resources/storage.ts`** — `getWarehouseStorageLimit` sans spec shared (testé via consumer backend).
+1. **test gap `logic/`** — `calculateTravelTime`, `calculateBuildingCost`, `calculateProductionRate` — consumer backend seulement. Valeur moyenne (backend suffit pour l'instant).
+2. **split `village/definitions.ts`** (476 L) — types + BUILDING_DEFINITIONS const + helpers mélangés. Refactor structurel, risque d'imports à mettre à jour.
+3. **split `rankings/index.ts`** (163 L) — types + consts + Zod schemas + formules. Already has index.spec.ts. Splitting would improve navigability.
