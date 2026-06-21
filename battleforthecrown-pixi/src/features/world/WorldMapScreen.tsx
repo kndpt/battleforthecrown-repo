@@ -1,8 +1,9 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
-import { Compass, Map as MapIcon, X } from 'lucide-react';
-import { BottomSheet, IconButton, Spinner, Tooltip } from '@/ui';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { BottomSheet, Spinner } from '@/ui';
 import { WorldMapCanvas, type WorldMapCanvasController } from './WorldMapCanvas';
+import { MapZoomControls, ZOOM_IN_FACTOR, ZOOM_OUT_FACTOR } from './MapZoomControls';
 import { SelectedEntityPanel } from './SelectedEntityPanel';
 import { WorldLockedScreen } from './WorldLockedScreen';
 import { WorldMiniMap } from './WorldMiniMap';
@@ -72,8 +73,8 @@ export function WorldMapScreen() {
   const [attackTarget, setAttackTarget] = useState<MapEntity | null>(null);
   const [caravanTarget, setCaravanTarget] = useState<MapEntity | null>(null);
   const [attackInitialMode, setAttackInitialMode] = useState<'attack' | 'scout'>('attack');
-  const [isMiniMapVisible, setIsMiniMapVisible] = useState(false);
   const [isKingdomActivitiesOpen, setIsKingdomActivitiesOpen] = useState(false);
+  const [isMiniMapOpen, setIsMiniMapOpen] = useState(false);
   const [kingdomActivityTab, setKingdomActivityTab] = useState<KingdomActivityTab>('expeditions');
   const [canvasReady, setCanvasReady] = useState(false);
   const [camera, setCamera] = useState<WorldMapCameraSnapshot>({
@@ -82,8 +83,8 @@ export function WorldMapScreen() {
   });
   const canvasRef = useRef<WorldMapCanvasController | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
-  const latestCameraRef = useRef(camera);
   const hasCameraSnapshotRef = useRef(false);
+  const latestCameraRef = useRef(camera);
   const visionDisks = worldEntities.data?.visionDisks ?? EMPTY_VISION_DISKS;
   const fogOfWarEnabled = worldEntities.data?.fogOfWarEnabled ?? true;
   const dims = worldDetails.data
@@ -176,7 +177,6 @@ export function WorldMapScreen() {
       center: activeFocus ?? myVillage ?? { x: dims.gridWidth / 2, y: dims.gridHeight / 2 },
       viewportTiles: FALLBACK_VIEWPORT_TILES,
     };
-    latestCameraRef.current = fallbackCamera;
     setCamera(fallbackCamera);
     // activeFocus volontairement hors deps : on l'utilise comme seed initial une fois,
     // l'application via centerOn est gérée par l'effet ci-dessous quand le canvas est prêt.
@@ -199,11 +199,11 @@ export function WorldMapScreen() {
     }
   }, [activeFocus, canvasReady, pendingFocus, searchParams, setPendingFocus, setSearchParams, setSelectedEntity, urlFocus]);
 
+  // À l'ouverture, resynchronise le state caméra avec le dernier snapshot capté
+  // pendant que la minimap était fermée (sinon viewbox figée à l'ouverture).
   useEffect(() => {
-    if (isMiniMapVisible) {
-      setCamera(latestCameraRef.current);
-    }
-  }, [isMiniMapVisible]);
+    if (isMiniMapOpen) setCamera(latestCameraRef.current);
+  }, [isMiniMapOpen]);
 
   const canViewWorld = !fogOfWarEnabled || isWatchtowerBuilt || visionDisks.length > 0;
   if (!worldEntities.isLoading && !canViewWorld) {
@@ -250,13 +250,52 @@ export function WorldMapScreen() {
                 onCameraChange={(nextCamera) => {
                   hasCameraSnapshotRef.current = true;
                   latestCameraRef.current = nextCamera;
-                  if (isMiniMapVisible) {
-                    setCamera(nextCamera);
-                  }
+                  // La minimap (repliée par défaut) se redessine à chaque update
+                  // caméra. Tant qu'elle est fermée, on n'écrit pas le snapshot
+                  // dans le state React → pas de re-render/redraw pendant pan/zoom.
+                  if (isMiniMapOpen) setCamera(nextCamera);
                 }}
                 onControllerReady={setCanvasReady}
                 controllerRef={canvasRef}
               />
+            )}
+
+            {/* Split view : la minimap occupe la moitié haute (navigation par
+                tap/drag) ; la map Pixi interactive reste accessible en dessous.
+                Repliable via l'onglet qui dépasse en bas (slide vers le haut). */}
+            {!worldEntities.isLoading && !myVillages.isLoading && (
+              <div
+                className={`pointer-events-none absolute inset-x-0 top-0 z-20 h-1/2 transition-transform duration-300 ease-out ${
+                  isMiniMapOpen ? 'translate-y-0' : '-translate-y-full'
+                }`}
+              >
+                <div className="pointer-events-auto h-full w-full overflow-hidden border-b-2 border-game-gold-border bg-[#2e2112] shadow-xl">
+                  <WorldMiniMap
+                    gridWidth={dims.gridWidth}
+                    gridHeight={dims.gridHeight}
+                    entities={visibleEntities}
+                    expeditions={expeditionSnapshots}
+                    myVillage={myVillage}
+                    visionDisks={visionDisks}
+                    cameraCenter={camera.center}
+                    viewportTiles={camera.viewportTiles}
+                    onRecenter={(x, y) => canvasRef.current?.centerOn(x, y)}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsMiniMapOpen((open) => !open)}
+                  aria-label={isMiniMapOpen ? 'Fermer la minimap' : 'Ouvrir la minimap'}
+                  className="pointer-events-auto absolute left-1/2 top-full flex -translate-x-1/2 items-center gap-1.5 rounded-b-xl border-2 border-t-0 border-game-gold-border bg-gradient-to-b from-[#5a4424] to-[#2e2112] px-4 py-1.5 font-game text-xs font-bold uppercase tracking-wide text-game-gold-light shadow-lg transition-all hover:brightness-110 active:translate-y-px"
+                >
+                  {isMiniMapOpen ? (
+                    <ChevronUp size={16} strokeWidth={2.5} />
+                  ) : (
+                    <ChevronDown size={16} strokeWidth={2.5} />
+                  )}
+                  {isMiniMapOpen ? 'Fermer minimap' : 'Ouvrir minimap'}
+                </button>
+              </div>
             )}
 
             <div className="pointer-events-none absolute inset-0">
@@ -272,7 +311,7 @@ export function WorldMapScreen() {
                 onNavigate={navigate}
               />
 
-              <div className="pointer-events-auto absolute left-3 top-3 flex flex-col items-start gap-2">
+              <div className="pointer-events-auto absolute left-3 top-9 flex flex-col items-start gap-2">
                 <KingdomActivityHudBadges
                   badges={[
                     {
@@ -291,46 +330,13 @@ export function WorldMapScreen() {
                 />
               </div>
 
-              <div className="pointer-events-auto absolute right-3 top-[160px] flex flex-col items-end gap-2">
-                {isMiniMapVisible && (
-                  <WorldMiniMap
-                    gridWidth={dims.gridWidth}
-                    gridHeight={dims.gridHeight}
-                    entities={visibleEntities}
-                    expeditions={expeditionSnapshots}
-                    myVillage={myVillage}
-                    visionDisks={visionDisks}
-                    cameraCenter={camera.center}
-                    viewportTiles={camera.viewportTiles}
-                    onRecenter={(x, y) => canvasRef.current?.centerOn(x, y)}
-                  />
-                )}
-                <Tooltip
-                  content={isMiniMapVisible ? 'Masquer la mini-carte' : 'Afficher la mini-carte'}
-                  position="left"
-                  variant="dark"
-                >
-                  <IconButton
-                    icon={isMiniMapVisible ? X : MapIcon}
-                    variant="warning"
-                    size="md"
-                    label={isMiniMapVisible ? 'Masquer la mini-carte' : 'Afficher la mini-carte'}
-                    onClick={() => setIsMiniMapVisible((v) => !v)}
-                  />
-                </Tooltip>
-              </div>
-
-              <div className="pointer-events-auto absolute bottom-4 right-4">
-                <Tooltip content="Recentrer sur mon village" position="left" variant="dark">
-                  <IconButton
-                    icon={Compass}
-                    variant="warning"
-                    size="md"
-                    label="Recentrer sur mon village"
-                    onClick={handleRecenter}
-                    disabled={!myVillage}
-                  />
-                </Tooltip>
+              <div className="pointer-events-auto absolute right-4 bottom-[calc(var(--bftc-bottom-nav-height,88px)_+_16px)]">
+                <MapZoomControls
+                  onZoomIn={() => canvasRef.current?.zoomBy(ZOOM_IN_FACTOR)}
+                  onZoomOut={() => canvasRef.current?.zoomBy(ZOOM_OUT_FACTOR)}
+                  onRecenter={handleRecenter}
+                  recenterDisabled={!myVillage}
+                />
               </div>
             </div>
 

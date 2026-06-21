@@ -17,6 +17,7 @@ const EMPTY_VISION_DISKS: readonly VisionDisk[] = [];
 
 export interface WorldMapCanvasController {
   centerOn: (worldX: number, worldY: number) => void;
+  zoomBy: (factor: number) => void;
   focusOn: (
     worldX: number,
     worldY: number,
@@ -79,6 +80,7 @@ export function WorldMapCanvas({
       if (controllerRef) {
         controllerRef.current = {
           centerOn: handle.centerOn,
+          zoomBy: handle.zoomBy,
           focusOn: handle.focusOn,
           onCameraChange: handle.onCameraChange,
           worldToScreen: handle.worldToScreen,
