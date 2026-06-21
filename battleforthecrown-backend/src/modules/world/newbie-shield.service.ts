@@ -2,8 +2,7 @@ import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WorldConfigService } from './world-config.service';
 import {
-  isShieldActive,
-  shieldEndsAt,
+  buildShieldState,
   type NewbieShieldState,
 } from '@battleforthecrown/shared';
 import { createOutboxEvent } from '../event/event.utils';
@@ -30,22 +29,13 @@ export class NewbieShieldService {
     if (!membership) return null;
 
     const config = await this.worldConfig.getConfig(worldId);
-    const hours = config.lifecycle.newbieShieldHours;
-    const { joinedAt, shieldBrokenAt } = membership;
 
-    const endsAt = shieldEndsAt({
-      joinedAt,
-      newbieShieldHours: hours,
-    }).toISOString();
-    const brokenAt = shieldBrokenAt ? shieldBrokenAt.toISOString() : null;
-    const active = isShieldActive({
-      joinedAt,
-      brokenAt: shieldBrokenAt,
-      newbieShieldHours: hours,
+    return buildShieldState({
+      joinedAt: membership.joinedAt,
+      brokenAt: membership.shieldBrokenAt,
+      newbieShieldHours: config.lifecycle.newbieShieldHours,
       now,
     });
-
-    return { endsAt, brokenAt, active };
   }
 
   async assertCanAttackTarget(

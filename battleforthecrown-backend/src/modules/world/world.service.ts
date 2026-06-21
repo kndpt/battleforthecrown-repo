@@ -17,8 +17,7 @@ import {
   type WorldMembershipResponse,
 } from '@battleforthecrown/shared/world';
 import {
-  isShieldActive,
-  shieldEndsAt,
+  buildShieldState,
   type NewbieShieldState,
 } from '@battleforthecrown/shared';
 
@@ -180,19 +179,12 @@ export class WorldService {
       // of re-fetching config per membership — avoids an N+1 on this list route.
       const shieldHours = this.parseWorldConfig(m.worldId, m.world.config)
         .lifecycle.newbieShieldHours;
-      const newbieShield: NewbieShieldState = {
-        endsAt: shieldEndsAt({
-          joinedAt: m.joinedAt,
-          newbieShieldHours: shieldHours,
-        }).toISOString(),
-        brokenAt: m.shieldBrokenAt ? m.shieldBrokenAt.toISOString() : null,
-        active: isShieldActive({
-          joinedAt: m.joinedAt,
-          brokenAt: m.shieldBrokenAt,
-          newbieShieldHours: shieldHours,
-          now,
-        }),
-      };
+      const newbieShield: NewbieShieldState = buildShieldState({
+        joinedAt: m.joinedAt,
+        brokenAt: m.shieldBrokenAt,
+        newbieShieldHours: shieldHours,
+        now,
+      });
       return {
         worldId: m.worldId,
         worldName: m.world.name,
