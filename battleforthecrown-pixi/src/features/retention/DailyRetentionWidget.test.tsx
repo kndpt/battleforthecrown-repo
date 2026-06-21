@@ -100,6 +100,40 @@ describe("DailyRetentionWidget", () => {
     expect(onClaim).toHaveBeenCalledWith({ cardId: "card-1", villageId: "v2" });
   });
 
+  it.each([
+    ["WATCH", "assets/watchtower.png"],
+    ["BUILDERS", "assets/castle.png"],
+    ["MARCH", "assets/army-power.png"],
+    ["BARBARIANS", "assets/attack.png"],
+  ] as const)(
+    "renders the %s Oyez theme with its mapped icon",
+    (theme, expectedIcon) => {
+      render(
+        <DailyRetentionWidget
+          activeVillageId="v1"
+          onClaim={vi.fn()}
+          onNavigate={vi.fn()}
+          summary={{
+            ...summary,
+            oyez: { ...summary.oyez!, theme },
+          }}
+          villages={villages}
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: /Devoir royal, 1 carte à réclamer/i,
+        }),
+      );
+
+      // The sheet is rendered through createPortal into document.body.
+      expect(
+        document.body.querySelector(`img[src$="${expectedIcon}"]`),
+      ).not.toBeNull();
+    },
+  );
+
   it("does not render a backlog or missed-days catch-up copy", () => {
     render(
       <DailyRetentionWidget
