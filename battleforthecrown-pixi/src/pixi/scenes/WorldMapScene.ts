@@ -510,10 +510,10 @@ export function createWorldMapScene(
     }
     const pulse = (Math.sin(nowMs / 240) + 1) / 2;
     activeVillageHalo.visible = true;
-    const feetY = py + size * 0.32;
+    const feetY = py + size * 0.2;
     const rx = size * factor * ACTIVE_HALO_SCALE;
     activeVillageHalo
-      .ellipse(px, feetY, rx, rx * 0.34)
+      .ellipse(px, feetY, rx * 1.2, rx * 0.34 * 1.7)
       .fill({ color: COLOR.myVillage, alpha: 0.12 })
       .stroke({ color: COLOR.myVillage, width: 4, alpha: 0.45 + pulse * 0.3 });
   };
@@ -576,15 +576,10 @@ export function createWorldMapScene(
       if (data.isMine) {
         const r = size * ownedHaloRxFactor(data);
         graphic
-          .ellipse(0, size * 0.32, r, r * 0.34)
+          .ellipse(0, size * 0.2, r * 1.2, r * 0.34 * 1.7)
           .fill({ color: COLOR.ownVillageMarker, alpha: 0.1 })
           .stroke({ color: COLOR.ownVillageMarker, width: 3, alpha: 0.85 });
       }
-      // Grounding drop-shadow: a flattened iso ellipse offset toward the SE
-      // (the terrain light comes from the NW), so the sprite sits on the map.
-      graphic
-        .ellipse(size * 0.12, size * 0.34, size * 0.36, size * 0.16)
-        .fill({ color: 0x14200d, alpha: 0.28 });
     } else {
       sprite.visible = false;
       graphic.circle(0, 0, radius + 4).fill({ color: ringColor, alpha: 0.7 });

@@ -268,11 +268,14 @@ export function BottomNavigationBar({
           style={{
             display: "flex",
             alignItems: "center",
-            background: "linear-gradient(to bottom, #54401f, #2e2112)",
-            border: "1.5px solid #1d1408",
+            background:
+              "linear-gradient(to bottom, rgba(84,64,31,.99), rgba(46,33,18,.80))",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            border: "1.5px solid rgba(29,20,8,.85)",
             borderRadius: 18,
             boxShadow:
-              "0 10px 22px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.16)",
+              "0 10px 22px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.16)",
             padding: "7px 4px",
           }}
         >

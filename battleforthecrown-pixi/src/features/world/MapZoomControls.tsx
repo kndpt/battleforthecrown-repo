@@ -30,7 +30,7 @@ function ControlButton({
       title={label}
       onClick={onClick}
       disabled={disabled}
-      className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-game-gold-border bg-gradient-to-b from-[#5a4424] to-[#2e2112] text-game-gold-light shadow-game-inset outline-none transition-all duration-100 hover:brightness-125 active:translate-y-0.5 active:shadow-game-pressed disabled:cursor-not-allowed disabled:opacity-40"
+      className="flex h-12 w-12 items-center justify-center rounded-2xl border-[1.5px] border-[#1d1408]/85 bg-gradient-to-b from-[rgba(84,64,31,0.99)] to-[rgba(46,33,18,0.8)] text-game-gold-light shadow-game-inset outline-none backdrop-blur-[10px] transition-all duration-100 hover:brightness-125 active:translate-y-0.5 active:shadow-game-pressed disabled:cursor-not-allowed disabled:opacity-40"
     >
       <Icon size={22} strokeWidth={2.5} />
     </button>
