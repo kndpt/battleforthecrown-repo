@@ -234,8 +234,9 @@ export function VillageView() {
         activePublicWorld,
         activeMembership,
         worldId,
+        renownLevel: renown?.level ?? null,
       }),
-    [activeMembership, activePublicWorld, crownBalance, kingdomPower, user, villages.length, worldId],
+    [activeMembership, activePublicWorld, crownBalance, kingdomPower, renown?.level, user, villages.length, worldId],
   );
 
   // ── Effects ─────────────────────────────────────────────────────────────────
@@ -370,7 +371,7 @@ export function VillageView() {
             onOpenVillageStyle={() => setIsVillageStyleOpen(true)}
             parallaxStyles={heroParallaxStyles}
             playerInitials={getPlayerInitials(user?.displayName ?? 'Joueur')}
-            playerLevel={PLAYER_PROFILE_LEVEL}
+            playerLevel={renown?.level ?? PLAYER_PROFILE_LEVEL}
             retentionSlot={
               <DailyRetentionWidget
                 activeVillageId={villageId}

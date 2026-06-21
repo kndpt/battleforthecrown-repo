@@ -132,4 +132,30 @@ describe('buildPlayerProfileSheetData', () => {
     });
     expect(worldIdOnly.world.name).toBe('world-9');
   });
+
+  it('uses the renown level for the avatar badge, with a placeholder fallback', () => {
+    const withRenown = buildPlayerProfileSheetData({
+      kingdomPower,
+      crownBalance: 0,
+      user: { displayName: 'Jane' },
+      villagesCount: 1,
+      activePublicWorld: undefined,
+      activeMembership: undefined,
+      worldId: 'world-1',
+      renownLevel: 3,
+    });
+    expect(withRenown.player.level).toBe(3);
+
+    const withoutRenown = buildPlayerProfileSheetData({
+      kingdomPower,
+      crownBalance: 0,
+      user: { displayName: 'Jane' },
+      villagesCount: 1,
+      activePublicWorld: undefined,
+      activeMembership: undefined,
+      worldId: 'world-1',
+    });
+    // Fallback placeholder (PLAYER_PROFILE_LEVEL) tant que la Renommée n'est pas chargée.
+    expect(withoutRenown.player.level).toBe(1);
+  });
 });

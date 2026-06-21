@@ -113,8 +113,9 @@ export function GameHeader({
         activePublicWorld,
         activeMembership,
         worldId,
+        renownLevel: renown?.level ?? null,
       }),
-    [activeMembership, activePublicWorld, crownBalance, kingdomPower, user, villages.length, worldId],
+    [activeMembership, activePublicWorld, crownBalance, kingdomPower, renown?.level, user, villages.length, worldId],
   );
 
   useEffect(() => {
@@ -206,7 +207,7 @@ export function GameHeader({
             {getPlayerInitials(user?.displayName ?? 'Joueur')}
           </span>
           <span className="absolute -bottom-0.5 -right-0.5 flex size-[18px] items-center justify-center rounded-full border border-[#7a5200] bg-gradient-to-b from-[#f6d57b] to-[#c9900c] font-game text-[8.5px] font-black text-[#3a2a00]">
-            {PLAYER_PROFILE_LEVEL}
+            {renown?.level ?? PLAYER_PROFILE_LEVEL}
           </span>
         </button>
 
