@@ -256,4 +256,68 @@ describe('construction smoke', () => {
       { timeoutMs: 15_000 },
     );
   });
+
+  it('construction: cancelled WAREHOUSE leaves storage cap untouched after the pg-boss singleton fires', async () => {
+    // Regression: the worker used to run `updateStorageLimit`, `resourcesChanged`
+    // and `recalculateOnBuildingChange` even when the tx callback returned early
+    // (building cancelled, missing, or already at target level). For WAREHOUSE
+    // that bumped `resourceStock.maxPerType` to the level we never built.
+    const world = await seedSmokeWorld(
+      ctx.prisma,
+      `build-cancel-warehouse-${Date.now()}`,
+    );
+    const user = await registerUser(ctx.server, 'build-cancel-warehouse');
+    const join = await joinWorld(
+      ctx.server,
+      user.accessToken,
+      world.id,
+      'build-cancel-warehouse-village',
+    );
+    const villageId = join.village.id;
+
+    await ctx.prisma.resourceStock.update({
+      where: { villageId },
+      data: {
+        wood: 1_000_000,
+        stone: 1_000_000,
+        iron: 1_000_000,
+      },
+    });
+    const baseline = await ctx.prisma.resourceStock.findUniqueOrThrow({
+      where: { villageId },
+    });
+
+    const upgrade = await request(ctx.server)
+      .post(`/village/${villageId}/upgrade`)
+      .set('Authorization', `Bearer ${user.accessToken}`)
+      .send({ buildingType: BUILDING_TYPES.WAREHOUSE });
+    expect(upgrade.status).toBeLessThan(300);
+
+    const warehouse = await ctx.prisma.building.findFirstOrThrow({
+      where: { villageId, type: BUILDING_TYPES.WAREHOUSE },
+    });
+    expect(warehouse.endTime).toBeTruthy();
+
+    const cancel = await request(ctx.server)
+      .delete(`/village/${villageId}/buildings/${warehouse.id}/cancel`)
+      .set('Authorization', `Bearer ${user.accessToken}`);
+    expect(cancel.status).toBeLessThan(300);
+
+    // SMOKE_WORLD_CONFIG has constructionSpeed=0.01 → WAREHOUSE 1→2 endTime ≈
+    // 1.2s. pg-boss polls every 1s, so the singleton dispatches within ~2.5s
+    // of the upgrade. Sleep past that window so the worker has handled (and,
+    // post-fix, skipped) the job before we assert.
+    await new Promise((r) => setTimeout(r, 4_000));
+
+    const post = await ctx.prisma.building.findUniqueOrThrow({
+      where: { id: warehouse.id },
+    });
+    expect(post.level).toBe(1);
+    expect(post.endTime).toBeNull();
+
+    const stock = await ctx.prisma.resourceStock.findUniqueOrThrow({
+      where: { villageId },
+    });
+    expect(stock.maxPerType).toBe(baseline.maxPerType);
+  }, 15_000);
 });
