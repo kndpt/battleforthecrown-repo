@@ -20,7 +20,9 @@ export function PixiCanvas({ className, onReady }: PixiCanvasProps) {
 
     void createPixiApp({ container }).then((created) => {
       if (cancelled) {
-        created.destroy(true, { children: true, texture: true });
+        // Same reasoning as the unmount path below: never release the global
+        // resources (TexturePool) shared with the other live canvas.
+        created.destroy({ removeView: true }, { children: true, texture: true });
         return;
       }
       app = created;
@@ -31,7 +33,14 @@ export function PixiCanvas({ className, onReady }: PixiCanvasProps) {
       cancelled = true;
       cleanupOnReady?.();
       if (app) {
-        app.destroy(true, { children: true, texture: true });
+        // `removeView: true` (not the `true` shorthand) tears down THIS renderer
+        // without `releaseGlobalResources`, which would call TexturePool.clear()
+        // on the process-global singleton shared by every PixiJS Application
+        // (Village + WorldMap canvases). Clearing it while another canvas still
+        // holds a pooled cache-as-texture (the world-map fog) leaves a dangling
+        // _poolKeyHash entry whose bucket is gone, so the next returnTexture()
+        // crashes with "undefined (reading 'push')" on scene teardown.
+        app.destroy({ removeView: true }, { children: true, texture: true });
       }
     };
   }, [onReady]);
