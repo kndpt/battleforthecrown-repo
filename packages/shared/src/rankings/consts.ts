@@ -1,13 +1,19 @@
 import type { UnitType } from "../army/types";
 
+export const RANKING_SIGNALS = [
+  "POWER",
+  "ASSAULT_GLORY",
+  "RAMPART_GLORY",
+] as const;
+
+export type RankingSignal = (typeof RANKING_SIGNALS)[number];
+export type GlorySignal = Exclude<RankingSignal, "POWER">;
+
 export const RANKING_SIGNAL_LABELS = Object.freeze({
   POWER: "Puissance du Royaume",
   ASSAULT_GLORY: "Gloire d'Assaut",
   RAMPART_GLORY: "Gloire du Rempart",
-});
-
-export type RankingSignal = keyof typeof RANKING_SIGNAL_LABELS;
-export type GlorySignal = Exclude<RankingSignal, "POWER">;
+} satisfies Record<RankingSignal, string>);
 
 export const BATTLE_UNIT_VALUES = Object.freeze({
   MILITIA: 2,

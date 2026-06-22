@@ -21,7 +21,14 @@ export function calculateOpponentMultiplier(
   scorerPower: number,
   opponentPower: number,
 ): number {
-  if (scorerPower <= 0 || opponentPower <= 0) return 1;
+  if (
+    !Number.isFinite(scorerPower) ||
+    !Number.isFinite(opponentPower) ||
+    scorerPower <= 0 ||
+    opponentPower <= 0
+  ) {
+    return 1;
+  }
   const ratio = opponentPower / scorerPower;
   return Math.min(
     GLORY_OPPONENT_MULTIPLIER.max,
@@ -33,10 +40,11 @@ export function applyPairDiminishingReturns(
   rawPoints: number,
   previousPairRawPoints24h: number,
 ): number {
-  if (rawPoints <= 0) return 0;
+  if (!Number.isFinite(rawPoints) || rawPoints <= 0) return 0;
 
   let remaining = rawPoints;
-  let cursor = Math.max(0, previousPairRawPoints24h);
+  const safePrevious = Number.isFinite(previousPairRawPoints24h) ? previousPairRawPoints24h : 0;
+  let cursor = Math.max(0, safePrevious);
   let effective = 0;
 
   const fullRoom = Math.max(0, GLORY_PAIR_24H_THRESHOLDS.full - cursor);
@@ -58,7 +66,7 @@ export function splitPointsByWeights<T extends string>(
   totalPoints: number,
   weights: { id: T; weight: number }[],
 ): { id: T; points: number }[] {
-  const safeTotal = Math.max(0, Math.floor(totalPoints));
+  const safeTotal = Number.isFinite(totalPoints) ? Math.max(0, Math.floor(totalPoints)) : 0;
   if (safeTotal <= 0) return [];
 
   const grouped = new Map<T, number>();

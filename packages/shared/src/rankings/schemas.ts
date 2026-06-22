@@ -1,10 +1,7 @@
 import { z } from "zod";
+import { RANKING_SIGNALS } from "./consts";
 
-export const RankingSignalSchema = z.enum([
-  "POWER",
-  "ASSAULT_GLORY",
-  "RAMPART_GLORY",
-]);
+export const RankingSignalSchema = z.enum(RANKING_SIGNALS);
 
 export const RankingsPeriodSchema = z.enum(["LIVE", "WEEKLY", "ALL_TIME"]);
 
