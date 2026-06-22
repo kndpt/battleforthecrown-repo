@@ -46,7 +46,7 @@ src/
     ├── construction.worker.ts
     ├── training.worker.ts
     ├── crown-production.worker.ts
-    ├── world-lifecycle.worker.ts
+    ├── world-lifecycle.worker.ts  # cycle PLANNED→OPEN→LOCKED→ENDED + spawner auto (ensurePlannedPipeline)
     ├── oyez.worker.ts            # cron 04:00 Europe/Paris → OyezProducerService (mondes OPEN)
     └── outbox.worker.ts
 ```
@@ -56,7 +56,7 @@ src/
 | Module | Endpoints clés | Workers | Notes |
 |--------|----------------|---------|-------|
 | **auth** | `POST /auth/login`, `/register`, `/refresh` | — | JWT + refresh tokens, sessions DB |
-| **world** | `GET /world`, `GET /worlds/public`, `GET /world/:worldId/details`, `/entities` | `BarbarianSeedingCatchupWorker`, `WorldLifecycleWorker` | Seeding procédural des villages barbares + placement joueur ; cycle `PLANNED → OPEN → LOCKED → ENDED` |
+| **world** | `GET /world`, `GET /worlds/public`, `GET /world/:worldId/details`, `/entities` | `BarbarianSeedingCatchupWorker`, `WorldLifecycleWorker` | Seeding procédural des villages barbares + placement joueur ; cycle `PLANNED → OPEN → LOCKED → ENDED` ; spawner auto qui garantit un monde joignable « frais » (cadence `newWorldEverydays`, event `world.planned.created`) |
 | **village** | `GET /village/:id/buildings`, `/queue` | — | Lectures village + bâtiments. Les mutations (upgrade/cancel) délégées à `gameplay/` |
 | **resources** | `GET /resources/:villageId` | `ProductionWorker` | Production passive bois/pierre/fer, capé par warehouse. Pas de publication d'event (déléguée à `OutboxPublisher`) |
 | **army** | `GET /army/:villageId/inventory`, `/training`, `POST /army/:villageId/throne/recruit-noble` | — | Lectures inventaire + entraînements. Mutations (train/cancel/recruit noble) déléguées à `gameplay/` |

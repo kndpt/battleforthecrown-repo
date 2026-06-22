@@ -1031,6 +1031,10 @@ const bindings: ServerEventBindings = {
   "crowns.changed": applyCrownsChanged,
   "rankings.changed": applyRankingsChanged,
   "world.status.changed": applyWorldStatusChanged,
+  // No client effect: a freshly auto-created PLANNED world has no members, and
+  // the public worlds list refreshes via its own query. Bound only to satisfy
+  // the exhaustive ServerEvents contract (run 064 spawner).
+  "world.planned.created": () => undefined,
   "building.completed": applyBuildingCompleted,
   "unit.training.completed": applyUnitTrainingCompleted,
   "unit.trained": applyUnitTrained,

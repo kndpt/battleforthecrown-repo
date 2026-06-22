@@ -1,8 +1,8 @@
 # Run #064 — world-recurring-planned-spawner
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-22
+> **Terminé** : 2026-06-22
 
 ## Cible
 
@@ -80,19 +80,26 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 - Déjà résolu : non. Run 032 a explicitement reporté ce livrable.
 - Keywords scannés : `world-lifecycle`, `world-spawner`, `planned`, `recurring`, `newWorldEverydays`, `multi-monde`, `cadence`.
 
-## Progress
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
-## Décisions prises
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
 ## Rapport final
+
+Spawner `ensurePlannedPipeline(now)` ajouté au `WorldLifecycleWorker`, exécuté avant `openPlannedWorlds`, sous advisory lock + invariant `count(PLANNED)===0`. Config héritée du monde `default` ou de la nouvelle constante shared `DEFAULT_WORLD_CONFIG` (bootstrap), identité dérivée déterministe. Nouvel event Outbox `world.planned.created`. Unit pure-logic (Jest, pas Vitest — backend, conforme `bftc-tests-policy`) + smoke 3 scénarios.
 
 ### Acceptance & QA
 
-- [ ] <critère> — `<cmd>` → <résultat>
-- **Review indépendante** : oui (critères déclencheurs : invariant durable « toujours un monde joignable frais à 7j max » + impact backend transverse + diff estimé > 100 lignes worker + smoke + helper).
-- **Tests automatisés** : Vitest unit (`computeNextPlannedOpenAt`) + smoke backend (`world-lifecycle-spawner.smoke.spec.ts`).
-- **Tests IG user** : `Aucun` (entièrement automatisable — manipulation DB + tick worker en smoke).
+**Critères d'acceptance vérifiés** :
+- [x] `ensurePlannedPipeline` avant `openPlannedWorlds` — `grep -n ensurePlannedPipeline world-lifecycle.worker.ts` → appelé en premier dans `handleLifecycleTick`.
+- [x] Trigger cadence échue + `plannedOpenAt` / bootstrap `now` / cadence non échue = skip — `yarn workspace battleforthecrown-backend test -- world-spawner.logic` → 8/8 (cadence/boundary/overdue/bootstrap/skip).
+- [x] Bootstrap DB vide = 1 monde ouvert immédiatement — smoke (c) → 1 monde OPEN, `startedAt=now`, 0 PLANNED.
+- [x] Idempotence (re-tick) + concurrence (`pg_try_advisory_xact_lock`) — smoke (a) re-tick → `plannedCreated=0`, 2 mondes, 1 event.
+- [x] Cap `<50` actifs (`MAX_ACTIVE_WORLDS`) + héritage config canonique + identité déterministe — review + unit `deriveAutoWorldIdentity`/parse Zod.
+- [x] Event Outbox `world.planned.created {worldId,plannedOpenAt,source:'auto'}` même tx — smoke (a) → 1 row `world.planned.created`, `aggregateId` = monde créé.
+- [x] `/worlds/public` contrat inchangé — `worlds-public.smoke.spec.ts` vert (seule la shape du retour `handleLifecycleTick` mise à jour : `+plannedCreated`).
+- [x] `yarn static-check` + `yarn test:backend` + `yarn test:smoke` verts — voir ci-dessous.
+
+**Review indépendante** : Déclenchée (raison : invariant durable + backend transverse + diff > 100 lignes). Verdict initial `BLOCK` (1 majeur : doc `realtime.md` manquante pour le nouvel event) → **résolu** (event ajouté à `realtime.md` + `backend-modules.md`). Mineurs (drift `tagline` non load-bearing car identity écrasée ; commentaire `resolveTemplateConfig` reformulé) traités.
+
+**Tests automatisés** : `test:backend` → 505/505 ; unit spawner `world-spawner.logic` → 8/8.
+**Smokes lancés** : Complets (`test:smoke` → 32 suites / 108 tests verts) — justifié : contrat events shared multi-domaines + planner Outbox global touchés. Ciblés au préalable : `world-lifecycle-spawner worlds-public world-ended-lifecycle` → 3/3.
+**Smokes ajoutés/modifiés** : `world-lifecycle-spawner.smoke.spec.ts` (a cadence échue, b cadence non échue, c bootstrap) ; `worlds-public.smoke.spec.ts` (assertion shape `+plannedCreated:0`).
+**QA fonctionnelle agent** : couverte par smokes (effets réels DB + Outbox + tick worker).
+**Tests IG à faire par le user** : Aucun — entièrement automatisable (backend pur, aucun rendu front ; le binding WS est un no-op).
