@@ -176,6 +176,13 @@ export class ConstructionWorker implements OnModuleInit {
       );
     }
 
+    // ADR-02 deviation note: `resources.changed` is emitted outside the
+    // building-mutation tx on purpose. The mutation that justifies the event
+    // here is the production-rate change derived from the new level — the
+    // underlying `resourceStock` row was not touched by this worker. Emitting
+    // inside the tx would force a retry of the whole job on failure (re-firing
+    // `building.completed`); if this emit drops, the next production tick or
+    // the next user-driven resource action re-emits a fresh snapshot.
     if (PRODUCTION_RECOMPUTE_BUILDINGS.has(data.buildingType as BuildingType)) {
       await this.runIsolatedSideEffect('resourcesChanged', data, () =>
         this.outbox.resourcesChanged(data.villageId),
