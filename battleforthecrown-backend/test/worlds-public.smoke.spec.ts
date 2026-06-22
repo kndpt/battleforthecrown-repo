@@ -133,6 +133,7 @@ describe('public worlds smoke', () => {
 
     const worker = ctx.app.get(WorldLifecycleWorker);
     await expect(worker.handleLifecycleTick(now)).resolves.toEqual({
+      plannedCreated: 0,
       plannedToOpen: 1,
       openToLocked: 1,
       lockedToEnded: 1,
@@ -176,6 +177,7 @@ describe('public worlds smoke', () => {
     ).toBeNull();
 
     await expect(worker.handleLifecycleTick(now)).resolves.toEqual({
+      plannedCreated: 0,
       plannedToOpen: 0,
       openToLocked: 0,
       lockedToEnded: 0,

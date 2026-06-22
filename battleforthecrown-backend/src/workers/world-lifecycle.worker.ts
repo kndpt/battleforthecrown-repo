@@ -1,18 +1,40 @@
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import type { World, WorldStatus } from '@prisma/client';
+import { Prisma, type World, type WorldStatus } from '@prisma/client';
+import { randomUUID } from 'node:crypto';
 import PgBoss from 'pg-boss';
 import { PrismaService } from '../infra/prisma/prisma.service';
+import { PrismaClientOrTx } from '../common/prisma.types';
 import { registerScheduledQueueWorker } from '../infra/pg-boss/queue-worker.helper';
 import { createOutboxEvent } from '../modules/event/event.utils';
 import { RankingsService } from '../modules/rankings/rankings.service';
 import { RenownService } from '../modules/renown/renown.service';
 import {
+  DEFAULT_WORLD_CONFIG,
   WorldConfigSchema,
   resolveWorldLifecycleConfig,
+  type WorldConfig,
 } from '@battleforthecrown/shared/world';
 import { MS_PER_DAY } from '@battleforthecrown/shared/time';
+import {
+  computeNextPlannedOpenAt,
+  deriveAutoWorldIdentity,
+} from './world-spawner.logic';
+
 const WORLD_LIFECYCLE_QUEUE = 'world:lifecycle';
 const WORLD_LIFECYCLE_CRON = '*/5 * * * *';
+
+/**
+ * Garde-fou anti-bug : ne jamais noyer la liste publique de mondes auto-créés.
+ * Plafond souple, pas une règle gameplay (run 064).
+ */
+const MAX_ACTIVE_WORLDS = 50;
+
+/**
+ * Clé constante de `pg_try_advisory_xact_lock` sérialisant la création de monde
+ * entre instances pg-boss. Combinée au check `count(PLANNED) === 0` dans la même
+ * transaction, elle garantit qu'un seul monde PLANNED est créé par fenêtre.
+ */
+const WORLD_SPAWNER_LOCK_KEY = 8_064_064_064;
 
 @Injectable()
 export class WorldLifecycleWorker implements OnModuleInit {
@@ -40,21 +62,130 @@ export class WorldLifecycleWorker implements OnModuleInit {
   }
 
   async handleLifecycleTick(now = new Date()): Promise<{
+    plannedCreated: number;
     plannedToOpen: number;
     openToLocked: number;
     lockedToEnded: number;
   }> {
+    // Garantir un monde joignable « frais » AVANT d'ouvrir les PLANNED : si la
+    // cadence est échue, le monde créé ici (`plannedOpenAt = now`) est ouvert
+    // dans le même tick par `openPlannedWorlds`.
+    const plannedCreated = await this.ensurePlannedPipeline(now);
     const plannedToOpen = await this.openPlannedWorlds(now);
     const openToLocked = await this.lockExpiredRegistrationWindows(now);
     const lockedToEnded = await this.endExpiredWorlds(now);
 
-    if (plannedToOpen + openToLocked + lockedToEnded > 0) {
+    if (plannedCreated + plannedToOpen + openToLocked + lockedToEnded > 0) {
       this.logger.log(
-        `World lifecycle transitions: plannedToOpen=${plannedToOpen}, openToLocked=${openToLocked}, lockedToEnded=${lockedToEnded}`,
+        `World lifecycle transitions: plannedCreated=${plannedCreated}, plannedToOpen=${plannedToOpen}, openToLocked=${openToLocked}, lockedToEnded=${lockedToEnded}`,
       );
     }
 
-    return { plannedToOpen, openToLocked, lockedToEnded };
+    return { plannedCreated, plannedToOpen, openToLocked, lockedToEnded };
+  }
+
+  /**
+   * Garantit qu'un monde joignable « frais » existe pour les latecomers. Ne crée
+   * rien si un monde PLANNED existe déjà (invariant primaire), si le système est
+   * saturé, ou si la cadence `newWorldEverydays` n'est pas encore échue.
+   *
+   * La transaction prend un advisory lock pour sérialiser la création entre
+   * instances ; le perdant du lock ne fait rien ce tick.
+   */
+  private async ensurePlannedPipeline(now: Date): Promise<number> {
+    return this.prisma.$transaction(async (tx) => {
+      const [{ locked }] = await tx.$queryRaw<{ locked: boolean }[]>(
+        Prisma.sql`SELECT pg_try_advisory_xact_lock(${WORLD_SPAWNER_LOCK_KEY}::bigint) AS locked`,
+      );
+      if (!locked) {
+        return 0;
+      }
+
+      // Invariant primaire : un monde frais existe déjà → rien à faire.
+      const plannedCount = await tx.world.count({
+        where: { status: 'PLANNED' },
+      });
+      if (plannedCount > 0) {
+        return 0;
+      }
+
+      // Garde-fou souple : ne pas noyer la liste publique en cas de bug.
+      const activeCount = await tx.world.count({
+        where: { status: { in: ['PLANNED', 'OPEN', 'LOCKED'] } },
+      });
+      if (activeCount >= MAX_ACTIVE_WORLDS) {
+        return 0;
+      }
+
+      const totalWorlds = await tx.world.count();
+      const lastStarted = await tx.world.findFirst({
+        where: { startedAt: { not: null } },
+        orderBy: { startedAt: 'desc' },
+        select: { startedAt: true },
+      });
+
+      // Des mondes existent mais aucun n'a démarré et aucun n'est PLANNED : état
+      // dégénéré improbable. Ne pas prendre la branche bootstrap (réservée à la
+      // DB strictement vide) pour rester idempotent.
+      if (!lastStarted && totalWorlds > 0) {
+        return 0;
+      }
+
+      const template = await this.resolveTemplateConfig(tx);
+      const plannedOpenAt = computeNextPlannedOpenAt(
+        lastStarted?.startedAt ?? null,
+        template.lifecycle.newWorldEverydays,
+        now,
+      );
+      if (plannedOpenAt === null) {
+        return 0;
+      }
+
+      const { name, identity } = deriveAutoWorldIdentity(totalWorlds);
+      const worldId = randomUUID();
+      const config: WorldConfig = { ...template, identity };
+      await tx.world.create({
+        data: {
+          id: worldId,
+          name,
+          status: 'PLANNED',
+          plannedOpenAt,
+          config,
+        },
+      });
+      await createOutboxEvent(tx, 'world.planned.created', worldId, {
+        worldId,
+        plannedOpenAt: plannedOpenAt.toISOString(),
+        source: 'auto',
+      });
+      return 1;
+    });
+  }
+
+  /**
+   * Config canonique héritée par un monde auto-créé : le monde `default` (inséré
+   * par la migration `add_world_entity`, configuré par `seed-default-world-config.sql`)
+   * s'il existe — respecte un éventuel tuning prod — sinon la constante partagée
+   * `DEFAULT_WORLD_CONFIG` (bootstrap DB vide / smoke à table tronquée). L'identité
+   * est écrasée par l'appelant.
+   */
+  private async resolveTemplateConfig(
+    tx: PrismaClientOrTx,
+  ): Promise<WorldConfig> {
+    const defaultWorld = await tx.world.findUnique({
+      where: { id: 'default' },
+      select: { config: true },
+    });
+    if (defaultWorld) {
+      const parsed = WorldConfigSchema.safeParse(defaultWorld.config);
+      if (parsed.success) {
+        return parsed.data;
+      }
+      this.logger.warn(
+        `Default world config invalid (${parsed.error.message}); falling back to DEFAULT_WORLD_CONFIG`,
+      );
+    }
+    return DEFAULT_WORLD_CONFIG;
   }
 
   private async openPlannedWorlds(now: Date): Promise<number> {

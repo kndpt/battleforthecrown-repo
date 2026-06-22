@@ -192,6 +192,7 @@ const PLANNERS: Record<EventKind, AnyPlanner> = {
   'crowns.changed': directUser('userId'),
   'rankings.changed': directWorld('worldId'),
   'world.status.changed': directWorld('worldId'),
+  'world.planned.created': directWorld('worldId'),
   'pvp.shield.broken': directUser('userId'),
   'intel.updated': directUser('userId'),
 };

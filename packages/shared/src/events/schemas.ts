@@ -271,6 +271,12 @@ const WorldStatusChangedPayloadSchema = z.object({
   at: z.string().datetime(),
 });
 
+const WorldPlannedCreatedPayloadSchema = z.object({
+  worldId: z.string(),
+  plannedOpenAt: z.string().datetime(),
+  source: z.literal("auto"),
+});
+
 const RankingsChangedPayloadSchema = z.object({
   worldId: z.string(),
   signal: z.enum(["ASSAULT_GLORY", "RAMPART_GLORY"]),
@@ -320,6 +326,7 @@ export const EVENT_PAYLOAD_SCHEMAS = {
   "crowns.changed": CrownsChangedPayloadSchema,
   "rankings.changed": RankingsChangedPayloadSchema,
   "world.status.changed": WorldStatusChangedPayloadSchema,
+  "world.planned.created": WorldPlannedCreatedPayloadSchema,
   "pvp.shield.broken": PvpShieldBrokenPayloadSchema,
   "intel.updated": IntelUpdatedPayloadSchema,
 } as const satisfies Record<EventKind, z.ZodType>;

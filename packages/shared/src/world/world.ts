@@ -1,6 +1,10 @@
-import type {
-  BarbarianSeedingConfig,
-  PlayerVillagePlacementConfig,
+import {
+  DEFAULT_WORLD_IDENTITY_CONFIG,
+  DEFAULT_WORLD_LIFECYCLE_CONFIG,
+  DEFAULT_WORLD_OYEZ_CONFIG,
+  type BarbarianSeedingConfig,
+  type PlayerVillagePlacementConfig,
+  type WorldConfig,
 } from './schemas';
 
 export const DEFAULT_BARBARIAN_SEEDING_PLAN: BarbarianSeedingConfig = {
@@ -93,3 +97,37 @@ export const DEFAULT_PLAYER_VILLAGE_PLACEMENT_PLAN: PlayerVillagePlacementConfig
       { minRadius: 200, maxRadius: 999, maxVillages: 10000 },
     ],
   };
+
+/**
+ * Configuration canonique d'un monde neuf. Source de vérité TS pour la création
+ * runtime d'un monde (auto-spawner lifecycle, run 064) quand aucun monde
+ * template n'existe (bootstrap DB vide). Composée des constantes de défaut
+ * partagées + des sections sans défaut Zod (tempo/combat/fogOfWar).
+ *
+ * Doit rester alignée avec `prisma/seed-default-world-config.sql` (le seed reste
+ * la source pour le monde `default` provisionné en base). Un test backend
+ * (`world-spawner.logic.spec.ts`) garantit que cet objet parse via
+ * `WorldConfigSchema`.
+ */
+export const DEFAULT_WORLD_CONFIG: WorldConfig = {
+  tempo: {
+    global: 1,
+    overrides: {
+      constructionSpeed: 1,
+      unitTrainingSpeed: 1,
+      lordTrainingSpeed: 1,
+      travelSpeed: 1,
+      captureWindow: 1,
+      barbarianRegen: 1,
+      resourceProduction: 1,
+      crownsYield: 1,
+    },
+  },
+  lifecycle: { ...DEFAULT_WORLD_LIFECYCLE_CONFIG },
+  identity: { ...DEFAULT_WORLD_IDENTITY_CONFIG },
+  combat: { attackBonus: 1, defenseBonus: 1, lootFactor: 0.5 },
+  barbarianSeeding: DEFAULT_BARBARIAN_SEEDING_PLAN,
+  playerVillagePlacement: DEFAULT_PLAYER_VILLAGE_PLACEMENT_PLAN,
+  fogOfWar: { enabled: true },
+  oyez: { ...DEFAULT_WORLD_OYEZ_CONFIG },
+};

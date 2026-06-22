@@ -279,6 +279,12 @@ export interface WorldStatusChangedPayload {
   at: string;
 }
 
+export interface WorldPlannedCreatedPayload {
+  worldId: string;
+  plannedOpenAt: string;
+  source: "auto";
+}
+
 export interface RankingsChangedPayload {
   worldId: string;
   signal: "ASSAULT_GLORY" | "RAMPART_GLORY";
@@ -335,6 +341,7 @@ export type OutboxEventPayload =
   | { kind: "crowns.changed"; payload: CrownsChangedPayload }
   | { kind: "rankings.changed"; payload: RankingsChangedPayload }
   | { kind: "world.status.changed"; payload: WorldStatusChangedPayload }
+  | { kind: "world.planned.created"; payload: WorldPlannedCreatedPayload }
   | { kind: "pvp.shield.broken"; payload: PvpShieldBrokenPayload }
   | { kind: "intel.updated"; payload: IntelUpdatedPayload };
 
@@ -376,6 +383,7 @@ export type AnyEventPayload =
   | CrownsChangedPayload
   | RankingsChangedPayload
   | WorldStatusChangedPayload
+  | WorldPlannedCreatedPayload
   | PvpShieldBrokenPayload
   | IntelUpdatedPayload;
 
@@ -410,6 +418,7 @@ export interface ServerEvents {
   "expedition.returned": ExpeditionReturnedPayload;
   "garrison.added": GarrisonAddedPayload;
   "world.status.changed": WorldStatusChangedPayload;
+  "world.planned.created": WorldPlannedCreatedPayload;
   "pvp.shield.broken": PvpShieldBrokenPayload;
   "intel.updated": IntelUpdatedPayload;
 }
