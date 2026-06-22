@@ -15,14 +15,13 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | conquest openCaptureWindow/interruptCaptureWindow/conquerVillage wrappers | used only in smoke tests, not prod code — public API for test convenience, low debt |
 | buildRefundToastItems export | exported for test import only — valid pattern, skip |
 | GarrisonLineDto export | used locally in combat.service.ts, export unnecessary but trivial |
-| serializable-retry.utils.ts error casts | `as { code?: unknown }` — replace with `in` narrowing. Safe, trivial |
 | intel.service.ts row.resources cast | `as { wood; stone; iron }` on Prisma JSON — add Zod parse or guard |
 
 ## done (this run)
 
 | area | PR |
 |------|-----|
-| remove dead class-validator/class-transformer deps + no-op ValidationPipe + orphan CrownBalanceDto | [#179](https://github.com/kndpt/battleforthecrown-repo/pull/179) |
+| serializable-retry.utils.ts error casts → `in` narrowing | pending |
 
 ## rules
 
