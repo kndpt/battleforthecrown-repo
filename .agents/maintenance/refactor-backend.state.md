@@ -11,6 +11,7 @@ full: `archive/refactor-backend/2026-06-22-full.md`
 | W1  | High | combat/combat.worker.ts (1846L)                    | 4 kinds cohabitent — split par kind, L effort                                              |
 | W2c | Med  | combat.service.ts:84-350                           | `initiate{Attack,Scout,Reinforce}` template-helper possible mais payloads divergent        |
 | W5  | Med  | construction.worker.ts:131-170                     | 3 try/catch hors-tx « Don't throw » swallow silencieux                                     |
+| W6  | Med  | construction.worker.ts:60,84,92 + 136-170          | early-return tx ne court-circuite pas les side-effects post-tx (updateStorageLimit, resourcesChanged, recalc crown) — flag completion (CodeRabbit PR #181) |
 | B1  | Med  | combat.service.ts                                  | 1313L sans spec unit direct (smokes uniquement)                                            |
 | U1  | Low  | combat.worker.ts:1489-1498, 1743-1759, return.worker.ts:326-340 | inbox.create/upsert loop ×N → `createMany skipDuplicates` (ROI bas)                |
 | U3  | Low  | world-entities-query.service.ts:137-315            | fetchBarb/fetchPlayer partagent bounds + captureWindow mapping                             |

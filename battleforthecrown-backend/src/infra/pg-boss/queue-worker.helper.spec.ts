@@ -167,6 +167,44 @@ describe('registerJobQueueWorker', () => {
     );
   });
 
+  it('invokes the handler for every job in the batch sequentially', async () => {
+    const boss = makeFakeBoss();
+    let workHandler: PgBoss.WorkHandler<{ id: string }> | undefined;
+    boss.work.mockImplementation(
+      (_name: string, cb: PgBoss.WorkHandler<{ id: string }>) => {
+        workHandler = cb;
+        return Promise.resolve('id');
+      },
+    );
+
+    const order: string[] = [];
+    const handler = jest.fn().mockImplementation((data: { id: string }) => {
+      order.push(data.id);
+      return Promise.resolve();
+    });
+    await registerJobQueueWorker<{ id: string }>(
+      boss as unknown as PgBoss,
+      silentLogger(),
+      { queueName: 'q' },
+      handler,
+    );
+
+    await workHandler?.([
+      { id: 'job-1', name: 'q', data: { id: 'a' } } as PgBoss.Job<{
+        id: string;
+      }>,
+      { id: 'job-2', name: 'q', data: { id: 'b' } } as PgBoss.Job<{
+        id: string;
+      }>,
+      { id: 'job-3', name: 'q', data: { id: 'c' } } as PgBoss.Job<{
+        id: string;
+      }>,
+    ]);
+
+    expect(handler).toHaveBeenCalledTimes(3);
+    expect(order).toEqual(['a', 'b', 'c']);
+  });
+
   it('rethrows when worker registration fails', async () => {
     const boss = makeFakeBoss();
     boss.work.mockRejectedValue(new Error('register failed'));

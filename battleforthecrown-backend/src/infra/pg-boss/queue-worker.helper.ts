@@ -44,8 +44,11 @@ export async function registerJobQueueWorker<TData extends object>(
   try {
     await boss.createQueue(opts.queueName);
     const workHandler: PgBoss.WorkHandler<TData> = async (jobs) => {
-      const job = Array.isArray(jobs) ? jobs[0] : jobs;
-      return handler(job.data);
+      // pg-boss delivers a job batch — iterate to honor batchSize > 1 callers.
+      const normalizedJobs = Array.isArray(jobs) ? jobs : [jobs];
+      for (const job of normalizedJobs) {
+        await handler(job.data);
+      }
     };
     if (opts.workOptions) {
       await boss.work(opts.queueName, opts.workOptions, workHandler);
