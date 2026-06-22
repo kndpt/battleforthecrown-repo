@@ -22,6 +22,8 @@ import {
   useInitiateAttackMutation,
   useInitiateReinforceMutation,
   useInitiateScoutMutation,
+  usePublicVillagePowerQuery,
+  useVillageIntelQuery,
   useWorldConfigQuery,
 } from '@/api/queries';
 import { combatErrorMessage } from './combatErrorMessage';
@@ -30,9 +32,11 @@ import { useGameStore } from '@/stores/game';
 import { unitMetaFor } from '@/features/army/unitConfig';
 import { SegmentedControl } from '@/features/design-system/components';
 import { publicAsset } from '@/lib/publicAsset';
+import { useTickingNow } from '@/lib/useTickingNow';
 import type { MapEntity } from '@/api/world-types';
 import { getBarbarianCaptureDurationLabel } from '@/features/world/barbarianConquest';
 import { getPvpCaptureDurationLabel } from '@battleforthecrown/shared/combat';
+import { buildThreatEstimateView } from './threatEstimateView';
 
 interface AttackDetailModalProps {
   target: MapEntity;
@@ -52,6 +56,9 @@ export function AttackDetailModal({
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const inventory = useArmyInventoryQuery(villageId);
   const worldConfig = useWorldConfigQuery(worldId);
+  // Menace estimée — queries partagent le même id canonique (target.id)
+  const intelQuery = useVillageIntelQuery(worldId, target.id);
+  const powerQuery = usePublicVillagePowerQuery(target.id);
   const attack = useInitiateAttackMutation();
   const reinforce = useInitiateReinforceMutation();
   const scout = useInitiateScoutMutation();
@@ -111,6 +118,21 @@ export function AttackDetailModal({
       return total + (stats?.attack ?? 0) * qty;
     }, 0);
   }, [effectiveUnits]);
+
+  // Fraîcheur d'intel : tick lent (60s) suffit, seuils menace coarse (1h/24h/7j).
+  const now = useTickingNow(60_000);
+  const threatView = useMemo(
+    () =>
+      buildThreatEstimateView({
+        target,
+        intel: intelQuery.data ?? null,
+        publicBuildingPower: powerQuery.data?.buildings ?? 0,
+        armyAttackPower: totalAttack,
+        now,
+      }),
+    [target, intelQuery.data, powerQuery.data, totalAttack, now],
+  );
+
   const selectedNobleCount = effectiveUnits[UNIT_TYPES.NOBLE] ?? 0;
   const isBarbarianConquest =
     target.kind === 'BARBARIAN_VILLAGE' &&
@@ -373,6 +395,36 @@ export function AttackDetailModal({
                   ? 'Durée pendant laquelle un Seigneur capturera ce village. Tes voisins peuvent intervenir.'
                   : 'Envoie un espion pour estimer la fenêtre de capture (niveau du Château inconnu).'}
               </p>
+            </div>
+          )}
+
+          {activeMode === 'attack' && (
+            <div className="p-3 bg-game-stone-light/10 border-2 border-game-stone-border/30 rounded-lg text-sm text-kingdom-800">
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-semibold">Menace estimée</span>
+                <Badge
+                  variant={
+                    threatView.tone === 'high'
+                      ? 'error'
+                      : threatView.tone === 'medium'
+                        ? 'warning'
+                        : threatView.tone === 'low'
+                          ? 'success'
+                          : 'neutral'
+                  }
+                  size="sm"
+                >
+                  {threatView.label}
+                </Badge>
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-kingdom-700">
+                {threatView.tooltip}
+              </p>
+              {threatView.freshnessNote && (
+                <p className="mt-1 text-xs text-kingdom-500 italic">
+                  {threatView.freshnessNote}
+                </p>
+              )}
             </div>
           )}
         </div>
