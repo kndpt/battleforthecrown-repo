@@ -21,7 +21,7 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 | area | PR |
 |------|-----|
-| serializable-retry.utils.ts error casts → `in` narrowing | pending |
+| serializable-retry.utils.ts error casts → `in` narrowing | [#185](https://github.com/kndpt/battleforthecrown-repo/pull/185) |
 
 ## rules
 
