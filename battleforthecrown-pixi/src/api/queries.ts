@@ -173,6 +173,8 @@ export const queryKeys = {
   rankingsSummary: (worldId: string | null) =>
     ["rankings", "summary", worldId] as const,
   renown: (userId: string | null) => ["renown", userId] as const,
+  villageIntel: (worldId: string | null, villageId: string | null) =>
+    ["intel", worldId, villageId] as const,
   // Broad-invalidation prefixes (omit trailing discriminants to match across worlds/users).
   renownPrefix: () => ["renown"] as const,
   membershipsPrefix: () => ["memberships"] as const,
@@ -351,6 +353,7 @@ export function useMyVillagesQuery(worldId: string | null) {
       return apiClient.get<JoinedVillage[]>("/village", { query: { worldId } });
     },
     enabled: Boolean(userId && worldId),
+    staleTime: 30_000,
   });
 }
 
@@ -565,7 +568,6 @@ export interface VillagePowerDto {
   total: number;
   buildings: number;
   army: number;
-  breakdown?: Record<string, unknown>;
 }
 
 export interface KingdomPowerVillageDto {
@@ -966,9 +968,7 @@ export function useGarrisonQuery(villageId: string | null) {
 export interface CombatLootDto {
   resources?: { wood?: number; stone?: number; iron?: number };
   remainingResources?: { wood?: number; stone?: number; iron?: number };
-  artifacts?: unknown[];
   honor?: number;
-  items?: unknown[];
 }
 
 export interface CombatReportDto {
@@ -995,7 +995,10 @@ export interface CombatReportDto {
   lossesDefender: Record<string, number>;
   details?: {
     targetTier?: string | null;
-    occupationDefense?: unknown;
+    occupationDefense?: {
+      attackerVillageId: string;
+      defenderUserId?: string;
+    };
     captureFinalized?: {
       pendingConquestId?: string;
       villageId?: string;
@@ -1676,7 +1679,7 @@ export function useVillageIntelQuery(
   enabled = true,
 ): UseQueryResult<VillageIntelDto | null> {
   return useQuery<VillageIntelDto | null>({
-    queryKey: ["intel", worldId, villageId],
+    queryKey: queryKeys.villageIntel(worldId, villageId),
     queryFn: async () => {
       if (!worldId || !villageId) return null;
       // The endpoint replies 200 with an empty body when no intel exists; the
