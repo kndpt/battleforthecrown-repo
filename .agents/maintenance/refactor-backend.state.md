@@ -1,17 +1,17 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-06-21 | theme hoist `buildShieldState` pure helper into `packages/shared/src/pvp/shield.ts`; 3 backend sites (world.service, world-entities-query.service, newbie-shield.service) délèguent au lieu de recomposer `NewbieShieldState` inline | PR maint(refactor-backend): hoist shield state builder into shared
-full: `archive/refactor-backend/2026-06-21-full.md`
+last: 2026-06-22 | theme extract `register{Scheduled,Job}QueueWorker` helpers in `infra/pg-boss/queue-worker.helper.ts`; 9 workers consomment, ~94L net supprimées + logs émojis construction sobres | PR maint(refactor-backend): extract registerQueueWorker helpers across pg-boss workers
+full: `archive/refactor-backend/2026-06-22-full.md`
 
 ## OPEN
 
 | ID  | Sev  | Where                                              | Note                                                                                       |
 |-----|------|----------------------------------------------------|--------------------------------------------------------------------------------------------|
 | R4  | High | crowns.service.ts:261                              | fractional carry — needs migration (`lastUpdateTs += production/rate`)                     |
-| W1  | High | combat/combat.worker.ts (1776L)                    | 4 kinds cohabitent — split par kind, L effort                                              |
+| W1  | High | combat/combat.worker.ts (1846L)                    | 4 kinds cohabitent — split par kind, L effort                                              |
 | W2c | Med  | combat.service.ts:84-350                           | `initiate{Attack,Scout,Reinforce}` template-helper possible mais payloads divergent        |
-| W3  | Med  | construction.worker.ts:31-69 +6 workers            | `createQueue → boss.work` ×8 répété, helper `registerQueueWorker` envisageable (L effort)  |
-| W5  | Med  | construction.worker.ts:159-197                     | 3 try/catch hors-tx « Don't throw » swallow silencieux                                     |
+| W5  | Med  | construction.worker.ts:131-170                     | 3 try/catch hors-tx « Don't throw » swallow silencieux                                     |
+| W6  | Med  | construction.worker.ts:60,84,92 + 136-170          | early-return tx ne court-circuite pas les side-effects post-tx (updateStorageLimit, resourcesChanged, recalc crown) — flag completion (CodeRabbit PR #181) |
 | B1  | Med  | combat.service.ts                                  | 1313L sans spec unit direct (smokes uniquement)                                            |
 | U1  | Low  | combat.worker.ts:1489-1498, 1743-1759, return.worker.ts:326-340 | inbox.create/upsert loop ×N → `createMany skipDuplicates` (ROI bas)                |
 | U3  | Low  | world-entities-query.service.ts:137-315            | fetchBarb/fetchPlayer partagent bounds + captureWindow mapping                             |
@@ -19,13 +19,12 @@ full: `archive/refactor-backend/2026-06-21-full.md`
 | N3  | Low  | world-entities-query.service.ts:113-116            | `getVillagesInRadius` ne clamp pas max=499 (asymétrique vs `getEntitiesInRadius`)          |
 | N4  | Low  | world-entities-query.service.ts:117-127            | `getVillagesInRadius`/`getAllVillages` renvoient rows raw (no `kind`) — surface confuse    |
 | L2  | Low  | strategy/village-strategy.service.ts:389-457       | `getStrategyRecommendations` strings UI FR hard-codées dans le service                     |
-| W4  | Low  | construction.worker.ts:33-153                      | logs émojis 🔧/🔨/🎯/✉️/✅ vs autres workers sobres                                          |
 | C1  | Low  | resources.service.ts:46-56                         | `getResources` récursif (cosmétique, récursion bornée 1)                                   |
 | F1  | Low  | combat.worker.ts:1130-1170                         | 2× garrison.findMany include similaire                                                     |
-| T1  | Low  | retention.service.ts:401-416                       | `$transaction` qui n'enveloppe qu'un updateMany — inutile                                   |
+| T1  | Low  | retention.service.ts:401-416                       | `$transaction` qui n'enveloppe qu'un updateMany — inutile                                  |
 | K1  | Low  | retention.service.ts:212-241                       | `create` + catch P2002 (vs upsert utilisé `ensureDailyCardInTransaction`) — asymétrie       |
 | K2  | Low  | retention.service.ts:37                            | `DAILY_CARD_LIMIT = 1` magic, jamais utilisé pour limiter                                  |
-| Z1  | Low  | world/join-world.use-case.ts:188                   | `process.env[key]` dynamique — `ConfigService` ferait mieux                                 |
+| Z1  | Low  | world/join-world.use-case.ts:188                   | `process.env[key]` dynamique — `ConfigService` ferait mieux                                |
 | P1  | Low  | world.service.ts:32-49                             | `getWorlds` 2 round-trips (worlds + groupBy memberships) au lieu d'`_count` include        |
 | H2  | Low  | production.worker.ts:76, crown-production.worker.ts:76 | `for of villages` séquentiel (OK <10k, sinon batch)                                    |
 | E1  | Low  | event/event.utils.ts                               | `createOutboxEvent` raw vs `OutboxPublisher.<kind>` typé — sweep progressif                |
@@ -33,6 +32,7 @@ full: `archive/refactor-backend/2026-06-21-full.md`
 
 ## Skip — déjà traité
 
-- S1 (shield state builder) → ce run
-- W2a/W2b done run 2026-06-20 | D3 PR #153 | D1 PR #144 | D4 PR #142 | OB1/OB2 PR #134
+- W3 + W4 (registerQueueWorker helpers + construction emoji logs) → ce run
+- Q1 (Array.isArray defensive unwrap) → absorbé par le helper
+- W2a/W2b done run 2026-06-20 | S1 done run 2026-06-21 | D3 PR #153 | D1 PR #144 | D4 PR #142 | OB1/OB2 PR #134
 - B3/E1/U2 déjà traités | G1 intentionnel tx | U4 false-positive | A1 case-insensitive pre-check OK

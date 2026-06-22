@@ -1,8 +1,12 @@
 import { Injectable, Logger, Inject, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../infra/prisma/prisma.service';
 import { CrownsService } from '../modules/crowns/crowns.service';
+import { registerScheduledQueueWorker } from '../infra/pg-boss/queue-worker.helper';
 import PgBoss from 'pg-boss';
 import { MS_PER_DAY } from '@battleforthecrown/shared/time';
+
+const CROWN_PRODUCTION_QUEUE = 'crowns:production';
+const CROWN_PRODUCTION_CRON = '*/5 * * * *';
 
 @Injectable()
 export class CrownProductionWorker implements OnModuleInit {
@@ -15,30 +19,17 @@ export class CrownProductionWorker implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    try {
-      await this.boss.createQueue('crowns:production');
-
-      await this.boss.work('crowns:production', async () => {
-        return this.handleCrownProduction();
-      });
-
-      // Run every 5 minutes
-      const cronExpression = '*/5 * * * *';
-
-      await this.boss.schedule(
-        'crowns:production',
-        cronExpression,
-        {},
-        {
-          tz: 'UTC',
-        },
-      );
-
-      this.logger.log('Crown production worker initialized (every 5 minutes)');
-    } catch (error) {
-      this.logger.error('Failed to initialize crown production worker:', error);
-      throw error;
-    }
+    await registerScheduledQueueWorker(
+      this.boss,
+      this.logger,
+      {
+        queueName: CROWN_PRODUCTION_QUEUE,
+        cron: CROWN_PRODUCTION_CRON,
+        tz: 'UTC',
+        displayName: 'Crown production',
+      },
+      () => this.handleCrownProduction(),
+    );
   }
 
   private async handleCrownProduction() {

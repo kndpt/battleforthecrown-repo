@@ -14,6 +14,7 @@ import { BarbarianVillageStrategy } from './strategies/barbarian-village.strateg
 import { PlayerVillageStrategy } from './strategies/player-village.strategy';
 import { ConquestService } from './conquest.service';
 import PgBoss from 'pg-boss';
+import { registerJobQueueWorker } from '../../infra/pg-boss/queue-worker.helper';
 import {
   CombatContext,
   CombatParticipant,
@@ -141,18 +142,12 @@ export class CombatWorker implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    try {
-      await this.boss.createQueue('combat:resolve');
-      await this.boss.work('combat:resolve', async (jobs) => {
-        const job = Array.isArray(jobs) ? jobs[0] : jobs;
-        return this.handleCombatResolution(job.data as CombatJob);
-      });
-
-      this.logger.log('Combat worker initialized');
-    } catch (error) {
-      this.logger.error('Failed to initialize combat worker:', error);
-      throw error;
-    }
+    await registerJobQueueWorker<CombatJob>(
+      this.boss,
+      this.logger,
+      { queueName: 'combat:resolve', displayName: 'Combat' },
+      (data) => this.handleCombatResolution(data),
+    );
   }
 
   private async handleCombatResolution(data: CombatJob) {

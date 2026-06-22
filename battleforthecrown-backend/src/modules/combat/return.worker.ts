@@ -1,6 +1,7 @@
 import { Injectable, Logger, Inject, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import PgBoss from 'pg-boss';
+import { registerJobQueueWorker } from '../../infra/pg-boss/queue-worker.helper';
 import { createOutboxEvent } from '../event/event.utils';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
 import { parseUnitMap, parseCombatLoot } from './codecs';
@@ -34,18 +35,12 @@ export class ReturnWorker implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    try {
-      await this.boss.createQueue('combat:return');
-      await this.boss.work('combat:return', async (jobs) => {
-        const job = Array.isArray(jobs) ? jobs[0] : jobs;
-        return this.handleReturn(job.data as ReturnJob);
-      });
-
-      this.logger.log('Return worker initialized');
-    } catch (error) {
-      this.logger.error('Failed to initialize return worker:', error);
-      throw error;
-    }
+    await registerJobQueueWorker<ReturnJob>(
+      this.boss,
+      this.logger,
+      { queueName: 'combat:return', displayName: 'Return' },
+      (data) => this.handleReturn(data),
+    );
   }
 
   private async handleReturn(data: ReturnJob) {

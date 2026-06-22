@@ -2,6 +2,7 @@ import { Injectable, Logger, Inject, OnModuleInit } from '@nestjs/common';
 import type { Prisma, TrainingBuilding } from '@prisma/client';
 import { PrismaService } from '../infra/prisma/prisma.service';
 import { OutboxPublisher } from '../modules/event/outbox-publisher.service';
+import { registerJobQueueWorker } from '../infra/pg-boss/queue-worker.helper';
 import PgBoss from 'pg-boss';
 
 interface TrainingJob {
@@ -21,21 +22,12 @@ export class TrainingWorker implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    try {
-      // Create the queue first if it doesn't exist
-      await this.boss.createQueue('training:tick');
-
-      // Then register the worker
-      await this.boss.work('training:tick', async (jobs) => {
-        const job = Array.isArray(jobs) ? jobs[0] : jobs;
-        return this.handleTrainingTick(job.data as TrainingJob);
-      });
-
-      this.logger.log('Training worker initialized');
-    } catch (error) {
-      this.logger.error('Failed to initialize training worker:', error);
-      throw error;
-    }
+    await registerJobQueueWorker<TrainingJob>(
+      this.boss,
+      this.logger,
+      { queueName: 'training:tick', displayName: 'Training' },
+      (data) => this.handleTrainingTick(data),
+    );
   }
 
   private async handleTrainingTick(data: TrainingJob) {

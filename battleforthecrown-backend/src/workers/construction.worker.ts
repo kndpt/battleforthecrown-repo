@@ -3,6 +3,7 @@ import { PrismaService } from '../infra/prisma/prisma.service';
 import { ResourcesService } from '../modules/resources/resources.service';
 import { CrownsService } from '../modules/crowns/crowns.service';
 import { OutboxPublisher } from '../modules/event/outbox-publisher.service';
+import { registerJobQueueWorker } from '../infra/pg-boss/queue-worker.helper';
 import PgBoss from 'pg-boss';
 import {
   BUILDING_TYPES,
@@ -29,49 +30,23 @@ export class ConstructionWorker implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    try {
-      this.logger.log('🔧 [ConstructionWorker] Initializing...');
-
-      // Create the queue first if it doesn't exist
-      await this.boss.createQueue('construction:end');
-      this.logger.log('✅ [ConstructionWorker] Queue created/verified');
-
-      // Then register the worker with aggressive polling
-      const workerId = await this.boss.work(
-        'construction:end',
-        {
-          pollingIntervalSeconds: 1, // Poll for jobs every 1 second
-          batchSize: 1, // Process one job at a time
-        },
-        async (jobs) => {
-          this.logger.log('🎯 [ConstructionWorker] Handler called with jobs:', {
-            isArray: Array.isArray(jobs),
-            count: Array.isArray(jobs) ? jobs.length : 1,
-          });
-
-          const job = Array.isArray(jobs) ? jobs[0] : jobs;
-          return this.handleConstructionComplete(job.data as ConstructionJob);
-        },
-      );
-
-      this.logger.log(
-        '✅ [ConstructionWorker] Worker registered successfully',
-        {
-          workerId,
-          queueName: 'construction:end',
-        },
-      );
-
-      this.logger.log('🎉 [ConstructionWorker] Initialization complete');
-    } catch (error) {
-      this.logger.error('❌ [ConstructionWorker] Failed to initialize:', error);
-      throw error;
-    }
+    await registerJobQueueWorker<ConstructionJob>(
+      this.boss,
+      this.logger,
+      {
+        queueName: 'construction:end',
+        displayName: 'Construction',
+        // Aggressive polling: building completion is user-facing and 1s latency
+        // matches the Outbox cadence so the WS event lands without extra delay.
+        workOptions: { pollingIntervalSeconds: 1, batchSize: 1 },
+      },
+      (data) => this.handleConstructionComplete(data),
+    );
   }
 
   private async handleConstructionComplete(data: ConstructionJob) {
     const receivedAt = Date.now();
-    this.logger.log(`🔨 [Worker] Job reçu pour: ${data.buildingId}`);
+    this.logger.log(`Construction job received: ${data.buildingId}`);
 
     try {
       await this.prisma.$transaction(async (tx) => {
@@ -92,7 +67,7 @@ export class ConstructionWorker implements OnModuleInit {
         const expectedEndTime = building.endTime?.getTime() || 0;
         const delta = now - expectedEndTime;
 
-        this.logger.log(`⏰ [Worker] Timing analysis:`, {
+        this.logger.log(`Construction timing analysis:`, {
           buildingId: data.buildingId,
           buildingType: data.buildingType,
           expectedEndTime: building.endTime?.toISOString(),
@@ -153,17 +128,12 @@ export class ConstructionWorker implements OnModuleInit {
           tx,
         );
 
-        const eventCreatedAt = Date.now();
-        this.logger.log(
-          `✉️ [Worker] Event outbox créé à ${eventCreatedAt} pour ${data.buildingId}`,
-        );
-
         this.logger.log(
           `Building ${data.buildingId} upgraded to level ${data.targetLevel}`,
         );
       });
 
-      // ✅ NEW: Update storage limit if Warehouse was upgraded
+      // Update storage limit if Warehouse was upgraded
       if (data.buildingType === 'WAREHOUSE') {
         try {
           await this.resourcesService.updateStorageLimit(
@@ -179,13 +149,13 @@ export class ConstructionWorker implements OnModuleInit {
         }
       }
 
-      // ✅ NEW: Emit resources.changed if production building or warehouse completed
+      // Emit resources.changed if production building or warehouse completed
       const productionBuildings = ['WOOD', 'STONE', 'IRON', 'WAREHOUSE'];
       if (productionBuildings.includes(data.buildingType)) {
         try {
           await this.outbox.resourcesChanged(data.villageId);
           this.logger.log(
-            `✅ resources.changed event created for ${data.buildingType} completion`,
+            `resources.changed event created for ${data.buildingType} completion`,
           );
         } catch (error) {
           this.logger.error(`Failed to emit resources.changed event:`, error);
@@ -193,11 +163,11 @@ export class ConstructionWorker implements OnModuleInit {
         }
       }
 
-      // ✅ NEW: Recalculate crown production rate after any building completion
+      // Recalculate crown production rate after any building completion
       try {
         await this.crownsService.recalculateOnBuildingChange(data.villageId);
         this.logger.log(
-          `✅ Crown production rate recalculated for village ${data.villageId}`,
+          `Crown production rate recalculated for village ${data.villageId}`,
         );
       } catch (error) {
         this.logger.error(`Failed to recalculate crown production:`, error);

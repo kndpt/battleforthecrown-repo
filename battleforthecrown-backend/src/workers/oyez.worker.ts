@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import PgBoss from 'pg-boss';
 import { OyezProducerService } from '../modules/retention/oyez-producer.service';
+import { registerScheduledQueueWorker } from '../infra/pg-boss/queue-worker.helper';
 
 const OYEZ_QUEUE = 'retention:oyez';
 // 04:00 Europe/Paris matches the daily card reset (DST handled by pg-boss tz).
@@ -16,25 +17,17 @@ export class OyezWorker implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    try {
-      await this.boss.createQueue(OYEZ_QUEUE);
-      await this.boss.work(OYEZ_QUEUE, async () => {
-        await this.handleOyezTick();
-      });
-      await this.boss.schedule(
-        OYEZ_QUEUE,
-        OYEZ_CRON,
-        {},
-        {
-          tz: 'Europe/Paris',
-        },
-      );
-
-      this.logger.log(`Oyez worker initialized (${OYEZ_CRON} Europe/Paris)`);
-    } catch (error) {
-      this.logger.error('Failed to initialize Oyez worker:', error);
-      throw error;
-    }
+    await registerScheduledQueueWorker(
+      this.boss,
+      this.logger,
+      {
+        queueName: OYEZ_QUEUE,
+        cron: OYEZ_CRON,
+        tz: 'Europe/Paris',
+        displayName: 'Oyez',
+      },
+      () => this.handleOyezTick(),
+    );
   }
 
   async handleOyezTick(now = new Date()): Promise<number> {
