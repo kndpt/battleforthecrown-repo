@@ -108,5 +108,11 @@ describe('world lifecycle spawner smoke', () => {
       where: { status: 'PLANNED' },
     });
     expect(plannedRemaining).toBe(0);
+
+    const events = await ctx.prisma.eventOutbox.findMany({
+      where: { kind: 'world.planned.created' },
+    });
+    expect(events).toHaveLength(1);
+    expect(events[0].aggregateId).toBe(worlds[0].id);
   });
 });
