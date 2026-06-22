@@ -33,7 +33,18 @@ function reportDetails(value: unknown): ScoutReportResponse['details'] {
       : {}),
     ...(typeof wallLevel === 'number' ? { wallLevel } : {}),
     ...(typeof castleLevel === 'number' ? { castleLevel } : {}),
+    ...newbieShieldDetails(details.newbieShield),
   };
+}
+
+function newbieShieldDetails(
+  value: unknown,
+): Pick<NonNullable<ScoutReportResponse['details']>, 'newbieShield'> | object {
+  if (!value || typeof value !== 'object') return {};
+  const shield = value as Record<string, unknown>;
+  if (typeof shield.active !== 'boolean') return {};
+  const endsAt = typeof shield.endsAt === 'string' ? shield.endsAt : null;
+  return { newbieShield: { active: shield.active, endsAt } };
 }
 
 export function presentScoutReport(

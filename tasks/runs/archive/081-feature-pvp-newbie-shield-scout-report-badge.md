@@ -1,8 +1,8 @@
 # Run #081 — feature-pvp-newbie-shield-scout-report-badge
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-22
+> **Terminé** : 2026-06-22
 
 ## Cible
 
@@ -64,42 +64,40 @@ Ce run livre la première moitié de cette dette — **badge sur le rapport de s
 - Frontend HUD : skill `bftc-react-hud`
 - Pattern d'implémentation analogue : run 060 (snapshot scout `castleLevel`)
 
-## Décomposition initiale
+## Décomposition / Liens / Points d'attention
 
-> Draft de cartographie. À raffiner à l'étape 3 du `$bftc-run`.
+_(git history — voir le commit du run)_
 
-- **T1 — DTO shared** : étendre `ScoutReportResponse.details` (`packages/shared/src/combat/dtos.ts`) avec `newbieShield?: { active: boolean; endsAt: string | null }`. Test typing inclus. ≤ 1 fichier.
-- **T2 — Backend snapshot scout** : localiser le point de résolution scout (`combat.worker.ts` + helper) qui produit le snapshot des détails. Appeler `buildShieldState` (`packages/shared/src/pvp/shield.ts`) sur la `WorldMembership` du propriétaire de la cible (PLAYER only), persister dans `ScoutReport.details.newbieShield`. ≤ 3 fichiers.
-- **T3 — Backend presenter** : `scout-report.presenter.ts` `reportDetails()` propage le nouveau champ. Spec presenter unit. ≤ 2 fichiers.
-- **T4 — Frontend viewmodel** : `scoutReportView.ts` mappe `details.newbieShield` → viewmodel (label + countdown via helper shared). Test unit. ≤ 2 fichiers.
-- **T5 — Frontend ScoutReportCard badge** : composant `ScoutReportCard.tsx` affiche le badge bouclier débutant (réutiliser le pattern visuel de `SelectedEntityPanel` ou composant partagé si déjà extrait). Test composant. ≤ 2 fichiers.
-- **T6 — Smoke + tests** : étendre `scouting.smoke.spec.ts` (cas shield actif + cas barbare + cas post-rupture), ajouter assertions presenter/viewmodel. ≤ 2 fichiers.
-- **T7 — Docs** : mettre à jour la fin du rapport final de `tasks/runs/archive/056-feature-pvp-newbie-shield-48h.md` (pointeur vers run 081 pour le suivi scout). Pas de modification spec. ≤ 1 fichier.
+## Rapport final
 
-## Liens détectés
+Snapshot figé du bouclier débutant du propriétaire de la cible (PLAYER only) capturé à la résolution scout via `NewbieShieldService.getMembershipShieldState`, persisté dans `ScoutReport.details.newbieShield {active, endsAt}` (barbares : champ absent), propagé par le presenter et affiché en badge sur `ScoutReportCard` (remaining figé = `endsAt − report.timestamp`, jamais recalculé live). Aucun nouveau helper shared, aucune migration (Json `details`). Review indépendante déclenchée (back+front + diff > 100 lignes prod) → `GO`.
 
-- **À faire avant** : Aucun. Tous les prérequis (helper shared, snapshot architecture, `WorldEntityDto.newbieShield`) sont livrés par les runs 056 et 060.
-- **À faire après** : **Run futur** — « fiche publique joueur (route REST + badge bouclier) » : nécessite d'abord trancher l'API profil global (cf. ticket archivé `tasks/archive/70-integrate-player-profile-sheet.md` § Piste B). Hors scope ici.
-- **Doublon potentiel** : Aucun. Vérifié via `ls tasks/ tasks/runs/` + `grep -l "shield.*scout\|scout.*shield"` (uniquement archive 056 qui *déclare* le suivi sans le faire).
-- **Connexe (contexte)** :
-  - [`tasks/runs/archive/056-feature-pvp-newbie-shield-48h.md`](./archive/056-feature-pvp-newbie-shield-48h.md) — livre tout sauf badge scout + badge fiche publique. Ce run consomme le suivi `task_56e23ad7` (partie scout).
-  - [`tasks/runs/archive/060-feature-pvp-capture-duration-preview.md`](./archive/060-feature-pvp-capture-duration-preview.md) — précédent qui a déjà étendu `ScoutReportResponse.details` (ajout `castleLevel`). Référence directe pour le pattern snapshot scout + presenter + DTO + frontend badge.
-  - [`tasks/runs/archive/055-feature-intel-notebook.md`](./archive/055-feature-intel-notebook.md) — l'âge du rapport scout est déjà affiché par le carnet d'intel ; ce run en bénéficie pour la lecture « snapshot vs live » du badge bouclier.
-  - [`tasks/runs/archive/058-feature-pvp-power-third-attack-guard.md`](./archive/058-feature-pvp-power-third-attack-guard.md) — pattern badge analogue (CTA grisé + message côté `SelectedEntityPanel`), pas de conflit (zones différentes).
-  - [`tasks/archive/70-integrate-player-profile-sheet.md`](../archive/70-integrate-player-profile-sheet.md) — confirme que la route profil joueur public n'existe pas (Piste B reportée).
-- **Déjà résolu (archive)** : Aucun. Le suivi `task_56e23ad7` est tracé dans le rapport 056 mais aucune fiche dédiée ne le porte.
-- **Keywords scannés** : `newbie-shield`, `shield`, `bouclier`, `scout`, `scout-report`, `rapport-scout`, `badge`, `visibilité`, `task_56e23ad7`.
+### Acceptance & QA
 
-## Points d'attention
+**Critères d'acceptance vérifiés**
+- [x] DTO `details.newbieShield?: {active, endsAt}` — `rg "newbieShield" packages/shared/src/combat/dtos.ts` → champ présent (dtos.ts:127).
+- [x] Snapshot worker (PLAYER only, barbare absent) — smoke `scouting.smoke` → `playerShield.active === true`, `barbReport.details.newbieShield === undefined`.
+- [x] Presenter propage + valide — `scout-report.presenter.spec` (15 tests verts, 3 nouveaux cas newbieShield).
+- [x] Frontend viewmodel + `getNewbieShieldStatus` — `scoutReportView.test` (13 verts, badge actif `48h 00m`).
+- [x] Badge `ScoutReportCard` masqué si absent/inactif/barbare — `scoutReportView.test` cas inactif/absent/barbare → `shieldBadge === undefined`. _(rendu visuel : IG)_
+- [x] Aucune migration Prisma — `git diff --stat` → aucun fichier `prisma/`.
+- [x] Snapshot vs live — remaining = `endsAt − report.timestamp` via `formatRemaining` pur, aucun `Date.now()` côté rapport (reviewer confirmé).
+- [x] Smoke shield actif + post-rupture — `scouting.smoke` → re-scout post-`shieldBrokenAt` → `active === false`.
+- [x] Pas de régression barbares — smoke + view tests verts.
+- [x] Pas de régression `SelectedEntityPanel`/header self — `vitest SelectedEntityPanel NewbieShield combat` → 109 verts (zones disjointes).
 
-- **Snapshot, pas live** : le badge affiche l'état du bouclier **au moment du scout** (cohérent avec `wallLevel` / `castleLevel`). Si la cible a brisé son bouclier en attaquant entre le scout et la consultation du rapport, le badge montre `active === true` figé. C'est le bon comportement (l'âge du rapport est déjà signalé via le carnet d'intel et la spec scout § « Pas de péremption explicite »).
-- **Cibles barbares** : `details.newbieShield` doit être **absent** (pas `false`), pour que le composant fasse une simple présence-de-clé check. Évite de polluer le payload des rapports barbares qui dominent en volume.
-- **Pas de migration Prisma** : `ScoutReport.details` est `Json`. L'ajout est silencieux pour les anciens rapports (champ `undefined`, badge masqué). Vérifier avec `prisma migrate diff`.
-- **Réutilisation du helper shared `isShieldActive`** : à utiliser côté backend lors du snapshot ET côté frontend pour formater le countdown (cohérence formule garantie). Aucun nouveau helper.
-- **Pas de duplication du badge UI** : si le badge `SelectedEntityPanel` a été extrait dans un composant partagé (à vérifier en cartographie), le réutiliser. Sinon factoriser à l'occasion (T5) sans gonfler le scope.
-- **Pas d'event WS dédié** : le rapport scout est créé une fois à la résolution ; aucun event de mise à jour ultérieur du badge (cohérent avec snapshot). L'event `pvp.shield.broken` existant (run 056) ne déclenche pas de refetch des rapports scout — ce serait incorrect (le snapshot doit rester figé).
-- **Review indépendante** : critère (a) back+front simultanés rempli, mais diff estimé < 100 lignes et pas d'invariant durable nouveau (le seul invariant nouveau est l'ajout DTO `newbieShield?`). Critère (b) modifie SPEC.md → non. Décision : review **non requise** par défaut, à confirmer au démarrage du run si la diff dépasse 100 lignes.
+**Review indépendante** : Déclenchée (raison: critère a back+front + diff > 100 lignes prod) → verdict `GO` (0 bloquant/majeur ; 1 nit barrel re-export fixé, 1 nit style laissé).
 
-## Estimation scope
+**Tests automatisés** : `yarn static-check` ✓ · presenter unit 15 ✓ · scoutReportView unit 13 ✓.
 
-`small-medium` — ~7-9 fichiers, scope clair, analog direct du run 060 (même pattern snapshot scout + DTO + presenter + frontend). Pas de découpage `$bftc-slice` nécessaire.
+**Smokes lancés** : Ciblés — `test:smoke:run -- scouting.smoke` (1 ✓) + `pvp-newbie-shield.smoke` (5 ✓) après `test:smoke:preflight`. Diff backend `src/` ciblé (worker scout + presenter), pas transversal.
+
+**Smokes ajoutés/modifiés** : `scouting.smoke.spec.ts` étendu — membership fraîche cible + assertions shield actif, absence barbare, re-scout post-rupture (`active === false`).
+
+**QA fonctionnelle agent** : couverte par le smoke e2e (REST scout → worker résolution → DB `ScoutReport.details` → assertions). Pas de curl manuel additionnel nécessaire.
+
+**Tests IG à faire par le user** :
+- [ ] Scouter un joueur sous bouclier débutant → le rapport scout affiche le badge « Bouclier débutant » + countdown figé, style aligné bleu carte.
+- [ ] Scouter un village barbare → aucun badge bouclier sur le rapport.
+
+Docs : archive `056` pointeur mis à jour (suivi scout livré) ; pas de modif spec (déjà alignée).

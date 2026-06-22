@@ -137,6 +137,10 @@ describe('scouting smoke', () => {
     await ctx.prisma.unitInventory.create({
       data: { villageId: playerTarget.id, unitType: 'SQUIRE', quantity: 3 },
     });
+    // Fresh membership for the target owner → newbie shield active at scout time.
+    await ctx.prisma.worldMembership.create({
+      data: { userId: defender.userId, worldId: world.id },
+    });
 
     const publicVillages = await request(ctx.server)
       .get(`/world/${world.id}/villages`)
@@ -205,6 +209,10 @@ describe('scouting smoke', () => {
     expect((barbReport.units as Record<string, number>).MILITIA).toBe(7);
     expect((barbReport.resources as Record<string, number>).wood).toBe(321);
     expect(barbReport.strategy).toBeNull();
+    // Barbarians have no newbie shield → field absent (not false).
+    expect(
+      (barbReport.details as Record<string, unknown>).newbieShield,
+    ).toBeUndefined();
 
     await waitFor(
       async () => {
@@ -261,6 +269,60 @@ describe('scouting smoke', () => {
     // Castle level is snapshot at scout time → derives the PvP capture window preview.
     const playerDetails = playerReport.details as Record<string, number>;
     expect(playerDetails.castleLevel).toBe(6);
+    // Newbie shield is snapshot at scout time (target owner freshly joined).
+    const playerShield = (
+      playerReport.details as {
+        newbieShield?: { active: boolean; endsAt: string | null };
+      }
+    ).newbieShield;
+    expect(playerShield?.active).toBe(true);
+    expect(typeof playerShield?.endsAt).toBe('string');
+
+    // Post-rupture: break the target owner's shield, re-scout → snapshot active=false.
+    await ctx.prisma.worldMembership.update({
+      where: {
+        userId_worldId: { userId: defender.userId, worldId: world.id },
+      },
+      data: { shieldBrokenAt: new Date() },
+    });
+    const reScout = await request(ctx.server)
+      .post('/combat/scout')
+      .set('Authorization', `Bearer ${attacker.accessToken}`)
+      .send({
+        villageId: attackerId,
+        targetX: playerTarget.x,
+        targetY: playerTarget.y,
+        targetKind: 'PLAYER_VILLAGE',
+        targetRefId: playerTarget.id,
+        units: { SPY: 1 },
+      });
+    expect(reScout.status).toBeLessThan(300);
+    const reScoutExpeditionId = (reScout.body as { id: string }).id;
+    await waitFor(
+      async () => {
+        const event = await ctx.prisma.eventOutbox.findFirst({
+          where: { kind: 'scout.returned', aggregateId: attackerId },
+          orderBy: { createdAt: 'desc' },
+        });
+        return event &&
+          (event.payload as { expeditionId?: string }).expeditionId ===
+            reScoutExpeditionId &&
+          event.dispatchedAt
+          ? event
+          : null;
+      },
+      { timeoutMs: 15_000 },
+    );
+    const postBreakReport = await ctx.prisma.scoutReport.findFirstOrThrow({
+      where: { scoutVillageId: attackerId, targetVillageId: playerTarget.id },
+      orderBy: { timestamp: 'desc' },
+    });
+    const postBreakShield = (
+      postBreakReport.details as {
+        newbieShield?: { active: boolean; endsAt: string | null };
+      }
+    ).newbieShield;
+    expect(postBreakShield?.active).toBe(false);
 
     const farBarbarian = await ctx.prisma.village.create({
       data: {

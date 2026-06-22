@@ -8,6 +8,7 @@ import {
 } from '@battleforthecrown/shared/combat';
 import { unitMetaFor } from '@/features/army/unitConfig';
 import { formatResourceAmount } from '@/lib/resourceConfig';
+import { formatRemaining } from '@/features/village/constructionProgress';
 import { DEFAULT_VILLAGE_STRATEGY, type VillageStrategyType } from '@battleforthecrown/shared/village';
 
 const NUMBER_FORMATTER = new Intl.NumberFormat('fr-FR');
@@ -65,6 +66,40 @@ function formatRelativeTime(timestamp: string): string {
   const elapsedHours = Math.floor(elapsedMinutes / 60);
   if (elapsedHours < 24) return `il y a ${elapsedHours} h`;
   return `il y a ${Math.floor(elapsedHours / 24)} j`;
+}
+
+export interface NewbieShieldStatus {
+  active: boolean;
+  endsAt: string | null;
+  /**
+   * Temps restant figé au moment du scout (`endsAt - report.timestamp`).
+   * `null` si le bouclier est inactif ou la valeur non dérivable. Snapshot —
+   * jamais recalculé en live (cohérent avec wallLevel/castleLevel).
+   */
+  remainingLabel: string | null;
+}
+
+/**
+ * État du bouclier débutant figé sur un rapport de scout. `null` si la cible
+ * est barbare, sans membership, ou si le champ est absent (anciens rapports).
+ */
+export function getNewbieShieldStatus(
+  report: ScoutReportResponse,
+): NewbieShieldStatus | null {
+  const shield = report.details?.newbieShield;
+  if (!shield) return null;
+  const endsAt = shield.endsAt ?? null;
+  if (!shield.active) {
+    return { active: false, endsAt, remainingLabel: null };
+  }
+  let remainingLabel: string | null = null;
+  if (endsAt) {
+    const remainingMs = Date.parse(endsAt) - Date.parse(report.timestamp);
+    if (Number.isFinite(remainingMs) && remainingMs > 0) {
+      remainingLabel = formatRemaining(remainingMs);
+    }
+  }
+  return { active: true, endsAt, remainingLabel };
 }
 
 export function scoutReportStrategyLabel(strategy: string | null | undefined): string {
@@ -148,6 +183,8 @@ export function buildScoutReportCardProps(
         ]),
   ];
 
+  const shieldStatus = getNewbieShieldStatus(report);
+
   return {
     action: {
       disabled: deleteDisabled,
@@ -155,6 +192,9 @@ export function buildScoutReportCardProps(
       onClick: onDelete,
     },
     bannerIcon: '/assets/lupa.png',
+    shieldBadge: shieldStatus?.active
+      ? { label: 'Bouclier débutant', remaining: shieldStatus.remainingLabel }
+      : undefined,
     sections,
     targetName: scoutReportTitle(report),
     targetPrefix: 'Cible',
