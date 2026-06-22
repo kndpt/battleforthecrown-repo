@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import PgBoss from 'pg-boss';
+import { registerJobQueueWorker } from '../../infra/pg-boss/queue-worker.helper';
 import { CONQUEST_FINALIZE_QUEUE, ConquestService } from './conquest.service';
 
 interface ConquestFinalizeJob {
@@ -16,21 +17,12 @@ export class ConquestFinalizeWorker implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    try {
-      await this.boss.createQueue(CONQUEST_FINALIZE_QUEUE);
-      await this.boss.work(CONQUEST_FINALIZE_QUEUE, async (jobs) => {
-        const job = Array.isArray(jobs) ? jobs[0] : jobs;
-        return this.handleFinalize(job.data as ConquestFinalizeJob);
-      });
-
-      this.logger.log('Conquest finalize worker initialized');
-    } catch (error) {
-      this.logger.error(
-        'Failed to initialize conquest finalize worker:',
-        error,
-      );
-      throw error;
-    }
+    await registerJobQueueWorker<ConquestFinalizeJob>(
+      this.boss,
+      this.logger,
+      { queueName: CONQUEST_FINALIZE_QUEUE, displayName: 'Conquest finalize' },
+      (data) => this.handleFinalize(data),
+    );
   }
 
   private async handleFinalize(data: ConquestFinalizeJob) {

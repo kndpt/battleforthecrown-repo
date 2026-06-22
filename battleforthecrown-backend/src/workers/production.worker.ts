@@ -2,7 +2,10 @@ import { Injectable, Logger, Inject, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../infra/prisma/prisma.service';
 import { ResourcesService } from '../modules/resources/resources.service';
+import { registerScheduledQueueWorker } from '../infra/pg-boss/queue-worker.helper';
 import PgBoss from 'pg-boss';
+
+const PRODUCTION_QUEUE = 'production:tick';
 
 @Injectable()
 export class ProductionWorker implements OnModuleInit {
@@ -16,37 +19,21 @@ export class ProductionWorker implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    try {
-      await this.boss.createQueue('production:tick');
-
-      await this.boss.work('production:tick', async () => {
-        return this.handleProductionTick();
-      });
-
-      // Get production interval from environment (default: 60 minutes)
-      const intervalMinutes = this.config.get<number>(
-        'PRODUCTION_TICK_INTERVAL_MINUTES',
-        60,
-      );
-      const cronExpression = `*/${intervalMinutes} * * * *`;
-
-      // Schedule recurring job
-      await this.boss.schedule(
-        'production:tick',
-        cronExpression,
-        {},
-        {
-          tz: 'UTC',
-        },
-      );
-
-      this.logger.log(
-        `Production worker initialized (ticking every ${intervalMinutes} minutes)`,
-      );
-    } catch (error) {
-      this.logger.error('Failed to initialize production worker:', error);
-      throw error;
-    }
+    const intervalMinutes = this.config.get<number>(
+      'PRODUCTION_TICK_INTERVAL_MINUTES',
+      60,
+    );
+    await registerScheduledQueueWorker(
+      this.boss,
+      this.logger,
+      {
+        queueName: PRODUCTION_QUEUE,
+        cron: `*/${intervalMinutes} * * * *`,
+        tz: 'UTC',
+        displayName: 'Production',
+      },
+      () => this.handleProductionTick(),
+    );
   }
 
   private async handleProductionTick() {

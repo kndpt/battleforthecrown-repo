@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import type { World, WorldStatus } from '@prisma/client';
 import PgBoss from 'pg-boss';
 import { PrismaService } from '../infra/prisma/prisma.service';
+import { registerScheduledQueueWorker } from '../infra/pg-boss/queue-worker.helper';
 import { createOutboxEvent } from '../modules/event/event.utils';
 import { RankingsService } from '../modules/rankings/rankings.service';
 import { RenownService } from '../modules/renown/renown.service';
@@ -25,27 +26,17 @@ export class WorldLifecycleWorker implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    try {
-      await this.boss.createQueue(WORLD_LIFECYCLE_QUEUE);
-      await this.boss.work(WORLD_LIFECYCLE_QUEUE, async () => {
-        await this.handleLifecycleTick();
-      });
-      await this.boss.schedule(
-        WORLD_LIFECYCLE_QUEUE,
-        WORLD_LIFECYCLE_CRON,
-        {},
-        {
-          tz: 'UTC',
-        },
-      );
-
-      this.logger.log(
-        `World lifecycle worker initialized (${WORLD_LIFECYCLE_CRON})`,
-      );
-    } catch (error) {
-      this.logger.error('Failed to initialize world lifecycle worker:', error);
-      throw error;
-    }
+    await registerScheduledQueueWorker(
+      this.boss,
+      this.logger,
+      {
+        queueName: WORLD_LIFECYCLE_QUEUE,
+        cron: WORLD_LIFECYCLE_CRON,
+        tz: 'UTC',
+        displayName: 'World lifecycle',
+      },
+      () => this.handleLifecycleTick(),
+    );
   }
 
   async handleLifecycleTick(now = new Date()): Promise<{
