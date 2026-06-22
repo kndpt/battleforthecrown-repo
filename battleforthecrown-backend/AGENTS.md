@@ -8,7 +8,7 @@ NestJS 10 + Prisma 6 + PostgreSQL + pg-boss + Socket.IO. Server-authoritative �
 - **Prisma** : ORM, source de vérité dans [`prisma/schema.prisma`](./prisma/schema.prisma).
 - **pg-boss** : queue de jobs (production tick, finalisation construction/training, combat, retour d'armée, outbox).
 - **Socket.IO** : temps réel, gateway `event/game.gateway.ts` alimenté par l'`OutboxWorker`.
-- **Zod** (nouveau) / `class-validator` (legacy) : validation DTOs. Migrer vers Zod pour les nouveaux endpoints.
+- **Zod** : validation DTOs via `ZodValidationPipe`.
 
 ## Commandes
 
