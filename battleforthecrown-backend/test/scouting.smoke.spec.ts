@@ -322,7 +322,24 @@ describe('scouting smoke', () => {
         newbieShield?: { active: boolean; endsAt: string | null };
       }
     ).newbieShield;
+    expect(postBreakShield).toBeDefined();
     expect(postBreakShield?.active).toBe(false);
+    // The re-scout produced a distinct, newer report (not a mutation in place).
+    expect(postBreakReport.id).not.toBe(playerReport.id);
+
+    // Immutability: the first report stays frozen (active=true) after the
+    // break — proves the snapshot is persisted, not computed on read.
+    const initialReportAfterBreak =
+      await ctx.prisma.scoutReport.findUniqueOrThrow({
+        where: { id: playerReport.id },
+      });
+    const initialShieldAfterBreak = (
+      initialReportAfterBreak.details as {
+        newbieShield?: { active: boolean; endsAt: string | null };
+      }
+    ).newbieShield;
+    expect(initialShieldAfterBreak?.active).toBe(true);
+    expect(initialShieldAfterBreak?.endsAt).toBe(playerShield?.endsAt);
 
     const farBarbarian = await ctx.prisma.village.create({
       data: {
