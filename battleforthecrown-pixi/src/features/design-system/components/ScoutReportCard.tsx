@@ -37,6 +37,12 @@ export interface ScoutReportAction {
   onClick?: ButtonHTMLAttributes<HTMLButtonElement>['onClick'];
 }
 
+export interface ScoutReportShieldBadge {
+  /** Frozen remaining time at scout moment, e.g. "47h 16m". `null` if unknown. */
+  remaining: string | null;
+  label: string;
+}
+
 export interface ScoutReportCardProps {
   action: ScoutReportAction;
   bannerIcon: string;
@@ -47,6 +53,7 @@ export interface ScoutReportCardProps {
   note?: string;
   onClose?: ButtonHTMLAttributes<HTMLButtonElement>['onClick'];
   sections: ScoutReportSection[];
+  shieldBadge?: ScoutReportShieldBadge;
   targetName: string;
   targetPrefix: string;
   timeLabel: string;
@@ -70,6 +77,7 @@ export function ScoutReportCard({
   note,
   onClose,
   sections,
+  shieldBadge,
   targetName,
   targetPrefix,
   timeLabel,
@@ -116,6 +124,25 @@ export function ScoutReportCard({
         </div>
         <span className="whitespace-nowrap text-[10.5px] text-[#6d5838]">{timeLabel}</span>
       </div>
+
+      {shieldBadge ? (
+        <div className="flex items-center gap-2 border-b border-[rgba(0,0,0,.08)] bg-[linear-gradient(to_bottom,rgba(91,155,213,.18),rgba(31,82,136,.08))] px-3 py-2">
+          <img
+            alt=""
+            aria-hidden="true"
+            className="size-[22px] flex-none object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,.45)]"
+            src={publicAsset('/assets/newbie-shield.png')}
+          />
+          <span className="flex-1 font-game text-[11px] font-bold uppercase tracking-[.08em] text-[#1f5288]">
+            {shieldBadge.label}
+          </span>
+          {shieldBadge.remaining ? (
+            <span className="whitespace-nowrap font-game text-[11px] font-extrabold tabular-nums text-[#1f5288]">
+              {shieldBadge.remaining}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
 
       {note ? (
         <p className="border-b border-[rgba(0,0,0,.08)] bg-[rgba(0,0,0,.04)] px-3 py-2 font-game text-[11px] italic leading-[1.35] text-[#6d5838]">

@@ -57,6 +57,7 @@ import { getCaptureDurationMs } from './capture-duration';
 import { RankingsService } from '../rankings/rankings.service';
 import { RenownService } from '../renown/renown.service';
 import { IntelService } from '../intel/intel.service';
+import { NewbieShieldService } from '../world/newbie-shield.service';
 import { mergeGarrisonsIntoParticipants } from './garrison-merge.utils';
 import {
   dedupedRecipientUserIds,
@@ -139,6 +140,7 @@ export class CombatWorker implements OnModuleInit {
     private readonly rankings: RankingsService,
     private readonly renown: RenownService,
     private readonly intelService: IntelService,
+    private readonly newbieShield: NewbieShieldService,
   ) {}
 
   async onModuleInit() {
@@ -1607,6 +1609,19 @@ export class CombatWorker implements OnModuleInit {
         ? (findBuildingByType(targetVillage.buildings, 'CASTLE')?.level ??
           undefined)
         : undefined;
+    // Snapshot du bouclier débutant du propriétaire de la cible au moment du
+    // scout (PLAYER only) → badge figé sur le rapport. Barbares : pas de
+    // bouclier (champ absent). Cohérent avec wallLevel/castleLevel : la valeur
+    // reste figée même si le bouclier expire après le scout.
+    const newbieShieldSnapshot =
+      expedition.targetKind === 'PLAYER_VILLAGE' && targetVillage.userId
+        ? await this.newbieShield.getMembershipShieldState(
+            targetVillage.userId,
+            expedition.worldId,
+            new Date(),
+            tx,
+          )
+        : null;
 
     const report = await tx.scoutReport.create({
       data: {
@@ -1631,6 +1646,14 @@ export class CombatWorker implements OnModuleInit {
           scoutUnits: parseUnitMap(expedition.units, 'expedition.units'),
           wallLevel,
           ...(castleLevel !== undefined ? { castleLevel } : {}),
+          ...(newbieShieldSnapshot
+            ? {
+                newbieShield: {
+                  active: newbieShieldSnapshot.active,
+                  endsAt: newbieShieldSnapshot.endsAt,
+                },
+              }
+            : {}),
         },
       },
     });

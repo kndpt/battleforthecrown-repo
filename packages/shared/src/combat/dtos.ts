@@ -120,6 +120,13 @@ export interface ScoutReportResponse {
     scoutUnits?: UnitMap;
     wallLevel?: number;
     castleLevel?: number;
+    /**
+     * Newbie-shield state of the target player owner, snapshot at scout time.
+     * Same shape as {@link NewbieShieldState} (subset). Absent for barbarian
+     * targets and for player targets without a membership. Frozen — never
+     * recomputed live (cf. wallLevel/castleLevel snapshot pattern).
+     */
+    newbieShield?: { active: boolean; endsAt: string | null };
   };
   isRead: boolean;
   timestamp: string;

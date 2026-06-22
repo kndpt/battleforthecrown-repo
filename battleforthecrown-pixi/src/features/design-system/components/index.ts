@@ -265,7 +265,7 @@ export type { SegmentedControlOption, SegmentedControlProps, SegmentedControlSiz
 export { SemanticColorRow } from './SemanticColorRow';
 export type { SemanticColorRowProps, SemanticColorSegment } from './SemanticColorRow';
 export { ScoutReportCard } from './ScoutReportCard';
-export type { ScoutReportAction, ScoutReportCardProps, ScoutReportSection, ScoutReportStat, ScoutReportTroopBar, ScoutReportVerdict, ScoutReportVerdictTone } from './ScoutReportCard';
+export type { ScoutReportAction, ScoutReportCardProps, ScoutReportSection, ScoutReportShieldBadge, ScoutReportStat, ScoutReportTroopBar, ScoutReportVerdict, ScoutReportVerdictTone } from './ScoutReportCard';
 export { ReinforcementReportModal } from './ReinforcementReportModal';
 export type {
   ReinforcementReportAction,

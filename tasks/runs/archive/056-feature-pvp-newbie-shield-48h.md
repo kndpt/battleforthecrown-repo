@@ -74,7 +74,7 @@ _(git history)_
 
 ## Rapport final
 
-Garde-fou bouclier débutant livré : guard serveur `CombatService.initiateAttack` (403 `NEWBIE_SHIELD_ACTIVE` entrant + rupture `shieldBrokenAt` sortante, même tx + Outbox `pvp.shield.broken`), helper pur shared `isShieldActive`/`shieldEndsAt`, enrichissement `WorldEntityDto.newbieShield` (carte) + `me/memberships.newbieShield`, CTA grisé + countdown + badge header self. Durée toujours via `WorldConfig.lifecycle.newbieShieldHours` (aucun `48` en dur). Reportés (ticket `task_56e23ad7`) : badge rapport de scout + fiche publique joueur (route inexistante).
+Garde-fou bouclier débutant livré : guard serveur `CombatService.initiateAttack` (403 `NEWBIE_SHIELD_ACTIVE` entrant + rupture `shieldBrokenAt` sortante, même tx + Outbox `pvp.shield.broken`), helper pur shared `isShieldActive`/`shieldEndsAt`, enrichissement `WorldEntityDto.newbieShield` (carte) + `me/memberships.newbieShield`, CTA grisé + countdown + badge header self. Durée toujours via `WorldConfig.lifecycle.newbieShieldHours` (aucun `48` en dur). Reportés (ticket `task_56e23ad7`) : badge rapport de scout + fiche publique joueur (route inexistante). _Suivi : badge rapport de scout livré par le run [`081-feature-pvp-newbie-shield-scout-report-badge`](../081-feature-pvp-newbie-shield-scout-report-badge.md) (snapshot `ScoutReport.details.newbieShield`). Fiche publique joueur toujours hors scope (route REST publique inexistante)._
 
 ### Acceptance & QA
 

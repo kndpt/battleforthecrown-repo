@@ -118,6 +118,43 @@ describe('presentScoutReport', () => {
     expect(presentScoutReport(report).details).toEqual({});
   });
 
+  it('includes newbieShield (active) when present in details', () => {
+    const report = {
+      ...baseReport,
+      details: {
+        newbieShield: { active: true, endsAt: '2026-06-09T10:00:00.000Z' },
+      },
+    };
+    expect(presentScoutReport(report).details).toEqual({
+      newbieShield: { active: true, endsAt: '2026-06-09T10:00:00.000Z' },
+    });
+  });
+
+  it('includes newbieShield (inactive) and normalizes a missing endsAt to null', () => {
+    const report = {
+      ...baseReport,
+      details: { newbieShield: { active: false } },
+    };
+    expect(presentScoutReport(report).details).toEqual({
+      newbieShield: { active: false, endsAt: null },
+    });
+  });
+
+  it('omits newbieShield when active is not a boolean or shape is invalid', () => {
+    expect(
+      presentScoutReport({
+        ...baseReport,
+        details: { newbieShield: { active: 'yes', endsAt: 'x' } },
+      }).details,
+    ).toEqual({});
+    expect(
+      presentScoutReport({
+        ...baseReport,
+        details: { newbieShield: 'not-an-object' },
+      }).details,
+    ).toEqual({});
+  });
+
   it('marks a barbarian scout report with null targetVillageId and targetTier', () => {
     const report: ScoutReportInput = {
       ...baseReport,

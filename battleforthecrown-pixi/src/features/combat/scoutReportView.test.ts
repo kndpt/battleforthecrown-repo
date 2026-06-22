@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { ScoutReportResponse } from '@battleforthecrown/shared/combat';
 import {
   buildScoutReportCardProps,
+  getNewbieShieldStatus,
   scoutReportResourceTotal,
   scoutReportStrategyLabel,
   scoutReportTargetLabel,
@@ -132,5 +133,81 @@ describe('scoutReportView', () => {
         }),
       ]),
     );
+  });
+
+  describe('newbie shield badge', () => {
+    const withShield = (newbieShield: {
+      active: boolean;
+      endsAt: string | null;
+    }): ScoutReportResponse => ({
+      ...report,
+      details: { ...report.details, newbieShield },
+    });
+
+    it('derives an active status with a frozen remaining label (endsAt - scout time)', () => {
+      const status = getNewbieShieldStatus(
+        withShield({ active: true, endsAt: '2026-05-14T10:00:00.000Z' }),
+      );
+      expect(status).toEqual({
+        active: true,
+        endsAt: '2026-05-14T10:00:00.000Z',
+        remainingLabel: '48h 00m',
+      });
+    });
+
+    it('exposes the shield badge on card props when active', () => {
+      const props = buildScoutReportCardProps(
+        withShield({ active: true, endsAt: '2026-05-14T10:00:00.000Z' }),
+        undefined,
+        false,
+      );
+      expect(props.shieldBadge).toEqual({
+        label: 'Bouclier débutant',
+        remaining: '48h 00m',
+      });
+    });
+
+    it('drops the remaining label when endsAt already passed at scout time', () => {
+      const status = getNewbieShieldStatus(
+        withShield({ active: true, endsAt: '2026-05-10T10:00:00.000Z' }),
+      );
+      expect(status).toEqual({
+        active: true,
+        endsAt: '2026-05-10T10:00:00.000Z',
+        remainingLabel: null,
+      });
+    });
+
+    it('hides the badge when the shield was inactive at scout time', () => {
+      const inactive = withShield({ active: false, endsAt: null });
+      expect(getNewbieShieldStatus(inactive)).toEqual({
+        active: false,
+        endsAt: null,
+        remainingLabel: null,
+      });
+      expect(
+        buildScoutReportCardProps(inactive, undefined, false).shieldBadge,
+      ).toBeUndefined();
+    });
+
+    it('returns null status and no badge when the shield field is absent', () => {
+      expect(getNewbieShieldStatus(report)).toBeNull();
+      expect(
+        buildScoutReportCardProps(report, undefined, false).shieldBadge,
+      ).toBeUndefined();
+    });
+
+    it('returns null status for a barbarian target (no shield field)', () => {
+      const barbarianReport: ScoutReportResponse = {
+        ...report,
+        targetKind: 'BARBARIAN_VILLAGE',
+        targetTier: 'T2',
+        details: { wallLevel: 0 },
+      };
+      expect(getNewbieShieldStatus(barbarianReport)).toBeNull();
+      expect(
+        buildScoutReportCardProps(barbarianReport, undefined, false).shieldBadge,
+      ).toBeUndefined();
+    });
   });
 });
