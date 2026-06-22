@@ -301,6 +301,28 @@
         "docs/gameplay/19-world-lifecycle.md:67-71 — explicite « L'UI de sélection de monde affiche un avertissement (« lancé il y a {N} j ») et propose côte à côte un monde frais en phase `main` si disponible »"
       ],
       "addedAt": "2026-06-21"
+    },
+    {
+      "specPath": "docs/gameplay/14-pvp-conquest.md",
+      "slug": "pvp-newbie-shield-scout-report-badge",
+      "title": "Bouclier débutant — badge sur le rapport de scout (visibilité MVP)",
+      "keywords": ["bouclier", "newbie-shield", "scout", "rapport-scout", "badge", "visibilité"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/081-feature-pvp-newbie-shield-scout-report-badge.md",
+      "artefactId": "081",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/pvp-newbie-shield-scout-report-badge",
+      "gapSummary": "La spec 14-pvp-conquest § 3 Bouclier débutant ligne 193 tranche MVP la visibilité du bouclier sur trois surfaces : panneau d'info village, fiche publique joueur, ET rapport de scout. Run 056 a livré le garde-fou + badge SelectedEntityPanel + badge header self, mais a explicitement reporté en suivi `task_56e23ad7` le badge rapport de scout + la fiche publique joueur (route inexistante). Ce run livre la première moitié — badge sur le rapport de scout — en appliquant le pattern snapshot-scout déjà utilisé par run 060 pour castleLevel.",
+      "codeEvidence": [
+        "battleforthecrown-backend/src/modules/combat/scout-report.presenter.ts:22-37 — reportDetails() expose scoutLosses/scoutUnits/wallLevel/castleLevel, jamais newbieShield",
+        "packages/shared/src/combat/dtos.ts — ScoutReportResponse.details n'inclut pas de champ newbieShield",
+        "battleforthecrown-pixi/src/features/combat/scoutReportView.ts — pas de mapping vers un état bouclier",
+        "battleforthecrown-pixi/src/features/design-system/components/ScoutReportCard.tsx — aucun badge bouclier débutant (uniquement compo + ressources + Rempart + Château + Fenêtre de capture)",
+        "tasks/runs/archive/056-feature-pvp-newbie-shield-48h.md:77 — explicite « Reportés (ticket task_56e23ad7) : badge rapport de scout + fiche publique joueur (route inexistante) »",
+        "tasks/runs/archive/056-feature-pvp-newbie-shield-48h.md:88,104 — checklist QA « Fiche publique joueur tierce porte newbieShield — reporté » + note refinement « route REST profil joueur public à confirmer »",
+        "tasks/archive/70-integrate-player-profile-sheet.md — confirme que la route profil joueur public n'existe pas (Piste B reportée)"
+      ],
+      "addedAt": "2026-06-22"
     }
   ]
 }
