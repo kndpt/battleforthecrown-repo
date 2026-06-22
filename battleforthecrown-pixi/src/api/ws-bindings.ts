@@ -1022,7 +1022,7 @@ export function applyIntelUpdated(
   ctx: BindingsContext,
 ): void {
   ctx.queryClient.invalidateQueries({
-    queryKey: ["intel", payload.worldId, payload.villageId],
+    queryKey: queryKeys.villageIntel(payload.worldId, payload.villageId),
   });
 }
 
