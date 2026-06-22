@@ -1,8 +1,8 @@
 # Run #069 — feature-worlds-selection-late-phase-warning
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-21
+> **Terminé** : 2026-06-21
 
 ## Cible
 
@@ -50,22 +50,31 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 
 ## Progress
 
-_(Vide au démarrage. Le run le remplira à l'exécution.)_
+_(git history)_
 
 ## Décisions prises
 
-_(Vide au démarrage.)_
+_(git history)_
 
 ## Rapport final
 
-_(Vide au démarrage.)_
+Helpers purs shared `formatWorldLaunchAgeFr` + `pickFreshAlternativeWorld` (lifecycle.ts) consommés par `worldsViewModel` (`launchAgeLabel`/`freshAlternativeWorldId`, phase `late` only) ; bandeau « Lancé il y a {N} j » + CTA secondaire « Rejoindre plutôt un monde plus frais » (ancrage scroll, pas de join auto) dans `WorldsSelectionDesign`. Aucun backend, aucune migration.
 
 ### Acceptance & QA
 
-- [ ] _(rempli à l'exécution)_
-- **Review indépendante** : oui si diff > 100 lignes (probable étant donné helpers shared + UI). Pas de back + front simultané attendu (UI-only + helpers shared purs). À trancher en étape 5 du run.
-- **Tests automatisés** : vitest helpers shared (`lifecycle.spec.ts`), vitest viewmodel (`worldsViewModel.test.ts`), vitest UI (`WorldsSelectionDesign.test.tsx`), `static-check`.
-- **Tests IG user** : checklist Kelvin (Cursor cloud) — vérifier (a) en monde `main` pur : aucun bandeau ; (b) en monde `late` avec un `main` dispo : bandeau visible + CTA secondaire fonctionnel ; (c) en monde `late` sans `main` : bandeau seul.
+- [x] Bandeau « Lancé il y a {N} j » sur card `late` — `yarn workspace battleforthecrown-pixi test --run WorldsSelectionDesign` → test "shows the launch-age banner..." vert
+- [x] Bandeau absent en `main`/`closed` — `worldsViewModel.test.ts` "hides the launch-age banner... outside the late phase" + UI "renders no launch-age banner on a main-phase world" → verts
+- [x] CTA secondaire si `main` dispo, sélectionne le plus jeune — `pickFreshAlternativeWorld` tri desc + `worldsViewModel.test.ts` "exposes a launch-age banner and a fresh alternative" → `freshAlternativeWorldId === 'fresh-main'`
+- [x] CTA masqué si aucun `main` — UI "shows the banner but no CTA" + viewmodel "every other world is also late" → null
+- [x] Clic CTA ancre vers la card cible, pas de join auto — `WorldSelector.onSelectFreshAlternative` (setActiveTab('open') + scrollIntoView, zéro mutation) ; UI test asserte `onSelectFreshAlternative('fresh-main')`
+- [x] `formatWorldLaunchAgeFr` couvert vitest (aujourd'hui/hier/{N}j/null/futur/ISO) — `lifecycle.spec.ts` 7 cas verts
+- [x] Helpers exportés via `world/index.ts` — `export * from './lifecycle'` → `yarn static-check` vert (imports résolus)
+- **Review indépendante** : Déclenchée (raison : (c) diff > 100 lignes). Verdict `GO` — 0 bloquant / 0 majeur, 4 nits mineurs non bloquants (tie-break tri, non-null assertion gardée, scroll DOM non testé, map par card O(N²) sur N petit).
+- **Tests automatisés** : `yarn workspace battleforthecrown-pixi test --run` → 106 fichiers / 695 tests verts. `yarn static-check` → vert.
+- **Smokes lancés** : Non lancés localement, raison : aucun fichier `battleforthecrown-backend/src/` touché (shared pur + UI front) ; aucune CI smoke pertinente.
+- **Smokes ajoutés/modifiés** : Aucun (pas de backend).
+- **QA fonctionnelle agent** : Non nécessaire — comportement purement front (dérivation viewmodel + rendu), couvert par vitest jsdom.
+- **Tests IG à faire par le user** : checklist Kelvin — (a) monde `main` pur : aucun bandeau ; (b) monde `late` + un `main` dispo : bandeau « Lancé il y a {N} j » + CTA « monde plus frais » qui scrolle vers la card fraîche ; (c) monde `late` sans `main` : bandeau seul, pas de CTA.
 
 ## Hors scope (à dériver plus tard si besoin)
 

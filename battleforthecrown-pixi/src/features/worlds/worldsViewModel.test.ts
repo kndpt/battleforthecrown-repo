@@ -217,6 +217,123 @@ describe("worldsViewModel", () => {
     expect(model.statusLabel).toBe("INSCRIPTIONS CLOSES");
   });
 
+  it("exposes a launch-age banner and a fresh alternative for a late world", () => {
+    const lateWorld = makeWorld({
+      id: "late-world",
+      lifecycle: {
+        day: 9,
+        endsAt: "2026-07-15T12:00:00.000Z",
+        inscriptionLateDays: 3,
+        inscriptionMainDays: 7,
+        newbieShieldHours: 72,
+        inscriptionPhase: "late",
+        plannedOpenAt: null,
+        startedAt: "2026-05-17T12:00:00.000Z", // 8 days before now
+        totalDays: 60,
+      },
+    });
+    const freshMainWorld = makeWorld({
+      id: "fresh-main",
+      lifecycle: {
+        day: 2,
+        endsAt: "2026-07-22T12:00:00.000Z",
+        inscriptionLateDays: 3,
+        inscriptionMainDays: 7,
+        newbieShieldHours: 72,
+        inscriptionPhase: "main",
+        plannedOpenAt: null,
+        startedAt: "2026-05-23T12:00:00.000Z",
+        totalDays: 60,
+      },
+    });
+
+    const model = toWorldCardViewModel(
+      lateWorld,
+      new Set<string>(),
+      now,
+      new Map(),
+      new Map(),
+      [lateWorld, freshMainWorld],
+    );
+
+    expect(model.inscriptionPhase).toBe("late");
+    expect(model.launchAgeLabel).toBe("Lancé il y a 8 j");
+    expect(model.freshAlternativeWorldId).toBe("fresh-main");
+  });
+
+  it("hides the launch-age banner and fresh alternative outside the late phase", () => {
+    const freshMainWorld = makeWorld({
+      id: "fresh-main",
+      lifecycle: {
+        day: 2,
+        endsAt: "2026-07-22T12:00:00.000Z",
+        inscriptionLateDays: 3,
+        inscriptionMainDays: 7,
+        newbieShieldHours: 72,
+        inscriptionPhase: "main",
+        plannedOpenAt: null,
+        startedAt: "2026-05-23T12:00:00.000Z",
+        totalDays: 60,
+      },
+    });
+
+    const mainModel = toWorldCardViewModel(
+      makeWorld({ id: "main-world" }),
+      new Set<string>(),
+      now,
+      new Map(),
+      new Map(),
+      [freshMainWorld],
+    );
+
+    expect(mainModel.inscriptionPhase).toBe("main");
+    expect(mainModel.launchAgeLabel).toBeNull();
+    expect(mainModel.freshAlternativeWorldId).toBeNull();
+  });
+
+  it("shows the banner but no alternative when every other world is also late", () => {
+    const lateWorld = makeWorld({
+      id: "late-world",
+      lifecycle: {
+        day: 9,
+        endsAt: "2026-07-15T12:00:00.000Z",
+        inscriptionLateDays: 3,
+        inscriptionMainDays: 7,
+        newbieShieldHours: 72,
+        inscriptionPhase: "late",
+        plannedOpenAt: null,
+        startedAt: "2026-05-17T12:00:00.000Z",
+        totalDays: 60,
+      },
+    });
+    const otherLate = makeWorld({
+      id: "other-late",
+      lifecycle: {
+        day: 8,
+        endsAt: "2026-07-16T12:00:00.000Z",
+        inscriptionLateDays: 3,
+        inscriptionMainDays: 7,
+        newbieShieldHours: 72,
+        inscriptionPhase: "late",
+        plannedOpenAt: null,
+        startedAt: "2026-05-18T12:00:00.000Z",
+        totalDays: 60,
+      },
+    });
+
+    const model = toWorldCardViewModel(
+      lateWorld,
+      new Set<string>(),
+      now,
+      new Map(),
+      new Map(),
+      [lateWorld, otherLate],
+    );
+
+    expect(model.launchAgeLabel).toBe("Lancé il y a 8 j");
+    expect(model.freshAlternativeWorldId).toBeNull();
+  });
+
   it("keeps legacy OPEN worlds explicit when lifecycle start dates are missing", () => {
     const model = toWorldCardViewModel(
       makeWorld({

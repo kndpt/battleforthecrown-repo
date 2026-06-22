@@ -1,4 +1,8 @@
-import type { PublicWorld } from "@battleforthecrown/shared/world";
+import {
+  formatWorldLaunchAgeFr,
+  pickFreshAlternativeWorld,
+  type PublicWorld,
+} from "@battleforthecrown/shared/world";
 
 export type WorldsTab = "open" | "planned" | "locked";
 export type WorldCtaKind = "join" | "notify" | "locked" | "joined" | "rejoin";
@@ -25,10 +29,14 @@ export interface WorldCardViewModel {
   ctaLabel: string;
   dayLabel: string;
   displayName: string;
+  /** Id of the freshest still-`main` world to suggest on a `late` card, else null. */
+  freshAlternativeWorldId: string | null;
   id: string;
   inscriptionPhase: PublicWorld["lifecycle"]["inscriptionPhase"];
   isJoined: boolean;
   joinedCountLabel: string;
+  /** Human FR « Lancé il y a {N} j » banner for a `late` world, else null. */
+  launchAgeLabel: string | null;
   lifecycleDay: number | null;
   lifecycleInscriptionLateDays: number;
   lifecycleInscriptionMainDays: number;
@@ -135,6 +143,7 @@ const tierLabels: Record<PublicWorld["identity"]["tier"], string> = {
 const formatter = new Intl.NumberFormat("fr-FR");
 const EMPTY_PERSONAL_STATS = new Map<string, WorldPersonalStatsInput>();
 const EMPTY_VILLAGE_COUNTS = new Map<string, number>();
+const EMPTY_CANDIDATE_WORLDS: readonly PublicWorld[] = [];
 
 function formatCountdown(
   plannedOpenAt: string | null,
@@ -177,6 +186,7 @@ export function toWorldCardViewModel(
     WorldPersonalStatsInput
   > = EMPTY_PERSONAL_STATS,
   villageCountByWorldId: ReadonlyMap<string, number> = EMPTY_VILLAGE_COUNTS,
+  candidateWorlds: readonly PublicWorld[] = EMPTY_CANDIDATE_WORLDS,
 ): WorldCardViewModel {
   const isJoined = joinedWorldIds.has(world.id);
   const villageCount = isJoined ? villageCountByWorldId.get(world.id) : undefined;
@@ -187,8 +197,28 @@ export function toWorldCardViewModel(
     ? personalStatsByWorldId.get(world.id)
     : undefined;
 
+  const isLatePhase = world.lifecycle.inscriptionPhase === "late";
+  const now = new Date(nowMs);
+  const launchAgeLabel = isLatePhase
+    ? formatWorldLaunchAgeFr(world.lifecycle.startedAt, now)
+    : null;
+  const freshAlternativeWorldId = isLatePhase
+    ? pickFreshAlternativeWorld(
+        world,
+        candidateWorlds.map((candidate) => ({
+          id: candidate.id,
+          startedAt: candidate.lifecycle.startedAt,
+          inscriptionPhase: candidate.lifecycle.inscriptionPhase,
+          status: candidate.status,
+        })),
+        now,
+      )
+    : null;
+
   return {
     ...cta,
+    freshAlternativeWorldId,
+    launchAgeLabel,
     dayLabel:
       world.status === "PLANNED"
         ? opensIn

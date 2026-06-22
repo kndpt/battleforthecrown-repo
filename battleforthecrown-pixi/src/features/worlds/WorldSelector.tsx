@@ -63,6 +63,19 @@ export function WorldSelector() {
     });
   };
 
+  const onSelectFreshAlternative = (worldId: string) => {
+    // Fresh worlds are always still-OPEN (main phase) → ensure the tab is visible
+    // before anchoring to the target card. No automatic join: the user validates
+    // via the card's own primary CTA.
+    setActiveTab('open');
+    requestAnimationFrame(() => {
+      const card = document.getElementById(`world-card-${worldId}`);
+      if (typeof card?.scrollIntoView === 'function') {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  };
+
   return (
     <>
       <WorldsSelectionDesign
@@ -77,6 +90,7 @@ export function WorldSelector() {
         onJoin={onJoin}
         onDetails={(world) => navigate(`/worlds/${world.id}`)}
         onNotify={onNotify}
+        onSelectFreshAlternative={onSelectFreshAlternative}
         onTabChange={setActiveTab}
         totalCount={worldModels.length}
         variants={defaultSeasonVariants}
