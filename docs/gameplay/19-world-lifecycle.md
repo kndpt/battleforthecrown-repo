@@ -106,6 +106,13 @@ Déclenchement : job planifié à `endsAt` (= `startedAt + 60 j`, default 🔧).
 - Mode lecture seule : les joueurs peuvent encore consulter leur royaume mais plus d'action (raid, upgrade, conquête). `WorldAccessService.assertWorldWritable` appliqué sur toutes les mutations joueur — `ForbiddenException` 403 `WORLD_READ_ONLY` (cf. [`backend-modules.md` § Invariant monde ENDED](../architecture/backend-modules.md#invariant-monde-ended--lecture-seule)).
 - Le monde reste consultable 🔧 7 j en `ENDED` puis archivé (données conservées pour stats globales, plus accessibles depuis l'UI).
 
+**UI lecture seule (livrée par le run 066).** Le statut `ENDED` est exposé au frontend (`PublicWorldStatus`, `WorldMembershipResponse.status`) ainsi qu'un `lifecycle.archiveAt` dérivé (= `endsAt + archiveAfterDays`, default 7 j). Conséquences côté joueur :
+
+- `WorldSessionGate` route un monde `ENDED` vers un écran « Monde terminé — consultation uniquement » au lieu de la `GameScreen` interactive (les mutations sont donc inatteignables côté UI, en plus du 403 backend). Le helper `isWorldReadOnly(status)` est la source unique de cette décision côté front.
+- La liste `/worlds` continue d'afficher le monde `ENDED` (badge « Terminé », countdown vers `archiveAt`) ; le CTA renvoie vers le classement final, jamais vers une inscription/entrée.
+- Le **Hall of fame** (3 classements snapshottés) est consultable par tout joueur, même non-membre, via `GET /worlds/:worldId/rankings/final` (cf. [`backend-modules.md`](../architecture/backend-modules.md)). Reste accessible pendant la phase `ENDED` ; inaccessible une fois `ARCHIVED` (run successeur 065).
+- Réception WS `world.status.changed → ENDED` en session : bascule lecture seule sans rechargement (invalidation des caches mutables + toast).
+
 ## Wipe et récompenses fin de monde
 
 **Décidé MVP : reset complet, cosmétique permanente uniquement.** Pas de méta-progression entre mondes — chaque monde est une page blanche.

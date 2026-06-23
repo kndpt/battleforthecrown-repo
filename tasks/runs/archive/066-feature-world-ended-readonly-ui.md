@@ -1,8 +1,8 @@
 # Run #066 — feature-world-ended-readonly-ui
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-23
+> **Terminé** : 2026-06-23
 
 ## Cible
 
@@ -83,3 +83,39 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 - Connexe (contexte) : [`051-feature-rankings-glory`](./archive/051-feature-rankings-glory.md) — DONE, le `FinalRankingsScreen` partage les composants du `RankingsScreen` live.
 - Déjà résolu (archive) : aucun.
 - Keywords scannés : `world-ended`, `monde-termine`, `read-only`, `leaderboard-final`, `hall-of-fame`, `archive`.
+
+## Rapport final
+
+Synthèse : UI lecture seule des mondes `ENDED` livrée par-dessus le snapshot 061. Backend `GET /worlds/:worldId/rankings/final` (200/404/409, `@Public`), `getPublicWorlds` inclut `ENDED` + `archiveAt` dérivé, memberships exposent `status`. Front : `WorldSessionGate` → `EndedWorldView`, `FinalRankingsScreen`, `worldsViewModel` ENDED, CTA classement final (liste + détail), WS `→ENDED` bascule sans reload + toast. Décision de cadrage actée : le takeover gate rend les CTAs HUD inatteignables sur ENDED (blocage > grisage) ; helper `isWorldReadOnly` livré+testé.
+
+### Acceptance & QA
+
+- [x] WorldSessionGate rend état ENDED (pas GameScreen) — `WorldSessionGate.test.tsx` → vert (court-circuite LostKingdom pour membre éliminé).
+- [x] ctaFor ENDED → `ctaKind 'ended'`, jamais "S'inscrire"/"Entrer" — `worldsViewModel.test.ts` (3 cas ENDED) → vert.
+- [x] Liste /worlds affiche ENDED + badge « TERMINÉ » + countdown archiveAt — `worlds-public.smoke` (status ENDED + archiveAt) → vert ; rendu carte = visuel IG.
+- [x] Détail /worlds/:id CTA « Voir le classement final » — `onViewRankings` câblé `WorldDetailDesign`/`WorldDetailScreen` ; visuel IG.
+- [x] EndedWorldView/FinalRankingsScreen 3 leaderboards depuis snapshot — `FinalRankingsScreen.test.tsx` → vert.
+- [x] `GET /worlds/:worldId/rankings/final` 200/404/409 — `test:smoke:run world-final-rankings.smoke` → vert (les 3 codes).
+- [x] HUD mutants non-actionnables sur ENDED — via takeover WorldSessionGate (CTAs inatteignables) ; helper `isWorldReadOnly` + `lifecycle.test.ts` → vert. _(grisage per-CTA non câblé = code mort ; review GO)._
+- [x] WS `world.status.changed → ENDED` invalide caches + toast sans reload — `ws-bindings.test.ts` → vert.
+- [x] Lien public non-membre vers /rankings/final — route `App.tsx` + `WorldSelector`/détail (`@Public`) ; visuel IG.
+- [x] Doc 19-world-lifecycle.md maj (+ backend-modules.md, data-model.md) — voir Docs.
+- [x] `yarn static-check` + `test:backend` + `test:pixi` verts.
+
+**Review indépendante** : Déclenchée (raison: touche backend ET frontend, diff > 100 lignes, invariant durable). Verdict initial `BLOCK` (docs manquantes + 2 mineurs) → fixés → re-review `GO`.
+
+**Tests automatisés** : `yarn static-check` vert ; `test:backend` 508/508 ; `test:pixi` 730/730 ; `shared lifecycle.spec` 16/16.
+
+**Smokes lancés** (ciblés) : `test:smoke:run world-final-rankings.smoke worlds-public.smoke world-membership.smoke world-ended-lifecycle.smoke` → 4 suites vertes. Full smoke non lancé localement (changement shared additif à défaut, domaines touchés couverts par les ciblés) ; full smoke couvert par CI PR.
+
+**Smokes ajoutés/modifiés** : ajout `test/world-final-rankings.smoke.spec.ts` (200/404/409 + liste publique ENDED + archiveAt) ; `worlds-public.smoke` mis à jour (ENDED désormais listé + assert archiveAt).
+
+**QA fonctionnelle agent** : couverte par smokes REST (endpoint final, liste publique) + worker lifecycle. Pas de QA manuelle serveur séparée nécessaire.
+
+**Tests IG à faire par le user** (rendu/UX, non automatisables) :
+- [ ] Carte d'un monde ENDED dans /worlds : badge « TERMINÉ » + libellé « Terminé il y a Nj · archivé dans Mj », CTA « Terminé · consulter ».
+- [ ] Écran « Monde terminé » à l'entrée d'un monde ENDED (membre, et membre éliminé) → bouton « Voir le classement final ».
+- [ ] `FinalRankingsScreen` : 3 leaderboards (Puissance/Assaut/Rempart), podium top 3 lisible.
+- [ ] Fin de monde en session live : toast « Monde terminé » + bascule lecture seule sans reload.
+
+**Docs** : mises à jour — `docs/gameplay/19-world-lifecycle.md` (bloc « UI lecture seule run 066 »), `docs/architecture/backend-modules.md` (module rankings + endpoint final, note /worlds/public ENDED+archiveAt, /world/me/memberships status), `docs/architecture/data-model.md` (lecture publique du snapshot).

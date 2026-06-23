@@ -131,7 +131,7 @@ Calcul à la volée côté `power.service.ts` :
 
 | Table | Rôle |
 |-------|------|
-| `WorldFinalRankingSnapshot` | snapshot des 3 classements (`FinalRankingSignal` : `POWER`, `ASSAULT_GLORY`, `RAMPART_GLORY`) à la transition `LOCKED → ENDED`. Champs : `worldId`, `userId`, `signal`, `rank`, `score`, `snapshotAt`. Contrainte unique `(worldId, signal, userId)` ; index `(worldId, signal, rank)`. Inclut tous les `WorldMembership`, y compris les éliminés (score 0). Tiebreaker : `userId` lexicographique. Source de vérité pour les runs UI/awards aval. |
+| `WorldFinalRankingSnapshot` | snapshot des 3 classements (`FinalRankingSignal` : `POWER`, `ASSAULT_GLORY`, `RAMPART_GLORY`) à la transition `LOCKED → ENDED`. Champs : `worldId`, `userId`, `signal`, `rank`, `score`, `snapshotAt`. Contrainte unique `(worldId, signal, userId)` ; index `(worldId, signal, rank)`. Inclut tous les `WorldMembership`, y compris les éliminés (score 0). Tiebreaker : `userId` lexicographique. Source de vérité pour les runs UI/awards aval — lu en consultation publique via `GET /worlds/:worldId/rankings/final` (run 066, cf. [`backend-modules.md`](./backend-modules.md)). |
 
 ### Renommée de compte (account renown)
 

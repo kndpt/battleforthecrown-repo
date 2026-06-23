@@ -91,6 +91,7 @@ export function WorldSelector() {
         onDetails={(world) => navigate(`/worlds/${world.id}`)}
         onNotify={onNotify}
         onSelectFreshAlternative={onSelectFreshAlternative}
+        onViewRankings={(world) => navigate(`/worlds/${world.id}/rankings/final`)}
         onTabChange={setActiveTab}
         totalCount={worldModels.length}
         variants={defaultSeasonVariants}

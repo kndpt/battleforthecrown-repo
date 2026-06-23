@@ -30,26 +30,36 @@ export function isSerializationFailure(error: unknown): boolean {
     return false;
   }
 
-  const code = (error as { code?: unknown }).code;
-  // Prisma write-conflict/deadlock on a typed query.
+  if (!('code' in error)) {
+    return false;
+  }
+
+  const { code } = error;
+
   if (code === 'P2034') {
     return true;
   }
 
   // Raw queries ($queryRaw FOR UPDATE) surface as P2010 with the underlying
   // SQLSTATE nested in `meta.code` / `meta.message`.
-  if (code === 'P2010') {
-    const meta = (error as { meta?: { code?: unknown; message?: unknown } })
-      .meta;
-    if (typeof meta?.code === 'string' && RETRYABLE_PG_CODES.has(meta.code)) {
-      return true;
-    }
-    if (
-      typeof meta?.message === 'string' &&
-      (meta.message.includes('could not serialize') ||
-        meta.message.includes('deadlock detected'))
-    ) {
-      return true;
+  if (code === 'P2010' && 'meta' in error) {
+    const { meta } = error;
+    if (typeof meta === 'object' && meta !== null) {
+      if (
+        'code' in meta &&
+        typeof meta.code === 'string' &&
+        RETRYABLE_PG_CODES.has(meta.code)
+      ) {
+        return true;
+      }
+      if (
+        'message' in meta &&
+        typeof meta.message === 'string' &&
+        (meta.message.includes('could not serialize') ||
+          meta.message.includes('deadlock detected'))
+      ) {
+        return true;
+      }
     }
   }
 

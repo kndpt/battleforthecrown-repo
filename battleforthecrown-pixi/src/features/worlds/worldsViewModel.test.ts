@@ -8,7 +8,12 @@ import {
 
 const now = Date.parse("2026-05-25T12:00:00.000Z");
 
-function makeWorld(overrides: Partial<PublicWorld> = {}): PublicWorld {
+type MakeWorldOverrides = Partial<Omit<PublicWorld, "lifecycle">> & {
+  lifecycle?: Partial<PublicWorld["lifecycle"]>;
+};
+
+function makeWorld(overrides: MakeWorldOverrides = {}): PublicWorld {
+  const { lifecycle: lifecycleOverride, ...rest } = overrides;
   return {
     id: "world-open",
     identity: {
@@ -29,11 +34,13 @@ function makeWorld(overrides: Partial<PublicWorld> = {}): PublicWorld {
       plannedOpenAt: null,
       startedAt: "2026-05-20T12:00:00.000Z",
       totalDays: 60,
+      archiveAt: null,
+      ...lifecycleOverride,
     },
     map: { width: 500, height: 500 },
     status: "OPEN",
     tempoProfile: "standard",
-    ...overrides,
+    ...rest,
   };
 }
 
@@ -136,6 +143,76 @@ describe("worldsViewModel", () => {
     expect(model.ctaKind).toBe("joined");
     expect(model.ctaLabel).toBe("Entrer");
     expect(model.statusLabel).toBe("INSCRIPTIONS CLOSES");
+  });
+
+  it("maps an ENDED world (not joined) to a non-engaging consult CTA", () => {
+    const model = toWorldCardViewModel(
+      makeWorld({
+        id: "world-ended",
+        status: "ENDED",
+        lifecycle: {
+          day: 60,
+          endsAt: "2026-05-22T12:00:00.000Z",
+          inscriptionLateDays: 3,
+          inscriptionMainDays: 7,
+          newbieShieldHours: 48,
+          inscriptionPhase: "closed",
+          plannedOpenAt: null,
+          startedAt: "2026-03-23T12:00:00.000Z",
+          totalDays: 60,
+          archiveAt: "2026-05-29T12:00:00.000Z",
+        },
+      }),
+      new Set<string>(),
+      now,
+    );
+
+    expect(model.tab).toBe("locked");
+    expect(model.statusLabel).toBe("TERMINÉ");
+    expect(model.ctaKind).toBe("ended");
+    expect(model.ctaLabel).toBe("Terminé · consulter");
+    expect(model.dayLabel).toBe("Terminé il y a 3j · archivé dans 4j");
+  });
+
+  it("keeps the ended CTA for an eliminated member (no « Revenir »)", () => {
+    // ENDED must win over the rejoin branch: a member with 0 village on an
+    // ended world consults the final state, it never offers to come back.
+    const model = toWorldCardViewModel(
+      makeWorld({ id: "world-ended", status: "ENDED" }),
+      new Set(["world-ended"]),
+      now,
+      undefined,
+      new Map([["world-ended", 0]]),
+    );
+
+    expect(model.isJoined).toBe(true);
+    expect(model.ctaKind).toBe("ended");
+    expect(model.ctaLabel).toBe("Terminé · consulter");
+  });
+
+  it("flags imminent archival on an ENDED world past its archive deadline", () => {
+    const model = toWorldCardViewModel(
+      makeWorld({
+        id: "world-ended-archiving",
+        status: "ENDED",
+        lifecycle: {
+          day: 60,
+          endsAt: "2026-05-22T12:00:00.000Z",
+          inscriptionLateDays: 3,
+          inscriptionMainDays: 7,
+          newbieShieldHours: 48,
+          inscriptionPhase: "closed",
+          plannedOpenAt: null,
+          startedAt: "2026-03-23T12:00:00.000Z",
+          totalDays: 60,
+          archiveAt: "2026-05-25T12:00:00.000Z",
+        },
+      }),
+      new Set<string>(),
+      now,
+    );
+
+    expect(model.dayLabel).toBe("Terminé il y a 3j · archivage imminent");
   });
 
   it("formats personal stats only for joined worlds with loaded stats", () => {

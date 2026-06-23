@@ -27,7 +27,7 @@ describe('public worlds smoke', () => {
     await ctx.app.close();
   });
 
-  it('GET /worlds/public returns planned, open main, open late and locked worlds with lifecycle metadata', async () => {
+  it('GET /worlds/public returns planned, open, locked and ENDED worlds with lifecycle metadata', async () => {
     const now = new Date();
     await seedWorld('planned-public', 'PLANNED', {
       plannedOpenAt: addDays(now, 2),
@@ -66,6 +66,7 @@ describe('public worlds smoke', () => {
     const worlds = PublicWorldsResponseSchema.parse(res.body);
     expect(worlds.map((world) => world.id).sort()).toEqual(
       [
+        'ended-public',
         'locked-public',
         'custom-tempo-public',
         'open-late-public',
@@ -107,6 +108,16 @@ describe('public worlds smoke', () => {
     });
     expect(byId.get('custom-tempo-public')).toMatchObject({
       tempoProfile: 'custom',
+    });
+    // ENDED world stays listed (read-only consultation) with a derived
+    // archiveAt = endsAt + archiveAfterDays (default 7j).
+    expect(byId.get('ended-public')).toMatchObject({
+      status: 'ENDED',
+      lifecycle: {
+        archiveAt: new Date(
+          addDays(now, -1).getTime() + 7 * MS_PER_DAY,
+        ).toISOString(),
+      },
     });
   });
 
