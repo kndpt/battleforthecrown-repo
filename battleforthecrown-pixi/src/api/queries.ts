@@ -720,7 +720,9 @@ export function useRankingsSummaryQuery(worldId: string | null) {
  * 404 (world not ENDED yet) and 409 (ENDED but snapshot missing) surface as
  * query errors — the screen renders an explicit empty/error state.
  */
-export function useFinalRankingsQuery(worldId: string | null) {
+export function useFinalRankingsQuery(
+  worldId: string | null,
+): UseQueryResult<WorldFinalRankingsResponse> {
   return useQuery<WorldFinalRankingsResponse>({
     queryKey: queryKeys.finalRankings(worldId),
     queryFn: async () => {

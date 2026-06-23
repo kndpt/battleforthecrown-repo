@@ -3,13 +3,10 @@ import { RANKING_SIGNALS } from "./consts";
 
 export const RankingSignalSchema = z.enum(RANKING_SIGNALS);
 
-export const RankingsPeriodSchema = z.enum([
-  "LIVE",
-  "WEEKLY",
-  "ALL_TIME",
-  // Frozen end-of-world snapshot served by GET /worlds/:worldId/rankings/final.
-  "FINAL",
-]);
+// Live leaderboard periods. The frozen end-of-world snapshot uses its own
+// `period: "FINAL"` literal in WorldFinalRankingLeaderboardSchema below — it is
+// deliberately kept out of this enum so the live contract can never emit FINAL.
+export const RankingsPeriodSchema = z.enum(["LIVE", "WEEKLY", "ALL_TIME"]);
 
 export const RankingsLeaderboardEntrySchema = z.object({
   rank: z.number().int().positive(),
@@ -43,11 +40,26 @@ export const WorldFinalRankingSnapshotEntrySchema = z.object({
   score: z.number().int().nonnegative(),
 });
 
+/**
+ * One frozen final leaderboard. Deliberately stricter than the live
+ * RankingsLeaderboardResponseSchema: `period` is the `FINAL` literal and entries
+ * use WorldFinalRankingSnapshotEntrySchema (no `villageCount`). This pins the
+ * public endpoint contract so any backend drift fails parse instead of slipping
+ * through on the shared live schema.
+ */
+export const WorldFinalRankingLeaderboardSchema = z.object({
+  worldId: z.string(),
+  signal: RankingSignalSchema,
+  period: z.literal("FINAL"),
+  label: z.string(),
+  entries: z.array(WorldFinalRankingSnapshotEntrySchema),
+});
+
 export const WorldFinalRankingsResponseSchema = z.object({
   worldId: z.string(),
   /** ISO instant the snapshot was taken (LOCKED → ENDED transition). */
   snapshotAt: z.string().datetime(),
-  leaderboards: z.array(RankingsLeaderboardResponseSchema),
+  leaderboards: z.array(WorldFinalRankingLeaderboardSchema),
 });
 
 export type RankingsLeaderboardEntry = z.infer<
@@ -66,6 +78,10 @@ export type RankingsSummaryResponse = z.infer<
 
 export type WorldFinalRankingSnapshotEntry = z.infer<
   typeof WorldFinalRankingSnapshotEntrySchema
+>;
+
+export type WorldFinalRankingLeaderboard = z.infer<
+  typeof WorldFinalRankingLeaderboardSchema
 >;
 
 export type WorldFinalRankingsResponse = z.infer<

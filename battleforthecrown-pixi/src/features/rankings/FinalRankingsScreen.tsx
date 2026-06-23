@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "react-router";
 import type {
-  RankingsLeaderboardEntry,
-  RankingsLeaderboardResponse,
+  WorldFinalRankingLeaderboard,
+  WorldFinalRankingSnapshotEntry,
 } from "@battleforthecrown/shared/rankings";
 import { useFinalRankingsQuery } from "@/api/queries";
 import { useAuthStore } from "@/stores/auth";
@@ -25,7 +25,7 @@ function FinalBoardSection({
   board,
   currentUserId,
 }: {
-  board: RankingsLeaderboardResponse;
+  board: WorldFinalRankingLeaderboard;
   currentUserId: string | null;
 }) {
   return (
@@ -42,7 +42,7 @@ function FinalBoardSection({
       ) : (
         <div className="flex flex-col gap-1">
           <LeaderboardHeader deltaLabel="" scoreLabel="Score" />
-          {board.entries.map((entry: RankingsLeaderboardEntry) => {
+          {board.entries.map((entry: WorldFinalRankingSnapshotEntry) => {
             const self = entry.userId === currentUserId;
             return (
               <LeaderboardRow
