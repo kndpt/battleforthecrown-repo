@@ -8,6 +8,7 @@ import PgBoss from 'pg-boss';
 import {
   BUILDING_TYPES,
   getQuarterPopulationLimit,
+  type BuildingType,
 } from '@battleforthecrown/shared/village';
 
 interface ConstructionJob {
@@ -16,6 +17,15 @@ interface ConstructionJob {
   buildingType: string;
   targetLevel: number;
 }
+
+// Buildings whose completion changes resource production OR storage capacity.
+// Used to gate the `resources.changed` event after a successful upgrade.
+const PRODUCTION_RECOMPUTE_BUILDINGS: ReadonlySet<BuildingType> = new Set([
+  BUILDING_TYPES.WOOD,
+  BUILDING_TYPES.STONE,
+  BUILDING_TYPES.IRON,
+  BUILDING_TYPES.WAREHOUSE,
+]);
 
 @Injectable()
 export class ConstructionWorker implements OnModuleInit {
@@ -48,9 +58,23 @@ export class ConstructionWorker implements OnModuleInit {
     const receivedAt = Date.now();
     this.logger.log(`Construction job received: ${data.buildingId}`);
 
+    const completed = await this.applyCompletionInTransaction(data, receivedAt);
+    if (!completed) {
+      // Worker exited early (building gone, cancelled, or already at target):
+      // post-tx side effects must not run. updateStorageLimit in particular
+      // would write the future level into resourceStock.maxPerType.
+      return;
+    }
+
+    await this.runPostCompletionSideEffects(data);
+  }
+
+  private async applyCompletionInTransaction(
+    data: ConstructionJob,
+    receivedAt: number,
+  ): Promise<boolean> {
     try {
-      await this.prisma.$transaction(async (tx) => {
-        // Get building and verify it exists
+      return await this.prisma.$transaction(async (tx) => {
         const building = await tx.building.findUnique({
           where: { id: data.buildingId },
           include: {
@@ -60,13 +84,12 @@ export class ConstructionWorker implements OnModuleInit {
 
         if (!building) {
           this.logger.warn(`Building ${data.buildingId} not found, skipping`);
-          return;
+          return false;
         }
 
         const now = Date.now();
         const expectedEndTime = building.endTime?.getTime() || 0;
         const delta = now - expectedEndTime;
-
         this.logger.log(`Construction timing analysis:`, {
           buildingId: data.buildingId,
           buildingType: data.buildingType,
@@ -79,23 +102,20 @@ export class ConstructionWorker implements OnModuleInit {
           wasLate: delta > 0,
         });
 
-        // Check if construction was cancelled
         if (!building.endTime) {
           this.logger.log(
             `Building ${data.buildingId} was cancelled, skipping`,
           );
-          return;
+          return false;
         }
 
-        // Check if already completed (idempotency)
         if (building.level >= data.targetLevel) {
           this.logger.log(
             `Building ${data.buildingId} already at level ${building.level}, skipping`,
           );
-          return;
+          return false;
         }
 
-        // Upgrade building level
         const completedBuilding = await tx.building.update({
           where: { id: data.buildingId },
           data: {
@@ -112,7 +132,6 @@ export class ConstructionWorker implements OnModuleInit {
           });
         }
 
-        // Create event in outbox for WebSocket notification
         await this.outbox.buildingCompleted(
           {
             buildingId: data.buildingId,
@@ -131,54 +150,72 @@ export class ConstructionWorker implements OnModuleInit {
         this.logger.log(
           `Building ${data.buildingId} upgraded to level ${data.targetLevel}`,
         );
+        return true;
       });
-
-      // Update storage limit if Warehouse was upgraded
-      if (data.buildingType === 'WAREHOUSE') {
-        try {
-          await this.resourcesService.updateStorageLimit(
-            data.villageId,
-            data.targetLevel,
-          );
-          this.logger.log(
-            `Storage limit updated for village ${data.villageId} (Warehouse level ${data.targetLevel})`,
-          );
-        } catch (error) {
-          this.logger.error(`Failed to update storage limit:`, error);
-          // Don't throw - building is already upgraded
-        }
-      }
-
-      // Emit resources.changed if production building or warehouse completed
-      const productionBuildings = ['WOOD', 'STONE', 'IRON', 'WAREHOUSE'];
-      if (productionBuildings.includes(data.buildingType)) {
-        try {
-          await this.outbox.resourcesChanged(data.villageId);
-          this.logger.log(
-            `resources.changed event created for ${data.buildingType} completion`,
-          );
-        } catch (error) {
-          this.logger.error(`Failed to emit resources.changed event:`, error);
-          // Don't throw - building is already upgraded
-        }
-      }
-
-      // Recalculate crown production rate after any building completion
-      try {
-        await this.crownsService.recalculateOnBuildingChange(data.villageId);
-        this.logger.log(
-          `Crown production rate recalculated for village ${data.villageId}`,
-        );
-      } catch (error) {
-        this.logger.error(`Failed to recalculate crown production:`, error);
-        // Don't throw - building is already upgraded
-      }
     } catch (error) {
       this.logger.error(
         `Failed to complete construction for ${data.buildingId}:`,
         error,
       );
       throw error; // pg-boss will retry
+    }
+  }
+
+  private async runPostCompletionSideEffects(
+    data: ConstructionJob,
+  ): Promise<void> {
+    // Each effect is isolated: the building upgrade is already committed and
+    // we never want to retry the whole job (it would re-emit
+    // `building.completed`). Failures surface as structured logs.
+    if (data.buildingType === BUILDING_TYPES.WAREHOUSE) {
+      await this.runIsolatedSideEffect('updateStorageLimit', data, () =>
+        this.resourcesService.updateStorageLimit(
+          data.villageId,
+          data.targetLevel,
+        ),
+      );
+    }
+
+    // ADR-02 deviation note: `resources.changed` is emitted outside the
+    // building-mutation tx on purpose. The mutation that justifies the event
+    // here is the production-rate change derived from the new level — the
+    // underlying `resourceStock` row was not touched by this worker. Emitting
+    // inside the tx would force a retry of the whole job on failure (re-firing
+    // `building.completed`); if this emit drops, the next production tick or
+    // the next user-driven resource action re-emits a fresh snapshot.
+    if (PRODUCTION_RECOMPUTE_BUILDINGS.has(data.buildingType as BuildingType)) {
+      await this.runIsolatedSideEffect('resourcesChanged', data, () =>
+        this.outbox.resourcesChanged(data.villageId),
+      );
+    }
+
+    await this.runIsolatedSideEffect('recalculateOnBuildingChange', data, () =>
+      this.crownsService.recalculateOnBuildingChange(data.villageId),
+    );
+  }
+
+  private async runIsolatedSideEffect(
+    op: string,
+    data: ConstructionJob,
+    fn: () => Promise<unknown>,
+  ): Promise<void> {
+    try {
+      await fn();
+    } catch (error) {
+      this.logger.error(
+        `Post-completion side-effect "${op}" failed for building ${data.buildingId}`,
+        {
+          op,
+          buildingId: data.buildingId,
+          villageId: data.villageId,
+          buildingType: data.buildingType,
+          targetLevel: data.targetLevel,
+          error:
+            error instanceof Error
+              ? (error.stack ?? error.message)
+              : String(error),
+        },
+      );
     }
   }
 }
