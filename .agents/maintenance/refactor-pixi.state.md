@@ -9,7 +9,6 @@ full: `archive/refactor-pixi/2026-06-23-full.md`
 |----|-----|-------|------|
 | F5 | High | VillageView.tsx:565L | 9 responsibilities, 8+ useState, mixed concerns |
 | F6 | High | ArmyScreen.tsx:681L | 10 responsibilities, 8 useState, training polling via useEffect+ref |
-| F7 | High | WorldMapScene.ts:1027L | closure state mutations bypass Zustand subscriber patterns |
 | F8 | High | GameHeader.tsx:404L | profileTab/villageFilter/sortAscending dup from VillageView |
 | F10 | High | WorldMapScene.ts:1027L | 0 tests (scene logic well-structured but uncovered) |
 | F11 | Med | BuildingSprite.ts | Listener leak fixed PR#146, still 0 tests |

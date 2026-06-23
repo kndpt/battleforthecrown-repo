@@ -93,6 +93,9 @@ export function WorldDetailScreen() {
         onEnter={onEnter}
         onJoin={onJoin}
         onNotify={onNotify}
+        onViewRankings={(selectedWorld) =>
+          navigate(`/worlds/${selectedWorld.id}/rankings/final`)
+        }
         world={world}
       />
       <ToastStack />

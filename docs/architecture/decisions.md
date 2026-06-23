@@ -400,6 +400,25 @@ Question posée : faut-il aligner BFTC sur cette granularité (passer à 30 leve
 
 ---
 
+## ADR-20 — Menace estimée = formule shared pure côté client, seuil de fraîcheur hors `WorldConfig`
+
+**Contexte (2026-06-22, run 059).** L'estimation de menace avant attaque (run 055 pour le carnet d'intel, spec dans [`docs/gameplay/11-scouting.md`](../gameplay/11-scouting.md)) nécessite de croiser : puissance bâtiments publique, intel datée du carnet, composition d'armée envoyée, tier barbare public. Deux options envisagées : (1) endpoint backend dédié qui calcule et retourne le label, (2) formule pure côté client sur données déjà exposées. L'option 1 aurait introduit un hop réseau supplémentaire et exigé que le backend « sache » ce que l'armée envoyée est — ce qui crée un couplage UI/backend, un second code path, et un risque de révéler des données hors portée.
+
+**Décision.**
+
+1. **Formule pure côté client** : `computeThreatLabel(...)` et `formatIntelFreshness(...)` vivent dans `packages/shared/src/threat/` (module pur sans dépendance à NestJS ni à React). Aucun endpoint backend dédié.
+2. **Invariant non-révélation** : un village joueur sans intel (`intel === null`) ou dont l'intel dépasse `STALE_THRESHOLD_MS` (7 jours) retourne toujours `Inconnue`, même si l'armée attaquante domine la puissance bâtiments. Les barbares ne peuvent jamais être `Inconnue` (leur tier est public).
+3. **Seuil hors `WorldConfig`** : `STALE_THRESHOLD_MS` (7 j) et l'échelle de fraîcheur (`INTEL_FRESHNESS_THRESHOLDS_MS`) sont des constantes shared fixes, non configurables par monde. Ce seuil est une règle de non-révélation (gameplay / confiance), pas un paramètre de tempo ou d'équilibrage — le mettre dans `WorldConfig` aurait ouvert la porte à des mondes révélant accidentellement des infos hors portée si la valeur était mal configurée.
+
+**Conséquences.**
+
+- Zéro hop réseau supplémentaire : le label est calculé en mémoire au moment de l'affichage.
+- La formule est testable en pur (spec dans `packages/shared/src/threat/formula.spec.ts`) sans mock NestJS ni DOM.
+- Les valeurs canoniques (`STALE_THRESHOLD_MS`, `INTEL_FRESHNESS_THRESHOLDS_MS`, seuils ratio Faible/Moyenne/Élevée) vivent dans `packages/shared/src/threat/constants.ts` — source unique, non dupliquée dans la doc.
+- Si le carnet d'intel évolue (partage tribu, multi-snapshots), la formule shared est le seul point de mise à jour.
+
+---
+
 ## Maintenance de ce document
 
 - Une décision **structurante** (qui change la façon dont on pense le projet) → nouvelle entrée ADR.

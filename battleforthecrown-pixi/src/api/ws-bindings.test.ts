@@ -279,6 +279,45 @@ describe('applyWorldStatusChanged', () => {
     expect(queryClient.getQueryState(queryKeys.worldConfig('world-1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.worldConfigFull('world-1'))?.isInvalidated).toBe(true);
   });
+
+  it('on ENDED, invalidates mutable caches and toasts without reload', () => {
+    setCurrentWorldSession();
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.worldEntities('world-1'), {});
+    queryClient.setQueryData(queryKeys.myVillages('user-1', 'world-1'), []);
+    queryClient.setQueryData(queryKeys.rankingsSummary('world-1'), { leaderboards: [] });
+    queryClient.setQueryData(queryKeys.retentionSummary('user-1', 'world-1'), {
+      claimableCount: 0,
+    });
+
+    applyWorldStatusChanged(
+      {
+        worldId: 'world-1',
+        from: 'LOCKED',
+        to: 'ENDED',
+        at: '2026-05-25T10:00:00.000Z',
+      },
+      { queryClient },
+    );
+
+    expect(
+      queryClient.getQueryState(queryKeys.worldEntities('world-1'))?.isInvalidated,
+    ).toBe(true);
+    expect(
+      queryClient.getQueryState(queryKeys.myVillages('user-1', 'world-1'))?.isInvalidated,
+    ).toBe(true);
+    expect(
+      queryClient.getQueryState(queryKeys.rankingsSummary('world-1'))?.isInvalidated,
+    ).toBe(true);
+    expect(
+      queryClient.getQueryState(queryKeys.retentionSummary('user-1', 'world-1'))
+        ?.isInvalidated,
+    ).toBe(true);
+
+    const toasts = useUiStore.getState().toasts;
+    expect(toasts).toHaveLength(1);
+    expect(toasts[0]?.title).toBe('Monde terminé');
+  });
 });
 
 describe('applyBuildingCompleted', () => {

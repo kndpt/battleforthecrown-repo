@@ -1,7 +1,7 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-06-22 | theme extract `register{Scheduled,Job}QueueWorker` helpers in `infra/pg-boss/queue-worker.helper.ts`; 9 workers consomment, ~94L net supprimées + logs émojis construction sobres | PR maint(refactor-backend): extract registerQueueWorker helpers across pg-boss workers
-full: `archive/refactor-backend/2026-06-22-full.md`
+last: 2026-06-22 (run 2) | theme construction.worker.ts post-tx correctness — tx callback retourne `completed: boolean`, side-effects gated, helper `runIsolatedSideEffect` structuré ; +1 smoke regression W6 (cancel WAREHOUSE n'augmente plus `maxPerType`) | PR maint(refactor-backend): skip post-tx side-effects when construction worker exits early
+full: `archive/refactor-backend/2026-06-22b-full.md`
 
 ## OPEN
 
@@ -10,8 +10,6 @@ full: `archive/refactor-backend/2026-06-22-full.md`
 | R4  | High | crowns.service.ts:261                              | fractional carry — needs migration (`lastUpdateTs += production/rate`)                     |
 | W1  | High | combat/combat.worker.ts (1846L)                    | 4 kinds cohabitent — split par kind, L effort                                              |
 | W2c | Med  | combat.service.ts:84-350                           | `initiate{Attack,Scout,Reinforce}` template-helper possible mais payloads divergent        |
-| W5  | Med  | construction.worker.ts:131-170                     | 3 try/catch hors-tx « Don't throw » swallow silencieux                                     |
-| W6  | Med  | construction.worker.ts:60,84,92 + 136-170          | early-return tx ne court-circuite pas les side-effects post-tx (updateStorageLimit, resourcesChanged, recalc crown) — flag completion (CodeRabbit PR #181) |
 | B1  | Med  | combat.service.ts                                  | 1313L sans spec unit direct (smokes uniquement)                                            |
 | U1  | Low  | combat.worker.ts:1489-1498, 1743-1759, return.worker.ts:326-340 | inbox.create/upsert loop ×N → `createMany skipDuplicates` (ROI bas)                |
 | U3  | Low  | world-entities-query.service.ts:137-315            | fetchBarb/fetchPlayer partagent bounds + captureWindow mapping                             |
@@ -32,7 +30,8 @@ full: `archive/refactor-backend/2026-06-22-full.md`
 
 ## Skip — déjà traité
 
-- W3 + W4 (registerQueueWorker helpers + construction emoji logs) → ce run
-- Q1 (Array.isArray defensive unwrap) → absorbé par le helper
+- W5 + W6 (construction post-tx correctness + structured swallow logs) → ce run
+- W3 + W4 (registerQueueWorker helpers + construction emoji logs) → run 2026-06-22 (1)
+- Q1 (Array.isArray defensive unwrap) → absorbé par le helper W3
 - W2a/W2b done run 2026-06-20 | S1 done run 2026-06-21 | D3 PR #153 | D1 PR #144 | D4 PR #142 | OB1/OB2 PR #134
 - B3/E1/U2 déjà traités | G1 intentionnel tx | U4 false-positive | A1 case-insensitive pre-check OK

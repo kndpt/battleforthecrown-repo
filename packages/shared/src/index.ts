@@ -15,3 +15,4 @@ export * from './utils';
 export * from './rankings';
 export * from './pvp';
 export * from './renown';
+export * from './threat';

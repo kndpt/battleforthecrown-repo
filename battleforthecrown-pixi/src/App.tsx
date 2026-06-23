@@ -30,6 +30,11 @@ const MessagesScreen = lazy(() =>
 const RankingsScreen = lazy(() =>
   import('@/features/rankings/RankingsScreen').then((m) => ({ default: m.RankingsScreen })),
 );
+const FinalRankingsScreen = lazy(() =>
+  import('@/features/rankings/FinalRankingsScreen').then((m) => ({
+    default: m.FinalRankingsScreen,
+  })),
+);
 const UiTestScreen = lazy(() =>
   import('@/features/ui-test/UiTestScreen').then((m) => ({ default: m.UiTestScreen })),
 );
@@ -126,6 +131,14 @@ export default function App() {
             <Route element={<AuthenticatedShell />}>
               <Route path="/worlds" element={<WorldSelector />} />
               <Route path="/worlds/:worldId" element={<WorldDetailScreen />} />
+              <Route
+                path="/worlds/:worldId/rankings/final"
+                element={
+                  <Suspense fallback={<GameLoader />}>
+                    <FinalRankingsScreen />
+                  </Suspense>
+                }
+              />
               <Route path="/my-worlds" element={<Navigate to="/game" replace />} />
               <Route element={<GameShellLayout />}>
                 <Route path="/game" element={<GameGuard />} />

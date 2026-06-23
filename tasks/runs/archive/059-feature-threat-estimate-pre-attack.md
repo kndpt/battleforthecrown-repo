@@ -1,8 +1,8 @@
 # Run #059 — feature-threat-estimate-pre-attack
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-22
+> **Terminé** : 2026-06-22
 
 ## Cible
 
@@ -57,24 +57,42 @@ Chaque tâche reste ≤ 5 fichiers.
 
 ## Progress (rempli pendant le run)
 
-_(Vide au démarrage. Mis à jour à chaque transition d'étape ou de tâche.)_
+_(git history)_
 
 ## Décisions prises
 
-_(Vide au démarrage. Décisions archi non triviales, dérogations lead, findings de review, refus de sub-agents.)_
+_(git history — clés : STALE_THRESHOLD_MS 7j en constante shared hors `WorldConfig` ; gate `Inconnue` avant calcul = invariant non-révélation ; fix `WorldTier 'T1'..'T5'` string→number, sinon barbares toujours `Élevée` ; reformulation acceptance cache = contrat `invalidateQueries` run 055, pas push-payload.)_
 
 ## Rapport final
 
-_(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tickets ouverts, méta-évaluation si applicable.)_
+Menace estimée avant attaque livrée 100% côté client : module shared pur `threat/` (`computeThreatLabel`/`formatIntelFreshness`) + viewmodel `threatEstimateView` + section badge dans `AttackDetailModal` (mode attack only). Aucun backend (formule dérive puissance bâtiments publique + carnet d'intel daté). Invariant non-révélation garanti par gate `Inconnue` avant tout calcul. Aucun ticket ouvert.
 
 ### Acceptance & QA
 
-- **Critères d'acceptance vérifiés** : à remplir à l'étape 10.
-- **Review indépendante** : `Déclenchée (raison : (d) invariant durable — formule UX-gameplay qui dicte la lecture du risque pré-attaque + politique de non-révélation d'info ; ne pas casser le contrat « ne pas révéler ce que le joueur n'a pas obtenu »). Diff probablement < 100 lignes (formule pure + 1 modal), pas de couplage back+front (T1 valide la formule shared pure), pas de modif SPEC.md durable.`
-- **Tests automatisés** : unit `packages/shared/src/threat/formula.spec.ts`, vitest `threatEstimateView.test.ts`, extension `AttackDetailModal.test.tsx`, **nouveau** vitest `threatEstimate-cache.test.tsx` (contrat `intel.updated` → recompute sans fetch REST).
-- **Smokes ajoutés/modifiés** : `Aucun`. La décision archi (formule shared pure, pas de second code path) supprime tout chemin serveur — donc pas de smoke backend pertinent. Couverture intégrale par unit shared + vitest UI.
-- **QA fonctionnelle agent** : `yarn test:pixi` (vitest) + `yarn test:shared` ; pas de `curl` requis (pas d'endpoint backend ajouté).
-- **Tests IG à faire par le user** : checklist mobile ≤ 5 items — ouvrir attack modal sur barbare T1 (badge `Faible`/`Moyenne`), sur barbare T5 (badge `Élevée`), sur joueur jamais scouté (`Inconnue` + tooltip CTA scout), sur joueur scouté récemment (label + mention `Estimation basée sur scout du …`), bascule mode `scout` (badge absent).
+- **Critères d'acceptance vérifiés** :
+  - [x] `[unit]` `computeThreatLabel` 12+ scénarios (Inconnue/Faible/Moyenne/Élevée, stale, barbare T1/T5) — `yarn workspace battleforthecrown-pixi test -- threat` → 38/38 vert (dont `formula.spec.ts` 26 tests).
+  - [x] `[unit]` `formatIntelFreshness` fresh/recent/stale/outdated + `STALE_THRESHOLD_MS` exporté — `formula.spec.ts:262-296` vert.
+  - [x] `[unit]` Non-révélation : `intel===null` ⇒ `Inconnue` même si `armyAttackPower ≫ publicBuildingPower` — `formula.spec.ts:105` vert.
+  - [x] `[grep]` Aucune fuite serveur (`getKingdomPowerValue`/`armyPower`) dans la formule — `rg "getKingdomPowerValue|armyPower" packages/shared/src/threat/ …/threatEstimateView.ts` → rc=1 (0 résultat).
+  - [x] `[grep]` Aucun %/`Certaine`/`Garantie`/`100` dans les libellés — `rg` prod 0 résultat ; assertion `formula.spec.ts:306`.
+  - [x] `[visuel/gameplay]` Barbare ⇒ jamais `Inconnue` (proxy tier) — `formula.spec.ts:63-98` + `threatEstimateView.test.ts:36-82`.
+  - [x] `[visuel/gameplay]` Joueur sans intel ⇒ `Inconnue` + tooltip ESPION — `threatEstimateView.test.ts:88`, `threatEstimate-cache.test.tsx` (intel=null).
+  - [x] `[visuel/gameplay]` Joueur intel ≥7j ⇒ `Inconnue` + tooltip « Intel trop ancienne » — `threatEstimateView.test.ts:108-134`.
+  - [x] `[visuel/gameplay]` Mode `scout` ⇒ badge ABSENT — `threatEstimate-cache.test.tsx` (test ajouté post-review, `queryByText('Menace estimée')` not in document).
+  - [x] `[vitest]` Cache : (A) intel fraîche en cache ⇒ 0 fetch intel au montage ; (B) `intel.updated` ⇒ 1 refetch canonique + badge recalculé — `threatEstimate-cache.test.tsx` vert (cf. reformulation contrat ci-dessus).
+  - [x] `[visuel/gameplay]` Section « Menace estimée » (badge couleur + libellé + mention scout) rendue en mode attack — code `AttackDetailModal.tsx:398-427` ; rendu humain = checklist IG ci-dessous.
+  - [x] Doc impact : `11-scouting.md` (question fraîcheur tranchée) + `decisions.md` ADR-20.
+- **Review indépendante** : `Déclenchée (raison : (d) invariant durable — non-révélation d'info pré-attaque)`. Verdict initial `BLOCK` (1 majeur : critère « scout ⇒ badge absent » non testé) → test d'absence ajouté → re-vérif `GO`. Mineurs (type `ThreatIntel.units | null` défensif ; fallback barbare `?? 1`) acceptés tels quels.
+- **Tests automatisés** : `yarn workspace battleforthecrown-pixi test -- threat` → 38/38 ; suite combat complète `… test -- src/features/combat` → 76/76 ; `yarn static-check` vert.
+- **Smokes lancés** : `Aucun` — diff backend `src/` = néant (décision : formule shared pure, zéro chemin serveur). Exception documentée, aucun smoke pertinent.
+- **Smokes ajoutés/modifiés** : `Aucun`.
+- **QA fonctionnelle agent** : tests vitest + unit shared (via runner pixi) + static-check. Pas de `curl`/SQL (aucun endpoint ni table ajoutés).
+- **Tests IG à faire par le user** : checklist mobile ≤5 items —
+  1. Attack modal sur barbare T1 ⇒ badge `Faible`/`Moyenne`.
+  2. Attack modal sur barbare T5 ⇒ badge `Élevée`.
+  3. Joueur jamais scouté ⇒ badge `Inconnue` + tooltip « Envoyer un ESPION… ».
+  4. Joueur scouté récemment ⇒ label coloré + mention « Estimation basée sur scout du JJ/MM ».
+  5. Bascule mode `scout` ⇒ section menace absente.
 
 ## Points d'attention (notes du plan)
 

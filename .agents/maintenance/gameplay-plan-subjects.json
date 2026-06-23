@@ -323,6 +323,49 @@
         "tasks/archive/70-integrate-player-profile-sheet.md — confirme que la route profil joueur public n'existe pas (Piste B reportée)"
       ],
       "addedAt": "2026-06-22"
+    },
+    {
+      "specPath": "docs/gameplay/14-pvp-conquest.md",
+      "slug": "public-player-profile-newbie-shield-badge",
+      "title": "Fiche publique joueur — route REST + badge bouclier débutant (Phase 7)",
+      "keywords": ["fiche-publique", "public-profile", "newbie-shield", "bouclier", "joueur-tiers", "phase-7"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/082-feature-public-player-profile-newbie-shield-badge.md",
+      "artefactId": "082",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/public-player-profile-newbie-shield-badge",
+      "gapSummary": "La spec 14-pvp-conquest § 3 Bouclier débutant ligne 193 tranche MVP la visibilité du bouclier sur trois surfaces : panneau d'info village (run 056 DONE), rapport de scout (run 081 DONE), ET fiche publique du joueur. Cette troisième surface n'a jamais été livrée — aucune route REST publique exposant le profil d'un joueur tiers, aucun composant PublicPlayerProfileSheet, aucun CTA d'ouverture depuis SelectedEntityPanel. Le suivi task_56e23ad7 mentionné par les runs 056 et 081 reste donc partiellement ouvert : ce run livre sa moitié manquante.",
+      "codeEvidence": [
+        "battleforthecrown-backend/src/modules — aucun module users/ ni endpoint /users/:userId/... (auth, combat, crowns, event, gameplay, intel, onboarding, population, power, rankings, renown, resources, retention, strategy, village, world uniquement)",
+        "battleforthecrown-backend/src/modules/auth/auth.controller.ts:9-10 — @Controller('auth') sans route profil public",
+        "battleforthecrown-pixi/src/ — aucun composant PublicPlayerProfileSheet (rg --files battleforthecrown-pixi/src/**/*ublic* renvoie uniquement publicKingdomPower.test.ts + lib/publicAsset.ts)",
+        "battleforthecrown-pixi/src/features/world/SelectedEntityPanel.tsx — aucun CTA « Voir profil » sur village ennemi (panneau actuellement limité à attaque + scout + rapport + activeCapture)",
+        "tasks/runs/archive/056-feature-pvp-newbie-shield-48h.md:77 — explicite « Reportés (ticket task_56e23ad7) : badge rapport de scout + fiche publique joueur (route inexistante) »",
+        "tasks/runs/archive/081-feature-pvp-newbie-shield-scout-report-badge.md:24 — explicite « Fiche publique joueur toujours hors scope (route REST publique inexistante) » — moitié restante du suivi task_56e23ad7",
+        "tasks/archive/70-integrate-player-profile-sheet.md — confirme que la PlayerProfileSheet existante est self-only ; aucune route ni composant pour la consultation d'un joueur tiers"
+      ],
+      "addedAt": "2026-06-22"
+    },
+    {
+      "specPath": "docs/gameplay/22-village-roles-and-navigation.md",
+      "slug": "multi-village-label-filter",
+      "title": "Filtre par étiquette dans le sélecteur multi-village",
+      "keywords": ["village-label", "filtre", "multi-village", "etiquette", "offensive", "defensive", "economic"],
+      "artefactType": "ticket",
+      "artefactPath": "tasks/083-multi-village-label-filter.md",
+      "artefactId": "083",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/multi-village-label-filter",
+      "gapSummary": "La spec 22 § UX attendue tranche MVP léger « filtre par étiquette dans la liste des villages » parmi 4 livrables UX. Les 3 autres sont livrés (badge label sur carte, badge Capitale, layout mobile), mais MultiVillageBottomSheet n'expose qu'un segment 'all' | 'active' | 'alerts' — aucun chip OFFENSIVE/DEFENSIVE/ECONOMIC. Le run 021 a livré la persistance backend + le filtre carte ; le filtre liste a été oublié et n'est jamais revenu dans aucun run.",
+      "codeEvidence": [
+        "battleforthecrown-pixi/src/features/design-system/components/MultiVillageBottomSheet.tsx:10 — type MultiVillageFilter = 'all' | 'active' | 'alerts' (aucun VillageLabel)",
+        "battleforthecrown-pixi/src/features/design-system/components/MultiVillageBottomSheet.tsx:505-509 — FilterSeg expose 3 chips fixes, aucun chip étiquette",
+        "battleforthecrown-pixi/src/features/design-system/components/MultiVillageBottomSheet.tsx:537-541 — closure villages.filter ne traite pas le cas label",
+        "battleforthecrown-pixi/src/features/layout/multiVillageSheet.ts:60-79 — buildMultiVillageSheetItems mappe village.label vers badge (string FR) mais ne propage pas la valeur enum",
+        "packages/shared/src/village/dtos.ts:4-12 — VILLAGE_LABELS + VILLAGE_LABEL_DISPLAY déjà exposés, prêts à être consommés",
+        "tasks/runs/archive/021-feature-village-labels-navigation.md — couvre persistance + badge + filtre carte ; le filtre liste n'est pas listé dans les critères de succès archivés"
+      ],
+      "addedAt": "2026-06-23"
     }
   ]
 }

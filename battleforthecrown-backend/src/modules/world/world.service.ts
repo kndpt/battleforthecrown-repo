@@ -10,6 +10,7 @@ import {
   InscriptionPhase,
   deriveInscriptionPhase,
   deriveWorldDayCounter,
+  deriveWorldArchiveAt,
   PublicWorldStatusSchema,
   TempoService,
   type PublicWorld,
@@ -81,7 +82,9 @@ export class WorldService {
 
   async getPublicWorlds(now = new Date()): Promise<PublicWorld[]> {
     const worlds = await this.prisma.world.findMany({
-      where: { status: { in: ['PLANNED', 'OPEN', 'LOCKED'] } },
+      // ENDED worlds stay listed (read-only consultation) until run 065
+      // transitions them to ARCHIVED at endsAt + archiveAfterDays.
+      where: { status: { in: ['PLANNED', 'OPEN', 'LOCKED', 'ENDED'] } },
       orderBy: [{ plannedOpenAt: 'asc' }, { createdAt: 'desc' }],
       include: { _count: { select: { memberships: true } } },
     });
@@ -130,6 +133,16 @@ export class WorldService {
             world.status === 'PLANNED'
               ? toIsoString(world.plannedOpenAt)
               : null,
+          archiveAt:
+            world.status === 'ENDED'
+              ? toIsoString(
+                  deriveWorldArchiveAt({
+                    startedAt: world.startedAt,
+                    endsAt: world.endsAt,
+                    config,
+                  }),
+                )
+              : null,
         },
         map: {
           width: world.gridWidth,
@@ -154,7 +167,7 @@ export class WorldService {
     return village.worldId;
   }
 
-  async getUserMemberships(userId: string) {
+  async getUserMemberships(userId: string): Promise<WorldMembershipResponse[]> {
     const memberships = await this.prisma.worldMembership.findMany({
       where: { userId },
       include: { world: true },
@@ -174,7 +187,13 @@ export class WorldService {
     );
 
     const now = new Date();
-    return memberships.map((m) => {
+    return memberships.flatMap((m) => {
+      // Validate the world status before building the row. A non-public status
+      // (e.g. ARCHIVED, run 065) is dropped rather than throwing on parse — the
+      // UI must not route the player back into a world it can no longer enter.
+      const status = PublicWorldStatusSchema.safeParse(m.world.status);
+      if (!status.success) return [];
+
       // Reuse the already-loaded world row (include: { world: true }) instead
       // of re-fetching config per membership — avoids an N+1 on this list route.
       const shieldHours = this.parseWorldConfig(m.worldId, m.world.config)
@@ -185,15 +204,18 @@ export class WorldService {
         newbieShieldHours: shieldHours,
         now,
       });
-      return {
-        worldId: m.worldId,
-        worldName: m.world.name,
-        role: m.role,
-        joinedAt: m.joinedAt.toISOString(),
-        lastLoginAt: m.lastLoginAt ? m.lastLoginAt.toISOString() : null,
-        villageCount: countByWorld.get(m.worldId) ?? 0,
-        newbieShield,
-      };
+      return [
+        {
+          worldId: m.worldId,
+          worldName: m.world.name,
+          status: status.data,
+          role: m.role,
+          joinedAt: m.joinedAt.toISOString(),
+          lastLoginAt: m.lastLoginAt ? m.lastLoginAt.toISOString() : null,
+          villageCount: countByWorld.get(m.worldId) ?? 0,
+          newbieShield,
+        },
+      ];
     });
   }
 
@@ -209,7 +231,13 @@ export class WorldService {
     if (!membership) {
       throw new NotFoundException(`World ${worldId} membership not found`);
     }
-    if (membership.world.status === 'ENDED') {
+    // Validate writability BEFORE the lastLoginAt write so a non-enterable world
+    // (ENDED, or ARCHIVED once run 065 lands) never persists a side effect and
+    // then 500s on the status parse below.
+    const parsedStatus = PublicWorldStatusSchema.safeParse(
+      membership.world.status,
+    );
+    if (!parsedStatus.success || parsedStatus.data === 'ENDED') {
       throw new BadRequestException(`World ${worldId} is not open for entry`);
     }
 
@@ -226,6 +254,7 @@ export class WorldService {
     return {
       worldId: membership.worldId,
       worldName: membership.world.name,
+      status: parsedStatus.data,
       role: membership.role,
       joinedAt: membership.joinedAt.toISOString(),
       lastLoginAt: lastLoginAt.toISOString(),
