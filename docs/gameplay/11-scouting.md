@@ -83,6 +83,8 @@ Hors scope MVP :
 
 Objectif : éviter les attaques manifestement absurdes sur mobile tout en gardant l'incertitude stratégique.
 
+**Implémentation.** Le label est dérivé **exclusivement côté client** via la formule pure `computeThreatLabel` (`packages/shared/src/threat/`). Elle ne lit que des données déjà exposées au front : puissance bâtiments publique (`PublicVillagePowerDto.buildings`) et intel de carnet (`VillageIntelDto`) obtenue par le joueur. Aucun endpoint backend dédié, aucun risque de fuite d'info serveur. Les villages barbares sont estimés via leur tier public.
+
 Avant l'envoi d'une attaque ou d'une conquête, l'interface peut afficher un label :
 
 | Label | Sens |
@@ -170,7 +172,7 @@ Idées à creuser plus tard :
 - **UI rapport** : section dédiée dans l'inbox du joueur, ou intégrée à l'écran cible ?
 - **Persistance** : combien de rapports sont stockés ? Suppression auto après N jours ?
 - **Cohérence couronnes** : le scout coûte-t-il **uniquement** la production de l'ESPION, ou faut-il un coût en couronnes par mission (modèle "frais d'opération") ?
-- **Fraîcheur intel** : seuil exact à partir duquel une estimation passe en `Inconnue` ?
+- **Fraîcheur intel** _(tranchée — run 059)_ : seuil = `STALE_THRESHOLD_MS` (7 jours). Au-delà, toute estimation joueur retombe en `Inconnue`. Échelle interne : fresh < 1 h / recent < 24 h / stale < 7 j / outdated ≥ 7 j. Valeurs canoniques dans `packages/shared/src/threat/constants.ts`.
 
 ## Liens
 
