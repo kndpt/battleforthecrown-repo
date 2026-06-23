@@ -1226,6 +1226,12 @@ export function useInitiateAttackMutation() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.population(villageId),
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.villagePower(villageId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.kingdomPowerPrefix(userId),
+      });
     },
   });
 }
@@ -1263,6 +1269,12 @@ export function useInitiateScoutMutation() {
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.population(villageId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.villagePower(villageId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.kingdomPowerPrefix(userId),
       });
     },
   });
@@ -1348,6 +1360,15 @@ export function useInitiateReinforceMutation() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.garrison(targetVillageId),
       });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.population(villageId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.villagePower(villageId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.kingdomPowerPrefix(userId),
+      });
     },
   });
 }
@@ -1382,6 +1403,12 @@ export function useInitiateCaravanMutation(): UseMutationResult<
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.openExpeditions(userId, worldId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.villagePower(villageId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.kingdomPowerPrefix(userId),
       });
     },
   });

@@ -144,6 +144,28 @@ describe('applyResourcesChanged', () => {
     ).toBe(false);
   });
 
+  it('invalidates the TanStack Query resources cache for the village', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.resources('v1'), { wood: 100 });
+
+    applyResourcesChanged(
+      {
+        villageId: 'v1',
+        wood: 500,
+        stone: 200,
+        iron: 100,
+        maxPerType: 1000,
+        productionRates: { wood: 60, stone: 60, iron: 60 },
+        lastUpdateTs: '2026-05-04T22:00:00.000Z',
+      },
+      { queryClient },
+    );
+
+    expect(
+      queryClient.getQueryState(queryKeys.resources('v1'))?.isInvalidated,
+    ).toBe(true);
+  });
+
   it('overwrites the previous snapshot for the same villageId', () => {
     applyResourcesChanged({
       villageId: 'v1',
@@ -184,6 +206,26 @@ describe('applyCrownsChanged', () => {
       productionRate: 3,
       lastUpdateTs: Date.parse('2026-05-04T22:00:00.000Z'),
     });
+  });
+
+  it('invalidates the TanStack Query crowns cache for the user+world', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.crowns('u1', 'default'), { balance: 5 });
+
+    applyCrownsChanged(
+      {
+        userId: 'u1',
+        worldId: 'default',
+        balance: 7,
+        productionRate: 3,
+        lastUpdateTs: '2026-05-04T22:00:00.000Z',
+      },
+      { queryClient },
+    );
+
+    expect(
+      queryClient.getQueryState(queryKeys.crowns('u1', 'default'))?.isInvalidated,
+    ).toBe(true);
   });
 
   it('does not refetch onboarding for high-frequency crown ticks', () => {
