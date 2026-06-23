@@ -44,6 +44,22 @@ function seedEliminatedPlayerQueries(queryClient: QueryClient) {
   queryClient.setQueryData(queryKeys.myVillages('u1', 'w1'), []);
 }
 
+function seedEndedWorldQueries(queryClient: QueryClient) {
+  queryClient.setQueryData(queryKeys.myMemberships('u1'), [
+    {
+      worldId: 'w1',
+      worldName: 'Monde Test',
+      status: 'ENDED',
+      role: 'PLAYER',
+      joinedAt: '2026-01-01T00:00:00.000Z',
+      lastLoginAt: '2026-06-01T00:00:00.000Z',
+      villageCount: 0,
+    },
+  ]);
+  queryClient.setQueryData(queryKeys.myVillages('u1', 'w1'), []);
+  queryClient.setQueryData(queryKeys.publicWorlds(), []);
+}
+
 function renderGate(queryClient: QueryClient) {
   const router = createMemoryRouter(
     [
@@ -172,6 +188,24 @@ describe('WorldSessionGate — village conquis (joueur sans village)', () => {
         onSuccess: expect.any(Function),
       }),
     );
+  });
+
+  it('affiche EndedWorldView (pas LostKingdom ni game content) sur un monde ENDED', () => {
+    useAuthStore.getState().setSession({
+      accessToken: 'access',
+      refreshToken: 'refresh',
+      user: { id: 'u1', displayName: 'Alice' },
+    });
+
+    const queryClient = makeQueryClient();
+    seedEndedWorldQueries(queryClient);
+    renderGate(queryClient);
+
+    expect(screen.getByText(/est terminé\./)).toBeInTheDocument();
+    expect(screen.getByText('Voir le classement final')).toBeInTheDocument();
+    // Un membre éliminé sur monde ENDED ne voit pas le CTA « Revenir ».
+    expect(screen.queryByText('Ton village a été pris.')).not.toBeInTheDocument();
+    expect(screen.queryByText('game content')).not.toBeInTheDocument();
   });
 
   it('efface le contexte jeu et navigue vers /worlds au clic sur Choisir un autre monde', async () => {

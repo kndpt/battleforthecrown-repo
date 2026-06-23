@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  deriveWorldArchiveAt,
   formatWorldLaunchAgeFr,
   pickFreshAlternativeWorld,
   type WorldFreshnessCandidate,
@@ -7,6 +8,29 @@ import {
 
 const NOW = new Date('2026-05-25T12:00:00.000Z');
 const MS_PER_DAY = 86_400_000;
+
+describe('deriveWorldArchiveAt', () => {
+  it('returns endsAt + archiveAfterDays (default 7j)', () => {
+    const endsAt = '2026-05-22T12:00:00.000Z';
+    const archiveAt = deriveWorldArchiveAt({ startedAt: null, endsAt, config: null });
+    expect(archiveAt?.toISOString()).toBe('2026-05-29T12:00:00.000Z');
+  });
+
+  it('honours a custom archiveAfterDays from config', () => {
+    const endsAt = '2026-05-22T12:00:00.000Z';
+    const archiveAt = deriveWorldArchiveAt({
+      startedAt: null,
+      endsAt,
+      config: { lifecycle: { archiveAfterDays: 3 } },
+    });
+    expect(archiveAt?.getTime()).toBe(Date.parse(endsAt) + 3 * MS_PER_DAY);
+  });
+
+  it('returns null when endsAt is missing', () => {
+    expect(deriveWorldArchiveAt({ startedAt: null, endsAt: null, config: null })).toBeNull();
+    expect(deriveWorldArchiveAt({ startedAt: null, config: null })).toBeNull();
+  });
+});
 
 describe('formatWorldLaunchAgeFr', () => {
   it("returns « Lancé aujourd'hui » when started less than a day ago", () => {

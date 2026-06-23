@@ -27,6 +27,7 @@ export const SMOKE_WORLD_CONFIG: WorldConfig = {
     inscriptionLateDays: 3,
     newWorldEverydays: 7,
     newbieShieldHours: 48,
+    archiveAfterDays: 7,
   },
   identity: {
     displayName: 'Smoke World',

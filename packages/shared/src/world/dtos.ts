@@ -46,7 +46,12 @@ export const VillageIntelDtoSchema = z.object({
   seenAt: z.string(),
 }) satisfies z.ZodType<VillageIntelDto>;
 
-export const PublicWorldStatusSchema = z.enum(["PLANNED", "OPEN", "LOCKED"]);
+export const PublicWorldStatusSchema = z.enum([
+  "PLANNED",
+  "OPEN",
+  "LOCKED",
+  "ENDED",
+]);
 export const WorldTempoProfileSchema = z.enum(["standard", "custom"]);
 
 export const InscriptionPhaseSchema = z.enum([
@@ -65,6 +70,13 @@ export const PublicWorldLifecycleSchema = z.strictObject({
   startedAt: z.string().datetime().nullable(),
   endsAt: z.string().datetime().nullable(),
   plannedOpenAt: z.string().datetime().nullable(),
+  /**
+   * Derived archive deadline for an ENDED world (= endsAt + archiveAfterDays).
+   * Null while the world has no endsAt or is not yet ENDED. Read-only UI uses
+   * it to render the « archivé dans {M}j » countdown. Run 065 wires the actual
+   * ENDED → ARCHIVED transition at this instant.
+   */
+  archiveAt: z.string().datetime().nullable(),
 });
 
 export const PublicWorldMapSchema = z.strictObject({
@@ -128,6 +140,8 @@ export interface NewbieShieldState {
 export interface WorldMembershipResponse {
   worldId: string;
   worldName: string;
+  /** Current world status. Drives read-only routing in WorldSessionGate. */
+  status: PublicWorldStatus;
   role: string;
   joinedAt: string;
   lastLoginAt: string | null;

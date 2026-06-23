@@ -121,6 +121,31 @@ export function applyWorldStatusChanged(
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.worldConfigFull(payload.worldId),
   });
+
+  // World just ended while a player is in session: the world is now frozen
+  // server-side. Invalidate every mutable cache so the HUD switches to
+  // read-only without a reload (the memberships refetch above flips
+  // `status → ENDED`, which drives `isWorldReadOnly`), then notify.
+  if (payload.to === "ENDED") {
+    ctx.queryClient.invalidateQueries({
+      queryKey: queryKeys.worldEntities(payload.worldId),
+    });
+    ctx.queryClient.invalidateQueries({
+      queryKey: queryKeys.myVillages(userId, payload.worldId),
+    });
+    ctx.queryClient.invalidateQueries({
+      queryKey: queryKeys.rankingsSummary(payload.worldId),
+    });
+    ctx.queryClient.invalidateQueries({
+      queryKey: queryKeys.retentionSummary(userId, payload.worldId),
+    });
+    useUiStore.getState().pushToast({
+      title: "Monde terminé",
+      description: "Le monde s'est terminé. Consultation uniquement.",
+      tone: "info",
+      ttlMs: 6000,
+    });
+  }
 }
 
 /**

@@ -10,6 +10,7 @@ import {
   InscriptionPhase,
   deriveInscriptionPhase,
   deriveWorldDayCounter,
+  deriveWorldArchiveAt,
   PublicWorldStatusSchema,
   TempoService,
   type PublicWorld,
@@ -81,7 +82,9 @@ export class WorldService {
 
   async getPublicWorlds(now = new Date()): Promise<PublicWorld[]> {
     const worlds = await this.prisma.world.findMany({
-      where: { status: { in: ['PLANNED', 'OPEN', 'LOCKED'] } },
+      // ENDED worlds stay listed (read-only consultation) until run 065
+      // transitions them to ARCHIVED at endsAt + archiveAfterDays.
+      where: { status: { in: ['PLANNED', 'OPEN', 'LOCKED', 'ENDED'] } },
       orderBy: [{ plannedOpenAt: 'asc' }, { createdAt: 'desc' }],
       include: { _count: { select: { memberships: true } } },
     });
@@ -129,6 +132,16 @@ export class WorldService {
           plannedOpenAt:
             world.status === 'PLANNED'
               ? toIsoString(world.plannedOpenAt)
+              : null,
+          archiveAt:
+            world.status === 'ENDED'
+              ? toIsoString(
+                  deriveWorldArchiveAt({
+                    startedAt: world.startedAt,
+                    endsAt: world.endsAt,
+                    config,
+                  }),
+                )
               : null,
         },
         map: {
@@ -188,6 +201,7 @@ export class WorldService {
       return {
         worldId: m.worldId,
         worldName: m.world.name,
+        status: PublicWorldStatusSchema.parse(m.world.status),
         role: m.role,
         joinedAt: m.joinedAt.toISOString(),
         lastLoginAt: m.lastLoginAt ? m.lastLoginAt.toISOString() : null,
@@ -226,6 +240,7 @@ export class WorldService {
     return {
       worldId: membership.worldId,
       worldName: membership.world.name,
+      status: PublicWorldStatusSchema.parse(membership.world.status),
       role: membership.role,
       joinedAt: membership.joinedAt.toISOString(),
       lastLoginAt: lastLoginAt.toISOString(),

@@ -61,6 +61,21 @@ export function deriveInscriptionPhase(
   return InscriptionPhase.CLOSED;
 }
 
+/**
+ * Archive deadline for a world = endsAt + archiveAfterDays (default 7 j).
+ * Returns null when the world has no endsAt (never started / not yet ENDED).
+ * Used by the read-only UI to render the « archivé dans {M}j » countdown; run
+ * 065 transitions ENDED → ARCHIVED at this instant.
+ */
+export function deriveWorldArchiveAt(world: WorldLifecycleSource): Date | null {
+  const endsAtMs = toTimeMs(world.endsAt ?? null);
+  if (endsAtMs === null) {
+    return null;
+  }
+  const lifecycle = resolveWorldLifecycleConfig(world.config?.lifecycle);
+  return new Date(endsAtMs + lifecycle.archiveAfterDays * MS_PER_DAY);
+}
+
 export function deriveWorldDayCounter(
   world: WorldLifecycleSource,
   now: Date,

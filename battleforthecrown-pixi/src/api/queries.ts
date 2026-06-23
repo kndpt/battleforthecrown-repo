@@ -77,7 +77,9 @@ import {
 import type { OnboardingSummaryDto } from "@battleforthecrown/shared/onboarding";
 import {
   RankingsSummaryResponseSchema,
+  WorldFinalRankingsResponseSchema,
   type RankingsSummaryResponse,
+  type WorldFinalRankingsResponse,
 } from "@battleforthecrown/shared/rankings";
 
 const CaravanReportResourcesSchema = z.strictObject({
@@ -172,6 +174,8 @@ export const queryKeys = {
     ["onboarding", "summary", userId, worldId] as const,
   rankingsSummary: (worldId: string | null) =>
     ["rankings", "summary", worldId] as const,
+  finalRankings: (worldId: string | null) =>
+    ["rankings", "final", worldId] as const,
   renown: (userId: string | null) => ["renown", userId] as const,
   villageIntel: (worldId: string | null, villageId: string | null) =>
     ["intel", worldId, villageId] as const,
@@ -706,6 +710,30 @@ export function useRankingsSummaryQuery(worldId: string | null) {
     // applyRankingsChanged only fires on glory writes; power changes are
     // covered by invalidatePowerQueries, but a dropped socket covers neither.
     refetchInterval: 30_000,
+  });
+}
+
+/**
+ * Frozen end-of-world leaderboards (Hall of fame), served from the run 061
+ * snapshot via GET /worlds/:worldId/rankings/final. Public: any player can
+ * consult an ENDED world's final rankings, even one they never joined.
+ * 404 (world not ENDED yet) and 409 (ENDED but snapshot missing) surface as
+ * query errors — the screen renders an explicit empty/error state.
+ */
+export function useFinalRankingsQuery(worldId: string | null) {
+  return useQuery<WorldFinalRankingsResponse>({
+    queryKey: queryKeys.finalRankings(worldId),
+    queryFn: async () => {
+      if (!worldId) throw new Error("No world selected");
+      const response = await apiClient.get<unknown>(
+        `/worlds/${worldId}/rankings/final`,
+      );
+      return WorldFinalRankingsResponseSchema.parse(response);
+    },
+    enabled: Boolean(worldId),
+    // Snapshot is immutable once written → cache aggressively, no polling.
+    staleTime: 5 * 60_000,
+    retry: false,
   });
 }
 

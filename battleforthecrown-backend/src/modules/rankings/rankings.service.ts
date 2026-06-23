@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { FinalRankingSignal, GloryLedger, RankingSignal } from '@prisma/client';
 import {
   RANKING_SIGNAL_LABELS,
@@ -8,6 +13,7 @@ import {
   rankSnapshotEntries,
   type RankingSignal as PublicRankingSignal,
   type RankingsLeaderboardResponse,
+  type WorldFinalRankingsResponse,
 } from '@battleforthecrown/shared/rankings';
 import type { UnitMap } from '@battleforthecrown/shared/army';
 import { MS_PER_DAY } from '@battleforthecrown/shared/time';
@@ -33,6 +39,8 @@ interface CreditGloryInput {
 
 @Injectable()
 export class RankingsService {
+  private readonly logger = new Logger(RankingsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly powerService: PowerService,
@@ -237,6 +245,69 @@ export class RankingsService {
       period,
       limit,
     );
+  }
+
+  /**
+   * Reads the frozen end-of-world leaderboards persisted at the LOCKED → ENDED
+   * transition (run 061 `snapshotFinalRankings`). Contract:
+   * - 404 when the world is not ENDED yet (snapshot legitimately absent).
+   * - 409 when the world IS ENDED but no snapshot exists (invariant break —
+   *   061 writes it in the same tx as the transition, so this is corruption).
+   */
+  async getFinalRankings(worldId: string): Promise<WorldFinalRankingsResponse> {
+    const world = await this.prisma.world.findUnique({
+      where: { id: worldId },
+      select: { status: true },
+    });
+    if (!world) {
+      throw new NotFoundException(`World ${worldId} not found`);
+    }
+    if (world.status !== 'ENDED') {
+      throw new NotFoundException('FINAL_RANKINGS_NOT_AVAILABLE');
+    }
+
+    const snapshots = await this.prisma.worldFinalRankingSnapshot.findMany({
+      where: { worldId },
+      orderBy: [{ signal: 'asc' }, { rank: 'asc' }],
+    });
+    if (snapshots.length === 0) {
+      this.logger.warn(
+        `World ${worldId} is ENDED but has no final ranking snapshot`,
+      );
+      throw new ConflictException('FINAL_RANKINGS_MISSING');
+    }
+
+    const displayNames = await this.loadDisplayNamesByUserIds(
+      snapshots.map((row) => row.userId),
+    );
+
+    const signalOrder: FinalRankingSignal[] = [
+      FinalRankingSignal.POWER,
+      FinalRankingSignal.ASSAULT_GLORY,
+      FinalRankingSignal.RAMPART_GLORY,
+    ];
+    const leaderboards: RankingsLeaderboardResponse[] = signalOrder.map(
+      (signal) => ({
+        worldId,
+        signal,
+        period: 'FINAL',
+        label: RANKING_SIGNAL_LABELS[signal],
+        entries: snapshots
+          .filter((row) => row.signal === signal)
+          .map((row) => ({
+            rank: row.rank,
+            userId: row.userId,
+            playerName: this.toPublicPlayerName(row.userId, displayNames),
+            score: row.score,
+          })),
+      }),
+    );
+
+    return {
+      worldId,
+      snapshotAt: snapshots[0].snapshotAt.toISOString(),
+      leaderboards,
+    };
   }
 
   async snapshotFinalRankings(

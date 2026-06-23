@@ -24,6 +24,8 @@ export interface WorldDetailDesignProps {
   onEnter: (world: WorldCardViewModel) => void;
   onJoin: (world: WorldCardViewModel) => void;
   onNotify: (world: WorldCardViewModel) => void;
+  /** Invoked for an ENDED world's « Terminé · consulter » CTA. */
+  onViewRankings?: (world: WorldCardViewModel) => void;
   world: WorldCardViewModel;
 }
 
@@ -160,11 +162,13 @@ function DetailCta({
   onEnter,
   onJoin,
   onNotify,
+  onViewRankings,
   world,
 }: {
   onEnter: (world: WorldCardViewModel) => void;
   onJoin: (world: WorldCardViewModel) => void;
   onNotify: (world: WorldCardViewModel) => void;
+  onViewRankings?: (world: WorldCardViewModel) => void;
   world: WorldCardViewModel;
 }) {
   if (world.ctaKind === 'locked') return null;
@@ -194,6 +198,7 @@ function DetailCta({
         if (world.ctaKind === 'join') onJoin(world);
         if (world.ctaKind === 'rejoin') onJoin(world);
         if (world.ctaKind === 'joined') onEnter(world);
+        if (world.ctaKind === 'ended') onViewRankings?.(world);
       }}
       type="button"
     >
@@ -212,6 +217,7 @@ export function WorldDetailDesign({
   onEnter,
   onJoin,
   onNotify,
+  onViewRankings,
   world,
 }: WorldDetailDesignProps) {
   return (
@@ -299,7 +305,13 @@ export function WorldDetailDesign({
 
         {world.ctaKind !== 'locked' ? (
           <div className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-[420px] bg-[linear-gradient(to_top,rgba(212,192,148,1)_60%,rgba(212,192,148,0))] px-3 pb-3 pt-7">
-            <DetailCta onEnter={onEnter} onJoin={onJoin} onNotify={onNotify} world={world} />
+            <DetailCta
+              onEnter={onEnter}
+              onJoin={onJoin}
+              onNotify={onNotify}
+              onViewRankings={onViewRankings}
+              world={world}
+            />
           </div>
         ) : null}
       </div>
