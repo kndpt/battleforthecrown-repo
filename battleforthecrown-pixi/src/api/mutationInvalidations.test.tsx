@@ -74,7 +74,7 @@ describe("useInitiateAttackMutation invalidations", () => {
       targetY: 20,
       targetKind: "BARBARIAN_VILLAGE",
       targetRefId: "barb-1",
-      units: { SWORDSMAN: 5 },
+      units: { MILITIA: 5 },
     });
 
     await waitFor(() => expect(result.current.isIdle).toBe(false));
@@ -97,7 +97,7 @@ describe("useInitiateScoutMutation invalidations", () => {
       targetY: 20,
       targetKind: "PLAYER_VILLAGE",
       targetRefId: "target-1",
-      units: { SCOUT: 1 },
+      units: { SPY: 1 },
     });
 
     await waitFor(() => expect(result.current.isIdle).toBe(false));
@@ -118,7 +118,7 @@ describe("useInitiateReinforceMutation invalidations", () => {
     result.current.mutate({
       villageId: "v-1",
       targetVillageId: "v-2",
-      units: { SWORDSMAN: 3 },
+      units: { MILITIA: 3 },
     });
 
     await waitFor(() => expect(result.current.isIdle).toBe(false));
