@@ -68,6 +68,7 @@ src/
 | **onboarding** | `GET /onboarding?worldId=...` | — | Tutoriel scripté Phase 8, récompense initiale unique au premier village et projection séquentielle depuis les facts Outbox |
 | **population** | `GET /population/:villageId` | — | Population courante / max via `getFarmPopulationLimit` |
 | **power** | `GET /power?villageId=…`, `GET /power/village/:id/public`, `GET /power/kingdom`, `GET /power/kingdom/:userId/public?worldId=...`, `GET /power/leaderboard?worldId=...` | — | Calcul puissance bâtiments + armée d'un village (propriétaire), puissance bâtiments publique d'un village, puissance royaume world-scopée du joueur authentifié ou publique, leaderboard public de puissance par monde |
+| **rankings** | `GET /rankings?worldId=...`, `GET /rankings/:signal?worldId=...`, `GET /worlds/:worldId/rankings/final` | — | Leaderboards live (POWER / ASSAULT_GLORY / RAMPART_GLORY) + crédit de Gloire. `GET /worlds/:worldId/rankings/final` (public) lit le snapshot `WorldFinalRankingSnapshot` (run 061) : **200** sur monde `ENDED` avec snapshot, **404** si non-`ENDED` (snapshot pas encore créé), **409** si `ENDED` sans snapshot (invariant cassé) |
 | **event** | WS `socket.io` | (consommé par `OutboxWorker`) | Gateway temps réel + `OutboxPublisher` (point unique de création d'events Outbox côté gameplay) |
 
 ## Sous-services notables
@@ -117,7 +118,7 @@ world/
 └── barbarian-seeding-catchup.worker.ts  # Catchup d'arrivée différée (chunks non couverts par le seeding sync)
 ```
 
-`WorldConfigService` est central : la migration d'`common/constants.ts` vers la config par-monde est en cours (objectif : permettre des serveurs à vitesses différentes sans redéploiement). `GET /worlds/public` expose les mondes planifiés/joignables/verrouillés avec identité, phase d'inscription dérivée, compteur de jour, `plannedOpenAt` et nombre de joueurs.
+`WorldConfigService` est central : la migration d'`common/constants.ts` vers la config par-monde est en cours (objectif : permettre des serveurs à vitesses différentes sans redéploiement). `GET /worlds/public` expose les mondes planifiés/joignables/verrouillés **et terminés** (`PLANNED | OPEN | LOCKED | ENDED` ; les `ARCHIVED` resteront exclus, run 065) avec identité, phase d'inscription dérivée, compteur de jour, `plannedOpenAt`, `archiveAt` dérivé (= `endsAt + archiveAfterDays`, non nul seulement sur `ENDED`) et nombre de joueurs. `GET /world/me/memberships` expose désormais le `status` du monde (pour le routage lecture seule côté front).
 
 ### Event
 

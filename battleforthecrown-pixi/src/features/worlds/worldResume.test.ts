@@ -7,6 +7,7 @@ function membership(overrides: Partial<WorldMembership>): WorldMembership {
     joinedAt: '2026-05-01T10:00:00.000Z',
     lastLoginAt: null,
     role: 'PLAYER',
+    status: 'OPEN',
     villageCount: 1,
     worldId: 'world-a',
     worldName: 'Aubeforge',

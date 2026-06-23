@@ -86,6 +86,7 @@ function mockApi() {
             plannedOpenAt: null,
             startedAt: new Date(now - 3_600_000).toISOString(),
             totalDays: 60,
+            archiveAt: null,
           },
           map: { width: 500, height: 500 },
           status: 'OPEN',

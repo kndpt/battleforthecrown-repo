@@ -22,6 +22,7 @@ export const DEFAULT_WORLD_LIFECYCLE_CONFIG = {
   inscriptionLateDays: 3,
   newWorldEverydays: 7,
   newbieShieldHours: 48,
+  archiveAfterDays: 7,
 } as const;
 
 export const WorldLifecycleSchema = z.strictObject({
@@ -39,6 +40,12 @@ export const WorldLifecycleSchema = z.strictObject({
   ),
   newbieShieldHours: z.number().int().positive().default(
     DEFAULT_WORLD_LIFECYCLE_CONFIG.newbieShieldHours,
+  ),
+  // Days a world stays consultable in ENDED before ARCHIVED purge (run 065).
+  // Surfaced now so the read-only UI can derive the « archivé dans {M}j »
+  // countdown (archiveAt = endsAt + archiveAfterDays).
+  archiveAfterDays: z.number().int().positive().default(
+    DEFAULT_WORLD_LIFECYCLE_CONFIG.archiveAfterDays,
   ),
 });
 

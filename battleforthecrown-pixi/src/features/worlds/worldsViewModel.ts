@@ -3,9 +3,16 @@ import {
   pickFreshAlternativeWorld,
   type PublicWorld,
 } from "@battleforthecrown/shared/world";
+import { MS_PER_DAY } from "@battleforthecrown/shared/time";
 
 export type WorldsTab = "open" | "planned" | "locked";
-export type WorldCtaKind = "join" | "notify" | "locked" | "joined" | "rejoin";
+export type WorldCtaKind =
+  | "join"
+  | "notify"
+  | "locked"
+  | "joined"
+  | "rejoin"
+  | "ended";
 
 export interface WorldThemeTokens {
   border: string;
@@ -124,12 +131,17 @@ export const WORLD_SIGIL_GLYPHS: Record<
 };
 
 const tabByStatus: Record<PublicWorld["status"], WorldsTab> = {
+  // ENDED worlds are no longer joinable → grouped with LOCKED in the
+  // "closed" tab. The card differentiates via the « TERMINÉ » badge + the
+  // `ended` CTA, so no dedicated tab is needed.
+  ENDED: "locked",
   LOCKED: "locked",
   OPEN: "open",
   PLANNED: "planned",
 };
 
 const statusLabels: Record<PublicWorld["status"], string> = {
+  ENDED: "TERMINÉ",
   LOCKED: "INSCRIPTIONS CLOSES",
   OPEN: "INSCRIPTIONS OUVERTES",
   PLANNED: "PLANIFIÉ",
@@ -159,11 +171,38 @@ function formatCountdown(
   return `${days}j ${hours}h`;
 }
 
+/**
+ * Label for an ENDED world card: « Terminé il y a {N}j · archivé dans {M}j ».
+ * Falls back gracefully when endsAt / archiveAt are missing or already past.
+ */
+function formatEndedLabel(
+  endsAt: string | null,
+  archiveAt: string | null,
+  nowMs: number,
+): string {
+  const endedPart = (() => {
+    if (!endsAt) return "Terminé";
+    const elapsedDays = Math.floor((nowMs - Date.parse(endsAt)) / MS_PER_DAY);
+    if (!Number.isFinite(elapsedDays) || elapsedDays <= 0) return "Terminé";
+    return `Terminé il y a ${elapsedDays}j`;
+  })();
+
+  if (!archiveAt) return endedPart;
+  const archiveDays = Math.ceil((Date.parse(archiveAt) - nowMs) / MS_PER_DAY);
+  if (!Number.isFinite(archiveDays)) return endedPart;
+  if (archiveDays <= 0) return `${endedPart} · archivage imminent`;
+  return `${endedPart} · archivé dans ${archiveDays}j`;
+}
+
 function ctaFor(
   world: PublicWorld,
   isJoined: boolean,
   villageCount?: number,
 ): Pick<WorldCardViewModel, "ctaKind" | "ctaLabel"> {
+  // ENDED wins over every join/rejoin branch: an eliminated member must see
+  // the read-only « consulter » CTA, never « Revenir » (no rejoin once ended).
+  if (world.status === "ENDED")
+    return { ctaKind: "ended", ctaLabel: "Terminé · consulter" };
   if (isJoined && villageCount === 0) return { ctaKind: "rejoin", ctaLabel: "Revenir" };
   if (isJoined) return { ctaKind: "joined", ctaLabel: "Entrer" };
   if (world.status === "PLANNED")
@@ -220,13 +259,19 @@ export function toWorldCardViewModel(
     freshAlternativeWorldId,
     launchAgeLabel,
     dayLabel:
-      world.status === "PLANNED"
-        ? opensIn
-          ? `Ouvre dans ${opensIn}`
-          : "Ouverture planifiée"
-        : day
-          ? `J. ${day} / ${world.lifecycle.totalDays}`
-          : `J. ? / ${world.lifecycle.totalDays}`,
+      world.status === "ENDED"
+        ? formatEndedLabel(
+            world.lifecycle.endsAt,
+            world.lifecycle.archiveAt,
+            nowMs,
+          )
+        : world.status === "PLANNED"
+          ? opensIn
+            ? `Ouvre dans ${opensIn}`
+            : "Ouverture planifiée"
+          : day
+            ? `J. ${day} / ${world.lifecycle.totalDays}`
+            : `J. ? / ${world.lifecycle.totalDays}`,
     displayName: world.identity.displayName,
     id: world.id,
     inscriptionPhase: world.lifecycle.inscriptionPhase,

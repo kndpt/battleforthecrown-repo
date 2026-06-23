@@ -5,6 +5,8 @@ import { useGameStore } from '@/stores/game';
 import { Panel, Spinner } from '@/ui';
 import { pickDefaultVillage, pickLastPlayedMembership } from './worldResume';
 import { LostKingdomScreen } from './LostKingdomScreen';
+import { EndedWorldView } from './EndedWorldView';
+import { isWorldReadOnly } from './lifecycle';
 
 interface WorldSessionGateProps {
   children: ReactNode;
@@ -21,6 +23,15 @@ export function WorldSessionGate({ children }: WorldSessionGateProps) {
     [memberships.data],
   );
   const targetWorldId = worldId ?? latestMembership?.worldId ?? null;
+  const targetMembership = useMemo(
+    () =>
+      targetWorldId
+        ? (memberships.data ?? []).find((m) => m.worldId === targetWorldId) ??
+          null
+        : null,
+    [memberships.data, targetWorldId],
+  );
+  const isEndedWorld = isWorldReadOnly(targetMembership?.status);
   const hasGameContext = Boolean(worldId && villageId);
   const villages = useMyVillagesQuery(targetWorldId);
   const selectedVillage = useMemo(
@@ -34,7 +45,22 @@ export function WorldSessionGate({ children }: WorldSessionGateProps) {
     setContext({ worldId: targetWorldId, villageId: selectedVillage.id });
   }, [hasGameContext, selectedVillage, setContext, targetWorldId]);
 
-  if (memberships.isLoading || (targetWorldId && villages.isLoading)) {
+  if (memberships.isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  // ENDED world → read-only landing. Short-circuit before the villages-dependent
+  // logic so an eliminated member (villageCount = 0) on an ended world sees the
+  // « monde terminé » view, not the LostKingdom « Revenir » screen.
+  if (isEndedWorld && targetWorldId) {
+    return <EndedWorldView worldId={targetWorldId} />;
+  }
+
+  if (targetWorldId && villages.isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
         <Spinner size="lg" />

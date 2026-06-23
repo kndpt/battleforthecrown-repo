@@ -34,6 +34,8 @@ export interface WorldsSelectionDesignProps {
   onJoin: (world: WorldCardViewModel) => void;
   onNotify: (world: WorldCardViewModel) => void;
   onSelectFreshAlternative?: (worldId: string) => void;
+  /** Invoked for an ENDED world's « Terminé · consulter » CTA. */
+  onViewRankings?: (world: WorldCardViewModel) => void;
   onTabChange: (tab: WorldsTab) => void;
   totalCount: number;
   variants: SeasonVariant[];
@@ -160,11 +162,13 @@ function CtaButton({
   onEnter,
   onJoin,
   onNotify,
+  onViewRankings,
   world,
 }: {
   onEnter: (world: WorldCardViewModel) => void;
   onJoin: (world: WorldCardViewModel) => void;
   onNotify: (world: WorldCardViewModel) => void;
+  onViewRankings?: (world: WorldCardViewModel) => void;
   world: WorldCardViewModel;
 }) {
   if (world.ctaKind === 'locked') return null;
@@ -194,6 +198,7 @@ function CtaButton({
         if (world.ctaKind === 'join') onJoin(world);
         if (world.ctaKind === 'rejoin') onJoin(world);
         if (world.ctaKind === 'joined') onEnter(world);
+        if (world.ctaKind === 'ended') onViewRankings?.(world);
       }}
       type="button"
     >
@@ -209,6 +214,7 @@ export function WorldCard({
   onJoin,
   onNotify,
   onSelectFreshAlternative,
+  onViewRankings,
   world,
 }: {
   onDetails: (world: WorldCardViewModel) => void;
@@ -216,6 +222,7 @@ export function WorldCard({
   onJoin: (world: WorldCardViewModel) => void;
   onNotify: (world: WorldCardViewModel) => void;
   onSelectFreshAlternative?: (worldId: string) => void;
+  onViewRankings?: (world: WorldCardViewModel) => void;
   world: WorldCardViewModel;
 }) {
   return (
@@ -291,7 +298,13 @@ export function WorldCard({
             <ScrollText aria-hidden="true" className="size-3.5 stroke-[2.4]" />
             Détails
           </button>
-          <CtaButton onEnter={onEnter} onJoin={onJoin} onNotify={onNotify} world={world} />
+          <CtaButton
+            onEnter={onEnter}
+            onJoin={onJoin}
+            onNotify={onNotify}
+            onViewRankings={onViewRankings}
+            world={world}
+          />
         </div>
         {world.launchAgeLabel ? (
           <div className="flex flex-col gap-1.5 rounded-[9px] border-[1.5px] border-[#9e7b0d] bg-[rgba(246,213,123,.22)] px-2.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,.4)]">
@@ -377,6 +390,7 @@ export function WorldsSelectionDesign({
   onJoin,
   onNotify,
   onSelectFreshAlternative,
+  onViewRankings,
   onTabChange,
   totalCount,
   variants,
@@ -507,7 +521,7 @@ export function WorldsSelectionDesign({
               ) : (
                 <div className="flex flex-col gap-2">
                   {worlds.map((world) => (
-                    <WorldCard key={world.id} onDetails={onDetails} onEnter={onEnter} onJoin={onJoin} onNotify={onNotify} onSelectFreshAlternative={onSelectFreshAlternative} world={world} />
+                    <WorldCard key={world.id} onDetails={onDetails} onEnter={onEnter} onJoin={onJoin} onNotify={onNotify} onSelectFreshAlternative={onSelectFreshAlternative} onViewRankings={onViewRankings} world={world} />
                   ))}
                   <div className="sticky -bottom-3 h-[30px] shrink-0 bg-[linear-gradient(to_bottom,transparent,#d4c094)]" />
                 </div>
