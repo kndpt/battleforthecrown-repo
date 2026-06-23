@@ -70,7 +70,7 @@ type ServerEventBindings = {
 
 export function applyResourcesChanged(
   payload: ResourcesChangedPayload,
-  _ctx?: BindingsContext,
+  ctx?: BindingsContext,
 ): void {
   useResourcesStore.getState().setResources({
     villageId: payload.villageId,
@@ -81,11 +81,14 @@ export function applyResourcesChanged(
     productionRates: payload.productionRates,
     lastUpdateTs: Date.parse(payload.lastUpdateTs),
   });
+  ctx?.queryClient.invalidateQueries({
+    queryKey: queryKeys.resources(payload.villageId),
+  });
 }
 
 export function applyCrownsChanged(
   payload: CrownsChangedPayload,
-  _ctx?: BindingsContext,
+  ctx?: BindingsContext,
 ): void {
   useCrownsStore.getState().setCrowns({
     userId: payload.userId,
@@ -93,6 +96,9 @@ export function applyCrownsChanged(
     balance: payload.balance,
     productionRate: payload.productionRate,
     lastUpdateTs: Date.parse(payload.lastUpdateTs),
+  });
+  ctx?.queryClient.invalidateQueries({
+    queryKey: queryKeys.crowns(payload.userId, payload.worldId),
   });
 }
 
