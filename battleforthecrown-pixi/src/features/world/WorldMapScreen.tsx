@@ -406,6 +406,7 @@ export function WorldMapScreen() {
                   activeCapture={selectedCapture}
                   entity={selectedEntity}
                   currentVillageId={currentVillageId}
+                  currentUserId={userId}
                   onAttack={(target) => {
                     setAttackInitialMode("attack");
                     setAttackTarget(target);

@@ -1,8 +1,8 @@
 # Run #082 — feature-public-player-profile-newbie-shield-badge
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-23
+> **Terminé** : 2026-06-23
 
 ## Cible
 
@@ -104,23 +104,36 @@ _(Lead étape 3 — tâches ≤ 5 fichiers)_
 - **Déjà résolu (archive)** : Aucun. Le suivi `task_56e23ad7` mentionné par 056/081 est précisément ce qui motive ce run.
 - **Keywords scannés** : `public-profile`, `public-player`, `fiche-publique`, `newbie-shield`, `bouclier-debutant`, `player-profile-sheet`.
 
-## Décomposition initiale
-
-_(Vide au démarrage. Voir « Décomposition initiale » plus haut comme draft refinement.)_
-
-## Progress
-
-_(Vide au démarrage. Sera rempli en cours de run.)_
-
-## Décisions prises
-
-_(Vide au démarrage. Sera rempli en cours de run.)_
-
 ## Rapport final
+
+Synthèse : route `GET /worlds/:worldId/users/:userId/public-profile` (JWT, module `users`) + DTO Zod shared `PublicPlayerProfileResponse` (placé dans `world/`, réutilise `NewbieShieldState`) + `PublicPlayerProfileSheet` Pixi + CTA « Voir le profil » sur `VillageMapPanel` (village joueur tiers only). Shield lu live via `NewbieShieldService`, `null` si inactif. Aucune migration. Décisions : auth JWT (pas `@Public`), pas de Zod-pipe params (cohérent codebase). Suivi `task_56e23ad7` clôturé (3 surfaces bouclier complètes).
 
 ### Acceptance & QA
 
-- [ ] _(à remplir au DONE)_
-- **Review indépendante** : à déclencher — back+front + introduit une nouvelle surface publique (invariant info publique vs privée). Critères a + d.
-- **Tests automatisés** : smoke backend ciblé + tests Pixi (SelectedEntityPanel CTA visibility + PublicPlayerProfileSheet shield visible/masqué) + unit shared (Zod boundary).
-- **Tests IG user** : ouverture sheet depuis village ennemi sur la carte, vérification badge bouclier visible avec timer cohérent, fermeture, ouverture sur village propre (CTA absent attendu), ouverture sur barbare (CTA absent attendu).
+**Critères d'acceptance vérifiés** :
+- [x] Route retourne `{userId, displayName, kingdomPower, newbieShield}` — `test:smoke:run -- public-player-profile.smoke` (case 1, 200 + shape) → vert
+- [x] Shape exacte 4 champs publics, zéro fuite privée — `Object.keys(body).sort()` assert dans smoke case 1 → vert
+- [x] Non-membre + barbare → 404 `USER_NOT_MEMBER_OF_WORLD` — smoke case 2 → vert
+- [x] Shield rompu/expiré → `newbieShield: null` ; protégé → `active:true` — smoke case 1 (attaque PvP rompt le bouclier attaquant) → vert
+- [x] Route JWT-protected (non-auth → 401) — smoke case 3 → vert
+- [x] Shared `PublicPlayerProfileResponseSchema` + parse boundary front — `yarn static-check` → vert
+- [x] CTA visibilité (enemy oui / mine non / barbare non) — `SelectedEntityPanel.test.tsx` 3 cas → vert
+- [x] Sheet : badge bouclier si actif / section masquée si null — `PublicPlayerProfileSheet.test.tsx` 2 cas → vert
+- [x] Aucune migration Prisma — `git status` : aucun dossier `prisma/migrations` ajouté
+- [x] Docs clôture `task_56e23ad7` dans rapports 056/081 — `grep "clôturé (run 082"` → 2 fichiers
+
+**Review indépendante** : Déclenchée (raison: critère a back+front, c diff>100 lignes). Verdict BLOCK→GO : 1 majeur (note de clôture docs 056/081 absente) résolu — notes ajoutées, finding objectivement vérifiable levé (grep). 2 mineurs acceptés (gating CTA réel en amont dans `SelectedEntityPanel` ; `ownerId` déjà requis par le garde ÷3 existant).
+
+**Tests automatisés** : `yarn static-check` vert ; `yarn workspace battleforthecrown-pixi test --run SelectedEntityPanel PublicPlayerProfileSheet` → 19/19.
+
+**Smokes lancés** : Ciblés — `test:smoke:preflight` + `test:smoke:run -- public-player-profile.smoke` → 3/3. Diff backend `src/` = nouveau module isolé (controller/service + register), non transversal ; full smoke couvert par CI PR.
+
+**Smokes ajoutés/modifiés** : `public-player-profile.smoke.spec.ts` (NEW) — shield rompu→null + protégé→active, 404 non-membre, 401 non-auth, shape exacte.
+
+**QA fonctionnelle agent** : couverte par le smoke e2e (REST attaque → rupture bouclier → 2 lectures profil + assertions DB/shape).
+
+**Tests IG à faire par le user** (≤5) :
+- [ ] Carte → sélectionner un village joueur ennemi → CTA « Voir le profil » présent ; clic ouvre la fiche.
+- [ ] Fiche d'un joueur sous bouclier → badge bouclier + countdown cohérent ; fiche d'un joueur exposé → section bouclier absente.
+- [ ] Fermer la fiche ne change ni la route ni le village sélectionné.
+- [ ] Village propre / barbare → CTA « Voir le profil » absent.

@@ -449,6 +449,76 @@ describe("barbarian", () => {
 });
 
 // ---------------------------------------------------------------------------
+// describe: CTA « Voir le profil » (fiche publique joueur tiers)
+// ---------------------------------------------------------------------------
+
+describe("public profile CTA", () => {
+  beforeEach(() => {
+    useGameStore.setState({ worldId: "w1" });
+  });
+
+  it("enemy player village → CTA « Voir le profil » présent", async () => {
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/worlds/w1/intel/v-enemy") return null;
+      if (path === "/power/village/v-enemy/public")
+        return { villageId: "v-enemy", buildings: 880 };
+      throw new Error(`Unexpected GET ${path}`);
+    });
+
+    renderPanel(enemyVillage, "v-mine", { currentUserId: "me" });
+
+    expect(
+      await screen.findByRole("button", { name: /Voir le profil/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("own village (mine) → CTA absent", async () => {
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/army/village-1/inventory") return [];
+      if (path === "/combat/village-1/garrison") return [];
+      if (path === "/power/village/village-1/public")
+        return { villageId: "village-1", buildings: 500 };
+      throw new Error(`Unexpected GET ${path}`);
+    });
+
+    renderPanel(playerVillage(), "another-village", {
+      currentUserId: "me",
+      onGoToVillage: vi.fn(),
+    });
+
+    await screen.findByRole("button", { name: /Entrer/ });
+    expect(
+      screen.queryByRole("button", { name: /Voir le profil/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("barbarian village → CTA absent", async () => {
+    const barb: MapEntity = {
+      id: "barb-1",
+      kind: "BARBARIAN_VILLAGE",
+      isMine: false,
+      x: 30,
+      y: 40,
+      name: "Camp barbare",
+      tier: "T3",
+    };
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/worlds/w1/intel/barb-1") return null;
+      if (path === "/power/village/barb-1/public")
+        return { villageId: "barb-1", buildings: 600 };
+      throw new Error(`Unexpected GET ${path}`);
+    });
+
+    renderPanel(barb, "v-mine", { currentUserId: "me" });
+
+    await screen.findByText("Garnison");
+    expect(
+      screen.queryByRole("button", { name: /Voir le profil/ }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // describe: intel — isMine ne déclenche jamais l'endpoint intel
 // ---------------------------------------------------------------------------
 
