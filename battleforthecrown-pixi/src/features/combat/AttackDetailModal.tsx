@@ -56,9 +56,16 @@ export function AttackDetailModal({
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const inventory = useArmyInventoryQuery(villageId);
   const worldConfig = useWorldConfigQuery(worldId);
-  // Menace estimée — queries partagent le même id canonique (target.id)
-  const intelQuery = useVillageIntelQuery(worldId, target.id);
-  const powerQuery = usePublicVillagePowerQuery(target.id);
+  // Menace estimée — uniquement pour une cible attaquable. En mode renfort
+  // (mon propre village) la section n'est jamais rendue : on désactive les
+  // queries pour éviter des fetchs/invalidations inutiles. Même id canonique.
+  const showsThreat = !(target.kind === 'PLAYER_VILLAGE' && target.isMine);
+  const intelQuery = useVillageIntelQuery(
+    worldId,
+    showsThreat ? target.id : null,
+    showsThreat,
+  );
+  const powerQuery = usePublicVillagePowerQuery(showsThreat ? target.id : null);
   const attack = useInitiateAttackMutation();
   const reinforce = useInitiateReinforceMutation();
   const scout = useInitiateScoutMutation();

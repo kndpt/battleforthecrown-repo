@@ -87,8 +87,12 @@ const target = {
 
 const origin = { x: 0, y: 0 };
 
-/** Intel légère : 10 MILITIA, label attendu = Faible avec armée > 0 */
-function makeIntel(overrides: { MILITIA?: number; TEMPLAR?: number } = {}) {
+const DAY_MS = 86_400_000;
+
+/** Intel scoutée. `ageMs` pilote la fraîcheur (défaut 1mn = fraîche). */
+function makeIntel(
+  overrides: { MILITIA?: number; TEMPLAR?: number; ageMs?: number } = {},
+) {
   return VillageIntelDtoSchema.parse({
     targetVillageId: VILLAGE_ID,
     worldId: WORLD_ID,
@@ -102,7 +106,7 @@ function makeIntel(overrides: { MILITIA?: number; TEMPLAR?: number } = {}) {
     targetX: 12,
     targetY: 34,
     targetTier: null,
-    seenAt: new Date(Date.now() - 60_000).toISOString(), // 1 minute ago — fraîche
+    seenAt: new Date(Date.now() - (overrides.ageMs ?? 60_000)).toISOString(),
   });
 }
 
@@ -174,25 +178,31 @@ describe('AttackDetailModal — badge Menace estimée réactif au cache intel', 
     await waitFor(() => expect(intelCallCount).toBe(0));
   });
 
-  it('(B) intel.updated ⇒ exactement 1 refetch canonique, badge recalculé', async () => {
+  /** Texte de la section "Menace estimée" (badge + tooltip). */
+  function threatSectionText(): string {
+    return screen.getByText('Menace estimée').closest('div.p-3')?.textContent ?? '';
+  }
+
+  it('(B) intel.updated ⇒ 1 refetch canonique + badge VISIBLEMENT recalculé', async () => {
     const queryClient = makeQueryClient();
 
-    const intelLight = makeIntel({ MILITIA: 10 });
-    const intelHeavy = makeIntel({ MILITIA: 10, TEMPLAR: 100 }); // garnison renforcée
+    // Cache initial : intel périmée (8j > STALE_THRESHOLD_MS) ⇒ badge "Inconnue".
+    const intelStale = makeIntel({ MILITIA: 10, ageMs: 8 * DAY_MS });
+    // Refetch après WS : intel fraîche (1mn) ⇒ armée=0 vs défense ⇒ badge "Élevée".
+    const intelFresh = makeIntel({ MILITIA: 10, ageMs: 60_000 });
 
-    queryClient.setQueryData(queryKeys.villageIntel(WORLD_ID, VILLAGE_ID), intelLight);
+    queryClient.setQueryData(queryKeys.villageIntel(WORLD_ID, VILLAGE_ID), intelStale);
     queryClient.setQueryData(queryKeys.publicVillagePower(VILLAGE_ID), {
       villageId: VILLAGE_ID,
       buildings: 0,
     });
     queryClient.setQueryData(queryKeys.armyInventory(MY_VILLAGE_ID), []);
 
-    // Après invalidation WS, le refetch canonique retourne l'intel renforcée.
     let intelCallCount = 0;
     vi.spyOn(apiClient, 'get').mockImplementation(async (path) => {
       if (path === `/worlds/${WORLD_ID}/intel/${VILLAGE_ID}`) {
         intelCallCount++;
-        return intelHeavy;
+        return intelFresh;
       }
       if (path === `/power/village/${VILLAGE_ID}/public`) return { villageId: VILLAGE_ID, buildings: 0 };
       if (path === `/army/${MY_VILLAGE_ID}/inventory`) return [];
@@ -201,6 +211,9 @@ describe('AttackDetailModal — badge Menace estimée réactif au cache intel', 
 
     setup(queryClient);
     expect(await screen.findByText('Menace estimée')).toBeInTheDocument();
+
+    // Avant l'event : intel périmée ⇒ badge "Inconnue".
+    expect(threatSectionText()).toContain('Inconnue');
 
     await act(async () => {
       applyIntelUpdated(
@@ -212,13 +225,10 @@ describe('AttackDetailModal — badge Menace estimée réactif au cache intel', 
     // Exactement 1 refetch : la seule query canonique invalidée par run 055,
     // pas de second chemin de fetch introduit par le modal.
     await waitFor(() => expect(intelCallCount).toBe(1));
-    // Le cache porte désormais l'intel renforcée → badge recalculé sur la nouvelle donnée.
-    await waitFor(() =>
-      expect(queryClient.getQueryData(queryKeys.villageIntel(WORLD_ID, VILLAGE_ID))).toMatchObject({
-        units: { MILITIA: 10, TEMPLAR: 100 },
-      }),
-    );
-    expect(screen.getByText('Menace estimée')).toBeInTheDocument();
+    // Régression UI : le badge RENDU doit refléter la nouvelle intel (Inconnue → Élevée),
+    // pas seulement le cache.
+    await waitFor(() => expect(threatSectionText()).toContain('Élevée'));
+    expect(threatSectionText()).not.toContain('Inconnue');
   });
 
   it('affiche le badge "Menace estimée" uniquement en mode attack', async () => {
