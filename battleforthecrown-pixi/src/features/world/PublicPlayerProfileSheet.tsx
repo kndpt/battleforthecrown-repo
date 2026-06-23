@@ -1,5 +1,6 @@
 import { ModalBackdrop, Spinner } from "@/ui";
 import { usePublicPlayerProfileQuery } from "@/api/queries";
+import { useTickingNow } from "@/lib/useTickingNow";
 import { NewbieShieldIcon, NewbieShieldTimer } from "./NewbieShieldIcon";
 
 interface PublicPlayerProfileSheetProps {
@@ -22,6 +23,17 @@ export function PublicPlayerProfileSheet({
   onClose,
 }: PublicPlayerProfileSheetProps) {
   const profile = usePublicPlayerProfileQuery(userId, worldId);
+  const now = useTickingNow(1_000);
+
+  // Le serveur reste autoritatif (active vient du DTO). On masque seulement le
+  // bloc dès que `endsAt` est dépassé localement — cohérent avec NewbieShieldIcon
+  // /Timer qui se masquent à expiration ; évite un libellé « Bouclier débutant »
+  // orphelin sans countdown si la fiche reste ouverte au-delà de l'échéance.
+  const shieldEndsMs = profile.data?.newbieShield
+    ? Date.parse(profile.data.newbieShield.endsAt)
+    : Number.NaN;
+  const shieldStillVisible =
+    Number.isFinite(shieldEndsMs) && shieldEndsMs > now;
 
   return (
     <ModalBackdrop onClose={onClose}>
@@ -137,7 +149,7 @@ export function PublicPlayerProfileSheet({
                   </span>
                 </div>
 
-                {profile.data.newbieShield && (
+                {profile.data.newbieShield && shieldStillVisible && (
                   <div
                     style={{
                       display: "flex",

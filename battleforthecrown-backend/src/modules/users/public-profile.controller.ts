@@ -1,4 +1,5 @@
 import { Controller, Get, Param } from '@nestjs/common';
+import type { PublicPlayerProfileResponse } from '@battleforthecrown/shared';
 import { PublicProfileService } from './public-profile.service';
 
 /**
@@ -15,7 +16,7 @@ export class PublicProfileController {
   getPublicProfile(
     @Param('worldId') worldId: string,
     @Param('userId') userId: string,
-  ) {
+  ): Promise<PublicPlayerProfileResponse> {
     return this.publicProfileService.getPublicProfile(userId, worldId);
   }
 }

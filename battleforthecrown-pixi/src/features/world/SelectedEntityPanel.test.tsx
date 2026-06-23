@@ -457,19 +457,28 @@ describe("public profile CTA", () => {
     useGameStore.setState({ worldId: "w1" });
   });
 
-  it("enemy player village → CTA « Voir le profil » présent", async () => {
+  it("enemy player village → CTA « Voir le profil » présent + clic ouvre la fiche", async () => {
     vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
       if (path === "/worlds/w1/intel/v-enemy") return null;
       if (path === "/power/village/v-enemy/public")
         return { villageId: "v-enemy", buildings: 880 };
+      if (path === "/worlds/w1/users/u-foreign/public-profile")
+        return {
+          userId: "u-foreign",
+          displayName: "Sire Kelvin",
+          kingdomPower: 1234,
+          newbieShield: null,
+        };
       throw new Error(`Unexpected GET ${path}`);
     });
 
     renderPanel(enemyVillage, "v-mine", { currentUserId: "me" });
 
-    expect(
-      await screen.findByRole("button", { name: /Voir le profil/ }),
-    ).toBeInTheDocument();
+    const cta = await screen.findByRole("button", { name: /Voir le profil/ });
+    fireEvent.click(cta);
+
+    // La sheet s'ouvre réellement (câblage onViewProfile → PublicPlayerProfileSheet).
+    expect(await screen.findByText("Profil du joueur")).toBeInTheDocument();
   });
 
   it("own village (mine) → CTA absent", async () => {

@@ -148,7 +148,11 @@ describe('public player profile smoke', () => {
     expect(protectedProfile.status).toBe(200);
     const protectedBody = protectedProfile.body as PublicPlayerProfileResponse;
     expect(protectedBody.newbieShield).toMatchObject({ active: true });
-    expect(typeof protectedBody.newbieShield?.endsAt).toBe('string');
+    // endsAt must be a parseable date in the future — it drives the client timer.
+    const endsAt = protectedBody.newbieShield?.endsAt;
+    expect(typeof endsAt).toBe('string');
+    expect(Number.isNaN(Date.parse(String(endsAt)))).toBe(false);
+    expect(Date.parse(String(endsAt))).toBeGreaterThan(Date.now());
   });
 
   it('case 2: non-member target (also covers barbarian: no User/membership) → 404', async () => {
