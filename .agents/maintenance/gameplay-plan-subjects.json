@@ -366,6 +366,28 @@
         "tasks/runs/archive/021-feature-village-labels-navigation.md — couvre persistance + badge + filtre carte ; le filtre liste n'est pas listé dans les critères de succès archivés"
       ],
       "addedAt": "2026-06-23"
+    },
+    {
+      "specPath": "docs/gameplay/19-world-lifecycle.md",
+      "slug": "world-inscription-phase-changed-event",
+      "title": "Bascule cohorte principale → retardataires — event Outbox + worker tick (Phase 11)",
+      "keywords": ["world-lifecycle", "inscription-phase", "late", "outbox-event", "phase-transition", "notification-serveur"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/083-feature-world-inscription-phase-changed-event.md",
+      "artefactId": "083",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/world-inscription-phase-changed-event",
+      "gapSummary": "La spec 19 § Bascule cohorte principale → retardataires tranche MVP qu'à `startedAt + inscriptionMainDays` (default 7 j), le monde émette une notification serveur. Run 069 a livré le rendu UI du bandeau côté sélection mondes, mais ne consomme aucun signal runtime — le bandeau dépend du timing du refetch. Aucun event Outbox `world.inscription-phase.changed`, aucun axe worker, aucune persistance de la transition (idempotence impossible).",
+      "codeEvidence": [
+        "battleforthecrown-backend/src/workers/world-lifecycle.worker.ts:64-85 handleLifecycleTick — 3 axes (openPlannedWorlds, lockExpiredRegistrationWindows, endExpiredWorlds), aucun handlePhaseTransitions",
+        "packages/shared/src/events/types.ts — aucun event 'world.inscription-phase.changed' ni payload équivalent (uniquement world.status.changed + world.planned.created)",
+        "battleforthecrown-backend/src/modules/event/event-outbox-notification-planner.ts:194 — 'world.status.changed' routé en directWorld, aucune entrée pour la phase d'inscription",
+        "battleforthecrown-backend/prisma/schema.prisma — modèle World n'a pas de colonne inscriptionPhaseTransitionedAt (impossible de borner l'idempotence)",
+        "battleforthecrown-pixi/src/api/ws-bindings.ts — aucun handler pour 'world.inscription-phase.changed' (la phase est dérivée live côté client via deriveInscriptionPhase, sans signal serveur)",
+        "tasks/runs/archive/069-feature-worlds-selection-late-phase-warning.md — livre helpers shared + UI bandeau, mais n'émet ni ne consomme d'event serveur",
+        "docs/gameplay/19-world-lifecycle.md:69 — explicite « Notification serveur : « La cohorte principale est complète. Inscription encore possible 3 jours en mode retardataires. » »"
+      ],
+      "addedAt": "2026-06-23"
     }
   ]
 }
