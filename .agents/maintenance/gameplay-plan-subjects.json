@@ -325,6 +325,28 @@
       "addedAt": "2026-06-22"
     },
     {
+      "specPath": "docs/gameplay/14-pvp-conquest.md",
+      "slug": "public-player-profile-newbie-shield-badge",
+      "title": "Fiche publique joueur — route REST + badge bouclier débutant (Phase 7)",
+      "keywords": ["fiche-publique", "public-profile", "newbie-shield", "bouclier", "joueur-tiers", "phase-7"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/082-feature-public-player-profile-newbie-shield-badge.md",
+      "artefactId": "082",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/public-player-profile-newbie-shield-badge",
+      "gapSummary": "La spec 14-pvp-conquest § 3 Bouclier débutant ligne 193 tranche MVP la visibilité du bouclier sur trois surfaces : panneau d'info village (run 056 DONE), rapport de scout (run 081 DONE), ET fiche publique du joueur. Cette troisième surface n'a jamais été livrée — aucune route REST publique exposant le profil d'un joueur tiers, aucun composant PublicPlayerProfileSheet, aucun CTA d'ouverture depuis SelectedEntityPanel. Le suivi task_56e23ad7 mentionné par les runs 056 et 081 reste donc partiellement ouvert : ce run livre sa moitié manquante.",
+      "codeEvidence": [
+        "battleforthecrown-backend/src/modules — aucun module users/ ni endpoint /users/:userId/... (auth, combat, crowns, event, gameplay, intel, onboarding, population, power, rankings, renown, resources, retention, strategy, village, world uniquement)",
+        "battleforthecrown-backend/src/modules/auth/auth.controller.ts:9-10 — @Controller('auth') sans route profil public",
+        "battleforthecrown-pixi/src/ — aucun composant PublicPlayerProfileSheet (rg --files battleforthecrown-pixi/src/**/*ublic* renvoie uniquement publicKingdomPower.test.ts + lib/publicAsset.ts)",
+        "battleforthecrown-pixi/src/features/world/SelectedEntityPanel.tsx — aucun CTA « Voir profil » sur village ennemi (panneau actuellement limité à attaque + scout + rapport + activeCapture)",
+        "tasks/runs/archive/056-feature-pvp-newbie-shield-48h.md:77 — explicite « Reportés (ticket task_56e23ad7) : badge rapport de scout + fiche publique joueur (route inexistante) »",
+        "tasks/runs/archive/081-feature-pvp-newbie-shield-scout-report-badge.md:24 — explicite « Fiche publique joueur toujours hors scope (route REST publique inexistante) » — moitié restante du suivi task_56e23ad7",
+        "tasks/archive/70-integrate-player-profile-sheet.md — confirme que la PlayerProfileSheet existante est self-only ; aucune route ni composant pour la consultation d'un joueur tiers"
+      ],
+      "addedAt": "2026-06-22"
+    },
+    {
       "specPath": "docs/gameplay/22-village-roles-and-navigation.md",
       "slug": "multi-village-label-filter",
       "title": "Filtre par étiquette dans le sélecteur multi-village",
