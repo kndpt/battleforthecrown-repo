@@ -44,6 +44,8 @@ export interface VillageMapPanelProps {
   onScout?: () => void;
   onAttack?: () => void;
   onViewReport?: () => void;
+  /** Ouvre la fiche publique du joueur propriétaire (village ennemi tiers). */
+  onViewProfile?: () => void;
   className?: string;
 }
 
@@ -110,6 +112,29 @@ function CaptureWindowRow({ label }: { label: string }) {
 // ---------------------------------------------------------------------------
 // BlockedMsg
 // ---------------------------------------------------------------------------
+
+function UserGlyph({ size = 14, color = '#3a2a00' }: { size?: number; color?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+      <circle cx="12" cy="7" r="4"/>
+    </svg>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ProfileRow — CTA fiche publique du joueur propriétaire
+// ---------------------------------------------------------------------------
+
+function ProfileRow({ onViewProfile }: { onViewProfile: () => void }) {
+  return (
+    <div style={{ padding: '0 11px 9px' }}>
+      <BftcButton variant="wood" size="sm" className="w-full justify-center" onClick={onViewProfile}>
+        <UserGlyph size={14}/> Voir le profil
+      </BftcButton>
+    </div>
+  );
+}
 
 function BlockedMsg({ reason }: { reason: string }) {
   return (
@@ -233,6 +258,7 @@ export function VillageMapPanel({
   onScout,
   onAttack,
   onViewReport,
+  onViewProfile,
   className,
 }: VillageMapPanelProps) {
   const barbare = variant === 'barbare';
@@ -285,6 +311,9 @@ export function VillageMapPanel({
           {barbare && tier != null && <TierPanel tier={tier}/>}
           {(variant === 'scouted' || variant === 'mine') && <FullIntelPanel {...(intel ?? {})}/>}
         </div>
+
+        {/* CTA fiche publique du joueur (village ennemi tiers) */}
+        {onViewProfile && <ProfileRow onViewProfile={onViewProfile}/>}
 
         {/* Pied */}
         <Footer

@@ -101,3 +101,5 @@ Snapshot figé du bouclier débutant du propriétaire de la cible (PLAYER only) 
 - [ ] Scouter un village barbare → aucun badge bouclier sur le rapport.
 
 Docs : archive `056` pointeur mis à jour (suivi scout livré) ; pas de modif spec (déjà alignée).
+
+> **Suivi `task_56e23ad7` clôturé (run 082, 2026-06-23)** : la fiche publique du joueur — qualifiée ici de « route inexistante / hors scope » — est désormais livrée (run 082 : route `GET /worlds/:worldId/users/:userId/public-profile` + `PublicPlayerProfileSheet` + CTA « Voir le profil »). Les 3 surfaces du bouclier (spec 14 § 3) sont complètes ; suivi fermé.

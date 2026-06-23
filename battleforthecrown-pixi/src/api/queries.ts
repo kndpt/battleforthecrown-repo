@@ -8,8 +8,10 @@ import {
 } from "@tanstack/react-query";
 import { z } from "zod";
 import {
+  PublicPlayerProfileResponseSchema,
   PublicWorldsResponseSchema,
   WorldConfigSchema,
+  type PublicPlayerProfileResponse,
   type PublicWorld,
   type WorldConfig,
 } from "@battleforthecrown/shared/world";
@@ -135,6 +137,8 @@ export const queryKeys = {
     ["power", "kingdom", "public", userId, worldId] as const,
   publicVillagePower: (villageId: string | null) =>
     ["power", "village", "public", villageId] as const,
+  publicPlayerProfile: (userId: string | null, worldId: string | null) =>
+    ["public-player-profile", userId, worldId] as const,
   armyInventory: (villageId: string | null) =>
     ["army", "inventory", villageId] as const,
   armyTraining: (villageId: string | null) =>
@@ -672,6 +676,31 @@ export function usePublicVillagePowerQuery(villageId: string | null) {
       return PublicVillagePowerSchema.parse(raw);
     },
     enabled: Boolean(villageId),
+    staleTime: 30_000,
+  });
+}
+
+/**
+ * World-scoped public profile of another player, opened from the map panel.
+ * JWT-protected (no `skipAuth`): the shield `endsAt` is only readable by
+ * authenticated players. Returns null-shield when the target is unprotected.
+ */
+export function usePublicPlayerProfileQuery(
+  userId: string | null,
+  worldId: string | null,
+) {
+  return useQuery<PublicPlayerProfileResponse>({
+    queryKey: queryKeys.publicPlayerProfile(userId, worldId),
+    queryFn: async () => {
+      if (!userId || !worldId) {
+        return Promise.reject(new Error("userId and worldId required"));
+      }
+      const raw = await apiClient.get<unknown>(
+        `/worlds/${worldId}/users/${userId}/public-profile`,
+      );
+      return PublicPlayerProfileResponseSchema.parse(raw);
+    },
+    enabled: Boolean(userId) && Boolean(worldId),
     staleTime: 30_000,
   });
 }

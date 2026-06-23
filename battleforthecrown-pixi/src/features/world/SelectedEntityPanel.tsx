@@ -31,6 +31,7 @@ import { unitCategoryFor } from "@/features/design-system/components/villageMapP
 import { summarizePresentTroops } from "./selectedEntityTroops";
 import { formatIntelAge, toIntelView } from "./intelView";
 import { ReportDetailModal } from "@/features/combat/ReportDetailModal";
+import { PublicPlayerProfileSheet } from "./PublicPlayerProfileSheet";
 
 interface SelectedEntityPanelProps {
   /** Accepté pour compat appelant ; la progression de capture n'est plus
@@ -38,6 +39,8 @@ interface SelectedEntityPanelProps {
   activeCapture?: OpenConquestDto | null;
   entity: MapEntity | null;
   currentVillageId?: string | null;
+  /** Id du joueur courant — masque le CTA « Voir profil » sur ses villages. */
+  currentUserId?: string | null;
   onAttack?: (entity: MapEntity) => void;
   onCaravan?: (entity: MapEntity) => void;
   onScout?: (entity: MapEntity) => void;
@@ -49,6 +52,7 @@ export function SelectedEntityPanel({
   activeCapture,
   entity,
   currentVillageId,
+  currentUserId,
   onAttack,
   onCaravan,
   onScout,
@@ -61,6 +65,7 @@ export function SelectedEntityPanel({
     reportId: string;
     reportKind: "scout" | "combat";
   } | null>(null);
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
 
   const ownedVillageId =
     entity?.kind === "PLAYER_VILLAGE" && entity.isMine ? entity.id : null;
@@ -184,6 +189,15 @@ export function SelectedEntityPanel({
     });
   };
 
+  // CTA « Voir profil » : seulement sur un village joueur tiers (jamais le sien,
+  // jamais un barbare). La fiche est scopée par joueur (ownerId), pas par village.
+  const profileTargetUserId =
+    isPlayerVillage &&
+    entity.ownerId != null &&
+    entity.ownerId !== currentUserId
+      ? entity.ownerId
+      : null;
+
   // Preview lecture seule de la fenêtre de capture PvP sur un village joueur
   // ennemi (durée de base dérivée du Château, sans tempo). Masquée pendant une
   // capture déjà active ou en fenêtre. Le castleLevel est public (taille carte).
@@ -230,12 +244,24 @@ export function SelectedEntityPanel({
         onViewReport={
           variant === "scouted" && intelData ? openReport : undefined
         }
+        onViewProfile={
+          profileTargetUserId
+            ? () => setProfileUserId(profileTargetUserId)
+            : undefined
+        }
       />
       {reportModal && (
         <ReportDetailModal
           reportId={reportModal.reportId}
           reportKind={reportModal.reportKind}
           onClose={() => setReportModal(null)}
+        />
+      )}
+      {profileUserId && worldId && (
+        <PublicPlayerProfileSheet
+          userId={profileUserId}
+          worldId={worldId}
+          onClose={() => setProfileUserId(null)}
         />
       )}
     </>

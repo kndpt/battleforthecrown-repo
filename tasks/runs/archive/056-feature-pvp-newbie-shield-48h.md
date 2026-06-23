@@ -119,3 +119,5 @@ Garde-fou bouclier débutant livré : guard serveur `CombatService.initiateAttac
   - [052 — Retour joueur après perte du dernier village](archive/052-feature-eliminated-player-rejoin-flow.md) — interaction avec `WorldMembership` conservé après élimination.
 - **Déjà résolu (archive)** : [23 — Snowball PvP : ni cooldown re-conquête, ni bouclier post-perte](../archive/23-pvp-snowball-no-cooldown-no-shield.md) — concerne le cooldown re-conquête (§ 4) et le **bouclier post-perte** rejeté, **pas** le bouclier débutant à l'arrivée. Pas un doublon.
 - **Keywords scannés** : `bouclier`, `newbieShield`, `puissance`, `shield`, `pvp`, `guardrail`, `protection`, `débutant`.
+
+> **Suivi `task_56e23ad7` clôturé (run 082, 2026-06-23)** : les 3 surfaces de visibilité du bouclier (spec 14 § 3) sont livrées — panneau village (ce run 056), rapport de scout (run 081), **fiche publique du joueur** (run 082, route `GET /worlds/:worldId/users/:userId/public-profile` + `PublicPlayerProfileSheet`). Plus aucune surface en attente.
