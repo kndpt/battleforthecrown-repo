@@ -4,6 +4,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
+- [83 — Filtre par étiquette dans le sélecteur multi-village](./083-multi-village-label-filter.md) — 🟠 Moyen. La spec 22 tranche MVP léger « filtre par étiquette dans la liste des villages » ; `MultiVillageBottomSheet` n'expose qu'un segment `all | active | alerts`, les 3 chips `Offensif | Défensif | Économique` manquent.
 - [66 — Inbox combat : tag VICTOIRE/DÉFAITE faux dans la liste](./66-inbox-report-outcome-uses-losses-heuristic.md) — 🟡 Majeur. La liste de l'inbox calcule l'issue via une heuristique de pertes, divergente de la règle canonique utilisée par le modal.
 - [57 — Source canonique du lifecycle des bâtiments joueur](./57-player-village-building-lifecycle-roster.md) — 🟡 Majeur. Centraliser la politique join/conquête/backfill des bâtiments pour éviter les oublis à chaque nouveau bâtiment activé.
 

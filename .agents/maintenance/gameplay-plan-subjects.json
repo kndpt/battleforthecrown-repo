@@ -323,6 +323,27 @@
         "tasks/archive/70-integrate-player-profile-sheet.md — confirme que la route profil joueur public n'existe pas (Piste B reportée)"
       ],
       "addedAt": "2026-06-22"
+    },
+    {
+      "specPath": "docs/gameplay/22-village-roles-and-navigation.md",
+      "slug": "multi-village-label-filter",
+      "title": "Filtre par étiquette dans le sélecteur multi-village",
+      "keywords": ["village-label", "filtre", "multi-village", "etiquette", "offensive", "defensive", "economic"],
+      "artefactType": "ticket",
+      "artefactPath": "tasks/083-multi-village-label-filter.md",
+      "artefactId": "083",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/multi-village-label-filter",
+      "gapSummary": "La spec 22 § UX attendue tranche MVP léger « filtre par étiquette dans la liste des villages » parmi 4 livrables UX. Les 3 autres sont livrés (badge label sur carte, badge Capitale, layout mobile), mais MultiVillageBottomSheet n'expose qu'un segment 'all' | 'active' | 'alerts' — aucun chip OFFENSIVE/DEFENSIVE/ECONOMIC. Le run 021 a livré la persistance backend + le filtre carte ; le filtre liste a été oublié et n'est jamais revenu dans aucun run.",
+      "codeEvidence": [
+        "battleforthecrown-pixi/src/features/design-system/components/MultiVillageBottomSheet.tsx:10 — type MultiVillageFilter = 'all' | 'active' | 'alerts' (aucun VillageLabel)",
+        "battleforthecrown-pixi/src/features/design-system/components/MultiVillageBottomSheet.tsx:505-509 — FilterSeg expose 3 chips fixes, aucun chip étiquette",
+        "battleforthecrown-pixi/src/features/design-system/components/MultiVillageBottomSheet.tsx:537-541 — closure villages.filter ne traite pas le cas label",
+        "battleforthecrown-pixi/src/features/layout/multiVillageSheet.ts:60-79 — buildMultiVillageSheetItems mappe village.label vers badge (string FR) mais ne propage pas la valeur enum",
+        "packages/shared/src/village/dtos.ts:4-12 — VILLAGE_LABELS + VILLAGE_LABEL_DISPLAY déjà exposés, prêts à être consommés",
+        "tasks/runs/archive/021-feature-village-labels-navigation.md — couvre persistance + badge + filtre carte ; le filtre liste n'est pas listé dans les critères de succès archivés"
+      ],
+      "addedAt": "2026-06-23"
     }
   ]
 }
