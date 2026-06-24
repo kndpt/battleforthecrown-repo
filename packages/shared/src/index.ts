@@ -13,6 +13,7 @@ export * from './auth';
 export * from './time';
 export * from './utils';
 export * from './rankings';
+export * from './cosmetic';
 export * from './pvp';
 export * from './renown';
 export * from './threat';

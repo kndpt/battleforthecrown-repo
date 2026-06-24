@@ -126,6 +126,8 @@ Rewards autorises :
 - entree dans l'historique du monde ;
 - cosmetique permanent au `ENDED` pour les meilleurs du monde.
 
+Cosmetique permanent `ENDED` livre (run 067) : un titre par signal au top 1, libelles FR centralises dans `@battleforthecrown/shared/cosmetic` — `Vainqueur de <monde>` (POWER), `Conquerant de <monde>` (Assaut), `Sentinelle de <monde>` (Rempart). Mecanique d'attribution + persistance : [`19-world-lifecycle.md` § Wipe et recompenses](./19-world-lifecycle.md#wipe-et-récompenses-fin-de-monde).
+
 Un bonus defensif temporaire peut etre reouvert plus tard, mais il doit rester separe de l'offensif et ne jamais financer directement les Seigneurs ou l'expansion.
 
 ## Anti-farm

@@ -65,6 +65,7 @@ import {
   type RetentionSummaryDto,
 } from "@battleforthecrown/shared/retention";
 import type { RenownStatus } from "@battleforthecrown/shared";
+import type { CosmeticAwardResponse } from "@battleforthecrown/shared";
 import type {
   OpenConquestDto,
   OpenExpeditionDto,
@@ -181,6 +182,8 @@ export const queryKeys = {
   finalRankings: (worldId: string | null) =>
     ["rankings", "final", worldId] as const,
   renown: (userId: string | null) => ["renown", userId] as const,
+  cosmeticAwards: (userId: string | null) =>
+    ["cosmetic-awards", userId] as const,
   villageIntel: (worldId: string | null, villageId: string | null) =>
     ["intel", worldId, villageId] as const,
   // Broad-invalidation prefixes (omit trailing discriminants to match across worlds/users).
@@ -1787,6 +1790,17 @@ export function useRenownQuery() {
     queryFn: () => apiClient.get<RenownStatus>("/users/me/renown"),
     enabled: Boolean(userId),
     staleTime: 30_000,
+  });
+}
+
+export function useCosmeticAwardsQuery() {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  return useQuery<CosmeticAwardResponse[]>({
+    queryKey: queryKeys.cosmeticAwards(userId),
+    queryFn: () =>
+      apiClient.get<CosmeticAwardResponse[]>("/users/me/cosmetic-awards"),
+    enabled: Boolean(userId),
+    staleTime: 5 * 60_000,
   });
 }
 

@@ -36,6 +36,7 @@ import {
 import { useMultiVillageData } from '@/features/layout/useMultiVillageData';
 import {
   buildPlayerProfileSheetData,
+  buildProfileAwards,
   buildProfileVillages,
 } from '@/features/layout/profileViewModel';
 import {
@@ -63,6 +64,7 @@ import { usePendingBuildingModalStore } from '@/stores/pendingBuildingModal';
 import { useTickingNow } from '@/lib/useTickingNow';
 import {
   useClaimDailyCardMutation,
+  useCosmeticAwardsQuery,
   useMyVillagesQuery,
   useOnboardingSummaryQuery,
   useRetentionSummaryQuery,
@@ -104,6 +106,11 @@ export function VillageView() {
   const consumePendingBuilding = usePendingBuildingModalStore((s) => s.consume);
   const logout = useLogout();
   const { renown, justLeveledUp, acknowledge: acknowledgeRenown } = useRenownLevelUp();
+  const cosmeticAwards = useCosmeticAwardsQuery();
+  const profileAwards = useMemo(
+    () => buildProfileAwards(cosmeticAwards.data ?? []),
+    [cosmeticAwards.data],
+  );
 
   // Village data
   const buildingsQuery = useVillageBuildingsQuery(villageId);
@@ -509,6 +516,7 @@ export function VillageView() {
         >
           <PlayerProfileSheet
             activeTab={profileTab}
+            awards={profileAwards}
             className="relative h-full max-h-full"
             icons={profileSheetIcons}
             labels={profileSheetLabels}

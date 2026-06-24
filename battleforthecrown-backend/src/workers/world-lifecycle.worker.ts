@@ -8,6 +8,7 @@ import { registerScheduledQueueWorker } from '../infra/pg-boss/queue-worker.help
 import { createOutboxEvent } from '../modules/event/event.utils';
 import { RankingsService } from '../modules/rankings/rankings.service';
 import { RenownService } from '../modules/renown/renown.service';
+import { CosmeticAwardService } from '../modules/cosmetic/cosmetic-award.service';
 import {
   DEFAULT_WORLD_CONFIG,
   WorldConfigSchema,
@@ -45,6 +46,7 @@ export class WorldLifecycleWorker implements OnModuleInit {
     private readonly prisma: PrismaService,
     private readonly rankings: RankingsService,
     private readonly renown: RenownService,
+    private readonly cosmeticAwards: CosmeticAwardService,
   ) {}
 
   async onModuleInit() {
@@ -290,6 +292,13 @@ export class WorldLifecycleWorker implements OnModuleInit {
       // et de l'UI lecture seule (run 066).
       if (to === 'ENDED') {
         await this.rankings.snapshotFinalRankings(tx, worldId, params.at);
+        // Permanent cosmetic titles read the snapshot rows just written above,
+        // in the same transaction (run 067). Must run AFTER the snapshot.
+        await this.cosmeticAwards.awardChampionsForWorld(
+          tx,
+          worldId,
+          params.at,
+        );
         await this.renown.creditRankingBonuses(tx, worldId);
       }
 

@@ -132,6 +132,7 @@ Calcul à la volée côté `power.service.ts` :
 | Table | Rôle |
 |-------|------|
 | `WorldFinalRankingSnapshot` | snapshot des 3 classements (`FinalRankingSignal` : `POWER`, `ASSAULT_GLORY`, `RAMPART_GLORY`) à la transition `LOCKED → ENDED`. Champs : `worldId`, `userId`, `signal`, `rank`, `score`, `snapshotAt`. Contrainte unique `(worldId, signal, userId)` ; index `(worldId, signal, rank)`. Inclut tous les `WorldMembership`, y compris les éliminés (score 0). Tiebreaker : `userId` lexicographique. Source de vérité pour les runs UI/awards aval — lu en consultation publique via `GET /worlds/:worldId/rankings/final` (run 066, cf. [`backend-modules.md`](./backend-modules.md)). |
+| `UserWorldCosmeticAward` | titre cosmétique **permanent** attaché au compte global, attribué au top 1 de chaque signal à `LOCKED → ENDED` (run 067), dans la même transaction que le snapshot ci-dessus. `kind` (`CosmeticAwardKind` : `POWER_CHAMPION_TITLE`, `ASSAULT_CHAMPION_TITLE`, `RAMPART_CHAMPION_TITLE`). `worldDisplayName` snapshotté à l'attribution (immuable, lisible même après rename/purge du monde). Filtre : score 0 → pas de titre sauf POWER (≥ 1 château ⇒ score > 0). Contrainte unique `(userId, worldId, kind)` (idempotence replay worker via `createMany skipDuplicates`) ; index `(userId)`. Lu par `GET /users/me/cosmetic-awards`. Cosmétique only — jamais de bonus gameplay (cf. [`gameplay/24-rankings.md`](../gameplay/24-rankings.md) § Rewards). **Préservé au wipe destructeur** (run 065). |
 
 ### Renommée de compte (account renown)
 

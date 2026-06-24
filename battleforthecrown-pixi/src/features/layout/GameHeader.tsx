@@ -18,6 +18,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
 import {
   useClaimDailyCardMutation,
+  useCosmeticAwardsQuery,
   useLogout,
   useMyMembershipsQuery,
   useMyVillagesQuery,
@@ -30,7 +31,7 @@ import { BottomSheet } from '@/ui';
 import { multiVillageBottomSheetLabels } from './multiVillageSheet';
 import { getPlayerInitials, integerFormatter, PLAYER_PROFILE_LEVEL } from './headerHelpers';
 import { useMultiVillageData } from './useMultiVillageData';
-import { buildPlayerProfileSheetData, buildProfileVillages } from './profileViewModel';
+import { buildPlayerProfileSheetData, buildProfileAwards, buildProfileVillages } from './profileViewModel';
 import {
   profileSheetIcons,
   profileSheetLabels,
@@ -65,6 +66,11 @@ export function GameHeader({
   const { display, hasSnapshot } = useDisplayResources(villageId);
   const { balance: crownBalance } = useDisplayCrowns(userId, worldId);
   const { renown, justLeveledUp, acknowledge: acknowledgeRenown } = useRenownLevelUp();
+  const cosmeticAwards = useCosmeticAwardsQuery();
+  const profileAwards = useMemo(
+    () => buildProfileAwards(cosmeticAwards.data ?? []),
+    [cosmeticAwards.data],
+  );
   const [isVillageSheetOpen, setIsVillageSheetOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profileTab, setProfileTab] = useState<PlayerProfileSheetTab>('profile');
@@ -375,6 +381,7 @@ export function GameHeader({
       >
         <PlayerProfileSheet
           activeTab={profileTab}
+          awards={profileAwards}
           className="relative h-full max-h-full"
           icons={profileSheetIcons}
           labels={profileSheetLabels}

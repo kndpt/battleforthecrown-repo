@@ -25,6 +25,7 @@ import { RankingsModule } from './modules/rankings/rankings.module';
 import { IntelModule } from './modules/intel/intel.module';
 import { RenownModule } from './modules/renown/renown.module';
 import { UsersModule } from './modules/users/users.module';
+import { CosmeticModule } from './modules/cosmetic/cosmetic.module';
 import { WorkersModule } from './workers/workers.module';
 import { HealthController } from './health.controller';
 import { RequestLoggerMiddleware } from './common/request-logger.middleware';
@@ -78,6 +79,7 @@ import { RequestLoggerMiddleware } from './common/request-logger.middleware';
     IntelModule,
     RenownModule,
     UsersModule,
+    CosmeticModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],

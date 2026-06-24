@@ -125,6 +125,8 @@ Déclenchement : job planifié à `endsAt` (= `startedAt + 60 j`, default 🔧).
 | Statistiques personnelles (raids menés, conquêtes, etc.) | Conservées sur la fiche profil globale |
 | **Récompenses cosmétiques** | **Permanentes**, attachées au compte global : titre du monde (ex : « Vainqueur de Avalon-3 »), bannière, badge profil |
 
+**Comment c'est attribué (titres)** : à la transition `LOCKED → ENDED`, dans la même transaction que le snapshot leaderboard, le top 1 de chaque signal (`POWER`, `ASSAULT_GLORY`, `RAMPART_GLORY`) reçoit un titre cosmétique permanent (table `UserWorldCosmeticAward`, cf. [`architecture/data-model.md`](../architecture/data-model.md) § Classements finaux). Un champion gloire à score 0 (aucun PvP) n'est **pas** titré ; POWER l'est toujours (≥ 1 château ⇒ score > 0). Le `worldDisplayName` est snapshotté à l'attribution, donc le titre reste lisible après purge du monde — le wipe destructeur (run 065) **doit exclure** cette table. Lu côté profil via `GET /users/me/cosmetic-awards`. Périmètre livré : **titres seuls** (libellés FR centralisés `@battleforthecrown/shared/cosmetic`) ; bannière + badge visuel = follow-up UI/UX. Cosmétique only — jamais de bonus gameplay.
+
 **Pourquoi pas de carry-over** : la méta-progression avantage mécaniquement les vétérans sur les mondes suivants — exactement le snowball qu'on vient de borner. Le carry-over cosmétique est suffisant pour la fierté joueur et la rétention long terme.
 
 ## Articulation avec les autres mécaniques
