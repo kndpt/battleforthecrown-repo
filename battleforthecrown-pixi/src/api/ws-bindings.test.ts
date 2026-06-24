@@ -29,6 +29,7 @@ import {
   applyVillageAttacked,
   applyVillageConquered,
   applyWorldStatusChanged,
+  applyWorldInscriptionPhaseChanged,
   applyPvpShieldBroken,
 } from './ws-bindings';
 import { queryKeys } from './queries';
@@ -317,6 +318,27 @@ describe('applyWorldStatusChanged', () => {
     const toasts = useUiStore.getState().toasts;
     expect(toasts).toHaveLength(1);
     expect(toasts[0]?.title).toBe('Monde terminé');
+  });
+});
+
+describe('applyWorldInscriptionPhaseChanged', () => {
+  it('invalidates the public worlds list so the late-cohort banner appears live', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.publicWorlds(), []);
+    queryClient.setQueryData(queryKeys.worlds(), []);
+
+    applyWorldInscriptionPhaseChanged(
+      {
+        worldId: 'world-1',
+        from: 'main',
+        to: 'late',
+        at: '2026-06-24T10:00:00.000Z',
+      },
+      { queryClient },
+    );
+
+    expect(queryClient.getQueryState(queryKeys.publicWorlds())?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.worlds())?.isInvalidated).toBe(true);
   });
 });
 

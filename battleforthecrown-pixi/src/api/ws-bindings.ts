@@ -24,6 +24,7 @@ import type {
   VillageCaptureWindowOpenedPayload,
   VillageConqueredPayload,
   VillageRemovedPayload,
+  WorldInscriptionPhaseChangedPayload,
   WorldStatusChangedPayload,
 } from "./ws-types";
 import { useResourcesStore } from "@/stores/resources";
@@ -152,6 +153,21 @@ export function applyWorldStatusChanged(
       ttlMs: 6000,
     });
   }
+}
+
+/**
+ * Bascule cohorte principale → retardataires (le monde reste OPEN). Signal
+ * serveur runtime : on invalide la liste publique des mondes pour que la card
+ * concernée affiche le bandeau « Lancé il y a {N} j » (run 069) sans refetch
+ * manuel, même si le joueur est déjà sur l'écran de sélection au moment exact
+ * de la transition.
+ */
+export function applyWorldInscriptionPhaseChanged(
+  _payload: WorldInscriptionPhaseChangedPayload,
+  ctx: BindingsContext,
+): void {
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.publicWorlds() });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.worlds() });
 }
 
 /**
@@ -1066,6 +1082,7 @@ const bindings: ServerEventBindings = {
   // the public worlds list refreshes via its own query. Bound only to satisfy
   // the exhaustive ServerEvents contract (run 064 spawner).
   "world.planned.created": () => undefined,
+  "world.inscription-phase.changed": applyWorldInscriptionPhaseChanged,
   "building.completed": applyBuildingCompleted,
   "unit.training.completed": applyUnitTrainingCompleted,
   "unit.trained": applyUnitTrained,

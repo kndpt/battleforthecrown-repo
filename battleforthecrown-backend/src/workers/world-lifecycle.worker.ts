@@ -64,6 +64,7 @@ export class WorldLifecycleWorker implements OnModuleInit {
   async handleLifecycleTick(now = new Date()): Promise<{
     plannedCreated: number;
     plannedToOpen: number;
+    inscriptionPhaseChanged: number;
     openToLocked: number;
     lockedToEnded: number;
   }> {
@@ -72,16 +73,91 @@ export class WorldLifecycleWorker implements OnModuleInit {
     // dans le même tick par `openPlannedWorlds`.
     const plannedCreated = await this.ensurePlannedPipeline(now);
     const plannedToOpen = await this.openPlannedWorlds(now);
+    const inscriptionPhaseChanged = await this.handlePhaseTransitions(now);
     const openToLocked = await this.lockExpiredRegistrationWindows(now);
     const lockedToEnded = await this.endExpiredWorlds(now);
 
-    if (plannedCreated + plannedToOpen + openToLocked + lockedToEnded > 0) {
+    if (
+      plannedCreated +
+        plannedToOpen +
+        inscriptionPhaseChanged +
+        openToLocked +
+        lockedToEnded >
+      0
+    ) {
       this.logger.log(
-        `World lifecycle transitions: plannedCreated=${plannedCreated}, plannedToOpen=${plannedToOpen}, openToLocked=${openToLocked}, lockedToEnded=${lockedToEnded}`,
+        `World lifecycle transitions: plannedCreated=${plannedCreated}, plannedToOpen=${plannedToOpen}, inscriptionPhaseChanged=${inscriptionPhaseChanged}, openToLocked=${openToLocked}, lockedToEnded=${lockedToEnded}`,
       );
     }
 
-    return { plannedCreated, plannedToOpen, openToLocked, lockedToEnded };
+    return {
+      plannedCreated,
+      plannedToOpen,
+      inscriptionPhaseChanged,
+      openToLocked,
+      lockedToEnded,
+    };
+  }
+
+  /**
+   * Sous-flag distinct du `WorldStatus` : à `startedAt + inscriptionMainDays`,
+   * la cohorte principale est complète et le monde bascule en inscription
+   * « retardataires ». Le monde reste `OPEN` — on émet seulement un signal
+   * serveur (`world.inscription-phase.changed`) pour que le front rafraîchisse
+   * la liste publique et affiche le bandeau (run 069) sans refetch manuel.
+   *
+   * Idempotence : `inscriptionPhaseTransitionedAt` est persisté dans la même
+   * transaction que l'event via un `updateMany` conditionnel (colonne null) ;
+   * un monde déjà transitionné n'émet plus rien aux ticks suivants.
+   */
+  private async handlePhaseTransitions(now: Date): Promise<number> {
+    const worlds = await this.prisma.world.findMany({
+      where: {
+        status: 'OPEN',
+        startedAt: { not: null },
+        inscriptionPhaseTransitionedAt: null,
+      },
+      orderBy: { startedAt: 'asc' },
+    });
+
+    let transitions = 0;
+    for (const world of worlds) {
+      if (!world.startedAt) continue;
+
+      const lifecycle = this.getLifecycle(world);
+      const phaseAt = addDays(world.startedAt, lifecycle.inscriptionMainDays);
+      if (phaseAt > now) continue;
+
+      transitions += await this.prisma.$transaction(async (tx) => {
+        const updated = await tx.world.updateMany({
+          where: {
+            id: world.id,
+            status: 'OPEN',
+            inscriptionPhaseTransitionedAt: null,
+          },
+          data: { inscriptionPhaseTransitionedAt: now },
+        });
+
+        if (updated.count !== 1) {
+          return 0;
+        }
+
+        await createOutboxEvent(
+          tx,
+          'world.inscription-phase.changed',
+          world.id,
+          {
+            worldId: world.id,
+            from: 'main',
+            to: 'late',
+            at: now.toISOString(),
+          },
+        );
+
+        return 1;
+      });
+    }
+    return transitions;
   }
 
   /**

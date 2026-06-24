@@ -175,6 +175,25 @@ describe('planNotifications', () => {
       expect(plans[0].recipient).toEqual({ kind: 'world', id: 'w1' });
     });
 
+    it('routes world.inscription-phase.changed as a world broadcast', async () => {
+      const plans = await planNotifications(
+        'world.inscription-phase.changed',
+        {
+          worldId: 'w1',
+          from: 'main',
+          to: 'late',
+          at: '2026-06-17T00:00:00Z',
+        },
+        makeDeps(),
+      );
+      expect(plans).toEqual([
+        {
+          recipient: { kind: 'world', id: 'w1' },
+          payload: expect.objectContaining({ worldId: 'w1', to: 'late' }),
+        },
+      ]);
+    });
+
     it('routes noble.killed to attackerUserId directly', async () => {
       const plans = await planNotifications(
         'noble.killed',
