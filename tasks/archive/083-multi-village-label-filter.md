@@ -2,7 +2,7 @@
 
 **Sévérité** : 🟠 Moyen
 **Statut** : ✅ Résolu le 2026-06-24
-**Spec amont** : [`docs/gameplay/22-village-roles-and-navigation.md`](../docs/gameplay/22-village-roles-and-navigation.md) § UX attendue
+**Spec amont** : [`docs/gameplay/22-village-roles-and-navigation.md`](../../docs/gameplay/22-village-roles-and-navigation.md) § UX attendue
 
 ## Résolution
 

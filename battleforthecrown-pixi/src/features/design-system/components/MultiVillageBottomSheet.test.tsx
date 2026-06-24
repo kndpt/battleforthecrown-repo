@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { useState } from 'react';
 import { describe, expect, it } from 'vitest';
 import { multiVillageBottomSheetLabels } from '@/features/layout/multiVillageSheet';
 import {
@@ -64,6 +65,31 @@ describe('MultiVillageBottomSheet filtering', () => {
 
     expect(screen.getByText(multiVillageBottomSheetLabels.empty)).toBeInTheDocument();
     expect(screen.queryByText('Kelvinor')).not.toBeInTheDocument();
+  });
+
+  it('drives the visible list when a label chip is clicked (controlled wiring)', () => {
+    function Harness() {
+      const [filter, setFilter] = useState<MultiVillageFilter>('all');
+      return (
+        <MultiVillageBottomSheet
+          filter={filter}
+          labels={multiVillageBottomSheetLabels}
+          onFilterChange={setFilter}
+          villages={villages}
+        />
+      );
+    }
+    render(<Harness />);
+
+    // all villages visible initially
+    expect(screen.getByText("Vald'Or")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Offensif' }));
+
+    // chip click flows back through onFilterChange -> only OFFENSIVE remains
+    expect(screen.getByText('Kelvinor')).toBeInTheDocument();
+    expect(screen.queryByText("Vald'Or")).not.toBeInTheDocument();
+    expect(screen.queryByText('Pierre-Noire')).not.toBeInTheDocument();
   });
 
   it('respects a restrictive availableFilters (no label chips)', () => {
