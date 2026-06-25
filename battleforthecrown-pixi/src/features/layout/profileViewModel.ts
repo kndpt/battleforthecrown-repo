@@ -30,6 +30,9 @@ const awardDateFormatter = new Intl.DateTimeFormat('fr-FR', {
   day: 'numeric',
   month: 'long',
   year: 'numeric',
+  // `awardedAt` is serialised as ISO UTC by the backend; pin the formatting TZ so
+  // an award granted near UTC midnight shows the same day for every player.
+  timeZone: 'UTC',
 });
 
 function formatAwardDate(iso: string): string {
