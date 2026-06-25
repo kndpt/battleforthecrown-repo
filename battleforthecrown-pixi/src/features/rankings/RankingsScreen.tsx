@@ -68,6 +68,9 @@ function findBoard(
 const cycleDateFormatter = new Intl.DateTimeFormat("fr-FR", {
   day: "numeric",
   month: "long",
+  // Cycle boundaries are anchored to Monday 00:00 UTC — format in UTC so the
+  // banner shows the right day regardless of the viewer's timezone.
+  timeZone: "UTC",
 });
 
 function formatCycleDate(iso: string): string {

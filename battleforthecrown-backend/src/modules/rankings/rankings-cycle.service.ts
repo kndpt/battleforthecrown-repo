@@ -69,14 +69,28 @@ export class RankingsCycleService {
   /** Close every due, not-yet-snapshotted cycle across all live worlds. */
   async closeDueCycles(now = new Date()): Promise<number> {
     const worlds = await this.prisma.world.findMany({
-      where: { status: { in: ['OPEN', 'LOCKED'] } },
-      select: { id: true, createdAt: true, config: true },
+      // ENDED worlds are still in their 7d read-only window before the run 065
+      // wipe: a cycle that fell due just before the world ended must still be
+      // snapshotted (its rank-1 title is permanent and survives the wipe).
+      where: {
+        OR: [
+          { status: { in: ['OPEN', 'LOCKED'] } },
+          { status: 'ENDED', endsAt: { not: null } },
+        ],
+      },
+      select: { id: true, createdAt: true, endsAt: true, config: true },
     });
 
     let closed = 0;
     for (const world of worlds) {
       const { reset, snapshotEntries } = resolveRankingsConfig(world.config);
-      const latestDue = latestDueCycleIndex(world.createdAt, now, reset);
+      // Never close a cycle past the world's real end: clamp the due-cycle
+      // computation to `endsAt` once the world has ended.
+      const closeUntil =
+        world.endsAt && world.endsAt.getTime() < now.getTime()
+          ? world.endsAt
+          : now;
+      const latestDue = latestDueCycleIndex(world.createdAt, closeUntil, reset);
       if (latestDue < 1) continue;
 
       for (const signal of GLORY_SIGNALS) {
@@ -320,7 +334,10 @@ export class RankingsCycleService {
       by: ['scorerUserId'],
       where: { worldId, signal, occurredAt: { gte: start, lt: end } },
       _sum: { points: true },
-      orderBy: { _sum: { points: 'desc' } },
+      // Stable tie-break (scorerUserId ASC) so equal-score players get a
+      // deterministic rank across runs — mirrors the WorldFinalRankingSnapshot
+      // lexicographic tiebreaker.
+      orderBy: [{ _sum: { points: 'desc' } }, { scorerUserId: 'asc' }],
       take: limit,
     });
     const names = await this.loadDisplayNames(

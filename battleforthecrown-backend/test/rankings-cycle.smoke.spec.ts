@@ -203,4 +203,67 @@ describe('rankings weekly cycle close smoke', () => {
     expect(typeof worldTitles[0]?.worldDisplayName).toBe('string');
     expect(worldTitles[0]?.worldDisplayName.length).toBeGreaterThan(0);
   }, 60_000);
+
+  it('closes cycles due before a world ENDED, clamped to endsAt', async () => {
+    const stamp = Date.now();
+    const worldId = `cycle-ended-${stamp}`;
+    // World ended mid-cycle-2 (Wed Jun 10). Cycle 1 [Jun01,Jun08) fully elapsed
+    // before the end → must be snapshotted. Cycle 2 [Jun08,Jun15) only completes
+    // after endsAt → must NOT be closed (no cycles past the real world end).
+    await ctx.prisma.world.create({
+      data: {
+        id: worldId,
+        name: 'Cycle Ended Smoke',
+        status: 'OPEN',
+        config: { ...SMOKE_WORLD_CONFIG },
+        createdAt: new Date('2026-06-01T00:00:00.000Z'), // Monday 00:00 UTC
+      },
+    });
+
+    const carol = await registerUser(ctx.server, `cyc-carol-${stamp}`);
+    const dave = await registerUser(ctx.server, `cyc-dave-${stamp}`);
+    await joinWorld(ctx.server, carol.accessToken, worldId, 'village-carol');
+    await joinWorld(ctx.server, dave.accessToken, worldId, 'village-dave');
+
+    // Flip to ENDED mid-cycle-2 once players are in (join requires OPEN).
+    await ctx.prisma.world.update({
+      where: { id: worldId },
+      data: { status: 'ENDED', endsAt: new Date('2026-06-10T00:00:00.000Z') },
+    });
+
+    await seedGlory(
+      worldId,
+      `re1-${stamp}`,
+      RankingSignal.ASSAULT_GLORY,
+      carol.userId,
+      dave.userId,
+      100,
+      new Date('2026-06-03T10:00:00.000Z'), // in cycle 1
+    );
+    // Seeded in cycle 2 — proves this window is ignored once clamped to endsAt.
+    await seedGlory(
+      worldId,
+      `re2-${stamp}`,
+      RankingSignal.ASSAULT_GLORY,
+      dave.userId,
+      carol.userId,
+      999,
+      new Date('2026-06-09T10:00:00.000Z'),
+    );
+
+    const service = ctx.app.get(RankingsCycleService);
+    // `now` is well after the world ended: without the clamp this would close
+    // cycle 2 too; with it, only the cycle-1 pair (2 signals) closes.
+    const closed = await service.closeDueCycles(
+      new Date('2026-06-20T00:05:00.000Z'),
+    );
+    expect(closed).toBe(2); // cycle 1 × 2 signals
+
+    const snapshots = await ctx.prisma.gloryCycleSnapshot.findMany({
+      where: { worldId },
+      select: { cycleIndex: true },
+    });
+    expect(snapshots.every((s) => s.cycleIndex === 1)).toBe(true);
+    expect(snapshots.length).toBe(2);
+  }, 60_000);
 });
