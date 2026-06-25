@@ -1,6 +1,7 @@
 import type { BuildingDto, JoinedVillage, WorldMembership } from '@/api';
 import type { KingdomPowerDto, VillageStrategyInfoDto } from '@/api/queries';
 import type {
+  PlayerProfileSheetAward,
   PlayerProfileSheetProps,
   PlayerProfileSheetVillage,
 } from '@/features/design-system/components/PlayerProfileSheet';
@@ -8,6 +9,11 @@ import { villageStyleOptions } from '@/features/design-system/components/village
 import { WORLD_SIGIL_GLYPHS, WORLD_THEME_TOKENS } from '@/features/worlds/worldsViewModel';
 import type { PublicWorld } from '@battleforthecrown/shared/world';
 import { VILLAGE_LABEL_DISPLAY } from '@battleforthecrown/shared/village';
+import type { CosmeticAwardResponse } from '@battleforthecrown/shared';
+import {
+  COSMETIC_AWARD_DESCRIPTIONS,
+  formatCosmeticAwardLabel,
+} from '@battleforthecrown/shared';
 import {
   formatWorldPhase,
   getPlayerInitials,
@@ -19,6 +25,38 @@ import {
 export const strategyLabels: Record<string, string> = Object.fromEntries(
   villageStyleOptions.map((option) => [option.id, option.name]),
 );
+
+const awardDateFormatter = new Intl.DateTimeFormat('fr-FR', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  // `awardedAt` is serialised as ISO UTC by the backend; pin the formatting TZ so
+  // an award granted near UTC midnight shows the same day for every player.
+  timeZone: 'UTC',
+});
+
+function formatAwardDate(iso: string): string {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? '' : awardDateFormatter.format(date);
+}
+
+/**
+ * Pure transform: account-global cosmetic awards (`GET /users/me/cosmetic-awards`)
+ * → `PlayerProfileSheet` award rows. Labels come from the shared FR catalogue so
+ * backend and front never drift (run 067). Ordering is preserved (API returns
+ * `awardedAt DESC`).
+ */
+export function buildProfileAwards(
+  awards: ReadonlyArray<CosmeticAwardResponse>,
+): PlayerProfileSheetAward[] {
+  return awards.map((award, index) => ({
+    id: `${award.kind}-${award.worldDisplayName}-${index}`,
+    title: formatCosmeticAwardLabel(award.kind, award.worldDisplayName),
+    description: COSMETIC_AWARD_DESCRIPTIONS[award.kind],
+    date: formatAwardDate(award.awardedAt),
+    kind: award.kind,
+  }));
+}
 
 export interface ProfileVillagesParams {
   villages: JoinedVillage[];

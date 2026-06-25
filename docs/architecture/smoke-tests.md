@@ -21,7 +21,7 @@ battleforthecrown-backend/test/
 yarn workspace battleforthecrown-backend test:smoke
 ```
 
-Pré-requis : la base `battleforthecrown_smoke` doit exister + migrations appliquées (cf. [`db-setup.md`](./db-setup.md)). La commande lance d'abord `scripts/smoke-preflight.sh` pour vérifier Docker, la DB smoke et `prisma migrate status`. Un seul boot AppModule, ~100s pour la suite complète locale actuelle.
+Pré-requis : la base `battleforthecrown_smoke` doit exister + migrations appliquées (cf. [`db-setup.md`](./db-setup.md)). La commande lance d'abord `scripts/smoke-preflight.sh` pour vérifier Docker, la DB smoke et `prisma migrate status`. Un boot `AppModule` par fichier (réparti sur `maxWorkers` clones DB isolés) ; suite complète locale ~16 s. Pour la **vitesse** des tests et son historique d'optimisation : [`test-performance.md`](./test-performance.md).
 
 Pour un run agent local, préférer un périmètre ciblé :
 
@@ -42,7 +42,7 @@ La CI GitHub lance la suite complète sur PR vers `main`; le ciblage local sert 
 | `village-labels.smoke.spec.ts`, `village-strategy.smoke.spec.ts` | endpoints village annexes |
 | `production-tick.smoke.spec.ts`, `crowns.smoke.spec.ts` | ticks ressources/couronnes |
 | `daily-retention.smoke.spec.ts`, `onboarding.smoke.spec.ts` | retention, onboarding |
-| `army-training.smoke.spec.ts`, `army-training-read.smoke.spec.ts`, `recruit-noble.smoke.spec.ts` | formation, lecture file, Seigneur |
+| `army-training.smoke.spec.ts`, `army-training-queue.smoke.spec.ts`, `army-training-read.smoke.spec.ts`, `recruit-noble.smoke.spec.ts` | formation (base + file/cancel), lecture file, Seigneur |
 | `combat-attack.smoke.spec.ts`, `combat-reports-inbox.smoke.spec.ts` | attaque, retour, rapports participant-scoped |
 | `scouting.smoke.spec.ts`, `vision.smoke.spec.ts` | scout, brouillard de guerre |
 | `combat-conquest-hook.smoke.spec.ts`, `conquest-service.smoke.spec.ts`, `conquest-finalize.smoke.spec.ts` | fenêtre de capture, occupation, finalisation |

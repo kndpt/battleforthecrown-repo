@@ -13,6 +13,7 @@ Documentation technique de référence (humaine) pour les agents et les contribu
 - [`codex-cloud.md`](./codex-cloud.md) — setup Codex Cloud pour `bftc-run`, DB dev, smokes et QA `curl`.
 - [`worktree-dev.md`](./worktree-dev.md) — référence humaine pour lancer backend/frontend depuis un worktree parallèle. Les agents utilisent le skill `bftc-worktree-qa` comme point d'entrée opérationnel.
 - [`smoke-tests.md`](./smoke-tests.md) — stratégie smokes orchestration/I/O : flows couverts, comment ajouter, anti-patterns.
+- [`test-performance.md`](./test-performance.md) — base + historique pour la **vitesse** des tests : modèle de coût, ordre des leviers, méthode de mesure, log des optimisations.
 - [`balance-and-tempo.md`](./balance-and-tempo.md) — guide ops : où vivent les constantes de durées/coûts/productions, comment éditer le seed `world.config`, workflow rebuild.
 - [`map-focus-navigation.md`](./map-focus-navigation.md) — contrat URL/helper pour ouvrir la WorldMap centrée sur des coordonnées sans sélectionner d'entité.
 

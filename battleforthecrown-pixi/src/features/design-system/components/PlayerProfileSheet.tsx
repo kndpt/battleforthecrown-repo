@@ -106,8 +106,25 @@ export interface PlayerProfileSheetTitle {
   active: boolean;
 }
 
+export type PlayerProfileSheetAwardKind =
+  | 'POWER_CHAMPION_TITLE'
+  | 'ASSAULT_CHAMPION_TITLE'
+  | 'RAMPART_CHAMPION_TITLE';
+
+export interface PlayerProfileSheetAward {
+  id: string;
+  /** Full FR title, e.g. "Vainqueur de Aubeforge". */
+  title: string;
+  /** Short descriptor of what the title rewards, e.g. "Puissance du royaume". */
+  description: string;
+  /** Pre-formatted FR award date, e.g. "24 juin 2026". */
+  date: string;
+  kind: PlayerProfileSheetAwardKind;
+}
+
 export interface PlayerProfileSheetProps {
   activeTab: PlayerProfileSheetTab;
+  awards?: PlayerProfileSheetAward[];
   className?: string;
   icons: PlayerProfileSheetIcons;
   labels: PlayerProfileSheetLabels;
@@ -139,6 +156,12 @@ const titleSignalStyle: Record<
     border: '#1f3e66',
     bg: 'linear-gradient(to bottom,#5b8fbf,#2e5a88)',
   },
+};
+
+const awardGlyph: Record<PlayerProfileSheetAwardKind, string> = {
+  POWER_CHAMPION_TITLE: '👑',
+  ASSAULT_CHAMPION_TITLE: '⚔️',
+  RAMPART_CHAMPION_TITLE: '🛡️',
 };
 
 const tabs: PlayerProfileSheetTab[] = ['profile', 'villages', 'settings'];
@@ -368,6 +391,25 @@ function TitleRow({ title }: { title: PlayerProfileSheetTitle }) {
   );
 }
 
+function AwardRow({ award }: { award: PlayerProfileSheetAward }) {
+  return (
+    <div className="flex items-center gap-2.5 rounded-[10px] border-2 border-[#9e7b0d] bg-[linear-gradient(to_right,#fff3d6_0%,#fef9f0_45%,#f0dcae_100%)] px-2.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,.5),0_2px_0_rgba(0,0,0,.14)]">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-full border-2 border-[#9e7b0d] bg-[linear-gradient(to_bottom,#f1c40f,#d4a017)] text-base shadow-[inset_0_1px_0_rgba(255,255,255,.45),0_0_8px_rgba(246,213,123,.5)]">
+        <span aria-hidden="true">{awardGlyph[award.kind]}</span>
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="truncate font-game text-[12.5px] font-extrabold text-[#3d2f1f] [text-shadow:0_1px_0_rgba(255,255,255,.4)]">
+          {award.title}
+        </div>
+        <div className="truncate font-game text-[9.5px] font-bold uppercase tracking-[.12em] text-[#8a6a1e]">
+          {award.description}
+        </div>
+      </div>
+      <span className="shrink-0 font-game text-[9px] text-[#6d5838] tabular-nums">{award.date}</span>
+    </div>
+  );
+}
+
 function TitlesBlock({ titles }: { titles: PlayerProfileSheetTitle[] }) {
   // Active titles first, capped at 3 shown; the rest collapse into a count.
   const sorted = [...titles].sort(
@@ -394,7 +436,23 @@ function TitlesBlock({ titles }: { titles: PlayerProfileSheetTitle[] }) {
   );
 }
 
+function AwardsBlock({ awards }: { awards: PlayerProfileSheetAward[] }) {
+  return (
+    <div>
+      <div className="mb-1.5 font-game text-[9.5px] font-bold uppercase tracking-[.3em] text-[#6d5838]">
+        Récompenses
+      </div>
+      <div className="flex flex-col gap-1.5">
+        {awards.map((award) => (
+          <AwardRow award={award} key={award.id} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ProfilePane({
+  awards,
   icons,
   labels,
   onWorldSelect,
@@ -402,12 +460,13 @@ function ProfilePane({
   stats,
   titles,
   world,
-}: Pick<PlayerProfileSheetProps, 'icons' | 'labels' | 'onWorldSelect' | 'renown' | 'stats' | 'titles' | 'world'>) {
+}: Pick<PlayerProfileSheetProps, 'awards' | 'icons' | 'labels' | 'onWorldSelect' | 'renown' | 'stats' | 'titles' | 'world'>) {
   return (
     <div className="flex flex-col gap-2.5">
       {renown ? <RenownBlock renown={renown} /> : null}
       <WorldPanel labels={labels} onWorldSelect={onWorldSelect} world={world} />
       {titles && titles.length > 0 ? <TitlesBlock titles={titles} /> : null}
+      {awards && awards.length > 0 ? <AwardsBlock awards={awards} /> : null}
       <div className="flex gap-1.5">
         <StatTile icon={icons.armyPower} label="Puissance" value={stats.power} />
         <StatTile icon={icons.crown} label="Couronnes" value={stats.crowns} />
@@ -567,6 +626,7 @@ function SettingsPane({
 
 export function PlayerProfileSheet({
   activeTab,
+  awards,
   className,
   icons,
   labels,
@@ -617,6 +677,7 @@ export function PlayerProfileSheet({
     >
       {activeTab === 'profile' ? (
         <ProfilePane
+          awards={awards}
           icons={icons}
           labels={labels}
           onWorldSelect={onWorldSelect}

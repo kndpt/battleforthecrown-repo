@@ -65,6 +65,8 @@ import {
   type RetentionSummaryDto,
 } from "@battleforthecrown/shared/retention";
 import type { RenownStatus } from "@battleforthecrown/shared";
+import type { CosmeticAwardResponse } from "@battleforthecrown/shared";
+import { COSMETIC_AWARD_KINDS } from "@battleforthecrown/shared";
 import type {
   OpenConquestDto,
   OpenExpeditionDto,
@@ -189,6 +191,8 @@ export const queryKeys = {
   finalRankings: (worldId: string | null) =>
     ["rankings", "final", worldId] as const,
   renown: (userId: string | null) => ["renown", userId] as const,
+  cosmeticAwards: (userId: string | null) =>
+    ["cosmetic-awards", userId] as const,
   villageIntel: (worldId: string | null, villageId: string | null) =>
     ["intel", worldId, villageId] as const,
   // Broad-invalidation prefixes (omit trailing discriminants to match across worlds/users).
@@ -1831,6 +1835,28 @@ export function useRenownQuery() {
     queryFn: () => apiClient.get<RenownStatus>("/users/me/renown"),
     enabled: Boolean(userId),
     staleTime: 30_000,
+  });
+}
+
+// Trust boundary: validate the cosmetic-awards payload with Zod before it enters
+// the React Query cache, so an unknown `kind` or malformed item can't silently
+// break the profile UI downstream. `kind` is pinned to the shared catalogue.
+const CosmeticAwardResponseSchema = z.strictObject({
+  kind: z.enum(COSMETIC_AWARD_KINDS),
+  worldDisplayName: z.string(),
+  awardedAt: z.string(),
+}) satisfies z.ZodType<CosmeticAwardResponse>;
+
+export function useCosmeticAwardsQuery() {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  return useQuery<CosmeticAwardResponse[]>({
+    queryKey: queryKeys.cosmeticAwards(userId),
+    queryFn: async () => {
+      const raw = await apiClient.get<unknown>("/users/me/cosmetic-awards");
+      return CosmeticAwardResponseSchema.array().parse(raw);
+    },
+    enabled: Boolean(userId),
+    staleTime: 5 * 60_000,
   });
 }
 

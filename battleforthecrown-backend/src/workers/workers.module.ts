@@ -6,6 +6,7 @@ import { CrownsModule } from '../modules/crowns/crowns.module';
 import { RetentionModule } from '../modules/retention/retention.module';
 import { RankingsModule } from '../modules/rankings/rankings.module';
 import { RenownModule } from '../modules/renown/renown.module';
+import { CosmeticModule } from '../modules/cosmetic/cosmetic.module';
 import { ConstructionWorker } from './construction.worker';
 import { TrainingWorker } from './training.worker';
 import { OutboxWorker } from './outbox.worker';
@@ -24,6 +25,7 @@ import { RankingsCycleWorker } from './rankings-cycle.worker';
     RetentionModule, // ✅ Provides OyezProducerService for OyezWorker
     RankingsModule, // ✅ Provides RankingsService + RankingsCycleService for WorldLifecycleWorker & RankingsCycleWorker
     RenownModule, // ✅ Provides RenownService for WorldLifecycleWorker (creditRankingBonuses at ENDED)
+    CosmeticModule, // ✅ Provides CosmeticAwardService for WorldLifecycleWorker (permanent titles at ENDED)
   ],
   providers: [
     ConstructionWorker,

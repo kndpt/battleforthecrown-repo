@@ -37,7 +37,7 @@ Le script ne reset pas la DB et ne supprime pas de données.
 |---|---|---|
 | `battleforthecrown` | backend dev + QA `curl` | schéma migré + config monde par défaut |
 | `battleforthecrown_smoke` | template smoke | schéma migré, pas de seed métier manuel |
-| `battleforthecrown_smoke_w1`…`_w8` | clones Jest smoke | recréées par `yarn test:smoke:preflight` |
+| `battleforthecrown_smoke_w1`…`_w10` | clones Jest smoke | recréées par `yarn test:smoke:preflight` |
 
 Les smokes créent leurs propres données dans les clones. La QA `curl` ne doit pas supposer des comptes existants : pour les endpoints protégés, l'agent crée d'abord un user via `/auth/register`, récupère le JWT, rejoint/crée l'état requis, puis appelle l'endpoint avec `Authorization: Bearer <token>`.
 

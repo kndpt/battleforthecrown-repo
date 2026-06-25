@@ -48,6 +48,12 @@ enum FinalRankingSignal {
   RAMPART_GLORY
 }
 
+enum CosmeticAwardKind {
+  POWER_CHAMPION_TITLE
+  ASSAULT_CHAMPION_TITLE
+  RAMPART_CHAMPION_TITLE
+}
+
 enum TrainingBuilding {
   BARRACKS
   THRONE_HALL
@@ -128,6 +134,7 @@ model User {
   finalRankingSnapshots WorldFinalRankingSnapshot[]
   renownLedgers         RenownLedger[]
   rankingCycleTitles    RankingCycleTitleAward[]
+  cosmeticAwards        UserWorldCosmeticAward[]
 
   @@map("user")
 }
@@ -169,6 +176,7 @@ model World {
   gloryLedgers           GloryLedger[]
   finalRankingSnapshots  WorldFinalRankingSnapshot[]
   gloryCycleSnapshots    GloryCycleSnapshot[]
+  cosmeticAwards         UserWorldCosmeticAward[]
 
   @@index([status, plannedOpenAt])
   @@index([status, startedAt])
@@ -883,6 +891,29 @@ model RankingCycleTitleAward {
   @@unique([userId, worldId, signal, cycleIndex], map: "ranking_cycle_title_award_user_world_signal_index_key")
   @@index([userId, validUntilAt])
   @@map("ranking_cycle_title_award")
+}
+
+/// Permanent, account-global cosmetic title earned by a top-1 champion when a
+/// world reaches ENDED (run 067). Attached to the user account, NOT the world
+/// session: `worldDisplayName` is snapshotted at award time so the label stays
+/// readable even after the world is renamed or purged (run 065 explicitly
+/// excludes this table from the destructive wipe). Cosmetic only — never a
+/// gameplay bonus (spec 24 § Rewards).
+model UserWorldCosmeticAward {
+  id               String            @id @default(cuid())
+  userId           String            @map("user_id")
+  worldId          String            @map("world_id")
+  kind             CosmeticAwardKind
+  worldDisplayName String            @map("world_display_name")
+  awardedAt        DateTime          @map("awarded_at") @db.Timestamptz(3)
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, worldId, kind], map: "user_world_cosmetic_award_user_world_kind_key")
+  @@index([userId])
+  @@map("user_world_cosmetic_award")
 }
 
 model RenownLedger {

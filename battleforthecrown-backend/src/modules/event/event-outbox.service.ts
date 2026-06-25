@@ -29,6 +29,13 @@ function isEventKind(kind: string): kind is EventKind {
 @Injectable()
 export class EventOutboxService {
   private readonly logger = new Logger(EventOutboxService.name);
+  // Tail of the dispatch chain. This singleton is shared between the background
+  // OutboxWorker poll and the manual dispatchPendingEvents() calls smokes use to
+  // force determinism. Without locking, concurrent dispatches fetch the same
+  // `dispatchedAt: null` rows and process them twice — a double onboarding
+  // reconcile can collide and leave the row stalled. Chaining serializes every
+  // caller process-locally so the same row is never dispatched in parallel.
+  private dispatchTail: Promise<void> = Promise.resolve();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -40,6 +47,16 @@ export class EventOutboxService {
   ) {}
 
   async dispatchPendingEvents(): Promise<void> {
+    // Queue behind any in-flight dispatch (swallow its error so one failed run
+    // doesn't poison the chain), then run our own and expose only our result.
+    const run = this.dispatchTail
+      .catch(() => undefined)
+      .then(() => this.runDispatch());
+    this.dispatchTail = run.catch(() => undefined);
+    return run;
+  }
+
+  private async runDispatch(): Promise<void> {
     const fetchStartTime = Date.now();
 
     const events = await this.prisma.eventOutbox.findMany({

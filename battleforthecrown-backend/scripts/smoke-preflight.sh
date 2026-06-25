@@ -9,7 +9,7 @@ set -eu
 # Preflight (re)creates the clones from the template so every run starts fresh.
 
 TEMPLATE_DB="${SMOKE_TEMPLATE_DB:-battleforthecrown_smoke}"
-WORKERS="${SMOKE_WORKERS:-8}"
+WORKERS="${SMOKE_WORKERS:-10}"
 TEMPLATE_URL="postgresql://postgres:postgres@localhost:5432/${TEMPLATE_DB}"
 PG_CONTAINER="${SMOKE_PG_CONTAINER:-battleforthecrown-postgres}"
 
