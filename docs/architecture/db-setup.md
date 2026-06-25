@@ -52,7 +52,7 @@ Sanity HTTP : `curl http://localhost:15001/health` → 200.
 
 ## DB smoke (`battleforthecrown_smoke` + clones par worker)
 
-Stratégie : un **template** migré (`battleforthecrown_smoke`) sert de modèle Postgres ; le préflight crée N **clones** (`battleforthecrown_smoke_w1` … `_wN`) via `CREATE DATABASE … TEMPLATE`. Chaque Jest worker se connecte à son propre clone → vraie isolation, parallélisme `maxWorkers: 8`.
+Stratégie : un **template** migré (`battleforthecrown_smoke`) sert de modèle Postgres ; le préflight crée N **clones** (`battleforthecrown_smoke_w1` … `_wN`) via `CREATE DATABASE … TEMPLATE`. Chaque Jest worker se connecte à son propre clone → vraie isolation, parallélisme `maxWorkers: 10`.
 
 ```bash
 # 1. Créer la base template (une fois)
@@ -63,27 +63,36 @@ docker exec battleforthecrown-postgres \
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/battleforthecrown_smoke" \
   yarn workspace battleforthecrown-backend prisma migrate deploy
 
-# 3. Lancer la suite smoke (le préflight (re)crée les 8 clones depuis le template)
+# 3. Lancer la suite smoke (le préflight (re)crée les 10 clones depuis le template)
 yarn workspace battleforthecrown-backend test:smoke
 ```
 
 À chaque évolution du schéma Prisma, rejouer `prisma migrate deploy` sur le **template**. Le préflight clone le template à chaque run, donc les clones sont toujours à jour. Pas de seed manuel : chaque smoke insère son propre `World` (cf. `test/fixtures/smoke-world-config.ts`).
 
-Le container Postgres doit autoriser ≥ 300 connections (8 workers × Nest + pg-boss ≈ 200) — configuré dans `docker-compose.yml` via `command: postgres -c max_connections=300`. Recréer le container après changement (`docker compose up -d --force-recreate postgres`).
+Le container Postgres doit autoriser ≥ 300 connections (10 workers × Nest + pg-boss ≈ 250) — configuré dans `docker-compose.yml` via `command: postgres -c max_connections=300`. Recréer le container après changement (`docker compose up -d --force-recreate postgres`).
 
 Le préflight (`scripts/smoke-preflight.sh`) détecte automatiquement le backend Postgres : container Docker `battleforthecrown-postgres` (dev local) ou serveur Postgres natif sur `localhost:5432` (env Claude Code web, sans daemon Docker). Aucune commande à changer.
 
 Overrides :
 - `SMOKE_DATABASE_URL` : bypass complet, force une URL spécifique (debug d'un test précis).
 - `SMOKE_TEMPLATE_DB` : change le nom du template (défaut `battleforthecrown_smoke`).
-- `SMOKE_WORKERS` : change le nombre de clones générés par le préflight (défaut `8`).
+- `SMOKE_WORKERS` : change le nombre de clones générés par le préflight (défaut `10`).
 - `SMOKE_PG_CONTAINER` : change le nom du container Docker ciblé (défaut `battleforthecrown-postgres`).
+
+### Latence worker compressée (levier dominant)
+
+La plupart du wall-clock smoke n'est pas du CPU mais de l'**attente de jobs pg-boss enchaînés** (training → unité suivante, combat → retour, …) : chaque reprise coûte un cycle de poll (défaut pg-boss 2 s). `jest-smoke-setup.ts` injecte deux env *gated test-only* (prod/dev les laissent unset → cadence normale) :
+
+- `PGBOSS_WORKER_POLL_MS=500` — poll des job workers ramené au plancher pg-boss (500 ms) au lieu de 2 s. Appliqué centralement dans `src/infra/pg-boss/queue-worker.helper.ts` (`withPollOverride`).
+- `OUTBOX_POLL_INTERVAL=250` — dispatcher Outbox 4× plus rapide.
+
+C'est ce qui a fait passer la suite de ~46 s à ~16 s (−65 %), avant même tout split de fichier. Toucher ces valeurs avant de multiplier les workers : c'est le levier le moins coûteux en complexité.
 
 ### Scaler quand la suite grossit
 
-Plancher incompressible = durée du **plus long fichier smoke** (aujourd'hui `combat-conquest-hook` ~22 s). Tout le reste se parallélise. Quand la suite dépasse à nouveau le seuil de douleur (~3-5 min), tirer ces leviers dans cet ordre :
+Plancher incompressible = durée du **plus long fichier smoke** (aujourd'hui `army-training-queue` ~12 s). Tout le reste se parallélise. Quand la suite dépasse à nouveau le seuil de douleur (~3-5 min), tirer ces leviers dans cet ordre (le levier 0 — compresser la latence worker, cf. § ci-dessus — est déjà appliqué et reste le moins coûteux) :
 
-1. **Splitter le fichier le plus long.** Si un smoke pèse plus que la moyenne × 3, le découper par sous-domaine — c'est lui qui dicte le temps total, pas le nombre de fichiers. Faire passer `combat-conquest-hook` de 22 s à 2 × 11 s donne -10 s sur le total avec 0 perte d'isolation.
+1. **Splitter le fichier le plus long.** Si un smoke pèse plus que la moyenne × 3, le découper par sous-domaine — c'est lui qui dicte le temps total, pas le nombre de fichiers. `army-training` (44 s avant tuning poll) a été coupé en `army-training` + `army-training-queue` ; au-delà d'un 2ᵉ split l'overhead de boot Nest par fichier annule le gain de parallélisme (mesuré).
 2. **Monter `maxWorkers` et `SMOKE_WORKERS` en miroir.** Plafond utile = nombre de cores physiques (au-delà, contention CPU & I/O annule le gain). Sur Mac M-series courants : 8-10. Sur CI cloud : matcher au runner. Les deux variables doivent **rester égales** sinon des workers cherchent une DB qui n'existe pas.
 3. **Bumper `max_connections` Postgres.** Si un run échoue avec `sorry, too many clients already`, augmenter dans `docker-compose.yml` (`postgres -c max_connections=…`). Règle de pouce : `maxWorkers × 25` (Prisma pool ~17 + pg-boss ~10 par app Nest).
 4. **Réduire le pool Prisma par worker.** Si bumper `max_connections` est cher (CI), forcer un pool plus petit en ajoutant `?connection_limit=5` dans le `DATABASE_URL` construit par `jest-smoke-setup.ts`. Conservateur mais robuste.
