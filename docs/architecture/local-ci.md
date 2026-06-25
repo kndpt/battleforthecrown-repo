@@ -104,7 +104,7 @@ Workflow actif : `.github/workflows/ci.yml`. Deux jobs requis pour merger sur `m
 | `smokes` | `prisma migrate deploy` + preflight + smoke suite complète | Postgres 16 natif | ~5-8 min |
 
 **Détails smokes CI :**
-- `SMOKE_WORKERS=4` (vs 8 en local) pour rester sous les 100 connexions Postgres par défaut du runner 2 CPU.
+- `SMOKE_WORKERS=4` (vs 10 en local) pour rester sous les 100 connexions Postgres par défaut du runner 2 CPU.
 - `smoke-preflight.sh` détecte automatiquement `PG_MODE=native` via `pg_isready` — pas de Docker.
 - `--maxWorkers=4` passé à Jest au moment du run pour aligner avec les 4 clones DB créés.
 

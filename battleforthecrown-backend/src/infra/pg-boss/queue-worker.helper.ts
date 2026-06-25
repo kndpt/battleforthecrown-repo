@@ -34,6 +34,19 @@ export interface JobQueueWorkerOptions {
   displayName?: string;
 }
 
+// Smokes/tests spend most of their wall-clock waiting for job workers to pick
+// up chained jobs (training → next unit, combat → return, …). Each pickup costs
+// one poll cycle (pg-boss default 2s). `PGBOSS_WORKER_POLL_MS` lets the test env
+// tighten this to pg-boss's 500ms floor without touching prod cadence (unset in
+// prod/dev → workOptions used verbatim, keeping the 2s default / explicit 1s).
+function withPollOverride(
+  workOptions?: PgBoss.WorkOptions,
+): PgBoss.WorkOptions | undefined {
+  const overrideMs = Number(process.env.PGBOSS_WORKER_POLL_MS);
+  if (!Number.isFinite(overrideMs) || overrideMs <= 0) return workOptions;
+  return { ...workOptions, pollingIntervalSeconds: overrideMs / 1000 };
+}
+
 export async function registerJobQueueWorker<TData extends object>(
   boss: PgBoss,
   logger: Logger,
@@ -50,8 +63,9 @@ export async function registerJobQueueWorker<TData extends object>(
         await handler(job.data);
       }
     };
-    if (opts.workOptions) {
-      await boss.work(opts.queueName, opts.workOptions, workHandler);
+    const workOptions = withPollOverride(opts.workOptions);
+    if (workOptions) {
+      await boss.work(opts.queueName, workOptions, workHandler);
     } else {
       await boss.work(opts.queueName, workHandler);
     }
