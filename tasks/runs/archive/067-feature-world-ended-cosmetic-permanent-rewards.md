@@ -1,8 +1,8 @@
 # Run #067 — world-ended-cosmetic-permanent-rewards
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-24
+> **Terminé** : 2026-06-24
 
 ## Cible
 
@@ -90,19 +90,24 @@ _(Lead étape 3 — tâches ≤ 5 fichiers)_
 - **Déjà résolu** : non. Ticket archivé `tasks/archive/12-rankings-rewards-undefined.md` avait posé les rewards économiques (1500/1000/500 couronnes) qui sont **supersédés** par spec 24 (cosmétiques uniquement) — ce run respecte la nouvelle direction.
 - **Keywords scannés** : `cosmetic`, `cosmétique`, `titre`, `world-title`, `champion`, `vainqueur`, `award`, `badge`, `bannière`, `wipe-preserve`, `ended-rewards`, `permanent-reward`.
 
-## Progress
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
-## Décisions prises
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
 ## Rapport final
+
+Synthèse : table `UserWorldCosmeticAward` + enum `CosmeticAwardKind` ; attribution des 3 titres top-1 (POWER/ASSAULT/RAMPART) dans la `$transaction` de transition LOCKED→ENDED, après le snapshot 061 ; endpoint `GET /users/me/cosmetic-awards` + section « Récompenses » sur le profil (libellés FR shared). _(détail = git history)_
+
+Décision assumée : POWER exempté du filtre `score > 0` (par construction `score > 0` dès ≥ 1 château, cf. critère ticket) ; Cascade FK World conservée (run 065 ne hard-delete jamais la ligne World, donc permanence préservée).
 
 ### Acceptance & QA
 
-- [ ] <critère> — `<cmd>` → <résultat>
-- **Review indépendante** : oui (critères déclencheurs : back+front + invariant durable « cosmétiques permanents préservés au wipe » + diff estimé > 100 lignes).
-- **Tests automatisés** : Vitest unit (résolution top-1 + tiebreaker + score 0) + smoke backend (fast-forward + transition ENDED + assert 3 awards + endpoint /users/me/cosmetic-awards 200).
-- **Tests IG user** : checklist FR ≤ 5 items pour Kelvin (compte vainqueur affiche bien titre dans profil, libellés FR corrects, vide ne crashe pas).
+- [x] Migration `UserWorldCosmeticAward` (champs/unique `(userId,worldId,kind)`/index `(userId)`) — `cat prisma/migrations/20260624100925_*/migration.sql` → enum + table + 2 index + 2 FK créés.
+- [x] Attribution top-1/signal après snapshot, même `$transaction` — `world-lifecycle.worker.ts:291-303` → `awardChampionsForWorld(tx,…)` entre `snapshotFinalRankings` et `creditRankingBonuses`.
+- [x] Tiebreaker rank-1 → tous awardés (vacant : 061 casse les ex æquo) + score 0 sauf POWER — `vitest run packages/shared/src/cosmetic/resolve.spec.ts` → 5/5 (cas (b) score 0, (c) tie, (e) répartition).
+- [x] Idempotence replay worker — smoke 5d (`unique` + `createMany skipDuplicates`) → count stable à 3 après 2ᵉ tick.
+- [x] `GET /users/me/cosmetic-awards` trié `awardedAt DESC`, caller-only — smoke 5b/5c → Alice 3 entrées, Bob 0, `200`.
+- [x] Frontend badges libellés FR + section masquée si vide — `PlayerProfileSheet.tsx` (`awards.length > 0`) + `buildProfileAwards` → libellés `Vainqueur/Conquérant/Sentinelle de <monde>`.
+- [x] Wipe 065 préserve la table — documenté (`data-model.md`, `19-world-lifecycle.md`) ; code de purge = run 065 à venir.
+- **Review indépendante** : Déclenchée (back+front + invariant durable + diff ~700 l). Verdict `GO` — 0 bloquant, 0 majeur, 4 mineurs (edge dégénéré + nits non-fonctionnels, hors scope ticket).
+- **Tests automatisés** : `yarn static-check` ✅ ; `yarn test:backend` ✅ 508/508 ; `yarn test:pixi` ✅ 784/784 ; `vitest resolve.spec` ✅ 5/5.
+- **Smokes lancés** : Ciblés — `test:smoke:run -- cosmetic-awards` ✅ (1/1) ; régression `world-ended-lifecycle world-final-rankings` ✅ (2/2). Backend touché (worker/module) → ciblé suffisant ; full smoke couvert par CI PR.
+- **Smokes ajoutés** : `test/cosmetic-awards.smoke.spec.ts` — fast-forward ENDED, 3 awards DB, endpoint 200×3 + 0 (Bob), idempotence.
+- **QA fonctionnelle agent** : couverte par smoke (transition worker + endpoint REST réel).
+- **Tests IG à faire par le user** : checklist FR ci-dessous (rendu visuel profil).

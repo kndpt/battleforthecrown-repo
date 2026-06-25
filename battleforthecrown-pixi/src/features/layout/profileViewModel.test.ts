@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { BuildingDto, JoinedVillage } from '@/api';
 import type { KingdomPowerDto, VillageStrategyInfoDto } from '@/api/queries';
-import { buildPlayerProfileSheetData, buildProfileVillages } from './profileViewModel';
+import type { CosmeticAwardResponse } from '@battleforthecrown/shared';
+import {
+  buildPlayerProfileSheetData,
+  buildProfileAwards,
+  buildProfileVillages,
+} from './profileViewModel';
 
 function village(overrides: Partial<JoinedVillage> & Pick<JoinedVillage, 'id'>): JoinedVillage {
   return {
@@ -67,6 +72,56 @@ describe('buildProfileVillages', () => {
     expect(rows[0].power).toBe('—');
     expect(rows[0].style).toBeUndefined();
     expect(rows[0].label).toBeUndefined();
+  });
+});
+
+describe('buildProfileAwards', () => {
+  const award = (
+    overrides: Partial<CosmeticAwardResponse> &
+      Pick<CosmeticAwardResponse, 'kind'>,
+  ): CosmeticAwardResponse => ({
+    worldDisplayName: 'Aubeforge',
+    awardedAt: '2026-06-25T10:00:00.000Z',
+    ...overrides,
+  });
+
+  it('maps id, shared label, description and formatted date, preserving order', () => {
+    const rows = buildProfileAwards([
+      award({ kind: 'POWER_CHAMPION_TITLE' }),
+      award({ kind: 'RAMPART_CHAMPION_TITLE', worldDisplayName: 'Val-Noir' }),
+    ]);
+
+    expect(rows).toEqual([
+      {
+        id: 'POWER_CHAMPION_TITLE-Aubeforge-0',
+        title: 'Vainqueur de Aubeforge',
+        description: 'Puissance du royaume',
+        date: '25 juin 2026',
+        kind: 'POWER_CHAMPION_TITLE',
+      },
+      {
+        id: 'RAMPART_CHAMPION_TITLE-Val-Noir-1',
+        title: 'Sentinelle de Val-Noir',
+        description: 'Gloire du rempart',
+        date: '25 juin 2026',
+        kind: 'RAMPART_CHAMPION_TITLE',
+      },
+    ]);
+  });
+
+  it('formats the date in UTC (no off-by-one near midnight) and tolerates invalid dates', () => {
+    const [late, invalid] = buildProfileAwards([
+      // 23:30 UTC → still the 25th in UTC, would roll to the 26th in +01:00 TZ.
+      award({ kind: 'POWER_CHAMPION_TITLE', awardedAt: '2026-06-25T23:30:00.000Z' }),
+      award({ kind: 'ASSAULT_CHAMPION_TITLE', awardedAt: 'not-a-date' }),
+    ]);
+
+    expect(late.date).toBe('25 juin 2026');
+    expect(invalid.date).toBe('');
+  });
+
+  it('returns an empty list for no awards', () => {
+    expect(buildProfileAwards([])).toEqual([]);
   });
 });
 
