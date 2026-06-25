@@ -30,6 +30,7 @@ import { isAttackAllowedByPowerRatio } from '@battleforthecrown/shared';
 import type {
   OpenConquestDto,
   OpenExpeditionDto,
+  TargetKind,
 } from '@battleforthecrown/shared/combat';
 import type { AttackCommandDto } from './dto/attack-command.schema';
 import type { ReinforceCommandDto } from './dto/reinforce-command.schema';
@@ -152,41 +153,22 @@ export class CombatService {
       // 5. Verify and deduct units
       await this.verifyAndDeductUnits(tx, dto.villageId, dto.units);
 
-      // 6. Calculate timing
-      const { travelTimeMs, arrivalAt, now } =
-        await this.calculateExpeditionTiming(
-          tx,
-          worldId,
-          village.x,
-          village.y,
-          target.x,
-          target.y,
-          dto.units,
-          dto.villageId,
-        );
-
-      // 7. Create expedition
-      const expedition = await tx.expedition.create({
-        data: {
-          worldId,
-          attackerVillageId: dto.villageId,
+      // 6. Calculate timing + create the EN_ROUTE expedition row.
+      const { expedition, arrivalAt, now } =
+        await this.createOutboundExpedition(tx, {
+          village,
+          target,
+          units: dto.units,
           kind: ExpeditionKind.ATTACK,
           targetKind: dto.targetKind,
-          targetRefId: target.id,
-          targetX: target.x,
-          targetY: target.y,
-          units: encodeUnitMap(dto.units),
-          status: 'EN_ROUTE',
-          departAt: now,
-          arrivalAt,
-          outboundTravelMs: travelTimeMs,
-          attackerKingdomPowerSnapshot,
-          defenderKingdomPowerSnapshot: defenderPowerSnapshot.primaryValue,
-          defenderKingdomPowerSnapshots: defenderPowerSnapshot.values,
-        },
-      });
+          extraData: {
+            attackerKingdomPowerSnapshot,
+            defenderKingdomPowerSnapshot: defenderPowerSnapshot.primaryValue,
+            defenderKingdomPowerSnapshots: defenderPowerSnapshot.values,
+          },
+        });
 
-      // 8. Create event
+      // 7. Create event
       await createOutboxEvent(tx, 'battle.sent', dto.villageId, {
         expeditionId: expedition.id,
         villageId: dto.villageId,
@@ -196,7 +178,7 @@ export class CombatService {
         arrivalAt: arrivalAt.toISOString(),
       });
 
-      // 8b. Break attacker's newbie shield if active (PvP only).
+      // 8. Break attacker's newbie shield if active (PvP only).
       if (dto.targetKind === 'PLAYER_VILLAGE') {
         await this.newbieShield.breakAttackerShieldIfActive(
           userId,
@@ -241,34 +223,16 @@ export class CombatService {
 
       await this.verifyAndDeductUnits(tx, dto.villageId, dto.units);
 
-      const { travelTimeMs, arrivalAt, now } =
-        await this.calculateExpeditionTiming(
-          tx,
-          worldId,
-          village.x,
-          village.y,
-          target.x,
-          target.y,
-          dto.units,
-          dto.villageId,
-        );
-
-      const expedition = await tx.expedition.create({
-        data: {
-          worldId,
-          attackerVillageId: dto.villageId,
+      const { expedition, arrivalAt } = await this.createOutboundExpedition(
+        tx,
+        {
+          village,
+          target,
+          units: dto.units,
           kind: ExpeditionKind.SCOUT,
           targetKind: dto.targetKind,
-          targetRefId: target.id,
-          targetX: target.x,
-          targetY: target.y,
-          units: encodeUnitMap(dto.units),
-          status: 'EN_ROUTE',
-          departAt: now,
-          arrivalAt,
-          outboundTravelMs: travelTimeMs,
         },
-      });
+      );
 
       await createOutboxEvent(tx, 'scout.sent', dto.villageId, {
         expeditionId: expedition.id,
@@ -327,38 +291,20 @@ export class CombatService {
       // 4. Verify and deduct units
       await this.verifyAndDeductUnits(tx, dto.villageId, dto.units);
 
-      // 5. Calculate timing
-      const { travelTimeMs, arrivalAt, now } =
-        await this.calculateExpeditionTiming(
-          tx,
-          worldId,
-          village.x,
-          village.y,
-          targetVillage.x,
-          targetVillage.y,
-          dto.units,
-          dto.villageId,
-        );
-      // 6. Create expedition
-      const expedition = await tx.expedition.create({
-        data: {
-          worldId,
-          attackerVillageId: dto.villageId,
+      // 5. Calculate timing + create the EN_ROUTE expedition row.
+      const { expedition, arrivalAt } = await this.createOutboundExpedition(
+        tx,
+        {
+          village,
+          target: targetVillage,
+          units: dto.units,
           kind: ExpeditionKind.REINFORCE,
-          reinforcementOriginVillageId: dto.villageId,
           targetKind: 'PLAYER_VILLAGE',
-          targetRefId: targetVillage.id,
-          targetX: targetVillage.x,
-          targetY: targetVillage.y,
-          units: encodeUnitMap(dto.units),
-          status: 'EN_ROUTE',
-          departAt: now,
-          arrivalAt,
-          outboundTravelMs: travelTimeMs,
+          extraData: { reinforcementOriginVillageId: dto.villageId },
         },
-      });
+      );
 
-      // 7. Create event
+      // 6. Create event
       await createOutboxEvent(tx, 'reinforcement.sent', dto.villageId, {
         expeditionId: expedition.id,
         villageId: dto.villageId,
@@ -366,7 +312,7 @@ export class CombatService {
         arrivalAt: arrivalAt.toISOString(),
       });
 
-      // 8. Schedule worker (same as combat:resolve, will handle REINFORCE)
+      // 7. Schedule worker (combat:resolve handles REINFORCE)
       await this.scheduleResolution(expedition.id, arrivalAt);
 
       this.logger.debug(
@@ -966,6 +912,85 @@ export class CombatService {
     const arrivalAt = new Date(now.getTime() + travelTimeMs);
 
     return { travelTimeMs, arrivalAt, now };
+  }
+
+  /**
+   * Compute outbound timing and insert the EN_ROUTE Expedition row shared by
+   * `initiateAttack` / `initiateScout` / `initiateReinforce`. The base fields
+   * (worldId, attacker, kind, target*, units, status, departAt, arrivalAt,
+   * outboundTravelMs) are always set by the helper; `extraData` carries
+   * variant-only columns (attack: kingdom power snapshots; reinforce:
+   * reinforcementOriginVillageId).
+   *
+   * Does NOT emit the outbox event, schedule the resolution job, or run any
+   * variant side-effect — callers stay responsible for those so the original
+   * tx ordering (create → outbox → side-effect → schedule) is preserved.
+   */
+  private async createOutboundExpedition(
+    tx: PrismaClientOrTx,
+    params: {
+      village: { id: string; worldId: string; x: number; y: number };
+      target: { id: string; x: number; y: number };
+      units: Record<string, number>;
+      kind: ExpeditionKind;
+      targetKind: TargetKind;
+      extraData?: Partial<
+        Omit<
+          Prisma.ExpeditionUncheckedCreateInput,
+          | 'worldId'
+          | 'attackerVillageId'
+          | 'kind'
+          | 'targetKind'
+          | 'targetRefId'
+          | 'targetX'
+          | 'targetY'
+          | 'units'
+          | 'status'
+          | 'departAt'
+          | 'arrivalAt'
+          | 'outboundTravelMs'
+        >
+      >;
+    },
+  ): Promise<{
+    expedition: Expedition;
+    arrivalAt: Date;
+    travelTimeMs: number;
+    now: Date;
+  }> {
+    const { village, target, units, kind, targetKind, extraData } = params;
+
+    const { travelTimeMs, arrivalAt, now } =
+      await this.calculateExpeditionTiming(
+        tx,
+        village.worldId,
+        village.x,
+        village.y,
+        target.x,
+        target.y,
+        units,
+        village.id,
+      );
+
+    const expedition = await tx.expedition.create({
+      data: {
+        worldId: village.worldId,
+        attackerVillageId: village.id,
+        kind,
+        targetKind,
+        targetRefId: target.id,
+        targetX: target.x,
+        targetY: target.y,
+        units: encodeUnitMap(units),
+        status: 'EN_ROUTE',
+        departAt: now,
+        arrivalAt,
+        outboundTravelMs: travelTimeMs,
+        ...extraData,
+      },
+    });
+
+    return { expedition, arrivalAt, travelTimeMs, now };
   }
 
   /** Load a village the caller must own, or throw. Shared by the expedition creators. */

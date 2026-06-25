@@ -1,19 +1,18 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-06-22 (run 2) | theme construction.worker.ts post-tx correctness — tx callback retourne `completed: boolean`, side-effects gated, helper `runIsolatedSideEffect` structuré ; +1 smoke regression W6 (cancel WAREHOUSE n'augmente plus `maxPerType`) | PR maint(refactor-backend): skip post-tx side-effects when construction worker exits early
-full: `archive/refactor-backend/2026-06-22b-full.md`
+last: 2026-06-25 | theme combat.service.ts `createOutboundExpedition` helper — consolide timing + tx.expedition.create entre initiateAttack/Scout/Reinforce ; extraData typed via `Partial<Omit<ExpeditionUncheckedCreateInput, /* base */>>` ; ordre tx-local préservé (create → outbox → side-effect → schedule) ; 25 smokes combat ✅ | PR maint(refactor-backend): consolidate outbound expedition creation helper
+full: `archive/refactor-backend/2026-06-25-full.md`
 
 ## OPEN
 
 | ID  | Sev  | Where                                              | Note                                                                                       |
 |-----|------|----------------------------------------------------|--------------------------------------------------------------------------------------------|
 | R4  | High | crowns.service.ts:261                              | fractional carry — needs migration (`lastUpdateTs += production/rate`)                     |
-| W1  | High | combat/combat.worker.ts (1846L)                    | 4 kinds cohabitent — split par kind, L effort                                              |
-| W2c | Med  | combat.service.ts:84-350                           | `initiate{Attack,Scout,Reinforce}` template-helper possible mais payloads divergent        |
-| B1  | Med  | combat.service.ts                                  | 1313L sans spec unit direct (smokes uniquement)                                            |
+| W1  | High | combat/combat.worker.ts (1869L)                    | 4 kinds cohabitent — split par kind, L effort                                              |
+| B1  | Med  | combat.service.ts                                  | 1362L sans spec unit direct (smokes uniquement)                                            |
 | U1  | Low  | combat.worker.ts:1489-1498, 1743-1759, return.worker.ts:326-340 | inbox.create/upsert loop ×N → `createMany skipDuplicates` (ROI bas)                |
 | U3  | Low  | world-entities-query.service.ts:137-315            | fetchBarb/fetchPlayer partagent bounds + captureWindow mapping                             |
-| D2  | Low  | gameplay/{upgrade-building,recruit-troops,recruit-noble}.use-case.ts | Promise.all quintette répété ×3, forme divergente                          |
+| D2  | Low  | gameplay/{upgrade-building,recruit-troops,recruit-noble}.use-case.ts | Promise.all quintette — divergence trop grande, ROI bas, garder en obs |
 | N3  | Low  | world-entities-query.service.ts:113-116            | `getVillagesInRadius` ne clamp pas max=499 (asymétrique vs `getEntitiesInRadius`)          |
 | N4  | Low  | world-entities-query.service.ts:117-127            | `getVillagesInRadius`/`getAllVillages` renvoient rows raw (no `kind`) — surface confuse    |
 | L2  | Low  | strategy/village-strategy.service.ts:389-457       | `getStrategyRecommendations` strings UI FR hard-codées dans le service                     |
@@ -30,7 +29,8 @@ full: `archive/refactor-backend/2026-06-22b-full.md`
 
 ## Skip — déjà traité
 
-- W5 + W6 (construction post-tx correctness + structured swallow logs) → ce run
+- W2c (initiate{Attack,Scout,Reinforce} skeleton consolidation) → ce run
+- W5 + W6 (construction post-tx correctness + structured swallow logs) → run 2026-06-22 (2)
 - W3 + W4 (registerQueueWorker helpers + construction emoji logs) → run 2026-06-22 (1)
 - Q1 (Array.isArray defensive unwrap) → absorbé par le helper W3
 - W2a/W2b done run 2026-06-20 | S1 done run 2026-06-21 | D3 PR #153 | D1 PR #144 | D4 PR #142 | OB1/OB2 PR #134
