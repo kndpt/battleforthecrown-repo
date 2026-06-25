@@ -146,6 +146,9 @@ describe('public worlds smoke', () => {
     await expect(worker.handleLifecycleTick(now)).resolves.toEqual({
       plannedCreated: 0,
       plannedToOpen: 1,
+      // open-expired-registration franchit main→late (startedAt+7j échu) avant
+      // d'être lock dans le même tick.
+      inscriptionPhaseChanged: 1,
       openToLocked: 1,
       lockedToEnded: 1,
     });
@@ -190,6 +193,7 @@ describe('public worlds smoke', () => {
     await expect(worker.handleLifecycleTick(now)).resolves.toEqual({
       plannedCreated: 0,
       plannedToOpen: 0,
+      inscriptionPhaseChanged: 0,
       openToLocked: 0,
       lockedToEnded: 0,
     });
