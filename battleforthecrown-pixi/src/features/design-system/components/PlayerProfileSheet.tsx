@@ -95,6 +95,17 @@ export interface PlayerProfileSheetRenown {
   justLeveledUp?: boolean;
 }
 
+export type PlayerProfileSheetTitleSignal = 'ASSAULT_GLORY' | 'RAMPART_GLORY';
+
+export interface PlayerProfileSheetTitle {
+  id: string;
+  /** Full FR label, e.g. "Champion d'Assaut · Semaine 3 · Avalon". */
+  label: string;
+  signal: PlayerProfileSheetTitleSignal;
+  /** `validUntilAt > now` — drives the active badge styling. */
+  active: boolean;
+}
+
 export type PlayerProfileSheetAwardKind =
   | 'POWER_CHAMPION_TITLE'
   | 'ASSAULT_CHAMPION_TITLE'
@@ -126,9 +137,26 @@ export interface PlayerProfileSheetProps {
   renown?: PlayerProfileSheetRenown;
   settings: PlayerProfileSheetSetting[];
   stats: PlayerProfileSheetStats;
+  titles?: PlayerProfileSheetTitle[];
   villages: PlayerProfileSheetVillage[];
   world: PlayerProfileSheetWorld;
 }
+
+const titleSignalStyle: Record<
+  PlayerProfileSheetTitleSignal,
+  { glyph: string; border: string; bg: string }
+> = {
+  ASSAULT_GLORY: {
+    glyph: '⚔️',
+    border: '#a93226',
+    bg: 'linear-gradient(to bottom,#e74c3c,#c0392b)',
+  },
+  RAMPART_GLORY: {
+    glyph: '🛡️',
+    border: '#1f3e66',
+    bg: 'linear-gradient(to bottom,#5b8fbf,#2e5a88)',
+  },
+};
 
 const awardGlyph: Record<PlayerProfileSheetAwardKind, string> = {
   POWER_CHAMPION_TITLE: '👑',
@@ -331,6 +359,38 @@ function RenownBlock({ renown }: { renown: PlayerProfileSheetRenown }) {
   );
 }
 
+function TitleRow({ title }: { title: PlayerProfileSheetTitle }) {
+  const style = titleSignalStyle[title.signal];
+  return (
+    <div
+      className={cn(
+        'flex items-center gap-2.5 rounded-[10px] border-2 px-2.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,.5),0_2px_0_rgba(0,0,0,.14)]',
+        title.active ? 'opacity-100' : 'opacity-60',
+      )}
+      style={{
+        borderColor: style.border,
+        background:
+          'linear-gradient(to right,#fff3d6 0%,#fef9f0 45%,#f0dcae 100%)',
+      }}
+    >
+      <div
+        className="flex size-9 shrink-0 items-center justify-center rounded-full border-2 text-base shadow-[inset_0_1px_0_rgba(255,255,255,.45),0_0_8px_rgba(246,213,123,.4)]"
+        style={{ borderColor: style.border, background: style.bg }}
+      >
+        <span aria-hidden="true">{style.glyph}</span>
+      </div>
+      <div className="min-w-0 flex-1 truncate font-game text-[12px] font-extrabold text-[#3d2f1f] [text-shadow:0_1px_0_rgba(255,255,255,.4)]">
+        {title.label}
+      </div>
+      {title.active ? null : (
+        <span className="shrink-0 font-game text-[8px] font-bold uppercase tracking-[.12em] text-[#8a6a1e]">
+          Expiré
+        </span>
+      )}
+    </div>
+  );
+}
+
 function AwardRow({ award }: { award: PlayerProfileSheetAward }) {
   return (
     <div className="flex items-center gap-2.5 rounded-[10px] border-2 border-[#9e7b0d] bg-[linear-gradient(to_right,#fff3d6_0%,#fef9f0_45%,#f0dcae_100%)] px-2.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,.5),0_2px_0_rgba(0,0,0,.14)]">
@@ -346,6 +406,32 @@ function AwardRow({ award }: { award: PlayerProfileSheetAward }) {
         </div>
       </div>
       <span className="shrink-0 font-game text-[9px] text-[#6d5838] tabular-nums">{award.date}</span>
+    </div>
+  );
+}
+
+function TitlesBlock({ titles }: { titles: PlayerProfileSheetTitle[] }) {
+  // Active titles first, capped at 3 shown; the rest collapse into a count.
+  const sorted = [...titles].sort(
+    (a, b) => Number(b.active) - Number(a.active),
+  );
+  const shown = sorted.slice(0, 3);
+  const remaining = sorted.length - shown.length;
+  return (
+    <div>
+      <div className="mb-1.5 font-game text-[9.5px] font-bold uppercase tracking-[.3em] text-[#6d5838]">
+        Titres
+      </div>
+      <div className="flex flex-col gap-1.5">
+        {shown.map((title) => (
+          <TitleRow key={title.id} title={title} />
+        ))}
+      </div>
+      {remaining > 0 ? (
+        <div className="mt-1 text-right font-game text-[9px] text-[#6d5838]">
+          + {remaining} autre{remaining > 1 ? 's' : ''}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -372,12 +458,14 @@ function ProfilePane({
   onWorldSelect,
   renown,
   stats,
+  titles,
   world,
-}: Pick<PlayerProfileSheetProps, 'awards' | 'icons' | 'labels' | 'onWorldSelect' | 'renown' | 'stats' | 'world'>) {
+}: Pick<PlayerProfileSheetProps, 'awards' | 'icons' | 'labels' | 'onWorldSelect' | 'renown' | 'stats' | 'titles' | 'world'>) {
   return (
     <div className="flex flex-col gap-2.5">
       {renown ? <RenownBlock renown={renown} /> : null}
       <WorldPanel labels={labels} onWorldSelect={onWorldSelect} world={world} />
+      {titles && titles.length > 0 ? <TitlesBlock titles={titles} /> : null}
       {awards && awards.length > 0 ? <AwardsBlock awards={awards} /> : null}
       <div className="flex gap-1.5">
         <StatTile icon={icons.armyPower} label="Puissance" value={stats.power} />
@@ -550,6 +638,7 @@ export function PlayerProfileSheet({
   renown,
   settings,
   stats,
+  titles,
   villages,
   world,
 }: PlayerProfileSheetProps) {
@@ -594,6 +683,7 @@ export function PlayerProfileSheet({
           onWorldSelect={onWorldSelect}
           renown={renown}
           stats={stats}
+          titles={titles}
           world={world}
         />
       ) : null}

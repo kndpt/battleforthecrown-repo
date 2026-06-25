@@ -189,6 +189,36 @@ export const WorldOyezSchema = z.strictObject({
     .default(DEFAULT_WORLD_OYEZ_CONFIG.defaultDurationHours),
 });
 
+export const DEFAULT_WORLD_RANKINGS_CONFIG = {
+  // Weekly Glory cycle boundary, wall-clock aligned on Monday 00:00 UTC by
+  // default (run 068). Kept wall-clock — not tempo-compressed — so "the week of
+  // play" stays socially legible across worlds.
+  weeklyCycleResetDayUtc: 1, // 0=Sun … 1=Mon … 6=Sat
+  weeklyCycleResetHourUtc: 0,
+  snapshotEntriesPerCycle: 20,
+} as const;
+
+export const WorldRankingsSchema = z.strictObject({
+  weeklyCycleResetDayUtc: z
+    .number()
+    .int()
+    .min(0)
+    .max(6)
+    .default(DEFAULT_WORLD_RANKINGS_CONFIG.weeklyCycleResetDayUtc),
+  weeklyCycleResetHourUtc: z
+    .number()
+    .int()
+    .min(0)
+    .max(23)
+    .default(DEFAULT_WORLD_RANKINGS_CONFIG.weeklyCycleResetHourUtc),
+  snapshotEntriesPerCycle: z
+    .number()
+    .int()
+    .positive()
+    .max(100)
+    .default(DEFAULT_WORLD_RANKINGS_CONFIG.snapshotEntriesPerCycle),
+});
+
 export const WorldConfigSchema = z.strictObject({
   tempo: TempoSchema,
   lifecycle: WorldLifecycleSchema.default(DEFAULT_WORLD_LIFECYCLE_CONFIG),
@@ -198,6 +228,7 @@ export const WorldConfigSchema = z.strictObject({
   playerVillagePlacement: PlayerVillagePlacementPlanSchema,
   fogOfWar: FogOfWarSettingsSchema,
   oyez: WorldOyezSchema.default(DEFAULT_WORLD_OYEZ_CONFIG),
+  rankings: WorldRankingsSchema.default(DEFAULT_WORLD_RANKINGS_CONFIG),
 });
 
 export type WorldConfig = z.infer<typeof WorldConfigSchema>;

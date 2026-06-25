@@ -1,9 +1,10 @@
 import { useState } from "react";
 import type {
+  RankingCycleCurrent,
   RankingsLeaderboardEntry,
   RankingsLeaderboardResponse,
 } from "@battleforthecrown/shared/rankings";
-import { useRankingsSummaryQuery } from "@/api/queries";
+import { useRankingCyclesQuery, useRankingsSummaryQuery } from "@/api/queries";
 import { useAuthStore } from "@/stores/auth";
 import { useGameStore } from "@/stores/game";
 import {
@@ -64,10 +65,23 @@ function findBoard(
   );
 }
 
+const cycleDateFormatter = new Intl.DateTimeFormat("fr-FR", {
+  day: "numeric",
+  month: "long",
+  // Cycle boundaries are anchored to Monday 00:00 UTC — format in UTC so the
+  // banner shows the right day regardless of the viewer's timezone.
+  timeZone: "UTC",
+});
+
+function formatCycleDate(iso: string): string {
+  return cycleDateFormatter.format(new Date(iso));
+}
+
 export function RankingsScreen() {
   const worldId = useGameStore((state) => state.worldId);
   const currentUserId = useAuthStore((state) => state.user?.id ?? null);
   const rankings = useRankingsSummaryQuery(worldId);
+  const cycles = useRankingCyclesQuery(worldId);
   const boards = rankings.data?.leaderboards ?? [];
 
   const [category, setCategory] = useState<Category>("puissance");
@@ -80,6 +94,10 @@ export function RankingsScreen() {
       : sub === "assaut"
         ? "ASSAULT_GLORY"
         : "RAMPART_GLORY";
+  const cycle =
+    category === "gloire"
+      ? (cycles.data?.cycles.find((entry) => entry.signal === signal) ?? null)
+      : null;
   const activePeriod = category === "puissance" ? "LIVE" : period;
   const board = findBoard(boards, signal, activePeriod);
 
@@ -121,6 +139,8 @@ export function RankingsScreen() {
         ) : null}
 
         <div className="px-2 pt-2">
+          {cycle && period === "WEEKLY" ? <CycleBanner cycle={cycle} /> : null}
+
           <div className="px-0.5 pb-1 pt-1">
             <h1 className="font-game text-sm font-extrabold tracking-[.02em] text-[#3d2f1f] [text-shadow:0_1px_0_rgba(255,255,255,.5)]">
               {title}
@@ -164,6 +184,60 @@ export function RankingsScreen() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function CycleBanner({ cycle }: { cycle: RankingCycleCurrent }) {
+  const [showLast, setShowLast] = useState(false);
+  const last = cycle.lastClosedSnapshot;
+  const top = last?.topEntries ?? [];
+  const weekLabel = cycle.cycleIndex >= 1 ? `Semaine ${cycle.cycleIndex}` : "Pré-saison";
+
+  return (
+    <div className="mb-2 rounded-[12px] border-2 border-[#9e7b0d] bg-[linear-gradient(to_bottom,#fff3d6,#f0dcae)] px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,.5),0_2px_0_rgba(0,0,0,.12)]">
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-game text-[11px] font-extrabold uppercase tracking-[.08em] text-[#3d2f1f]">
+          {weekLabel}
+        </span>
+        <span className="font-game text-[9.5px] text-[#6d5838]">
+          Clôture le {formatCycleDate(cycle.cycleEndAt)}
+        </span>
+      </div>
+      <div className="mt-1 font-game text-[11px] text-[#6d5838]">
+        Meneur ·{" "}
+        <b className="text-[#3d2f1f]">
+          {cycle.leaderName ?? "Aucun prétendant"}
+        </b>
+      </div>
+      {last && top.length > 0 ? (
+        <>
+          <button
+            className="mt-1.5 cursor-pointer font-game text-[9.5px] font-bold uppercase tracking-[.1em] text-[#8a6a1e] underline"
+            onClick={() => setShowLast((value) => !value)}
+            type="button"
+          >
+            {showLast ? "Masquer" : `Voir le champion sortant (Semaine ${last.cycleIndex})`}
+          </button>
+          {showLast ? (
+            <div className="mt-1.5 flex flex-col gap-1 border-t border-[rgba(158,123,13,.3)] pt-1.5">
+              {top.map((entry) => (
+                <div
+                  className="flex items-center justify-between font-game text-[10.5px] text-[#3d2f1f]"
+                  key={entry.userId}
+                >
+                  <span>
+                    <b>#{entry.rank}</b> {entry.displayName}
+                  </span>
+                  <span className="tabular-nums text-[#6d5838]">
+                    {formatScore(entry.score)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </>
+      ) : null}
     </div>
   );
 }

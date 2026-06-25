@@ -133,6 +133,7 @@ model User {
   gloryLedgers          GloryLedger[]
   finalRankingSnapshots WorldFinalRankingSnapshot[]
   renownLedgers         RenownLedger[]
+  rankingCycleTitles    RankingCycleTitleAward[]
   cosmeticAwards        UserWorldCosmeticAward[]
 
   @@map("user")
@@ -174,6 +175,7 @@ model World {
   onboardingStates       OnboardingState[]
   gloryLedgers           GloryLedger[]
   finalRankingSnapshots  WorldFinalRankingSnapshot[]
+  gloryCycleSnapshots    GloryCycleSnapshot[]
   cosmeticAwards         UserWorldCosmeticAward[]
 
   @@index([status, plannedOpenAt])
@@ -838,6 +840,57 @@ model WorldFinalRankingSnapshot {
   @@unique([worldId, signal, userId], map: "world_final_ranking_snapshot_world_signal_user_key")
   @@index([worldId, signal, rank])
   @@map("world_final_ranking_snapshot")
+}
+
+/// Frozen leaderboard of one closed weekly Glory cycle (run 068). `entries` is a
+/// JSONB top-N `[{userId, displayName, score, rank}]`. Bound to a world, so it
+/// can be purged with the world wipe (run 065). The rank-1 champions are also
+/// materialized as durable RankingCycleTitleAward rows that survive the wipe.
+model GloryCycleSnapshot {
+  id           String        @id @default(cuid())
+  worldId      String        @map("world_id")
+  signal       RankingSignal
+  cycleIndex   Int           @map("cycle_index")
+  cycleStartAt DateTime      @map("cycle_start_at") @db.Timestamptz(3)
+  cycleEndAt   DateTime      @map("cycle_end_at") @db.Timestamptz(3)
+  closedAt     DateTime      @map("closed_at") @db.Timestamptz(3)
+  entries      Json
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  @@unique([worldId, signal, cycleIndex], map: "glory_cycle_snapshot_world_signal_index_key")
+  @@index([worldId, signal, cycleEndAt])
+  @@map("glory_cycle_snapshot")
+}
+
+/// Temporary weekly championship title awarded to the rank-1 player of a closed
+/// Glory cycle (run 068). `validUntilAt` (= next cycle's end) bounds the
+/// "active" display window, but the row is permanent — a player keeps their
+/// title history. Cosmetic only.
+///
+/// `worldId` is denormalized WITHOUT a `World` FK relation (same rationale as
+/// `GloryLedger.opponentUserId`): the title must survive the destructive world
+/// wipe (run 065) by construction, so it must not cascade-delete when the world
+/// is purged. `worldDisplayName` snapshots the readable name at award time so
+/// the title stays legible even after the world is gone.
+model RankingCycleTitleAward {
+  id               String        @id @default(cuid())
+  userId           String        @map("user_id")
+  worldId          String        @map("world_id")
+  signal           RankingSignal
+  cycleIndex       Int           @map("cycle_index")
+  worldDisplayName String        @map("world_display_name")
+  cycleEndAt       DateTime      @map("cycle_end_at") @db.Timestamptz(3)
+  validUntilAt     DateTime      @map("valid_until_at") @db.Timestamptz(3)
+  awardedAt        DateTime      @map("awarded_at") @db.Timestamptz(3)
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, worldId, signal, cycleIndex], map: "ranking_cycle_title_award_user_world_signal_index_key")
+  @@index([userId, validUntilAt])
+  @@map("ranking_cycle_title_award")
 }
 
 /// Permanent, account-global cosmetic title earned by a top-1 champion when a

@@ -87,3 +87,71 @@ export type WorldFinalRankingLeaderboard = z.infer<
 export type WorldFinalRankingsResponse = z.infer<
   typeof WorldFinalRankingsResponseSchema
 >;
+
+// ---------------------------------------------------------------------------
+// Weekly Glory cycles (run 068) — POWER is live and never cycles, so the cycle
+// contract is restricted to the two Glory signals.
+// ---------------------------------------------------------------------------
+
+export const GlorySignalSchema = z.enum(["ASSAULT_GLORY", "RAMPART_GLORY"]);
+
+/** One entry of a closed cycle's frozen leaderboard. */
+export const RankingCycleSnapshotEntrySchema = z.object({
+  userId: z.string(),
+  displayName: z.string(),
+  score: z.number().int().nonnegative(),
+  rank: z.number().int().positive(),
+});
+
+/** Current (in-progress) cycle for a single Glory signal. */
+export const RankingCycleCurrentSchema = z.object({
+  signal: GlorySignalSchema,
+  /** 1-based; `0` while the world is still in its pre-cycle. */
+  cycleIndex: z.number().int().nonnegative(),
+  cycleStartAt: z.string().datetime(),
+  cycleEndAt: z.string().datetime(),
+  /** Current leader of the live cycle window, or null if no scoring yet. */
+  leaderUserId: z.string().nullable(),
+  leaderName: z.string().nullable(),
+  /** Top 3 of the most recently closed cycle, or null if none closed yet. */
+  lastClosedSnapshot: z
+    .object({
+      cycleIndex: z.number().int().positive(),
+      cycleEndAt: z.string().datetime(),
+      topEntries: z.array(RankingCycleSnapshotEntrySchema),
+    })
+    .nullable(),
+});
+
+export const RankingCyclesCurrentResponseSchema = z.object({
+  worldId: z.string(),
+  cycles: z.array(RankingCycleCurrentSchema),
+});
+
+/** A temporary championship title owned by a player (run 068). */
+export const RankingCycleTitleSchema = z.object({
+  id: z.string(),
+  signal: GlorySignalSchema,
+  cycleIndex: z.number().int().positive(),
+  worldId: z.string(),
+  worldDisplayName: z.string(),
+  label: z.string(),
+  cycleEndAt: z.string().datetime(),
+  validUntilAt: z.string().datetime(),
+  awardedAt: z.string().datetime(),
+  /** `validUntilAt > now` at serialization time. */
+  active: z.boolean(),
+});
+
+export const RankingTitlesResponseSchema = z.array(RankingCycleTitleSchema);
+
+export type GlorySignalDto = z.infer<typeof GlorySignalSchema>;
+export type RankingCycleSnapshotEntry = z.infer<
+  typeof RankingCycleSnapshotEntrySchema
+>;
+export type RankingCycleCurrent = z.infer<typeof RankingCycleCurrentSchema>;
+export type RankingCyclesCurrentResponse = z.infer<
+  typeof RankingCyclesCurrentResponseSchema
+>;
+export type RankingCycleTitle = z.infer<typeof RankingCycleTitleSchema>;
+export type RankingTitlesResponse = z.infer<typeof RankingTitlesResponseSchema>;

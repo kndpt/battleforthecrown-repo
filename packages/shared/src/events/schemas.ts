@@ -293,6 +293,13 @@ const IntelUpdatedPayloadSchema = z.object({
   villageId: z.string(),
 });
 
+const RankingsCycleClosedPayloadSchema = z.object({
+  worldId: z.string(),
+  signal: z.enum(["ASSAULT_GLORY", "RAMPART_GLORY"]),
+  cycleIndex: z.number().int().positive(),
+  cycleEndAt: z.string().datetime(),
+});
+
 export const EVENT_PAYLOAD_SCHEMAS = {
   "building.completed": BuildingCompletedPayloadSchema,
   "unit.training.completed": UnitTrainingCompletedPayloadSchema,
@@ -325,6 +332,7 @@ export const EVENT_PAYLOAD_SCHEMAS = {
   "resources.changed": ResourcesChangedPayloadSchema,
   "crowns.changed": CrownsChangedPayloadSchema,
   "rankings.changed": RankingsChangedPayloadSchema,
+  "rankings.cycle.closed": RankingsCycleClosedPayloadSchema,
   "world.status.changed": WorldStatusChangedPayloadSchema,
   "world.planned.created": WorldPlannedCreatedPayloadSchema,
   "pvp.shield.broken": PvpShieldBrokenPayloadSchema,

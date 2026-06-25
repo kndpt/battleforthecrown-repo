@@ -10,6 +10,7 @@ import {
 import {
   PlayerProfileSheet,
   type PlayerProfileSheetTab,
+  type PlayerProfileSheetTitle,
 } from '@/features/design-system/components/PlayerProfileSheet';
 import { useDisplayResources, useDisplayCrowns } from '@/features/resources/useDisplayResources';
 import { DailyRetentionWidget } from '@/features/retention/DailyRetentionWidget';
@@ -22,6 +23,7 @@ import {
   useLogout,
   useMyMembershipsQuery,
   useMyVillagesQuery,
+  useRankingTitlesQuery,
   useRetentionSummaryQuery,
   usePublicWorldsQuery,
 } from '@/api/queries';
@@ -66,6 +68,7 @@ export function GameHeader({
   const { display, hasSnapshot } = useDisplayResources(villageId);
   const { balance: crownBalance } = useDisplayCrowns(userId, worldId);
   const { renown, justLeveledUp, acknowledge: acknowledgeRenown } = useRenownLevelUp();
+  const rankingTitles = useRankingTitlesQuery();
   const cosmeticAwards = useCosmeticAwardsQuery();
   const profileAwards = useMemo(
     () => buildProfileAwards(cosmeticAwards.data ?? []),
@@ -78,6 +81,19 @@ export function GameHeader({
   const [sortAscending, setSortAscending] = useState(true);
 
   const villages = useMemo(() => myVillages.data ?? [], [myVillages.data]);
+  // MVP scopes the profile titles to the current world (run 068 § Hors scope).
+  const profileTitles = useMemo<PlayerProfileSheetTitle[]>(
+    () =>
+      (rankingTitles.data ?? [])
+        .filter((title) => title.worldId === worldId)
+        .map((title) => ({
+          id: title.id,
+          label: title.label,
+          signal: title.signal,
+          active: title.active,
+        })),
+    [rankingTitles.data, worldId],
+  );
   const activeMembership = memberships.data?.find((membership) => membership.worldId === worldId);
   const activePublicWorld = publicWorlds.data?.find((world) => world.id === worldId);
   const fallbackVillageId = villages.find((village) => village.isCapital)?.id
@@ -402,6 +418,7 @@ export function GameHeader({
           renown={renown ? { level: renown.level, xpIntoLevel: renown.xpIntoLevel, xpForNextLevel: renown.xpForNextLevel, justLeveledUp } : undefined}
           settings={profileSheetSettings}
           stats={profileSheetData.stats}
+          titles={profileTitles}
           villages={profileVillages}
           world={profileSheetData.world}
         />

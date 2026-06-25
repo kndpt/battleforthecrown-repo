@@ -10,6 +10,7 @@ import type {
   IntelUpdatedPayload,
   PvpShieldBrokenPayload,
   RankingsChangedPayload,
+  RankingsCycleClosedPayload,
   ResourcesChangedPayload,
   ScoutReportedPayload,
   ScoutReturnedPayload,
@@ -108,6 +109,24 @@ export function applyRankingsChanged(
 ): void {
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.rankingsSummary(payload.worldId),
+  });
+}
+
+export function applyRankingsCycleClosed(
+  payload: RankingsCycleClosedPayload,
+  ctx: BindingsContext,
+): void {
+  // A cycle just closed: refresh the live board (weekly window rolled over),
+  // the cycle banner, and the player's own titles (a new one may be theirs).
+  const userId = useAuthStore.getState().user?.id ?? null;
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.rankingsSummary(payload.worldId),
+  });
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.rankingCycles(payload.worldId),
+  });
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.rankingTitles(userId),
   });
 }
 
@@ -1061,6 +1080,7 @@ const bindings: ServerEventBindings = {
   "resources.changed": applyResourcesChanged,
   "crowns.changed": applyCrownsChanged,
   "rankings.changed": applyRankingsChanged,
+  "rankings.cycle.closed": applyRankingsCycleClosed,
   "world.status.changed": applyWorldStatusChanged,
   // No client effect: a freshly auto-created PLANNED world has no members, and
   // the public worlds list refreshes via its own query. Bound only to satisfy
