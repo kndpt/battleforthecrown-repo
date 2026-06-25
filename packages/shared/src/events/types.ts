@@ -274,8 +274,8 @@ export interface PvpShieldBrokenPayload {
 
 export interface WorldStatusChangedPayload {
   worldId: string;
-  from: "PLANNED" | "OPEN" | "LOCKED" | "ENDED";
-  to: "PLANNED" | "OPEN" | "LOCKED" | "ENDED";
+  from: "PLANNED" | "OPEN" | "LOCKED" | "ENDED" | "ARCHIVED";
+  to: "PLANNED" | "OPEN" | "LOCKED" | "ENDED" | "ARCHIVED";
   at: string;
 }
 

@@ -69,6 +69,7 @@ export class WorldLifecycleWorker implements OnModuleInit {
     inscriptionPhaseChanged: number;
     openToLocked: number;
     lockedToEnded: number;
+    endedToArchived: number;
   }> {
     // Garantir un monde joignable « frais » AVANT d'ouvrir les PLANNED : si la
     // cadence est échue, le monde créé ici (`plannedOpenAt = now`) est ouvert
@@ -78,17 +79,19 @@ export class WorldLifecycleWorker implements OnModuleInit {
     const inscriptionPhaseChanged = await this.handlePhaseTransitions(now);
     const openToLocked = await this.lockExpiredRegistrationWindows(now);
     const lockedToEnded = await this.endExpiredWorlds(now);
+    const endedToArchived = await this.archiveEndedWorlds(now);
 
     if (
       plannedCreated +
         plannedToOpen +
         inscriptionPhaseChanged +
         openToLocked +
-        lockedToEnded >
+        lockedToEnded +
+        endedToArchived >
       0
     ) {
       this.logger.log(
-        `World lifecycle transitions: plannedCreated=${plannedCreated}, plannedToOpen=${plannedToOpen}, inscriptionPhaseChanged=${inscriptionPhaseChanged}, openToLocked=${openToLocked}, lockedToEnded=${lockedToEnded}`,
+        `World lifecycle transitions: plannedCreated=${plannedCreated}, plannedToOpen=${plannedToOpen}, inscriptionPhaseChanged=${inscriptionPhaseChanged}, openToLocked=${openToLocked}, lockedToEnded=${lockedToEnded}, endedToArchived=${endedToArchived}`,
       );
     }
 
@@ -98,6 +101,7 @@ export class WorldLifecycleWorker implements OnModuleInit {
       inscriptionPhaseChanged,
       openToLocked,
       lockedToEnded,
+      endedToArchived,
     };
   }
 
@@ -332,6 +336,87 @@ export class WorldLifecycleWorker implements OnModuleInit {
       });
     }
     return transitions;
+  }
+
+  /**
+   * Fin de vie d'un monde : `archiveAfterDays` (default 7 j) après `endsAt`, la
+   * fenêtre de consultation read-only `ENDED` expire. Le monde passe `ENDED →
+   * ARCHIVED` et toutes ses données joueur sont purgées dans la **même
+   * transaction**. Le monde lui-même est conservé (`status = ARCHIVED`) pour
+   * préserver les FK des entités durables (rapports, snapshots, memberships).
+   */
+  private async archiveEndedWorlds(now: Date): Promise<number> {
+    const worlds = await this.prisma.world.findMany({
+      where: {
+        status: 'ENDED',
+        endsAt: { not: null },
+      },
+      orderBy: { endsAt: 'asc' },
+    });
+
+    let transitions = 0;
+    for (const world of worlds) {
+      if (!world.endsAt) continue;
+
+      const lifecycle = this.getLifecycle(world);
+      const archiveAt = addDays(world.endsAt, lifecycle.archiveAfterDays);
+      if (archiveAt > now) continue;
+
+      transitions += await this.archiveWorld(world.id, now);
+    }
+    return transitions;
+  }
+
+  /**
+   * Transition `ENDED → ARCHIVED` + purge atomique des données joueur scopées au
+   * monde. Un `updateMany` conditionnel (`status = ENDED`) garantit l'idempotence
+   * et l'atomicité : un monde déjà archivé (`count !== 1`) ne purge rien et
+   * n'émet aucun event. Échec partiel ⇒ rollback complet (status reste `ENDED`).
+   *
+   * Matrice de purge (run 065). Sont conservés : `World` (status ARCHIVED),
+   * `WorldMembership` (relation user×world durable), tous les rapports
+   * (`CombatReport`/`ScoutReport`/`ReinforcementReport`/`CaravanReport` +
+   * `InboxEntry`), `GloryLedger`, `RenownLedger`, `WorldFinalRankingSnapshot`,
+   * `GloryCycleSnapshot`, `RankingCycleTitleAward`, `UserWorldCosmeticAward` —
+   * ces tables n'ont pas de FK cascade depuis `Village` (rapports = `worldId`
+   * dénormalisé) et survivent puisque `World` n'est pas supprimé.
+   */
+  private async archiveWorld(worldId: string, now: Date): Promise<number> {
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.world.updateMany({
+        where: { id: worldId, status: 'ENDED' },
+        data: { status: 'ARCHIVED', archivedAt: now },
+      });
+
+      if (updated.count !== 1) {
+        return 0;
+      }
+
+      // Tables `worldId` dénormalisées (pas de cascade Prisma) — purge explicite.
+      await tx.expedition.deleteMany({ where: { worldId } });
+      await tx.villageIntel.deleteMany({ where: { worldId } });
+      await tx.worldSeedState.deleteMany({ where: { worldId } });
+      await tx.chunkSpawnState.deleteMany({ where: { worldId } });
+      await tx.zoneCapacity.deleteMany({ where: { worldId } });
+      await tx.crownBalance.deleteMany({ where: { worldId } });
+      // DailyCard cascade DailyCardTask ; OnboardingState cascade OnboardingStepProgress.
+      await tx.dailyCard.deleteMany({ where: { worldId } });
+      await tx.dailyOyez.deleteMany({ where: { worldId } });
+      await tx.onboardingState.deleteMany({ where: { worldId } });
+      // Village EN DERNIER : ses FK cascade (Building, ResourceStock, Population,
+      // UnitInventory, UnitTraining, PendingConquest, VillageStrategyConfig,
+      // Garrison) partent avec lui.
+      await tx.village.deleteMany({ where: { worldId } });
+
+      await createOutboxEvent(tx, 'world.status.changed', worldId, {
+        worldId,
+        from: 'ENDED',
+        to: 'ARCHIVED',
+        at: now.toISOString(),
+      });
+
+      return 1;
+    });
   }
 
   private async transitionWorld(
