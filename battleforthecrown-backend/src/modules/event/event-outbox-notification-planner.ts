@@ -194,6 +194,7 @@ const PLANNERS: Record<EventKind, AnyPlanner> = {
   'rankings.cycle.closed': directWorld('worldId'),
   'world.status.changed': directWorld('worldId'),
   'world.planned.created': directWorld('worldId'),
+  'world.inscription-phase.changed': directWorld('worldId'),
   'pvp.shield.broken': directUser('userId'),
   'intel.updated': directUser('userId'),
 };

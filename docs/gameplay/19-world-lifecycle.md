@@ -66,7 +66,7 @@ Déclenchement : manuel (admin) ou planifié via cron.
 Pas de changement de status (le monde reste `OPEN`). À `startedAt + 7 j` (default 🔧), le sous-flag `inscriptionPhase` passe de `'main'` à `'late'`. Effets :
 
 - Le monde reste joignable mais l'UI de sélection de monde affiche un avertissement (« lancé il y a {N} j ») et propose côte à côte un monde frais en phase `main` si disponible.
-- Notification serveur : « La cohorte principale est complète. Inscription encore possible 3 jours en mode retardataires. »
+- Notification serveur : la bascule émet l'event Outbox `world.inscription-phase.changed` (broadcast `directWorld`) — cf. [run 083](../../tasks/runs/archive/083-feature-world-inscription-phase-changed-event.md) + [`realtime.md`](../architecture/realtime.md). Le front invalide `worlds.public` au signal, donc le bandeau apparaît **en temps réel** pour un joueur déjà sur l'écran de sélection, sans refetch manuel. La traversée est persistée via `World.inscriptionPhaseTransitionedAt` (idempotence : émis une seule fois).
 - Aucun impact technique côté `JoinWorldUseCase` — les inscriptions sont toujours acceptées.
 
 ### `OPEN → LOCKED`

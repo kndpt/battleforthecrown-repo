@@ -164,6 +164,7 @@ model World {
   startedAt       DateTime?   @map("started_at") @db.Timestamptz(3)
   endsAt          DateTime?   @map("ends_at") @db.Timestamptz(3)
   plannedOpenAt   DateTime?   @map("planned_open_at") @db.Timestamptz(3)
+  inscriptionPhaseTransitionedAt DateTime? @map("inscription_phase_transitioned_at") @db.Timestamptz(3)
   createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
 
   villages               Village[]

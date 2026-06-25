@@ -1,8 +1,8 @@
 # Run #083 — feature-world-inscription-phase-changed-event
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-24
+> **Terminé** : 2026-06-24
 
 ## Cible
 
@@ -87,23 +87,34 @@ Une seule piste évidente — pattern aligné sur `world.status.changed`. Le seu
 - Rules : `.agents/rules/{conventions,docs,git,harness}.md`
 - Skills : `bftc-tests-policy`, `bftc-qa`, `bftc-prisma`, `bftc-workers-outbox`
 
-## Décomposition initiale
+## Décomposition / Décisions
 
-_(Lead étape 3 — tâches ≤5 fichiers)_
-
-## Progress
-
-_(Vide au démarrage. Lead remplit pendant le run.)_
-
-## Décisions prises
-
-_(Vide au démarrage. Lead remplit pendant le run.)_
+_(git history)_
 
 ## Rapport final
 
+Synthèse : nouvel event Outbox `world.inscription-phase.changed` émis par `WorldLifecycleWorker.handlePhaseTransitions` à `startedAt + inscriptionMainDays` (monde reste OPEN, sous-flag distinct). Idempotence via colonne `World.inscriptionPhaseTransitionedAt` (updateMany conditionnel dans la même tx que `createOutboxEvent`). Routing `directWorld`, front invalide `worlds.public`.
+
 ### Acceptance & QA
 
-- [ ] Critères ci-dessus — résultats à remplir au run
-- **Review indépendante** : non (critère a partiellement vrai — back + front, mais diff estimé < 100 lignes ; à confirmer au démarrage du run)
-- **Tests automatisés** : spec worker idempotence + spec planner routing + ws-binding handler
-- **Tests IG user** : checklist Kelvin 1 item (bandeau retardataires apparaît sans refresh)
+**Critères d'acceptance vérifiés**
+
+- [x] Colonne `World.inscriptionPhaseTransitionedAt: DateTime?` + migration additive — `yarn prisma migrate deploy` → `20260624153000_add_world_inscription_phase_transitioned_at` appliquée (nullable, non destructif).
+- [x] `WorldInscriptionPhaseChangedPayloadSchema {worldId, from:'main', to:'late', at}` Zod — `schemas.ts:280` (`z.literal` + `z.string().datetime()`), type `types.ts:288` ; exhaustivité EventKind/ServerEvents/Outbox/Any couverte → `yarn static-check` vert.
+- [x] `handlePhaseTransitions` invoqué dans `handleLifecycleTick` + idempotence colonne — smoke `world-inscription-phase` : `yarn workspace battleforthecrown-backend test:smoke:run -- world-inscription-phase world-lifecycle-spawner` → 6 passed (transition unique, re-tick = 0 event, hors fenêtre = 0).
+- [x] Un seul event émis dans la même tx que la persistance — smoke audite `eventOutbox` filtré par kind/aggregateId → 1 event, `inscriptionPhaseTransitionedAt = now`, monde reste OPEN.
+- [x] Planner route `directWorld('worldId')` — `event-outbox-notification-planner.ts:196` ; unit `yarn workspace battleforthecrown-backend test -- event-outbox-notification-planner` → 18 passed.
+- [x] Front reçoit le WS et invalide `worlds.public` — `applyWorldInscriptionPhaseChanged` + binding ; `yarn workspace battleforthecrown-pixi test --run ws-bindings` → 48 passed.
+- [x] `static-check` racine vert · `yarn workspace battleforthecrown-backend test` → 509 passed · smokes ciblés verts.
+
+**Review indépendante** : Déclenchée (raison: critère a back+front ET critère c diff>100 lignes). Verdict `GO` — zéro bloquant/majeur, 4 mineurs loggés (phase+lock même tick sur monde >J+10 : métier correct ; double parse config & double invalidation front : alignés sur patterns existants ; `at`=instant du tick comme `world.status.changed`). Aucun fix requis.
+
+**Tests automatisés** : `static-check` vert ; backend unit 509 passed ; planner 18 passed ; ws-bindings 48 passed.
+
+**Smokes lancés** (Ciblés) : `test:smoke:run -- world-inscription-phase world-lifecycle-spawner` → 6 passed. Périmètre ciblé suffisant (worker lifecycle + nouvelle colonne) ; full smoke couvert par CI PR.
+
+**Smokes ajoutés/modifiés** : `test/world-inscription-phase.smoke.spec.ts` — transition main→late unique, idempotence re-tick, non-transition hors fenêtre.
+
+**QA fonctionnelle agent** : worker exercé bout-en-bout via smoke (boot app réel + Prisma + Outbox). Pas de curl/WS manuel additionnel nécessaire.
+
+**Tests IG à faire par le user** : 1 item — sur l'écran sélection mondes ouvert au moment de la bascule (`startedAt + inscriptionMainDays`), le bandeau « Lancé il y a {N} j » apparaît **sans refresh manuel**.
