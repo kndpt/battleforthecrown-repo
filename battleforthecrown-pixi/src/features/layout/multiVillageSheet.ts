@@ -66,6 +66,7 @@ export function buildMultiVillageSheetItems(
     capitale: village.isCapital,
     coords: `${village.x}:${village.y}`,
     id: village.id,
+    label: village.label ?? null,
     level: getCastleLevel(runtime.buildingsByVillageId?.get(village.id)),
     lords: mapLordActivities(runtime.trainingByVillageId?.get(village.id), now),
     name: village.name,

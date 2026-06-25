@@ -4,7 +4,6 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-- [83 — Filtre par étiquette dans le sélecteur multi-village](./083-multi-village-label-filter.md) — 🟠 Moyen. La spec 22 tranche MVP léger « filtre par étiquette dans la liste des villages » ; `MultiVillageBottomSheet` n'expose qu'un segment `all | active | alerts`, les 3 chips `Offensif | Défensif | Économique` manquent.
 - [66 — Inbox combat : tag VICTOIRE/DÉFAITE faux dans la liste](./66-inbox-report-outcome-uses-losses-heuristic.md) — 🟡 Majeur. La liste de l'inbox calcule l'issue via une heuristique de pertes, divergente de la règle canonique utilisée par le modal.
 - [57 — Source canonique du lifecycle des bâtiments joueur](./57-player-village-building-lifecycle-roster.md) — 🟡 Majeur. Centraliser la politique join/conquête/backfill des bâtiments pour éviter les oublis à chaque nouveau bâtiment activé.
 
@@ -115,6 +114,7 @@ Politique PR `$bftc-run` :
 
 ## Archivés
 
+- [83 — Filtre par étiquette dans le sélecteur multi-village](./archive/083-multi-village-label-filter.md) ✅ Résolu 2026-06-24 par $bftc-run @tasks/083-multi-village-label-filter.md
 - [76 — Annuler une formation depuis la file Caserne](./archive/076-cancel-army-training-from-queue-chip.md) ✅ Résolu 2026-05-31 par $bftc-run @tasks/076-cancel-army-training-from-queue-chip.md
 - [75 — Transition d'entrée monde rejouée à chaque navigation jeu](./archive/075-fix-world-entry-transition-on-game-navigation.md) ✅ Résolu 2026-05-31 par $bftc-run @tasks/075-fix-world-entry-transition-on-game-navigation.md
 - [74 — Drag tactile direct (tap + glisser) pour recruter dans la vue Armée](./archive/74-army-touch-drag-recruit.md) ✅ Résolu 2026-05-28 par $bftc-run @tasks/74-army-touch-drag-recruit.md

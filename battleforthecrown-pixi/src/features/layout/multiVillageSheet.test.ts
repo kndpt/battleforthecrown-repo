@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { JoinedVillage } from '@/api';
-import { buildSortedMultiVillageSheetItems } from './multiVillageSheet';
+import {
+  buildMultiVillageSheetItems,
+  buildSortedMultiVillageSheetItems,
+} from './multiVillageSheet';
 
 function village(id: string, name: string): JoinedVillage {
   return { id, name, x: 0, y: 0, worldId: 'world-1' };
@@ -27,5 +30,23 @@ describe('buildSortedMultiVillageSheetItems', () => {
     expect(items.filter((item) => item.active)).toHaveLength(1);
     // original order preserved (toSorted does not mutate the source array)
     expect(input.map((v) => v.id)).toEqual(['a', 'b', 'c']);
+  });
+});
+
+describe('buildMultiVillageSheetItems label propagation', () => {
+  it('forwards the raw enum label so the list filter can compare it', () => {
+    const items = buildMultiVillageSheetItems(
+      [
+        { ...village('off', 'Kelvinor'), label: 'OFFENSIVE' },
+        { ...village('eco', "Vald'Or"), label: 'ECONOMIC' },
+        { ...village('none', 'Pierre-Noire') },
+      ],
+      'off',
+      {},
+    );
+
+    expect(items.map((item) => item.label)).toEqual(['OFFENSIVE', 'ECONOMIC', null]);
+    // badge stays the French display string, decoupled from the enum value
+    expect(items.find((item) => item.id === 'off')?.badge).toBe('Offensif');
   });
 });

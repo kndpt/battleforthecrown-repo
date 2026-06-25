@@ -1,5 +1,6 @@
 import type { HTMLAttributes, ReactNode } from 'react';
-import type { VillageStrategyType } from '@battleforthecrown/shared/village';
+import type { VillageLabel, VillageStrategyType } from '@battleforthecrown/shared/village';
+import { VILLAGE_LABELS, VILLAGE_LABEL_DISPLAY } from '@battleforthecrown/shared/village';
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
 import { formatCompactNumber } from '@/lib/resourceConfig';
@@ -7,7 +8,7 @@ import { GameBottomSheetPanel } from './GameBottomSheetPanel';
 import { SegmentedControl } from './SegmentedControl';
 import { villageStyleOptions } from './villageStyleData';
 
-export type MultiVillageFilter = 'all' | 'active' | 'alerts';
+export type MultiVillageFilter = 'all' | 'active' | 'alerts' | VillageLabel;
 export type MultiVillageResourceKind = 'wood' | 'stone' | 'iron' | 'pop';
 export type MultiVillageActivityKind = 'build' | 'troops' | 'lords';
 export type MultiVillageAlertKind = 'attack' | 'warning';
@@ -53,6 +54,7 @@ export interface MultiVillageItem {
   capitale?: boolean;
   coords: string;
   id: string;
+  label?: VillageLabel | null;
   level?: number;
   lords?: MultiVillageLordActivity[];
   name: string;
@@ -145,6 +147,9 @@ interface VillageTierSpriteProps {
   size?: number;
   tier?: number;
 }
+
+// Default chip set: the three segments + one chip per village label (stable enum order).
+const DEFAULT_MULTI_VILLAGE_FILTERS: MultiVillageFilter[] = ['all', 'active', 'alerts', ...VILLAGE_LABELS];
 
 const resourceMeta: Record<MultiVillageResourceKind, { icon: string; label: string }> = {
   iron: { icon: '/assets/resources/iron.png', label: 'Fer' },
@@ -501,11 +506,13 @@ function VillageCard({ labels, onActivitySelect, onSelect, village }: VillageCar
 }
 
 function FilterSeg({ availableFilters, labels, onChange, value }: FilterSegProps) {
-  const allowed = new Set(availableFilters ?? ['all', 'active', 'alerts']);
+  const allowed = new Set(availableFilters ?? DEFAULT_MULTI_VILLAGE_FILTERS);
   const allOptions = [
     { id: 'all', label: labels.allFilter },
     { id: 'active', label: labels.activeFilter },
     { id: 'alerts', label: labels.alertsFilter },
+    // Label chips reuse the shared enum display (same source as the card badge).
+    ...VILLAGE_LABELS.map((label) => ({ id: label, label: VILLAGE_LABEL_DISPLAY[label] })),
   ] satisfies { id: MultiVillageFilter; label: string }[];
   const options = allOptions.filter((option) => allowed.has(option.id));
 
@@ -537,10 +544,12 @@ export function MultiVillageBottomSheet({
   const visible = villages.filter((village) => {
     if (filter === 'active') return village.active || (village.builds?.length ?? 0) + (village.troops?.length ?? 0) + (village.lords?.length ?? 0) > 0;
     if (filter === 'alerts') return Boolean(village.alert);
+    // Any remaining non-'all' filter is a VillageLabel chip: match exact label, hide unlabelled.
+    if (filter !== 'all') return village.label === filter;
     return true;
   });
   const count = totalCount ?? villages.length;
-  const filters = availableFilters ?? ['all', 'active', 'alerts'];
+  const filters = availableFilters ?? DEFAULT_MULTI_VILLAGE_FILTERS;
   const hasFilterTabs = filters.length > 1;
   const title = (
     <>
