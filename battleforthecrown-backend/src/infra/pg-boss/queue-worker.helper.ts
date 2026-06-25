@@ -39,12 +39,17 @@ export interface JobQueueWorkerOptions {
 // one poll cycle (pg-boss default 2s). `PGBOSS_WORKER_POLL_MS` lets the test env
 // tighten this to pg-boss's 500ms floor without touching prod cadence (unset in
 // prod/dev → workOptions used verbatim, keeping the 2s default / explicit 1s).
+// pg-boss enforces a 500ms floor on pollingIntervalSeconds and throws from
+// work() below it — clamp so a misconfigured override can't break worker boot.
+const PGBOSS_MIN_POLL_MS = 500;
+
 function withPollOverride(
   workOptions?: PgBoss.WorkOptions,
 ): PgBoss.WorkOptions | undefined {
   const overrideMs = Number(process.env.PGBOSS_WORKER_POLL_MS);
   if (!Number.isFinite(overrideMs) || overrideMs <= 0) return workOptions;
-  return { ...workOptions, pollingIntervalSeconds: overrideMs / 1000 };
+  const clampedMs = Math.max(overrideMs, PGBOSS_MIN_POLL_MS);
+  return { ...workOptions, pollingIntervalSeconds: clampedMs / 1000 };
 }
 
 export async function registerJobQueueWorker<TData extends object>(
