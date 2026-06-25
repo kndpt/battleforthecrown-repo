@@ -11,10 +11,15 @@ import {
 } from '@battleforthecrown/shared/rankings';
 import type { UnitMap } from '@battleforthecrown/shared/army';
 import { MS_PER_DAY } from '@battleforthecrown/shared/time';
+import {
+  computeCycleBoundaries,
+  currentCycleIndex,
+} from '@battleforthecrown/shared/rankings';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { PowerService } from '../power/power.service';
 import type { PrismaClientOrTx } from '../../common/prisma.types';
 import { createOutboxEvent } from '../event/event.utils';
+import { resolveRankingsConfig } from './rankings-cycle.service';
 
 const GLORY_WEEKLY_DAYS = 7;
 
@@ -188,13 +193,23 @@ export class RankingsService {
     period: 'WEEKLY' | 'ALL_TIME',
     limit = 20,
   ): Promise<RankingsLeaderboardResponse> {
-    const since = period === 'WEEKLY' ? this.getWeeklyCutoff() : undefined;
+    // WEEKLY reads the current cycle window `[cycleStartAt, cycleEndAt)` (run
+    // 068). During the pre-cycle (before the first reset boundary) it falls back
+    // to a sliding 7-day cutoff so the board is never empty.
+    const window =
+      period === 'WEEKLY' ? await this.resolveWeeklyWindow(worldId) : null;
+    const occurredAtFilter: { gte: Date; lt?: Date } | undefined =
+      period !== 'WEEKLY'
+        ? undefined
+        : window
+          ? { gte: window.start, lt: window.end }
+          : { gte: this.getWeeklyCutoff() };
     const grouped = await this.prisma.gloryLedger.groupBy({
       by: ['scorerUserId'],
       where: {
         worldId,
         signal,
-        ...(since ? { occurredAt: { gte: since } } : {}),
+        ...(occurredAtFilter ? { occurredAt: occurredAtFilter } : {}),
       },
       _sum: { points: true },
       orderBy: { _sum: { points: 'desc' } },
@@ -353,5 +368,24 @@ export class RankingsService {
 
   private getWeeklyCutoff(): Date {
     return new Date(Date.now() - GLORY_WEEKLY_DAYS * MS_PER_DAY);
+  }
+
+  /**
+   * Current weekly cycle window for a world, or `null` during the pre-cycle (the
+   * caller then falls back to a sliding cutoff). Reads the world's reset config.
+   */
+  private async resolveWeeklyWindow(
+    worldId: string,
+  ): Promise<{ start: Date; end: Date } | null> {
+    const world = await this.prisma.world.findUnique({
+      where: { id: worldId },
+      select: { createdAt: true, config: true },
+    });
+    if (!world) return null;
+    const { reset } = resolveRankingsConfig(world.config);
+    const index = currentCycleIndex(world.createdAt, new Date(), reset);
+    if (index < 1) return null;
+    const boundaries = computeCycleBoundaries(world.createdAt, index, reset);
+    return { start: boundaries.cycleStartAt, end: boundaries.cycleEndAt };
   }
 }

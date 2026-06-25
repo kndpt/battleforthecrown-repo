@@ -114,13 +114,15 @@ Deux lectures coexistent :
 
 La vue hebdomadaire cree de l'animation pendant le monde. La vue monde entier donne du poids a la fin de monde sans imposer une meta-progression entre mondes.
 
+**Implementation MVP (run 068)** : frontiere de cycle **wall-clock Lundi 00:00 UTC** (configurable via `WorldConfig.rankings.weeklyCycleResetDayUtc/HourUtc`), restee wall-clock meme sur un monde au tempo compresse pour rester socialement lisible. Le worker `RankingsCycleWorker` (tick horaire) clot chaque cycle echu : snapshot `GloryCycleSnapshot` + attribution du titre temporaire au rang 1 (`score > 0`, ties tous recompenses) dans la meme transaction. Le pre-cycle (entre `createdAt` et le premier Lundi) n'est pas snapshotte ; la vue hebdo y retombe sur un cutoff glissant 7 j. POWER reste live, hors cycle. Detail des entites : [`data-model.md`](../architecture/data-model.md).
+
 ## Rewards
 
 Par defaut, les classements ne donnent pas de couronnes, ressources, reduction de temps, bonus de production, bonus d'attaque, ou bonus de conquete.
 
 Rewards autorises :
 
-- titre temporaire sur le cycle suivant ;
+- titre temporaire sur le cycle suivant (livré run 068 : `RankingCycleTitleAward`, `validUntilAt` = fin du cycle suivant) ;
 - banniere ou cadre de profil ;
 - badge public sur la fiche joueur ;
 - entree dans l'historique du monde ;

@@ -124,6 +124,7 @@ Déclenchement : job planifié à `endsAt` (= `startedAt + 60 j`, default 🔧).
 | Couronnes accumulées | Reset (perdues avec le monde) |
 | Statistiques personnelles (raids menés, conquêtes, etc.) | Conservées sur la fiche profil globale |
 | **Récompenses cosmétiques** | **Permanentes**, attachées au compte global : titre du monde (ex : « Vainqueur de Avalon-3 »), bannière, badge profil |
+| **Titres hebdo de cycle** (`RankingCycleTitleAward`, run 068) | **Permanents** — la table survit au wipe destructeur (l'historique des titres reste consultable). Distinct du `GloryCycleSnapshot`, lui lié au monde et purgeable. |
 
 **Pourquoi pas de carry-over** : la méta-progression avantage mécaniquement les vétérans sur les mondes suivants — exactement le snowball qu'on vient de borner. Le carry-over cosmétique est suffisant pour la fierté joueur et la rétention long terme.
 

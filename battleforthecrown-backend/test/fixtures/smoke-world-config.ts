@@ -127,4 +127,9 @@ export const SMOKE_WORLD_CONFIG: WorldConfig = {
   },
   fogOfWar: { enabled: true },
   oyez: { enabled: true, weeklyCadence: 7, defaultDurationHours: 18 },
+  rankings: {
+    weeklyCycleResetDayUtc: 1,
+    weeklyCycleResetHourUtc: 0,
+    snapshotEntriesPerCycle: 20,
+  },
 };

@@ -13,6 +13,7 @@ import { ProductionWorker } from './production.worker';
 import { CrownProductionWorker } from './crown-production.worker';
 import { WorldLifecycleWorker } from './world-lifecycle.worker';
 import { OyezWorker } from './oyez.worker';
+import { RankingsCycleWorker } from './rankings-cycle.worker';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { OyezWorker } from './oyez.worker';
     ResourcesModule, // ✅ Provides ResourcesService for ConstructionWorker & ProductionWorker
     CrownsModule, // ✅ Provides CrownsService for CrownProductionWorker & ConstructionWorker
     RetentionModule, // ✅ Provides OyezProducerService for OyezWorker
-    RankingsModule, // ✅ Provides RankingsService for WorldLifecycleWorker (final snapshot at ENDED)
+    RankingsModule, // ✅ Provides RankingsService + RankingsCycleService for WorldLifecycleWorker & RankingsCycleWorker
     RenownModule, // ✅ Provides RenownService for WorldLifecycleWorker (creditRankingBonuses at ENDED)
   ],
   providers: [
@@ -32,6 +33,7 @@ import { OyezWorker } from './oyez.worker';
     CrownProductionWorker,
     WorldLifecycleWorker,
     OyezWorker,
+    RankingsCycleWorker,
   ],
   exports: [
     ConstructionWorker,
@@ -41,6 +43,7 @@ import { OyezWorker } from './oyez.worker';
     CrownProductionWorker,
     WorldLifecycleWorker,
     OyezWorker,
+    RankingsCycleWorker,
   ],
 })
 export class WorkersModule {}

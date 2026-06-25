@@ -1,8 +1,8 @@
 # Run #068 — rankings-weekly-cycle-close-and-titles
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-25
+> **Terminé** : 2026-06-25
 
 ## Cible
 
@@ -110,17 +110,32 @@ _(Lead étape 3 — tâches ≤ 5 fichiers)_
 
 ## Progress
 
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
+_(git history)_
 
 ## Décisions prises
 
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
+_(git history)_
 
 ## Rapport final
 
+Frontière de cycle wall-clock **Lundi 00:00 UTC** (configurable `WorldConfig.rankings`), helpers purs shared (`cycle.ts`). Worker horaire `RankingsCycleWorker` → `closeDueCycles` snapshote chaque cycle échu (`GloryCycleSnapshot`) + attribue le titre rang 1 (`RankingCycleTitleAward`, ties tous, score 0 = aucun) dans la même tx, idempotent (unique + catch P2002). `getGloryLeaderboard` WEEKLY lit la fenêtre du cycle courant (fallback cutoff 7j en pré-cycle). Endpoints `GET /worlds/:id/rankings/cycles/current` (public) + `GET /users/me/ranking-titles` (self). Front : bandeau cycle + champion sortant (RankingsScreen), section « Titres » (PlayerProfileSheet). Event Outbox `rankings.cycle.closed` (5 points). **Titre permanent** : `RankingCycleTitleAward.worldId` dénormalisé sans FK World (pas de cascade au wipe — invariant encodé schéma, comme `GloryLedger.opponentUserId`).
+
 ### Acceptance & QA
 
-- [ ] <critère> — `<cmd>` → <résultat>
-- **Review indépendante** : oui (critères déclencheurs : back+front + invariant durable « frontière de cycle hebdo wall-clock + titre temporaire » + diff estimé > 100 lignes).
-- **Tests automatisés** : Vitest unit (`computeCycleBoundaries` + résolution top-1) + smoke backend (fast-forward 2 semaines + assert snapshots + assert titres + endpoints).
-- **Tests IG user** : checklist FR ≤ 5 items pour Kelvin (bandeau cycle en cours visible, badge titre apparaît sur profil après simulation clôture, libellés FR, vide ne crashe pas).
+- [x] 2 modèles Prisma + migration (unique + index) — `git show --stat | grep migration` → `glory_cycle_snapshot` + `ranking_cycle_title_award` créés (2 FK : snapshot→world cascade, title→user cascade ; **pas** de FK title→world).
+- [x] Worker rattrape N cycles en un tick + idempotence — smoke : `closeDueCycles(Jun15 00:05)` → 4 (2 sem × 2 signaux), 2e tick → 0, count snapshots = 4.
+- [x] Frontière Lundi 00:00 UTC inclusive + ties + score 0 — `cycle.spec.ts` (18 tests) → verts.
+- [x] WEEKLY lit le cycle courant, pré-cycle fallback — `rankings.service.ts:resolveWeeklyWindow` ; smoke world-final-rankings + combat-attack non régressés.
+- [x] Endpoints cycles/current (public) + ranking-titles (self) — smoke : 200 + 2 signaux + lastClosed cycle 2 ; titres alice = 2× ASSAULT.
+- [x] Titres permanents survivent au wipe — schéma : `RankingCycleTitleAward` sans relation `world` (cascade impossible) + doc `19-world-lifecycle.md` / `data-model.md`.
+- **Review indépendante** : Déclenchée (back+front + invariant durable + diff > 100 lignes). Verdict initial `BLOCK` (1 majeur : `RankingCycleTitleAward.world onDelete: Cascade` vs invariant permanent). **Résolu** : FK World supprimée → `worldId` dénormalisé (vérifié migration + static-check + smoke verts). Mineurs (tie > 20 ex-aequo borné par snapshotEntries, broadcast directWorld) acceptés MVP.
+- **Tests automatisés** : `cycle.spec.ts` 18 verts (via vitest pixi) ; backend unit 508 verts ; pixi 805 verts ; `yarn static-check` vert.
+- **Smokes lancés** : Ciblés — `test:smoke:run rankings-cycle` (1/1) + non-régression `world-final-rankings renown combat-attack` (10/10). Full smoke couvert par CI PR (drift DB local sur migrations 067/083 d'autres branches bloque le préflight complet en local).
+- **Smokes ajoutés** : `test/rankings-cycle.smoke.spec.ts` (fast-forward 2 semaines, 4 snapshots, titres rang 1, idempotence, 2 endpoints).
+- **QA fonctionnelle agent** : smoke = scénario worker + endpoints REST bout-en-bout.
+- **Tests IG à faire par le user** (checklist FR) :
+  1. Écran Classements → onglet Gloire d'Assaut/Rempart : bandeau « Semaine N · clôture <date> · meneur <nom> » visible.
+  2. Lien « Voir le champion sortant » déplie le top 3 du cycle précédent.
+  3. Après une vraie clôture (ou simulation), un titre actif apparaît dans la section « Titres » du profil (badge ⚔️/🛡️, libellé FR `Champion d'Assaut · Semaine N · <monde>`).
+  4. Profil sans titre : la section « Titres » est masquée (pas de crash).
+  5. Bandeau pré-cycle (monde jeune) : « Pré-saison », aucun crash.

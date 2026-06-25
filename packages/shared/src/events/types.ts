@@ -301,6 +301,13 @@ export interface IntelUpdatedPayload {
   villageId: string;
 }
 
+export interface RankingsCycleClosedPayload {
+  worldId: string;
+  signal: "ASSAULT_GLORY" | "RAMPART_GLORY";
+  cycleIndex: number;
+  cycleEndAt: string;
+}
+
 export type OutboxEventPayload =
   | { kind: "building.completed"; payload: BuildingCompletedPayload }
   | { kind: "unit.training.completed"; payload: UnitTrainingCompletedPayload }
@@ -340,6 +347,7 @@ export type OutboxEventPayload =
   | { kind: "resources.changed"; payload: ResourcesChangedPayload }
   | { kind: "crowns.changed"; payload: CrownsChangedPayload }
   | { kind: "rankings.changed"; payload: RankingsChangedPayload }
+  | { kind: "rankings.cycle.closed"; payload: RankingsCycleClosedPayload }
   | { kind: "world.status.changed"; payload: WorldStatusChangedPayload }
   | { kind: "world.planned.created"; payload: WorldPlannedCreatedPayload }
   | { kind: "pvp.shield.broken"; payload: PvpShieldBrokenPayload }
@@ -382,6 +390,7 @@ export type AnyEventPayload =
   | ResourcesChangedPayload
   | CrownsChangedPayload
   | RankingsChangedPayload
+  | RankingsCycleClosedPayload
   | WorldStatusChangedPayload
   | WorldPlannedCreatedPayload
   | PvpShieldBrokenPayload
@@ -391,6 +400,7 @@ export interface ServerEvents {
   "resources.changed": ResourcesChangedPayload;
   "crowns.changed": CrownsChangedPayload;
   "rankings.changed": RankingsChangedPayload;
+  "rankings.cycle.closed": RankingsCycleClosedPayload;
   "building.completed": BuildingCompletedPayload;
   "unit.training.completed": UnitTrainingCompletedPayload;
   "unit.trained": UnitTrainedPayload;

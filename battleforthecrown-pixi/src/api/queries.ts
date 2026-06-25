@@ -78,9 +78,13 @@ import {
 } from "@battleforthecrown/shared/world";
 import type { OnboardingSummaryDto } from "@battleforthecrown/shared/onboarding";
 import {
+  RankingCyclesCurrentResponseSchema,
   RankingsSummaryResponseSchema,
+  RankingTitlesResponseSchema,
   WorldFinalRankingsResponseSchema,
+  type RankingCyclesCurrentResponse,
   type RankingsSummaryResponse,
+  type RankingTitlesResponse,
   type WorldFinalRankingsResponse,
 } from "@battleforthecrown/shared/rankings";
 
@@ -178,6 +182,10 @@ export const queryKeys = {
     ["onboarding", "summary", userId, worldId] as const,
   rankingsSummary: (worldId: string | null) =>
     ["rankings", "summary", worldId] as const,
+  rankingCycles: (worldId: string | null) =>
+    ["rankings", "cycles", worldId] as const,
+  rankingTitles: (userId: string | null) =>
+    ["ranking-titles", userId] as const,
   finalRankings: (worldId: string | null) =>
     ["rankings", "final", worldId] as const,
   renown: (userId: string | null) => ["renown", userId] as const,
@@ -765,6 +773,42 @@ export function useFinalRankingsQuery(
     // Snapshot is immutable once written → cache aggressively, no polling.
     staleTime: 5 * 60_000,
     retry: false,
+  });
+}
+
+/**
+ * Live weekly Glory cycle (current cycle + last closed champion) per signal,
+ * for the rankings banner. Public endpoint; polls so the banner self-heals.
+ */
+export function useRankingCyclesQuery(
+  worldId: string | null,
+): UseQueryResult<RankingCyclesCurrentResponse> {
+  return useQuery<RankingCyclesCurrentResponse>({
+    queryKey: queryKeys.rankingCycles(worldId),
+    queryFn: async () => {
+      if (!worldId) throw new Error("No world selected");
+      const response = await apiClient.get<unknown>(
+        `/worlds/${worldId}/rankings/cycles/current`,
+      );
+      return RankingCyclesCurrentResponseSchema.parse(response);
+    },
+    enabled: Boolean(worldId),
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+  });
+}
+
+/** Temporary championship titles (active + historical) owned by the player. */
+export function useRankingTitlesQuery(): UseQueryResult<RankingTitlesResponse> {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  return useQuery<RankingTitlesResponse>({
+    queryKey: queryKeys.rankingTitles(userId),
+    queryFn: async () => {
+      const response = await apiClient.get<unknown>("/users/me/ranking-titles");
+      return RankingTitlesResponseSchema.parse(response);
+    },
+    enabled: Boolean(userId),
+    staleTime: 5 * 60_000,
   });
 }
 

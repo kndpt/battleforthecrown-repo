@@ -2,6 +2,7 @@ import {
   DEFAULT_WORLD_IDENTITY_CONFIG,
   DEFAULT_WORLD_LIFECYCLE_CONFIG,
   DEFAULT_WORLD_OYEZ_CONFIG,
+  DEFAULT_WORLD_RANKINGS_CONFIG,
   type BarbarianSeedingConfig,
   type PlayerVillagePlacementConfig,
   type WorldConfig,
@@ -130,4 +131,5 @@ export const DEFAULT_WORLD_CONFIG: WorldConfig = {
   playerVillagePlacement: DEFAULT_PLAYER_VILLAGE_PLACEMENT_PLAN,
   fogOfWar: { enabled: true },
   oyez: { ...DEFAULT_WORLD_OYEZ_CONFIG },
+  rankings: { ...DEFAULT_WORLD_RANKINGS_CONFIG },
 };
