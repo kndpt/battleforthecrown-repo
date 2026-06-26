@@ -21,7 +21,7 @@ Oubli lors des runs 032 (foundation lifecycle) / 061 (`ENDED` snapshot + lecture
 ## Comportement attendu
 
 - À la réception WS `world.status.changed` avec `payload.to === "LOCKED"`, `applyWorldStatusChanged` émet un toast via `useUiStore.pushToast` (tone `info`, ttlMs aligné sur le pattern `ENDED`).
-- Titre court (ex : « Inscription close ») + description reprenant le sens de la spec (« La fenêtre d'inscription est fermée. {endsAt} »).
+- Titre court (ex : « Inscription close ») + description reprenant le sens de la spec (« La fenêtre d'inscription est fermée. »). Une mention du `endsAt` formaté FR est un plus si la donnée est disponible côté front (cf. § Source de `endsAt` ci-dessous) ; sinon on garde le wording court sans endsAt — l'info essentielle pour le joueur est la fermeture de l'inscription.
 - Les invalidations de cache existantes (`publicWorlds`, `worlds`, `myMemberships`, `worldConfig`, `worldConfigFull`) restent inchangées — non-régression.
 - Aucun toast pour les autres transitions hors `LOCKED` / `ENDED` (PLANNED → OPEN reste silencieux, OPEN → ENDED — saut improbable — affiche uniquement le toast `ENDED`, etc.).
 - Le toast n'est pas spammé si l'event est rejoué (TTL court, pattern existant côté `ENDED`).
@@ -44,12 +44,23 @@ Oubli lors des runs 032 (foundation lifecycle) / 061 (`ENDED` snapshot + lecture
 
 - `battleforthecrown-pixi/src/api/ws-bindings.test.ts` — assertion : le toast est poussé quand `payload.to === "LOCKED"` ; pas de toast pour PLANNED → OPEN ; toast `ENDED` toujours déclenché pour `to === "ENDED"`.
 
+## Source de `endsAt` côté front (clarification)
+
+Le payload WS `WorldStatusChangedPayload` (`packages/shared/src/events/types.ts:275-280`) ne porte que `{ worldId, from, to, at }` — **pas** d'`endsAt`. Pour éviter une modif backend (qui pousserait ce ticket vers une fiche de run), le toast lit `endsAt` depuis une cache TanStack déjà alimentée côté client :
+
+- `queryClient.getQueryData(queryKeys.myMemberships(userId))` — chaque membership expose `lifecycle.endsAt` (cf. `packages/shared/src/world/dtos.ts` + `world-types.ts`). C'est la cache la plus pertinente : seul un membre du monde reçoit l'event (routing `directWorld`).
+- Fallback : `queryClient.getQueryData(queryKeys.publicWorlds())` — `PublicWorldResponse` carry également `endsAt` (`packages/shared/src/world/schemas.ts:53`).
+
+**Lecture synchrone avant invalidation** : le toast lit la donnée juste avant `invalidateQueries`, donc on récupère la valeur encore en cache (la refetch n'est qu'enclenchée après). Si la cache est vide (cas dégénéré : membership pas encore chargée), le toast retombe sur le wording court sans `endsAt`. Aucun await, aucune dépendance d'ordering avec la refetch.
+
+Aucune modification de payload, de schema partagé ou du backend n'est requise — ticket strictement frontend.
+
 ## Points d'attention
 
 - **Cible audience du toast** : `world.status.changed` est routé `directWorld` par `event-outbox-notification-planner.ts:195` → seuls les sockets joints à la room `world:<worldId>` reçoivent l'event. Le toast s'affichera donc uniquement pour les joueurs membres en session sur ce monde — comportement attendu, aucune action explicite côté front nécessaire.
 - **Idempotence visuelle** : le pattern `ENDED` ne dédoublonne pas explicitement, le `ttlMs` fait office de garde-fou. Conserver la même approche.
-- **Wording FR** : la spec donne le sens, pas un libellé canonique ; rester court (mobile) et neutre, sans inclure le `endsAt` brut sans formatage humain. À borner par le concepteur du run.
-- **Pas de modification backend** : `payload` actuel (`{ worldId, from, to, at }`) suffit pour le wording figé piste A. Si la piste B est retenue plus tard, ajouter `memberCount` / `endsAt` au payload via `packages/shared/src/events/types.ts` + `schemas.ts` + `world-lifecycle.worker.ts` (hors scope ce ticket).
+- **Wording FR** : la spec donne le sens, pas un libellé canonique ; rester court (mobile) et neutre. Si `endsAt` est inclus, formater FR (`Intl.DateTimeFormat` ou helper existant) — pas d'ISO brut.
+- **Pas de modification backend** : `payload` actuel suffit ; `endsAt` lu de la cache front (cf. § Source de `endsAt`). Si une piste B (memberCount/endsAt dans le payload) devient pertinente plus tard, c'est un ticket distinct car ça touche `packages/shared/src/events/types.ts` + `schemas.ts` + `world-lifecycle.worker.ts` — hors scope ce ticket frontend-only.
 
 ## Critères de succès
 
