@@ -77,8 +77,7 @@ describe("useInitiateAttackMutation invalidations", () => {
       units: { MILITIA: 5 },
     });
 
-    await waitFor(() => expect(result.current.isIdle).toBe(false));
-    await waitFor(() => !result.current.isPending);
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expectPowerInvalidated("v-1", "user-1", "world-1");
   });
 });
@@ -100,8 +99,7 @@ describe("useInitiateScoutMutation invalidations", () => {
       units: { SPY: 1 },
     });
 
-    await waitFor(() => expect(result.current.isIdle).toBe(false));
-    await waitFor(() => !result.current.isPending);
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expectPowerInvalidated("v-1", "user-1", "world-1");
   });
 });
@@ -121,8 +119,7 @@ describe("useInitiateReinforceMutation invalidations", () => {
       units: { MILITIA: 3 },
     });
 
-    await waitFor(() => expect(result.current.isIdle).toBe(false));
-    await waitFor(() => !result.current.isPending);
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expectPowerInvalidated("v-1", "user-1", "world-1");
     expect(
       queryClient.getQueryState(queryKeys.population("v-1"))?.isInvalidated,
@@ -145,8 +142,7 @@ describe("useInitiateReinforceMutation invalidations", () => {
       units: { MILITIA: 3 },
     });
 
-    await waitFor(() => expect(result.current.isIdle).toBe(false));
-    await waitFor(() => !result.current.isPending);
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(
       queryClient.getQueryState(queryKeys.garrison("v-1"))?.isInvalidated,
     ).toBe(true);
@@ -176,8 +172,7 @@ describe("useRecallReinforcementMutation invalidations", () => {
       units: { MILITIA: 2 },
     });
 
-    await waitFor(() => expect(result.current.isIdle).toBe(false));
-    await waitFor(() => !result.current.isPending);
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expectPowerInvalidated("v-1", "user-1", "world-1");
     expect(
       queryClient.getQueryState(queryKeys.villagePower("v-2"))?.isInvalidated,
@@ -205,8 +200,7 @@ describe("useInitiateCaravanMutation invalidations", () => {
       resources: { wood: 100, stone: 50, iron: 25 },
     });
 
-    await waitFor(() => expect(result.current.isIdle).toBe(false));
-    await waitFor(() => !result.current.isPending);
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expectPowerInvalidated("v-1", "user-1", "world-1");
   });
 });
