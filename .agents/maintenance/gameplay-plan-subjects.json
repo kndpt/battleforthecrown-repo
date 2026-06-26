@@ -390,6 +390,28 @@
       "addedAt": "2026-06-23"
     },
     {
+      "specPath": "docs/gameplay/19-world-lifecycle.md",
+      "slug": "world-locked-transition-toast",
+      "title": "Notification serveur OPEN→LOCKED — toast côté joueur en session (Phase 11)",
+      "keywords": ["world-lifecycle", "locked", "notification", "inscription-closed", "toast", "phase-11"],
+      "artefactType": "ticket",
+      "artefactPath": "tasks/085-world-locked-transition-toast.md",
+      "artefactId": "085",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/world-locked-transition-toast",
+      "gapSummary": "La spec 19-world-lifecycle § OPEN → LOCKED stipule « Notification serveur : La fenêtre d'inscription est fermée. Le monde tourne maintenant entre ses {N} joueurs jusqu'au {endsAt}. » Le backend émet bien `world.status.changed` (worker + planner directWorld) et le frontend invalide les caches (publicWorlds/worlds/myMemberships/worldConfig), mais `applyWorldStatusChanged` n'affiche un toast que pour `to === ENDED` — aucune branche LOCKED. Le joueur en session voit son écran muter silencieusement sans comprendre pourquoi le monde a disparu de la liste publique.",
+      "codeEvidence": [
+        "battleforthecrown-pixi/src/api/ws-bindings.ts:134-175 applyWorldStatusChanged — branche `if (payload.to === 'ENDED')` avec pushToast, aucune branche `LOCKED`",
+        "battleforthecrown-backend/src/workers/world-lifecycle.worker.ts:358 — createOutboxEvent('world.status.changed', ...) émis pour toutes les transitions incluant OPEN→LOCKED",
+        "battleforthecrown-backend/src/modules/event/event-outbox-notification-planner.ts:195 — 'world.status.changed' routé directWorld(worldId), atteint les sockets dans la room world:<worldId>",
+        "packages/shared/src/events/types.ts:275-280 — WorldStatusChangedPayload = { worldId, from, to, at }, suffisant pour wording figé piste A",
+        "tasks/runs/archive/032-world-lifecycle-foundation-and-identity.md — livre l'event runtime mais aucun toast LOCKED côté UI",
+        "tasks/runs/archive/061-feature-world-ended-lifecycle.md + 066-feature-world-ended-readonly-ui.md — posent le pattern toast ENDED jamais étendu à LOCKED",
+        "tasks/runs/archive/083-feature-world-inscription-phase-changed-event.md — pattern 'invalidate sans toast' livré pour main→late, distinct du besoin LOCKED qui demande explicitement une notification serveur"
+      ],
+      "addedAt": "2026-06-26"
+    },
+    {
       "specPath": "docs/gameplay/06-barbarians.md",
       "slug": "barbarian-tier-readability-t4-t5",
       "title": "Lisibilité des villages barbares T4/T5 sur la carte (taille + palette)",
