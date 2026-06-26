@@ -3,6 +3,7 @@ import {
   encodeLootResult,
   parseCombatLoot,
   parseLootResources,
+  parseLootResourcesWithDefaults,
   parseLootResult,
 } from './loot.codec';
 
@@ -100,6 +101,51 @@ describe('loot.codec', () => {
 
     it('throws on non-object input', () => {
       expect(() => parseLootResources('bad', field)).toThrow(
+        /Invalid test\.resources JSON shape:/,
+      );
+    });
+  });
+
+  describe('parseLootResourcesWithDefaults', () => {
+    const field = 'test.resources';
+
+    it('defaults missing keys to zero', () => {
+      expect(parseLootResourcesWithDefaults({}, field)).toEqual({
+        wood: 0,
+        stone: 0,
+        iron: 0,
+      });
+    });
+
+    it('parses valid resources', () => {
+      expect(
+        parseLootResourcesWithDefaults(
+          { wood: 100, stone: 50, iron: 25 },
+          field,
+        ),
+      ).toEqual({
+        wood: 100,
+        stone: 50,
+        iron: 25,
+      });
+    });
+
+    it('defaults null to zeroes', () => {
+      expect(parseLootResourcesWithDefaults(null, field)).toEqual({
+        wood: 0,
+        stone: 0,
+        iron: 0,
+      });
+    });
+
+    it('throws on negative value', () => {
+      expect(() =>
+        parseLootResourcesWithDefaults({ wood: -1, stone: 0, iron: 0 }, field),
+      ).toThrow(/Invalid test\.resources JSON shape:/);
+    });
+
+    it('throws on non-object input', () => {
+      expect(() => parseLootResourcesWithDefaults('bad', field)).toThrow(
         /Invalid test\.resources JSON shape:/,
       );
     });

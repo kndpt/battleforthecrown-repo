@@ -1,7 +1,7 @@
 import type { Prisma } from '@prisma/client';
 import type { ScoutReportResponse } from '@battleforthecrown/shared/combat';
 import { parseUnitMap } from './codecs/unit-map.codec';
-import { parseLootResources } from './codecs/loot.codec';
+import { parseLootResourcesWithDefaults } from './codecs/loot.codec';
 
 type ScoutReportInput = {
   id: string;
@@ -61,7 +61,10 @@ export function presentScoutReport(
     targetName: report.targetName,
     targetTier: report.targetTier,
     units: parseUnitMap(report.units, 'scoutReport.units'),
-    resources: parseLootResources(report.resources, 'scoutReport.resources'),
+    resources: parseLootResourcesWithDefaults(
+      report.resources,
+      'scoutReport.resources',
+    ),
     strategy: report.strategy,
     details: reportDetails(report.details),
     isRead: report.isRead,

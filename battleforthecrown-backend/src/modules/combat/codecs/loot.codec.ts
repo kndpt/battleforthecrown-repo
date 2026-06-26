@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { z } from 'zod';
 import {
   LootResourcesSchema,
   LootResultSchema,
@@ -8,11 +9,36 @@ import {
   type CombatLoot,
 } from '@battleforthecrown/shared/combat';
 
+const LootResourcesWithDefaultsSchema = z.strictObject({
+  wood: z.number().nonnegative().default(0),
+  stone: z.number().nonnegative().default(0),
+  iron: z.number().nonnegative().default(0),
+});
+
 export function parseLootResources(
   raw: Prisma.JsonValue,
   fieldName: string,
 ): LootResources {
   const result = LootResourcesSchema.safeParse(raw);
+  if (!result.success) {
+    throw new Error(`Invalid ${fieldName} JSON shape: ${result.error.message}`);
+  }
+  return result.data;
+}
+
+/**
+ * Decode loot resources from Prisma JSON when empty or partial objects are
+ * valid persisted shapes (scout reports, village intel). Missing keys default
+ * to zero — same semantics as caravan `presentResources`.
+ */
+export function parseLootResourcesWithDefaults(
+  raw: Prisma.JsonValue,
+  fieldName: string,
+): LootResources {
+  if (raw === null || raw === undefined) {
+    return { wood: 0, stone: 0, iron: 0 };
+  }
+  const result = LootResourcesWithDefaultsSchema.safeParse(raw);
   if (!result.success) {
     throw new Error(`Invalid ${fieldName} JSON shape: ${result.error.message}`);
   }

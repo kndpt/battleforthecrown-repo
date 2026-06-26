@@ -155,6 +155,16 @@ describe('presentScoutReport', () => {
     ).toEqual({});
   });
 
+  it('defaults empty persisted resources to zeroes', () => {
+    expect(
+      presentScoutReport({ ...baseReport, resources: {} }).resources,
+    ).toEqual({
+      wood: 0,
+      stone: 0,
+      iron: 0,
+    });
+  });
+
   it('marks a barbarian scout report with null targetVillageId and targetTier', () => {
     const report: ScoutReportInput = {
       ...baseReport,

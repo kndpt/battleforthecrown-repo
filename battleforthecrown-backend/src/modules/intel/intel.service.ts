@@ -10,7 +10,7 @@ import { PrismaClientOrTx } from '../../common/prisma.types';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
 import { OwnershipService } from '../../common/auth/ownership.service';
 import { parseUnitMap } from '../combat/codecs/unit-map.codec';
-import { parseLootResources } from '../combat/codecs/loot.codec';
+import { parseLootResourcesWithDefaults } from '../combat/codecs/loot.codec';
 
 export interface RecordIntelInput {
   userId: string;
@@ -62,7 +62,10 @@ export class IntelService {
       sourceKind: row.sourceKind,
       sourceReportId: row.sourceReportId,
       units: parseUnitMap(row.units, 'villageIntel.units'),
-      resources: parseLootResources(row.resources, 'villageIntel.resources'),
+      resources: parseLootResourcesWithDefaults(
+        row.resources,
+        'villageIntel.resources',
+      ),
       wallLevel: row.wallLevel,
       strategy: row.strategy,
       targetName: row.targetName,
