@@ -58,6 +58,7 @@ import { RankingsService } from '../rankings/rankings.service';
 import { RenownService } from '../renown/renown.service';
 import { IntelService } from '../intel/intel.service';
 import { NewbieShieldService } from '../world/newbie-shield.service';
+import { FriendshipService } from '../friendship/friendship.service';
 import { mergeGarrisonsIntoParticipants } from './garrison-merge.utils';
 import {
   dedupedRecipientUserIds,
@@ -141,6 +142,7 @@ export class CombatWorker implements OnModuleInit {
     private readonly renown: RenownService,
     private readonly intelService: IntelService,
     private readonly newbieShield: NewbieShieldService,
+    private readonly friendship: FriendshipService,
   ) {}
 
   async onModuleInit() {
@@ -1622,6 +1624,17 @@ export class CombatWorker implements OnModuleInit {
             tx,
           )
         : null;
+    // Snapshot des amis défensifs ACTIVE du propriétaire de la cible au moment
+    // du scout (PLAYER only) → un attaquant jauge le risque de renfort. Figé
+    // comme wallLevel/newbieShield : non recalculé live après le scout.
+    const defensiveFriendsDisplayNames =
+      expedition.targetKind === 'PLAYER_VILLAGE' && targetVillage.userId
+        ? await this.friendship.listActiveFriendDisplayNames(
+            expedition.worldId,
+            targetVillage.userId,
+            tx,
+          )
+        : [];
 
     const report = await tx.scoutReport.create({
       data: {
@@ -1653,6 +1666,9 @@ export class CombatWorker implements OnModuleInit {
                   endsAt: newbieShieldSnapshot.endsAt,
                 },
               }
+            : {}),
+          ...(defensiveFriendsDisplayNames.length > 0
+            ? { defensiveFriendsDisplayNames }
             : {}),
         },
       },

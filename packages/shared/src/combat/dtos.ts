@@ -127,6 +127,14 @@ export interface ScoutReportResponse {
      * recomputed live (cf. wallLevel/castleLevel snapshot pattern).
      */
     newbieShield?: { active: boolean; endsAt: string | null };
+    /**
+     * Display names of the target owner's ACTIVE defensive friends, snapshot at
+     * scout time (PLAYER targets only, cap {@link DEFENSIVE_FRIENDS_CAP}). Lets
+     * an attacker gauge the reinforcement risk before striking. Absent for
+     * barbarian targets and for owners with no ACTIVE friend. Frozen — never
+     * recomputed live (same pattern as wallLevel/newbieShield).
+     */
+    defensiveFriendsDisplayNames?: string[];
   };
   isRead: boolean;
   timestamp: string;
