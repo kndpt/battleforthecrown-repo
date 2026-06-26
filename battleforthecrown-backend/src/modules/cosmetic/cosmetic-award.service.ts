@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { resolveCosmeticAwards } from '@battleforthecrown/shared';
 import type { CosmeticAwardResponse } from '@battleforthecrown/shared';
-import { WorldConfigSchema } from '@battleforthecrown/shared/world';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { PrismaClientOrTx } from '../../common/prisma.types';
+import { resolveWorldDisplayName } from '../../common/display-names';
 
 /**
  * Permanent, account-global cosmetic championship titles (run 067).
@@ -47,7 +47,7 @@ export class CosmeticAwardService {
     );
     if (resolved.length === 0) return 0;
 
-    const worldDisplayName = await this.resolveWorldDisplayName(tx, worldId);
+    const worldDisplayName = await resolveWorldDisplayName(tx, worldId);
 
     const result = await tx.userWorldCosmeticAward.createMany({
       data: resolved.map((award) => ({
@@ -76,27 +76,5 @@ export class CosmeticAwardService {
       worldDisplayName: award.worldDisplayName,
       awardedAt: award.awardedAt.toISOString(),
     }));
-  }
-
-  /**
-   * Snapshot the world's human-readable name at award time so the title stays
-   * legible after the world is renamed or purged (run 065). Falls back to the
-   * raw `world.name` if the config can't be parsed.
-   */
-  private async resolveWorldDisplayName(
-    tx: PrismaClientOrTx,
-    worldId: string,
-  ): Promise<string> {
-    const world = await tx.world.findUnique({
-      where: { id: worldId },
-      select: { name: true, config: true },
-    });
-    if (!world) return worldId;
-
-    const parsed = WorldConfigSchema.safeParse(world.config);
-    if (parsed.success) {
-      return parsed.data.identity.displayName;
-    }
-    return world.name;
   }
 }
