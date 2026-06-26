@@ -22,7 +22,7 @@ import type { PrismaClientOrTx } from '../../common/prisma.types';
 import {
   loadUserDisplayNames,
   resolvePublicPlayerName,
-  resolveWorldDisplayName,
+  resolveWorldDisplayNameFromData,
 } from '../../common/display-names';
 import { createOutboxEvent } from '../event/event.utils';
 
@@ -83,7 +83,16 @@ export class RankingsCycleService {
           { status: 'ENDED', endsAt: { not: null } },
         ],
       },
-      select: { id: true, createdAt: true, endsAt: true, config: true },
+      // `name` + `config` feed `resolveWorldDisplayNameFromData` inside
+      // closeCycle, avoiding a per-iteration `world.findUnique` (N+1 on the
+      // rattrapage path).
+      select: {
+        id: true,
+        name: true,
+        createdAt: true,
+        endsAt: true,
+        config: true,
+      },
     });
 
     let closed = 0;
@@ -98,6 +107,8 @@ export class RankingsCycleService {
       const latestDue = latestDueCycleIndex(world.createdAt, closeUntil, reset);
       if (latestDue < 1) continue;
 
+      const worldDisplayName = resolveWorldDisplayNameFromData(world, world.id);
+
       for (const signal of GLORY_SIGNALS) {
         const lastIndex = await this.lastSnapshottedIndex(world.id, signal);
         // Catch up every missed cycle in one tick (downtime-resilient): close
@@ -106,6 +117,7 @@ export class RankingsCycleService {
           const didClose = await this.closeCycle(
             world.id,
             world.createdAt,
+            worldDisplayName,
             reset,
             snapshotEntries,
             signal,
@@ -232,6 +244,7 @@ export class RankingsCycleService {
   private async closeCycle(
     worldId: string,
     worldCreatedAt: Date,
+    worldDisplayName: string,
     reset: CycleResetConfig,
     snapshotEntries: number,
     signal: RankingSignal,
@@ -275,7 +288,6 @@ export class RankingsCycleService {
 
         const championIds = resolveCycleChampions(entries);
         if (championIds.length > 0) {
-          const worldDisplayName = await resolveWorldDisplayName(tx, worldId);
           await tx.rankingCycleTitleAward.createMany({
             data: championIds.map((userId) => ({
               userId,

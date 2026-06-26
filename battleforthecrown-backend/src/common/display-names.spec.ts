@@ -2,6 +2,7 @@ import {
   loadUserDisplayNames,
   resolvePublicPlayerName,
   resolveWorldDisplayName,
+  resolveWorldDisplayNameFromData,
 } from './display-names';
 import { DEFAULT_WORLD_CONFIG } from '@battleforthecrown/shared/world';
 import type { PrismaClientOrTx } from './prisma.types';
@@ -64,6 +65,36 @@ describe('resolvePublicPlayerName', () => {
 
   it('falls back to the missing-id placeholder when id is null', () => {
     expect(resolvePublicPlayerName(null, new Map())).toBe('Joueur ?');
+  });
+});
+
+describe('resolveWorldDisplayNameFromData', () => {
+  it('returns the parsed identity display name when config is valid', () => {
+    expect(
+      resolveWorldDisplayNameFromData(
+        {
+          name: 'fallback-name',
+          config: {
+            ...DEFAULT_WORLD_CONFIG,
+            identity: { displayName: 'Royaume' },
+          },
+        },
+        'world-1',
+      ),
+    ).toBe('Royaume');
+  });
+
+  it('falls back to world.name when config is invalid', () => {
+    expect(
+      resolveWorldDisplayNameFromData(
+        { name: 'fallback-name', config: { broken: true } },
+        'world-1',
+      ),
+    ).toBe('fallback-name');
+  });
+
+  it('falls back to the world id when the row is missing', () => {
+    expect(resolveWorldDisplayNameFromData(null, 'world-1')).toBe('world-1');
   });
 });
 

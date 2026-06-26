@@ -35,6 +35,21 @@ export function resolvePublicPlayerName(
 }
 
 /**
+ * Pure resolution of a world's display name from an already-loaded
+ * `{ name, config }` pair (or `null` when the row is missing). Lets hot loops
+ * that already hold the world data — e.g. the cycle-close rattrapage path —
+ * avoid an extra `world.findUnique` per iteration.
+ */
+export function resolveWorldDisplayNameFromData(
+  world: { name: string; config: unknown } | null,
+  worldId: string,
+): string {
+  if (!world) return worldId;
+  const parsed = WorldConfigSchema.safeParse(world.config);
+  return parsed.success ? parsed.data.identity.displayName : world.name;
+}
+
+/**
  * World identity name surfaced on title labels (cosmetic awards, ranking-cycle
  * champions). Reads the world's parsed `identity.displayName`, gracefully
  * falling back to the raw `world.name` if the config is missing/invalid, then
@@ -48,7 +63,5 @@ export async function resolveWorldDisplayName(
     where: { id: worldId },
     select: { name: true, config: true },
   });
-  if (!world) return worldId;
-  const parsed = WorldConfigSchema.safeParse(world.config);
-  return parsed.success ? parsed.data.identity.displayName : world.name;
+  return resolveWorldDisplayNameFromData(world, worldId);
 }
