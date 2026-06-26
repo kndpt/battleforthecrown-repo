@@ -1,4 +1,5 @@
 import {
+  type QueryClient,
   queryOptions,
   useMutation,
   useQuery,
@@ -1290,6 +1291,37 @@ export function useWorldConfigQuery(worldId: string | null) {
   });
 }
 
+function invalidateCombatDispatchQueries(
+  qc: QueryClient,
+  villageId: string,
+  userId: string | null,
+  worldId: string | null,
+): void {
+  qc.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
+  qc.invalidateQueries({ queryKey: queryKeys.activeExpeditions(villageId) });
+  qc.invalidateQueries({ queryKey: queryKeys.openExpeditions(userId, worldId) });
+  qc.invalidateQueries({ queryKey: queryKeys.population(villageId) });
+  qc.invalidateQueries({ queryKey: queryKeys.villagePower(villageId) });
+  qc.invalidateQueries({ queryKey: queryKeys.kingdomPowerPrefix(userId) });
+}
+
+function invalidateTroopMovementQueries(
+  qc: QueryClient,
+  villageIds: string[],
+  userId: string | null,
+  worldId: string | null,
+): void {
+  for (const vid of new Set(villageIds)) {
+    qc.invalidateQueries({ queryKey: queryKeys.armyInventory(vid) });
+    qc.invalidateQueries({ queryKey: queryKeys.activeExpeditions(vid) });
+    qc.invalidateQueries({ queryKey: queryKeys.garrison(vid) });
+    qc.invalidateQueries({ queryKey: queryKeys.population(vid) });
+    qc.invalidateQueries({ queryKey: queryKeys.villagePower(vid) });
+  }
+  qc.invalidateQueries({ queryKey: queryKeys.openExpeditions(userId, worldId) });
+  qc.invalidateQueries({ queryKey: queryKeys.kingdomPowerPrefix(userId) });
+}
+
 interface AttackInput {
   villageId: string;
   targetX: number;
@@ -1321,24 +1353,7 @@ export function useInitiateAttackMutation() {
         units,
       }),
     onSettled: (_data, _err, { villageId }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.armyInventory(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.activeExpeditions(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.openExpeditions(userId, worldId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.population(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.villagePower(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.kingdomPowerPrefix(userId),
-      });
+      invalidateCombatDispatchQueries(queryClient, villageId, userId, worldId);
     },
   });
 }
@@ -1365,24 +1380,7 @@ export function useInitiateScoutMutation() {
         units,
       }),
     onSettled: (_data, _err, { villageId }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.armyInventory(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.activeExpeditions(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.openExpeditions(userId, worldId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.population(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.villagePower(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.kingdomPowerPrefix(userId),
-      });
+      invalidateCombatDispatchQueries(queryClient, villageId, userId, worldId);
     },
   });
 }
@@ -1446,36 +1444,12 @@ export function useInitiateReinforceMutation() {
         units,
       }),
     onSettled: (_data, _err, { villageId, targetVillageId }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.armyInventory(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.armyInventory(targetVillageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.activeExpeditions(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.activeExpeditions(targetVillageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.openExpeditions(userId, worldId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.garrison(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.garrison(targetVillageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.population(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.villagePower(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.kingdomPowerPrefix(userId),
-      });
+      invalidateTroopMovementQueries(
+        queryClient,
+        [villageId, targetVillageId],
+        userId,
+        worldId,
+      );
     },
   });
 }
@@ -1533,27 +1507,12 @@ export function useRecallReinforcementMutation() {
         units,
       }),
     onSettled: (_data, _err, { villageId, originVillageId }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.armyInventory(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.armyInventory(originVillageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.activeExpeditions(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.activeExpeditions(originVillageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.openExpeditions(userId, worldId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.garrison(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.garrison(originVillageId),
-      });
+      invalidateTroopMovementQueries(
+        queryClient,
+        [villageId, originVillageId],
+        userId,
+        worldId,
+      );
     },
   });
 }

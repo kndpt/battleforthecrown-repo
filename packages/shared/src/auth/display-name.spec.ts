@@ -4,6 +4,7 @@ import {
   DISPLAY_NAME_MIN_LENGTH,
   DISPLAY_NAME_PATTERN,
   displayNameSchema,
+  formatAnonymousPlayerName,
   normalizeDisplayName,
 } from './display-name';
 
@@ -55,5 +56,24 @@ describe('displayNameSchema', () => {
 
   it('allows underscore, apostrophe and hyphen', () => {
     expect(displayNameSchema.parse("O'Brien-Lord_1")).toBe("O'Brien-Lord_1");
+  });
+});
+
+describe('formatAnonymousPlayerName', () => {
+  it('takes the last 6 chars of the user id', () => {
+    expect(formatAnonymousPlayerName('user_abcdef123456')).toBe('Joueur 123456');
+  });
+
+  it('handles ids shorter than 6 chars by surfacing the whole id', () => {
+    expect(formatAnonymousPlayerName('ab')).toBe('Joueur ab');
+  });
+
+  it('falls back to a question mark for null or undefined', () => {
+    expect(formatAnonymousPlayerName(null)).toBe('Joueur ?');
+    expect(formatAnonymousPlayerName(undefined)).toBe('Joueur ?');
+  });
+
+  it('falls back to a question mark for an empty string', () => {
+    expect(formatAnonymousPlayerName('')).toBe('Joueur ?');
   });
 });
