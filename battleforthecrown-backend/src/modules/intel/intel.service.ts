@@ -9,6 +9,8 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 import { PrismaClientOrTx } from '../../common/prisma.types';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
 import { OwnershipService } from '../../common/auth/ownership.service';
+import { parseUnitMap } from '../combat/codecs/unit-map.codec';
+import { parseLootResources } from '../combat/codecs/loot.codec';
 
 export interface RecordIntelInput {
   userId: string;
@@ -59,8 +61,8 @@ export class IntelService {
       worldId: row.worldId,
       sourceKind: row.sourceKind,
       sourceReportId: row.sourceReportId,
-      units: row.units as UnitMap,
-      resources: row.resources as { wood: number; stone: number; iron: number },
+      units: parseUnitMap(row.units, 'villageIntel.units'),
+      resources: parseLootResources(row.resources, 'villageIntel.resources'),
       wallLevel: row.wallLevel,
       strategy: row.strategy,
       targetName: row.targetName,

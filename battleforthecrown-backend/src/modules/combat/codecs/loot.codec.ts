@@ -1,10 +1,23 @@
 import { Prisma } from '@prisma/client';
 import {
+  LootResourcesSchema,
   LootResultSchema,
   CombatLootSchema,
+  type LootResources,
   type LootResult,
   type CombatLoot,
 } from '@battleforthecrown/shared/combat';
+
+export function parseLootResources(
+  raw: Prisma.JsonValue,
+  fieldName: string,
+): LootResources {
+  const result = LootResourcesSchema.safeParse(raw);
+  if (!result.success) {
+    throw new Error(`Invalid ${fieldName} JSON shape: ${result.error.message}`);
+  }
+  return result.data;
+}
 
 /**
  * Decode the full LootResult JSON stored in `combatReport.loot`.

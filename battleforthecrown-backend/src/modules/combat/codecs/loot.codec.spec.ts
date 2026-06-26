@@ -2,6 +2,7 @@ import {
   encodeCombatLoot,
   encodeLootResult,
   parseCombatLoot,
+  parseLootResources,
   parseLootResult,
 } from './loot.codec';
 
@@ -69,6 +70,36 @@ describe('loot.codec', () => {
           resources: { wood: 0, stone: -5, iron: 0 },
         }),
       ).toThrow(/Invalid combat loot JSON shape:/);
+    });
+  });
+
+  describe('parseLootResources', () => {
+    const field = 'test.resources';
+
+    it('parses valid resources', () => {
+      expect(parseLootResources({ wood: 100, stone: 50, iron: 25 }, field)).toEqual({
+        wood: 100,
+        stone: 50,
+        iron: 25,
+      });
+    });
+
+    it('throws on missing key', () => {
+      expect(() => parseLootResources({ wood: 10, stone: 5 }, field)).toThrow(
+        /Invalid test\.resources JSON shape:/,
+      );
+    });
+
+    it('throws on negative value', () => {
+      expect(() =>
+        parseLootResources({ wood: -1, stone: 0, iron: 0 }, field),
+      ).toThrow(/Invalid test\.resources JSON shape:/);
+    });
+
+    it('throws on non-object input', () => {
+      expect(() => parseLootResources('bad', field)).toThrow(
+        /Invalid test\.resources JSON shape:/,
+      );
     });
   });
 
