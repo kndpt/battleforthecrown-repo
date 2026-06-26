@@ -388,6 +388,28 @@
         "docs/gameplay/19-world-lifecycle.md:69 — explicite « Notification serveur : « La cohorte principale est complète. Inscription encore possible 3 jours en mode retardataires. » »"
       ],
       "addedAt": "2026-06-23"
+    },
+    {
+      "specPath": "docs/gameplay/06-barbarians.md",
+      "slug": "barbarian-tier-readability-t4-t5",
+      "title": "Lisibilité des villages barbares T4/T5 sur la carte (taille + palette)",
+      "keywords": ["barbarian", "tier", "sprite", "visual", "T4", "T5", "readability"],
+      "artefactType": "ticket",
+      "artefactPath": "tasks/084-barbarian-tier-readability-t4-t5.md",
+      "artefactId": "084",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/barbarian-tier-readability-t4-t5",
+      "gapSummary": "La spec 06-barbarians.md § Lisibilité joueur acte 5 variantes visuelles progressives (palette gris-marron T1 → rouge-or sombre T5 + accents narratifs par tier). Côté code Pixi, `spriteSizeFor` et `styleFor` ne branchent que T1/T2/T3 — T4 et T5 retombent sur la taille T1 et sur la couleur fallback T1. Les assets PNG existent (world.barbarian.t4/t5 dans manifest.ts) et `aliasFor` retourne le bon alias, mais l'échelle reste celle d'un T1 et le fallback Graphics (utilisé en pre-load ou si la texture échoue) est unicolore. Le ticket archive 27 a figé la spec (2026-05-09) mais sa consommation runtime n'a jamais été branchée pour T4/T5.",
+      "codeEvidence": [
+        "battleforthecrown-pixi/src/pixi/scenes/worldMapEntityStyle.ts:63-66 spriteSizeFor — ternaire `entity.tier === 'T3' ? 2 : entity.tier === 'T2' ? 1 : 0` (T4/T5 retombent sur idx=0)",
+        "battleforthecrown-pixi/src/pixi/scenes/worldMapEntityStyle.ts:84-99 styleFor — uniquement T1/T2/T3 dans color/ringColor/radius, fallback silencieux sur T1 pour T4/T5",
+        "battleforthecrown-pixi/src/pixi/scenes/worldMapEntityStyle.ts:37-42 COLOR — palette barbarianT1/T2/T3 + barbarianRingT1/T2/T3, aucune entrée T4/T5",
+        "battleforthecrown-pixi/src/pixi/assets/manifest.ts:41-42 — assets world.barbarian.t4 + world.barbarian.t5 présents, donc aliasFor renvoie bien le PNG mais la taille reste T1",
+        "battleforthecrown-pixi/src/pixi/scenes/worldMapEntityStyle.test.ts — describe('spriteSizeFor') ne couvre que T1 et T3 (aucun test T4/T5)",
+        "tasks/archive/27-barbarian-tier-sprites-redesign.md — résolu spec 2026-05-09, brief sprites tier-par-tier figé, production d'assets actée mais consommation code jamais étendue pour T4/T5",
+        "battleforthecrown-backend/prisma/seed-default-world-config.sql:41 — rMax=60 (T4 et T5 spawnent effectivement sur l'anneau [40, 60])"
+      ],
+      "addedAt": "2026-06-25"
     }
   ]
 }
