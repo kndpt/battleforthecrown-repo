@@ -128,6 +128,67 @@ describe("useInitiateReinforceMutation invalidations", () => {
       queryClient.getQueryState(queryKeys.population("v-1"))?.isInvalidated,
     ).toBe(true);
   });
+
+  it("invalidates garrison and power for both origin and target villages", async () => {
+    seedPowerQueries("v-1", "user-1", "world-1");
+    queryClient.setQueryData(queryKeys.villagePower("v-2"), { total: 5 });
+    queryClient.setQueryData(queryKeys.garrison("v-1"), []);
+    queryClient.setQueryData(queryKeys.garrison("v-2"), []);
+    const { useInitiateReinforceMutation } = await import("./queries");
+    const { result } = renderHook(() => useInitiateReinforceMutation(), {
+      wrapper,
+    });
+
+    result.current.mutate({
+      villageId: "v-1",
+      targetVillageId: "v-2",
+      units: { MILITIA: 3 },
+    });
+
+    await waitFor(() => expect(result.current.isIdle).toBe(false));
+    await waitFor(() => !result.current.isPending);
+    expect(
+      queryClient.getQueryState(queryKeys.garrison("v-1"))?.isInvalidated,
+    ).toBe(true);
+    expect(
+      queryClient.getQueryState(queryKeys.garrison("v-2"))?.isInvalidated,
+    ).toBe(true);
+    expect(
+      queryClient.getQueryState(queryKeys.villagePower("v-2"))?.isInvalidated,
+    ).toBe(true);
+  });
+});
+
+describe("useRecallReinforcementMutation invalidations", () => {
+  it("invalidates population, villagePower and kingdomPower for both villages", async () => {
+    seedPowerQueries("v-1", "user-1", "world-1");
+    queryClient.setQueryData(queryKeys.villagePower("v-2"), { total: 5 });
+    queryClient.setQueryData(queryKeys.population("v-1"), { used: 10, max: 50 });
+    queryClient.setQueryData(queryKeys.population("v-2"), { used: 8, max: 50 });
+    const { useRecallReinforcementMutation } = await import("./queries");
+    const { result } = renderHook(() => useRecallReinforcementMutation(), {
+      wrapper,
+    });
+
+    result.current.mutate({
+      villageId: "v-1",
+      originVillageId: "v-2",
+      units: { MILITIA: 2 },
+    });
+
+    await waitFor(() => expect(result.current.isIdle).toBe(false));
+    await waitFor(() => !result.current.isPending);
+    expectPowerInvalidated("v-1", "user-1", "world-1");
+    expect(
+      queryClient.getQueryState(queryKeys.villagePower("v-2"))?.isInvalidated,
+    ).toBe(true);
+    expect(
+      queryClient.getQueryState(queryKeys.population("v-1"))?.isInvalidated,
+    ).toBe(true);
+    expect(
+      queryClient.getQueryState(queryKeys.population("v-2"))?.isInvalidated,
+    ).toBe(true);
+  });
 });
 
 describe("useInitiateCaravanMutation invalidations", () => {
