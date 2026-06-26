@@ -5,6 +5,7 @@ import {
   getBuildingPowerWeight,
   getUnitPowerWeight,
 } from '@battleforthecrown/shared/power';
+import { formatAnonymousPlayerName } from '@battleforthecrown/shared/auth';
 
 type LeaderboardType = 'total' | 'kingdom' | 'army';
 type UnitQuantityMap = Record<string, number>;
@@ -88,7 +89,8 @@ export class PowerService {
       const current = byUser.get(village.userId) ?? {
         userId: village.userId,
         playerName:
-          village.user?.displayName ?? `Joueur ${village.userId.slice(-6)}`,
+          village.user?.displayName ??
+          formatAnonymousPlayerName(village.userId),
         total: 0,
         building: 0,
         army: 0,

@@ -19,6 +19,11 @@ import {
 import { MS_PER_DAY } from '@battleforthecrown/shared/time';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import type { PrismaClientOrTx } from '../../common/prisma.types';
+import {
+  loadUserDisplayNames,
+  resolvePublicPlayerName,
+  resolveWorldDisplayName,
+} from '../../common/display-names';
 import { createOutboxEvent } from '../event/event.utils';
 
 const GLORY_SIGNALS: RankingSignal[] = [
@@ -270,10 +275,7 @@ export class RankingsCycleService {
 
         const championIds = resolveCycleChampions(entries);
         if (championIds.length > 0) {
-          const worldDisplayName = await this.resolveWorldDisplayName(
-            tx,
-            worldId,
-          );
+          const worldDisplayName = await resolveWorldDisplayName(tx, worldId);
           await tx.rankingCycleTitleAward.createMany({
             data: championIds.map((userId) => ({
               userId,
@@ -340,42 +342,16 @@ export class RankingsCycleService {
       orderBy: [{ _sum: { points: 'desc' } }, { scorerUserId: 'asc' }],
       take: limit,
     });
-    const names = await this.loadDisplayNames(
+    const names = await loadUserDisplayNames(
       db,
       grouped.map((row) => row.scorerUserId),
     );
     return grouped.map((row, index) => ({
       userId: row.scorerUserId,
-      displayName:
-        names.get(row.scorerUserId) ?? `Joueur ${row.scorerUserId.slice(-6)}`,
+      displayName: resolvePublicPlayerName(row.scorerUserId, names),
       score: row._sum.points ?? 0,
       rank: index + 1,
     }));
-  }
-
-  private async loadDisplayNames(
-    db: PrismaClientOrTx,
-    userIds: string[],
-  ): Promise<Map<string, string>> {
-    if (userIds.length === 0) return new Map();
-    const users = await db.user.findMany({
-      where: { id: { in: userIds } },
-      select: { id: true, displayName: true },
-    });
-    return new Map(users.map((user) => [user.id, user.displayName]));
-  }
-
-  private async resolveWorldDisplayName(
-    tx: PrismaClientOrTx,
-    worldId: string,
-  ): Promise<string> {
-    const world = await tx.world.findUnique({
-      where: { id: worldId },
-      select: { name: true, config: true },
-    });
-    if (!world) return worldId;
-    const parsed = WorldConfigSchema.safeParse(world.config);
-    return parsed.success ? parsed.data.identity.displayName : world.name;
   }
 
   private parseSnapshotEntries(value: unknown): RankingCycleSnapshotEntry[] {
