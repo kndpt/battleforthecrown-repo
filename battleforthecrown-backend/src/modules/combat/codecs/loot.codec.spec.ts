@@ -77,7 +77,9 @@ describe('loot.codec', () => {
     const field = 'test.resources';
 
     it('parses valid resources', () => {
-      expect(parseLootResources({ wood: 100, stone: 50, iron: 25 }, field)).toEqual({
+      expect(
+        parseLootResources({ wood: 100, stone: 50, iron: 25 }, field),
+      ).toEqual({
         wood: 100,
         stone: 50,
         iron: 25,
