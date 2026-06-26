@@ -382,41 +382,48 @@ export class WorldLifecycleWorker implements OnModuleInit {
    * dénormalisé) et survivent puisque `World` n'est pas supprimé.
    */
   private async archiveWorld(worldId: string, now: Date): Promise<number> {
-    return this.prisma.$transaction(async (tx) => {
-      const updated = await tx.world.updateMany({
-        where: { id: worldId, status: 'ENDED' },
-        data: { status: 'ARCHIVED', archivedAt: now },
-      });
+    return this.prisma.$transaction(
+      async (tx) => {
+        const updated = await tx.world.updateMany({
+          where: { id: worldId, status: 'ENDED' },
+          data: { status: 'ARCHIVED', archivedAt: now },
+        });
 
-      if (updated.count !== 1) {
-        return 0;
-      }
+        if (updated.count !== 1) {
+          return 0;
+        }
 
-      // Tables `worldId` dénormalisées (pas de cascade Prisma) — purge explicite.
-      await tx.expedition.deleteMany({ where: { worldId } });
-      await tx.villageIntel.deleteMany({ where: { worldId } });
-      await tx.worldSeedState.deleteMany({ where: { worldId } });
-      await tx.chunkSpawnState.deleteMany({ where: { worldId } });
-      await tx.zoneCapacity.deleteMany({ where: { worldId } });
-      await tx.crownBalance.deleteMany({ where: { worldId } });
-      // DailyCard cascade DailyCardTask ; OnboardingState cascade OnboardingStepProgress.
-      await tx.dailyCard.deleteMany({ where: { worldId } });
-      await tx.dailyOyez.deleteMany({ where: { worldId } });
-      await tx.onboardingState.deleteMany({ where: { worldId } });
-      // Village EN DERNIER : ses FK cascade (Building, ResourceStock, Population,
-      // UnitInventory, UnitTraining, PendingConquest, VillageStrategyConfig,
-      // Garrison) partent avec lui.
-      await tx.village.deleteMany({ where: { worldId } });
+        // Tables `worldId` dénormalisées (pas de cascade Prisma) — purge explicite.
+        await tx.expedition.deleteMany({ where: { worldId } });
+        await tx.villageIntel.deleteMany({ where: { worldId } });
+        await tx.worldSeedState.deleteMany({ where: { worldId } });
+        await tx.chunkSpawnState.deleteMany({ where: { worldId } });
+        await tx.zoneCapacity.deleteMany({ where: { worldId } });
+        await tx.crownBalance.deleteMany({ where: { worldId } });
+        // DailyCard cascade DailyCardTask ; OnboardingState cascade OnboardingStepProgress.
+        await tx.dailyCard.deleteMany({ where: { worldId } });
+        await tx.dailyOyez.deleteMany({ where: { worldId } });
+        await tx.onboardingState.deleteMany({ where: { worldId } });
+        // Village EN DERNIER : ses FK cascade (Building, ResourceStock, Population,
+        // UnitInventory, UnitTraining, PendingConquest, VillageStrategyConfig,
+        // Garrison) partent avec lui.
+        await tx.village.deleteMany({ where: { worldId } });
 
-      await createOutboxEvent(tx, 'world.status.changed', worldId, {
-        worldId,
-        from: 'ENDED',
-        to: 'ARCHIVED',
-        at: now.toISOString(),
-      });
+        await createOutboxEvent(tx, 'world.status.changed', worldId, {
+          worldId,
+          from: 'ENDED',
+          to: 'ARCHIVED',
+          at: now.toISOString(),
+        });
 
-      return 1;
-    });
+        return 1;
+      },
+      {
+        // Purge multi-tables : le défaut Prisma (5 s) peut rollback sur un monde volumineux.
+        maxWait: 10_000,
+        timeout: 60_000,
+      },
+    );
   }
 
   private async transitionWorld(

@@ -12,6 +12,14 @@ import { createOutboxEvent } from '../event/event.utils';
 import { WorldConfigService } from '../world/world-config.service';
 import { WorldAccessService } from '../world/world-access.service';
 
+export interface CrownBalanceView {
+  userId: string;
+  worldId: string;
+  balance: number;
+  productionRate: number;
+  lastUpdateTs: Date;
+}
+
 @Injectable()
 export class CrownsService {
   private readonly logger = new Logger(CrownsService.name);
@@ -59,7 +67,10 @@ export class CrownsService {
   /**
    * Get crown balance for a player, with automatic catch-up
    */
-  async getCrownBalance(userId: string, worldId: string) {
+  async getCrownBalance(
+    userId: string,
+    worldId: string,
+  ): Promise<CrownBalanceView> {
     await this.ownership.assertWorldMember(worldId, userId);
 
     // Check if crown system is enabled
