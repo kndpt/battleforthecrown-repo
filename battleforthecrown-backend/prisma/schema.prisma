@@ -12,6 +12,7 @@ enum WorldStatus {
   OPEN
   LOCKED
   ENDED
+  ARCHIVED
 }
 
 enum WorldRole {
@@ -167,6 +168,7 @@ model World {
   endsAt          DateTime?   @map("ends_at") @db.Timestamptz(3)
   plannedOpenAt   DateTime?   @map("planned_open_at") @db.Timestamptz(3)
   inscriptionPhaseTransitionedAt DateTime? @map("inscription_phase_transitioned_at") @db.Timestamptz(3)
+  archivedAt      DateTime?   @map("archived_at") @db.Timestamptz(3)
   createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
 
   villages               Village[]

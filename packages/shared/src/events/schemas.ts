@@ -266,8 +266,8 @@ const CrownsChangedPayloadSchema = z.object({
 
 const WorldStatusChangedPayloadSchema = z.object({
   worldId: z.string(),
-  from: z.enum(["PLANNED", "OPEN", "LOCKED", "ENDED"]),
-  to: z.enum(["PLANNED", "OPEN", "LOCKED", "ENDED"]),
+  from: z.enum(["PLANNED", "OPEN", "LOCKED", "ENDED", "ARCHIVED"]),
+  to: z.enum(["PLANNED", "OPEN", "LOCKED", "ENDED", "ARCHIVED"]),
   at: z.string().datetime(),
 });
 

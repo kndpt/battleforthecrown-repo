@@ -58,8 +58,12 @@ export class RetentionService {
     await this.ownership.assertWorldMember(worldId, userId);
     const now = new Date();
     const currentDayKey = getParisDailyKey(now);
-    await this.expireStaleCards(userId, worldId, currentDayKey, now);
-    await this.ensureDailyCard(userId, worldId, currentDayKey, now);
+    // Monde ARCHIVED (run 065) : données purgées. Ne pas recréer de DailyCard
+    // orpheline via les créations paresseuses — on lit l'état (vide) tel quel.
+    if (!(await this.worldAccess.isWorldArchived(worldId))) {
+      await this.expireStaleCards(userId, worldId, currentDayKey, now);
+      await this.ensureDailyCard(userId, worldId, currentDayKey, now);
+    }
     const claimableDayKeys = getClaimableDayKeys(now);
 
     const [cards, latestClaim, oyez] = await Promise.all([

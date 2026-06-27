@@ -10,6 +10,15 @@ import { TempoService } from '@battleforthecrown/shared/world';
 import { PRODUCTION_CATCHUP_THRESHOLD_MS } from '../resources/resources.constants';
 import { createOutboxEvent } from '../event/event.utils';
 import { WorldConfigService } from '../world/world-config.service';
+import { WorldAccessService } from '../world/world-access.service';
+
+export interface CrownBalanceView {
+  userId: string;
+  worldId: string;
+  balance: number;
+  productionRate: number;
+  lastUpdateTs: Date;
+}
 
 @Injectable()
 export class CrownsService {
@@ -19,6 +28,7 @@ export class CrownsService {
     private prisma: PrismaService,
     private ownership: OwnershipService,
     private worldConfig: WorldConfigService,
+    private worldAccess: WorldAccessService,
   ) {}
 
   /**
@@ -57,12 +67,28 @@ export class CrownsService {
   /**
    * Get crown balance for a player, with automatic catch-up
    */
-  async getCrownBalance(userId: string, worldId: string) {
+  async getCrownBalance(
+    userId: string,
+    worldId: string,
+  ): Promise<CrownBalanceView> {
     await this.ownership.assertWorldMember(worldId, userId);
 
     // Check if crown system is enabled
     if (!DEFAULT_CROWNS.enabled) {
       throw new NotFoundException('Crown system is not enabled for this world');
+    }
+
+    // Monde ARCHIVED (run 065) : la ligne CrownBalance a été purgée. Renvoyer
+    // une vue zéro en lecture seule SANS upsert — sinon un refresh HUD recrée un
+    // orphelin et la purge n'est plus durable.
+    if (await this.worldAccess.isWorldArchived(worldId)) {
+      return {
+        userId,
+        worldId,
+        balance: 0,
+        productionRate: 0,
+        lastUpdateTs: new Date(),
+      };
     }
 
     // Get or create crown balance

@@ -151,6 +151,9 @@ describe('public worlds smoke', () => {
       inscriptionPhaseChanged: 1,
       openToLocked: 1,
       lockedToEnded: 1,
+      // locked-expired vient juste d'ENDED ce tick ; archiveAt = endsAt + 7j est
+      // encore dans le futur, donc aucune archive sur ce même tick.
+      endedToArchived: 0,
     });
 
     const statuses = await ctx.prisma.world.findMany({
@@ -196,6 +199,7 @@ describe('public worlds smoke', () => {
       inscriptionPhaseChanged: 0,
       openToLocked: 0,
       lockedToEnded: 0,
+      endedToArchived: 0,
     });
 
     const events = await ctx.prisma.eventOutbox.findMany({

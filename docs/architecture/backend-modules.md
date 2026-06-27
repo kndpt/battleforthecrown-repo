@@ -46,7 +46,7 @@ src/
     ├── construction.worker.ts
     ├── training.worker.ts
     ├── crown-production.worker.ts
-    ├── world-lifecycle.worker.ts  # cycle PLANNED→OPEN→LOCKED→ENDED + spawner auto (ensurePlannedPipeline)
+    ├── world-lifecycle.worker.ts  # cycle PLANNED→OPEN→LOCKED→ENDED→ARCHIVED (purge) + spawner auto (ensurePlannedPipeline)
     ├── oyez.worker.ts            # cron 04:00 Europe/Paris → OyezProducerService (mondes OPEN)
     └── outbox.worker.ts
 ```
@@ -56,7 +56,7 @@ src/
 | Module | Endpoints clés | Workers | Notes |
 |--------|----------------|---------|-------|
 | **auth** | `POST /auth/login`, `/register`, `/refresh` | — | JWT + refresh tokens, sessions DB |
-| **world** | `GET /world`, `GET /worlds/public`, `GET /world/:worldId/details`, `/entities` | `BarbarianSeedingCatchupWorker`, `WorldLifecycleWorker` | Seeding procédural des villages barbares + placement joueur ; cycle `PLANNED → OPEN → LOCKED → ENDED` ; spawner auto qui garantit un monde joignable « frais » (cadence `newWorldEverydays`, event `world.planned.created`) |
+| **world** | `GET /world`, `GET /worlds/public`, `GET /world/:worldId/details`, `/entities` | `BarbarianSeedingCatchupWorker`, `WorldLifecycleWorker` | Seeding procédural des villages barbares + placement joueur ; cycle `PLANNED → OPEN → LOCKED → ENDED → ARCHIVED` ; spawner auto qui garantit un monde joignable « frais » (cadence `newWorldEverydays`, event `world.planned.created`) |
 | **village** | `GET /village/:id/buildings`, `/queue` | — | Lectures village + bâtiments. Les mutations (upgrade/cancel) délégées à `gameplay/` |
 | **resources** | `GET /resources/:villageId` | `ProductionWorker` | Production passive bois/pierre/fer, capé par warehouse. Pas de publication d'event (déléguée à `OutboxPublisher`) |
 | **army** | `GET /army/:villageId/inventory`, `/training`, `POST /army/:villageId/throne/recruit-noble` | — | Lectures inventaire + entraînements. Mutations (train/cancel/recruit noble) déléguées à `gameplay/` |
@@ -151,13 +151,15 @@ gameplay/
 
 Chaque use case = une transaction Prisma qui orchestre plusieurs domaines (Village + Resources + Population + Outbox), expose une seule méthode `execute(...)`, et est appelé directement depuis les controllers correspondants. Cela résout les `forwardRef` historiques entre `Village ↔ Resources` et `Army ↔ Resources` (cf. ADR-12 et l'audit ticket 05).
 
-## Invariant monde ENDED — lecture seule
+## Invariant monde ENDED / ARCHIVED — lecture seule
 
-`WorldAccessService` (`@Global`, `src/modules/world/world-access.service.ts`) expose `assertWorldWritable(worldId)` : lève `ForbiddenException` 403 code `WORLD_READ_ONLY` si le monde est `ENDED`.
+`WorldAccessService` (`@Global`, `src/modules/world/world-access.service.ts`) expose `assertWorldWritable(worldId)` : lève `ForbiddenException` 403 code `WORLD_READ_ONLY` si le monde est `ENDED` **ou** `ARCHIVED` (run 065). Le helper `isWorldArchived(worldId)` (lecture, sans throw) sert aux reads side-effecting : `CrownsService.getCrownBalance` et `RetentionService.getSummary` court-circuitent leurs créations paresseuses (`CrownBalance` upsert, `DailyCard`) sur un monde `ARCHIVED` pour ne jamais recréer d'orphelin post-purge.
 
 Mutations gardées (appel obligatoire) : attack, scout, reinforce, caravan, train, recruit-noble, upgrade building, change strategy, claim daily card, claim onboarding completion reward.
 
 Carve-outs autorisés sans garde : recall, cancel construction/training, produce/settle, report read/delete, rename cosmétique, join/enter/leave.
+
+L'archivage (`ENDED → ARCHIVED` à `endsAt + archiveAfterDays`) est porté par `WorldLifecycleWorker.archiveEndedWorlds` : transaction unique qui purge les données joueur scopées au monde (Village + cascades, Expedition, VillageIntel, seed/chunk/zone state, CrownBalance, DailyCard, DailyOyez, OnboardingState) et conserve `World`, memberships, rapports, snapshot final, gloire/renown et cosmétiques permanents.
 
 ## Modules globaux
 
