@@ -2,6 +2,7 @@ import type {
   CaravanReportType as PrismaCaravanReportType,
   ExpeditionKind as PrismaExpeditionKind,
   ExpeditionStatus as PrismaExpeditionStatus,
+  FriendshipStatus as PrismaFriendshipStatus,
   OnboardingStatus as PrismaOnboardingStatus,
   OnboardingStep as PrismaOnboardingStep,
   ReinforcementReportType as PrismaReinforcementReportType,
@@ -24,6 +25,7 @@ import type {
   OnboardingStatus,
   OnboardingStep,
 } from '@battleforthecrown/shared/onboarding';
+import type { FriendshipStatus } from '@battleforthecrown/shared/social';
 
 // Compile-time alignment between Prisma enums and shared unions.
 // Bidirectional Records: if either side adds, removes, or renames a variant,
@@ -78,6 +80,21 @@ export const _reinforcementReportTypeToPrisma: Record<
 > = {
   STATIONED: 'STATIONED',
   RETURNED: 'RETURNED',
+};
+
+export const _friendshipStatusFromPrisma: Record<
+  PrismaFriendshipStatus,
+  FriendshipStatus
+> = {
+  PENDING: 'PENDING',
+  ACTIVE: 'ACTIVE',
+};
+export const _friendshipStatusToPrisma: Record<
+  FriendshipStatus,
+  PrismaFriendshipStatus
+> = {
+  PENDING: 'PENDING',
+  ACTIVE: 'ACTIVE',
 };
 
 export const _caravanReportTypeFromPrisma: Record<

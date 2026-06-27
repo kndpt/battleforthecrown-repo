@@ -1,6 +1,6 @@
 # Liste d'amis défensifs
 
-> 🚧 **Doc en chantier — candidate MVP minimaliste.** Compromis envisagé pour offrir un minimum de coopération sans introduire le système complet d'alliances ([`21-alliances-and-tribes.md`](./21-alliances-and-tribes.md), strictement post-MVP). À analyser pour décider si on l'inclut au MVP ou si on le repousse aussi.
+> ✅ **MVP léger livré** (backend + contrat shared — cf. [run 063](../../tasks/runs/archive/063-feature-defensive-friends-list.md)). Compromis minimal pour offrir une coopération **défensive** sans introduire le système complet d'alliances ([`21-alliances-and-tribes.md`](./21-alliances-and-tribes.md), strictement post-MVP).
 
 ## Pourquoi cette doc
 
@@ -26,11 +26,17 @@ La **liste d'amis défensifs** est un compromis ultra-minimal qui rétablit une 
 
 Tout ce qui n'est pas « renforts mutuels autorisés » glisse mécaniquement vers un système de tribu et appartient à [`21-alliances-and-tribes.md`](./21-alliances-and-tribes.md). La distinction n'est pas un choix esthétique : c'est ce qui permet de livrer la coopération défensive en MVP sans porter la dette UX/backend d'un vrai système social (chat, modération, gestion de rôles, etc.).
 
-## Questions à trancher
+## Décisions tranchées (MVP)
 
-- **Inclus au MVP ?** Le user a tranché : *« à la rigueur la liste d'ami pour le MVP ok »*. À reconfirmer après une analyse coût/valeur (effort backend : table `Friendship` + endpoints CRUD + extension de la mécanique de renfort).
-- **Visibilité publique** : la liste d'amis défensifs d'un joueur est-elle révélée par scout (cf. [`11-scouting.md`](./11-scouting.md)) ? Plutôt **oui** — un attaquant doit pouvoir évaluer le risque qu'un voisin envoie des renforts.
-- **Effet pendant la fenêtre de capture PvP** : un ami défensif peut-il envoyer des renforts pendant la **fenêtre de capture** d'un village conquis par son ami ? Cohérent avec [`14-pvp-conquest.md` § Acteurs autorisés à attaquer pendant la fenêtre](./14-pvp-conquest.md#acteurs-autorisés-à-attaquer-pendant-la-fenêtre) qui exclut explicitement les *« alliés du défenseur »* au MVP — donc la liste d'amis ne devrait **pas** débloquer ce cas. À confirmer pour éviter d'inverser cette décision par accident.
+- **Inclus au MVP ?** ✅ **Oui** (user : *« à la rigueur la liste d'ami pour le MVP ok »*). Périmètre minimal : table `Friendship` + endpoints CRUD + extension cross-joueur de la mécanique de renfort. **Aucun** chat / bannière / attaque coordonnée / partage de vision-ressources-classement.
+- **Visibilité publique** : ✅ **Oui, révélé par scout**. Le rapport de scout sur un joueur expose la liste de ses amis défensifs `ACTIVE` (`ScoutReportResponse.details.defensiveFriendsDisplayNames`), snapshot au moment du scout (figé comme `wallLevel`/`newbieShield`). Un attaquant peut ainsi jauger le risque de renfort.
+- **Effet pendant la fenêtre de capture PvP** : ❌ **Non**. Un ami défensif **ne peut pas** renforcer un village sous fenêtre de capture `OPEN` — aligné sur [`14-pvp-conquest.md` § Acteurs autorisés à attaquer pendant la fenêtre](./14-pvp-conquest.md#acteurs-autorisés-à-attaquer-pendant-la-fenêtre) qui exclut les *« alliés du défenseur »*. Le guard de renfort refuse toute cible portant un `PendingConquest` `OPEN`.
+
+## Contrat technique (MVP livré)
+
+- **Statut `Friendship`** : `PENDING` → `ACTIVE`. Seul `ACTIVE` ouvre le droit de renfort réciproque. Cap **5 `ACTIVE`** par joueur, revérifié des deux côtés à l'`accept` (codes `FRIENDSHIP_ALREADY_ACTIVE`, `FRIENDSHIP_PENDING_AWAITING_ACCEPT`, `DEFENSIVE_FRIENDS_CAP_REACHED`).
+- **Endpoints** : `POST /worlds/:worldId/friendships`, `GET …/me`, `POST …/:id/accept`, `DELETE …/:id`. Voir [`backend-modules.md` § friendship](../architecture/backend-modules.md).
+- **Renfort cross-joueur** : invariants durée / pop (consommée à l'origine) / pertes / style **non dupliqués ici** — cf. [`04-combat.md` § Renforts entre villages](./04-combat.md#renforts-entre-villages-auto--amis-défensifs). Le retrait passe par les actions existantes `Rappeler` (propriétaire des troupes) / `Renvoyer` (propriétaire du village hôte) ; un `DELETE` de l'amitié ne rappelle **pas** les garnisons déjà stationnées.
 
 ## Liens
 

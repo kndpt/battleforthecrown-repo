@@ -53,6 +53,7 @@ import { PowerService } from '../power/power.service';
 import { ResourcesService } from '../resources/resources.service';
 import { WorldAccessService } from '../world/world-access.service';
 import { NewbieShieldService } from '../world/newbie-shield.service';
+import { FriendshipService } from '../friendship/friendship.service';
 
 export interface GarrisonLineDto {
   villageId: string;
@@ -82,6 +83,7 @@ export class CombatService {
     private readonly resourcesService: ResourcesService,
     private readonly worldAccess: WorldAccessService,
     private readonly newbieShield: NewbieShieldService,
+    private readonly friendship: FriendshipService,
     @Inject('PG_BOSS') private readonly boss: PgBoss,
   ) {}
 
@@ -280,11 +282,39 @@ export class CombatService {
         throw new BadRequestException('Target village not found');
       }
 
-      // 3. For MVP inter-villages, target must be owned by the user
-      // Note: Architecture supports other players, but business rule limits it here.
+      // 3. Target must be owned by the caller OR by an ACTIVE defensive friend
+      // on this world (cf. docs/gameplay/20-defensive-friends.md). Pop stays
+      // consumed by the origin village regardless of the host's owner.
       if (targetVillage.userId !== userId) {
+        const isFriendVillage =
+          targetVillage.userId != null &&
+          (await this.friendship.areActiveFriends(
+            worldId,
+            userId,
+            targetVillage.userId,
+            tx,
+          ));
+        if (!isFriendVillage) {
+          throw new ForbiddenException(
+            'You can only reinforce your own villages or those of your defensive friends',
+          );
+        }
+      }
+
+      // 3b. A village under an OPEN capture window is closed to reinforcements:
+      // the occupation garrison cannot be propped up by allies — defensive
+      // friends do NOT unlock this (aligned with 14-pvp-conquest § Acteurs
+      // autorisés à attaquer pendant la fenêtre).
+      const openConquest = await tx.pendingConquest.findFirst({
+        where: {
+          targetVillageId: targetVillage.id,
+          status: PendingConquestStatus.OPEN,
+        },
+        select: { id: true },
+      });
+      if (openConquest) {
         throw new ForbiddenException(
-          'You can only reinforce your own villages for now',
+          'This village is under an open capture window and cannot be reinforced',
         );
       }
 

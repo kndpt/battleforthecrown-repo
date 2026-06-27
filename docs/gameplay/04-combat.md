@@ -22,13 +22,15 @@ Détail technique côté backend dans [`docs/architecture/backend-modules.md` §
 
 Cas particulier des villages barbares (rapport de combat asymétrique selon victoire/défaite) : [`06-barbarians.md` § Rapport de combat](./06-barbarians.md#rapport-de-combat).
 
-## Renforts entre ses propres villages
+## Renforts entre villages (auto + amis défensifs)
 
 Un joueur peut envoyer des troupes d'un de ses villages **A** vers un autre village qu'il possède **B** pour le renforcer (defense ou consolidation tactique). Modèle Tribal Wars / Kingsage, **trajet combat-like** :
 
+> **Cross-joueur** : la même mécanique s'étend au village d'un **ami défensif `ACTIVE`** (réciprocité obligatoire, cap 5). Règles propres au social — cap, réciprocité, révélation par scout, blocage pendant la fenêtre de capture PvP — dans [`20-defensive-friends.md`](./20-defensive-friends.md). Les invariants de durée / pop / pertes / style ci-dessous sont identiques pour un renfort vers soi ou vers un ami.
+
 | Élément                    | Règle                                                                                                                                                                                                                                                                              |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Action**                 | « Renforcer » (distincte d'« Attaquer ») depuis l'écran d'envoi d'armée. La cible doit être un village possédé par le joueur.                                                                                                                                                      |
+| **Action**                 | « Renforcer » (distincte d'« Attaquer ») depuis l'écran d'envoi d'armée. La cible doit être un village possédé par le joueur **ou par un ami défensif `ACTIVE`** (cf. [`20-defensive-friends.md`](./20-defensive-friends.md)).                                                       |
 | **Durée**                  | Distance euclidienne × vitesse de l'unité la plus lente — **identique à un raid** (`findSlowestUnitSpeed`).                                                                                                                                                                        |
 | **Combat en chemin**       | ❌ Aucun (cohérent avec § Mécanique générale, _« pas d'interception en voyage »_).                                                                                                                                                                                                 |
 | **Rappel pendant l'aller** | ✅ Possible, identique au raid (demi-tour à la position actuelle, retour = temps déjà parcouru, sans perte).                                                                                                                                                                       |

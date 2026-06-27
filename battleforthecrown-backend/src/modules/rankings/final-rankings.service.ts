@@ -11,6 +11,10 @@ import {
   type WorldFinalRankingsResponse,
 } from '@battleforthecrown/shared/rankings';
 import { PrismaService } from '../../infra/prisma/prisma.service';
+import {
+  loadUserDisplayNames,
+  resolvePublicPlayerName,
+} from '../../common/display-names';
 
 /**
  * Read-only consultation of a world's frozen final leaderboards (Hall of fame),
@@ -54,7 +58,8 @@ export class FinalRankingsService {
       throw new ConflictException('FINAL_RANKINGS_MISSING');
     }
 
-    const displayNames = await this.loadDisplayNamesByUserIds(
+    const displayNames = await loadUserDisplayNames(
+      this.prisma,
       snapshots.map((row) => row.userId),
     );
 
@@ -74,7 +79,7 @@ export class FinalRankingsService {
           .map((row) => ({
             rank: row.rank,
             userId: row.userId,
-            playerName: this.toPublicPlayerName(row.userId, displayNames),
+            playerName: resolvePublicPlayerName(row.userId, displayNames),
             score: row.score,
           })),
       }),
@@ -85,21 +90,5 @@ export class FinalRankingsService {
       snapshotAt: snapshots[0].snapshotAt.toISOString(),
       leaderboards,
     };
-  }
-
-  private async loadDisplayNamesByUserIds(userIds: string[]) {
-    if (userIds.length === 0) return new Map<string, string>();
-    const users = await this.prisma.user.findMany({
-      where: { id: { in: userIds } },
-      select: { id: true, displayName: true },
-    });
-    return new Map(users.map((user) => [user.id, user.displayName]));
-  }
-
-  private toPublicPlayerName(
-    userId: string,
-    displayNames: ReadonlyMap<string, string>,
-  ): string {
-    return displayNames.get(userId) ?? `Joueur ${userId.slice(-6)}`;
   }
 }

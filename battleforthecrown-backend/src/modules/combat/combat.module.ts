@@ -22,6 +22,7 @@ import { PowerModule } from '../power/power.module';
 import { RankingsModule } from '../rankings/rankings.module';
 import { RenownModule } from '../renown/renown.module';
 import { IntelModule } from '../intel/intel.module';
+import { FriendshipModule } from '../friendship/friendship.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { IntelModule } from '../intel/intel.module';
     RankingsModule,
     RenownModule,
     IntelModule,
+    FriendshipModule,
   ],
   controllers: [CombatController],
   providers: [

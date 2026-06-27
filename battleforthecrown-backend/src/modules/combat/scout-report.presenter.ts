@@ -1,6 +1,7 @@
+import type { Prisma } from '@prisma/client';
 import type { ScoutReportResponse } from '@battleforthecrown/shared/combat';
-import type { UnitMap } from '@battleforthecrown/shared/army';
-import type { LootResources } from '@battleforthecrown/shared/combat';
+import { parseUnitMap } from './codecs/unit-map.codec';
+import { parseLootResourcesWithDefaults } from './codecs/loot.codec';
 
 type ScoutReportInput = {
   id: string;
@@ -11,10 +12,10 @@ type ScoutReportInput = {
   targetY: number;
   targetName: string | null;
   targetTier: string | null;
-  units: unknown;
-  resources: unknown;
+  units: Prisma.JsonValue;
+  resources: Prisma.JsonValue;
   strategy: string | null;
-  details: unknown;
+  details: Prisma.JsonValue;
   isRead: boolean;
   timestamp: Date;
 };
@@ -34,7 +35,24 @@ function reportDetails(value: unknown): ScoutReportResponse['details'] {
     ...(typeof wallLevel === 'number' ? { wallLevel } : {}),
     ...(typeof castleLevel === 'number' ? { castleLevel } : {}),
     ...newbieShieldDetails(details.newbieShield),
+    ...defensiveFriendsDetails(details.defensiveFriendsDisplayNames),
   };
+}
+
+function defensiveFriendsDetails(
+  value: unknown,
+):
+  | Pick<
+      NonNullable<ScoutReportResponse['details']>,
+      'defensiveFriendsDisplayNames'
+    >
+  | object {
+  if (!Array.isArray(value)) return {};
+  const names = value.filter(
+    (name): name is string => typeof name === 'string',
+  );
+  if (names.length === 0) return {};
+  return { defensiveFriendsDisplayNames: names };
 }
 
 function newbieShieldDetails(
@@ -59,8 +77,11 @@ export function presentScoutReport(
     targetY: report.targetY,
     targetName: report.targetName,
     targetTier: report.targetTier,
-    units: report.units as UnitMap,
-    resources: report.resources as LootResources,
+    units: parseUnitMap(report.units, 'scoutReport.units'),
+    resources: parseLootResourcesWithDefaults(
+      report.resources,
+      'scoutReport.resources',
+    ),
     strategy: report.strategy,
     details: reportDetails(report.details),
     isRead: report.isRead,

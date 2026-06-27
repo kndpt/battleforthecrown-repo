@@ -139,7 +139,7 @@ Critère de fin : un monde test fait son cycle complet (avec durées raccourcies
 
 ### Phase 12 — Ajouts mineurs MVP
 
-Specs : [`20-defensive-friends.md`](../docs/gameplay/20-defensive-friends.md), [`18-inactivity-and-abandonment.md`](../docs/gameplay/18-inactivity-and-abandonment.md) (post-MVP selon la doc, mais cap des comptes-zombies utile avant lancement public — à arbitrer).
+Specs : [`20-defensive-friends.md`](../docs/gameplay/20-defensive-friends.md) — ✅ backend + contrat shared livrés ([run 063](runs/archive/063-feature-defensive-friends-list.md)) ; HUD front (sheet + form + scout viewer) en run de suivi. [`18-inactivity-and-abandonment.md`](../docs/gameplay/18-inactivity-and-abandonment.md) (post-MVP selon la doc, mais cap des comptes-zombies utile avant lancement public — à arbitrer).
 
 Pourquoi ici : ajouts isolés sans impact sur les boucles principales. On les case en dernier pour ne pas charger le scope MVP plus tôt. La navigation multi-village, initialement prévue ici, a été remontée en Phase 9 (cf. justification dans cette phase).
 

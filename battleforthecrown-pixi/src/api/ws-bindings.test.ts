@@ -1010,6 +1010,11 @@ describe('conquest websocket bindings', () => {
     queryClient.setQueryData(queryKeys.population('v-att'), { used: 1, max: 10, available: 9 });
     queryClient.setQueryData(queryKeys.openConquests('user-1', 'world-1'), []);
     queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
+    queryClient.setQueryData(queryKeys.villagePower('v-att'), { total: 1 });
+    queryClient.setQueryData(queryKeys.kingdomPower('user-1', 'world-1'), { kingdomPower: 1 });
+    queryClient.setQueryData(queryKeys.rankingsSummary('world-1'), {});
+    queryClient.setQueryData(queryKeys.combatReports('user-1', 'world-1'), []);
+    queryClient.setQueryData(queryKeys.scoutReports('user-1', 'world-1'), []);
 
     applyNobleKilled(
       {
@@ -1025,6 +1030,11 @@ describe('conquest websocket bindings', () => {
     expect(queryClient.getQueryState(queryKeys.population('v-att'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.openConquests('user-1', 'world-1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.villagePower('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.kingdomPower('user-1', 'world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.rankingsSummary('world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.combatReports('user-1', 'world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.scoutReports('user-1', 'world-1'))?.isInvalidated).toBe(true);
   });
 });
 

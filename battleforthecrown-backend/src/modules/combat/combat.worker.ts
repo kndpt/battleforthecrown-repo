@@ -3,6 +3,7 @@ import {
   Expedition,
   Prisma,
   ExpeditionKind,
+  PendingConquestStatus,
   RankingSignal,
   Village,
 } from '@prisma/client';
@@ -58,6 +59,7 @@ import { RankingsService } from '../rankings/rankings.service';
 import { RenownService } from '../renown/renown.service';
 import { IntelService } from '../intel/intel.service';
 import { NewbieShieldService } from '../world/newbie-shield.service';
+import { FriendshipService } from '../friendship/friendship.service';
 import { mergeGarrisonsIntoParticipants } from './garrison-merge.utils';
 import {
   dedupedRecipientUserIds,
@@ -141,6 +143,7 @@ export class CombatWorker implements OnModuleInit {
     private readonly renown: RenownService,
     private readonly intelService: IntelService,
     private readonly newbieShield: NewbieShieldService,
+    private readonly friendship: FriendshipService,
   ) {}
 
   async onModuleInit() {
@@ -1398,6 +1401,30 @@ export class CombatWorker implements OnModuleInit {
       expedition.reinforcementOriginVillageId || expedition.attackerVillageId;
     const isReturningHome = expedition.targetRefId === originVillageId;
 
+    // A capture window may have opened on the host between dispatch and arrival.
+    // Defensive friends must never prop up an occupation garrison (cf.
+    // docs/gameplay/14-pvp-conquest.md § Acteurs autorisés). The dispatch guard
+    // (combat.service) only covers send-time, so re-check on arrival and bounce
+    // in-flight reinforcements back home instead of stationing them.
+    if (!isReturningHome) {
+      const openConquest = await tx.pendingConquest.findFirst({
+        where: {
+          targetVillageId: expedition.targetRefId,
+          status: PendingConquestStatus.OPEN,
+        },
+        select: { id: true },
+      });
+      if (openConquest) {
+        await this.bounceReinforcementFromCaptureWindow(
+          tx,
+          expedition,
+          units,
+          originVillageId,
+        );
+        return;
+      }
+    }
+
     if (isReturningHome) {
       this.logger.debug(`Reinforcement returning home to ${originVillageId}`);
       // Back to home inventory
@@ -1550,6 +1577,94 @@ export class CombatWorker implements OnModuleInit {
     );
   }
 
+  /**
+   * The host slammed an OPEN capture window shut while these reinforcements were
+   * in flight. Refuse delivery: the troops turn back at the gates and are
+   * returned to their origin village immediately (pop stays consumed at origin —
+   * the units are alive and home). A RETURNED report tells the troop owner why.
+   */
+  private async bounceReinforcementFromCaptureWindow(
+    tx: PrismaClientOrTx,
+    expedition: Expedition,
+    units: UnitMap,
+    originVillageId: string,
+  ): Promise<void> {
+    this.logger.debug(
+      `Reinforcement ${expedition.id} bounced: host ${expedition.targetRefId} under an open capture window`,
+    );
+
+    for (const [unitType, quantity] of Object.entries(units)) {
+      if (quantity <= 0) continue;
+      await tx.unitInventory.upsert({
+        where: {
+          villageId_unitType: { villageId: originVillageId, unitType },
+        },
+        create: { villageId: originVillageId, unitType, quantity },
+        update: { quantity: { increment: quantity } },
+      });
+    }
+
+    await tx.expedition.update({
+      where: { id: expedition.id },
+      data: { status: 'RESOLVED' },
+    });
+
+    await createOutboxEvent(tx, 'reinforcement.returned', originVillageId, {
+      expeditionId: expedition.id,
+      villageId: originVillageId,
+      originVillageId,
+      hostVillageId: expedition.targetRefId,
+      units,
+    });
+
+    const [originVillageSnap, hostVillageSnap] = await Promise.all([
+      loadReportVillageSnapshot(tx, originVillageId),
+      loadReportVillageSnapshot(tx, expedition.targetRefId),
+    ]);
+    if (!originVillageSnap) {
+      throw new Error(
+        `Bounced reinforcement origin village not found: originVillageId=${originVillageId}, worldId=${expedition.worldId}`,
+      );
+    }
+    if (!hostVillageSnap) {
+      throw new Error(
+        `Bounced reinforcement host village not found: hostVillageId=${expedition.targetRefId}, worldId=${expedition.worldId}`,
+      );
+    }
+
+    const report = await tx.reinforcementReport.create({
+      data: {
+        worldId: expedition.worldId,
+        type: 'RETURNED',
+        originVillageId,
+        originVillageName: originVillageSnap.name,
+        originX: originVillageSnap.x,
+        originY: originVillageSnap.y,
+        hostVillageId: expedition.targetRefId,
+        hostVillageName: hostVillageSnap.name,
+        hostX: hostVillageSnap.x,
+        hostY: hostVillageSnap.y,
+        units: encodeUnitMap(units),
+        actorUserId: null,
+      },
+    });
+
+    const recipientIds = dedupedRecipientUserIds(
+      originVillageSnap.userId,
+      hostVillageSnap.userId,
+    );
+    for (const recipientUserId of recipientIds) {
+      await tx.inboxEntry.create({
+        data: {
+          userId: recipientUserId,
+          worldId: expedition.worldId,
+          kind: 'REINFORCEMENT',
+          reinforcementReportId: report.id,
+        },
+      });
+    }
+  }
+
   private async handleScoutArrival(
     tx: PrismaClientOrTx,
     expedition: Expedition,
@@ -1622,6 +1737,17 @@ export class CombatWorker implements OnModuleInit {
             tx,
           )
         : null;
+    // Snapshot des amis défensifs ACTIVE du propriétaire de la cible au moment
+    // du scout (PLAYER only) → un attaquant jauge le risque de renfort. Figé
+    // comme wallLevel/newbieShield : non recalculé live après le scout.
+    const defensiveFriendsDisplayNames =
+      expedition.targetKind === 'PLAYER_VILLAGE' && targetVillage.userId
+        ? await this.friendship.listActiveFriendDisplayNames(
+            expedition.worldId,
+            targetVillage.userId,
+            tx,
+          )
+        : [];
 
     const report = await tx.scoutReport.create({
       data: {
@@ -1653,6 +1779,9 @@ export class CombatWorker implements OnModuleInit {
                   endsAt: newbieShieldSnapshot.endsAt,
                 },
               }
+            : {}),
+          ...(defensiveFriendsDisplayNames.length > 0
+            ? { defensiveFriendsDisplayNames }
             : {}),
         },
       },

@@ -1,7 +1,7 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-06-25 | theme combat.service.ts `createOutboundExpedition` helper — consolide timing + tx.expedition.create entre initiateAttack/Scout/Reinforce ; extraData typed via `Partial<Omit<ExpeditionUncheckedCreateInput, /* base */>>` ; ordre tx-local préservé (create → outbox → side-effect → schedule) ; 25 smokes combat ✅ | PR maint(refactor-backend): consolidate outbound expedition creation helper
-full: `archive/refactor-backend/2026-06-25-full.md`
+last: 2026-06-26 | theme consolidate player + world display-name resolution — 4 services rankings/cosmetic/power/world-entities-query → helpers communs (`formatAnonymousPlayerName` shared + `loadUserDisplayNames`/`resolvePublicPlayerName`/`resolveWorldDisplayName` backend/common) ; -31 lignes net ; 9 unit tests added ; 5 smokes verts | PR maint(refactor-backend): consolidate player and world display-name resolution helpers
+full: `archive/refactor-backend/2026-06-26-full.md`
 
 ## OPEN
 
@@ -10,6 +10,7 @@ full: `archive/refactor-backend/2026-06-25-full.md`
 | R4  | High | crowns.service.ts:261                              | fractional carry — needs migration (`lastUpdateTs += production/rate`)                     |
 | W1  | High | combat/combat.worker.ts (1869L)                    | 4 kinds cohabitent — split par kind, L effort                                              |
 | B1  | Med  | combat.service.ts                                  | 1362L sans spec unit direct (smokes uniquement)                                            |
+| L3  | Low  | rankings.service.ts:22                             | import `resolveRankingsConfig` cross-service helper inside other service file              |
 | U1  | Low  | combat.worker.ts:1489-1498, 1743-1759, return.worker.ts:326-340 | inbox.create/upsert loop ×N → `createMany skipDuplicates` (ROI bas)                |
 | U3  | Low  | world-entities-query.service.ts:137-315            | fetchBarb/fetchPlayer partagent bounds + captureWindow mapping                             |
 | D2  | Low  | gameplay/{upgrade-building,recruit-troops,recruit-noble}.use-case.ts | Promise.all quintette — divergence trop grande, ROI bas, garder en obs |
@@ -29,7 +30,8 @@ full: `archive/refactor-backend/2026-06-25-full.md`
 
 ## Skip — déjà traité
 
-- W2c (initiate{Attack,Scout,Reinforce} skeleton consolidation) → ce run
+- N5–N15 (display-name dup) → ce run
+- W2c (initiate{Attack,Scout,Reinforce} skeleton consolidation) → 2026-06-25
 - W5 + W6 (construction post-tx correctness + structured swallow logs) → run 2026-06-22 (2)
 - W3 + W4 (registerQueueWorker helpers + construction emoji logs) → run 2026-06-22 (1)
 - Q1 (Array.isArray defensive unwrap) → absorbé par le helper W3

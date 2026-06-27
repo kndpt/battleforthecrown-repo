@@ -17,3 +17,4 @@ export * from './cosmetic';
 export * from './pvp';
 export * from './renown';
 export * from './threat';
+export * from './social';
