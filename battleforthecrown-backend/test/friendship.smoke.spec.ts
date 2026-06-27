@@ -50,11 +50,12 @@ describe('friendship smoke', () => {
     const a = await newPlayer(world.id, 'a');
     const b = await newPlayer(world.id, 'b');
 
-    // A requests B by display name.
+    // A requests B by display name — sent upper-cased to prove the lookup is
+    // case-insensitive (display names are unique case-insensitively).
     const reqRes = await request(ctx.server)
       .post(friendships(world.id))
       .set('Authorization', `Bearer ${a.accessToken}`)
-      .send({ recipientDisplayName: b.displayName });
+      .send({ recipientDisplayName: b.displayName.toUpperCase() });
     expect(reqRes.status).toBe(200);
     expect(asFriendship(reqRes).status).toBe('PENDING');
     expect(asFriendship(reqRes).otherDisplayName).toBe(b.displayName);
@@ -178,5 +179,39 @@ describe('friendship smoke', () => {
       .send({ recipientUserId: overflow.userId });
     expect(reqRes.status).toBe(409);
     expect(asError(reqRes).code).toBe('DEFENSIVE_FRIENDS_CAP_REACHED');
+  });
+
+  it('rechecks the cap on the recipient side at accept', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    // X reaches 5 ACTIVE friends as the requester. A 6th player then sends a
+    // request to X — accepting it would push X (the RECIPIENT) past the cap,
+    // so the recipient-side recheck must refuse it.
+    const x = await newPlayer(world.id, 'x');
+    for (let i = 0; i < 5; i++) {
+      const r = await newPlayer(world.id, `xr${i}`);
+      const req = await request(ctx.server)
+        .post(friendships(world.id))
+        .set('Authorization', `Bearer ${x.accessToken}`)
+        .send({ recipientUserId: r.userId });
+      expect(req.status).toBe(200);
+      const accept = await request(ctx.server)
+        .post(`${friendships(world.id)}/${asFriendship(req).id}/accept`)
+        .set('Authorization', `Bearer ${r.accessToken}`);
+      expect(accept.status).toBe(200);
+    }
+
+    const suitor = await newPlayer(world.id, 'suitor');
+    const inbound = await request(ctx.server)
+      .post(friendships(world.id))
+      .set('Authorization', `Bearer ${suitor.accessToken}`)
+      .send({ recipientUserId: x.userId });
+    expect(inbound.status).toBe(200);
+
+    // X is the recipient here and already at 5 ACTIVE → accept refused.
+    const sixth = await request(ctx.server)
+      .post(`${friendships(world.id)}/${asFriendship(inbound).id}/accept`)
+      .set('Authorization', `Bearer ${x.accessToken}`);
+    expect(sixth.status).toBe(409);
+    expect(asError(sixth).code).toBe('DEFENSIVE_FRIENDS_CAP_REACHED');
   });
 });

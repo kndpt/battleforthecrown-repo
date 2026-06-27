@@ -155,6 +155,32 @@ describe('presentScoutReport', () => {
     ).toEqual({});
   });
 
+  it('keeps only string names in defensiveFriendsDisplayNames', () => {
+    const report = {
+      ...baseReport,
+      details: { defensiveFriendsDisplayNames: ['Alice', 42, null, 'Bob'] },
+    };
+    expect(presentScoutReport(report).details).toEqual({
+      defensiveFriendsDisplayNames: ['Alice', 'Bob'],
+    });
+  });
+
+  it('omits defensiveFriendsDisplayNames when the value is not an array', () => {
+    const report = {
+      ...baseReport,
+      details: { defensiveFriendsDisplayNames: 'Alice' },
+    };
+    expect(presentScoutReport(report).details).toEqual({});
+  });
+
+  it('omits defensiveFriendsDisplayNames when no string names remain', () => {
+    const report = {
+      ...baseReport,
+      details: { defensiveFriendsDisplayNames: [1, 2, null] },
+    };
+    expect(presentScoutReport(report).details).toEqual({});
+  });
+
   it('marks a barbarian scout report with null targetVillageId and targetTier', () => {
     const report: ScoutReportInput = {
       ...baseReport,

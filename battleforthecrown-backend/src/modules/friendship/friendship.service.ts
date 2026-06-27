@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import type { Friendship } from '@prisma/client';
+import { Friendship, Prisma } from '@prisma/client';
 import {
   DEFENSIVE_FRIENDS_CAP,
   FRIENDSHIP_ERROR_CODES,
@@ -16,6 +16,7 @@ import {
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import type { PrismaClientOrTx } from '../../common/prisma.types';
 import { OwnershipService } from '../../common/auth/ownership.service';
+import { WorldAccessService } from '../world/world-access.service';
 
 const FRIENDSHIP_USER_INCLUDE = {
   requesterUser: { select: { displayName: true } },
@@ -39,6 +40,7 @@ export class FriendshipService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ownership: OwnershipService,
+    private readonly worldAccess: WorldAccessService,
   ) {}
 
   /** ACTIVE friendships of a player, counted from either side of the pair. */
@@ -109,6 +111,7 @@ export class FriendshipService {
     body: CreateFriendshipBody,
   ): Promise<FriendshipDto> {
     await this.ownership.assertWorldMember(worldId, callerId);
+    await this.worldAccess.assertWorldWritable(worldId);
     const recipientUserId = await this.resolveRecipientUserId(worldId, body);
 
     if (recipientUserId === callerId) {
@@ -116,35 +119,12 @@ export class FriendshipService {
     }
     await this.assertWorldMember(worldId, recipientUserId, 'Recipient');
 
-    const existing = await this.prisma.friendship.findFirst({
-      where: {
-        worldId,
-        OR: [
-          { requesterUserId: callerId, recipientUserId },
-          { requesterUserId: recipientUserId, recipientUserId: callerId },
-        ],
-      },
-      include: FRIENDSHIP_USER_INCLUDE,
-    });
-
-    if (existing) {
-      if (existing.status === 'ACTIVE') {
-        throw new ConflictException({
-          message: 'You are already defensive friends with this player.',
-          code: FRIENDSHIP_ERROR_CODES.ALREADY_ACTIVE,
-        });
-      }
-      // status === 'PENDING'
-      if (existing.requesterUserId === callerId) {
-        // Idempotent re-request from the same side: return the same PENDING row.
-        return this.toDto(existing, callerId);
-      }
-      throw new ConflictException({
-        message:
-          'This player already sent you a friend request — accept it instead.',
-        code: FRIENDSHIP_ERROR_CODES.PENDING_AWAITING_ACCEPT,
-      });
-    }
+    const existing = await this.findPairFriendship(
+      worldId,
+      callerId,
+      recipientUserId,
+    );
+    if (existing) return this.resolveExistingFriendship(existing, callerId);
 
     if (
       (await this.countActive(this.prisma, worldId, callerId)) >=
@@ -153,11 +133,70 @@ export class FriendshipService {
       throw this.capReached();
     }
 
-    const created = await this.prisma.friendship.create({
-      data: { worldId, requesterUserId: callerId, recipientUserId },
+    try {
+      const created = await this.prisma.friendship.create({
+        data: { worldId, requesterUserId: callerId, recipientUserId },
+        include: FRIENDSHIP_USER_INCLUDE,
+      });
+      return this.toDto(created, callerId);
+    } catch (error) {
+      // A concurrent identical request won the insert race (P2002 on the
+      // directional unique). Re-read the pair and resolve to the same business
+      // outcome instead of leaking a raw Prisma error.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        const raced = await this.findPairFriendship(
+          worldId,
+          callerId,
+          recipientUserId,
+        );
+        if (raced) return this.resolveExistingFriendship(raced, callerId);
+      }
+      throw error;
+    }
+  }
+
+  /** Friendship linking the pair in either direction, with user names. */
+  private findPairFriendship(
+    worldId: string,
+    userIdA: string,
+    userIdB: string,
+  ): Promise<FriendshipWithUsers | null> {
+    return this.prisma.friendship.findFirst({
+      where: {
+        worldId,
+        OR: [
+          { requesterUserId: userIdA, recipientUserId: userIdB },
+          { requesterUserId: userIdB, recipientUserId: userIdA },
+        ],
+      },
       include: FRIENDSHIP_USER_INCLUDE,
     });
-    return this.toDto(created, callerId);
+  }
+
+  /** Map an already-existing pair row to the right request-time outcome. */
+  private resolveExistingFriendship(
+    existing: FriendshipWithUsers,
+    callerId: string,
+  ): FriendshipDto {
+    if (existing.status === 'ACTIVE') {
+      throw new ConflictException({
+        message: 'You are already defensive friends with this player.',
+        code: FRIENDSHIP_ERROR_CODES.ALREADY_ACTIVE,
+      });
+    }
+    // status === 'PENDING'
+    if (existing.requesterUserId === callerId) {
+      // Idempotent re-request from the same side: return the same PENDING row.
+      return this.toDto(existing, callerId);
+    }
+    throw new ConflictException({
+      message:
+        'This player already sent you a friend request — accept it instead.',
+      code: FRIENDSHIP_ERROR_CODES.PENDING_AWAITING_ACCEPT,
+    });
   }
 
   async acceptFriendship(
@@ -167,6 +206,9 @@ export class FriendshipService {
   ): Promise<FriendshipDto> {
     await this.ownership.assertWorldMember(worldId, callerId);
     return this.prisma.$transaction(async (tx) => {
+      // Read-only world guard inside the tx so a concurrent LOCKED → ENDED
+      // transition can never let an accept slip through after the wipe.
+      await this.worldAccess.assertWorldWritable(worldId, tx);
       const friendship = await tx.friendship.findUnique({
         where: { id: friendshipId },
       });
@@ -260,6 +302,7 @@ export class FriendshipService {
     friendshipId: string,
   ): Promise<void> {
     await this.ownership.assertWorldMember(worldId, callerId);
+    await this.worldAccess.assertWorldWritable(worldId);
     const friendship = await this.prisma.friendship.findUnique({
       where: { id: friendshipId },
     });

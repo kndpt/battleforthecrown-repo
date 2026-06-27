@@ -122,7 +122,20 @@ describe('cross-player reinforcement smoke', () => {
     });
     expect(hostPopAfter.used).toBe(hostPopBefore.used);
 
-    // Reinforcing a non-friend, non-owned village → forbidden.
+    // Inventory accounting: A actually lost the 30 MILITIA it sent (50 → 20),
+    // so a duplication bug (garrison created without deducting) cannot pass.
+    const originInv = await ctx.prisma.unitInventory.findUniqueOrThrow({
+      where: {
+        villageId_unitType: { villageId: a.villageId, unitType: 'MILITIA' },
+      },
+    });
+    expect(originInv.quantity).toBe(20);
+
+    // Reinforcing a non-friend, non-owned village → forbidden, with NO side
+    // effects: the 403 must leave units, garrison and expedition state untouched.
+    const strangerPopBefore = await ctx.prisma.population.findUniqueOrThrow({
+      where: { villageId: stranger.villageId },
+    });
     const forbidden = await request(ctx.server)
       .post('/combat/reinforce')
       .set('Authorization', `Bearer ${a.accessToken}`)
@@ -132,6 +145,26 @@ describe('cross-player reinforcement smoke', () => {
         units: { MILITIA: 5 },
       });
     expect(forbidden.status).toBe(403);
+
+    const originInvAfterForbidden =
+      await ctx.prisma.unitInventory.findUniqueOrThrow({
+        where: {
+          villageId_unitType: { villageId: a.villageId, unitType: 'MILITIA' },
+        },
+      });
+    expect(originInvAfterForbidden.quantity).toBe(20);
+    const strangerGarrisons = await ctx.prisma.garrison.count({
+      where: { villageId: stranger.villageId },
+    });
+    expect(strangerGarrisons).toBe(0);
+    const strangerExpeditions = await ctx.prisma.expedition.count({
+      where: { targetRefId: stranger.villageId },
+    });
+    expect(strangerExpeditions).toBe(0);
+    const strangerPopAfter = await ctx.prisma.population.findUniqueOrThrow({
+      where: { villageId: stranger.villageId },
+    });
+    expect(strangerPopAfter.used).toBe(strangerPopBefore.used);
   });
 
   it('blocks reinforcement of a friend village under an OPEN capture window', async () => {
@@ -162,6 +195,69 @@ describe('cross-player reinforcement smoke', () => {
         units: { MILITIA: 10 },
       });
     expect(res.status).toBe(403);
+  });
+
+  it('bounces an in-flight reinforcement home when a capture window opens mid-travel', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const a = await newPlayer(world.id, 'flight-send');
+    const b = await newPlayer(world.id, 'flight-host');
+    await makeActiveFriends(world.id, a, b);
+    await giveArmy(a.villageId, 20);
+
+    // Push B far away so the reinforcement stays EN_ROUTE long enough to open a
+    // capture window before it arrives (dispatch passes — no window yet).
+    await ctx.prisma.village.update({
+      where: { id: b.villageId },
+      data: { x: a.x + 60, y: a.y + 60 },
+    });
+
+    const res = await request(ctx.server)
+      .post('/combat/reinforce')
+      .set('Authorization', `Bearer ${a.accessToken}`)
+      .send({
+        villageId: a.villageId,
+        targetVillageId: b.villageId,
+        units: { MILITIA: 10 },
+      });
+    expect(res.status).toBeLessThan(300);
+
+    // Window slams shut on B while the reinforcement is still travelling.
+    await ctx.prisma.pendingConquest.create({
+      data: {
+        attackerVillageId: a.villageId,
+        attackerUserId: a.userId,
+        targetVillageId: b.villageId,
+        worldId: world.id,
+        captureUntil: new Date(Date.now() + 60 * 60 * 1000),
+        status: 'OPEN',
+      },
+    });
+
+    // On arrival the worker must refuse delivery and return the troops home.
+    await waitFor(
+      () =>
+        ctx.prisma.expedition.findFirst({
+          where: {
+            attackerVillageId: a.villageId,
+            targetRefId: b.villageId,
+            kind: 'REINFORCE',
+            status: 'RESOLVED',
+          },
+        }),
+      { timeoutMs: 30_000 },
+    );
+
+    // No garrison propped up the occupation; the 10 MILITIA are back at origin.
+    const hostGarrison = await ctx.prisma.garrison.count({
+      where: { villageId: b.villageId, originVillageId: a.villageId },
+    });
+    expect(hostGarrison).toBe(0);
+    const originInv = await ctx.prisma.unitInventory.findUniqueOrThrow({
+      where: {
+        villageId_unitType: { villageId: a.villageId, unitType: 'MILITIA' },
+      },
+    });
+    expect(originInv.quantity).toBe(20);
   });
 
   it('scout report reveals the target owner ACTIVE defensive friends', async () => {

@@ -35,7 +35,7 @@ Tout ce qui n'est pas « renforts mutuels autorisés » glisse mécaniquement ve
 ## Contrat technique (MVP livré)
 
 - **Statut `Friendship`** : `PENDING` → `ACTIVE`. Seul `ACTIVE` ouvre le droit de renfort réciproque. Cap **5 `ACTIVE`** par joueur, revérifié des deux côtés à l'`accept` (codes `FRIENDSHIP_ALREADY_ACTIVE`, `FRIENDSHIP_PENDING_AWAITING_ACCEPT`, `DEFENSIVE_FRIENDS_CAP_REACHED`).
-- **Endpoints** : `POST/GET/DELETE /worlds/:worldId/friendships`, `POST …/:id/accept`. Voir [`backend-modules.md` § friendship](../architecture/backend-modules.md).
+- **Endpoints** : `POST /worlds/:worldId/friendships`, `GET …/me`, `POST …/:id/accept`, `DELETE …/:id`. Voir [`backend-modules.md` § friendship](../architecture/backend-modules.md).
 - **Renfort cross-joueur** : invariants durée / pop (consommée à l'origine) / pertes / style **non dupliqués ici** — cf. [`04-combat.md` § Renforts entre villages](./04-combat.md#renforts-entre-villages-auto--amis-défensifs). Le retrait passe par les actions existantes `Rappeler` (propriétaire des troupes) / `Renvoyer` (propriétaire du village hôte) ; un `DELETE` de l'amitié ne rappelle **pas** les garnisons déjà stationnées.
 
 ## Liens
