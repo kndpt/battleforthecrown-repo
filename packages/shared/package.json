@@ -75,6 +75,10 @@
     "./utils": {
       "types": "./dist/utils/index.d.ts",
       "default": "./dist/utils/index.js"
+    },
+    "./social": {
+      "types": "./dist/social/index.d.ts",
+      "default": "./dist/social/index.js"
     }
   },
   "files": [

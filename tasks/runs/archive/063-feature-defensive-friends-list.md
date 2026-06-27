@@ -1,8 +1,9 @@
 # Run #063 — feature-defensive-friends-list
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE (backend + shared + docs)
+> **Démarré** : 2026-06-26
+> **Terminé** : 2026-06-26
+> **Note** : scope frontend (T7-T9 + critères `[frontend]`) délégué au [run 084](084-feature-defensive-friends-frontend.md) — split sanctionné par § Points d'attention « Scope frontend large ». Le contrat REST/DTO consommé par le front est figé et livré ici.
 
 ## Cible
 
@@ -74,26 +75,40 @@ _(Le lead peut affiner à l'étape 3 du `$bftc-run`.)_
 
 Chaque tâche reste ≤ 5 fichiers.
 
-## Progress (rempli pendant le run)
+## Progress
 
-_(Vide au démarrage. Mis à jour à chaque transition d'étape ou de tâche.)_
+_(git history)_
 
 ## Décisions prises
 
-_(Vide au démarrage. Décisions archi non triviales, dérogations lead, findings de review, refus de sub-agents.)_
+_(git history)_
 
 ## Rapport final
 
-_(Vide au démarrage. Rempli à l'étape 10 : synthèse, fichiers touchés, tickets ouverts, méta-évaluation si applicable.)_
+Backend atomique livré : domaine shared `social/` (cap 5, codes d'erreur, Zod), modèle Prisma `Friendship` + migration, module `FriendshipModule` (CRUD + accept, cap bilatéral sous `FOR UPDATE`, idempotence, anti-doublon symétrique), guard renfort cross-joueur + blocage capture-window, scout enrichi `defensiveFriendsDisplayNames`. Frontend (sheet + form + scout viewer) délégué au [run 084](084-feature-defensive-friends-frontend.md).
 
 ### Acceptance & QA
 
-- **Critères d'acceptance vérifiés** : à remplir à l'étape 10.
-- **Review indépendante** : `Déclenchée (raison : (a) back+front+shared simultanés ; (b) modifie SPEC.md — `20-defensive-friends.md` tranche 3 questions ; (d) invariant durable — extension du contrat de renfort qui devient cross-joueur)`.
-- **Tests automatisés** : unit `friendship.test.ts` (shared), unit `friendship.service.spec.ts` (cap, idempotence, refus, accept), smoke `friendship.smoke.spec.ts` (CRUD), smoke `cross-player-reinforcement.smoke.spec.ts` (4 cas), vitest sheet + form + scout viewer.
-- **Smokes ajoutés/modifiés** : `battleforthecrown-backend/test/friendship.smoke.spec.ts` (à créer), `battleforthecrown-backend/test/cross-player-reinforcement.smoke.spec.ts` (à créer), `battleforthecrown-backend/test/scout-report.smoke.spec.ts` (étendre).
-- **QA fonctionnelle agent** : `curl` séquencé sur stack locale (2 comptes test sur même monde) : add → accept → cap 5 → reinforce → retrait → scout révèle.
-- **Tests IG à faire par le user** : checklist mobile ≤ 5 items — (a) ajout d'un ami via pseudo + accept côté autre compte, (b) cap 5 atteint = bouton ajout grisé, (c) renfort vers village ami visible sur carte, (d) scout d'un joueur tiers ami du défenseur révèle la liste d'amis, (e) retrait unilatéral fonctionne et coupe l'accès renfort.
+- **Critères d'acceptance vérifiés (backend/shared/docs)** :
+  - [x] Modèle `Friendship` + unique + 2 index bi-dir + CHECK requester≠recipient — `prisma/migrations/20260626120000_add_friendship/migration.sql` → appliquée (dev + smoke template).
+  - [x] `POST …/friendships` PENDING idempotent + 409 `ALREADY_ACTIVE` / `PENDING_AWAITING_ACCEPT` — `test:smoke:run friendship.smoke` → vert.
+  - [x] `POST …/:id/accept` caller=recipient, cap bilatéral revérifié sous `FOR UPDATE`, anti-doublon symétrique même tx — smoke cap 6→accept bloqué (requester) → vert.
+  - [x] `DELETE …/:id` hard delete 2 côtés, garnisons non auto-rappelées — smoke → vert.
+  - [x] `GET …/me` 3 buckets + displayName autre côté, ne fuit que le caller — smoke → vert.
+  - [x] Cap 5 ACTIVE (request + accept) — smoke → 409 `DEFENSIVE_FRIENDS_CAP_REACHED`.
+  - [x] Renfort vers ami ACTIVE → 200, pop consommée à l'origine, host inchangé — `cross-player-reinforcement.smoke` → vert (garrison `originVillageId` caller, `Population.used` origine=50 host inchangé).
+  - [x] Renfort vers non-ami → 403 — smoke → vert.
+  - [x] Renfort bloqué sous fenêtre capture `OPEN` → 403 — smoke → vert.
+  - [x] Scout révèle `defensiveFriendsDisplayNames` ACTIVE (snapshot) — smoke → vert (2 noms).
+  - [x] Docs `20-defensive-friends.md` (bandeau levé, 3 questions tranchées), `04-combat.md` (§ renommé + pointeur), roadmap Phase 12, `backend-modules.md`.
+  - [→ run 084] Critères `[frontend]` (sheet, form, scout viewer) + T7-T9 — frontend, hors scope backend atomique.
+  - [QA backend, non-régressé] `[combat]` raid utilisant troupes d'amis en défense + `recall`/`Renvoyer` RETURNED : réutilisent le pattern `Garrison` cross-village (`originVillageId`≠`villageId`) inchangé, couvert par `reinforcements.smoke.spec.ts` existant ; ce run ne touche pas la résolution combat ni le recall.
+- **Review indépendante** : `Déclenchée (raison : (b) modifie SPEC `20-defensive-friends.md` ; (c) diff > 100 lignes ; (d) invariant durable — renfort cross-joueur)`. Verdict **GO**, 0 bloquant/0 majeur, 4 mineurs ; 2 traités (world-membership accept/delete, lookup displayName case-insensitive), 2 notés (perf négligeable, capture-window bloque aussi l'auto-renfort = conforme `04-combat` § Exception conquête).
+- **Tests automatisés** : `yarn static-check` ✅ ; `yarn workspace battleforthecrown-backend test` → 509 ✅ ; `yarn test:pixi` → 819 ✅ (inclut `social/index.spec.ts`).
+- **Smokes lancés** : `test:smoke:run -- friendship.smoke cross-player-reinforcement.smoke` → **6/6 vert** (ciblés). Full smoke non lancé localement (préflight bloqué par drift migration run-065 non lié) ; couvert par CI PR.
+- **Smokes ajoutés** : `test/friendship.smoke.spec.ts` (lifecycle, idempotence, codes 409, self, cap 5 recheck requester), `test/cross-player-reinforcement.smoke.spec.ts` (ami/non-ami/capture-window/scout-reveal).
+- **QA fonctionnelle agent** : couverte par smokes REST+DB bout-en-bout (register→join→friendship→reinforce→scout). Pas de curl manuel additionnel nécessaire.
+- **Tests IG à faire par le user** : `Aucun` pour ce run backend (aucun rendu front livré). La QA IG est portée par le run 084 (frontend).
 
 ## Points d'attention (notes du plan)
 

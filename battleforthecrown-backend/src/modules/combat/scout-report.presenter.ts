@@ -35,7 +35,24 @@ function reportDetails(value: unknown): ScoutReportResponse['details'] {
     ...(typeof wallLevel === 'number' ? { wallLevel } : {}),
     ...(typeof castleLevel === 'number' ? { castleLevel } : {}),
     ...newbieShieldDetails(details.newbieShield),
+    ...defensiveFriendsDetails(details.defensiveFriendsDisplayNames),
   };
+}
+
+function defensiveFriendsDetails(
+  value: unknown,
+):
+  | Pick<
+      NonNullable<ScoutReportResponse['details']>,
+      'defensiveFriendsDisplayNames'
+    >
+  | object {
+  if (!Array.isArray(value)) return {};
+  const names = value.filter(
+    (name): name is string => typeof name === 'string',
+  );
+  if (names.length === 0) return {};
+  return { defensiveFriendsDisplayNames: names };
 }
 
 function newbieShieldDetails(
