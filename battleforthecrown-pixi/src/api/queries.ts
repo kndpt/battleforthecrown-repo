@@ -897,18 +897,7 @@ export function useTrainUnitsMutation() {
       }
     },
     onSettled: (_data, _err, { villageId }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.armyTraining(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.armyInventory(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.resources(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.population(villageId),
-      });
+      invalidateArmyMutationQueries(queryClient, villageId);
     },
   });
 }
@@ -928,18 +917,7 @@ export function useRecruitNobleMutation() {
         {},
       ),
     onSettled: (_data, _err, { villageId }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.armyTraining(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.armyInventory(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.resources(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.population(villageId),
-      });
+      invalidateArmyMutationQueries(queryClient, villageId);
       queryClient.invalidateQueries({
         queryKey: queryKeys.crowns(userId, worldId),
       });
@@ -967,18 +945,7 @@ export function useCancelTrainingMutation() {
       pushRefundToast("Entraînement annulé", data.refunded);
     },
     onSettled: (_data, _err, { villageId }) => {
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.armyTraining(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.armyInventory(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.resources(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.population(villageId),
-      });
+      invalidateArmyMutationQueries(queryClient, villageId);
       queryClient.invalidateQueries({
         queryKey: queryKeys.crowns(userId, worldId),
       });
@@ -1291,6 +1258,26 @@ export function useWorldConfigQuery(worldId: string | null) {
   });
 }
 
+function invalidateArmyMutationQueries(
+  qc: QueryClient,
+  villageId: string,
+): void {
+  qc.invalidateQueries({ queryKey: queryKeys.armyTraining(villageId) });
+  qc.invalidateQueries({ queryKey: queryKeys.armyInventory(villageId) });
+  qc.invalidateQueries({ queryKey: queryKeys.resources(villageId) });
+  qc.invalidateQueries({ queryKey: queryKeys.population(villageId) });
+}
+
+function invalidateBuildingMutationQueries(
+  qc: QueryClient,
+  villageId: string,
+): void {
+  qc.invalidateQueries({ queryKey: queryKeys.queue(villageId) });
+  qc.invalidateQueries({ queryKey: queryKeys.buildings(villageId) });
+  qc.invalidateQueries({ queryKey: queryKeys.resources(villageId) });
+  qc.invalidateQueries({ queryKey: queryKeys.population(villageId) });
+}
+
 function invalidateCombatDispatchQueries(
   qc: QueryClient,
   villageId: string,
@@ -1586,16 +1573,7 @@ export function useUpgradeBuildingMutation() {
       }
     },
     onSettled: (_data, _err, { villageId, buildingType }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.queue(villageId) });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.buildings(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.population(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.resources(villageId),
-      });
+      invalidateBuildingMutationQueries(queryClient, villageId);
       if (buildingType === "CASTLE") {
         queryClient.invalidateQueries({
           queryKey: queryKeys.myVillages(userId, worldId),
@@ -1752,16 +1730,7 @@ export function useCancelConstructionMutation() {
       pushRefundToast("Construction annulée", data.refunded);
     },
     onSettled: (_data, _err, { villageId }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.queue(villageId) });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.buildings(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.resources(villageId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.population(villageId),
-      });
+      invalidateBuildingMutationQueries(queryClient, villageId);
     },
   });
 }
