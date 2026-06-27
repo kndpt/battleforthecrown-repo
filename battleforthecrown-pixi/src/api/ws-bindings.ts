@@ -209,12 +209,7 @@ export function applyBuildingCompleted(
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.queue(payload.villageId),
   });
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.population(payload.villageId),
-  });
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.resources(payload.villageId),
-  });
+  invalidateVillageEconomy(ctx, payload.villageId);
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.villageStrategy(payload.villageId),
   });
@@ -249,12 +244,7 @@ export function applyUnitTrained(
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.armyInventory(payload.villageId),
   });
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.resources(payload.villageId),
-  });
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.population(payload.villageId),
-  });
+  invalidateVillageEconomy(ctx, payload.villageId);
   invalidatePowerQueries(ctx, payload.villageId);
   invalidateRetentionSummary(ctx);
   invalidateOnboardingSummary(ctx);
@@ -270,12 +260,7 @@ export function applyUnitTrainingCompleted(
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.armyInventory(payload.villageId),
   });
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.resources(payload.villageId),
-  });
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.population(payload.villageId),
-  });
+  invalidateVillageEconomy(ctx, payload.villageId);
   invalidatePowerQueries(ctx, payload.villageId);
   invalidateRetentionSummary(ctx);
   invalidateOnboardingSummary(ctx);
@@ -346,13 +331,7 @@ export function applyBattleResolved(
     useExpeditionsStore.getState().remove(payload.expeditionId);
   }, RESOLVED_TO_RETURNING_DELAY_MS);
 
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.resources(payload.villageId),
-  });
-  // Population freed for dead attacker units — see backend combat.worker:sumPopulationCost.
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.population(payload.villageId),
-  });
+  invalidateVillageEconomy(ctx, payload.villageId);
   invalidatePowerQueries(ctx, payload.villageId);
   invalidateCombatReports(ctx);
   invalidateOpenExpeditions(ctx);
@@ -480,12 +459,7 @@ export function applyExpeditionRecalled(
     description: `Retour prévu à ${new Date(payload.returnAt).toLocaleTimeString()}`,
     ttlMs: 4000,
   });
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.resources(payload.villageId),
-  });
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.population(payload.villageId),
-  });
+  invalidateVillageEconomy(ctx, payload.villageId);
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.activeExpeditions(payload.villageId),
   });
@@ -620,10 +594,9 @@ export function applyCaravanSent(
     arrivalAt: Date.parse(payload.arrivalAt),
   };
   useExpeditionsStore.getState().add(snapshot);
-  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.villageId) });
+  invalidateVillageEconomy(ctx, payload.villageId);
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.targetVillageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(payload.villageId) });
-  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.villageId) });
   invalidateOpenExpeditions(ctx);
 }
 
@@ -635,8 +608,7 @@ export function applyCaravanArrived(
     phase: "RETURNING",
     returnAt: Date.parse(payload.returnAt),
   });
-  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.targetVillageId) });
-  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.targetVillageId) });
+  invalidateVillageEconomy(ctx, payload.targetVillageId);
   invalidateCaravanReports(ctx);
   invalidateOpenExpeditions(ctx);
 }
@@ -678,12 +650,7 @@ export function applyCaravanRecalled(
     description: `Retour prévu à ${new Date(payload.returnAt).toLocaleTimeString()}`,
     ttlMs: 4000,
   });
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.resources(payload.villageId),
-  });
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.population(payload.villageId),
-  });
+  invalidateVillageEconomy(ctx, payload.villageId);
   invalidateOpenExpeditions(ctx);
 }
 
@@ -692,12 +659,7 @@ export function applyCaravanReturned(
   ctx: BindingsContext,
 ): void {
   markExpeditionReturned(payload.expeditionId);
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.resources(payload.villageId),
-  });
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.population(payload.villageId),
-  });
+  invalidateVillageEconomy(ctx, payload.villageId);
   invalidateCaravanReports(ctx);
   invalidateOpenExpeditions(ctx);
 }
@@ -721,8 +683,7 @@ export function applyVillageAttacked(
   ctx: BindingsContext,
 ): void {
   // Defender lost units → population was released server-side. Refresh the HUD.
-  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.defenderVillageId) });
-  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(payload.defenderVillageId) });
+  invalidateVillageEconomy(ctx, payload.defenderVillageId);
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.defenderVillageId) });
   invalidatePowerQueries(ctx, payload.defenderVillageId);
   for (const originVillageId of payload.reinforcementOriginVillageIds ?? []) {
@@ -782,6 +743,11 @@ function invalidateOpenExpeditions(ctx: BindingsContext): void {
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.openExpeditions(userId, worldId),
   });
+}
+
+function invalidateVillageEconomy(ctx: BindingsContext, villageId: string): void {
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(villageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
 }
 
 function invalidatePowerQueries(ctx: BindingsContext, villageId: string): void {
@@ -972,6 +938,8 @@ export function applyNobleKilled(
   });
   invalidateOpenConquests(ctx);
   invalidateOpenExpeditions(ctx);
+  invalidatePowerQueries(ctx, payload.attackerVillageId);
+  invalidateCombatReports(ctx);
   useUiStore.getState().pushToast({
     tone: "error",
     title: "Seigneur perdu",
