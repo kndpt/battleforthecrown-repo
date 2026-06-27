@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { z } from 'zod';
 import { buildShieldState } from '@battleforthecrown/shared';
+import { formatAnonymousPlayerName } from '@battleforthecrown/shared/auth';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WorldConfigService } from './world-config.service';
 
@@ -284,7 +285,7 @@ export class WorldEntitiesQueryService {
           userId: village.userId,
           ownerDisplayName:
             village.user?.displayName ??
-            `Joueur ${village.userId?.slice(-6) ?? '?'}`,
+            formatAnonymousPlayerName(village.userId),
           name: village.name,
           villageId: village.id,
           castleLevel,

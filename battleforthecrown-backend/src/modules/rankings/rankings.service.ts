@@ -18,6 +18,10 @@ import {
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { PowerService } from '../power/power.service';
 import type { PrismaClientOrTx } from '../../common/prisma.types';
+import {
+  loadUserDisplayNames,
+  resolvePublicPlayerName,
+} from '../../common/display-names';
 import { createOutboxEvent } from '../event/event.utils';
 import { resolveRankingsConfig } from './rankings-cycle.service';
 
@@ -215,7 +219,8 @@ export class RankingsService {
       orderBy: { _sum: { points: 'desc' } },
       take: limit,
     });
-    const displayNames = await this.loadDisplayNamesByUserIds(
+    const displayNames = await loadUserDisplayNames(
+      this.prisma,
       grouped.map((row) => row.scorerUserId),
     );
     return {
@@ -229,7 +234,7 @@ export class RankingsService {
       entries: grouped.map((row, index) => ({
         rank: index + 1,
         userId: row.scorerUserId,
-        playerName: this.toPublicPlayerName(row.scorerUserId, displayNames),
+        playerName: resolvePublicPlayerName(row.scorerUserId, displayNames),
         score: row._sum.points ?? 0,
       })),
     };
@@ -348,22 +353,6 @@ export class RankingsService {
 
   private toPairKey(left: string, right: string): string {
     return [left, right].sort().join(':');
-  }
-
-  private async loadDisplayNamesByUserIds(userIds: string[]) {
-    if (userIds.length === 0) return new Map<string, string>();
-    const users = await this.prisma.user.findMany({
-      where: { id: { in: userIds } },
-      select: { id: true, displayName: true },
-    });
-    return new Map(users.map((user) => [user.id, user.displayName]));
-  }
-
-  private toPublicPlayerName(
-    userId: string,
-    displayNames: ReadonlyMap<string, string>,
-  ): string {
-    return displayNames.get(userId) ?? `Joueur ${userId.slice(-6)}`;
   }
 
   private getWeeklyCutoff(): Date {
