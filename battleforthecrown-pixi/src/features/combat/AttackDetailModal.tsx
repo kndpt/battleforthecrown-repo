@@ -211,8 +211,12 @@ export function AttackDetailModal({
     }
     if (
       (activeMode !== 'reinforce' && !targetKind) ||
-      (activeMode === 'reinforce' && target.id === villageId)
+      (activeMode === 'reinforce' &&
+        (target.id === villageId || !(isOwnVillage || isFriendVillage)))
     ) {
+      // Reinforce is valid only toward another of my villages or an ACTIVE
+      // friend — never the origin village, never an ineligible target (guards
+      // a stale `reinforce` pick after a friendship was removed mid-session).
       setError('Cible invalide');
       return;
     }

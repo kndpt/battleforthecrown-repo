@@ -234,6 +234,29 @@ describe('scoutReportView', () => {
       );
     });
 
+    it('caps the displayed list at 5 friends', () => {
+      const withManyFriends: ScoutReportResponse = {
+        ...report,
+        details: {
+          ...report.details,
+          defensiveFriendsDisplayNames: [
+            'Arthur',
+            'Lancelot',
+            'Gauvain',
+            'Perceval',
+            'Tristan',
+            'Galahad',
+          ],
+        },
+      };
+      expect(sectionTitled(withManyFriends, 'Amis défensifs')?.items[0]).toEqual(
+        expect.objectContaining({
+          label: '5 amis',
+          value: 'Arthur, Lancelot, Gauvain, Perceval, Tristan',
+        }),
+      );
+    });
+
     it('singularizes the label for a lone friend', () => {
       const withFriend: ScoutReportResponse = {
         ...report,
