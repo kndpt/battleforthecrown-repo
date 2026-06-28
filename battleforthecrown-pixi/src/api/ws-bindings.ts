@@ -172,6 +172,21 @@ export function applyWorldStatusChanged(
       ttlMs: 6000,
     });
   }
+
+  // Registration window just closed while a player is in session: the world
+  // vanishes from the public joinable list (the invalidations above refetch
+  // it). Notify the player so the silent list update has a reason, mirroring
+  // the ENDED toast (spec docs/gameplay/19-world-lifecycle.md § OPEN → LOCKED).
+  // The payload carries no endsAt/memberCount, so the wording stays short and
+  // server-payload-only — no fragile read of a freshly-invalidated cache.
+  if (payload.to === "LOCKED") {
+    useUiStore.getState().pushToast({
+      title: "Inscription close",
+      description: "La fenêtre d'inscription est fermée. Le monde tourne maintenant entre ses joueurs.",
+      tone: "info",
+      ttlMs: 6000,
+    });
+  }
 }
 
 /**

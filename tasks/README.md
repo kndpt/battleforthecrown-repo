@@ -4,7 +4,6 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-- [85 — Notification serveur `OPEN → LOCKED` : toast côté joueur en session](./085-world-locked-transition-toast.md) — 🟢 Mineur. `applyWorldStatusChanged` ne déclenche pas de toast pour `LOCKED` alors que la spec 19 § OPEN → LOCKED le demande ; pattern miroir du toast `ENDED` existant.
 - [66 — Inbox combat : tag VICTOIRE/DÉFAITE faux dans la liste](./66-inbox-report-outcome-uses-losses-heuristic.md) — 🟡 Majeur. La liste de l'inbox calcule l'issue via une heuristique de pertes, divergente de la règle canonique utilisée par le modal.
 - [57 — Source canonique du lifecycle des bâtiments joueur](./57-player-village-building-lifecycle-roster.md) — 🟡 Majeur. Centraliser la politique join/conquête/backfill des bâtiments pour éviter les oublis à chaque nouveau bâtiment activé.
 
@@ -118,6 +117,7 @@ Politique PR `$bftc-run` :
 
 ## Archivés
 
+- [85 — Notification serveur `OPEN → LOCKED` : toast côté joueur en session](./archive/085-world-locked-transition-toast.md) ✅ Résolu 2026-06-28 par $bftc-run @tasks/085-world-locked-transition-toast.md
 - [84 — Lisibilité des villages barbares T4/T5 sur la carte](./archive/084-barbarian-tier-readability-t4-t5.md) ✅ Résolu 2026-06-28 par $bftc-run @tasks/084-barbarian-tier-readability-t4-t5.md
 - [83 — Filtre par étiquette dans le sélecteur multi-village](./archive/083-multi-village-label-filter.md) ✅ Résolu 2026-06-24 par $bftc-run @tasks/083-multi-village-label-filter.md
 - [76 — Annuler une formation depuis la file Caserne](./archive/076-cancel-army-training-from-queue-chip.md) ✅ Résolu 2026-05-31 par $bftc-run @tasks/076-cancel-army-training-from-queue-chip.md

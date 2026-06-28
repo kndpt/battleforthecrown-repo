@@ -281,6 +281,45 @@ describe('applyWorldStatusChanged', () => {
     expect(queryClient.getQueryState(queryKeys.worldConfigFull('world-1'))?.isInvalidated).toBe(true);
   });
 
+  it('on LOCKED, pushes an info toast so the silent list update has a reason', () => {
+    setCurrentWorldSession();
+    const queryClient = new QueryClient();
+
+    applyWorldStatusChanged(
+      {
+        worldId: 'world-1',
+        from: 'OPEN',
+        to: 'LOCKED',
+        at: '2026-05-25T10:00:00.000Z',
+      },
+      { queryClient },
+    );
+
+    const toasts = useUiStore.getState().toasts;
+    expect(toasts).toHaveLength(1);
+    expect(toasts[0]?.title).toBe('Inscription close');
+    expect(toasts[0]?.tone).toBe('info');
+  });
+
+  it('does not toast on PLANNED → OPEN, only invalidates caches', () => {
+    setCurrentWorldSession();
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.publicWorlds(), []);
+
+    applyWorldStatusChanged(
+      {
+        worldId: 'world-1',
+        from: 'PLANNED',
+        to: 'OPEN',
+        at: '2026-05-25T10:00:00.000Z',
+      },
+      { queryClient },
+    );
+
+    expect(queryClient.getQueryState(queryKeys.publicWorlds())?.isInvalidated).toBe(true);
+    expect(useUiStore.getState().toasts).toHaveLength(0);
+  });
+
   it('on ENDED, invalidates mutable caches and toasts without reload', () => {
     setCurrentWorldSession();
     const queryClient = new QueryClient();

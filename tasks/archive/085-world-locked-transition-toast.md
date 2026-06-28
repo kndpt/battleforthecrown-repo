@@ -1,8 +1,33 @@
 # 85 — Notification serveur `OPEN → LOCKED` : toast côté joueur en session
 
 **Sévérité** : 🟢 Mineur
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ Résolu (2026-06-28)
 **Spec amont** : [`docs/gameplay/19-world-lifecycle.md` § OPEN → LOCKED](../docs/gameplay/19-world-lifecycle.md#open--locked)
+
+## Résolution
+
+Piste **A retenue** (toast fixe, miroir d'`ENDED`). Branche `if (payload.to === "LOCKED")` ajoutée dans `applyWorldStatusChanged` ([`ws-bindings.ts`](../battleforthecrown-pixi/src/api/ws-bindings.ts)) : `pushToast({ title: "Inscription close", description: "La fenêtre d'inscription est fermée. Le monde tourne maintenant entre ses joueurs.", tone: "info", ttlMs: 6000 })`. Invalidations existantes inchangées.
+
+**Finding (ticket inexact)** : la § « Source de `endsAt` » prétendait que chaque membership expose `lifecycle.endsAt` — faux. `WorldMembershipResponse` (`packages/shared/src/world/dtos.ts:140`) n'a **pas** de `lifecycle`. Seul `PublicWorldLifecycle.endsAt` porte la valeur, mais un monde qui passe `LOCKED` peut quitter la liste publique joignable → source fragile. Le ticket autorisant explicitement le wording court sans `endsAt`, l'enrichissement a été abandonné (piste B confirmée hors scope). Aucune modif backend/shared.
+
+### Acceptance & QA
+
+- [x] Toast `info` sur `payload.to === "LOCKED"` — `yarn workspace battleforthecrown-pixi test --run src/api/ws-bindings.test.ts` → 50/50 (test « on LOCKED, pushes an info toast »).
+- [x] Aucun toast PLANNED → OPEN — même suite, test « does not toast on PLANNED → OPEN ».
+- [x] Toast `ENDED` non-régression — test « on ENDED … » toujours vert.
+- [x] 5 invalidations de cache intactes pour toutes transitions — test « invalidates world selection … » vert.
+- [x] `yarn static-check` → vert (27 s).
+- **Review indépendante** : Non déclenchée (aucun critère vrai : front-only, 1 fichier logique, 15 lignes impl < 100, pas d'invariant durable).
+- **Tests automatisés** : `test --run ws-bindings.test.ts` → 50 passed ; `yarn static-check` → vert.
+- **Smokes** : Aucun (diff front-only, 0 fichier `battleforthecrown-backend/src/`).
+- **Smokes ajoutés/modifiés** : Aucun.
+- **QA fonctionnelle agent** : Non exécuté — comportement déclenché par event WS `world.status.changed` en session, couvert par unit (mock `pushToast`).
+- **Tests IG à faire par le user** : 1 item — sur la bascule réelle OPEN → LOCKED d'un monde où le joueur est en session, vérifier l'apparition du toast « Inscription close » (≤ 6 s).
+
+**Docs** : aucun changement nécessaire — la spec 19 § OPEN → LOCKED décrit déjà la notification attendue ; pas de nouveau composant UI réutilisable (catalogue `ui-library.md` inchangé).
+
+---
+
 
 ## Symptôme
 
