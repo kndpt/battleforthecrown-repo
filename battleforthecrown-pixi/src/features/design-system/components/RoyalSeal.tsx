@@ -3,16 +3,23 @@ import type {
   FocusEventHandler,
   MouseEventHandler,
   PointerEventHandler,
-} from 'react';
-import { publicAsset } from '@/lib/publicAsset';
-import { cn } from '@/lib/cn';
+} from "react";
+import { Check } from "lucide-react";
+import { publicAsset } from "@/lib/publicAsset";
+import { cn } from "@/lib/cn";
+import { Motion } from "@/ui/motion";
 
-export type RoyalSealVariant = 'wax' | 'parchment' | 'crown';
+export type RoyalSealVariant = "wax" | "parchment" | "crown";
+export type RoyalSealBadgeVariant = "danger" | "success";
 
 export interface RoyalSealProps {
+  /** Periodic "wizz" attention shake on the seal face. */
+  animate?: boolean;
   ariaLabel?: string;
   badge?: boolean;
   badgeCount?: number | null;
+  /** `danger` = red counter, `success` = green check (e.g. all done). */
+  badgeVariant?: RoyalSealBadgeVariant;
   className?: string;
   halo?: boolean;
   onBlur?: FocusEventHandler<HTMLButtonElement>;
@@ -31,21 +38,49 @@ export interface RoyalSealProps {
   variant?: RoyalSealVariant;
 }
 
-function SealBadge({ count, size }: { count: number | null | undefined; size: number }) {
-  const dot = Math.max(13, Math.round(size * 0.32));
+function SealBadge({
+  count,
+  size,
+  variant,
+}: {
+  count: number | null | undefined;
+  size: number;
+  variant: RoyalSealBadgeVariant;
+}) {
+  const dot = Math.max(16, Math.round(size * 0.32));
+  const isSuccess = variant === "success";
+  // Keep a perfect circle for the check and single digits; only widen into a
+  // pill for 2+ digit counts.
+  const isWide = !isSuccess && typeof count === "number" && count >= 10;
   return (
     <span
-      className="absolute z-[2] inline-flex items-center justify-center rounded-full border-2 border-[#fef9f0] bg-[radial-gradient(circle_at_32%_28%,#ff8a7d_0%,#e74c3c_45%,#a93226_100%)] font-game font-black leading-none text-white shadow-[0_1px_3px_rgba(0,0,0,.45),inset_0_1px_0_rgba(255,255,255,.4)] [text-shadow:0_1px_1px_rgba(0,0,0,.4)]"
+      className={cn(
+        "absolute z-[2] inline-flex items-center justify-center rounded-full border-2 border-[#fef9f0] font-game font-black leading-none text-white shadow-[0_1px_3px_rgba(0,0,0,.45),inset_0_1px_0_rgba(255,255,255,.4)] [text-shadow:0_1px_1px_rgba(0,0,0,.4)]",
+        isSuccess
+          ? "bg-[radial-gradient(circle_at_32%_28%,#7ee08a_0%,#2ecc71_45%,#1e8449_100%)]"
+          : "bg-[radial-gradient(circle_at_32%_28%,#ff8a7d_0%,#e74c3c_45%,#a93226_100%)]",
+      )}
       style={{
-        top: -dot * 0.18,
-        right: -dot * 0.18,
+        top: -dot * 0.1,
+        right: -dot * 0.1,
         minWidth: dot,
+        width: isWide ? undefined : dot,
         height: dot,
-        padding: count != null ? '0 4px' : 0,
+        padding: isWide ? "0 4px" : 0,
         fontSize: dot * 0.62,
       }}
     >
-      {count != null ? count : ''}
+      {isSuccess ? (
+        <Check
+          aria-hidden="true"
+          strokeWidth={3.5}
+          style={{ width: dot * 0.68, height: dot * 0.68 }}
+        />
+      ) : count != null ? (
+        count
+      ) : (
+        ""
+      )}
     </span>
   );
 }
@@ -63,12 +98,12 @@ function WaxFace({
   return (
     <div
       className={cn(
-        'relative z-[1] flex items-center justify-center rounded-full border-[2.5px] border-[#4a2f06] bg-[radial-gradient(circle_at_32%_26%,#fff3b0_0%,#f1c40f_32%,#b67e0a_72%,#6e4a08_100%)] transition-[transform,filter] duration-100',
+        "relative z-[1] flex items-center justify-center rounded-full border-[2.5px] border-[#4a2f06] bg-[radial-gradient(circle_at_32%_26%,#fff3b0_0%,#f1c40f_32%,#b67e0a_72%,#6e4a08_100%)] transition-[transform,filter] duration-100",
         pressed
-          ? 'translate-y-px shadow-[inset_0_3px_6px_rgba(0,0,0,.55),0_1px_0_rgba(0,0,0,.2)]'
+          ? "translate-y-px shadow-[inset_0_3px_6px_rgba(0,0,0,.55),0_1px_0_rgba(0,0,0,.2)]"
           : softShadow
-            ? 'shadow-[inset_0_1px_0_rgba(255,255,255,.5),0_2px_0_rgba(0,0,0,.2),0_3px_8px_rgba(74,47,6,.18)]'
-            : 'shadow-[inset_0_1px_0_rgba(255,255,255,.55),0_3px_0_rgba(0,0,0,.28),0_6px_14px_rgba(74,47,6,.35)]',
+            ? "shadow-[inset_0_1px_0_rgba(255,255,255,.5),0_2px_0_rgba(0,0,0,.2),0_3px_8px_rgba(74,47,6,.18)]"
+            : "shadow-[inset_0_1px_0_rgba(255,255,255,.55),0_3px_0_rgba(0,0,0,.28),0_6px_14px_rgba(74,47,6,.35)]",
       )}
       style={{ width: size, height: size }}
     >
@@ -79,16 +114,17 @@ function WaxFace({
       <img
         alt=""
         className="opacity-[.92] drop-shadow-[0_1px_0_rgba(255,255,255,.45)]"
-        src={publicAsset('/assets/casual-icons/crown.png')}
+        src={publicAsset("/assets/casual-icons/crown.png")}
         style={{
           width: inner,
           height: inner,
-          filter: 'drop-shadow(0 1px 0 rgba(255,255,255,.45)) drop-shadow(0 -1px 0 rgba(60,30,0,.45))',
+          filter:
+            "drop-shadow(0 1px 0 rgba(255,255,255,.45)) drop-shadow(0 -1px 0 rgba(60,30,0,.45))",
         }}
       />
       <span
         className="pointer-events-none absolute rounded-full bg-[linear-gradient(to_bottom,rgba(255,255,255,.55),rgba(255,255,255,0))] blur-[1.5px]"
-        style={{ left: '18%', right: '40%', top: '10%', height: '18%' }}
+        style={{ left: "18%", right: "40%", top: "10%", height: "18%" }}
       />
     </div>
   );
@@ -99,17 +135,17 @@ function CrownFace({ size, pressed }: { size: number; pressed: boolean }) {
   return (
     <div
       className={cn(
-        'relative z-[1] flex items-center justify-center rounded-full border-2 border-[#7a5200] bg-gradient-to-b from-[#e8b040] to-[#c47a0a] transition-[transform] duration-100',
+        "relative z-[1] flex items-center justify-center rounded-full border-2 border-[#7a5200] bg-gradient-to-b from-[#e8b040] to-[#c47a0a] transition-[transform] duration-100",
         pressed
-          ? 'translate-y-px shadow-[inset_0_3px_6px_rgba(0,0,0,.5)]'
-          : 'shadow-[0_2px_0_rgba(0,0,0,.35),inset_0_1px_0_rgba(255,255,255,.35)]',
+          ? "translate-y-px shadow-[inset_0_3px_6px_rgba(0,0,0,.5)]"
+          : "shadow-[0_2px_0_rgba(0,0,0,.35),inset_0_1px_0_rgba(255,255,255,.35)]",
       )}
       style={{ width: size, height: size }}
     >
       <img
         alt=""
         className="object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,.6)]"
-        src={publicAsset('/assets/casual-icons/crown.png')}
+        src={publicAsset("/assets/casual-icons/crown.png")}
         style={{ width: inner, height: inner }}
       />
     </div>
@@ -120,16 +156,16 @@ function ParchmentFace({ size, pressed }: { size: number; pressed: boolean }) {
   return (
     <div
       className={cn(
-        'relative z-[1] flex items-center justify-center rounded-[10px] border-[2.5px] border-[#6e4a08] bg-[linear-gradient(160deg,#fef0c6_0%,#e8c878_60%,#c79a3e_100%)]',
+        "relative z-[1] flex items-center justify-center rounded-[10px] border-[2.5px] border-[#6e4a08] bg-[linear-gradient(160deg,#fef0c6_0%,#e8c878_60%,#c79a3e_100%)]",
         pressed
-          ? 'translate-y-px shadow-[inset_0_3px_5px_rgba(0,0,0,.45),0_1px_0_rgba(0,0,0,.2)]'
-          : 'shadow-[inset_0_1px_0_rgba(255,255,255,.55),0_3px_0_rgba(0,0,0,.25),0_6px_14px_rgba(74,47,6,.3)]',
+          ? "translate-y-px shadow-[inset_0_3px_5px_rgba(0,0,0,.45),0_1px_0_rgba(0,0,0,.2)]"
+          : "shadow-[inset_0_1px_0_rgba(255,255,255,.55),0_3px_0_rgba(0,0,0,.25),0_6px_14px_rgba(74,47,6,.3)]",
       )}
       style={{ width: size, height: size }}
     >
       <span
         className="absolute border-y border-[rgba(0,0,0,.35)] bg-[linear-gradient(to_bottom,#c84128_0%,#7d2218_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,.25)]"
-        style={{ left: -3, right: -3, bottom: '14%', height: size * 0.18 }}
+        style={{ left: -3, right: -3, bottom: "14%", height: size * 0.18 }}
       />
       <span
         className="font-game font-black leading-none text-[#5a3a05] [text-shadow:0_1px_0_rgba(255,255,255,.55),0_-1px_0_rgba(60,30,0,.4)]"
@@ -142,9 +178,11 @@ function ParchmentFace({ size, pressed }: { size: number; pressed: boolean }) {
 }
 
 export function RoyalSeal({
+  animate = false,
   ariaLabel,
   badge = false,
   badgeCount = null,
+  badgeVariant = "danger",
   className,
   halo = false,
   onClick,
@@ -160,10 +198,19 @@ export function RoyalSeal({
   size = 44,
   softShadow = false,
   style,
-  variant = 'wax',
+  variant = "wax",
 }: RoyalSealProps) {
-  const haloRadius = variant === 'parchment' ? 12 : '50%';
+  const haloRadius = variant === "parchment" ? 12 : "50%";
   const containerStyle: CSSProperties = { width: size, height: size, ...style };
+
+  const face =
+    variant === "parchment" ? (
+      <ParchmentFace pressed={pressed} size={size} />
+    ) : variant === "crown" ? (
+      <CrownFace pressed={pressed} size={size} />
+    ) : (
+      <WaxFace pressed={pressed} size={size} softShadow={softShadow} />
+    );
 
   const body = (
     <>
@@ -173,22 +220,23 @@ export function RoyalSeal({
           style={{ inset: -size * 0.18, borderRadius: haloRadius }}
         />
       ) : null}
-      {variant === 'parchment' ? (
-        <ParchmentFace pressed={pressed} size={size} />
-      ) : variant === 'crown' ? (
-        <CrownFace pressed={pressed} size={size} />
-      ) : (
-        <WaxFace pressed={pressed} size={size} softShadow={softShadow} />
-      )}
-      {badge ? <SealBadge count={badgeCount} size={size} /> : null}
+      <Motion active={animate} className="relative z-[1]" preset="wizz">
+        {face}
+      </Motion>
+      {badge ? (
+        <SealBadge count={badgeCount} size={size} variant={badgeVariant} />
+      ) : null}
     </>
   );
 
   if (onClick) {
     return (
       <button
-        aria-label={ariaLabel ?? 'Sceau royal'}
-        className={cn('relative shrink-0 cursor-pointer border-none bg-transparent p-0', className)}
+        aria-label={ariaLabel ?? "Sceau royal"}
+        className={cn(
+          "relative shrink-0 cursor-pointer border-none bg-transparent p-0",
+          className,
+        )}
         onBlur={onBlur}
         onClick={onClick}
         onFocus={onFocus}
@@ -209,8 +257,8 @@ export function RoyalSeal({
   return (
     <div
       aria-label={ariaLabel}
-      className={cn('relative shrink-0', className)}
-      role={ariaLabel ? 'img' : undefined}
+      className={cn("relative shrink-0", className)}
+      role={ariaLabel ? "img" : undefined}
       style={containerStyle}
     >
       {body}

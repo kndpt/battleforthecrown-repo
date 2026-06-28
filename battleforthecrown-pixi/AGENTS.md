@@ -30,7 +30,7 @@ Frontend Battle for the Crown : Vite + React 19 + PixiJS v8 + Zustand + TanStack
 ## Conventions React HUD
 
 - **Tailwind 3.4** avec palette `kingdom`, `game.{green,blue,red,gold,stone}`, `parchment`. Pas de styled-components, pas de CSS modules.
-- **UI primitives** : `src/ui/` (Clash-like, CVA + Tailwind). Catalogue → [`docs/ui-library.md`](./docs/ui-library.md) · Design system → [`docs/ui-design-system.md`](./docs/ui-design-system.md) · Tone & writing → [`docs/ui-writing-style.md`](./docs/ui-writing-style.md). UI idiote : zéro logique métier dans `src/ui/`.
+- **UI primitives** : `src/ui/` (Clash-like, CVA + Tailwind). Catalogue → [`docs/ui-library.md`](./docs/ui-library.md) · Design system → [`docs/ui-design-system.md`](./docs/ui-design-system.md) · Tone & writing → [`docs/ui-writing-style.md`](./docs/ui-writing-style.md) · Animations (`<Motion>`) → [`docs/ui-motion.md`](./docs/ui-motion.md). UI idiote : zéro logique métier dans `src/ui/`.
 - **Pas de Redux** (le legacy en avait). Migrer toute logique d'état vers Zustand ou TanStack Query.
 - **Optimistic UI** : pattern `onMutate` (snapshot previous, mutate cache) → `onError` (rollback) → `onSettled` (invalidate). Voir `useUpgradeBuildingMutation`.
 

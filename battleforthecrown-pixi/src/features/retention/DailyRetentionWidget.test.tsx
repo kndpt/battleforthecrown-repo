@@ -263,7 +263,9 @@ describe("DailyRetentionWidget", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Devoir royal" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Devoir royal, 1 tâche restante" }),
+    );
     fireEvent.click(screen.getByRole("button", { name: "Village" }));
 
     expect(onAction).toHaveBeenCalledWith("open-building-management");
@@ -392,10 +394,118 @@ describe("DailyRetentionWidget", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Devoir royal" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Devoir royal, 1 tâche restante" }),
+    );
 
     // Server label must be shown as-is; local override ("Vaincre un village barbare") must not appear.
     expect(screen.getByText("Vaincre un village barbare de niveau 2")).toBeInTheDocument();
     expect(screen.queryByText("Vaincre un village barbare")).not.toBeInTheDocument();
+  });
+
+  it("shows a red counter badge with the remaining task count (pending)", () => {
+    const pendingSummary: RetentionSummaryDto = {
+      ...summary,
+      claimableCount: 0,
+      cards: [
+        {
+          ...summary.cards[0],
+          status: "ACTIVE",
+          tasks: [
+            {
+              completedAt: "2026-05-15T08:00:00.000Z",
+              metadata: {},
+              id: "done-1",
+              label: "Former 5 unités",
+              progress: 5,
+              target: 5,
+              type: "TRAIN_UNITS",
+            },
+            {
+              completedAt: null,
+              metadata: {},
+              id: "todo-1",
+              label: "Terminer une construction",
+              progress: 0,
+              target: 1,
+              type: "COMPLETE_BUILDING",
+            },
+            {
+              completedAt: null,
+              metadata: {},
+              id: "todo-2",
+              label: "Éclairer une cible",
+              progress: 0,
+              target: 1,
+              type: "SCOUT_TARGET",
+            },
+          ],
+        },
+      ],
+    };
+
+    render(
+      <DailyRetentionWidget
+        activeVillageId="v1"
+        onClaim={vi.fn()}
+        onNavigate={vi.fn()}
+        summary={pendingSummary}
+        villages={villages}
+      />,
+    );
+
+    const seal = screen.getByRole("button", {
+      name: "Devoir royal, 2 tâches restantes",
+    });
+    expect(seal).toHaveTextContent("2");
+    // Red counter, not the success check.
+    expect(seal.querySelector("svg")).toBeNull();
+  });
+
+  it("shows a green check badge when claimable (all done, not claimed)", () => {
+    render(
+      <DailyRetentionWidget
+        activeVillageId="v1"
+        onClaim={vi.fn()}
+        onNavigate={vi.fn()}
+        summary={summary}
+        villages={villages}
+      />,
+    );
+
+    const seal = screen.getByRole("button", {
+      name: /Devoir royal, 1 carte à réclamer/i,
+    });
+    // Success check icon, no numeric counter.
+    expect(seal.querySelector("svg")).not.toBeNull();
+    expect(seal.textContent ?? "").not.toMatch(/\d/);
+  });
+
+  it("renders no badge once everything is claimed (idle)", () => {
+    const claimedSummary: RetentionSummaryDto = {
+      ...summary,
+      claimableCount: 0,
+      cards: [
+        {
+          ...summary.cards[0],
+          status: "CLAIMED",
+          claimedAt: "2026-05-15T09:00:00.000Z",
+        },
+      ],
+    };
+
+    render(
+      <DailyRetentionWidget
+        activeVillageId="v1"
+        onClaim={vi.fn()}
+        onNavigate={vi.fn()}
+        summary={claimedSummary}
+        villages={villages}
+      />,
+    );
+
+    const seal = screen.getByRole("button", { name: "Devoir royal" });
+    expect(seal.querySelector("svg")).toBeNull();
+    expect(seal.textContent ?? "").not.toMatch(/\d/);
   });
 });

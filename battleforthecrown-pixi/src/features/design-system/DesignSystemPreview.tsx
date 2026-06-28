@@ -2943,14 +2943,22 @@ export function DesignSystemPreview() {
             <div className="flex flex-wrap items-end justify-around gap-x-7 gap-y-5">
               {[
                 { label: 'Couronne', badge: false, halo: false },
-                { label: 'Avec dot', badge: true, halo: true },
-                { label: 'Avec total', badge: true, halo: true, count: 2 },
+                { label: 'Tâches restantes', badge: true, halo: false, count: 2, animate: true },
+                {
+                  label: 'Tout fait (check)',
+                  badge: true,
+                  halo: true,
+                  badgeVariant: 'success' as const,
+                  animate: true,
+                },
                 { label: 'Pressé', badge: true, halo: false, pressed: true },
               ].map((sample) => (
                 <div className="flex flex-col items-center gap-2" key={`crown-${sample.label}`}>
                   <RoyalSeal
+                    animate={sample.animate ?? false}
                     badge={sample.badge}
                     badgeCount={sample.count ?? null}
+                    badgeVariant={sample.badgeVariant ?? 'danger'}
                     halo={sample.halo}
                     pressed={sample.pressed ?? false}
                     size={56}

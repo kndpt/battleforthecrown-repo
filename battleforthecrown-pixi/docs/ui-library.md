@@ -11,6 +11,8 @@ Composants UI stylisés "Clash-like" pour le HUD React. Tailwind CSS + thème m�
 > **Tone & writing** des micro-copies : [`ui-writing-style.md`](./ui-writing-style.md).
 >
 > **Coachmarks / hints animés** (drag, tap, ready) pour tutoriels : [`ui-onboarding-hints.md`](./ui-onboarding-hints.md).
+>
+> **Animations réutilisables** (`<Motion>` + presets : wizz, pulse, shake) : [`ui-motion.md`](./ui-motion.md).
 
 ## Structure
 
@@ -27,6 +29,7 @@ src/ui/
 ├── keypads/           NumericKeypad, NumericKeypadSheet
 ├── layout/            HeaderBar, HeaderActions, PlayerProfile, PopulationIndicator, ResourceDisplay
 ├── modals/            ModalOverlay, Modal, ModalBackdrop, ModalBody, ModalFooter
+├── motion/            Motion (+ MOTION_PRESETS) — cf. ui-motion.md
 ├── panels/            Panel, PanelHeader, PanelBody, PanelFooter, BottomSheet
 ├── selects/           Select
 ├── sliders/           Slider

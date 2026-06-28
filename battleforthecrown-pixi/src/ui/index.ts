@@ -15,3 +15,4 @@ export { Panel, type PanelProps, PanelHeader, type PanelHeaderProps, PanelBody, 
 export { HeaderBar, type HeaderBarProps, PopulationIndicator, PlayerProfile, type PlayerProfileProps, ResourceDisplay, type ResourceDisplayProps, type ResourceDisplayItem, HeaderActions, type HeaderActionsProps } from './layout';
 export { ResourceIcon, type ResourceIconProps } from './common/ResourceIcon';
 export { ProgressBar, type ProgressBarProps } from './feedback';
+export { Motion, type MotionProps, MOTION_PRESETS, type MotionPreset } from './motion';

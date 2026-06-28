@@ -102,6 +102,59 @@ canvas {
   }
 }
 
+/* Motion presets — see src/ui/motion + docs/ui-motion.md. Keyframes are `bftc-`
+   prefixed and referenced from MOTION_PRESETS. */
+@keyframes bftc-wizz {
+  0%,
+  82%,
+  100% {
+    transform: translateX(0) rotate(0);
+  }
+  84% {
+    transform: translateX(-2px) rotate(-7deg);
+  }
+  86% {
+    transform: translateX(2px) rotate(7deg);
+  }
+  88% {
+    transform: translateX(-2px) rotate(-6deg);
+  }
+  90% {
+    transform: translateX(2px) rotate(6deg);
+  }
+  92% {
+    transform: translateX(-1px) rotate(-3deg);
+  }
+  94% {
+    transform: translateX(0) rotate(0);
+  }
+}
+
+@keyframes bftc-pulse {
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes bftc-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bftc-motion {
+    animation: none !important;
+  }
+}
+
 @keyframes bftc-world-entry-overlay {
   0% {
     opacity: 1;

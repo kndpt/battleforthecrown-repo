@@ -227,6 +227,19 @@ export function DailyRetentionWidget({
   const completedCount = quests.filter(
     (quest) => quest.state === "done",
   ).length;
+  const remainingTaskCount = Math.max(0, quests.length - completedCount);
+  const sealState: "claimable" | "pending" | "idle" =
+    claimableCount > 0
+      ? "claimable"
+      : remainingTaskCount > 0
+        ? "pending"
+        : "idle";
+  const sealAriaLabel =
+    sealState === "claimable"
+      ? `Devoir royal, ${claimableCount} carte${claimableCount > 1 ? "s" : ""} à réclamer`
+      : sealState === "pending"
+        ? `Devoir royal, ${remainingTaskCount} tâche${remainingTaskCount > 1 ? "s" : ""} restante${remainingTaskCount > 1 ? "s" : ""}`
+        : "Devoir royal";
   const canClaim =
     focusCard?.status === "CLAIMABLE" && selectedRewardVillageId.length > 0;
 
@@ -261,17 +274,15 @@ export function DailyRetentionWidget({
     <>
       {!hideButton && (
         <RoyalSeal
-          ariaLabel={
-            claimableCount > 0
-              ? `Devoir royal, ${claimableCount} carte${claimableCount > 1 ? "s" : ""} à réclamer`
-              : "Devoir royal"
-          }
-          badge={claimableCount > 0}
-          badgeCount={claimableCount > 0 ? claimableCount : null}
+          animate={sealState !== "idle"}
+          ariaLabel={sealAriaLabel}
+          badge={sealState !== "idle"}
+          badgeCount={sealState === "pending" ? remainingTaskCount : null}
+          badgeVariant={sealState === "claimable" ? "success" : "danger"}
           className={
             isLoading && !summary ? `${className ?? ""} opacity-60` : className
           }
-          halo={claimableCount > 0}
+          halo={sealState === "claimable"}
           onBlur={() => setIsSealPressed(false)}
           onClick={() => handleSetOpen(true)}
           onPointerCancel={() => setIsSealPressed(false)}
