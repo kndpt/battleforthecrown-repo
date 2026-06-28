@@ -1,4 +1,5 @@
 import type { UnitMap } from '../army/unit-map';
+import { typedEntries } from '../utils/typed-record';
 
 export interface CasualtyStats {
   total: number;
@@ -31,8 +32,8 @@ export function isVictoryForAttacker(
   losses: UnitMap,
   original: UnitMap,
 ): boolean {
-  for (const [unitType, originalQty] of Object.entries(original)) {
-    const lost = losses[unitType as keyof UnitMap] ?? 0;
+  for (const [unitType, originalQty] of typedEntries(original)) {
+    const lost = losses[unitType] ?? 0;
     if ((originalQty ?? 0) - lost > 0) {
       return true;
     }

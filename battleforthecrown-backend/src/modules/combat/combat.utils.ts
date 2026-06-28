@@ -1,4 +1,5 @@
-import { type UnitMap, type UnitType } from '@battleforthecrown/shared/army';
+import { type UnitMap } from '@battleforthecrown/shared/army';
+import { typedEntries } from '@battleforthecrown/shared/utils';
 
 export {
   calculateCasualtyStats,
@@ -16,13 +17,12 @@ export function distributeLossesProportionally(
   participantUnits: UnitMap,
 ): UnitMap {
   const result: UnitMap = {};
-  for (const [unitType, totalLoss] of Object.entries(totalLosses)) {
-    const type = unitType as UnitType;
-    const totalQty = totalUnits[type] || 0;
-    const partQty = participantUnits[type] || 0;
+  for (const [unitType, totalLoss] of typedEntries(totalLosses)) {
+    const totalQty = totalUnits[unitType] || 0;
+    const partQty = participantUnits[unitType] || 0;
 
     if (totalQty > 0 && partQty > 0 && totalLoss) {
-      result[type] = Math.floor((totalLoss * partQty) / totalQty);
+      result[unitType] = Math.floor((totalLoss * partQty) / totalQty);
     }
   }
   return result;
