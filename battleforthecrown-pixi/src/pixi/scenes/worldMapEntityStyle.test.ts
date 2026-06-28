@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { MapEntity } from "@/api/world-types";
 import {
   aliasFor,
+  barbarianTierIndex,
   BASE_BARBARIAN_SIZE,
   BASE_PLAYER_SIZE,
   COLOR,
@@ -75,6 +76,27 @@ describe("spriteSizeFor", () => {
   it("falls back to BASE_BARBARIAN_SIZE for OTHER entities", () => {
     expect(spriteSizeFor(other())).toBe(BASE_BARBARIAN_SIZE);
   });
+
+  it("falls back to the T1 size for a barbarian with no tier", () => {
+    expect(spriteSizeFor(barbarian("T1", { tier: null }))).toBe(
+      BASE_BARBARIAN_SIZE,
+    );
+  });
+});
+
+describe("barbarianTierIndex", () => {
+  it("maps each tier to its progression index", () => {
+    expect(barbarianTierIndex("T1")).toBe(0);
+    expect(barbarianTierIndex("T2")).toBe(1);
+    expect(barbarianTierIndex("T3")).toBe(2);
+    expect(barbarianTierIndex("T4")).toBe(3);
+    expect(barbarianTierIndex("T5")).toBe(4);
+  });
+
+  it("falls back to index 0 for null/undefined tier", () => {
+    expect(barbarianTierIndex(null)).toBe(0);
+    expect(barbarianTierIndex(undefined)).toBe(0);
+  });
 });
 
 describe("ownedHaloRxFactor", () => {
@@ -128,6 +150,13 @@ describe("styleFor", () => {
       expect(s.radius).toBeGreaterThan(t1.radius);
     }
     expect(t5.radius).toBeGreaterThan(t4.radius);
+  });
+
+  it("returns the T1 style for a barbarian with no tier", () => {
+    const s = styleFor(barbarian("T1", { tier: null }));
+    expect(s.color).toBe(COLOR.barbarianT1);
+    expect(s.ringColor).toBe(COLOR.barbarianRingT1);
+    expect(s.radius).toBe(10);
   });
 
   it("returns fallback style for OTHER entities", () => {
