@@ -1,5 +1,6 @@
 import { BUILDING_TYPES, type BuildingType } from '../village/buildings';
 import type { UnitMap } from '../army/unit-map';
+import { typedEntries } from '../utils/typed-record';
 
 export interface BuildingTemplate {
   type: BuildingType;
@@ -171,9 +172,9 @@ function allocateUnits(total: number, weights: UnitMap, caps: UnitMap): UnitMap 
   if (total <= 0) return {};
 
   const cappedWeights: UnitMap = {};
-  for (const [unitType, weight] of Object.entries(weights)) {
-    const cap = caps[unitType as keyof UnitMap] ?? 0;
-    if (weight && cap > 0) cappedWeights[unitType as keyof UnitMap] = weight;
+  for (const [unitType, weight] of typedEntries(weights)) {
+    const cap = caps[unitType] ?? 0;
+    if (weight && cap > 0) cappedWeights[unitType] = weight;
   }
 
   const weightTotal = sumUnits(cappedWeights);
@@ -182,13 +183,12 @@ function allocateUnits(total: number, weights: UnitMap, caps: UnitMap): UnitMap 
   const allocated: UnitMap = {};
   const remainders: Array<{ unitType: keyof UnitMap; remainder: number }> = [];
 
-  for (const [unitType, weight] of Object.entries(cappedWeights)) {
-    const type = unitType as keyof UnitMap;
-    const cap = caps[type] ?? 0;
+  for (const [unitType, weight] of typedEntries(cappedWeights)) {
+    const cap = caps[unitType] ?? 0;
     const exact = (total * weight) / weightTotal;
     const quantity = Math.min(Math.floor(exact), cap);
-    if (quantity > 0) allocated[type] = quantity;
-    remainders.push({ unitType: type, remainder: exact - quantity });
+    if (quantity > 0) allocated[unitType] = quantity;
+    remainders.push({ unitType, remainder: exact - quantity });
   }
 
   let remaining = Math.min(total, sumUnits(caps)) - sumUnits(allocated);
@@ -208,9 +208,9 @@ function allocateUnits(total: number, weights: UnitMap, caps: UnitMap): UnitMap 
 
 function subtractUnits(maxUnits: UnitMap, currentUnits: UnitMap): UnitMap {
   const result: UnitMap = {};
-  for (const [unitType, maxQuantity] of Object.entries(maxUnits)) {
-    const current = currentUnits[unitType as keyof UnitMap] ?? 0;
-    result[unitType as keyof UnitMap] = Math.max(0, maxQuantity - current);
+  for (const [unitType, maxQuantity] of typedEntries(maxUnits)) {
+    const current = currentUnits[unitType] ?? 0;
+    result[unitType] = Math.max(0, maxQuantity - current);
   }
   return result;
 }

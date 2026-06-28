@@ -1,4 +1,7 @@
-import { villageVisualTierFromCastleLevel } from "@battleforthecrown/shared/world";
+import {
+  villageVisualTierFromCastleLevel,
+  type WorldTier,
+} from "@battleforthecrown/shared/world";
 import { villageSpriteAliasForEntity, type MapEntity } from "@/api/world-types";
 
 export const BASE_PLAYER_SIZE = 56;
@@ -37,9 +40,13 @@ export const COLOR = {
   barbarianT1: 0xc69455,
   barbarianT2: 0xd0625c,
   barbarianT3: 0x9644a0,
+  barbarianT4: 0xb0402a,
+  barbarianT5: 0x7a2414,
   barbarianRingT1: 0xffe4b6,
   barbarianRingT2: 0xffccd2,
   barbarianRingT3: 0xeaccff,
+  barbarianRingT4: 0xf2b15a,
+  barbarianRingT5: 0xffd166,
   other: 0xc89664,
   outline: 0x000000,
   worldBorder: 0xffecbe,
@@ -55,13 +62,44 @@ export interface EntityStyle {
   zIndex: number;
 }
 
+const BARBARIAN_TIER_ORDER: readonly WorldTier[] = [
+  "T1",
+  "T2",
+  "T3",
+  "T4",
+  "T5",
+];
+
+const BARBARIAN_TIER_COLOR: readonly number[] = [
+  COLOR.barbarianT1,
+  COLOR.barbarianT2,
+  COLOR.barbarianT3,
+  COLOR.barbarianT4,
+  COLOR.barbarianT5,
+];
+
+const BARBARIAN_TIER_RING: readonly number[] = [
+  COLOR.barbarianRingT1,
+  COLOR.barbarianRingT2,
+  COLOR.barbarianRingT3,
+  COLOR.barbarianRingT4,
+  COLOR.barbarianRingT5,
+];
+
+/** Maps a barbarian tier (`T1..T5`) to its progression index `0..4`. */
+export function barbarianTierIndex(tier: WorldTier | null | undefined): number {
+  if (!tier) return 0;
+  const idx = BARBARIAN_TIER_ORDER.indexOf(tier);
+  return idx === -1 ? 0 : idx;
+}
+
 export function spriteSizeFor(entity: MapEntity): number {
   if (entity.kind === "PLAYER_VILLAGE") {
     const tier = villageVisualTierFromCastleLevel(entity.castleLevel ?? 1);
     return Math.round(BASE_PLAYER_SIZE * Math.pow(1.1, tier - 1));
   }
   if (entity.kind === "BARBARIAN_VILLAGE") {
-    const idx = entity.tier === "T3" ? 2 : entity.tier === "T2" ? 1 : 0;
+    const idx = barbarianTierIndex(entity.tier);
     return Math.round(BASE_BARBARIAN_SIZE * Math.pow(1.1, idx));
   }
   return BASE_BARBARIAN_SIZE;
@@ -82,21 +120,13 @@ export function styleFor(entity: MapEntity): EntityStyle {
     };
   }
   if (entity.kind === "BARBARIAN_VILLAGE") {
-    const tier = entity.tier ?? "T1";
-    const color =
-      tier === "T3"
-        ? COLOR.barbarianT3
-        : tier === "T2"
-          ? COLOR.barbarianT2
-          : COLOR.barbarianT1;
-    const ring =
-      tier === "T3"
-        ? COLOR.barbarianRingT3
-        : tier === "T2"
-          ? COLOR.barbarianRingT2
-          : COLOR.barbarianRingT1;
-    const radius = tier === "T3" ? 12 : tier === "T2" ? 11 : 10;
-    return { color, ringColor: ring, radius, zIndex: 5 };
+    const idx = barbarianTierIndex(entity.tier);
+    return {
+      color: BARBARIAN_TIER_COLOR[idx],
+      ringColor: BARBARIAN_TIER_RING[idx],
+      radius: 10 + idx,
+      zIndex: 5,
+    };
   }
   return { color: COLOR.other, ringColor: 0xffffff, radius: 9, zIndex: 3 };
 }

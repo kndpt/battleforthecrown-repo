@@ -1,17 +1,18 @@
 import type { UnitType } from "../army/types";
 import type { UnitMap } from "../army/unit-map";
+import { typedEntries } from "../utils/typed-record";
 import {
   BATTLE_UNIT_VALUES,
   GLORY_OPPONENT_MULTIPLIER,
   GLORY_PAIR_24H_THRESHOLDS,
 } from "./consts";
 
-export function getBattleUnitValue(unitType: string): number {
-  return BATTLE_UNIT_VALUES[unitType as UnitType] ?? 0;
+export function getBattleUnitValue(unitType: UnitType): number {
+  return BATTLE_UNIT_VALUES[unitType] ?? 0;
 }
 
 export function calculateRawBattleValue(losses: UnitMap): number {
-  return Object.entries(losses).reduce((sum, [unitType, quantity]) => {
+  return typedEntries(losses).reduce((sum, [unitType, quantity]) => {
     if (!Number.isFinite(quantity) || quantity <= 0) return sum;
     return sum + getBattleUnitValue(unitType) * quantity;
   }, 0);

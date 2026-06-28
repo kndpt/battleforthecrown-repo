@@ -1,7 +1,19 @@
 # 084 — Lisibilité des villages barbares T4/T5 sur la carte
 
 **Sévérité** : 🟡 Majeur
-**Statut** : 🆕 Ouvert
+**Statut** : ✅ Résolu 2026-06-28 — Piste A (mapping discret 5 paliers). Branche `task/084-barbarian-tier-readability-t4-t5`.
+
+## Acceptance & QA
+
+- [x] `spriteSizeFor` strictement croissant T1<T2<T3<T4<T5 — `yarn workspace battleforthecrown-pixi test src/pixi/scenes/worldMapEntityStyle.test.ts` → 16 tests verts (dont monotonie 5 paliers).
+- [x] `styleFor(T4)`/`styleFor(T5)` : `color`/`ringColor`/`radius` distincts de T1 — même suite, test dédié vert.
+- [x] Aucun ternaire `tier === "T3"` résiduel — `grep -n 'tier === "T3"' worldMapEntityStyle.ts` → none. Logique tier via helper `barbarianTierIndex` + arrays 5 paliers.
+- [x] Pixi vert isolé — `yarn workspace battleforthecrown-pixi type-check` + `lint:check --quiet` → OK.
+- [ ] `yarn static-check` global : **bloqué par baseline backend préexistante** (erreurs `ARCHIVED`/`archivedAt` dans `world-access.service.ts`/`world-lifecycle.worker.ts`/`world-archive.smoke.spec.ts` — Prisma client non régénéré post-run 065, présentes aussi sur `main`, hors scope ce ticket pixi-only).
+- **Review indépendante** : Non déclenchée (aucun critère : pixi-only, pas SPEC.md, diff 74 lignes < 100, pas d'invariant durable).
+- **Tests IG à faire par le user** : QA visuelle carte tactique (sur monde où l'anneau spawn intersecte T4/T5, `rMax=60`) — vérifier qu'un T5 est le plus large + le plus rouge-or sombre (`barbarianT5=0x7a2414`, ring or `0xffd166`) du cluster, distinguable d'un T1 sans clic.
+
+Synthèse : palette `COLOR` étendue (T4/T5 + rings), `spriteSizeFor`/`styleFor` re-câblés sur `barbarianTierIndex` (T1..T5→0..4), radius=`10+idx`, T1/T2/T3 inchangés. Docs : note de consommation runtime ajoutée dans `archive/27`.
 **Spec amont** : [`docs/gameplay/06-barbarians.md` § Lisibilité joueur](../docs/gameplay/06-barbarians.md#lisibilité-joueur) (Brief sprites — 5 variantes d'un même asset de base + palette gris-marron → rouge-or sombre)
 
 ## Symptôme

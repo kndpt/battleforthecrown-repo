@@ -18,6 +18,8 @@
 
 **Suite** : production d'assets à briefer pour artiste / IA générative (suivi hors de ce ticket).
 
+**Consommation runtime** : `tasks/archive/084-barbarian-tier-readability-t4-t5.md` branche le mapping 5 paliers (taille + couleur + ring distincts T1→T5) côté rendu Pixi (`worldMapEntityStyle.ts`), refermant l'écart entre ce brief spec et la carte tactique.
+
 ## Symptôme
 
 `docs/gameplay/06-barbarians.md:162-165` — 3 variantes de sprites existantes pour 5 tiers, pas assez différenciables.

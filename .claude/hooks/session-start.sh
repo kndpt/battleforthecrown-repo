@@ -44,9 +44,16 @@ PG_CLUSTER="${PG_CLUSTER:-main}"
 if ! pg_isready -h localhost -p 5432 >/dev/null 2>&1; then
   pg_ctlcluster "$PG_VERSION" "$PG_CLUSTER" start >/dev/null 2>&1 || true
 fi
-until pg_isready -h localhost -p 5432 >/dev/null 2>&1; do
+# Attente bornée : ne JAMAIS boucler à l'infini (bloquerait la session/routine).
+PG_WAIT="${PG_WAIT_SECONDS:-30}"
+for _ in $(seq "$PG_WAIT"); do
+  pg_isready -h localhost -p 5432 >/dev/null 2>&1 && break
   sleep 1
 done
+if ! pg_isready -h localhost -p 5432 >/dev/null 2>&1; then
+  echo "session-start: Postgres indisponible après ${PG_WAIT}s, setup DB skippé." >&2
+  exit 0
+fi
 
 # Rôle + bases (idempotent). psql via l'user OS postgres (peer auth socket).
 runuser -u postgres -- psql -v ON_ERROR_STOP=1 \
