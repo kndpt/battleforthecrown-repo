@@ -4,7 +4,8 @@ import { ResourceBuildingDetailModal } from './ResourceBuildingDetailModal';
 
 describe('ResourceBuildingDetailModal', () => {
   it('shows Quarter available population projected against effective runtime capacity', () => {
-    const { container } = render(
+    // Le contenu est porté dans <body> via ModalOverlay → interroger baseElement.
+    const { baseElement } = render(
       <ResourceBuildingDetailModal
         building={{
           endTime: null,
@@ -37,11 +38,11 @@ describe('ResourceBuildingDetailModal', () => {
       />,
     );
 
-    expect(container).toHaveTextContent('Villageois disponibles');
-    expect(container).toHaveTextContent('141 / 423');
-    expect(container).toHaveTextContent('191 / 473');
-    expect(container).toHaveTextContent('+50 villageois');
-    expect(container).not.toHaveTextContent('282 / 423');
+    expect(baseElement).toHaveTextContent('Villageois disponibles');
+    expect(baseElement).toHaveTextContent('141 / 423');
+    expect(baseElement).toHaveTextContent('191 / 473');
+    expect(baseElement).toHaveTextContent('+50 villageois');
+    expect(baseElement).not.toHaveTextContent('282 / 423');
   });
 
   it('labels level 0 available resource buildings as construction', () => {

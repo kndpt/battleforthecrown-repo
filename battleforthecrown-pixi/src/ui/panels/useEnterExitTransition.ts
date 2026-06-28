@@ -54,17 +54,21 @@ export function useEnterExitTransition(
   const [isRendered, setIsRendered] = useState(isOpen);
   const [isVisible, setIsVisible] = useState(false);
 
-  // Ajustement d'état pendant le render (pattern React recommandé) : l'élément
-  // est monté dans la même passe, l'effet ci-dessous le voit déjà présent.
+  // Ajustements d'état pendant le render (pattern React recommandé, converge) :
+  // - à l'ouverture, monter l'élément dans la même passe ;
+  // - à la fermeture, déclencher la transition de sortie sans passer par un
+  //   effet (évite un setState « nu » dans useLayoutEffect).
   if (isOpen && !isRendered) setIsRendered(true);
+  if (!isOpen && isVisible) setIsVisible(false);
 
   useLayoutEffect(() => {
-    if (!isOpen || !isRendered) {
-      if (!isOpen) setIsVisible(false);
-      return;
-    }
+    if (!isOpen || !isRendered) return;
     // Lecture de layout = flush de la frame fermée avant le flip vers ouvert.
+    // Ce setState *est* la synchronisation animation↔DOM voulue (jouer la
+    // transition après que le navigateur a peint l'état fermé) ; la règle
+    // set-state-in-effect le rejette par prudence, dérogation assumée et locale.
     void panelRef.current?.getBoundingClientRect();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsVisible(true);
   }, [isOpen, isRendered]);
 
@@ -85,7 +89,13 @@ export function useEnterExitTransition(
  * le dernier contenu connu tant que l'élément n'est pas fermé.
  */
 export function useRetainedChildren(isOpen: boolean, children: ReactNode): ReactNode {
+  // Cache du dernier contenu ouvert, lu uniquement sur les frames de sortie.
+  // Même forme que `usePrevious` (écriture/lecture de ref en render) ; la règle
+  // react-hooks/refs interdit ce motif par prudence mais il est ici idempotent
+  // et volontairement hors du flux de mémoïsation du compilateur.
   const lastChildrenRef = useRef<ReactNode>(children);
+  // eslint-disable-next-line react-hooks/refs
   if (isOpen) lastChildrenRef.current = children;
+  // eslint-disable-next-line react-hooks/refs
   return isOpen ? children : lastChildrenRef.current;
 }

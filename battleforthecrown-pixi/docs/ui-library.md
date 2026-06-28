@@ -26,7 +26,7 @@ src/ui/
 ├── inputs/            Input, InputLabel, InputHelperText, Checkbox, Radio, Textarea
 ├── keypads/           NumericKeypad, NumericKeypadSheet
 ├── layout/            HeaderBar, HeaderActions, PlayerProfile, PopulationIndicator, ResourceDisplay
-├── modals/            Modal, ModalBody, ModalFooter
+├── modals/            ModalOverlay, Modal, ModalBackdrop, ModalBody, ModalFooter
 ├── panels/            Panel, PanelHeader, PanelBody, PanelFooter, BottomSheet
 ├── selects/           Select
 ├── sliders/           Slider
@@ -61,7 +61,8 @@ Chaque dossier contient un `README.md` détaillé (variants, tailles, props, exe
 | **Slider**      | `sliders/`            | 5 variants                                                 | 3 tailles ; min/max/step                         |
 | **NumericKeypad** | `keypads/`          | `info`, `success`, `warning`, `danger`, `neutral`         | Pavé tactile 4×3, display + max ; sheet wrapper `NumericKeypadSheet` |
 | **ProgressBar** | `feedback/`           | `default`, `success`, `info`, `warning`, `danger`         | Animation `shimmer`                              |
-| **Modal**       | `modals/`             | `default`, `warning`, `danger`, `info`                    | + `ModalBody`, `ModalFooter`                     |
+| **ModalOverlay** | `modals/`            | —                                                          | **Parent unique** des modales centrées : portail, backdrop, anim « pop spring », Escape, scroll-lock, focus |
+| **Modal**       | `modals/`             | `default`, `warning`, `danger`, `info`                    | Modale stylée CVA bâtie sur `ModalOverlay` ; + `ModalBody`, `ModalFooter` |
 | **Panel**       | `panels/`             | 8 variants matériaux                                       | + `Header`, `Body`, `Footer`                     |
 | **BottomSheet** | `panels/`             | —                                                          | Slide depuis le bas, mobile-first                |
 | **Toast**       | `toasts/`             | `default`, `success`, `error`, `warning`, `info`          | + `ToastProvider`, hook `useToast`               |
@@ -76,6 +77,34 @@ Règles :
 - contenu long dans un body `data-bottom-sheet-scrollable` avec `overscroll-contain` et inertie tactile ;
 - contrôles interactifs (`button`, inputs, keypad, tabs, liens) exclus du drag ;
 - pas de `touch-action: none` global : seulement sur la zone de drag ou les gestes custom ciblés comme le drag Armée.
+
+### Pattern modal officiel — `ModalOverlay` + panneau
+
+Toute modale **centrée** passe par `ModalOverlay`, le parent unique d'orchestration. Il fournit en un
+seul endroit : portail vers `<body>`, fond assombri + flou, centrage, fermeture Escape / clic extérieur,
+verrou de scroll, focus initial + restauration, échelle de z-index, et l'**animation « pop spring »**
+mobile-game (scale .8→1 avec overshoot à l'entrée, repli + fade à la sortie ; respecte
+`prefers-reduced-motion`). `ModalOverlay` ne style **pas** le panneau — il anime son enfant.
+
+Le contenu attendu est une coquille stylée, en général `BaseModal`
+(`features/design-system/components/BaseModal.tsx` : header/tone/footer). `Modal` (CVA),
+`ModalBackdrop` (wrapper de compat), `VictoryModal`, `DefeatModal` et `DailyRetentionWidget` sont tous
+bâtis dessus.
+
+```tsx
+<ModalOverlay isOpen={isOpen} onClose={close} ariaLabel="Rapport">
+  <BaseModal title="Rapport" onClose={close}>…</BaseModal>
+</ModalOverlay>
+```
+
+Règles :
+
+- **nouveau code** : utiliser `ModalOverlay` directement (pas `ModalBackdrop`, conservé pour compat) ;
+- l'animation de **sortie** ne joue que si `ModalOverlay` reste monté et que `isOpen` bascule à `false` ;
+  une modale montée conditionnellement (`{open && <ModalOverlay isOpen … />}`) n'anime que l'**entrée** ;
+- le mécanisme enter/exit est mutualisé avec `BottomSheet` via le hook `panels/useEnterExitTransition`
+  (reflow forcé à l'entrée + `transitionend` pour démonter + cache du contenu pendant la sortie) ;
+- z-index : 50 = modale standard, 60 = empilée sur une autre, 80 = surface haute (widget plein écran).
 
 ### Layout HUD (transversal stateful)
 
