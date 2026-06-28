@@ -81,6 +81,10 @@ import type {
   ScoutReportResponse,
 } from "@battleforthecrown/shared/combat";
 import {
+  IncomingAttackDtoSchema,
+  type IncomingAttackDto,
+} from "@battleforthecrown/shared/events";
+import {
   VillageIntelDtoSchema,
   type VillageIntelDto,
 } from "@battleforthecrown/shared/world";
@@ -161,6 +165,8 @@ export const queryKeys = {
     ["combat", "conquests", "open", userId, worldId] as const,
   openExpeditions: (userId: string | null, worldId: string | null) =>
     ["combat", "expeditions", "open", userId, worldId] as const,
+  incomingAttacks: (villageId: string | null) =>
+    ["combat", "incoming", villageId] as const,
   garrison: (villageId: string | null) =>
     ["combat", "garrison", villageId] as const,
   combatReports: (userId: string | null, worldId: string | null) =>
@@ -996,6 +1002,33 @@ export function useActiveExpeditionsQuery(villageId: string | null) {
     // sync even when a WS event is missed (the socket can drop briefly).
     refetchInterval: (query) =>
       query.state.data && query.state.data.length > 0 ? 5_000 : false,
+    staleTime: 2_000,
+  });
+}
+
+const IncomingAttackDtoArraySchema = z.array(IncomingAttackDtoSchema);
+
+export function useIncomingAttacksQuery(villageId: string | null) {
+  return useQuery<IncomingAttackDto[]>({
+    queryKey: queryKeys.incomingAttacks(villageId),
+    queryFn: async () => {
+      if (!villageId) return [] as IncomingAttackDto[];
+      const raw = await apiClient.get<unknown>(`/combat/${villageId}/incoming`);
+      // Validate at the trust boundary: a malformed threat list must not enter
+      // the cache and corrupt the "Menaces" tab.
+      return IncomingAttackDtoArraySchema.parse(raw);
+    },
+    enabled: Boolean(villageId),
+    // Defender is passive: a dropped `attack.incoming` WS event would otherwise
+    // leave a "safe" village silently unaware of an inbound army. Keep a slow
+    // background poll whenever a village is in context, and accelerate to 5s
+    // only while a threat is already known.
+    refetchInterval: (query) =>
+      !villageId
+        ? false
+        : query.state.data && query.state.data.length > 0
+          ? 5_000
+          : 30_000,
     staleTime: 2_000,
   });
 }

@@ -1,8 +1,8 @@
 # Run #086 — feature-incoming-attack-indicator
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-28
+> **Terminé** : 2026-06-28
 
 ## Cible
 
@@ -90,14 +90,42 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 
 ## Progress
 
-_(Vide au démarrage. À remplir pendant `$bftc-run`.)_
+_(git history)_
 
 ## Décisions prises
 
-_(Vide au démarrage. À remplir pendant `$bftc-run`.)_
+- **Event dédié `attack.incoming`** (pas d'extension `BattleSentPayload`) : `battle.sent` attaquant strictement inchangé, payload défenseur fog-safe par construction → aucun scrub nécessaire. Routing via planner générique `userByVillage('targetVillageId')` (village barbare `userId null` → 0 destinataire). Émission only `targetKind === 'PLAYER_VILLAGE'`.
+- **Front scopé au village courant** (`currentVillageId`) : endpoint per-village 1:1 ; agrégat multi-villages = follow-up hors MVP.
+- **Barre d'imminence** sur fenêtre 15 min (pas de `departAt` révélé — fog).
 
 ## Rapport final
 
+Synthèse : event Outbox/WS `attack.incoming` + endpoint `GET /combat/:villageId/incoming` (fog-safe, ownership service-side) ; HUD onglet « Menaces » (countdown + badge) dans `KingdomActivitiesPanel`. Zéro migration (Piste B). Review indépendante GO.
+
 ### Acceptance & QA
 
-_(Vide au démarrage. Rempli à la clôture.)_
+**Critères d'acceptance vérifiés**
+- [x] `GET /combat/:villageId/incoming` (owned) → 200 liste ATTACK/EN_ROUTE/future asc, tri arrivalAt ASC — `test/incoming-attack.smoke.spec.ts` (cas 1 + 3) → vert
+- [x] `GET /combat/:villageId/incoming` non-owned → 404 ownership service-side, jamais `@Public` — smoke cas 1 → 404
+- [x] Aucun champ compo armée / identité / origine attaquant (event ET endpoint) — assert set exact de clés `{expeditionId,targetVillageId,targetX,targetY,arrivalAt}` → vert
+- [x] Cible barbare jamais routée — smoke cas 2 : `count(attack.incoming aggregateId=barb) === 0` → vert
+- [x] Défenseur reçoit event WS `arrivalAt` ; attaquant `battle.sent` inchangé — smoke cas 1 → les deux rows présents
+- [x] Idempotence (clé `expeditionId`) — liste REST keyée DB, handler WS = invalidate seul ; smoke cas 1 length=1
+- [x] Expédition résolue/passée disparaît — smoke cas 3 : filtre `status=EN_ROUTE` + `arrivalAt>now` → 1 seule listée
+- [x] Zod `IncomingAttackDto` shared + rebuild + DTO partagé front — `yarn static-check` vert
+- [x] Section « Menaces » countdown vivant + badge / WS sans reload — `visuel` (QA IG Kelvin)
+
+**Review indépendante** : Déclenchée (raison : touche backend+front, diff >100 lignes, invariant fog-of-war). Verdict `GO`, 0 bloquant/majeur, 3 mineurs non bloquants (index `targetRefId`, imminence proxy, ligne Outbox inerte cas inexistant).
+
+**Tests automatisés** : `yarn test:backend` → 534/534 ✓ ; `yarn test:pixi` → 846/846 ✓ (dont 3 nouveaux `mapIncomingAttackToThreatCard`) ; `yarn static-check` → ✓.
+
+**Smokes lancés** : `test:smoke:preflight` puis `test:smoke:run -- incoming-attack` → **Ciblé**, 3/3 ✓. (Log `CombatWorker` Population P2025 = bruit async du fixture défenseur sans ligne Population, identique aux smokes PvP existants, hors assertions.)
+
+**Smokes ajoutés/modifiés** : `test/incoming-attack.smoke.spec.ts` — routing défenseur + fog whitelist + ownership 404 + exclusion barbare + filtre status/arrival.
+
+**QA fonctionnelle agent** : couverte par le smoke (POST /combat/attack → Outbox + endpoint).
+
+**Tests IG à faire par le user** :
+- [ ] Onglet « Menaces » du bottom sheet *Activités du royaume* : une attaque PvP entrante s'affiche avec compte à rebours vivant + badge compteur rouge.
+- [ ] Le compte à rebours décroît en continu ; une nouvelle attaque pendant la session apparaît sans reload (WS).
+- [ ] Aucune info attaquant (armée/origine) visible côté défenseur.

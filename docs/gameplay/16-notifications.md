@@ -1,6 +1,6 @@
 # Notifications push & timers
 
-> 🚧 **Doc en chantier.** Spec à détailler plus tard. Cette page existe pour acter que les notifications push entrent dans le scope **MVP** — l'analyse design (catalogue exact, opt-in granulaire, latence acceptable, intégration FCM/APNs) viendra dans une seconde passe.
+> 🚧 **Doc en chantier.** La couche **push** (FCM/APNs, sessions fermées) reste à détailler (Phase 6, POST-MVP). La couche **in-app** de l'attaque entrante est en revanche **livrée** (run 086) — voir [§ Visibilité in-app de l'attaque entrante](#visibilité-in-app-de-lattaque-entrante-livré--run-086). Cette page acte que les notifications entrent dans le scope **MVP** ; l'analyse design push (catalogue exact, opt-in granulaire, latence acceptable, intégration FCM/APNs) viendra dans une seconde passe.
 
 ## Pourquoi c'est obligatoire au MVP
 
@@ -28,6 +28,16 @@ Détails à trancher plus tard : opt-in/opt-out par catégorie, regroupement (un
 ## Asymétrie attaquant ↔ défenseur
 
 Point d'attention design pour la spec finale : l'attaquant **choisit** son timing (il sait quand il a cliqué « envoyer »), le défenseur **subit** (il ne contrôle pas quand il est attaqué). Donc la notif d'attaque entrante est **structurellement plus critique** que la notif de retour d'armée pour l'attaquant. Latence et fiabilité doivent être dimensionnées sur ce cas-là.
+
+## Visibilité in-app de l'attaque entrante (livré — run 086)
+
+La **couche in-app** de l'attaque entrante est livrée, indépendamment du push hors-ligne (Phase 6, POST-MVP). Modèle Tribal Wars / Kingsage : timer permanent dans l'app, le push viendra seulement pour les sessions fermées.
+
+- **Événement** : `attack.incoming` (Outbox/WS), émis dans la même transaction que `battle.sent` à l'envoi d'une attaque, **uniquement** sur cible `PLAYER_VILLAGE`. Routé au seul propriétaire du village ciblé (un village barbare n'a pas de défenseur). Détail : [`docs/architecture/realtime.md`](../architecture/realtime.md).
+- **Endpoint** : `GET /combat/:villageId/incoming` (JWT, ownership service-side) — liste les expéditions `ATTACK` `EN_ROUTE` encore à venir ciblant **ce** village, ETA croissante.
+- **Fog-of-war** : seuls `expeditionId, targetVillageId, targetX, targetY (village défenseur), arrivalAt` sont exposés. **Jamais** la composition de l'armée attaquante ni l'identité/origine de l'attaquant.
+- **HUD** : onglet « Menaces » du bottom sheet *Activités du royaume* (`KingdomActivitiesPanel`), compte à rebours vivant par menace + badge compteur ; rafraîchi par WS + invalidation TanStack Query, sans reload.
+- **Hors scope run 086** : push FCM/APNs, opt-in granulaire, agrégat multi-villages (la section est scopée au village courant), révélation de la composition/origine.
 
 ## Liens
 

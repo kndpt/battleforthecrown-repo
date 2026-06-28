@@ -474,6 +474,28 @@
         "battleforthecrown-backend/prisma/schema.prisma — `Expedition.targetRefId` = Village.id direct ; `Village.userId` nullable (null = barbare, à exclure) ; aucun champ `defenderUserId`/`defenderVillageId` dénormalisé"
       ],
       "addedAt": "2026-06-28"
+    },
+    {
+      "specPath": "docs/gameplay/lab/tickets/02-simple-combat-orders.md",
+      "slug": "combat-postures",
+      "title": "Postures de combat — ordres simples Prudent / Normal / Brutal (promotion lab 02)",
+      "keywords": ["combat-posture", "posture", "ordre-combat", "prudent", "brutal", "lab-promotion"],
+      "artefactType": "rejected",
+      "artefactPath": "",
+      "artefactId": "087",
+      "status": "REJECTED",
+      "prBranch": "plan/gameplay/combat-postures",
+      "gapSummary": "Analysé et NON RETENU pour l'instant (décision 2026-06-28). À EXCLURE des futures analyses gameplay (slug/specPath/keywords). Le gap était réel (combat 100 % auto, aucun levier d'intention au lancement ; promotion lab ticket 02), mais le sujet n'est pas retenu maintenant. Run 087 annulé, aucune fiche écrite.",
+      "codeEvidence": [
+        "packages/shared/src/combat/dtos.ts:28-35 — AttackCommand = { villageId, targetX, targetY, targetKind, targetRefId, units }, aucun champ posture",
+        "packages/shared/src/combat/ — aucun type CombatPosture ni constante de multiplicateurs (les matches 'stance' sont du substring instance/distance)",
+        "battleforthecrown-backend/src/modules/combat/combat-resolution.ts:59-111 — calculateCombatOutcome calcule lossesAttacker et le loot sans paramètre ni modificateur de posture",
+        "battleforthecrown-backend/prisma/schema.prisma — modèle Expedition sans colonne posture",
+        "battleforthecrown-pixi/src/features/combat/AttackDetailModal.tsx:260-267 — mutation.mutate envoie units sans aucun sélecteur ni champ posture",
+        "battleforthecrown-backend/src/modules/combat/combat-report.presenter.ts — le rapport de combat n'expose aucune posture",
+        "tasks/ — aucun ticket/run actif ou archivé ne couvre les ordres/postures de combat"
+      ],
+      "addedAt": "2026-06-28"
     }
   ]
 }

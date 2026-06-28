@@ -166,6 +166,9 @@ const PLANNERS: Record<EventKind, AnyPlanner> = {
   'unit.training.completed': userByVillage('villageId'),
   'unit.trained': userByVillage('villageId'),
   'battle.sent': userByVillage('villageId'),
+  // Routed to the defender only: targetVillageId resolves to its owner; a
+  // barbarian target (userId = null) yields no recipient, so it is never sent.
+  'attack.incoming': userByVillage('targetVillageId'),
   'battle.resolved': userByVillage('villageId'),
   'battle.returned': userByVillage('villageId'),
   'scout.sent': userByVillage('villageId'),

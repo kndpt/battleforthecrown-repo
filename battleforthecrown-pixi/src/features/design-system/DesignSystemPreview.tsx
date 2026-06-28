@@ -111,6 +111,7 @@ import {
   type DailyQuestOyez,
   type ExpeditionActivityCardProps,
   type AuthHeraldShield,
+  type IncomingAttackCardProps,
   type KingdomActivitiesPanelLabels,
   type KingdomActivityTab,
   type MultiVillageFilter,
@@ -486,6 +487,12 @@ const kingdomActivityLabels: KingdomActivitiesPanelLabels = {
   expeditionsTab: 'Expéditions',
   headerEyebrow: 'Panneau',
   headerTitle: 'Activités du royaume',
+  threatEmptyQuote: '« Aucune armée ennemie ne marche vers vos terres. »',
+  threatEmptyTitle: 'Aucune attaque entrante',
+  threatErrorLabel: 'Impossible de charger les menaces.',
+  threatLoadingLabel: 'Analyse des menaces...',
+  threatRetryLabel: 'Réessayer',
+  threatsTab: 'Menaces',
 };
 
 const captureWindows: CaptureWindowCardProps[] = [
@@ -635,6 +642,35 @@ const expeditionActivities: ExpeditionActivityCardProps[] = [
     ),
     time: '46m',
     title: 'Camp de conquête T4',
+  },
+];
+
+const incomingThreats: IncomingAttackCardProps[] = [
+  {
+    icon: '/assets/hand-red.png',
+    movementId: 'menace-village-principal',
+    progress: 72,
+    statusLabel: 'Imminente',
+    subtitle: (
+      <>
+        Cible <b>247|231</b> · Arrivée dans 4 min
+      </>
+    ),
+    time: '4m',
+    title: 'ATTAQUE ENTRANTE',
+  },
+  {
+    icon: '/assets/hand-red.png',
+    movementId: 'menace-village-est',
+    progress: 18,
+    statusLabel: 'Imminente',
+    subtitle: (
+      <>
+        Cible <b>251|228</b> · Arrivée dans 27 min
+      </>
+    ),
+    time: '27m',
+    title: 'ATTAQUE ENTRANTE',
   },
 ];
 
@@ -2056,6 +2092,8 @@ export function DesignSystemPreview() {
                   expeditions={expeditionActivities}
                   labels={kingdomActivityLabels}
                   onTabChange={setKingdomActivityTab}
+                  threatCount={incomingThreats.length}
+                  threats={incomingThreats}
                 />
               </div>
             </div>
@@ -2111,6 +2149,8 @@ export function DesignSystemPreview() {
                 expeditions={expeditionActivities}
                 labels={kingdomActivityLabels}
                 onTabChange={() => undefined}
+                threatCount={incomingThreats.length}
+                threats={incomingThreats}
               />
             </div>
           </div>
