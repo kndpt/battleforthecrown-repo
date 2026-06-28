@@ -21,7 +21,7 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 | area | PR |
 |------|-----|
-| typedEntries consistency: 4 files still using Object.entries + `as UnitType` instead of shared typedEntries helper | pending |
+| typedEntries consistency: 4 files still using Object.entries + `as UnitType` instead of shared typedEntries helper | #213 |
 
 ## rules
 
