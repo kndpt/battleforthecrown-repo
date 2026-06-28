@@ -49,6 +49,10 @@ const config: Config = {
         shimmer: 'shimmer 2s infinite',
         'fade-in': 'fade-in 180ms ease-out',
       },
+      transitionTimingFunction: {
+        // Overshoot léger « pop spring » pour l'ouverture des modales (ModalOverlay).
+        'modal-pop': 'cubic-bezier(.34,1.56,.64,1)',
+      },
     },
   },
   plugins: [

@@ -1,22 +1,26 @@
 import { type ReactNode } from 'react';
+import { ModalOverlay } from './ModalOverlay';
 
 interface ModalBackdropProps {
   children: ReactNode;
   onClose: () => void;
 }
 
+/**
+ * ModalBackdrop — wrapper de compatibilité au-dessus de {@link ModalOverlay}.
+ *
+ * Historiquement le backdrop centré du jeu (portail + fond assombri). Ses
+ * consommateurs le montent conditionnellement (`{open && <ModalBackdrop/>}`),
+ * d'où `isOpen` forcé à `true`. Déléguer à `ModalOverlay` leur apporte
+ * gratuitement l'animation « pop », Échap, le verrou de scroll et le focus.
+ *
+ * Pour tout nouveau code, préférer `ModalOverlay` directement.
+ */
 export function ModalBackdrop({ children, onClose }: ModalBackdropProps) {
   return (
-    <div
-      aria-modal="true"
-      className="fixed inset-0 z-50 grid place-items-center bg-[rgba(0,0,0,.62)] p-3 [backdrop-filter:blur(3px)]"
-      onClick={onClose}
-      role="dialog"
-    >
-      <div className="flex w-full justify-center" onClick={(event) => event.stopPropagation()}>
-        {children}
-      </div>
-    </div>
+    <ModalOverlay isOpen onClose={onClose}>
+      <div className="flex w-full justify-center">{children}</div>
+    </ModalOverlay>
   );
 }
 

@@ -1,23 +1,13 @@
-'use client';
-
-import { useEffect, useRef, ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { X } from 'lucide-react';
-
-const overlayVariants = cva([
-  'fixed inset-0 z-40',
-  'bg-black/60',
-  'backdrop-blur-sm',
-  'transition-opacity duration-300',
-]);
+import { ModalOverlay } from './ModalOverlay';
 
 const modalVariants = cva(
   [
-    'fixed z-50',
     'bg-gradient-to-b from-[#f4e4c1] to-[#e8d4a8]',
     'border-4 rounded-lg',
     'shadow-2xl',
-    'transform transition-all duration-300',
     'font-game',
   ],
   {
@@ -106,63 +96,31 @@ export const Modal = ({
   closeOnOverlayClick = true,
   closeOnEscape = true,
 }: ModalProps) => {
-  const modalRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (closeOnEscape && e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleEscape);
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen, closeOnEscape, onClose]);
-
-  if (!isOpen) return null;
-
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (closeOnOverlayClick && e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
   return (
-    <>
-      <div className={overlayVariants()} onClick={handleOverlayClick} />
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4"
-        onClick={handleOverlayClick}
-      >
-        <div
-          ref={modalRef}
-          className={modalVariants({ size, variant })}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {title && (
-            <div className={headerVariants()}>
-              <h2 className={titleVariants()}>{title}</h2>
-              {showCloseButton && (
-                <button
-                  onClick={onClose}
-                  className={closeButtonVariants()}
-                  aria-label="Fermer"
-                >
-                  <X size={16} strokeWidth={3} />
-                </button>
-              )}
-            </div>
-          )}
-          {children}
-        </div>
+    <ModalOverlay
+      ariaLabel={title}
+      closeOnEscape={closeOnEscape}
+      closeOnOverlayClick={closeOnOverlayClick}
+      isOpen={isOpen}
+      onClose={onClose}
+    >
+      <div className={modalVariants({ size, variant })}>
+        {title && (
+          <div className={headerVariants()}>
+            <h2 className={titleVariants()}>{title}</h2>
+            {showCloseButton && (
+              <button
+                onClick={onClose}
+                className={closeButtonVariants()}
+                aria-label="Fermer"
+              >
+                <X size={16} strokeWidth={3} />
+              </button>
+            )}
+          </div>
+        )}
+        {children}
       </div>
-    </>
+    </ModalOverlay>
   );
 };
