@@ -99,7 +99,7 @@ export function ModalOverlay({
       {/* Fond assombri + flou — fade seul */}
       <div
         aria-hidden="true"
-        className={`absolute inset-0 bg-[rgba(0,0,0,.62)] [backdrop-filter:blur(3px)] transition-opacity duration-200 ease-out ${
+        className={`absolute inset-0 bg-[rgba(0,0,0,.62)] [backdrop-filter:blur(3px)] transition-opacity duration-150 ease-out ${
           isVisible ? 'opacity-100' : 'opacity-0'
         }`}
       />
@@ -115,7 +115,7 @@ export function ModalOverlay({
             isVisible
               ? 'scale-100 opacity-100'
               : `opacity-0 ${isOpen ? 'scale-[.8]' : 'scale-[.92]'}`
-          } ${isOpen ? 'duration-[260ms] ease-modal-pop' : 'duration-[180ms] ease-in'} ${panelClassName}`}
+          } ${isOpen ? 'duration-200 ease-modal-pop' : 'duration-[140ms] ease-in'} ${panelClassName}`}
           onClick={stopPropagation}
           onTransitionEnd={handleTransitionEnd}
           role="dialog"
