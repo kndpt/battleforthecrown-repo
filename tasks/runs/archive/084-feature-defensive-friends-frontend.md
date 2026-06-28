@@ -1,8 +1,8 @@
 # Run #084 — feature-defensive-friends-frontend
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-28
+> **Terminé** : 2026-06-28
 
 ## Cible
 
@@ -42,17 +42,33 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 
 ## Progress
 
-_(Pendant run — supprimé à l'archive)_
+_(git history)_
 
 ## Décisions prises
 
-_(Pendant run — supprimé à l'archive)_
+_(git history)_
 
 ## Rapport final
 
+Synthèse : HUD amis défensifs livré full-front (sheet 3 buckets + add pseudo gaté cap, mapping codes d'erreur FR distincts, extension renfort vers village d'ami `ACTIVE`, section scout `defensiveFriendsDisplayNames`). Aucun changement backend/contrat. Mode défaut renfort dérivé (pas d'effet) pour suivre une résolution tardive de la query amis.
+
 ### Acceptance & QA
 
-- [ ] <critère> — `<cmd>` → <résultat>
-- **Review indépendante** : …
-- **Tests automatisés** : …
-- **Tests IG user** : checklist mobile (sheet, cap grisé, renfort ami, scout révèle).
+- [x] Sheet 3 buckets + add + accept/refuse + retirer + cap grisé/tooltip — `visuel` + `yarn workspace battleforthecrown-pixi test --run` → 840 verts (logique sheet via primitives `src/ui` + GameBottomSheetPanel)
+- [x] Codes d'erreur distincts (lecture `err.data.code`, steering accept) — `yarn workspace battleforthecrown-pixi test --run src/features/social/friendshipErrorMessage.test.ts` → 6 verts
+- [x] Renfort cible village d'ami `ACTIVE` (sinon auto-renfort seul) — `visuel` (AttackDetailModal : mode renfort offert ssi `target.ownerId` ∈ amis `ACTIVE`)
+- [x] Scout affiche `defensiveFriendsDisplayNames` (≤5, compact) — `yarn workspace battleforthecrown-pixi test --run src/features/combat/scoutReportView.test.ts` → section amis (pluriel/singulier/absent/vide/barbare) verte
+- [x] `yarn static-check` + `yarn test:pixi` verts — `yarn static-check` → OK ; `test:pixi` → 840/840
+- [x] Docs UI — N/A : `DefensiveFriendsSheet` est un écran feature, pas une primitive `src/ui/` réutilisable (rule docs respectée)
+
+- **Review indépendante** : Déclenchée (raison : diff > 100 lignes) → **GO**. 3 mineurs : (1) mode défaut renfort ami sur cache froid → **fixé** (default dérivé) ; (2) message guard fenêtre-de-capture EN brut → pré-existant combat, hors scope ; (3) `eslint-disable exhaustive-deps` useMemo → cosmétique.
+- **Tests automatisés** : `yarn workspace battleforthecrown-pixi test --run` → 840 passed (120 files). `yarn static-check` → OK.
+- **Smokes lancés** : Non lancés localement, raison : diff frontend-only (aucun `battleforthecrown-backend/src/` touché) ; backend couvert par run 063.
+- **Smokes ajoutés/modifiés** : Aucun.
+- **QA fonctionnelle agent** : Non exécuté — feature 100 % frontend (rendu + interaction), aucun nouvel effet backend à curl/SQL ; endpoints/guard validés en run 063.
+- **Tests IG à faire par le user** (checklist mobile) :
+  - [ ] Bouton "Amis défensifs" (header) ouvre la sheet ; 3 buckets visibles.
+  - [ ] Ajout par pseudo → demande envoyée ; à 5 `ACTIVE` le bouton est grisé + tooltip "Cap 5 amis défensifs".
+  - [ ] `Reçues` : accept active la liaison, refuse la retire ; `Actifs`/`Envoyées` : retirer/annuler OK.
+  - [ ] Sur un village d'ami `ACTIVE` (carte), le mode **Renfort** est proposé et part ; sans ami `ACTIVE`, seul l'auto-renfort reste.
+  - [ ] Un scout sur un joueur avec amis `ACTIVE` révèle la section "Amis défensifs".

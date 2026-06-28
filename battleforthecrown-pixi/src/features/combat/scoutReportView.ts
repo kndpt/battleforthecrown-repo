@@ -107,6 +107,31 @@ export function scoutReportStrategyLabel(strategy: string | null | undefined): s
   return DEFAULT_VILLAGE_STRATEGY.strategies[strategy as VillageStrategyType]?.displayName ?? strategy;
 }
 
+/**
+ * Defensive-friends section for a PvP scout. The list is a snapshot frozen at
+ * scout time (cf. wallLevel/newbieShield). Omitted entirely when the field is
+ * absent (barbarian / old reports / no friends) so we never render an empty
+ * "Amis défensifs : —" row. Display is capped at the MVP cap (5).
+ */
+function buildDefensiveFriendsSections(
+  names: string[] | undefined,
+): ScoutReportSection[] {
+  if (!names || names.length === 0) return [];
+  const shown = names.slice(0, 5);
+  return [
+    {
+      title: 'Amis défensifs',
+      items: [
+        {
+          icon: '/assets/hand-silver.png',
+          label: `${shown.length} ami${shown.length > 1 ? 's' : ''}`,
+          value: shown.join(', '),
+        },
+      ],
+    },
+  ];
+}
+
 export function buildScoutReportCardProps(
   report: ScoutReportResponse,
   onDelete: ScoutReportCardProps['action']['onClick'],
@@ -180,6 +205,9 @@ export function buildScoutReportCardProps(
               },
             ],
           },
+          ...buildDefensiveFriendsSections(
+            report.details?.defensiveFriendsDisplayNames,
+          ),
         ]),
   ];
 

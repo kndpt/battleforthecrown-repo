@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 const featuresRoot = join(process.cwd(), 'src/features');
 const allowedFeatureSheetChildren = [
+  'DefensiveFriendsSheet',
   'GameBottomSheetPanel',
   'KingdomActivitiesBottomSheet',
   'MultiVillageBottomSheet',
