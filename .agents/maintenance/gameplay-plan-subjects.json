@@ -432,6 +432,28 @@
         "battleforthecrown-backend/prisma/seed-default-world-config.sql:41 — rMax=60 (T4 et T5 spawnent effectivement sur l'anneau [40, 60])"
       ],
       "addedAt": "2026-06-25"
+    },
+    {
+      "specPath": "docs/gameplay/lab/tickets/10-map-notes-and-markers.md",
+      "slug": "private-map-markers",
+      "title": "Marqueurs et notes de carte privés — promotion lab ticket 10",
+      "keywords": ["map-markers", "marqueurs", "notes-carte", "private-markers", "lab-promotion", "mobile-ux"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/085-feature-private-map-markers.md",
+      "artefactId": "085",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/private-map-markers",
+      "gapSummary": "Le lab ticket 10 (ratio bénéfice/coût « très bon ») n'a jamais été promu en spec canonique. Aucune mémoire stratégique privée sur la carte (à scout, cible, danger, futur spot) — le joueur garde ces infos hors jeu. Backend, frontend, shared et spec sont à créer. Le run promeut le ticket en spec `26-private-map-markers.md`, ajoute le modèle `MapMarker` (cap 50 par `userId × worldId`), un module REST CRUD scopé monde, une couche overlay Pixi reconciliée et une sheet d'édition mobile-friendly.",
+      "codeEvidence": [
+        "battleforthecrown-pixi/src/pixi/scenes/WorldMapScene.ts:592-620 — seul `captureMarker` Graphics existe (sur les villages en capture publique), aucune couche `markersLayer` ni primitive d'overlay privé",
+        "battleforthecrown-pixi/src/features/world/ — aucun composant `MapMarkerSheet` / `MapMarkerEditor` / `MapMarkersPanel` (rg sur 'marker|markers' renvoie uniquement captureMarker)",
+        "battleforthecrown-backend/src/modules/ — aucun module `map-markers/`. Le module `intel` est privé par village cible (consommé par run 055), pas un marker libre par tile `(x, y)`",
+        "battleforthecrown-backend/prisma/schema.prisma — aucun modèle `MapMarker` / `PrivateMarker`",
+        "packages/shared/src/ — aucun répertoire `map-markers/`, aucun type `MapMarkerKind` / `MapMarkerDto`, aucune constante `MAP_MARKER_CAP`",
+        "docs/gameplay/lab/tickets/10-map-notes-and-markers.md — ticket lab non promu, 4 Points à trancher non répondus (cible, contenu, mini-map, suppression auto). À promouvoir dans nouvelle spec `26-private-map-markers.md`.",
+        "docs/gameplay/lab/README.md — § « Idées promues » ne référence pas encore le ticket 10 (seuls 08/09/11 promus), confirmation que la sortie du lab n'est pas faite"
+      ],
+      "addedAt": "2026-06-28"
     }
   ]
 }
