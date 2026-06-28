@@ -456,7 +456,7 @@ export function WorldMapScreen() {
           activeTab={kingdomActivityTab}
           onClose={() => setIsKingdomActivitiesOpen(false)}
           onTabChange={setKingdomActivityTab}
-          villageId={currentVillageId}
+          villageId={myVillage?.id ?? currentVillageId}
           worldId={worldId}
         />
       </BottomSheet>

@@ -105,8 +105,8 @@ Synthèse : event Outbox/WS `attack.incoming` + endpoint `GET /combat/:villageId
 ### Acceptance & QA
 
 **Critères d'acceptance vérifiés**
-- [x] `GET /:villageId/incoming` (owned) → 200 liste ATTACK/EN_ROUTE/future asc — `test/incoming-attack.smoke.spec.ts` (cas 1 + 3) → vert
-- [x] `GET /:villageId/incoming` non-owned → 404 ownership service-side, jamais `@Public` — smoke cas 1 → 404
+- [x] `GET /combat/:villageId/incoming` (owned) → 200 liste ATTACK/EN_ROUTE/future asc, tri arrivalAt ASC — `test/incoming-attack.smoke.spec.ts` (cas 1 + 3) → vert
+- [x] `GET /combat/:villageId/incoming` non-owned → 404 ownership service-side, jamais `@Public` — smoke cas 1 → 404
 - [x] Aucun champ compo armée / identité / origine attaquant (event ET endpoint) — assert set exact de clés `{expeditionId,targetVillageId,targetX,targetY,arrivalAt}` → vert
 - [x] Cible barbare jamais routée — smoke cas 2 : `count(attack.incoming aggregateId=barb) === 0` → vert
 - [x] Défenseur reçoit event WS `arrivalAt` ; attaquant `battle.sent` inchangé — smoke cas 1 → les deux rows présents

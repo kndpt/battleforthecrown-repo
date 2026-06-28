@@ -204,6 +204,48 @@ describe('planNotifications', () => {
     });
   });
 
+  describe('attack.incoming', () => {
+    it('routes to the targeted village owner (defender)', async () => {
+      const deps = makeDeps({ villageOwners: { vDef: 'uDef' } });
+      const plans = await planNotifications(
+        'attack.incoming',
+        {
+          expeditionId: 'e1',
+          targetVillageId: 'vDef',
+          targetX: 10,
+          targetY: 20,
+          arrivalAt: '2026-06-28T00:00:00Z',
+        },
+        deps,
+      );
+      expect(plans).toEqual([
+        {
+          recipient: { kind: 'user', id: 'uDef' },
+          payload: expect.objectContaining({
+            expeditionId: 'e1',
+            targetVillageId: 'vDef',
+          }),
+        },
+      ]);
+    });
+
+    it('emits nothing when the targeted village has no owner (barbarian)', async () => {
+      const deps = makeDeps({ villageOwners: { vBarb: null } });
+      const plans = await planNotifications(
+        'attack.incoming',
+        {
+          expeditionId: 'e1',
+          targetVillageId: 'vBarb',
+          targetX: 10,
+          targetY: 20,
+          arrivalAt: '2026-06-28T00:00:00Z',
+        },
+        deps,
+      );
+      expect(plans).toEqual([]);
+    });
+  });
+
   describe('village.attacked', () => {
     it('hides observerUserId from the defender payload', async () => {
       const plans = await planNotifications(

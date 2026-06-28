@@ -80,7 +80,10 @@ import type {
   ReinforcementReportResponse,
   ScoutReportResponse,
 } from "@battleforthecrown/shared/combat";
-import type { IncomingAttackDto } from "@battleforthecrown/shared/events";
+import {
+  IncomingAttackDtoSchema,
+  type IncomingAttackDto,
+} from "@battleforthecrown/shared/events";
 import {
   VillageIntelDtoSchema,
   type VillageIntelDto,
@@ -1003,20 +1006,29 @@ export function useActiveExpeditionsQuery(villageId: string | null) {
   });
 }
 
+const IncomingAttackDtoArraySchema = z.array(IncomingAttackDtoSchema);
+
 export function useIncomingAttacksQuery(villageId: string | null) {
   return useQuery<IncomingAttackDto[]>({
     queryKey: queryKeys.incomingAttacks(villageId),
-    queryFn: () => {
-      if (!villageId) return Promise.resolve([] as IncomingAttackDto[]);
-      return apiClient.get<IncomingAttackDto[]>(
-        `/combat/${villageId}/incoming`,
-      );
+    queryFn: async () => {
+      if (!villageId) return [] as IncomingAttackDto[];
+      const raw = await apiClient.get<unknown>(`/combat/${villageId}/incoming`);
+      // Validate at the trust boundary: a malformed threat list must not enter
+      // the cache and corrupt the "Menaces" tab.
+      return IncomingAttackDtoArraySchema.parse(raw);
     },
     enabled: Boolean(villageId),
-    // Poll while a threat is inbound so the ETA stays fresh even if a WS event
-    // is missed; back off to no polling once the village is safe.
+    // Defender is passive: a dropped `attack.incoming` WS event would otherwise
+    // leave a "safe" village silently unaware of an inbound army. Keep a slow
+    // background poll whenever a village is in context, and accelerate to 5s
+    // only while a threat is already known.
     refetchInterval: (query) =>
-      query.state.data && query.state.data.length > 0 ? 5_000 : false,
+      !villageId
+        ? false
+        : query.state.data && query.state.data.length > 0
+          ? 5_000
+          : 30_000,
     staleTime: 2_000,
   });
 }

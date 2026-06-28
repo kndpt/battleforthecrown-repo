@@ -210,7 +210,7 @@ describe('incoming attack smoke', () => {
     expect(incomingCount).toBe(0);
   });
 
-  it('lists only unresolved, future attacks targeting an owned village', async () => {
+  it('lists only unresolved, future attacks targeting an owned village, soonest first', async () => {
     const world = await seedSmokeWorld(ctx.prisma);
     const owner = await registerUser(ctx.server);
     const join = await joinWorld(
@@ -234,13 +234,22 @@ describe('incoming attack smoke', () => {
       outboundTravelMs: 60_000,
     };
 
-    const future = await ctx.prisma.expedition.create({
+    // Two future threats with distinct ETAs to lock the arrivalAt ASC contract.
+    const futureFar = await ctx.prisma.expedition.create({
       data: {
         ...base,
         status: 'EN_ROUTE',
         arrivalAt: new Date(Date.now() + 3_600_000),
       },
     });
+    const futureSoon = await ctx.prisma.expedition.create({
+      data: {
+        ...base,
+        status: 'EN_ROUTE',
+        arrivalAt: new Date(Date.now() + 600_000),
+      },
+    });
+    // Excluded: already arrived (past).
     await ctx.prisma.expedition.create({
       data: {
         ...base,
@@ -248,6 +257,7 @@ describe('incoming attack smoke', () => {
         arrivalAt: new Date(Date.now() - 60_000),
       },
     });
+    // Excluded: resolved.
     await ctx.prisma.expedition.create({
       data: {
         ...base,
@@ -261,7 +271,9 @@ describe('incoming attack smoke', () => {
       .set('Authorization', `Bearer ${owner.accessToken}`);
     expect(view.status).toBe(200);
     const threats = view.body as Array<{ expeditionId: string }>;
-    expect(threats).toHaveLength(1);
-    expect(threats[0].expeditionId).toBe(future.id);
+    expect(threats.map((t) => t.expeditionId)).toEqual([
+      futureSoon.id,
+      futureFar.id,
+    ]);
   });
 });

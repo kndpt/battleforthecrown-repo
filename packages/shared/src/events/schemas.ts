@@ -37,13 +37,21 @@ const BattleSentPayloadSchema = z.object({
   arrivalAt: z.string(),
 });
 
-const AttackIncomingPayloadSchema = z.object({
+/**
+ * Validates an incoming-attack payload. Exported (as {@link IncomingAttackDtoSchema})
+ * so the frontend can parse the `GET /combat/:villageId/incoming` REST response at
+ * the trust boundary — same shape as the `attack.incoming` WS event.
+ */
+export const AttackIncomingPayloadSchema = z.object({
   expeditionId: z.string(),
   targetVillageId: z.string(),
   targetX: z.number(),
   targetY: z.number(),
   arrivalAt: z.string(),
 });
+
+/** REST-facing alias of {@link AttackIncomingPayloadSchema} (identical shape). */
+export const IncomingAttackDtoSchema = AttackIncomingPayloadSchema;
 
 const BattleResolvedPayloadSchema = z.object({
   expeditionId: z.string(),
