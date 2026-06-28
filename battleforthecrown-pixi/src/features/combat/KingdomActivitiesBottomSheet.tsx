@@ -5,12 +5,14 @@ import {
   type KingdomActivityTab,
 } from '@/features/design-system/components';
 import {
+  useIncomingAttacksQuery,
   useOpenConquestsQuery,
   useOpenExpeditionsQuery,
   useRecallExpeditionMutation,
 } from '@/api/queries';
 import { useTickingNow } from '@/lib/useTickingNow';
 import {
+  mapIncomingAttackToThreatCard,
   mapOpenConquestToCaptureCard,
   mapOpenExpeditionToActivityCard,
 } from './kingdomActivitiesViewModel';
@@ -19,6 +21,7 @@ export interface KingdomActivitiesBottomSheetProps {
   activeTab: KingdomActivityTab;
   onClose: () => void;
   onTabChange: (tab: KingdomActivityTab) => void;
+  villageId: string | null;
   worldId: string | null;
 }
 
@@ -38,17 +41,25 @@ const labels: KingdomActivitiesPanelLabels = {
   expeditionsTab: 'Expéditions',
   headerEyebrow: 'Panneau',
   headerTitle: 'Activités du royaume',
+  threatEmptyQuote: 'Aucune armée ennemie en approche.',
+  threatEmptyTitle: 'Aucune attaque entrante',
+  threatErrorLabel: 'Impossible de charger les menaces.',
+  threatLoadingLabel: 'Analyse des menaces...',
+  threatRetryLabel: 'Réessayer',
+  threatsTab: 'Menaces',
 };
 
 export function KingdomActivitiesBottomSheet({
   activeTab,
   onClose,
   onTabChange,
+  villageId,
   worldId,
 }: KingdomActivitiesBottomSheetProps) {
   const now = useTickingNow(1_000);
   const conquestsQuery = useOpenConquestsQuery(worldId);
   const expeditionsQuery = useOpenExpeditionsQuery(worldId);
+  const incomingAttacksQuery = useIncomingAttacksQuery(villageId);
   const recallExpedition = useRecallExpeditionMutation();
 
   const captures = useMemo(
@@ -66,6 +77,11 @@ export function KingdomActivitiesBottomSheet({
     [expeditionsQuery.data, now, recallExpedition],
   );
 
+  const threats = useMemo(
+    () => (incomingAttacksQuery.data ?? []).map((attack) => mapIncomingAttackToThreatCard(attack, now)),
+    [incomingAttacksQuery.data, now],
+  );
+
   return (
     <KingdomActivitiesPanel
       activeTab={activeTab}
@@ -80,7 +96,11 @@ export function KingdomActivitiesBottomSheet({
       onClose={onClose}
       onRetryCaptures={() => void conquestsQuery.refetch()}
       onRetryExpeditions={() => void expeditionsQuery.refetch()}
+      onRetryThreats={() => void incomingAttacksQuery.refetch()}
       onTabChange={onTabChange}
+      threatCount={incomingAttacksQuery.data?.length ?? 0}
+      threatState={queryState(incomingAttacksQuery)}
+      threats={threats}
     />
   );
 }

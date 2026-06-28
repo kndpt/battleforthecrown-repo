@@ -80,6 +80,7 @@ import type {
   ReinforcementReportResponse,
   ScoutReportResponse,
 } from "@battleforthecrown/shared/combat";
+import type { IncomingAttackDto } from "@battleforthecrown/shared/events";
 import {
   VillageIntelDtoSchema,
   type VillageIntelDto,
@@ -161,6 +162,8 @@ export const queryKeys = {
     ["combat", "conquests", "open", userId, worldId] as const,
   openExpeditions: (userId: string | null, worldId: string | null) =>
     ["combat", "expeditions", "open", userId, worldId] as const,
+  incomingAttacks: (villageId: string | null) =>
+    ["combat", "incoming", villageId] as const,
   garrison: (villageId: string | null) =>
     ["combat", "garrison", villageId] as const,
   combatReports: (userId: string | null, worldId: string | null) =>
@@ -994,6 +997,24 @@ export function useActiveExpeditionsQuery(villageId: string | null) {
     enabled: Boolean(villageId),
     // Poll while there are active expeditions so phase transitions stay in
     // sync even when a WS event is missed (the socket can drop briefly).
+    refetchInterval: (query) =>
+      query.state.data && query.state.data.length > 0 ? 5_000 : false,
+    staleTime: 2_000,
+  });
+}
+
+export function useIncomingAttacksQuery(villageId: string | null) {
+  return useQuery<IncomingAttackDto[]>({
+    queryKey: queryKeys.incomingAttacks(villageId),
+    queryFn: () => {
+      if (!villageId) return Promise.resolve([] as IncomingAttackDto[]);
+      return apiClient.get<IncomingAttackDto[]>(
+        `/combat/${villageId}/incoming`,
+      );
+    },
+    enabled: Boolean(villageId),
+    // Poll while a threat is inbound so the ETA stays fresh even if a WS event
+    // is missed; back off to no polling once the village is safe.
     refetchInterval: (query) =>
       query.state.data && query.state.data.length > 0 ? 5_000 : false,
     staleTime: 2_000,

@@ -3,9 +3,11 @@ import type {
   OpenConquestDto,
   OpenExpeditionDto,
 } from '@battleforthecrown/shared/combat';
+import type { IncomingAttackDto } from '@battleforthecrown/shared/events';
 import {
   computeProgress,
   formatTime,
+  mapIncomingAttackToThreatCard,
   mapOpenConquestToCaptureCard,
   mapOpenExpeditionToActivityCard,
 } from './kingdomActivitiesViewModel';
@@ -172,6 +174,54 @@ describe('kingdom activities view model', () => {
 
     card.onRecall?.('caravan-1');
     expect(onRecall).toHaveBeenCalledWith('caravan-1', 'origin-1');
+  });
+});
+
+describe('mapIncomingAttackToThreatCard', () => {
+  const baseAttack: IncomingAttackDto = {
+    expeditionId: 'exp-threat-1',
+    targetVillageId: 'vil-1',
+    targetX: 247,
+    targetY: 231,
+    arrivalAt: '2026-06-28T12:10:00.000Z',
+  };
+
+  it('keys the card by expeditionId and surfaces the defender coordinates', () => {
+    const now = Date.parse('2026-06-28T12:00:00.000Z');
+    const card = mapIncomingAttackToThreatCard(baseAttack, now);
+    expect(card).toMatchObject({
+      icon: '/assets/hand-red.png',
+      movementId: 'exp-threat-1',
+      statusLabel: 'Imminente',
+      title: 'ATTAQUE ENTRANTE',
+      time: '10m 00s',
+    });
+    expect(String(card.subtitle)).toContain('247|231');
+  });
+
+  it('fills the imminence bar more as the ETA shrinks', () => {
+    // 10 min before arrival within a 15 min window.
+    const far = mapIncomingAttackToThreatCard(
+      baseAttack,
+      Date.parse('2026-06-28T12:00:00.000Z'),
+    );
+    // 2 min before arrival.
+    const near = mapIncomingAttackToThreatCard(
+      baseAttack,
+      Date.parse('2026-06-28T12:08:00.000Z'),
+    );
+    expect(near.progress).toBeGreaterThan(far.progress);
+    expect(far.progress).toBeGreaterThanOrEqual(0);
+    expect(near.progress).toBeLessThanOrEqual(100);
+  });
+
+  it('clamps the bar to 100 once the attack is due', () => {
+    const due = mapIncomingAttackToThreatCard(
+      baseAttack,
+      Date.parse('2026-06-28T12:15:00.000Z'),
+    );
+    expect(due.progress).toBe(100);
+    expect(due.time).toBe('0s');
   });
 });
 

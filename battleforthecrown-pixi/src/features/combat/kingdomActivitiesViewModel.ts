@@ -2,11 +2,14 @@ import type {
   OpenConquestDto,
   OpenExpeditionDto,
 } from '@battleforthecrown/shared/combat';
+import type { IncomingAttackDto } from '@battleforthecrown/shared/events';
 import type {
   CaptureTier,
   CaptureWindowCardProps,
   ExpeditionActivityCardProps,
+  IncomingAttackCardProps,
 } from '@/features/design-system/components';
+import { clamp } from '@/lib/math';
 import { formatRemaining } from '@/features/village/constructionProgress';
 
 const SOON_THRESHOLD_MS = 15 * 60_000;
@@ -16,6 +19,9 @@ export interface KingdomActivityLabels {
   captureOriginLabelPrefix: string;
   captureStatusLabel: string;
   captureSoonStatusLabel: string;
+  incomingThreatStatus: string;
+  incomingThreatSubtitlePrefix: string;
+  incomingThreatTitle: string;
   nobleEyebrow: string;
   nobleNameFallback: string;
   tierSubLabel: string;
@@ -26,10 +32,21 @@ export const KINGDOM_ACTIVITY_LABELS: KingdomActivityLabels = {
   captureOriginLabelPrefix: 'Depuis',
   captureSoonStatusLabel: 'Bientôt terminée',
   captureStatusLabel: 'Capture en cours',
+  incomingThreatStatus: 'Imminente',
+  incomingThreatSubtitlePrefix: 'Cible',
+  incomingThreatTitle: 'ATTAQUE ENTRANTE',
   nobleEyebrow: 'Seigneur immobilisé',
   nobleNameFallback: 'Seigneur',
   tierSubLabel: 'Tier',
 };
+
+/**
+ * Window over which an incoming attack visually "fills" its row. We have no
+ * depart time (fog-of-war: the DTO never reveals it), so the bar reflects
+ * imminence — it grows as the ETA falls inside this window. Purely a function
+ * of remaining ETA, so it never leaks the attacker's travel distance/origin.
+ */
+const INCOMING_ATTACK_IMMINENCE_MS = 15 * 60_000;
 
 const EXPEDITION_LABELS: Record<OpenExpeditionDto['kind'], string> = {
   ATTACK: 'ATTAQUE',
@@ -122,6 +139,30 @@ export function mapOpenExpeditionToActivityCard(
     subtitle: `${expedition.targetX}|${expedition.targetY} · ${expedition.status === 'RETURNING' ? 'Retour' : 'Arrivée'} ${formatRelativeDue(dueAt, nowMs)}`,
     time: formatRemaining(Math.max(0, dueAt - nowMs)),
     title: expedition.targetName ?? expedition.targetKind,
+  };
+}
+
+export function mapIncomingAttackToThreatCard(
+  attack: IncomingAttackDto,
+  nowMs: number,
+  labels: KingdomActivityLabels = KINGDOM_ACTIVITY_LABELS,
+): IncomingAttackCardProps {
+  const arrivalAt = Date.parse(attack.arrivalAt);
+  const remainingMs = Math.max(0, arrivalAt - nowMs);
+  const imminence = clamp(
+    (1 - remainingMs / INCOMING_ATTACK_IMMINENCE_MS) * 100,
+    0,
+    100,
+  );
+
+  return {
+    icon: '/assets/hand-red.png',
+    movementId: attack.expeditionId,
+    progress: imminence,
+    statusLabel: labels.incomingThreatStatus,
+    subtitle: `${labels.incomingThreatSubtitlePrefix} ${attack.targetX}|${attack.targetY} · Arrivée ${formatRelativeDue(arrivalAt, nowMs)}`,
+    time: formatRemaining(remainingMs),
+    title: labels.incomingThreatTitle,
   };
 }
 

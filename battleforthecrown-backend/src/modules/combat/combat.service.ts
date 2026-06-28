@@ -27,6 +27,7 @@ import {
 import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
 import { UNIT_TYPES } from '@battleforthecrown/shared/army';
 import { isAttackAllowedByPowerRatio } from '@battleforthecrown/shared';
+import type { IncomingAttackDto } from '@battleforthecrown/shared/events';
 import type {
   OpenConquestDto,
   OpenExpeditionDto,
@@ -170,7 +171,7 @@ export class CombatService {
           },
         });
 
-      // 7. Create event
+      // 7. Create event (outbound, attacker-facing — unchanged).
       await createOutboxEvent(tx, 'battle.sent', dto.villageId, {
         expeditionId: expedition.id,
         villageId: dto.villageId,
@@ -179,6 +180,20 @@ export class CombatService {
         targetKind: dto.targetKind,
         arrivalAt: arrivalAt.toISOString(),
       });
+
+      // 7b. Defender-facing incoming-attack event (in-app threat visibility).
+      // Player villages only — barbarian targets have no defender to notify.
+      // Payload is fog-of-war safe: no army composition, no attacker identity
+      // or origin. The planner routes it to the target village owner.
+      if (dto.targetKind === 'PLAYER_VILLAGE') {
+        await createOutboxEvent(tx, 'attack.incoming', target.id, {
+          expeditionId: expedition.id,
+          targetVillageId: target.id,
+          targetX: target.x,
+          targetY: target.y,
+          arrivalAt: arrivalAt.toISOString(),
+        });
+      }
 
       // 8. Break attacker's newbie shield if active (PvP only).
       if (dto.targetKind === 'PLAYER_VILLAGE') {
@@ -1174,6 +1189,45 @@ export class CombatService {
       },
       orderBy: { departAt: 'desc' },
     });
+  }
+
+  /**
+   * In-app incoming-attack threats for a village the caller owns. Returns only
+   * unresolved ATTACK expeditions still en route to this village, soonest
+   * arrival first. The DTO is fog-of-war safe: it never exposes the attacking
+   * army, the attacker identity, or the attack origin (see {@link IncomingAttackDto}).
+   */
+  async getIncomingAttacks(
+    userId: string,
+    villageId: string,
+  ): Promise<IncomingAttackDto[]> {
+    const village = await this.prisma.village.findFirst({
+      where: { id: villageId, userId },
+      select: { id: true, x: true, y: true },
+    });
+
+    if (!village) {
+      throw new NotFoundException('Village not found');
+    }
+
+    const expeditions = await this.prisma.expedition.findMany({
+      where: {
+        targetRefId: villageId,
+        kind: ExpeditionKind.ATTACK,
+        status: 'EN_ROUTE',
+        arrivalAt: { gt: new Date() },
+      },
+      select: { id: true, arrivalAt: true },
+      orderBy: { arrivalAt: 'asc' },
+    });
+
+    return expeditions.map((expedition) => ({
+      expeditionId: expedition.id,
+      targetVillageId: village.id,
+      targetX: village.x,
+      targetY: village.y,
+      arrivalAt: expedition.arrivalAt.toISOString(),
+    }));
   }
 
   async getOpenConquests(

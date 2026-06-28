@@ -37,6 +37,14 @@ const BattleSentPayloadSchema = z.object({
   arrivalAt: z.string(),
 });
 
+const AttackIncomingPayloadSchema = z.object({
+  expeditionId: z.string(),
+  targetVillageId: z.string(),
+  targetX: z.number(),
+  targetY: z.number(),
+  arrivalAt: z.string(),
+});
+
 const BattleResolvedPayloadSchema = z.object({
   expeditionId: z.string(),
   reportId: z.string(),
@@ -312,6 +320,7 @@ export const EVENT_PAYLOAD_SCHEMAS = {
   "unit.training.completed": UnitTrainingCompletedPayloadSchema,
   "unit.trained": UnitTrainedPayloadSchema,
   "battle.sent": BattleSentPayloadSchema,
+  "attack.incoming": AttackIncomingPayloadSchema,
   "battle.resolved": BattleResolvedPayloadSchema,
   "battle.returned": BattleReturnedPayloadSchema,
   "scout.sent": ScoutSentPayloadSchema,

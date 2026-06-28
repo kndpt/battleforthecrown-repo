@@ -37,6 +37,25 @@ export interface BattleSentPayload {
   arrivalAt: string;
 }
 
+/**
+ * Defender-facing view of an incoming attack. Fog-of-war safe by construction:
+ * it never carries the attacking army composition, the attacker identity, nor
+ * the attack origin coordinates. `targetX/Y` are the *defender's own* village
+ * coordinates. Shared verbatim between the `attack.incoming` WS event and the
+ * `GET /combat/:villageId/incoming` REST response so the frontend has a single
+ * DTO to consume.
+ */
+export interface IncomingAttackDto {
+  expeditionId: string;
+  targetVillageId: string;
+  targetX: number;
+  targetY: number;
+  arrivalAt: string;
+}
+
+/** WS payload for `attack.incoming`, routed to the defender only. */
+export type AttackIncomingPayload = IncomingAttackDto;
+
 export interface BattleResolvedPayload {
   expeditionId: string;
   reportId: string;
@@ -320,6 +339,7 @@ export type OutboxEventPayload =
   | { kind: "unit.training.completed"; payload: UnitTrainingCompletedPayload }
   | { kind: "unit.trained"; payload: UnitTrainedPayload }
   | { kind: "battle.sent"; payload: BattleSentPayload }
+  | { kind: "attack.incoming"; payload: AttackIncomingPayload }
   | { kind: "battle.resolved"; payload: BattleResolvedPayload }
   | { kind: "battle.returned"; payload: BattleReturnedPayload }
   | { kind: "scout.sent"; payload: ScoutSentPayload }
@@ -376,6 +396,7 @@ export type AnyEventPayload =
   | UnitTrainingCompletedPayload
   | UnitTrainedPayload
   | BattleSentPayload
+  | AttackIncomingPayload
   | BattleResolvedPayload
   | BattleReturnedPayload
   | ScoutSentPayload
@@ -417,6 +438,7 @@ export interface ServerEvents {
   "unit.training.completed": UnitTrainingCompletedPayload;
   "unit.trained": UnitTrainedPayload;
   "battle.sent": BattleSentPayload;
+  "attack.incoming": AttackIncomingPayload;
   "battle.resolved": BattleResolvedPayload;
   "battle.returned": BattleReturnedPayload;
   "scout.sent": ScoutSentPayload;

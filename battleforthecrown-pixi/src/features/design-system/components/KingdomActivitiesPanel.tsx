@@ -8,7 +8,7 @@ export type CaptureWindowState = 'open' | 'soon' | 'completed' | 'interrupted';
 export type CaptureTier = 'T1' | 'T2' | 'T3' | 'T4' | 'T5' | 'PVP';
 export type ExpeditionActivityKind = 'attack' | 'reinforce' | 'scout' | 'caravan' | 'conquest';
 export type ExpeditionActivityPhase = 'en_route' | 'resolved' | 'returning';
-export type KingdomActivityTab = 'expeditions' | 'captures';
+export type KingdomActivityTab = 'expeditions' | 'captures' | 'threats';
 export type KingdomActivitiesPanelState = 'idle' | 'loading' | 'error';
 export type KingdomActivityHudBadgeTone = 'gold' | 'green' | 'red' | 'blue' | 'stone';
 
@@ -45,6 +45,19 @@ export interface ExpeditionActivityCardProps extends Omit<ArmyMovementRowProps, 
   phase: ExpeditionActivityPhase;
 }
 
+export type IncomingAttackCardProps = Omit<ArmyMovementRowProps, 'surface' | 'tone' | 'incoming'>;
+
+export interface IncomingAttackListProps extends HTMLAttributes<HTMLDivElement> {
+  emptyQuote: string;
+  emptyTitle: string;
+  items: IncomingAttackCardProps[];
+  state?: KingdomActivitiesPanelState;
+  loadingLabel?: string;
+  errorLabel?: string;
+  retryLabel?: string;
+  onRetry?: () => void;
+}
+
 export interface ExpeditionActivityListProps extends HTMLAttributes<HTMLDivElement> {
   emptyQuote: string;
   emptyTitle: string;
@@ -72,6 +85,12 @@ export interface KingdomActivitiesPanelLabels {
   expeditionsTab: string;
   headerEyebrow: string;
   headerTitle: string;
+  threatEmptyQuote: string;
+  threatEmptyTitle: string;
+  threatErrorLabel: string;
+  threatLoadingLabel: string;
+  threatRetryLabel: string;
+  threatsTab: string;
 }
 
 export interface KingdomActivitiesPanelProps extends HTMLAttributes<HTMLDivElement> {
@@ -87,7 +106,11 @@ export interface KingdomActivitiesPanelProps extends HTMLAttributes<HTMLDivEleme
   onClose?: () => void;
   onRetryCaptures?: () => void;
   onRetryExpeditions?: () => void;
+  onRetryThreats?: () => void;
   onTabChange: (tab: KingdomActivityTab) => void;
+  threatCount: number;
+  threatState?: KingdomActivitiesPanelState;
+  threats: IncomingAttackCardProps[];
 }
 
 export interface KingdomActivityHudBadgeProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
@@ -518,6 +541,35 @@ export function ExpeditionActivityList({
   );
 }
 
+export function IncomingAttackList({
+  className,
+  emptyQuote,
+  emptyTitle,
+  errorLabel,
+  items,
+  loadingLabel,
+  onRetry,
+  retryLabel,
+  state = 'idle',
+  ...props
+}: IncomingAttackListProps) {
+  if (state !== 'idle') {
+    return <ListStateMessage errorLabel={errorLabel} loadingLabel={loadingLabel} onRetry={onRetry} retryLabel={retryLabel} state={state} />;
+  }
+
+  if (!items.length) {
+    return <EmptyPanel quote={emptyQuote} title={emptyTitle} />;
+  }
+
+  return (
+    <div className={cn('flex flex-col gap-2 px-3 py-3.5', className)} {...props}>
+      {items.map((item) => (
+        <ArmyMovementRow key={item.movementId} {...item} incoming surface="parchment" tone="attack" />
+      ))}
+    </div>
+  );
+}
+
 function TabButton({
   active,
   badge,
@@ -529,7 +581,7 @@ function TabButton({
   badge: number;
   label: string;
   onClick: () => void;
-  tone: 'captures' | 'expeditions';
+  tone: 'captures' | 'expeditions' | 'threats';
 }) {
   return (
     <button
@@ -548,9 +600,11 @@ function TabButton({
         <span
           className={cn(
             'inline-flex h-4 min-w-4 items-center justify-center rounded-full border-[1.5px] px-[5px] font-game text-[9.5px] font-black',
-            active && tone === 'captures'
-              ? 'border-[#9e7b0d] bg-[linear-gradient(180deg,#f1c40f,#d4a017)] text-[#3a2a00]'
-              : 'border-[rgba(0,0,0,.25)] bg-[rgba(60,38,25,.55)] text-white',
+            tone === 'threats'
+              ? 'border-[#a93226] bg-[linear-gradient(180deg,#e74c3c,#c0392b)] text-white'
+              : active && tone === 'captures'
+                ? 'border-[#9e7b0d] bg-[linear-gradient(180deg,#f1c40f,#d4a017)] text-[#3a2a00]'
+                : 'border-[rgba(0,0,0,.25)] bg-[rgba(60,38,25,.55)] text-white',
           )}
         >
           {badge}
@@ -574,7 +628,11 @@ export function KingdomActivitiesPanel({
   onClose,
   onRetryCaptures,
   onRetryExpeditions,
+  onRetryThreats,
   onTabChange,
+  threatCount,
+  threatState = 'idle',
+  threats,
   ...props
 }: KingdomActivitiesPanelProps) {
   return (
@@ -593,6 +651,13 @@ export function KingdomActivitiesPanel({
             tone="expeditions"
           />
           <TabButton
+            active={activeTab === 'threats'}
+            badge={threatCount}
+            label={labels.threatsTab}
+            onClick={() => onTabChange('threats')}
+            tone="threats"
+          />
+          <TabButton
             active={activeTab === 'captures'}
             badge={captureCount}
             label={labels.capturesTab}
@@ -606,7 +671,18 @@ export function KingdomActivitiesPanel({
       {...props}
     >
       <KingdomActivitiesAnimations />
-      {activeTab === 'captures' ? (
+      {activeTab === 'threats' ? (
+        <IncomingAttackList
+          emptyQuote={labels.threatEmptyQuote}
+          emptyTitle={labels.threatEmptyTitle}
+          errorLabel={labels.threatErrorLabel}
+          items={threats}
+          loadingLabel={labels.threatLoadingLabel}
+          onRetry={onRetryThreats}
+          retryLabel={labels.threatRetryLabel}
+          state={threatState}
+        />
+      ) : activeTab === 'captures' ? (
         <CaptureWindowList
           emptyQuote={labels.captureEmptyQuote}
           emptyTitle={labels.captureEmptyTitle}
