@@ -39,6 +39,11 @@ export function scoutReportTargetLabel(report: ScoutReportResponse): string {
 }
 
 export function scoutReportTitle(report: ScoutReportResponse): string {
+  // Les villages barbares n'ont jamais de nom affiché : on masque le nom de
+  // fantaisie stocké et on retombe sur le label générique « Village barbare ».
+  if (report.targetKind === 'BARBARIAN_VILLAGE') {
+    return scoutReportTargetLabel(report);
+  }
   return report.targetName?.trim() || scoutReportTargetLabel(report);
 }
 

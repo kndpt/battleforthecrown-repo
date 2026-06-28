@@ -16,7 +16,11 @@ import {
   usePublicVillagePowerQuery,
   useVillageIntelQuery,
 } from "@/api/queries";
-import type { MapEntity } from "@/api/world-types";
+import {
+  entityTileImageSrc,
+  mapEntityDisplayName,
+  type MapEntity,
+} from "@/api/world-types";
 import {
   getPvpCaptureDurationLabel,
   type OpenConquestDto,
@@ -210,7 +214,8 @@ export function SelectedEntityPanel({
     <>
       <VillageMapPanel
         variant={variant}
-        name={entity.name}
+        name={mapEntityDisplayName(entity)}
+        iconSrc={entityTileImageSrc(entity)}
         coords={`${entity.x} | ${entity.y}`}
         typeTag={typeTag}
         owner={isBarbarian ? null : (entity.ownerDisplayName ?? null)}

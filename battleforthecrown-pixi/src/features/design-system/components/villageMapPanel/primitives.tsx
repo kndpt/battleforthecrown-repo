@@ -152,8 +152,8 @@ export function PowerCell({ label, value }: PowerCellProps) {
 // VillageTile
 // ---------------------------------------------------------------------------
 
-export interface VillageTileProps { size?: number }
-export function VillageTile({ size = 42 }: VillageTileProps) {
+export interface VillageTileProps { size?: number; src?: string }
+export function VillageTile({ size = 42, src = '/assets/castle.png' }: VillageTileProps) {
   return (
     <div
       className="font-game"
@@ -173,7 +173,7 @@ export function VillageTile({ size = 42 }: VillageTileProps) {
       }}
     >
       <img
-        src={publicAsset('/assets/castle.png')}
+        src={publicAsset(src)}
         alt=""
         style={{ width: size * 0.84, height: size * 0.84, objectFit: 'contain', filter: 'drop-shadow(0 2px 2px rgba(0,0,0,.4))' }}
       />

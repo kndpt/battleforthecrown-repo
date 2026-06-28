@@ -34,7 +34,7 @@ import { unitMetaFor } from '@/features/army/unitConfig';
 import { SegmentedControl } from '@/features/design-system/components';
 import { publicAsset } from '@/lib/publicAsset';
 import { useTickingNow } from '@/lib/useTickingNow';
-import type { MapEntity } from '@/api/world-types';
+import { mapEntityDisplayName, type MapEntity } from '@/api/world-types';
 import { getBarbarianCaptureDurationLabel } from '@/features/world/barbarianConquest';
 import { getPvpCaptureDurationLabel } from '@battleforthecrown/shared/combat';
 import { buildThreatEstimateView } from './threatEstimateView';
@@ -313,7 +313,7 @@ export function AttackDetailModal({
                   : 'Préparer une attaque'}
             </h2>
             <p className="text-xs text-white/90 mt-1">
-              {target.name} ({target.x}, {target.y}) — distance {distance.toFixed(1)}
+              {mapEntityDisplayName(target)} ({target.x}, {target.y}) — distance {distance.toFixed(1)}
             </p>
           </div>
         </div>

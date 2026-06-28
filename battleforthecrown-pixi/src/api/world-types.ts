@@ -128,6 +128,31 @@ export function villageImageSrcForVisualTier(tier: number): string {
   return `/assets/world/entity/village-tier${clamped}.png`;
 }
 
+/** Nom affiché au joueur. Les villages barbares portent un nom de fantaisie
+ *  généré côté serveur (`village.name`) que l'on masque volontairement : ils
+ *  sont toujours présentés comme un générique « Village Barbare ». */
+export const BARBARIAN_DISPLAY_NAME = "Village Barbare";
+
+export function mapEntityDisplayName(entity: MapEntity): string {
+  return entity.kind === "BARBARIAN_VILLAGE"
+    ? BARBARIAN_DISPLAY_NAME
+    : entity.name;
+}
+
+/** Visuel de tuile cohérent avec les sprites de la carte (même famille
+ *  d'assets), utilisé par le panneau d'entité sélectionnée. */
+export function entityTileImageSrc(entity: MapEntity): string {
+  if (entity.kind === "BARBARIAN_VILLAGE") {
+    const n = entity.tier
+      ? Math.min(5, Math.max(1, Number(entity.tier.slice(1)) || 1))
+      : 1;
+    return `/assets/world/entity/barbarian-village-tier${n}.png`;
+  }
+  return villageImageSrcForVisualTier(
+    villageVisualTierFromCastleLevel(entity.castleLevel ?? 1),
+  );
+}
+
 function normalizeCaptureWindow(value: unknown): MapEntity["captureWindow"] {
   if (!value || typeof value !== "object") return undefined;
   const data = value as Record<string, unknown>;

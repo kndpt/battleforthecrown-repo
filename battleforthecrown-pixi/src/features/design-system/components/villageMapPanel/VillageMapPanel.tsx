@@ -26,6 +26,8 @@ export type { FullIntelPanelProps };
 export interface VillageMapPanelProps {
   variant: VillageMapVariant;
   name: string;
+  /** Asset de tuile (haut-gauche). Défaut : château générique. */
+  iconSrc?: string;
   coords: string;
   typeTag: VillageMapTypeTag;
   owner?: string | null;
@@ -241,6 +243,7 @@ function Footer({
 export function VillageMapPanel({
   variant,
   name,
+  iconSrc,
   coords,
   typeTag,
   owner,
@@ -278,7 +281,7 @@ export function VillageMapPanel({
 
         {/* Tête */}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '9px 11px 8px' }}>
-          <VillageTile size={42}/>
+          <VillageTile size={42} src={iconSrc}/>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ flex: 1, minWidth: 0, fontWeight: 900, fontSize: 16, color: '#3d2f1f', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textShadow: '0 1px 0 rgba(255,255,255,.5)' }}>
