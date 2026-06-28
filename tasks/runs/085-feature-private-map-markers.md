@@ -35,19 +35,17 @@ Le lab ticket 10 est noté **« très bon » ratio bénéfice/coût** (cf. docum
 - ✅ Sélecteur multi-village + `SelectedEntityPanel` (run 042/079) — surfaces où ajouter un CTA « Marquer ».
 - Hors scope : partage tribu/alliances (post-MVP `21`), notes publiques, gameplay-mutant (le marker reste cosmétique).
 
-## Étape 0 — Trancher les questions lab (avant écriture spec)
+## Étape 0 — Questions lab tranchées (refinement acté 2026-06-28)
 
-À résoudre en début de run (proposition par défaut entre crochets, à valider en refinement) :
+Les 7 réponses sont **figées** (validées par Kelvin). À reporter telles quelles dans la spec canonique `26-private-map-markers.md` :
 
-- **Cible** : marker peut être posé sur n'importe quelle **tile** `(worldId, x, y)` — qu'elle contienne ou non une entité. [proposition : tile libre OU village ; pas restreint au village pour permettre « futur spot »]
-- **Contenu** : 1 marker = **1 kind enum** (`TO_SCOUT | TARGET | DANGER | FUTURE_VILLAGE | INTEREST | NOTE`) + **note libre courte** (≤ 80 chars, optionnelle). Kind fixe pour icône lisible, note libre pour le contexte. [proposition : combo enum + note plutôt que note libre seule]
-- **Cap** : **50 markers par `userId × worldId`** (lisible, suffisant pour usage stratégique, borne UI). [proposition : 50]
-- **Persistance** : DB backend (cross-device), pas localStorage. [proposition : backend, cohérent avec `VillageIntel` privé]
-- **Suppression auto** : NON au MVP — un marker sur tile où le village a été détruit reste affiché en gris « entité disparue ». Anti-frustration : on ne perd pas la mémoire stratégique. [proposition : pas de suppression auto]
-- **Mini-map** : NON au MVP — la mini-map reste lisible, pas de pollution. [proposition : pas mini-map]
-- **Visibilité dans la vision (brouillard)** : un marker est affiché **même hors vision** (c'est la mémoire privée du joueur, pas une révélation publique). Pas de fuite — c'est seulement ce que **le joueur** sait déjà. [proposition : affiché partout, hors fog dependency]
-
-Ces 7 réponses doivent être actées en début de run (refinement) puis figées dans la spec canonique `26-private-map-markers.md`.
+- **Cible** : ✅ **tile libre** — le marker est posé sur n'importe quelle **tile** `(worldId, x, y)`, identifiée par ses coordonnées, **indépendamment de son contenu** (vide, village, site). Aucun lien dur vers une entité → permet « futur spot » et survit à la disparition d'une entité. Unicité `(userId, worldId, x, y)`.
+- **Contenu** : ✅ **1 kind enum** (`TO_SCOUT | TARGET | DANGER | FUTURE_VILLAGE | INTEREST | NOTE`) + **note libre courte** (≤ 80 chars, optionnelle). Kind fixe pour icône lisible, note pour le contexte.
+- **Cap** : ✅ **50 markers par `userId × worldId`** (borne UI lisible, suffisant pour usage stratégique).
+- **Persistance** : ✅ **DB backend** (cross-device), pas localStorage — cohérent avec `VillageIntel` privé.
+- **Suppression auto** : ✅ **NON** au MVP — un marker sur tile dont le village a été détruit reste affiché en gris « entité disparue ». Anti-frustration : on ne perd pas la mémoire stratégique.
+- **Mini-map** : ✅ **NON** au MVP — la mini-map reste lisible, pas de pollution.
+- **Visibilité dans la vision (brouillard)** : ✅ marker affiché **même hors vision** (mémoire privée du joueur, pas une révélation publique). Pas de fuite — c'est seulement ce que **le joueur** sait déjà.
 
 ## Critère de fin (acceptance)
 
@@ -96,7 +94,7 @@ _(Vide au démarrage. À remplir pendant `$bftc-run`.)_
 
 ## Décisions prises
 
-_(Vide au démarrage. À remplir pendant `$bftc-run`.)_
+- **2026-06-28 (refinement)** — 7 questions Étape 0 tranchées (cf. section Étape 0). Point clé : **Cible = tile libre** (marker indexé par coordonnées `(worldId, x, y)`, jamais lié dur à une entité). Reste = propositions par défaut confirmées (kind enum + note ≤80, cap 50, backend, no auto-delete, no mini-map, off-fog).
 
 ## Rapport final
 
