@@ -454,6 +454,26 @@
         "docs/gameplay/lab/README.md — § « Idées promues » ne référence pas encore le ticket 10 (seuls 08/09/11 promus), confirmation que la sortie du lab n'est pas faite"
       ],
       "addedAt": "2026-06-28"
+    },
+    {
+      "specPath": "docs/gameplay/16-notifications.md",
+      "slug": "incoming-attack-indicator",
+      "title": "Indicateur d'attaque entrante in-app (ETA HUD)",
+      "keywords": ["incoming-attack", "attaque-entrante", "eta", "threat", "defender", "notifications"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/086-feature-incoming-attack-indicator.md",
+      "artefactId": "086",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/incoming-attack-indicator",
+      "gapSummary": "La spec 16-notifications.md déclare l'attaque entrante (avec ETA) comme catégorie critique du MVP, mais le défenseur n'a aucune visibilité pré-combat : `battle.sent` est routé uniquement à l'attaquant, il n'existe pas d'endpoint incoming/threats, et le bottom sheet ne liste que les expéditions sortantes. Le défenseur n'apprend l'attaque qu'après résolution (event `village.attacked`). Le run livre la couche in-app seule (event WS routé au défenseur via planner avec scrub fog-of-war, `GET /combat/:villageId/incoming`, section « Attaques entrantes » avec countdown ETA réutilisant `ArmyMovementRow` prop `incoming`) ; le push FCM/APNs (Phase 6, POST-MVP) reste hors scope.",
+      "codeEvidence": [
+        "battleforthecrown-backend/src/modules/combat/combat.controller.ts — `@Get('expeditions/open')` et `@Get(':villageId/active')` filtrent sur `attackerVillageIds` (sortantes only) ; aucun `@Get(':villageId/incoming')` ni route `threats`",
+        "battleforthecrown-backend/src/modules/event/event-outbox-notification-planner.ts — `battle.sent` routé `userByVillage('villageId')` = attaquant uniquement ; le planner défenseur `planVillageAttacked` (scrub `observerUserId`) n'est branché que sur l'event post-combat `village.attacked`",
+        "packages/shared/src/events/types.ts — `BattleSentPayload` = expeditionId/villageId/targetX/targetY/targetKind/arrivalAt ; pas de `defenderUserId`, pas d'event `attack.incoming`, aucun `IncomingAttackDto`",
+        "battleforthecrown-pixi/src/features/combat/KingdomActivitiesBottomSheet.tsx + stores/expeditions.ts — onglets captures/expéditions sortantes only, aucune section « Attaques entrantes »",
+        "battleforthecrown-backend/prisma/schema.prisma — `Expedition.targetRefId` = Village.id direct ; `Village.userId` nullable (null = barbare, à exclure) ; aucun champ `defenderUserId`/`defenderVillageId` dénormalisé"
+      ],
+      "addedAt": "2026-06-28"
     }
   ]
 }
