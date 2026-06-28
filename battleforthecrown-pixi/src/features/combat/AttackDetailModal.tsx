@@ -22,6 +22,7 @@ import {
   useInitiateAttackMutation,
   useInitiateReinforceMutation,
   useInitiateScoutMutation,
+  useMyFriendshipsQuery,
   usePublicVillagePowerQuery,
   useVillageIntelQuery,
   useWorldConfigQuery,
@@ -69,8 +70,28 @@ export function AttackDetailModal({
   const attack = useInitiateAttackMutation();
   const reinforce = useInitiateReinforceMutation();
   const scout = useInitiateScoutMutation();
+  const friendships = useMyFriendshipsQuery();
+  const activeFriendUserIds = useMemo(
+    () =>
+      new Set((friendships.data?.active ?? []).map((f) => f.otherUserId)),
+    [friendships.data],
+  );
+  // A village is reinforceable when it is one of mine (auto-renfort) or belongs
+  // to an ACTIVE defensive friend. The backend re-validates eligibility + the
+  // capture-window guard; here we only gate which modes the form offers.
+  const isOwnVillage = target.kind === 'PLAYER_VILLAGE' && target.isMine;
+  const isFriendVillage =
+    target.kind === 'PLAYER_VILLAGE' &&
+    !target.isMine &&
+    !!target.ownerId &&
+    activeFriendUserIds.has(target.ownerId);
   const [selectedUnits, setSelectedUnits] = useState<Record<string, number>>({});
-  const [mode, setMode] = useState<'attack' | 'scout'>(initialMode);
+  // `null` = the user hasn't picked a mode → fall back to the derived default.
+  // Storing only the explicit override (instead of the resolved mode) lets the
+  // default react to a late-resolving friendships query without an effect.
+  const [userMode, setUserMode] = useState<'attack' | 'scout' | 'reinforce' | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   const targetKind = target.kind === 'BARBARIAN_VILLAGE'
@@ -78,9 +99,14 @@ export function AttackDetailModal({
     : target.kind === 'PLAYER_VILLAGE'
       ? 'PLAYER_VILLAGE'
       : null;
-  const isReinforcement = target.kind === 'PLAYER_VILLAGE' && target.isMine;
-  const canScout = Boolean(targetKind && !isReinforcement);
-  const activeMode = isReinforcement ? 'reinforce' : mode;
+  const canScout = Boolean(targetKind && !isOwnVillage);
+  // Own village → reinforce is forced (no segmented control). Friend village →
+  // reinforce default + attack + scout. Enemy/barbarian → attack default + scout.
+  // The default is derived (not stored) so it tracks a late-resolving friendships
+  // query; the user's explicit pick (`userMode`) always wins once set.
+  const defaultMode: 'attack' | 'scout' | 'reinforce' =
+    isOwnVillage || isFriendVillage ? 'reinforce' : initialMode;
+  const activeMode = isOwnVillage ? 'reinforce' : (userMode ?? defaultMode);
   const effectiveUnits = useMemo(() => {
     if (activeMode !== 'scout') return selectedUnits;
     const spyCount = selectedUnits[UNIT_TYPES.SPY] ?? 0;
@@ -183,7 +209,14 @@ export function AttackDetailModal({
       setError('Session invalide');
       return;
     }
-    if ((!isReinforcement && !targetKind) || (isReinforcement && target.id === villageId)) {
+    if (
+      (activeMode !== 'reinforce' && !targetKind) ||
+      (activeMode === 'reinforce' &&
+        (target.id === villageId || !(isOwnVillage || isFriendVillage)))
+    ) {
+      // Reinforce is valid only toward another of my villages or an ACTIVE
+      // friend — never the origin village, never an ineligible target (guards
+      // a stale `reinforce` pick after a friendship was removed mid-session).
       setError('Cible invalide');
       return;
     }
@@ -269,7 +302,7 @@ export function AttackDetailModal({
               />
             ) : (
               <div className="text-3xl mb-1" aria-hidden>
-                {isReinforcement ? '🛡️' : '⚔️'}
+                {activeMode === 'reinforce' ? '🛡️' : '⚔️'}
               </div>
             )}
             <h2 className="font-cinzel text-xl font-bold text-white text-shadow">
@@ -286,21 +319,24 @@ export function AttackDetailModal({
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {!isReinforcement && canScout && (
+          {!isOwnVillage && canScout && (
             <SegmentedControl
               ariaLabel="Mode de mission"
               className="w-full [&>button]:flex-1 [&>button]:justify-center"
               onChange={(value) => {
                 if (isPending) return;
-                setMode(value as 'attack' | 'scout');
+                setUserMode(value as 'attack' | 'scout' | 'reinforce');
                 setError(null);
               }}
               options={[
+                ...(isFriendVillage
+                  ? [{ icon: '/assets/defense.png', label: 'Renfort', value: 'reinforce' }]
+                  : []),
                 { icon: '/assets/army-power.png', label: 'Attaque', value: 'attack' },
                 { icon: '/assets/lupa.png', label: 'Scout', value: 'scout' },
               ]}
               size="tabs"
-              value={activeMode === 'scout' ? 'scout' : 'attack'}
+              value={activeMode}
             />
           )}
 

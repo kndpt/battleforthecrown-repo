@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Users } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import {
   MultiVillageBottomSheet,
@@ -41,6 +41,7 @@ import {
 } from './profileSheetData';
 import { NewbieShieldIcon, NewbieShieldTimer } from '@/features/world/NewbieShieldIcon';
 import { useRenownLevelUp } from './useRenownLevelUp';
+import { DefensiveFriendsSheet } from '@/features/social/DefensiveFriendsSheet';
 
 interface GameHeaderProps {
   onPowerClick?: () => void;
@@ -75,6 +76,7 @@ export function GameHeader({
     [cosmeticAwards.data],
   );
   const [isVillageSheetOpen, setIsVillageSheetOpen] = useState(false);
+  const [isFriendsOpen, setIsFriendsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profileTab, setProfileTab] = useState<PlayerProfileSheetTab>('profile');
   const [villageFilter, setVillageFilter] = useState<MultiVillageFilter>('all');
@@ -245,6 +247,16 @@ export function GameHeader({
           </span>
         </button>
 
+        <button
+          type="button"
+          aria-label="Amis défensifs"
+          aria-expanded={isFriendsOpen}
+          onClick={() => setIsFriendsOpen(true)}
+          className="flex size-9 items-center justify-center rounded-full border border-[#1a120a] bg-[linear-gradient(180deg,#4a3a28,#2a1f14)] text-[#f0e0c0] shadow-[inset_0_1px_0_rgba(255,255,255,.1)] transition-transform active:scale-95"
+        >
+          <Users aria-hidden="true" className="size-4" />
+        </button>
+
         <div className="flex-1" />
 
         <div
@@ -388,6 +400,15 @@ export function GameHeader({
           />
         </BottomSheet>
       )}
+      <BottomSheet
+        className="mx-auto h-[64vh] max-w-[32rem]"
+        isOpen={isFriendsOpen}
+        maxHeight="64vh"
+        onClose={() => setIsFriendsOpen(false)}
+        zIndex={60}
+      >
+        <DefensiveFriendsSheet onClose={() => setIsFriendsOpen(false)} />
+      </BottomSheet>
       <BottomSheet
         className="mx-auto h-[64vh] max-w-[32rem]"
         isOpen={isProfileOpen}

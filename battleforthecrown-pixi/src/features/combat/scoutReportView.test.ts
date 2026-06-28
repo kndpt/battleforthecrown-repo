@@ -210,4 +210,80 @@ describe('scoutReportView', () => {
       ).toBeUndefined();
     });
   });
+
+  describe('defensive friends section', () => {
+    function sectionTitled(report: ScoutReportResponse, title: string) {
+      return buildScoutReportCardProps(report, undefined, false).sections.find(
+        (section) => section.title === title,
+      );
+    }
+
+    it('renders the revealed friends as a compact section', () => {
+      const withFriends: ScoutReportResponse = {
+        ...report,
+        details: { ...report.details, defensiveFriendsDisplayNames: ['Arthur', 'Lancelot'] },
+      };
+      const section = sectionTitled(withFriends, 'Amis défensifs');
+      expect(section).toEqual(
+        expect.objectContaining({
+          title: 'Amis défensifs',
+          items: [
+            expect.objectContaining({ label: '2 amis', value: 'Arthur, Lancelot' }),
+          ],
+        }),
+      );
+    });
+
+    it('caps the displayed list at 5 friends', () => {
+      const withManyFriends: ScoutReportResponse = {
+        ...report,
+        details: {
+          ...report.details,
+          defensiveFriendsDisplayNames: [
+            'Arthur',
+            'Lancelot',
+            'Gauvain',
+            'Perceval',
+            'Tristan',
+            'Galahad',
+          ],
+        },
+      };
+      expect(sectionTitled(withManyFriends, 'Amis défensifs')?.items[0]).toEqual(
+        expect.objectContaining({
+          label: '5 amis',
+          value: 'Arthur, Lancelot, Gauvain, Perceval, Tristan',
+        }),
+      );
+    });
+
+    it('singularizes the label for a lone friend', () => {
+      const withFriend: ScoutReportResponse = {
+        ...report,
+        details: { ...report.details, defensiveFriendsDisplayNames: ['Arthur'] },
+      };
+      expect(sectionTitled(withFriend, 'Amis défensifs')?.items[0]).toEqual(
+        expect.objectContaining({ label: '1 ami', value: 'Arthur' }),
+      );
+    });
+
+    it('omits the section when the field is absent or empty', () => {
+      expect(sectionTitled(report, 'Amis défensifs')).toBeUndefined();
+      const empty: ScoutReportResponse = {
+        ...report,
+        details: { ...report.details, defensiveFriendsDisplayNames: [] },
+      };
+      expect(sectionTitled(empty, 'Amis défensifs')).toBeUndefined();
+    });
+
+    it('never renders for a barbarian target', () => {
+      const barbarianWithFriends: ScoutReportResponse = {
+        ...report,
+        targetKind: 'BARBARIAN_VILLAGE',
+        targetTier: 'T2',
+        details: { wallLevel: 0, defensiveFriendsDisplayNames: ['Ghost'] },
+      };
+      expect(sectionTitled(barbarianWithFriends, 'Amis défensifs')).toBeUndefined();
+    });
+  });
 });
