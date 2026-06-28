@@ -124,6 +124,14 @@ export class CombatController {
     return this.combatService.getActiveExpeditions(user.id, villageId);
   }
 
+  @Get(':villageId/incoming')
+  async getIncomingAttacks(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('villageId') villageId: string,
+  ) {
+    return this.combatService.getIncomingAttacks(user.id, villageId);
+  }
+
   @Get(':villageId/garrison')
   async getGarrison(
     @CurrentUser() user: AuthenticatedUser,

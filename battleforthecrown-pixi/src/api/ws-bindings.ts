@@ -2,6 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { gameSocket } from "./ws";
 import { queryKeys } from "./queries";
 import type {
+  AttackIncomingPayload,
   BattleResolvedPayload,
   BattleReturnedPayload,
   BattleSentPayload,
@@ -316,6 +317,18 @@ export function applyBattleSent(
     queryKey: queryKeys.population(payload.villageId),
   });
   invalidateOpenExpeditions(ctx);
+}
+
+export function applyAttackIncoming(
+  payload: AttackIncomingPayload,
+  ctx: BindingsContext,
+): void {
+  // Defender-side threat. Refresh the incoming-attacks list for the targeted
+  // village so the bottom sheet picks up the new ETA without a reload. The
+  // query is keyed by villageId; React Query dedups by the expeditionId field.
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.incomingAttacks(payload.targetVillageId),
+  });
 }
 
 export function applyBattleResolved(
@@ -1095,6 +1108,7 @@ const bindings: ServerEventBindings = {
   "unit.training.completed": applyUnitTrainingCompleted,
   "unit.trained": applyUnitTrained,
   "battle.sent": applyBattleSent,
+  "attack.incoming": applyAttackIncoming,
   "battle.resolved": applyBattleResolved,
   "battle.returned": applyBattleReturned,
   "scout.sent": applyScoutSent,
