@@ -135,6 +135,57 @@ describe('scoutReportView', () => {
     );
   });
 
+  describe('defensive friends section', () => {
+    it('lists the revealed defensive friends (capped at 5 names)', () => {
+      const props = buildScoutReportCardProps(
+        {
+          ...report,
+          details: {
+            ...report.details,
+            defensiveFriendsDisplayNames: ['Alice', 'Bob', 'Cara'],
+          },
+        },
+        undefined,
+        false,
+      );
+      expect(props.sections).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            title: 'Amis défensifs',
+            items: [
+              expect.objectContaining({
+                label: '3 alliés',
+                value: 'Alice, Bob, Cara',
+              }),
+            ],
+          }),
+        ]),
+      );
+    });
+
+    it('omits the section when there is no defensive friend', () => {
+      const props = buildScoutReportCardProps(report, undefined, false);
+      expect(
+        props.sections.some((s) => s.title === 'Amis défensifs'),
+      ).toBe(false);
+    });
+
+    it('omits the section for a barbarian target', () => {
+      const props = buildScoutReportCardProps(
+        {
+          ...report,
+          targetKind: 'BARBARIAN_VILLAGE',
+          details: { defensiveFriendsDisplayNames: ['Ghost'] },
+        },
+        undefined,
+        false,
+      );
+      expect(
+        props.sections.some((s) => s.title === 'Amis défensifs'),
+      ).toBe(false);
+    });
+  });
+
   describe('newbie shield badge', () => {
     const withShield = (newbieShield: {
       active: boolean;

@@ -11,11 +11,13 @@ import { useQuery } from "@tanstack/react-query";
 import {
   publicKingdomPowerQueryOptions,
   useArmyInventoryQuery,
+  useFriendshipsQuery,
   useGarrisonQuery,
   useKingdomPowerQuery,
   usePublicVillagePowerQuery,
   useVillageIntelQuery,
 } from "@/api/queries";
+import { activeFriendOwnerIds } from "@/lib/friendshipsCache";
 import type { MapEntity } from "@/api/world-types";
 import {
   getPvpCaptureDurationLabel,
@@ -89,6 +91,7 @@ export function SelectedEntityPanel({
       ? (entity.ownerId ?? null)
       : null;
 
+  const friendships = useFriendshipsQuery();
   const armyInventory = useArmyInventoryQuery(ownedVillageId);
   const garrison = useGarrisonQuery(ownedVillageId);
   const villagePower = usePublicVillagePowerQuery(villagePowerId);
@@ -181,6 +184,18 @@ export function SelectedEntityPanel({
   const isOtherOwned =
     isOwnedPlayerVillage && entity.id !== currentVillageId;
 
+  // Village d'un ami défensif ACTIVE : renforçable (cf. docs/gameplay/20). On
+  // masque attaque/scout dessus — l'amitié est défensive, et le renfort ne se
+  // lance pas sur un village sous fenêtre de capture OPEN (spec § Effet pendant
+  // la fenêtre de capture ; le backend refuserait de toute façon).
+  const isFriendActiveVillage =
+    isPlayerVillage &&
+    entity.ownerId != null &&
+    activeFriendOwnerIds(friendships.data).has(entity.ownerId);
+  const canReinforceFriend = isFriendActiveVillage && !entity.captureWindow;
+  const canAttackOrScout =
+    (isPlayerVillage && !isFriendActiveVillage) || isBarbarian;
+
   const openReport = () => {
     if (!intelData) return;
     setReportModal({
@@ -219,6 +234,7 @@ export function SelectedEntityPanel({
         intel={intel}
         tier={tier}
         captureWindowLabel={captureWindowLabel}
+        reinforceOnly={isFriendActiveVillage}
         attackBlocked={attackBlocked}
         attackBlockedReason={attackBlockedReason}
         onClose={onClose}
@@ -229,17 +245,15 @@ export function SelectedEntityPanel({
           isOtherOwned && onCaravan ? () => onCaravan(entity) : undefined
         }
         onReinforce={
-          isOtherOwned && onAttack ? () => onAttack(entity) : undefined
-        }
-        onScout={
-          (isPlayerVillage || isBarbarian) && onScout
-            ? () => onScout(entity)
-            : undefined
-        }
-        onAttack={
-          (isPlayerVillage || isBarbarian) && onAttack
+          (isOtherOwned || canReinforceFriend) && onAttack
             ? () => onAttack(entity)
             : undefined
+        }
+        onScout={
+          canAttackOrScout && onScout ? () => onScout(entity) : undefined
+        }
+        onAttack={
+          canAttackOrScout && onAttack ? () => onAttack(entity) : undefined
         }
         onViewReport={
           variant === "scouted" && intelData ? openReport : undefined

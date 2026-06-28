@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Users } from "lucide-react";
 import { BottomSheet, Spinner } from "@/ui";
 import {
   WorldMapCanvas,
@@ -24,6 +24,7 @@ import {
   filterEntitiesForNarrativeTarget,
 } from "./buildMapEntities";
 import { AttackDetailModal } from "@/features/combat/AttackDetailModal";
+import { DefensiveFriendsSheet } from "@/features/social/DefensiveFriendsSheet";
 import { CaravanLaunchModal } from "./CaravanLaunchModal";
 import { KingdomActivitiesBottomSheet } from "@/features/combat/KingdomActivitiesBottomSheet";
 import { OnboardingGuidance } from "@/features/onboarding/OnboardingGuidance";
@@ -91,6 +92,7 @@ export function WorldMapScreen() {
     "attack" | "scout"
   >("attack");
   const [isKingdomActivitiesOpen, setIsKingdomActivitiesOpen] = useState(false);
+  const [isFriendsOpen, setIsFriendsOpen] = useState(false);
   const [isMiniMapOpen, setIsMiniMapOpen] = useState(false);
   const [kingdomActivityTab, setKingdomActivityTab] =
     useState<KingdomActivityTab>("expeditions");
@@ -382,6 +384,14 @@ export function WorldMapScreen() {
                     },
                   ]}
                 />
+                <button
+                  type="button"
+                  onClick={() => setIsFriendsOpen(true)}
+                  className="flex items-center gap-1.5 rounded-lg border-2 border-game-gold-border bg-gradient-to-b from-[#5a4424] to-[#2e2112] px-2.5 py-1.5 font-game text-[11px] font-bold uppercase tracking-wide text-game-gold-light shadow-lg transition-all hover:brightness-110 active:translate-y-px"
+                >
+                  <Users size={14} strokeWidth={2.2} />
+                  Amis
+                </button>
               </div>
 
               <div className="pointer-events-auto absolute right-4 bottom-[calc(var(--bftc-bottom-nav-height,88px)_+_16px)]">
@@ -446,6 +456,11 @@ export function WorldMapScreen() {
           onClose={() => setCaravanTarget(null)}
         />
       )}
+
+      <DefensiveFriendsSheet
+        isOpen={isFriendsOpen}
+        onClose={() => setIsFriendsOpen(false)}
+      />
 
       <BottomSheet
         isOpen={isKingdomActivitiesOpen}

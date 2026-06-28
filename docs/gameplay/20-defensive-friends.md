@@ -1,6 +1,6 @@
 # Liste d'amis défensifs
 
-> ✅ **MVP léger livré** (backend + contrat shared — cf. [run 063](../../tasks/runs/archive/063-feature-defensive-friends-list.md)). Compromis minimal pour offrir une coopération **défensive** sans introduire le système complet d'alliances ([`21-alliances-and-tribes.md`](./21-alliances-and-tribes.md), strictement post-MVP).
+> ✅ **MVP léger livré** — backend + contrat shared ([run 063](../../tasks/runs/archive/063-feature-defensive-friends-list.md)), HUD Pixi/React ([run 084](../../tasks/runs/archive/084-feature-defensive-friends-frontend.md) : sheet de gestion, renfort cross-joueur sur village d'ami `ACTIVE`, amis défensifs révélés par le scout). Compromis minimal pour offrir une coopération **défensive** sans introduire le système complet d'alliances ([`21-alliances-and-tribes.md`](./21-alliances-and-tribes.md), strictement post-MVP).
 
 ## Pourquoi cette doc
 

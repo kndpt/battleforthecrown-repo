@@ -19,6 +19,7 @@ import {
 import { formatTravelTime } from '@/lib/combatHelpers';
 import {
   useArmyInventoryQuery,
+  useFriendshipsQuery,
   useInitiateAttackMutation,
   useInitiateReinforceMutation,
   useInitiateScoutMutation,
@@ -26,6 +27,7 @@ import {
   useVillageIntelQuery,
   useWorldConfigQuery,
 } from '@/api/queries';
+import { activeFriendOwnerIds } from '@/lib/friendshipsCache';
 import { combatErrorMessage } from './combatErrorMessage';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
@@ -56,10 +58,23 @@ export function AttackDetailModal({
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const inventory = useArmyInventoryQuery(villageId);
   const worldConfig = useWorldConfigQuery(worldId);
+  const friendships = useFriendshipsQuery();
+  // Un village d'ami défensif ACTIVE est renforçable comme un des siens
+  // (cf. docs/gameplay/20-defensive-friends.md). On le détecte via l'owner du
+  // village et la liste d'amis ACTIVE du joueur. Le backend reste autoritatif
+  // (guard renfort cross-joueur + exclusion fenêtre de capture OPEN).
+  const isFriendActiveVillage =
+    target.kind === 'PLAYER_VILLAGE' &&
+    !target.isMine &&
+    !target.captureWindow &&
+    target.ownerId != null &&
+    activeFriendOwnerIds(friendships.data).has(target.ownerId);
+  const isReinforcement =
+    (target.kind === 'PLAYER_VILLAGE' && target.isMine) || isFriendActiveVillage;
   // Menace estimée — uniquement pour une cible attaquable. En mode renfort
-  // (mon propre village) la section n'est jamais rendue : on désactive les
-  // queries pour éviter des fetchs/invalidations inutiles. Même id canonique.
-  const showsThreat = !(target.kind === 'PLAYER_VILLAGE' && target.isMine);
+  // (mon village ou celui d'un ami) la section n'est jamais rendue : on désactive
+  // les queries pour éviter des fetchs/invalidations inutiles.
+  const showsThreat = !isReinforcement;
   const intelQuery = useVillageIntelQuery(
     worldId,
     showsThreat ? target.id : null,
@@ -78,7 +93,6 @@ export function AttackDetailModal({
     : target.kind === 'PLAYER_VILLAGE'
       ? 'PLAYER_VILLAGE'
       : null;
-  const isReinforcement = target.kind === 'PLAYER_VILLAGE' && target.isMine;
   const canScout = Boolean(targetKind && !isReinforcement);
   const activeMode = isReinforcement ? 'reinforce' : mode;
   const effectiveUnits = useMemo(() => {

@@ -79,6 +79,15 @@ import {
   VillageIntelDtoSchema,
   type VillageIntelDto,
 } from "@battleforthecrown/shared/world";
+import type {
+  FriendshipDto,
+  MyFriendshipsResponse,
+} from "@battleforthecrown/shared/social";
+import {
+  EMPTY_FRIENDSHIPS,
+  acceptFriendshipLocal,
+  removeFriendshipLocal,
+} from "@/lib/friendshipsCache";
 import type { OnboardingSummaryDto } from "@battleforthecrown/shared/onboarding";
 import {
   RankingCyclesCurrentResponseSchema,
@@ -196,6 +205,8 @@ export const queryKeys = {
     ["cosmetic-awards", userId] as const,
   villageIntel: (worldId: string | null, villageId: string | null) =>
     ["intel", worldId, villageId] as const,
+  friendships: (userId: string | null, worldId: string | null) =>
+    ["friendships", userId, worldId] as const,
   // Broad-invalidation prefixes (omit trailing discriminants to match across worlds/users).
   renownPrefix: () => ["renown"] as const,
   membershipsPrefix: () => ["memberships"] as const,
@@ -1244,6 +1255,116 @@ export const useCaravanReportQuery = caravanReport.useDetailQuery;
 export const useMarkCaravanReportReadMutation =
   caravanReport.useMarkReadMutation;
 export const useDeleteCaravanReportMutation = caravanReport.useDeleteMutation;
+
+// ─── Defensive friends (cf. docs/gameplay/20-defensive-friends.md) ──────────
+// Self-scoped, per-world. No WS replication at MVP — refreshed by REST
+// invalidation. The three buckets (active / pendingOut / pendingIn) are owned by
+// the server; the client only renders them and drives the lifecycle mutations.
+
+export function useFriendshipsQuery() {
+  const userId = useAuthStore((s) => s.user?.id ?? null);
+  const worldId = useGameStore((s) => s.worldId);
+  return useQuery<MyFriendshipsResponse>({
+    queryKey: queryKeys.friendships(userId, worldId),
+    queryFn: () => {
+      if (!worldId) return Promise.resolve(EMPTY_FRIENDSHIPS);
+      return apiClient.get<MyFriendshipsResponse>(
+        `/worlds/${worldId}/friendships/me`,
+      );
+    },
+    enabled: Boolean(userId && worldId),
+    staleTime: 30_000,
+  });
+}
+
+export function useCreateFriendshipMutation() {
+  const queryClient = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id ?? null);
+  const worldId = useGameStore((s) => s.worldId);
+  // Not optimistic: no id until the server answers, and the recipient must still
+  // accept — a PENDING row only matters once the backend confirms it exists.
+  return useMutation<FriendshipDto, Error, { recipientDisplayName: string }>({
+    mutationFn: ({ recipientDisplayName }) => {
+      if (!worldId) return Promise.reject(new Error("No world selected"));
+      return apiClient.post<FriendshipDto>(`/worlds/${worldId}/friendships`, {
+        recipientDisplayName,
+      });
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.friendships(userId, worldId),
+      });
+    },
+  });
+}
+
+export function useAcceptFriendshipMutation() {
+  const queryClient = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id ?? null);
+  const worldId = useGameStore((s) => s.worldId);
+  const key = queryKeys.friendships(userId, worldId);
+  return useMutation<
+    FriendshipDto,
+    Error,
+    { id: string },
+    { previous?: MyFriendshipsResponse }
+  >({
+    mutationFn: ({ id }) => {
+      if (!worldId) return Promise.reject(new Error("No world selected"));
+      return apiClient.post<FriendshipDto>(
+        `/worlds/${worldId}/friendships/${id}/accept`,
+      );
+    },
+    onMutate: async ({ id }) => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous =
+        queryClient.getQueryData<MyFriendshipsResponse>(key);
+      if (previous) {
+        queryClient.setQueryData(key, acceptFriendshipLocal(previous, id));
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(key, context.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key });
+    },
+  });
+}
+
+export function useDeleteFriendshipMutation() {
+  const queryClient = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id ?? null);
+  const worldId = useGameStore((s) => s.worldId);
+  const key = queryKeys.friendships(userId, worldId);
+  return useMutation<
+    unknown,
+    Error,
+    { id: string },
+    { previous?: MyFriendshipsResponse }
+  >({
+    mutationFn: ({ id }) => {
+      if (!worldId) return Promise.reject(new Error("No world selected"));
+      return apiClient.delete<unknown>(`/worlds/${worldId}/friendships/${id}`);
+    },
+    onMutate: async ({ id }) => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous =
+        queryClient.getQueryData<MyFriendshipsResponse>(key);
+      if (previous) {
+        queryClient.setQueryData(key, removeFriendshipLocal(previous, id));
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(key, context.previous);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: key });
+    },
+  });
+}
 
 export function useWorldConfigQuery(worldId: string | null) {
   return useQuery<WorldConfig>({

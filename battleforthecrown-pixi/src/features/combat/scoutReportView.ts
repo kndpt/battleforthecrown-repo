@@ -183,6 +183,22 @@ export function buildScoutReportCardProps(
         ]),
   ];
 
+  // Amis défensifs révélés par le scout (snapshot, joueurs uniquement, ≤ cap).
+  // Section omise quand absente/vide — l'attaquant jauge le risque de renfort.
+  const defensiveFriends = report.details?.defensiveFriendsDisplayNames ?? [];
+  if (report.targetKind !== 'BARBARIAN_VILLAGE' && defensiveFriends.length > 0) {
+    sections.push({
+      title: 'Amis défensifs',
+      items: [
+        {
+          icon: '/assets/army-power.png',
+          label: `${defensiveFriends.length} allié${defensiveFriends.length > 1 ? 's' : ''}`,
+          value: defensiveFriends.slice(0, 5).join(', '),
+        },
+      ],
+    });
+  }
+
   const shieldStatus = getNewbieShieldStatus(report);
 
   return {

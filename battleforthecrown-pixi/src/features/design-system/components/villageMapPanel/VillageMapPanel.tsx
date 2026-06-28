@@ -33,6 +33,12 @@ export interface VillageMapPanelProps {
   ownerPower?: number | null;
   intel?: FullIntelPanelProps;
   tier?: BarbarianTier;
+  /**
+   * Village d'un ami défensif ACTIVE : le pied n'expose que « Renfort » (pas
+   * d'attaque/scout), désactivé si `onReinforce` est absent (ex. fenêtre de
+   * capture OPEN). Cf. docs/gameplay/20-defensive-friends.md.
+   */
+  reinforceOnly?: boolean;
   /** Preview lecture seule de la durée de fenêtre de capture PvP (ex `4h30`). */
   captureWindowLabel?: string | null;
   attackBlocked?: boolean;
@@ -150,6 +156,7 @@ function BlockedMsg({ reason }: { reason: string }) {
 
 function Footer({
   variant,
+  reinforceOnly,
   attackBlocked,
   attackBlockedReason,
   onEnter,
@@ -160,6 +167,7 @@ function Footer({
   onViewReport,
 }: {
   variant: VillageMapVariant;
+  reinforceOnly?: boolean;
   attackBlocked?: boolean;
   attackBlockedReason?: string | null;
   onEnter?: () => void;
@@ -169,6 +177,17 @@ function Footer({
   onAttack?: () => void;
   onViewReport?: () => void;
 }) {
+  // Village d'un ami défensif ACTIVE : renfort uniquement (jamais attaque/scout).
+  if (reinforceOnly) {
+    return (
+      <div style={{ padding: '0 11px 11px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <BftcButton variant="info" size="md" disabled={!onReinforce} className="w-full justify-center" onClick={onReinforce}>
+          <ShieldGlyph size={15}/> Renfort
+        </BftcButton>
+      </div>
+    );
+  }
+
   if (variant === 'mine') {
     return (
       <div style={{ padding: '0 11px 11px', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -248,6 +267,7 @@ export function VillageMapPanel({
   ownerPower,
   intel,
   tier,
+  reinforceOnly,
   captureWindowLabel,
   attackBlocked,
   attackBlockedReason,
@@ -318,6 +338,7 @@ export function VillageMapPanel({
         {/* Pied */}
         <Footer
           variant={variant}
+          reinforceOnly={reinforceOnly}
           attackBlocked={attackBlocked}
           attackBlockedReason={attackBlockedReason}
           onEnter={onEnter}
