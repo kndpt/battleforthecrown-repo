@@ -3,12 +3,11 @@ import {
   HTMLAttributes,
   PointerEvent,
   ReactNode,
-  TransitionEvent,
   useImperativeHandle,
-  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
+import { useEnterExitTransition, useRetainedChildren } from './useEnterExitTransition';
 
 export interface BottomSheetProps extends HTMLAttributes<HTMLDivElement> {
   isOpen: boolean;
@@ -58,47 +57,14 @@ interface DragStart {
 export const BottomSheet = forwardRef<HTMLDivElement, BottomSheetProps>(
   ({ isOpen, onClose, children, maxHeight = '75vh', zIndex = 50, className = '', style, ...props }, ref) => {
     const rootRef = useRef<HTMLDivElement>(null);
-    const panelRef = useRef<HTMLDivElement>(null);
     const dragStartRef = useRef<DragStart | null>(null);
     const [dragY, setDragY] = useState(0);
 
-    // Animation enter/exit : `isRendered` garde le sheet dans le DOM le temps de
-    // l'animation de sortie ; `isVisible` pilote la position (translateY 100% →
-    // 0) et l'opacité de l'overlay. Sans cet état intermédiaire, le panel serait
-    // monté directement à sa position finale et démonté instantanément → aucune
-    // transition CSS déclenchée.
-    const [isRendered, setIsRendered] = useState(isOpen);
-    const [isVisible, setIsVisible] = useState(false);
-
-    // Conserve le dernier contenu rendu pendant l'animation de sortie : certains
-    // parents passent un enfant conditionnel (ex. ArmyScreen `{recruitTroop ? …}`)
-    // qui se démonte instantanément à la fermeture, faisant glisser un panneau
-    // vide. On rejoue le dernier contenu connu tant que le sheet s'anime.
-    const lastChildrenRef = useRef<ReactNode>(children);
-    if (isOpen) lastChildrenRef.current = children;
+    // Animation slide up/down + cache du contenu pendant la sortie (cf. hook).
+    const { isRendered, isVisible, panelRef, handleTransitionEnd } = useEnterExitTransition(isOpen);
+    const renderedChildren = useRetainedChildren(isOpen, children);
 
     useImperativeHandle(ref, () => rootRef.current as HTMLDivElement);
-
-    if (isOpen && !isRendered) setIsRendered(true);
-
-    // Entrée : une fois le panneau monté à sa position fermée (translateY 100%),
-    // forcer un reflow pour que le navigateur enregistre cette frame de départ,
-    // puis basculer en ouvert. Sans ce reflow, le passage 100% → 0% est coalescé
-    // en un seul style et la transition est sautée (apparition « d'un coup »).
-    useLayoutEffect(() => {
-      if (!isOpen || !isRendered) {
-        if (!isOpen) setIsVisible(false);
-        return;
-      }
-      // Lecture de layout = flush du transform fermé avant le flip.
-      void panelRef.current?.getBoundingClientRect();
-      setIsVisible(true);
-    }, [isOpen, isRendered]);
-
-    const handleTransitionEnd = (event: TransitionEvent<HTMLDivElement>) => {
-      if (event.target !== event.currentTarget || event.propertyName !== 'transform') return;
-      if (!isOpen) setIsRendered(false);
-    };
 
     const releasePointerCapture = (element: HTMLDivElement, pointerId: number) => {
       if (!element.hasPointerCapture(pointerId)) return;
@@ -195,7 +161,7 @@ export const BottomSheet = forwardRef<HTMLDivElement, BottomSheetProps>(
             transform: isVisible ? `translateY(${dragY}px)` : 'translateY(100%)',
           }}
         >
-          {isOpen ? children : lastChildrenRef.current}
+          {renderedChildren}
         </div>
       </div>
     );
