@@ -1,6 +1,9 @@
 # Select
 
-Menu déroulant stylisé avec effet médiéval et icône chevron intégrée.
+Menu déroulant **entièrement custom** (listbox), thème médiéval. Le bouton déclencheur
+et le popup d'options sont rendus par React — **aucun `<select>`/`<option>` natif**, donc
+le dropdown OS gris ne ressort jamais. Le popup est monté en portal (`fixed`, `z-[9999]`)
+pour ne pas être clippé par un parent `overflow-hidden` (ex. modales).
 
 ## Variants
 
@@ -35,7 +38,7 @@ const buildingOptions = [
   size="md"
   options={buildingOptions}
   placeholder="Sélectionner un bâtiment"
-  onChange={(e) => console.log(e.target.value)}
+  onValueChange={(value) => console.log(value)}
 />
 ```
 
@@ -62,11 +65,14 @@ export default function BuildingSelector() {
       options={options}
       placeholder="Choisir un bâtiment"
       value={building}
-      onChange={(e) => setBuilding(e.target.value)}
+      onValueChange={setBuilding}
     />
   );
 }
 ```
+
+> Contrôlé via `value` + `onValueChange`. Sans `value`, le composant est non contrôlé
+> et accepte `defaultValue`.
 
 ### Avec InputLabel et InputHelperText
 
@@ -94,24 +100,32 @@ import { Select, InputLabel, InputHelperText } from '@/ui';
 ## Props
 
 ```ts
-interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+interface SelectProps {
   variant?: 'default' | 'parchment' | 'success' | 'info';
   size?: 'sm' | 'md' | 'lg';
   options: Array<{ value: string; label: string }>;
+  value?: string;            // contrôlé
+  defaultValue?: string;     // non contrôlé
+  onValueChange?: (value: string) => void;
   placeholder?: string;
-  className?: string;
+  disabled?: boolean;
+  required?: boolean;
+  id?: string;
+  name?: string;             // ajoute un input caché pour soumission de form native
+  className?: string;        // mergé sur le bouton déclencheur
+  'aria-label'?: string;
 }
 ```
 
 ## Caractéristiques
 
-- ✅ **Icône chevron** : ChevronDown de lucide-react intégré automatiquement
-- ✅ **Dégradés subtils** : Fond avec gradient pour effet de profondeur
-- ✅ **Bordure médiévale** : Bordure 2px avec couleur thématique
-- ✅ **Hover & Focus** : États interactifs avec ring sur focus
-- ✅ **État désactivé** : Opacité réduite + curseur non autorisé
-- ✅ **Accessibilité** : Support `forwardRef`, spread des props HTML natives
-- ✅ **Placeholder** : Option placeholder optionnelle disabled
+- ✅ **100% custom** : popup React stylé, jamais le dropdown natif OS
+- ✅ **Portal `fixed`** : jamais clippé par un parent `overflow-hidden` (modales), flip auto haut/bas selon la place
+- ✅ **Clavier** : `↑/↓`, `Home/End`, `Enter`/`Espace`, `Échap`, fermeture sur `Tab`
+- ✅ **Accessibilité** : `role="combobox"/"listbox"/"option"`, `aria-expanded`, `aria-selected`
+- ✅ **Coche** : option sélectionnée marquée d'un `Check`
+- ✅ **Icône chevron** : `ChevronDown` qui pivote à l'ouverture
+- ✅ **État désactivé** : opacité réduite + curseur non autorisé
 
 ## Bonnes pratiques
 
@@ -119,12 +133,9 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 - Utiliser `variant="parchment"` pour cohérence avec le thème médiéval
 - Combiner avec `InputLabel` pour améliorer l'accessibilité
 - Ajouter un `placeholder` pour guider l'utilisateur
-- Utiliser `success` ou `info` pour indiquer un état de validation
-- Privilégier `size="md"` pour la plupart des formulaires
-- Limiter le nombre d'options (max 10-15 pour UX optimale)
+- Limiter le nombre d'options (popup scrollable au-delà, `max-height` ~240px)
 
 ## Limitations
 
 - Pas de support multi-sélection (utiliser une checkbox list à la place)
 - Pas de recherche intégrée (pour cela, créer un composant Autocomplete)
-- Style natif du dropdown (impossible de styliser avec CSS uniquement)

@@ -3,6 +3,7 @@ import { BftcButton, type BftcButtonVariant } from './BftcButton';
 import { BaseModal } from './BaseModal';
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
+import { Select } from '@/ui';
 
 export type DailyQuestState = 'progress' | 'claimable' | 'done' | 'locked';
 
@@ -417,21 +418,23 @@ function ClaimPanel({ panel }: { panel: DailyQuestClaimPanel }) {
           <RewardPill key={`${reward.icon}-${reward.value}-${i}`} {...reward} />
         ))}
       </div>
-      <label className="mt-2 flex flex-col gap-1 font-game text-[10px] font-extrabold uppercase tracking-[.14em] text-[#704c0a]">
-        {panel.villageLabel}
-        <select
-          className="min-h-9 rounded-lg border-2 border-[#5d4a32] bg-[#fef9f0] px-2 font-game text-[12px] font-bold normal-case tracking-normal text-[#3d2f1f]"
+      <div className="mt-2 flex flex-col gap-1">
+        <span className="font-game text-[10px] font-extrabold uppercase tracking-[.14em] text-[#704c0a]">
+          {panel.villageLabel}
+        </span>
+        <Select
+          aria-label={panel.villageLabel}
+          className="min-h-9 px-2 text-[12px] font-bold normal-case tracking-normal"
           disabled={panel.disabled || panel.villages.length === 0}
-          onChange={(event) => panel.onVillageChange(event.target.value)}
+          onValueChange={panel.onVillageChange}
+          options={panel.villages.map((village) => ({
+            value: village.id,
+            label: village.label,
+          }))}
           value={panel.selectedVillageId}
-        >
-          {panel.villages.map((village) => (
-            <option key={village.id} value={village.id}>
-              {village.label}
-            </option>
-          ))}
-        </select>
-      </label>
+          variant="parchment"
+        />
+      </div>
     </div>
   );
 }

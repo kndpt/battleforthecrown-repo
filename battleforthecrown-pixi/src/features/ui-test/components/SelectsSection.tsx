@@ -143,7 +143,7 @@ export function SelectsSection({ selectedBuilding, setSelectedBuilding, selected
                 ]}
                 placeholder="Choisir un bâtiment"
                 value={selectedBuilding}
-                onChange={(e) => setSelectedBuilding(e.target.value)}
+                onValueChange={setSelectedBuilding}
               />
               <InputHelperText variant="default">
                 {selectedBuilding 
@@ -170,7 +170,7 @@ export function SelectsSection({ selectedBuilding, setSelectedBuilding, selected
                   { value: 'mage', label: 'Mage (200 or)' },
                 ]}
                 value={selectedTroop}
-                onChange={(e) => setSelectedTroop(e.target.value)}
+                onValueChange={setSelectedTroop}
                 required
               />
               <InputHelperText variant="success">
