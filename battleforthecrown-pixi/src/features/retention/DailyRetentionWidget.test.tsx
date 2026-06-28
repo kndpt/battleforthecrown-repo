@@ -180,7 +180,11 @@ describe("DailyRetentionWidget", () => {
     );
     expect(screen.getByText("Devoir royal")).toBeInTheDocument();
 
-    fireEvent.mouseDown(screen.getByTestId("daily-retention-backdrop"));
+    // Clic sur le calque de centrage (parent du dialog) = clic « hors modale ».
+    const dialog = screen.getByRole("dialog");
+    fireEvent.click(dialog.parentElement as HTMLElement);
+    // L'unmount n'arrive qu'en fin d'animation de sortie (transition opacity).
+    fireEvent.transitionEnd(dialog, { propertyName: "opacity" });
 
     expect(screen.queryByText("Devoir royal")).not.toBeInTheDocument();
   });
@@ -202,7 +206,7 @@ describe("DailyRetentionWidget", () => {
 
     expect(screen.getByText("Devoir royal")).toBeInTheDocument();
 
-    fireEvent.mouseDown(screen.getByTestId("daily-retention-backdrop"));
+    fireEvent.click(screen.getByRole("dialog").parentElement as HTMLElement);
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(screen.getByText("Devoir royal")).toBeInTheDocument();
@@ -220,6 +224,7 @@ describe("DailyRetentionWidget", () => {
       />,
     );
 
+    fireEvent.transitionEnd(screen.getByRole("dialog"), { propertyName: "opacity" });
     expect(screen.queryByText("Devoir royal")).not.toBeInTheDocument();
   });
 
@@ -262,6 +267,7 @@ describe("DailyRetentionWidget", () => {
     fireEvent.click(screen.getByRole("button", { name: "Village" }));
 
     expect(onAction).toHaveBeenCalledWith("open-building-management");
+    fireEvent.transitionEnd(screen.getByRole("dialog"), { propertyName: "opacity" });
     expect(screen.queryByText("Devoir royal")).not.toBeInTheDocument();
   });
 

@@ -1,5 +1,4 @@
-import { useCallback, useMemo, useState, type MouseEvent } from "react";
-import { createPortal } from "react-dom";
+import { useCallback, useMemo, useState } from "react";
 import type {
   DailyCardDto,
   DailyCardTaskDto,
@@ -23,6 +22,7 @@ import {
   getDailyTaskGameAction,
   type GameActionId,
 } from "@/features/game-actions/gameActions";
+import { ModalOverlay } from "@/ui/modals/ModalOverlay";
 
 interface ClaimInput {
   cardId: string;
@@ -257,12 +257,6 @@ export function DailyRetentionWidget({
     }
   };
 
-  const handleBackdropMouseDown = (event: MouseEvent<HTMLDivElement>) => {
-    if (event.target === event.currentTarget) {
-      handleSetOpen(false);
-    }
-  };
-
   return (
     <>
       {!hideButton && (
@@ -290,14 +284,14 @@ export function DailyRetentionWidget({
         />
       )}
 
-      {isOpen && summary
-        ? createPortal(
-            <div
-              className="fixed inset-0 z-[80] flex items-center justify-center bg-black/65 p-3"
-              data-testid="daily-retention-backdrop"
-              onMouseDown={handleBackdropMouseDown}
-            >
-              <DailyQuestModal
+      {summary ? (
+        <ModalOverlay
+          ariaLabel="Devoir royal"
+          isOpen={isOpen}
+          onClose={() => handleSetOpen(false)}
+          zIndex={80}
+        >
+          <DailyQuestModal
                 chapter={chapter}
                 claimPanel={claimPanel}
                 claimRowLabel="Réclamer"
@@ -328,10 +322,8 @@ export function DailyRetentionWidget({
                 title="Devoir royal"
                 width="min(360px, calc(100vw - 24px))"
               />
-            </div>,
-            document.body,
-          )
-        : null}
+        </ModalOverlay>
+      ) : null}
     </>
   );
 }

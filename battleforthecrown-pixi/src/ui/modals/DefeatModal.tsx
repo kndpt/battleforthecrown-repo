@@ -1,9 +1,7 @@
-'use client';
-
-import { useEffect } from 'react';
 import type { DefeatModalItem } from '@/stores/ui';
 import { Button } from '@/ui/buttons/Button';
 import { villageImageSrcForVisualTier } from '@/api/world-types';
+import { ModalOverlay } from './ModalOverlay';
 
 export interface DefeatModalProps {
   items: DefeatModalItem[];
@@ -23,31 +21,19 @@ export const DefeatModal = ({
   const item = items[activeIndex] ?? null;
   const total = items.length;
 
-  // Acquittement explicite obligatoire : pas de fermeture par Escape ni clic overlay
-  // (la victime doit « Valider » pour persister `readByDefender`). On verrouille juste
-  // le scroll de fond tant que la modal est montée.
-  useEffect(() => {
-    if (!item) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [item]);
-
-  if (!item) return null;
-
+  // Acquittement explicite obligatoire : pas de fermeture par Escape ni clic
+  // overlay (la victime doit « Valider » pour persister `readByDefender`).
+  // ModalOverlay gère portail/scroll-lock/animation ; `onClose` reste inerte.
   return (
-    <>
-      <div className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm transition-opacity duration-300" />
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div
-          className="w-[90%] max-w-md overflow-hidden rounded-lg border-4 border-[#3a1a1a] bg-gradient-to-b from-[#2a1010] to-[#1a0808] font-game shadow-[0_0_0_2px_#5a1a1a,0_12px_32px_rgba(0,0,0,0.75)] transition-all duration-300"
-          onClick={(e) => e.stopPropagation()}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="defeat-modal-title"
-        >
+    <ModalOverlay
+      ariaLabel="Village perdu"
+      closeOnEscape={false}
+      closeOnOverlayClick={false}
+      isOpen={Boolean(item)}
+      onClose={() => undefined}
+    >
+      {item ? (
+        <div className="w-[90%] max-w-md overflow-hidden rounded-lg border-4 border-[#3a1a1a] bg-gradient-to-b from-[#2a1010] to-[#1a0808] font-game shadow-[0_0_0_2px_#5a1a1a,0_12px_32px_rgba(0,0,0,0.75)]">
           {/* Bandeau rouge sombre */}
           <div className="h-1.5 bg-gradient-to-r from-[#8b0000] to-[#c0392b]" />
 
@@ -59,10 +45,7 @@ export const DefeatModal = ({
               className="mx-auto h-20 w-20 drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)] grayscale"
             />
 
-            <h2
-              id="defeat-modal-title"
-              className="mt-2 font-cinzel text-3xl font-extrabold uppercase tracking-wider text-[#e05050] [text-shadow:0_2px_0_rgba(0,0,0,0.5),0_3px_6px_rgba(0,0,0,0.4)]"
-            >
+            <h2 className="mt-2 font-cinzel text-3xl font-extrabold uppercase tracking-wider text-[#e05050] [text-shadow:0_2px_0_rgba(0,0,0,0.5),0_3px_6px_rgba(0,0,0,0.4)]">
               Village perdu
             </h2>
 
@@ -128,7 +111,7 @@ export const DefeatModal = ({
             </Button>
           </div>
         </div>
-      </div>
-    </>
+      ) : null}
+    </ModalOverlay>
   );
 };
