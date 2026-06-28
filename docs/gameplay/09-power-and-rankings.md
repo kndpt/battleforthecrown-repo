@@ -37,6 +37,7 @@ La **force présente locale** d'un village reste séparée : c'est la somme des 
 | **Puissance Village** (bâtiments) | Visible pour tous (information publique) |
 | **Puissance Armée** | Cachée pour les ennemis (révélée par espion) |
 | **Puissance Royaume** | Visible pour tous |
+| **Niveau de Renommée** | Visible pour tous (cosmétique, sans pouvoir in-world — cf. [`25-account-renown.md`](./25-account-renown.md#8-frontend)). Seul le niveau, jamais l'XP. |
 
 ### Système de poids des bâtiments
 

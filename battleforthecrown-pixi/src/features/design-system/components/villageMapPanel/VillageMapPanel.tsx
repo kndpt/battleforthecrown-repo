@@ -31,6 +31,8 @@ export interface VillageMapPanelProps {
   coords: string;
   typeTag: VillageMapTypeTag;
   owner?: string | null;
+  /** Niveau de Renommée du propriétaire (village joueur). Badge sur l'avatar. */
+  playerLevel?: number | null;
   villagePower?: number | null;
   ownerPower?: number | null;
   intel?: FullIntelPanelProps;
@@ -247,6 +249,7 @@ export function VillageMapPanel({
   coords,
   typeTag,
   owner,
+  playerLevel,
   villagePower,
   ownerPower,
   intel,
@@ -281,7 +284,7 @@ export function VillageMapPanel({
 
         {/* Tête */}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '9px 11px 8px' }}>
-          <VillageTile size={42} src={iconSrc}/>
+          <VillageTile size={42} src={iconSrc} level={playerLevel ?? null}/>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ flex: 1, minWidth: 0, fontWeight: 900, fontSize: 16, color: '#3d2f1f', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textShadow: '0 1px 0 rgba(255,255,255,.5)' }}>

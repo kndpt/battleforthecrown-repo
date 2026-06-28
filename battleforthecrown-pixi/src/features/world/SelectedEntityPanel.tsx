@@ -13,6 +13,7 @@ import {
   useArmyInventoryQuery,
   useGarrisonQuery,
   useKingdomPowerQuery,
+  usePublicPlayerProfileQuery,
   usePublicVillagePowerQuery,
   useVillageIntelQuery,
 } from "@/api/queries";
@@ -92,6 +93,12 @@ export function SelectedEntityPanel({
     entity?.kind === "PLAYER_VILLAGE" && !entity.isMine
       ? (entity.ownerId ?? null)
       : null;
+
+  // Niveau de Renommée affiché en badge sur l'avatar — tout village joueur
+  // (le sien inclus). Barbares exclus (pas de User → pas de renown).
+  const ownerUserId =
+    entity?.kind === "PLAYER_VILLAGE" ? (entity.ownerId ?? null) : null;
+  const ownerProfile = usePublicPlayerProfileQuery(ownerUserId, worldId);
 
   const armyInventory = useArmyInventoryQuery(ownedVillageId);
   const garrison = useGarrisonQuery(ownedVillageId);
@@ -219,6 +226,7 @@ export function SelectedEntityPanel({
         coords={`${entity.x} | ${entity.y}`}
         typeTag={typeTag}
         owner={isBarbarian ? null : (entity.ownerDisplayName ?? null)}
+        playerLevel={isBarbarian ? null : (ownerProfile.data?.renownLevel ?? null)}
         villagePower={villageBuildingPower}
         ownerPower={ownerPower}
         intel={intel}

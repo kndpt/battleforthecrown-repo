@@ -124,6 +124,8 @@ Dans [`packages/shared/src/renown/constants.ts`](../../packages/shared/src/renow
 
 `PlayerProfileSheet` : niveau de Renommée + barre de progression (`xpIntoLevel / xpForNextLevel`). Feedback de level-up cosmétique. Aucune valeur n'est calculée localement de façon autoritative — le front consomme `GET /users/me/renown` et la dérivation pure de `shared/renown`.
 
+**Visibilité publique** : seul le *niveau* de Renommée d'un joueur tiers est exposé (jamais l'XP brute), via `PublicPlayerProfileResponse` (`renownLevel`). Affiché en badge sur l'avatar du panneau de sélection de la carte (`SelectedEntityPanel` → `VillageMapPanel`). Sûr car la Renommée est cosmétique à pouvoir in-world nul (§2) — l'exposer ne leak aucun avantage mécanique.
+
 ## 9. Décisions d'architecture
 
 - **Table `RenownLedger` dédiée, pas d'infra account-global unifiée.** Le run connexe `067` (récompenses cosmétiques permanentes, `UserWorldCosmeticAward`) **n'est pas encore implémenté** au moment de ce run. Construire une infra unifiée spéculative violerait la simplicité de scope. `067` pourra réutiliser `User`/le hook `LOCKED→ENDED` ou coexister ; les deux sont account-global et compatibles.

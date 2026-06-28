@@ -34,6 +34,7 @@ describe("PublicPlayerProfileSheet", () => {
           userId: "u-foreign",
           displayName: "Sire Kelvin",
           kingdomPower: 1234,
+          renownLevel: 7,
           newbieShield: {
             active: true,
             endsAt: new Date(Date.now() + 47 * 3_600_000).toISOString(),
@@ -60,6 +61,7 @@ describe("PublicPlayerProfileSheet", () => {
           userId: "u-foreign",
           displayName: "Sire Kelvin",
           kingdomPower: 1234,
+          renownLevel: 7,
           newbieShield: null,
         };
       throw new Error(`Unexpected GET ${path}`);

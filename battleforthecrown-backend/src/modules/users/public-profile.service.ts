@@ -2,13 +2,17 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { PowerService } from '../power/power.service';
 import { NewbieShieldService } from '../world/newbie-shield.service';
-import type { PublicPlayerProfileResponse } from '@battleforthecrown/shared';
+import {
+  renownStatusForXp,
+  type PublicPlayerProfileResponse,
+} from '@battleforthecrown/shared';
 
 /**
  * Read-only, world-scoped public profile of a player observed from the map.
  *
- * Exposes ONLY spec-public fields (09 § Visibilité): displayName + kingdom
- * power + newbie-shield state. The shield state is read live via
+ * Exposes spec-public fields: displayName + kingdom power (09 § Visibilité) +
+ * newbie-shield state + cross-world renown level (cosmetic, zero in-world
+ * power — spec 25 § 2). The shield state is read live via
  * {@link NewbieShieldService} (no new source of truth). An inactive shield is
  * mapped to `null` (spec 14 § 3 — no explicit "exposed" signal).
  */
@@ -29,7 +33,7 @@ export class PublicProfileService {
     // (userId, worldId) constraint keeps the world-scope invariant explicit.
     const membership = await this.prisma.worldMembership.findUnique({
       where: { userId_worldId: { userId, worldId } },
-      select: { user: { select: { displayName: true } } },
+      select: { user: { select: { displayName: true, renownXp: true } } },
     });
 
     if (!membership) {
@@ -49,6 +53,7 @@ export class PublicProfileService {
       userId,
       displayName: membership.user.displayName,
       kingdomPower,
+      renownLevel: renownStatusForXp(membership.user.renownXp).level,
       newbieShield: shieldState?.active
         ? { active: true, endsAt: shieldState.endsAt }
         : null,

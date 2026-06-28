@@ -407,6 +407,27 @@ describe("enemy player", () => {
     expect(btn).toBeDisabled();
     expect(screen.getByText(/Bouclier débutant/)).toBeInTheDocument();
   });
+
+  it("12. village joueur tiers → badge niveau de Renommée sur l'avatar (public-profile)", async () => {
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/worlds/w1/intel/v-enemy") return null;
+      if (path === "/power/village/v-enemy/public")
+        return { villageId: "v-enemy", buildings: 880 };
+      if (path === "/worlds/w1/users/u-foreign/public-profile")
+        return {
+          userId: "u-foreign",
+          displayName: "Sire Kelvin",
+          kingdomPower: 1234,
+          renownLevel: 12,
+          newbieShield: null,
+        };
+      throw new Error(`Unexpected GET ${path}`);
+    });
+
+    renderPanel(enemyVillage, "v-mine");
+
+    expect(await screen.findByLabelText("Niveau 12")).toBeInTheDocument();
+  });
 });
 
 // ---------------------------------------------------------------------------

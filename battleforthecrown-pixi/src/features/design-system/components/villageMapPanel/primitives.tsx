@@ -152,8 +152,13 @@ export function PowerCell({ label, value }: PowerCellProps) {
 // VillageTile
 // ---------------------------------------------------------------------------
 
-export interface VillageTileProps { size?: number; src?: string }
-export function VillageTile({ size = 42, src = '/assets/castle.png' }: VillageTileProps) {
+export interface VillageTileProps {
+  size?: number;
+  src?: string;
+  /** Niveau de Renommée du propriétaire — badge doré bas-droite (cf. header). */
+  level?: number | null;
+}
+export function VillageTile({ size = 42, src = '/assets/castle.png', level = null }: VillageTileProps) {
   return (
     <div
       className="font-game"
@@ -169,14 +174,43 @@ export function VillageTile({ size = 42, src = '/assets/castle.png' }: VillageTi
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        overflow: 'hidden',
+        // `overflow: visible` pour laisser déborder le badge de niveau ; le
+        // contenu (img) est déjà clippé par son propre cadrage.
+        overflow: level != null ? 'visible' : 'hidden',
       }}
     >
       <img
         src={publicAsset(src)}
         alt=""
-        style={{ width: size * 0.84, height: size * 0.84, objectFit: 'contain', filter: 'drop-shadow(0 2px 2px rgba(0,0,0,.4))' }}
+        style={{ width: size * 0.84, height: size * 0.84, objectFit: 'contain', filter: 'drop-shadow(0 2px 2px rgba(0,0,0,.4))', borderRadius: 9 }}
       />
+      {level != null && (
+        <span
+          aria-label={`Niveau ${level}`}
+          style={{
+            position: 'absolute',
+            bottom: -5,
+            right: -5,
+            minWidth: 18,
+            height: 18,
+            padding: '0 4px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 999,
+            border: '1px solid #7a5200',
+            background: 'linear-gradient(to bottom, #f6d57b, #c9900c)',
+            color: '#3a2a00',
+            fontWeight: 900,
+            fontSize: 9.5,
+            lineHeight: 1,
+            fontVariantNumeric: 'tabular-nums',
+            boxShadow: '0 1px 2px rgba(0,0,0,.35)',
+          }}
+        >
+          {level}
+        </span>
+      )}
     </div>
   );
 }
