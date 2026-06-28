@@ -1,6 +1,6 @@
 # maint-debt — candidats (réécrit chaque run)
 
-last: 2026-06-26 | archive: `archive/maint-debt/2026-06-15-full.md`
+last: 2026-06-28 | archive: `archive/maint-debt/2026-06-15-full.md`
 branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 ## candidate
@@ -15,12 +15,13 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | conquest openCaptureWindow/interruptCaptureWindow/conquerVillage wrappers | used only in smoke tests, not prod code — public API for test convenience, low debt |
 | buildRefundToastItems export | exported for test import only — valid pattern, skip |
 | GarrisonLineDto export | used locally in combat.service.ts, export unnecessary but trivial |
+| barbarian-runtime.service.ts toUnitMap local fn + Prisma unitType casts | Prisma `unitType: String` → `as UnitType` — Object.entries pattern fixed, Prisma-sourced casts remain (need isUnitType guard, broader scope) |
 
 ## done (this run)
 
 | area | PR |
 |------|-----|
-| intel.service.ts + scout-report.presenter.ts unsafe `as` casts on Prisma JSON → Zod codec parsing | pending |
+| typedEntries consistency: 4 files still using Object.entries + `as UnitType` instead of shared typedEntries helper | pending |
 
 ## rules
 
