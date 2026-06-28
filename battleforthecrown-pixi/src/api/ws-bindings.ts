@@ -624,6 +624,7 @@ export function applyCaravanArrived(
     returnAt: Date.parse(payload.returnAt),
   });
   invalidateVillageEconomy(ctx, payload.targetVillageId);
+  invalidatePowerQueries(ctx, payload.targetVillageId);
   invalidateCaravanReports(ctx);
   invalidateOpenExpeditions(ctx);
 }
@@ -689,6 +690,7 @@ export function applyGarrisonAdded(
     getString(payload, "originVillageId"),
     getString(payload, "targetVillageId"),
   );
+  invalidatePowerQueries(ctx, payload.villageId);
   invalidateOpenExpeditions(ctx);
   invalidateReinforcementReports(ctx);
 }
@@ -822,6 +824,9 @@ export function applyVillageConquered(
     queryKey: queryKeys.worldEntitiesPrefix(),
   });
   invalidatePowerQueries(ctx, payload.villageId);
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.garrison(payload.villageId),
+  });
   invalidateOpenConquests(ctx);
   invalidateCombatReports(ctx);
   // Mark the entity as conquered on the map by simply removing it; the next
