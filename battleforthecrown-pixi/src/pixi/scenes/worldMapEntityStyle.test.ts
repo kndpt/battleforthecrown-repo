@@ -23,7 +23,7 @@ const player = (overrides: Partial<MapEntity> = {}): MapEntity => ({
 });
 
 const barbarian = (
-  tier: "T1" | "T2" | "T3" = "T1",
+  tier: "T1" | "T2" | "T3" | "T4" | "T5" = "T1",
   overrides: Partial<MapEntity> = {},
 ): MapEntity => ({
   id: "b1",
@@ -60,6 +60,16 @@ describe("spriteSizeFor", () => {
     const t3 = spriteSizeFor(barbarian("T3"));
     expect(t1).toBe(BASE_BARBARIAN_SIZE);
     expect(t3).toBeGreaterThan(t1);
+  });
+
+  it("grows strictly monotonically across all five barbarian tiers", () => {
+    const sizes = (["T1", "T2", "T3", "T4", "T5"] as const).map((t) =>
+      spriteSizeFor(barbarian(t)),
+    );
+    expect(sizes[0]).toBe(BASE_BARBARIAN_SIZE);
+    for (let i = 1; i < sizes.length; i += 1) {
+      expect(sizes[i]).toBeGreaterThan(sizes[i - 1]);
+    }
   });
 
   it("falls back to BASE_BARBARIAN_SIZE for OTHER entities", () => {
@@ -102,6 +112,22 @@ describe("styleFor", () => {
     const r1 = styleFor(barbarian("T1")).radius;
     const r3 = styleFor(barbarian("T3")).radius;
     expect(r3).toBeGreaterThan(r1);
+  });
+
+  it("gives T4/T5 distinct color, ring and radius from T1", () => {
+    const t1 = styleFor(barbarian("T1"));
+    const t4 = styleFor(barbarian("T4"));
+    const t5 = styleFor(barbarian("T5"));
+    expect(t4.color).toBe(COLOR.barbarianT4);
+    expect(t4.ringColor).toBe(COLOR.barbarianRingT4);
+    expect(t5.color).toBe(COLOR.barbarianT5);
+    expect(t5.ringColor).toBe(COLOR.barbarianRingT5);
+    for (const s of [t4, t5]) {
+      expect(s.color).not.toBe(t1.color);
+      expect(s.ringColor).not.toBe(t1.ringColor);
+      expect(s.radius).toBeGreaterThan(t1.radius);
+    }
+    expect(t5.radius).toBeGreaterThan(t4.radius);
   });
 
   it("returns fallback style for OTHER entities", () => {
