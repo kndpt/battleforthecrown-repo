@@ -12,7 +12,7 @@ full: `archive/refactor-pixi/2026-06-28-full.md`
 | C-01 | High | ArmyScreen.tsx:681L | 50+ state vars, mixed onboarding/garrison/recruitment |
 | C-03 | High | VillageView.tsx:573L | 26 hooks, 8 useState, 40+ props drilled |
 | P-01 | High | WorldMapScene.ts:930L | Scene monolith: viewport/entities/fog/expeditions/camera |
-| WS-01 | High | ws-bindings.ts:831-878 | applyVillageConquered god function |
+| WS-01 | High | ws-bindings.ts applyVillageConquered | god function (conquest + map + UI + reports) |
 | S-01 | High | resources.ts, crowns.ts | Dual source of truth: Zustand + TQ cache |
 | C-04 | High | BuildingDetailModal.tsx | 50+ props drilled to specialized modals |
 | Q-09 | Med | queries.ts:~1790L | Monolith: 50+ hooks + DTOs in single file |

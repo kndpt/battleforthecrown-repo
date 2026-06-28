@@ -1131,6 +1131,7 @@ describe('caravan websocket bindings', () => {
     queryClient.setQueryData(queryKeys.resources('target-village'), { wood: 100 });
     queryClient.setQueryData(queryKeys.population('target-village'), { used: 5, max: 20, available: 15 });
     seedPowerQueries(queryClient, 'target-village');
+    queryClient.setQueryData(queryKeys.rankingsSummary('world-1'), { leaderboards: [] });
     queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
     queryClient.setQueryData(queryKeys.caravanReports('user-1', 'world-1'), []);
     queryClient.setQueryData(queryKeys.caravanReports('user-1', 'world-old'), []);
@@ -1155,6 +1156,7 @@ describe('caravan websocket bindings', () => {
     expect(queryClient.getQueryState(queryKeys.resources('target-village'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.population('target-village'))?.isInvalidated).toBe(true);
     expectPowerQueriesInvalidated(queryClient, 'target-village');
+    expect(queryClient.getQueryState(queryKeys.rankingsSummary('world-1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.caravanReports('user-1', 'world-1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.caravanReports('user-1', 'world-old'))?.isInvalidated).toBe(true);
@@ -1449,6 +1451,7 @@ describe('applyGarrisonAdded', () => {
     setCurrentWorldSession();
     const queryClient = createQueryClientWithReinforcementData(['host-village', 'origin-village']);
     seedPowerQueries(queryClient, 'host-village');
+    queryClient.setQueryData(queryKeys.rankingsSummary('world-1'), { leaderboards: [] });
 
     applyGarrisonAdded(
       {
@@ -1462,6 +1465,7 @@ describe('applyGarrisonAdded', () => {
     expect(queryClient.getQueryState(queryKeys.garrison('host-village'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.armyInventory('origin-village'))?.isInvalidated).toBe(true);
     expectPowerQueriesInvalidated(queryClient, 'host-village');
+    expect(queryClient.getQueryState(queryKeys.rankingsSummary('world-1'))?.isInvalidated).toBe(true);
   });
 });
 
