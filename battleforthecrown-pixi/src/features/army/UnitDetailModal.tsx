@@ -15,6 +15,7 @@ import {
   UNIT_COSTS,
   UNIT_STATS,
   UNIT_TYPES,
+  isUnitType,
   type UnitType,
 } from '@battleforthecrown/shared/army';
 import { unitMetaFor } from './unitConfig';
@@ -24,10 +25,6 @@ interface UnitDetailModalProps {
   barracksLevel: number;
   onClose: () => void;
   unit: ArmyUnitDto;
-}
-
-function isUnitType(value: string): value is UnitType {
-  return Object.values(UNIT_TYPES).includes(value as UnitType);
 }
 
 function roman(value: number): string {
