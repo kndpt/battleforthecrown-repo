@@ -19,3 +19,22 @@ export const CreateFriendshipSchema = z
   );
 
 export type CreateFriendshipBody = z.infer<typeof CreateFriendshipSchema>;
+
+const FriendshipStatusSchema = z.enum(["PENDING", "ACTIVE"]);
+
+export const FriendshipDtoSchema = z.object({
+  id: z.string(),
+  worldId: z.string(),
+  status: FriendshipStatusSchema,
+  otherUserId: z.string(),
+  otherDisplayName: z.string(),
+  isRequester: z.boolean(),
+  createdAt: z.string(),
+  acceptedAt: z.string().nullable(),
+});
+
+export const MyFriendshipsResponseSchema = z.object({
+  active: z.array(FriendshipDtoSchema),
+  pendingOut: z.array(FriendshipDtoSchema),
+  pendingIn: z.array(FriendshipDtoSchema),
+});

@@ -65,11 +65,13 @@ import {
   type ClaimDailyCardResponse,
   type RetentionSummaryDto,
 } from "@battleforthecrown/shared/retention";
-import type { RenownStatus } from "@battleforthecrown/shared";
-import type {
-  CreateFriendshipBody,
-  FriendshipDto,
-  MyFriendshipsResponse,
+import { RenownStatusSchema, type RenownStatus } from "@battleforthecrown/shared";
+import {
+  FriendshipDtoSchema,
+  MyFriendshipsResponseSchema,
+  type CreateFriendshipBody,
+  type FriendshipDto,
+  type MyFriendshipsResponse,
 } from "@battleforthecrown/shared/social";
 import type { CosmeticAwardResponse } from "@battleforthecrown/shared";
 import { COSMETIC_AWARD_KINDS } from "@battleforthecrown/shared";
@@ -88,7 +90,10 @@ import {
   VillageIntelDtoSchema,
   type VillageIntelDto,
 } from "@battleforthecrown/shared/world";
-import type { OnboardingSummaryDto } from "@battleforthecrown/shared/onboarding";
+import {
+  OnboardingSummarySchema,
+  type OnboardingSummaryDto,
+} from "@battleforthecrown/shared/onboarding";
 import {
   RankingCyclesCurrentResponseSchema,
   RankingsSummaryResponseSchema,
@@ -1362,7 +1367,7 @@ export function useInitiateAttackMutation() {
   const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const worldId = useGameStore((state) => state.worldId);
-  return useMutation<unknown, Error, AttackInput>({
+  return useMutation<void, Error, AttackInput>({
     mutationFn: ({
       villageId,
       targetX,
@@ -1371,7 +1376,7 @@ export function useInitiateAttackMutation() {
       targetRefId,
       units,
     }) =>
-      apiClient.post<unknown>("/combat/attack", {
+      apiClient.post<void>("/combat/attack", {
         villageId,
         targetX,
         targetY,
@@ -1389,7 +1394,7 @@ export function useInitiateScoutMutation() {
   const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.user?.id ?? null);
   const worldId = useGameStore((state) => state.worldId);
-  return useMutation<unknown, Error, AttackInput>({
+  return useMutation<void, Error, AttackInput>({
     mutationFn: ({
       villageId,
       targetX,
@@ -1398,7 +1403,7 @@ export function useInitiateScoutMutation() {
       targetRefId,
       units,
     }) =>
-      apiClient.post<unknown>("/combat/scout", {
+      apiClient.post<void>("/combat/scout", {
         villageId,
         targetX,
         targetY,
@@ -1692,12 +1697,12 @@ export function useOnboardingSummaryQuery(worldId: string | null) {
   const userId = useAuthStore((state) => state.user?.id ?? null);
   return useQuery<OnboardingSummaryDto>({
     queryKey: queryKeys.onboardingSummary(userId, worldId),
-    queryFn: () => {
-      if (!userId || !worldId)
-        return Promise.reject(new Error("No world selected"));
-      return apiClient.get<OnboardingSummaryDto>("/onboarding", {
+    queryFn: async () => {
+      if (!userId || !worldId) throw new Error("No world selected");
+      const raw = await apiClient.get("/onboarding", {
         query: { worldId },
       });
+      return OnboardingSummarySchema.parse(raw);
     },
     enabled: Boolean(userId && worldId),
     staleTime: 10_000,
@@ -1800,7 +1805,10 @@ export function useRenownQuery() {
   const userId = useAuthStore((state) => state.user?.id ?? null);
   return useQuery<RenownStatus>({
     queryKey: queryKeys.renown(userId),
-    queryFn: () => apiClient.get<RenownStatus>("/users/me/renown"),
+    queryFn: async () => {
+      const raw = await apiClient.get("/users/me/renown");
+      return RenownStatusSchema.parse(raw);
+    },
     enabled: Boolean(userId),
     staleTime: 30_000,
   });
@@ -1838,13 +1846,15 @@ export function useMyFriendshipsQuery() {
   const worldId = useGameStore((state) => state.worldId);
   return useQuery<MyFriendshipsResponse>({
     queryKey: queryKeys.myFriendships(userId, worldId),
-    queryFn: () => {
+    queryFn: async () => {
       if (!worldId) throw new Error("No world selected");
-      return apiClient.get<MyFriendshipsResponse>(
+      const raw = await apiClient.get(
         `/worlds/${worldId}/friendships/me`,
       );
+      return MyFriendshipsResponseSchema.parse(raw);
     },
     enabled: Boolean(worldId),
+    staleTime: 30_000,
   });
 }
 
