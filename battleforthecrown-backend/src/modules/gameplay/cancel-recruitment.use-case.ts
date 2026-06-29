@@ -11,7 +11,6 @@ import { OutboxPublisher } from '../event/outbox-publisher.service';
 import { CrownsService } from '../crowns/crowns.service';
 import {
   UNIT_CATALOG,
-  type UnitType,
   type UnitCost,
   isUnitType,
 } from '@battleforthecrown/shared/army';

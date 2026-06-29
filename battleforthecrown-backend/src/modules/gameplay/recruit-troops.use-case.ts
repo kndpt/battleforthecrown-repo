@@ -15,7 +15,6 @@ import { VillageStrategyService } from '../strategy/village-strategy.service';
 import { applyPopulationBonus } from '../population/population-capacity';
 import {
   UNIT_CATALOG,
-  UnitType,
   UnitCost,
   UNIT_TYPES,
   isUnitType,
