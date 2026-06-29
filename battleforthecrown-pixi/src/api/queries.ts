@@ -1846,13 +1846,13 @@ export function useMyFriendshipsQuery() {
   return useQuery<MyFriendshipsResponse>({
     queryKey: queryKeys.myFriendships(userId, worldId),
     queryFn: async () => {
-      if (!worldId) throw new Error("No world selected");
+      if (!userId || !worldId) throw new Error("No auth or world");
       const raw = await apiClient.get(
         `/worlds/${worldId}/friendships/me`,
       );
       return MyFriendshipsResponseSchema.parse(raw);
     },
-    enabled: Boolean(worldId),
+    enabled: Boolean(userId && worldId),
     staleTime: 30_000,
   });
 }

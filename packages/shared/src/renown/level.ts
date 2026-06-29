@@ -34,13 +34,15 @@ export const renownLevelForXp = (xp: number): number => {
   return level;
 };
 
+const intNN = z.number().int().nonnegative();
+
 export const RenownStatusSchema = z.object({
-  xp: z.number(),
-  level: z.number(),
-  currentLevelXp: z.number(),
-  nextLevelXp: z.number(),
-  xpIntoLevel: z.number(),
-  xpForNextLevel: z.number(),
+  xp: intNN,
+  level: intNN,
+  currentLevelXp: intNN,
+  nextLevelXp: intNN,
+  xpIntoLevel: intNN,
+  xpForNextLevel: intNN,
 });
 
 export type RenownStatus = z.infer<typeof RenownStatusSchema>;

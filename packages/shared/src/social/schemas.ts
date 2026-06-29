@@ -33,8 +33,16 @@ export const FriendshipDtoSchema = z.object({
   acceptedAt: z.string().nullable(),
 });
 
+const ActiveFriendshipDtoSchema = FriendshipDtoSchema.extend({
+  status: z.literal("ACTIVE"),
+});
+
+const PendingFriendshipDtoSchema = FriendshipDtoSchema.extend({
+  status: z.literal("PENDING"),
+});
+
 export const MyFriendshipsResponseSchema = z.object({
-  active: z.array(FriendshipDtoSchema),
-  pendingOut: z.array(FriendshipDtoSchema),
-  pendingIn: z.array(FriendshipDtoSchema),
+  active: z.array(ActiveFriendshipDtoSchema),
+  pendingOut: z.array(PendingFriendshipDtoSchema),
+  pendingIn: z.array(PendingFriendshipDtoSchema),
 });
