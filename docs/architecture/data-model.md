@@ -88,6 +88,12 @@ Pour `CARAVAN`, `Expedition.units` reste vide et `Expedition.loot.resources` por
 
 Une conquête passe par `PendingConquest.OPEN → COMPLETED|INTERRUPTED`. La DB impose une seule fenêtre `OPEN` par `targetVillageId` via index unique partiel SQL ; les historiques terminés/interrompus peuvent coexister pour une même cible. Pendant la fenêtre, le Seigneur survivant est stationné comme `Garrison { villageId: targetVillageId, originVillageId: attackerVillageId, unitType: NOBLE }`; s'il survit jusqu'à la finalisation, il est converti en `UnitInventory.NOBLE` du village conquis.
 
+### Marqueurs de carte privés
+
+| Table | Rôle |
+|-------|------|
+| `MapMarker` | marqueur de carte **privé** au joueur, posé sur une **tile libre** `(worldId, x, y)` indépendamment de son contenu (run 085). Champs : `userId`, `worldId`, `x`, `y`, `kind` (enum `MapMarkerKind` : `TO_SCOUT`/`TARGET`/`DANGER`/`FUTURE_VILLAGE`/`INTEREST`/`NOTE`), `note` (≤80, nullable), `createdAt`, `updatedAt`. Unicité `(userId, worldId, x, y)` → upsert idempotent par tile ; index `(userId, worldId)`. `worldId` **dénormalisé** (pas de FK cascade depuis `Village`) → purge explicite à l'archive monde, comme `VillageIntel`. Aucun event WS (privé par compte). Spec [`26-private-map-markers.md`](../gameplay/26-private-map-markers.md). |
+
 ### Crowns
 
 | Table | Rôle |

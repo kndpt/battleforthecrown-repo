@@ -88,6 +88,16 @@ describe('world-archive lifecycle smoke', () => {
       },
     });
 
+    // 5b. Seed private map markers for BOTH players (run 085) — denormalised
+    //     worldId, no FK cascade. Must be purged with the rest of the kingdom.
+    await ctx.prisma.mapMarker.createMany({
+      data: [
+        { userId: owner.userId, worldId, x: 1, y: 1, kind: 'TARGET' },
+        { userId: owner.userId, worldId, x: 2, y: 2, kind: 'DANGER' },
+        { userId: other.userId, worldId, x: 3, y: 3, kind: 'TO_SCOUT' },
+      ],
+    });
+
     // Pre-conditions: the purge targets exist.
     expect(await ctx.prisma.village.count({ where: { worldId } })).toBe(2);
     expect(await ctx.prisma.crownBalance.count({ where: { worldId } })).toBe(2);
@@ -95,6 +105,7 @@ describe('world-archive lifecycle smoke', () => {
       await ctx.prisma.dailyCard.count({ where: { worldId } }),
     ).toBeGreaterThanOrEqual(1);
     expect(await ctx.prisma.villageIntel.count({ where: { worldId } })).toBe(1);
+    expect(await ctx.prisma.mapMarker.count({ where: { worldId } })).toBe(3);
 
     // 6. Force LOCKED with endsAt well past `endsAt + archiveAfterDays` so a
     //    single tick does LOCKED → ENDED (snapshot) → ARCHIVED (purge).
@@ -124,6 +135,7 @@ describe('world-archive lifecycle smoke', () => {
     expect(await ctx.prisma.crownBalance.count({ where: { worldId } })).toBe(0);
     expect(await ctx.prisma.dailyCard.count({ where: { worldId } })).toBe(0);
     expect(await ctx.prisma.villageIntel.count({ where: { worldId } })).toBe(0);
+    expect(await ctx.prisma.mapMarker.count({ where: { worldId } })).toBe(0);
     expect(await ctx.prisma.expedition.count({ where: { worldId } })).toBe(0);
     // Village cascade reached its children.
     expect(

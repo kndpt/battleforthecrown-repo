@@ -10,6 +10,7 @@ import {
 import { loadBundle } from '@/pixi/assets/loader';
 import { useWorldMapStore } from '@/stores/worldMap';
 import { useExpeditionsStore } from '@/stores/expeditions';
+import { useMapMarkersStore } from './mapMarkersStore';
 import type { MapEntity } from '@/api/world-types';
 import type { VisionDisk } from '@battleforthecrown/shared/world';
 
@@ -50,6 +51,9 @@ export function WorldMapCanvas({
   controllerRef,
 }: WorldMapCanvasProps) {
   const setSelectedEntity = useWorldMapStore((state) => state.setSelectedEntity);
+  const setSelectedMarkerId = useMapMarkersStore(
+    (state) => state.setSelectedMarkerId,
+  );
   const handleRef = useRef<WorldMapHandle | null>(null);
   const myVillageRef = useRef(myVillage);
   const visionDisksRef = useRef(visionDisks);
@@ -75,6 +79,7 @@ export function WorldMapCanvas({
         visionDisks: visionDisksRef.current,
         fogOfWarEnabled,
         onSelectEntity: (id) => setSelectedEntity(id),
+        onSelectMarker: (id) => setSelectedMarkerId(id),
       });
       handleRef.current = handle;
       if (controllerRef) {
@@ -94,6 +99,7 @@ export function WorldMapCanvas({
       // Initial reconcile from stores (might already have data).
       handle.reconcile(Object.values(useWorldMapStore.getState().entities));
       handle.reconcileExpeditions(Object.values(useExpeditionsStore.getState().byId));
+      handle.reconcileMarkers(useMapMarkersStore.getState().markers);
       handle.setSelected(useWorldMapStore.getState().selectedEntityId);
 
       // Subscribe to store updates without triggering React re-renders.
@@ -110,6 +116,11 @@ export function WorldMapCanvas({
           handle.reconcileExpeditions(Object.values(state.byId));
         }
       });
+      const unsubMarkers = useMapMarkersStore.subscribe((state, prev) => {
+        if (state.markers !== prev.markers) {
+          handle.reconcileMarkers(state.markers);
+        }
+      });
       const unsubCamera = handle.onCameraChange((camera) => {
         onCameraChangeRef.current?.(camera);
       });
@@ -117,6 +128,7 @@ export function WorldMapCanvas({
       return () => {
         unsubEntities();
         unsubExpeditions();
+        unsubMarkers();
         unsubCamera();
         if (controllerRef) controllerRef.current = null;
         onControllerReady?.(false);
@@ -129,6 +141,7 @@ export function WorldMapCanvas({
       gridHeight,
       fogOfWarEnabled,
       setSelectedEntity,
+      setSelectedMarkerId,
       onControllerReady,
       controllerRef,
     ],

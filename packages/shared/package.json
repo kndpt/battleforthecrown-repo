@@ -79,6 +79,10 @@
     "./social": {
       "types": "./dist/social/index.d.ts",
       "default": "./dist/social/index.js"
+    },
+    "./map-markers": {
+      "types": "./dist/map-markers/index.d.ts",
+      "default": "./dist/map-markers/index.js"
     }
   },
   "files": [
