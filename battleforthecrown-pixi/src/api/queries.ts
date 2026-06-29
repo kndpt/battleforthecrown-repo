@@ -67,7 +67,6 @@ import {
 } from "@battleforthecrown/shared/retention";
 import { RenownStatusSchema, type RenownStatus } from "@battleforthecrown/shared";
 import {
-  FriendshipDtoSchema,
   MyFriendshipsResponseSchema,
   type CreateFriendshipBody,
   type FriendshipDto,
