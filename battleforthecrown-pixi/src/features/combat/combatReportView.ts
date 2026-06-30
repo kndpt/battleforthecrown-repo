@@ -97,7 +97,7 @@ export function combatReportOutcome(report: CombatReportDto): {
 
   const attackerWon = isVictoryForAttacker(
     report.lossesAttacker,
-    report.totalUnitsAttacker,
+    report.totalUnitsAttacker ?? {},
   );
   const isVictory = report.isAttacker ? attackerWon : !attackerWon;
   return { isVictory, outcome: isVictory ? 'win' : 'lose' };
@@ -150,8 +150,9 @@ export function combatReportTypeLabel(report: CombatReportDto): {
 function buildLootHighlight(
   report: CombatReportDto,
 ): CombatReportHighlight | undefined {
-  const resources = report.loot?.resources ?? {};
-  const remaining = report.loot?.remainingResources ?? {};
+  const emptyLoot = { wood: 0, stone: 0, iron: 0 } as const;
+  const resources = report.loot?.resources ?? emptyLoot;
+  const remaining = report.loot?.remainingResources ?? emptyLoot;
   const chips = (['wood', 'stone', 'iron'] as const)
     .map((resource) => {
       const looted = resources[resource] ?? 0;

@@ -68,14 +68,17 @@ export interface CombatLoot {
 
 export interface CombatReportResponse {
   id: string;
+  worldId: string;
   attackerVillageId: string;
   attackerVillageName?: string | null;
   attackerX?: number | null;
   attackerY?: number | null;
+  attackerUserId: string;
   defenderVillageId?: string | null;
   defenderVillageName?: string | null;
   defenderX?: number | null;
   defenderY?: number | null;
+  defenderUserId?: string | null;
   observerUserId?: string | null;
   targetKind: string;
   targetX: number;
@@ -98,9 +101,12 @@ export interface CombatReportResponse {
       openedAt?: string;
       completedAt?: string;
       outcome?: string;
+      conquerorName?: string;
+      visualTier?: number;
     };
   };
   timestamp: string;
+  createdAt: string;
 }
 
 export interface ScoutReportResponse {

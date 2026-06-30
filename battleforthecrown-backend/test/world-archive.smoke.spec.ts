@@ -98,6 +98,19 @@ describe('world-archive lifecycle smoke', () => {
       ],
     });
 
+    // 5c. Seed a Friendship between the two members (run 063 table). It only
+    //     cascades on World/User delete — neither happens at the wipe (World is
+    //     kept), so it must be purged explicitly or it leaks as orphan data.
+    await ctx.prisma.friendship.create({
+      data: {
+        worldId,
+        requesterUserId: owner.userId,
+        recipientUserId: other.userId,
+        status: 'ACTIVE',
+        acceptedAt: new Date(),
+      },
+    });
+
     // Pre-conditions: the purge targets exist.
     expect(await ctx.prisma.village.count({ where: { worldId } })).toBe(2);
     expect(await ctx.prisma.crownBalance.count({ where: { worldId } })).toBe(2);
@@ -106,6 +119,7 @@ describe('world-archive lifecycle smoke', () => {
     ).toBeGreaterThanOrEqual(1);
     expect(await ctx.prisma.villageIntel.count({ where: { worldId } })).toBe(1);
     expect(await ctx.prisma.mapMarker.count({ where: { worldId } })).toBe(3);
+    expect(await ctx.prisma.friendship.count({ where: { worldId } })).toBe(1);
 
     // 6. Force LOCKED with endsAt well past `endsAt + archiveAfterDays` so a
     //    single tick does LOCKED → ENDED (snapshot) → ARCHIVED (purge).
@@ -136,6 +150,7 @@ describe('world-archive lifecycle smoke', () => {
     expect(await ctx.prisma.dailyCard.count({ where: { worldId } })).toBe(0);
     expect(await ctx.prisma.villageIntel.count({ where: { worldId } })).toBe(0);
     expect(await ctx.prisma.mapMarker.count({ where: { worldId } })).toBe(0);
+    expect(await ctx.prisma.friendship.count({ where: { worldId } })).toBe(0);
     expect(await ctx.prisma.expedition.count({ where: { worldId } })).toBe(0);
     // Village cascade reached its children.
     expect(
