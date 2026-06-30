@@ -77,8 +77,19 @@ import type {
   OpenConquestDto,
   OpenExpeditionDto,
   CaravanReportResponse,
+  CombatReportResponse,
   ReinforcementReportResponse,
   ScoutReportResponse,
+} from "@battleforthecrown/shared/combat";
+import {
+  CaravanReportsResponseSchema,
+  CaravanReportResponseSchema,
+  CombatReportsResponseSchema,
+  CombatReportResponseSchema,
+  ReinforcementReportsResponseSchema,
+  ReinforcementReportResponseSchema,
+  ScoutReportsResponseSchema,
+  ScoutReportResponseSchema,
 } from "@battleforthecrown/shared/combat";
 import {
   IncomingAttackDtoSchema,
@@ -99,37 +110,6 @@ import {
   type RankingTitlesResponse,
   type WorldFinalRankingsResponse,
 } from "@battleforthecrown/shared/rankings";
-
-const CaravanReportResourcesSchema = z.strictObject({
-  wood: z.number(),
-  stone: z.number(),
-  iron: z.number(),
-});
-
-const CaravanReportResponseSchema = z.strictObject({
-  id: z.string(),
-  worldId: z.string(),
-  expeditionId: z.string(),
-  type: z.enum(["ARRIVED", "RETURNED"]),
-  originVillageId: z.string(),
-  originVillageName: z.string().nullable().optional(),
-  originX: z.number(),
-  originY: z.number(),
-  targetVillageId: z.string(),
-  targetVillageName: z.string().nullable().optional(),
-  targetX: z.number(),
-  targetY: z.number(),
-  resources: CaravanReportResourcesSchema,
-  credited: CaravanReportResourcesSchema,
-  returned: CaravanReportResourcesSchema,
-  lost: CaravanReportResourcesSchema,
-  porters: z.number(),
-  recalled: z.boolean(),
-  isRead: z.boolean(),
-  timestamp: z.string(),
-});
-
-const CaravanReportsResponseSchema = z.array(CaravanReportResponseSchema);
 
 export const queryKeys = {
   worlds: () => ["worlds"] as const,
@@ -1080,57 +1060,7 @@ export function useGarrisonQuery(villageId: string | null) {
   });
 }
 
-export interface CombatLootDto {
-  resources?: { wood?: number; stone?: number; iron?: number };
-  remainingResources?: { wood?: number; stone?: number; iron?: number };
-  honor?: number;
-}
-
-export interface CombatReportDto {
-  id: string;
-  worldId: string;
-  attackerVillageId: string;
-  attackerVillageName?: string | null;
-  attackerX?: number | null;
-  attackerY?: number | null;
-  attackerUserId: string;
-  defenderVillageId?: string | null;
-  defenderVillageName?: string | null;
-  defenderX?: number | null;
-  defenderY?: number | null;
-  defenderUserId?: string | null;
-  observerUserId?: string | null;
-  targetKind: string;
-  targetX: number;
-  targetY: number;
-  loot: CombatLootDto;
-  totalUnitsAttacker: Record<string, number>;
-  totalUnitsDefender: Record<string, number>;
-  lossesAttacker: Record<string, number>;
-  lossesDefender: Record<string, number>;
-  details?: {
-    targetTier?: string | null;
-    occupationDefense?: {
-      attackerVillageId: string;
-      defenderUserId?: string;
-    };
-    captureFinalized?: {
-      pendingConquestId?: string;
-      villageId?: string;
-      villageName?: string;
-      openedAt?: string;
-      completedAt?: string;
-      outcome?: string;
-      conquerorName?: string;
-      visualTier?: number;
-    };
-  };
-  isRead: boolean;
-  isAttacker: boolean;
-  recipientRole?: "attacker" | "defender" | "observer" | null;
-  timestamp: string;
-  createdAt: string;
-}
+export type CombatReportDto = CombatReportResponse;
 
 interface ReportHooksConfig<TList, TDetail> {
   listPath: string;
@@ -1139,8 +1069,8 @@ interface ReportHooksConfig<TList, TDetail> {
   deletePath: (id: string) => string;
   listKey: (a: string | null, b: string | null) => readonly unknown[];
   detailKey: (a: string | null, b: string | null) => readonly unknown[];
-  parseList?: (raw: unknown) => TList[];
-  parseDetail?: (raw: unknown) => TDetail;
+  parseList: (raw: unknown) => TList[];
+  parseDetail: (raw: unknown) => TDetail;
 }
 
 function createReportHooks<TList, TDetail>(
@@ -1154,7 +1084,7 @@ function createReportHooks<TList, TDetail>(
       queryFn: async () => {
         if (!userId || !worldId) return [] as TList[];
         const raw = await apiClient.get<unknown>(cfg.listPath);
-        return cfg.parseList ? cfg.parseList(raw) : (raw as TList[]);
+        return cfg.parseList(raw);
       },
       enabled: Boolean(userId && worldId),
       staleTime: 10_000,
@@ -1170,7 +1100,7 @@ function createReportHooks<TList, TDetail>(
         if (!reportId || !worldId)
           return Promise.reject(new Error("Missing report"));
         const raw = await apiClient.get<unknown>(cfg.detailPath(reportId));
-        return cfg.parseDetail ? cfg.parseDetail(raw) : (raw as TDetail);
+        return cfg.parseDetail(raw);
       },
       enabled: Boolean(reportId && userId && worldId),
       staleTime: 60_000,
@@ -1184,7 +1114,7 @@ function createReportHooks<TList, TDetail>(
     return useMutation<TDetail, Error, { reportId: string }>({
       mutationFn: async ({ reportId }) => {
         const raw = await apiClient.patch<unknown>(cfg.readPath(reportId));
-        return cfg.parseDetail ? cfg.parseDetail(raw) : (raw as TDetail);
+        return cfg.parseDetail(raw);
       },
       onSettled: (_data, _err, { reportId }) => {
         queryClient.invalidateQueries({
@@ -1227,6 +1157,8 @@ const combatReport = createReportHooks<CombatReportDto, CombatReportDto>({
   deletePath: (id) => `/combat/report/${id}`,
   listKey: queryKeys.combatReports,
   detailKey: queryKeys.combatReport,
+  parseList: (raw) => CombatReportsResponseSchema.parse(raw),
+  parseDetail: (raw) => CombatReportResponseSchema.parse(raw),
 });
 export const useCombatReportsQuery = combatReport.useListQuery;
 export const useCombatReportQuery = combatReport.useDetailQuery;
@@ -1241,6 +1173,8 @@ const scoutReport = createReportHooks<ScoutReportResponse, ScoutReportResponse>(
     deletePath: (id) => `/combat/scout-report/${id}`,
     listKey: queryKeys.scoutReports,
     detailKey: queryKeys.scoutReport,
+    parseList: (raw) => ScoutReportsResponseSchema.parse(raw),
+    parseDetail: (raw) => ScoutReportResponseSchema.parse(raw),
   },
 );
 export const useScoutReportsQuery = scoutReport.useListQuery;
@@ -1258,6 +1192,8 @@ const reinforcementReport = createReportHooks<
   deletePath: (id) => `/combat/reinforcement-report/${id}`,
   listKey: queryKeys.reinforcementReports,
   detailKey: queryKeys.reinforcementReport,
+  parseList: (raw) => ReinforcementReportsResponseSchema.parse(raw),
+  parseDetail: (raw) => ReinforcementReportResponseSchema.parse(raw),
 });
 export const useReinforcementReportsQuery = reinforcementReport.useListQuery;
 export const useReinforcementReportQuery = reinforcementReport.useDetailQuery;
