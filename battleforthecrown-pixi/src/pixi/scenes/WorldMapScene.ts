@@ -34,12 +34,14 @@ import {
   aliasFor,
   BASE_PLAYER_SIZE,
   COLOR,
+  markerStyleFor,
   ownedHaloRxFactor,
   spriteSizeFor,
   styleFor,
   WORLD_MAX_ZOOM,
   WORLD_MIN_ZOOM,
 } from "./worldMapEntityStyle";
+import type { MapMarkerDto } from "@battleforthecrown/shared/map-markers";
 import type { ExpeditionSnapshot } from "@/stores/expeditions";
 import type { VisionDisk } from "@battleforthecrown/shared/world";
 import {
@@ -70,6 +72,7 @@ export interface WorldMapOptions {
   visionDisks?: readonly VisionDisk[];
   fogOfWarEnabled?: boolean;
   onSelectEntity?: (entityId: string | null) => void;
+  onSelectMarker?: (markerId: string) => void;
 }
 
 export interface WorldMapCameraSnapshot {
@@ -115,6 +118,8 @@ export interface WorldMapHandle {
   ) => void;
   /** Convert world tile coords to current screen pixel coords (for tooltip positioning). */
   worldToScreen: (tileX: number, tileY: number) => { x: number; y: number };
+  /** Sync the markers overlay with the latest list from the server. */
+  reconcileMarkers: (markers: MapMarkerDto[]) => void;
 }
 
 export function createWorldMapScene(
@@ -325,6 +330,20 @@ export function createWorldMapScene(
   const expeditionsLayer = new Container();
   expeditionsLayer.sortableChildren = true;
   viewport.addChild(expeditionsLayer);
+
+  // === Markers overlay (above entities layer, always visible regardless of fog) ===
+  // Private map pins are the player's own strategic memory: they are intentionally
+  // visible even outside vision disks (cf. spec § "Brouillard").
+  const markersLayer = new Container();
+  markersLayer.eventMode = "static";
+  viewport.addChild(markersLayer);
+
+  interface MarkerVisual {
+    container: Container;
+    graphic: Graphics;
+    data: MapMarkerDto;
+  }
+  const markerVisuals = new Map<string, MarkerVisual>();
 
   // === Active village halo ===
   // Inserted just below the entities layer so the village sprite occludes the
@@ -698,6 +717,11 @@ export function createWorldMapScene(
     blipVisuals.clear();
     expeditionVisuals.forEach((v) => v.destroy());
     expeditionVisuals.clear();
+    markerVisuals.forEach((visual) => {
+      markersLayer.removeChild(visual.container);
+      visual.container.destroy({ children: true });
+    });
+    markerVisuals.clear();
     terrainLayer.destroy();
     terrainTextures.destroy();
   };
@@ -751,6 +775,70 @@ export function createWorldMapScene(
         if (blipVisuals.has(entity.id)) destroyBlip(entity.id);
         ensureVisual(entity);
       }
+    }
+  };
+
+  const destroyMarkerVisual = (id: string) => {
+    const visual = markerVisuals.get(id);
+    if (visual) {
+      markersLayer.removeChild(visual.container);
+      visual.container.destroy({ children: true });
+    }
+    markerVisuals.delete(id);
+  };
+
+  const ensureMarkerVisual = (marker: MapMarkerDto): MarkerVisual => {
+    let visual = markerVisuals.get(marker.id);
+    if (visual) {
+      visual.data = marker;
+      const { px, py } = tileToWorld(marker.x, marker.y);
+      visual.container.position.set(px, py);
+      // Redraw in case kind changed.
+      const { color, ringColor } = markerStyleFor(marker.kind);
+      visual.graphic.clear();
+      visual.graphic
+        .circle(0, 0, 11)
+        .fill({ color: ringColor, alpha: 0.85 })
+        .circle(0, 0, 9)
+        .fill(color);
+      return visual;
+    }
+
+    const container = new Container();
+    container.eventMode = "static";
+    container.cursor = "pointer";
+
+    const graphic = new Graphics();
+    const { color, ringColor } = markerStyleFor(marker.kind);
+    graphic
+      .circle(0, 0, 11)
+      .fill({ color: ringColor, alpha: 0.85 })
+      .circle(0, 0, 9)
+      .fill(color);
+    container.addChild(graphic);
+
+    const { px, py } = tileToWorld(marker.x, marker.y);
+    container.position.set(px, py);
+
+    container.on("pointertap", (event: FederatedPointerEvent) => {
+      event.stopPropagation();
+      options.onSelectMarker?.(marker.id);
+    });
+
+    markersLayer.addChild(container);
+
+    visual = { container, graphic, data: marker };
+    markerVisuals.set(marker.id, visual);
+    return visual;
+  };
+
+  const reconcileMarkers = (markers: MapMarkerDto[]) => {
+    const nextIds = new Set(markers.map((m) => m.id));
+    for (const id of Array.from(markerVisuals.keys())) {
+      if (!nextIds.has(id)) destroyMarkerVisual(id);
+    }
+    for (const marker of markers) {
+      ensureMarkerVisual(marker);
     }
   };
 
@@ -919,6 +1007,7 @@ export function createWorldMapScene(
     scene,
     reconcile,
     reconcileExpeditions,
+    reconcileMarkers,
     setSelected,
     centerOn,
     zoomBy,

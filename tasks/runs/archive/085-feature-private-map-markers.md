@@ -1,8 +1,8 @@
 # Run #085 — feature-private-map-markers
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-29
+> **Terminé** : 2026-06-29
 
 ## Cible
 
@@ -92,14 +92,43 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 
 ## Progress
 
-_(Vide au démarrage. À remplir pendant `$bftc-run`.)_
+_(voir git history)_
 
 ## Décisions prises
 
-- **2026-06-28 (refinement)** — 7 questions Étape 0 tranchées (cf. section Étape 0). Point clé : **Cible = tile libre** (marker indexé par coordonnées `(worldId, x, y)`, jamais lié dur à une entité). Reste = propositions par défaut confirmées (kind enum + note ≤80, cap 50, backend, no auto-delete, no mini-map, off-fog).
+_(voir git history — décisions Étape 0 figées reportées dans `docs/gameplay/26-private-map-markers.md`)_
 
 ## Rapport final
 
+Synthèse : feature livrée full-stack (shared contracts + Prisma `MapMarker` + module CRUD scopé `userId×worldId` + purge à l'archive + overlay Pixi `markersLayer` + `MapMarkerSheet` + TanStack Query optimistic). Tile-libre, cap 50, off-fog, privé par compte. **Déviation actée** : `markersLayer` est une couche indépendante au-dessus des entités (et non « sous la captureMarker » comme suggéré au critère) — la captureMarker vit *dans* chaque container d'entité, incompatible avec un marker indexé par tile libre. Sans impact (captureMarker = anneau au sol `eventMode:"none"`).
+
 ### Acceptance & QA
 
-_(Vide au démarrage. Rempli à la clôture.)_
+**Critères d'acceptance vérifiés**
+- [x] Spec canonique + sortie lab — `ls docs/gameplay/26-private-map-markers.md && grep -c "26-private-map-markers" docs/gameplay/README.md docs/gameplay/lab/README.md docs/gameplay/lab/tickets/README.md` → spec présente, ticket 10 promu (lab READMEs + index MAJ).
+- [x] Purge à l'archive + smoke 2 joueurs — `yarn workspace battleforthecrown-backend test:smoke:run -- world-archive` → 2 passed (assertion `count(MapMarker where worldId) === 0` post-archive, seed 3 markers / 2 joueurs).
+- [x] Modèle Prisma + migration additive + `@@unique([userId,worldId,x,y])` + index — migration `20260629120000_add_map_marker` appliquée (dev + smoke template) via `prisma migrate deploy`.
+- [x] Module CRUD, JWT non-`@Public`, ownership 404 sans fuite, cap 50 en tx, `assertWorldWritable` — `yarn workspace battleforthecrown-backend test:smoke:run -- map-marker` → 6 passed (CRUD/upsert, cap, validation, iso cross-account, iso cross-world, read-only ENDED).
+- [x] Shared `map-markers/` (kinds, Dto, schemas, cap, note-max, error-codes, barrel + subpath) — `yarn workspace @battleforthecrown/shared build` → OK.
+- [x] Overlay Pixi `markersLayer` reconciliation `Map<id,Visual>` + style par kind, off-fog — `visuel` (IG) ; logique pure couverte par Vitest `markerStyleFor`.
+- [x] `MapMarkerSheet` mobile + cap `{N}/50` + tooltip cap atteint — `visuel` (IG).
+- [x] Query/mutations TanStack optimistic + rollback + invalidation — `grep -n "onMutate\|onError\|onSettled" battleforthecrown-pixi/src/api/queries.ts` (hooks markers) ; rollback testé indirectement (pattern identique aux mutations existantes).
+- [x] Isolation par compte (DTO sans `userId`) — `grep -n "userId" packages/shared/src/map-markers/types.ts` → absent du `MapMarkerDto` ; smoke iso cross-account/world verts.
+- [x] Tests : `yarn static-check` vert ; `yarn test:backend` 536/536 ; `yarn test:pixi` 868/868 ; smokes ciblés 8/8.
+- [x] Docs : `backend-modules.md` (+ entrée `map-marker`, purge matrix, mutations gardées), `data-model.md` (entité `MapMarker`), `19-world-lifecycle.md` (purge).
+
+**Review indépendante** : Déclenchée (raison: touche backend ET frontend + invariant durable + diff >100). Verdict `GO` — zéro bloquant/majeur ; 3 mineurs non-actionnables (ordre de layer intentionnel, divergence optimistic transitoire, enum to-prisma = compile-guard bidirectionnel requis).
+
+**Tests automatisés** : `yarn static-check` → OK ; `yarn workspace battleforthecrown-backend test` → 56 suites / 536 tests ; `yarn workspace battleforthecrown-pixi test --run` → 123 fichiers / 868 tests ; Vitest ajouté `mapMarkerSheetModel.test.ts` (6).
+
+**Smokes lancés** : `test:smoke:preflight` + `test:smoke:run -- map-marker world-archive` → 2 suites / 8 tests. Ciblés (diff backend = nouveau module CRUD + 1 ligne purge worker, pas transversal).
+
+**Smokes ajoutés/modifiés** : `test/map-marker.smoke.spec.ts` (CRUD/upsert, cap, validation, iso cross-account, iso cross-world, read-only ENDED) ; `test/world-archive.smoke.spec.ts` étendu (seed + purge MapMarker 2 joueurs).
+
+**QA fonctionnelle agent** : couverte par les smokes REST end-to-end (register → join → POST/GET/PATCH/DELETE markers + tick archive). Pas de curl manuel additionnel nécessaire.
+
+**Tests IG à faire par le user** :
+- [ ] Carte monde : poser un marqueur via « Marquer ce lieu » sur un village/barbare sélectionné → pin visible à la bonne tile, kind/couleur corrects.
+- [ ] Taper un pin existant → sheet en édition (kind + note préremplis), Enregistrer / Supprimer fonctionnent.
+- [ ] Marqueur reste visible hors vision (zone non scoutée / fog).
+- [ ] Compteur `{N}/50` + blocage à 50 (création nouvelle tile désactivée, édition d'une tile marquée OK).

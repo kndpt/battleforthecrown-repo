@@ -121,6 +121,7 @@ Déclenchement : job planifié à `endsAt` (= `startedAt + 60 j`, default 🔧).
 | Élément | Sort en `ENDED` |
 | --- | --- |
 | Royaume du joueur (villages, bâtiments, armée) | Archivé puis purgé |
+| Marqueurs de carte privés (`MapMarker`, run 085) | Purgés à l'archivage (`archiveEndedWorlds`, après la fenêtre de consultation `ENDED`), player-scoped per-world, aucun carry-over |
 | Ressources stockées (bois, pierre, fer) | Reset (perdus avec le monde) |
 | Couronnes accumulées | Reset (perdues avec le monde) |
 | Statistiques personnelles (raids menés, conquêtes, etc.) | Conservées sur la fiche profil globale |

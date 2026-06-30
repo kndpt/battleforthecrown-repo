@@ -396,6 +396,7 @@ export class WorldLifecycleWorker implements OnModuleInit {
         // Tables `worldId` dénormalisées (pas de cascade Prisma) — purge explicite.
         await tx.expedition.deleteMany({ where: { worldId } });
         await tx.villageIntel.deleteMany({ where: { worldId } });
+        await tx.mapMarker.deleteMany({ where: { worldId } });
         // Friendship (run 063) ne cascade que sur World/User delete — ni l'un ni
         // l'autre n'arrive au wipe (World conservé) → purge explicite requise.
         await tx.friendship.deleteMany({ where: { worldId } });

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { MapPin } from "lucide-react";
 import {
   VillageMapPanel,
   type VillageMapVariant,
@@ -50,6 +51,8 @@ interface SelectedEntityPanelProps {
   onCaravan?: (entity: MapEntity) => void;
   onScout?: (entity: MapEntity) => void;
   onGoToVillage?: (entity: MapEntity) => void;
+  /** Ouvre la sheet de marqueur privé sur la tile de l'entité (run 085). */
+  onMark?: (entity: MapEntity) => void;
   onClose?: () => void;
 }
 
@@ -62,6 +65,7 @@ export function SelectedEntityPanel({
   onCaravan,
   onScout,
   onGoToVillage,
+  onMark,
   onClose,
 }: SelectedEntityPanelProps) {
   const now = useTickingNow(1_000);
@@ -263,6 +267,18 @@ export function SelectedEntityPanel({
             : undefined
         }
       />
+      {onMark && (
+        <div className="mt-2 flex justify-center">
+          <button
+            type="button"
+            onClick={() => onMark(entity)}
+            className="pointer-events-auto flex items-center gap-1.5 rounded-full border-2 border-game-gold-border bg-gradient-to-b from-[#5a4424] to-[#2e2112] px-4 py-1.5 font-game text-xs font-bold uppercase tracking-wide text-game-gold-light shadow-lg transition-all hover:brightness-110 active:translate-y-px"
+          >
+            <MapPin size={14} strokeWidth={2.5} />
+            Marquer ce lieu
+          </button>
+        </div>
+      )}
       {reportModal && (
         <ReportDetailModal
           reportId={reportModal.reportId}

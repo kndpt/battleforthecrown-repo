@@ -27,6 +27,7 @@ import { RenownModule } from './modules/renown/renown.module';
 import { UsersModule } from './modules/users/users.module';
 import { CosmeticModule } from './modules/cosmetic/cosmetic.module';
 import { FriendshipModule } from './modules/friendship/friendship.module';
+import { MapMarkerModule } from './modules/map-marker/map-marker.module';
 import { WorkersModule } from './workers/workers.module';
 import { HealthController } from './health.controller';
 import { RequestLoggerMiddleware } from './common/request-logger.middleware';
@@ -82,6 +83,7 @@ import { RequestLoggerMiddleware } from './common/request-logger.middleware';
     UsersModule,
     CosmeticModule,
     FriendshipModule,
+    MapMarkerModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],
