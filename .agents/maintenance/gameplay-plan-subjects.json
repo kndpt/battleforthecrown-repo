@@ -482,7 +482,7 @@
       "keywords": ["combat-posture", "posture", "ordre-combat", "prudent", "brutal", "lab-promotion"],
       "artefactType": "rejected",
       "artefactPath": "",
-      "artefactId": "087",
+      "artefactId": "",
       "status": "REJECTED",
       "prBranch": "plan/gameplay/combat-postures",
       "gapSummary": "Analysé et NON RETENU pour l'instant (décision 2026-06-28). À EXCLURE des futures analyses gameplay (slug/specPath/keywords). Le gap était réel (combat 100 % auto, aucun levier d'intention au lancement ; promotion lab ticket 02), mais le sujet n'est pas retenu maintenant. Run 087 annulé, aucune fiche écrite.",
