@@ -1,3 +1,4 @@
+import { formatInactivityLabel } from "@battleforthecrown/shared";
 import { ModalBackdrop, Spinner } from "@/ui";
 import { usePublicPlayerProfileQuery } from "@/api/queries";
 import { useTickingNow } from "@/lib/useTickingNow";
@@ -16,6 +17,10 @@ const NUMBER_FORMATTER = new Intl.NumberFormat("fr-FR");
  * champs publics par spec (09 § Visibilité) : nom, puissance royaume, état du
  * bouclier débutant. Le bloc bouclier est masqué quand `newbieShield === null`
  * (spec 14 § 3 — pas de signal « exposé » explicite).
+ *
+ * Affiche aussi un badge gris discret « Inactif depuis N j » quand le joueur est
+ * pré-abandon (spec 18). `inactivity === null` (membre actif) → rien. Le libellé
+ * vient du serveur (`sinceDays` figé) ; aucun recalcul ni `lastLoginAt` brut.
  */
 export function PublicPlayerProfileSheet({
   userId,
@@ -180,6 +185,34 @@ export function PublicPlayerProfileSheet({
                         endsAt={profile.data.newbieShield.endsAt}
                       />
                     </div>
+                  </div>
+                )}
+
+                {profile.data.inactivity && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "8px 12px",
+                      borderRadius: 10,
+                      background:
+                        "linear-gradient(to bottom, #f1efe9, #ddd8cd)",
+                      border: "1.5px solid #a9a195",
+                    }}
+                  >
+                    <span style={{ fontSize: 18, filter: "grayscale(1)" }}>
+                      💤
+                    </span>
+                    <span
+                      style={{
+                        fontWeight: 700,
+                        fontSize: 11,
+                        color: "#6b6357",
+                      }}
+                    >
+                      {formatInactivityLabel(profile.data.inactivity.sinceDays)}
+                    </span>
                   </div>
                 )}
               </div>

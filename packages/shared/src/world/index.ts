@@ -5,6 +5,7 @@ export * from './lifecycle';
 export * from './world';
 export * from './dtos';
 export * from './public-player-profile';
+export * from './inactivity';
 export * from './barbarian-templates';
 export * from './barbarian-geometry';
 
