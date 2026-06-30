@@ -25,16 +25,3 @@ export const MAP_MARKER_KINDS = [
 
 /** Fixed kind of a marker. */
 export type MapMarkerKind = (typeof MAP_MARKER_KINDS)[number];
-
-/** One marker as seen by its owner (the only viewer — never cross-account). */
-export interface MapMarkerDto {
-  id: string;
-  worldId: string;
-  x: number;
-  y: number;
-  kind: MapMarkerKind;
-  /** Optional free-text context (≤ MAP_MARKER_NOTE_MAX_LENGTH), null when empty. */
-  note: string | null;
-  createdAt: string;
-  updatedAt: string;
-}

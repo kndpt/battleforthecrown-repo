@@ -492,6 +492,7 @@ export function WorldMapScreen() {
 
       {activeMarkerTile && worldId && (
         <MapMarkerSheet
+          key={`${activeMarkerTile.x}:${activeMarkerTile.y}`}
           worldId={worldId}
           tile={activeMarkerTile}
           onClose={closeMarkerSheet}

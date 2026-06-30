@@ -78,8 +78,14 @@ export function WorldMapCanvas({
         myVillage: currentMyVillage ? { x: currentMyVillage.x, y: currentMyVillage.y } : null,
         visionDisks: visionDisksRef.current,
         fogOfWarEnabled,
-        onSelectEntity: (id) => setSelectedEntity(id),
-        onSelectMarker: (id) => setSelectedMarkerId(id),
+        onSelectEntity: (id) => {
+          if (id !== null) setSelectedMarkerId(null);
+          setSelectedEntity(id);
+        },
+        onSelectMarker: (id) => {
+          if (id !== null) setSelectedEntity(null);
+          setSelectedMarkerId(id);
+        },
       });
       handleRef.current = handle;
       if (controllerRef) {

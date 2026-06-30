@@ -743,6 +743,7 @@ model MapMarker {
 
   @@unique([userId, worldId, x, y])
   @@index([userId, worldId])
+  @@index([worldId])
   @@map("map_marker")
 }
 

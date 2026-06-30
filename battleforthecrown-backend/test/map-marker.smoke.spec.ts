@@ -116,6 +116,16 @@ describe('map-marker smoke', () => {
       .set('Authorization', `Bearer ${a.accessToken}`)
       .send({ x: 1, y: 1, kind: 'NOPE' });
     expect(badKind.status).toBe(400);
+
+    const created = await request(ctx.server)
+      .post(markers(world.id))
+      .set('Authorization', `Bearer ${a.accessToken}`)
+      .send({ x: 2, y: 2, kind: 'NOTE' });
+    const emptyPatch = await request(ctx.server)
+      .patch(`${markers(world.id)}/${asMarker(created).id}`)
+      .set('Authorization', `Bearer ${a.accessToken}`)
+      .send({});
+    expect(emptyPatch.status).toBe(400);
   });
 
   it('caps markers at MAP_MARKER_CAP new tiles per world; upsert on a marked tile still allowed at cap', async () => {

@@ -70,6 +70,11 @@ export class MapMarkerService {
         return this.toDto(updated);
       }
 
+      // Serialize concurrent creates for this (userId, worldId): without it,
+      // two near-simultaneous calls can both read count < CAP and both insert,
+      // overshooting MAP_MARKER_CAP. Advisory lock released at tx end.
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`map-marker:${userId}:${worldId}`}))`;
+
       const count = await tx.mapMarker.count({ where: { userId, worldId } });
       if (count >= MAP_MARKER_CAP) {
         throw this.capReached();

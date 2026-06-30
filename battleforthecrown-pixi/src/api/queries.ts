@@ -76,6 +76,7 @@ import type {
   CreateMapMarkerBody,
   UpdateMapMarkerBody,
 } from "@battleforthecrown/shared/map-markers";
+import { MapMarkerDtoSchema } from "@battleforthecrown/shared/map-markers";
 import type { CosmeticAwardResponse } from "@battleforthecrown/shared";
 import { COSMETIC_AWARD_KINDS } from "@battleforthecrown/shared";
 import type {
@@ -1918,9 +1919,12 @@ export function useDeleteFriendshipMutation() {
 export const mapMarkersQueryOptions = (worldId: string | null) =>
   queryOptions({
     queryKey: queryKeys.mapMarkers(worldId),
-    queryFn: (): Promise<MapMarkerDto[]> => {
-      if (!worldId) return Promise.resolve([] as MapMarkerDto[]);
-      return apiClient.get<MapMarkerDto[]>(`/worlds/${worldId}/map-markers`);
+    queryFn: async (): Promise<MapMarkerDto[]> => {
+      if (!worldId) return [];
+      const raw = await apiClient.get<unknown>(
+        `/worlds/${worldId}/map-markers`,
+      );
+      return MapMarkerDtoSchema.array().parse(raw);
     },
     enabled: Boolean(worldId),
     staleTime: 30_000,
@@ -1941,8 +1945,13 @@ export function useUpsertMapMarkerMutation(worldId: string) {
     UpsertMapMarkerInput,
     { previousMarkers?: MapMarkerDto[] }
   >({
-    mutationFn: (body) =>
-      apiClient.post<MapMarkerDto>(`/worlds/${worldId}/map-markers`, body),
+    mutationFn: async (body) => {
+      const raw = await apiClient.post<unknown>(
+        `/worlds/${worldId}/map-markers`,
+        body,
+      );
+      return MapMarkerDtoSchema.parse(raw);
+    },
     onMutate: async (input) => {
       const key = queryKeys.mapMarkers(worldId);
       await queryClient.cancelQueries({ queryKey: key });
@@ -1993,11 +2002,13 @@ export function useUpdateMapMarkerMutation(worldId: string) {
     UpdateMapMarkerInput,
     { previousMarkers?: MapMarkerDto[] }
   >({
-    mutationFn: ({ id, body }) =>
-      apiClient.patch<MapMarkerDto>(
+    mutationFn: async ({ id, body }) => {
+      const raw = await apiClient.patch<unknown>(
         `/worlds/${worldId}/map-markers/${id}`,
         body,
-      ),
+      );
+      return MapMarkerDtoSchema.parse(raw);
+    },
     onMutate: async ({ id, body }) => {
       const key = queryKeys.mapMarkers(worldId);
       await queryClient.cancelQueries({ queryKey: key });

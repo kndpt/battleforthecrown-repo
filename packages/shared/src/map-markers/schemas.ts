@@ -51,3 +51,17 @@ export const UpdateMapMarkerSchema = z
   });
 
 export type UpdateMapMarkerBody = z.infer<typeof UpdateMapMarkerSchema>;
+
+/** One marker as seen by its owner (the only viewer — never cross-account). */
+export const MapMarkerDtoSchema = z.object({
+  id: z.string(),
+  worldId: z.string(),
+  x: tileCoordinate,
+  y: tileCoordinate,
+  kind: MapMarkerKindSchema,
+  note: z.string().max(MAP_MARKER_NOTE_MAX_LENGTH).nullable(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type MapMarkerDto = z.infer<typeof MapMarkerDtoSchema>;

@@ -20,4 +20,7 @@ CREATE TABLE "map_marker" (
 CREATE INDEX "map_marker_user_id_world_id_idx" ON "map_marker"("user_id", "world_id");
 
 -- CreateIndex
+CREATE INDEX "map_marker_world_id_idx" ON "map_marker"("world_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "map_marker_user_id_world_id_x_y_key" ON "map_marker"("user_id", "world_id", "x", "y");
