@@ -127,8 +127,7 @@ function isoWeekParts(dayKey: string): {
   const isoWeek =
     1 +
     Math.round(
-      (thursday.getTime() - firstThursday.getTime()) /
-        (7 * MS_PER_DAY),
+      (thursday.getTime() - firstThursday.getTime()) / (7 * MS_PER_DAY),
     );
   return { isoYear, isoWeek, weekdayIndex };
 }
