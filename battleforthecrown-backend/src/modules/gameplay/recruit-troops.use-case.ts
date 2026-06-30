@@ -15,9 +15,9 @@ import { VillageStrategyService } from '../strategy/village-strategy.service';
 import { applyPopulationBonus } from '../population/population-capacity';
 import {
   UNIT_CATALOG,
-  UnitType,
   UnitCost,
   UNIT_TYPES,
+  isUnitType,
 } from '@battleforthecrown/shared/army';
 import { calculateTrainingTime } from '@battleforthecrown/shared/logic';
 import { MS_PER_SECOND } from '@battleforthecrown/shared/time';
@@ -50,7 +50,7 @@ export class RecruitTroopsUseCase {
     const worldId = await this.worldService.getWorldIdFromVillage(villageId);
     const config = await this.worldService.getWorldConfig(worldId);
 
-    if (!isValidUnitType(unitType)) {
+    if (!isUnitType(unitType)) {
       throw new BadRequestException('Invalid unit type');
     }
     if (unitType === UNIT_TYPES.NOBLE) {
@@ -227,7 +227,3 @@ export class RecruitTroopsUseCase {
     });
   }
 }
-
-const isValidUnitType = (value: string): value is UnitType => {
-  return Object.values(UNIT_TYPES).includes(value as UnitType);
-};

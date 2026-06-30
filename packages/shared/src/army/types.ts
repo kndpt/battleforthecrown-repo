@@ -13,6 +13,12 @@ export const UNIT_TYPES = {
 
 export type UnitType = (typeof UNIT_TYPES)[keyof typeof UNIT_TYPES];
 
+const UNIT_TYPE_VALUES = new Set<string>(Object.values(UNIT_TYPES));
+
+export function isUnitType(value: string): value is UnitType {
+  return UNIT_TYPE_VALUES.has(value);
+}
+
 export const BARRACKS_UNIT_TYPES = [
   UNIT_TYPES.MILITIA,
   UNIT_TYPES.SQUIRE,
