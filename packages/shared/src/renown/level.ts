@@ -6,6 +6,7 @@
  *
  * Spec : docs/gameplay/25-account-renown.md §4.
  */
+import { z } from 'zod';
 import { getBuildingPowerWeight } from '../power/weights';
 import {
   RENOWN_BARBARIAN_CONQUEST_FACTOR,
@@ -33,20 +34,18 @@ export const renownLevelForXp = (xp: number): number => {
   return level;
 };
 
-export interface RenownStatus {
-  /** XP totale cumulée. */
-  xp: number;
-  /** Niveau dérivé. */
-  level: number;
-  /** Seuil XP du niveau courant (`xpForLevel(level)`). */
-  currentLevelXp: number;
-  /** Seuil XP du niveau suivant (`xpForLevel(level + 1)`). */
-  nextLevelXp: number;
-  /** XP acquise dans le niveau courant (`xp − currentLevelXp`). */
-  xpIntoLevel: number;
-  /** XP totale du palier courant (`nextLevelXp − currentLevelXp`). */
-  xpForNextLevel: number;
-}
+const intNN = z.number().int().nonnegative();
+
+export const RenownStatusSchema = z.object({
+  xp: intNN,
+  level: intNN,
+  currentLevelXp: intNN,
+  nextLevelXp: intNN,
+  xpIntoLevel: intNN,
+  xpForNextLevel: intNN,
+});
+
+export type RenownStatus = z.infer<typeof RenownStatusSchema>;
 
 /** Dérive le statut complet de Renommée depuis l'XP cumulée. */
 export const renownStatusForXp = (xp: number): RenownStatus => {
