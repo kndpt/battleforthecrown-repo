@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { buildShieldState } from '@battleforthecrown/shared';
 import { formatAnonymousPlayerName } from '@battleforthecrown/shared/auth';
@@ -65,6 +66,12 @@ type PlayerVillageEntity = {
   data: PlayerVillageData;
 };
 
+export type WorldEntity = BarbarianVillageEntity | PlayerVillageEntity;
+
+export type VillageSummary = Prisma.VillageGetPayload<{
+  select: typeof VILLAGE_SUMMARY_SELECT;
+}>;
+
 @Injectable()
 export class WorldEntitiesQueryService {
   constructor(
@@ -78,7 +85,7 @@ export class WorldEntitiesQueryService {
     centerY: number,
     radius: number,
     kinds?: string[],
-  ) {
+  ): Promise<WorldEntity[]> {
     const bounds = computeRadiusBounds(
       await this.loadGridSize(worldId),
       centerX,
@@ -94,7 +101,10 @@ export class WorldEntitiesQueryService {
     return [...barbarianVillages, ...playerVillages].sort(byCoord);
   }
 
-  async getAllEntities(worldId: string, kinds?: string[]) {
+  async getAllEntities(
+    worldId: string,
+    kinds?: string[],
+  ): Promise<WorldEntity[]> {
     const barbarianVillages =
       (await this.fetchBarbarianVillages(worldId, kinds)) ?? [];
     const playerVillages =
@@ -108,7 +118,7 @@ export class WorldEntitiesQueryService {
     centerX: number,
     centerY: number,
     radius: number,
-  ) {
+  ): Promise<VillageSummary[]> {
     const { minX, maxX, minY, maxY } = computeRadiusBounds(
       await this.loadGridSize(worldId),
       centerX,
@@ -127,7 +137,7 @@ export class WorldEntitiesQueryService {
     });
   }
 
-  async getAllVillages(worldId: string) {
+  async getAllVillages(worldId: string): Promise<VillageSummary[]> {
     return this.prisma.village.findMany({
       where: { worldId },
       select: VILLAGE_SUMMARY_SELECT,
