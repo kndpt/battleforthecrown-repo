@@ -1,6 +1,6 @@
 # maint-debt — candidats (réécrit chaque run)
 
-last: 2026-06-29 | archive: `archive/maint-debt/2026-06-15-full.md`
+last: 2026-06-30 | archive: `archive/maint-debt/2026-06-15-full.md`
 branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 ## candidate
@@ -23,6 +23,7 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | area | PR |
 |------|-----|
 | isUnitType guard duplicated 3× (cancel-recruitment, recruit-troops, UnitDetailModal) → shared | #221 |
+| hardcoded time constants (MS_PER_HOUR/MS_PER_DAY) in retention + shield + spec — replaced by shared/time imports | #225 |
 
 ## done (prev)
 

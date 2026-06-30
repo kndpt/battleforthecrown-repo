@@ -1,3 +1,6 @@
+import { MS_PER_HOUR } from '../time';
+import type { NewbieShieldState } from '../world/dtos';
+
 export interface ShieldTimingInput {
   joinedAt: Date | string;
   newbieShieldHours: number;
@@ -5,7 +8,7 @@ export interface ShieldTimingInput {
 
 export function shieldEndsAt({ joinedAt, newbieShieldHours }: ShieldTimingInput): Date {
   const start = joinedAt instanceof Date ? joinedAt : new Date(joinedAt);
-  return new Date(start.getTime() + newbieShieldHours * 3600 * 1000);
+  return new Date(start.getTime() + newbieShieldHours * MS_PER_HOUR);
 }
 
 export interface ShieldActiveInput extends ShieldTimingInput {
@@ -17,8 +20,6 @@ export function isShieldActive({ joinedAt, brokenAt, newbieShieldHours, now }: S
   if (brokenAt != null) return false;
   return now.getTime() < shieldEndsAt({ joinedAt, newbieShieldHours }).getTime();
 }
-
-import type { NewbieShieldState } from '../world/dtos';
 
 /**
  * Build the wire-shaped shield state observed by attackers and the owner.
