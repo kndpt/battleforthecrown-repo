@@ -496,6 +496,26 @@
         "tasks/ — aucun ticket/run actif ou archivé ne couvre les ordres/postures de combat"
       ],
       "addedAt": "2026-06-28"
+    },
+    {
+      "specPath": "docs/gameplay/18-inactivity-and-abandonment.md",
+      "slug": "inactivity-indicator",
+      "title": "Indicateur d'inactivité (pré-abandon) — tranche bornée non destructive",
+      "keywords": ["inactivity", "inactif", "abandon", "lastLoginAt", "public-profile"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/087-feature-inactivity-indicator.md",
+      "artefactId": "087",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/inactivity-indicator",
+      "gapSummary": "La spec 18 anticipe un indicateur visuel des comptes inactifs (gris, J+7 à J+14) avant tout basculement, mais rien n'est dérivé ni exposé : lastLoginAt n'a qu'un usage interne (filtre crown-production), aucun état d'inactivité shared/DTO/UI. Basculement village->barbare destructif laissé hors scope (questions de design non tranchées).",
+      "codeEvidence": [
+        "battleforthecrown-backend/prisma/schema.prisma:482 — WorldMembership.lastLoginAt existe mais n'est exposé sur aucune surface publique",
+        "battleforthecrown-backend/src/workers/crown-production.worker.ts:40 — seul usage de lastLoginAt (filtre joueurs actifs 7 j), aucun état d'inactivité dérivé",
+        "battleforthecrown-backend/src/modules/users/public-profile.service.ts — expose displayName + kingdomPower + newbieShield, pas d'inactivité",
+        "packages/shared/src/world/ — aucun helper computeInactivityState ni constante de seuil d'inactivité",
+        "battleforthecrown-pixi/src — aucun indicateur d'inactivité (rg 'inactif|inactiv|dormant' : 0 match)"
+      ],
+      "addedAt": "2026-06-30"
     }
   ]
 }
