@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { shieldEndsAt, isShieldActive, buildShieldState } from './shield';
+import { MS_PER_HOUR } from '../time';
 
 const JOINED_AT = new Date('2026-01-01T00:00:00.000Z');
 const HOURS_48 = 48;
-const MS_48H = 48 * 3600 * 1000; // 172800000
+const MS_48H = HOURS_48 * MS_PER_HOUR;
 
 describe('shieldEndsAt', () => {
   it('returns joinedAt + newbieShieldHours×3600×1000 ms exactly', () => {

@@ -1,6 +1,6 @@
 # maint-debt — candidats (réécrit chaque run)
 
-last: 2026-06-28 | archive: `archive/maint-debt/2026-06-15-full.md`
+last: 2026-06-30 | archive: `archive/maint-debt/2026-06-15-full.md`
 branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 ## candidate
@@ -21,7 +21,7 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 | area | PR |
 |------|-----|
-| typedEntries consistency: 4 files still using Object.entries + `as UnitType` instead of shared typedEntries helper | #213 |
+| hardcoded time constants (MS_PER_HOUR/MS_PER_DAY) in retention + shield + spec — replaced by shared/time imports | pending |
 
 ## rules
 
