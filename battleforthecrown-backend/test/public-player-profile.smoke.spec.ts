@@ -134,12 +134,21 @@ describe('public player profile smoke', () => {
       userId: attacker.userId,
       newbieShield: null,
     });
-    // Exact public shape — no private leak (renown, villages, crowns, army…).
+    // Exact public shape — no private leak (raw renownXp, villages, crowns,
+    // army…). Cosmetic `renownLevel` is exposed per spec 25 § 2 (run on main
+    // a5c87ad surfaced it on the profile but missed this smoke assertion).
     expect(Object.keys(attackerBody).sort()).toEqual(
-      ['displayName', 'kingdomPower', 'newbieShield', 'userId'].sort(),
+      [
+        'displayName',
+        'kingdomPower',
+        'newbieShield',
+        'renownLevel',
+        'userId',
+      ].sort(),
     );
     expect(typeof attackerBody.displayName).toBe('string');
     expect(typeof attackerBody.kingdomPower).toBe('number');
+    expect(typeof attackerBody.renownLevel).toBe('number');
 
     // Protected player profile: still protected → newbieShield active.
     const protectedProfile = await request(ctx.server)
