@@ -1,9 +1,15 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { z } from 'zod';
 import { buildShieldState } from '@battleforthecrown/shared';
 import { formatAnonymousPlayerName } from '@battleforthecrown/shared/auth';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WorldConfigService } from './world-config.service';
+import {
+  computeRadiusBounds,
+  presentCaptureWindow,
+  type GridSize,
+  type RadiusBounds,
+} from './world-entities-query.utils';
 
 const captureWindowSchema = z
   .object({
@@ -73,25 +79,17 @@ export class WorldEntitiesQueryService {
     radius: number,
     kinds?: string[],
   ) {
-    const minX = Math.max(centerX - radius, 0);
-    const maxX = Math.min(centerX + radius, 499);
-    const minY = Math.max(centerY - radius, 0);
-    const maxY = Math.min(centerY + radius, 499);
+    const bounds = computeRadiusBounds(
+      await this.loadGridSize(worldId),
+      centerX,
+      centerY,
+      radius,
+    );
 
     const barbarianVillages =
-      (await this.fetchBarbarianVillages(worldId, kinds, {
-        minX,
-        maxX,
-        minY,
-        maxY,
-      })) ?? [];
+      (await this.fetchBarbarianVillages(worldId, kinds, bounds)) ?? [];
     const playerVillages =
-      (await this.fetchPlayerVillages(worldId, kinds, {
-        minX,
-        maxX,
-        minY,
-        maxY,
-      })) ?? [];
+      (await this.fetchPlayerVillages(worldId, kinds, bounds)) ?? [];
 
     return [...barbarianVillages, ...playerVillages].sort(byCoord);
   }
@@ -111,10 +109,12 @@ export class WorldEntitiesQueryService {
     centerY: number,
     radius: number,
   ) {
-    const minX = Math.max(centerX - radius, 0);
-    const maxX = centerX + radius;
-    const minY = Math.max(centerY - radius, 0);
-    const maxY = centerY + radius;
+    const { minX, maxX, minY, maxY } = computeRadiusBounds(
+      await this.loadGridSize(worldId),
+      centerX,
+      centerY,
+      radius,
+    );
 
     return this.prisma.village.findMany({
       where: {
@@ -135,10 +135,21 @@ export class WorldEntitiesQueryService {
     });
   }
 
+  private async loadGridSize(worldId: string): Promise<GridSize> {
+    const world = await this.prisma.world.findUnique({
+      where: { id: worldId },
+      select: { gridWidth: true, gridHeight: true },
+    });
+    if (!world) {
+      throw new NotFoundException(`World ${worldId} not found`);
+    }
+    return world;
+  }
+
   private async fetchBarbarianVillages(
     worldId: string,
     kinds: string[] | undefined,
-    bounds?: { minX: number; maxX: number; minY: number; maxY: number },
+    bounds?: RadiusBounds,
   ): Promise<BarbarianVillageEntity[] | null> {
     const shouldInclude =
       !kinds || kinds.length === 0 || kinds.includes('BARBARIAN_VILLAGE');
@@ -175,7 +186,7 @@ export class WorldEntitiesQueryService {
     });
 
     return barbarians.map((b) => {
-      const capture = b.pendingConquestTargets[0];
+      const captureWindow = presentCaptureWindow(b.pendingConquestTargets[0]);
 
       return {
         id: b.id,
@@ -187,16 +198,7 @@ export class WorldEntitiesQueryService {
           tier: b.tier,
           name: b.name,
           villageId: b.id,
-          ...(capture
-            ? {
-                captureWindow: {
-                  status: 'OPEN' as const,
-                  pendingConquestId: capture.id,
-                  attackerVillageId: capture.attackerVillageId,
-                  captureUntil: capture.captureUntil.toISOString(),
-                },
-              }
-            : {}),
+          ...(captureWindow ? { captureWindow } : {}),
         }),
       };
     });
@@ -205,7 +207,7 @@ export class WorldEntitiesQueryService {
   private async fetchPlayerVillages(
     worldId: string,
     kinds: string[] | undefined,
-    bounds?: { minX: number; maxX: number; minY: number; maxY: number },
+    bounds?: RadiusBounds,
   ): Promise<PlayerVillageEntity[] | null> {
     const shouldInclude =
       !kinds || kinds.length === 0 || kinds.includes('PLAYER_VILLAGE');
@@ -263,7 +265,9 @@ export class WorldEntitiesQueryService {
 
     return villages.map((village) => {
       const castleLevel = village.buildings[0]?.level ?? 1;
-      const capture = village.pendingConquestTargets[0];
+      const captureWindow = presentCaptureWindow(
+        village.pendingConquestTargets[0],
+      );
       const membership = village.user?.worldMemberships?.[0];
       const shieldState = membership
         ? buildShieldState({
@@ -289,16 +293,7 @@ export class WorldEntitiesQueryService {
           name: village.name,
           villageId: village.id,
           castleLevel,
-          ...(capture
-            ? {
-                captureWindow: {
-                  status: 'OPEN' as const,
-                  pendingConquestId: capture.id,
-                  attackerVillageId: capture.attackerVillageId,
-                  captureUntil: capture.captureUntil.toISOString(),
-                },
-              }
-            : {}),
+          ...(captureWindow ? { captureWindow } : {}),
           ...(newbieShield ? { newbieShield } : {}),
         }),
       };
