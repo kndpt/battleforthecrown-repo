@@ -21,6 +21,18 @@ export const PublicPlayerProfileNewbieShieldSchema = z.object({
   endsAt: z.string(),
 });
 
+/**
+ * Indicateur d'inactivité pré-abandon (spec `18-inactivity-and-abandonment.md`).
+ * `null` quand le membre est actif : l'absence de signal n'est pas surfacée,
+ * comme pour `newbieShield`. Le DTO n'expose **jamais** `lastLoginAt` brut —
+ * seulement l'état dérivé + le nombre de jours pleins figé server-side
+ * (server-authoritative, pas de recalcul client).
+ */
+export const PublicPlayerProfileInactivitySchema = z.object({
+  state: z.literal('INACTIVE'),
+  sinceDays: z.number().int().min(0),
+});
+
 export const PublicPlayerProfileResponseSchema = z.object({
   userId: z.string(),
   displayName: z.string(),
@@ -28,6 +40,7 @@ export const PublicPlayerProfileResponseSchema = z.object({
   /** Niveau de Renommée cross-monde (cosmétique, dérivé de l'XP — spec 25). */
   renownLevel: z.number().int().min(1),
   newbieShield: PublicPlayerProfileNewbieShieldSchema.nullable(),
+  inactivity: PublicPlayerProfileInactivitySchema.nullable(),
 });
 
 export type PublicPlayerProfileResponse = z.infer<

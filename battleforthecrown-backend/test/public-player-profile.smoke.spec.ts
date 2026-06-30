@@ -133,13 +133,27 @@ describe('public player profile smoke', () => {
     expect(attackerBody).toMatchObject({
       userId: attacker.userId,
       newbieShield: null,
+      // Freshly joined (heartbeat set lastLoginAt = now) → ACTIVE → null.
+      inactivity: null,
     });
-    // Exact public shape — no private leak (renown, villages, crowns, army…).
+    // Exact public shape — no private leak (raw renownXp, villages, crowns,
+    // army…). Cosmetic `renownLevel` is exposed per spec 25 § 2 (run on main
+    // a5c87ad surfaced it on the profile but missed this smoke assertion).
+    // `inactivity` (run 087) is derived state only — never raw `lastLoginAt`.
     expect(Object.keys(attackerBody).sort()).toEqual(
-      ['displayName', 'kingdomPower', 'newbieShield', 'userId'].sort(),
+      [
+        'displayName',
+        'inactivity',
+        'kingdomPower',
+        'newbieShield',
+        'renownLevel',
+        'userId',
+      ].sort(),
     );
+    expect(attackerBody).not.toHaveProperty('lastLoginAt');
     expect(typeof attackerBody.displayName).toBe('string');
     expect(typeof attackerBody.kingdomPower).toBe('number');
+    expect(typeof attackerBody.renownLevel).toBe('number');
 
     // Protected player profile: still protected → newbieShield active.
     const protectedProfile = await request(ctx.server)
@@ -168,6 +182,33 @@ describe('public player profile smoke', () => {
     expect((res.body as { message?: unknown }).message).toBe(
       'USER_NOT_MEMBER_OF_WORLD',
     );
+  });
+
+  it('case 4: member inactive >= threshold → inactivity INACTIVE, sinceDays figé, no raw lastLoginAt', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const requester = await setupAttacker(world.id, 'profile-requester-4');
+    // Target member whose last login is well past the 7-day threshold.
+    const inactive = await setupDefender(
+      world.id,
+      requester.x,
+      requester.y + 6,
+      'profile-inactive-4',
+    );
+    await ctx.prisma.worldMembership.update({
+      where: { userId_worldId: { userId: inactive.userId, worldId: world.id } },
+      data: { lastLoginAt: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000) },
+    });
+
+    const res = await request(ctx.server)
+      .get(`/worlds/${world.id}/users/${inactive.userId}/public-profile`)
+      .set('Authorization', `Bearer ${requester.accessToken}`);
+    expect(res.status).toBe(200);
+    const body = res.body as PublicPlayerProfileResponse;
+    expect(body.inactivity).toMatchObject({ state: 'INACTIVE' });
+    expect(body.inactivity?.sinceDays).toBeGreaterThanOrEqual(7);
+    expect(body.inactivity?.sinceDays).toBe(9);
+    // Non-révélation : only derived state, never the raw timestamp.
+    expect(body).not.toHaveProperty('lastLoginAt');
   });
 
   it('case 3: unauthenticated request → 401 (JWT-protected route)', async () => {
