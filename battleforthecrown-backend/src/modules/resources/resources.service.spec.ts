@@ -5,6 +5,7 @@ import { OwnershipService } from '../../common/auth';
 import { WorldConfigService } from '../world/world-config.service';
 import { VillageStrategyService } from '../strategy/village-strategy.service';
 import type { WorldConfig } from '@battleforthecrown/shared/world';
+import { MS_PER_HOUR } from '@battleforthecrown/shared/time';
 
 describe('ResourcesService', () => {
   let service: ResourcesService;
@@ -15,7 +16,7 @@ describe('ResourcesService', () => {
 
   const fakeConfig = {} as WorldConfig;
   const RATE_PER_MINUTE = 10;
-  const sixtyMinutesAgo = () => new Date(Date.now() - 60 * 60 * 1000);
+  const sixtyMinutesAgo = () => new Date(Date.now() - MS_PER_HOUR);
 
   beforeEach(async () => {
     mockWorldConfig = {

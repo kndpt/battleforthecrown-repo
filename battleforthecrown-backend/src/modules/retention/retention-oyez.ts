@@ -3,6 +3,7 @@ import {
   OYEZ_THEMES,
   type OyezTheme,
 } from '@battleforthecrown/shared/retention';
+import { MS_PER_DAY } from '@battleforthecrown/shared/time';
 import type { ScaledTaskTemplate } from './retention-scaling';
 
 export interface OyezCatalogueEntry {
@@ -127,7 +128,7 @@ function isoWeekParts(dayKey: string): {
     1 +
     Math.round(
       (thursday.getTime() - firstThursday.getTime()) /
-        (7 * 24 * 60 * 60 * 1000),
+        (7 * MS_PER_DAY),
     );
   return { isoYear, isoWeek, weekdayIndex };
 }
