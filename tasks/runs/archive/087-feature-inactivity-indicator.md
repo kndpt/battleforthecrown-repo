@@ -1,8 +1,8 @@
 # Run #087 — feature-inactivity-indicator
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-06-30
+> **Terminé** : 2026-06-30
 
 ## Cible
 
@@ -88,21 +88,37 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 
 - **Requise : OUI.** Critère (a) — modification simultanée backend (service/DTO public) + frontend (UI) + shared. Surface **publique** avec invariant de non-révélation (ne pas leaker plus que le public actuel, ne pas exposer `lastLoginAt` brut) → second regard sur l'invariant et la cohérence du contrat shared↔back↔front.
 
-## Progress
-
-_(Vide au démarrage. Pendant run — supprimé à l'archive.)_
-
-## Décisions prises
-
-_(Vide au démarrage. Pendant run — supprimé à l'archive.)_
-
 ## Rapport final
 
-_(Vide au démarrage. Rempli en fin de run.)_
+Tranche pré-abandon non destructive livrée : helper shared pur `computeInactivityState` (seuil 7 j) + champ DTO `inactivity` nullable sur la fiche publique + badge gris « Inactif depuis N j » dans `PublicPlayerProfileSheet`. Zéro worker/mutation/migration ; invariant non-révélation verrouillé (jamais `lastLoginAt` brut). Review indépendante GO. _(détails : git history)_
 
 ### Acceptance & QA
 
-- [ ] <critère> — `<cmd>` → <résultat>
-- **Review indépendante** : …
-- **Tests automatisés** : …
-- **Tests IG user** : checklist Kelvin (badge gris affiché seulement pour INACTIVE ; aucune fuite de donnée privée).
+**Critères d'acceptance vérifiés**
+- [x] `computeInactivityState` seuil/null/floor/future-clamp — `yarn vitest run inactivity` → 9 passed
+- [x] Libellé FR « Inactif depuis N j » floor — idem spec ci-dessus (`formatInactivityLabel`)
+- [x] `PublicPlayerProfileResponseSchema` valide `inactivity` nullable (calqué `newbieShield`) — `public-player-profile.ts:30-43`, parse côté query + tests sheet verts
+- [x] GET membre inactif → `inactivity.state=INACTIVE` + `sinceDays>=7` ; actif → `null` — smoke case 4 (`sinceDays=9`) + case 1 (`inactivity:null`)
+- [x] DTO n'expose jamais `lastLoginAt` brut — `Object.keys().sort()` + `not.toHaveProperty('lastLoginAt')` (smoke case 1 & 4)
+- [x] `yarn static-check` + `test:backend` + `test:pixi` verts — voir ci-dessous
+- [ ] [visuel] badge gris discret seulement pour INACTIVE — checklist Kelvin
+- [ ] [visuel] aucune nouvelle donnée au-delà du public — checklist Kelvin (verrouillé côté smoke)
+
+**Review indépendante** : Déclenchée (raison: critère a — backend+frontend+shared, surface publique avec invariant non-révélation). Verdict **GO** — zéro bloquant/majeur, 3 nits mineurs non bloquants (cohérents avec le code existant).
+
+**Tests automatisés** :
+- `yarn vitest run inactivity` → 9 passed
+- `yarn test:pixi` → 873 passed (123 files)
+- `yarn test:backend` → 543 passed (57 suites)
+- `yarn static-check` → vert
+
+**Smokes lancés** : `test:smoke:preflight` + `test:smoke:run -- public-player-profile.smoke` → 4 passed. **Ciblés** (diff backend localisé au service public-profile + son smoke ; pas de Prisma schema / Outbox / auth / boot touchés). Full smoke couvert par CI PR.
+
+**Smokes ajoutés/modifiés** : `public-player-profile.smoke.spec.ts` — case 4 (membre inactif ≥ seuil → INACTIVE, `sinceDays` figé, pas de `lastLoginAt` brut) + assertions `inactivity:null` (actif) + clé `inactivity` dans la forme publique exacte.
+
+**QA fonctionnelle agent** : smoke E2E REST (boot app + GET public-profile authentifié) couvre le contrat backend↔DTO. Non exécuté de curl manuel additionnel (couvert par le smoke).
+
+**Tests IG à faire par le user** : checklist Kelvin —
+- [ ] Ouvrir la fiche publique d'un joueur dont `lastLoginAt` > 7 j → badge gris « Inactif depuis N j » visible.
+- [ ] Fiche d'un joueur actif → aucun badge d'inactivité.
+- [ ] Aucune donnée privée nouvelle affichée (pas de date de login brute).
