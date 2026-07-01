@@ -88,6 +88,11 @@ const NewbieShieldSnapshotSchema = z.object({
   endsAt: z.string().nullable(),
 });
 
+const InactivitySnapshotSchema = z.object({
+  state: z.literal('INACTIVE'),
+  sinceDays: z.number().int().nonnegative(),
+});
+
 const ScoutReportDetailsSchema = z.object({
   scoutLosses: UnitMapSchema.optional(),
   scoutUnits: UnitMapSchema.optional(),
@@ -95,6 +100,7 @@ const ScoutReportDetailsSchema = z.object({
   castleLevel: z.number().optional(),
   newbieShield: NewbieShieldSnapshotSchema.optional(),
   defensiveFriendsDisplayNames: z.array(z.string()).optional(),
+  inactivity: InactivitySnapshotSchema.optional(),
 }).optional();
 
 export const ScoutReportResponseSchema = z.object({

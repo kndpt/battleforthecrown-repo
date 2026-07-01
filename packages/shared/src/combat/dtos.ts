@@ -141,6 +141,15 @@ export interface ScoutReportResponse {
      * recomputed live (same pattern as wallLevel/newbieShield).
      */
     defensiveFriendsDisplayNames?: string[];
+    /**
+     * Pre-abandonment inactivity of the target player owner, snapshot at scout
+     * time (spec 18 § « Affichage carte »). Present only when the owner is
+     * INACTIVE (`lastLoginAt` ≥ {@link INACTIVITY_THRESHOLD_DAYS} j). Absent for
+     * barbarian targets, active owners, and old reports. Frozen — never
+     * recomputed live (same pattern as wallLevel/newbieShield); the raw
+     * `lastLoginAt` is never exposed, only the derived state + frozen sinceDays.
+     */
+    inactivity?: { state: 'INACTIVE'; sinceDays: number };
   };
   isRead: boolean;
   timestamp: string;
