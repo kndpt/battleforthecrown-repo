@@ -76,6 +76,8 @@ export function useJoinWorldMutation() {
       });
       queryClient.invalidateQueries({ queryKey: queryKeys.villagesPrefix() });
       queryClient.invalidateQueries({ queryKey: queryKeys.onboardingPrefix() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.worlds() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.publicWorlds() });
     },
   });
 }
@@ -118,6 +120,8 @@ export function useResetWorldMutation() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.myVillages(userId, worldId),
       });
+      queryClient.invalidateQueries({ queryKey: queryKeys.worlds() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.publicWorlds() });
     },
   });
 }

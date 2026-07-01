@@ -401,7 +401,7 @@ export function useRecallExpeditionMutation() {
             : buildRecalledExpeditionPatch(current, Date.now(), returnAt)
           : {
               phase: "RETURNING",
-              returnAt,
+              returnAt: returnAt ?? current?.returnAt,
             },
       );
     },

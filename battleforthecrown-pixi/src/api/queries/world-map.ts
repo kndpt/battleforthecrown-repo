@@ -61,6 +61,7 @@ export function useVillageIntelQuery(
 ): UseQueryResult<VillageIntelDto | null> {
   return useQuery<VillageIntelDto | null>({
     queryKey: queryKeys.villageIntel(worldId, villageId),
+    placeholderData: null,
     queryFn: async () => {
       if (!worldId || !villageId) return null;
       const raw = await apiClient.get<unknown>(
