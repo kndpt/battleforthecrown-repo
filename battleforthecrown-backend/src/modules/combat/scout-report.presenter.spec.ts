@@ -181,6 +181,37 @@ describe('presentScoutReport', () => {
     expect(presentScoutReport(report).details).toEqual({});
   });
 
+  it('includes inactivity when the owner was INACTIVE at scout time', () => {
+    const report = {
+      ...baseReport,
+      details: { inactivity: { state: 'INACTIVE', sinceDays: 9 } },
+    };
+    expect(presentScoutReport(report).details).toEqual({
+      inactivity: { state: 'INACTIVE', sinceDays: 9 },
+    });
+  });
+
+  it('omits inactivity when the state is not INACTIVE or sinceDays is invalid', () => {
+    expect(
+      presentScoutReport({
+        ...baseReport,
+        details: { inactivity: { state: 'ACTIVE', sinceDays: 0 } },
+      }).details,
+    ).toEqual({});
+    expect(
+      presentScoutReport({
+        ...baseReport,
+        details: { inactivity: { state: 'INACTIVE', sinceDays: 'nope' } },
+      }).details,
+    ).toEqual({});
+    expect(
+      presentScoutReport({
+        ...baseReport,
+        details: { inactivity: 'not-an-object' },
+      }).details,
+    ).toEqual({});
+  });
+
   it('defaults empty persisted resources to zeroes', () => {
     expect(
       presentScoutReport({ ...baseReport, resources: {} }).resources,

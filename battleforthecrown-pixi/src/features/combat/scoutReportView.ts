@@ -6,6 +6,7 @@ import {
   getPvpCaptureDurationLabel,
   type ScoutReportResponse,
 } from '@battleforthecrown/shared/combat';
+import { formatInactivityLabel } from '@battleforthecrown/shared/world';
 import { unitMetaFor } from '@/features/army/unitConfig';
 import { formatResourceAmount } from '@/lib/resourceConfig';
 import { formatRemaining } from '@/features/village/constructionProgress';
@@ -105,6 +106,20 @@ export function getNewbieShieldStatus(
     }
   }
   return { active: true, endsAt, remainingLabel };
+}
+
+/**
+ * Badge d'inactivité pré-abandon figé sur un rapport de scout (spec 18).
+ * `undefined` si la cible est barbare, si le propriétaire était ACTIVE au
+ * moment du scout, ou pour un ancien rapport (champ absent). Snapshot — jamais
+ * recalculé en live, jamais dérivé d'un `lastLoginAt` brut (non exposé).
+ */
+export function getInactivityBadge(
+  report: ScoutReportResponse,
+): { label: string } | undefined {
+  const inactivity = report.details?.inactivity;
+  if (!inactivity) return undefined;
+  return { label: formatInactivityLabel(inactivity.sinceDays) };
 }
 
 export function scoutReportStrategyLabel(strategy: string | null | undefined): string {
@@ -228,6 +243,7 @@ export function buildScoutReportCardProps(
     shieldBadge: shieldStatus?.active
       ? { label: 'Bouclier débutant', remaining: shieldStatus.remainingLabel }
       : undefined,
+    inactivityBadge: getInactivityBadge(report),
     sections,
     targetName: scoutReportTitle(report),
     targetPrefix: 'Cible',

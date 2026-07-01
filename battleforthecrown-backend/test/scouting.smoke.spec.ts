@@ -277,6 +277,15 @@ describe('scouting smoke', () => {
     ).newbieShield;
     expect(playerShield?.active).toBe(true);
     expect(typeof playerShield?.endsAt).toBe('string');
+    // Inactivity snapshot (spec 18): the target owner just joined → ACTIVE → no
+    // `inactivity` field, and the raw `lastLoginAt` is never leaked into the
+    // report details (non-révélation invariant).
+    expect(
+      (playerReport.details as { inactivity?: unknown }).inactivity,
+    ).toBeUndefined();
+    expect(
+      (playerReport.details as Record<string, unknown>).lastLoginAt,
+    ).toBeUndefined();
 
     // Post-rupture: break the target owner's shield, re-scout → snapshot active=false.
     await ctx.prisma.worldMembership.update({
@@ -340,6 +349,60 @@ describe('scouting smoke', () => {
     ).newbieShield;
     expect(initialShieldAfterBreak?.active).toBe(true);
     expect(initialShieldAfterBreak?.endsAt).toBe(playerShield?.endsAt);
+
+    // Inactivity snapshot (spec 18): age the target owner's membership past the
+    // 7 j threshold, re-scout → the fresh report carries a frozen INACTIVE
+    // badge with a derived `sinceDays`, still without leaking the raw timestamp.
+    await ctx.prisma.worldMembership.update({
+      where: {
+        userId_worldId: { userId: defender.userId, worldId: world.id },
+      },
+      data: {
+        lastLoginAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+      },
+    });
+    const inactivityScout = await request(ctx.server)
+      .post('/combat/scout')
+      .set('Authorization', `Bearer ${attacker.accessToken}`)
+      .send({
+        villageId: attackerId,
+        targetX: playerTarget.x,
+        targetY: playerTarget.y,
+        targetKind: 'PLAYER_VILLAGE',
+        targetRefId: playerTarget.id,
+        units: { SPY: 1 },
+      });
+    expect(inactivityScout.status).toBeLessThan(300);
+    const inactivityExpeditionId = (inactivityScout.body as { id: string }).id;
+    await waitFor(
+      async () => {
+        const event = await ctx.prisma.eventOutbox.findFirst({
+          where: { kind: 'scout.returned', aggregateId: attackerId },
+          orderBy: { createdAt: 'desc' },
+        });
+        return event &&
+          (event.payload as { expeditionId?: string }).expeditionId ===
+            inactivityExpeditionId &&
+          event.dispatchedAt
+          ? event
+          : null;
+      },
+      { timeoutMs: 15_000 },
+    );
+    const inactivityReport = await ctx.prisma.scoutReport.findFirstOrThrow({
+      where: { scoutVillageId: attackerId, targetVillageId: playerTarget.id },
+      orderBy: { timestamp: 'desc' },
+    });
+    const inactivitySnapshot = (
+      inactivityReport.details as {
+        inactivity?: { state: string; sinceDays: number };
+      }
+    ).inactivity;
+    expect(inactivitySnapshot?.state).toBe('INACTIVE');
+    expect(inactivitySnapshot?.sinceDays).toBeGreaterThanOrEqual(7);
+    expect(
+      (inactivityReport.details as Record<string, unknown>).lastLoginAt,
+    ).toBeUndefined();
 
     const farBarbarian = await ctx.prisma.village.create({
       data: {

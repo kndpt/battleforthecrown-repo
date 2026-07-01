@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { ScoutReportResponse } from '@battleforthecrown/shared/combat';
 import {
   buildScoutReportCardProps,
+  getInactivityBadge,
   getNewbieShieldStatus,
   scoutReportResourceTotal,
   scoutReportStrategyLabel,
@@ -284,6 +285,39 @@ describe('scoutReportView', () => {
         details: { wallLevel: 0, defensiveFriendsDisplayNames: ['Ghost'] },
       };
       expect(sectionTitled(barbarianWithFriends, 'Amis défensifs')).toBeUndefined();
+    });
+  });
+
+  describe('inactivity badge', () => {
+    it('exposes a frozen "Inactif depuis N j" badge when the snapshot is INACTIVE', () => {
+      const inactive: ScoutReportResponse = {
+        ...report,
+        details: { ...report.details, inactivity: { state: 'INACTIVE', sinceDays: 9 } },
+      };
+      expect(getInactivityBadge(inactive)).toEqual({ label: 'Inactif depuis 9 j' });
+      expect(
+        buildScoutReportCardProps(inactive, undefined, false).inactivityBadge,
+      ).toEqual({ label: 'Inactif depuis 9 j' });
+    });
+
+    it('has no badge when the inactivity field is absent (active owner or old report)', () => {
+      expect(getInactivityBadge(report)).toBeUndefined();
+      expect(
+        buildScoutReportCardProps(report, undefined, false).inactivityBadge,
+      ).toBeUndefined();
+    });
+
+    it('has no badge for a barbarian target (no inactivity field)', () => {
+      const barbarian: ScoutReportResponse = {
+        ...report,
+        targetKind: 'BARBARIAN_VILLAGE',
+        targetTier: 'T2',
+        details: { wallLevel: 0 },
+      };
+      expect(getInactivityBadge(barbarian)).toBeUndefined();
+      expect(
+        buildScoutReportCardProps(barbarian, undefined, false).inactivityBadge,
+      ).toBeUndefined();
     });
   });
 });
