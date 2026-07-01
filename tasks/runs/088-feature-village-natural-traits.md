@@ -35,7 +35,8 @@ Donner à chaque village une identité **fixe liée à son emplacement** (trait 
 - [ ] [auto] `PLAINS` n'applique **aucun** bonus éco (production == baseline sans trait).
 - [ ] [auto] Le bonus trait **ne scale pas** avec le niveau de bâtiment (facteur plat constant vérifié sur 2 niveaux).
 - [ ] [auto] Tout village créé (joueur **et** barbare) a un `naturalTrait` non-null en base immédiatement après create (smoke/test service).
-- [ ] [auto] `world-entities` n'expose **pas** `naturalTrait` des villages ennemis dans la réponse carte (test presenter — anti-fuite intel).
+- [ ] [auto] **Villages pré-existants** : une **seule** stratégie de backfill/migration est retenue (décision étape 1) et un monde déjà ouvert vérifie que chaque village conserve un `naturalTrait` stable et homogène après déploiement (pas de trait incohérent entre mondes neufs et mondes ouverts).
+- [ ] [auto] `world-entities` conserve pour les villages ennemis un **blip foggé avec `id` stable** (entité toujours sélectionnable avant scout) et `naturalTrait` **n'apparaît jamais** dans le payload révélé (test presenter — anti-fuite intel sans casser le rendu carte).
 - [ ] [auto] Le rapport de scout d'un village ennemi porte `details.naturalTrait` après scout.
 - [ ] [visuel — checklist Kelvin] Trait de **son** village affiché sur son panneau ; trait ennemi **absent** de la carte avant scout, **présent** dans le rapport scout après.
 
