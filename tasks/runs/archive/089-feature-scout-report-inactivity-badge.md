@@ -1,4 +1,4 @@
-# Run #088 — feature-scout-report-inactivity-badge
+# Run #089 — feature-scout-report-inactivity-badge
 
 > **Statut** : DONE
 > **Démarré** : 2026-07-01

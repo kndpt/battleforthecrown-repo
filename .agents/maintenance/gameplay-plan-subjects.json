@@ -516,6 +516,27 @@
         "battleforthecrown-pixi/src — aucun indicateur d'inactivité (rg 'inactif|inactiv|dormant' : 0 match)"
       ],
       "addedAt": "2026-06-30"
+    },
+    {
+      "specPath": "docs/gameplay/lab/tickets/01-natural-village-traits.md",
+      "slug": "village-natural-traits",
+      "title": "Traits naturels de village — promotion lab ticket 01 (spec 27)",
+      "keywords": ["natural-trait", "village-trait", "terrain", "spot", "production-bonus", "lab-promotion"],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/088-feature-village-natural-traits.md",
+      "artefactId": "088",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/village-natural-traits",
+      "gapSummary": "Le lab ticket 01 (ratio bénéfice/coût « bon ») n'a jamais été promu en spec canonique. Un village n'a aucune identité liée à son emplacement : le modèle Village porte x,y,tier,label,strategyConfig (style CHOISI) mais aucun trait FIXE. La couche worldTerrain.ts front est purement cosmétique/client-side (serveur pas au courant), donc aucun bonus lié au lieu n'existe. Le run promeut le ticket en spec 27-village-natural-traits.md avec un MVP borné aux traits de ressource (bonus production plat non-snowball), déterministe (worldId, x, y), posé joueur + barbare, révélé côté ennemi par le scout.",
+      "codeEvidence": [
+        "battleforthecrown-backend/prisma/schema.prisma:193 model Village — champs x,y,tier,label,strategyConfig ; aucun champ naturalTrait/terrain",
+        "packages/shared/src/village/ — pas de module traits.ts, aucun type VillageNaturalTrait ni deriveNaturalTrait (strategy.ts = style CHOISI, distinct)",
+        "packages/shared/src/logic/production.ts — calculateProductionRate ne reçoit ni n'applique aucun facteur de trait de tile",
+        "battleforthecrown-pixi/src/pixi/scenes/worldTerrain.ts:1-8 — commentaire module « purely cosmetic », biomes client-side seed-based, serveur non-autoritatif, zéro effet gameplay",
+        "battleforthecrown-backend/src/modules/combat/scout-report.presenter.ts — reportDetails expose wallLevel/castleLevel, jamais naturalTrait (vecteur de révélation à réutiliser)",
+        "tasks/ — aucun ticket/run actif ou archivé ne matche les slugs trait/terrain/natural-village/biome/spot (connexes : 021-village-labels-navigation, module strategy)"
+      ],
+      "addedAt": "2026-07-01"
     }
   ]
 }

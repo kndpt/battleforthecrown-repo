@@ -1,7 +1,7 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-06-30 | theme consolidate world-entities-query bounds + captureWindow — extract `computeRadiusBounds(grid, …)` + `presentCaptureWindow(row)` helpers ; fix N3 (`getVillagesInRadius` maxX/maxY non clamped) + suppression magic `499` au profit de `gridWidth/gridHeight` Prisma ; -5L net service / +57L utils / +7 unit tests ; 543 unit + 22 smokes verts | PR maint(refactor-backend): consolidate world-entities-query bounds and captureWindow helpers
-full: `archive/refactor-backend/2026-06-30-full.md`
+last: 2026-07-01 | theme consolidate WorldService count/groupBy aggregation via `_count` include (Prisma 6 filtered `_count`) — 4 méthodes (`getWorlds`, `getWorldDetails`, `getUserMemberships`, `touchUserMembership`), 1 fichier, +14L/-21L net, -1 round-trip DB par appel, aligné avec `getPublicWorlds` déjà en place ; 543 unit + 881 pixi + 11 smokes verts | PR maint(refactor-backend): consolidate WorldService count aggregation via `_count` include
+full: `archive/refactor-backend/2026-07-01-full.md`
 
 ## OPEN
 
@@ -16,11 +16,10 @@ full: `archive/refactor-backend/2026-06-30-full.md`
 | L2  | Low  | strategy/village-strategy.service.ts:389-457       | `getStrategyRecommendations` strings UI FR hard-codées + endpoint sans consumer front      |
 | C1  | Low  | resources.service.ts:46-56                         | `getResources` récursif (cosmétique, récursion bornée 1)                                   |
 | F1  | Low  | combat.worker.ts:1130-1170                         | 2× garrison.findMany include similaire                                                     |
-| T1  | Low  | retention.service.ts:401-416                       | `$transaction` qui n'enveloppe qu'un updateMany — inutile                                  |
-| K1  | Low  | retention.service.ts:212-241                       | `create` + catch P2002 (vs upsert utilisé `ensureDailyCardInTransaction`) — asymétrie       |
-| K2  | Low  | retention.service.ts:37 + DTO `backlogLimit`       | `DAILY_CARD_LIMIT = 1` magic, jamais utilisé pour limiter, exposé sans consumer front      |
+| T1  | Low  | retention.service.ts:456-464                       | `$transaction` qui n'enveloppe qu'un updateMany — inutile                                  |
+| K1  | Low  | retention.service.ts:229-259                       | `create` + catch P2002 (vs upsert utilisé `ensureDailyCardInTransaction`) — asymétrie       |
+| K2  | Low  | retention.service.ts:41 + DTO `backlogLimit`       | `DAILY_CARD_LIMIT = 1` magic, jamais utilisé pour limiter, exposé sans consumer front      |
 | Z1  | Low  | world/join-world.use-case.ts:188                   | `process.env[key]` dynamique — `ConfigService` ferait mieux                                |
-| P1  | Low  | world.service.ts:32-49                             | `getWorlds` 2 round-trips (worlds + groupBy memberships) au lieu d'`_count` include        |
 | H2  | Low  | production.worker.ts:76, crown-production.worker.ts:76 | `for of villages` séquentiel (OK <10k, sinon batch)                                    |
 | E1  | Low  | event/event.utils.ts                               | `createOutboxEvent` raw vs `OutboxPublisher.<kind>` typé — sweep progressif                |
 | V2  | Low  | retention.service.ts:294-301                       | backfill currentDayKey post-midnight Paris non commenté                                    |
@@ -28,7 +27,8 @@ full: `archive/refactor-backend/2026-06-30-full.md`
 
 ## Skip — déjà traité
 
-- U3 + N3 + N4 + F (world-entities-query bounds & captureWindow) → ce run
+- P1 + P2 + P3 + P4 (WorldService `_count` include consolidation) → ce run
+- U3 + N3 + N4 + F (world-entities-query bounds & captureWindow) → 2026-06-30
 - N5–N15 (display-name dup) → 2026-06-26
 - W2c (initiate{Attack,Scout,Reinforce} skeleton consolidation) → 2026-06-25
 - W5 + W6 (construction post-tx correctness + structured swallow logs) → 2026-06-22 (2)
