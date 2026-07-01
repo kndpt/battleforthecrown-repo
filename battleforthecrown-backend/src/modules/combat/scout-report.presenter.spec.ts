@@ -207,6 +207,18 @@ describe('presentScoutReport', () => {
     expect(
       presentScoutReport({
         ...baseReport,
+        details: { inactivity: { state: 'INACTIVE', sinceDays: -1 } },
+      }).details,
+    ).toEqual({});
+    expect(
+      presentScoutReport({
+        ...baseReport,
+        details: { inactivity: { state: 'INACTIVE', sinceDays: 2.5 } },
+      }).details,
+    ).toEqual({});
+    expect(
+      presentScoutReport({
+        ...baseReport,
         details: { inactivity: 'not-an-object' },
       }).details,
     ).toEqual({});

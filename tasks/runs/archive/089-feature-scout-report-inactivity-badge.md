@@ -36,16 +36,17 @@ Snapshot figé de l'inactivité pré-abandon du propriétaire cible à la résol
 ### Acceptance & QA
 
 - **Critères d'acceptance vérifiés** :
-  - [x] Village joueur inactif → snapshot `INACTIVE` figé — `yarn workspace battleforthecrown-backend test:smoke:run -- scouting.smoke` → owner vieilli J+10 ⇒ `details.inactivity.state==='INACTIVE'`, `sinceDays>=7`.
-  - [x] Joueur actif → champ absent — même smoke → `playerReport.details.inactivity === undefined` (owner fraîchement joint).
+  - [x] Village joueur inactif → snapshot `INACTIVE` figé — `yarn workspace battleforthecrown-backend test:smoke:run -- scouting.smoke` → owner vieilli J+10, `GET /combat/scout-reports` ⇒ `details.inactivity.state==='INACTIVE'`, `sinceDays>=7`.
+  - [x] Joueur actif → champ absent — même smoke, payload HTTP → `details.inactivity === undefined` (owner fraîchement joint).
   - [x] Barbare → champ absent — `scoutReportView` test barbarian + guard worker `targetKind==='PLAYER_VILLAGE' && targetVillage.userId`.
   - [x] Badge gris rendu — `getInactivityBadge` → `{label:'Inactif depuis N j'}`, câblé `inactivityBadge` sur `ScoutReportCard` (test pixi).
-  - [x] Non-révélation — smoke asserte `details.lastLoginAt === undefined` sur 2 chemins ; worker `select: { lastLoginAt: true }` → jamais persisté brut.
-- **Review indépendante** : Déclenchée (raison: touche backend ET frontend) — VERDICT `GO`, 0 bloquant/majeur, 2 mineurs no-action (J+14 non distingué = scope 087 voulu ; type `| object` = pattern existant).
+  - [x] `sinceDays` non entier/négatif rejeté par le presenter — `test -- scout-report.presenter` (`-1`, `2.5`, `'nope'` → champ omis).
+  - [x] Non-révélation — smoke asserte l'absence de `lastLoginAt` sur le **payload HTTP** `GET /combat/scout-reports` (parse `ScoutReportsResponseSchema`, `JSON.stringify(reports)` sans `lastLoginAt`, 2 chemins actif/inactif) ; worker `select: { lastLoginAt: true }` → jamais persisté brut.
+- **Review indépendante** : Déclenchée (raison: touche backend ET frontend) — VERDICT `GO`, 0 bloquant/majeur. Commentaires PR CodeRabbit traités : durcissement `sinceDays` (entier ≥ 0) presenter + schéma Zod, smoke non-révélation reporté sur le payload HTTP (assert comportement, pas implémentation).
 - **Tests automatisés** : `test -- scout-report.presenter` 21/21 ; `test -- scoutReportView` 21/21 ; `yarn static-check` OK.
 - **Smokes lancés** : `test:smoke:preflight` + `test:smoke:run -- scouting.smoke` → 1/1 (Ciblé). Diff backend `src/` = worker scout + presenter, couvert par ce smoke ; full smoke porté par la CI PR.
 - **Smokes ajoutés/modifiés** : `scouting.smoke.spec.ts` — cas owner actif (champ absent + non-révélation) + owner vieilli J+10 (snapshot INACTIVE + non-révélation).
-- **QA fonctionnelle agent** : couverte par le smoke e2e (scout REST → worker snapshot → lecture DB report).
+- **QA fonctionnelle agent** : couverte par le smoke e2e (scout REST → worker snapshot → `GET /combat/scout-reports` payload).
 - **Tests IG à faire par le user** :
   - [ ] Scouter un village joueur dont le propriétaire est inactif ≥ 7 j → le rapport affiche le bandeau gris « Inactif depuis N j ».
   - [ ] Scouter un joueur actif et un village barbare → aucun bandeau d'inactivité.

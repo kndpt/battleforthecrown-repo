@@ -90,7 +90,7 @@ const NewbieShieldSnapshotSchema = z.object({
 
 const InactivitySnapshotSchema = z.object({
   state: z.literal('INACTIVE'),
-  sinceDays: z.number(),
+  sinceDays: z.number().int().nonnegative(),
 });
 
 const ScoutReportDetailsSchema = z.object({

@@ -74,7 +74,16 @@ function inactivityDetails(
   // Only the INACTIVE state is ever persisted (ACTIVE → field absent); reject
   // anything else defensively. `sinceDays` must be a number.
   if (inactivity.state !== 'INACTIVE') return {};
-  if (typeof inactivity.sinceDays !== 'number') return {};
+  // `sinceDays` is a floored non-negative day count upstream
+  // (computeInactivityState); reject fractional/negative values from a
+  // corrupted or legacy Json payload before they reach the UI.
+  if (
+    typeof inactivity.sinceDays !== 'number' ||
+    !Number.isSafeInteger(inactivity.sinceDays) ||
+    inactivity.sinceDays < 0
+  ) {
+    return {};
+  }
   return { inactivity: { state: 'INACTIVE', sinceDays: inactivity.sinceDays } };
 }
 
