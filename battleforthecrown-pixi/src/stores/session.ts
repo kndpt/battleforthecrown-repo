@@ -6,6 +6,7 @@ import { useUiStore } from './ui';
 import { useWorldMapStore } from './worldMap';
 import { useOnboardingFabStore } from './onboardingFab';
 import { usePendingBuildingModalStore } from './pendingBuildingModal';
+import { useMapMarkersStore } from '@/features/world/mapMarkersStore';
 
 /**
  * Resets every game-session-scoped Zustand store in one place.
@@ -32,4 +33,5 @@ export function resetGameSessionStores(): void {
   // inherit the previous player's onboarding FAB position.
   useOnboardingFabStore.getState().reset();
   usePendingBuildingModalStore.getState().consume();
+  useMapMarkersStore.getState().clear();
 }
