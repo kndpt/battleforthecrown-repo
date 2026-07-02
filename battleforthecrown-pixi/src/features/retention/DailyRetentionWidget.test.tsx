@@ -92,9 +92,10 @@ describe("DailyRetentionWidget", () => {
     expect(screen.getByText("Expire à")).toBeInTheDocument();
     expect(screen.getByText("04h00")).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText("Village récompensé"), {
-      target: { value: "v2" },
-    });
+    fireEvent.click(
+      screen.getByRole("combobox", { name: "Village récompensé" }),
+    );
+    fireEvent.click(screen.getByRole("option", { name: /Marche Nord/ }));
     fireEvent.click(screen.getByRole("button", { name: "Récupérer" }));
 
     expect(onClaim).toHaveBeenCalledWith({ cardId: "card-1", villageId: "v2" });
