@@ -49,6 +49,7 @@ describe('kingdom activities snapshots smoke', () => {
     const secondVillage = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         userId: user.userId,
         name: 'south-keep',
         x: join.village.x + 10,
@@ -58,6 +59,7 @@ describe('kingdom activities snapshots smoke', () => {
     const soonTarget = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         name: 'soon-camp',
         x: join.village.x + 1,
         y: join.village.y,
@@ -68,6 +70,7 @@ describe('kingdom activities snapshots smoke', () => {
     const laterTarget = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         name: 'later-camp',
         x: secondVillage.x + 1,
         y: secondVillage.y,
@@ -78,6 +81,7 @@ describe('kingdom activities snapshots smoke', () => {
     const hiddenTarget = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         name: 'hidden-camp',
         x: otherJoin.village.x + 1,
         y: otherJoin.village.y,
@@ -87,6 +91,7 @@ describe('kingdom activities snapshots smoke', () => {
     const foreignTarget = await ctx.prisma.village.create({
       data: {
         worldId: otherWorld.id,
+        naturalTrait: 'PLAINS',
         name: 'foreign-camp',
         x: foreignJoin.village.x + 1,
         y: foreignJoin.village.y,
@@ -208,6 +213,7 @@ describe('kingdom activities snapshots smoke', () => {
     const secondVillage = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         userId: user.userId,
         name: 'origin-b',
         x: join.village.x + 8,
@@ -217,6 +223,7 @@ describe('kingdom activities snapshots smoke', () => {
     const targetA = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         name: 'target-a',
         x: join.village.x + 1,
         y: join.village.y,
@@ -226,6 +233,7 @@ describe('kingdom activities snapshots smoke', () => {
     const targetB = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         name: 'target-b',
         x: secondVillage.x + 1,
         y: secondVillage.y,
@@ -247,6 +255,7 @@ describe('kingdom activities snapshots smoke', () => {
     const foreignTarget = await ctx.prisma.village.create({
       data: {
         worldId: otherWorld.id,
+        naturalTrait: 'PLAINS',
         name: 'foreign-target',
         x: foreignJoin.village.x + 1,
         y: foreignJoin.village.y,

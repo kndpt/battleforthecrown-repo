@@ -5,7 +5,10 @@ import {
   TempoService,
   type WorldConfig,
 } from '@battleforthecrown/shared/world';
-import type { VillageStrategyType } from '@battleforthecrown/shared/village';
+import type {
+  VillageStrategyType,
+  VillageNaturalTrait,
+} from '@battleforthecrown/shared/village';
 import { getQuarterPopulationLimit } from '@battleforthecrown/shared/village';
 import {
   ResourceBuildingType,
@@ -81,9 +84,16 @@ export class WorldConfigService {
     type: ResourceBuildingType,
     level: number,
     strategy?: VillageStrategyType,
+    naturalTrait?: VillageNaturalTrait | null,
   ): Promise<number> {
     const config = await this.getConfig(worldId);
-    return this.computeProductionRate(config, type, level, strategy);
+    return this.computeProductionRate(
+      config,
+      type,
+      level,
+      strategy,
+      naturalTrait,
+    );
   }
 
   computeProductionRate(
@@ -91,8 +101,15 @@ export class WorldConfigService {
     type: ResourceBuildingType,
     level: number,
     strategy?: VillageStrategyType,
+    naturalTrait?: VillageNaturalTrait | null,
   ): number {
-    const absoluteRate = calculateProductionRate(type, level, 1, strategy);
+    const absoluteRate = calculateProductionRate(
+      type,
+      level,
+      1,
+      strategy,
+      naturalTrait,
+    );
     return TempoService.applyRate(
       absoluteRate,
       config.tempo,

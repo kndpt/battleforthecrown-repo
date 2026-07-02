@@ -38,6 +38,7 @@ describe('conquest service smoke', () => {
     const barbarian = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         isBarbarian: true,
         name: 'barb-conquer-target',
         x: join.village.x + 1,

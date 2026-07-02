@@ -5,6 +5,7 @@ import { WorldConfigService } from '../world/world-config.service';
 import { VillageStrategyService } from '../strategy/village-strategy.service';
 import {
   VillageStrategyType,
+  VillageNaturalTrait,
   getBuildingLevel,
   getStrategyBonusValue,
 } from '@battleforthecrown/shared/village';
@@ -104,6 +105,7 @@ export class ResourcesService {
         worldId,
         village.buildings,
         storageStrategy,
+        village.naturalTrait,
       );
 
       const updatedTotals = applyResourceCatchup(
@@ -141,8 +143,10 @@ export class ResourcesService {
     };
     buildings: Array<{ type: string; level: number }>;
     strategy?: 'FORTRESS' | 'RAIDERS' | 'ECONOMIC' | 'BALANCED';
+    naturalTrait?: VillageNaturalTrait | null;
   }): Promise<{ wood: number; stone: number; iron: number }> {
-    const { worldId, resourceStock, buildings, strategy } = params;
+    const { worldId, resourceStock, buildings, strategy, naturalTrait } =
+      params;
 
     const now = new Date();
     const elapsedMs = now.getTime() - resourceStock.lastUpdateTs.getTime();
@@ -152,6 +156,7 @@ export class ResourcesService {
       worldId,
       buildings,
       strategy,
+      naturalTrait,
     );
 
     return applyResourceCatchup(
@@ -213,10 +218,17 @@ export class ResourcesService {
     worldId: string,
     buildings: Array<{ type: string; level: number }>,
     strategy?: VillageStrategyType,
+    naturalTrait?: VillageNaturalTrait | null,
   ): Promise<{ wood: number; stone: number; iron: number }> {
     const config = await this.worldConfig.getConfig(worldId);
     return projectResourceRates(buildings, (type, level) =>
-      this.worldConfig.computeProductionRate(config, type, level, strategy),
+      this.worldConfig.computeProductionRate(
+        config,
+        type,
+        level,
+        strategy,
+        naturalTrait,
+      ),
     );
   }
 
@@ -246,6 +258,7 @@ export class ResourcesService {
       worldId,
       village.buildings,
       strategyType,
+      village.naturalTrait,
     );
 
     return {

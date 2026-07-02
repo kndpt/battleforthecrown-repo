@@ -35,6 +35,7 @@ describe('village labels smoke', () => {
     const conqueredEarly = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         userId: owner.userId,
         name: 'first-conquest',
         x: join.village.x + 4,
@@ -47,6 +48,7 @@ describe('village labels smoke', () => {
     await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         userId: owner.userId,
         name: 'second-conquest',
         x: join.village.x + 5,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ScoutReportResponse } from '@battleforthecrown/shared/combat';
 import {
+  buildNaturalTraitSections,
   buildScoutReportCardProps,
   getInactivityBadge,
   getNewbieShieldStatus,
@@ -35,6 +36,41 @@ describe('scoutReportView', () => {
     expect(scoutReportStrategyLabel(report.strategy)).toBe('Forteresse');
     expect(scoutReportTargetLabel(report)).toBe('Village joueur');
     expect(scoutReportTitle(report)).toBe('Roc-d-Acier');
+  });
+
+  it('builds a natural trait section for a resource trait (bonus shown)', () => {
+    const sections = buildNaturalTraitSections('DENSE_FOREST');
+    expect(sections).toEqual([
+      {
+        title: 'Trait naturel',
+        items: [
+          expect.objectContaining({ label: 'Forêt dense', value: '+10 % Bois' }),
+        ],
+      },
+    ]);
+  });
+
+  it('shows PLAINS as no bonus and omits the section when trait is absent', () => {
+    expect(buildNaturalTraitSections('PLAINS')[0].items[0]).toEqual(
+      expect.objectContaining({ label: 'Plaine', value: 'Aucun bonus' }),
+    );
+    expect(buildNaturalTraitSections(undefined)).toEqual([]);
+  });
+
+  it('surfaces the scouted natural trait in the card sections', () => {
+    const props = buildScoutReportCardProps(
+      { ...report, details: { ...report.details, naturalTrait: 'IRON_VEIN' } },
+      undefined,
+      false,
+    );
+    expect(props.sections).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: 'Trait naturel',
+          items: [expect.objectContaining({ label: 'Veine de fer' })],
+        }),
+      ]),
+    );
   });
 
   it('builds card props from backend scout data without hiding revealed fields', () => {

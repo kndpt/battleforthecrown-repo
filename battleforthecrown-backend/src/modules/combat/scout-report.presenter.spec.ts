@@ -224,6 +224,28 @@ describe('presentScoutReport', () => {
     ).toEqual({});
   });
 
+  it('includes naturalTrait when a valid trait is present in details', () => {
+    const report = { ...baseReport, details: { naturalTrait: 'IRON_VEIN' } };
+    expect(presentScoutReport(report).details).toEqual({
+      naturalTrait: 'IRON_VEIN',
+    });
+  });
+
+  it('omits naturalTrait when the value is not a known trait', () => {
+    expect(
+      presentScoutReport({
+        ...baseReport,
+        details: { naturalTrait: 'MOUNTAIN' },
+      }).details,
+    ).toEqual({});
+    expect(
+      presentScoutReport({
+        ...baseReport,
+        details: { naturalTrait: 42 },
+      }).details,
+    ).toEqual({});
+  });
+
   it('defaults empty persisted resources to zeroes', () => {
     expect(
       presentScoutReport({ ...baseReport, resources: {} }).resources,
