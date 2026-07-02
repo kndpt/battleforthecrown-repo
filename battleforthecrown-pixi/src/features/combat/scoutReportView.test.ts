@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { ScoutReportResponse } from '@battleforthecrown/shared/combat';
 import {
+  buildNaturalTraitSections,
   buildScoutReportCardProps,
+  getInactivityBadge,
   getNewbieShieldStatus,
   scoutReportResourceTotal,
   scoutReportStrategyLabel,
@@ -34,6 +36,41 @@ describe('scoutReportView', () => {
     expect(scoutReportStrategyLabel(report.strategy)).toBe('Forteresse');
     expect(scoutReportTargetLabel(report)).toBe('Village joueur');
     expect(scoutReportTitle(report)).toBe('Roc-d-Acier');
+  });
+
+  it('builds a natural trait section for a resource trait (bonus shown)', () => {
+    const sections = buildNaturalTraitSections('DENSE_FOREST');
+    expect(sections).toEqual([
+      {
+        title: 'Trait naturel',
+        items: [
+          expect.objectContaining({ label: 'Forêt dense', value: '+10 % Bois' }),
+        ],
+      },
+    ]);
+  });
+
+  it('shows PLAINS as no bonus and omits the section when trait is absent', () => {
+    expect(buildNaturalTraitSections('PLAINS')[0].items[0]).toEqual(
+      expect.objectContaining({ label: 'Plaine', value: 'Aucun bonus' }),
+    );
+    expect(buildNaturalTraitSections(undefined)).toEqual([]);
+  });
+
+  it('surfaces the scouted natural trait in the card sections', () => {
+    const props = buildScoutReportCardProps(
+      { ...report, details: { ...report.details, naturalTrait: 'IRON_VEIN' } },
+      undefined,
+      false,
+    );
+    expect(props.sections).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: 'Trait naturel',
+          items: [expect.objectContaining({ label: 'Veine de fer' })],
+        }),
+      ]),
+    );
   });
 
   it('builds card props from backend scout data without hiding revealed fields', () => {
@@ -284,6 +321,39 @@ describe('scoutReportView', () => {
         details: { wallLevel: 0, defensiveFriendsDisplayNames: ['Ghost'] },
       };
       expect(sectionTitled(barbarianWithFriends, 'Amis défensifs')).toBeUndefined();
+    });
+  });
+
+  describe('inactivity badge', () => {
+    it('exposes a frozen "Inactif depuis N j" badge when the snapshot is INACTIVE', () => {
+      const inactive: ScoutReportResponse = {
+        ...report,
+        details: { ...report.details, inactivity: { state: 'INACTIVE', sinceDays: 9 } },
+      };
+      expect(getInactivityBadge(inactive)).toEqual({ label: 'Inactif depuis 9 j' });
+      expect(
+        buildScoutReportCardProps(inactive, undefined, false).inactivityBadge,
+      ).toEqual({ label: 'Inactif depuis 9 j' });
+    });
+
+    it('has no badge when the inactivity field is absent (active owner or old report)', () => {
+      expect(getInactivityBadge(report)).toBeUndefined();
+      expect(
+        buildScoutReportCardProps(report, undefined, false).inactivityBadge,
+      ).toBeUndefined();
+    });
+
+    it('has no badge for a barbarian target (no inactivity field)', () => {
+      const barbarian: ScoutReportResponse = {
+        ...report,
+        targetKind: 'BARBARIAN_VILLAGE',
+        targetTier: 'T2',
+        details: { wallLevel: 0 },
+      };
+      expect(getInactivityBadge(barbarian)).toBeUndefined();
+      expect(
+        buildScoutReportCardProps(barbarian, undefined, false).inactivityBadge,
+      ).toBeUndefined();
     });
   });
 });

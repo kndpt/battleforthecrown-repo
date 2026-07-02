@@ -117,6 +117,15 @@ enum VillageOriginKind {
   ONBOARDING_NARRATIVE
 }
 
+// Trait naturel fixe dérivé de la tile (spec 27). Bonus de production plat sur
+// une ressource ; PLAINS = neutre. Distinct du style *choisi* (strategyConfig).
+enum VillageNaturalTrait {
+  DENSE_FOREST
+  RICH_QUARRY
+  IRON_VEIN
+  PLAINS
+}
+
 model User {
   id          String   @id @default(cuid())
   email       String   @unique
@@ -199,6 +208,7 @@ model Village {
   y                          Int
   isBarbarian                Boolean           @default(false) @map("is_barbarian")
   originKind                 VillageOriginKind @default(STANDARD) @map("origin_kind")
+  naturalTrait               VillageNaturalTrait @map("natural_trait")
   tier                       String?
   label                      VillageLabel?
   barbarianTroopsLastRegenTs DateTime?         @map("barbarian_troops_last_regen_ts") @db.Timestamptz(3)
@@ -715,6 +725,36 @@ model VillageIntel {
   @@unique([userId, worldId, targetVillageId])
   @@index([userId, worldId])
   @@map("village_intel")
+}
+
+/// Private map markers (cf. docs/gameplay/26-private-map-markers.md, run 085).
+enum MapMarkerKind {
+  TO_SCOUT
+  TARGET
+  DANGER
+  FUTURE_VILLAGE
+  INTEREST
+  NOTE
+}
+
+/// Player-private strategic memory pinned to a free tile (worldId, x, y),
+/// independent of the tile's content. worldId is denormalised (no FK cascade
+/// from Village) — purged explicitly on world archive, like VillageIntel.
+model MapMarker {
+  id        String        @id @default(cuid())
+  userId    String        @map("user_id")
+  worldId   String        @map("world_id")
+  x         Int
+  y         Int
+  kind      MapMarkerKind
+  note      String?
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@unique([userId, worldId, x, y])
+  @@index([userId, worldId])
+  @@index([worldId])
+  @@map("map_marker")
 }
 
 model Garrison {

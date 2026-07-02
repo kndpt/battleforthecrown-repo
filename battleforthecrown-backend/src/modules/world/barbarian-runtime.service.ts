@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import type { UnitMap, UnitType } from '@battleforthecrown/shared/army';
+import { Injectable, Logger } from '@nestjs/common';
+import { isUnitType, type UnitMap } from '@battleforthecrown/shared/army';
 import { MS_PER_HOUR } from '@battleforthecrown/shared/time';
+import { typedEntries } from '@battleforthecrown/shared/utils';
 import { TempoService, type WorldTempo } from '@battleforthecrown/shared/world';
 import {
   calculateBarbarianUnitRegen,
@@ -56,7 +57,7 @@ export class BarbarianRuntimeService {
       ),
     });
 
-    for (const [unitType, quantity] of Object.entries(unitRegen)) {
+    for (const [unitType, quantity] of typedEntries(unitRegen)) {
       if (!quantity) continue;
       await tx.unitInventory.upsert({
         where: {
@@ -74,8 +75,7 @@ export class BarbarianRuntimeService {
           quantity: { increment: quantity },
         },
       });
-      currentUnits[unitType as UnitType] =
-        (currentUnits[unitType as UnitType] ?? 0) + quantity;
+      currentUnits[unitType] = (currentUnits[unitType] ?? 0) + quantity;
     }
 
     const isTroopStockFull = isAtCap(tier, currentUnits);
@@ -146,13 +146,18 @@ export class BarbarianRuntimeService {
   }
 }
 
+const logger = new Logger('BarbarianRuntime');
+
 function toUnitMap(
   inventory: Array<{ unitType: string; quantity: number }>,
 ): UnitMap {
   const units: UnitMap = {};
   for (const item of inventory) {
-    if (item.quantity > 0) {
-      units[item.unitType as UnitType] = item.quantity;
+    if (item.quantity <= 0) continue;
+    if (isUnitType(item.unitType)) {
+      units[item.unitType] = item.quantity;
+    } else {
+      logger.warn(`Invalid unitType "${item.unitType}" ignored in toUnitMap`);
     }
   }
   return units;
@@ -160,7 +165,7 @@ function toUnitMap(
 
 function isAtCap(tier: string, currentUnits: UnitMap): boolean {
   const maxUnits = getUnits(tier);
-  return Object.entries(maxUnits).every(
-    ([unitType, max]) => (currentUnits[unitType as UnitType] ?? 0) >= max,
+  return typedEntries(maxUnits).every(
+    ([unitType, max]) => (currentUnits[unitType] ?? 0) >= max,
   );
 }

@@ -11,9 +11,8 @@ import { OutboxPublisher } from '../event/outbox-publisher.service';
 import { CrownsService } from '../crowns/crowns.service';
 import {
   UNIT_CATALOG,
-  type UnitType,
   type UnitCost,
-  UNIT_TYPES,
+  isUnitType,
 } from '@battleforthecrown/shared/army';
 
 export interface CancelRecruitmentResult {
@@ -56,7 +55,7 @@ export class CancelRecruitmentUseCase {
       if (training.villageId !== villageId) {
         throw new NotFoundException('Training not found for this village');
       }
-      if (!isValidUnitType(training.unitType)) {
+      if (!isUnitType(training.unitType)) {
         throw new BadRequestException('Invalid unit type');
       }
 
@@ -156,7 +155,3 @@ export class CancelRecruitmentUseCase {
     });
   }
 }
-
-const isValidUnitType = (value: string): value is UnitType => {
-  return Object.values(UNIT_TYPES).includes(value as UnitType);
-};

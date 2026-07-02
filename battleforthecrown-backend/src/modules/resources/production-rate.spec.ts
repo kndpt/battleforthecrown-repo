@@ -49,4 +49,57 @@ describe('calculateProductionRate', () => {
       base * 2 * 1.2,
     );
   });
+
+  describe('natural trait', () => {
+    it('boosts only the matching resource — DENSE_FOREST lifts wood, not stone/iron', () => {
+      const level = 5;
+      const base = RESOURCE_PRODUCTION_PER_MINUTE[level];
+
+      // DENSE_FOREST produces strictly MORE wood than PLAINS (same everything).
+      expect(
+        calculateProductionRate('WOOD', level, 1, undefined, 'DENSE_FOREST'),
+      ).toBeGreaterThan(
+        calculateProductionRate('WOOD', level, 1, undefined, 'PLAINS'),
+      );
+      expect(
+        calculateProductionRate('WOOD', level, 1, undefined, 'DENSE_FOREST'),
+      ).toBe(base * 1.1);
+
+      // Stone / iron unchanged by DENSE_FOREST.
+      expect(
+        calculateProductionRate('STONE', level, 1, undefined, 'DENSE_FOREST'),
+      ).toBe(base);
+      expect(
+        calculateProductionRate('IRON', level, 1, undefined, 'DENSE_FOREST'),
+      ).toBe(base);
+    });
+
+    it('PLAINS applies no bonus (production == baseline without trait)', () => {
+      const level = 7;
+      for (const type of ['WOOD', 'STONE', 'IRON'] as const) {
+        expect(
+          calculateProductionRate(type, level, 1, undefined, 'PLAINS'),
+        ).toBe(calculateProductionRate(type, level, 1));
+      }
+    });
+
+    it('trait factor is flat — does not scale with building level', () => {
+      const ratio = (level: number) =>
+        calculateProductionRate('IRON', level, 1, undefined, 'IRON_VEIN') /
+        calculateProductionRate('IRON', level, 1);
+
+      expect(ratio(2)).toBeCloseTo(1.1, 10);
+      expect(ratio(9)).toBeCloseTo(1.1, 10);
+      expect(ratio(2)).toBeCloseTo(ratio(9), 10);
+    });
+
+    it('applies trait after strategy (both factors multiply)', () => {
+      const level = 10;
+      const base = RESOURCE_PRODUCTION_PER_MINUTE[level];
+
+      expect(
+        calculateProductionRate('WOOD', level, 1, 'ECONOMIC', 'DENSE_FOREST'),
+      ).toBeCloseTo(base * 1.2 * 1.1, 10);
+    });
+  });
 });

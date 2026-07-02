@@ -41,6 +41,8 @@
 
 Un user peut avoir plusieurs villages (conquête), un seul `mainVillage` (par convention via le `Village.isMain` ou par âge).
 
+`Village.naturalTrait` (enum `VillageNaturalTrait`, **NOT NULL**) est un trait fixe dérivé déterministe de la tile `(worldId, x, y)`, posé à la création (joueurs **et** barbares) et backfillé pour les villages pré-existants dans la migration. Bonus de production plat sur une ressource ; révélé sur une entité d'autrui **uniquement** par scout. Mécanique et invariant anti-fuite : [`docs/gameplay/27-village-natural-traits.md`](../gameplay/27-village-natural-traits.md). Source de vérité du champ : [`prisma/schema.prisma`](../../battleforthecrown-backend/prisma/schema.prisma).
+
 ### Villages barbares
 
 Pas de table dédiée — les villages barbares sont des `Village` avec `isBarbarian=true` et `userId=null`, plus un `tier` (T1→T5). Ils partagent les tables associées (`Building`, `ResourceStock`, `Population`, `UnitInventory`) et les **mêmes enums** (`BUILDING_TYPES`, `UNIT_TYPES`) que les villages joueurs : la différence est purement compositionnelle (composition de bâtiments et blueprint d'armée par tier dans `packages/shared/src/world/barbarian-templates.ts`).
@@ -87,6 +89,12 @@ Un trajet passe généralement par les phases `EN_ROUTE → RESOLVED → RETURNI
 Pour `CARAVAN`, `Expedition.units` reste vide et `Expedition.loot.resources` porte les ressources transportées. À l'arrivée, le worker crédite le village cible jusqu'à la capacité de son Entrepôt, perd l'excédent et crée un `CaravanReport.ARRIVED` avec son `InboxEntry`. Le retour nominal libère seulement les porteurs dans `Population.used` du village d'origine. Si la caravane est rappelée avant arrivée, son retour restitue aussi les ressources à l'origine jusqu'à la capacité de stockage, perd le surplus, libère les porteurs et crée un `CaravanReport.RETURNED`. Aucune ligne `UnitInventory` n'est créée pour les porteurs.
 
 Une conquête passe par `PendingConquest.OPEN → COMPLETED|INTERRUPTED`. La DB impose une seule fenêtre `OPEN` par `targetVillageId` via index unique partiel SQL ; les historiques terminés/interrompus peuvent coexister pour une même cible. Pendant la fenêtre, le Seigneur survivant est stationné comme `Garrison { villageId: targetVillageId, originVillageId: attackerVillageId, unitType: NOBLE }`; s'il survit jusqu'à la finalisation, il est converti en `UnitInventory.NOBLE` du village conquis.
+
+### Marqueurs de carte privés
+
+| Table | Rôle |
+|-------|------|
+| `MapMarker` | marqueur de carte **privé** au joueur, posé sur une **tile libre** `(worldId, x, y)` indépendamment de son contenu (run 085). Champs : `userId`, `worldId`, `x`, `y`, `kind` (enum `MapMarkerKind` : `TO_SCOUT`/`TARGET`/`DANGER`/`FUTURE_VILLAGE`/`INTEREST`/`NOTE`), `note` (≤80, nullable), `createdAt`, `updatedAt`. Unicité `(userId, worldId, x, y)` → upsert idempotent par tile ; index `(userId, worldId)`. `worldId` **dénormalisé** (pas de FK cascade depuis `Village`) → purge explicite à l'archive monde, comme `VillageIntel`. Aucun event WS (privé par compte). Spec [`26-private-map-markers.md`](../gameplay/26-private-map-markers.md). |
 
 ### Crowns
 

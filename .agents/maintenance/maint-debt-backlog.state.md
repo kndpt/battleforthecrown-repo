@@ -1,6 +1,6 @@
 # maint-debt — candidats (réécrit chaque run)
 
-last: 2026-06-28 | archive: `archive/maint-debt/2026-06-15-full.md`
+last: 2026-07-02 | archive: `archive/maint-debt/2026-06-15-full.md`
 branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 ## candidate
@@ -15,13 +15,22 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | conquest openCaptureWindow/interruptCaptureWindow/conquerVillage wrappers | used only in smoke tests, not prod code — public API for test convenience, low debt |
 | buildRefundToastItems export | exported for test import only — valid pattern, skip |
 | GarrisonLineDto export | used locally in combat.service.ts, export unnecessary but trivial |
-| barbarian-runtime.service.ts toUnitMap local fn + Prisma unitType casts | Prisma `unitType: String` → `as UnitType` — Object.entries pattern fixed, Prisma-sourced casts remain (need isUnitType guard, broader scope) |
+| HeaderBarSection console.log + unused useState | ui-test demo component — trivial cleanup |
 
 ## done (this run)
 
 | area | PR |
 |------|-----|
-| typedEntries consistency: 4 files still using Object.entries + `as UnitType` instead of shared typedEntries helper | #213 |
+| barbarian-runtime.service.ts 4× `as UnitType` → typedEntries + isUnitType guard | pending |
+
+## done (prev)
+
+| area | PR |
+|------|-----|
+| isUnitType guard duplicated 3× → shared | #221 |
+| hardcoded time constants → shared/time imports | #225 |
+| typedEntries consistency: Object.entries + `as UnitType` → shared typedEntries | #213 |
+| garrison-merge.utils.ts repeated `as UnitType` casts → extract local const | stale (never pushed) |
 
 ## rules
 

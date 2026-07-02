@@ -23,6 +23,7 @@ Ces idées ne sont plus sources de vérité dans le lab :
 | Menace estimée avant attaque | MVP léger | [`11-scouting.md`](../11-scouting.md#menace-estimée-avant-attaque-mvp-léger) |
 | Carnet d'intel | MVP léger | [`11-scouting.md`](../11-scouting.md#carnet-dintel-minimal-mvp-léger) |
 | Villages favoris et rôles visibles | MVP léger | [`22-village-roles-and-navigation.md`](../22-village-roles-and-navigation.md) |
+| Notes et marqueurs de carte | MVP léger | [`26-private-map-markers.md`](../26-private-map-markers.md) |
 
 ## Règle de promotion
 

@@ -12,6 +12,8 @@ import {
   ZOOM_OUT_FACTOR,
 } from "./MapZoomControls";
 import { SelectedEntityPanel } from "./SelectedEntityPanel";
+import { MapMarkerSheet } from "./MapMarkerSheet";
+import { useMapMarkersStore } from "./mapMarkersStore";
 import { WorldLockedScreen } from "./WorldLockedScreen";
 import { WorldMiniMap } from "./WorldMiniMap";
 import {
@@ -41,6 +43,7 @@ import {
   useOpenExpeditionsQuery,
   useWorldDetailsQuery,
   useWorldEntitiesQuery,
+  useMapMarkersQuery,
 } from "@/api/queries";
 import { useGameStore } from "@/stores/game";
 import { useAuthStore } from "@/stores/auth";
@@ -74,8 +77,21 @@ export function WorldMapScreen() {
   const openConquests = useOpenConquestsQuery(worldId);
   const openExpeditions = useOpenExpeditionsQuery(worldId);
   const worldDetails = useWorldDetailsQuery(worldId);
+  const mapMarkers = useMapMarkersQuery(worldId);
   const { isWatchtowerBuilt } = useBuildingsForLockCheck();
   const expeditions = useExpeditionsStore((state) => state.byId);
+
+  const setMapMarkers = useMapMarkersStore((state) => state.setMarkers);
+  const selectedMarkerId = useMapMarkersStore(
+    (state) => state.selectedMarkerId,
+  );
+  const setSelectedMarkerId = useMapMarkersStore(
+    (state) => state.setSelectedMarkerId,
+  );
+  const [markerSheetTile, setMarkerSheetTile] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
 
   const setEntities = useWorldMapStore((state) => state.setEntities);
   const setVillage = useGameStore((state) => state.setVillage);
@@ -160,10 +176,19 @@ export function WorldMapScreen() {
     setEntities(visibleEntities);
   }, [visibleEntities, setEntities]);
 
+  // Feed the private map markers into the Pixi-facing store (the canvas
+  // reconciles off it). Off-fog by design — markers render regardless of vision.
+  useEffect(() => {
+    setMapMarkers(mapMarkers.data ?? []);
+  }, [mapMarkers.data, setMapMarkers]);
+
   // Clean store entry when leaving the map.
   useEffect(() => {
     return () => {
       useWorldMapStore.getState().clear();
+      const markersStore = useMapMarkersStore.getState();
+      markersStore.setMarkers([]);
+      markersStore.setSelectedMarkerId(null);
     };
   }, []);
 
@@ -179,6 +204,20 @@ export function WorldMapScreen() {
         (conquest) => conquest.targetVillageId === selectedEntity.id,
       ) ?? null)
     : null;
+
+  // The marker sheet opens either from the "Marquer" CTA (markerSheetTile) or
+  // from tapping a marker pin (scene → store.selectedMarkerId). CTA wins if both
+  // are set. Derived during render — no setState-in-effect cascade.
+  const tappedMarker = selectedMarkerId
+    ? ((mapMarkers.data ?? []).find((m) => m.id === selectedMarkerId) ?? null)
+    : null;
+  const activeMarkerTile =
+    markerSheetTile ??
+    (tappedMarker ? { x: tappedMarker.x, y: tappedMarker.y } : null);
+  const closeMarkerSheet = () => {
+    setMarkerSheetTile(null);
+    setSelectedMarkerId(null);
+  };
 
   // Le panneau de sélection est FIXE sur la vue (bottom-anchored). À la
   // sélection, on pan la caméra (animé) pour caler le village sous le bec du
@@ -422,6 +461,10 @@ export function WorldMapScreen() {
                     setSelectedEntity(null);
                   }}
                   onGoToVillage={goToVillage}
+                  onMark={(target) => {
+                    setMarkerSheetTile({ x: target.x, y: target.y });
+                    setSelectedEntity(null);
+                  }}
                   onClose={() => setSelectedEntity(null)}
                 />
               </div>
@@ -444,6 +487,15 @@ export function WorldMapScreen() {
           target={caravanTarget}
           origin={{ x: myVillage.x, y: myVillage.y }}
           onClose={() => setCaravanTarget(null)}
+        />
+      )}
+
+      {activeMarkerTile && worldId && (
+        <MapMarkerSheet
+          key={`${activeMarkerTile.x}:${activeMarkerTile.y}`}
+          worldId={worldId}
+          tile={activeMarkerTile}
+          onClose={closeMarkerSheet}
         />
       )}
 

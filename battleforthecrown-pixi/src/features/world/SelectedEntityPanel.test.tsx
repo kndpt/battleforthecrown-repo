@@ -420,6 +420,7 @@ describe("enemy player", () => {
           kingdomPower: 1234,
           renownLevel: 12,
           newbieShield: null,
+          inactivity: null,
         };
       throw new Error(`Unexpected GET ${path}`);
     });

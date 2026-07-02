@@ -2,11 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { WorldConfigSchema } from '@battleforthecrown/shared/world';
 import type { OyezTheme } from '@battleforthecrown/shared/retention';
+import { MS_PER_HOUR } from '@battleforthecrown/shared/time';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OYEZ_CATALOGUE, selectOyezForDay } from './retention-oyez';
 import { getParisDailyKey } from './retention.utils';
-
-const MS_PER_HOUR = 60 * 60 * 1000;
 
 export interface OyezProductionResult {
   created: boolean;

@@ -5,6 +5,7 @@ import { OwnershipService } from '../../common/auth';
 import { WorldConfigService } from '../world/world-config.service';
 import { VillageStrategyService } from '../strategy/village-strategy.service';
 import type { WorldConfig } from '@battleforthecrown/shared/world';
+import { MS_PER_HOUR } from '@battleforthecrown/shared/time';
 
 describe('ResourcesService', () => {
   let service: ResourcesService;
@@ -15,7 +16,7 @@ describe('ResourcesService', () => {
 
   const fakeConfig = {} as WorldConfig;
   const RATE_PER_MINUTE = 10;
-  const sixtyMinutesAgo = () => new Date(Date.now() - 60 * 60 * 1000);
+  const sixtyMinutesAgo = () => new Date(Date.now() - MS_PER_HOUR);
 
   beforeEach(async () => {
     mockWorldConfig = {
@@ -80,6 +81,7 @@ describe('ResourcesService', () => {
         'IRON',
         1,
         undefined,
+        undefined,
       );
     });
 
@@ -105,12 +107,38 @@ describe('ResourcesService', () => {
         'WOOD',
         2,
         'ECONOMIC',
+        undefined,
       );
       expect(mockWorldConfig.computeProductionRate).toHaveBeenCalledWith(
         fakeConfig,
         'STONE',
         3,
         'ECONOMIC',
+        undefined,
+      );
+    });
+
+    it('forwards naturalTrait to computeProductionRate when provided', async () => {
+      await service.calculateCurrentResources({
+        worldId: 'world-1',
+        resourceStock: {
+          wood: 0,
+          stone: 0,
+          iron: 0,
+          maxPerType: 50_000,
+          lastUpdateTs: sixtyMinutesAgo(),
+        },
+        buildings: [{ type: 'WOOD', level: 2 }],
+        strategy: 'ECONOMIC',
+        naturalTrait: 'DENSE_FOREST',
+      });
+
+      expect(mockWorldConfig.computeProductionRate).toHaveBeenCalledWith(
+        fakeConfig,
+        'WOOD',
+        2,
+        'ECONOMIC',
+        'DENSE_FOREST',
       );
     });
 

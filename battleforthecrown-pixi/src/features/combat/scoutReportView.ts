@@ -6,10 +6,17 @@ import {
   getPvpCaptureDurationLabel,
   type ScoutReportResponse,
 } from '@battleforthecrown/shared/combat';
+import { formatInactivityLabel } from '@battleforthecrown/shared/world';
 import { unitMetaFor } from '@/features/army/unitConfig';
 import { formatResourceAmount } from '@/lib/resourceConfig';
 import { formatRemaining } from '@/features/village/constructionProgress';
-import { DEFAULT_VILLAGE_STRATEGY, type VillageStrategyType } from '@battleforthecrown/shared/village';
+import {
+  DEFAULT_VILLAGE_STRATEGY,
+  NATURAL_TRAIT_DISPLAY,
+  NATURAL_TRAIT_PRODUCTION_BONUS,
+  type VillageNaturalTrait,
+  type VillageStrategyType,
+} from '@battleforthecrown/shared/village';
 
 const NUMBER_FORMATTER = new Intl.NumberFormat('fr-FR');
 
@@ -29,6 +36,47 @@ const RESOURCE_LABELS = {
   stone: 'Pierre',
   iron: 'Fer',
 } as const;
+
+const NATURAL_TRAIT_ICON: Record<VillageNaturalTrait, string> = {
+  DENSE_FOREST: RESOURCE_ICONS.wood,
+  RICH_QUARRY: RESOURCE_ICONS.stone,
+  IRON_VEIN: RESOURCE_ICONS.iron,
+  PLAINS: '/assets/castle.png',
+};
+
+/**
+ * Section « Trait naturel » du rapport de scout (spec 27). Présente pour les
+ * deux kinds (joueur ET barbare — tout village a un trait). Retourne un tableau
+ * vide si le trait est absent (vieux rapport d'avant la feature).
+ */
+export function buildNaturalTraitSections(
+  trait: VillageNaturalTrait | undefined,
+): ScoutReportSection[] {
+  if (!trait) return [];
+  const display = NATURAL_TRAIT_DISPLAY[trait];
+  const boosted = display.boostedResource;
+  const factor = boosted
+    ? NATURAL_TRAIT_PRODUCTION_BONUS[trait][boosted]
+    : undefined;
+  const bonusLabel =
+    boosted && factor
+      ? `+${Math.round((factor - 1) * 100)} % ${RESOURCE_LABELS[
+          boosted.toLowerCase() as keyof typeof RESOURCE_LABELS
+        ]}`
+      : 'Aucun bonus';
+  return [
+    {
+      title: 'Trait naturel',
+      items: [
+        {
+          icon: NATURAL_TRAIT_ICON[trait],
+          label: display.label,
+          value: bonusLabel,
+        },
+      ],
+    },
+  ];
+}
 
 export function scoutReportTargetLabel(report: ScoutReportResponse): string {
   const base = TARGET_KIND_LABEL[report.targetKind] ?? report.targetKind;
@@ -105,6 +153,20 @@ export function getNewbieShieldStatus(
     }
   }
   return { active: true, endsAt, remainingLabel };
+}
+
+/**
+ * Badge d'inactivité pré-abandon figé sur un rapport de scout (spec 18).
+ * `undefined` si la cible est barbare, si le propriétaire était ACTIVE au
+ * moment du scout, ou pour un ancien rapport (champ absent). Snapshot — jamais
+ * recalculé en live, jamais dérivé d'un `lastLoginAt` brut (non exposé).
+ */
+export function getInactivityBadge(
+  report: ScoutReportResponse,
+): { label: string } | undefined {
+  const inactivity = report.details?.inactivity;
+  if (!inactivity) return undefined;
+  return { label: formatInactivityLabel(inactivity.sinceDays) };
 }
 
 export function scoutReportStrategyLabel(strategy: string | null | undefined): string {
@@ -185,6 +247,7 @@ export function buildScoutReportCardProps(
       title: 'Ressources',
       items: resourceItems,
     },
+    ...buildNaturalTraitSections(report.details?.naturalTrait),
     ...(report.targetKind === 'BARBARIAN_VILLAGE'
       ? []
       : [
@@ -228,6 +291,7 @@ export function buildScoutReportCardProps(
     shieldBadge: shieldStatus?.active
       ? { label: 'Bouclier débutant', remaining: shieldStatus.remainingLabel }
       : undefined,
+    inactivityBadge: getInactivityBadge(report),
     sections,
     targetName: scoutReportTitle(report),
     targetPrefix: 'Cible',

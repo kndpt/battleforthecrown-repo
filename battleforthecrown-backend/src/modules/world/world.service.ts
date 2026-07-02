@@ -32,19 +32,12 @@ export class WorldService {
   async getWorlds() {
     const worlds = await this.prisma.world.findMany({
       orderBy: { createdAt: 'desc' },
+      include: { _count: { select: { memberships: true } } },
     });
 
-    const counts = await this.prisma.worldMembership.groupBy({
-      by: ['worldId'],
-      _count: { _all: true },
-      where: { worldId: { in: worlds.map((w) => w.id) } },
-    });
-
-    const countByWorld = new Map(counts.map((c) => [c.worldId, c._count._all]));
-
-    return worlds.map((world) => ({
+    return worlds.map(({ _count, ...world }) => ({
       ...world,
-      playerCount: countByWorld.get(world.id) ?? 0,
+      playerCount: _count.memberships,
     }));
   }
 
@@ -63,17 +56,15 @@ export class WorldService {
         endsAt: true,
         plannedOpenAt: true,
         createdAt: true,
+        _count: { select: { memberships: true } },
       },
     });
     if (!world) {
       throw new NotFoundException(`World ${worldId} not found`);
     }
 
-    const playerCount = await this.prisma.worldMembership.count({
-      where: { worldId },
-    });
-
-    return { ...world, playerCount };
+    const { _count, ...rest } = world;
+    return { ...rest, playerCount: _count.memberships };
   }
 
   async getWorldConfig(worldId: string) {
@@ -168,23 +159,18 @@ export class WorldService {
   }
 
   async getUserMemberships(userId: string): Promise<WorldMembershipResponse[]> {
+    // Filtered `_count` on `world.villages` folds the per-world village tally
+    // into the same round-trip as the memberships (was a separate `groupBy`).
     const memberships = await this.prisma.worldMembership.findMany({
       where: { userId },
-      include: { world: true },
-    });
-
-    const villageCounts = await this.prisma.village.groupBy({
-      by: ['worldId'],
-      _count: { _all: true },
-      where: {
-        userId,
-        worldId: { in: memberships.map((m) => m.worldId) },
+      include: {
+        world: {
+          include: {
+            _count: { select: { villages: { where: { userId } } } },
+          },
+        },
       },
     });
-
-    const countByWorld = new Map(
-      villageCounts.map((c) => [c.worldId, c._count._all]),
-    );
 
     const now = new Date();
     return memberships.flatMap((m) => {
@@ -212,7 +198,7 @@ export class WorldService {
           role: m.role,
           joinedAt: m.joinedAt.toISOString(),
           lastLoginAt: m.lastLoginAt ? m.lastLoginAt.toISOString() : null,
-          villageCount: countByWorld.get(m.worldId) ?? 0,
+          villageCount: m.world._count.villages,
           newbieShield,
         },
       ];
@@ -241,24 +227,29 @@ export class WorldService {
       throw new BadRequestException(`World ${worldId} is not open for entry`);
     }
 
+    // Fold the villageCount tally into the same update round-trip via a filtered
+    // `_count` on `world.villages` — was a separate `village.count`.
     const lastLoginAt = new Date();
-    await this.prisma.worldMembership.update({
+    const updated = await this.prisma.worldMembership.update({
       where: { userId_worldId: { userId, worldId } },
       data: { lastLoginAt },
-    });
-
-    const villageCount = await this.prisma.village.count({
-      where: { userId, worldId },
+      include: {
+        world: {
+          include: {
+            _count: { select: { villages: { where: { userId } } } },
+          },
+        },
+      },
     });
 
     return {
-      worldId: membership.worldId,
-      worldName: membership.world.name,
+      worldId: updated.worldId,
+      worldName: updated.world.name,
       status: parsedStatus.data,
-      role: membership.role,
-      joinedAt: membership.joinedAt.toISOString(),
+      role: updated.role,
+      joinedAt: updated.joinedAt.toISOString(),
       lastLoginAt: lastLoginAt.toISOString(),
-      villageCount,
+      villageCount: updated.world._count.villages,
     };
   }
 

@@ -3,6 +3,7 @@ import type {
   ExpeditionKind as PrismaExpeditionKind,
   ExpeditionStatus as PrismaExpeditionStatus,
   FriendshipStatus as PrismaFriendshipStatus,
+  MapMarkerKind as PrismaMapMarkerKind,
   OnboardingStatus as PrismaOnboardingStatus,
   OnboardingStep as PrismaOnboardingStep,
   ReinforcementReportType as PrismaReinforcementReportType,
@@ -26,6 +27,7 @@ import type {
   OnboardingStep,
 } from '@battleforthecrown/shared/onboarding';
 import type { FriendshipStatus } from '@battleforthecrown/shared/social';
+import type { MapMarkerKind } from '@battleforthecrown/shared/map-markers';
 
 // Compile-time alignment between Prisma enums and shared unions.
 // Bidirectional Records: if either side adds, removes, or renames a variant,
@@ -170,4 +172,27 @@ export const _onboardingStepFromPrisma: Record<
   UPGRADE_CASTLE_LEVEL_3: 'UPGRADE_CASTLE_LEVEL_3',
   BUILD_WATCHTOWER: 'BUILD_WATCHTOWER',
   ATTACK_BARBARIAN: 'ATTACK_BARBARIAN',
+};
+
+export const _mapMarkerKindFromPrisma: Record<
+  PrismaMapMarkerKind,
+  MapMarkerKind
+> = {
+  TO_SCOUT: 'TO_SCOUT',
+  TARGET: 'TARGET',
+  DANGER: 'DANGER',
+  FUTURE_VILLAGE: 'FUTURE_VILLAGE',
+  INTEREST: 'INTEREST',
+  NOTE: 'NOTE',
+};
+export const _mapMarkerKindToPrisma: Record<
+  MapMarkerKind,
+  PrismaMapMarkerKind
+> = {
+  TO_SCOUT: 'TO_SCOUT',
+  TARGET: 'TARGET',
+  DANGER: 'DANGER',
+  FUTURE_VILLAGE: 'FUTURE_VILLAGE',
+  INTEREST: 'INTEREST',
+  NOTE: 'NOTE',
 };

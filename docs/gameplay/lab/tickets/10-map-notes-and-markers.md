@@ -1,6 +1,8 @@
 # 10 — Notes et marqueurs de carte
 
-**Statut** : idée à approfondir  
+> **Promu (run 085).** Source de vérité : [`docs/gameplay/26-private-map-markers.md`](../../26-private-map-markers.md). Ce ticket n'est plus canonique — conservé comme trace de l'idée d'origine.
+
+**Statut** : promu — MVP léger  
 **Ratio bénéfice / coût** : très bon
 
 ## Opportunité

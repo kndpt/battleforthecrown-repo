@@ -3,6 +3,7 @@ import {
   type WorldTier,
 } from "@battleforthecrown/shared/world";
 import { villageSpriteAliasForEntity, type MapEntity } from "@/api/world-types";
+import type { MapMarkerKind } from "@battleforthecrown/shared/map-markers";
 
 export const BASE_PLAYER_SIZE = 56;
 export const BASE_BARBARIAN_SIZE = 46;
@@ -129,6 +130,30 @@ export function styleFor(entity: MapEntity): EntityStyle {
     };
   }
   return { color: COLOR.other, ringColor: 0xffffff, radius: 9, zIndex: 3 };
+}
+
+/**
+ * Per-kind colour pair for private map-marker pins.
+ * Colours are chosen to be distinct from the entity palette above and readable
+ * at small sizes on the green/dark map background.
+ */
+export const MAP_MARKER_STYLE: Record<
+  MapMarkerKind,
+  { color: number; ringColor: number }
+> = {
+  DANGER: { color: 0xe03030, ringColor: 0xff9999 },
+  TARGET: { color: 0xe07820, ringColor: 0xffcc88 },
+  TO_SCOUT: { color: 0x3090e0, ringColor: 0x99d4ff },
+  FUTURE_VILLAGE: { color: 0x38b060, ringColor: 0x99f0b4 },
+  INTEREST: { color: 0x9040c8, ringColor: 0xd8a8ff },
+  NOTE: { color: 0xa0a0a0, ringColor: 0xe0e0e0 },
+};
+
+export function markerStyleFor(kind: MapMarkerKind): {
+  color: number;
+  ringColor: number;
+} {
+  return MAP_MARKER_STYLE[kind];
 }
 
 export function aliasFor(entity: MapEntity): string | null {

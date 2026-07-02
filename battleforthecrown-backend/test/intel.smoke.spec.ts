@@ -54,6 +54,7 @@ async function seedAdjacentBarbarian(
   const barbarian = await ctx.prisma.village.create({
     data: {
       worldId,
+      naturalTrait: 'PLAINS',
       isBarbarian: true,
       name: `intel-barb-${Date.now()}`,
       x: attackerVillage.x + 1,
@@ -224,6 +225,7 @@ describe('intel smoke', () => {
     const unknownVillage = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         isBarbarian: true,
         name: 'intel-unknown-barb',
         x: 50,

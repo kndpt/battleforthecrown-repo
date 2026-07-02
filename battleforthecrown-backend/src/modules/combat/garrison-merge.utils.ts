@@ -16,14 +16,14 @@ export function mergeGarrisonsIntoParticipants(
   totalUnits: UnitMap,
 ): void {
   for (const g of garrisons) {
-    const gUnits: UnitMap = { [g.unitType as UnitType]: g.quantity };
+    const ut = g.unitType as UnitType;
+    const gUnits: UnitMap = { [ut]: g.quantity };
     const existing = participants.find(
       (p) => p.villageId === g.originVillageId,
     );
 
     if (existing) {
-      existing.units[g.unitType as UnitType] =
-        (existing.units[g.unitType as UnitType] ?? 0) + g.quantity;
+      existing.units[ut] = (existing.units[ut] ?? 0) + g.quantity;
     } else {
       participants.push({
         villageId: g.originVillageId,
@@ -32,7 +32,6 @@ export function mergeGarrisonsIntoParticipants(
       });
     }
 
-    totalUnits[g.unitType as UnitType] =
-      (totalUnits[g.unitType as UnitType] ?? 0) + g.quantity;
+    totalUnits[ut] = (totalUnits[ut] ?? 0) + g.quantity;
   }
 }

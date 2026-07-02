@@ -3,6 +3,7 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 import { PowerService } from '../power/power.service';
 import { NewbieShieldService } from '../world/newbie-shield.service';
 import {
+  computeInactivityState,
   renownStatusForXp,
   type PublicPlayerProfileResponse,
 } from '@battleforthecrown/shared';
@@ -12,9 +13,11 @@ import {
  *
  * Exposes spec-public fields: displayName + kingdom power (09 § Visibilité) +
  * newbie-shield state + cross-world renown level (cosmetic, zero in-world
- * power — spec 25 § 2). The shield state is read live via
- * {@link NewbieShieldService} (no new source of truth). An inactive shield is
- * mapped to `null` (spec 14 § 3 — no explicit "exposed" signal).
+ * power — spec 25 § 2) + pre-abandonment inactivity state (spec 18). The shield
+ * state is read live via {@link NewbieShieldService} (no new source of truth).
+ * An inactive shield is mapped to `null` (spec 14 § 3 — no explicit "exposed"
+ * signal). Inactivity is derived read-only from `lastLoginAt`; the raw timestamp
+ * is never exposed — only the state + frozen `sinceDays` (non-révélation).
  */
 @Injectable()
 export class PublicProfileService {
@@ -33,7 +36,10 @@ export class PublicProfileService {
     // (userId, worldId) constraint keeps the world-scope invariant explicit.
     const membership = await this.prisma.worldMembership.findUnique({
       where: { userId_worldId: { userId, worldId } },
-      select: { user: { select: { displayName: true, renownXp: true } } },
+      select: {
+        lastLoginAt: true,
+        user: { select: { displayName: true, renownXp: true } },
+      },
     });
 
     if (!membership) {
@@ -49,6 +55,15 @@ export class PublicProfileService {
       worldId,
     );
 
+    // Indicateur d'inactivité pré-abandon (spec 18). Dérivé en lecture seule de
+    // `lastLoginAt`, jamais exposé brut : seul l'état + `sinceDays` figés
+    // server-side sortent. `ACTIVE` → `null` (pas de signal explicite, comme le
+    // bouclier inactif).
+    const inactivity = computeInactivityState(
+      membership.lastLoginAt,
+      new Date(),
+    );
+
     return {
       userId,
       displayName: membership.user.displayName,
@@ -57,6 +72,10 @@ export class PublicProfileService {
       newbieShield: shieldState?.active
         ? { active: true, endsAt: shieldState.endsAt }
         : null,
+      inactivity:
+        inactivity.state === 'INACTIVE'
+          ? { state: 'INACTIVE', sinceDays: inactivity.sinceDays }
+          : null,
     };
   }
 }

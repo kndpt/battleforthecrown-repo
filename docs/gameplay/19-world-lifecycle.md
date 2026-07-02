@@ -15,7 +15,7 @@ Un monde Battle for the Crown est **borné dans le temps**. Status successifs (c
 | **Retardataires** | `OPEN` (sous-phase) | **🔧 3 j** | ✅ avec avertissement UI | Inscription encore possible, mais le monde tourne depuis 1 semaine. L'UI signale le retard (« monde lancé il y a {N} j — voir aussi un monde plus frais ») pour que le joueur fasse un choix éclairé. |
 | **Verrouillé** | `LOCKED` | **🔧 ~50 j** | ❌ | Plus d'inscription possible. Le monde tourne entre les joueurs déjà présents. PvP, conquête, snowball borné par la fin programmée. |
 | Terminé | `ENDED` | **🔧 7 j** | ❌ | Wipe planifié, leaderboard final figé, attribution des récompenses cosmétiques. Consultation lecture seule pendant la fenêtre. |
-| Archivé | `ARCHIVED` | — | ❌ | À `endsAt + archiveAfterDays` (🔧 7 j), `WorldLifecycleWorker.archiveEndedWorlds` purge les données joueur scopées au monde (royaume, ressources, couronnes, cartes…) dans une transaction unique et émet `world.status.changed → ARCHIVED`. La ligne `World` et les données durables (rapports, snapshot final, gloire/renown, cosmétiques permanents, memberships) sont conservées. Exclu de `GET /worlds/public`. |
+| Archivé | `ARCHIVED` | — | ❌ | À `endsAt + archiveAfterDays` (🔧 7 j), `WorldLifecycleWorker.archiveEndedWorlds` purge les données joueur scopées au monde (royaume, ressources, couronnes, cartes, amis défensifs…) dans une transaction unique et émet `world.status.changed → ARCHIVED`. La ligne `World` et les données durables (rapports, snapshot final, gloire/renown, cosmétiques permanents, memberships) sont conservées. Exclu de `GET /worlds/public`. |
 
 **Durée totale par défaut : 🔧 60 jours (~2 mois)**, soit 7 j d'ouverture + 3 j retardataires + 50 j verrouillés. Le serveur fait tourner **plusieurs mondes en parallèle**, décalés dans le temps — un nouveau joueur arrivé après J+10 sur un monde rejoint le suivant en phase `OPEN`.
 
@@ -121,6 +121,7 @@ Déclenchement : job planifié à `endsAt` (= `startedAt + 60 j`, default 🔧).
 | Élément | Sort en `ENDED` |
 | --- | --- |
 | Royaume du joueur (villages, bâtiments, armée) | Archivé puis purgé |
+| Marqueurs de carte privés (`MapMarker`, run 085) | Purgés à l'archivage (`archiveEndedWorlds`, après la fenêtre de consultation `ENDED`), player-scoped per-world, aucun carry-over |
 | Ressources stockées (bois, pierre, fer) | Reset (perdus avec le monde) |
 | Couronnes accumulées | Reset (perdues avec le monde) |
 | Statistiques personnelles (raids menés, conquêtes, etc.) | Conservées sur la fiche profil globale |

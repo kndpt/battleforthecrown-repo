@@ -1,5 +1,6 @@
 import type { LootResources } from './loot';
 import type { UnitMap } from '../army/unit-map';
+import type { VillageNaturalTrait } from '../village/traits';
 
 export type TargetKind = 'PLAYER_VILLAGE' | 'BARBARIAN_VILLAGE';
 
@@ -68,14 +69,17 @@ export interface CombatLoot {
 
 export interface CombatReportResponse {
   id: string;
+  worldId: string;
   attackerVillageId: string;
   attackerVillageName?: string | null;
   attackerX?: number | null;
   attackerY?: number | null;
+  attackerUserId: string;
   defenderVillageId?: string | null;
   defenderVillageName?: string | null;
   defenderX?: number | null;
   defenderY?: number | null;
+  defenderUserId?: string | null;
   observerUserId?: string | null;
   targetKind: string;
   targetX: number;
@@ -98,9 +102,12 @@ export interface CombatReportResponse {
       openedAt?: string;
       completedAt?: string;
       outcome?: string;
+      conquerorName?: string;
+      visualTier?: number;
     };
   };
   timestamp: string;
+  createdAt: string;
 }
 
 export interface ScoutReportResponse {
@@ -135,6 +142,22 @@ export interface ScoutReportResponse {
      * recomputed live (same pattern as wallLevel/newbieShield).
      */
     defensiveFriendsDisplayNames?: string[];
+    /**
+     * Pre-abandonment inactivity of the target player owner, snapshot at scout
+     * time (spec 18 § « Affichage carte »). Present only when the owner is
+     * INACTIVE (`lastLoginAt` ≥ {@link INACTIVITY_THRESHOLD_DAYS} j). Absent for
+     * barbarian targets, active owners, and old reports. Frozen — never
+     * recomputed live (same pattern as wallLevel/newbieShield); the raw
+     * `lastLoginAt` is never exposed, only the derived state + frozen sinceDays.
+     */
+    inactivity?: { state: 'INACTIVE'; sinceDays: number };
+    /**
+     * Natural trait of the target village, snapshot at scout time (spec 27).
+     * Present for both PLAYER and BARBARIAN targets (every village has one).
+     * Frozen — never recomputed live (same pattern as wallLevel/castleLevel);
+     * the trait is fixed to the tile so a single snapshot is authoritative.
+     */
+    naturalTrait?: VillageNaturalTrait;
   };
   isRead: boolean;
   timestamp: string;

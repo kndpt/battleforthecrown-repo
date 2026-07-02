@@ -6,6 +6,7 @@ import { useCrownsStore } from './crowns';
 import { useExpeditionsStore } from './expeditions';
 import { useUiStore } from './ui';
 import { useWorldMapStore } from './worldMap';
+import { useMapMarkersStore } from '@/features/world/mapMarkersStore';
 
 function seedAllSessionStores() {
   useGameStore.getState().setContext({ worldId: 'w1', villageId: 'v1' });
@@ -61,6 +62,10 @@ function seedAllSessionStores() {
     isMine: true,
     tier: null,
   });
+  useMapMarkersStore.getState().setMarkers([
+    { id: 'mk1', x: 3, y: 4, kind: 'DANGER', note: null, worldId: 'w1', createdAt: '', updatedAt: '' },
+  ]);
+  useMapMarkersStore.getState().setSelectedMarkerId('mk1');
 }
 
 describe('resetGameSessionStores', () => {
@@ -75,6 +80,8 @@ describe('resetGameSessionStores', () => {
     expect(useUiStore.getState().toasts).toHaveLength(1);
     expect(useUiStore.getState().victoryModals).toHaveLength(1);
     expect(Object.keys(useWorldMapStore.getState().entities)).toHaveLength(1);
+    expect(useMapMarkersStore.getState().markers).toHaveLength(1);
+    expect(useMapMarkersStore.getState().selectedMarkerId).toBe('mk1');
 
     resetGameSessionStores();
 
@@ -86,5 +93,7 @@ describe('resetGameSessionStores', () => {
     expect(useUiStore.getState().toasts).toEqual([]);
     expect(useUiStore.getState().victoryModals).toEqual([]);
     expect(useWorldMapStore.getState().entities).toEqual({});
+    expect(useMapMarkersStore.getState().markers).toEqual([]);
+    expect(useMapMarkersStore.getState().selectedMarkerId).toBeNull();
   });
 });
