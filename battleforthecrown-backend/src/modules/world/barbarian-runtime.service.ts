@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { isUnitType, type UnitMap } from '@battleforthecrown/shared/army';
 import { MS_PER_HOUR } from '@battleforthecrown/shared/time';
 import { typedEntries } from '@battleforthecrown/shared/utils';
@@ -146,13 +146,18 @@ export class BarbarianRuntimeService {
   }
 }
 
+const logger = new Logger('BarbarianRuntime');
+
 function toUnitMap(
   inventory: Array<{ unitType: string; quantity: number }>,
 ): UnitMap {
   const units: UnitMap = {};
   for (const item of inventory) {
-    if (item.quantity > 0 && isUnitType(item.unitType)) {
+    if (item.quantity <= 0) continue;
+    if (isUnitType(item.unitType)) {
       units[item.unitType] = item.quantity;
+    } else {
+      logger.warn(`Invalid unitType "${item.unitType}" ignored in toUnitMap`);
     }
   }
   return units;
