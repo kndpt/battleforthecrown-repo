@@ -43,6 +43,8 @@ V9 | L'Oyez est produit en runtime par un worker cron 04:00 Europe/Paris (mondes
 
 V10 | L'inactivité pré-abandon (spec 18) exposée à un tiers (fiche publique joueur, rapport de scout, futures surfaces carte) ne doit jamais sérialiser `WorldMembership.lastLoginAt` brut : dériver l'état via le helper pur `computeInactivityState` et n'exposer que `{ state, sinceDays }` figés server-side. Mapping `ACTIVE → champ absent` (pas de signal explicite). Sur une surface snapshot (scout), figer la valeur dans `details` à la résolution, jamais recalculer live. | source: tasks/runs/archive/087-feature-inactivity-indicator.md + tasks/runs/archive/089-feature-scout-report-inactivity-badge.md
 
+V11 | Le trait naturel d'un village (spec 27) n'est révélé sur une entité d'AUTRUI que par le rapport de scout (snapshot figé `details.naturalTrait`). Il ne doit JAMAIS entrer dans un payload servi sans viewer scope (`world-entities-query` = même donnée pour tous) ni dans un DTO cross-joueur (profil public, activités, intel) : n'ajoute jamais `naturalTrait` à un `select`/`include` renvoyé à un non-propriétaire. Le trait de SON propre village passe uniquement par l'endpoint owner-scoped (`village.service.getVillages`, filtré `userId`). | source: tasks/runs/archive/088-feature-village-natural-traits.md
+
 ## §B — Bugs récurrents / anti-patterns
 
 Format :

@@ -48,6 +48,7 @@ describe('combat attack smoke', () => {
     const barbarian = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         isBarbarian: true,
         name: 'barb-target',
         x: join.village.x + 5,
@@ -217,6 +218,7 @@ describe('combat attack smoke', () => {
     const barbarian = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         isBarbarian: true,
         name: 'barb-total-loss-target',
         x: join.village.x + 1,
@@ -309,6 +311,7 @@ describe('combat attack smoke', () => {
     const barbarian = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         isBarbarian: true,
         name: 'barb-anti-cav-target',
         x: join.village.x + 1,
@@ -403,6 +406,7 @@ describe('combat attack smoke', () => {
     const barbarian = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         isBarbarian: true,
         name: 'barb-target-2',
         x: join.village.x + 1,

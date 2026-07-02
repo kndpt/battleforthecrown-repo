@@ -1825,6 +1825,10 @@ export class CombatWorker implements OnModuleInit {
             ? { defensiveFriendsDisplayNames }
             : {}),
           ...(inactivitySnapshot ? { inactivity: inactivitySnapshot } : {}),
+          // Natural trait snapshot (spec 27) — present for BOTH player and
+          // barbarian targets (every village has one). Fixed to the tile, so a
+          // single snapshot is authoritative (never recomputed live).
+          naturalTrait: targetVillage.naturalTrait,
         },
       },
     });
@@ -1923,6 +1927,7 @@ export class CombatWorker implements OnModuleInit {
       resourceStock: targetVillage.resourceStock,
       buildings: targetVillage.buildings,
       strategy: targetVillage.strategyConfig?.strategy,
+      naturalTrait: targetVillage.naturalTrait,
     });
     const credited = {
       wood: Math.min(

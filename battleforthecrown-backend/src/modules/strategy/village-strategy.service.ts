@@ -16,6 +16,7 @@ import {
   StrategyBonus,
   VillageStrategyChangeCost,
   VillageStrategyType,
+  VillageNaturalTrait,
   getBuildingLevel,
   getVillageStrategyChangeCost,
   getStrategyBonusValue,
@@ -377,12 +378,19 @@ export class VillageStrategyService {
     village: {
       worldId: string;
       buildings: Array<{ type: string; level: number }>;
+      naturalTrait: VillageNaturalTrait;
     },
     strategy: VillageStrategyType,
   ) {
     const config = await this.worldConfig.getConfig(village.worldId);
     const ratesPerMin = projectResourceRates(village.buildings, (type, level) =>
-      this.worldConfig.computeProductionRate(config, type, level, strategy),
+      this.worldConfig.computeProductionRate(
+        config,
+        type,
+        level,
+        strategy,
+        village.naturalTrait,
+      ),
     );
     return {
       wood: ratesPerMin.wood * 60,

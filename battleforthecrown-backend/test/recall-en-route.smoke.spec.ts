@@ -53,6 +53,7 @@ describe('recall en-route smoke', () => {
     const barbarian = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         name: 'Barbarian',
         x: joinA.village.x + 10, // Far enough to have time to recall
         y: joinA.village.y + 10,

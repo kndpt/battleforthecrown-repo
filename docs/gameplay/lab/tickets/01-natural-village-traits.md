@@ -1,6 +1,6 @@
 # 01 — Traits naturels de village
 
-**Statut** : idée à approfondir  
+**Statut** : ✅ promu — spec canonique [`docs/gameplay/27-village-natural-traits.md`](../../27-village-natural-traits.md) (run 088). Périmètre MVP = traits de ressource ; traits vision/mobilité/population reportés en follow-up.  
 **Ratio bénéfice / coût** : bon
 
 ## Opportunité

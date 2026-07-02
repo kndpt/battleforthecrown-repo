@@ -1,5 +1,6 @@
 import type { LootResources } from './loot';
 import type { UnitMap } from '../army/unit-map';
+import type { VillageNaturalTrait } from '../village/traits';
 
 export type TargetKind = 'PLAYER_VILLAGE' | 'BARBARIAN_VILLAGE';
 
@@ -150,6 +151,13 @@ export interface ScoutReportResponse {
      * `lastLoginAt` is never exposed, only the derived state + frozen sinceDays.
      */
     inactivity?: { state: 'INACTIVE'; sinceDays: number };
+    /**
+     * Natural trait of the target village, snapshot at scout time (spec 27).
+     * Present for both PLAYER and BARBARIAN targets (every village has one).
+     * Frozen — never recomputed live (same pattern as wallLevel/castleLevel);
+     * the trait is fixed to the tile so a single snapshot is authoritative.
+     */
+    naturalTrait?: VillageNaturalTrait;
   };
   isRead: boolean;
   timestamp: string;

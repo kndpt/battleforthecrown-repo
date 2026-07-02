@@ -1,14 +1,25 @@
 import type { ReactNode } from 'react';
 import { publicAsset } from '@/lib/publicAsset';
 import { integerFormatter } from '@/features/layout/headerHelpers';
-import { VILLAGE_LABEL_DISPLAY, type VillageLabel } from '@battleforthecrown/shared/village';
+import {
+  NATURAL_TRAIT_DISPLAY,
+  VILLAGE_LABEL_DISPLAY,
+  type VillageLabel,
+  type VillageNaturalTrait,
+} from '@battleforthecrown/shared/village';
 import { NewbieShieldIcon, NewbieShieldTimer } from '@/features/world/NewbieShieldIcon';
 import type { HeroParallaxStyles } from './useHeroParallax';
 import { HERO_EXPANDED_HEIGHT } from './useHeroParallax';
 import { useHeroSwipe } from './useHeroSwipe';
 
 interface VillageHeroProps {
-  activeVillage: { id: string; name: string; isCapital?: boolean; label?: string | null } | null;
+  activeVillage: {
+    id: string;
+    name: string;
+    isCapital?: boolean;
+    label?: string | null;
+    naturalTrait?: VillageNaturalTrait | null;
+  } | null;
   activeVillagePower: number;
   availablePopulation: number | undefined;
   canOpenVillageStyle: boolean;
@@ -258,6 +269,19 @@ export function VillageHero({
                 {activeVillage?.label && (
                   <span className="shrink-0 rounded-full border border-[rgba(246,213,123,.45)] bg-[rgba(246,213,123,.18)] px-2 py-1 text-[9.5px] uppercase tracking-[.1em] text-[#f6d57b]">
                     {VILLAGE_LABEL_DISPLAY[activeVillage.label as VillageLabel]}
+                  </span>
+                )}
+                {activeVillage?.naturalTrait && (
+                  <span
+                    className="flex shrink-0 items-center gap-1 rounded-full border border-[rgba(120,200,140,.4)] bg-[rgba(30,60,35,.45)] px-2 py-1 text-[9.5px] font-bold tracking-[.06em] text-[#a9d9b3]"
+                    title="Trait naturel de la tile (fixe)"
+                  >
+                    <span aria-hidden="true">
+                      {NATURAL_TRAIT_DISPLAY[activeVillage.naturalTrait].icon}
+                    </span>
+                    <span className="min-w-0 truncate">
+                      {NATURAL_TRAIT_DISPLAY[activeVillage.naturalTrait].label}
+                    </span>
                   </span>
                 )}
                 <span

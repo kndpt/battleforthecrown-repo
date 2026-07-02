@@ -106,6 +106,7 @@ describe('scouting smoke', () => {
     const barbarian = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         isBarbarian: true,
         name: 'scout-barbarian',
         x: join.village.x + 1,
@@ -123,6 +124,7 @@ describe('scouting smoke', () => {
     const playerTarget = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         userId: defender.userId,
         isBarbarian: false,
         name: 'scout-player',
@@ -422,6 +424,7 @@ describe('scouting smoke', () => {
     const farBarbarian = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         isBarbarian: true,
         name: 'scout-far-barbarian',
         x: join.village.x + 50,

@@ -1,5 +1,9 @@
 import type { Prisma } from '@prisma/client';
 import type { ScoutReportResponse } from '@battleforthecrown/shared/combat';
+import {
+  VILLAGE_NATURAL_TRAITS,
+  type VillageNaturalTrait,
+} from '@battleforthecrown/shared/village';
 import { parseUnitMap } from './codecs/unit-map.codec';
 import { parseLootResourcesWithDefaults } from './codecs/loot.codec';
 
@@ -37,7 +41,22 @@ function reportDetails(value: unknown): ScoutReportResponse['details'] {
     ...newbieShieldDetails(details.newbieShield),
     ...defensiveFriendsDetails(details.defensiveFriendsDisplayNames),
     ...inactivityDetails(details.inactivity),
+    ...naturalTraitDetails(details.naturalTrait),
   };
+}
+
+function naturalTraitDetails(
+  value: unknown,
+): Pick<NonNullable<ScoutReportResponse['details']>, 'naturalTrait'> | object {
+  // Reject anything not a known trait from a corrupted or legacy Json payload
+  // before it reaches the UI.
+  if (
+    typeof value !== 'string' ||
+    !VILLAGE_NATURAL_TRAITS.includes(value as VillageNaturalTrait)
+  ) {
+    return {};
+  }
+  return { naturalTrait: value as VillageNaturalTrait };
 }
 
 function defensiveFriendsDetails(

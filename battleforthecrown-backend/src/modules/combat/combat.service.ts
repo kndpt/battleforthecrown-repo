@@ -422,6 +422,7 @@ export class CombatService {
               population,
               originBuildings,
               originStrategyConfig,
+              originVillage,
             ] = await Promise.all([
               tx.resourceStock.findUnique({
                 where: { villageId: dto.villageId },
@@ -434,6 +435,10 @@ export class CombatService {
               tx.villageStrategyConfig.findUnique({
                 where: { villageId: dto.villageId },
                 select: { strategy: true },
+              }),
+              tx.village.findUnique({
+                where: { id: dto.villageId },
+                select: { naturalTrait: true },
               }),
             ]);
             if (!originStock) {
@@ -449,6 +454,7 @@ export class CombatService {
                 resourceStock: originStock,
                 buildings: originBuildings,
                 strategy: originStrategyConfig?.strategy,
+                naturalTrait: originVillage?.naturalTrait,
               });
             if (
               currentOriginStock.wood < resources.wood ||

@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { UNIT_TYPES } from '@battleforthecrown/shared/army';
-import type { VillageOriginKind } from '@battleforthecrown/shared/village';
+import {
+  deriveNaturalTrait,
+  type VillageOriginKind,
+} from '@battleforthecrown/shared/village';
 import { getOnboardingNarrativeLoot } from '@battleforthecrown/shared/onboarding';
 import { generateBarbarianName } from '@battleforthecrown/shared/world';
 import { WorldConfigService } from './world-config.service';
@@ -58,6 +61,7 @@ export class BarbarianVillageFactory {
         name: generateBarbarianName(tier, x, y),
         x,
         y,
+        naturalTrait: deriveNaturalTrait(worldId, x, y),
       },
     });
 

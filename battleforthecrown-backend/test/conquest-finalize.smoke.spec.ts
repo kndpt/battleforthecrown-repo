@@ -69,6 +69,7 @@ describe('conquest finalize smoke', () => {
     return ctx.prisma.village.create({
       data: {
         worldId,
+        naturalTrait: 'PLAINS',
         isBarbarian: true,
         name: `capture-target-${x}-${y}`,
         x,

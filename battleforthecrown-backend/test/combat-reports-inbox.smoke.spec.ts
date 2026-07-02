@@ -251,6 +251,7 @@ describe('combat reports inbox smoke', () => {
     const extraVillageA = await ctx.prisma.village.create({
       data: {
         worldId: worldA.id,
+        naturalTrait: 'PLAINS',
         userId: user.userId,
         name: 'world-a-extra',
         x: 499,
