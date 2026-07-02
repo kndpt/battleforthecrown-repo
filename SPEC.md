@@ -41,6 +41,8 @@ V7 | Les transferts de ressources entre villages possédés peuvent lever un gat
 V8 | Le nom public joueur vit sur `User.displayName` (global au compte, unique case-insensitive) ; l'`email` reste identifiant de login et ne doit pas servir de nom affiché ni fuir dans les DTOs/session gameplay publics (`playerName`, `ownerDisplayName`, profil HUD). | source: tasks/runs/053-feature-player-display-name.md
 V9 | L'Oyez est produit en runtime par un worker cron 04:00 Europe/Paris (mondes `OPEN`) ; « 1 Oyez actif par monde » est garanti en DB par l'index unique `daily_oyez(world_id, day_key)` + durée < 24h (PAS de colonne `status` — l'actif est dérivé de la fenêtre `startsAt`/`endsAt`). Sous Oyez, la carte du jour passe à 4 tâches (3 naturelles + 1 thématique du catalogue `BUILDERS|MARCH|WATCH|BARBARIANS`) ; la tâche thématique a un poids de récompense nul → aucune récompense empilée (la carte reste plafonnée 12 %/jour). | source: tasks/runs/archive/057-feature-oyez-runtime-producer.md
 
+V10 | L'inactivité pré-abandon (spec 18) exposée à un tiers (fiche publique joueur, rapport de scout, futures surfaces carte) ne doit jamais sérialiser `WorldMembership.lastLoginAt` brut : dériver l'état via le helper pur `computeInactivityState` et n'exposer que `{ state, sinceDays }` figés server-side. Mapping `ACTIVE → champ absent` (pas de signal explicite). Sur une surface snapshot (scout), figer la valeur dans `details` à la résolution, jamais recalculer live. | source: tasks/runs/archive/087-feature-inactivity-indicator.md + tasks/runs/archive/089-feature-scout-report-inactivity-badge.md
+
 ## §B — Bugs récurrents / anti-patterns
 
 Format :

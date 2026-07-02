@@ -43,12 +43,18 @@ export interface ScoutReportShieldBadge {
   label: string;
 }
 
+export interface ScoutReportInactivityBadge {
+  /** Pre-abandonment label frozen at scout moment, e.g. "Inactif depuis 9 j". */
+  label: string;
+}
+
 export interface ScoutReportCardProps {
   action: ScoutReportAction;
   bannerIcon: string;
   className?: string;
   hideFooter?: boolean;
   hideHeader?: boolean;
+  inactivityBadge?: ScoutReportInactivityBadge;
   metaLabel?: string;
   note?: string;
   onClose?: ButtonHTMLAttributes<HTMLButtonElement>['onClick'];
@@ -73,6 +79,7 @@ export function ScoutReportCard({
   className,
   hideFooter = false,
   hideHeader = false,
+  inactivityBadge,
   metaLabel,
   note,
   onClose,
@@ -141,6 +148,20 @@ export function ScoutReportCard({
               {shieldBadge.remaining}
             </span>
           ) : null}
+        </div>
+      ) : null}
+
+      {inactivityBadge ? (
+        <div className="flex items-center gap-2 border-b border-[rgba(0,0,0,.08)] bg-[rgba(127,140,141,.12)] px-3 py-2">
+          <span
+            aria-hidden="true"
+            className="flex size-[22px] flex-none items-center justify-center rounded-full bg-[rgba(127,140,141,.28)] text-[13px] text-[#5a6567]"
+          >
+            💤
+          </span>
+          <span className="flex-1 font-game text-[11px] font-bold uppercase tracking-[.08em] text-[#5a6567]">
+            {inactivityBadge.label}
+          </span>
         </div>
       ) : null}
 

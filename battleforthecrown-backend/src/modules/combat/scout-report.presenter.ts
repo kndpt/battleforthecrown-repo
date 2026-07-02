@@ -36,6 +36,7 @@ function reportDetails(value: unknown): ScoutReportResponse['details'] {
     ...(typeof castleLevel === 'number' ? { castleLevel } : {}),
     ...newbieShieldDetails(details.newbieShield),
     ...defensiveFriendsDetails(details.defensiveFriendsDisplayNames),
+    ...inactivityDetails(details.inactivity),
   };
 }
 
@@ -63,6 +64,27 @@ function newbieShieldDetails(
   if (typeof shield.active !== 'boolean') return {};
   const endsAt = typeof shield.endsAt === 'string' ? shield.endsAt : null;
   return { newbieShield: { active: shield.active, endsAt } };
+}
+
+function inactivityDetails(
+  value: unknown,
+): Pick<NonNullable<ScoutReportResponse['details']>, 'inactivity'> | object {
+  if (!value || typeof value !== 'object') return {};
+  const inactivity = value as Record<string, unknown>;
+  // Only the INACTIVE state is ever persisted (ACTIVE → field absent); reject
+  // anything else defensively. `sinceDays` must be a number.
+  if (inactivity.state !== 'INACTIVE') return {};
+  // `sinceDays` is a floored non-negative day count upstream
+  // (computeInactivityState); reject fractional/negative values from a
+  // corrupted or legacy Json payload before they reach the UI.
+  if (
+    typeof inactivity.sinceDays !== 'number' ||
+    !Number.isSafeInteger(inactivity.sinceDays) ||
+    inactivity.sinceDays < 0
+  ) {
+    return {};
+  }
+  return { inactivity: { state: 'INACTIVE', sinceDays: inactivity.sinceDays } };
 }
 
 export function presentScoutReport(

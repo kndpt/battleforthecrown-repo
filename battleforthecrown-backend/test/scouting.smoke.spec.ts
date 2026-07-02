@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { ScoutReportsResponseSchema } from '@battleforthecrown/shared/combat';
 import {
   bootSmokeApp,
   joinWorld,
@@ -277,6 +278,23 @@ describe('scouting smoke', () => {
     ).newbieShield;
     expect(playerShield?.active).toBe(true);
     expect(typeof playerShield?.endsAt).toBe('string');
+    // Inactivity snapshot (spec 18) asserted on the HTTP payload the client
+    // consumes (not the Prisma row): the target owner just joined → ACTIVE → no
+    // `inactivity` field, and the raw `lastLoginAt` never leaks into the report.
+    const activeReports = ScoutReportsResponseSchema.parse(
+      (
+        await request(ctx.server)
+          .get('/combat/scout-reports')
+          .set('Authorization', `Bearer ${attacker.accessToken}`)
+          .set('x-world-id', world.id)
+          .expect(200)
+      ).body,
+    );
+    const activePlayerReport = activeReports.find(
+      (r) => r.targetVillageId === playerTarget.id,
+    );
+    expect(activePlayerReport?.details?.inactivity).toBeUndefined();
+    expect(JSON.stringify(activeReports)).not.toContain('lastLoginAt');
 
     // Post-rupture: break the target owner's shield, re-scout → snapshot active=false.
     await ctx.prisma.worldMembership.update({
@@ -340,6 +358,66 @@ describe('scouting smoke', () => {
     ).newbieShield;
     expect(initialShieldAfterBreak?.active).toBe(true);
     expect(initialShieldAfterBreak?.endsAt).toBe(playerShield?.endsAt);
+
+    // Inactivity snapshot (spec 18): age the target owner's membership past the
+    // 7 j threshold, re-scout → the fresh report carries a frozen INACTIVE
+    // badge with a derived `sinceDays`, still without leaking the raw timestamp.
+    await ctx.prisma.worldMembership.update({
+      where: {
+        userId_worldId: { userId: defender.userId, worldId: world.id },
+      },
+      data: {
+        lastLoginAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+      },
+    });
+    const inactivityScout = await request(ctx.server)
+      .post('/combat/scout')
+      .set('Authorization', `Bearer ${attacker.accessToken}`)
+      .send({
+        villageId: attackerId,
+        targetX: playerTarget.x,
+        targetY: playerTarget.y,
+        targetKind: 'PLAYER_VILLAGE',
+        targetRefId: playerTarget.id,
+        units: { SPY: 1 },
+      });
+    expect(inactivityScout.status).toBeLessThan(300);
+    const inactivityExpeditionId = (inactivityScout.body as { id: string }).id;
+    await waitFor(
+      async () => {
+        const event = await ctx.prisma.eventOutbox.findFirst({
+          where: { kind: 'scout.returned', aggregateId: attackerId },
+          orderBy: { createdAt: 'desc' },
+        });
+        return event &&
+          (event.payload as { expeditionId?: string }).expeditionId ===
+            inactivityExpeditionId &&
+          event.dispatchedAt
+          ? event
+          : null;
+      },
+      { timeoutMs: 15_000 },
+    );
+    const inactivityReports = ScoutReportsResponseSchema.parse(
+      (
+        await request(ctx.server)
+          .get('/combat/scout-reports')
+          .set('Authorization', `Bearer ${attacker.accessToken}`)
+          .set('x-world-id', world.id)
+          .expect(200)
+      ).body,
+    );
+    const inactivePlayerReport = inactivityReports.find(
+      (r) =>
+        r.targetVillageId === playerTarget.id &&
+        r.details?.inactivity !== undefined,
+    );
+    expect(inactivePlayerReport?.details?.inactivity?.state).toBe('INACTIVE');
+    expect(
+      inactivePlayerReport?.details?.inactivity?.sinceDays,
+    ).toBeGreaterThanOrEqual(7);
+    // Non-révélation on the HTTP payload the client actually receives.
+    expect(JSON.stringify(inactivityReports)).not.toContain('lastLoginAt');
 
     const farBarbarian = await ctx.prisma.village.create({
       data: {

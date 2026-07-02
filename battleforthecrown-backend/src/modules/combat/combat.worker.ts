@@ -46,6 +46,7 @@ import {
   splitPointsByWeights,
 } from '@battleforthecrown/shared/rankings';
 import type { WorldTempo } from '@battleforthecrown/shared/world';
+import { computeInactivityState } from '@battleforthecrown/shared/world';
 import type { CombatResolution } from '@battleforthecrown/shared/combat';
 import {
   UNIT_COSTS,
@@ -1665,6 +1666,32 @@ export class CombatWorker implements OnModuleInit {
     }
   }
 
+  /**
+   * Dérive l'état d'inactivité pré-abandon d'un propriétaire de village à
+   * partir de son `WorldMembership.lastLoginAt`, pour un snapshot figé sur le
+   * rapport de scout (spec 18). Retourne `null` quand le propriétaire est
+   * ACTIVE : le rapport n'expose alors aucun champ `inactivity` (cohérent avec
+   * le mapping ACTIVE → `null` de la fiche publique). Le `lastLoginAt` brut ne
+   * sort jamais — seul l'état dérivé + `sinceDays` figés sont persistés.
+   */
+  private async snapshotOwnerInactivity(
+    tx: PrismaClientOrTx,
+    ownerUserId: string,
+    worldId: string,
+  ): Promise<{ state: 'INACTIVE'; sinceDays: number } | null> {
+    const membership = await tx.worldMembership.findUnique({
+      where: { userId_worldId: { userId: ownerUserId, worldId } },
+      select: { lastLoginAt: true },
+    });
+    const status = computeInactivityState(
+      membership?.lastLoginAt ?? null,
+      new Date(),
+    );
+    return status.state === 'INACTIVE'
+      ? { state: 'INACTIVE', sinceDays: status.sinceDays }
+      : null;
+  }
+
   private async handleScoutArrival(
     tx: PrismaClientOrTx,
     expedition: Expedition,
@@ -1748,6 +1775,20 @@ export class CombatWorker implements OnModuleInit {
             tx,
           )
         : [];
+    // Snapshot de l'inactivité pré-abandon du propriétaire de la cible au
+    // moment du scout (PLAYER only) → badge figé sur le rapport (spec 18).
+    // Dérivé en lecture seule de `WorldMembership.lastLoginAt` : jamais le
+    // timestamp brut, seul l'état + `sinceDays` figés sortent. Absent si le
+    // propriétaire est ACTIVE ou pour une cible barbare. Figé comme
+    // wallLevel/newbieShield : non recalculé live après le scout.
+    const inactivitySnapshot =
+      expedition.targetKind === 'PLAYER_VILLAGE' && targetVillage.userId
+        ? await this.snapshotOwnerInactivity(
+            tx,
+            targetVillage.userId,
+            expedition.worldId,
+          )
+        : null;
 
     const report = await tx.scoutReport.create({
       data: {
@@ -1783,6 +1824,7 @@ export class CombatWorker implements OnModuleInit {
           ...(defensiveFriendsDisplayNames.length > 0
             ? { defensiveFriendsDisplayNames }
             : {}),
+          ...(inactivitySnapshot ? { inactivity: inactivitySnapshot } : {}),
         },
       },
     });
