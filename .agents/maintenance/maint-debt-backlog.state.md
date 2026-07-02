@@ -1,6 +1,6 @@
 # maint-debt — candidats (réécrit chaque run)
 
-last: 2026-07-01 | archive: `archive/maint-debt/2026-06-15-full.md`
+last: 2026-07-02 | archive: `archive/maint-debt/2026-06-15-full.md`
 branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 ## candidate
@@ -21,7 +21,7 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 | area | PR |
 |------|-----|
-| garrison-merge.utils.ts repeated `as UnitType` casts → extract local const | pending |
+| barbarian-runtime.service.ts 4× `as UnitType` → typedEntries + isUnitType guard | pending |
 
 ## done (prev)
 
@@ -30,6 +30,7 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | isUnitType guard duplicated 3× → shared | #221 |
 | hardcoded time constants → shared/time imports | #225 |
 | typedEntries consistency: Object.entries + `as UnitType` → shared typedEntries | #213 |
+| garrison-merge.utils.ts repeated `as UnitType` casts → extract local const | stale (never pushed) |
 
 ## rules
 
