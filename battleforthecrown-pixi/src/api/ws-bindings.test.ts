@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import { QueryClient } from '@tanstack/react-query';
 import {
+  applyAttackIncoming,
   applyBattleResolved,
   applyBattleReturned,
   applyBattleSent,
@@ -13,6 +14,9 @@ import {
   applyExpeditionRecalled,
   applyExpeditionReturned,
   applyGarrisonAdded,
+  applyIntelUpdated,
+  applyRankingsChanged,
+  applyRankingsCycleClosed,
   applyReinforcementRecalled,
   applyReinforcementReturned,
   applyReinforcementSent,
@@ -28,6 +32,7 @@ import {
   applyVillageCaptureWindowOpened,
   applyVillageAttacked,
   applyVillageConquered,
+  applyVillageRemoved,
   applyWorldStatusChanged,
   applyWorldInscriptionPhaseChanged,
   applyPvpShieldBroken,
@@ -1806,5 +1811,122 @@ describe('applyPvpShieldBroken', () => {
 
     expect(queryClient.getQueryState(['memberships'])?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(['world-entities'])?.isInvalidated).toBe(true);
+  });
+});
+
+describe('applyAttackIncoming', () => {
+  it('invalidates incoming attacks for the target village', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.incomingAttacks('v-def'), []);
+
+    applyAttackIncoming(
+      {
+        expeditionId: 'exp-inc-1',
+        targetVillageId: 'v-def',
+        targetX: 5,
+        targetY: 7,
+        arrivalAt: '2026-07-02T12:00:00.000Z',
+      },
+      { queryClient },
+    );
+
+    expect(
+      queryClient.getQueryState(queryKeys.incomingAttacks('v-def'))?.isInvalidated,
+    ).toBe(true);
+  });
+});
+
+describe('applyRankingsChanged', () => {
+  it('invalidates rankings summary for the given world', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.rankingsSummary('world-1'), { data: [] });
+
+    applyRankingsChanged(
+      {
+        worldId: 'world-1',
+        signal: 'ASSAULT_GLORY',
+        scorerUserId: 'user-1',
+        opponentUserId: 'user-2',
+        points: 10,
+        combatReportId: 'report-1',
+        occurredAt: '2026-07-02T12:00:00.000Z',
+      },
+      { queryClient },
+    );
+
+    expect(
+      queryClient.getQueryState(queryKeys.rankingsSummary('world-1'))?.isInvalidated,
+    ).toBe(true);
+  });
+});
+
+describe('applyRankingsCycleClosed', () => {
+  it('invalidates rankings summary, cycles, and player titles', () => {
+    setCurrentWorldSession();
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.rankingsSummary('world-1'), { data: [] });
+    queryClient.setQueryData(queryKeys.rankingCycles('world-1'), { data: [] });
+    queryClient.setQueryData(queryKeys.rankingTitles('user-1'), []);
+
+    applyRankingsCycleClosed(
+      {
+        worldId: 'world-1',
+        signal: 'RAMPART_GLORY',
+        cycleIndex: 3,
+        cycleEndAt: '2026-07-02T00:00:00.000Z',
+      },
+      { queryClient },
+    );
+
+    expect(
+      queryClient.getQueryState(queryKeys.rankingsSummary('world-1'))?.isInvalidated,
+    ).toBe(true);
+    expect(
+      queryClient.getQueryState(queryKeys.rankingCycles('world-1'))?.isInvalidated,
+    ).toBe(true);
+    expect(
+      queryClient.getQueryState(queryKeys.rankingTitles('user-1'))?.isInvalidated,
+    ).toBe(true);
+  });
+});
+
+describe('applyVillageRemoved', () => {
+  it('invalidates world entities and removes entity from world map store', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.worldEntities('world-1'), []);
+    queryClient.setQueryData(queryKeys.worldEntitiesPrefix(), []);
+    useWorldMapStore.getState().setEntities([
+      { id: 'v-removed', x: 3, y: 4, kind: 'PLAYER_VILLAGE', name: 'Gone', ownerId: 'u1', isMine: false, tier: null },
+    ]);
+
+    applyVillageRemoved(
+      { worldId: 'world-1', villageId: 'v-removed', x: 3, y: 4 },
+      { queryClient },
+    );
+
+    expect(
+      queryClient.getQueryState(queryKeys.worldEntities('world-1'))?.isInvalidated,
+    ).toBe(true);
+    expect(
+      queryClient.getQueryState(queryKeys.worldEntitiesPrefix())?.isInvalidated,
+    ).toBe(true);
+    expect(useWorldMapStore.getState().entities['v-removed']).toBeUndefined();
+  });
+});
+
+describe('applyIntelUpdated', () => {
+  it('invalidates village intel cache for the given world and village', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.villageIntel('world-1', 'v-target'), {});
+
+    applyIntelUpdated(
+      { userId: 'user-1', worldId: 'world-1', villageId: 'v-target' },
+      { queryClient },
+    );
+
+    expect(
+      queryClient.getQueryState(queryKeys.villageIntel('world-1', 'v-target'))
+        ?.isInvalidated,
+    ).toBe(true);
   });
 });
