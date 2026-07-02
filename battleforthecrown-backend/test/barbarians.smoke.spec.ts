@@ -44,6 +44,7 @@ describe('barbarians smoke', () => {
     await ctx.prisma.village.create({
       data: {
         worldId,
+        naturalTrait: 'PLAINS',
         userId: user.userId,
         name: 'recent-anchor',
         x: 50,

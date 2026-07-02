@@ -63,6 +63,7 @@ describe('public player profile smoke', () => {
     const village = await ctx.prisma.village.create({
       data: {
         worldId,
+        naturalTrait: 'PLAINS',
         userId: user.userId,
         isBarbarian: false,
         name: villageName,

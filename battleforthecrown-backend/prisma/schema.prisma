@@ -117,6 +117,15 @@ enum VillageOriginKind {
   ONBOARDING_NARRATIVE
 }
 
+// Trait naturel fixe dérivé de la tile (spec 27). Bonus de production plat sur
+// une ressource ; PLAINS = neutre. Distinct du style *choisi* (strategyConfig).
+enum VillageNaturalTrait {
+  DENSE_FOREST
+  RICH_QUARRY
+  IRON_VEIN
+  PLAINS
+}
+
 model User {
   id          String   @id @default(cuid())
   email       String   @unique
@@ -199,6 +208,7 @@ model Village {
   y                          Int
   isBarbarian                Boolean           @default(false) @map("is_barbarian")
   originKind                 VillageOriginKind @default(STANDARD) @map("origin_kind")
+  naturalTrait               VillageNaturalTrait @map("natural_trait")
   tier                       String?
   label                      VillageLabel?
   barbarianTroopsLastRegenTs DateTime?         @map("barbarian_troops_last_regen_ts") @db.Timestamptz(3)

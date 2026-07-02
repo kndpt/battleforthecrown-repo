@@ -81,6 +81,7 @@ describe('ResourcesService', () => {
         'IRON',
         1,
         undefined,
+        undefined,
       );
     });
 
@@ -106,12 +107,38 @@ describe('ResourcesService', () => {
         'WOOD',
         2,
         'ECONOMIC',
+        undefined,
       );
       expect(mockWorldConfig.computeProductionRate).toHaveBeenCalledWith(
         fakeConfig,
         'STONE',
         3,
         'ECONOMIC',
+        undefined,
+      );
+    });
+
+    it('forwards naturalTrait to computeProductionRate when provided', async () => {
+      await service.calculateCurrentResources({
+        worldId: 'world-1',
+        resourceStock: {
+          wood: 0,
+          stone: 0,
+          iron: 0,
+          maxPerType: 50_000,
+          lastUpdateTs: sixtyMinutesAgo(),
+        },
+        buildings: [{ type: 'WOOD', level: 2 }],
+        strategy: 'ECONOMIC',
+        naturalTrait: 'DENSE_FOREST',
+      });
+
+      expect(mockWorldConfig.computeProductionRate).toHaveBeenCalledWith(
+        fakeConfig,
+        'WOOD',
+        2,
+        'ECONOMIC',
+        'DENSE_FOREST',
       );
     });
 

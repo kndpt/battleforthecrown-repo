@@ -1,8 +1,8 @@
 # Run #088 — village-natural-traits
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-07-02
+> **Terminé** : 2026-07-02
 
 ## Cible
 
@@ -69,21 +69,31 @@ _(Lead étape 3 du run — tâches ≤ 5 fichiers. Le run peut être scindé bac
 - **worldTerrain.ts** (front, cosmétique, seed-based) ≠ trait (serveur). Ne pas s'appuyer dessus comme source de vérité.
 - **Review indépendante REQUISE** : touche la formule de production passive server-authoritative (chaîne shared → 2 services) + schéma DB + vecteur de révélation d'info sensible au fair-play. Critères déclencheurs : back+front, modifie/crée une spec, > 100 lignes de diff estimées, invariant durable.
 
-## Progress
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
-## Décisions prises
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
 ## Rapport final
+
+Décisions clés _(git history)_ : sel = `worldId` (pas de `World.seed`) ; `deriveNaturalTrait` FNV-1a pur browser-safe ; bonus plat `×1.10` après strategy ; colonne NOT NULL sans default (pose forcée) + backfill migration `md5` ; révélation trait propre owner-scoped (`village.service.getVillages`), ennemi via scout snapshot, world-entities intouché (déviation vs T7 planner).
 
 ### Acceptance & QA
 
-_(Vide au démarrage. Rempli en fin de run.)_
+- [x] `deriveNaturalTrait` déterministe — `vitest run village/traits.spec.ts` → 5/5 (même tile → même trait sur 50 appels, sel worldId, distribution)
+- [x] `DENSE_FOREST` > `PLAINS` bois, pierre/fer inchangés — `jest production-rate` → 9/9
+- [x] `PLAINS` aucun bonus (== baseline) — `jest production-rate` (case PLAINS) → pass
+- [x] Bonus plat, ne scale pas avec le niveau — `jest production-rate` (`ratio(2)==ratio(9)==1.1`) → pass
+- [x] Tout village créé (joueur+barbare) a `naturalTrait` non-null — pose aux 2 create + colonne NOT NULL ; `test:smoke barbarians` → pass ; `SELECT count(*) FILTER (WHERE natural_trait IS NULL)` → 0/121
+- [x] Backfill villages pré-existants stable/homogène — migration appliquée dev+smoke, `SELECT natural_trait, count(*) GROUP BY` → PLAINS 61 / IRON 21 / QUARRY 21 / FOREST 18, 0 NULL
+- [x] world-entities : blip foggé id stable + `naturalTrait` jamais dans le payload — `jest world-entities-natural-trait-leak` → 2/2 (Zod strip) ; audit `grep naturalTrait src/` → 0 chemin cross-joueur
+- [x] Rapport scout porte `details.naturalTrait` — `jest scout-report.presenter` (+2 cases) → pass ; `test:smoke scouting` → pass
+- [ ] [visuel] trait propre sur son panneau / ennemi absent avant scout, présent après — **checklist Kelvin** (front `VillageHero` + `scoutReportView`)
+- **Review indépendante** : Déclenchée (raison: back+front + crée spec + diff>100L + invariant durable). Verdict **GO** (0 bloquant, 0 majeur ; 2 findings mineurs fixés : threading recommandations stratégie + simplification cast ; 1 mineur laissé = guard Zod adéquat).
+- **Tests automatisés** : shared 5 (traits) + production 9 + presenter 2 + anti-leak 2 + resources 1 (+forward trait) ; backend unit 554/554 ; pixi unit 892/892 ; front scoutReportView +5.
+- **Smokes lancés** : `test:smoke` complet (transversal : migration Prisma + contrat shared) → **43 suites / 139 tests pass**. Ciblés d'abord : scouting/barbarians/vision 7/7.
+- **Smokes ajoutés/modifiés** : Aucun nouveau ; 19 fixtures smoke mises à jour (`naturalTrait: 'PLAINS'`, NOT NULL).
+- **QA fonctionnelle agent** : SQL DB (distribution + 0 null), audit exposition grep, static-check vert.
+- **Tests IG à faire par le user** : voir checklist ci-dessous.
 
-- [ ] `<critère>` — `<cmd>` → `<résultat>`
-- **Review indépendante** : requise (voir Points d'attention).
-- **Tests automatisés** : shared (traits + production) + backend (pose + presenter anti-fuite) + smoke création village.
-- **Tests IG user** : checklist Kelvin (affichage trait propre village + révélation scout).
+### Checklist IG (Kelvin)
+
+1. Panneau de son village : badge trait naturel affiché (icône + label FR).
+2. Scout d'un village ennemi (joueur ou barbare) : section « Trait naturel » présente dans le rapport.
+3. Avant scout : le trait d'un ennemi n'apparaît nulle part sur la carte.
+4. Un village Forêt dense produit visiblement plus de bois qu'une Plaine équivalente.

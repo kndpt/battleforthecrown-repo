@@ -51,6 +51,7 @@ async function main() {
       const village = await prisma.village.create({
         data: {
           worldId,
+          naturalTrait: 'PLAINS',
           userId: user.id,
           name: `Test Village ${i + 1}`,
           x,

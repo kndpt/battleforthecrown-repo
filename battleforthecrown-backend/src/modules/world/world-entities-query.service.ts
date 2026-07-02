@@ -21,7 +21,10 @@ const captureWindowSchema = z
   })
   .optional();
 
-const barbarianVillageDataSchema = z.object({
+// Exported for the anti-leak guard test: these schemas define the world-entities
+// payload sent to ALL viewers (no viewer scope). `naturalTrait` must NEVER be a
+// field here — the trait is revealed only by scout (spec 27 § « Révélation »).
+export const barbarianVillageDataSchema = z.object({
   tier: z.string().nullable(),
   name: z.string(),
   villageId: z.string(),
@@ -39,7 +42,7 @@ type BarbarianVillageEntity = {
   data: BarbarianVillageData;
 };
 
-const playerVillageDataSchema = z.object({
+export const playerVillageDataSchema = z.object({
   userId: z.string(),
   ownerDisplayName: z.string(),
   name: z.string(),

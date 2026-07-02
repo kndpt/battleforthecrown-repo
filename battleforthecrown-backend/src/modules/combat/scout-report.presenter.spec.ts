@@ -181,6 +181,71 @@ describe('presentScoutReport', () => {
     expect(presentScoutReport(report).details).toEqual({});
   });
 
+  it('includes inactivity when the owner was INACTIVE at scout time', () => {
+    const report = {
+      ...baseReport,
+      details: { inactivity: { state: 'INACTIVE', sinceDays: 9 } },
+    };
+    expect(presentScoutReport(report).details).toEqual({
+      inactivity: { state: 'INACTIVE', sinceDays: 9 },
+    });
+  });
+
+  it('omits inactivity when the state is not INACTIVE or sinceDays is invalid', () => {
+    expect(
+      presentScoutReport({
+        ...baseReport,
+        details: { inactivity: { state: 'ACTIVE', sinceDays: 0 } },
+      }).details,
+    ).toEqual({});
+    expect(
+      presentScoutReport({
+        ...baseReport,
+        details: { inactivity: { state: 'INACTIVE', sinceDays: 'nope' } },
+      }).details,
+    ).toEqual({});
+    expect(
+      presentScoutReport({
+        ...baseReport,
+        details: { inactivity: { state: 'INACTIVE', sinceDays: -1 } },
+      }).details,
+    ).toEqual({});
+    expect(
+      presentScoutReport({
+        ...baseReport,
+        details: { inactivity: { state: 'INACTIVE', sinceDays: 2.5 } },
+      }).details,
+    ).toEqual({});
+    expect(
+      presentScoutReport({
+        ...baseReport,
+        details: { inactivity: 'not-an-object' },
+      }).details,
+    ).toEqual({});
+  });
+
+  it('includes naturalTrait when a valid trait is present in details', () => {
+    const report = { ...baseReport, details: { naturalTrait: 'IRON_VEIN' } };
+    expect(presentScoutReport(report).details).toEqual({
+      naturalTrait: 'IRON_VEIN',
+    });
+  });
+
+  it('omits naturalTrait when the value is not a known trait', () => {
+    expect(
+      presentScoutReport({
+        ...baseReport,
+        details: { naturalTrait: 'MOUNTAIN' },
+      }).details,
+    ).toEqual({});
+    expect(
+      presentScoutReport({
+        ...baseReport,
+        details: { naturalTrait: 42 },
+      }).details,
+    ).toEqual({});
+  });
+
   it('defaults empty persisted resources to zeroes', () => {
     expect(
       presentScoutReport({ ...baseReport, resources: {} }).resources,

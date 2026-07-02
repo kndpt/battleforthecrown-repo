@@ -34,6 +34,7 @@ describe('vision smoke', () => {
     const barbarian = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         isBarbarian: true,
         name: 'fogged-target',
         x: join.village.x + 50,
@@ -79,6 +80,7 @@ describe('vision smoke', () => {
     await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         isBarbarian: true,
         name: 'fogged-barb',
         x: foggedX,
@@ -132,6 +134,7 @@ describe('vision smoke', () => {
     const viewerVillage = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         userId: viewer.userId,
         isBarbarian: false,
         name: 'viewer-village',
@@ -145,6 +148,7 @@ describe('vision smoke', () => {
     const visibleVillage = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         userId: visibleOwner.userId,
         isBarbarian: false,
         name: 'visible-player-village',
@@ -158,6 +162,7 @@ describe('vision smoke', () => {
     const hiddenVillage = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         userId: hiddenOwner.userId,
         isBarbarian: false,
         name: 'hidden-player-village',
@@ -239,6 +244,7 @@ describe('vision smoke', () => {
     await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         userId: user.userId,
         isBarbarian: false,
         name: 'second-watchtower',
@@ -254,6 +260,7 @@ describe('vision smoke', () => {
       data: [
         {
           worldId: world.id,
+          naturalTrait: 'PLAINS',
           isBarbarian: true,
           name: 'inside-first-disk',
           x: join.village.x + 9,
@@ -262,6 +269,7 @@ describe('vision smoke', () => {
         },
         {
           worldId: world.id,
+          naturalTrait: 'PLAINS',
           isBarbarian: true,
           name: 'inside-second-disk',
           x: secondX + 19,
@@ -270,6 +278,7 @@ describe('vision smoke', () => {
         },
         {
           worldId: world.id,
+          naturalTrait: 'PLAINS',
           isBarbarian: true,
           name: 'outside-all-disks',
           x: secondX,

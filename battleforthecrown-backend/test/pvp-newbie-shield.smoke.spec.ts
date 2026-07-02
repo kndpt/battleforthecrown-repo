@@ -93,6 +93,7 @@ describe('pvp newbie-shield smoke', () => {
     const village = await ctx.prisma.village.create({
       data: {
         worldId,
+        naturalTrait: 'PLAINS',
         userId: user.userId,
         isBarbarian: false,
         name: villageName,
@@ -182,6 +183,7 @@ describe('pvp newbie-shield smoke', () => {
     const barbarian = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         isBarbarian: true,
         name: 'shield-barb-target-2',
         x: attacker.x + 1,

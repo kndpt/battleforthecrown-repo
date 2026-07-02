@@ -10,6 +10,7 @@ import { WorldConfigService } from './world-config.service';
 import { BarbarianSeedingService } from './barbarian-seeding.service';
 import { VillagePlacementService } from './village-placement.service';
 import { getInitialPlayerVillageBuildings } from '../village/player-village-building-lifecycle';
+import { deriveNaturalTrait } from '@battleforthecrown/shared/village';
 import { OnboardingService } from '../onboarding/onboarding.service';
 
 interface JoinWorldParams {
@@ -115,7 +116,14 @@ export class JoinWorldUseCase {
     });
 
     const village = await tx.village.create({
-      data: { worldId, userId, name: villageName, x, y },
+      data: {
+        worldId,
+        userId,
+        name: villageName,
+        x,
+        y,
+        naturalTrait: deriveNaturalTrait(worldId, x, y),
+      },
     });
 
     await tx.building.createMany({

@@ -4,6 +4,7 @@ import type { VillageLabel } from "../village";
 import type { UnitMap } from "../army/unit-map";
 import { UnitMapSchema } from "../army/unit-map";
 import type { VillageStrategyType } from "../village/strategy";
+import type { VillageNaturalTrait } from "../village/traits";
 import { WorldIdentitySchema } from "./schemas";
 import { InscriptionPhase } from "./lifecycle";
 
@@ -129,6 +130,9 @@ export interface JoinedVillage {
   isCapital?: boolean;
   /** Highest watchtower level in this village (0 = none). Drives world-map unlock. */
   watchtowerLevel?: number;
+  /** Natural trait of the village's tile (spec 27). Owner-scoped — only ever
+   * sent for the requester's own villages, never for others. */
+  naturalTrait?: VillageNaturalTrait | null;
 }
 
 export interface NewbieShieldState {

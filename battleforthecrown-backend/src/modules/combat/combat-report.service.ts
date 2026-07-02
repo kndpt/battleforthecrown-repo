@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import type { CombatReport, ScoutReport } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import { presentCombatReport } from './combat-report.presenter';
@@ -35,35 +36,22 @@ export class CombatReportService {
   }
 
   async getReport(userId: string, reportId: string, worldId: string) {
-    await this.ownership.assertWorldMember(worldId, userId);
-    const report = await this.prisma.combatReport.findFirst({
-      where: { id: reportId, worldId },
-    });
-
-    if (!report) {
-      throw new NotFoundException('Report not found');
-    }
-
-    if (!this.canAccessReport(report, userId)) {
-      throw new BadRequestException('Not authorized to view this report');
-    }
-
+    const report = await this.findAuthorizedCombatReport(
+      userId,
+      reportId,
+      worldId,
+      'view',
+    );
     return presentCombatReport(report, userId);
   }
 
   async deleteReport(userId: string, reportId: string, worldId: string) {
-    await this.ownership.assertWorldMember(worldId, userId);
-    const report = await this.prisma.combatReport.findFirst({
-      where: { id: reportId, worldId },
-    });
-
-    if (!report) {
-      throw new NotFoundException('Report not found');
-    }
-
-    if (!this.canAccessReport(report, userId)) {
-      throw new BadRequestException('Not authorized to delete this report');
-    }
+    const report = await this.findAuthorizedCombatReport(
+      userId,
+      reportId,
+      worldId,
+      'delete',
+    );
 
     const role = this.getReportRole(report, userId);
     const participants = this.getReportParticipants(report);
@@ -84,18 +72,12 @@ export class CombatReportService {
   }
 
   async markReportAsRead(userId: string, reportId: string, worldId: string) {
-    await this.ownership.assertWorldMember(worldId, userId);
-    const report = await this.prisma.combatReport.findFirst({
-      where: { id: reportId, worldId },
-    });
-
-    if (!report) {
-      throw new NotFoundException('Report not found');
-    }
-
-    if (!this.canAccessReport(report, userId)) {
-      throw new BadRequestException('Not authorized to modify this report');
-    }
+    const report = await this.findAuthorizedCombatReport(
+      userId,
+      reportId,
+      worldId,
+      'modify',
+    );
 
     const role = this.getReportRole(report, userId);
     const updated = await this.prisma.combatReport.update({
@@ -117,19 +99,12 @@ export class CombatReportService {
   }
 
   async getScoutReport(userId: string, reportId: string, worldId: string) {
-    await this.ownership.assertWorldMember(worldId, userId);
-    const report = await this.prisma.scoutReport.findFirst({
-      where: { id: reportId, worldId },
-    });
-
-    if (!report) {
-      throw new NotFoundException('Scout report not found');
-    }
-
-    if (report.scoutUserId !== userId || report.hidden) {
-      throw new BadRequestException('Not authorized to view this scout report');
-    }
-
+    const report = await this.findAuthorizedScoutReport(
+      userId,
+      reportId,
+      worldId,
+      'view',
+    );
     return presentScoutReport(report);
   }
 
@@ -138,20 +113,7 @@ export class CombatReportService {
     reportId: string,
     worldId: string,
   ) {
-    await this.ownership.assertWorldMember(worldId, userId);
-    const report = await this.prisma.scoutReport.findFirst({
-      where: { id: reportId, worldId },
-    });
-
-    if (!report) {
-      throw new NotFoundException('Scout report not found');
-    }
-
-    if (report.scoutUserId !== userId || report.hidden) {
-      throw new BadRequestException(
-        'Not authorized to modify this scout report',
-      );
-    }
+    await this.findAuthorizedScoutReport(userId, reportId, worldId, 'modify');
 
     const updated = await this.prisma.scoutReport.update({
       where: { id: reportId },
@@ -162,20 +124,7 @@ export class CombatReportService {
   }
 
   async deleteScoutReport(userId: string, reportId: string, worldId: string) {
-    await this.ownership.assertWorldMember(worldId, userId);
-    const report = await this.prisma.scoutReport.findFirst({
-      where: { id: reportId, worldId },
-    });
-
-    if (!report) {
-      throw new NotFoundException('Scout report not found');
-    }
-
-    if (report.scoutUserId !== userId || report.hidden) {
-      throw new BadRequestException(
-        'Not authorized to delete this scout report',
-      );
-    }
+    await this.findAuthorizedScoutReport(userId, reportId, worldId, 'delete');
 
     await this.prisma.scoutReport.update({
       where: { id: reportId },
@@ -183,6 +132,56 @@ export class CombatReportService {
     });
 
     return { message: 'Scout report deleted successfully' };
+  }
+
+  /**
+   * Load a combat report the caller is entitled to interact with. Enforces
+   * world membership, existence, and the per-role access rules used by
+   * {@link canAccessReport}. `action` picks the phrasing of the auth error
+   * so operators can grep incidents by verb.
+   */
+  private async findAuthorizedCombatReport(
+    userId: string,
+    reportId: string,
+    worldId: string,
+    action: 'view' | 'modify' | 'delete',
+  ): Promise<CombatReport> {
+    await this.ownership.assertWorldMember(worldId, userId);
+    const report = await this.prisma.combatReport.findFirst({
+      where: { id: reportId, worldId },
+    });
+    if (!report) {
+      throw new NotFoundException('Report not found');
+    }
+    if (!this.canAccessReport(report, userId)) {
+      throw new BadRequestException(`Not authorized to ${action} this report`);
+    }
+    return report;
+  }
+
+  /**
+   * Scout-report counterpart of {@link findAuthorizedCombatReport}. A scout
+   * report is only accessible to its own scout, and never once soft-hidden.
+   */
+  private async findAuthorizedScoutReport(
+    userId: string,
+    reportId: string,
+    worldId: string,
+    action: 'view' | 'modify' | 'delete',
+  ): Promise<ScoutReport> {
+    await this.ownership.assertWorldMember(worldId, userId);
+    const report = await this.prisma.scoutReport.findFirst({
+      where: { id: reportId, worldId },
+    });
+    if (!report) {
+      throw new NotFoundException('Scout report not found');
+    }
+    if (report.scoutUserId !== userId || report.hidden) {
+      throw new BadRequestException(
+        `Not authorized to ${action} this scout report`,
+      );
+    }
+    return report;
   }
 
   private getReportRole(

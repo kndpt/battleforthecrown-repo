@@ -72,6 +72,7 @@ describe('world-ended lifecycle smoke', () => {
     const barbarian = await ctx.prisma.village.create({
       data: {
         worldId,
+        naturalTrait: 'PLAINS',
         name: 'Barb-Ended-Target',
         x: joinAtk.village.x + 10,
         y: joinAtk.village.y + 10,
