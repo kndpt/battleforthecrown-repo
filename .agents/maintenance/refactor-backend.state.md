@@ -1,7 +1,7 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-07-01 | theme consolidate WorldService count/groupBy aggregation via `_count` include (Prisma 6 filtered `_count`) — 4 méthodes (`getWorlds`, `getWorldDetails`, `getUserMemberships`, `touchUserMembership`), 1 fichier, +14L/-21L net, -1 round-trip DB par appel, aligné avec `getPublicWorlds` déjà en place ; 543 unit + 881 pixi + 11 smokes verts | PR maint(refactor-backend): consolidate WorldService count aggregation via `_count` include
-full: `archive/refactor-backend/2026-07-01-full.md`
+last: 2026-07-02 | theme consolider les guards `findFirst → null-check → role/ownership-check` dupliqués 3× dans `combat-report.service.ts` (combat + scout) et `reinforcement-report.service.ts` — extraction de 3 helpers privés (`findAuthorizedCombatReport`, `findAuthorizedScoutReport`, `findReinforcementEntry`) alignés sur `caravan-report.service.ts::findCaravanEntry`. 2 fichiers, comportement inchangé (phrasing d'erreurs préservé via `action: 'view'|'modify'|'delete'`) ; 543 unit + 881 pixi + 12 smokes verts.
+full: `archive/refactor-backend/2026-07-02-full.md`
 
 ## OPEN
 
@@ -21,13 +21,14 @@ full: `archive/refactor-backend/2026-07-01-full.md`
 | K2  | Low  | retention.service.ts:41 + DTO `backlogLimit`       | `DAILY_CARD_LIMIT = 1` magic, jamais utilisé pour limiter, exposé sans consumer front      |
 | Z1  | Low  | world/join-world.use-case.ts:188                   | `process.env[key]` dynamique — `ConfigService` ferait mieux                                |
 | H2  | Low  | production.worker.ts:76, crown-production.worker.ts:76 | `for of villages` séquentiel (OK <10k, sinon batch)                                    |
-| E1  | Low  | event/event.utils.ts                               | `createOutboxEvent` raw vs `OutboxPublisher.<kind>` typé — sweep progressif                |
+| E1  | Low  | event/event.utils.ts                               | `createOutboxEvent` raw ≥40 callsites vs `OutboxPublisher.<kind>` typé (5 méthodes)         |
 | V2  | Low  | retention.service.ts:294-301                       | backfill currentDayKey post-midnight Paris non commenté                                    |
 | X1  | Low  | village.controller.ts:132 /village/strategy/recommendations | endpoint sans consumer front (candidat suppression, breaking surface)              |
 
 ## Skip — déjà traité
 
-- P1 + P2 + P3 + P4 (WorldService `_count` include consolidation) → ce run
+- RS1 + RS2 + RS3 (report-service fetch guards alignment on caravan pattern) → ce run
+- P1 + P2 + P3 + P4 (WorldService `_count` include consolidation) → 2026-07-01
 - U3 + N3 + N4 + F (world-entities-query bounds & captureWindow) → 2026-06-30
 - N5–N15 (display-name dup) → 2026-06-26
 - W2c (initiate{Attack,Scout,Reinforce} skeleton consolidation) → 2026-06-25
