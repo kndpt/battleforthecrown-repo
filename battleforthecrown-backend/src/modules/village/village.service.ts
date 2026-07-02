@@ -42,6 +42,10 @@ export class VillageService {
       conqueredAt: v.conqueredAt,
       label: v.label,
       isCapital: v.id === capitalVillageId,
+      // Owner-scoped endpoint (where userId matches the requester) → safe to
+      // expose the natural trait of one's own village (spec 27). Never leaked
+      // via world-entities, which serves the same payload to all viewers.
+      naturalTrait: v.naturalTrait,
     }));
   }
 

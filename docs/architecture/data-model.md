@@ -41,6 +41,8 @@
 
 Un user peut avoir plusieurs villages (conquête), un seul `mainVillage` (par convention via le `Village.isMain` ou par âge).
 
+`Village.naturalTrait` (enum `VillageNaturalTrait`, **NOT NULL**) est un trait fixe dérivé déterministe de la tile `(worldId, x, y)`, posé à la création (joueurs **et** barbares) et backfillé pour les villages pré-existants dans la migration. Bonus de production plat sur une ressource ; révélé sur une entité d'autrui **uniquement** par scout. Mécanique et invariant anti-fuite : [`docs/gameplay/27-village-natural-traits.md`](../gameplay/27-village-natural-traits.md). Source de vérité du champ : [`prisma/schema.prisma`](../../battleforthecrown-backend/prisma/schema.prisma).
+
 ### Villages barbares
 
 Pas de table dédiée — les villages barbares sont des `Village` avec `isBarbarian=true` et `userId=null`, plus un `tier` (T1→T5). Ils partagent les tables associées (`Building`, `ResourceStock`, `Population`, `UnitInventory`) et les **mêmes enums** (`BUILDING_TYPES`, `UNIT_TYPES`) que les villages joueurs : la différence est purement compositionnelle (composition de bâtiments et blueprint d'armée par tier dans `packages/shared/src/world/barbarian-templates.ts`).

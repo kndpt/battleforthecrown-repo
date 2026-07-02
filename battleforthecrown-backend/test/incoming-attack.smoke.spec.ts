@@ -64,6 +64,7 @@ describe('incoming attack smoke', () => {
     const village = await ctx.prisma.village.create({
       data: {
         worldId,
+        naturalTrait: 'PLAINS',
         userId: user.userId,
         isBarbarian: false,
         name,
@@ -177,6 +178,7 @@ describe('incoming attack smoke', () => {
     const barbarian = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         isBarbarian: true,
         name: 'barb-incoming-target',
         x: attacker.x + 1,

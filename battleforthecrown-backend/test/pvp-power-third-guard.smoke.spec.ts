@@ -84,6 +84,7 @@ describe('pvp power-ratio (÷3) guard smoke', () => {
     const village = await ctx.prisma.village.create({
       data: {
         worldId,
+        naturalTrait: 'PLAINS',
         userId: user.userId,
         isBarbarian: false,
         name: villageName,
@@ -240,6 +241,7 @@ describe('pvp power-ratio (÷3) guard smoke', () => {
     const barbarian = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         isBarbarian: true,
         name: 'pr-barb-target-3',
         x: attacker.x + 1,

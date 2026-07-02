@@ -78,6 +78,7 @@ describe('combat conquest hook smoke', () => {
     return ctx.prisma.village.create({
       data: {
         worldId,
+        naturalTrait: 'PLAINS',
         name: `conquest-target-${x}-${y}`,
         x,
         y,

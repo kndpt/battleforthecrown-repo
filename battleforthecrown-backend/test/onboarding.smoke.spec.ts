@@ -513,6 +513,7 @@ describe('scripted onboarding smoke', () => {
     const standardBarbarian = await ctx.prisma.village.create({
       data: {
         worldId: world.id,
+        naturalTrait: 'PLAINS',
         isBarbarian: true,
         originKind: 'STANDARD',
         tier: 'T1',

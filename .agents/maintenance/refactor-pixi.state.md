@@ -1,39 +1,39 @@
 # refactor-pixi — state (rewritten each run)
 
-last: 2026-06-30 | theme report-trust-boundary-zod | branch claude/focused-galileo-2u4in4
-full: `archive/refactor-pixi/2026-06-30-full.md`
+last: 2026-07-01 | theme split-queries-monolith | branch claude/focused-galileo-hd3gxu
+full: `archive/refactor-pixi/2026-07-01-full.md`
 
 ## OPEN
 
 | ID | Sev | Where | Note |
 |----|-----|-------|------|
-| F01 | Critical | queries.ts:870-889 | useTrainUnitsMutation: hardcoded timePerUnitMs=60_000 in optimistic update |
-| C-01 | High | ArmyScreen.tsx:681L | 50+ state vars, mixed onboarding/garrison/recruitment |
-| C-03 | High | VillageView.tsx:573L | 26 hooks, 8 useState, 40+ props drilled |
-| P-01 | High | WorldMapScene.ts:930L | Scene monolith: viewport/entities/fog/expeditions/camera |
-| WS-01 | High | ws-bindings.ts applyVillageConquered | god function (conquest + map + UI + reports) |
-| S-01 | High | resources.ts, crowns.ts | Dual source of truth: Zustand + TQ cache |
-| C-04 | High | BuildingDetailModal.tsx | 25+ props drilled to specialized modals |
-| Q-09 | Med | queries.ts:~1850L | Monolith: 50+ hooks + DTOs in single file |
+| F01 | Critical | queries/army.ts:97 | useTrainUnitsMutation: hardcoded timePerUnitMs=60_000 in optimistic update |
+| C-01 | High | ArmyScreen.tsx:681L | 23 hooks, 5 state vars, mixed tabs/recruitment/garrison |
+| C-03 | High | VillageView.tsx:573L | 30 hooks, 8 state vars, god component |
+| P-01 | High | WorldMapScene.ts:1019L | 8 responsibilities, ~250L extractable |
+| S-01 | High | stores/resources.ts, crowns.ts | Dual source of truth: Zustand + TQ cache |
+| WS-01 | Med | ws-bindings.ts:applyVillageConquered | 51L well-structured; downgraded from High |
 | WS-02 | Med | ws-bindings.ts | worldId null assumption across handlers |
-| WS-03 | Med | ws-bindings.test.ts | some handlers untested |
-| P-02 | Med | WorldMapScene.ts:610-612 | Entity pointertap listener leak |
-| P-03 | Med | WorldMapScene.ts:645-650 | Viewport background tap listener leak |
+| WS-03 | Med | ws-bindings.test.ts | 5 untested handlers (low risk) |
 | S-02 | Med | Multiple | Missing store selectors |
-| S-03 | Med | ui.ts:131L | Toasts + modals + defeats mixed |
+| S-03 | Med | stores/ui.ts:131L | Toasts + modals + defeats mixed |
 | STR-02 | Med | stores/ui.ts:62-63 | toastSeq/victoryModalSeq module-level mutable |
 
 ## CLOSED this run
 
 | ID | Fix |
 |----|-----|
-| Q-01 | Zod schemas for all 4 report types in shared + required parsers in createReportHooks |
-| SCN-01 | VERIFIED RESOLVED: ticker handler properly removed before exit() |
+| Q-09 | Split queries.ts monolith (2035L) → 12 domain modules under api/queries/ |
+| P-02 | VERIFIED RESOLVED: no listener leaks detected in WorldMapScene audit |
+| P-03 | VERIFIED RESOLVED: viewport removeAllListeners on exit covers all |
+| C-04 | RECLASSIFIED: pure presentational (22 props, 0 hooks) — looks bad but fine |
 
 ## CLOSED prior runs
 
 | ID | Fix |
 |----|-----|
+| Q-01 | Zod schemas for all 4 report types in shared + required parsers in createReportHooks |
+| SCN-01 | VERIFIED RESOLVED: ticker handler properly removed before exit() |
 | WS-06 | BUG FIX: applyCaravanArrived missing invalidatePowerQueries for target village |
 | WS-07 | BUG FIX: applyGarrisonAdded missing invalidatePowerQueries for host village |
 | WS-08 | BUG FIX: applyVillageConquered missing garrison cache invalidation |

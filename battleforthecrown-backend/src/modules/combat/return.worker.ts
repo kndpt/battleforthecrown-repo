@@ -229,6 +229,7 @@ export class ReturnWorker implements OnModuleInit {
           resourceStock: originVillage.resourceStock,
           buildings: originVillage.buildings,
           strategy: originVillage.strategyConfig?.strategy,
+          naturalTrait: originVillage.naturalTrait,
         });
       const maxPerType = originVillage.resourceStock.maxPerType;
       returnedResources = {
