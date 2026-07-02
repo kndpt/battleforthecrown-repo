@@ -1894,6 +1894,7 @@ describe('applyVillageRemoved', () => {
   it('invalidates world entities and removes entity from world map store', () => {
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.worldEntities('world-1'), []);
+    queryClient.setQueryData(queryKeys.worldEntitiesPrefix(), []);
     useWorldMapStore.getState().setEntities([
       { id: 'v-removed', x: 3, y: 4, kind: 'PLAYER_VILLAGE', name: 'Gone', ownerId: 'u1', isMine: false, tier: null },
     ]);
@@ -1905,6 +1906,9 @@ describe('applyVillageRemoved', () => {
 
     expect(
       queryClient.getQueryState(queryKeys.worldEntities('world-1'))?.isInvalidated,
+    ).toBe(true);
+    expect(
+      queryClient.getQueryState(queryKeys.worldEntitiesPrefix())?.isInvalidated,
     ).toBe(true);
     expect(useWorldMapStore.getState().entities['v-removed']).toBeUndefined();
   });

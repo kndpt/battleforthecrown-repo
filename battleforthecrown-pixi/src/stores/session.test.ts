@@ -65,6 +65,7 @@ function seedAllSessionStores() {
   useMapMarkersStore.getState().setMarkers([
     { id: 'mk1', x: 3, y: 4, kind: 'DANGER', note: null, worldId: 'w1', createdAt: '', updatedAt: '' },
   ]);
+  useMapMarkersStore.getState().setSelectedMarkerId('mk1');
 }
 
 describe('resetGameSessionStores', () => {
@@ -80,6 +81,7 @@ describe('resetGameSessionStores', () => {
     expect(useUiStore.getState().victoryModals).toHaveLength(1);
     expect(Object.keys(useWorldMapStore.getState().entities)).toHaveLength(1);
     expect(useMapMarkersStore.getState().markers).toHaveLength(1);
+    expect(useMapMarkersStore.getState().selectedMarkerId).toBe('mk1');
 
     resetGameSessionStores();
 
