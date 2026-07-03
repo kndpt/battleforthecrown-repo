@@ -1,6 +1,6 @@
 # maint-debt — candidats (réécrit chaque run)
 
-last: 2026-07-02 | archive: `archive/maint-debt/2026-06-15-full.md`
+last: 2026-07-03 | archive: `archive/maint-debt/2026-06-15-full.md`
 branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 ## candidate
@@ -16,17 +16,19 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | buildRefundToastItems export | exported for test import only — valid pattern, skip |
 | GarrisonLineDto export | used locally in combat.service.ts, export unnecessary but trivial |
 | HeaderBarSection console.log + unused useState | ui-test demo component — trivial cleanup |
+| army.service.ts Object.keys(UNIT_CATALOG.costs) as UnitType[] | TS Object.keys limitation — standard cast, low value |
 
 ## done (this run)
 
 | area | PR |
 |------|-----|
-| barbarian-runtime.service.ts 4× `as UnitType` → typedEntries + isUnitType guard | pending |
+| combat.worker / conquest.service / garrison-merge.utils — remaining `as UnitType` casts → typedEntries + isUnitType guard | pending |
 
 ## done (prev)
 
 | area | PR |
 |------|-----|
+| barbarian-runtime.service.ts 4× `as UnitType` → typedEntries + isUnitType guard | stale (never pushed) |
 | isUnitType guard duplicated 3× → shared | #221 |
 | hardcoded time constants → shared/time imports | #225 |
 | typedEntries consistency: Object.entries + `as UnitType` → shared typedEntries | #213 |
