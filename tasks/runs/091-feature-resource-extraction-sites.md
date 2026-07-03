@@ -44,6 +44,7 @@ Automatisables (SQL / curl / smoke / unit / grep) :
 - [ ] Attaque sur équipe en exploitation → interruption + vol **partiel** du non-sécurisé (montant volé < stock total accumulé, pas de jackpot).
 - [ ] Épuisement déclenche un respawn ailleurs (nouveau site `ACTIVE`, ancien `DEPLETED`/supprimé).
 - [ ] Events `extraction.*` émis via Outbox aux moments clés (started / depleted / attacked / returned).
+- [ ] **World lifecycle** : `initiateExtraction` et l'interception `initiateAttack` appellent `WorldAccessService.assertWorldWritable` et sont **rejetées quand le monde est `ENDED`** (mêmes calls déjà présents dans `initiateCaravan`/`initiateAttack`) ; comportement `LOCKED` préservé (visibilité + production continuent, retours de membres éliminés possibles, pas de nouvelle interaction interdite au-delà des règles existantes).
 
 Visuels (checklist Kelvin IG, ≤ 5) :
 
@@ -62,6 +63,8 @@ Visuels (checklist Kelvin IG, ≤ 5) :
 _(Lead étape 3 — tâches ≤5 fichiers)_
 
 > ⚠️ **Scope large** — le run-planner recommande `$bftc-slice` en 3 tranches verticales, chacune testable IG. Découper isole le risque (leak vision sur A, exploit combat sur C). Si un seul run est retenu, viser **la tranche A seule** et ticketer B/C.
+>
+> 🏛️ **ADR-12 (use cases gameplay)** — toute mutation transverse (exploitation / vol / retour, écritures ressources + population/verrou + Outbox dans une transaction) doit vivre dans un **`ExtractionUseCase` sous `modules/gameplay/`** (une méthode `execute(...)` ouvrant la transaction), pas dans `combat.service`/`combat.worker`/`return.worker` qui restent des read-models + helpers de calcul. Réutiliser le *pattern* Caravane (verrou population, `Expedition`, `assertWorldWritable`) comme base de code, mais **router l'orchestration via le use case** conformément à `docs/architecture/decisions.md` § ADR-12. Si une dérogation s'impose (ex. cohérence avec l'orchestration expédition existante), la **documenter explicitement** comme dette au refinement.
 
 **Tranche A — sites visibles (read-only, aucun combat)** :
 - T1 — Modèle `ResourceExtractionSite` (worldId, x, y, resourceType, remainingCapacity, state `ACTIVE`/`DEPLETED`) + migration + génération basique de sites rares (< nb joueurs / zone).
@@ -69,7 +72,7 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 - T8 — Rendu Pixi : nouveau `kind` dans `WorldMapScene.ts` (`spriteSizeFor`/`styleFor` + asset bosquet/carrière/mine).
 
 **Tranche B — boucle d'exploitation PvE** :
-- T3 — Envoi équipe : `ExtractionCommand` shared (calqué `CaravanCommand`), `initiateExtraction` (verrou population + escorte optionnelle, timer 2/4/8 h, 1 site actif max/joueur, cap escorte).
+- T3 — Envoi équipe : `ExtractionCommand` shared (calqué `CaravanCommand`) + `modules/gameplay/ExtractionUseCase.execute(...)` (ADR-12 : transaction + Outbox) qui verrouille la population (+ escorte optionnelle), appelle `assertWorldWritable`, pose le timer 2/4/8 h, applique « 1 site actif max/joueur » + cap escorte.
 - T4 — Cycle exploitation : phase stationnaire à l'arrivée (`combat.worker.ts`), accumulation plafonnée par `remainingCapacity`, épuisement → `DEPLETED`.
 - T5 — Retour + sécurisation : ressources créditées **au retour uniquement** (`return.worker.ts`), plafond capacité restante.
 - T7 — Respawn ailleurs à l'épuisement + events Outbox/WS.
@@ -84,6 +87,8 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 - **Cible de combat neuve** : `TargetKind` = villages seulement ; une équipe mobile/stationnée comme cible étend `initiateAttack` de façon non triviale (pas de garrison, pas de bâtiments, résolution loot spécifique). Risque de sur-scope → tranche C isolée.
 - **4 points non tranchés par le lab** (tiers de sites, base du cap escorte, mode de respawn, affichage de l'occupant dans la vision) → arbitrages design **avant/pendant refinement** (étape 1 pipeline), à ne PAS improviser en implémentation.
 - **Cohérence puissance** : sites et équipes ne doivent **pas** entrer dans le calcul de puissance (`09-power-and-rankings.md`).
+- **ADR-12 — orchestration en use case** : les writes multi-domaines (exploitation/vol/retour) passent par un `ExtractionUseCase` dans `modules/gameplay/` (transaction + Outbox), pas par les services de domaine. Aligner sur `UpgradeBuildingUseCase`/`RecruitTroopsUseCase`. Cf. `docs/architecture/decisions.md` § ADR-12 (« Use cases gameplay »).
+- **World lifecycle** : `initiateExtraction` + interception `initiateAttack` doivent appeler `WorldAccessService.assertWorldWritable` (rejet en `ENDED`), à l'image des calls existants dans `combat.service.initiateCaravan`/`initiateAttack`.
 - **Docs** : impact `docs/architecture/data-model.md` (nouvelle entité) + `docs/gameplay/lab/tickets/07-*.md` (statut « promu ») + éventuel renvoi depuis `16-notifications.md`.
 
 ## Progress
