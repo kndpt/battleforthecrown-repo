@@ -102,6 +102,15 @@ export function useTrainUnitsMutation() {
       ]);
       return { previousTraining };
     },
+    onSuccess: (serverEntry, { villageId }) => {
+      queryClient.setQueryData<ArmyTrainingDto[]>(
+        queryKeys.armyTraining(villageId),
+        (current = []) =>
+          current.map((t) =>
+            t.id.startsWith("optimistic-train-") ? serverEntry : t,
+          ),
+      );
+    },
     onError: (_err, { villageId }, context) => {
       if (context?.previousTraining !== undefined) {
         queryClient.setQueryData(

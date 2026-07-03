@@ -186,9 +186,7 @@ export function WorldMapScreen() {
   useEffect(() => {
     return () => {
       useWorldMapStore.getState().clear();
-      const markersStore = useMapMarkersStore.getState();
-      markersStore.setMarkers([]);
-      markersStore.setSelectedMarkerId(null);
+      useMapMarkersStore.getState().clear();
     };
   }, []);
 
