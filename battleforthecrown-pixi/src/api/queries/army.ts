@@ -74,7 +74,7 @@ export function useTrainUnitsMutation() {
     ArmyTrainingDto,
     Error,
     TrainUnitsInput,
-    { previousTraining?: ArmyTrainingDto[] }
+    { previousTraining?: ArmyTrainingDto[]; optimisticId?: string }
   >({
     mutationFn: ({ villageId, unitType, quantity }) =>
       apiClient.post<ArmyTrainingDto>(`/army/${villageId}/train`, {
@@ -100,14 +100,15 @@ export function useTrainUnitsMutation() {
         ...current,
         optimistic,
       ]);
-      return { previousTraining };
+      return { previousTraining, optimisticId: optimistic.id };
     },
-    onSuccess: (serverEntry, { villageId }) => {
+    onSuccess: (serverEntry, { villageId }, context) => {
+      if (!context?.optimisticId) return;
       queryClient.setQueryData<ArmyTrainingDto[]>(
         queryKeys.armyTraining(villageId),
         (current = []) =>
           current.map((t) =>
-            t.id.startsWith("optimistic-train-") ? serverEntry : t,
+            t.id === context.optimisticId ? serverEntry : t,
           ),
       );
     },
