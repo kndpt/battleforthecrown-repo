@@ -745,6 +745,35 @@
         "rg -i precision|fourchette|spyCount|accuracy sur modules/combat + shared/combat + shared/threat — 0 match"
       ],
       "addedAt": "2026-07-02"
+    },
+    {
+      "specPath": "docs/gameplay/lab/tickets/07-resource-extraction-sites.md",
+      "slug": "resource-extraction-sites",
+      "title": "Sites d'exploitation de ressources (promotion lab 07)",
+      "keywords": [
+        "extraction",
+        "exploitation",
+        "resource-site",
+        "bosquet",
+        "carriere",
+        "mine",
+        "escorte",
+        "respawn"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/091-feature-resource-extraction-sites.md",
+      "artefactId": "091",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/resource-extraction-sites",
+      "gapSummary": "Le lab ticket 07 (sites de ressources rares sur la carte) n'a aucun footprint code : pas d'entité site, pas d'équipe d'exploitation, pas de gating vision dédié, pas d'interception ni de respawn. Feature additive entièrement absente. Le run la promeut en MVP-light réutilisant le pattern Caravane (run 050) et le fog-of-war Watchtower ; scope large, découpage vertical A/B/C recommandé. Orchestration des mutations (exploitation/vol/retour) à router via un ExtractionUseCase dans modules/gameplay/ conformément à ADR-12.",
+      "codeEvidence": [
+        "battleforthecrown-backend/prisma/schema.prisma — aucun modèle ResourceExtractionSite ; ExpeditionStatus (EN_ROUTE/RESOLVED/RETURNING) sans phase stationnaire d'exploitation ; TargetKind limité à PLAYER_VILLAGE/BARBARIAN_VILLAGE",
+        "battleforthecrown-backend/src/modules/world/world-entities-query.service.ts — fetchPlayerVillages/fetchBarbarianVillages seulement, pas de fetchExtractionSites",
+        "packages/shared/src/world/entities.ts — WorldEntityKind sans RESOURCE_EXTRACTION_SITE",
+        "battleforthecrown-pixi/src/pixi/scenes/WorldMapScene.ts — aucun kind de site de ressource au rendu carte",
+        "battleforthecrown-backend/src/modules/combat/combat.service.ts — initiateCaravan présent (pattern population verrouillée + worldAccess.assertWorldWritable réutilisable), aucun initiateExtraction"
+      ],
+      "addedAt": "2026-07-03"
     }
   ]
 }
