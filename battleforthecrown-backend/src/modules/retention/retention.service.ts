@@ -11,6 +11,7 @@ import {
   type DailyCardTaskType,
 } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
+import type { PrismaClientOrTx } from '../../common/prisma.types';
 import { OwnershipService } from '../../common/auth';
 import { WorldAccessService } from '../world/world-access.service';
 import type { EventKind, PayloadForKind } from '../event/event-types';
@@ -61,8 +62,20 @@ export class RetentionService {
     // Monde ARCHIVED (run 065) : données purgées. Ne pas recréer de DailyCard
     // orpheline via les créations paresseuses — on lit l'état (vide) tel quel.
     if (!(await this.worldAccess.isWorldArchived(worldId))) {
-      await this.expireStaleCards(userId, worldId, currentDayKey, now);
-      await this.ensureDailyCard(userId, worldId, currentDayKey, now);
+      await this.expireStaleCards(
+        this.prisma,
+        userId,
+        worldId,
+        currentDayKey,
+        now,
+      );
+      await this.ensureDailyCard(
+        this.prisma,
+        userId,
+        worldId,
+        currentDayKey,
+        now,
+      );
     }
     const claimableDayKeys = getClaimableDayKeys(now);
 
@@ -221,41 +234,35 @@ export class RetentionService {
   }
 
   private async ensureDailyCard(
+    client: PrismaClientOrTx,
     userId: string,
     worldId: string,
     dayKey: string,
-    now: Date,
+    reference: Date,
   ): Promise<void> {
-    const existing = await this.prisma.dailyCard.findUnique({
+    const existing = await client.dailyCard.findUnique({
       where: { userId_worldId_dayKey: { userId, worldId, dayKey } },
       select: { id: true },
     });
     if (existing) return;
 
-    try {
-      const oyezTheme = await this.resolveActiveOyezTheme(
-        this.prisma,
-        worldId,
-        now,
-      );
-      const cardData = await this.buildDailyCardPayload(
-        this.prisma,
-        userId,
-        worldId,
-        oyezTheme,
-      );
-      await this.prisma.dailyCard.create({
-        data: { userId, worldId, dayKey, ...cardData },
-      });
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        return;
-      }
-      throw error;
-    }
+    const oyezTheme = await this.resolveActiveOyezTheme(
+      client,
+      worldId,
+      reference,
+    );
+    const cardData = await this.buildDailyCardPayload(
+      client,
+      userId,
+      worldId,
+      oyezTheme,
+    );
+    await client.dailyCard.upsert({
+      where: { userId_worldId_dayKey: { userId, worldId, dayKey } },
+      update: {},
+      create: { userId, worldId, dayKey, ...cardData },
+      select: { id: true },
+    });
   }
 
   private getActiveOyez(
@@ -301,7 +308,7 @@ export class RetentionService {
     if (!village?.userId) return;
     const currentDayKey = getParisDailyKey(now);
     const eventDayKey = getParisDailyKey(eventCreatedAt);
-    await this.ensureDailyCardInTransaction(
+    await this.ensureDailyCard(
       tx,
       village.userId,
       village.worldId,
@@ -318,15 +325,19 @@ export class RetentionService {
       targetTier,
       eventCreatedAt,
     );
-    await this.expireStaleCardsInTransaction(
+    await this.expireStaleCards(
       tx,
       village.userId,
       village.worldId,
       currentDayKey,
       now,
     );
+    // Late-arriving Outbox event: if the completion crossed the Paris 04:00 reset
+    // (eventDayKey != currentDayKey), the card seeded above is yesterday's, so
+    // also seed today's so `getSummary` doesn't return an empty backlog on the
+    // next call.
     if (currentDayKey !== eventDayKey) {
-      await this.ensureDailyCardInTransaction(
+      await this.ensureDailyCard(
         tx,
         village.userId,
         village.worldId,
@@ -395,28 +406,6 @@ export class RetentionService {
     }
   }
 
-  private async ensureDailyCardInTransaction(
-    tx: Prisma.TransactionClient,
-    userId: string,
-    worldId: string,
-    dayKey: string,
-    reference: Date,
-  ): Promise<void> {
-    const oyezTheme = await this.resolveActiveOyezTheme(tx, worldId, reference);
-    const cardData = await this.buildDailyCardPayload(
-      tx,
-      userId,
-      worldId,
-      oyezTheme,
-    );
-    await tx.dailyCard.upsert({
-      where: { userId_worldId_dayKey: { userId, worldId, dayKey } },
-      update: {},
-      create: { userId, worldId, dayKey, ...cardData },
-      select: { id: true },
-    });
-  }
-
   private async buildDailyCardPayload(
     reader: CastleLevelReader,
     userId: string,
@@ -447,32 +436,18 @@ export class RetentionService {
     };
   }
 
+  // Two updateMany operate on disjoint status sets (ACTIVE vs CLAIMABLE), so
+  // no transactional isolation is needed between them — callers pass either
+  // `this.prisma` or an existing tx.
   private async expireStaleCards(
-    userId: string,
-    worldId: string,
-    currentDayKey: string,
-    now: Date,
-  ): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
-      await this.expireStaleCardsInTransaction(
-        tx,
-        userId,
-        worldId,
-        currentDayKey,
-        now,
-      );
-    });
-  }
-
-  private async expireStaleCardsInTransaction(
-    tx: Prisma.TransactionClient,
+    client: PrismaClientOrTx,
     userId: string,
     worldId: string,
     currentDayKey: string,
     now: Date,
   ): Promise<void> {
     const claimableDayKeys = getClaimableDayKeys(now);
-    await tx.dailyCard.updateMany({
+    await client.dailyCard.updateMany({
       where: {
         userId,
         worldId,
@@ -481,7 +456,7 @@ export class RetentionService {
       },
       data: { status: 'EXPIRED' },
     });
-    await tx.dailyCard.updateMany({
+    await client.dailyCard.updateMany({
       where: {
         userId,
         worldId,
