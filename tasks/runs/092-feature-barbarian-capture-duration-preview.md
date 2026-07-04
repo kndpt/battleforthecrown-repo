@@ -34,7 +34,7 @@ Objectif : aligner le preview barbare sur la source de vérité (spec 13 = backe
 
 Automatisables (unit/static) :
 
-- [ ] Le preview barbare affiche les valeurs de la spec 13 : `T1=30min`, `T2=1h`, `T3=1h30`, `T4=2h15`, `T5=3h` (ou format court cohérent avec le rendu PvP `XhYY`).
+- [ ] Le preview barbare réutilise le **formatter partagé PvP** (`getPvpCaptureDurationLabel`, format `XhYY`) → `T1=0h30`, `T2=1h`, `T3=1h30`, `T4=2h15`, `T5=3h`. **Convention unique** : la checklist ET `barbarianConquest.test.ts` assertent exactement cette sortie, pas de libellé divergent type `30min`.
 - [ ] La table barbare a **une seule source de vérité** dans `packages/shared/src/combat/capture-duration.ts` (à côté de `PVP_CAPTURE_DURATIONS_MS`) ; le backend la ré-exporte au lieu de la redéfinir localement ; le front la consomme au lieu de sa copie locale.
 - [ ] `barbarianConquest.test.ts` asserte les **nouvelles** valeurs (plus aucune assertion `'12h'`/`'9h'`/`'6h'`/`'4h'`/`'2h'`).
 - [ ] Parité base-duration : le preview affiche la durée **de base** (sans tempo), cohérent avec le preview PvP (le tempo n'est appliqué que backend via `TempoService`) — pas de double application.
@@ -42,8 +42,8 @@ Automatisables (unit/static) :
 
 Visuel (checklist Kelvin IG, ≤5) :
 
-- [ ] Clic sur un village barbare T5 → panneau d'info affiche « Fenêtre de capture ~3h » (plus « 12h »).
-- [ ] Clic sur un T1 → « ~30min ».
+- [ ] Clic sur un village barbare T5 → panneau d'info affiche « Fenêtre de capture 3h » (plus « 12h »).
+- [ ] Clic sur un T1 → « 0h30 » (format `XhYY`, plus « 2h »).
 
 ## Références
 
@@ -65,7 +65,7 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 
 - **Parité base-duration vs tempo** : le preview front doit afficher la durée **de base** (comme le PvP). Le tempo monde n'est appliqué que backend (`getCaptureDurationMs` via `TempoService`) — ne pas ré-appliquer côté front.
 - **API publique front** : `getBarbarianCaptureDurationLabel` est consommé par `AttackDetailModal` (badge « Fenêtre de capture ») ; conserver la signature pour un diff minimal.
-- **Format d'affichage** : le PvP rend `XhYY` (`2h15`, `3h`) via `getPvpCaptureDurationLabel` ; aligner le barbare sur ce format (T4=`2h15`) plutôt que l'ancien `2.3h` de `formatBarbarianCaptureDuration`.
+- **Format d'affichage (convention canonique)** : réutiliser le formatter PvP `getPvpCaptureDurationLabel` (`XhYY`) pour le barbare — T4=`2h15`, et la valeur sous l'heure T1 (30 min) rend `0h30`, **pas** `30min`, plutôt que l'ancien `2.3h` de `formatBarbarianCaptureDuration`. Une seule convention pour l'acceptance ET le code livré.
 - **Test verrouillant le bug** : `barbarianConquest.test.ts` fige les mauvaises valeurs — c'est un test à corriger, pas une régression à préserver.
 - **Ré-export backend** : suivre exactement le pattern `export { PVP_CAPTURE_DURATIONS_MS }` déjà en place pour ne pas dupliquer une 3e copie.
 
