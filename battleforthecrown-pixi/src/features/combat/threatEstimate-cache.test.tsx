@@ -107,6 +107,7 @@ function makeIntel(
     targetY: 34,
     targetTier: null,
     seenAt: new Date(Date.now() - (overrides.ageMs ?? 60_000)).toISOString(),
+    naturalTrait: null,
   });
 }
 

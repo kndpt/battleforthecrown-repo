@@ -2,6 +2,8 @@ import { publicAsset } from '@/lib/publicAsset';
 import { TIER_META } from './meta';
 import type { BarbarianTier } from './meta';
 import type { UnitCategory } from '@/features/army/unitCategory';
+import { NaturalTraitBadge } from '@/features/game/NaturalTraitBadge';
+import type { VillageNaturalTrait } from '@battleforthecrown/shared/village';
 import {
   Dossier,
   WallGlyph,
@@ -102,9 +104,12 @@ export interface FullIntelPanelProps {
   wall?: number | null;
   style?: string | null;
   freshness?: { ago: string; fresh: boolean };
+  /** Trait naturel de la cible — n'est fourni par l'appelant que quand
+   * l'intel a été scoutée (anti-leak, cf. run 093). */
+  naturalTrait?: VillageNaturalTrait | null;
 }
 
-export function FullIntelPanel({ loot, army, wall, style, freshness }: FullIntelPanelProps) {
+export function FullIntelPanel({ loot, army, wall, style, freshness, naturalTrait }: FullIntelPanelProps) {
   return (
     <Dossier style={{ gap: 9, padding: 10 }}>
       {/* Bloc Butin */}
@@ -175,6 +180,12 @@ export function FullIntelPanel({ loot, army, wall, style, freshness }: FullIntel
           )}
           {style && <StyleStat style={style}/>}
         </div>
+      )}
+
+      {/* Trait naturel — visible seulement si l'intel a livré une valeur
+          non-null (anti-leak : village non scouté ⇒ prop absente). */}
+      {naturalTrait && (
+        <NaturalTraitBadge trait={naturalTrait} variant="full"/>
       )}
     </Dossier>
   );

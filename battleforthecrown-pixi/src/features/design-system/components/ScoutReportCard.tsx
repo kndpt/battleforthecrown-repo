@@ -2,6 +2,8 @@ import type { ButtonHTMLAttributes } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { publicAsset } from '@/lib/publicAsset';
+import type { VillageNaturalTrait } from '@battleforthecrown/shared/village';
+import { NaturalTraitBadge } from '@/features/game/NaturalTraitBadge';
 import { TroopBar } from './TroopBar';
 
 export type ScoutReportVerdictTone = 'default' | 'danger';
@@ -56,6 +58,7 @@ export interface ScoutReportCardProps {
   hideHeader?: boolean;
   inactivityBadge?: ScoutReportInactivityBadge;
   metaLabel?: string;
+  naturalTraitBadge?: VillageNaturalTrait;
   note?: string;
   onClose?: ButtonHTMLAttributes<HTMLButtonElement>['onClick'];
   sections: ScoutReportSection[];
@@ -81,6 +84,7 @@ export function ScoutReportCard({
   hideHeader = false,
   inactivityBadge,
   metaLabel,
+  naturalTraitBadge,
   note,
   onClose,
   sections,
@@ -162,6 +166,12 @@ export function ScoutReportCard({
           <span className="flex-1 font-game text-[11px] font-bold uppercase tracking-[.08em] text-[#5a6567]">
             {inactivityBadge.label}
           </span>
+        </div>
+      ) : null}
+
+      {naturalTraitBadge ? (
+        <div className="flex items-center gap-2 border-b border-[rgba(0,0,0,.08)] px-3 py-2">
+          <NaturalTraitBadge trait={naturalTraitBadge} variant="full" />
         </div>
       ) : null}
 
