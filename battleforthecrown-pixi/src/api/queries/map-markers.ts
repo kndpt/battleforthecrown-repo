@@ -7,7 +7,6 @@ import {
 import type {
   MapMarkerDto,
   CreateMapMarkerBody,
-  UpdateMapMarkerBody,
 } from "@battleforthecrown/shared/map-markers";
 import { MapMarkerDtoSchema } from "@battleforthecrown/shared/map-markers";
 import { apiClient } from "../index";
@@ -69,58 +68,6 @@ export function useUpsertMapMarkerMutation(worldId: string) {
         );
         return [...filtered, optimistic];
       });
-      return { previousMarkers };
-    },
-    onError: (_err, _input, context) => {
-      if (context?.previousMarkers !== undefined) {
-        queryClient.setQueryData(
-          queryKeys.mapMarkers(worldId),
-          context.previousMarkers,
-        );
-      }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.mapMarkers(worldId) });
-    },
-  });
-}
-
-interface UpdateMapMarkerInput {
-  id: string;
-  body: UpdateMapMarkerBody;
-}
-
-export function useUpdateMapMarkerMutation(worldId: string) {
-  const queryClient = useQueryClient();
-  return useMutation<
-    MapMarkerDto,
-    Error,
-    UpdateMapMarkerInput,
-    { previousMarkers?: MapMarkerDto[] }
-  >({
-    mutationFn: async ({ id, body }) => {
-      const raw = await apiClient.patch<unknown>(
-        `/worlds/${worldId}/map-markers/${id}`,
-        body,
-      );
-      return MapMarkerDtoSchema.parse(raw);
-    },
-    onMutate: async ({ id, body }) => {
-      const key = queryKeys.mapMarkers(worldId);
-      await queryClient.cancelQueries({ queryKey: key });
-      const previousMarkers = queryClient.getQueryData<MapMarkerDto[]>(key);
-      queryClient.setQueryData<MapMarkerDto[]>(key, (current = []) =>
-        current.map((m) =>
-          m.id === id
-            ? {
-                ...m,
-                ...(body.kind !== undefined ? { kind: body.kind } : {}),
-                ...(body.note !== undefined ? { note: body.note } : {}),
-                updatedAt: new Date().toISOString(),
-              }
-            : m,
-        ),
-      );
       return { previousMarkers };
     },
     onError: (_err, _input, context) => {
