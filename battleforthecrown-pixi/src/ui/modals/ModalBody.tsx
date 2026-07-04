@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '@/lib/cn';
 
 const modalBodyVariants = cva([
   'px-6 py-5',
@@ -14,5 +15,5 @@ export interface ModalBodyProps extends VariantProps<typeof modalBodyVariants> {
 }
 
 export const ModalBody = ({ children, className }: ModalBodyProps) => {
-  return <div className={modalBodyVariants({ className })}>{children}</div>;
+  return <div className={cn(modalBodyVariants(), className)}>{children}</div>;
 };

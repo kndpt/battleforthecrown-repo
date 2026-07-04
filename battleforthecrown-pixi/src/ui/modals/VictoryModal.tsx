@@ -30,7 +30,7 @@ export const VictoryModal = ({
       isOpen={isOpen}
       onClose={onClose}
     >
-      <div className="w-[90%] max-w-md overflow-hidden rounded-lg border-4 border-[#5d4a32] bg-gradient-to-b from-[#fef9f0] to-[#e8d4a8] font-game shadow-[0_0_0_2px_#5d4a32,0_12px_32px_rgba(0,0,0,0.55)]">
+      <div className="w-[90vw] max-w-md overflow-hidden rounded-lg border-4 border-[#5d4a32] bg-gradient-to-b from-[#fef9f0] to-[#e8d4a8] font-game shadow-[0_0_0_2px_#5d4a32,0_12px_32px_rgba(0,0,0,0.55)]">
         <div className="h-1.5 bg-gradient-to-r from-game-green-light to-game-green-dark" />
 
         <div className="px-6 py-7 text-center">
