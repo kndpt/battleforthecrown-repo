@@ -6,6 +6,8 @@ disable-model-invocation: true
 
 # Lead — pipeline semi-autonome
 
+> **LOCAL UNIQUEMENT — interdit en cloud.** `$bftc-run` s'exécute exclusivement sur la machine de Kelvin (interactif). Il **ne doit jamais** tourner dans une routine cloud Claude / env headless : le pipeline dépend d'outils locaux authentifiés (dont la review indépendante via `coderabbit` CLI local + `.coderabbit.yaml`) absents du sandbox cloud. Si tu détectes un contexte cloud/routine (pas de TTY local, `coderabbit` introuvable, env de routine), **abort immédiatement** avec ce motif et renvoie vers le flux cloud natif : les routines produisent des PR, et la review indépendante en cloud est CR **sur la PR GitHub** (`.coderabbit.yaml`, gate `bftc-auto-merge`), pas ce skill.
+
 Tu orchestres une cible BFTC passée en **path de fichier obligatoire** (`@` optionnel). Tu es le lead : tu tiens le plan, les décisions, la review et l'archive. Tu délègues le code volumineux, l'implémentation, les tests écrits/lancés et la doc dès que le scope dépasse le mode rapide.
 
 Noms d'agents selon harness :
@@ -17,7 +19,7 @@ Noms d'agents selon harness :
 | Tests écrits | `test_writer` | `test-writer` |
 | Tests lancés | `test_runner` | `test-runner` |
 | Documentation | `doc_writer` | `doc-writer` |
-| Review indépendante (conditionnelle) | `reviewer` | `reviewer` |
+| Review indépendante (conditionnelle) — moteur CodeRabbit CLI | `reviewer` | `reviewer` |
 | Review 5 axes par défaut | lead direct | lead direct |
 
 **Source de vérité mission sub-agent** : corps de prompt dans `.claude/agents/<name>.md` (Mission, Inputs, Procédure, Limites, Output) pour Claude Code ; `.codex/agents/<name>.toml` pour Codex. Valable pour **tous** les harness — pas d'improvisation lead.
@@ -59,13 +61,14 @@ Préflight commun :
 3. **Refinement** — découper en tâches chirurgicales ≤ 5 fichiers, citer tout §V/§B applicable de `SPEC.md`.
 4. **Coding** — lead direct seulement pour cas A ; sinon spawn implementer.
 5. **Tests écrits** — avant tout test, use `bftc-tests-policy`; lead direct seulement si trivial.
-6. **Review 5 axes** — correctness, readability, architecture, security, performance. Skip seulement si diff < 30 lignes, 1 fichier, aucune logique métier. **Review indépendante obligatoire** (spawn sub-agent `reviewer`) si l'un des critères est vrai : (a) touche backend ET frontend, (b) modifie `SPEC.md` (backprop §V/§B faite à l'étape 8c ou prévue), (c) diff > 100 lignes, (d) introduit un invariant durable. Le reviewer reçoit la fiche + la range git diff + la spec source, et ne lit jamais `Décisions prises` ni `Rapport final`. Son `VERDICT: BLOCK` interdit le passage à l'étape 8c/10 tant que findings bloquants/majeurs non fixés.
+6. **Review 5 axes** — correctness, readability, architecture, security, performance. Skip seulement si diff < 30 lignes, 1 fichier, aucune logique métier. **Review indépendante obligatoire** (spawn sub-agent `reviewer`) si l'un des critères est vrai : (a) touche backend ET frontend, (b) modifie `SPEC.md` (backprop §V/§B faite à l'étape 8c ou prévue), (c) diff > 100 lignes, (d) introduit un invariant durable. Le `reviewer` **délègue les findings code à CodeRabbit CLI en local** (`coderabbit review --agent`, config `.coderabbit.yaml` — mêmes règles que la review PR) et ajoute par-dessus la vérification de couverture des critères d'acceptance. Il reçoit la fiche + la base de comparaison (branche/commit) + la spec source, et ne lit jamais `Décisions prises` ni `Rapport final`. Son `VERDICT: BLOCK` interdit le passage à l'étape 8c/10 tant que findings bloquants/majeurs non fixés ou critères non couverts. Prérequis : `coderabbit` installé + `coderabbit auth status` OK (sinon le reviewer escalade).
 7. **Fix findings** — bloquants/majeurs obligatoires (review lead **et** reviewer indépendant cumulés), 1 tâche par finding, cap 3 cycles.
 8. **Retest + static-check** — tests adaptés au scope, puis `yarn static-check`.
 8c. **Backprop SPEC** — ajouter §V/§B seulement si un invariant durable ou bug subtil/récurrent a été révélé.
 9. **Documentation** — décider l'impact doc via `.agents/rules/docs.md`; déléguer au doc writer si non trivial.
 10. **Archive + commit** — compacter fiche (cf. `.agents/rules/harness.md` : strip `Progress`/`Décisions`, `Rapport final` = QA + ≤3 lignes synthèse) → `DONE`, `git mv` vers `runs/archive/`, maj index `tasks/README.md` (lien seulement, pas de prose), commit unique EN `<type>(<scope>): <subject>`.
 10b. **Publication PR conditionnelle** — si `PR_REQUIRED: oui`, push la branche et ouvrir une PR **ready for review** vers `main` avec titre `run(<id>): ...` ou `task(<id>): ...`, résumé, root cause/impact et validations. Si `PR_REQUIRED: non`, pas de push et pas de PR.
+    - **Anti-double-review CR** : si le reviewer indépendant a effectivement tourné (étape 6) **et** rendu `VERDICT: GO`, poser le label `bftc-local-reviewed` sur la PR (`gh pr edit <n> --add-label bftc-local-reviewed` ; créer le label une seule fois s'il manque : `gh label create bftc-local-reviewed -c BFCF66 -d "Déjà review CodeRabbit CLI en local via \$bftc-run"`). CR skip alors la review PR (redondante — même moteur + même `.coderabbit.yaml`). **Ne PAS poser le label** si le reviewer n'a pas tourné (review PR = seule review, à garder) ou si le verdict final était `BLOCK`/escaladé user (laisser CR gater la PR).
 11. **Démarrage IG conditionnel** — seulement si le rapport final contient des `Tests IG à faire par le user` non vides : utiliser `bftc-worktree-qa` pour démarrer backend + frontend depuis le worktree courant, puis inclure les URLs dans le rapport final.
 
 ## Mode Rapide
@@ -138,7 +141,7 @@ Les sub-agents doivent retourner un rapport structuré (`STATUS: success|partial
   - Si le diff backend `src/` est strictement pure logic déjà couverte par unit, DTO/type-only sans effet runtime, ou refacto interne sans endpoint/worker/event affecté, documenter l'exception dans `Acceptance & QA`.
   - La CI PR lance la suite smoke complète ; le run local doit prouver le risque ciblé, pas dupliquer systématiquement la CI.
 - `yarn static-check` obligatoire avant commit final.
-- **Review indépendante** : si la fiche run porte `REVIEW_INDÉPENDANT_REQUIS: oui` (cf. `bftc-plan`) **ou** si l'un des critères de l'étape 6 devient vrai en cours de run, spawn `reviewer` est obligatoire avant l'étape 8c. Verdict `BLOCK` → fix findings (cap 3 cycles) → re-spawn `reviewer`. Pas de bypass lead sans escalade user explicite.
+- **Review indépendante** : si la fiche run porte `REVIEW_INDÉPENDANT_REQUIS: oui` (cf. `bftc-plan`) **ou** si l'un des critères de l'étape 6 devient vrai en cours de run, spawn `reviewer` est obligatoire avant l'étape 8c. Le `reviewer` fait tourner CodeRabbit CLI en local (`.coderabbit.yaml`) + check couverture critères. Verdict `BLOCK` → fix findings (cap 3 cycles) → re-spawn `reviewer`. Pas de bypass lead sans escalade user explicite.
 - Rapport final : inclure une section `Acceptance & QA` obligatoire avec :
   - `Critères d'acceptance vérifiés` : checklist binaire, **commande exécutable obligatoire si automatisable** (curl, SQL via `bftc-db`, test auto, smoke, grep, script). Preuve textuelle uniquement si le critère est purement visuel/gameplay/UX (sinon = manquement). Format imposé par item : `- [x] <critère> — \`<commande ou "visuel">\` → <résultat observé>`. Si la commande est trop longue pour une ligne, la mettre dans un bloc code sous l'item et garder une référence courte sur la ligne.
   - `Review indépendante` : `Déclenchée (raison: <critère>)` avec verdict `GO` ou `BLOCK + findings résolus`, ou `Non déclenchée (aucun critère vrai)`. Obligatoire — jamais omettre cette ligne.
