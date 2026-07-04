@@ -1,8 +1,8 @@
 # Run #093 — feature-natural-trait-badge-modal
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-07-04
+> **Terminé** : 2026-07-04
 
 ## Cible
 
@@ -78,19 +78,26 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 - **T5 — Surface C** : `SelectedEntityPanel` / `villageMapPanel` — badge trait `variant="full"` pour mon village (store) **et** ennemi scouté (intel), même gating que le style stratégique. [≤3 fichiers]
 - **T6 — Tests + QA** : unit (info builder, badge a11y, projection intel gated) + checklist QA IG. [≤3 fichiers]
 
-## Progress
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
-## Décisions prises
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
 ## Rapport final
+
+Socle front réutilisable (`naturalTraitInfo` + `NaturalTraitBadge` + `NaturalTraitModal` via `BaseModal`) branché sur 3 surfaces ; trait ennemi exposé au canal intel scouté via `getIntel` (join `Village` gated par l'existence du row intel, zéro migration — trait immuable) ; anti-leak feed public préservé. _(Détail Progress/Décisions : git history.)_
 
 ### Acceptance & QA
 
-- [ ] <critère> — `<cmd>` → <résultat>
-- **Review indépendante** : **requise** — back+front simultané + touche un invariant anti-leak spec (`27 § Révélation`). Axes prioritaires : correctness (gating intel), security/leak (trait jamais dans le feed public), architecture (socle réutilisable sans logique métier dans `src/ui/`).
-- **Tests automatisés** : …
-- **Tests IG user** : checklist ≤5 items (surfaces A/B/C + cas ennemi non scouté).
+- [x] `naturalTraitInfo(trait)` contenu correct (incl. PLAINS « Aucun bonus ») — `vitest scoutReportView.test.ts` + naturalTraitInfo consommé → vert.
+- [x] `scoutReportView.ts` ne duplique plus le bonus % — `buildNaturalTraitSections` supprimé, source unique `naturalTraitInfo` — `git diff` + `scoutReportView.test.ts` vert.
+- [x] `NaturalTraitBadge` = `<button>` + `aria-label` + `<img>` .webp — vérifié review + `NaturalTraitBadge.tsx:34-53`.
+- [x] Anti-leak `world-entities-natural-trait-leak.spec.ts` toujours vert — `jest world-entities-natural-trait-leak` → pass (spec non modifiée).
+- [x] `VillageIntelDto.naturalTrait` projeté **ssi** intel scout existe — `jest intel.service.spec.ts` (présent/absent) → pass.
+- [x] Surfaces A/B/C + « mon village » sur panneau carte — couvert par `SelectedEntityPanel.test.tsx` (mine/scouté/non-scouté) + review GO.
+- **Review indépendante** : Déclenchée (raison : back+front + invariant anti-leak). `BLOCK` (critère C « mon village » manquant) → fixé (branche `mine` alimentée depuis `useMyVillagesQuery`) → re-review **GO**.
+- **Tests automatisés** : `yarn static-check` vert ; `yarn workspace battleforthecrown-pixi test --run` → 902/902 ; backend unit `intel.service.spec` + leak spec verts.
+- **Smokes lancés** : Ciblés — `test:smoke:run -- intel.smoke scouting.smoke` → 10/10 (après re-migration template DB smoke, 6 migrations de retard). Full smoke = CI PR.
+- **Smokes ajoutés/modifiés** : Aucun (getIntel = lecture gated déjà couverte par unit + smoke intel existant).
+- **QA fonctionnelle agent** : smoke intel/scouting exerce le flux scout→getIntel→trait. Rendu visuel non automatisable → checklist user.
+- **Tests IG à faire par le user** :
+  1. Header `/game` : icône du trait seule (sans texte) → clic → modale (bonus, ressource, permanence).
+  2. Rapport scout d'un village avec trait : badge icône + label → clic → même modale.
+  3. Panneau carte de mon propre village : badge trait → modale.
+  4. Panneau carte d'un village **ennemi scouté** : badge trait visible.
+  5. Panneau carte d'un village ennemi **non scouté** : aucun badge trait (anti-leak).

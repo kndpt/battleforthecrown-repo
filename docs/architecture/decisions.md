@@ -419,6 +419,27 @@ Question posée : faut-il aligner BFTC sur cette granularité (passer à 30 leve
 
 ---
 
+## ADR-21 — Review indépendante propulsée par CodeRabbit : CLI en local, PR sur le cloud, un seul moteur
+
+**Contexte (2026-07-04).** Le pipeline `$bftc-run` avait un sub-agent `reviewer` maison (relecture 5 axes à froid, findings inventés par le modèle). Deux problèmes : (1) la review dépendait de la subjectivité du modèle à chaque run, non reproductible ; (2) le repo utilise déjà CodeRabbit sur les PR GitHub (`.coderabbit.yaml`, `auto_review: enabled`), donc deux moteurs de review distincts coexistaient. On a voulu unifier sur CodeRabbit comme moteur unique, avec la même config des deux côtés.
+
+**Décision.**
+
+1. **Un seul moteur, deux points d'entrée selon l'environnement.** Le fichier `.coderabbit.yaml` (règles BFTC : layering, Outbox, server-authoritative, N+1, optimistic UI, seuils anti-nitpick) est la source de vérité unique, consommée par les deux :
+   - **Local** (`$bftc-run` sur la machine de Kelvin) : le sub-agent `reviewer` délègue les findings code à **CodeRabbit CLI** (`coderabbit review --agent`) en pre-commit. Il n'improvise plus de relecture — il ne garde que le **check de couverture des critères d'acceptance** de la fiche run, que le CLI ne fait pas.
+   - **Cloud** (routines `bftc-refactor-*`, `bftc-maint-debt`) : elles produisent des PR ; la review indépendante est **CodeRabbit sur la PR GitHub**, qui gate `bftc-auto-merge` via `request_changes_workflow` + `fail_commit_status`.
+2. **`$bftc-run` est local uniquement.** Il dépend d'outils locaux authentifiés (dont `coderabbit` CLI) absents du sandbox cloud → abort explicite si contexte routine/cloud détecté. Les routines ne spawnent jamais `reviewer`.
+3. **Anti-double-review.** Quand le reviewer local a tourné **et** rendu `GO`, `$bftc-run` pose le label `bftc-local-reviewed` sur la PR ; `.coderabbit.yaml` porte `auto_review.labels: ["!bftc-local-reviewed"]` → CR skip la review PR (redondante, même moteur + même config). Le label n'est **pas** posé si la review locale n'a pas tourné (la review PR devient alors la seule) ni si le verdict était `BLOCK`/escaladé.
+
+**Conséquences.**
+
+- Review reproductible et alignée sur une config versionnée, identique en pre-commit local et sur la PR.
+- Les PR `run/*` labellisées ne sont plus auto-mergées (CR ne les approuve plus) : **merge manuel assumé par Kelvin**, cohérent avec le fait qu'il doit tester la feature avant merge de toute façon.
+- Prérequis local : `coderabbit` installé + `coderabbit auth status` OK ; sinon le `reviewer` escalade au lieu de bluffer une review.
+- Détail de la procédure agent : `.claude/agents/reviewer.md` / `.codex/agents/reviewer.toml` ; branchement pipeline : `.agents/skills/bftc-run/SKILL.md` (étapes 6 et 10b).
+
+---
+
 ## Maintenance de ce document
 
 - Une décision **structurante** (qui change la façon dont on pense le projet) → nouvelle entrée ADR.
