@@ -41,6 +41,7 @@ const baseDto: VillageIntelDto = {
   targetY: 34,
   targetTier: null,
   seenAt: "2026-06-20T10:00:00.000Z",
+  naturalTrait: null,
 };
 
 describe("toIntelView", () => {
@@ -85,5 +86,15 @@ describe("toIntelView", () => {
   it("passes through resources", () => {
     const view = toIntelView(baseDto);
     expect(view.resources).toEqual({ wood: 100, stone: 50, iron: 25 });
+  });
+
+  it("exposes naturalTrait when present on the dto (scouted)", () => {
+    const view = toIntelView({ ...baseDto, naturalTrait: "IRON_VEIN" });
+    expect(view.naturalTrait).toBe("IRON_VEIN");
+  });
+
+  it("naturalTrait is null when absent from the dto (anti-leak)", () => {
+    const view = toIntelView(baseDto);
+    expect(view.naturalTrait).toBeNull();
   });
 });

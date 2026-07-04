@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { MS_PER_HOUR } from '../time';
 import {
+  BARBARIAN_CAPTURE_DURATIONS_MS,
   formatCaptureDuration,
+  getBarbarianCaptureDurationLabel,
+  getBarbarianCaptureDurationMs,
   getPvpCaptureDurationLabel,
   getPvpCaptureDurationMs,
   PVP_CAPTURE_DURATIONS_MS,
@@ -63,5 +66,40 @@ describe('getPvpCaptureDurationLabel', () => {
   it('returns null when the castle level is unknown (UI shows "Inconnue")', () => {
     expect(getPvpCaptureDurationLabel(null)).toBeNull();
     expect(getPvpCaptureDurationLabel(undefined)).toBeNull();
+  });
+});
+
+describe('barbarian capture durations', () => {
+  it('keeps the compressed curve frozen (docs/gameplay/13-barbarian-conquest.md)', () => {
+    expect(BARBARIAN_CAPTURE_DURATIONS_MS).toEqual({
+      T1: 0.5 * MS_PER_HOUR,
+      T2: 1 * MS_PER_HOUR,
+      T3: 1.5 * MS_PER_HOUR,
+      T4: 2.25 * MS_PER_HOUR,
+      T5: 3 * MS_PER_HOUR,
+    });
+  });
+
+  it('maps every tier to its base duration in ms', () => {
+    expect(getBarbarianCaptureDurationMs('T1')).toBe(0.5 * MS_PER_HOUR);
+    expect(getBarbarianCaptureDurationMs('T5')).toBe(3 * MS_PER_HOUR);
+  });
+
+  it('returns null for an unknown or missing tier', () => {
+    expect(getBarbarianCaptureDurationMs(null)).toBeNull();
+    expect(getBarbarianCaptureDurationMs(undefined)).toBeNull();
+    expect(getBarbarianCaptureDurationMs('T9')).toBeNull();
+  });
+
+  it('formats the preview label as XhYY, aligned with the PvP formatter', () => {
+    expect(getBarbarianCaptureDurationLabel('T1')).toBe('0h30');
+    expect(getBarbarianCaptureDurationLabel('T2')).toBe('1h');
+    expect(getBarbarianCaptureDurationLabel('T3')).toBe('1h30');
+    expect(getBarbarianCaptureDurationLabel('T4')).toBe('2h15');
+    expect(getBarbarianCaptureDurationLabel('T5')).toBe('3h');
+  });
+
+  it('returns null label for an unknown tier (UI shows "Inconnue")', () => {
+    expect(getBarbarianCaptureDurationLabel(null)).toBeNull();
   });
 });

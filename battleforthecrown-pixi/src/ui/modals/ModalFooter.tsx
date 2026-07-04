@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '@/lib/cn';
 
 const modalFooterVariants = cva([
   'px-6 py-4',
@@ -15,5 +16,5 @@ export interface ModalFooterProps extends VariantProps<typeof modalFooterVariant
 }
 
 export const ModalFooter = ({ children, className }: ModalFooterProps) => {
-  return <div className={modalFooterVariants({ className })}>{children}</div>;
+  return <div className={cn(modalFooterVariants(), className)}>{children}</div>;
 };

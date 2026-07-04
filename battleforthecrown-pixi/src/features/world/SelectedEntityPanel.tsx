@@ -14,6 +14,7 @@ import {
   useArmyInventoryQuery,
   useGarrisonQuery,
   useKingdomPowerQuery,
+  useMyVillagesQuery,
   usePublicPlayerProfileQuery,
   usePublicVillagePowerQuery,
   useVillageIntelQuery,
@@ -33,7 +34,7 @@ import { useGameStore } from "@/stores/game";
 import { useTickingNow } from "@/lib/useTickingNow";
 import { formatRemaining } from "@/features/village/constructionProgress";
 import { unitMetaFor } from "@/features/army/unitConfig";
-import { unitCategoryFor } from "@/features/design-system/components/villageMapPanel/meta";
+import { unitCategoryFor } from "@/features/army/unitCategory";
 import { summarizePresentTroops } from "./selectedEntityTroops";
 import { formatIntelAge, toIntelView } from "./intelView";
 import { ReportDetailModal } from "@/features/combat/ReportDetailModal";
@@ -106,6 +107,9 @@ export function SelectedEntityPanel({
 
   const armyInventory = useArmyInventoryQuery(ownedVillageId);
   const garrison = useGarrisonQuery(ownedVillageId);
+  // Trait naturel de MON village — connu localement (pas un leak), source =
+  // store des villages possédés, jamais `world-entities` ni l'intel query.
+  const myVillages = useMyVillagesQuery(worldId);
   const villagePower = usePublicVillagePowerQuery(villagePowerId);
   const myKingdomPower = useKingdomPowerQuery();
   const defenderKingdomPower = useQuery({
@@ -174,7 +178,11 @@ export function SelectedEntityPanel({
       armyInventory.data ?? [],
       garrison.data ?? [],
     );
-    intel = { army: toPanelArmy(troops) };
+    const myVillage = myVillages.data?.find((v) => v.id === entity.id);
+    intel = {
+      army: toPanelArmy(troops),
+      naturalTrait: myVillage?.naturalTrait ?? null,
+    };
   } else if (variant === "scouted" && intelData) {
     const view = toIntelView(intelData);
     const ago = formatIntelAge(intelData.seenAt, new Date(now)).replace(
@@ -189,6 +197,7 @@ export function SelectedEntityPanel({
       wall: intelData.wallLevel,
       style: view.styleLabel === "—" ? null : view.styleLabel,
       freshness: { ago, fresh },
+      naturalTrait: view.naturalTrait,
     };
   }
 

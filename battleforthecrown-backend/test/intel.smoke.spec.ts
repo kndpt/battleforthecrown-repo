@@ -54,7 +54,9 @@ async function seedAdjacentBarbarian(
   const barbarian = await ctx.prisma.village.create({
     data: {
       worldId,
-      naturalTrait: 'PLAINS',
+      // Trait non-neutre pour prouver que getIntel projette bien le trait réel
+      // du village (et pas une valeur par défaut) une fois scouté.
+      naturalTrait: 'DENSE_FOREST',
       isBarbarian: true,
       name: `intel-barb-${Date.now()}`,
       x: attackerVillage.x + 1,
@@ -197,6 +199,7 @@ describe('intel smoke', () => {
       sourceReportId: string;
       units: Record<string, number>;
       resources: { wood: number; stone: number; iron: number };
+      naturalTrait: string | null;
       seenAt: string;
     };
     expect(intel).not.toBeNull();
@@ -205,6 +208,9 @@ describe('intel smoke', () => {
     expect(intel.units).toMatchObject({ MILITIA: 7 });
     // wood peut légèrement varier à cause du tick de production — on vérifie seulement > 0
     expect(intel.resources.wood).toBeGreaterThan(0);
+    // Trait naturel révélé UNIQUEMENT après scout (gating getIntel) : avant scout,
+    // beforeRes renvoyait déjà `null` (aucun intel) ⇒ pas de trait exposé.
+    expect(intel.naturalTrait).toBe('DENSE_FOREST');
     expect(typeof intel.seenAt).toBe('string');
   });
 

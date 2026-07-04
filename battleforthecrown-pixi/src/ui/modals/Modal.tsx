@@ -13,10 +13,10 @@ const modalVariants = cva(
   {
     variants: {
       size: {
-        sm: 'w-[90%] max-w-md',
-        md: 'w-[90%] max-w-2xl',
-        lg: 'w-[90%] max-w-4xl',
-        xl: 'w-[90%] max-w-6xl',
+        sm: 'w-[90vw] max-w-md',
+        md: 'w-[90vw] max-w-2xl',
+        lg: 'w-[90vw] max-w-4xl',
+        xl: 'w-[90vw] max-w-6xl',
       },
       variant: {
         default: [

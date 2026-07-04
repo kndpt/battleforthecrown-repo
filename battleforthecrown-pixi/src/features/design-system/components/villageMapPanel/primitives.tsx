@@ -1,13 +1,13 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { publicAsset } from '@/lib/publicAsset';
 import {
-  CATEGORY_COLORS,
   STYLE_META,
   STYLE_FALLBACK,
   frInt,
   frShort,
 } from './meta';
-import type { TroopCategory, VillageMapTypeTag } from './meta';
+import type { VillageMapTypeTag } from './meta';
+import { CATEGORY_THEME, type UnitCategory } from '@/features/army/unitCategory';
 
 // ---------------------------------------------------------------------------
 // Glyphes SVG inline (sans className font-game — ce sont des SVG purs)
@@ -299,13 +299,13 @@ export function LootChip({ kind, value }: LootChipProps) {
 export interface TroopChipProps {
   icon: string;
   count: number;
-  category: TroopCategory;
+  category: UnitCategory;
   name?: string;
   size?: number;
   showName?: boolean;
 }
 export function TroopChip({ icon, count, category, name, size = 44, showName = false }: TroopChipProps) {
-  const c = CATEGORY_COLORS[category];
+  const c = CATEGORY_THEME[category];
   return (
     <div className="font-game" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, flexShrink: 0 }}>
       <div
@@ -314,8 +314,8 @@ export function TroopChip({ icon, count, category, name, size = 44, showName = f
           height: size,
           borderRadius: 11,
           position: 'relative',
-          background: `linear-gradient(to bottom, ${c.l}, ${c.d})`,
-          border: `2px solid ${c.b}`,
+          background: `linear-gradient(to bottom, ${c.light}, ${c.dark})`,
+          border: `2px solid ${c.border}`,
           boxShadow: 'inset 0 1px 0 rgba(255,255,255,.3), 0 2px 0 rgba(0,0,0,.2)',
           display: 'flex',
           alignItems: 'center',

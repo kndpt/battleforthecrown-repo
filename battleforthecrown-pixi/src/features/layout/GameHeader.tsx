@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight, Users } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import {
   MultiVillageBottomSheet,
@@ -254,7 +254,12 @@ export function GameHeader({
           onClick={() => setIsFriendsOpen(true)}
           className="flex size-9 items-center justify-center rounded-full border border-[#1a120a] bg-[linear-gradient(180deg,#4a3a28,#2a1f14)] text-[#f0e0c0] shadow-[inset_0_1px_0_rgba(255,255,255,.1)] transition-transform active:scale-95"
         >
-          <Users aria-hidden="true" className="size-4" />
+          <img
+            alt=""
+            aria-hidden="true"
+            className="size-5 object-contain"
+            src={publicAsset('/assets/friends.webp')}
+          />
         </button>
 
         <div className="flex-1" />

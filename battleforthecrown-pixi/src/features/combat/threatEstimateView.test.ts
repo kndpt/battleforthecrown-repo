@@ -27,6 +27,7 @@ function freshIntel(seenAt: string) {
     targetY: 34,
     targetTier: null,
     seenAt,
+    naturalTrait: null,
   };
 }
 

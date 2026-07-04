@@ -1,3 +1,5 @@
+import { clamp, clamp01 } from '@/lib/math';
+
 /**
  * Procedural world terrain — PURE module (no Pixi import).
  *
@@ -163,14 +165,6 @@ const C_SAND: RGB = { r: 0xc7, g: 0xb2, b: 0x83 };
 const C_GRASS: RGB = { r: 0x6f, g: 0x9b, b: 0x41 };
 const C_FOREST: RGB = { r: 0x40, g: 0x6c, b: 0x2f };
 const C_ROCK: RGB = { r: 0x8a, g: 0x83, b: 0x77 };
-
-function clamp(x: number, lo: number, hi: number): number {
-  return x < lo ? lo : x > hi ? hi : x;
-}
-
-function clamp01(x: number): number {
-  return clamp(x, 0, 1);
-}
 
 function lerpRGB(a: RGB, b: RGB, t: number): RGB {
   return {

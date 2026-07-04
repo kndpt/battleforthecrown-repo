@@ -24,6 +24,9 @@ export interface VillageIntelDto {
   targetY: number;
   targetTier: string | null;
   seenAt: string;
+  /** Trait naturel du village ciblé, exposé UNIQUEMENT quand cet intel a été
+   * scouté (jamais dérivé côté client). Cf. docs/gameplay/27-village-natural-traits.md. */
+  naturalTrait: VillageNaturalTrait | null;
 }
 
 /** Runtime validation of the intel endpoint response at the client boundary. */
@@ -45,6 +48,9 @@ export const VillageIntelDtoSchema = z.object({
   targetY: z.number(),
   targetTier: z.string().nullable(),
   seenAt: z.string(),
+  naturalTrait: z
+    .enum(["DENSE_FOREST", "RICH_QUARRY", "IRON_VEIN", "PLAINS"])
+    .nullable(),
 }) satisfies z.ZodType<VillageIntelDto>;
 
 export const PublicWorldStatusSchema = z.enum([
