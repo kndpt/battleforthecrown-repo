@@ -67,7 +67,7 @@ export class InitiateExtractionUseCase {
       );
     }
 
-    return withSerializableRetry(
+    const expedition = await withSerializableRetry(
       () =>
         this.prisma.$transaction(
           async (tx) => {
@@ -255,22 +255,6 @@ export class InitiateExtractionUseCase {
             );
             await this.outbox.resourcesChanged(command.villageId, tx);
 
-            // (j) Schedule the arrival job — same queue/shape as the
-            // caravan/combat resolution so the T4 worker can route by
-            // expedition kind.
-            await this.boss.send(
-              'combat:resolve',
-              { expeditionId: expedition.id },
-              {
-                startAfter: arrivalAt,
-                singletonKey: `combat:${expedition.id}`,
-              },
-            );
-
-            this.logger.debug(
-              `Extraction expedition created: ${expedition.id}, arrives at ${arrivalAt.toISOString()}`,
-            );
-
             return expedition;
           },
           { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
@@ -278,5 +262,26 @@ export class InitiateExtractionUseCase {
       this.logger,
       'extraction transaction',
     );
+
+    // (j) Schedule the arrival job — same queue/shape as the
+    // caravan/combat resolution so the T4 worker can route by expedition
+    // kind. Kept OUTSIDE the serializable transaction: a serialization retry
+    // replaying this callback after an earlier attempt already enqueued the
+    // job would otherwise leave an orphaned job pointing at a rolled-back
+    // expedition.
+    await this.boss.send(
+      'combat:resolve',
+      { expeditionId: expedition.id },
+      {
+        startAfter: expedition.arrivalAt,
+        singletonKey: `combat:${expedition.id}`,
+      },
+    );
+
+    this.logger.debug(
+      `Extraction expedition created: ${expedition.id}, arrives at ${expedition.arrivalAt.toISOString()}`,
+    );
+
+    return expedition;
   }
 }

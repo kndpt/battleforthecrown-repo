@@ -7,7 +7,10 @@ import {
   type SmokeContext,
 } from './helpers';
 import { ExtractionLifecycleService } from '../src/modules/gameplay/extraction-lifecycle.service';
-import { computeExtractedAmount } from '@battleforthecrown/shared/extraction';
+import {
+  computeExtractedAmount,
+  EXTRACTION_STEAL_RATIO,
+} from '@battleforthecrown/shared/extraction';
 import { SMOKE_WORLD_CONFIG } from './fixtures/smoke-world-config';
 
 /**
@@ -489,6 +492,11 @@ describe('extraction smoke', () => {
       const exploiting = await ctx.prisma.expedition.findUniqueOrThrow({
         where: { id: victimExpeditionId },
       });
+      // Dispatched with durationHours: 8 above — assert the persisted field
+      // explicitly. The `!` below only satisfies the type checker; if this
+      // field silently stopped being persisted, the arithmetic would treat it
+      // as 0 without failing.
+      expect(exploiting.extractionDurationMs).toBe(8 * 3_600_000);
       // exploitationStartedAt = exploitationEndsAt - extractionDurationMs, so
       // to get `elapsedMs = simulatedElapsedMs` from `Date.now()` we need
       // exploitationEndsAt = now + (durationMs - elapsedMs).
@@ -563,6 +571,9 @@ describe('extraction smoke', () => {
         payload.stolen.wood + payload.stolen.stone + payload.stolen.iron;
       expect(stolenTotal).toBeGreaterThan(0);
       expect(stolenTotal).toBeLessThan(expectedAccrued);
+      expect(stolenTotal).toBeLessThanOrEqual(
+        Math.floor(expectedAccrued * EXTRACTION_STEAL_RATIO),
+      );
 
       const victimLoot = victimAfter.loot as {
         resources: { wood: number; stone: number; iron: number };
@@ -608,14 +619,18 @@ describe('extraction smoke', () => {
       const world = await seedSmokeWorld(ctx.prisma);
       await setupPlayer(world.id, 'seed-a');
       await setupPlayer(world.id, 'seed-b');
+      await setupPlayer(world.id, 'seed-c');
+      await setupPlayer(world.id, 'seed-d');
 
-      // The join hook is fire-and-forget; poll until it lands.
+      // The join hook is fire-and-forget; poll until it lands. With 4 members
+      // we expect exactly floor(4 * 0.5) = 2 ACTIVE sites — with only 2
+      // members, 1 site is indistinguishable from an "always 1 site" bug.
       const countSites = () =>
         ctx.prisma.resourceExtractionSite.count({
           where: { worldId: world.id, state: 'ACTIVE' },
         });
       let sites = await countSites();
-      for (let i = 0; i < 20 && sites < 1; i++) {
+      for (let i = 0; i < 20 && sites < 2; i++) {
         await new Promise((resolve) => setTimeout(resolve, 100));
         sites = await countSites();
       }
@@ -623,8 +638,8 @@ describe('extraction smoke', () => {
       const members = await ctx.prisma.worldMembership.count({
         where: { worldId: world.id },
       });
-      expect(members).toBe(2);
-      expect(sites).toBeGreaterThan(0);
+      expect(members).toBe(4);
+      expect(sites).toBe(2);
       expect(sites).toBeLessThan(members);
     });
   });

@@ -235,7 +235,7 @@ export class CombatService {
     userId: string,
     dto: AttackCommandDto,
   ): Promise<Expedition> {
-    return withSerializableRetry(
+    const expedition = await withSerializableRetry(
       () =>
         this.prisma.$transaction(
           async (tx) => {
@@ -320,12 +320,6 @@ export class CombatService {
               arrivalAt: arrivalAt.toISOString(),
             });
 
-            await this.scheduleResolution(expedition.id, arrivalAt);
-
-            this.logger.debug(
-              `Attack on extraction site ${site.id} created: ${expedition.id}, arrives at ${arrivalAt.toISOString()}`,
-            );
-
             return expedition;
           },
           { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
@@ -333,6 +327,18 @@ export class CombatService {
       this.logger,
       'extraction-site attack transaction',
     );
+
+    // Scheduled OUTSIDE the serializable transaction: a serialization retry
+    // replaying this callback after an earlier attempt already enqueued the
+    // job would otherwise leave an orphaned job pointing at a rolled-back
+    // expedition.
+    await this.scheduleResolution(expedition.id, expedition.arrivalAt);
+
+    this.logger.debug(
+      `Attack on extraction site created: ${expedition.id}, arrives at ${expedition.arrivalAt.toISOString()}`,
+    );
+
+    return expedition;
   }
 
   async initiateScout(

@@ -19,7 +19,10 @@ import {
 } from '@battleforthecrown/shared/extraction';
 import type { ExtractionResourceType } from '@battleforthecrown/shared/extraction';
 import { calculateCombatOutcome } from '../combat/combat-resolution';
-import { isVictoryForAttacker } from '../combat/combat.utils';
+import {
+  isVictoryForAttacker,
+  sumPopulationCost,
+} from '../combat/combat.utils';
 import { getUnitStats, type UnitMap } from '@battleforthecrown/shared/army';
 import { typedEntries } from '@battleforthecrown/shared/utils';
 import { WorldConfigService } from '../world/world-config.service';
@@ -479,7 +482,11 @@ export class ExtractionLifecycleService {
   private async resolveInterceptionVictory(
     tx: PrismaClientOrTx,
     args: {
-      attacker: { id: string; outboundTravelMs: number };
+      attacker: {
+        id: string;
+        attackerVillageId: string;
+        outboundTravelMs: number;
+      };
       victim: {
         id: string;
         attackerVillageId: string;
@@ -491,6 +498,7 @@ export class ExtractionLifecycleService {
       site: ResourceExtractionSite;
       outcome: {
         lossesAttacker: UnitMap;
+        lossesDefender: UnitMap;
         survivingAttacker: UnitMap;
         survivingDefender: UnitMap;
       };
@@ -510,6 +518,20 @@ export class ExtractionLifecycleService {
         `Extraction expedition ${victim.id} missing extraction fields for interception`,
       );
     }
+
+    // Release population for units killed on both sides — mirrors
+    // combat.worker's sumPopulationCost/decrement (dead units free their pop
+    // immediately, same as village combat resolution).
+    await this.releasePopulationForLosses(
+      tx,
+      attacker.attackerVillageId,
+      outcome.lossesAttacker,
+    );
+    await this.releasePopulationForLosses(
+      tx,
+      victim.attackerVillageId,
+      outcome.lossesDefender,
+    );
 
     const exploitationStartedAt = new Date(
       victim.exploitationEndsAt.getTime() - victim.extractionDurationMs,
@@ -577,9 +599,18 @@ export class ExtractionLifecycleService {
   private async resolveInterceptionDefeat(
     tx: PrismaClientOrTx,
     args: {
-      attacker: { id: string; outboundTravelMs: number };
-      victim: { id: string };
-      outcome: { survivingAttacker: UnitMap; survivingDefender: UnitMap };
+      attacker: {
+        id: string;
+        attackerVillageId: string;
+        outboundTravelMs: number;
+      };
+      victim: { id: string; attackerVillageId: string };
+      outcome: {
+        lossesAttacker: UnitMap;
+        lossesDefender: UnitMap;
+        survivingAttacker: UnitMap;
+        survivingDefender: UnitMap;
+      };
     },
   ): Promise<{
     jobs: { expeditionId: string; returnAt: Date }[];
@@ -587,6 +618,19 @@ export class ExtractionLifecycleService {
   }> {
     const { attacker, victim, outcome } = args;
     const noStolen = { wood: 0, stone: 0, iron: 0 };
+
+    // Release population for units killed on both sides — mirrors
+    // combat.worker's sumPopulationCost/decrement.
+    await this.releasePopulationForLosses(
+      tx,
+      attacker.attackerVillageId,
+      outcome.lossesAttacker,
+    );
+    await this.releasePopulationForLosses(
+      tx,
+      victim.attackerVillageId,
+      outcome.lossesDefender,
+    );
 
     await tx.expedition.update({
       where: { id: victim.id },
@@ -624,6 +668,24 @@ export class ExtractionLifecycleService {
       jobs: [{ expeditionId: attacker.id, returnAt }],
       stolen: noStolen,
     };
+  }
+
+  /**
+   * Release `villageId`'s population for units killed in interception combat —
+   * same accounting as `combat.worker`'s `sumPopulationCost` +
+   * `tx.population.update({ used: { decrement } })` for village combat.
+   */
+  private async releasePopulationForLosses(
+    tx: PrismaClientOrTx,
+    villageId: string,
+    losses: UnitMap,
+  ): Promise<void> {
+    const popReleased = sumPopulationCost(losses);
+    if (popReleased <= 0) return;
+    await tx.population.update({
+      where: { villageId },
+      data: { used: { decrement: popReleased } },
+    });
   }
 
   private async scheduleReturn(
@@ -723,7 +785,11 @@ export class ExtractionLifecycleService {
     tx: PrismaClientOrTx,
     site: ResourceExtractionSite,
   ): Promise<void> {
-    if (site.remainingCapacity > 0) return;
+    // Idempotence guard: a site already DEPLETED (or with capacity left) must
+    // never be re-depleted/re-respawned — guards against completion +
+    // interception both racing to deplete the same exhausted site, which
+    // would double-emit `extraction.depleted` and respawn twice.
+    if (site.state !== 'ACTIVE' || site.remainingCapacity > 0) return;
 
     await tx.resourceExtractionSite.update({
       where: { id: site.id },

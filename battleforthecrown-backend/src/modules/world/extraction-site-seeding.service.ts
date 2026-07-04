@@ -25,38 +25,48 @@ export class ExtractionSiteSeedingService {
    * Ensure the world has its target number of ACTIVE extraction sites.
    * Target is always strictly below the member count (spec: sites rares,
    * en nombre inférieur au nombre de joueurs d'une zone).
+   *
+   * Concurrent joins racing this method would otherwise TOCTOU the
+   * read-count-then-create sequence (both read the same `activeCount` and
+   * both create, overshooting `target`). A per-world advisory lock (same
+   * pattern as `RecruitTroopsUseCase`) serializes the whole read→create
+   * sequence across concurrent callers.
    */
   async ensureSites(worldId: string): Promise<void> {
-    const memberCount = await this.prisma.worldMembership.count({
-      where: { worldId },
-    });
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`extraction-site-seeding:${worldId}`}))`;
 
-    const target = Math.floor(memberCount * EXTRACTION_SITES_PER_PLAYER_RATIO);
-    if (target <= 0) {
-      return;
-    }
+      const memberCount = await tx.worldMembership.count({
+        where: { worldId },
+      });
 
-    const activeCount = await this.prisma.resourceExtractionSite.count({
-      where: { worldId, state: 'ACTIVE' },
-    });
-
-    const need = target - activeCount;
-    if (need <= 0) {
-      return;
-    }
-
-    for (let i = 0; i < need; i++) {
-      const resourceType = await this.pickLeastRepresentedType(worldId);
-      const created = await this.prisma.$transaction((tx) =>
-        this.respawnSite(tx, worldId, resourceType),
+      const target = Math.floor(
+        memberCount * EXTRACTION_SITES_PER_PLAYER_RATIO,
       );
-      if (!created) {
-        this.logger.warn(
-          `Could not place extraction site (${resourceType}) for world ${worldId}: no valid spot found`,
-        );
-        break;
+      if (target <= 0) {
+        return;
       }
-    }
+
+      const activeCount = await tx.resourceExtractionSite.count({
+        where: { worldId, state: 'ACTIVE' },
+      });
+
+      const need = target - activeCount;
+      if (need <= 0) {
+        return;
+      }
+
+      for (let i = 0; i < need; i++) {
+        const resourceType = await this.pickLeastRepresentedType(worldId, tx);
+        const created = await this.respawnSite(tx, worldId, resourceType);
+        if (!created) {
+          this.logger.warn(
+            `Could not place extraction site (${resourceType}) for world ${worldId}: no valid spot found`,
+          );
+          break;
+        }
+      }
+    });
   }
 
   /**
@@ -131,8 +141,9 @@ export class ExtractionSiteSeedingService {
    */
   private async pickLeastRepresentedType(
     worldId: string,
+    tx: Prisma.TransactionClient | PrismaService = this.prisma,
   ): Promise<ExtractionResourceType> {
-    const grouped = await this.prisma.resourceExtractionSite.groupBy({
+    const grouped = await tx.resourceExtractionSite.groupBy({
       by: ['resourceType'],
       where: { worldId, state: 'ACTIVE' },
       _count: { _all: true },

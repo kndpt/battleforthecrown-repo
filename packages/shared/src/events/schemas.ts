@@ -329,8 +329,8 @@ const ExtractionStartedPayloadSchema = z.object({
   villageId: z.string(),
   siteId: z.string(),
   resourceType: z.enum(["WOOD", "STONE", "IRON"]),
-  arrivalAt: z.string(),
-  durationMs: z.number(),
+  arrivalAt: z.string().datetime(),
+  durationMs: z.number().int().nonnegative(),
 });
 
 const ExtractionDepletedPayloadSchema = z.object({
@@ -346,9 +346,9 @@ const ExtractionAttackedPayloadSchema = z.object({
   siteId: z.string(),
   interrupted: z.boolean(),
   stolen: z.object({
-    wood: z.number(),
-    stone: z.number(),
-    iron: z.number(),
+    wood: z.number().int().nonnegative(),
+    stone: z.number().int().nonnegative(),
+    iron: z.number().int().nonnegative(),
   }),
 });
 
@@ -357,9 +357,9 @@ const ExtractionReturnedPayloadSchema = z.object({
   worldId: z.string(),
   villageId: z.string(),
   resources: z.object({
-    wood: z.number(),
-    stone: z.number(),
-    iron: z.number(),
+    wood: z.number().int().nonnegative(),
+    stone: z.number().int().nonnegative(),
+    iron: z.number().int().nonnegative(),
   }),
 });
 

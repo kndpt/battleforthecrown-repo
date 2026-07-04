@@ -8,7 +8,9 @@ import type {
   BattleSentPayload,
   BuildingCompletedPayload,
   CrownsChangedPayload,
+  ExtractionAttackedPayload,
   ExtractionDepletedPayload,
+  ExtractionReturnedPayload,
   IntelUpdatedPayload,
   PvpShieldBrokenPayload,
   RankingsChangedPayload,
@@ -1124,6 +1126,27 @@ export function applyExtractionDepleted(
   });
 }
 
+export function applyExtractionAttacked(
+  payload: ExtractionAttackedPayload,
+  ctx: BindingsContext,
+): void {
+  // The site's siteActivity flips EXPLOITING -> IDLE server-side: refresh
+  // entities so the site's ring on the world map isn't left stale.
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.worldEntities(payload.worldId),
+  });
+}
+
+export function applyExtractionReturned(
+  payload: ExtractionReturnedPayload,
+  ctx: BindingsContext,
+): void {
+  // Same as above: the site's siteActivity flips EXPLOITING -> IDLE.
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.worldEntities(payload.worldId),
+  });
+}
+
 const bindings: ServerEventBindings = {
   "resources.changed": applyResourcesChanged,
   "crowns.changed": applyCrownsChanged,
@@ -1168,8 +1191,8 @@ const bindings: ServerEventBindings = {
   // ServerEvents contract (declaration-only, run 091 T3a).
   "extraction.started": () => undefined,
   "extraction.depleted": applyExtractionDepleted,
-  "extraction.attacked": () => undefined,
-  "extraction.returned": () => undefined,
+  "extraction.attacked": applyExtractionAttacked,
+  "extraction.returned": applyExtractionReturned,
 };
 
 export function bindServerEvents(ctx: BindingsContext): () => void {

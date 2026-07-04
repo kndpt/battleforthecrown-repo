@@ -27,6 +27,7 @@ import {
   calculateCasualtyStats,
   isVictoryForAttacker,
   distributeLossesProportionally,
+  sumPopulationCost,
 } from './combat.utils';
 import { parseUnitMap, encodeUnitMap, encodeLootResult } from './codecs';
 import {
@@ -48,11 +49,7 @@ import {
 import type { WorldTempo } from '@battleforthecrown/shared/world';
 import { computeInactivityState } from '@battleforthecrown/shared/world';
 import type { CombatResolution } from '@battleforthecrown/shared/combat';
-import {
-  UNIT_COSTS,
-  UNIT_TYPES,
-  type UnitMap,
-} from '@battleforthecrown/shared/army';
+import { UNIT_TYPES, type UnitMap } from '@battleforthecrown/shared/army';
 import { typedEntries } from '@battleforthecrown/shared/utils';
 import { getCaptureDurationMs } from './capture-duration';
 import { RankingsService } from '../rankings/rankings.service';
@@ -101,19 +98,6 @@ function addUnitLosses(target: UnitMap, losses: UnitMap): void {
     if (!Number.isFinite(quantity) || quantity <= 0) continue;
     target[unitType] = (target[unitType] ?? 0) + quantity;
   }
-}
-
-/**
- * Total population freed by a set of unit losses. The pop of a dead unit is
- * released back to the village's pool — see `docs/gameplay/02-economy-and-progression.md` § Population.
- */
-function sumPopulationCost(losses: UnitMap): number {
-  let total = 0;
-  for (const [unitType, lossCount] of typedEntries(losses)) {
-    const popCost = UNIT_COSTS[unitType]?.population;
-    if (popCost && lossCount) total += popCost * lossCount;
-  }
-  return total;
 }
 
 function hasSurvivingUnits(totalUnits: UnitMap, losses: UnitMap): boolean {
