@@ -59,7 +59,7 @@ export function NaturalTraitBadge({
         <button
           aria-label={ariaLabel}
           className={cn(
-            'group flex min-w-0 shrink-0 items-center gap-[9px] self-start rounded-xl px-1.5 py-1 font-game transition-colors hover:bg-[rgba(93,74,50,.08)]',
+            'group flex min-w-0 shrink-0 items-center gap-[9px] self-start rounded-lg font-game transition-colors hover:bg-[rgba(93,74,50,.08)]',
             className,
           )}
           onClick={handleClick}

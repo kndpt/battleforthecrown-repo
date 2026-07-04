@@ -111,7 +111,8 @@ export interface FullIntelPanelProps {
 
 export function FullIntelPanel({ loot, army, wall, style, freshness, naturalTrait }: FullIntelPanelProps) {
   return (
-    <Dossier style={{ gap: 9, padding: 10 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+      <Dossier style={{ gap: 9, padding: 10 }}>
       {/* Bloc Butin */}
       {loot && (
         <div>
@@ -182,12 +183,17 @@ export function FullIntelPanel({ loot, army, wall, style, freshness, naturalTrai
         </div>
       )}
 
-      {/* Trait naturel — visible seulement si l'intel a livré une valeur
-          non-null (anti-leak : village non scouté ⇒ prop absente). */}
+      </Dossier>
+
+      {/* Trait naturel — info FIXE du village (pas du contenu scouté butin/armée),
+          livrée en même temps que l'intel mais présentée dans sa propre section.
+          Visible seulement si non-null (anti-leak : village non scouté ⇒ absente). */}
       {naturalTrait && (
-        <NaturalTraitBadge trait={naturalTrait} variant="full"/>
+        <Dossier style={{ padding: 10 }}>
+          <NaturalTraitBadge trait={naturalTrait} variant="full"/>
+        </Dossier>
       )}
-    </Dossier>
+    </div>
   );
 }
 
