@@ -45,6 +45,8 @@ V10 | L'inactivité pré-abandon (spec 18) exposée à un tiers (fiche publique 
 
 V11 | Le trait naturel d'un village (spec 27) n'est révélé sur une entité d'AUTRUI que par le rapport de scout (snapshot figé `details.naturalTrait`). Il ne doit JAMAIS entrer dans un payload servi sans viewer scope (`world-entities-query` = même donnée pour tous) ni dans un DTO cross-joueur (profil public, activités, intel) : n'ajoute jamais `naturalTrait` à un `select`/`include` renvoyé à un non-propriétaire. Le trait de SON propre village passe uniquement par l'endpoint owner-scoped (`village.service.getVillages`, filtré `userId`). | source: tasks/runs/archive/088-feature-village-natural-traits.md
 
+V12 | Une entité carte « secrète » (site d'extraction, et toute future entité à découvrir) est fog-gated INCONDITIONNELLEMENT par les disques de vision serveur — y compris quand `fogOfWarEnabled=false` — et hors vision elle est ABSENTE du payload (jamais de blip `fogged`, qui révélerait la position). Les events Outbox associés ne portent jamais de position x/y. | source: tasks/runs/archive/091-feature-resource-extraction-sites.md
+
 ## §B — Bugs récurrents / anti-patterns
 
 Format :
@@ -57,6 +59,7 @@ Format :
 | B1 | capture interrompue sans rapport défenseur pour l'occupant | les villages barbares sous capture étaient traités comme sans `defenderUserId` malgré leur garnison joueur | si une `PendingConquest.OPEN` existe sur la cible, la garnison d'occupation rend `attackerUserId` défenseur de rapport et destinataire `village.attacked` | tasks/53-capture-occupation-defense-report-missing.md |
 | B2 | carte multi-village avec un seul disque de vision | le frontend recalculait un rayon depuis le village sélectionné au lieu de consommer la vision serveur | `GET /world/:worldId/entities` expose `visionDisks`; Pixi/mini-carte/filtre client consomment ces disques autoritatifs, jamais le niveau Watchtower local courant | tasks/archive/58-multi-village-vision-disks-missing.md |
 | B3 | reset quotidien 04:00 faux autour des changements d'heure | soustraire 4h UTC simule mal une règle Europe/Paris pendant DST | dériver la clé quotidienne depuis l'heure locale Europe/Paris réelle, puis reculer d'un jour calendrier seulement si l'heure locale est `< 04:00` | tasks/runs/archive/046-refactor-royal-duty-light-fomo.md |
+| B4 | invariant métier de dispatch violé sous concurrence (2 équipes sur un site, 2 extractions actives/joueur) | dispatch d'expédition en READ COMMITTED validant ses invariants par `findFirst` (read-then-create) sans contrainte DB unique | tout `initiate*` d'expédition tourne en `withSerializableRetry(() => prisma.$transaction(..., { isolationLevel: Serializable }))` comme `initiateCaravan` | tasks/runs/archive/091-feature-resource-extraction-sites.md |
 
 ## §A — Règle d'ajout
 

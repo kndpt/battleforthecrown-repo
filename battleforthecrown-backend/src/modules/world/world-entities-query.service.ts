@@ -69,7 +69,30 @@ type PlayerVillageEntity = {
   data: PlayerVillageData;
 };
 
-export type WorldEntity = BarbarianVillageEntity | PlayerVillageEntity;
+// Extraction sites are ALWAYS fog-gated (world.controller.withVision), even
+// when world.config.fogOfWar.enabled=false. This schema must never carry
+// `remainingCapacity`/`initialCapacity`/`occupant` — those would leak exact
+// site value or the identity of the exploiting player. Cf. run 091 T2.
+export const extractionSiteDataSchema = z.object({
+  resourceType: z.enum(['WOOD', 'STONE', 'IRON']),
+  activity: z.enum(['IDLE', 'EXPLOITING']),
+});
+
+type ExtractionSiteData = z.infer<typeof extractionSiteDataSchema>;
+
+type ExtractionSiteEntity = {
+  id: string;
+  worldId: string;
+  kind: 'RESOURCE_EXTRACTION_SITE';
+  x: number;
+  y: number;
+  data: ExtractionSiteData;
+};
+
+export type WorldEntity =
+  | BarbarianVillageEntity
+  | PlayerVillageEntity
+  | ExtractionSiteEntity;
 
 export type VillageSummary = Prisma.VillageGetPayload<{
   select: typeof VILLAGE_SUMMARY_SELECT;
@@ -100,8 +123,12 @@ export class WorldEntitiesQueryService {
       (await this.fetchBarbarianVillages(worldId, kinds, bounds)) ?? [];
     const playerVillages =
       (await this.fetchPlayerVillages(worldId, kinds, bounds)) ?? [];
+    const extractionSites =
+      (await this.fetchExtractionSites(worldId, kinds, bounds)) ?? [];
 
-    return [...barbarianVillages, ...playerVillages].sort(byCoord);
+    return [...barbarianVillages, ...playerVillages, ...extractionSites].sort(
+      byCoord,
+    );
   }
 
   async getAllEntities(
@@ -112,8 +139,12 @@ export class WorldEntitiesQueryService {
       (await this.fetchBarbarianVillages(worldId, kinds)) ?? [];
     const playerVillages =
       (await this.fetchPlayerVillages(worldId, kinds)) ?? [];
+    const extractionSites =
+      (await this.fetchExtractionSites(worldId, kinds)) ?? [];
 
-    return [...barbarianVillages, ...playerVillages].sort(byCoord);
+    return [...barbarianVillages, ...playerVillages, ...extractionSites].sort(
+      byCoord,
+    );
   }
 
   async getVillagesInRadius(
@@ -311,6 +342,67 @@ export class WorldEntitiesQueryService {
         }),
       };
     });
+  }
+
+  private async fetchExtractionSites(
+    worldId: string,
+    kinds: string[] | undefined,
+    bounds?: RadiusBounds,
+  ): Promise<ExtractionSiteEntity[] | null> {
+    const shouldInclude =
+      !kinds ||
+      kinds.length === 0 ||
+      kinds.includes('RESOURCE_EXTRACTION_SITE');
+    if (!shouldInclude) return null;
+
+    const sites = await this.prisma.resourceExtractionSite.findMany({
+      where: {
+        worldId,
+        state: 'ACTIVE',
+        ...(bounds
+          ? {
+              x: { gte: bounds.minX, lte: bounds.maxX },
+              y: { gte: bounds.minY, lte: bounds.maxY },
+            }
+          : {}),
+      },
+      select: {
+        id: true,
+        x: true,
+        y: true,
+        resourceType: true,
+      },
+      orderBy: [{ y: 'asc' }, { x: 'asc' }],
+    });
+
+    if (sites.length === 0) return [];
+
+    const exploitingSiteIds = new Set(
+      (
+        await this.prisma.expedition.findMany({
+          where: {
+            kind: 'EXTRACTION',
+            status: 'EXPLOITING',
+            extractionSiteId: { in: sites.map((s) => s.id) },
+          },
+          select: { extractionSiteId: true },
+        })
+      )
+        .map((e) => e.extractionSiteId)
+        .filter((id): id is string => id !== null),
+    );
+
+    return sites.map((site) => ({
+      id: site.id,
+      worldId,
+      kind: 'RESOURCE_EXTRACTION_SITE' as const,
+      x: site.x,
+      y: site.y,
+      data: extractionSiteDataSchema.parse({
+        resourceType: site.resourceType,
+        activity: exploitingSiteIds.has(site.id) ? 'EXPLOITING' : 'IDLE',
+      }),
+    }));
   }
 }
 

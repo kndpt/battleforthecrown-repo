@@ -5,6 +5,7 @@ import {
   Graphics,
   Point,
   Sprite,
+  Text,
   Texture,
   TilingSprite,
   type Application,
@@ -34,6 +35,7 @@ import {
   aliasFor,
   BASE_PLAYER_SIZE,
   COLOR,
+  extractionSiteEmoji,
   markerStyleFor,
   ownedHaloRxFactor,
   spriteSizeFor,
@@ -89,6 +91,10 @@ interface EntityVisual {
   captureIcon: Sprite;
   sprite: Sprite;
   dome: ShieldDomeHandle | null;
+  /** Emoji placeholder glyph for entities without a sprite asset yet (resource extraction sites). */
+  emojiText: Text;
+  /** Pulsing ring drawn over an extraction site while a team is `EXPLOITING` it. */
+  exploitingRing: Graphics;
   data: MapEntity;
 }
 
@@ -475,11 +481,13 @@ export function createWorldMapScene(
   let selectedId: string | null = null;
 
   const drawEntity = (visual: EntityVisual) => {
-    const { captureIcon, captureMarker, graphic, sprite, data } = visual;
+    const { captureIcon, captureMarker, emojiText, exploitingRing, graphic, sprite, data } =
+      visual;
     const { color, ringColor, radius, zIndex } = styleFor(data);
     const isSelected = data.id === selectedId;
     const alias = aliasFor(data);
     const texture = alias ? Assets.get<Texture>(alias) : null;
+    const isExtractionSite = data.kind === "RESOURCE_EXTRACTION_SITE";
 
     graphic.clear();
     if (texture) {
@@ -506,6 +514,17 @@ export function createWorldMapScene(
       graphic.circle(0, 0, radius).fill({ color: COLOR.outline, alpha: 0.55 });
       graphic.circle(0, 0, radius - 2).fill(color);
     }
+
+    if (isExtractionSite) {
+      emojiText.text = extractionSiteEmoji(data.resourceType);
+      emojiText.visible = true;
+    } else {
+      emojiText.visible = false;
+    }
+    if (!isExtractionSite || data.siteActivity !== "EXPLOITING") {
+      exploitingRing.clear();
+    }
+
     // Iso painter's order: depth (tileX+tileY) dominates so nearer villages
     // draw over further ones; selection only breaks ties at equal depth.
     const depth = (data.x + data.y) * 16;
@@ -514,6 +533,20 @@ export function createWorldMapScene(
       captureMarker.clear();
       captureIcon.visible = false;
     }
+  };
+
+  /** Pulsing ring over an extraction site actively being exploited by a team. */
+  const drawExploitingRing = (visual: EntityVisual, nowMs: number) => {
+    const { exploitingRing, data } = visual;
+    exploitingRing.clear();
+    if (data.kind !== "RESOURCE_EXTRACTION_SITE" || data.siteActivity !== "EXPLOITING") {
+      return;
+    }
+    const { radius } = styleFor(data);
+    const pulse = (Math.sin(nowMs / 260) + 1) / 2;
+    exploitingRing
+      .circle(0, 0, radius + 6 + pulse * 4)
+      .stroke({ color: COLOR.extractionExploiting, width: 3, alpha: 0.4 + pulse * 0.4 });
   };
 
   const drawCaptureMarker = (visual: EntityVisual, nowMs: number) => {
@@ -608,6 +641,10 @@ export function createWorldMapScene(
     const graphic = new Graphics();
     container.addChild(graphic);
 
+    const exploitingRing = new Graphics();
+    exploitingRing.eventMode = "none";
+    container.addChild(exploitingRing);
+
     const captureMarker = new Graphics();
     captureMarker.eventMode = "none";
     container.addChild(captureMarker);
@@ -616,6 +653,18 @@ export function createWorldMapScene(
     sprite.anchor.set(0.5);
     sprite.visible = false;
     container.addChild(sprite);
+
+    const emojiText = new Text({
+      text: "",
+      style: {
+        fontFamily: "Apple Color Emoji, Segoe UI Emoji, Cinzel, serif",
+        fontSize: 28,
+        align: "center",
+      },
+    });
+    emojiText.anchor.set(0.5);
+    emojiText.visible = false;
+    container.addChild(emojiText);
 
     const captureIcon = new Sprite();
     captureIcon.anchor.set(0.5);
@@ -640,6 +689,8 @@ export function createWorldMapScene(
       captureIcon,
       sprite,
       dome: null,
+      emojiText,
+      exploitingRing,
       data: entity,
     };
     visuals.set(entity.id, visual);
@@ -992,6 +1043,9 @@ export function createWorldMapScene(
       cloudLayer.tilePosition.y += deltaMs * 0.002;
       visuals.forEach((visual) => {
         if (visual.data.captureWindow) drawCaptureMarker(visual, now);
+        if (visual.data.siteActivity === "EXPLOITING") {
+          drawExploitingRing(visual, now);
+        }
         if (visual.dome) visual.dome.tick(now);
       });
       expeditionVisuals.forEach((visual) => visual.tick(now));

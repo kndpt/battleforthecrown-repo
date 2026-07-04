@@ -2,28 +2,43 @@ import type { LootResources } from './loot';
 import type { UnitMap } from '../army/unit-map';
 import type { VillageNaturalTrait } from '../village/traits';
 
-export type TargetKind = 'PLAYER_VILLAGE' | 'BARBARIAN_VILLAGE';
+export type TargetKind =
+  | 'PLAYER_VILLAGE'
+  | 'BARBARIAN_VILLAGE'
+  | 'EXTRACTION_SITE';
 
 export const TARGET_KINDS = {
   PLAYER_VILLAGE: 'PLAYER_VILLAGE',
   BARBARIAN_VILLAGE: 'BARBARIAN_VILLAGE',
+  EXTRACTION_SITE: 'EXTRACTION_SITE',
 } as const;
 
-export type ExpeditionStatus = 'EN_ROUTE' | 'RESOLVED' | 'RETURNING';
+export type ExpeditionStatus =
+  | 'EN_ROUTE'
+  | 'RESOLVED'
+  | 'RETURNING'
+  | 'EXPLOITING';
 
 export const EXPEDITION_STATUSES = {
   EN_ROUTE: 'EN_ROUTE',
   RESOLVED: 'RESOLVED',
   RETURNING: 'RETURNING',
+  EXPLOITING: 'EXPLOITING',
 } as const;
 
-export type ExpeditionKind = 'ATTACK' | 'REINFORCE' | 'SCOUT' | 'CARAVAN';
+export type ExpeditionKind =
+  | 'ATTACK'
+  | 'REINFORCE'
+  | 'SCOUT'
+  | 'CARAVAN'
+  | 'EXTRACTION';
 
 export const EXPEDITION_KINDS = {
   ATTACK: 'ATTACK',
   REINFORCE: 'REINFORCE',
   SCOUT: 'SCOUT',
   CARAVAN: 'CARAVAN',
+  EXTRACTION: 'EXTRACTION',
 } as const;
 
 export interface AttackCommand {

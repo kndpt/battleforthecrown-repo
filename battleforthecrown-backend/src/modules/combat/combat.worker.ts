@@ -66,6 +66,7 @@ import {
   dedupedRecipientUserIds,
   loadReportVillageSnapshot,
 } from './combat-report.utils';
+import { ExtractionLifecycleService } from '../gameplay/extraction-lifecycle.service';
 
 interface PendingConquestToSchedule {
   id: string;
@@ -145,6 +146,7 @@ export class CombatWorker implements OnModuleInit {
     private readonly intelService: IntelService,
     private readonly newbieShield: NewbieShieldService,
     private readonly friendship: FriendshipService,
+    private readonly extractionLifecycle: ExtractionLifecycleService,
   ) {}
 
   async onModuleInit() {
@@ -158,6 +160,22 @@ export class CombatWorker implements OnModuleInit {
 
   private async handleCombatResolution(data: CombatJob) {
     this.logger.debug(`Processing combat resolution: ${data.expeditionId}`);
+
+    const kindProbe = await this.prisma.expedition.findUnique({
+      where: { id: data.expeditionId },
+      select: { kind: true, targetKind: true },
+    });
+    if (kindProbe?.kind === ExpeditionKind.EXTRACTION) {
+      await this.extractionLifecycle.handleArrival(data.expeditionId);
+      return;
+    }
+    if (
+      kindProbe?.kind === ExpeditionKind.ATTACK &&
+      kindProbe.targetKind === 'EXTRACTION_SITE'
+    ) {
+      await this.extractionLifecycle.handleInterception(data.expeditionId);
+      return;
+    }
 
     try {
       const postCommitWork = await withSerializableRetry(

@@ -34,12 +34,17 @@ import {
   caravanCommandSchema,
   type CaravanCommandDto,
 } from './dto/caravan-command.schema';
+import {
+  extractionCommandSchema,
+  type ExtractionCommandDto,
+} from './dto/extraction-command.schema';
 import type {
   CaravanReportResponse,
   ReinforcementReportResponse,
 } from '@battleforthecrown/shared/combat';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { CurrentUser, type AuthenticatedUser } from '../../common/auth';
+import { InitiateExtractionUseCase } from '../gameplay/initiate-extraction.use-case';
 
 @Controller('combat')
 export class CombatController {
@@ -48,6 +53,7 @@ export class CombatController {
     private readonly reportService: CombatReportService,
     private readonly reinforcementReportService: ReinforcementReportService,
     private readonly caravanReportService: CaravanReportService,
+    private readonly initiateExtraction: InitiateExtractionUseCase,
   ) {}
 
   @Post('attack')
@@ -82,6 +88,15 @@ export class CombatController {
     dto: CaravanCommandDto,
   ) {
     return this.combatService.initiateCaravan(user.id, dto);
+  }
+
+  @Post('extraction')
+  extraction(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(extractionCommandSchema))
+    dto: ExtractionCommandDto,
+  ) {
+    return this.initiateExtraction.execute(user.id, dto);
   }
 
   @Post('recall')

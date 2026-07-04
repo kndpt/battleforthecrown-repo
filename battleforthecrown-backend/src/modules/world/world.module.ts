@@ -13,6 +13,7 @@ import { BarbarianSeedingService } from './barbarian-seeding.service';
 import { BarbarianRuntimeService } from './barbarian-runtime.service';
 import { BarbarianVillageFactory } from './barbarian-village.factory';
 import { BarbarianSeedingCatchupWorker } from './barbarian-seeding-catchup.worker';
+import { ExtractionSiteSeedingService } from './extraction-site-seeding.service';
 import { OnboardingNarrativeTargetService } from './onboarding-narrative-target.service';
 import { VillagePlacementService } from './village-placement.service';
 import { VisionService } from './vision.service';
@@ -41,6 +42,7 @@ import { OnboardingModule } from '../onboarding/onboarding.module';
     VillagePlacementService,
     VisionService,
     NewbieShieldService,
+    ExtractionSiteSeedingService,
   ],
   exports: [
     WorldService,
@@ -52,6 +54,7 @@ import { OnboardingModule } from '../onboarding/onboarding.module';
     VillagePlacementService,
     VisionService,
     NewbieShieldService,
+    ExtractionSiteSeedingService,
   ],
 })
 export class WorldModule {}

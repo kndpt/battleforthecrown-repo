@@ -7,6 +7,7 @@ import { CaravanReportService } from './caravan-report.service';
 import { CombatWorker } from './combat.worker';
 import { ConquestFinalizeWorker } from './conquest-finalize.worker';
 import { ReturnWorker } from './return.worker';
+import { ExtractionWorker } from './extraction.worker';
 import { ConquestService } from './conquest.service';
 import { LootManager } from './loot/loot.manager';
 import { ResourceLootProvider } from './loot/providers/resource-loot.provider';
@@ -23,6 +24,7 @@ import { RankingsModule } from '../rankings/rankings.module';
 import { RenownModule } from '../renown/renown.module';
 import { IntelModule } from '../intel/intel.module';
 import { FriendshipModule } from '../friendship/friendship.module';
+import { GameplayModule } from '../gameplay/gameplay.module';
 
 @Module({
   imports: [
@@ -37,6 +39,7 @@ import { FriendshipModule } from '../friendship/friendship.module';
     RenownModule,
     IntelModule,
     FriendshipModule,
+    GameplayModule,
   ],
   controllers: [CombatController],
   providers: [
@@ -47,6 +50,7 @@ import { FriendshipModule } from '../friendship/friendship.module';
     CombatWorker,
     ConquestFinalizeWorker,
     ReturnWorker,
+    ExtractionWorker,
     ConquestService,
     LootManager,
     ResourceLootProvider,

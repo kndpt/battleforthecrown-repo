@@ -6,6 +6,7 @@ export type WorldEntityKind =
   | 'BARBARIAN_VILLAGE'
   | 'PLAYER_VILLAGE'
   | 'BARBARIAN_CASTLE'
+  | 'RESOURCE_EXTRACTION_SITE'
   | string;
 
 export interface WorldEntityDto {
@@ -28,6 +29,8 @@ export interface WorldEntityDto {
       captureUntil: string;
     };
     newbieShield?: NewbieShieldState;
+    resourceType?: 'WOOD' | 'STONE' | 'IRON';
+    activity?: 'IDLE' | 'EXPLOITING';
   };
 }
 

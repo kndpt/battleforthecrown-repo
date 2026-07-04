@@ -323,6 +323,46 @@ const RankingsCycleClosedPayloadSchema = z.object({
   cycleEndAt: z.string().datetime(),
 });
 
+const ExtractionStartedPayloadSchema = z.object({
+  expeditionId: z.string(),
+  worldId: z.string(),
+  villageId: z.string(),
+  siteId: z.string(),
+  resourceType: z.enum(["WOOD", "STONE", "IRON"]),
+  arrivalAt: z.string(),
+  durationMs: z.number(),
+});
+
+const ExtractionDepletedPayloadSchema = z.object({
+  worldId: z.string(),
+  siteId: z.string(),
+  resourceType: z.enum(["WOOD", "STONE", "IRON"]),
+});
+
+const ExtractionAttackedPayloadSchema = z.object({
+  expeditionId: z.string(),
+  worldId: z.string(),
+  villageId: z.string(),
+  siteId: z.string(),
+  interrupted: z.boolean(),
+  stolen: z.object({
+    wood: z.number(),
+    stone: z.number(),
+    iron: z.number(),
+  }),
+});
+
+const ExtractionReturnedPayloadSchema = z.object({
+  expeditionId: z.string(),
+  worldId: z.string(),
+  villageId: z.string(),
+  resources: z.object({
+    wood: z.number(),
+    stone: z.number(),
+    iron: z.number(),
+  }),
+});
+
 export const EVENT_PAYLOAD_SCHEMAS = {
   "building.completed": BuildingCompletedPayloadSchema,
   "unit.training.completed": UnitTrainingCompletedPayloadSchema,
@@ -363,6 +403,10 @@ export const EVENT_PAYLOAD_SCHEMAS = {
     WorldInscriptionPhaseChangedPayloadSchema,
   "pvp.shield.broken": PvpShieldBrokenPayloadSchema,
   "intel.updated": IntelUpdatedPayloadSchema,
+  "extraction.started": ExtractionStartedPayloadSchema,
+  "extraction.depleted": ExtractionDepletedPayloadSchema,
+  "extraction.attacked": ExtractionAttackedPayloadSchema,
+  "extraction.returned": ExtractionReturnedPayloadSchema,
 } as const satisfies Record<EventKind, z.ZodType>;
 
 export type EventPayloadSchema<K extends EventKind> = z.ZodType<

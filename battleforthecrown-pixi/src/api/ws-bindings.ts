@@ -8,6 +8,7 @@ import type {
   BattleSentPayload,
   BuildingCompletedPayload,
   CrownsChangedPayload,
+  ExtractionDepletedPayload,
   IntelUpdatedPayload,
   PvpShieldBrokenPayload,
   RankingsChangedPayload,
@@ -1113,6 +1114,16 @@ export function applyIntelUpdated(
   });
 }
 
+export function applyExtractionDepleted(
+  payload: ExtractionDepletedPayload,
+  ctx: BindingsContext,
+): void {
+  // The site disappears/reappears on the world map: refresh entities.
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.worldEntities(payload.worldId),
+  });
+}
+
 const bindings: ServerEventBindings = {
   "resources.changed": applyResourcesChanged,
   "crowns.changed": applyCrownsChanged,
@@ -1153,6 +1164,12 @@ const bindings: ServerEventBindings = {
   "noble.killed": applyNobleKilled,
   "pvp.shield.broken": applyPvpShieldBroken,
   "intel.updated": applyIntelUpdated,
+  // No frontend consumer yet — bound only to satisfy the exhaustive
+  // ServerEvents contract (declaration-only, run 091 T3a).
+  "extraction.started": () => undefined,
+  "extraction.depleted": applyExtractionDepleted,
+  "extraction.attacked": () => undefined,
+  "extraction.returned": () => undefined,
 };
 
 export function bindServerEvents(ctx: BindingsContext): () => void {

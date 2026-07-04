@@ -29,6 +29,10 @@ interface PositionedEntity {
   y: number;
 }
 
+interface KindedEntity extends PositionedEntity {
+  kind?: string;
+}
+
 interface WorldEntitiesPayload<T extends PositionedEntity> {
   entities: Array<FogResult<T>>;
   visionDisks: VisionDisk[];
@@ -144,7 +148,7 @@ export class WorldController {
     return this.worldEntities.getAllVillages(worldId);
   }
 
-  private async withVision<T extends PositionedEntity>(
+  private async withVision<T extends KindedEntity>(
     worldId: string,
     userId: string,
     entities: T[],
@@ -152,10 +156,28 @@ export class WorldController {
     const config = await this.worldConfigService.getConfig(worldId);
     const fogOfWarEnabled = config.fogOfWar?.enabled === true;
     const disks = await this.visionService.getVisionDisks(userId, worldId);
+
+    // Extraction sites are ALWAYS vision-gated, regardless of the global
+    // fogOfWar flag — a site outside vision must be ABSENT from the payload
+    // (never a `fogged` blip, which would reveal its position). Cf. run 091
+    // T2, spec V11/B2 anti-leak.
+    const extractionSites = entities.filter(
+      (e) => e.kind === 'RESOURCE_EXTRACTION_SITE',
+    );
+    const otherEntities = entities.filter(
+      (e) => e.kind !== 'RESOURCE_EXTRACTION_SITE',
+    );
+    const visibleExtractionSites = extractionSites.filter((e) =>
+      this.visionService.isInVision(e, disks),
+    );
+
     return {
-      entities: fogOfWarEnabled
-        ? this.visionService.applyFogOfWar(entities, disks)
-        : entities,
+      entities: [
+        ...(fogOfWarEnabled
+          ? this.visionService.applyFogOfWar(otherEntities, disks)
+          : otherEntities),
+        ...visibleExtractionSites,
+      ],
       visionDisks: disks,
       fogOfWarEnabled,
     };
