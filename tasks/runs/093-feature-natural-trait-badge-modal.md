@@ -32,6 +32,17 @@ Icônes fournies, rangées dans `battleforthecrown-pixi/public/assets/natural-tr
 - Chargées via `publicAsset('/assets/natural-traits/<slug>.webp')` (helper `@/lib/publicAsset`), `<img>` — pas d'emoji `Text`.
 - **Le mapping trait → asset vit côté front** (dans `naturalTraitInfo.ts` ou le badge), **pas dans `packages/shared`** : shared est consommé backend et ne doit pas porter de chemin d'asset front. Le champ `icon` emoji de shared peut rester comme fallback ou être ignoré côté rendu.
 
+### Variantes d'affichage du badge (validé user)
+
+`NaturalTraitBadge` supporte **deux variantes**, toutes deux cliquables → même modal :
+
+| Variante | Rendu | Surfaces |
+| --- | --- | --- |
+| `icon-only` | **Asset seul** (icône cliquable), **sans label texte** | **Surface A — header `/game`** : le label « Carrière riche » prend trop de largeur dans la barre de chips. On garde juste l'asset. |
+| `full` | Asset + label (« Forêt dense »…) | **Surfaces B (rapport scout) et C (panneau carte)** : place disponible, label utile pour la lisibilité. |
+
+La modal d'info est identique quelle que soit la variante (elle porte le contexte complet).
+
 ## Dépendances
 
 - Run 088 (village-natural-traits) — ✅ DONE. Fournit la data (`NATURAL_TRAIT_DISPLAY`, `NATURAL_TRAIT_PRODUCTION_BONUS`, `VillageNaturalTrait`), le badge muet du header et l'exposition `naturalTrait` dans le DTO scout combat.
@@ -45,8 +56,8 @@ Icônes fournies, rangées dans `battleforthecrown-pixi/public/assets/natural-tr
 - [ ] [auto] `naturalTraitInfo(trait).iconAsset` pointe le bon `.webp` pour chaque trait (unit).
 - [ ] [auto] Test anti-leak `world-entities-natural-trait-leak.spec.ts` **toujours vert** (trait absent du feed carte public).
 - [ ] [auto] Backend : `VillageIntelDto` porte `naturalTrait` **seulement** quand l'intel provient d'un scout ; village non scouté → champ absent (unit/smoke projection intel).
-- [ ] [visuel — Kelvin] Surface A (header mon village) : clic badge trait → modal parchemin (nom, icône, bonus %, ressource, mention « fixe/permanent »).
-- [ ] [visuel — Kelvin] Surface B (rapport scout frais) : trait rendu en **badge cliquable** → même modal.
+- [ ] [visuel — Kelvin] Surface A (header mon village, `/game`) : trait rendu en **asset seul** (`icon-only`, sans label) ; clic → modal parchemin (nom, icône, bonus %, ressource, mention « fixe/permanent »).
+- [ ] [visuel — Kelvin] Surface B (rapport scout frais) : trait rendu en **badge cliquable `full`** (icône + label) → même modal.
 - [ ] [visuel — Kelvin] Surface C (panneau carte) : mon village → badge trait ; village ennemi **scouté** → badge trait ; village ennemi **non scouté** → aucun trait (anti-leak préservé).
 
 ## Références
@@ -60,11 +71,11 @@ Icônes fournies, rangées dans `battleforthecrown-pixi/public/assets/natural-tr
 
 _(Lead étape 3 — tâches ≤5 fichiers)_
 
-- **T1 — Socle réutilisable** : `naturalTraitInfo.ts` (helper pur : dédupe le `bonusLabel` de `scoutReportView.ts` + mapping trait → asset `/assets/natural-traits/<slug>.webp`), `NaturalTraitBadge.tsx` (button DA, `<img>` asset au lieu de l'emoji, réutilise un pattern chip header), `NaturalTraitModal.tsx` (via `BaseModal`, tone parchemin/brown, `<img>` asset). [3 fichiers]
+- **T1 — Socle réutilisable** : `naturalTraitInfo.ts` (helper pur : dédupe le `bonusLabel` de `scoutReportView.ts` + mapping trait → asset `/assets/natural-traits/<slug>.webp`), `NaturalTraitBadge.tsx` (button DA, `<img>` asset au lieu de l'emoji, prop `variant: 'icon-only' | 'full'`), `NaturalTraitModal.tsx` (via `BaseModal`, tone parchemin/brown, `<img>` asset). [3 fichiers]
 - **T2 — Backend intel scout** : ajouter `naturalTrait?` à `VillageIntelDto` (`packages/shared/src/world/dtos.ts`) + projection intel scout côté `world` qui remplit le champ **uniquement** depuis une intel scoutée. Ne pas toucher au feed `world-entities`. [≤3 fichiers]
-- **T3 — Surface A** : remplacer le span bespoke `VillageHero.tsx:274-286` par `NaturalTraitBadge` + état modal. [1 fichier]
-- **T4 — Surface B** : rendre le trait en badge cliquable dans `ScoutReportCard` (slot type badge) + adapter `scoutReportView.ts` (section → badge). [≤2 fichiers]
-- **T5 — Surface C** : `SelectedEntityPanel` / `villageMapPanel` — badge trait pour mon village (store) **et** ennemi scouté (intel), même gating que le style stratégique. [≤3 fichiers]
+- **T3 — Surface A** : remplacer le span bespoke `VillageHero.tsx:274-286` par `NaturalTraitBadge variant="icon-only"` (asset seul, pas de label — contrainte de largeur de la barre de chips) + état modal. [1 fichier]
+- **T4 — Surface B** : rendre le trait en badge cliquable `variant="full"` dans `ScoutReportCard` (slot type badge) + adapter `scoutReportView.ts` (section → badge). [≤2 fichiers]
+- **T5 — Surface C** : `SelectedEntityPanel` / `villageMapPanel` — badge trait `variant="full"` pour mon village (store) **et** ennemi scouté (intel), même gating que le style stratégique. [≤3 fichiers]
 - **T6 — Tests + QA** : unit (info builder, badge a11y, projection intel gated) + checklist QA IG. [≤3 fichiers]
 
 ## Progress
