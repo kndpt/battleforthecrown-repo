@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { NaturalTraitBadge } from './NaturalTraitBadge';
 
@@ -25,7 +25,8 @@ describe('NaturalTraitBadge', () => {
     // ModalOverlay mounts a centered dialog (portaled to <body>), with the info.
     const dialog = screen.getByRole('dialog');
     expect(dialog).toBeInTheDocument();
-    expect(screen.getByText('Trait naturel')).toBeInTheDocument();
-    expect(screen.getByText('+10 % Fer')).toBeInTheDocument();
+    // "Trait naturel" also labels the full badge — scope to the dialog.
+    expect(within(dialog).getByText('Trait naturel')).toBeInTheDocument();
+    expect(within(dialog).getByText('+10 % Fer')).toBeInTheDocument();
   });
 });
