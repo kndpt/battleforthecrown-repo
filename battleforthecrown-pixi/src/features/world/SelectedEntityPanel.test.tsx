@@ -87,6 +87,7 @@ const intelDto: VillageIntelDto = {
   targetY: 10,
   targetTier: null,
   seenAt: new Date(Date.now() - 30 * 60_000).toISOString(),
+  naturalTrait: null,
 };
 
 // ---------------------------------------------------------------------------
@@ -196,6 +197,33 @@ describe("owned village (mine)", () => {
     });
     // Le bouton Entrer est bien rendu (footer mine toujours présent)
     expect(screen.getByRole("button", { name: /Entrer/ })).toBeInTheDocument();
+  });
+
+  it("mon village avec naturalTrait connu (store villages possédés) → badge trait 'full' rendu", async () => {
+    useGameStore.setState({ worldId: "w1" });
+    useAuthStore.setState({ user: { id: "me", displayName: "Moi" } });
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/army/village-1/inventory") return [];
+      if (path === "/combat/village-1/garrison") return [];
+      if (path === "/power/village/village-1/public")
+        return { villageId: "village-1", buildings: 500 };
+      if (path === "/village")
+        return [
+          {
+            id: "village-1",
+            name: "Boisjoli",
+            x: 10,
+            y: 20,
+            worldId: "w1",
+            naturalTrait: "IRON_VEIN",
+          },
+        ];
+      throw new Error(`Unexpected GET ${path}`);
+    });
+
+    renderPanel(playerVillage(), "another-village", { onGoToVillage: vi.fn() });
+
+    expect(await screen.findByText("Veine de fer")).toBeInTheDocument();
   });
 });
 
@@ -322,6 +350,35 @@ describe("enemy player", () => {
     // doit router vers reportKind 'scout', pas combat).
     fireEvent.click(reportBtn);
     expect(await screen.findByText("Rapport scout")).toBeInTheDocument();
+  });
+
+  it("scouted + naturalTrait présent sur l'intel → badge trait 'full' rendu", async () => {
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/worlds/w1/intel/v-enemy")
+        return { ...intelDto, naturalTrait: "IRON_VEIN" };
+      if (path === "/power/village/v-enemy/public")
+        return { villageId: "v-enemy", buildings: 300 };
+      throw new Error(`Unexpected GET ${path}`);
+    });
+
+    renderPanel(enemyVillage, "v-mine");
+
+    expect(await screen.findByText("Veine de fer")).toBeInTheDocument();
+  });
+
+  it("unscouted (intel null) → aucun badge trait naturel (anti-leak)", async () => {
+    vi.spyOn(apiClient, "get").mockImplementation(async (path) => {
+      if (path === "/worlds/w1/intel/v-enemy") return null;
+      if (path === "/power/village/v-enemy/public")
+        return { villageId: "v-enemy", buildings: 880 };
+      throw new Error(`Unexpected GET ${path}`);
+    });
+
+    renderPanel(enemyVillage, "v-mine");
+
+    await screen.findByText("Village non espionné");
+    expect(screen.queryByText("Veine de fer")).not.toBeInTheDocument();
+    expect(screen.queryByText("Forêt dense")).not.toBeInTheDocument();
   });
 
   it("8. ratio ÷3 bloqué (defender 100 vs attacker 3000, unscouted) → bouton Attaquer disabled + texte 'Puissance trop faible'", async () => {

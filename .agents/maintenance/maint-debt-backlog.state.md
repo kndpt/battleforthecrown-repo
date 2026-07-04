@@ -13,6 +13,10 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | shared/world/entities.ts isFoggedEntity | type guard used by world map — no direct unit spec |
 | shared/village/strategy.ts getVillageStrategyPlan | constant plan accessor — low value unless plan becomes configurable |
 | conquest openCaptureWindow/interruptCaptureWindow/conquerVillage wrappers | used only in smoke tests, not prod code — public API for test convenience, low debt |
+| buildRefundToastItems export | exported for test import only — valid pattern, skip |
+| GarrisonLineDto export | used locally in combat.service.ts, export unnecessary but trivial |
+| HeaderBarSection console.log + unused useState | ui-test demo component — trivial cleanup |
+| army.service.ts Object.keys(UNIT_CATALOG.costs) as UnitType[] | TS Object.keys limitation — standard cast, low value |
 | 11× Intl.NumberFormat('fr-FR') singleton | extract to src/lib/formatters.ts — 11 files, scope too broad for 1 PR |
 | formatDate divergence ReportCard vs ReportsList | need product call on whether time is shown on non-same-day combat reports |
 | ArmyViewDesign.tsx regex formatNumber | uses regex instead of Intl.NumberFormat — locale-ignorant, replace with shared helper |

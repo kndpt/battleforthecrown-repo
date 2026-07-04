@@ -52,7 +52,6 @@ import {
   UNIT_COSTS,
   UNIT_TYPES,
   type UnitMap,
-  type UnitType,
 } from '@battleforthecrown/shared/army';
 import { typedEntries } from '@battleforthecrown/shared/utils';
 import { getCaptureDurationMs } from './capture-duration';
@@ -109,8 +108,8 @@ function addUnitLosses(target: UnitMap, losses: UnitMap): void {
  */
 function sumPopulationCost(losses: UnitMap): number {
   let total = 0;
-  for (const [unitType, lossCount] of Object.entries(losses)) {
-    const popCost = UNIT_COSTS[unitType as UnitType]?.population;
+  for (const [unitType, lossCount] of typedEntries(losses)) {
+    const popCost = UNIT_COSTS[unitType]?.population;
     if (popCost && lossCount) total += popCost * lossCount;
   }
   return total;
