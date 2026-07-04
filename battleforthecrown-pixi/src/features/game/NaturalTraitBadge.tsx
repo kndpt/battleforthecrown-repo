@@ -51,7 +51,7 @@ export function NaturalTraitBadge({
         <img alt="" className="size-[14px] shrink-0 object-contain" src={info.iconAsset} />
         {variant === 'full' ? <span className="min-w-0 truncate">{info.label}</span> : null}
       </button>
-      {open ? <NaturalTraitModal onClose={() => setOpen(false)} trait={trait} /> : null}
+      <NaturalTraitModal isOpen={open} onClose={() => setOpen(false)} trait={trait} />
     </>
   );
 }

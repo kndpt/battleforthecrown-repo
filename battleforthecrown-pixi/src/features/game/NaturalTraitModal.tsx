@@ -1,8 +1,10 @@
 import { BaseModal } from '@/features/design-system/components/BaseModal';
+import { ModalOverlay } from '@/ui/modals/ModalOverlay';
 import type { VillageNaturalTrait } from '@battleforthecrown/shared/village';
 import { naturalTraitInfo } from './naturalTraitInfo';
 
 export interface NaturalTraitModalProps {
+  isOpen: boolean;
   onClose: () => void;
   trait: VillageNaturalTrait;
 }
@@ -12,18 +14,23 @@ export interface NaturalTraitModalProps {
  * variante de badge qui l'ouvre (spec 093 § « Variantes d'affichage du
  * badge »). Le trait est **fixe et permanent** : lié à la tile, jamais
  * modifiable — cf. `docs/gameplay/27-village-natural-traits.md`.
+ *
+ * Wrappée dans `ModalOverlay` (portail `<body>` + centrage + fond assombri +
+ * animation) : sans lui, `BaseModal` se rend inline là où vit le badge
+ * (header, panneau carte) au lieu d'une modale centrée.
  */
-export function NaturalTraitModal({ onClose, trait }: NaturalTraitModalProps) {
+export function NaturalTraitModal({ isOpen, onClose, trait }: NaturalTraitModalProps) {
   const info = naturalTraitInfo(trait);
 
   return (
-    <BaseModal
-      closeLabel="Fermer"
-      onClose={onClose}
-      title="Trait naturel"
-      tone="brown"
-    >
-      <div className="flex flex-col items-center gap-3 text-center">
+    <ModalOverlay ariaLabel="Trait naturel" isOpen={isOpen} onClose={onClose}>
+      <BaseModal
+        closeLabel="Fermer"
+        onClose={onClose}
+        title="Trait naturel"
+        tone="brown"
+      >
+        <div className="flex flex-col items-center gap-3 text-center">
         <img
           alt=""
           className="size-20 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,.35)]"
@@ -41,10 +48,11 @@ export function NaturalTraitModal({ onClose, trait }: NaturalTraitModalProps) {
           </p>
         ) : null}
         <p className="border-t border-[rgba(60,38,25,.22)] pt-2.5 font-game text-[11px] italic text-[#6d5838]">
-          Ce trait est gravé dans la terre du village : fixe et permanent, il ne
-          dépend d'aucun bâtiment et ne peut être changé.
-        </p>
-      </div>
-    </BaseModal>
+            Ce trait est gravé dans la terre du village : fixe et permanent, il
+            ne dépend d'aucun bâtiment et ne peut être changé.
+          </p>
+        </div>
+      </BaseModal>
+    </ModalOverlay>
   );
 }
