@@ -41,7 +41,7 @@ describe('mergeGarrisonsIntoParticipants', () => {
     const totalUnits = { MILITIA: 3 };
 
     mergeGarrisonsIntoParticipants(
-      [makeGarrison('origin-a', 'SPEARMAN', 10)],
+      [makeGarrison('origin-a', 'SQUIRE', 10)],
       participants,
       totalUnits,
     );
@@ -49,10 +49,10 @@ describe('mergeGarrisonsIntoParticipants', () => {
     expect(participants).toHaveLength(2);
     expect(participants[1]).toEqual({
       villageId: 'origin-a',
-      units: { SPEARMAN: 10 },
+      units: { SQUIRE: 10 },
       strategy: undefined,
     });
-    expect(totalUnits).toEqual({ MILITIA: 3, SPEARMAN: 10 });
+    expect(totalUnits).toEqual({ MILITIA: 3, SQUIRE: 10 });
   });
 
   it('merges units into an existing participant', () => {
@@ -96,8 +96,8 @@ describe('mergeGarrisonsIntoParticipants', () => {
     mergeGarrisonsIntoParticipants(
       [
         makeGarrison('a', 'MILITIA', 5),
-        makeGarrison('b', 'SPEARMAN', 3),
-        makeGarrison('a', 'SPEARMAN', 7),
+        makeGarrison('b', 'SQUIRE', 3),
+        makeGarrison('a', 'SQUIRE', 7),
       ],
       participants,
       totalUnits,
@@ -105,9 +105,9 @@ describe('mergeGarrisonsIntoParticipants', () => {
 
     expect(participants).toHaveLength(3);
     const pa = participants.find((p) => p.villageId === 'a')!;
-    expect(pa.units).toEqual({ MILITIA: 5, SPEARMAN: 7 });
+    expect(pa.units).toEqual({ MILITIA: 5, SQUIRE: 7 });
     const pb = participants.find((p) => p.villageId === 'b')!;
-    expect(pb.units).toEqual({ SPEARMAN: 3 });
-    expect(totalUnits).toEqual({ MILITIA: 7, SPEARMAN: 10 });
+    expect(pb.units).toEqual({ SQUIRE: 3 });
+    expect(totalUnits).toEqual({ MILITIA: 7, SQUIRE: 10 });
   });
 });

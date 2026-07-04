@@ -1,4 +1,5 @@
 import { Prisma, VillageStrategy } from '@prisma/client';
+import { isUnitType } from '@battleforthecrown/shared/army';
 import type { UnitMap, UnitType } from '@battleforthecrown/shared/army';
 import type { PrismaClientOrTx } from '../../common/prisma.types';
 import type { CombatParticipant } from './interfaces/combat-context.interface';
@@ -36,7 +37,8 @@ export function mergeGarrisonsIntoParticipants(
   totalUnits: UnitMap,
 ): void {
   for (const g of garrisons) {
-    const ut = g.unitType as UnitType;
+    if (!isUnitType(g.unitType)) continue;
+    const ut: UnitType = g.unitType;
     const gUnits: UnitMap = { [ut]: g.quantity };
     const existing = participants.find(
       (p) => p.villageId === g.originVillageId,

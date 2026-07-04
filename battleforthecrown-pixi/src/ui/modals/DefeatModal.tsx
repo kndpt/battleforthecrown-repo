@@ -33,7 +33,7 @@ export const DefeatModal = ({
       onClose={() => undefined}
     >
       {item ? (
-        <div className="w-[90%] max-w-md overflow-hidden rounded-lg border-4 border-[#3a1a1a] bg-gradient-to-b from-[#2a1010] to-[#1a0808] font-game shadow-[0_0_0_2px_#5a1a1a,0_12px_32px_rgba(0,0,0,0.75)]">
+        <div className="w-[90vw] max-w-md overflow-hidden rounded-lg border-4 border-[#3a1a1a] bg-gradient-to-b from-[#2a1010] to-[#1a0808] font-game shadow-[0_0_0_2px_#5a1a1a,0_12px_32px_rgba(0,0,0,0.75)]">
           {/* Bandeau rouge sombre */}
           <div className="h-1.5 bg-gradient-to-r from-[#8b0000] to-[#c0392b]" />
 

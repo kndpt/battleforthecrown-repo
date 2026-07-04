@@ -56,6 +56,16 @@ export class IntelService {
 
     if (!row) return null;
 
+    // Trait naturel = immuable, donc lire la valeur live du Village ciblé
+    // équivaut à la valeur au moment du scout. Pas de colonne trait sur
+    // VillageIntel (pas de relation Prisma déclarée sur targetVillageId) :
+    // lookup séparé plutôt qu'un include, pour ne pas ajouter de relation
+    // schema.prisma hors scope de cette tâche.
+    const targetVillage = await this.prisma.village.findUnique({
+      where: { id: row.targetVillageId },
+      select: { naturalTrait: true },
+    });
+
     return {
       targetVillageId: row.targetVillageId,
       worldId: row.worldId,
@@ -73,6 +83,7 @@ export class IntelService {
       targetY: row.targetY,
       targetTier: row.targetTier,
       seenAt: row.seenAt.toISOString(),
+      naturalTrait: targetVillage?.naturalTrait ?? null,
     };
   }
 

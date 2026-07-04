@@ -58,3 +58,44 @@ export function getPvpCaptureDurationLabel(
   if (castleLevel == null) return null;
   return formatCaptureDuration(getPvpCaptureDurationMs(castleLevel));
 }
+
+/**
+ * Durée de capture d'un village **barbare** selon son tier.
+ * Courbe compressée figée par `docs/gameplay/13-barbarian-conquest.md`
+ * § Période de capture variable par tier (recalibrage tempo, cf. spec 23 § 7).
+ * Source de vérité unique : ré-exportée par le backend
+ * (`modules/combat/capture-duration.ts`, appliquée au runtime via `TempoService`)
+ * et consommée par le preview frontend (panneau d'info + `AttackDetailModal`).
+ *
+ * IMPORTANT : valeurs **de base** (sans tempo), comme la table PvP. Le tempo monde
+ * est appliqué uniquement côté backend ; les previews frontend affichent la base.
+ */
+export const BARBARIAN_CAPTURE_DURATIONS_MS: Record<string, number> = {
+  T1: 0.5 * MS_PER_HOUR,
+  T2: 1 * MS_PER_HOUR,
+  T3: 1.5 * MS_PER_HOUR,
+  T4: 2.25 * MS_PER_HOUR,
+  T5: 3 * MS_PER_HOUR,
+};
+
+/**
+ * Durée de capture barbare de base (sans tempo) pour un tier donné.
+ * Renvoie `null` quand le tier est inconnu (`null`/`undefined` ou hors table).
+ */
+export function getBarbarianCaptureDurationMs(
+  tier?: string | null,
+): number | null {
+  if (tier == null) return null;
+  return BARBARIAN_CAPTURE_DURATIONS_MS[tier] ?? null;
+}
+
+/**
+ * Libellé preview de la fenêtre de capture barbare de base, format `XhYY`
+ * (`0h30`, `1h`, `2h15`, `3h`). Renvoie `null` quand le tier est inconnu.
+ */
+export function getBarbarianCaptureDurationLabel(
+  tier?: string | null,
+): string | null {
+  const ms = getBarbarianCaptureDurationMs(tier);
+  return ms == null ? null : formatCaptureDuration(ms);
+}

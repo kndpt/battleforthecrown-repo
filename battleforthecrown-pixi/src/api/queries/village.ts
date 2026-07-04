@@ -305,6 +305,23 @@ export function useUpgradeBuildingMutation() {
 
       return { previousQueue, previousResources, optimisticEntryId };
     },
+    onSuccess: (serverData, { villageId }, context) => {
+      if (!context?.optimisticEntryId) return;
+      const queueEntry: QueueEntryDto = {
+        id: serverData.id,
+        type: serverData.type,
+        level: serverData.nextLevel,
+        startTime: serverData.startTime,
+        endTime: serverData.endTime,
+      };
+      queryClient.setQueryData<QueueEntryDto[]>(
+        queryKeys.queue(villageId),
+        (current = []) =>
+          current.map((e) =>
+            e.id === context.optimisticEntryId ? queueEntry : e,
+          ),
+      );
+    },
     onError: (_err, { villageId }, context) => {
       if (!context) return;
       if (context.previousQueue !== undefined) {

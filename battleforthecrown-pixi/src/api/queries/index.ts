@@ -116,6 +116,5 @@ export {
   mapMarkersQueryOptions,
   useMapMarkersQuery,
   useUpsertMapMarkerMutation,
-  useUpdateMapMarkerMutation,
   useDeleteMapMarkerMutation,
 } from "./map-markers";

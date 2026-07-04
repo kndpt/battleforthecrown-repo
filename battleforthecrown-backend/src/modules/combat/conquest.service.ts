@@ -14,7 +14,7 @@ import { createOutboxEvent } from '../event/event.utils';
 import {
   UNIT_COSTS,
   UNIT_TYPES,
-  type UnitType,
+  isUnitType,
 } from '@battleforthecrown/shared/army';
 import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
 import {
@@ -633,7 +633,8 @@ export class ConquestService {
     if (!occupation.length) return;
 
     const remainingPopulation = occupation.reduce((total, line) => {
-      const popCost = UNIT_COSTS[line.unitType as UnitType]?.population ?? 0;
+      if (!isUnitType(line.unitType)) return total;
+      const popCost = UNIT_COSTS[line.unitType]?.population ?? 0;
       return total + popCost * Math.max(0, line.quantity);
     }, 0);
 

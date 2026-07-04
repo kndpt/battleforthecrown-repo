@@ -59,7 +59,8 @@ Réponses aux 4 « Points à trancher » du ticket lab 01 :
 ## Révélation (anti-fuite intel)
 
 - **Son propre village** : trait exposé par l'endpoint owner-scoped `GET /villages?worldId=` ([`village.service.getVillages`](../../battleforthecrown-backend/src/modules/village/village.service.ts)), affiché sur le panneau du village.
-- **Village ennemi (joueur ou barbare)** : trait révélé **uniquement** par le rapport de scout, en snapshot figé au moment du scout (`details.naturalTrait`, même pattern que `wallLevel`/`castleLevel` — cf. [`11-scouting.md`](./11-scouting.md)). Le trait étant FIXE, un snapshot unique suffit (aucune péremption).
+- **Village ennemi (joueur ou barbare)** : trait révélé **uniquement** après scout — dans le rapport (`details.naturalTrait`, même pattern que `wallLevel`/`castleLevel` — cf. [`11-scouting.md`](./11-scouting.md)) **et** sur le panneau carte du village, via `VillageIntelDto.naturalTrait`. Ce champ n'est projeté par `IntelService.getIntel` que si un row intel scout existe pour le viewer (pas de scout → `getIntel` renvoie `null` → aucun trait). Le trait étant FIXE, `getIntel` lit la valeur live du `Village` (== valeur au scout, aucune péremption).
+- **Affichage** : sur les 3 surfaces (panneau de son propre village, rapport de scout, panneau carte scouté), le trait est un badge cliquable (`NaturalTraitBadge`) ouvrant une modale explicative (bonus, ressource, permanence). Header du village en variante `icon-only` (contrainte de largeur), les autres en `full` (icône + label).
 - **Carte publique** (`world-entities-query`) : `naturalTrait` **n'apparaît jamais** dans les payloads `PLAYER_VILLAGE`/`BARBARIAN_VILLAGE`. Cet endpoint sert la même donnée à tous les clients (pas de viewer scope) → l'exposer serait une fuite. Le blip ennemi reste foggé avec un `id` stable (sélectionnable avant scout). Verrouillé par test guard.
 
 ## Persistance & backfill
