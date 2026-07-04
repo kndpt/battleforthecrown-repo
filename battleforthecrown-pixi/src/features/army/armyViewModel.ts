@@ -18,10 +18,10 @@ import type {
   ArmySupportRow,
   ArmySupportUnitChip,
   ArmyTroop,
-  ArmyTroopCategory,
   ArmyTroopSection,
   ArmyVillageRow,
 } from '@/features/design-system/components';
+import { UNIT_CATEGORY } from './unitCategory';
 import { formatRemaining } from '@/features/village/constructionProgress';
 import type { DisplayResources } from '@/lib/interpolation';
 import { unitMetaFor } from './unitConfig';
@@ -41,19 +41,6 @@ const FILTER_TONES: Partial<Record<ArmyFilterId, ArmyFilterOption['tone']>> = {
   allies: 'blue',
   mine: 'green',
   sent: 'gold',
-};
-
-const UNIT_CATEGORIES: Record<UnitType, ArmyTroopCategory> = {
-  ARCHER: 'Tireur',
-  CATAPULT: 'Siège',
-  CAVALRY: 'Cavalerie',
-  MILITIA: 'Infanterie',
-  NOBLE: 'Élite',
-  RAM: 'Siège',
-  SPY: 'Spécial',
-  SQUIRE: 'Infanterie',
-  TEMPLAR: 'Élite',
-  WARRIOR: 'Infanterie',
 };
 
 const ARMY_UNIT_TYPES = Object.values(UNIT_TYPES) as UnitType[];
@@ -136,7 +123,7 @@ export function buildArmyViewModel({
 
     return {
       attack: stats.attack,
-      category: UNIT_CATEGORIES[unitType],
+      category: UNIT_CATEGORY[unitType],
       cost: {
         iron: cost.iron,
         stone: cost.stone,

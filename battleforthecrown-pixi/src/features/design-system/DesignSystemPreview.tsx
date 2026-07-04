@@ -3293,11 +3293,11 @@ export function DesignSystemPreview() {
                     wall: 4,
                     style: 'Forteresse',
                     army: [
-                      { icon: '/assets/army/militia.png', count: 120, category: 'inf', name: 'Milicien' },
-                      { icon: '/assets/army/archer.png', count: 64, category: 'tir', name: 'Archer' },
-                      { icon: '/assets/army/squire.png', count: 40, category: 'inf', name: 'Écuyer' },
-                      { icon: '/assets/army/savage.png', count: 12, category: 'spe', name: 'Mercenaire' },
-                      { icon: '/assets/army/templar.png', count: 9, category: 'eli', name: 'Templier' },
+                      { icon: '/assets/army/militia.png', count: 120, category: 'Infanterie', name: 'Milicien' },
+                      { icon: '/assets/army/archer.png', count: 64, category: 'Tireur', name: 'Archer' },
+                      { icon: '/assets/army/squire.png', count: 40, category: 'Infanterie', name: 'Écuyer' },
+                      { icon: '/assets/army/savage.png', count: 12, category: 'Spécial', name: 'Mercenaire' },
+                      { icon: '/assets/army/templar.png', count: 9, category: 'Élite', name: 'Templier' },
                     ],
                   }}
                   onClose={() => {}}
@@ -3343,11 +3343,11 @@ export function DesignSystemPreview() {
                     wall: 0,
                     style: 'Économique',
                     army: [
-                      { icon: '/assets/army/militia.png', count: 48, category: 'inf', name: 'Milicien' },
-                      { icon: '/assets/army/archer.png', count: 22, category: 'tir', name: 'Archer' },
-                      { icon: '/assets/army/squire.png', count: 14, category: 'inf', name: 'Écuyer' },
-                      { icon: '/assets/army/savage.png', count: 6, category: 'spe', name: 'Mercenaire' },
-                      { icon: '/assets/army/templar.png', count: 3, category: 'eli', name: 'Templier' },
+                      { icon: '/assets/army/militia.png', count: 48, category: 'Infanterie', name: 'Milicien' },
+                      { icon: '/assets/army/archer.png', count: 22, category: 'Tireur', name: 'Archer' },
+                      { icon: '/assets/army/squire.png', count: 14, category: 'Infanterie', name: 'Écuyer' },
+                      { icon: '/assets/army/savage.png', count: 6, category: 'Spécial', name: 'Mercenaire' },
+                      { icon: '/assets/army/templar.png', count: 3, category: 'Élite', name: 'Templier' },
                     ],
                   }}
                   onClose={() => {}}

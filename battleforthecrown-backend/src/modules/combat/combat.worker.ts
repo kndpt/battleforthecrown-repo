@@ -52,7 +52,6 @@ import {
   UNIT_COSTS,
   UNIT_TYPES,
   type UnitMap,
-  type UnitType,
 } from '@battleforthecrown/shared/army';
 import { typedEntries } from '@battleforthecrown/shared/utils';
 import { getCaptureDurationMs } from './capture-duration';
@@ -61,7 +60,7 @@ import { RenownService } from '../renown/renown.service';
 import { IntelService } from '../intel/intel.service';
 import { NewbieShieldService } from '../world/newbie-shield.service';
 import { FriendshipService } from '../friendship/friendship.service';
-import { mergeGarrisonsIntoParticipants } from './garrison-merge.utils';
+import { assembleDefenderParticipants } from './garrison-merge.utils';
 import {
   dedupedRecipientUserIds,
   loadReportVillageSnapshot,
@@ -109,8 +108,8 @@ function addUnitLosses(target: UnitMap, losses: UnitMap): void {
  */
 function sumPopulationCost(losses: UnitMap): number {
   let total = 0;
-  for (const [unitType, lossCount] of Object.entries(losses)) {
-    const popCost = UNIT_COSTS[unitType as UnitType]?.population;
+  for (const [unitType, lossCount] of typedEntries(losses)) {
+    const popCost = UNIT_COSTS[unitType]?.population;
     if (popCost && lossCount) total += popCost * lossCount;
   }
   return total;
@@ -1185,21 +1184,10 @@ export class CombatWorker implements OnModuleInit {
       tempo,
     );
 
-    const garrisons = await tx.garrison.findMany({
-      where: { villageId },
-      include: {
-        originVillage: {
-          include: { strategyConfig: true },
-        },
-      },
-    });
-
-    const participants: CombatParticipant[] = [
-      { villageId: village.id, units, strategy: undefined },
-    ];
-    const totalUnits: UnitMap = { ...units };
-
-    mergeGarrisonsIntoParticipants(garrisons, participants, totalUnits);
+    const { participants, totalUnits } = await assembleDefenderParticipants(
+      tx,
+      { villageId: village.id, localUnits: units },
+    );
 
     return {
       kind: 'BARBARIAN_VILLAGE' as const,
@@ -1220,31 +1208,18 @@ export class CombatWorker implements OnModuleInit {
       },
     });
 
-    // Get reinforcements stationned in this village
-    const garrisons = await tx.garrison.findMany({
-      where: { villageId },
-      include: {
-        originVillage: {
-          include: { strategyConfig: true },
-        },
-      },
-    });
-
     const localUnits: UnitMap = Object.fromEntries(
       village.unitInventory.map((inv) => [inv.unitType, inv.quantity]),
     );
 
-    const participants: CombatParticipant[] = [
+    const { participants, totalUnits } = await assembleDefenderParticipants(
+      tx,
       {
         villageId: village.id,
-        units: localUnits,
+        localUnits,
         strategy: village.strategyConfig?.strategy || undefined,
       },
-    ];
-
-    const totalUnits: UnitMap = { ...localUnits };
-
-    mergeGarrisonsIntoParticipants(garrisons, participants, totalUnits);
+    );
 
     return {
       kind: 'PLAYER_VILLAGE' as const,

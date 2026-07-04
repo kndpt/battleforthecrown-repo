@@ -12,9 +12,6 @@ import { formatResourceAmount } from '@/lib/resourceConfig';
 import { formatRemaining } from '@/features/village/constructionProgress';
 import {
   DEFAULT_VILLAGE_STRATEGY,
-  NATURAL_TRAIT_DISPLAY,
-  NATURAL_TRAIT_PRODUCTION_BONUS,
-  type VillageNaturalTrait,
   type VillageStrategyType,
 } from '@battleforthecrown/shared/village';
 
@@ -36,47 +33,6 @@ const RESOURCE_LABELS = {
   stone: 'Pierre',
   iron: 'Fer',
 } as const;
-
-const NATURAL_TRAIT_ICON: Record<VillageNaturalTrait, string> = {
-  DENSE_FOREST: RESOURCE_ICONS.wood,
-  RICH_QUARRY: RESOURCE_ICONS.stone,
-  IRON_VEIN: RESOURCE_ICONS.iron,
-  PLAINS: '/assets/castle.png',
-};
-
-/**
- * Section « Trait naturel » du rapport de scout (spec 27). Présente pour les
- * deux kinds (joueur ET barbare — tout village a un trait). Retourne un tableau
- * vide si le trait est absent (vieux rapport d'avant la feature).
- */
-export function buildNaturalTraitSections(
-  trait: VillageNaturalTrait | undefined,
-): ScoutReportSection[] {
-  if (!trait) return [];
-  const display = NATURAL_TRAIT_DISPLAY[trait];
-  const boosted = display.boostedResource;
-  const factor = boosted
-    ? NATURAL_TRAIT_PRODUCTION_BONUS[trait][boosted]
-    : undefined;
-  const bonusLabel =
-    boosted && factor
-      ? `+${Math.round((factor - 1) * 100)} % ${RESOURCE_LABELS[
-          boosted.toLowerCase() as keyof typeof RESOURCE_LABELS
-        ]}`
-      : 'Aucun bonus';
-  return [
-    {
-      title: 'Trait naturel',
-      items: [
-        {
-          icon: NATURAL_TRAIT_ICON[trait],
-          label: display.label,
-          value: bonusLabel,
-        },
-      ],
-    },
-  ];
-}
 
 export function scoutReportTargetLabel(report: ScoutReportResponse): string {
   const base = TARGET_KIND_LABEL[report.targetKind] ?? report.targetKind;
@@ -247,7 +203,6 @@ export function buildScoutReportCardProps(
       title: 'Ressources',
       items: resourceItems,
     },
-    ...buildNaturalTraitSections(report.details?.naturalTrait),
     ...(report.targetKind === 'BARBARIAN_VILLAGE'
       ? []
       : [
@@ -292,6 +247,7 @@ export function buildScoutReportCardProps(
       ? { label: 'Bouclier débutant', remaining: shieldStatus.remainingLabel }
       : undefined,
     inactivityBadge: getInactivityBadge(report),
+    naturalTraitBadge: report.details?.naturalTrait,
     sections,
     targetName: scoutReportTitle(report),
     targetPrefix: 'Cible',

@@ -1,23 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { frShort, unitCategoryFor } from './meta';
-
-describe('unitCategoryFor', () => {
-  it('mappe les types connus sur leur catégorie visuelle', () => {
-    expect(unitCategoryFor('MILITIA')).toBe('inf');
-    expect(unitCategoryFor('SQUIRE')).toBe('inf');
-    expect(unitCategoryFor('ARCHER')).toBe('tir');
-    expect(unitCategoryFor('SPY')).toBe('tir');
-    expect(unitCategoryFor('WARRIOR')).toBe('spe');
-    expect(unitCategoryFor('CAVALRY')).toBe('spe');
-    expect(unitCategoryFor('TEMPLAR')).toBe('eli');
-    expect(unitCategoryFor('NOBLE')).toBe('eli');
-  });
-
-  it('retombe sur "inf" pour un type inconnu', () => {
-    expect(unitCategoryFor('UNKNOWN')).toBe('inf');
-    expect(unitCategoryFor('')).toBe('inf');
-  });
-});
+import { frShort } from './meta';
 
 describe('frShort', () => {
   it('rend les valeurs < 1000 sans abréviation', () => {

@@ -54,7 +54,7 @@ Système d'équipe Claude — lead orchestre, sub-agents à scope chirurgical ex
 - `$bftc-plan <input>` — triage un sujet (description libre, path roadmap + section, path spec) en **ticket** (`tasks/<id>.md`) ou **fiche de run** (`tasks/runs/<id>.md` statut `PLANNED`). Lit roadmap + spec + carto code. Validation user avant écriture.
 - `$bftc-run <path>` — exécute pipeline 1-10 sur fiche `PLANNED` ou ticket actif (path obligatoire, `@` optionnel). Termine `DONE` + commit + déplacement vers `tasks/runs/archive/` ou `tasks/archive/`.
 
-**Pipeline `$bftc-run`** : 0 préflight → 1 clarif (≤4Q) → 2 carto code → 3 refinement (lead) → 4 coding → 5 testing → 6 review 5 axes → 7 fix findings → 8 re-tests → 9 docs → 10 archive+commit. Hard gate `git diff` post chaque sub-agent qui écrit.
+**Pipeline `$bftc-run`** (local uniquement) : 0 préflight → 1 clarif (≤4Q) → 2 carto code → 3 refinement (lead) → 4 coding → 5 testing → 6 review (indépendante = CodeRabbit CLI local) → 7 fix findings → 8 re-tests → 9 docs → 10 archive+commit. Hard gate `git diff` post chaque sub-agent qui écrit.
 
 **Sub-agents** (`.claude/agents/`)
 
@@ -66,6 +66,6 @@ Système d'équipe Claude — lead orchestre, sub-agents à scope chirurgical ex
 | `test-writer` | Tests selon `tests.md`, refus anti-patterns | sonnet |
 | `test-runner` | Lance suite, retourne fails compacts | haiku |
 | `doc-writer` | Crée/maj docs, refus duplication | sonnet |
-| `agent-skills:code-reviewer` | Review 5 axes (built-in plugin) | sonnet |
+| `reviewer` | Review indépendante — moteur CodeRabbit CLI local (`.coderabbit.yaml`) + check couverture critères | opus |
 
 **Docs** : pipeline détaillé [`tasks/runs/README.md`](./tasks/runs/README.md) ; mitigations [`tasks/runs/safety-fallbacks.md`](./tasks/runs/safety-fallbacks.md) ; roadmap MVP [`tasks/00-mvp-roadmap.md`](./tasks/00-mvp-roadmap.md).

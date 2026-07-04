@@ -44,6 +44,13 @@ reviews:
     drafts: false
     ignore_title_keywords:
       - "[skip review]"
+    # Anti-double-review : les PR issues de `$bftc-run` (local) ont déjà été passées au
+    # CodeRabbit CLI en local avec CETTE MÊME config quand le reviewer indépendant a tourné
+    # et rendu GO. Dans ce cas seul, `$bftc-run` pose le label `bftc-local-reviewed` → CR
+    # skip la review PR (redondante, même moteur + même config). Toute PR sans ce label
+    # (review locale non déclenchée, ou verdict BLOCK/escaladé) reste reviewée normalement.
+    labels:
+      - "!bftc-local-reviewed"
 
   path_filters:
     - "!node_modules/**"

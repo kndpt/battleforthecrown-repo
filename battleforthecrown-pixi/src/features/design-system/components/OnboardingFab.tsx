@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } fr
 import { createPortal } from 'react-dom';
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
+import { clamp } from '@/lib/math';
 
 export interface OnboardingFabActionPayload {
   step: number;
@@ -75,12 +76,6 @@ const FLOATING_EDGE_GAP = 8;
 const DRAG_START_THRESHOLD = 2;
 const DRAG_CLICK_SUPPRESSION_MS = 200;
 const SELECT_FEEDBACK_MS = 180;
-
-function clamp(value: number, min: number, max: number) {
-  const lower = Math.min(min, max);
-  const upper = Math.max(min, max);
-  return Math.min(Math.max(value, lower), upper);
-}
 
 function clampFloatingOffset(
   offset: DragOffset,

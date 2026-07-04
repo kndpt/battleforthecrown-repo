@@ -1,6 +1,9 @@
 import { publicAsset } from '@/lib/publicAsset';
 import { TIER_META } from './meta';
-import type { BarbarianTier, TroopCategory } from './meta';
+import type { BarbarianTier } from './meta';
+import type { UnitCategory } from '@/features/army/unitCategory';
+import { NaturalTraitBadge } from '@/features/game/NaturalTraitBadge';
+import type { VillageNaturalTrait } from '@battleforthecrown/shared/village';
 import {
   Dossier,
   WallGlyph,
@@ -91,7 +94,7 @@ export function UnscoutedPanel() {
 export interface FullIntelArmyEntry {
   icon: string;
   count: number;
-  category: TroopCategory;
+  category: UnitCategory;
   name?: string;
 }
 
@@ -101,11 +104,15 @@ export interface FullIntelPanelProps {
   wall?: number | null;
   style?: string | null;
   freshness?: { ago: string; fresh: boolean };
+  /** Trait naturel de la cible — n'est fourni par l'appelant que quand
+   * l'intel a été scoutée (anti-leak, cf. run 093). */
+  naturalTrait?: VillageNaturalTrait | null;
 }
 
-export function FullIntelPanel({ loot, army, wall, style, freshness }: FullIntelPanelProps) {
+export function FullIntelPanel({ loot, army, wall, style, freshness, naturalTrait }: FullIntelPanelProps) {
   return (
-    <Dossier style={{ gap: 9, padding: 10 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+      <Dossier style={{ gap: 9, padding: 10 }}>
       {/* Bloc Butin */}
       {loot && (
         <div>
@@ -175,7 +182,18 @@ export function FullIntelPanel({ loot, army, wall, style, freshness }: FullIntel
           {style && <StyleStat style={style}/>}
         </div>
       )}
-    </Dossier>
+
+      </Dossier>
+
+      {/* Trait naturel — info FIXE du village (pas du contenu scouté butin/armée),
+          livrée en même temps que l'intel mais présentée dans sa propre section.
+          Visible seulement si non-null (anti-leak : village non scouté ⇒ absente). */}
+      {naturalTrait && (
+        <Dossier style={{ padding: 10 }}>
+          <NaturalTraitBadge trait={naturalTrait} variant="full"/>
+        </Dossier>
+      )}
+    </div>
   );
 }
 
