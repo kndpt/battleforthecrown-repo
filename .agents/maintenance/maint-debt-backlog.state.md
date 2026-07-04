@@ -1,6 +1,6 @@
 # maint-debt — candidats (réécrit chaque run)
 
-last: 2026-07-02 | archive: `archive/maint-debt/2026-06-15-full.md`
+last: 2026-07-04 | archive: `archive/maint-debt/2026-06-15-full.md`
 branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 ## candidate
@@ -13,24 +13,24 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | shared/world/entities.ts isFoggedEntity | type guard used by world map — no direct unit spec |
 | shared/village/strategy.ts getVillageStrategyPlan | constant plan accessor — low value unless plan becomes configurable |
 | conquest openCaptureWindow/interruptCaptureWindow/conquerVillage wrappers | used only in smoke tests, not prod code — public API for test convenience, low debt |
-| buildRefundToastItems export | exported for test import only — valid pattern, skip |
-| GarrisonLineDto export | used locally in combat.service.ts, export unnecessary but trivial |
-| HeaderBarSection console.log + unused useState | ui-test demo component — trivial cleanup |
+| 11× Intl.NumberFormat('fr-FR') singleton | extract to src/lib/formatters.ts — 11 files, scope too broad for 1 PR |
+| formatDate divergence ReportCard vs ReportsList | need product call on whether time is shown on non-same-day combat reports |
+| ArmyViewDesign.tsx regex formatNumber | uses regex instead of Intl.NumberFormat — locale-ignorant, replace with shared helper |
 
 ## done (this run)
 
 | area | PR |
 |------|-----|
-| barbarian-runtime.service.ts 4× `as UnitType` → typedEntries + isUnitType guard | pending |
+| clamp/clamp01 dup worldTerrain.ts + OnboardingFab.tsx → import @/lib/math | pending |
 
 ## done (prev)
 
 | area | PR |
 |------|-----|
+| barbarian-runtime.service.ts 4× `as UnitType` → typedEntries + isUnitType guard | #241 |
 | isUnitType guard duplicated 3× → shared | #221 |
 | hardcoded time constants → shared/time imports | #225 |
 | typedEntries consistency: Object.entries + `as UnitType` → shared typedEntries | #213 |
-| garrison-merge.utils.ts repeated `as UnitType` casts → extract local const | stale (never pushed) |
 
 ## rules
 
