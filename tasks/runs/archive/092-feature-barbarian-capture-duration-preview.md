@@ -1,8 +1,8 @@
 # Run #092 — barbarian-capture-duration-preview
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-07-04
+> **Terminé** : 2026-07-04
 
 ## Cible
 
@@ -51,34 +51,31 @@ Visuel (checklist Kelvin IG, ≤5) :
 - Skills : `bftc-tests-policy`, `bftc-qa`
 - **Review indépendante requise** : oui — touche backend + frontend + shared et consolide un invariant durable (source unique des durées de capture). Aligner sans casser la parité base-duration/tempo du preview.
 
-## Décomposition initiale
-
-_(Lead étape 3 — tâches ≤5 fichiers)_
-
-- **T1 — shared** : ajouter la table barbare canonique dans `packages/shared/src/combat/capture-duration.ts` (`BARBARIAN_CAPTURE_DURATIONS_MS` + helper `getBarbarianCaptureDurationMs`/`...Label` alignés sur le style PvP `XhYY`) + specs unitaires ; rebuild `@battleforthecrown/shared`.
-- **T2 — backend** : `modules/combat/capture-duration.ts` ré-exporte la table shared au lieu de la redéfinir ; vérifier `getCaptureDurationMs` (barbare) inchangé fonctionnellement.
-- **T3 — front** : `features/world/barbarianConquest.ts` consomme le helper shared (supprimer la copie locale obsolète) ; garder l'API publique (`getBarbarianCaptureDurationLabel`) pour ne pas casser `AttackDetailModal`.
-- **T4 — front tests** : réécrire `barbarianConquest.test.ts` sur les nouvelles valeurs + corriger le commentaire trompeur ; vérifier la non-régression `AttackDetailModal`.
-- **T5 — docs** : aucune mise à jour de spec attendue (spec 13 déjà correcte) ; vérifier l'impact doc (source unique). Consigner en cas de note technique data-model.
-
-## Points d'attention
-
-- **Parité base-duration vs tempo** : le preview front doit afficher la durée **de base** (comme le PvP). Le tempo monde n'est appliqué que backend (`getCaptureDurationMs` via `TempoService`) — ne pas ré-appliquer côté front.
-- **API publique front** : `getBarbarianCaptureDurationLabel` est consommé par `AttackDetailModal` (badge « Fenêtre de capture ») ; conserver la signature pour un diff minimal.
-- **Format d'affichage (convention canonique)** : réutiliser le formatter PvP `getPvpCaptureDurationLabel` (`XhYY`) pour le barbare — T4=`2h15`, et la valeur sous l'heure T1 (30 min) rend `0h30`, **pas** `30min`, plutôt que l'ancien `2.3h` de `formatBarbarianCaptureDuration`. Une seule convention pour l'acceptance ET le code livré.
-- **Test verrouillant le bug** : `barbarianConquest.test.ts` fige les mauvaises valeurs — c'est un test à corriger, pas une régression à préserver.
-- **Ré-export backend** : suivre exactement le pattern `export { PVP_CAPTURE_DURATIONS_MS }` déjà en place pour ne pas dupliquer une 3e copie.
-
-## Progress
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
-## Décisions prises
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
 ## Rapport final
+
+Table barbare promue source unique dans `packages/shared/src/combat/capture-duration.ts` (`BARBARIAN_CAPTURE_DURATIONS_MS` + `getBarbarianCaptureDurationMs`/`...Label`, format `XhYY`), backend ré-exporte, front devient thin re-export — pattern PvP run 060 appliqué. Drift preview corrigé (T1 `2h`→`0h30` … T5 `12h`→`3h`). `Record<string, number>` conservé (indexable par le backend `[tier ?? '']`) : trade-off typage assumé (mineur review, non bloquant).
 
 ### Acceptance & QA
 
-_(Vide au démarrage. Rempli en fin de run.)_
+**Critères d'acceptance vérifiés** :
+
+- [x] Preview réutilise le formatter partagé `XhYY` (T1=`0h30`, T2=`1h`, T3=`1h30`, T4=`2h15`, T5=`3h`) — `yarn workspace battleforthecrown-pixi test --run barbarianConquest capture-duration` → 26/26 (dont `barbarianConquest.test.ts` + `capture-duration.spec.ts` shared).
+- [x] Table barbare = source unique dans `packages/shared` ; backend ré-exporte ; front consomme — `grep -rn "BARBARIAN_CAPTURE_DURATION_HOURS" battleforthecrown-pixi/src` → 0 (copie locale supprimée) ; backend `capture-duration.ts:11` `export { BARBARIAN_CAPTURE_DURATIONS_MS, PVP_CAPTURE_DURATIONS_MS }`.
+- [x] `barbarianConquest.test.ts` asserte les nouvelles valeurs, plus aucune assertion `12h/9h/6h/4h/2h` — visuel diff + test vert.
+- [x] Parité base-duration (tempo appliqué backend uniquement, preview = base) — thin re-export shared, aucun `TempoService` côté front → `grep -rn "TempoService" battleforthecrown-pixi/src/features/world/barbarianConquest.ts` → 0.
+- [x] `yarn static-check` + `yarn test:pixi` + `yarn test:backend` (ciblé capture-duration 4/4) verts.
+
+**Review indépendante** : Déclenchée (raison : critère a — touche backend ET frontend). Verdict **GO** (0 bloquant, 0 majeur, 2 mineurs traçabilité non correctifs).
+
+**Tests automatisés** : `test --run barbarianConquest capture-duration threatEstimate` → 4 fichiers, 26/26 ; backend `test capture-duration` → 4/4. `yarn static-check` → vert.
+
+**Smokes lancés** : Non lancés localement, raison : diff backend `src/` = ré-export type-only d'une constante shared, `getCaptureDurationMs` inchangé fonctionnellement (couvert par unit backend) ; full smoke couvert par CI PR.
+
+**Smokes ajoutés/modifiés** : Aucun, raison : pure logic déjà couverte par unit (shared + backend spec).
+
+**QA fonctionnelle agent** : Non nécessaire — helper d'affichage pur, pas d'endpoint/worker/event touché.
+
+**Tests IG à faire par le user** :
+
+- [ ] Clic sur un village barbare T5 → panneau d'info « Fenêtre de capture 3h » (plus « 12h »).
+- [ ] Clic sur un T1 → « 0h30 » (format `XhYY`, plus « 2h »).
