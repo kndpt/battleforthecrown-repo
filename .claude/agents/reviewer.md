@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Review indépendante d'un run avant commit final, propulsée par CodeRabbit CLI en local (moteur = `.coderabbit.yaml`, mêmes règles que la review PR). Use quand le run touche back+front, modifie SPEC.md, diff > 100 lignes, ou introduit un invariant durable. Lance `coderabbit review` sur le diff du run, mappe les findings sur l'échelle bloquant/majeur/mineur, et ajoute le seul axe que CR ne couvre pas en local la couverture des critères d'acceptance de la fiche. Ne modifie rien.
+description: Review indépendante d'un run avant commit final, propulsée par CodeRabbit CLI en local (moteur = `.coderabbit.yaml`, mêmes règles que la review PR). Use quand le run touche back+front, modifie SPEC.md, diff > 100 lignes, ou introduit un invariant durable. Lance `coderabbit review` sur le diff du run, mappe les findings sur l'échelle bloquant/majeur/mineur, et ajoute le seul axe que CR ne couvre pas en local : la couverture des critères d'acceptance de la fiche. Ne modifie rien.
 tools: Read, Grep, Glob, Bash
 model: opus
 memory: project
