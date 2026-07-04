@@ -774,6 +774,34 @@
         "battleforthecrown-backend/src/modules/combat/combat.service.ts — initiateCaravan présent (pattern population verrouillée + worldAccess.assertWorldWritable réutilisable), aucun initiateExtraction"
       ],
       "addedAt": "2026-07-03"
+    },
+    {
+      "specPath": "docs/gameplay/13-barbarian-conquest.md",
+      "slug": "barbarian-capture-duration-preview",
+      "title": "Preview durée de capture barbare — correctif drift front après recalibrage tempo",
+      "keywords": [
+        "barbarian-capture",
+        "capture-duration",
+        "preview",
+        "tier",
+        "tempo-recalibrage"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/092-feature-barbarian-capture-duration-preview.md",
+      "artefactId": "092",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/barbarian-capture-duration-preview",
+      "gapSummary": "La spec 13-barbarian-conquest § Période de capture par tier tranche MVP la table 30 min / 1 h / 1 h 30 / 2 h 15 / 3 h et § Visibilité exige le pré-affichage de cette durée sur le panneau d'info du village barbare. Le backend a été recalibré vers cette courbe compressée (BARBARIAN_CAPTURE_DURATIONS_MS) mais le helper front barbarianConquest.ts est resté figé sur l'ancienne table 2 / 4 / 6 / 9 / 12 h (jusqu'à 4× la durée réelle). Le joueur lit une fenêtre fausse avant de lancer sa conquête. Le run aligne le front sur la source de vérité et promeut la table barbare dans packages/shared (source unique, pattern PvP run 060) + ré-export backend.",
+      "codeEvidence": [
+        "battleforthecrown-pixi/src/features/world/barbarianConquest.ts:4-10 — BARBARIAN_CAPTURE_DURATION_HOURS { T1:2, T2:4, T3:6, T4:9, T5:12 } obsolète",
+        "battleforthecrown-backend/src/modules/combat/capture-duration.ts:12-18 — BARBARIAN_CAPTURE_DURATIONS_MS { T1:0.5h, T2:1h, T3:1.5h, T4:2.25h, T5:3h } autoritatif runtime, conforme spec 13",
+        "docs/gameplay/13-barbarian-conquest.md:79-85 — table figée 30 min / 1 h / 1 h 30 / 2 h 15 / 3 h ; l.101 exige le pré-affichage",
+        "battleforthecrown-pixi/src/features/combat/AttackDetailModal.tsx:174,415-417 — badge Fenêtre de capture rend getBarbarianCaptureDurationLabel(target.tier), la mauvaise valeur atteint le joueur",
+        "battleforthecrown-pixi/src/features/world/barbarianConquest.test.ts:9-13 — le test fige les mauvaises valeurs (T5 === '12h'), drift verrouillé par test",
+        "packages/shared/src/combat/capture-duration.ts — PVP_CAPTURE_DURATIONS_MS déjà source unique back+front (run 060), aucune table barbare partagée (duplication à l'origine du drift)",
+        ".agents/maintenance/gameplay-plan-subjects.json — subject 060 couvre le preview PvP (castleLevel), 084 les sprites T4/T5 ; aucun subject ne couvre la durée de capture barbare"
+      ],
+      "addedAt": "2026-07-04"
     }
   ]
 }
