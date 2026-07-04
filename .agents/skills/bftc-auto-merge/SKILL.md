@@ -1,9 +1,3 @@
----
-name: bftc-auto-merge
-description: Scanne les PRs ouvertes et merge celles qui sont APPROVED + tous les checks CI verts. Ignore le reste sans intervention.
-invoke: /bftc-auto-merge
----
-
 # Auto-Merge
 
 Routine horaire. Merge silencieux. Aucune action humaine requise pour les PRs éligibles.
@@ -20,8 +14,12 @@ Repo    : kndpt/battleforthecrown-repo
 
 ## Critères merge (tous requis)
 
-- `reviewDecision === "APPROVED"` — approuvé, aucun `CHANGES_REQUESTED` actif
-- Tous les `statusCheckRollup` à `conclusion/state === "SUCCESS"`
+### Approbation (une des deux conditions suffit)
+- **Greptile a reviewé** (check `Greptile Review: success`) **ET** n'a commenté aucun P0, P1 ou P2 ouvert
+- **OU CodeRabbit a approuvé** : `reviewDecision === "APPROVED"`, aucun `CHANGES_REQUESTED` actif
+
+### CI
+- Tous les checks du HEAD commit à `conclusion === "SUCCESS"`
 - Aucun check `IN_PROGRESS` / `QUEUED` / `PENDING`
 
 **Sinon → skip. Passage humain requis.**
@@ -39,3 +37,4 @@ gh pr merge <number> --squash --delete-branch
 Afficher un résumé : PRs mergées / ignorées (raison courte par PR ignorée).
 Ne jamais commenter une PR, ne jamais modifier de fichier state.
 Si une PR est en draft, tu peux la mettre en mode ready for review automatiquement et la traiter comme une PR ordinaire.
+Si conflits, les résoudre intelligement puis merger.
