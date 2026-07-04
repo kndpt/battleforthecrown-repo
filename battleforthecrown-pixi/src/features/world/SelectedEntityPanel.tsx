@@ -33,7 +33,7 @@ import { useGameStore } from "@/stores/game";
 import { useTickingNow } from "@/lib/useTickingNow";
 import { formatRemaining } from "@/features/village/constructionProgress";
 import { unitMetaFor } from "@/features/army/unitConfig";
-import { unitCategoryFor } from "@/features/design-system/components/villageMapPanel/meta";
+import { unitCategoryFor } from "@/features/army/unitCategory";
 import { summarizePresentTroops } from "./selectedEntityTroops";
 import { formatIntelAge, toIntelView } from "./intelView";
 import { ReportDetailModal } from "@/features/combat/ReportDetailModal";

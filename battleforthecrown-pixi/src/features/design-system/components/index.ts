@@ -84,7 +84,6 @@ export type {
   ArmySupportUnitChip,
   ArmyTroopSection,
   ArmyTroop,
-  ArmyTroopCategory,
   ArmyTroopCost,
   ArmyViewProps,
   ArmyVillageRow,
@@ -95,7 +94,7 @@ export type { BaseModalProps, BaseModalTone } from './BaseModal';
 export { BftcButton } from './BftcButton';
 export type { BftcButtonProps, BftcButtonSize, BftcButtonState, BftcButtonVariant } from './BftcButton';
 export { VillageMapPanel } from './villageMapPanel';
-export type { VillageMapPanelProps, VillageMapVariant, VillageMapTypeTag, TroopCategory, BarbarianTier, FullIntelPanelProps, FullIntelArmyEntry } from './villageMapPanel';
+export type { VillageMapPanelProps, VillageMapVariant, VillageMapTypeTag, BarbarianTier, FullIntelPanelProps, FullIntelArmyEntry } from './villageMapPanel';
 export { BorderStrokeTile } from './BorderStrokeTile';
 export type { BorderStrokeTileProps, BorderStrokeTone } from './BorderStrokeTile';
 export { BuildingCard } from './BuildingCard';

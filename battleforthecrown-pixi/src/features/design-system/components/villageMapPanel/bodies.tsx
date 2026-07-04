@@ -1,6 +1,7 @@
 import { publicAsset } from '@/lib/publicAsset';
 import { TIER_META } from './meta';
-import type { BarbarianTier, TroopCategory } from './meta';
+import type { BarbarianTier } from './meta';
+import type { UnitCategory } from '@/features/army/unitCategory';
 import {
   Dossier,
   WallGlyph,
@@ -91,7 +92,7 @@ export function UnscoutedPanel() {
 export interface FullIntelArmyEntry {
   icon: string;
   count: number;
-  category: TroopCategory;
+  category: UnitCategory;
   name?: string;
 }
 

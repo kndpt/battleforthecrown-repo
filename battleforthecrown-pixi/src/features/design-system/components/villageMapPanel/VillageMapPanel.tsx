@@ -181,7 +181,7 @@ function Footer({
         </BftcButton>
         <div style={{ display: 'flex', gap: 7 }}>
           <BftcButton variant="wood" size="sm" disabled={!onSendResources} className="w-full justify-center" onClick={onSendResources}>
-            <ScrollGlyph size={14}/> Envoyer ressources
+            <img src={publicAsset('/assets/resources/resources.png')} alt="" style={{ width: 16, height: 16 }}/> Envoyer ressources
           </BftcButton>
           <BftcButton variant="info" size="sm" disabled={!onReinforce} className="w-full justify-center" onClick={onReinforce}>
             <ShieldGlyph size={14}/> Renfort

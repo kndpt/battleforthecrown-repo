@@ -10,11 +10,11 @@ import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
 import { clamp } from '@/lib/math';
 import { DragHintOverlay } from './DragHintOverlay';
+import { CATEGORY_THEME as CAT_COLOR, type UnitCategory } from '@/features/army/unitCategory';
 
 export type ArmyFilterTone = 'wood' | 'green' | 'blue' | 'gold';
 export type ArmyNavTone = 'wood' | 'gold';
 export type ArmyOriginKind = 'mine' | 'ally' | 'sent' | 'training' | 'village';
-export type ArmyTroopCategory = 'Infanterie' | 'Tireur' | 'Cavalerie' | 'Spécial' | 'Élite' | 'Siège';
 export type ArmySliderTone = 'green' | 'gold' | 'red';
 
 export interface ArmyResourceChip {
@@ -71,7 +71,7 @@ export interface ArmyTroopCost {
 
 export interface ArmyTroop {
   attack: number;
-  category: ArmyTroopCategory;
+  category: UnitCategory;
   cost: ArmyTroopCost;
   defense: number;
   displayQuantity?: number;
@@ -252,15 +252,6 @@ export interface ArmyDraggingOverlayProps {
   ghostLabel: string;
   troopId: string;
 }
-
-const CAT_COLOR: Record<ArmyTroopCategory, { border: string; dark: string; ink: string; light: string }> = {
-  Infanterie: { border: 'var(--wood-bark)', dark: '#5d4a32', ink: '#fff', light: '#a67c52' },
-  Tireur: { border: 'var(--game-blue-border)', dark: 'var(--game-blue-dark)', ink: '#fff', light: 'var(--game-blue-light)' },
-  Cavalerie: { border: 'var(--game-green-border)', dark: 'var(--game-green-dark)', ink: '#fff', light: 'var(--game-green-light)' },
-  Spécial: { border: 'var(--game-red-border)', dark: 'var(--game-red-dark)', ink: '#fff', light: 'var(--game-red-light)' },
-  Élite: { border: 'var(--game-gold-border)', dark: 'var(--game-gold-dark)', ink: '#3a2a00', light: 'var(--game-gold-glow)' },
-  Siège: { border: 'var(--game-stone-border)', dark: 'var(--game-stone-dark)', ink: '#fff', light: 'var(--game-stone-light)' },
-};
 
 const ARMY_CSS_VARIABLES = {
   '--fg-muted-parch': '#4b5563',
