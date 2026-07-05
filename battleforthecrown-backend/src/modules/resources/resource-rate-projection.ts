@@ -32,6 +32,19 @@ export function projectResourceRates(
   return rates;
 }
 
+/**
+ * Convert per-minute rates to per-hour. The `productionRates` field of the
+ * `resources.changed` event and the `getResources` DTO is always hourly (the
+ * frontend interpolates on it), while resource catch-up works per minute.
+ */
+export function ratesPerHour(perMinute: ResourceTriple): ResourceTriple {
+  return {
+    wood: perMinute.wood * 60,
+    stone: perMinute.stone * 60,
+    iron: perMinute.iron * 60,
+  };
+}
+
 export function applyResourceCatchup(
   stock: ResourceTriple,
   ratesPerMinute: ResourceTriple,

@@ -11,10 +11,7 @@ import {
 } from '@battleforthecrown/shared/village';
 import { MS_PER_MINUTE } from '@battleforthecrown/shared/time';
 import { PRODUCTION_CATCHUP_THRESHOLD_MS } from './resources.constants';
-import {
-  applyResourceCatchup,
-  projectResourceRates,
-} from './resource-rate-projection';
+import { applyResourceCatchup, ratesPerHour } from './resource-rate-projection';
 
 @Injectable()
 export class ResourcesService {
@@ -101,12 +98,13 @@ export class ResourcesService {
       const elapsedMs = now.getTime() - lastUpdate.getTime();
       const elapsedMinutes = elapsedMs / MS_PER_MINUTE;
 
-      const ratesPerMinute = await this.fetchBuildingRates(
-        worldId,
-        village.buildings,
-        storageStrategy,
-        village.naturalTrait,
-      );
+      const ratesPerMinute =
+        await this.worldConfig.projectVillageRatesPerMinute(
+          worldId,
+          village.buildings,
+          storageStrategy,
+          village.naturalTrait,
+        );
 
       const updatedTotals = applyResourceCatchup(
         village.resourceStock,
@@ -152,7 +150,7 @@ export class ResourcesService {
     const elapsedMs = now.getTime() - resourceStock.lastUpdateTs.getTime();
     const elapsedMinutes = elapsedMs / MS_PER_MINUTE;
 
-    const ratesPerMinute = await this.fetchBuildingRates(
+    const ratesPerMinute = await this.worldConfig.projectVillageRatesPerMinute(
       worldId,
       buildings,
       strategy,
@@ -214,24 +212,6 @@ export class ResourcesService {
     return Math.max(1, Math.floor(baseLimit * storageBonus));
   }
 
-  private async fetchBuildingRates(
-    worldId: string,
-    buildings: Array<{ type: string; level: number }>,
-    strategy?: VillageStrategyType,
-    naturalTrait?: VillageNaturalTrait | null,
-  ): Promise<{ wood: number; stone: number; iron: number }> {
-    const config = await this.worldConfig.getConfig(worldId);
-    return projectResourceRates(buildings, (type, level) =>
-      this.worldConfig.computeProductionRate(
-        config,
-        type,
-        level,
-        strategy,
-        naturalTrait,
-      ),
-    );
-  }
-
   /**
    * Get production rates per hour for a village
    * Used by frontend for local interpolation
@@ -250,21 +230,13 @@ export class ResourcesService {
       throw new NotFoundException('Village not found');
     }
 
-    const worldId = village.worldId;
-
-    const strategyType = village.strategyConfig?.strategy;
-
-    const ratesPerMin = await this.fetchBuildingRates(
-      worldId,
+    const ratesPerMin = await this.worldConfig.projectVillageRatesPerMinute(
+      village.worldId,
       village.buildings,
-      strategyType,
+      village.strategyConfig?.strategy,
       village.naturalTrait,
     );
 
-    return {
-      wood: ratesPerMin.wood * 60,
-      stone: ratesPerMin.stone * 60,
-      iron: ratesPerMin.iron * 60,
-    };
+    return ratesPerHour(ratesPerMin);
   }
 }
