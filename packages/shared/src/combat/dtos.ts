@@ -1,6 +1,12 @@
 import type { LootResources } from './loot';
 import type { UnitMap } from '../army/unit-map';
 import type { VillageNaturalTrait } from '../village/traits';
+import type {
+  ScoutMagnitudeBand,
+  ScoutPrecision,
+  ScoutResourceRanges,
+  ScoutUnitRanges,
+} from './scout-precision';
 
 export type TargetKind =
   | 'PLAYER_VILLAGE'
@@ -134,8 +140,26 @@ export interface ScoutReportResponse {
   targetY: number;
   targetName?: string | null;
   targetTier?: string | null;
-  units: UnitMap;
-  resources: LootResources;
+  /**
+   * Qualité du rapport, dérivée du nombre d'ESPIONS envoyés (run 090,
+   * cf. docs/gameplay/11-scouting.md). Détermine quels champs de compo/stock
+   * sont peuplés. Toujours présent sur un rapport présenté (les anciens
+   * rapports sont floutés rétroactivement depuis `details.scoutUnits`).
+   */
+  precision: ScoutPrecision;
+  /** Compo exacte — peuplée **uniquement** au palier `PRECISE` ; `null` sinon. */
+  units: UnitMap | null;
+  /** Stock exact — peuplé **uniquement** au palier `PRECISE` ; `null` sinon. */
+  resources: LootResources | null;
+  /** Fourchettes par type d'unité — palier `RANGED` uniquement. */
+  unitRanges?: ScoutUnitRanges | null;
+  /** Fourchettes par ressource — palier `RANGED` uniquement. */
+  resourceRanges?: ScoutResourceRanges | null;
+  /** Magnitude d'armée catégorielle — palier `VAGUE` uniquement. */
+  armyBand?: ScoutMagnitudeBand | null;
+  /** Magnitude de stock catégorielle — palier `VAGUE` uniquement. */
+  resourceBand?: ScoutMagnitudeBand | null;
+  /** Style stratégique — masqué (`null`) au palier `VAGUE`, révélé dès `RANGED`. */
   strategy?: string | null;
   details?: {
     scoutLosses?: UnitMap;

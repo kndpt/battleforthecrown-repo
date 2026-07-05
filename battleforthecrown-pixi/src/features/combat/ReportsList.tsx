@@ -10,6 +10,7 @@ import {
 import type { CaravanReportResponse, ReinforcementReportResponse, ScoutReportResponse } from '@battleforthecrown/shared/combat';
 import { InboxTabs, MailInboxItem } from '@/features/design-system/components/MailInboxItem';
 import {
+  scoutReportPrecisionLabel,
   scoutReportResourceTotal,
   scoutReportTargetLabel,
   scoutReportTitle,
@@ -73,9 +74,14 @@ function combatInboxItem(report: CombatReportDto) {
 }
 
 function scoutInboxItem(report: ScoutReportResponse) {
+  // Rapport imprécis (peu d'espions, run 090) : pas de total exact à afficher.
+  const preview =
+    report.precision === 'PRECISE'
+      ? `${NUMBER_FORMATTER.format(scoutReportUnitTotal(report))} unités · ${NUMBER_FORMATTER.format(scoutReportResourceTotal(report))} ressources visibles.`
+      : `Renseignement ${scoutReportPrecisionLabel(report).toLowerCase()} · plus d'espions = rapport précis.`;
   return {
     icon: '/assets/lupa.png',
-    preview: `${NUMBER_FORMATTER.format(scoutReportUnitTotal(report))} unités · ${NUMBER_FORMATTER.format(scoutReportResourceTotal(report))} ressources visibles.`,
+    preview,
     sender: scoutReportTargetLabel(report),
     subject: `Reconnaissance · ${scoutReportTitle(report)}`,
     tag: { label: 'ESPION', tone: 'scout' as const },

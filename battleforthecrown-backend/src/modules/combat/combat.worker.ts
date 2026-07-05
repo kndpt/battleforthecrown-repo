@@ -49,6 +49,14 @@ import {
 import type { WorldTempo } from '@battleforthecrown/shared/world';
 import { computeInactivityState } from '@battleforthecrown/shared/world';
 import type { CombatResolution } from '@battleforthecrown/shared/combat';
+import {
+  deriveScoutPrecision,
+  isIntelCompositionRevealed,
+  isStrategyRevealed,
+  representativeIntelResources,
+  representativeIntelUnits,
+  scoutSpyCount,
+} from '@battleforthecrown/shared/combat';
 import { UNIT_TYPES, type UnitMap } from '@battleforthecrown/shared/army';
 import { typedEntries } from '@battleforthecrown/shared/utils';
 import { getCaptureDurationMs } from './capture-duration';
@@ -1810,19 +1818,33 @@ export class CombatWorker implements OnModuleInit {
       },
     });
 
+    // Cohérence carnet d'intel (run 090) : le carnet ne doit pas exposer plus
+    // de précision que le rapport. On dérive le palier depuis le nombre
+    // d'ESPIONS et on coarse la compo/stock (valeurs représentatives), en ne
+    // révélant compo/stock/style qu'à partir du palier RANGED.
+    const scoutPrecision = deriveScoutPrecision(
+      scoutSpyCount(parseUnitMap(expedition.units, 'expedition.units')),
+    );
+    const intelStrategy =
+      expedition.targetKind === 'PLAYER_VILLAGE' &&
+      isStrategyRevealed(scoutPrecision)
+        ? (targetVillage.strategyConfig?.strategy ?? null)
+        : null;
+
     await this.intelService.recordIntel(tx, {
       userId: attackerVillage.userId,
       worldId: expedition.worldId,
       targetVillageId: targetVillage.id,
       sourceKind: 'SCOUT',
       sourceReportId: report.id,
-      units: snapshot.units,
-      resources: snapshot.resources,
+      units: representativeIntelUnits(snapshot.units, scoutPrecision),
+      resources: representativeIntelResources(
+        snapshot.resources,
+        scoutPrecision,
+      ),
+      compositionRevealed: isIntelCompositionRevealed(scoutPrecision),
       wallLevel,
-      strategy:
-        expedition.targetKind === 'PLAYER_VILLAGE'
-          ? (targetVillage.strategyConfig?.strategy ?? null)
-          : null,
+      strategy: intelStrategy,
       targetName: targetVillage.name,
       targetX: expedition.targetX,
       targetY: expedition.targetY,

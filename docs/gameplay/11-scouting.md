@@ -45,6 +45,25 @@ Le scout réutilise l'infrastructure combat existante (déplacement euclidien, m
 - **Niveau de Rempart** : le rapport expose le niveau observé du mur de la cible pour calibrer la puissance d'attaque nécessaire.
 - **Style stratégique** : le scout est le seul moyen de connaître le style d'un village ennemi (Forteresse / Raiders / Économique / Équilibré) — info essentielle pour calibrer une attaque, cf. [`12-village-styles.md`](./12-village-styles.md).
 
+## Qualité du renseignement — précision par nombre d'ESPIONS (run 090)
+
+La précision du rapport **scale avec le nombre d'ESPIONS engagés**. L'information devient une ressource stratégique : scout rapide (1 espion) vs scout fiable (10 espions) vs attaque à l'aveugle.
+
+| Espions | Palier | Compo d'armée | Stock | Style |
+| --- | --- | --- | --- | --- |
+| 1-2 | `VAGUE` | magnitude catégorielle (`Aucune`…`Très élevée`), aucune compo | magnitude catégorielle | **masqué** (`Inconnu`) |
+| 3-9 | `RANGED` | fourchette `[min, max]` par type d'unité | fourchette par ressource | révélé |
+| ≥ 10 | `PRECISE` | compo exacte (parité historique) | stock exact | révélé |
+
+Décisions figées :
+
+- **Seuils fixes** (pas de scaling par puissance cible) : 3 (fourchettes), 10 (précis). Bornes canoniques dans `packages/shared/src/combat/scout-precision.ts`.
+- **Approximation déterministe par buckets**, zéro RNG (rapports reproductibles). La valeur exacte n'est jamais le centre d'une fourchette.
+- **Rempart** : toujours exact quel que soit le palier (donnée structurelle de calibrage, pas « armée cachée »).
+- **Flou serveur** : appliqué au moment de présenter le rapport ; la DB conserve le snapshot exact, mais aux paliers VAGUE/RANGED l'exact ne transite jamais vers le client. Les anciens rapports sont floutés rétroactivement depuis leur compte d'espions enregistré.
+- **Cohérence carnet d'intel** : le carnet (§ ci-dessous) n'expose jamais plus de précision que le rapport — un scout VAGUE n'écrase pas une observation antérieure plus riche et n'y injecte pas de compo/stock exacts.
+- **Perte d'ESPION** : hors scope (post-MVP, cf. § Évolutions).
+
 ## Carnet d'intel minimal (MVP léger)
 
 Objectif : rendre le scout exploitable sans obliger le joueur à fouiller toute l'inbox avant chaque décision.

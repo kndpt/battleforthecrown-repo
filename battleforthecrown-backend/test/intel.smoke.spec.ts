@@ -131,13 +131,14 @@ describe('intel smoke', () => {
       data: { used: 0, max: 100 },
     });
 
-    // Train 1 SPY directement en inventaire pour ne pas attendre le worker training
+    // Train 10 SPY directement en inventaire (worker training bypassé). 10 =
+    // palier PRECISE (run 090) → le carnet enregistre la compo/stock exacts.
     await ctx.prisma.unitInventory.upsert({
       where: {
         villageId_unitType: { villageId: villageA.id, unitType: 'SPY' },
       },
-      create: { villageId: villageA.id, unitType: 'SPY', quantity: 1 },
-      update: { quantity: 1 },
+      create: { villageId: villageA.id, unitType: 'SPY', quantity: 10 },
+      update: { quantity: 10 },
     });
 
     const barbarian = await seedAdjacentBarbarian(ctx, world.id, villageA, {
@@ -155,7 +156,7 @@ describe('intel smoke', () => {
     // NestJS retourne un body vide (ou "null" en texte) quand le service retourne null
     expect(beforeRes.text === 'null' || beforeRes.text === '').toBe(true);
 
-    // Envoyer le scout
+    // Envoyer le scout (10 espions → PRECISE, compo/stock exacts au carnet)
     const scoutRes = await request(ctx.server)
       .post('/combat/scout')
       .set('Authorization', `Bearer ${playerA.accessToken}`)
@@ -165,7 +166,7 @@ describe('intel smoke', () => {
         targetY: barbarian.y,
         targetKind: 'BARBARIAN_VILLAGE',
         targetRefId: barbarian.id,
-        units: { SPY: 1 },
+        units: { SPY: 10 },
       });
     expect(scoutRes.status).toBeLessThan(300);
 
@@ -787,13 +788,14 @@ describe('intel smoke', () => {
       data: { used: 0, max: 500 },
     });
 
-    // Inject 1 SPY directly (skip training worker)
+    // Inject 10 SPY directly (skip training worker) → PRECISE : le scout révèle
+    // la strategy (masquée sous le palier RANGED, run 090).
     await ctx.prisma.unitInventory.upsert({
       where: {
         villageId_unitType: { villageId: villageA.id, unitType: 'SPY' },
       },
-      create: { villageId: villageA.id, unitType: 'SPY', quantity: 1 },
-      update: { quantity: 1 },
+      create: { villageId: villageA.id, unitType: 'SPY', quantity: 10 },
+      update: { quantity: 10 },
     });
 
     // ── Step 1 : Scout villageB ──────────────────────────────────────────
@@ -806,7 +808,7 @@ describe('intel smoke', () => {
         targetY,
         targetKind: 'PLAYER_VILLAGE',
         targetRefId: villageB.id,
-        units: { SPY: 1 },
+        units: { SPY: 10 },
       });
     expect(scoutRes.status).toBeLessThan(300);
 
