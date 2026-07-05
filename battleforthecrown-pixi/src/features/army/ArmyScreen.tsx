@@ -532,11 +532,23 @@ export function ArmyScreen() {
   };
 
   const handleRecallLine = (line: GarrisonLine) => {
-    recallReinforcement.mutate({
-      originVillageId: line.originVillageId,
-      units: { [line.unitType]: line.quantity },
-      villageId: line.villageId,
-    });
+    recallReinforcement.mutate(
+      {
+        originVillageId: line.originVillageId,
+        units: { [line.unitType]: line.quantity },
+        villageId: line.villageId,
+      },
+      {
+        onError: (err) => {
+          pushToast({
+            title: 'Rappel impossible',
+            description: err instanceof ApiError ? err.message : 'Échec du rappel',
+            tone: 'error',
+            ttlMs: 4000,
+          });
+        },
+      },
+    );
   };
 
   return (
@@ -668,11 +680,6 @@ export function ArmyScreen() {
               onRecall={handleRecallLine}
               pendingRecallKey={pendingRecallKey}
             />
-          ) : null}
-          {recallReinforcement.isError ? (
-            <p className="mx-3 mb-3 rounded-md border border-red-700/30 bg-red-900/20 px-3 py-2 text-sm text-red-900">
-              Impossible de rappeler ce renfort pour le moment.
-            </p>
           ) : null}
         </GameBottomSheetPanel>
       </BottomSheet>

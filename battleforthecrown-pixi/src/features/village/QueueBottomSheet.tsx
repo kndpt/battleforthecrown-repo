@@ -2,12 +2,14 @@ import { useEffect } from 'react';
 import { MAX_CONSTRUCTION_QUEUE } from '@battleforthecrown/shared/village/buildings';
 import { Badge, BottomSheet } from '@/ui';
 import { BuildQueueCard, GameBottomSheetPanel } from '@/features/design-system/components';
+import { ApiError } from '@/api';
 import {
   useBuildingQueueQuery,
   useCancelConstructionMutation,
   useVillageBuildingsQuery,
 } from '@/api/queries';
 import { useGameStore } from '@/stores/game';
+import { useUiStore } from '@/stores/ui';
 import { useTickingNow } from '@/lib/useTickingNow';
 import { metaFor } from './buildingMeta';
 import { rawIconFor } from './queueIcons';
@@ -34,6 +36,7 @@ export function QueueBottomSheet({ isOpen, onClose }: QueueBottomSheetProps) {
   const { data: buildingQueue = [] } = useBuildingQueueQuery(villageId);
   const { data: buildings = [] } = useVillageBuildingsQuery(villageId);
   const cancel = useCancelConstructionMutation();
+  const pushToast = useUiStore((state) => state.pushToast);
   const now = useTickingNow(1_000);
 
   useEffect(() => {
@@ -49,7 +52,19 @@ export function QueueBottomSheet({ isOpen, onClose }: QueueBottomSheetProps) {
 
   const handleCancel = (buildingId: string) => {
     if (!villageId) return;
-    cancel.mutate({ villageId, buildingId });
+    cancel.mutate(
+      { villageId, buildingId },
+      {
+        onError: (err) => {
+          pushToast({
+            title: 'Annulation impossible',
+            description: err instanceof ApiError ? err.message : "Échec de l'annulation",
+            tone: 'error',
+            ttlMs: 4000,
+          });
+        },
+      },
+    );
   };
 
   return (

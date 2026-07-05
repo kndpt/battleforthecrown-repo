@@ -77,8 +77,9 @@ import {
   useCancelConstructionMutation,
   useVillageStrategyQuery,
 } from '@/api/queries';
-import type { BuildingDto } from '@/api';
+import { ApiError, type BuildingDto } from '@/api';
 import { BUILDING_TYPES } from '@battleforthecrown/shared/village/buildings';
+import { useUiStore } from '@/stores/ui';
 import { villageVisualTierFromCastleLevel } from '@battleforthecrown/shared/world';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -126,6 +127,7 @@ export function VillageView() {
   const onboardingSummary = useOnboardingSummaryQuery(worldId);
   const claimDailyCard = useClaimDailyCardMutation();
   const cancelConstruction = useCancelConstructionMutation();
+  const pushToast = useUiStore((state) => state.pushToast);
   const memberships = useMyMembershipsQuery();
   const publicWorlds = usePublicWorldsQuery();
 
@@ -326,7 +328,32 @@ export function VillageView() {
 
   const handleCancelConstruction = (buildingId: string) => {
     if (!villageId) return;
-    cancelConstruction.mutate({ villageId, buildingId });
+    cancelConstruction.mutate(
+      { villageId, buildingId },
+      {
+        onError: (err) => {
+          pushToast({
+            title: 'Annulation impossible',
+            description: err instanceof ApiError ? err.message : "Échec de l'annulation",
+            tone: 'error',
+            ttlMs: 4000,
+          });
+        },
+      },
+    );
+  };
+
+  const handleClaimDaily = (input: Parameters<typeof claimDailyCard.mutate>[0]) => {
+    claimDailyCard.mutate(input, {
+      onError: (err) => {
+        pushToast({
+          title: 'Récompense impossible',
+          description: err instanceof ApiError ? err.message : 'Échec de la réclamation',
+          tone: 'error',
+          ttlMs: 4000,
+        });
+      },
+    });
   };
 
   const closeProfile = () => {
@@ -386,7 +413,7 @@ export function VillageView() {
                 isClaiming={claimDailyCard.isPending}
                 isLoading={retentionSummary.isLoading}
                 onAction={runVillageAction}
-                onClaim={(input) => claimDailyCard.mutate(input)}
+                onClaim={handleClaimDaily}
                 onNavigate={navigate}
                 sealSize={40}
                 summary={retentionSummary.data}
