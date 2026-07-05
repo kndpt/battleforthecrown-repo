@@ -304,7 +304,7 @@ const navIconPath: Record<string, string> = {
 };
 
 function formatNumber(value: number): string {
-  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return value.toLocaleString('fr-FR');
 }
 
 function clampQuantity(value: number, max: number): number {
