@@ -802,6 +802,32 @@
         ".agents/maintenance/gameplay-plan-subjects.json — subject 060 couvre le preview PvP (castleLevel), 084 les sprites T4/T5 ; aucun subject ne couvre la durée de capture barbare"
       ],
       "addedAt": "2026-07-04"
+    },
+    {
+      "specPath": "docs/gameplay/16-notifications.md",
+      "slug": "capture-window-defender-visibility",
+      "title": "Visibilité in-app de la fenêtre de capture côté défenseur",
+      "keywords": [
+        "capture-window",
+        "fenêtre-capture",
+        "defender",
+        "défenseur",
+        "siège",
+        "notification"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/094-feature-capture-window-defender-visibility.md",
+      "artefactId": "094",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/capture-window-defender-visibility",
+      "gapSummary": "Le propriétaire original d'un village PvP en cours de capture n'a aucune surface in-app live (event WS, endpoint, ou feed HUD countdown) l'avertissant du siège. Les 3 events de fenêtre routent l'attaquant uniquement — équivalent défenseur du run 086 (attaque entrante) jamais livré.",
+      "codeEvidence": [
+        "battleforthecrown-backend/src/modules/combat/combat.service.ts:1239-1246 — getOpenConquests filtre attackerUserId only, aucune requête symétrique côté défenseur",
+        "battleforthecrown-backend/src/modules/event/event-outbox-notification-planner.ts:144-162,193 — planCaptureWindowOpened/Interrupted routent attackerUserId only ; completed → newOwnerUserId (pas l'ancien propriétaire)",
+        "packages/shared/src/events/types.ts:156-177 — VillageCaptureWindowOpened/InterruptedPayload ne portent que attackerUserId, pas de champ propriétaire cible/défenseur",
+        "battleforthecrown-pixi/src — aucun match sur underCapture/beingCaptured/captureTargetingMe/villagesUnderCapture (surface défenseur absente)"
+      ],
+      "addedAt": "2026-07-05"
     }
   ]
 }
