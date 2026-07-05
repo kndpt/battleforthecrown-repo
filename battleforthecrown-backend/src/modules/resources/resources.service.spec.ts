@@ -4,24 +4,21 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import { WorldConfigService } from '../world/world-config.service';
 import { VillageStrategyService } from '../strategy/village-strategy.service';
-import type { WorldConfig } from '@battleforthecrown/shared/world';
 import { MS_PER_HOUR } from '@battleforthecrown/shared/time';
 
 describe('ResourcesService', () => {
   let service: ResourcesService;
   let mockWorldConfig: {
-    getConfig: jest.Mock;
-    computeProductionRate: jest.Mock;
+    projectVillageRatesPerMinute: jest.Mock;
   };
 
-  const fakeConfig = {} as WorldConfig;
-  const RATE_PER_MINUTE = 10;
   const sixtyMinutesAgo = () => new Date(Date.now() - MS_PER_HOUR);
 
   beforeEach(async () => {
     mockWorldConfig = {
-      getConfig: jest.fn().mockResolvedValue(fakeConfig),
-      computeProductionRate: jest.fn().mockReturnValue(RATE_PER_MINUTE),
+      projectVillageRatesPerMinute: jest
+        .fn()
+        .mockResolvedValue({ wood: 0, stone: 0, iron: 0 }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -42,7 +39,13 @@ describe('ResourcesService', () => {
   });
 
   describe('calculateCurrentResources', () => {
-    it('returns 0 production gain for a missing building type', async () => {
+    it('accrues each stock from its per-minute rate over the elapsed time', async () => {
+      mockWorldConfig.projectVillageRatesPerMinute.mockResolvedValue({
+        wood: 0,
+        stone: 10,
+        iron: 0,
+      });
+
       const result = await service.calculateCurrentResources({
         worldId: 'world-1',
         resourceStock: {
@@ -52,73 +55,40 @@ describe('ResourcesService', () => {
           maxPerType: 50_000,
           lastUpdateTs: sixtyMinutesAgo(),
         },
-        buildings: [{ type: 'STONE', level: 3 }], // no WOOD, no IRON
+        buildings: [{ type: 'STONE', level: 3 }],
       });
 
-      // STONE present: 200 + floor(10 * 60) = 800
+      // STONE: 200 + floor(10 * 60) = 800; wood/iron have rate 0 → unchanged
       expect(result.stone).toBe(800);
-      // WOOD and IRON missing: rate=0, no gain
       expect(result.wood).toBe(100);
       expect(result.iron).toBe(150);
     });
 
-    it('does not call computeProductionRate for absent building types', async () => {
-      await service.calculateCurrentResources({
-        worldId: 'world-1',
-        resourceStock: {
-          wood: 0,
-          stone: 0,
-          iron: 0,
-          maxPerType: 50_000,
-          lastUpdateTs: sixtyMinutesAgo(),
-        },
-        buildings: [{ type: 'IRON', level: 1 }],
+    it('caps the accrual at maxPerType', async () => {
+      mockWorldConfig.projectVillageRatesPerMinute.mockResolvedValue({
+        wood: 1000,
+        stone: 0,
+        iron: 0,
       });
 
-      expect(mockWorldConfig.computeProductionRate).toHaveBeenCalledTimes(1);
-      expect(mockWorldConfig.computeProductionRate).toHaveBeenCalledWith(
-        fakeConfig,
-        'IRON',
-        1,
-        undefined,
-        undefined,
-      );
-    });
-
-    it('forwards strategy to computeProductionRate for all present buildings', async () => {
-      await service.calculateCurrentResources({
+      const result = await service.calculateCurrentResources({
         worldId: 'world-1',
         resourceStock: {
           wood: 0,
           stone: 0,
           iron: 0,
-          maxPerType: 50_000,
+          maxPerType: 500,
           lastUpdateTs: sixtyMinutesAgo(),
         },
-        buildings: [
-          { type: 'WOOD', level: 2 },
-          { type: 'STONE', level: 3 },
-        ],
-        strategy: 'ECONOMIC',
+        buildings: [{ type: 'WOOD', level: 1 }],
       });
 
-      expect(mockWorldConfig.computeProductionRate).toHaveBeenCalledWith(
-        fakeConfig,
-        'WOOD',
-        2,
-        'ECONOMIC',
-        undefined,
-      );
-      expect(mockWorldConfig.computeProductionRate).toHaveBeenCalledWith(
-        fakeConfig,
-        'STONE',
-        3,
-        'ECONOMIC',
-        undefined,
-      );
+      expect(result.wood).toBe(500);
     });
 
-    it('forwards naturalTrait to computeProductionRate when provided', async () => {
+    it('forwards worldId, buildings, strategy and naturalTrait to the projection', async () => {
+      const buildings = [{ type: 'WOOD', level: 2 }];
+
       await service.calculateCurrentResources({
         worldId: 'world-1',
         resourceStock: {
@@ -128,38 +98,17 @@ describe('ResourcesService', () => {
           maxPerType: 50_000,
           lastUpdateTs: sixtyMinutesAgo(),
         },
-        buildings: [{ type: 'WOOD', level: 2 }],
+        buildings,
         strategy: 'ECONOMIC',
         naturalTrait: 'DENSE_FOREST',
       });
 
-      expect(mockWorldConfig.computeProductionRate).toHaveBeenCalledWith(
-        fakeConfig,
-        'WOOD',
-        2,
+      expect(mockWorldConfig.projectVillageRatesPerMinute).toHaveBeenCalledWith(
+        'world-1',
+        buildings,
         'ECONOMIC',
         'DENSE_FOREST',
       );
-    });
-
-    it('fetches world config exactly once regardless of building count', async () => {
-      await service.calculateCurrentResources({
-        worldId: 'world-1',
-        resourceStock: {
-          wood: 0,
-          stone: 0,
-          iron: 0,
-          maxPerType: 50_000,
-          lastUpdateTs: sixtyMinutesAgo(),
-        },
-        buildings: [
-          { type: 'WOOD', level: 1 },
-          { type: 'STONE', level: 1 },
-          { type: 'IRON', level: 1 },
-        ],
-      });
-
-      expect(mockWorldConfig.getConfig).toHaveBeenCalledTimes(1);
     });
   });
 });

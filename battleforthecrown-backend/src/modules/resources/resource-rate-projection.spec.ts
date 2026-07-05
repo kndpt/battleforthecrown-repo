@@ -1,6 +1,7 @@
 import {
   applyResourceCatchup,
   projectResourceRates,
+  ratesPerHour,
 } from './resource-rate-projection';
 
 describe('projectResourceRates', () => {
@@ -39,6 +40,16 @@ describe('projectResourceRates', () => {
       () => 999,
     );
     expect(result).toEqual({ wood: 0, stone: 0, iron: 0 });
+  });
+});
+
+describe('ratesPerHour', () => {
+  it('multiplies each per-minute rate by 60', () => {
+    expect(ratesPerHour({ wood: 1, stone: 2.5, iron: 0 })).toEqual({
+      wood: 60,
+      stone: 150,
+      iron: 0,
+    });
   });
 });
 

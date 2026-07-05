@@ -16,7 +16,6 @@ import {
   StrategyBonus,
   VillageStrategyChangeCost,
   VillageStrategyType,
-  VillageNaturalTrait,
   getBuildingLevel,
   getVillageStrategyChangeCost,
   getStrategyBonusValue,
@@ -26,7 +25,7 @@ import {
   StrategyBonusContext,
   projectStrategyBonusForContext,
 } from './strategy-bonus-projection';
-import { projectResourceRates } from '../resources/resource-rate-projection';
+import { ratesPerHour } from '../resources/resource-rate-projection';
 import { MS_PER_HOUR } from '@battleforthecrown/shared/time';
 
 export interface StrategyChangeResult {
@@ -308,9 +307,13 @@ export class VillageStrategyService {
         iron: updatedStock.iron,
         maxPerType: updatedStock.maxPerType,
         lastUpdateTs: updatedStock.lastUpdateTs.toISOString(),
-        productionRates: await this.getProductionRatesForStrategy(
-          village,
-          newStrategy,
+        productionRates: ratesPerHour(
+          await this.worldConfig.projectVillageRatesPerMinute(
+            village.worldId,
+            village.buildings,
+            newStrategy,
+            village.naturalTrait,
+          ),
         ),
       });
 
@@ -372,31 +375,6 @@ export class VillageStrategyService {
     return Math.floor(
       baseLimit * getStrategyBonusValue(strategy, 'storageBonus'),
     );
-  }
-
-  private async getProductionRatesForStrategy(
-    village: {
-      worldId: string;
-      buildings: Array<{ type: string; level: number }>;
-      naturalTrait: VillageNaturalTrait;
-    },
-    strategy: VillageStrategyType,
-  ) {
-    const config = await this.worldConfig.getConfig(village.worldId);
-    const ratesPerMin = projectResourceRates(village.buildings, (type, level) =>
-      this.worldConfig.computeProductionRate(
-        config,
-        type,
-        level,
-        strategy,
-        village.naturalTrait,
-      ),
-    );
-    return {
-      wood: ratesPerMin.wood * 60,
-      stone: ratesPerMin.stone * 60,
-      iron: ratesPerMin.iron * 60,
-    };
   }
 
   async getStrategyRecommendations(villageId: string, userId: string) {

@@ -23,6 +23,10 @@ import {
   REFERENCE_SPEED,
 } from '@battleforthecrown/shared/logic';
 import { MS_PER_SECOND } from '@battleforthecrown/shared/time';
+import {
+  projectResourceRates,
+  type ResourceTriple,
+} from '../resources/resource-rate-projection';
 
 @Injectable()
 export class WorldConfigService {
@@ -114,6 +118,25 @@ export class WorldConfigService {
       absoluteRate,
       config.tempo,
       'resourceProduction',
+    );
+  }
+
+  /**
+   * Per-minute production rates for a whole village's resource buildings,
+   * resolving the world config once. Single home for the
+   * `getConfig` + `projectResourceRates(…computeProductionRate…)` block that
+   * both ResourcesService (accrual + `getProductionRates`) and
+   * VillageStrategyService (strategy-change outbox payload) need.
+   */
+  async projectVillageRatesPerMinute(
+    worldId: string,
+    buildings: ReadonlyArray<{ type: string; level: number }>,
+    strategy?: VillageStrategyType,
+    naturalTrait?: VillageNaturalTrait | null,
+  ): Promise<ResourceTriple> {
+    const config = await this.getConfig(worldId);
+    return projectResourceRates(buildings, (type, level) =>
+      this.computeProductionRate(config, type, level, strategy, naturalTrait),
     );
   }
 

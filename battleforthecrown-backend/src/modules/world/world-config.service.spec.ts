@@ -257,6 +257,47 @@ describe('WorldConfigService', () => {
     });
   });
 
+  describe('projectVillageRatesPerMinute', () => {
+    it('projects per-minute rates only for present resource buildings', async () => {
+      mockWorld();
+
+      const rates = await service.projectVillageRatesPerMinute('world-1', [
+        { type: 'STONE', level: 3 },
+      ]);
+
+      expect(rates.wood).toBe(0);
+      expect(rates.iron).toBe(0);
+      expect(rates.stone).toBeGreaterThan(0);
+    });
+
+    it('fetches the world config once regardless of building count', async () => {
+      mockWorld();
+
+      await service.projectVillageRatesPerMinute('world-1', [
+        { type: 'WOOD', level: 1 },
+        { type: 'STONE', level: 1 },
+        { type: 'IRON', level: 1 },
+      ]);
+
+      expect(mockPrismaService.world.findUnique).toHaveBeenCalledTimes(1);
+    });
+
+    it('forwards the strategy bonus to the projected rates (+20% ECONOMIC)', async () => {
+      mockWorld();
+
+      const base = await service.projectVillageRatesPerMinute('world-1', [
+        { type: 'WOOD', level: 1 },
+      ]);
+      const withEconomic = await service.projectVillageRatesPerMinute(
+        'world-1',
+        [{ type: 'WOOD', level: 1 }],
+        'ECONOMIC',
+      );
+
+      expect(withEconomic.wood).toBeCloseTo(base.wood * 1.2, 5);
+    });
+  });
+
   describe('getStorageLimit', () => {
     it('returns the storage limit for a warehouse level', () => {
       expect(service.getStorageLimit('world-1', 5)).toBe(12000);
