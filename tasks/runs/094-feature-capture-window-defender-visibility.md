@@ -45,6 +45,7 @@ Automatisables (curl / SQL / smoke / test / grep) :
 - [ ] Interruption **et** complétion routent aussi le défenseur / propriétaire original (`capture-window-interrupted` défenseur ; `capture-window-completed` → `previousOwnerUserId` + `newOwnerUserId`).
 - [ ] Cible barbare (`isBarbarian` / `userId null`) : jamais routée ni listée côté défenseur.
 - [ ] Une fenêtre `COMPLETED` / `INTERRUPTED` disparaît de `captures/targeting-me` (filtre `status = OPEN`).
+- [ ] **Idempotence WS (at-least-once)** : une livraison **dupliquée** de `capture-window-opened` (retry Outbox, ~1 s) ne crée pas de doublon dans le feed défenseur et ne redémarre pas le countdown — dédup stable par `pendingConquestId` côté consumer front (invariant `docs/architecture/decisions.md:41` + `realtime.md:213`). Couvert par un test unit mapper/consumer.
 - [ ] `DefenderCaptureDto` défini dans shared + rebuild + DTO partagé consommé côté front (pas de duplication) ; `previousOwnerUserId` typé sur le payload `completed`.
 - [ ] `yarn static-check` + `test:backend` + `test:pixi` verts ; smoke `capture-defender` ajouté.
 
@@ -70,9 +71,9 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 - **T4 — back/conquest.service** : alimenter `previousOwnerUserId` dans l'Outbox `capture-window-completed` (source `conquerVillageInTx.previousOwnerId`, `:231/:351`) — **ne pas** résoudre via `getUserIdByVillage` sur `completed` (renverrait l'attaquant post-transfert). (≤1)
 - **T5 — back/service+controller** : `getCapturesTargetingMe(userId, worldId)` (join `PendingConquest OPEN → targetVillage.userId = userId`, DTO fog-safe) + `@Get('captures/targeting-me')` (ownership service-side). (≤2)
 - **T6 — back/test** : smoke `capture-defender` — endpoint liste côté défenseur, `getOpenConquests` attaquant inchangé, barbare exclu, défenseur reçoit les 3 events, fog whitelist, ownership 403/404, filtre `status = OPEN`. (≤2)
-- **T7 — front/query+ws** : `useCapturesTargetingMeQuery` + keys (`api/queries/combat.ts`) ; brancher les handlers capture-window de `api/ws-bindings.ts:920-976` pour invalider **aussi** la query défenseur. (≤3)
-- **T8 — front/ui+vm** : surface défenseur dans `KingdomActivitiesPanel.tsx` + `KingdomActivitiesBottomSheet.tsx` + mapper `kingdomActivitiesViewModel.ts` (countdown `captureUntil`, tri asc). (≤5)
-- **T9 — front/test** : unit mapper DTO → card (countdown, tri `captureUntil` ascendant). (≤1)
+- **T7 — front/query+ws** : `useCapturesTargetingMeQuery` + keys (`api/queries/combat.ts`) ; brancher les handlers capture-window de `api/ws-bindings.ts:920-976` pour invalider **aussi** la query défenseur. Consumer **idempotent** : la source de vérité reste la query (invalidation → refetch dédupliqué serveur-side par `pendingConquestId`), un event dupliqué ne fait que re-déclencher l'invalidation (no-op sur le feed). (≤3)
+- **T8 — front/ui+vm** : surface défenseur dans `KingdomActivitiesPanel.tsx` + `KingdomActivitiesBottomSheet.tsx` + mapper `kingdomActivitiesViewModel.ts` (countdown `captureUntil`, tri asc). Dédup stable par `pendingConquestId` (clé de liste) — pas de doublon ni de reset du countdown sur livraison dupliquée. (≤5)
+- **T9 — front/test** : unit mapper DTO → card (countdown, tri `captureUntil` ascendant) + cas **idempotence** : un DTO répété par `pendingConquestId` → une seule card, countdown stable. (≤1)
 - **T10 — docs** : `16-notifications.md` (volet défenseur « Fin de fenêtre de capture » livré) + `docs/architecture/realtime.md` (routing des 3 events vers le défenseur).
 
 ## Points d'attention
@@ -82,6 +83,7 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 - **Sémantique surface** : « Menaces » (086) = attaques `EN_ROUTE` pré-combat ; le siège = post-combat (noble déjà installé, garnison d'occupation en place). Fusionner ou onglet dédié → tranché en T1.
 - **Portée endpoint** : `getIncomingAttacks` est per-village, `getOpenConquests` per-world. Recommandé : per-world pour couvrir un défenseur multi-village.
 - **Pas de migration** : `PendingConquest` ne stocke pas de `targetUserId` ; OK pour `OPEN` (résolution live) et `completed` (snapshot previousOwner). Ne pas ajouter de colonne.
+- **Idempotence at-least-once** : l'Outbox garantit une livraison ≥ 1 fois (`decisions.md:41`). Le feed défenseur étant une surface persistante (pas un toast), il DOIT dédupliquer par `pendingConquestId` (pattern « write idempotent par ID », `realtime.md:213`) — jamais de doublon ni de reset de countdown sur retry.
 - **Marqueur carte** : capture déjà public (`WorldMapScene captureMarker`) ; la nouvelle surface ne doit pas dégrader/dupliquer ce fog partiel existant.
 - **Push FCM/APNs** : hors scope (Phase 6 push POST-MVP), comme 086.
 
