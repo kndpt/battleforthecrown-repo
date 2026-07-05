@@ -10,6 +10,7 @@ export const attackCommandSchema = z.object({
   targetKind: z.enum([
     TARGET_KINDS.PLAYER_VILLAGE,
     TARGET_KINDS.BARBARIAN_VILLAGE,
+    TARGET_KINDS.EXTRACTION_SITE,
   ]),
   targetRefId: z.string().min(1),
   units: UnitMapSchema,

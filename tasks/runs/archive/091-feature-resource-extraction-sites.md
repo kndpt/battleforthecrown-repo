@@ -1,8 +1,8 @@
 # Run #091 — resource-extraction-sites
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-07-04
+> **Terminé** : 2026-07-04
 
 ## Cible
 
@@ -93,14 +93,45 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 
 ## Progress
 
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
+_(git history)_
 
 ## Décisions prises
 
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
+_(git history — arbitrages user : feature complète 1 PR, pas de tiers, cap escorte fixe, respawn aléatoire, occupant jamais exposé ; lead : Expedition étendu, sites hors vision absents, pas de CombatReport interception, UI HUD hors scope)_
 
 ## Rapport final
 
+Feature complète livrée (tranches A+B+C) : sites rares fog-gated inconditionnellement, boucle d'exploitation server-authoritative (dispatch sérialisé, accrual plafonné, crédit au retour uniquement), interception avec vol partiel doublement borné (ratio 0,5 + capacité de charge), épuisement→respawn, 4 events Outbox, rendu Pixi. Dettes loguées : pas de CombatReport inbox pour l'interception, pas d'UI HUD d'envoi/attaque de site (tickets futurs), allocations Pixi par entité (mineur perf). Backprop SPEC : V12 (entités carte secrètes fog-gated inconditionnellement) + B4 (dispatch sérialisé obligatoire).
+
 ### Acceptance & QA
 
-_(Vide au démarrage. Rempli en fin de run.)_
+**Critères d'acceptance vérifiés** :
+
+- [x] Migration `ResourceExtractionSite` + sites < joueurs — `yarn workspace battleforthecrown-backend prisma migrate dev --name add_resource_extraction_sites` → migration 100 % additive appliquée (dev + smoke) ; smoke « site seeding » → 2 membres ⇒ 1 site ACTIVE (< membres, chemin réel join REST → hook).
+- [x] Site renvoyé seulement en vision, y compris `fogOfWarEnabled=false` — `yarn workspace battleforthecrown-backend test:smoke:run -- extraction.smoke.spec.ts` (scénario « out-of-vision site absent even with fogOfWar disabled ») → vert ; hors vision = absent, jamais de blip fogged.
+- [x] Anti-leak payload `{resourceType, activity}` seulement — `yarn workspace battleforthecrown-backend test -- --testPathPatterns="world-entities"` → 3 suites / 13 tests verts (dont `world-entities-extraction-leak.spec.ts`).
+- [x] Verrou population + 2ᵉ envoi refusé + cap escorte — smoke dispatch (population.used vérifié en DB, 400 sur 2ᵉ envoi / escorte 51 / villageois hors bornes) → verts ; garanti sous concurrence par `withSerializableRetry` + `Serializable` (cf. review).
+- [x] Épuisement → `DEPLETED` + sécurisation plafonnée — smoke « depletion » → capacité restante 50 ⇒ 50 sécurisés (pas 9 600 bruts), state DEPLETED.
+- [x] Crédit au retour uniquement — smoke lifecycle → stock village inchangé après completion, crédité du montant exact après `handleReturn`.
+- [x] Vol partiel < stock accumulé — smoke interception → `stolen > 0` et `< accru total`, site décrémenté de l'accru complet.
+- [x] Respawn à l'épuisement — smoke → nouveau site ACTIVE du même type ailleurs dans le monde.
+- [x] Events `extraction.*` via Outbox — smoke asserte les rows `EventOutbox` started/depleted/attacked/returned ; 5 points d'enregistrement (shared types+schemas, planner, ws-bindings, realtime.md).
+- [x] World lifecycle : dispatch + interception rejetés en `ENDED` — smoke « world lifecycle guard » → ≥ 400 (`assertWorldWritable` dans les 2 chemins).
+
+**Review indépendante** : Déclenchée (raisons : back+front, diff > 100 lignes, invariant durable anti-leak, exigée par la fiche). Verdict initial **BLOCK** (1 majeur : dispatch non sérialisé → race « site libre »/« 1 actif/joueur ») + 4 mineurs. Cycle de fix unique (sérialisation des 2 dispatches pattern caravane, config monde réelle dans l'interception, self-attack interdite, doc realtime + branche morte Pixi) → re-review ciblée → **GO** (0 bloquant/majeur restant).
+
+**Tests automatisés** :
+- `yarn workspace battleforthecrown-backend test` → 59 suites / 558 tests verts.
+- `yarn workspace battleforthecrown-pixi test` → 127 fichiers / 901 tests verts (dont `packages/shared/src/extraction/formulas.spec.ts`).
+- `yarn static-check` → vert (shared build + tsc + eslint backend/pixi).
+
+**Smokes lancés** : Ciblés — `test:smoke:preflight` puis `yarn workspace battleforthecrown-backend test:smoke:run -- extraction.smoke.spec.ts` → 10/10 verts. Full smoke couvert par la CI PR.
+
+**Smokes ajoutés/modifiés** : `battleforthecrown-backend/test/extraction.smoke.spec.ts` (nouveau, 10 scénarios : dispatch + rejets + vision, exposition fog inconditionnelle, lifecycle complet, épuisement + respawn, interception vol partiel, monde ENDED, seeding au join < membres).
+
+**QA fonctionnelle agent** : couverte par le smoke (REST réel + DB réelle + services Nest réels + assertions rows `EventOutbox` — équivalent server + curl + SELECT). Aucun comportement backend non couvert ne restait vérifiable sans navigateur.
+
+**Tests IG à faire par le user** (diff touche le rendu Pixi) :
+- [ ] Carte monde : un site s'affiche dans la vision Watchtower avec le bon marker (🌳 bois / 🪨 pierre / ⛏️ fer).
+- [ ] Après envoi d'une équipe (`POST /combat/extraction` via curl), un ring d'activité pulse sur le site (EXPLOITING) et disparaît au retour.
+- [ ] En parcourant la carte, aucun site hors des disques de vision n'apparaît.

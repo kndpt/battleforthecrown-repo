@@ -19,3 +19,4 @@ export * from './renown';
 export * from './threat';
 export * from './social';
 export * from './map-markers';
+export * from './extraction';

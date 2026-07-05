@@ -334,6 +334,38 @@ export interface RankingsCycleClosedPayload {
   cycleEndAt: string;
 }
 
+export interface ExtractionStartedPayload {
+  expeditionId: string;
+  worldId: string;
+  villageId: string;
+  siteId: string;
+  resourceType: "WOOD" | "STONE" | "IRON";
+  arrivalAt: string;
+  durationMs: number;
+}
+
+export interface ExtractionDepletedPayload {
+  worldId: string;
+  siteId: string;
+  resourceType: "WOOD" | "STONE" | "IRON";
+}
+
+export interface ExtractionAttackedPayload {
+  expeditionId: string;
+  worldId: string;
+  villageId: string;
+  siteId: string;
+  interrupted: boolean;
+  stolen: { wood: number; stone: number; iron: number };
+}
+
+export interface ExtractionReturnedPayload {
+  expeditionId: string;
+  worldId: string;
+  villageId: string;
+  resources: { wood: number; stone: number; iron: number };
+}
+
 export type OutboxEventPayload =
   | { kind: "building.completed"; payload: BuildingCompletedPayload }
   | { kind: "unit.training.completed"; payload: UnitTrainingCompletedPayload }
@@ -382,7 +414,11 @@ export type OutboxEventPayload =
       payload: WorldInscriptionPhaseChangedPayload;
     }
   | { kind: "pvp.shield.broken"; payload: PvpShieldBrokenPayload }
-  | { kind: "intel.updated"; payload: IntelUpdatedPayload };
+  | { kind: "intel.updated"; payload: IntelUpdatedPayload }
+  | { kind: "extraction.started"; payload: ExtractionStartedPayload }
+  | { kind: "extraction.depleted"; payload: ExtractionDepletedPayload }
+  | { kind: "extraction.attacked"; payload: ExtractionAttackedPayload }
+  | { kind: "extraction.returned"; payload: ExtractionReturnedPayload };
 
 export type EventKind = OutboxEventPayload["kind"];
 
@@ -427,7 +463,11 @@ export type AnyEventPayload =
   | WorldPlannedCreatedPayload
   | WorldInscriptionPhaseChangedPayload
   | PvpShieldBrokenPayload
-  | IntelUpdatedPayload;
+  | IntelUpdatedPayload
+  | ExtractionStartedPayload
+  | ExtractionDepletedPayload
+  | ExtractionAttackedPayload
+  | ExtractionReturnedPayload;
 
 export interface ServerEvents {
   "resources.changed": ResourcesChangedPayload;
@@ -466,6 +506,10 @@ export interface ServerEvents {
   "world.inscription-phase.changed": WorldInscriptionPhaseChangedPayload;
   "pvp.shield.broken": PvpShieldBrokenPayload;
   "intel.updated": IntelUpdatedPayload;
+  "extraction.started": ExtractionStartedPayload;
+  "extraction.depleted": ExtractionDepletedPayload;
+  "extraction.attacked": ExtractionAttackedPayload;
+  "extraction.returned": ExtractionReturnedPayload;
 }
 
 export type ServerEventName = keyof ServerEvents;

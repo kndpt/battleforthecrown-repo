@@ -27,6 +27,7 @@ import {
   calculateCasualtyStats,
   isVictoryForAttacker,
   distributeLossesProportionally,
+  sumPopulationCost,
 } from './combat.utils';
 import { parseUnitMap, encodeUnitMap, encodeLootResult } from './codecs';
 import {
@@ -48,11 +49,7 @@ import {
 import type { WorldTempo } from '@battleforthecrown/shared/world';
 import { computeInactivityState } from '@battleforthecrown/shared/world';
 import type { CombatResolution } from '@battleforthecrown/shared/combat';
-import {
-  UNIT_COSTS,
-  UNIT_TYPES,
-  type UnitMap,
-} from '@battleforthecrown/shared/army';
+import { UNIT_TYPES, type UnitMap } from '@battleforthecrown/shared/army';
 import { typedEntries } from '@battleforthecrown/shared/utils';
 import { getCaptureDurationMs } from './capture-duration';
 import { RankingsService } from '../rankings/rankings.service';
@@ -65,6 +62,7 @@ import {
   dedupedRecipientUserIds,
   loadReportVillageSnapshot,
 } from './combat-report.utils';
+import { ExtractionLifecycleService } from '../gameplay/extraction-lifecycle.service';
 
 interface PendingConquestToSchedule {
   id: string;
@@ -102,19 +100,6 @@ function addUnitLosses(target: UnitMap, losses: UnitMap): void {
   }
 }
 
-/**
- * Total population freed by a set of unit losses. The pop of a dead unit is
- * released back to the village's pool — see `docs/gameplay/02-economy-and-progression.md` § Population.
- */
-function sumPopulationCost(losses: UnitMap): number {
-  let total = 0;
-  for (const [unitType, lossCount] of typedEntries(losses)) {
-    const popCost = UNIT_COSTS[unitType]?.population;
-    if (popCost && lossCount) total += popCost * lossCount;
-  }
-  return total;
-}
-
 function hasSurvivingUnits(totalUnits: UnitMap, losses: UnitMap): boolean {
   return typedEntries(totalUnits).some(
     ([unitType, quantity]) => quantity - (losses[unitType] ?? 0) > 0,
@@ -144,6 +129,7 @@ export class CombatWorker implements OnModuleInit {
     private readonly intelService: IntelService,
     private readonly newbieShield: NewbieShieldService,
     private readonly friendship: FriendshipService,
+    private readonly extractionLifecycle: ExtractionLifecycleService,
   ) {}
 
   async onModuleInit() {
@@ -157,6 +143,22 @@ export class CombatWorker implements OnModuleInit {
 
   private async handleCombatResolution(data: CombatJob) {
     this.logger.debug(`Processing combat resolution: ${data.expeditionId}`);
+
+    const kindProbe = await this.prisma.expedition.findUnique({
+      where: { id: data.expeditionId },
+      select: { kind: true, targetKind: true },
+    });
+    if (kindProbe?.kind === ExpeditionKind.EXTRACTION) {
+      await this.extractionLifecycle.handleArrival(data.expeditionId);
+      return;
+    }
+    if (
+      kindProbe?.kind === ExpeditionKind.ATTACK &&
+      kindProbe.targetKind === 'EXTRACTION_SITE'
+    ) {
+      await this.extractionLifecycle.handleInterception(data.expeditionId);
+      return;
+    }
 
     try {
       const postCommitWork = await withSerializableRetry(

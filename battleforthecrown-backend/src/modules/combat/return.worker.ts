@@ -18,6 +18,7 @@ import {
   sumCaravanResources,
 } from './caravan.utils';
 import { loadReportVillageSnapshot } from './combat-report.utils';
+import { ExtractionLifecycleService } from '../gameplay/extraction-lifecycle.service';
 
 interface ReturnJob {
   expeditionId: string;
@@ -32,6 +33,7 @@ export class ReturnWorker implements OnModuleInit {
     private readonly prisma: PrismaService,
     private readonly outbox: OutboxPublisher,
     private readonly resourcesService: ResourcesService,
+    private readonly extractionLifecycle: ExtractionLifecycleService,
   ) {}
 
   async onModuleInit() {
@@ -45,6 +47,15 @@ export class ReturnWorker implements OnModuleInit {
 
   private async handleReturn(data: ReturnJob) {
     this.logger.debug(`Processing troops return: ${data.expeditionId}`);
+
+    const kindProbe = await this.prisma.expedition.findUnique({
+      where: { id: data.expeditionId },
+      select: { kind: true },
+    });
+    if (kindProbe?.kind === ExpeditionKind.EXTRACTION) {
+      await this.extractionLifecycle.handleReturn(data.expeditionId);
+      return;
+    }
 
     try {
       await withSerializableRetry(

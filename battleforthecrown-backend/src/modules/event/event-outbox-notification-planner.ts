@@ -200,6 +200,10 @@ const PLANNERS: Record<EventKind, AnyPlanner> = {
   'world.inscription-phase.changed': directWorld('worldId'),
   'pvp.shield.broken': directUser('userId'),
   'intel.updated': directUser('userId'),
+  'extraction.started': userByVillage('villageId'),
+  'extraction.depleted': directWorld('worldId'),
+  'extraction.attacked': userByVillage('villageId'),
+  'extraction.returned': userByVillage('villageId'),
 };
 
 export async function planNotifications<K extends EventKind>(

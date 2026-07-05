@@ -26,7 +26,12 @@ export {
  *  position is known, no owner / kind / name. */
 export interface MapEntity {
   id: string;
-  kind: "PLAYER_VILLAGE" | "BARBARIAN_VILLAGE" | "OTHER" | "fogged";
+  kind:
+    | "PLAYER_VILLAGE"
+    | "BARBARIAN_VILLAGE"
+    | "RESOURCE_EXTRACTION_SITE"
+    | "OTHER"
+    | "fogged";
   ownerId?: string;
   ownerDisplayName?: string;
   isMine: boolean;
@@ -48,6 +53,10 @@ export interface MapEntity {
     brokenAt: string | null;
     active: boolean;
   };
+  /** Only set for `RESOURCE_EXTRACTION_SITE` entities. */
+  resourceType?: "WOOD" | "STONE" | "IRON";
+  /** Only set for `RESOURCE_EXTRACTION_SITE` entities. */
+  siteActivity?: "IDLE" | "EXPLOITING";
 }
 
 export function entityFromWorldDto(
@@ -60,7 +69,9 @@ export function entityFromWorldDto(
       ? "PLAYER_VILLAGE"
       : dto.kind === "BARBARIAN_VILLAGE"
         ? "BARBARIAN_VILLAGE"
-        : "OTHER";
+        : dto.kind === "RESOURCE_EXTRACTION_SITE"
+          ? "RESOURCE_EXTRACTION_SITE"
+          : "OTHER";
   const ownerId =
     typeof dto.data.userId === "string" ? dto.data.userId : undefined;
   const ownerDisplayName =
@@ -83,6 +94,8 @@ export function entityFromWorldDto(
     isCapital: ownerId === myUserId ? dto.data.isCapital === true : undefined,
     captureWindow: normalizeCaptureWindow(dto.data.captureWindow),
     newbieShield: normalizeNewbieShield(dto.data.newbieShield),
+    resourceType: normalizeResourceType(dto.data.resourceType),
+    siteActivity: normalizeSiteActivity(dto.data.activity),
   };
 }
 
@@ -193,4 +206,14 @@ function normalizeVillageLabel(value: unknown): VillageLabel | null {
 function normalizeCastleLevel(value: unknown): number | null {
   if (!Number.isFinite(value)) return null;
   return clampBuildingLevel(value as number);
+}
+
+function normalizeResourceType(value: unknown): MapEntity["resourceType"] {
+  return value === "WOOD" || value === "STONE" || value === "IRON"
+    ? value
+    : undefined;
+}
+
+function normalizeSiteActivity(value: unknown): MapEntity["siteActivity"] {
+  return value === "IDLE" || value === "EXPLOITING" ? value : undefined;
 }

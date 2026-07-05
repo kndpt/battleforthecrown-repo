@@ -8,6 +8,9 @@ import type {
   BattleSentPayload,
   BuildingCompletedPayload,
   CrownsChangedPayload,
+  ExtractionAttackedPayload,
+  ExtractionDepletedPayload,
+  ExtractionReturnedPayload,
   IntelUpdatedPayload,
   PvpShieldBrokenPayload,
   RankingsChangedPayload,
@@ -1113,6 +1116,37 @@ export function applyIntelUpdated(
   });
 }
 
+export function applyExtractionDepleted(
+  payload: ExtractionDepletedPayload,
+  ctx: BindingsContext,
+): void {
+  // The site disappears/reappears on the world map: refresh entities.
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.worldEntities(payload.worldId),
+  });
+}
+
+export function applyExtractionAttacked(
+  payload: ExtractionAttackedPayload,
+  ctx: BindingsContext,
+): void {
+  // The site's siteActivity flips EXPLOITING -> IDLE server-side: refresh
+  // entities so the site's ring on the world map isn't left stale.
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.worldEntities(payload.worldId),
+  });
+}
+
+export function applyExtractionReturned(
+  payload: ExtractionReturnedPayload,
+  ctx: BindingsContext,
+): void {
+  // Same as above: the site's siteActivity flips EXPLOITING -> IDLE.
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.worldEntities(payload.worldId),
+  });
+}
+
 const bindings: ServerEventBindings = {
   "resources.changed": applyResourcesChanged,
   "crowns.changed": applyCrownsChanged,
@@ -1153,6 +1187,12 @@ const bindings: ServerEventBindings = {
   "noble.killed": applyNobleKilled,
   "pvp.shield.broken": applyPvpShieldBroken,
   "intel.updated": applyIntelUpdated,
+  // No frontend consumer yet — bound only to satisfy the exhaustive
+  // ServerEvents contract (declaration-only, run 091 T3a).
+  "extraction.started": () => undefined,
+  "extraction.depleted": applyExtractionDepleted,
+  "extraction.attacked": applyExtractionAttacked,
+  "extraction.returned": applyExtractionReturned,
 };
 
 export function bindServerEvents(ctx: BindingsContext): () => void {

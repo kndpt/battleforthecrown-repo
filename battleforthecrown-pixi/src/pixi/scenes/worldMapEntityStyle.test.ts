@@ -6,6 +6,7 @@ import {
   BASE_BARBARIAN_SIZE,
   BASE_PLAYER_SIZE,
   COLOR,
+  extractionSiteEmoji,
   ownedHaloRxFactor,
   spriteSizeFor,
   styleFor,
@@ -45,6 +46,21 @@ const other = (overrides: Partial<MapEntity> = {}): MapEntity => ({
   y: 3,
   name: "Unknown",
   tier: null,
+  ...overrides,
+});
+
+const extractionSite = (
+  resourceType: "WOOD" | "STONE" | "IRON",
+  overrides: Partial<MapEntity> = {},
+): MapEntity => ({
+  id: "site1",
+  kind: "RESOURCE_EXTRACTION_SITE",
+  isMine: false,
+  x: 7,
+  y: 7,
+  name: "Site",
+  tier: null,
+  resourceType,
   ...overrides,
 });
 
@@ -163,6 +179,43 @@ describe("styleFor", () => {
     const s = styleFor(other());
     expect(s.color).toBe(COLOR.other);
     expect(s.zIndex).toBe(3);
+  });
+
+  it("returns resourceType-specific colors for extraction sites, distinct from each other and from other kinds", () => {
+    const wood = styleFor(extractionSite("WOOD"));
+    const stone = styleFor(extractionSite("STONE"));
+    const iron = styleFor(extractionSite("IRON"));
+    expect(wood.color).toBe(COLOR.extractionWood);
+    expect(wood.ringColor).toBe(COLOR.extractionWoodRing);
+    expect(stone.color).toBe(COLOR.extractionStone);
+    expect(stone.ringColor).toBe(COLOR.extractionStoneRing);
+    expect(iron.color).toBe(COLOR.extractionIron);
+    expect(iron.ringColor).toBe(COLOR.extractionIronRing);
+
+    const colors = [wood.color, stone.color, iron.color];
+    expect(new Set(colors).size).toBe(colors.length);
+
+    const otherStyle = styleFor(other());
+    const barbarianStyle = styleFor(barbarian("T1"));
+    const playerStyle = styleFor(player());
+    for (const site of [wood, stone, iron]) {
+      expect(site.color).not.toBe(otherStyle.color);
+      expect(site.color).not.toBe(barbarianStyle.color);
+      expect(site.color).not.toBe(playerStyle.color);
+    }
+  });
+});
+
+describe("extractionSiteEmoji", () => {
+  it("returns a distinct emoji per resource type", () => {
+    const wood = extractionSiteEmoji("WOOD");
+    const stone = extractionSiteEmoji("STONE");
+    const iron = extractionSiteEmoji("IRON");
+    expect(new Set([wood, stone, iron]).size).toBe(3);
+  });
+
+  it("falls back to the WOOD emoji for an undefined resourceType", () => {
+    expect(extractionSiteEmoji(undefined)).toBe(extractionSiteEmoji("WOOD"));
   });
 });
 
