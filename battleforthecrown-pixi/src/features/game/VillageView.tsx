@@ -343,6 +343,19 @@ export function VillageView() {
     );
   };
 
+  const handleClaimDaily = (input: Parameters<typeof claimDailyCard.mutate>[0]) => {
+    claimDailyCard.mutate(input, {
+      onError: (err) => {
+        pushToast({
+          title: 'Récompense impossible',
+          description: err instanceof ApiError ? err.message : 'Échec de la réclamation',
+          tone: 'error',
+          ttlMs: 4000,
+        });
+      },
+    });
+  };
+
   const closeProfile = () => {
     setIsProfileOpen(false);
     setProfileTab('profile');
@@ -400,16 +413,7 @@ export function VillageView() {
                 isClaiming={claimDailyCard.isPending}
                 isLoading={retentionSummary.isLoading}
                 onAction={runVillageAction}
-                onClaim={(input) => claimDailyCard.mutate(input, {
-                  onError: (err) => {
-                    pushToast({
-                      title: 'Récompense impossible',
-                      description: err instanceof ApiError ? err.message : 'Échec de la réclamation',
-                      tone: 'error',
-                      ttlMs: 4000,
-                    });
-                  },
-                })}
+                onClaim={handleClaimDaily}
                 onNavigate={navigate}
                 sealSize={40}
                 summary={retentionSummary.data}

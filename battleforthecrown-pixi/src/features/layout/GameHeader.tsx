@@ -218,6 +218,19 @@ export function GameHeader({
     runGameAction(actionId, { navigate });
   };
 
+  const handleClaimDaily = (input: Parameters<typeof claimDailyCard.mutate>[0]) => {
+    claimDailyCard.mutate(input, {
+      onError: (err) => {
+        pushToast({
+          title: 'Récompense impossible',
+          description: err instanceof ApiError ? err.message : 'Échec de la réclamation',
+          tone: 'error',
+          ttlMs: 4000,
+        });
+      },
+    });
+  };
+
   return (
     <div className="relative flex flex-col overflow-hidden border-b border-[rgba(246,213,123,.16)] bg-[linear-gradient(180deg,#07150f_0%,#142816_46%,#2b170b_100%)] text-[#f0e0c0] shadow-[0_10px_26px_rgba(0,0,0,.3)]">
       <div className="absolute inset-x-0 top-0 h-16 bg-[radial-gradient(ellipse_75%_80%_at_50%_-20%,rgba(246,213,123,.2),transparent_72%)]" />
@@ -283,16 +296,7 @@ export function GameHeader({
           isClaiming={claimDailyCard.isPending}
           isLoading={retentionSummary.isLoading}
           onAction={runHeaderAction}
-          onClaim={(input) => claimDailyCard.mutate(input, {
-            onError: (err) => {
-              pushToast({
-                title: 'Récompense impossible',
-                description: err instanceof ApiError ? err.message : 'Échec de la réclamation',
-                tone: 'error',
-                ttlMs: 4000,
-              });
-            },
-          })}
+          onClaim={handleClaimDaily}
           onNavigate={navigate}
           sealSize={40}
           summary={retentionSummary.data}

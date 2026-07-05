@@ -681,11 +681,6 @@ export function ArmyScreen() {
               pendingRecallKey={pendingRecallKey}
             />
           ) : null}
-          {recallReinforcement.isError ? (
-            <p className="mx-3 mb-3 rounded-md border border-red-700/30 bg-red-900/20 px-3 py-2 text-sm text-red-900">
-              Impossible de rappeler ce renfort pour le moment.
-            </p>
-          ) : null}
         </GameBottomSheetPanel>
       </BottomSheet>
     </div>
