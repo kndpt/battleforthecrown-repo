@@ -35,6 +35,10 @@ const BASE_EXPEDITION: Expedition = {
   scoutReportId: null,
   survivingUnits: null,
   loot: null,
+  extractionSiteId: null,
+  extractionDurationMs: null,
+  exploitationEndsAt: null,
+  extractionVillagers: null,
   createdAt: new Date('2026-01-01'),
 };
 

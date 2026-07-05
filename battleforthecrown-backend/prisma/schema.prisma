@@ -25,17 +25,31 @@ enum ExpeditionKind {
   REINFORCE
   SCOUT
   CARAVAN
+  EXTRACTION
 }
 
 enum ExpeditionStatus {
   EN_ROUTE
   RESOLVED
   RETURNING
+  EXPLOITING
 }
 
 enum TargetKind {
   PLAYER_VILLAGE
   BARBARIAN_VILLAGE
+  EXTRACTION_SITE
+}
+
+enum ExtractionResourceType {
+  WOOD
+  STONE
+  IRON
+}
+
+enum ExtractionSiteState {
+  ACTIVE
+  DEPLETED
 }
 
 enum RankingSignal {
@@ -192,6 +206,7 @@ model World {
   gloryCycleSnapshots    GloryCycleSnapshot[]
   cosmeticAwards         UserWorldCosmeticAward[]
   friendships            Friendship[]
+  resourceExtractionSites ResourceExtractionSite[]
 
   @@index([status, plannedOpenAt])
   @@index([status, startedAt])
@@ -553,16 +568,42 @@ model Expedition {
   scoutReportId                  String?          @unique @map("scout_report_id")
   survivingUnits                 Json?            @map("surviving_units")
   loot                           Json?            @map("loot")
+  extractionSiteId               String?          @map("extraction_site_id")
+  extractionDurationMs           Int?             @map("extraction_duration_ms")
+  exploitationEndsAt             DateTime?        @map("exploitation_ends_at") @db.Timestamptz(3)
+  extractionVillagers            Int?             @map("extraction_villagers")
   createdAt                      DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  report      CombatReport? @relation(fields: [reportId], references: [id], onDelete: SetNull)
-  scoutReport ScoutReport?  @relation(fields: [scoutReportId], references: [id], onDelete: SetNull)
+  report         CombatReport?           @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  scoutReport    ScoutReport?            @relation(fields: [scoutReportId], references: [id], onDelete: SetNull)
+  extractionSite ResourceExtractionSite? @relation(fields: [extractionSiteId], references: [id], onDelete: SetNull)
 
   @@index([attackerVillageId])
   @@index([status])
   @@index([arrivalAt])
   @@index([returnAt])
+  @@index([extractionSiteId, status])
   @@map("expedition")
+}
+
+model ResourceExtractionSite {
+  id                String                 @id @default(cuid())
+  worldId           String                 @map("world_id")
+  x                 Int
+  y                 Int
+  resourceType      ExtractionResourceType @map("resource_type")
+  initialCapacity   Int                    @map("initial_capacity")
+  remainingCapacity Int                    @map("remaining_capacity")
+  state             ExtractionSiteState    @default(ACTIVE)
+  createdAt         DateTime               @default(now()) @map("created_at") @db.Timestamptz(3)
+  depletedAt        DateTime?              @map("depleted_at") @db.Timestamptz(3)
+
+  world       World        @relation(fields: [worldId], references: [id], onDelete: Cascade)
+  expeditions Expedition[]
+
+  @@unique([worldId, x, y])
+  @@index([worldId, state])
+  @@map("resource_extraction_site")
 }
 
 model CombatReport {

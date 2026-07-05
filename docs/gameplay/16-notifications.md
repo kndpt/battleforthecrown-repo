@@ -18,7 +18,7 @@ Catégories de notifications, chaînées au pattern Outbox côté backend (cf. [
 | --- | --- | --- | --- |
 | **Attaque entrante** (avec ETA) | Une armée ennemie est en route vers un de mes villages | Défenseur | 🔴 Critique — fenêtre de réaction limitée |
 | **Fin de fenêtre de capture** | La fenêtre de [conquête](./14-pvp-conquest.md#période-de-capture-variable-selon-le-niveau-du-château) que je tiens (ou qui me cible) se termine — succès ou échec | Attaquant + défenseur | 🔴 Critique — issue stratégique majeure |
-| **Site d'exploitation attaqué** | Une équipe envoyée sur un site de ressource est attaquée | Exploitant | 🔴 Critique — perte possible d'escorte / récolte |
+| **Site d'exploitation attaqué** | Une équipe envoyée sur un site de ressource est attaquée (event `extraction.attacked`, cf. [`realtime.md`](../architecture/realtime.md)) | Exploitant | 🔴 Critique — perte possible d'escorte / récolte |
 | **Retour d'armée** | Une armée revient avec troupes, loot ou fin de rappel | Propriétaire | 🟡 Important — relance une décision |
 | **Rapport reçu** | Un rapport combat / scout important est créé | Participant | 🟡 Important — ouvre vers l'inbox si pertinent |
 | **Fin de construction / entraînement** | Un upgrade de bâtiment ou une queue d'entraînement se termine | Propriétaire | 🟡 Rétention — incite à la session suivante |
@@ -46,4 +46,4 @@ La **couche in-app** de l'attaque entrante est livrée, indépendamment du push 
 - [`docs/architecture/realtime.md`](../architecture/realtime.md) — pattern Outbox + WebSocket (canal in-app, à compléter par push pour les sessions fermées).
 - [`05-daily-cards-and-oyez.md`](./05-daily-cards-and-oyez.md) — cartes quotidiennes et Oyez ; les notifications ne sont pas une quête, elles ramènent au bon moment.
 - [`15-onboarding.md`](./15-onboarding.md) — l'autre boucle MVP de rétention session-1.
-- [`lab/tickets/07-resource-extraction-sites.md`](./lab/tickets/07-resource-extraction-sites.md) — site d'exploitation attaqué (idée lab, non MVP).
+- [`lab/tickets/07-resource-extraction-sites.md`](./lab/tickets/07-resource-extraction-sites.md) — site d'exploitation attaqué, mécanique livrée (run 091) ; catégorie notification push encore non implémentée.

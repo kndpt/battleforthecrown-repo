@@ -53,6 +53,7 @@ const EXPEDITION_LABELS: Record<OpenExpeditionDto['kind'], string> = {
   REINFORCE: 'RENFORT',
   SCOUT: 'SCOUT',
   CARAVAN: 'CARAVANE',
+  EXTRACTION: 'EXTRACTION',
 };
 
 const EXPEDITION_ICONS: Record<OpenExpeditionDto['kind'], string> = {
@@ -60,6 +61,7 @@ const EXPEDITION_ICONS: Record<OpenExpeditionDto['kind'], string> = {
   REINFORCE: '/assets/hand-silver.png',
   SCOUT: '/assets/lupa.png',
   CARAVAN: '/assets/resources/resources.png',
+  EXTRACTION: '/assets/resources/resources.png',
 };
 
 export function mapOpenConquestToCaptureCard(

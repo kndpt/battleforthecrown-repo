@@ -1,7 +1,9 @@
 # 07 — Sites d'exploitation de ressources
 
-**Statut** : idée à approfondir  
+**Statut** : livré (run 091)  
 **Ratio bénéfice / coût** : bon si le système reste rare et lisible
+
+> **Promu et implémenté au run 091.** Modèle `ResourceExtractionSite` (cf. [`docs/architecture/data-model.md` § Sites d'exploitation de ressources](../../../architecture/data-model.md#sites-dexploitation-de-ressources)). Arbitrages retenus sur les points à trancher ci-dessous : pas de tiers de sites (la durée choisie à l'envoi — 2/4/8 h — détermine le volume extrait, plafonné par la capacité restante) ; cap d'escorte fixe (nombre d'unités identique pour tous les sites, pas de variation par puissance/population) ; respawn à une position aléatoire valide dans le monde à l'épuisement ; l'occupant n'est **jamais** exposé dans la vision — seuls la position, le type de ressource et l'activité (équipe en exploitation ou non) sont visibles. Interception combat : vol partiel plafonné à 50 % du stock non sécurisé accumulé (pas de jackpot sur la capacité totale du site).
 
 ## Opportunité
 

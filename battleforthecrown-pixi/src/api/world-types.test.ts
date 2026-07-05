@@ -70,3 +70,58 @@ describe('entityFromWorldDto — newbieShield mapping', () => {
     expect(entity.newbieShield).toBeUndefined();
   });
 });
+
+// normalizeResourceType / normalizeSiteActivity aren't exported directly;
+// they're exercised through entityFromWorldDto (their only call site), which
+// mirrors the actual contract observed in the implementation: a strict
+// whitelist that falls back to `undefined` for anything else.
+describe('entityFromWorldDto — resourceType/siteActivity normalization', () => {
+  function makeSiteDto(dataOverrides: Record<string, unknown> = {}) {
+    return {
+      id: 'site-test',
+      worldId: 'world-1',
+      kind: 'RESOURCE_EXTRACTION_SITE' as const,
+      x: 1,
+      y: 2,
+      data: { ...dataOverrides },
+    };
+  }
+
+  it.each(['WOOD', 'STONE', 'IRON'] as const)(
+    'keeps valid resourceType %s',
+    (resourceType) => {
+      const entity = entityFromWorldDto(
+        makeSiteDto({ resourceType }),
+        null,
+      );
+      expect(entity.resourceType).toBe(resourceType);
+    },
+  );
+
+  it.each([undefined, null, 'GOLD', 42, ''])(
+    'falls back to undefined for invalid resourceType %j',
+    (resourceType) => {
+      const entity = entityFromWorldDto(
+        makeSiteDto({ resourceType }),
+        null,
+      );
+      expect(entity.resourceType).toBeUndefined();
+    },
+  );
+
+  it.each(['IDLE', 'EXPLOITING'] as const)(
+    'keeps valid siteActivity %s',
+    (activity) => {
+      const entity = entityFromWorldDto(makeSiteDto({ activity }), null);
+      expect(entity.siteActivity).toBe(activity);
+    },
+  );
+
+  it.each([undefined, null, 'DEPLETED', 1, ''])(
+    'falls back to undefined for invalid siteActivity %j',
+    (activity) => {
+      const entity = entityFromWorldDto(makeSiteDto({ activity }), null);
+      expect(entity.siteActivity).toBeUndefined();
+    },
+  );
+});

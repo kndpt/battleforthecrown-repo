@@ -83,6 +83,10 @@
     "./map-markers": {
       "types": "./dist/map-markers/index.d.ts",
       "default": "./dist/map-markers/index.js"
+    },
+    "./extraction": {
+      "types": "./dist/extraction/index.d.ts",
+      "default": "./dist/extraction/index.js"
     }
   },
   "files": [

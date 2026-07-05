@@ -94,6 +94,10 @@ export class CombatService {
   ): Promise<Expedition> {
     this.logger.debug(`Attack initiated by user ${userId}`, { dto });
 
+    if (dto.targetKind === 'EXTRACTION_SITE') {
+      return this.initiateAttackOnExtractionSite(userId, dto);
+    }
+
     return this.prisma.$transaction(async (tx) => {
       // 1. Verify ownership and get village
       const village = await this.loadOwnedVillage(tx, dto.villageId, userId);
@@ -214,6 +218,127 @@ export class CombatService {
 
       return expedition;
     });
+  }
+
+  /**
+   * Attack a resource extraction site (T6). Mirrors the outbound half of
+   * `initiateAttack` for a village target, but the target is a
+   * `ResourceExtractionSite` (state ACTIVE) instead of a `Village`: no
+   * ownership/newbie-shield checks, no kingdom power snapshots (sites are
+   * out of the power calculation — same as the caravan path). Vision is
+   * mandatory and unconditional (no `fogOfWar.enabled` gate), matching
+   * `InitiateExtractionUseCase` — a site must never be probed for existence
+   * outside the attacker's vision. Resolution branches in `combat.worker.ts`
+   * to `ExtractionLifecycleService.handleInterception`.
+   */
+  private async initiateAttackOnExtractionSite(
+    userId: string,
+    dto: AttackCommandDto,
+  ): Promise<Expedition> {
+    const expedition = await withSerializableRetry(
+      () =>
+        this.prisma.$transaction(
+          async (tx) => {
+            const village = await this.loadOwnedVillage(
+              tx,
+              dto.villageId,
+              userId,
+            );
+            const worldId = village.worldId;
+            await this.worldAccess.assertWorldWritable(worldId, tx);
+
+            const site = await tx.resourceExtractionSite.findUnique({
+              where: { id: dto.targetRefId },
+            });
+            if (!site || site.worldId !== worldId) {
+              throw new BadRequestException('Extraction site not found');
+            }
+            if (site.state !== 'ACTIVE') {
+              throw new BadRequestException('Extraction site is not active');
+            }
+            if (site.x !== dto.targetX || site.y !== dto.targetY) {
+              throw new BadRequestException(
+                'Target coordinates do not match target',
+              );
+            }
+
+            // Vision is unconditional for extraction sites — never gated
+            // behind world.config.fogOfWar.enabled (cf.
+            // InitiateExtractionUseCase).
+            const disks = await this.visionService.getVisionDisks(
+              userId,
+              worldId,
+            );
+            if (
+              !this.visionService.isInVision({ x: site.x, y: site.y }, disks)
+            ) {
+              throw new ForbiddenException(
+                'Target is outside your vision — extend your watchtower to attack.',
+              );
+            }
+
+            // Cannot attack your own extraction team: if the site is
+            // currently occupied (EN_ROUTE/EXPLOITING) by an EXTRACTION
+            // expedition whose origin village belongs to the same attacker.
+            const attackerVillages = await tx.village.findMany({
+              where: { worldId, userId },
+              select: { id: true },
+            });
+            const attackerVillageIds = attackerVillages.map((v) => v.id);
+            const ownExtraction = await tx.expedition.findFirst({
+              where: {
+                extractionSiteId: site.id,
+                kind: 'EXTRACTION',
+                status: { in: ['EN_ROUTE', 'EXPLOITING'] },
+                attackerVillageId: { in: attackerVillageIds },
+              },
+              select: { id: true },
+            });
+            if (ownExtraction) {
+              throw new BadRequestException(
+                'Cannot attack your own extraction team',
+              );
+            }
+
+            await this.verifyAndDeductUnits(tx, dto.villageId, dto.units);
+
+            const { expedition, arrivalAt } =
+              await this.createOutboundExpedition(tx, {
+                village,
+                target: { id: site.id, x: site.x, y: site.y },
+                units: dto.units,
+                kind: ExpeditionKind.ATTACK,
+                targetKind: dto.targetKind,
+              });
+
+            await createOutboxEvent(tx, 'battle.sent', dto.villageId, {
+              expeditionId: expedition.id,
+              villageId: dto.villageId,
+              targetX: site.x,
+              targetY: site.y,
+              targetKind: dto.targetKind,
+              arrivalAt: arrivalAt.toISOString(),
+            });
+
+            return expedition;
+          },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        ),
+      this.logger,
+      'extraction-site attack transaction',
+    );
+
+    // Scheduled OUTSIDE the serializable transaction: a serialization retry
+    // replaying this callback after an earlier attempt already enqueued the
+    // job would otherwise leave an orphaned job pointing at a rolled-back
+    // expedition.
+    await this.scheduleResolution(expedition.id, expedition.arrivalAt);
+
+    this.logger.debug(
+      `Attack on extraction site created: ${expedition.id}, arrives at ${expedition.arrivalAt.toISOString()}`,
+    );
+
+    return expedition;
   }
 
   async initiateScout(

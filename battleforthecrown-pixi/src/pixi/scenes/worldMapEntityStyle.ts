@@ -54,6 +54,13 @@ export const COLOR = {
   fogOverlay: 0x0c0804,
   capture: 0xf1c40f,
   captureDark: 0x7a4b00,
+  extractionWood: 0x5a7d3a,
+  extractionWoodRing: 0x8a5a2e,
+  extractionStone: 0x8a8a8a,
+  extractionStoneRing: 0xd8d8d8,
+  extractionIron: 0xb05a2e,
+  extractionIronRing: 0xe0906a,
+  extractionExploiting: 0xffd166,
 } as const;
 
 export interface EntityStyle {
@@ -129,7 +136,40 @@ export function styleFor(entity: MapEntity): EntityStyle {
       zIndex: 5,
     };
   }
+  if (entity.kind === "RESOURCE_EXTRACTION_SITE") {
+    return extractionSiteStyle(entity.resourceType);
+  }
   return { color: COLOR.other, ringColor: 0xffffff, radius: 9, zIndex: 3 };
+}
+
+/** Distinct look per resource type: wood = green/brown, stone = grey, iron = rust. */
+function extractionSiteStyle(
+  resourceType: MapEntity["resourceType"],
+): EntityStyle {
+  switch (resourceType) {
+    case "STONE":
+      return {
+        color: COLOR.extractionStone,
+        ringColor: COLOR.extractionStoneRing,
+        radius: 11,
+        zIndex: 4,
+      };
+    case "IRON":
+      return {
+        color: COLOR.extractionIron,
+        ringColor: COLOR.extractionIronRing,
+        radius: 11,
+        zIndex: 4,
+      };
+    case "WOOD":
+    default:
+      return {
+        color: COLOR.extractionWood,
+        ringColor: COLOR.extractionWoodRing,
+        radius: 11,
+        zIndex: 4,
+      };
+  }
 }
 
 /**
@@ -154,6 +194,22 @@ export function markerStyleFor(kind: MapMarkerKind): {
   ringColor: number;
 } {
   return MAP_MARKER_STYLE[kind];
+}
+
+const EXTRACTION_RESOURCE_EMOJI: Record<
+  NonNullable<MapEntity["resourceType"]>,
+  string
+> = {
+  WOOD: "🌳",
+  STONE: "🪨",
+  IRON: "⛏️",
+};
+
+/** Placeholder emoji glyph for a resource extraction site marker (no final asset yet). */
+export function extractionSiteEmoji(
+  resourceType: MapEntity["resourceType"],
+): string {
+  return resourceType ? EXTRACTION_RESOURCE_EMOJI[resourceType] : "🌳";
 }
 
 export function aliasFor(entity: MapEntity): string | null {

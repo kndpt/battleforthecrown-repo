@@ -2,6 +2,8 @@ import type {
   CaravanReportType as PrismaCaravanReportType,
   ExpeditionKind as PrismaExpeditionKind,
   ExpeditionStatus as PrismaExpeditionStatus,
+  ExtractionResourceType as PrismaExtractionResourceType,
+  ExtractionSiteState as PrismaExtractionSiteState,
   FriendshipStatus as PrismaFriendshipStatus,
   MapMarkerKind as PrismaMapMarkerKind,
   OnboardingStatus as PrismaOnboardingStatus,
@@ -28,6 +30,10 @@ import type {
 } from '@battleforthecrown/shared/onboarding';
 import type { FriendshipStatus } from '@battleforthecrown/shared/social';
 import type { MapMarkerKind } from '@battleforthecrown/shared/map-markers';
+import type { ExtractionResourceType } from '@battleforthecrown/shared/extraction';
+
+// Prisma-only enum (no shared union yet): site lifecycle state.
+type ExtractionSiteState = 'ACTIVE' | 'DEPLETED';
 
 // Compile-time alignment between Prisma enums and shared unions.
 // Bidirectional Records: if either side adds, removes, or renames a variant,
@@ -40,6 +46,7 @@ export const _expeditionStatusFromPrisma: Record<
   EN_ROUTE: 'EN_ROUTE',
   RESOLVED: 'RESOLVED',
   RETURNING: 'RETURNING',
+  EXPLOITING: 'EXPLOITING',
 };
 export const _expeditionStatusToPrisma: Record<
   ExpeditionStatus,
@@ -48,6 +55,7 @@ export const _expeditionStatusToPrisma: Record<
   EN_ROUTE: 'EN_ROUTE',
   RESOLVED: 'RESOLVED',
   RETURNING: 'RETURNING',
+  EXPLOITING: 'EXPLOITING',
 };
 
 export const _expeditionKindFromPrisma: Record<
@@ -58,6 +66,7 @@ export const _expeditionKindFromPrisma: Record<
   REINFORCE: 'REINFORCE',
   SCOUT: 'SCOUT',
   CARAVAN: 'CARAVAN',
+  EXTRACTION: 'EXTRACTION',
 };
 export const _expeditionKindToPrisma: Record<
   ExpeditionKind,
@@ -67,6 +76,7 @@ export const _expeditionKindToPrisma: Record<
   REINFORCE: 'REINFORCE',
   SCOUT: 'SCOUT',
   CARAVAN: 'CARAVAN',
+  EXTRACTION: 'EXTRACTION',
 };
 
 export const _reinforcementReportTypeFromPrisma: Record<
@@ -117,9 +127,42 @@ export const _caravanReportTypeToPrisma: Record<
 export const _targetKindFromPrisma: Record<PrismaTargetKind, TargetKind> = {
   PLAYER_VILLAGE: 'PLAYER_VILLAGE',
   BARBARIAN_VILLAGE: 'BARBARIAN_VILLAGE',
+  EXTRACTION_SITE: 'EXTRACTION_SITE',
 };
 
 // No reverse mapping: shared TargetKind may diverge from Prisma in future variants.
+
+export const _extractionResourceTypeFromPrisma: Record<
+  PrismaExtractionResourceType,
+  ExtractionResourceType
+> = {
+  WOOD: 'WOOD',
+  STONE: 'STONE',
+  IRON: 'IRON',
+};
+export const _extractionResourceTypeToPrisma: Record<
+  ExtractionResourceType,
+  PrismaExtractionResourceType
+> = {
+  WOOD: 'WOOD',
+  STONE: 'STONE',
+  IRON: 'IRON',
+};
+
+export const _extractionSiteStateFromPrisma: Record<
+  PrismaExtractionSiteState,
+  ExtractionSiteState
+> = {
+  ACTIVE: 'ACTIVE',
+  DEPLETED: 'DEPLETED',
+};
+export const _extractionSiteStateToPrisma: Record<
+  ExtractionSiteState,
+  PrismaExtractionSiteState
+> = {
+  ACTIVE: 'ACTIVE',
+  DEPLETED: 'DEPLETED',
+};
 
 export const _villageStrategyFromPrisma: Record<
   PrismaVillageStrategy,

@@ -8,6 +8,7 @@ import { Village } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WorldConfigService } from './world-config.service';
 import { BarbarianSeedingService } from './barbarian-seeding.service';
+import { ExtractionSiteSeedingService } from './extraction-site-seeding.service';
 import { VillagePlacementService } from './village-placement.service';
 import { getInitialPlayerVillageBuildings } from '../village/player-village-building-lifecycle';
 import { deriveNaturalTrait } from '@battleforthecrown/shared/village';
@@ -27,6 +28,7 @@ export class JoinWorldUseCase {
     private readonly prisma: PrismaService,
     private readonly worldConfig: WorldConfigService,
     private readonly barbarianSeeding: BarbarianSeedingService,
+    private readonly extractionSiteSeeding: ExtractionSiteSeedingService,
     private readonly villagePlacement: VillagePlacementService,
     private readonly onboarding: OnboardingService,
   ) {}
@@ -94,6 +96,8 @@ export class JoinWorldUseCase {
         result.village.id,
       );
     }
+
+    this.scheduleExtractionSiteSeeding(worldId);
 
     return result;
   }
@@ -188,6 +192,12 @@ export class JoinWorldUseCase {
       .catch((err) => {
         this.logger.error('Barbarian seeding failed', err);
       });
+  }
+
+  private scheduleExtractionSiteSeeding(worldId: string) {
+    void this.extractionSiteSeeding.ensureSites(worldId).catch((err) => {
+      this.logger.error('Extraction site seeding failed', err);
+    });
   }
 }
 
