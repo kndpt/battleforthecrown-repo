@@ -4,12 +4,14 @@ import {
   type KingdomActivitiesPanelLabels,
   type KingdomActivityTab,
 } from '@/features/design-system/components';
+import { ApiError } from '@/api';
 import {
   useIncomingAttacksQuery,
   useOpenConquestsQuery,
   useOpenExpeditionsQuery,
   useRecallExpeditionMutation,
 } from '@/api/queries';
+import { useUiStore } from '@/stores/ui';
 import { useTickingNow } from '@/lib/useTickingNow';
 import {
   mapIncomingAttackToThreatCard,
@@ -61,6 +63,7 @@ export function KingdomActivitiesBottomSheet({
   const expeditionsQuery = useOpenExpeditionsQuery(worldId);
   const incomingAttacksQuery = useIncomingAttacksQuery(villageId);
   const recallExpedition = useRecallExpeditionMutation();
+  const pushToast = useUiStore((state) => state.pushToast);
 
   const captures = useMemo(
     () => (conquestsQuery.data ?? []).map((conquest) => mapOpenConquestToCaptureCard(conquest, now)),
@@ -71,10 +74,22 @@ export function KingdomActivitiesBottomSheet({
     () =>
       (expeditionsQuery.data ?? []).map((expedition) =>
         mapOpenExpeditionToActivityCard(expedition, now, (expeditionId, attackerVillageId) =>
-          recallExpedition.mutate({ expeditionId, villageId: attackerVillageId }),
+          recallExpedition.mutate(
+            { expeditionId, villageId: attackerVillageId },
+            {
+              onError: (err) => {
+                pushToast({
+                  title: 'Rappel impossible',
+                  description: err instanceof ApiError ? err.message : "Échec du rappel",
+                  tone: 'error',
+                  ttlMs: 4000,
+                });
+              },
+            },
+          ),
         ),
       ),
-    [expeditionsQuery.data, now, recallExpedition],
+    [expeditionsQuery.data, now, recallExpedition, pushToast],
   );
 
   const threats = useMemo(

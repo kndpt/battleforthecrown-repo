@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { BottomSheet, Button, Textarea } from "@/ui";
 import { GameBottomSheetPanel } from "@/features/design-system/components";
+import { ApiError } from "@/api";
+import { useUiStore } from "@/stores/ui";
 import {
   MAP_MARKER_CAP,
   MAP_MARKER_KINDS,
@@ -47,16 +49,41 @@ export function MapMarkerSheet({ worldId, tile, onClose }: MapMarkerSheetProps) 
   const busy = upsert.isPending || remove.isPending;
   const saveDisabled = busy || atCap;
 
+  const pushToast = useUiStore((state) => state.pushToast);
+
   const handleSave = () => {
     upsert.mutate(
       { x: tile.x, y: tile.y, kind, note: note.trim() || null },
-      { onSuccess: () => onClose() },
+      {
+        onSuccess: () => onClose(),
+        onError: (err) => {
+          pushToast({
+            title: 'Marqueur non enregistré',
+            description: err instanceof ApiError ? err.message : "Échec de l'enregistrement",
+            tone: 'error',
+            ttlMs: 4000,
+          });
+        },
+      },
     );
   };
 
   const handleDelete = () => {
     if (!existing) return;
-    remove.mutate({ id: existing.id }, { onSuccess: () => onClose() });
+    remove.mutate(
+      { id: existing.id },
+      {
+        onSuccess: () => onClose(),
+        onError: (err) => {
+          pushToast({
+            title: 'Suppression impossible',
+            description: err instanceof ApiError ? err.message : 'Échec de la suppression',
+            tone: 'error',
+            ttlMs: 4000,
+          });
+        },
+      },
+    );
   };
 
   return (

@@ -532,11 +532,23 @@ export function ArmyScreen() {
   };
 
   const handleRecallLine = (line: GarrisonLine) => {
-    recallReinforcement.mutate({
-      originVillageId: line.originVillageId,
-      units: { [line.unitType]: line.quantity },
-      villageId: line.villageId,
-    });
+    recallReinforcement.mutate(
+      {
+        originVillageId: line.originVillageId,
+        units: { [line.unitType]: line.quantity },
+        villageId: line.villageId,
+      },
+      {
+        onError: (err) => {
+          pushToast({
+            title: 'Rappel impossible',
+            description: err instanceof ApiError ? err.message : 'Échec du rappel',
+            tone: 'error',
+            ttlMs: 4000,
+          });
+        },
+      },
+    );
   };
 
   return (

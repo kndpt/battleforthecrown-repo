@@ -14,8 +14,10 @@ import { metaFor } from './buildingMeta';
 import { BuildingIcon } from './BuildingIcon';
 import { computeConstructionProgress, formatRemaining } from './constructionProgress';
 import { useTickingNow } from '@/lib/useTickingNow';
+import { ApiError } from '@/api';
 import { useCancelConstructionMutation, usePopulationQuery } from '@/api/queries';
 import { useGameStore } from '@/stores/game';
+import { useUiStore } from '@/stores/ui';
 import { useDisplayResources } from '@/features/resources/useDisplayResources';
 import {
   BUILDING_DEFINITIONS,
@@ -61,6 +63,7 @@ export function BuildingCard({ building, lockState, onClick }: BuildingCardProps
     now,
   );
   const cancel = useCancelConstructionMutation();
+  const pushToast = useUiStore((state) => state.pushToast);
 
   const isMaxLevel = lockState.state === 'max';
   const isUnderConstruction = progress.inProgress;
@@ -89,7 +92,19 @@ export function BuildingCard({ building, lockState, onClick }: BuildingCardProps
   const handleCancelConstruction = (event: React.MouseEvent) => {
     event.stopPropagation();
     if (!villageId) return;
-    cancel.mutate({ villageId, buildingId: building.id });
+    cancel.mutate(
+      { villageId, buildingId: building.id },
+      {
+        onError: (err) => {
+          pushToast({
+            title: 'Annulation impossible',
+            description: err instanceof ApiError ? err.message : "Échec de l'annulation",
+            tone: 'error',
+            ttlMs: 4000,
+          });
+        },
+      },
+    );
   };
 
   const upgradeButton = () => (

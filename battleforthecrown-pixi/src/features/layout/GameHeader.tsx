@@ -27,9 +27,11 @@ import {
   useRetentionSummaryQuery,
   usePublicWorldsQuery,
 } from '@/api/queries';
+import { ApiError } from '@/api';
 import { formatHeaderCompactAmount } from '@/lib/resourceConfig';
 import { publicAsset } from '@/lib/publicAsset';
 import { BottomSheet } from '@/ui';
+import { useUiStore } from '@/stores/ui';
 import { multiVillageBottomSheetLabels } from './multiVillageSheet';
 import { getPlayerInitials, integerFormatter, PLAYER_PROFILE_LEVEL } from './headerHelpers';
 import { useMultiVillageData } from './useMultiVillageData';
@@ -66,6 +68,7 @@ export function GameHeader({
   const myVillages = useMyVillagesQuery(worldId);
   const retentionSummary = useRetentionSummaryQuery(worldId);
   const claimDailyCard = useClaimDailyCardMutation();
+  const pushToast = useUiStore((state) => state.pushToast);
   const { display, hasSnapshot } = useDisplayResources(villageId);
   const { balance: crownBalance } = useDisplayCrowns(userId, worldId);
   const { renown, justLeveledUp, acknowledge: acknowledgeRenown } = useRenownLevelUp();
@@ -280,7 +283,16 @@ export function GameHeader({
           isClaiming={claimDailyCard.isPending}
           isLoading={retentionSummary.isLoading}
           onAction={runHeaderAction}
-          onClaim={(input) => claimDailyCard.mutate(input)}
+          onClaim={(input) => claimDailyCard.mutate(input, {
+            onError: (err) => {
+              pushToast({
+                title: 'Récompense impossible',
+                description: err instanceof ApiError ? err.message : 'Échec de la réclamation',
+                tone: 'error',
+                ttlMs: 4000,
+              });
+            },
+          })}
           onNavigate={navigate}
           sealSize={40}
           summary={retentionSummary.data}
