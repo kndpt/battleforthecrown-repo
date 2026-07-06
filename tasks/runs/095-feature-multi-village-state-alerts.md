@@ -20,7 +20,7 @@ Périmètre MVP retenu :
 - **File inactive** : aucune construction ni formation en cours pour le village.
 
 Hors scope explicite :
-- `kind: 'attack'` (attaque entrante) → subject 086 / successeur différé « incoming-threats-by-village » de run 031.
+- `kind: 'attack'` (attaque entrante) : l'alerte par village dans le **sélecteur multi-village** est un **gap ouvert distinct** du subject 086 — 086 livre la section « Attaques entrantes » du `KingdomActivities` (surface différente), il ne couvre PAS le `village.alert` du sélecteur. À tracer via le successeur différé « incoming-threats-by-village » de run 031.
 - **Garnison faible** → différé (seuil « faible » non tranché + aucun fan-out garrison actuel, cf. Points d'attention).
 - Presets de rôle à impact gameplay + vue consolidée riche (autres axes lab 06 — restent non planifiés).
 
@@ -64,7 +64,7 @@ _(À trancher à l'étape 1 du pipeline `$bftc-run`.)_
 
 - **Sémantique `eta`** : `MultiVillageAlert.eta` est conçu pour `kind:'attack'` (temps avant impact). Pour un warning d'état, pas d'`eta` naturel → laisser tiret/vide (reco) ou dériver un « temps avant plein » (nécessite le taux de prod, hors data actuelle).
 - **Seuil « entrepôt plein »** : `n ≥ max` (100 %, reco pour éviter le bruit) vs alignement sur le `nearFull` existant (0.9) de `ResourceChip`. Cf. point à trancher lab « alertes critiques vs bruit ».
-- **« File inactive »** : inclure ou non la formation seigneur/noble (`trainingByVillageId` contient les nobles) dans le « en cours ».
+- **« File inactive » — risque de bruit (à trancher)** : la condition « aucune construction ni formation en cours » est **très fréquente et souvent bénigne** (village au niveau max, village-ressource laissé sans file volontairement, queue juste terminée) → risque de **faux positif systématique / fatigue d'alerte** sur une grande partie du parc, à l'encontre de l'objectif « alertes ciblées ». Définir un garde-fou : durée d'inactivité minimale, exclure les villages dont tous les bâtiments pertinents sont au max, ou restreindre la portée. Décider aussi d'inclure ou non la formation seigneur/noble (`trainingByVillageId` contient les nobles) dans le « en cours ».
 - **Priorité** (`alert` singulier) : figer l'ordre. Proposition : entrepôt plein > file inactive.
 - **Garnison faible** (différé) : `useGarrisonQuery` est per-village uniquement (`GET /combat/:villageId/garrison`), aucun `garrisonQueryOptions` pour fan-out `useQueries`, seuil non tranché → follow-up dédié.
 - **Backprop doc** : promouvoir une **note MVP-léger dans spec 22** (reco — scope trop petit pour une spec dédiée). Garde-fou explicite à écrire : alertes présentationnelles, zéro effet gameplay, aucune écriture serveur.
