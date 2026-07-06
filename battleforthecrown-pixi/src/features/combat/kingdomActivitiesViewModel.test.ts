@@ -4,9 +4,12 @@ import type {
   OpenExpeditionDto,
 } from '@battleforthecrown/shared/combat';
 import type { IncomingAttackDto } from '@battleforthecrown/shared/events';
+import type { DefenderCaptureDto } from '@battleforthecrown/shared/combat';
 import {
   computeProgress,
   formatTime,
+  mapDefenderCaptureToSiegeCard,
+  mapDefenderCapturesToSiegeCards,
   mapIncomingAttackToThreatCard,
   mapOpenConquestToCaptureCard,
   mapOpenExpeditionToActivityCard,
@@ -222,6 +225,91 @@ describe('mapIncomingAttackToThreatCard', () => {
     );
     expect(due.progress).toBe(100);
     expect(due.time).toBe('0s');
+  });
+});
+
+describe('mapDefenderCaptureToSiegeCard', () => {
+  const baseCapture: DefenderCaptureDto = {
+    pendingConquestId: 'pc-siege-1',
+    targetVillageId: 'my-village-1',
+    targetName: 'Bastion du Sud',
+    targetX: 512,
+    targetY: 480,
+    targetCastleLevel: 7,
+    captureStartedAt: '2026-05-13T12:00:00.000Z',
+    captureUntil: '2026-05-13T18:00:00.000Z',
+    status: 'OPEN',
+  };
+
+  it('maps a defender capture to a siege card without any attacker field', () => {
+    const now = Date.parse('2026-05-13T15:00:00.000Z');
+    const card = mapDefenderCaptureToSiegeCard(baseCapture, now);
+
+    expect(card).toMatchObject({
+      id: 'pc-siege-1',
+      coordinates: '512|480',
+      state: 'open',
+      statusLabel: 'Sous siège',
+      targetName: 'Bastion du Sud',
+      tier: 'PVP',
+      tierSubLabel: 'Ch. 7',
+      progress: 50,
+    });
+    // Fog-of-war: the defender view never carries the attacker noble/origin.
+    expect(card.nobleName).toBeUndefined();
+    expect(card.originName).toBeUndefined();
+  });
+
+  it('switches to the "chute imminente" label when the window is nearly closed', () => {
+    // 10 min before the deadline (SOON threshold is 15 min).
+    const now = Date.parse('2026-05-13T17:50:00.000Z');
+    const card = mapDefenderCaptureToSiegeCard(baseCapture, now);
+    expect(card.statusLabel).toBe('Chute imminente');
+    // Even when imminent the card stays gold `open`, never the attacker green.
+    expect(card.state).toBe('open');
+  });
+});
+
+describe('mapDefenderCapturesToSiegeCards (idempotence + order)', () => {
+  const make = (id: string, until: string): DefenderCaptureDto => ({
+    pendingConquestId: id,
+    targetVillageId: `v-${id}`,
+    targetName: `Village ${id}`,
+    targetX: 1,
+    targetY: 2,
+    targetCastleLevel: 3,
+    captureStartedAt: '2026-05-13T12:00:00.000Z',
+    captureUntil: until,
+    status: 'OPEN',
+  });
+
+  it('collapses a duplicated pendingConquestId into a single card', () => {
+    const now = Date.parse('2026-05-13T12:30:00.000Z');
+    const dup = make('pc-1', '2026-05-13T18:00:00.000Z');
+    const cards = mapDefenderCapturesToSiegeCards([dup, { ...dup }], now);
+    expect(cards).toHaveLength(1);
+    expect(cards[0].id).toBe('pc-1');
+  });
+
+  it('keeps the countdown stable across a duplicated delivery', () => {
+    const now = Date.parse('2026-05-13T12:30:00.000Z');
+    const dup = make('pc-1', '2026-05-13T18:00:00.000Z');
+    const single = mapDefenderCapturesToSiegeCards([dup], now);
+    const doubled = mapDefenderCapturesToSiegeCards([dup, { ...dup }], now);
+    expect(doubled[0].timeRemaining).toBe(single[0].timeRemaining);
+    expect(doubled[0].progress).toBe(single[0].progress);
+  });
+
+  it('orders sieges by soonest deadline first', () => {
+    const now = Date.parse('2026-05-13T12:30:00.000Z');
+    const cards = mapDefenderCapturesToSiegeCards(
+      [
+        make('later', '2026-05-13T20:00:00.000Z'),
+        make('sooner', '2026-05-13T14:00:00.000Z'),
+      ],
+      now,
+    );
+    expect(cards.map((c) => c.id)).toEqual(['sooner', 'later']);
   });
 });
 

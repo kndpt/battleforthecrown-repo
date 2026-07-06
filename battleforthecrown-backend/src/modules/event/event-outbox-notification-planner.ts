@@ -5,6 +5,7 @@ import type {
   VillageConqueredPayload,
   VillageCaptureWindowOpenedPayload,
   VillageCaptureWindowInterruptedPayload,
+  VillageCaptureWindowCompletedPayload,
 } from './event-types';
 import type { VillageUserIdCache } from './event-outbox-prefetch';
 
@@ -141,14 +142,46 @@ const planVillageConquered: AnyPlanner = (payload) => {
   return plans;
 };
 
+/**
+ * Fog-safe defender copy of a capture-window event: strips every attacker
+ * identity/origin field so the besieged owner never learns who is capturing
+ * them (mirror of {@link planVillageAttacked}'s observer scrub). The attacker
+ * keeps their full copy.
+ */
+function scrubAttackerFields(
+  payload: Record<string, unknown>,
+): Record<string, unknown> {
+  const defenderView = { ...payload };
+  delete defenderView.attackerUserId;
+  delete defenderView.attackerVillageId;
+  return defenderView;
+}
+
+/**
+ * During an OPEN window the target village's row still points to its original
+ * owner (the transfer only happens at finalize), so the defender is resolvable
+ * live via `getUserIdByVillage(targetVillageId)`. A barbarian target yields no
+ * owner and is therefore never routed a defender copy.
+ */
 const planCaptureWindowOpened: AnyPlanner = async (payload, deps) => {
   const typed = payload as VillageCaptureWindowOpenedPayload;
   const attackerUserId =
     typed.attackerUserId ??
     (await deps.getAttackerUserIdByConquest(typed.pendingConquestId));
-  return attackerUserId
-    ? [{ recipient: userRecipient(attackerUserId), payload: typed }]
-    : [];
+
+  const plans: NotificationPlan[] = [];
+  if (attackerUserId) {
+    plans.push({ recipient: userRecipient(attackerUserId), payload: typed });
+  }
+
+  const defenderUserId = await deps.getUserIdByVillage(typed.targetVillageId);
+  if (defenderUserId && defenderUserId !== attackerUserId) {
+    plans.push({
+      recipient: userRecipient(defenderUserId),
+      payload: scrubAttackerFields(typed as unknown as Record<string, unknown>),
+    });
+  }
+  return plans;
 };
 
 const planCaptureWindowInterrupted: AnyPlanner = async (payload, deps) => {
@@ -156,9 +189,43 @@ const planCaptureWindowInterrupted: AnyPlanner = async (payload, deps) => {
   const attackerUserId =
     typed.attackerUserId ??
     (await deps.getAttackerUserIdByConquest(typed.pendingConquestId));
-  return attackerUserId
-    ? [{ recipient: userRecipient(attackerUserId), payload: typed }]
-    : [];
+
+  const plans: NotificationPlan[] = [];
+  if (attackerUserId) {
+    plans.push({ recipient: userRecipient(attackerUserId), payload: typed });
+  }
+
+  const defenderUserId = await deps.getUserIdByVillage(typed.targetVillageId);
+  if (defenderUserId && defenderUserId !== attackerUserId) {
+    plans.push({
+      recipient: userRecipient(defenderUserId),
+      payload: scrubAttackerFields(typed as unknown as Record<string, unknown>),
+    });
+  }
+  return plans;
+};
+
+/**
+ * The completed event routes both the new owner (attacker) and the original
+ * owner (defender who just lost the village). The previous owner is carried as
+ * a snapshot in the payload — never resolved live, since `targetVillageId`
+ * already points to the new owner by now.
+ */
+const planCaptureWindowCompleted: AnyPlanner = (payload) => {
+  const typed = payload as VillageCaptureWindowCompletedPayload;
+  const plans: NotificationPlan[] = [
+    { recipient: userRecipient(typed.newOwnerUserId), payload: typed },
+  ];
+  if (
+    typed.previousOwnerUserId &&
+    typed.previousOwnerUserId !== typed.newOwnerUserId
+  ) {
+    plans.push({
+      recipient: userRecipient(typed.previousOwnerUserId),
+      payload: typed,
+    });
+  }
+  return plans;
 };
 
 const PLANNERS: Record<EventKind, AnyPlanner> = {
@@ -190,7 +257,7 @@ const PLANNERS: Record<EventKind, AnyPlanner> = {
   'village.removed': directWorld('worldId'),
   'village.capture-window-opened': planCaptureWindowOpened,
   'village.capture-window-interrupted': planCaptureWindowInterrupted,
-  'village.capture-window-completed': directUser('newOwnerUserId'),
+  'village.capture-window-completed': planCaptureWindowCompleted,
   'noble.killed': directUser('attackerUserId'),
   'crowns.changed': directUser('userId'),
   'rankings.changed': directWorld('worldId'),

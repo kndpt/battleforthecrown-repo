@@ -983,6 +983,7 @@ describe('conquest websocket bindings', () => {
     queryClient.setQueryData(queryKeys.population('v-att'), { used: 1, max: 10, available: 9 });
     queryClient.setQueryData(queryKeys.openConquests('user-1', 'world-1'), []);
     queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
+    queryClient.setQueryData(queryKeys.capturesTargetingMe('user-1', 'world-1'), []);
 
     applyVillageCaptureWindowOpened(
       {
@@ -1001,6 +1002,32 @@ describe('conquest websocket bindings', () => {
     expect(queryClient.getQueryState(queryKeys.population('v-att'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.openConquests('user-1', 'world-1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.capturesTargetingMe('user-1', 'world-1'))?.isInvalidated).toBe(true);
+  });
+
+  it('on the fog-scrubbed defender copy, refreshes only the siege feed and skips attacker-side queries', () => {
+    setCurrentWorldSession();
+    const queryClient = new QueryClient();
+    // The defender copy is missing attackerVillageId (fog scrub), so the
+    // attacker-side invalidations must be guarded out.
+    queryClient.setQueryData(queryKeys.activeExpeditions('v-att'), []);
+    queryClient.setQueryData(queryKeys.openConquests('user-1', 'world-1'), []);
+    queryClient.setQueryData(queryKeys.capturesTargetingMe('user-1', 'world-1'), []);
+
+    applyVillageCaptureWindowOpened(
+      {
+        pendingConquestId: 'pc1',
+        targetVillageId: 'my-village',
+        captureUntil: '2026-05-04T23:00:00.000Z',
+      } as unknown as Parameters<typeof applyVillageCaptureWindowOpened>[0],
+      { queryClient },
+    );
+
+    // Defender feed refreshes...
+    expect(queryClient.getQueryState(queryKeys.capturesTargetingMe('user-1', 'world-1'))?.isInvalidated).toBe(true);
+    // ...but the attacker-side queries are left untouched (no attackerVillageId).
+    expect(queryClient.getQueryState(queryKeys.activeExpeditions('v-att'))?.isInvalidated).toBe(false);
+    expect(queryClient.getQueryState(queryKeys.openConquests('user-1', 'world-1'))?.isInvalidated).toBe(false);
   });
 
   it('refreshes open conquests when capture terminal events arrive', () => {

@@ -271,6 +271,29 @@ export interface OpenConquestDto {
   status: 'OPEN';
 }
 
+/**
+ * Defender-facing view of a capture window targeting one of the caller's own
+ * villages (the mirror of {@link OpenConquestDto} for the besieged owner).
+ * Fog-of-war safe by construction: it carries **only** the defender's own
+ * village identity + the window deadline. It never exposes the attacker
+ * identity/origin (`attackerVillageId`/`attackerVillageName`/noble) nor the
+ * occupation garrison. `targetVillage*` fields describe the *defender's own*
+ * village. Shared verbatim between the `GET /combat/captures/targeting-me`
+ * REST response so the frontend has a single DTO to consume. A barbarian
+ * village has no defender and is never listed here.
+ */
+export interface DefenderCaptureDto {
+  pendingConquestId: string;
+  targetVillageId: string;
+  targetName: string;
+  targetX: number;
+  targetY: number;
+  targetCastleLevel: number | null;
+  captureStartedAt: string;
+  captureUntil: string;
+  status: 'OPEN';
+}
+
 export interface OpenExpeditionDto {
   expeditionId: string;
   kind: ExpeditionKind;
