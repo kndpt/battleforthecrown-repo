@@ -828,6 +828,34 @@
         "battleforthecrown-pixi/src — aucun match sur underCapture/beingCaptured/captureTargetingMe/villagesUnderCapture (surface défenseur absente)"
       ],
       "addedAt": "2026-07-05"
+    },
+    {
+      "specPath": "docs/gameplay/lab/tickets/06-multi-village-governance.md",
+      "slug": "multi-village-state-alerts",
+      "title": "Alertes d'état multi-village — promotion lab 06 (axe alertes)",
+      "keywords": [
+        "multi-village",
+        "gouvernance",
+        "alertes",
+        "entrepot-plein",
+        "file-inactive",
+        "warning"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/095-feature-multi-village-state-alerts.md",
+      "artefactId": "095",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/multi-village-state-alerts",
+      "gapSummary": "Le composant MultiVillageBottomSheet expose déjà la primitive AlertPill + le filtre 'alerts', mais buildMultiVillageSheetItems ne peuple jamais village.alert — le run 031 a livré le shell et différé la dérivation. Aucune dérivation d'alertes d'état (entrepôt plein, file inactive) n'existe côté front, aucun signal backend équivalent. Ce run couvre uniquement l'axe 'alertes d'état' (kind:'warning' seul, présentationnel, zéro effet gameplay) du lab 06 ; kind:'attack' (subject 086) et garnison faible sont différés.",
+      "codeEvidence": [
+        "battleforthecrown-pixi/src/features/design-system/components/MultiVillageBottomSheet.tsx — MultiVillageAlert { kind:'attack'|'warning' } + AlertPill + filtre 'alerts' (Boolean(village.alert)) présents, primitive jamais peuplée",
+        "battleforthecrown-pixi/src/features/layout/multiVillageSheet.ts — buildMultiVillageSheetItems ne set jamais `alert` sur les items ; aucun appelant (GameHeader.tsx, VillageView.tsx) ne le set",
+        "battleforthecrown-backend/src + packages/shared/src — aucun signal warehouseFull / garrisonWeak / idleQueue",
+        "battleforthecrown-pixi/src/features/layout/useMultiVillageData.ts — 6 fan-outs (resources+maxPerType, population, buildings, queue, strategy, training) déjà orchestrés, données suffisantes pour 'entrepôt plein' et 'file inactive'",
+        "tasks/runs/archive/031-feature-multi-village-bottom-sheet-selector.md — acceptance T2 'rendu MVP sans alertes inventées' + successeur différé 'incoming-threats-by-village' (kind:'attack') ; la dérivation d'état n'a jamais été livrée",
+        "docs/gameplay/22-village-roles-and-navigation.md — 'dashboard consolidé' + 'alertes par rôle' listés post-MVP ; l'axe 'alertes d'état' promu ici en MVP-léger présentationnel"
+      ],
+      "addedAt": "2026-07-06"
     }
   ]
 }
