@@ -1117,6 +1117,27 @@ export function applyIntelUpdated(
   });
 }
 
+function invalidateVillageExtractionState(
+  ctx: BindingsContext,
+  villageId: string,
+  options: { resources?: boolean } = {},
+): void {
+  if (options.resources) {
+    ctx.queryClient.invalidateQueries({
+      queryKey: queryKeys.resources(villageId),
+    });
+  }
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.activeExpeditions(villageId),
+  });
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.armyInventory(villageId),
+  });
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.population(villageId),
+  });
+}
+
 export function applyExtractionStarted(
   payload: ExtractionStartedPayload,
   ctx: BindingsContext,
@@ -1124,22 +1145,13 @@ export function applyExtractionStarted(
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.worldEntities(payload.worldId),
   });
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.activeExpeditions(payload.villageId),
-  });
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.armyInventory(payload.villageId),
-  });
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.population(payload.villageId),
-  });
+  invalidateVillageExtractionState(ctx, payload.villageId);
 }
 
 export function applyExtractionDepleted(
   payload: ExtractionDepletedPayload,
   ctx: BindingsContext,
 ): void {
-  // The site disappears/reappears on the world map: refresh entities.
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.worldEntities(payload.worldId),
   });
@@ -1153,17 +1165,8 @@ export function applyExtractionAttacked(
     queryKey: queryKeys.worldEntities(payload.worldId),
   });
   if (payload.interrupted) {
-    ctx.queryClient.invalidateQueries({
-      queryKey: queryKeys.resources(payload.villageId),
-    });
-    ctx.queryClient.invalidateQueries({
-      queryKey: queryKeys.activeExpeditions(payload.villageId),
-    });
-    ctx.queryClient.invalidateQueries({
-      queryKey: queryKeys.armyInventory(payload.villageId),
-    });
-    ctx.queryClient.invalidateQueries({
-      queryKey: queryKeys.population(payload.villageId),
+    invalidateVillageExtractionState(ctx, payload.villageId, {
+      resources: true,
     });
   }
 }
@@ -1175,18 +1178,7 @@ export function applyExtractionReturned(
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.worldEntities(payload.worldId),
   });
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.resources(payload.villageId),
-  });
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.activeExpeditions(payload.villageId),
-  });
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.armyInventory(payload.villageId),
-  });
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.population(payload.villageId),
-  });
+  invalidateVillageExtractionState(ctx, payload.villageId, { resources: true });
 }
 
 const bindings: ServerEventBindings = {
