@@ -2,6 +2,7 @@ import {
   calculateCasualtyStats,
   isVictoryForAttacker,
   distributeLossesProportionally,
+  sumCarryCapacity,
 } from './combat.utils';
 
 describe('Combat Utils', () => {
@@ -295,6 +296,30 @@ describe('Combat Utils', () => {
       );
 
       expect(result).toEqual({});
+    });
+  });
+
+  describe('sumCarryCapacity', () => {
+    it('should sum carry capacity across unit types', () => {
+      // MILITIA=25, CAVALRY=100
+      const result = sumCarryCapacity({ MILITIA: 4, CAVALRY: 2 });
+
+      expect(result).toBe(4 * 25 + 2 * 100);
+    });
+
+    it('should ignore units with zero carry capacity', () => {
+      // SPY and NOBLE both have carryCapacity 0
+      const result = sumCarryCapacity({ MILITIA: 2, SPY: 10, NOBLE: 1 });
+
+      expect(result).toBe(2 * 25);
+    });
+
+    it('should return 0 for an empty unit map', () => {
+      expect(sumCarryCapacity({})).toBe(0);
+    });
+
+    it('should ignore zero-quantity entries', () => {
+      expect(sumCarryCapacity({ MILITIA: 0, CAVALRY: 3 })).toBe(3 * 100);
     });
   });
 });
