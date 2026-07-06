@@ -4,7 +4,7 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import {
   UNIT_CATALOG,
-  UnitType,
+  UNIT_TYPES,
   UnitCost,
 } from '@battleforthecrown/shared/army';
 
@@ -31,7 +31,7 @@ export class ArmyService {
       throw new NotFoundException('Village not found');
     }
 
-    const allUnitTypes = Object.keys(UNIT_CATALOG.costs) as UnitType[];
+    const allUnitTypes = Object.values(UNIT_TYPES);
 
     const inventoryMap = new Map(
       village.unitInventory.map((inv) => [inv.unitType, inv.quantity]),
