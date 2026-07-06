@@ -11,6 +11,7 @@ import type {
   ExtractionAttackedPayload,
   ExtractionDepletedPayload,
   ExtractionReturnedPayload,
+  ExtractionStartedPayload,
   IntelUpdatedPayload,
   PvpShieldBrokenPayload,
   RankingsChangedPayload,
@@ -1116,6 +1117,24 @@ export function applyIntelUpdated(
   });
 }
 
+export function applyExtractionStarted(
+  payload: ExtractionStartedPayload,
+  ctx: BindingsContext,
+): void {
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.worldEntities(payload.worldId),
+  });
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.activeExpeditions(payload.villageId),
+  });
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.armyInventory(payload.villageId),
+  });
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.population(payload.villageId),
+  });
+}
+
 export function applyExtractionDepleted(
   payload: ExtractionDepletedPayload,
   ctx: BindingsContext,
@@ -1130,20 +1149,43 @@ export function applyExtractionAttacked(
   payload: ExtractionAttackedPayload,
   ctx: BindingsContext,
 ): void {
-  // The site's siteActivity flips EXPLOITING -> IDLE server-side: refresh
-  // entities so the site's ring on the world map isn't left stale.
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.worldEntities(payload.worldId),
   });
+  if (payload.interrupted) {
+    ctx.queryClient.invalidateQueries({
+      queryKey: queryKeys.resources(payload.villageId),
+    });
+    ctx.queryClient.invalidateQueries({
+      queryKey: queryKeys.activeExpeditions(payload.villageId),
+    });
+    ctx.queryClient.invalidateQueries({
+      queryKey: queryKeys.armyInventory(payload.villageId),
+    });
+    ctx.queryClient.invalidateQueries({
+      queryKey: queryKeys.population(payload.villageId),
+    });
+  }
 }
 
 export function applyExtractionReturned(
   payload: ExtractionReturnedPayload,
   ctx: BindingsContext,
 ): void {
-  // Same as above: the site's siteActivity flips EXPLOITING -> IDLE.
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.worldEntities(payload.worldId),
+  });
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.resources(payload.villageId),
+  });
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.activeExpeditions(payload.villageId),
+  });
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.armyInventory(payload.villageId),
+  });
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.population(payload.villageId),
   });
 }
 
@@ -1187,9 +1229,7 @@ const bindings: ServerEventBindings = {
   "noble.killed": applyNobleKilled,
   "pvp.shield.broken": applyPvpShieldBroken,
   "intel.updated": applyIntelUpdated,
-  // No frontend consumer yet — bound only to satisfy the exhaustive
-  // ServerEvents contract (declaration-only, run 091 T3a).
-  "extraction.started": () => undefined,
+  "extraction.started": applyExtractionStarted,
   "extraction.depleted": applyExtractionDepleted,
   "extraction.attacked": applyExtractionAttacked,
   "extraction.returned": applyExtractionReturned,

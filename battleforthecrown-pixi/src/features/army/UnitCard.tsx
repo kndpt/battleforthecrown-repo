@@ -144,7 +144,20 @@ export function UnitCard({
   const handleCancel = (event: React.MouseEvent) => {
     event.stopPropagation();
     if (!villageId || !training) return;
-    cancel.mutate({ villageId, trainingId: training.id });
+    cancel.mutate(
+      { villageId, trainingId: training.id },
+      {
+        onError: (err) => {
+          pushToast({
+            tone: "error",
+            title: "Annulation impossible",
+            description:
+              err instanceof ApiError ? err.message : "Échec de l'annulation",
+            ttlMs: 4000,
+          });
+        },
+      },
+    );
   };
 
   const handleTrain = (event: React.MouseEvent) => {

@@ -36,6 +36,9 @@ import {
   applyWorldStatusChanged,
   applyWorldInscriptionPhaseChanged,
   applyPvpShieldBroken,
+  applyExtractionStarted,
+  applyExtractionAttacked,
+  applyExtractionReturned,
 } from './ws-bindings';
 import { queryKeys } from './queries';
 import { useResourcesStore } from '@/stores/resources';
@@ -1928,5 +1931,110 @@ describe('applyIntelUpdated', () => {
       queryClient.getQueryState(queryKeys.villageIntel('world-1', 'v-target'))
         ?.isInvalidated,
     ).toBe(true);
+  });
+});
+
+describe('applyExtractionStarted', () => {
+  it('invalidates world entities and village expedition/army/population queries', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.worldEntities('world-1'), []);
+    queryClient.setQueryData(queryKeys.activeExpeditions('v-att'), []);
+    queryClient.setQueryData(queryKeys.armyInventory('v-att'), []);
+    queryClient.setQueryData(queryKeys.population('v-att'), {});
+
+    applyExtractionStarted(
+      {
+        expeditionId: 'exp-1',
+        worldId: 'world-1',
+        villageId: 'v-att',
+        siteId: 'site-1',
+        resourceType: 'IRON',
+        arrivalAt: '2026-07-06T10:00:00.000Z',
+        durationMs: 7200000,
+      },
+      { queryClient },
+    );
+
+    expect(queryClient.getQueryState(queryKeys.worldEntities('world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.activeExpeditions('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.armyInventory('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.population('v-att'))?.isInvalidated).toBe(true);
+  });
+});
+
+describe('applyExtractionAttacked', () => {
+  it('invalidates world entities for non-interrupted attack', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.worldEntities('world-1'), []);
+    queryClient.setQueryData(queryKeys.resources('v-ext'), {});
+
+    applyExtractionAttacked(
+      {
+        expeditionId: 'exp-1',
+        worldId: 'world-1',
+        villageId: 'v-ext',
+        siteId: 'site-1',
+        interrupted: false,
+        stolen: { wood: 0, stone: 0, iron: 0 },
+      },
+      { queryClient },
+    );
+
+    expect(queryClient.getQueryState(queryKeys.worldEntities('world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.resources('v-ext'))?.isInvalidated).toBeFalsy();
+  });
+
+  it('invalidates resources + army + population when interrupted', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.worldEntities('world-1'), []);
+    queryClient.setQueryData(queryKeys.resources('v-ext'), {});
+    queryClient.setQueryData(queryKeys.activeExpeditions('v-ext'), []);
+    queryClient.setQueryData(queryKeys.armyInventory('v-ext'), []);
+    queryClient.setQueryData(queryKeys.population('v-ext'), {});
+
+    applyExtractionAttacked(
+      {
+        expeditionId: 'exp-1',
+        worldId: 'world-1',
+        villageId: 'v-ext',
+        siteId: 'site-1',
+        interrupted: true,
+        stolen: { wood: 100, stone: 50, iron: 0 },
+      },
+      { queryClient },
+    );
+
+    expect(queryClient.getQueryState(queryKeys.worldEntities('world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.resources('v-ext'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.activeExpeditions('v-ext'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.armyInventory('v-ext'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.population('v-ext'))?.isInvalidated).toBe(true);
+  });
+});
+
+describe('applyExtractionReturned', () => {
+  it('invalidates world entities + resources + army + population + active expeditions', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.worldEntities('world-1'), []);
+    queryClient.setQueryData(queryKeys.resources('v-att'), {});
+    queryClient.setQueryData(queryKeys.activeExpeditions('v-att'), []);
+    queryClient.setQueryData(queryKeys.armyInventory('v-att'), []);
+    queryClient.setQueryData(queryKeys.population('v-att'), {});
+
+    applyExtractionReturned(
+      {
+        expeditionId: 'exp-1',
+        worldId: 'world-1',
+        villageId: 'v-att',
+        resources: { wood: 200, stone: 0, iron: 0 },
+      },
+      { queryClient },
+    );
+
+    expect(queryClient.getQueryState(queryKeys.worldEntities('world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.resources('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.activeExpeditions('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.armyInventory('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.population('v-att'))?.isInvalidated).toBe(true);
   });
 });
