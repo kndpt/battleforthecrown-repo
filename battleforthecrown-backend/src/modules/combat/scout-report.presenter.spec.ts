@@ -14,13 +14,14 @@ const baseReport: ScoutReportInput = {
   units: { MILITIA: 8, SPY: 3 },
   resources: { wood: 200, stone: 100, iron: 50 },
   strategy: 'AGGRESSIVE',
-  details: null,
+  // 10 espions → palier PRECISE (parité historique : compo/stock/style exacts).
+  details: { scoutUnits: { SPY: 10 } },
   isRead: false,
   timestamp: new Date('2026-06-07T10:00:00.000Z'),
 };
 
 describe('presentScoutReport', () => {
-  it('maps all fields and serializes timestamp to ISO string', () => {
+  it('maps all fields exactly at the PRECISE tier and serializes timestamp', () => {
     expect(presentScoutReport(baseReport)).toEqual({
       id: 'scout-report-1',
       scoutVillageId: 'village-scout',
@@ -30,12 +31,90 @@ describe('presentScoutReport', () => {
       targetY: 34,
       targetName: 'Fortress',
       targetTier: null,
+      precision: 'PRECISE',
       units: { MILITIA: 8, SPY: 3 },
       resources: { wood: 200, stone: 100, iron: 50 },
       strategy: 'AGGRESSIVE',
-      details: undefined,
+      details: { scoutUnits: { SPY: 10 } },
       isRead: false,
       timestamp: '2026-06-07T10:00:00.000Z',
+    });
+  });
+
+  describe('precision scales with spy count (run 090)', () => {
+    it('VAGUE (1 spy): withholds exact composition, stock and strategy', () => {
+      const result = presentScoutReport({
+        ...baseReport,
+        details: { scoutUnits: { SPY: 1 } },
+      });
+      expect(result.precision).toBe('VAGUE');
+      expect(result.units).toBeNull();
+      expect(result.resources).toBeNull();
+      expect(result.strategy).toBeNull();
+      expect(result.unitRanges).toBeUndefined();
+      // total army 11 (8+3) → LOW ; total stock 350 → LOW.
+      expect(result.armyBand).toBe('LOW');
+      expect(result.resourceBand).toBe('LOW');
+    });
+
+    it('RANGED (3 spies): exposes deterministic ranges, not exact values', () => {
+      const result = presentScoutReport({
+        ...baseReport,
+        details: { scoutUnits: { SPY: 3 } },
+      });
+      expect(result.precision).toBe('RANGED');
+      expect(result.units).toBeNull();
+      expect(result.resources).toBeNull();
+      // MILITIA 8 → step 5 → [5,10] ; SPY 3 → [0,5].
+      expect(result.unitRanges).toEqual({
+        MILITIA: { min: 5, max: 10 },
+        SPY: { min: 0, max: 5 },
+      });
+      // wood 200 → step 250 → [0,250] ; stone 100 → [0,250] ; iron 50 → step 50 → [50,100].
+      expect(result.resourceRanges).toEqual({
+        wood: { min: 0, max: 250 },
+        stone: { min: 0, max: 250 },
+        iron: { min: 50, max: 100 },
+      });
+      // Style revealed from RANGED upward.
+      expect(result.strategy).toBe('AGGRESSIVE');
+      expect(result.armyBand).toBeUndefined();
+    });
+
+    it('falls back to VAGUE (no crash) when scoutUnits is absent from details', () => {
+      const result = presentScoutReport({
+        ...baseReport,
+        details: { wallLevel: 3 },
+      });
+      expect(result.precision).toBe('VAGUE');
+      expect(result.units).toBeNull();
+      expect(result.resources).toBeNull();
+    });
+
+    it('never crashes on a corrupted scoutUnits payload (falls back to VAGUE)', () => {
+      // Non-enum key, float and negative counts would throw the strict codec —
+      // the presenter must stay defensive like every other details extractor.
+      const corrupted = presentScoutReport({
+        ...baseReport,
+        details: { scoutUnits: { NOT_A_UNIT: 5, SPY: -3, MILITIA: 2.5 } },
+      });
+      expect(corrupted.precision).toBe('VAGUE');
+      expect(corrupted.units).toBeNull();
+      // Le scoutUnits corrompu n'est pas réémis brut (sinon le .parse() client
+      // échouerait → rapport legacy illisible). Il est omis des details.
+      expect(corrupted.details?.scoutUnits).toBeUndefined();
+    });
+
+    it('blurs legacy reports retroactively from their scoutUnits count', () => {
+      // An old persisted report scouted with a single spy → still blurred.
+      const legacy = presentScoutReport({
+        ...baseReport,
+        details: { scoutUnits: { SPY: 2 }, wallLevel: 4 },
+      });
+      expect(legacy.precision).toBe('VAGUE');
+      expect(legacy.units).toBeNull();
+      // wallLevel stays exact (structural) and survives in details.
+      expect(legacy.details).toEqual(expect.objectContaining({ wallLevel: 4 }));
     });
   });
 

@@ -47,6 +47,8 @@ V11 | Le trait naturel d'un village (spec 27) n'est révélé sur une entité d'
 
 V12 | Une entité carte « secrète » (site d'extraction, et toute future entité à découvrir) est fog-gated INCONDITIONNELLEMENT par les disques de vision serveur — y compris quand `fogOfWarEnabled=false` — et hors vision elle est ABSENTE du payload (jamais de blip `fogged`, qui révélerait la position). Les events Outbox associés ne portent jamais de position x/y. | source: tasks/runs/archive/091-feature-resource-extraction-sites.md
 
+V13 | La précision d'un rapport de scout scale avec le nombre d'ESPIONS, dérivé de `details.scoutUnits.SPY` (aucun champ persisté, rétrocompat auto). Le flou est appliqué au PRESENTER (read-time) via le module pur déterministe `packages/shared/src/combat/scout-precision.ts` (zéro RNG) : la DB garde le snapshot exact, mais compo/stock exacts ne sortent JAMAIS sous le palier PRECISE. Le carnet d'intel (`recordIntel`) doit refléter la MÊME précision (valeurs représentatives coarsées + flag `compositionRevealed` suivant le pattern « si révélé ») sinon il contourne la mécanique. Tout `UnitMap`/`resources` réémis d'un `details` Json (legacy/tiers) passe par un codec strict tolérant qui OMET le champ sur échec, jamais réémis brut (sinon le `.parse()` client casse → rapport illisible). | source: tasks/runs/archive/090-feature-scout-precision-by-spy-count.md
+
 ## §B — Bugs récurrents / anti-patterns
 
 Format :

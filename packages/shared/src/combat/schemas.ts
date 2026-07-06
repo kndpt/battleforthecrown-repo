@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { UnitMapSchema } from '../army/unit-map';
+import { UnitMapSchema, UnitTypeSchema } from '../army/unit-map';
+import { SCOUT_MAGNITUDE_BANDS, SCOUT_PRECISIONS } from './scout-precision';
+import {
+  VILLAGE_NATURAL_TRAITS,
+  type VillageNaturalTrait,
+} from '../village/traits';
 
 export const LootResourcesSchema = z.strictObject({
   wood: z.number().nonnegative(),
@@ -101,7 +106,32 @@ const ScoutReportDetailsSchema = z.object({
   newbieShield: NewbieShieldSnapshotSchema.optional(),
   defensiveFriendsDisplayNames: z.array(z.string()).optional(),
   inactivity: InactivitySnapshotSchema.optional(),
+  // Trait naturel (spec 27) : présent au DTO, doit être conservé au boundary
+  // client (z.object strip les clés inconnues sinon → badge jamais rendu).
+  naturalTrait: z
+    .enum(
+      VILLAGE_NATURAL_TRAITS as readonly [
+        VillageNaturalTrait,
+        ...VillageNaturalTrait[],
+      ],
+    )
+    .optional(),
 }).optional();
+
+const ScoutRangeSchema = z.object({
+  min: z.number().nonnegative(),
+  max: z.number().nonnegative(),
+});
+
+const ScoutMagnitudeBandSchema = z.enum(SCOUT_MAGNITUDE_BANDS);
+
+const ScoutUnitRangesSchema = z.partialRecord(UnitTypeSchema, ScoutRangeSchema);
+
+const ScoutResourceRangesSchema = z.object({
+  wood: ScoutRangeSchema,
+  stone: ScoutRangeSchema,
+  iron: ScoutRangeSchema,
+});
 
 export const ScoutReportResponseSchema = z.object({
   id: z.string(),
@@ -112,8 +142,15 @@ export const ScoutReportResponseSchema = z.object({
   targetY: z.number(),
   targetName: z.string().nullable().optional(),
   targetTier: z.string().nullable().optional(),
-  units: UnitMapSchema,
-  resources: LootResourcesSchema,
+  precision: z.enum(SCOUT_PRECISIONS),
+  // Compo/stock exacts uniquement au palier PRECISE ; null aux autres paliers
+  // (le flou est appliqué côté serveur — l'exact ne transite jamais).
+  units: UnitMapSchema.nullable(),
+  resources: LootResourcesSchema.nullable(),
+  unitRanges: ScoutUnitRangesSchema.nullable().optional(),
+  resourceRanges: ScoutResourceRangesSchema.nullable().optional(),
+  armyBand: ScoutMagnitudeBandSchema.nullable().optional(),
+  resourceBand: ScoutMagnitudeBandSchema.nullable().optional(),
   strategy: z.string().nullable().optional(),
   details: ScoutReportDetailsSchema,
   isRead: z.boolean(),

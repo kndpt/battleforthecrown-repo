@@ -1,8 +1,8 @@
 # Run #090 — scout-precision-by-spy-count
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-07-05
+> **Terminé** : 2026-07-05
 
 ## Cible
 
@@ -73,16 +73,40 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 - Coordination merge avec PR ouvertes 055/059/081/089 touchant le même DTO/card.
 - Risque de perte d'ESPION (ticket § « post-MVP ? ») : **hors scope** proposé.
 
-## Progress
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
 ## Décisions prises
 
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
+_(git history)_ — T1 design gate consigné dans `docs/gameplay/11-scouting.md` § Qualité du renseignement + `SPEC.md` V13.
 
 ## Rapport final
 
+Précision de scout scale avec le nombre d'ESPIONS (1→VAGUE, 3→RANGED, 10→PRECISE), flou **déterministe au presenter** (DB garde l'exact), dérivé de `details.scoutUnits.SPY` → **zéro migration, rétrocompat auto**. Miroir cohérent au carnet d'intel (pattern « si révélé »). Incident corrigé au passage : `naturalTrait` (spec 27) était strippé au boundary client (absent du schema). Dette préexistante (parse top-level `units`/`resources` non gardé) flaggée en task séparée.
+
 ### Acceptance & QA
 
-_(Vide au démarrage. Rempli en fin de run.)_
+Critères d'acceptance vérifiés :
+- [x] Fonction pure 1/3/10 (bornes figées) — `yarn workspace battleforthecrown-pixi test -- --run scout-precision` → 45 assertions vertes
+- [x] Scout 1 espion : pas de compo/stock exacts — `yarn workspace battleforthecrown-backend test -- scout-report.presenter` → VAGUE ⇒ `units`/`resources`/`strategy` = null (28 tests)
+- [x] Scout PRECISE : compo + stock exacts (parité) — presenter spec PRECISE + smoke `intel` 10 SPY
+- [x] Champ précision typé + schema valide 3 paliers + static-check — `yarn static-check` → vert (tsc+eslint back+pixi)
+- [x] Presenter ne crashe sur aucun palier + rétrocompat anciens rapports — presenter spec (`scoutUnits` absent/corrompu → VAGUE, champ omis, `.parse()` client OK)
+
+Review indépendante : Déclenchée (raison : back+front + contrat shared modifié + diff>100 + invariant durable). CodeRabbit CLI local, 3 rounds — verdict final **GO** (3 findings majeurs successifs résolus : parseUnitMap non gardé, `scoutUnits` réémis brut, tests manquants).
+
+Tests automatisés : backend `yarn workspace battleforthecrown-backend test` → 565 · pixi `yarn workspace battleforthecrown-pixi test` → 954 · (inclut shared scout-precision 45, presenter scout 28).
+
+Smokes lancés : Ciblés (après `test:smoke:preflight`) — `test:smoke:run -- scouting intel combat-reports-inbox cross-player-reinforcement pvp-newbie-shield` → **21 verts**. Périmètre = flux scout job → scoutReport → carnet d'intel + inbox.
+
+Smokes ajoutés/modifiés : `test/intel.smoke.spec.ts` — scouts bumpés à 10 espions (PRECISE) pour préserver l'assertion carnet exact + révélation `strategy` (tests dedup/losing-combat laissés en VAGUE, non concernés).
+
+QA fonctionnelle agent : couverte par les smokes (bout-en-bout scout→intel) + presenter spec. Non nécessaire en curl manuel.
+
+Tests IG à faire par le user :
+- [ ] Rapport **1 espion** : armée/stock en magnitude vague (`Ampleur`/`Stock` catégoriels), aucun chiffre exact, style « Inconnu ».
+- [ ] Rapport **3 espions** : fourchettes `min–max` par unité et par ressource lisibles.
+- [ ] Rapport **10 espions** : chiffres exacts (parité avant/après).
+- [ ] Verdict « Fiabilité » + note explicative affichés selon le palier.
+- [ ] Badge « Trait naturel » d'un rapport scout (fix incident schema) s'affiche.
+
+_(Serveurs non démarrés : run scheduled autonome, user absent — checklist IG fournie ci-dessus, cf. `.agents/rules/qa.md`.)_
+
+Docs : mises à jour `docs/gameplay/11-scouting.md` (§ Qualité du renseignement), `docs/gameplay/lab/tickets/03-scouting-information-quality.md` (statut ✅), `SPEC.md` (invariant V13), `tasks/lessons.md`.

@@ -4,6 +4,7 @@ import {
   buildScoutReportCardProps,
   getInactivityBadge,
   getNewbieShieldStatus,
+  scoutReportPrecisionLabel,
   scoutReportResourceTotal,
   scoutReportStrategyLabel,
   scoutReportTargetLabel,
@@ -20,6 +21,7 @@ const report: ScoutReportResponse = {
   targetY: 34,
   targetName: 'Roc-d-Acier',
   targetTier: null,
+  precision: 'PRECISE',
   units: { MILITIA: 12, SPY: 2 },
   resources: { wood: 100, stone: 50, iron: 25 },
   strategy: 'FORTRESS',
@@ -58,9 +60,11 @@ describe('scoutReportView', () => {
     const props = buildScoutReportCardProps(report, undefined, false);
 
     expect(props.metaLabel).toBeUndefined();
+    expect(props.note).toBeUndefined();
     expect(props.verdicts).toEqual([
       expect.objectContaining({ label: 'Pillage estimé', value: '175' }),
       expect.objectContaining({ label: 'Menace · mur', value: 'Niv. 6' }),
+      expect.objectContaining({ label: 'Fiabilité', value: 'Précis' }),
     ]);
     expect(props.targetPrefix).toBe('Cible');
     expect(props.villageLabel).toBe('Village joueur · 12|34');
@@ -335,6 +339,97 @@ describe('scoutReportView', () => {
       expect(
         buildScoutReportCardProps(barbarian, undefined, false).inactivityBadge,
       ).toBeUndefined();
+    });
+  });
+
+  describe('precision-scaled rendering (run 090)', () => {
+    function sectionTitled(props: ReturnType<typeof buildScoutReportCardProps>, title: string) {
+      return props.sections.find((section) => section.title === title);
+    }
+
+    it('renders a VAGUE report as magnitude bands, no exact composition/stock', () => {
+      const vague: ScoutReportResponse = {
+        ...report,
+        precision: 'VAGUE',
+        units: null,
+        resources: null,
+        strategy: null,
+        armyBand: 'MEDIUM',
+        resourceBand: 'LOW',
+        details: { scoutUnits: { SPY: 1 }, wallLevel: 6 },
+      };
+      const props = buildScoutReportCardProps(vague, undefined, false);
+
+      expect(sectionTitled(props, 'Armée observée')?.items).toEqual([
+        expect.objectContaining({ label: 'Ampleur', value: 'Moyenne' }),
+      ]);
+      expect(sectionTitled(props, 'Ressources')?.items).toEqual([
+        expect.objectContaining({ label: 'Stock', value: 'Faible' }),
+      ]);
+      expect(sectionTitled(props, 'Style stratégique')?.items[0]).toEqual(
+        expect.objectContaining({ label: 'Style', value: 'Inconnu' }),
+      );
+      expect(props.verdicts).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ label: 'Fiabilité', value: 'Estimation vague' }),
+          expect.objectContaining({ label: 'Pillage estimé', value: 'Faible' }),
+        ]),
+      );
+      expect(props.note).toContain('Estimation vague');
+      expect(scoutReportPrecisionLabel(vague)).toBe('Estimation vague');
+    });
+
+    it('renders a RANGED report as deterministic ranges per unit/resource', () => {
+      const ranged: ScoutReportResponse = {
+        ...report,
+        precision: 'RANGED',
+        units: null,
+        resources: null,
+        strategy: 'FORTRESS',
+        unitRanges: {
+          WARRIOR: { min: 40, max: 50 },
+          ARCHER: { min: 5, max: 10 },
+        },
+        resourceRanges: {
+          wood: { min: 1000, max: 2000 },
+          stone: { min: 50, max: 100 },
+          iron: { min: 4000, max: 5000 },
+        },
+        details: { scoutUnits: { SPY: 3 }, wallLevel: 6 },
+      };
+      const props = buildScoutReportCardProps(ranged, undefined, false);
+
+      // Sorted alphabetically: ARCHER before WARRIOR.
+      expect(sectionTitled(props, 'Armée observée')?.items).toEqual([
+        expect.objectContaining({ label: 'Archer', value: '5–10' }),
+        expect.objectContaining({ label: 'Guerrier', value: '40–50' }),
+      ]);
+      expect(sectionTitled(props, 'Ressources')?.items).toEqual([
+        expect.objectContaining({ label: 'Bois', value: '1.0K–2.0K' }),
+        expect.objectContaining({ label: 'Pierre', value: '50–100' }),
+        expect.objectContaining({ label: 'Fer', value: '4.0K–5.0K' }),
+      ]);
+      // Style revealed from RANGED upward.
+      expect(sectionTitled(props, 'Style stratégique')?.items[0]).toEqual(
+        expect.objectContaining({ value: 'Forteresse' }),
+      );
+      const pillage = props.verdicts.find((v) => v.label === 'Pillage estimé');
+      // midpoints 1500 + 75 + 4500 = 6075.
+      expect(pillage?.value).toBe(`≈ ${new Intl.NumberFormat('fr-FR').format(6075)}`);
+      expect(props.verdicts).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ label: 'Fiabilité', value: 'Fourchettes' }),
+        ]),
+      );
+    });
+
+    it('renders a PRECISE report with exact composition and stock (parity)', () => {
+      const props = buildScoutReportCardProps(report, undefined, false);
+      expect(sectionTitled(props, 'Armée observée')?.items).toEqual([
+        expect.objectContaining({ label: 'Milice de paysans', value: '12' }),
+        expect.objectContaining({ label: 'Espion', value: '2' }),
+      ]);
+      expect(scoutReportPrecisionLabel(report)).toBe('Précis');
     });
   });
 });

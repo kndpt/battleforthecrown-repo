@@ -15,3 +15,4 @@ export * from './utils';
 export * from './loot';
 export * from './schemas';
 export * from './capture-duration';
+export * from './scout-precision';

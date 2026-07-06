@@ -4,6 +4,8 @@ import type {
 } from '@/features/design-system/components/ScoutReportCard';
 import {
   getPvpCaptureDurationLabel,
+  type ScoutMagnitudeBand,
+  type ScoutRange,
   type ScoutReportResponse,
 } from '@battleforthecrown/shared/combat';
 import { formatInactivityLabel } from '@battleforthecrown/shared/world';
@@ -155,15 +157,77 @@ function buildDefensiveFriendsSections(
   ];
 }
 
-export function buildScoutReportCardProps(
-  report: ScoutReportResponse,
-  onDelete: ScoutReportCardProps['action']['onClick'],
-  deleteDisabled: boolean,
-): ScoutReportCardProps {
-  const scoutMeta = unitMetaFor('SPY');
-  const scoutUnits = scoutReportUnitMapTotal(report.details?.scoutUnits);
-  const scoutLosses = scoutReportUnitMapTotal(report.details?.scoutLosses);
-  const armyItems = Object.entries(report.units ?? {})
+/** Libellés FR des bandes de magnitude (palier VAGUE). */
+const SCOUT_BAND_LABELS: Record<ScoutMagnitudeBand, string> = {
+  NONE: 'Aucune',
+  LOW: 'Faible',
+  MEDIUM: 'Moyenne',
+  HIGH: 'Élevée',
+  VERY_HIGH: 'Très élevée',
+};
+
+/** Libellé de fiabilité affiché en verdict + note. */
+export function scoutReportPrecisionLabel(report: ScoutReportResponse): string {
+  switch (report.precision) {
+    case 'PRECISE':
+      return 'Précis';
+    case 'RANGED':
+      return 'Fourchettes';
+    default:
+      return 'Estimation vague';
+  }
+}
+
+function formatUnitRange(range: ScoutRange): string {
+  if (range.min === range.max) return NUMBER_FORMATTER.format(range.min);
+  return `${NUMBER_FORMATTER.format(range.min)}–${NUMBER_FORMATTER.format(range.max)}`;
+}
+
+function formatResourceRange(range: ScoutRange): string {
+  if (range.min === range.max) return formatResourceAmount(range.min);
+  return `${formatResourceAmount(range.min)}–${formatResourceAmount(range.max)}`;
+}
+
+/**
+ * Section « Armée observée » — rendu selon la précision (run 090) :
+ * compo exacte (PRECISE), fourchettes par type (RANGED), ou magnitude
+ * catégorielle (VAGUE).
+ */
+function buildArmySection(report: ScoutReportResponse): ScoutReportSection {
+  const title = 'Armée observée';
+  if (report.precision === 'RANGED' && report.unitRanges) {
+    const items = Object.entries(report.unitRanges)
+      .filter(([, range]) => range && range.max > 0)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([unitType, range]) => {
+        const meta = unitMetaFor(unitType);
+        return {
+          icon: meta.iconPath ?? '/assets/army-power.png',
+          label: meta.name,
+          value: formatUnitRange(range as ScoutRange),
+        };
+      });
+    return {
+      title,
+      items:
+        items.length > 0
+          ? items
+          : [{ icon: '/assets/army-power.png', label: 'Unités', value: '≈ 0' }],
+    };
+  }
+  if (report.precision === 'VAGUE') {
+    return {
+      title,
+      items: [
+        {
+          icon: '/assets/army-power.png',
+          label: 'Ampleur',
+          value: SCOUT_BAND_LABELS[report.armyBand ?? 'NONE'],
+        },
+      ],
+    };
+  }
+  const items = Object.entries(report.units ?? {})
     .filter(([, quantity]) => quantity > 0)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([unitType, quantity]) => {
@@ -174,12 +238,76 @@ export function buildScoutReportCardProps(
         value: NUMBER_FORMATTER.format(quantity),
       };
     });
+  return {
+    title,
+    items:
+      items.length > 0
+        ? items
+        : [{ icon: '/assets/army-power.png', label: 'Unités', value: '0' }],
+  };
+}
 
-  const resourceItems = (['wood', 'stone', 'iron'] as const).map((resource) => ({
-    icon: RESOURCE_ICONS[resource],
-    label: RESOURCE_LABELS[resource],
-    value: formatResourceAmount(report.resources?.[resource] ?? 0),
-  }));
+/** Section « Ressources » — exact / fourchettes / magnitude selon la précision. */
+function buildResourceSection(report: ScoutReportResponse): ScoutReportSection {
+  const title = 'Ressources';
+  if (report.precision === 'RANGED' && report.resourceRanges) {
+    const ranges = report.resourceRanges;
+    return {
+      title,
+      items: (['wood', 'stone', 'iron'] as const).map((resource) => ({
+        icon: RESOURCE_ICONS[resource],
+        label: RESOURCE_LABELS[resource],
+        value: formatResourceRange(ranges[resource]),
+      })),
+    };
+  }
+  if (report.precision === 'VAGUE') {
+    return {
+      title,
+      items: [
+        {
+          icon: RESOURCE_ICONS.wood,
+          label: 'Stock',
+          value: SCOUT_BAND_LABELS[report.resourceBand ?? 'NONE'],
+        },
+      ],
+    };
+  }
+  return {
+    title,
+    items: (['wood', 'stone', 'iron'] as const).map((resource) => ({
+      icon: RESOURCE_ICONS[resource],
+      label: RESOURCE_LABELS[resource],
+      value: formatResourceAmount(report.resources?.[resource] ?? 0),
+    })),
+  };
+}
+
+/** Valeur du verdict « Pillage estimé » selon la précision. */
+function pillageVerdictValue(report: ScoutReportResponse): string {
+  if (report.precision === 'RANGED' && report.resourceRanges) {
+    const ranges = report.resourceRanges;
+    const mid = (['wood', 'stone', 'iron'] as const).reduce(
+      (sum, resource) =>
+        sum + Math.round((ranges[resource].min + ranges[resource].max) / 2),
+      0,
+    );
+    return `≈ ${NUMBER_FORMATTER.format(mid)}`;
+  }
+  if (report.precision === 'VAGUE') {
+    return SCOUT_BAND_LABELS[report.resourceBand ?? 'NONE'];
+  }
+  return NUMBER_FORMATTER.format(scoutReportResourceTotal(report));
+}
+
+export function buildScoutReportCardProps(
+  report: ScoutReportResponse,
+  onDelete: ScoutReportCardProps['action']['onClick'],
+  deleteDisabled: boolean,
+): ScoutReportCardProps {
+  const scoutMeta = unitMetaFor('SPY');
+  const scoutUnits = scoutReportUnitMapTotal(report.details?.scoutUnits);
+  const scoutLosses = scoutReportUnitMapTotal(report.details?.scoutLosses);
 
   const sections: ScoutReportSection[] = [
     {
@@ -193,16 +321,8 @@ export function buildScoutReportCardProps(
         },
       ],
     },
-    {
-      title: 'Armée observée',
-      items: armyItems.length > 0
-        ? armyItems
-        : [{ icon: '/assets/army-power.png', label: 'Unités', value: '0' }],
-    },
-    {
-      title: 'Ressources',
-      items: resourceItems,
-    },
+    buildArmySection(report),
+    buildResourceSection(report),
     ...(report.targetKind === 'BARBARIAN_VILLAGE'
       ? []
       : [
@@ -212,7 +332,10 @@ export function buildScoutReportCardProps(
               {
                 icon: '/assets/strategy-icons/spritesheet.png',
                 label: 'Style',
-                value: scoutReportStrategyLabel(report.strategy),
+                value:
+                  report.precision === 'VAGUE'
+                    ? 'Inconnu'
+                    : scoutReportStrategyLabel(report.strategy),
               },
             ],
           },
@@ -248,6 +371,11 @@ export function buildScoutReportCardProps(
       : undefined,
     inactivityBadge: getInactivityBadge(report),
     naturalTraitBadge: report.details?.naturalTrait,
+    // Un rapport imprécis (peu d'espions) affiche la raison du flou.
+    note:
+      report.precision === 'PRECISE'
+        ? undefined
+        : `Fiabilité : ${scoutReportPrecisionLabel(report)}. Envoyer plus d'espions affine le rapport.`,
     sections,
     targetName: scoutReportTitle(report),
     targetPrefix: 'Cible',
@@ -256,7 +384,7 @@ export function buildScoutReportCardProps(
     verdicts: [
       {
         label: 'Pillage estimé',
-        value: NUMBER_FORMATTER.format(scoutReportResourceTotal(report)),
+        value: pillageVerdictValue(report),
       },
       report.details?.wallLevel !== undefined
         ? {
@@ -268,6 +396,10 @@ export function buildScoutReportCardProps(
             label: 'Menace · mur',
             value: 'Inconnu',
           },
+      {
+        label: 'Fiabilité',
+        value: scoutReportPrecisionLabel(report),
+      },
     ],
     villageLabel: `${scoutReportTargetLabel(report)} · ${report.targetX}|${report.targetY}`,
   };

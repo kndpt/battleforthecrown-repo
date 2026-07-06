@@ -27,6 +27,13 @@ export interface RecordIntelInput {
   targetY: number;
   targetTier: string | null;
   seenAt: Date;
+  /**
+   * `false` ⇒ la source n'a pas révélé la compo/stock exacts (scout VAGUE,
+   * run 090) : à l'upsert, ne pas écraser une observation antérieure plus riche
+   * (pattern « si révélé » des autres champs). Défaut (`undefined`) ⇒ révélé
+   * (combat gagné, scout RANGED/PRECISE).
+   */
+  compositionRevealed?: boolean;
 }
 
 @Injectable()
@@ -106,6 +113,7 @@ export class IntelService {
       targetY,
       targetTier,
       seenAt,
+      compositionRevealed,
     } = input;
 
     // Garde temporelle : un job retardé/rejoué (pg-boss) ne doit pas faire
@@ -149,8 +157,9 @@ export class IntelService {
       update: {
         sourceKind,
         sourceReportId,
-        units,
-        resources,
+        // Compo/stock : « si révélé » (run 090) — un scout VAGUE ne doit pas
+        // écraser une observation antérieure plus riche ni fuiter l'exact.
+        ...(compositionRevealed === false ? {} : { units, resources }),
         ...(wallLevel !== null ? { wallLevel } : {}),
         ...(strategy !== null ? { strategy } : {}),
         ...(targetName !== null ? { targetName } : {}),
