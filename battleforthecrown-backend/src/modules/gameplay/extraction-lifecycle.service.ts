@@ -21,10 +21,10 @@ import type { ExtractionResourceType } from '@battleforthecrown/shared/extractio
 import { calculateCombatOutcome } from '../combat/combat-resolution';
 import {
   isVictoryForAttacker,
+  sumCarryCapacity,
   sumPopulationCost,
 } from '../combat/combat.utils';
-import { getUnitStats, type UnitMap } from '@battleforthecrown/shared/army';
-import { typedEntries } from '@battleforthecrown/shared/utils';
+import { type UnitMap } from '@battleforthecrown/shared/army';
 import { WorldConfigService } from '../world/world-config.service';
 import type { CombatContext } from '../combat/interfaces/combat-context.interface';
 
@@ -546,7 +546,7 @@ export class ExtractionLifecycleService {
       remainingCapacity: site.remainingCapacity,
     });
     const stolenBase = Math.floor(accrued * EXTRACTION_STEAL_RATIO);
-    const carryCapacity = this.sumCarryCapacity(outcome.survivingAttacker);
+    const carryCapacity = sumCarryCapacity(outcome.survivingAttacker);
     const stolen = Math.min(stolenBase, carryCapacity);
     const stolenResources = this.resourceLoot(site.resourceType, stolen);
 
@@ -767,18 +767,6 @@ export class ExtractionLifecycleService {
         _travelTime: 0,
       },
     };
-  }
-
-  /** Sum of `carryCapacity` across a UnitMap — mirrors `LootManager`'s private helper, no dependency on the loot pipeline (which expects a defender resource stock, irrelevant here). */
-  private sumCarryCapacity(units: UnitMap): number {
-    let total = 0;
-    for (const [unitType, quantity] of typedEntries(units)) {
-      const stats = getUnitStats(unitType);
-      if (stats?.carryCapacity) {
-        total += stats.carryCapacity * quantity;
-      }
-    }
-    return total;
   }
 
   private async depleteAndRespawnIfExhausted(

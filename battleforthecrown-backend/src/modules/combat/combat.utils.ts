@@ -1,4 +1,8 @@
-import { UNIT_COSTS, type UnitMap } from '@battleforthecrown/shared/army';
+import {
+  UNIT_COSTS,
+  getUnitStats,
+  type UnitMap,
+} from '@battleforthecrown/shared/army';
 import { typedEntries } from '@battleforthecrown/shared/utils';
 
 export {
@@ -18,6 +22,23 @@ export function sumPopulationCost(losses: UnitMap): number {
   for (const [unitType, lossCount] of typedEntries(losses)) {
     const popCost = UNIT_COSTS[unitType]?.population;
     if (popCost && lossCount) total += popCost * lossCount;
+  }
+  return total;
+}
+
+/**
+ * Total carry capacity of a set of units — the volume of resources they can
+ * haul home. Sums `carryCapacity` (from the shared unit catalog) across the
+ * UnitMap. Lives here (not in LootManager) so both the combat loot pipeline
+ * and ExtractionLifecycleService share one home, mirroring `sumPopulationCost`.
+ */
+export function sumCarryCapacity(units: UnitMap): number {
+  let total = 0;
+  for (const [unitType, quantity] of typedEntries(units)) {
+    const stats = getUnitStats(unitType);
+    if (stats?.carryCapacity && quantity) {
+      total += stats.carryCapacity * quantity;
+    }
   }
   return total;
 }

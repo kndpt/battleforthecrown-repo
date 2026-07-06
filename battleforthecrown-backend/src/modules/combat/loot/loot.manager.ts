@@ -3,8 +3,7 @@ import { ResourceLootProvider } from './providers/resource-loot.provider';
 import { CombatContext } from '../interfaces/combat-context.interface';
 import { LootResult } from './interfaces/loot-result.interface';
 import { LootResolver } from './interfaces/loot-resolver.interface';
-import { getUnitStats, type UnitMap } from '@battleforthecrown/shared/army';
-import { typedEntries } from '@battleforthecrown/shared/utils';
+import { sumCarryCapacity } from '../combat.utils';
 
 @Injectable()
 export class LootManager {
@@ -24,9 +23,7 @@ export class LootManager {
    */
   async calculateLoot(context: CombatContext): Promise<LootResult> {
     // Calculate total carry capacity
-    const totalCapacity = this.calculateTotalCarryCapacity(
-      context.attacker.units,
-    );
+    const totalCapacity = sumCarryCapacity(context.attacker.units);
 
     let remainingCapacity = totalCapacity;
     const aggregatedLoot: LootResult = {
@@ -67,21 +64,5 @@ export class LootManager {
     }
 
     return aggregatedLoot;
-  }
-
-  /**
-   * Calculate total carry capacity of units
-   */
-  private calculateTotalCarryCapacity(units: UnitMap): number {
-    let total = 0;
-
-    for (const [unitType, quantity] of typedEntries(units)) {
-      const stats = getUnitStats(unitType);
-      if (stats && stats.carryCapacity) {
-        total += stats.carryCapacity * quantity;
-      }
-    }
-
-    return total;
   }
 }
