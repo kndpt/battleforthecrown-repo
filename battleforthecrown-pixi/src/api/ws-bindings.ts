@@ -11,6 +11,7 @@ import type {
   ExtractionAttackedPayload,
   ExtractionDepletedPayload,
   ExtractionReturnedPayload,
+  ExtractionStartedPayload,
   IntelUpdatedPayload,
   PvpShieldBrokenPayload,
   RankingsChangedPayload,
@@ -1116,11 +1117,41 @@ export function applyIntelUpdated(
   });
 }
 
+function invalidateVillageExtractionState(
+  ctx: BindingsContext,
+  villageId: string,
+  options: { resources?: boolean } = {},
+): void {
+  if (options.resources) {
+    ctx.queryClient.invalidateQueries({
+      queryKey: queryKeys.resources(villageId),
+    });
+  }
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.activeExpeditions(villageId),
+  });
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.armyInventory(villageId),
+  });
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.population(villageId),
+  });
+}
+
+export function applyExtractionStarted(
+  payload: ExtractionStartedPayload,
+  ctx: BindingsContext,
+): void {
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.worldEntities(payload.worldId),
+  });
+  invalidateVillageExtractionState(ctx, payload.villageId);
+}
+
 export function applyExtractionDepleted(
   payload: ExtractionDepletedPayload,
   ctx: BindingsContext,
 ): void {
-  // The site disappears/reappears on the world map: refresh entities.
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.worldEntities(payload.worldId),
   });
@@ -1130,21 +1161,24 @@ export function applyExtractionAttacked(
   payload: ExtractionAttackedPayload,
   ctx: BindingsContext,
 ): void {
-  // The site's siteActivity flips EXPLOITING -> IDLE server-side: refresh
-  // entities so the site's ring on the world map isn't left stale.
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.worldEntities(payload.worldId),
   });
+  if (payload.interrupted) {
+    invalidateVillageExtractionState(ctx, payload.villageId, {
+      resources: true,
+    });
+  }
 }
 
 export function applyExtractionReturned(
   payload: ExtractionReturnedPayload,
   ctx: BindingsContext,
 ): void {
-  // Same as above: the site's siteActivity flips EXPLOITING -> IDLE.
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.worldEntities(payload.worldId),
   });
+  invalidateVillageExtractionState(ctx, payload.villageId, { resources: true });
 }
 
 const bindings: ServerEventBindings = {
@@ -1187,9 +1221,7 @@ const bindings: ServerEventBindings = {
   "noble.killed": applyNobleKilled,
   "pvp.shield.broken": applyPvpShieldBroken,
   "intel.updated": applyIntelUpdated,
-  // No frontend consumer yet — bound only to satisfy the exhaustive
-  // ServerEvents contract (declaration-only, run 091 T3a).
-  "extraction.started": () => undefined,
+  "extraction.started": applyExtractionStarted,
   "extraction.depleted": applyExtractionDepleted,
   "extraction.attacked": applyExtractionAttacked,
   "extraction.returned": applyExtractionReturned,
