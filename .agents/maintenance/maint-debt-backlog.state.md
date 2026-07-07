@@ -1,6 +1,6 @@
 # maint-debt — candidats (réécrit chaque run)
 
-last: 2026-07-06 | archive: `archive/maint-debt/2026-06-15-full.md`
+last: 2026-07-07 | archive: `archive/maint-debt/2026-06-15-full.md`
 branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 ## candidate
@@ -24,12 +24,13 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 | area | PR |
 |------|-----|
-| army.service.ts `Object.keys(UNIT_CATALOG.costs) as UnitType[]` → typed `Object.values(UNIT_TYPES)`, drops cast | pending |
+| recall-en-route.smoke.spec.ts drop dead `as any` on world `config` spread (siblings type-check identical spread without cast) | pending |
 
 ## done (prev)
 
 | area | PR |
 |------|-----|
+| army.service.ts `Object.keys(UNIT_CATALOG.costs) as UnitType[]` → typed `Object.values(UNIT_TYPES)`, drops cast | #260 |
 | ArmyViewDesign.tsx regex formatNumber → toLocaleString('fr-FR'), aligns siblings | pending |
 | clamp/clamp01 dup worldTerrain.ts + OnboardingFab.tsx → import @/lib/math | #246 |
 | barbarian-runtime.service.ts 4× `as UnitType` → typedEntries + isUnitType guard | #241 |

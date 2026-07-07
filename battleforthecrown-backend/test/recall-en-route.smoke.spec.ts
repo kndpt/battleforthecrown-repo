@@ -26,7 +26,7 @@ describe('recall en-route smoke', () => {
         id: `recall-smoke-${Date.now()}`,
         name: 'Recall Smoke',
         status: 'OPEN',
-        config: { ...SMOKE_WORLD_CONFIG, fogOfWar: { enabled: false } } as any,
+        config: { ...SMOKE_WORLD_CONFIG, fogOfWar: { enabled: false } },
       },
     });
 
