@@ -4,6 +4,7 @@ import { PrismaService } from '../../infra/prisma/prisma.service';
 import { WorldConfigService } from './world-config.service';
 import { BarbarianSeedingService } from './barbarian-seeding.service';
 import { MS_PER_HOUR } from '@battleforthecrown/shared/time';
+import { runResilientBatch } from '../../infra/pg-boss/queue-worker.helper';
 
 @Injectable()
 export class BarbarianSeedingCatchupWorker {
@@ -49,16 +50,15 @@ export class BarbarianSeedingCatchupWorker {
         },
       });
 
-      for (const world of worlds) {
-        try {
-          await this.catchupSeedingForWorld(world.id);
-        } catch (err) {
+      await runResilientBatch(
+        worlds,
+        (world) => this.catchupSeedingForWorld(world.id),
+        (world, err) =>
           this.logger.error(
             `Seeding catchup failed for world ${world.id}`,
             err,
-          );
-        }
-      }
+          ),
+      );
 
       const duration = Date.now() - startTime;
       this.logger.log(
