@@ -39,19 +39,12 @@ interface ReportsListProps {
 
 import { NUMBER_FMT } from '@/lib/formatters';
 
+import { formatReportTimestamp } from '@/lib/formatters';
+
 const NUMBER_FORMATTER = NUMBER_FMT;
 
 function formatDate(value: string): string {
-  const parsed = new Date(value);
-  const today = new Date();
-  const isSameDay = parsed.toDateString() === today.toDateString();
-  if (isSameDay) {
-    return parsed.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-  }
-  return parsed.toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-  });
+  return formatReportTimestamp(value);
 }
 
 function combatInboxItem(report: CombatReportDto) {
