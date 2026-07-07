@@ -3,6 +3,7 @@ import type PgBoss from 'pg-boss';
 import {
   registerJobQueueWorker,
   registerScheduledQueueWorker,
+  runResilientBatch,
 } from './queue-worker.helper';
 
 type FakeBoss = {
@@ -223,5 +224,57 @@ describe('registerJobQueueWorker', () => {
       'Failed to initialize My queue worker:',
       expect.any(Error),
     );
+  });
+});
+
+describe('runResilientBatch', () => {
+  it('processes every item and reports all successes', async () => {
+    const seen: number[] = [];
+    const onItemError = jest.fn();
+
+    const result = await runResilientBatch(
+      [1, 2, 3],
+      (n) => {
+        seen.push(n);
+        return Promise.resolve();
+      },
+      onItemError,
+    );
+
+    expect(seen).toEqual([1, 2, 3]);
+    expect(result).toEqual({ successCount: 3, errorCount: 0 });
+    expect(onItemError).not.toHaveBeenCalled();
+  });
+
+  it('isolates a failing item, continues the loop, and counts it as an error', async () => {
+    const seen: string[] = [];
+    const onItemError = jest.fn();
+    const boom = new Error('boom');
+
+    const result = await runResilientBatch(
+      ['a', 'b', 'c'],
+      (item) => {
+        seen.push(item);
+        return item === 'b' ? Promise.reject(boom) : Promise.resolve();
+      },
+      onItemError,
+    );
+
+    // 'b' throwing must not abort processing of 'c'.
+    expect(seen).toEqual(['a', 'b', 'c']);
+    expect(result).toEqual({ successCount: 2, errorCount: 1 });
+    expect(onItemError).toHaveBeenCalledTimes(1);
+    expect(onItemError).toHaveBeenCalledWith('b', boom);
+  });
+
+  it('returns zero counts for an empty list without invoking the handler', async () => {
+    const handler = jest.fn().mockResolvedValue(undefined);
+    const onItemError = jest.fn();
+
+    const result = await runResilientBatch([], handler, onItemError);
+
+    expect(result).toEqual({ successCount: 0, errorCount: 0 });
+    expect(handler).not.toHaveBeenCalled();
+    expect(onItemError).not.toHaveBeenCalled();
   });
 });
