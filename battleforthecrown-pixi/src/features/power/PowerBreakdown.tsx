@@ -1,5 +1,6 @@
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
+import { NUMBER_FMT } from '@/lib/formatters';
 
 export interface PowerBreakdownProps {
   buildings: number;
@@ -17,8 +18,6 @@ const SECTIONS = [
     icon: '/assets/army-power.png',
   },
 ] as const;
-
-const numberFormatter = new Intl.NumberFormat('fr-FR');
 
 export function PowerBreakdown({
   buildings,
@@ -44,7 +43,7 @@ export function PowerBreakdown({
             />
             <div className="min-w-0 flex-1">
               <div className="font-game text-[14px] font-extrabold leading-none tabular-nums text-[#3d2f1f]">
-                {numberFormatter.format(value)}
+                {NUMBER_FMT.format(value)}
               </div>
             </div>
           </div>

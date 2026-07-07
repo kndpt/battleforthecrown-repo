@@ -4,6 +4,7 @@ import { useKingdomPowerQuery, useVillagePowerQuery } from '@/api/queries';
 import { useGameStore } from '@/stores/game';
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
+import { NUMBER_FMT } from '@/lib/formatters';
 import { PowerBreakdown } from './PowerBreakdown';
 
 interface PowerBottomSheetProps {
@@ -11,10 +12,8 @@ interface PowerBottomSheetProps {
   onClose: () => void;
 }
 
-const numberFormatter = new Intl.NumberFormat('fr-FR');
-
 function formatNumber(value: number): string {
-  return numberFormatter.format(Math.max(0, Math.floor(value)));
+  return NUMBER_FMT.format(Math.max(0, Math.floor(value)));
 }
 
 function villageTierFromPower(power: number): number {

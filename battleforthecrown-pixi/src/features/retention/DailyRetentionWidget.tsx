@@ -59,9 +59,9 @@ const OYEZ_THEME_ICON: Record<OyezTheme, string> = {
   BARBARIANS: "/assets/attack.png",
 };
 
-const rewardFormatter = new Intl.NumberFormat("fr-FR", {
-  maximumFractionDigits: 0,
-});
+import { INTEGER_FMT } from '@/lib/formatters';
+
+const rewardFormatter = INTEGER_FMT;
 const cardDateFormatter = new Intl.DateTimeFormat("fr-FR", {
   day: "numeric",
   month: "long",

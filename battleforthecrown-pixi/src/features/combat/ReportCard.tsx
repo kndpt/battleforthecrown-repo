@@ -1,5 +1,6 @@
 import { Badge, Card } from '@/ui';
 import type { CombatReportDto } from '@/api/queries';
+import { NUMBER_FMT, formatReportTimestamp } from '@/lib/formatters';
 import { combatReportOutcome, combatReportTypeLabel } from './combatReportView';
 
 interface ReportCardProps {
@@ -7,21 +8,10 @@ interface ReportCardProps {
   onClick: () => void;
 }
 
-const NUMBER_FORMATTER = new Intl.NumberFormat('fr-FR');
+const NUMBER_FORMATTER = NUMBER_FMT;
 
 function formatDate(value: string): string {
-  const parsed = new Date(value);
-  const today = new Date();
-  const isSameDay = parsed.toDateString() === today.toDateString();
-  if (isSameDay) {
-    return parsed.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-  }
-  return parsed.toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatReportTimestamp(value, true);
 }
 
 export function ReportCard({ report, onClick }: ReportCardProps) {
