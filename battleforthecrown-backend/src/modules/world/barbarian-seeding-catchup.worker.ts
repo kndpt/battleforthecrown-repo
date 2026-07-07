@@ -50,7 +50,7 @@ export class BarbarianSeedingCatchupWorker {
         },
       });
 
-      await runResilientBatch(
+      const { successCount, errorCount } = await runResilientBatch(
         worlds,
         (world) => this.catchupSeedingForWorld(world.id),
         (world, err) =>
@@ -62,7 +62,7 @@ export class BarbarianSeedingCatchupWorker {
 
       const duration = Date.now() - startTime;
       this.logger.log(
-        `Seeding catchup cycle completed in ${duration}ms for ${worlds.length} worlds`,
+        `Seeding catchup cycle completed in ${duration}ms for ${worlds.length} worlds (${successCount} success, ${errorCount} errors)`,
       );
     } catch (err) {
       this.logger.error('Seeding catchup cycle failed', err);
