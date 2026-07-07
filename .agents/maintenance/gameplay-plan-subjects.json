@@ -856,6 +856,32 @@
         "docs/gameplay/22-village-roles-and-navigation.md — 'dashboard consolidé' + 'alertes par rôle' listés post-MVP ; l'axe 'alertes d'état' promu ici en MVP-léger présentationnel"
       ],
       "addedAt": "2026-07-06"
+    },
+    {
+      "specPath": "docs/gameplay/05-daily-cards-and-oyez.md",
+      "slug": "daily-card-exploit-resource-site",
+      "title": "Devoir royal — mission d'exploitation de site de ressource",
+      "keywords": [
+        "daily-card",
+        "devoir-royal",
+        "exploit-resource-site",
+        "oyez-prospectors",
+        "extraction-mission"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/096-feature-daily-cards-exploit-site.md",
+      "artefactId": "096",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/daily-card-extraction-site",
+      "gapSummary": "La feature sites d'exploitation de ressources (run 091) est livrée, mais aucune tache de carte quotidienne ni theme Oyez ne recompense son usage. La spec 05 section Questions a trancher pose explicitement la question ouverte (ligne ~159 : les cartes peuvent-elles cibler des sites d'exploitation quand cette feature existe). Ce run ajoute un DailyCardTaskType EXPLOIT_RESOURCE_SITE valide par l'event metier extraction.started plus un theme Oyez PROSPECTORS, en preservant les invariants (3 taches naturelles par bande, tache thematique rewardWeight=0, cap 12 pourcent/jour) et backprop la spec 05.",
+      "codeEvidence": [
+        "packages/shared/src/retention/types.ts — DAILY_CARD_TASK_TYPES = [TRAIN_UNITS, COMPLETE_BUILDING, RAID_BARBARIAN, SCOUT_TARGET, SEND_REINFORCEMENT] ; aucune valeur liee a l'exploitation/extraction",
+        "packages/shared/src/retention/types.ts — OYEZ_THEMES = [BUILDERS, MARCH, WATCH, BARBARIANS] ; aucun theme exploitation/prospecteurs",
+        "battleforthecrown-backend/src/modules/retention/retention.utils.ts — getTaskProjection mappe uniquement unit.trained, building.completed, battle.resolved, scout.reported, reinforcement.sent ; aucun case pour les events extraction",
+        "packages/shared/src/events/types.ts — events extraction.started, extraction.depleted, extraction.attacked, extraction.returned emis par run 091, non consommes par le pipeline retention",
+        "docs/gameplay/05-daily-cards-and-oyez.md section Questions a trancher — question sites d'exploitation laissee ouverte"
+      ],
+      "addedAt": "2026-07-07"
     }
   ]
 }
