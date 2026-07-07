@@ -1228,6 +1228,7 @@ describe('caravan websocket bindings', () => {
     queryClient.setQueryData(queryKeys.resources('origin-village'), { wood: 100 });
     queryClient.setQueryData(queryKeys.population('origin-village'), { used: 1, max: 10, available: 9 });
     queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
+    queryClient.setQueryData(queryKeys.activeExpeditions('origin-village'), []);
     queryClient.setQueryData(queryKeys.caravanReports('user-1', 'world-1'), []);
     queryClient.setQueryData(queryKeys.caravanReport('caravan-report-2', 'world-1'), {});
 
@@ -1252,6 +1253,7 @@ describe('caravan websocket bindings', () => {
     expect(useUiStore.getState().toasts[0].title).toBe('Caravane rappelée');
     expect(queryClient.getQueryState(queryKeys.resources('origin-village'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.population('origin-village'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.activeExpeditions('origin-village'))?.isInvalidated).toBe(true);
 
     applyCaravanReturned(
       {

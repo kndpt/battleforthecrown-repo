@@ -4,7 +4,9 @@ import { useDisplayCrowns } from '@/features/resources/useDisplayResources';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
 
-const crownFormatter = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
+import { INTEGER_FMT } from '@/lib/formatters';
+
+const crownFormatter = INTEGER_FMT;
 
 export function CrownDisplay() {
   const userId = useAuthStore((state) => state.user?.id ?? null);

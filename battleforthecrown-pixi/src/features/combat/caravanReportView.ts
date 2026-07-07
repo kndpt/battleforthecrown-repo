@@ -1,4 +1,5 @@
 import type { CaravanReportResponse } from '@battleforthecrown/shared/combat';
+import { NUMBER_FMT } from '@/lib/formatters';
 import { formatCoord } from './report-view-utils';
 
 export type CaravanReportResourcesDto = CaravanReportResponse['resources'];
@@ -9,7 +10,7 @@ export interface CaravanReportVillageView {
   y: number;
 }
 
-const NUMBER_FORMATTER = new Intl.NumberFormat('fr-FR');
+const NUMBER_FORMATTER = NUMBER_FMT;
 const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
   day: '2-digit',
   month: '2-digit',

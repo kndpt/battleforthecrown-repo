@@ -1,5 +1,6 @@
 import { Badge, Card } from '@/ui';
 import type { CombatReportDto } from '@/api/queries';
+import { NUMBER_FMT } from '@/lib/formatters';
 import { combatReportOutcome, combatReportTypeLabel } from './combatReportView';
 
 interface ReportCardProps {
@@ -7,7 +8,7 @@ interface ReportCardProps {
   onClick: () => void;
 }
 
-const NUMBER_FORMATTER = new Intl.NumberFormat('fr-FR');
+const NUMBER_FORMATTER = NUMBER_FMT;
 
 function formatDate(value: string): string {
   const parsed = new Date(value);

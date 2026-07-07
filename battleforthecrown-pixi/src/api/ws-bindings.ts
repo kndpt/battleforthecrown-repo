@@ -714,6 +714,7 @@ export function applyCaravanRecalled(
   });
   invalidateVillageEconomy(ctx, payload.villageId);
   invalidateOpenExpeditions(ctx, session);
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(payload.villageId) });
 }
 
 export function applyCaravanReturned(

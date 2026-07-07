@@ -37,7 +37,9 @@ interface ReportsListProps {
   onReportClick: (report: InboxReportSummary) => void;
 }
 
-const NUMBER_FORMATTER = new Intl.NumberFormat('fr-FR');
+import { NUMBER_FMT } from '@/lib/formatters';
+
+const NUMBER_FORMATTER = NUMBER_FMT;
 
 function formatDate(value: string): string {
   const parsed = new Date(value);

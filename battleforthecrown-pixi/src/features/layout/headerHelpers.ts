@@ -1,8 +1,7 @@
 import type { PublicWorld } from '@battleforthecrown/shared/world';
+import { INTEGER_FMT } from '@/lib/formatters';
 
-export const integerFormatter = new Intl.NumberFormat('fr-FR', {
-  maximumFractionDigits: 0,
-});
+export const integerFormatter = INTEGER_FMT;
 
 export const PLAYER_PROFILE_LEVEL = 1;
 
