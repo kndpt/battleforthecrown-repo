@@ -17,17 +17,13 @@ import { getOnboardingGuidance } from '@/features/onboarding/onboardingViewModel
 import { useOnboardingCompletionAck } from '@/features/onboarding/onboardingCompletion';
 import { PowerBottomSheet } from '@/features/power/PowerBottomSheet';
 import { BottomNavigationBar } from '@/features/layout/BottomNavigationBar';
-import {
-  MultiVillageBottomSheet,
-  type MultiVillageActivityKind,
-  type MultiVillageFilter,
-} from '@/features/design-system/components/MultiVillageBottomSheet';
+import { type MultiVillageFilter } from '@/features/design-system/components/MultiVillageBottomSheet';
 import {
   PlayerProfileSheet,
   type PlayerProfileSheetTab,
 } from '@/features/design-system/components/PlayerProfileSheet';
 import { villageStyleOptions } from '@/features/design-system/components/villageStyleData';
-import { multiVillageBottomSheetLabels } from '@/features/layout/multiVillageSheet';
+import { VillageSelectorSheet } from '@/features/layout/VillageSelectorSheet';
 import {
   getPlayerInitials,
   integerFormatter,
@@ -502,35 +498,26 @@ export function VillageView() {
 
         {/* Village selector sheet */}
         {activeVillage && (
-          <BottomSheet
-            className="mx-auto h-[68vh] max-w-[32rem]"
+          <VillageSelectorSheet
+            filter={villageFilter}
             isOpen={isVillageSheetOpen}
-            maxHeight="68vh"
+            onActivitySelect={(village, activity) => {
+              markVillageTransition(village.id);
+              setVillage(village.id);
+              setIsVillageSheetOpen(false);
+              navigate(activity === 'build' ? '/game' : '/game/army');
+            }}
             onClose={() => setIsVillageSheetOpen(false)}
-            zIndex={50}
-          >
-            <MultiVillageBottomSheet
-              availableFilters={['all', 'active']}
-              className="relative h-full max-h-full"
-              filter={villageFilter}
-              labels={multiVillageBottomSheetLabels}
-              onActivitySelect={(village, activity: MultiVillageActivityKind) => {
-                markVillageTransition(village.id);
-                setVillage(village.id);
-                setIsVillageSheetOpen(false);
-                navigate(activity === 'build' ? '/game' : '/game/army');
-              }}
-              onFilterChange={setVillageFilter}
-              onSelectVillage={(village) => {
-                markVillageTransition(village.id);
-                setVillage(village.id);
-                setIsVillageSheetOpen(false);
-              }}
-              onSort={() => setSortAscending((v) => !v)}
-              totalCount={villages.length}
-              villages={villageSheetItems}
-            />
-          </BottomSheet>
+            onFilterChange={setVillageFilter}
+            onSelectVillage={(village) => {
+              markVillageTransition(village.id);
+              setVillage(village.id);
+              setIsVillageSheetOpen(false);
+            }}
+            onSort={() => setSortAscending((v) => !v)}
+            totalCount={villages.length}
+            villages={villageSheetItems}
+          />
         )}
 
         {/* Player profile sheet */}
