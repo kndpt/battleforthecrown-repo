@@ -12,3 +12,10 @@ export interface StorageLimits {
   stone: number;
   iron: number;
 }
+
+/** Per-resource amounts (wood/stone/iron), e.g. a stock, a reward, or a delta. */
+export interface ResourceAmounts {
+  wood: number;
+  stone: number;
+  iron: number;
+}

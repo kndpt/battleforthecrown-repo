@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { BUILDING_TYPES } from '@battleforthecrown/shared/village';
 import { UNIT_TYPES, type UnitMap } from '@battleforthecrown/shared/army';
 import { isVictoryForAttacker } from '@battleforthecrown/shared/combat';
+import { creditResourcesCapped } from '@battleforthecrown/shared/resources';
 import type { OnboardingSummaryDto } from '@battleforthecrown/shared/onboarding';
 import {
   ONBOARDING_TRAIN_TROOPS_TARGET,
@@ -220,9 +221,7 @@ export class OnboardingService {
       await tx.resourceStock.update({
         where: { villageId: state.firstVillageId },
         data: {
-          wood: Math.min(stock.wood + reward.wood, stock.maxPerType),
-          stone: Math.min(stock.stone + reward.stone, stock.maxPerType),
-          iron: Math.min(stock.iron + reward.iron, stock.maxPerType),
+          ...creditResourcesCapped(stock, reward, stock.maxPerType),
           lastUpdateTs: now,
         },
       });
