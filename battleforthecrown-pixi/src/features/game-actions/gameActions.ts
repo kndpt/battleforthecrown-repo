@@ -58,6 +58,12 @@ const DAILY_TASK_ACTIONS: Record<DailyCardTaskType, DailyTaskGameAction> = {
     icon: '/assets/castle.png',
     loopLabel: 'Éco',
   },
+  EXPLOIT_RESOURCE_SITE: {
+    actionLabel: 'Carte',
+    gameActionId: 'open-world-map',
+    icon: '/assets/resources/resources.png',
+    loopLabel: 'Éco',
+  },
   RAID_BARBARIAN: {
     actionLabel: 'Carte',
     gameActionId: 'open-world-map',
