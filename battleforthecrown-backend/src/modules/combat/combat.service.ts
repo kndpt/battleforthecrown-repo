@@ -29,6 +29,7 @@ import { UNIT_TYPES } from '@battleforthecrown/shared/army';
 import { isAttackAllowedByPowerRatio } from '@battleforthecrown/shared';
 import type { IncomingAttackDto } from '@battleforthecrown/shared/events';
 import type {
+  DefenderCaptureDto,
   OpenConquestDto,
   OpenExpeditionDto,
   TargetKind,
@@ -1406,6 +1407,56 @@ export class CombatService {
         ? null
         : (conquest.targetVillage.buildings[0]?.level ?? 1),
       targetTier: this.toCaptureTier(conquest.targetVillage.tier),
+      captureStartedAt: conquest.openedAt.toISOString(),
+      captureUntil: conquest.captureUntil.toISOString(),
+      status: 'OPEN',
+    }));
+  }
+
+  /**
+   * In-app defender view of the capture windows currently targeting villages
+   * the caller owns (the mirror of {@link getOpenConquests} for the besieged
+   * side). Ownership is enforced service-side by filtering on
+   * `targetVillage.userId = userId`; there is no `@Public` surface. During an
+   * OPEN window the target village still belongs to its original owner, so this
+   * join naturally resolves the defender. Barbarian targets have no owner and
+   * are never listed. The DTO is fog-of-war safe: it never exposes the attacker
+   * identity/origin nor the occupation garrison (see {@link DefenderCaptureDto}).
+   */
+  async getCapturesTargetingMe(
+    userId: string,
+    worldId?: string,
+  ): Promise<DefenderCaptureDto[]> {
+    const conquests = await this.prisma.pendingConquest.findMany({
+      where: {
+        status: PendingConquestStatus.OPEN,
+        targetVillage: { userId },
+        ...(worldId ? { worldId } : {}),
+      },
+      include: {
+        targetVillage: {
+          select: {
+            buildings: {
+              select: { level: true, type: true },
+              where: { type: 'CASTLE' },
+            },
+            id: true,
+            name: true,
+            x: true,
+            y: true,
+          },
+        },
+      },
+      orderBy: { captureUntil: 'asc' },
+    });
+
+    return conquests.map((conquest) => ({
+      pendingConquestId: conquest.id,
+      targetVillageId: conquest.targetVillageId,
+      targetName: conquest.targetVillage.name,
+      targetX: conquest.targetVillage.x,
+      targetY: conquest.targetVillage.y,
+      targetCastleLevel: conquest.targetVillage.buildings[0]?.level ?? 1,
       captureStartedAt: conquest.openedAt.toISOString(),
       captureUntil: conquest.captureUntil.toISOString(),
       status: 'OPEN',

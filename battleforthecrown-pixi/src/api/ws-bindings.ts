@@ -805,6 +805,17 @@ function invalidateOpenExpeditions(ctx: BindingsContext, session: SessionCtx): v
   });
 }
 
+// Defender siege feed. Invalidation is the source of truth: a duplicated
+// capture-window event (at-least-once Outbox) only re-triggers a server-deduped
+// refetch, so the feed never gains a stale row nor restarts a countdown. Safe
+// to call from the attacker's copy too — their targeting-me query returns [] and
+// the refetch is a cheap no-op.
+function invalidateCapturesTargetingMe(ctx: BindingsContext, session: SessionCtx): void {
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.capturesTargetingMe(session.userId, session.worldId),
+  });
+}
+
 function invalidateVillageEconomy(ctx: BindingsContext, villageId: string): void {
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
@@ -930,9 +941,14 @@ export function applyVillageCaptureWindowOpened(
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.worldEntitiesPrefix(),
   });
-  invalidateConquestAttackerState(ctx, payload.attackerVillageId);
-  invalidateOpenConquests(ctx, session);
-  invalidateOpenExpeditions(ctx, session);
+  // The defender copy is fog-scrubbed of attackerVillageId; the attacker-side
+  // invalidations only apply when this is the attacker's own copy.
+  if (payload.attackerVillageId) {
+    invalidateConquestAttackerState(ctx, payload.attackerVillageId);
+    invalidateOpenConquests(ctx, session);
+    invalidateOpenExpeditions(ctx, session);
+  }
+  invalidateCapturesTargetingMe(ctx, session);
   useUiStore.getState().pushToast({
     tone: "warning",
     title: "Capture en cours",
@@ -954,6 +970,7 @@ export function applyVillageCaptureWindowCompleted(
     queryKey: queryKeys.worldEntitiesPrefix(),
   });
   invalidateOpenConquests(ctx, session);
+  invalidateCapturesTargetingMe(ctx, session);
   invalidateCombatReports(ctx, session);
   useUiStore.getState().pushToast({
     tone: "success",
@@ -972,6 +989,7 @@ export function applyVillageCaptureWindowInterrupted(
     queryKey: queryKeys.worldEntitiesPrefix(),
   });
   invalidateOpenConquests(ctx, session);
+  invalidateCapturesTargetingMe(ctx, session);
   useUiStore.getState().pushToast({
     tone: "error",
     title: "Capture interrompue",

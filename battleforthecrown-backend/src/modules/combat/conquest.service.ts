@@ -249,6 +249,12 @@ export class ConquestService {
           pendingConquestId: pending.id,
           targetVillageId: pending.targetVillageId,
           newOwnerUserId: pending.attackerUserId,
+          // Snapshot the original owner here: by the time this event is planned
+          // the village already belongs to the attacker, so resolving the
+          // defender live from targetVillageId would misroute to the new owner.
+          ...(conquestResult.previousOwnerId
+            ? { previousOwnerUserId: conquestResult.previousOwnerId }
+            : {}),
         },
       );
 

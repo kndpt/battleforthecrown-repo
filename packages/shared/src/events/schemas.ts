@@ -156,6 +156,7 @@ const VillageCaptureWindowCompletedPayloadSchema = z.object({
   pendingConquestId: z.string(),
   targetVillageId: z.string(),
   newOwnerUserId: z.string(),
+  previousOwnerUserId: z.string().optional(),
 });
 
 const VillageCaptureWindowInterruptedPayloadSchema = z.object({

@@ -166,6 +166,15 @@ export interface VillageCaptureWindowCompletedPayload {
   pendingConquestId: string;
   targetVillageId: string;
   newOwnerUserId: string;
+  /**
+   * Original owner of the village at capture time (the defender who just lost
+   * it). Snapshotted from `conquerVillageInTx.previousOwnerId` — never resolved
+   * live from `targetVillageId`, which by this point already points to the new
+   * owner. Absent when the target had no owner (barbarian) or in rows queued
+   * before the defender-visibility deploy. Routed the completed event so the
+   * previous owner learns the window closed against them.
+   */
+  previousOwnerUserId?: string;
 }
 
 export interface VillageCaptureWindowInterruptedPayload {
