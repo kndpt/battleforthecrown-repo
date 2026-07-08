@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { isUnitType, type UnitMap } from '@battleforthecrown/shared/army';
+import { creditResourcesCapped } from '@battleforthecrown/shared/resources';
 import { MS_PER_HOUR } from '@battleforthecrown/shared/time';
 import { typedEntries } from '@battleforthecrown/shared/utils';
 import { TempoService, type WorldTempo } from '@battleforthecrown/shared/world';
@@ -117,11 +118,11 @@ export class BarbarianRuntimeService {
         TempoService.applyRate(resourceRatePerHour, tempo, 'barbarianRegen') *
         elapsedHours,
     );
-    const resources = {
-      wood: Math.min(stock.maxPerType, stock.wood + gain),
-      stone: Math.min(stock.maxPerType, stock.stone + gain),
-      iron: Math.min(stock.maxPerType, stock.iron + gain),
-    };
+    const resources = creditResourcesCapped(
+      stock,
+      { wood: gain, stone: gain, iron: gain },
+      stock.maxPerType,
+    );
 
     const changed =
       resources.wood !== stock.wood ||
