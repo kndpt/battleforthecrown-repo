@@ -11,10 +11,15 @@ import { metaFor } from '@/features/village/buildingMeta';
 import type {
   MultiVillageAlert,
   MultiVillageBottomSheetLabels,
+  MultiVillageFilter,
   MultiVillageItem,
 } from '@/features/design-system/components/MultiVillageBottomSheet';
 import { VILLAGE_LABEL_DISPLAY } from '@battleforthecrown/shared/village';
 import { UNIT_TYPES } from '@battleforthecrown/shared/army';
+
+// Segment set used by the live in-game selector (no per-label chips). Single source of
+// truth so the two mount points (village view + shell header) can't drift apart.
+export const MULTI_VILLAGE_SELECTOR_FILTERS: MultiVillageFilter[] = ['all', 'active', 'alerts'];
 
 export const multiVillageBottomSheetLabels: MultiVillageBottomSheetLabels = {
   activeFilter: 'Actifs',

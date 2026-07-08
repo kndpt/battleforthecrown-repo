@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import {
-  MultiVillageBottomSheet,
   type MultiVillageActivityKind,
   type MultiVillageFilter,
   type MultiVillageItem,
@@ -32,7 +31,7 @@ import { formatHeaderCompactAmount } from '@/lib/resourceConfig';
 import { publicAsset } from '@/lib/publicAsset';
 import { BottomSheet } from '@/ui';
 import { useUiStore } from '@/stores/ui';
-import { multiVillageBottomSheetLabels } from './multiVillageSheet';
+import { VillageSelectorSheet } from './VillageSelectorSheet';
 import { getPlayerInitials, integerFormatter, PLAYER_PROFILE_LEVEL } from './headerHelpers';
 import { useMultiVillageData } from './useMultiVillageData';
 import { buildPlayerProfileSheetData, buildProfileAwards, buildProfileVillages } from './profileViewModel';
@@ -397,29 +396,20 @@ export function GameHeader({
         </div>
       )}
       {activeVillage && (
-        <BottomSheet
-          className="mx-auto h-[68vh] max-w-[32rem]"
+        <VillageSelectorSheet
+          filter={villageFilter}
           isOpen={isVillageSheetOpen}
-          maxHeight="68vh"
+          onActivitySelect={openVillageActivity}
           onClose={() => setIsVillageSheetOpen(false)}
-        >
-          <MultiVillageBottomSheet
-            availableFilters={['all', 'active']}
-            className="relative h-full max-h-full"
-            filter={villageFilter}
-            labels={multiVillageBottomSheetLabels}
-            onActivitySelect={openVillageActivity}
-            onClose={() => setIsVillageSheetOpen(false)}
-            onFilterChange={setVillageFilter}
-            onSelectVillage={(village) => {
-              setVillage(village.id);
-              setIsVillageSheetOpen(false);
-            }}
-            onSort={() => setSortAscending((value) => !value)}
-            totalCount={villages.length}
-            villages={villageSheetItems}
-          />
-        </BottomSheet>
+          onFilterChange={setVillageFilter}
+          onSelectVillage={(village) => {
+            setVillage(village.id);
+            setIsVillageSheetOpen(false);
+          }}
+          onSort={() => setSortAscending((value) => !value)}
+          totalCount={villages.length}
+          villages={villageSheetItems}
+        />
       )}
       <BottomSheet
         className="mx-auto h-[64vh] max-w-[32rem]"
