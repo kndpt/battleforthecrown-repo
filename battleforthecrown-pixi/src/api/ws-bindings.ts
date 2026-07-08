@@ -407,11 +407,12 @@ export function applyBattleReturned(
   scheduleTimeout(() => {
     useExpeditionsStore.getState().remove(payload.expeditionId);
   }, RETURNED_TO_CLEANUP_DELAY_MS);
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.resources(payload.villageId),
-  });
+  invalidateVillageEconomy(ctx, payload.villageId);
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.armyInventory(payload.villageId),
+  });
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.activeExpeditions(payload.villageId),
   });
   invalidatePowerQueries(ctx, session, payload.villageId);
   invalidateOpenExpeditions(ctx, session);
@@ -485,6 +486,12 @@ export function applyScoutReturned(
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.armyInventory(payload.villageId),
   });
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.population(payload.villageId),
+  });
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.activeExpeditions(payload.villageId),
+  });
   invalidateOpenExpeditions(ctx, session);
 }
 
@@ -534,8 +541,9 @@ export function applyExpeditionReturned(
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.armyInventory(payload.villageId),
   });
+  invalidateVillageEconomy(ctx, payload.villageId);
   ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.resources(payload.villageId),
+    queryKey: queryKeys.activeExpeditions(payload.villageId),
   });
   invalidateOpenExpeditions(ctx, session);
 }
@@ -724,6 +732,9 @@ export function applyCaravanReturned(
   const session = resolveSessionCtx();
   markExpeditionReturned(payload.expeditionId);
   invalidateVillageEconomy(ctx, payload.villageId);
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.activeExpeditions(payload.villageId),
+  });
   invalidateCaravanReports(ctx, session);
   invalidateOpenExpeditions(ctx, session);
 }
@@ -1105,6 +1116,9 @@ function invalidateReinforcementQueries(
     });
     ctx.queryClient.invalidateQueries({
       queryKey: queryKeys.armyInventory(villageId),
+    });
+    ctx.queryClient.invalidateQueries({
+      queryKey: queryKeys.population(villageId),
     });
   }
 }
