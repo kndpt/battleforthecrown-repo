@@ -80,13 +80,16 @@ function createQueryClientWithReinforcementData(villageIds: string[]): QueryClie
     queryClient.setQueryData(queryKeys.activeExpeditions(villageId), []);
     queryClient.setQueryData(queryKeys.garrison(villageId), []);
     queryClient.setQueryData(queryKeys.armyInventory(villageId), []);
+    queryClient.setQueryData(queryKeys.population(villageId), { used: 1, max: 10, available: 9 });
   }
   return queryClient;
 }
 
 function expectReinforcementQueriesInvalidated(queryClient: QueryClient, villageId: string): void {
+  expect(queryClient.getQueryState(queryKeys.activeExpeditions(villageId))?.isInvalidated).toBe(true);
   expect(queryClient.getQueryState(queryKeys.garrison(villageId))?.isInvalidated).toBe(true);
   expect(queryClient.getQueryState(queryKeys.armyInventory(villageId))?.isInvalidated).toBe(true);
+  expect(queryClient.getQueryState(queryKeys.population(villageId))?.isInvalidated).toBe(true);
 }
 
 function seedPowerQueries(
@@ -1297,6 +1300,7 @@ describe('caravan websocket bindings', () => {
     expect(useExpeditionsStore.getState().byId['caravan-3'].phase).toBe('RETURNED');
     expect(queryClient.getQueryState(queryKeys.resources('origin-village'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.population('origin-village'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.activeExpeditions('origin-village'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.caravanReports('user-1', 'world-1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.caravanReport('caravan-report-2', 'world-1'))?.isInvalidated).toBe(true);
     vi.advanceTimersByTime(RETURNED_TO_CLEANUP_DELAY_MS);
@@ -1340,7 +1344,7 @@ describe('applyBattleReturned', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it('removes the snapshot after the configured delay', () => {
+  it('removes the snapshot after the configured delay, invalidates economy + activeExpeditions', () => {
     setCurrentWorldSession();
     useExpeditionsStore.getState().add({
       expeditionId: 'e2',
@@ -1354,6 +1358,9 @@ describe('applyBattleReturned', () => {
     });
 
     const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.resources('v1'), { wood: 100 });
+    queryClient.setQueryData(queryKeys.population('v1'), { used: 5, max: 20, available: 15 });
+    queryClient.setQueryData(queryKeys.activeExpeditions('v1'), []);
     seedPowerQueries(queryClient, 'v1');
 
     applyBattleReturned(
@@ -1368,6 +1375,9 @@ describe('applyBattleReturned', () => {
     );
 
     expect(useExpeditionsStore.getState().byId['e2'].phase).toBe('RETURNED');
+    expect(queryClient.getQueryState(queryKeys.resources('v1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.population('v1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.activeExpeditions('v1'))?.isInvalidated).toBe(true);
     expectPowerQueriesInvalidated(queryClient, 'v1');
     vi.advanceTimersByTime(RETURNED_TO_CLEANUP_DELAY_MS);
     expect(useExpeditionsStore.getState().byId['e2']).toBeUndefined();
@@ -1704,7 +1714,7 @@ describe('applyScoutReturned', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it('marks RETURNED, invalidates armyInventory, and removes after delay', () => {
+  it('marks RETURNED, invalidates armyInventory + population + activeExpeditions, and removes after delay', () => {
     setCurrentWorldSession();
     useExpeditionsStore.getState().add({
       expeditionId: 'scout-ret-1',
@@ -1719,6 +1729,8 @@ describe('applyScoutReturned', () => {
     });
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.armyInventory('v-att'), []);
+    queryClient.setQueryData(queryKeys.population('v-att'), { used: 3, max: 20, available: 17 });
+    queryClient.setQueryData(queryKeys.activeExpeditions('v-att'), []);
     queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
 
     applyScoutReturned(
@@ -1733,6 +1745,8 @@ describe('applyScoutReturned', () => {
 
     expect(useExpeditionsStore.getState().byId['scout-ret-1'].phase).toBe('RETURNED');
     expect(queryClient.getQueryState(queryKeys.armyInventory('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.population('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.activeExpeditions('v-att'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
 
     vi.advanceTimersByTime(RETURNED_TO_CLEANUP_DELAY_MS);
@@ -1744,7 +1758,7 @@ describe('applyExpeditionReturned', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it('marks RETURNED, invalidates armyInventory + resources, and removes after delay', () => {
+  it('marks RETURNED, invalidates armyInventory + economy + activeExpeditions, and removes after delay', () => {
     setCurrentWorldSession();
     useExpeditionsStore.getState().add({
       expeditionId: 'exp-ret-1',
@@ -1760,6 +1774,8 @@ describe('applyExpeditionReturned', () => {
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.armyInventory('v-att'), []);
     queryClient.setQueryData(queryKeys.resources('v-att'), { wood: 100 });
+    queryClient.setQueryData(queryKeys.population('v-att'), { used: 5, max: 20, available: 15 });
+    queryClient.setQueryData(queryKeys.activeExpeditions('v-att'), []);
     queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
 
     applyExpeditionReturned(
@@ -1776,6 +1792,8 @@ describe('applyExpeditionReturned', () => {
     expect(useExpeditionsStore.getState().byId['exp-ret-1'].phase).toBe('RETURNED');
     expect(queryClient.getQueryState(queryKeys.armyInventory('v-att'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.resources('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.population('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.activeExpeditions('v-att'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
 
     vi.advanceTimersByTime(RETURNED_TO_CLEANUP_DELAY_MS);

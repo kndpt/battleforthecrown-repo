@@ -407,9 +407,7 @@ export function applyBattleReturned(
   scheduleTimeout(() => {
     useExpeditionsStore.getState().remove(payload.expeditionId);
   }, RETURNED_TO_CLEANUP_DELAY_MS);
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.resources(payload.villageId),
-  });
+  invalidateVillageEconomyAndExpeditions(ctx, payload.villageId);
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.armyInventory(payload.villageId),
   });
@@ -485,6 +483,12 @@ export function applyScoutReturned(
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.armyInventory(payload.villageId),
   });
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.population(payload.villageId),
+  });
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.activeExpeditions(payload.villageId),
+  });
   invalidateOpenExpeditions(ctx, session);
 }
 
@@ -513,10 +517,7 @@ export function applyExpeditionRecalled(
     description: `Retour prévu à ${new Date(payload.returnAt).toLocaleTimeString()}`,
     ttlMs: 4000,
   });
-  invalidateVillageEconomy(ctx, payload.villageId);
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.activeExpeditions(payload.villageId),
-  });
+  invalidateVillageEconomyAndExpeditions(ctx, payload.villageId);
   invalidateOpenExpeditions(ctx, session);
 }
 
@@ -534,9 +535,7 @@ export function applyExpeditionReturned(
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.armyInventory(payload.villageId),
   });
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.resources(payload.villageId),
-  });
+  invalidateVillageEconomyAndExpeditions(ctx, payload.villageId);
   invalidateOpenExpeditions(ctx, session);
 }
 
@@ -653,9 +652,8 @@ export function applyCaravanSent(
     arrivalAt: Date.parse(payload.arrivalAt),
   };
   useExpeditionsStore.getState().add(snapshot);
-  invalidateVillageEconomy(ctx, payload.villageId);
+  invalidateVillageEconomyAndExpeditions(ctx, payload.villageId);
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.targetVillageId) });
-  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(payload.villageId) });
   invalidateOpenExpeditions(ctx, session);
 }
 
@@ -712,9 +710,8 @@ export function applyCaravanRecalled(
     description: `Retour prévu à ${new Date(payload.returnAt).toLocaleTimeString()}`,
     ttlMs: 4000,
   });
-  invalidateVillageEconomy(ctx, payload.villageId);
+  invalidateVillageEconomyAndExpeditions(ctx, payload.villageId);
   invalidateOpenExpeditions(ctx, session);
-  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(payload.villageId) });
 }
 
 export function applyCaravanReturned(
@@ -723,7 +720,7 @@ export function applyCaravanReturned(
 ): void {
   const session = resolveSessionCtx();
   markExpeditionReturned(payload.expeditionId);
-  invalidateVillageEconomy(ctx, payload.villageId);
+  invalidateVillageEconomyAndExpeditions(ctx, payload.villageId);
   invalidateCaravanReports(ctx, session);
   invalidateOpenExpeditions(ctx, session);
 }
@@ -819,6 +816,11 @@ function invalidateCapturesTargetingMe(ctx: BindingsContext, session: SessionCtx
 function invalidateVillageEconomy(ctx: BindingsContext, villageId: string): void {
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
+}
+
+function invalidateVillageEconomyAndExpeditions(ctx: BindingsContext, villageId: string): void {
+  invalidateVillageEconomy(ctx, villageId);
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(villageId) });
 }
 
 function invalidatePowerQueries(ctx: BindingsContext, session: SessionCtx, villageId: string): void {
@@ -1123,6 +1125,9 @@ function invalidateReinforcementQueries(
     });
     ctx.queryClient.invalidateQueries({
       queryKey: queryKeys.armyInventory(villageId),
+    });
+    ctx.queryClient.invalidateQueries({
+      queryKey: queryKeys.population(villageId),
     });
   }
 }
