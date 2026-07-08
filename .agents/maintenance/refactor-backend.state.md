@@ -1,6 +1,6 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-07-08 | theme RC1 — single-home warehouse-capped resource credit. Nouveau helper pur `creditResourcesCapped(current, delta, maxPerType)` + type `ResourceAmounts` dans `packages/shared/resources/storage.ts` : `min(current + delta, cap)` par ressource. 3 sites migrés byte-for-byte (`retention` daily card, `onboarding` completion, `barbarian-runtime` regen). return.worker exclu (clamp headroom, sémantique distincte). +5 unit (storage.spec). 572 back + 963 pixi + 13 smokes (daily-retention/onboarding/barbarians/production-tick) verts.
+last: 2026-07-08 | theme RC1 — single-home warehouse-capped resource credit. Nouveau helper pur `creditResourcesCapped(current, delta, maxPerType)` + type `ResourceAmounts` dans `packages/shared/src/resources/storage.ts` : `min(current + delta, cap)` par ressource. 4 callsites migrés byte-for-byte (`retention` daily card, `onboarding` completion + initial reward, `barbarian-runtime` regen ; le 2e site onboarding ajouté sur review CR). return.worker exclu (clamp headroom, sémantique distincte). +5 unit (storage.spec). 572 back + 963 pixi + 13 smokes (daily-retention/onboarding/barbarians/production-tick) verts.
 full: `archive/refactor-backend/2026-07-08-full.md`
 
 ## OPEN

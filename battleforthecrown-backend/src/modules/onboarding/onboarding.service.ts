@@ -102,16 +102,9 @@ export class OnboardingService {
     await tx.resourceStock.update({
       where: { villageId },
       data: {
-        wood: Math.min(
-          stock.wood + ONBOARDING_INITIAL_REWARD.wood,
-          stock.maxPerType,
-        ),
-        stone: Math.min(
-          stock.stone + ONBOARDING_INITIAL_REWARD.stone,
-          stock.maxPerType,
-        ),
-        iron: Math.min(
-          stock.iron + ONBOARDING_INITIAL_REWARD.iron,
+        ...creditResourcesCapped(
+          stock,
+          ONBOARDING_INITIAL_REWARD,
           stock.maxPerType,
         ),
         lastUpdateTs: now,
