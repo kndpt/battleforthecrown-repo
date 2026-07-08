@@ -9,6 +9,7 @@ import { unitMetaFor } from '@/features/army/unitConfig';
 import { computeConstructionProgress } from '@/features/village/constructionProgress';
 import { metaFor } from '@/features/village/buildingMeta';
 import type {
+  MultiVillageAlert,
   MultiVillageBottomSheetLabels,
   MultiVillageItem,
 } from '@/features/design-system/components/MultiVillageBottomSheet';
@@ -59,6 +60,11 @@ export function buildMultiVillageSheetItems(
 
   return villages.map((village) => ({
     active: village.id === activeVillageId,
+    alert: deriveVillageStateAlert({
+      queue: runtime.queueByVillageId?.get(village.id),
+      resources: runtime.resourcesByVillageId?.get(village.id),
+      training: runtime.trainingByVillageId?.get(village.id),
+    }),
     badge: village.label
         ? VILLAGE_LABEL_DISPLAY[village.label]
         : null,
@@ -78,6 +84,88 @@ export function buildMultiVillageSheetItems(
     strategy: runtime.strategyByVillageId?.get(village.id)?.currentStrategy,
     troops: mapTroopActivities(runtime.trainingByVillageId?.get(village.id), now),
   }));
+}
+
+/**
+ * FR messages for the derived state warnings. Kept here (not in the component
+ * label bag) so the pure derivation stays self-contained and unit-testable.
+ */
+export const VILLAGE_STATE_ALERT_MESSAGES = {
+  idleQueue: 'File inactive',
+  warehouseFull: 'Entrepôt plein',
+} as const;
+
+/** No natural countdown for a state warning — the eta pill shows a dash. */
+const STATE_ALERT_NO_ETA = '—';
+
+/**
+ * Purely presentational per-village state warning for the multi-village sheet
+ * (run 095). Derived from data already fetched by `useMultiVillageData`; it has
+ * **zero gameplay effect** and never triggers any server write.
+ *
+ * Invariant inherited from run 031: never invent an alert when no state data is
+ * available (returns `null`). This derivation path only ever emits
+ * `kind: 'warning'` — never `kind: 'attack'` (incoming-attack alerts are a
+ * separate, still-open concern).
+ *
+ * Deterministic priority when several conditions hold (`alert` is singular):
+ * warehouse full > idle queue.
+ */
+export function deriveVillageStateAlert(input: {
+  queue?: QueueEntryDto[];
+  resources?: ResourcesPayload;
+  training?: ArmyTrainingDto[];
+}): MultiVillageAlert | null {
+  const { queue, resources, training } = input;
+
+  // No state data loaded for this village → nothing to assert (invariant 031).
+  if (resources === undefined && queue === undefined && training === undefined) {
+    return null;
+  }
+
+  if (isWarehouseFull(resources)) {
+    return {
+      eta: STATE_ALERT_NO_ETA,
+      kind: 'warning',
+      msg: VILLAGE_STATE_ALERT_MESSAGES.warehouseFull,
+    };
+  }
+
+  if (isQueueIdle(queue, training)) {
+    return {
+      eta: STATE_ALERT_NO_ETA,
+      kind: 'warning',
+      msg: VILLAGE_STATE_ALERT_MESSAGES.idleQueue,
+    };
+  }
+
+  return null;
+}
+
+/** At least one storable resource (wood/stone/iron) reached its cap. */
+function isWarehouseFull(resources: ResourcesPayload | undefined): boolean {
+  if (!resources || resources.maxPerType <= 0) return false;
+  const { iron, maxPerType, stone, wood } = resources;
+  return (
+    Math.floor(wood) >= maxPerType ||
+    Math.floor(stone) >= maxPerType ||
+    Math.floor(iron) >= maxPerType
+  );
+}
+
+/**
+ * Nothing under construction and nothing training (lords included). Only
+ * concludes "idle" when both feeds are actually loaded, to avoid a false
+ * positive while data is still fetching.
+ */
+function isQueueIdle(
+  queue: QueueEntryDto[] | undefined,
+  training: ArmyTrainingDto[] | undefined,
+): boolean {
+  if (queue === undefined || training === undefined) return false;
+  const building = queue.length > 0;
+  const forming = training.some((item) => item.totalQty - item.completedQty > 0);
+  return !building && !forming;
 }
 
 /**

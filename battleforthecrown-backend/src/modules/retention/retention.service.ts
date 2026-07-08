@@ -17,6 +17,7 @@ import { WorldAccessService } from '../world/world-access.service';
 import type { EventKind, PayloadForKind } from '../event/event-types';
 import { createOutboxEvent } from '../event/event.utils';
 import { ResourcesService } from '../resources/resources.service';
+import { creditResourcesCapped } from '@battleforthecrown/shared/resources';
 import { getDailyCardScaling } from './retention-scaling';
 import { getOyezThematicTask } from './retention-oyez';
 import {
@@ -166,9 +167,15 @@ export class RetentionService {
       const updatedStock = await tx.resourceStock.update({
         where: { villageId },
         data: {
-          wood: Math.min(stock.wood + card.rewardWood, stock.maxPerType),
-          stone: Math.min(stock.stone + card.rewardStone, stock.maxPerType),
-          iron: Math.min(stock.iron + card.rewardIron, stock.maxPerType),
+          ...creditResourcesCapped(
+            stock,
+            {
+              wood: card.rewardWood,
+              stone: card.rewardStone,
+              iron: card.rewardIron,
+            },
+            stock.maxPerType,
+          ),
           lastUpdateTs: new Date(),
         },
       });

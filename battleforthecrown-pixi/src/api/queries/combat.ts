@@ -27,6 +27,10 @@ import {
   IncomingAttackDtoSchema,
   type IncomingAttackDto,
 } from "@battleforthecrown/shared/events";
+import {
+  DefenderCapturesResponseSchema,
+  type DefenderCaptureDto,
+} from "@battleforthecrown/shared/combat";
 import { apiClient } from "../index";
 import type {
   Expedition,
@@ -113,6 +117,30 @@ export function useOpenConquestsQuery(worldId: string | null) {
       return apiClient.get<OpenConquestDto[]>("/combat/conquests/open", {
         query: { worldId },
       });
+    },
+    enabled: Boolean(userId && worldId),
+    refetchInterval: (query) =>
+      query.state.data && query.state.data.length > 0 ? 10_000 : false,
+    staleTime: 2_000,
+  });
+}
+
+/**
+ * Defender-facing capture windows targeting the caller's own villages
+ * (per-world, ownership enforced server-side). Fog-safe: the DTO never carries
+ * the attacker. Parsed at the trust boundary so a leaked attacker field is
+ * rejected rather than rendered. Mirror of {@link useOpenConquestsQuery}.
+ */
+export function useCapturesTargetingMeQuery(worldId: string | null) {
+  const userId = useAuthStore((state) => state.user?.id ?? null);
+  return useQuery<DefenderCaptureDto[]>({
+    queryKey: queryKeys.capturesTargetingMe(userId, worldId),
+    queryFn: async () => {
+      if (!userId || !worldId) return [] as DefenderCaptureDto[];
+      const raw = await apiClient.get<unknown>("/combat/captures/targeting-me", {
+        query: { worldId },
+      });
+      return DefenderCapturesResponseSchema.parse(raw);
     },
     enabled: Boolean(userId && worldId),
     refetchInterval: (query) =>

@@ -2,7 +2,10 @@ import { Injectable, Logger, Inject, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../infra/prisma/prisma.service';
 import { ResourcesService } from '../modules/resources/resources.service';
-import { registerScheduledQueueWorker } from '../infra/pg-boss/queue-worker.helper';
+import {
+  registerScheduledQueueWorker,
+  runResilientBatch,
+} from '../infra/pg-boss/queue-worker.helper';
 import PgBoss from 'pg-boss';
 
 const PRODUCTION_QUEUE = 'production:tick';
@@ -53,25 +56,19 @@ export class ProductionWorker implements OnModuleInit {
 
       this.logger.log(`Processing production for ${villages.length} villages`);
 
-      let successCount = 0;
-      let errorCount = 0;
-
       // Update production for each village.
       // No WebSocket broadcast on tick — the frontend interpolates locally
       // between mutation-driven `resources.changed` events. Documented under
       // "Exceptions au pattern Outbox" in `docs/architecture/realtime.md`.
-      for (const village of villages) {
-        try {
-          await this.resourcesService.updateProduction(village.id);
-          successCount++;
-        } catch (error) {
+      const { successCount, errorCount } = await runResilientBatch(
+        villages,
+        (village) => this.resourcesService.updateProduction(village.id),
+        (village, error) =>
           this.logger.error(
             `Failed to update production for village ${village.id}:`,
             error,
-          );
-          errorCount++;
-        }
-      }
+          ),
+      );
 
       const duration = Date.now() - startTime;
       this.logger.log(

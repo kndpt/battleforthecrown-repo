@@ -1,7 +1,10 @@
 import { Injectable, Logger, Inject, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../infra/prisma/prisma.service';
 import { CrownsService } from '../modules/crowns/crowns.service';
-import { registerScheduledQueueWorker } from '../infra/pg-boss/queue-worker.helper';
+import {
+  registerScheduledQueueWorker,
+  runResilientBatch,
+} from '../infra/pg-boss/queue-worker.helper';
 import PgBoss from 'pg-boss';
 import { MS_PER_DAY } from '@battleforthecrown/shared/time';
 
@@ -60,26 +63,21 @@ export class CrownProductionWorker implements OnModuleInit {
         `Processing crown production for ${memberships.length} active players`,
       );
 
-      let successCount = 0;
-      let errorCount = 0;
-
       // Update production for each player-world combination
-      for (const membership of memberships) {
-        try {
-          await this.crownsService.updateProduction(
+      const { successCount, errorCount } = await runResilientBatch(
+        memberships,
+        (membership) =>
+          this.crownsService.updateProduction(
             membership.userId,
             membership.worldId,
             true, // Create WebSocket event
-          );
-          successCount++;
-        } catch (error) {
+          ),
+        (membership, error) =>
           this.logger.error(
             `Failed to update crown production for user ${membership.userId} in world ${membership.worldId}:`,
             error,
-          );
-          errorCount++;
-        }
-      }
+          ),
+      );
 
       const duration = Date.now() - startTime;
       this.logger.log(

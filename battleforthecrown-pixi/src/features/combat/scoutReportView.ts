@@ -17,7 +17,9 @@ import {
   type VillageStrategyType,
 } from '@battleforthecrown/shared/village';
 
-const NUMBER_FORMATTER = new Intl.NumberFormat('fr-FR');
+import { NUMBER_FMT } from '@/lib/formatters';
+
+const NUMBER_FORMATTER = NUMBER_FMT;
 
 const TARGET_KIND_LABEL: Record<string, string> = {
   BARBARIAN_VILLAGE: 'Village barbare',

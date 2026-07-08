@@ -1,4 +1,5 @@
 import { cn } from '@/lib/cn';
+import { NUMBER_FMT } from '@/lib/formatters';
 import { publicAsset } from '@/lib/publicAsset';
 
 export interface TroopBarProps {
@@ -9,7 +10,7 @@ export interface TroopBarProps {
   unitName: string;
 }
 
-const NUMBER_FORMATTER = new Intl.NumberFormat('fr-FR');
+const NUMBER_FORMATTER = NUMBER_FMT;
 
 export function TroopBar({ className, icon, lost, sent, unitName }: TroopBarProps) {
   const safeSent = Math.max(0, sent);

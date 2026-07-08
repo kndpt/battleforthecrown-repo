@@ -1,4 +1,5 @@
 import type {
+  DefenderCaptureDto,
   OpenConquestDto,
   OpenExpeditionDto,
 } from '@battleforthecrown/shared/combat';
@@ -24,6 +25,8 @@ export interface KingdomActivityLabels {
   incomingThreatTitle: string;
   nobleEyebrow: string;
   nobleNameFallback: string;
+  siegeStatusLabel: string;
+  siegeSoonStatusLabel: string;
   tierSubLabel: string;
 }
 
@@ -37,6 +40,8 @@ export const KINGDOM_ACTIVITY_LABELS: KingdomActivityLabels = {
   incomingThreatTitle: 'ATTAQUE ENTRANTE',
   nobleEyebrow: 'Seigneur immobilisé',
   nobleNameFallback: 'Seigneur',
+  siegeStatusLabel: 'Sous siège',
+  siegeSoonStatusLabel: 'Chute imminente',
   tierSubLabel: 'Tier',
 };
 
@@ -77,6 +82,7 @@ export function mapOpenConquestToCaptureCard(
   const isPlayerTarget = conquest.targetKind === 'PLAYER_VILLAGE';
 
   return {
+    id: conquest.pendingConquestId,
     coordinates: `${conquest.targetX}|${conquest.targetY}`,
     endTime: formatTime(captureUntil),
     endTimeLabel: labels.captureEndTimeLabel,
@@ -94,6 +100,63 @@ export function mapOpenConquestToCaptureCard(
       : labels.tierSubLabel,
     timeRemaining: formatRemaining(remainingMs),
   };
+}
+
+/**
+ * Maps the fog-safe defender view of a capture window to a siege card. Mirror
+ * of {@link mapOpenConquestToCaptureCard} minus every attacker field: no noble,
+ * no origin village — the besieged owner only sees their own village and the
+ * countdown until it falls. Always rendered in the neutral `open` (gold) state
+ * so the green "about to succeed" tone (an attacker cue) never misleads the
+ * defender; urgency is carried textually via {@link siegeSoonStatusLabel}.
+ */
+export function mapDefenderCaptureToSiegeCard(
+  capture: DefenderCaptureDto,
+  nowMs: number,
+  labels: KingdomActivityLabels = KINGDOM_ACTIVITY_LABELS,
+): CaptureWindowCardProps {
+  const captureStartedAt = Date.parse(capture.captureStartedAt);
+  const captureUntil = Date.parse(capture.captureUntil);
+  const remainingMs = Math.max(0, captureUntil - nowMs);
+  const progress = computeProgress(captureStartedAt, captureUntil, nowMs);
+  const soon = remainingMs > 0 && remainingMs <= SOON_THRESHOLD_MS;
+
+  return {
+    id: capture.pendingConquestId,
+    coordinates: `${capture.targetX}|${capture.targetY}`,
+    endTime: formatTime(captureUntil),
+    endTimeLabel: labels.captureEndTimeLabel,
+    progress,
+    state: 'open',
+    statusLabel: soon ? labels.siegeSoonStatusLabel : labels.siegeStatusLabel,
+    targetName: capture.targetName,
+    tier: 'PVP',
+    tierSubLabel: formatCastleLevel(capture.targetCastleLevel),
+    timeRemaining: formatRemaining(remainingMs),
+  };
+}
+
+/**
+ * Dedup + sort helper for the defender siege feed. The endpoint already returns
+ * distinct rows, but the at-least-once Outbox means a duplicated WS delivery
+ * can momentarily surface the same `pendingConquestId` twice mid-refetch; this
+ * collapses duplicates by id (first wins) so the feed never shows a doubled
+ * card, and orders by soonest deadline first.
+ */
+export function mapDefenderCapturesToSiegeCards(
+  captures: DefenderCaptureDto[],
+  nowMs: number,
+  labels: KingdomActivityLabels = KINGDOM_ACTIVITY_LABELS,
+): CaptureWindowCardProps[] {
+  const byId = new Map<string, DefenderCaptureDto>();
+  for (const capture of captures) {
+    if (!byId.has(capture.pendingConquestId)) {
+      byId.set(capture.pendingConquestId, capture);
+    }
+  }
+  return [...byId.values()]
+    .sort((a, b) => Date.parse(a.captureUntil) - Date.parse(b.captureUntil))
+    .map((capture) => mapDefenderCaptureToSiegeCard(capture, nowMs, labels));
 }
 
 export function mapOpenExpeditionToActivityCard(

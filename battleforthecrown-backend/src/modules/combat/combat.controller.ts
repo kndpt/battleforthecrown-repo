@@ -123,6 +123,14 @@ export class CombatController {
     return this.combatService.getOpenConquests(user.id, worldId);
   }
 
+  @Get('captures/targeting-me')
+  async getCapturesTargetingMe(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('worldId') worldId?: string,
+  ) {
+    return this.combatService.getCapturesTargetingMe(user.id, worldId);
+  }
+
   @Get('expeditions/open')
   async getOpenExpeditions(
     @CurrentUser() user: AuthenticatedUser,

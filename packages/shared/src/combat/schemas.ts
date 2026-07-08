@@ -205,3 +205,24 @@ export const CaravanReportResponseSchema = z.strictObject({
 });
 
 export const CaravanReportsResponseSchema = z.array(CaravanReportResponseSchema);
+
+/**
+ * Fog-safe defender view of a capture window targeting one of the caller's own
+ * villages. Parsed by the frontend at the `GET /combat/captures/targeting-me`
+ * trust boundary. `strictObject` so an accidental attacker field leaking into
+ * the payload is rejected rather than silently forwarded. Mirror of
+ * {@link import('./dtos').DefenderCaptureDto}.
+ */
+export const DefenderCaptureDtoSchema = z.strictObject({
+  pendingConquestId: z.string(),
+  targetVillageId: z.string(),
+  targetName: z.string(),
+  targetX: z.number(),
+  targetY: z.number(),
+  targetCastleLevel: z.number().nullable(),
+  captureStartedAt: z.string(),
+  captureUntil: z.string(),
+  status: z.literal('OPEN'),
+});
+
+export const DefenderCapturesResponseSchema = z.array(DefenderCaptureDtoSchema);

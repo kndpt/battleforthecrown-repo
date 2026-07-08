@@ -40,7 +40,9 @@ interface ReportDetailModalProps {
 
 const REPORT_MODAL_FOOTER_CLASS =
   'border-t border-[rgba(93,74,50,.24)] bg-[linear-gradient(to_bottom,rgba(255,250,238,.96),rgba(232,212,168,.92))] px-3 pb-3 pt-2.5';
-const NUMBER_FORMATTER = new Intl.NumberFormat('fr-FR');
+import { NUMBER_FMT } from '@/lib/formatters';
+
+const NUMBER_FORMATTER = NUMBER_FMT;
 
 function ReportModalFooter({
   deleteLabel,

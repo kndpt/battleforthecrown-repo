@@ -6,6 +6,7 @@ import {
 } from '@/features/design-system/components';
 import { ApiError } from '@/api';
 import {
+  useCapturesTargetingMeQuery,
   useIncomingAttacksQuery,
   useOpenConquestsQuery,
   useOpenExpeditionsQuery,
@@ -14,6 +15,7 @@ import {
 import { useUiStore } from '@/stores/ui';
 import { useTickingNow } from '@/lib/useTickingNow';
 import {
+  mapDefenderCapturesToSiegeCards,
   mapIncomingAttackToThreatCard,
   mapOpenConquestToCaptureCard,
   mapOpenExpeditionToActivityCard,
@@ -43,6 +45,12 @@ const labels: KingdomActivitiesPanelLabels = {
   expeditionsTab: 'Expéditions',
   headerEyebrow: 'Panneau',
   headerTitle: 'Activités du royaume',
+  siegeEmptyQuote: 'Aucun de vos villages n’est assiégé.',
+  siegeEmptyTitle: 'Aucun siège en cours',
+  siegeErrorLabel: 'Impossible de charger les sièges.',
+  siegeLoadingLabel: 'Analyse des sièges...',
+  siegeRetryLabel: 'Réessayer',
+  siegesTab: 'Sièges',
   threatEmptyQuote: 'Aucune armée ennemie en approche.',
   threatEmptyTitle: 'Aucune attaque entrante',
   threatErrorLabel: 'Impossible de charger les menaces.',
@@ -62,12 +70,18 @@ export function KingdomActivitiesBottomSheet({
   const conquestsQuery = useOpenConquestsQuery(worldId);
   const expeditionsQuery = useOpenExpeditionsQuery(worldId);
   const incomingAttacksQuery = useIncomingAttacksQuery(villageId);
+  const siegesQuery = useCapturesTargetingMeQuery(worldId);
   const recallExpedition = useRecallExpeditionMutation();
   const pushToast = useUiStore((state) => state.pushToast);
 
   const captures = useMemo(
     () => (conquestsQuery.data ?? []).map((conquest) => mapOpenConquestToCaptureCard(conquest, now)),
     [conquestsQuery.data, now],
+  );
+
+  const sieges = useMemo(
+    () => mapDefenderCapturesToSiegeCards(siegesQuery.data ?? [], now),
+    [siegesQuery.data, now],
   );
 
   const expeditions = useMemo(
@@ -111,8 +125,12 @@ export function KingdomActivitiesBottomSheet({
       onClose={onClose}
       onRetryCaptures={() => void conquestsQuery.refetch()}
       onRetryExpeditions={() => void expeditionsQuery.refetch()}
+      onRetrySieges={() => void siegesQuery.refetch()}
       onRetryThreats={() => void incomingAttacksQuery.refetch()}
       onTabChange={onTabChange}
+      siegeCount={sieges.length}
+      siegeState={queryState(siegesQuery)}
+      sieges={sieges}
       threatCount={incomingAttacksQuery.data?.length ?? 0}
       threatState={queryState(incomingAttacksQuery)}
       threats={threats}

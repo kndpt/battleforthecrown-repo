@@ -1,8 +1,8 @@
 # Run #094 — capture-window-defender-visibility
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-07-06
+> **Terminé** : 2026-07-06
 
 ## Cible
 
@@ -87,16 +87,35 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 - **Marqueur carte** : capture déjà public (`WorldMapScene captureMarker`) ; la nouvelle surface ne doit pas dégrader/dupliquer ce fog partiel existant.
 - **Push FCM/APNs** : hors scope (Phase 6 push POST-MVP), comme 086.
 
-## Progress
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
-## Décisions prises
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
 ## Rapport final
+
+Volet défenseur « Fin de fenêtre de capture » livré, calqué sur le run 086 (attaque entrante). Décisions T1 : onglet HUD dédié **« Sièges »** (distinct de « Menaces » = pré-combat per-village) ; endpoint **per-world** `GET /combat/captures/targeting-me` ; `DefenderCaptureDto` fog-safe sans champ attaquant. Dual-route des 3 events capture-window vers le défenseur (copie scrub), `previousOwnerUserId` snapshot sur `completed`. _(détail : git history)_
 
 ### Acceptance & QA
 
-_(Vide au démarrage. Rempli en fin de run.)_
+**Critères d'acceptance vérifiés** :
+- [x] `GET /combat/captures/targeting-me?worldId=` propriétaire → fenêtre OPEN + `captureUntil`, 200 — `test:smoke:run capture-defender` → 2/2 (assert DTO keys + captureUntil).
+- [x] Non-propriétaire → jamais la fenêtre (filtre `targetVillage.userId=userId` service-side, jamais `@Public`) — smoke : attaquant `GET captures/targeting-me` → `[]` ; endpoint per-world ownership-scopé (pas de route per-window donc pas de 403/404, l'accès cross-user renvoie liste vide = équivalent not-found).
+- [x] Fog : réponse REST + copies event défenseur sans `attackerUserId`/`attackerVillageId`/`attackerVillageName` — `DefenderCaptureDtoSchema` = `strictObject` ; smoke `not.toHaveProperty` ; planner spec `scrubAttackerFields` (`not.toHaveProperty attackerUserId/attackerVillageId`).
+- [x] `opened` : défenseur reçoit ; attaquant garde copie full — `jest event-outbox-notification-planner` → « opened also routes the defender with attacker fields scrubbed ».
+- [x] `interrupted` + `completed` routent défenseur/previousOwner — planner spec « interrupted also routes the defender scrubbed » + « completed routes both previous and new owner » ; smoke `completed` payload `previousOwnerUserId = defender`.
+- [x] Cible barbare (`userId null`) jamais routée ni listée — planner spec « opened never routes a barbarian target » ; smoke barbare exclu de la liste.
+- [x] Fenêtre COMPLETED/INTERRUPTED disparaît (filtre `status=OPEN`) — smoke : après `update status=COMPLETED` → liste `[]`.
+- [x] Idempotence WS at-least-once (pas de doublon feed / reset countdown ; dedup `pendingConquestId`) — `test kingdomActivitiesViewModel` : « collapses a duplicated pendingConquestId » + « keeps the countdown stable » ; ws-bindings = invalidate-only (refetch dédup serveur).
+- [x] `DefenderCaptureDto` shared consommé front (pas de dup) + `previousOwnerUserId` typé sur payload `completed` — `dtos.ts` + import front `useCapturesTargetingMeQuery` ; `types.ts`/`schemas.ts` payload completed.
+- [x] `static-check` + `test:backend` + `test:pixi` verts ; smoke `capture-defender` ajouté — cf. ci-dessous.
+
+**Review indépendante** : Déclenchée (raison : back+front, diff >100 lignes, invariant fog durable). Moteur CodeRabbit CLI local + couverture. **VERDICT GO** — zéro finding bloquant/majeur ; 4 mineurs cosmétiques (2 badges non dédup → **fixés** `siegeCount={sieges.length}` ; 1 test ws-bindings branche fog → **ajouté** ; 1 DOM id → laissé, `id` = attribut HTML légitime).
+
+**Tests automatisés** : `yarn static-check` → OK. `yarn workspace battleforthecrown-backend test` → 565/565. `yarn workspace battleforthecrown-pixi test` → 939/939 (+ 2 ws-bindings, + 5 mapper/siege). `jest event-outbox-notification-planner` → 25/25.
+
+**Smokes lancés** : Ciblés. `test:smoke:run capture-defender` → 2/2 ; `test:smoke:run conquest-finalize` → 3/3 (event `completed` touché). Full smoke → CI PR.
+
+**Smokes ajoutés/modifiés** : `test/capture-defender.smoke.spec.ts` (endpoint fog-safe, ownership, barbare exclu, filtre status OPEN, `getOpenConquests` attaquant inchangé, `completed` porte `previousOwnerUserId`).
+
+**QA fonctionnelle agent** : endpoint + events validés end-to-end via smoke (REST + Outbox `completed` dispatché). Routing planner validé en unit.
+
+**Tests IG à faire par le user** (≤5) :
+- [ ] Onglet « Sièges » + badge rouge compteur : compte à rebours vivant « fenêtre jusqu'à T » par village assiégé.
+- [ ] WS actualise la surface sans reload (ouverture / interruption / complétion).
+- [ ] Aucune info attaquante (compo garnison d'occupation, identité/origine) n'apparaît côté défenseur.

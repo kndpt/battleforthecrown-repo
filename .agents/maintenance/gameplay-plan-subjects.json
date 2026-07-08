@@ -882,6 +882,34 @@
         "docs/gameplay/05-daily-cards-and-oyez.md section Questions a trancher — question sites d'exploitation laissee ouverte"
       ],
       "addedAt": "2026-07-07"
+    },
+    {
+      "specPath": "docs/gameplay/10-conquest.md",
+      "slug": "fix-noble-cap-inflight-occupation",
+      "title": "Cap Seigneur en-vol / occupation — enforcement du cap 1 Seigneur/village",
+      "keywords": [
+        "noble",
+        "seigneur",
+        "cap",
+        "conquest",
+        "in-flight",
+        "occupation"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/097-fix-noble-cap-inflight-occupation.md",
+      "artefactId": "097",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/noble-cap-inflight-occupation",
+      "gapSummary": "La spec 10-conquest.md § Cap : 1 Seigneur par village (lignes 62-66) tranche : pas de cumul, le village d'origine ne re-recrute un Seigneur qu'une fois la conquête RÉUSSIE (Seigneur installé dans le village conquis), pas au simple départ. Or le gate canRecruitNoble ne compte que la garnison (unitInventory NOBLE) + la file Trône (unitTraining THRONE_HALL). Un Seigneur parti en conquête est décrémenté de l'inventaire au lancement puis stationné en garnison d'occupation SUR LA CIBLE (originVillageId = village d'origine) pendant la fenêtre OPEN — invisible au gate. Le village d'origine re-recrute donc un 2e Seigneur avant résolution → 2 Seigneurs simultanés issus d'un seul village, en violation directe de l'invariant spec.",
+      "codeEvidence": [
+        "packages/shared/src/army/recruitment.ts:11-36 — canRecruitNoble ne connaît que garrisonNobleCount + hasNobleInQueue, aucune entrée en-vol/occupation",
+        "battleforthecrown-backend/src/modules/gameplay/recruit-noble.use-case.ts:58-104 — le gate lit uniquement unitInventory NOBLE + unitTraining THRONE_HALL, aucune requête Expedition (Seigneur sortant) ni Garrison (originVillageId = villageId, occupation)",
+        "battleforthecrown-backend/src/modules/combat/combat.service.ts (verifyAndDeductUnits) — le NOBLE est décrémenté de unitInventory au lancement de l'attaque → inventaire = 0 pendant tout le vol",
+        "battleforthecrown-backend/src/modules/combat/combat.worker.ts — pendant la fenêtre le NOBLE survivant est stationné en Garrison sur la cible (originVillageId = attaquant), invisible au gate du village d'origine",
+        "battleforthecrown-backend/prisma/schema.prisma — PendingConquest a status OPEN/COMPLETED/INTERRUPTED + attackerVillageId mais pas d'index [attackerVillageId, status]",
+        "tasks/archive/40-recruit-noble-throne-hall.md + tasks/runs/archive/006-audit-conquest.md — ont défini le cap = garnison OU file Trône, cas en-vol/occupation jamais envisagé ; aucun ticket/run actif ou archivé ne couvre l'enforcement en-vol"
+      ],
+      "addedAt": "2026-07-08"
     }
   ]
 }

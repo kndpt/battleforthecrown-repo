@@ -11,7 +11,9 @@ import { formatCoord, shortReportId } from './report-view-utils';
 
 export type { ReinforcementReportResponse };
 
-const NUMBER_FORMATTER = new Intl.NumberFormat('fr-FR');
+import { NUMBER_FMT } from '@/lib/formatters';
+
+const NUMBER_FORMATTER = NUMBER_FMT;
 const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
   day: '2-digit',
   month: '2-digit',

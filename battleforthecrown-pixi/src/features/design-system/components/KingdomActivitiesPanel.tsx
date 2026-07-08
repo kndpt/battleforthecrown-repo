@@ -8,7 +8,7 @@ export type CaptureWindowState = 'open' | 'soon' | 'completed' | 'interrupted';
 export type CaptureTier = 'T1' | 'T2' | 'T3' | 'T4' | 'T5' | 'PVP';
 export type ExpeditionActivityKind = 'attack' | 'reinforce' | 'scout' | 'caravan' | 'conquest';
 export type ExpeditionActivityPhase = 'en_route' | 'resolved' | 'returning';
-export type KingdomActivityTab = 'expeditions' | 'captures' | 'threats';
+export type KingdomActivityTab = 'expeditions' | 'captures' | 'threats' | 'sieges';
 export type KingdomActivitiesPanelState = 'idle' | 'loading' | 'error';
 export type KingdomActivityHudBadgeTone = 'gold' | 'green' | 'red' | 'blue' | 'stone';
 
@@ -16,10 +16,18 @@ export interface CaptureWindowCardProps extends HTMLAttributes<HTMLElement> {
   coordinates: string;
   endTime: string;
   endTimeLabel: string;
-  nobleEyebrow: string;
-  nobleName: string;
-  originLabelPrefix: string;
-  originName: string;
+  /**
+   * Attacker's immobilised noble. Optional: omitted on the defender siege view,
+   * where revealing the attacker's noble would break fog-of-war.
+   */
+  nobleEyebrow?: string;
+  nobleName?: string;
+  /**
+   * Attacker's origin village. Optional for the same fog-of-war reason as the
+   * noble fields — the besieged defender must not learn the attack origin.
+   */
+  originLabelPrefix?: string;
+  originName?: string;
   progress: number;
   state: CaptureWindowState;
   statusLabel: string;
@@ -85,6 +93,12 @@ export interface KingdomActivitiesPanelLabels {
   expeditionsTab: string;
   headerEyebrow: string;
   headerTitle: string;
+  siegeEmptyQuote: string;
+  siegeEmptyTitle: string;
+  siegeErrorLabel: string;
+  siegeLoadingLabel: string;
+  siegeRetryLabel: string;
+  siegesTab: string;
   threatEmptyQuote: string;
   threatEmptyTitle: string;
   threatErrorLabel: string;
@@ -106,8 +120,13 @@ export interface KingdomActivitiesPanelProps extends HTMLAttributes<HTMLDivEleme
   onClose?: () => void;
   onRetryCaptures?: () => void;
   onRetryExpeditions?: () => void;
+  onRetrySieges?: () => void;
   onRetryThreats?: () => void;
   onTabChange: (tab: KingdomActivityTab) => void;
+  /** Defender siege feed. Optional so existing showcases keep compiling. */
+  siegeCount?: number;
+  siegeState?: KingdomActivitiesPanelState;
+  sieges?: CaptureWindowCardProps[];
   threatCount: number;
   threatState?: KingdomActivitiesPanelState;
   threats: IncomingAttackCardProps[];
@@ -366,14 +385,18 @@ export function CaptureWindowCard({
               <span className="opacity-55">·</span>
               {tierSubLabel}
             </span>
-            <span className="text-[#8b7355] opacity-[.6]">·</span>
-            <span className="inline-flex min-w-0 items-center gap-1">
-              <CastleGlyph className="size-[11px] shrink-0" />
-              <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
-                {originLabelPrefix}{' '}
-                <em className="not-italic font-bold text-[#3d2f1f]">{originName}</em>
-              </span>
-            </span>
+            {originName ? (
+              <>
+                <span className="text-[#8b7355] opacity-[.6]">·</span>
+                <span className="inline-flex min-w-0 items-center gap-1">
+                  <CastleGlyph className="size-[11px] shrink-0" />
+                  <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                    {originLabelPrefix}{' '}
+                    <em className="not-italic font-bold text-[#3d2f1f]">{originName}</em>
+                  </span>
+                </span>
+              </>
+            ) : null}
           </div>
         </div>
 
@@ -393,12 +416,14 @@ export function CaptureWindowCard({
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-0.5 text-right font-game">
-            <span className="text-[8.5px] font-bold uppercase tracking-[.22em] text-[#8b7355]">{nobleEyebrow}</span>
-            <span className="max-w-[140px] overflow-hidden text-ellipsis whitespace-nowrap text-[11.5px] font-bold text-[#3d2f1f]">
-              {nobleName}
-            </span>
-          </div>
+          {nobleName ? (
+            <div className="flex flex-col items-end gap-0.5 text-right font-game">
+              <span className="text-[8.5px] font-bold uppercase tracking-[.22em] text-[#8b7355]">{nobleEyebrow}</span>
+              <span className="max-w-[140px] overflow-hidden text-ellipsis whitespace-nowrap text-[11.5px] font-bold text-[#3d2f1f]">
+                {nobleName}
+              </span>
+            </div>
+          ) : null}
         </div>
 
         <div className="flex items-center gap-2">
@@ -489,7 +514,10 @@ export function CaptureWindowList({
   return (
     <div className={cn('flex flex-col gap-2.5 px-3 py-2.5', className)} {...props}>
       {items.map((item) => (
-        <CaptureWindowCard key={`${item.targetName}-${item.coordinates}-${item.nobleName}`} {...item} />
+        <CaptureWindowCard
+          key={item.id ?? `${item.targetName}-${item.coordinates}-${item.nobleName ?? ''}`}
+          {...item}
+        />
       ))}
     </div>
   );
@@ -581,7 +609,7 @@ function TabButton({
   badge: number;
   label: string;
   onClick: () => void;
-  tone: 'captures' | 'expeditions' | 'threats';
+  tone: 'captures' | 'expeditions' | 'threats' | 'sieges';
 }) {
   return (
     <button
@@ -600,7 +628,7 @@ function TabButton({
         <span
           className={cn(
             'inline-flex h-4 min-w-4 items-center justify-center rounded-full border-[1.5px] px-[5px] font-game text-[9.5px] font-black',
-            tone === 'threats'
+            tone === 'threats' || tone === 'sieges'
               ? 'border-[#a93226] bg-[linear-gradient(180deg,#e74c3c,#c0392b)] text-white'
               : active && tone === 'captures'
                 ? 'border-[#9e7b0d] bg-[linear-gradient(180deg,#f1c40f,#d4a017)] text-[#3a2a00]'
@@ -628,8 +656,12 @@ export function KingdomActivitiesPanel({
   onClose,
   onRetryCaptures,
   onRetryExpeditions,
+  onRetrySieges,
   onRetryThreats,
   onTabChange,
+  siegeCount = 0,
+  siegeState = 'idle',
+  sieges = [],
   threatCount,
   threatState = 'idle',
   threats,
@@ -658,6 +690,13 @@ export function KingdomActivitiesPanel({
             tone="threats"
           />
           <TabButton
+            active={activeTab === 'sieges'}
+            badge={siegeCount}
+            label={labels.siegesTab}
+            onClick={() => onTabChange('sieges')}
+            tone="sieges"
+          />
+          <TabButton
             active={activeTab === 'captures'}
             badge={captureCount}
             label={labels.capturesTab}
@@ -681,6 +720,17 @@ export function KingdomActivitiesPanel({
           onRetry={onRetryThreats}
           retryLabel={labels.threatRetryLabel}
           state={threatState}
+        />
+      ) : activeTab === 'sieges' ? (
+        <CaptureWindowList
+          emptyQuote={labels.siegeEmptyQuote}
+          emptyTitle={labels.siegeEmptyTitle}
+          errorLabel={labels.siegeErrorLabel}
+          items={sieges}
+          loadingLabel={labels.siegeLoadingLabel}
+          onRetry={onRetrySieges}
+          retryLabel={labels.siegeRetryLabel}
+          state={siegeState}
         />
       ) : activeTab === 'captures' ? (
         <CaptureWindowList

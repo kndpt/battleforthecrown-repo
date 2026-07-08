@@ -39,6 +39,19 @@ La **couche in-app** de l'attaque entrante est livrée, indépendamment du push 
 - **HUD** : onglet « Menaces » du bottom sheet *Activités du royaume* (`KingdomActivitiesPanel`), compte à rebours vivant par menace + badge compteur ; rafraîchi par WS + invalidation TanStack Query, sans reload.
 - **Hors scope run 086** : push FCM/APNs, opt-in granulaire, agrégat multi-villages (la section est scopée au village courant), révélation de la composition/origine.
 
+## Visibilité in-app de la fenêtre de capture — volet défenseur (livré — run 094)
+
+Le pendant défenseur de la catégorie 🔴 « Fin de fenêtre de capture ». L'attaquant voyait déjà ses captures en cours (onglet « Captures ») ; le propriétaire original d'un village PvP en cours de capture a désormais sa propre surface in-app live, calquée sur le run 086. Push FCM/APNs toujours hors scope (Phase 6, POST-MVP).
+
+- **Événements** (Outbox/WS) : les 3 events de cycle de fenêtre atteignent le défenseur, en plus de l'attaquant :
+  - `village.capture-window-opened` / `village.capture-window-interrupted` — **dual-routés** au propriétaire original du village cible (résolu à la volée pendant `OPEN`, où `Village.userId` reste le défenseur). La **copie défenseur est fog-scrub** : les champs `attackerUserId` / `attackerVillageId` sont retirés (miroir du scrub `observerUserId` de `village.attacked`).
+  - `village.capture-window-completed` — routé au nouveau propriétaire **et** à `previousOwnerUserId` (snapshot de l'ancien propriétaire, jamais résolu live après transfert).
+  - Une cible barbare (`userId = null`) n'a pas de défenseur → jamais routée. Détail : [`docs/architecture/realtime.md`](../architecture/realtime.md).
+- **Endpoint** : `GET /combat/captures/targeting-me?worldId=` (JWT, ownership service-side via `targetVillage.userId = userId`, **jamais** `@Public`) — liste per-world les fenêtres `OPEN` ciblant les villages du joueur, `captureUntil` croissante. Per-world (mirror de `getOpenConquests`) pour couvrir un défenseur multi-village.
+- **Fog-of-war** : le `DefenderCaptureDto` (`strictObject` Zod) n'expose que `{pendingConquestId, targetVillageId, targetName, targetX, targetY, targetCastleLevel, captureStartedAt, captureUntil, status}` — c.-à-d. le village **du défenseur** + l'échéance. **Jamais** l'identité/origine de l'attaquant ni la garnison d'occupation.
+- **HUD** : onglet « Sièges » du bottom sheet *Activités du royaume* (`KingdomActivitiesPanel`) + badge compteur rouge sur la carte, compte à rebours vivant « fenêtre jusqu'à T » par village assiégé ; rafraîchi par WS + invalidation TanStack Query, sans reload. **Idempotence at-least-once** : le feed dédup par `pendingConquestId` (mapper first-wins) ; une livraison WS dupliquée ne fait que ré-invalider la query (no-op), sans doubler la carte ni relancer le countdown.
+- **Hors scope run 094** : push FCM/APNs, opt-in granulaire, révélation de la composition/origine de l'attaquant.
+
 ## Liens
 
 - [`14-pvp-conquest.md`](./14-pvp-conquest.md) — fenêtres de capture variables (consommateur principal des notifs).

@@ -39,6 +39,7 @@ import { useBuildingsForLockCheck } from "@/features/layout/useBuildingsForLockC
 import {
   useMyVillagesQuery,
   useOnboardingSummaryQuery,
+  useCapturesTargetingMeQuery,
   useOpenConquestsQuery,
   useOpenExpeditionsQuery,
   useWorldDetailsQuery,
@@ -75,6 +76,7 @@ export function WorldMapScreen() {
   const myVillages = useMyVillagesQuery(worldId);
   const onboardingSummary = useOnboardingSummaryQuery(worldId);
   const openConquests = useOpenConquestsQuery(worldId);
+  const capturesTargetingMe = useCapturesTargetingMeQuery(worldId);
   const openExpeditions = useOpenExpeditionsQuery(worldId);
   const worldDetails = useWorldDetailsQuery(worldId);
   const mapMarkers = useMapMarkersQuery(worldId);
@@ -410,6 +412,12 @@ export function WorldMapScreen() {
                       label: "Expéditions",
                       onClick: () => openKingdomActivities("expeditions"),
                       tone: "stone",
+                    },
+                    {
+                      count: capturesTargetingMe.data?.length ?? 0,
+                      label: "Sièges",
+                      onClick: () => openKingdomActivities("sieges"),
+                      tone: "red",
                     },
                     {
                       count: openConquests.data?.length ?? 0,

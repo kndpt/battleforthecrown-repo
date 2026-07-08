@@ -28,6 +28,40 @@ export async function registerScheduledQueueWorker(
   }
 }
 
+export interface ResilientBatchResult {
+  successCount: number;
+  errorCount: number;
+}
+
+/**
+ * Runs `handler` over every item, isolating per-item failures: a throw from one
+ * item is routed to `onItemError` and the loop moves on, so a single bad row
+ * can't abort an entire tick. Returns success/error counts for the caller's
+ * summary log.
+ *
+ * Centralizes the resilient-loop invariant shared by the periodic batch ticks
+ * (production, crown production, seeding catchup): the tick must attempt every
+ * eligible item even when some individually fail.
+ */
+export async function runResilientBatch<T>(
+  items: readonly T[],
+  handler: (item: T) => Promise<unknown>,
+  onItemError: (item: T, error: unknown) => void,
+): Promise<ResilientBatchResult> {
+  let successCount = 0;
+  let errorCount = 0;
+  for (const item of items) {
+    try {
+      await handler(item);
+      successCount++;
+    } catch (error) {
+      onItemError(item, error);
+      errorCount++;
+    }
+  }
+  return { successCount, errorCount };
+}
+
 export interface JobQueueWorkerOptions {
   queueName: string;
   workOptions?: PgBoss.WorkOptions;
