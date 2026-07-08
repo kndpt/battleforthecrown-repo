@@ -70,6 +70,7 @@ Le cap « 1 Seigneur par village » couvre **garnison + file + en-vol + en-occup
 - [ ] [smoke] Après conquête COMPLETED (Seigneur installé dans le village conquis), le village d'origine peut re-recruter → 201.
 - [ ] [smoke/SQL] Après conquête interrompue/échouée et retour du Seigneur, re-recrutement possible sans double comptage.
 - [ ] [test unit] `canRecruitNoble` couvre les nouveaux états avec la reason attendue.
+- [ ] [smoke] **Interleaving** : recrutement de B et finalisation/interruption de la conquête de A en concurrence → aucun état où 2 Seigneurs coexistent, aucun faux blocage post-résolution (couvre la fenêtre TOCTOU du verrou, cf. Points d'attention).
 - [ ] [grep/build] Aucun appelant de `canRecruitNoble` laissé sur l'ancienne signature ; `@battleforthecrown/shared` rebuild.
 - [ ] [static] `yarn static-check` vert.
 
@@ -82,6 +83,7 @@ Le cap « 1 Seigneur par village » couvre **garnison + file + en-vol + en-occup
 ## Points d'attention
 
 - **Couverture continue** : EN_ROUTE (vol) → PendingConquest OPEN + Garrison(NOBLE away) (occupation) → COMPLETED (Seigneur consommé/installé) ou RETURNING (échec, retour). Le leg RETURNING/RESOLVED avec `survivingUnits` NOBLE n'est ni en inventaire ni en garnison d'origine tant qu'il n'a pas atterri → risque de fenêtre où le cap n'est pas appliqué. À trancher en refinement.
+- **TOCTOU du verrou (bloquant refinement)** : l'advisory lock existant `training:<villageId>:THRONE_HALL` ne sérialise **que** `recruit-noble.use-case.ts`. Les writers de conquête — `ConquestService.openCaptureWindowInTx`, `interruptCaptureWindowInTx` et la finalisation (`conquest-finalize.worker.ts`) — n'acquièrent **pas** cette clé. Un comptage qui s'appuie uniquement sur le `Promise.all` sous ce lock laisse donc une fenêtre TOCTOU : une ouverture/interruption/finalisation de fenêtre de capture peut committer en parallèle du gate de recrutement et fausser le décompte (double recrutement, ou faux blocage). **Le run doit trancher** : (a) faire acquérir la **même clé de lock** (`training:<villageId>:THRONE_HALL`) par les writers de conquête concernés — attention aux risques d'interblocage / d'ordre d'acquisition —, OU (b) s'appuyer sur un invariant DB atomique (état métier lu dans la même tx avec une garantie de sérialisation suffisante) + **un test d'interleaving dédié** prouvant l'absence de course. Ne pas considérer le lock training seul comme suffisant.
 - `Expedition.units` est du JSON non indexé → le comptage NOBLE en vol nécessite un parse applicatif, pas de filtre SQL direct. Préférer `PendingConquest` OPEN (état métier propre) quand possible.
 - `PendingConquest` n'a pas d'index `[attackerVillageId, status]` → l'ajouter si une requête sur ce champ est introduite.
 - Attaque simple (kind=ATTACK non-conquête) emmenant un NOBLE : peu probable (le NOBLE ne sert qu'à conquérir) mais confirmer que le domaine l'interdit, sinon le comptage doit le couvrir aussi.
