@@ -68,6 +68,20 @@ Quand une récompense joueur doit s'appliquer à un village alors que le joueur 
 
 Le système retient ensuite le dernier village ayant reçu une récompense et le propose par défaut à la validation suivante. La Phase 10 consomme cette règle sans la re-trancher.
 
+## Alertes d'état (MVP-léger, présentationnel)
+
+Le sélecteur multi-village (`MultiVillageBottomSheet`) affiche une pastille d'alerte
+`kind: 'warning'` par village, dérivée **uniquement** des données déjà chargées par
+`useMultiVillageData` (`deriveVillageStateAlert` dans `features/layout/multiVillageSheet.ts`).
+
+Garde-fous — **purement présentationnel, zéro effet gameplay, aucune écriture serveur** :
+
+- **Entrepôt plein** : ≥1 ressource stockable (bois/pierre/fer) atteint son cap (`maxPerType`, seuil 100 %).
+- **File inactive** : aucune construction en file **et** aucune formation en cours (seigneur inclus).
+- Priorité déterministe (`alert` singulier) : entrepôt plein > file inactive.
+- Jamais d'alerte inventée : `null` si aucune donnée d'état chargée (invariant hérité de la livraison du shell multi-village).
+- Ce chemin n'émet **jamais** `kind: 'attack'` : l'alerte « attaque entrante » par village reste un gap ouvert distinct (successeur différé).
+
 ## Évolutions post-MVP
 
 À étudier seulement après observation du multi-village :
@@ -76,7 +90,8 @@ Le système retient ensuite le dernier village ayant reçu une récompense et le
 - plusieurs étiquettes simultanées par village ;
 - favoris ;
 - dashboard royaume consolidé ;
-- alertes par rôle (entrepôt plein, garnison faible, file inactive) ;
+- alerte « garnison faible » (différée : seuil non tranché + pas de fan-out garrison) ;
+- alerte « attaque entrante » par village dans le sélecteur (surface distincte de la section « Attaques entrantes » du `KingdomActivities`) ;
 - presets d'actions ;
 - interaction avec une capitale mécanique ;
 - partage de rôles ou marqueurs avec une tribu.
