@@ -435,5 +435,99 @@ describe('planNotifications', () => {
         },
       ]);
     });
+
+    it('opened also routes the defender with attacker fields scrubbed', async () => {
+      const deps = makeDeps({ villageOwners: { vT: 'uDef' } });
+      const plans = await planNotifications(
+        'village.capture-window-opened',
+        {
+          pendingConquestId: 'c1',
+          targetVillageId: 'vT',
+          attackerVillageId: 'vA',
+          attackerUserId: 'uAtk',
+          captureUntil: '2026-06-17T00:00:00Z',
+        },
+        deps,
+      );
+      const attacker = plans.find((p) => p.recipient.id === 'uAtk');
+      const defender = plans.find((p) => p.recipient.id === 'uDef');
+      expect(attacker?.payload).toMatchObject({ attackerUserId: 'uAtk' });
+      expect(defender).toBeDefined();
+      expect(defender?.payload).not.toHaveProperty('attackerUserId');
+      expect(defender?.payload).not.toHaveProperty('attackerVillageId');
+      expect(defender?.payload).toMatchObject({
+        pendingConquestId: 'c1',
+        targetVillageId: 'vT',
+        captureUntil: '2026-06-17T00:00:00Z',
+      });
+    });
+
+    it('opened never routes a barbarian target (no defender owner)', async () => {
+      const deps = makeDeps({
+        villageOwners: {},
+        conquestAttackers: { c1: 'uAtk' },
+      });
+      const plans = await planNotifications(
+        'village.capture-window-opened',
+        {
+          pendingConquestId: 'c1',
+          targetVillageId: 'vBarb',
+          attackerVillageId: 'vA',
+          attackerUserId: 'uAtk',
+          captureUntil: '2026-06-17T00:00:00Z',
+        },
+        deps,
+      );
+      expect(plans).toHaveLength(1);
+      expect(plans[0].recipient).toEqual({ kind: 'user', id: 'uAtk' });
+    });
+
+    it('interrupted also routes the defender with attacker fields scrubbed', async () => {
+      const deps = makeDeps({ villageOwners: { vT: 'uDef' } });
+      const plans = await planNotifications(
+        'village.capture-window-interrupted',
+        {
+          pendingConquestId: 'c2',
+          targetVillageId: 'vT',
+          attackerUserId: 'uAtk',
+          reason: 'noble-killed',
+        },
+        deps,
+      );
+      const defender = plans.find((p) => p.recipient.id === 'uDef');
+      expect(defender).toBeDefined();
+      expect(defender?.payload).not.toHaveProperty('attackerUserId');
+      expect(defender?.payload).toMatchObject({ reason: 'noble-killed' });
+    });
+
+    it('completed routes both previous and new owner', async () => {
+      const plans = await planNotifications(
+        'village.capture-window-completed',
+        {
+          pendingConquestId: 'c3',
+          targetVillageId: 'vT',
+          newOwnerUserId: 'uNew',
+          previousOwnerUserId: 'uOld',
+        },
+        makeDeps(),
+      );
+      const recipients = plans.map((p) => p.recipient.id).sort();
+      expect(recipients).toEqual(['uNew', 'uOld']);
+    });
+
+    it('completed skips previousOwner when it equals newOwner', async () => {
+      const plans = await planNotifications(
+        'village.capture-window-completed',
+        {
+          pendingConquestId: 'c3',
+          targetVillageId: 'vT',
+          newOwnerUserId: 'uSame',
+          previousOwnerUserId: 'uSame',
+        },
+        makeDeps(),
+      );
+      expect(plans).toHaveLength(1);
+      expect(plans[0].recipient).toEqual({ kind: 'user', id: 'uSame' });
+    });
   });
 });

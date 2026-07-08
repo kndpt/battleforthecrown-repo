@@ -407,9 +407,7 @@ export function applyBattleReturned(
   scheduleTimeout(() => {
     useExpeditionsStore.getState().remove(payload.expeditionId);
   }, RETURNED_TO_CLEANUP_DELAY_MS);
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.resources(payload.villageId),
-  });
+  invalidateVillageEconomyAndExpeditions(ctx, payload.villageId);
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.armyInventory(payload.villageId),
   });
@@ -485,6 +483,12 @@ export function applyScoutReturned(
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.armyInventory(payload.villageId),
   });
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.population(payload.villageId),
+  });
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.activeExpeditions(payload.villageId),
+  });
   invalidateOpenExpeditions(ctx, session);
 }
 
@@ -513,10 +517,7 @@ export function applyExpeditionRecalled(
     description: `Retour prévu à ${new Date(payload.returnAt).toLocaleTimeString()}`,
     ttlMs: 4000,
   });
-  invalidateVillageEconomy(ctx, payload.villageId);
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.activeExpeditions(payload.villageId),
-  });
+  invalidateVillageEconomyAndExpeditions(ctx, payload.villageId);
   invalidateOpenExpeditions(ctx, session);
 }
 
@@ -534,9 +535,7 @@ export function applyExpeditionReturned(
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.armyInventory(payload.villageId),
   });
-  ctx.queryClient.invalidateQueries({
-    queryKey: queryKeys.resources(payload.villageId),
-  });
+  invalidateVillageEconomyAndExpeditions(ctx, payload.villageId);
   invalidateOpenExpeditions(ctx, session);
 }
 
@@ -653,9 +652,8 @@ export function applyCaravanSent(
     arrivalAt: Date.parse(payload.arrivalAt),
   };
   useExpeditionsStore.getState().add(snapshot);
-  invalidateVillageEconomy(ctx, payload.villageId);
+  invalidateVillageEconomyAndExpeditions(ctx, payload.villageId);
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(payload.targetVillageId) });
-  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(payload.villageId) });
   invalidateOpenExpeditions(ctx, session);
 }
 
@@ -712,9 +710,8 @@ export function applyCaravanRecalled(
     description: `Retour prévu à ${new Date(payload.returnAt).toLocaleTimeString()}`,
     ttlMs: 4000,
   });
-  invalidateVillageEconomy(ctx, payload.villageId);
+  invalidateVillageEconomyAndExpeditions(ctx, payload.villageId);
   invalidateOpenExpeditions(ctx, session);
-  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(payload.villageId) });
 }
 
 export function applyCaravanReturned(
@@ -723,7 +720,7 @@ export function applyCaravanReturned(
 ): void {
   const session = resolveSessionCtx();
   markExpeditionReturned(payload.expeditionId);
-  invalidateVillageEconomy(ctx, payload.villageId);
+  invalidateVillageEconomyAndExpeditions(ctx, payload.villageId);
   invalidateCaravanReports(ctx, session);
   invalidateOpenExpeditions(ctx, session);
 }
@@ -805,9 +802,25 @@ function invalidateOpenExpeditions(ctx: BindingsContext, session: SessionCtx): v
   });
 }
 
+// Defender siege feed. Invalidation is the source of truth: a duplicated
+// capture-window event (at-least-once Outbox) only re-triggers a server-deduped
+// refetch, so the feed never gains a stale row nor restarts a countdown. Safe
+// to call from the attacker's copy too — their targeting-me query returns [] and
+// the refetch is a cheap no-op.
+function invalidateCapturesTargetingMe(ctx: BindingsContext, session: SessionCtx): void {
+  ctx.queryClient.invalidateQueries({
+    queryKey: queryKeys.capturesTargetingMe(session.userId, session.worldId),
+  });
+}
+
 function invalidateVillageEconomy(ctx: BindingsContext, villageId: string): void {
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.resources(villageId) });
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.population(villageId) });
+}
+
+function invalidateVillageEconomyAndExpeditions(ctx: BindingsContext, villageId: string): void {
+  invalidateVillageEconomy(ctx, villageId);
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.activeExpeditions(villageId) });
 }
 
 function invalidatePowerQueries(ctx: BindingsContext, session: SessionCtx, villageId: string): void {
@@ -930,9 +943,14 @@ export function applyVillageCaptureWindowOpened(
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.worldEntitiesPrefix(),
   });
-  invalidateConquestAttackerState(ctx, payload.attackerVillageId);
-  invalidateOpenConquests(ctx, session);
-  invalidateOpenExpeditions(ctx, session);
+  // The defender copy is fog-scrubbed of attackerVillageId; the attacker-side
+  // invalidations only apply when this is the attacker's own copy.
+  if (payload.attackerVillageId) {
+    invalidateConquestAttackerState(ctx, payload.attackerVillageId);
+    invalidateOpenConquests(ctx, session);
+    invalidateOpenExpeditions(ctx, session);
+  }
+  invalidateCapturesTargetingMe(ctx, session);
   useUiStore.getState().pushToast({
     tone: "warning",
     title: "Capture en cours",
@@ -954,6 +972,7 @@ export function applyVillageCaptureWindowCompleted(
     queryKey: queryKeys.worldEntitiesPrefix(),
   });
   invalidateOpenConquests(ctx, session);
+  invalidateCapturesTargetingMe(ctx, session);
   invalidateCombatReports(ctx, session);
   useUiStore.getState().pushToast({
     tone: "success",
@@ -972,6 +991,7 @@ export function applyVillageCaptureWindowInterrupted(
     queryKey: queryKeys.worldEntitiesPrefix(),
   });
   invalidateOpenConquests(ctx, session);
+  invalidateCapturesTargetingMe(ctx, session);
   useUiStore.getState().pushToast({
     tone: "error",
     title: "Capture interrompue",
@@ -1105,6 +1125,9 @@ function invalidateReinforcementQueries(
     });
     ctx.queryClient.invalidateQueries({
       queryKey: queryKeys.armyInventory(villageId),
+    });
+    ctx.queryClient.invalidateQueries({
+      queryKey: queryKeys.population(villageId),
     });
   }
 }

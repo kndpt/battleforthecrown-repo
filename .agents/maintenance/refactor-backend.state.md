@@ -1,7 +1,7 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-07-07 | theme BT1 — single-home resilient batch loop. Nouveau `runResilientBatch<T>(items, handler, onItemError)` dans `infra/pg-boss/queue-worker.helper.ts` : isole les échecs par item (log + continue), renvoie `{successCount, errorCount}`. 3 workers migrés (`production`, `crown-production`, `barbarian-seeding-catchup`) — boucle try/catch recopiée 3× supprimée, logs inchangés (byte-for-byte). +3 unit (helper spec) couvrant l'invariant resilient jusque-là non-testé. 572 unit + 6 smokes (production-tick/crowns/barbarians) verts.
-full: `archive/refactor-backend/2026-07-07-full.md`
+last: 2026-07-08 | theme RC1 — single-home warehouse-capped resource credit. Nouveau helper pur `creditResourcesCapped(current, delta, maxPerType)` + type `ResourceAmounts` dans `packages/shared/src/resources/storage.ts` : `min(current + delta, cap)` par ressource. 4 callsites migrés byte-for-byte (`retention` daily card, `onboarding` completion + initial reward, `barbarian-runtime` regen ; le 2e site onboarding ajouté sur review CR). return.worker exclu (clamp headroom, sémantique distincte). +5 unit (storage.spec). 572 back + 963 pixi + 13 smokes (daily-retention/onboarding/barbarians/production-tick) verts.
+full: `archive/refactor-backend/2026-07-08-full.md`
 
 ## OPEN
 
@@ -23,7 +23,8 @@ full: `archive/refactor-backend/2026-07-07-full.md`
 
 ## Skip — déjà traité
 
-- BT1 + BT2 (resilient batch loop → `queue-worker.helper.runResilientBatch`) → ce run
+- RC1 + RC2 (warehouse-capped resource credit → `shared/resources.creditResourcesCapped`) → ce run
+- BT1 + BT2 (resilient batch loop → `queue-worker.helper.runResilientBatch`) → 2026-07-07 (#267)
 - CD1 (dedup helper carry-capacity → `combat.utils.sumCarryCapacity`) → 2026-07-06 (#262)
 - PR1 (village production-rate projection consolidation) → 2026-07-05 (#256)
 - O1 requalifié _latent, pas actif_ → 2026-07-05

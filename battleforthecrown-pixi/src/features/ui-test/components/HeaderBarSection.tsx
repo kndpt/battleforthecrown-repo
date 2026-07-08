@@ -5,11 +5,8 @@ import {
   HeaderActions,
   type ResourceDisplayItem,
 } from "@/ui";
-import { useState } from "react";
 
 export function HeaderBarSection() {
-  const [notificationCount] = useState(5);
-
   // Données exemple
   const mockResources: ResourceDisplayItem[] = [
     { type: "wood", current: 8500, max: 10000, production: 120 },
@@ -44,7 +41,7 @@ export function HeaderBarSection() {
               <ResourceDisplay resources={mockResources} />
 
               <HeaderActions
-                notificationCount={notificationCount}
+                notificationCount={5}
                 onSettingsClick={() => console.log("Settings")}
                 onNotificationsClick={() => console.log("Notifications")}
               />

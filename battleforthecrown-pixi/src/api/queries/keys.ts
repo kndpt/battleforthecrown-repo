@@ -34,6 +34,8 @@ export const queryKeys = {
     ["combat", "expeditions", "open", userId, worldId] as const,
   incomingAttacks: (villageId: string | null) =>
     ["combat", "incoming", villageId] as const,
+  capturesTargetingMe: (userId: string | null, worldId: string | null) =>
+    ["combat", "captures", "targeting-me", userId, worldId] as const,
   garrison: (villageId: string | null) =>
     ["combat", "garrison", villageId] as const,
   combatReports: (userId: string | null, worldId: string | null) =>
