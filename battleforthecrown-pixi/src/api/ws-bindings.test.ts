@@ -86,6 +86,7 @@ function createQueryClientWithReinforcementData(villageIds: string[]): QueryClie
 }
 
 function expectReinforcementQueriesInvalidated(queryClient: QueryClient, villageId: string): void {
+  expect(queryClient.getQueryState(queryKeys.activeExpeditions(villageId))?.isInvalidated).toBe(true);
   expect(queryClient.getQueryState(queryKeys.garrison(villageId))?.isInvalidated).toBe(true);
   expect(queryClient.getQueryState(queryKeys.armyInventory(villageId))?.isInvalidated).toBe(true);
   expect(queryClient.getQueryState(queryKeys.population(villageId))?.isInvalidated).toBe(true);
