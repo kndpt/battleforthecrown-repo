@@ -910,6 +910,34 @@
         "tasks/archive/40-recruit-noble-throne-hall.md + tasks/runs/archive/006-audit-conquest.md — ont défini le cap = garnison OU file Trône, cas en-vol/occupation jamais envisagé ; aucun ticket/run actif ou archivé ne couvre l'enforcement en-vol"
       ],
       "addedAt": "2026-07-08"
+    },
+    {
+      "specPath": "docs/gameplay/16-notifications.md",
+      "slug": "extraction-attacked-inapp-indicator",
+      "title": "Indicateur in-app « Site d'exploitation attaqué » — alerte exploitant (couche in-app)",
+      "keywords": [
+        "extraction",
+        "attacked",
+        "exploitation",
+        "notification",
+        "in-app",
+        "toast"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/098-feature-extraction-attacked-inapp-indicator.md",
+      "artefactId": "098",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/extraction-attacked-inapp-indicator",
+      "gapSummary": "La spec 16-notifications.md l.17-21 liste 3 catégories 🔴 Critiques MVP ; les 2 sœurs (Attaque entrante, Fin de fenêtre de capture) ont leur surface in-app livrée (runs 086, 094), la 3e « Site d'exploitation attaqué » n'a AUCUNE traduction UI. L'event extraction.attacked est bien routé à l'exploitant mais applyExtractionAttacked (ws-bindings.ts) se limite à invalider une query — aucun toast/alerte, contrairement à applyVillageAttacked. Comme extraction.attacked est un event discret (pas d'état persistant listable), le trou réel est une alerte in-app (toast), pas un onglet targeting-me. Push FCM/APNs hors scope (Phase 6, POST-MVP) comme 086/094.",
+      "codeEvidence": [
+        "battleforthecrown-pixi/src/api/ws-bindings.ts:1184 applyExtractionAttacked — invalide worldEntities (+ extraction-state si interrupted) seulement, aucun pushToast, contrairement à applyVillageAttacked (ws-bindings.ts:759-766)",
+        "battleforthecrown-backend/src/modules/event/event-outbox-notification-planner.ts:272 — 'extraction.attacked': userByVillage('villageId') route déjà à l'exploitant, routage correct, rien à changer",
+        "packages/shared/src/events/types.ts:362-369 ExtractionAttackedPayload — { expeditionId, worldId, villageId, siteId, interrupted, stolen } sans resourceType ni nom/coords de site (toast peu informatif sans enrichissement)",
+        "battleforthecrown-pixi/src/features/combat/KingdomActivitiesBottomSheet.tsx — 3 onglets Captures/Sièges/Menaces, aucune surface extraction ; extractions actives déjà dans l'onglet Expéditions (kindEXTRACTION, kingdomActivitiesViewModel.ts:56-70)",
+        "docs/gameplay/16-notifications.md:21 — catégorie 🔴 « Site d'exploitation attaqué » listée MVP ; l.32-53 les 2 catégories 🔴 sœurs ont leur § in-app livrée (086, 094), pas l'extraction",
+        "battleforthecrown-backend/src/modules/gameplay/extraction-lifecycle.service.ts:447-459 — createOutboxEvent('extraction.attacked', …) émis une seule fois à l'interception (event discret, pas d'état 'exploitation menacée' requêtable → patron endpoint targeting-me non transposable)"
+      ],
+      "addedAt": "2026-07-09"
     }
   ]
 }
