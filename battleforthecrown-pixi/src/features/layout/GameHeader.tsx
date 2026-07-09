@@ -27,7 +27,7 @@ import {
   usePublicWorldsQuery,
 } from '@/api/queries';
 import { ApiError } from '@/api';
-import { formatHeaderCompactAmount, RESOURCE_BAR_FILL, RESOURCE_ICON_PATHS, RESOURCE_DISPLAY_LABELS, PRIMARY_RESOURCE_KEYS } from '@/lib/resourceConfig';
+import { formatHeaderCompactAmount, RESOURCE_BAR_FILL, RESOURCE_ICON_PATHS, RESOURCE_DISPLAY_LABELS, PRIMARY_RESOURCE_KEYS, type PrimaryResourceKey } from '@/lib/resourceConfig';
 import { publicAsset } from '@/lib/publicAsset';
 import { BottomSheet } from '@/ui';
 import { useUiStore } from '@/stores/ui';
@@ -155,7 +155,7 @@ export function GameHeader({
 
   const resources = useMemo(() => {
     const max = hasSnapshot && display ? display.maxPerType : 0;
-    const currentValues: Record<string, number> = {
+    const currentValues: Record<PrimaryResourceKey, number> = {
       wood: hasSnapshot && display ? Math.floor(display.wood) : 0,
       stone: hasSnapshot && display ? Math.floor(display.stone) : 0,
       iron: hasSnapshot && display ? Math.floor(display.iron) : 0,
