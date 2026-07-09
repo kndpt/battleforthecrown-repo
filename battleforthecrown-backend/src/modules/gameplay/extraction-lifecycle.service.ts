@@ -19,11 +19,8 @@ import {
 } from '@battleforthecrown/shared/extraction';
 import type { ExtractionResourceType } from '@battleforthecrown/shared/extraction';
 import { calculateCombatOutcome } from '../combat/combat-resolution';
-import {
-  isVictoryForAttacker,
-  sumCarryCapacity,
-  sumPopulationCost,
-} from '../combat/combat.utils';
+import { isVictoryForAttacker, sumCarryCapacity } from '../combat/combat.utils';
+import { releasePopulationForLosses } from '../combat/population-release';
 import { type UnitMap } from '@battleforthecrown/shared/army';
 import { WorldConfigService } from '../world/world-config.service';
 import type { CombatContext } from '../combat/interfaces/combat-context.interface';
@@ -522,12 +519,12 @@ export class ExtractionLifecycleService {
     // Release population for units killed on both sides — mirrors
     // combat.worker's sumPopulationCost/decrement (dead units free their pop
     // immediately, same as village combat resolution).
-    await this.releasePopulationForLosses(
+    await releasePopulationForLosses(
       tx,
       attacker.attackerVillageId,
       outcome.lossesAttacker,
     );
-    await this.releasePopulationForLosses(
+    await releasePopulationForLosses(
       tx,
       victim.attackerVillageId,
       outcome.lossesDefender,
@@ -621,12 +618,12 @@ export class ExtractionLifecycleService {
 
     // Release population for units killed on both sides — mirrors
     // combat.worker's sumPopulationCost/decrement.
-    await this.releasePopulationForLosses(
+    await releasePopulationForLosses(
       tx,
       attacker.attackerVillageId,
       outcome.lossesAttacker,
     );
-    await this.releasePopulationForLosses(
+    await releasePopulationForLosses(
       tx,
       victim.attackerVillageId,
       outcome.lossesDefender,
@@ -668,24 +665,6 @@ export class ExtractionLifecycleService {
       jobs: [{ expeditionId: attacker.id, returnAt }],
       stolen: noStolen,
     };
-  }
-
-  /**
-   * Release `villageId`'s population for units killed in interception combat —
-   * same accounting as `combat.worker`'s `sumPopulationCost` +
-   * `tx.population.update({ used: { decrement } })` for village combat.
-   */
-  private async releasePopulationForLosses(
-    tx: PrismaClientOrTx,
-    villageId: string,
-    losses: UnitMap,
-  ): Promise<void> {
-    const popReleased = sumPopulationCost(losses);
-    if (popReleased <= 0) return;
-    await tx.population.update({
-      where: { villageId },
-      data: { used: { decrement: popReleased } },
-    });
   }
 
   private async scheduleReturn(
