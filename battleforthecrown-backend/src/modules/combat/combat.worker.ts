@@ -27,8 +27,8 @@ import {
   calculateCasualtyStats,
   isVictoryForAttacker,
   distributeLossesProportionally,
-  sumPopulationCost,
 } from './combat.utils';
+import { releasePopulationForLosses } from './population-release';
 import { parseUnitMap, encodeUnitMap, encodeLootResult } from './codecs';
 import {
   caravanPortersFor,
@@ -268,15 +268,11 @@ export class CombatWorker implements OnModuleInit {
               // Release attacker population for dead units (always — PvP and barbarian raids).
               // Pop is freed at combat resolution, not at return — the units are dead now,
               // even if survivors are still on the road back. See docs/gameplay/02-economy-and-progression.md § Population.
-              const popReleasedAttacker = sumPopulationCost(
+              await releasePopulationForLosses(
+                tx,
+                expedition.attackerVillageId,
                 resolution.lossesAttacker,
               );
-              if (popReleasedAttacker > 0) {
-                await tx.population.update({
-                  where: { villageId: expedition.attackerVillageId },
-                  data: { used: { decrement: popReleasedAttacker } },
-                });
-              }
 
               // 6. Get attacker village for userId
               const attackerVillage = await tx.village.findUnique({
@@ -1285,12 +1281,12 @@ export class CombatWorker implements OnModuleInit {
           });
         }
 
-        const popReleasedLocal = sumPopulationCost(participantLosses);
-        if (popReleasedLocal > 0 && !defenderVillage.isBarbarian) {
-          await tx.population.update({
-            where: { villageId: defenderVillage.id },
-            data: { used: { decrement: popReleasedLocal } },
-          });
+        if (!defenderVillage.isBarbarian) {
+          await releasePopulationForLosses(
+            tx,
+            defenderVillage.id,
+            participantLosses,
+          );
         }
         continue;
       }
@@ -1315,13 +1311,11 @@ export class CombatWorker implements OnModuleInit {
         });
       }
 
-      const popReleasedOrigin = sumPopulationCost(participantLosses);
-      if (popReleasedOrigin > 0) {
-        await tx.population.update({
-          where: { villageId: participant.villageId },
-          data: { used: { decrement: popReleasedOrigin } },
-        });
-      }
+      await releasePopulationForLosses(
+        tx,
+        participant.villageId,
+        participantLosses,
+      );
 
       if (
         pending?.attackerVillageId === participant.villageId &&
