@@ -1,6 +1,6 @@
 # maint-debt — candidats (réécrit chaque run)
 
-last: 2026-07-08 | archive: `archive/maint-debt/2026-06-15-full.md`
+last: 2026-07-09 | archive: `archive/maint-debt/2026-06-15-full.md`
 branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 ## candidate
@@ -22,7 +22,7 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 | area | PR |
 |------|-----|
-| HeaderBarSection.tsx drop useless `useState(5)` (no setter) → inline literal, drop react import | pending |
+| ws-bindings.ts `Exhaustive map` comment orphaned above `getString` → moved above the `bindings` const it describes | pending |
 
 ## rejected (false positive — do not repick)
 
@@ -34,6 +34,7 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 | area | PR |
 |------|-----|
+| HeaderBarSection.tsx drop useless `useState(5)` (no setter) → inline literal, drop react import | pending |
 | recall-en-route.smoke.spec.ts drop dead `as any` on world `config` spread | #265 |
 | army.service.ts `Object.keys(...) as UnitType[]` → typed `Object.values(UNIT_TYPES)` | #260 |
 | ArmyViewDesign.tsx regex formatNumber → toLocaleString('fr-FR') | pending |

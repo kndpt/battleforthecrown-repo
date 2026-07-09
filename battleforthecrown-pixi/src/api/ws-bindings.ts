@@ -1047,8 +1047,6 @@ function resolveOrigin(villageId: string): { x: number; y: number } {
   return { x: 0, y: 0 };
 }
 
-// Exhaustive map: TypeScript enforces a binding for every key of ServerEvents.
-// Adding a new event in shared without registering it here breaks the build.
 function getString(payload: unknown, key: string): string | undefined {
   if (!payload || typeof payload !== "object") return undefined;
   const value = (payload as Record<string, unknown>)[key];
@@ -1205,6 +1203,8 @@ export function applyExtractionReturned(
   invalidateVillageExtractionState(ctx, payload.villageId, { resources: true });
 }
 
+// Exhaustive map: TypeScript enforces a binding for every key of ServerEvents.
+// Adding a new event in shared without registering it here breaks the build.
 const bindings: ServerEventBindings = {
   "resources.changed": applyResourcesChanged,
   "crowns.changed": applyCrownsChanged,
