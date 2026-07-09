@@ -7,6 +7,7 @@ import type {
   BattleResolvedPayload,
   BuildingCompletedPayload,
   EventKind,
+  ExtractionStartedPayload,
   PayloadForKind,
   ReinforcementSentPayload,
   ScoutReportedPayload,
@@ -82,6 +83,15 @@ export function getTaskProjection<K extends EventKind>(
       return {
         villageId: eventPayload.villageId,
         type: 'SEND_REINFORCEMENT',
+        completedQty: 1,
+        targetTier: null,
+      };
+    }
+    case 'extraction.started': {
+      const eventPayload = payload as ExtractionStartedPayload;
+      return {
+        villageId: eventPayload.villageId,
+        type: 'EXPLOIT_RESOURCE_SITE',
         completedQty: 1,
         targetTier: null,
       };

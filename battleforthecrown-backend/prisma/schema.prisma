@@ -99,6 +99,7 @@ enum DailyCardTaskType {
   RAID_BARBARIAN
   SCOUT_TARGET
   SEND_REINFORCEMENT
+  EXPLOIT_RESOURCE_SITE
 }
 
 enum DailyRewardType {

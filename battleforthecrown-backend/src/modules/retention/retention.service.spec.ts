@@ -131,6 +131,25 @@ describe('getTaskProjection', () => {
     });
   });
 
+  it('projects extraction.started to an EXPLOIT_RESOURCE_SITE task (PROSPECTORS Oyez, run #096)', () => {
+    expect(
+      getTaskProjection('extraction.started', {
+        expeditionId: 'extraction-1',
+        worldId: 'world-1',
+        villageId: 'village-1',
+        siteId: 'site-1',
+        resourceType: 'IRON',
+        arrivalAt: new Date().toISOString(),
+        durationMs: 600_000,
+      }),
+    ).toEqual({
+      villageId: 'village-1',
+      type: 'EXPLOIT_RESOURCE_SITE',
+      completedQty: 1,
+      targetTier: null,
+    });
+  });
+
   it('ignores event kinds that are not daily task templates', () => {
     expect(
       getTaskProjection('garrison.added', {

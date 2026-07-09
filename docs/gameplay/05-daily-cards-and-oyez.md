@@ -70,6 +70,8 @@ Les tâches doivent se valider sur des faits gameplay émis par le runtime, pas 
 | Lancer / finir un upgrade | `building.completed` pour la fin ; l'action de lancement reste côté mutation construction. |
 | Raider un barbare         | `battle.resolved` avec cible barbare                                                       |
 
+Les tâches **thématiques** d'Oyez suivent le même mécanisme event-driven mais restent hors des 3 naturelles (cf. [§Exemples](#exemples)). Exemple : `EXPLOIT_RESOURCE_SITE` (Oyez `PROSPECTORS`) se valide sur `extraction.started` (sites d'exploitation, run #091).
+
 ### Récompenses
 
 Préférer :
@@ -120,14 +122,15 @@ Il ne doit pas rendre les cartes obligatoires ni créer un avantage massif pour 
 
 ### Exemples
 
-Le catalogue runtime expose exactement **4 thèmes**, chacun mappé sur un event métier déjà consommé par les daily cards :
+Le catalogue runtime expose exactement **5 thèmes**, chacun mappé sur un event métier déjà consommé par les daily cards :
 
-| Thème (`OyezTheme`) | Oyez                | Tâche thématique ajoutée   | Event métier      |
-| ------------------- | ------------------- | -------------------------- | ----------------- |
-| `BUILDERS`          | Jour des bâtisseurs | Terminer une construction  | `building.completed` |
-| `MARCH`             | Marche forcée       | Envoyer un renfort         | `reinforcement.sent` |
-| `WATCH`             | Oeil du Guet        | Scouter une cible          | `scout.reported`     |
-| `BARBARIANS`        | Jour des barbares   | Vaincre un village barbare | `battle.resolved` (cible barbare) |
+| Thème (`OyezTheme`) | Oyez                 | Tâche thématique ajoutée        | Event métier      |
+| ------------------- | -------------------- | ------------------------------- | ----------------- |
+| `BUILDERS`          | Jour des bâtisseurs  | Terminer une construction       | `building.completed` |
+| `MARCH`             | Marche forcée        | Envoyer un renfort              | `reinforcement.sent` |
+| `WATCH`             | Oeil du Guet         | Scouter une cible               | `scout.reported`     |
+| `BARBARIANS`        | Jour des barbares    | Vaincre un village barbare      | `battle.resolved` (cible barbare) |
+| `PROSPECTORS`       | Jour des prospecteurs | Envoyer une équipe d'exploitation | `extraction.started` (sites d'exploitation, run #091) |
 
 ## UX attendue
 
@@ -156,5 +159,5 @@ Le joueur doit comprendre en une lecture : quoi faire, pourquoi maintenant, ce q
 - Faut-il réintroduire plus tard une grâce payante ou sociale pour les très longues absences ? Hors scope MVP.
 - Récompense fixe ou choix à la fin de la carte ?
 - ~~Oyez cadence hebdo ou semi-hebdo ?~~ Tranché (run #057) : ~2/semaine par défaut, configurable `WorldConfig.oyez.weeklyCadence`.
-- Les cartes peuvent-elles cibler des sites d'exploitation quand cette feature existe ?
+- ~~Les cartes peuvent-elles cibler des sites d'exploitation quand cette feature existe ?~~ Tranché (run #096) : **oui**, via la tâche thématique de l'Oyez `PROSPECTORS` (`EXPLOIT_RESOURCE_SITE`, validée sur `extraction.started`). Reste **hors des 3 tâches naturelles** (aucun impact scaling, `rewardWeight = 0`) pour préserver l'invariant de récompense.
 - Les cartes sont-elles par monde uniquement ? Reco actuelle : oui.

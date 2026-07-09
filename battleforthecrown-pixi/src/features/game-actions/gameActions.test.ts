@@ -11,6 +11,10 @@ describe('gameActions', () => {
       gameActionId: 'open-building-management',
       loopLabel: 'Éco',
     });
+    expect(getDailyTaskGameAction('EXPLOIT_RESOURCE_SITE')).toMatchObject({
+      gameActionId: 'open-world-map',
+      loopLabel: 'Éco',
+    });
     expect(getOnboardingStepGameAction('BUILD_BARRACKS')).toMatchObject({
       id: 'open-building-management',
       route: '/game',

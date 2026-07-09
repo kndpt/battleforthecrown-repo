@@ -67,6 +67,13 @@ describe('selectOyezForDay', () => {
     }
   });
 
+  it('maps the PROSPECTORS theme to the EXPLOIT_RESOURCE_SITE task (run #096)', () => {
+    expect(OYEZ_CATALOGUE.PROSPECTORS.taskType).toBe('EXPLOIT_RESOURCE_SITE');
+    const task = getOyezThematicTask('PROSPECTORS');
+    expect(task.type).toBe('EXPLOIT_RESOURCE_SITE');
+    expect(task.rewardWeight).toBe(0);
+  });
+
   // Acceptance #10: the 04:00 Europe/Paris reset boundary must hold across the
   // spring-forward DST change (2026-03-29, 02:00 CET → 03:00 CEST).
   it('keeps the 04:00 Paris reset boundary stable across DST spring-forward', () => {
