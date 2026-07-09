@@ -39,7 +39,7 @@ Pistes (trancher à l'étape 1) :
 - [ ] `[visuel]` Quand `stolen > 0`, les quantités volées (bois/pierre/fer) sont affichées.
 - [ ] `[automatisable]` L'alerte n'expose aucune identité/origine de l'attaquant (fog-safe) — le payload n'en porte pas ; test asserte l'absence.
 - [ ] `[automatisable]` `ws-bindings.test.ts` couvre le nouveau comportement (toast émis + invalidations existantes conservées).
-- [ ] `[automatisable]` Une double livraison WS (at-least-once) ne casse pas l'UI (au pire un 2ᵉ toast bénin ; pas d'état dupliqué).
+- [ ] `[automatisable]` Une double livraison WS (at-least-once) ne produit **pas** de toast ni d'état dupliqué : le toast est dédupliqué par `expeditionId` (ex. `Set` récent à TTL court), conformément à [ADR-02](../../docs/architecture/decisions.md) (« le client doit dédupliquer si pertinent » — un toast est un side-effect, cas pertinent, contrairement à l'invalidation TanStack naturellement idempotente).
 - [ ] `[automatisable]` (si chemin A) le champ `resourceType` est présent dans le payload émis par `extraction-lifecycle.service.ts` et validé par le schéma Zod miroir.
 - [ ] `[automatisable]` `yarn static-check` vert (tsc + eslint back+pixi).
 
@@ -70,7 +70,7 @@ Raison : si chemin A retenu → modification d'un contrat d'event cross-workspac
 - **CRITIQUE** : `extraction.attacked` = event discret, pas d'état persistant → ne PAS créer d'endpoint `targeting-me`-like sans introduire une persistance (déconseillé ; l'interception n'écrit volontairement aucun `CombatReport`, dette future-ticketée cf. `extraction-lifecycle.service.ts:333-335`).
 - Ne pas dupliquer une surface « extractions en cours » : les extractions actives sont déjà dans l'onglet « Expéditions » (`kindEXTRACTION`).
 - Payload actuel pauvre (`{expeditionId, worldId, villageId, siteId, interrupted, stolen{wood,stone,iron}}`) : pas de `resourceType`/nom/coords → toast peu informatif sans enrichissement.
-- Idempotence at-least-once : toast déclenché par event (pas par état dédupé) → une double livraison Outbox peut produire 2 toasts. Décider si acceptable (probablement oui, TTL court) ou dédup légère par `expeditionId`.
+- Idempotence at-least-once (**obligatoire, non optionnel**) : le toast est un side-effect → une double livraison Outbox ne doit PAS produire 2 toasts. Dédup **requise** par `expeditionId` (identifiant stable déjà porté par le payload ; ex. `Set` récent à TTL court). Exigence tranchée par [ADR-02](../../docs/architecture/decisions.md) (« dédupliquer si pertinent ») — cf. critère d'acceptance WS ci-dessus. Ne pas laisser cette dédup à l'appréciation du run.
 - Après toute modif de `packages/shared` → rebuild `@battleforthecrown/shared` avant de croire tests/smokes.
 - Vérifier que l'invalidation conditionnelle `if (payload.interrupted)` (`ws-bindings.ts:1191`) reste correcte après ajout du toast.
 
