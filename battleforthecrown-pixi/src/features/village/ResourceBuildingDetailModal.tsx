@@ -7,6 +7,7 @@ import {
   type ResourceBuildingKey,
   type ResourceBuildingLevelStats,
 } from '@/features/design-system/components';
+import { RESOURCE_CONFIG } from '@/lib/resourceConfig';
 import { formatRemaining } from './constructionProgress';
 import type { getBuildingLockState } from './buildingLockState';
 import { getResourceBuildingKey } from './resourceBuildingKey';
@@ -59,26 +60,26 @@ const RESOURCE_BUILDING_META: Record<ResourceBuildingKey, {
 }> = {
   quarter: {
     eyebrow: 'Logement · Population',
-    icon: '/assets/resources/population.png',
+    icon: RESOURCE_CONFIG.population.assetPath,
     isPopulation: true,
     label: 'villageois',
     tagline: '« Sans pain, point de soldats. »',
   },
   iron: {
     eyebrow: 'Production · Fer',
-    icon: '/assets/resources/iron.png',
+    icon: RESOURCE_CONFIG.iron.assetPath,
     label: 'fer',
     tagline: '« De la roche au fer, du fer à la lame. »',
   },
   stone: {
     eyebrow: 'Production · Pierre',
-    icon: '/assets/resources/stone.png',
+    icon: RESOURCE_CONFIG.stone.assetPath,
     label: 'pierre',
     tagline: '« Pierre par pierre, le royaume tient debout. »',
   },
   wood: {
     eyebrow: 'Production · Bois',
-    icon: '/assets/resources/wood.png',
+    icon: RESOURCE_CONFIG.wood.assetPath,
     label: 'bois',
     tagline: '« Que les forêts bruissent sous nos haches. »',
   },

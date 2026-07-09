@@ -32,20 +32,12 @@ import { TempoService } from "@battleforthecrown/shared/world";
 import type { MapEntity } from "@/api/world-types";
 import type { LootResources } from "@battleforthecrown/shared/combat";
 import { getCaravanLaunchState, RESOURCE_KEYS } from "./caravanLaunchState";
+import { RESOURCE_DISPLAY_LABELS, RESOURCE_ICON_PATHS } from "@/lib/resourceConfig";
 
 type ResourceKey = keyof LootResources;
 
-const RESOURCE_LABELS: Record<ResourceKey, string> = {
-  wood: "Bois",
-  stone: "Pierre",
-  iron: "Fer",
-};
-
-const RESOURCE_ICONS: Record<ResourceKey, string> = {
-  wood: "/assets/resources/wood.png",
-  stone: "/assets/resources/stone.png",
-  iron: "/assets/resources/iron.png",
-};
+const RESOURCE_LABELS: Record<ResourceKey, string> = RESOURCE_DISPLAY_LABELS;
+const RESOURCE_ICONS: Record<ResourceKey, string> = RESOURCE_ICON_PATHS;
 
 interface CaravanLaunchModalProps {
   origin: { x: number; y: number };

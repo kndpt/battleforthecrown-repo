@@ -10,7 +10,7 @@ import {
   type GameActionId,
   type GameActionRoute,
 } from "@/features/game-actions/gameActions";
-import { formatResourceAmount } from "@/lib/resourceConfig";
+import { formatResourceAmount, PRIMARY_RESOURCE_KEYS, RESOURCE_ICON_PATHS } from "@/lib/resourceConfig";
 
 export interface OnboardingLootPreviewItem {
   icon: string;
@@ -58,20 +58,10 @@ const TOTAL_STEPS = 6;
 
 const ONBOARDING_REWARD_PREVIEW: OnboardingLootPreview = {
   label: "Butin à récupérer",
-  items: [
-    {
-      icon: "/assets/resources/wood.png",
-      value: formatResourceAmount(ONBOARDING_COMPLETION_REWARD.wood),
-    },
-    {
-      icon: "/assets/resources/stone.png",
-      value: formatResourceAmount(ONBOARDING_COMPLETION_REWARD.stone),
-    },
-    {
-      icon: "/assets/resources/iron.png",
-      value: formatResourceAmount(ONBOARDING_COMPLETION_REWARD.iron),
-    },
-  ],
+  items: PRIMARY_RESOURCE_KEYS.map((key) => ({
+    icon: RESOURCE_ICON_PATHS[key],
+    value: formatResourceAmount(ONBOARDING_COMPLETION_REWARD[key]),
+  })),
 };
 
 const STEP_GUIDANCE: Record<

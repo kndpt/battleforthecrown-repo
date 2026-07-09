@@ -60,6 +60,7 @@ const OYEZ_THEME_ICON: Record<OyezTheme, string> = {
 };
 
 import { INTEGER_FMT } from '@/lib/formatters';
+import { PRIMARY_RESOURCE_KEYS, RESOURCE_ICON_PATHS } from '@/lib/resourceConfig';
 
 const rewardFormatter = INTEGER_FMT;
 const cardDateFormatter = new Intl.DateTimeFormat("fr-FR", {
@@ -69,20 +70,12 @@ const cardDateFormatter = new Intl.DateTimeFormat("fr-FR", {
 });
 
 function rewardPills(card: DailyCardDto): DailyQuestReward[] {
-  return [
-    {
-      icon: "/assets/resources/wood.png",
-      value: rewardFormatter.format(card.reward.wood),
-    },
-    {
-      icon: "/assets/resources/stone.png",
-      value: rewardFormatter.format(card.reward.stone),
-    },
-    {
-      icon: "/assets/resources/iron.png",
-      value: rewardFormatter.format(card.reward.iron),
-    },
-  ].filter((reward) => reward.value !== "0");
+  return PRIMARY_RESOURCE_KEYS
+    .map((key) => ({
+      icon: RESOURCE_ICON_PATHS[key],
+      value: rewardFormatter.format(card.reward[key]),
+    }))
+    .filter((reward) => reward.value !== "0");
 }
 
 function formatCardTitle(card: DailyCardDto): string {

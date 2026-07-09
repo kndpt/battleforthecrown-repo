@@ -10,7 +10,7 @@ import {
 } from '@battleforthecrown/shared/combat';
 import { formatInactivityLabel } from '@battleforthecrown/shared/world';
 import { unitMetaFor } from '@/features/army/unitConfig';
-import { formatResourceAmount } from '@/lib/resourceConfig';
+import { formatResourceAmount, RESOURCE_ICON_PATHS, RESOURCE_DISPLAY_LABELS } from '@/lib/resourceConfig';
 import { formatRemaining } from '@/features/village/constructionProgress';
 import {
   DEFAULT_VILLAGE_STRATEGY,
@@ -26,17 +26,8 @@ const TARGET_KIND_LABEL: Record<string, string> = {
   PLAYER_VILLAGE: 'Village joueur',
 };
 
-const RESOURCE_ICONS = {
-  wood: '/assets/resources/wood.png',
-  stone: '/assets/resources/stone.png',
-  iron: '/assets/resources/iron.png',
-} as const;
-
-const RESOURCE_LABELS = {
-  wood: 'Bois',
-  stone: 'Pierre',
-  iron: 'Fer',
-} as const;
+const RESOURCE_ICONS = RESOURCE_ICON_PATHS;
+const RESOURCE_LABELS = RESOURCE_DISPLAY_LABELS;
 
 export function scoutReportTargetLabel(report: ScoutReportResponse): string {
   const base = TARGET_KIND_LABEL[report.targetKind] ?? report.targetKind;

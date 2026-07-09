@@ -5,12 +5,8 @@ import {
   type VillageNaturalTrait,
 } from '@battleforthecrown/shared/village';
 import type { ResourceType } from '@battleforthecrown/shared/resources';
+import { RESOURCE_CONFIG } from '@/lib/resourceConfig';
 
-/**
- * Mapping trait naturel → slug d'asset. Vit côté front (pas dans
- * `packages/shared`, qui est aussi consommé backend et ne porte pas de
- * chemins d'assets). Cf. `docs/gameplay/27-village-natural-traits.md` § Assets.
- */
 const NATURAL_TRAIT_ASSET_SLUG: Record<VillageNaturalTrait, string> = {
   DENSE_FOREST: 'dense-forest',
   RICH_QUARRY: 'rich-quarry',
@@ -19,9 +15,9 @@ const NATURAL_TRAIT_ASSET_SLUG: Record<VillageNaturalTrait, string> = {
 };
 
 const RESOURCE_LABELS: Record<ResourceType, string> = {
-  WOOD: 'Bois',
-  STONE: 'Pierre',
-  IRON: 'Fer',
+  WOOD: RESOURCE_CONFIG.wood.nameCapitalized,
+  STONE: RESOURCE_CONFIG.stone.nameCapitalized,
+  IRON: RESOURCE_CONFIG.iron.nameCapitalized,
 };
 
 /** Chemin public (non résolu par `publicAsset`) de l'icône du trait. */

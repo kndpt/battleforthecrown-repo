@@ -10,7 +10,7 @@ import {
   type VillageBuildingCategoryDef,
   type VillageBuildingCategoryKey,
 } from './VillageViewData';
-import { formatCompactNumber } from '@/lib/resourceConfig';
+import { formatCompactNumber, RESOURCE_BAR_FILL, RESOURCE_ICON_PATHS, RESOURCE_DISPLAY_LABELS } from '@/lib/resourceConfig';
 import {
   canAffordNextBuildingLevel,
   computeQueueProgress,
@@ -20,35 +20,19 @@ import {
 
 export type VillageResourceType = 'iron' | 'stone' | 'wood';
 
-const RESOURCE_BUTTONS = [
-  {
-    ariaLabel: 'Ouvrir le camp de bûcherons',
-    fillClass: 'bg-[linear-gradient(90deg,#7a5a32,#b08040)]',
-    icon: '/assets/resources/wood.png',
-    key: 'wood',
-    label: 'Bois',
-  },
-  {
-    ariaLabel: 'Ouvrir la carrière de pierre',
-    fillClass: 'bg-[linear-gradient(90deg,#7a7a7a,#a0a0a0)]',
-    icon: '/assets/resources/stone.png',
-    key: 'stone',
-    label: 'Pierre',
-  },
-  {
-    ariaLabel: 'Ouvrir la mine de fer',
-    fillClass: 'bg-[linear-gradient(90deg,#4a6070,#6a90a8)]',
-    icon: '/assets/resources/iron.png',
-    key: 'iron',
-    label: 'Fer',
-  },
-] satisfies {
-  ariaLabel: string;
-  fillClass: string;
-  icon: string;
-  key: VillageResourceType;
-  label: string;
-}[];
+const RESOURCE_ARIA: Record<VillageResourceType, string> = {
+  wood: 'Ouvrir le camp de bûcherons',
+  stone: 'Ouvrir la carrière de pierre',
+  iron: 'Ouvrir la mine de fer',
+};
+
+const RESOURCE_BUTTONS = (['wood', 'stone', 'iron'] as const).map((key) => ({
+  ariaLabel: RESOURCE_ARIA[key],
+  fillClass: RESOURCE_BAR_FILL[key],
+  icon: RESOURCE_ICON_PATHS[key],
+  key,
+  label: RESOURCE_DISPLAY_LABELS[key],
+}));
 
 function CategoryHeader({ category, count }: { category: VillageBuildingCategoryDef; count: number }) {
   return (
