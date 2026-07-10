@@ -1,16 +1,17 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-07-09 | theme P5 — single-home combat population release. Nouvelle fonction tx `releasePopulationForLosses(tx, villageId, losses)` dans `modules/combat/population-release.ts` (`sumPopulationCost` + `population.used` decrement, no-op-on-zero interne). 3 sites inline `combat.worker` (attaquant + 2 participants renfort) + helper privé `extraction-lifecycle` (4 appels interception) consolidés. Guard `!isBarbarian` conservé au callsite worker ; `combat.utils` reste pur. 577 back + 17 smokes (combat-attack/reinforcements/extraction) verts. static-check ok.
-full: `archive/refactor-backend/2026-07-09-full.md`
+last: 2026-07-10 | theme AF — single-home resource-affordability guard. Nouveau helper pur `hasSufficientResources(current, cost)` dans `shared/resources/storage.ts` (à côté de `creditResourcesCapped`). 4 guards inline 3-ressources (`wood< || stone< || iron<`) consolidés : recruit-troops, recruit-noble, upgrade-building, combat caravan (message custom conservé). village-strategy exclu (guard atomique `gte`). +4 cas spec shared. 579 back + 985 pixi + 17 smokes (caravan/recruit-noble/army-training/construction) verts. static-check ok.
+full: `archive/refactor-backend/2026-07-10-full.md`
 
 ## OPEN
 
 | ID  | Sev  | Where                                              | Note                                                                                       |
 |-----|------|----------------------------------------------------|--------------------------------------------------------------------------------------------|
 | R4  | High | crowns.service.ts:261                              | fractional carry — needs migration (`lastUpdateTs += production/rate`)                     |
-| W1  | High | combat/combat.worker.ts (2044L)                    | 4 kinds cohabitent — split par kind, L effort                                              |
-| B1  | Med  | combat.service.ts (1602L)                          | sans spec unit direct (smokes uniquement)                                                  |
-| G2  | Med  | gameplay/extraction-lifecycle.service.ts (804L)    | 8 handlers dans un service — split candidat quand stabilisé (neuf run 091)                 |
+| W1  | High | combat/combat.worker.ts (2038L)                    | 4 kinds cohabitent — split par kind, L effort                                              |
+| B1  | Med  | combat.service.ts (1653L)                          | sans spec unit direct (smokes uniquement)                                                  |
+| G2  | Med  | gameplay/extraction-lifecycle.service.ts (783L)    | 8 handlers dans un service — split candidat quand stabilisé (neuf run 091)                 |
+| AF2 | Low  | pixi caravanLaunchState.ts:58 + VillageStyleModal  | front duplique guard affordabilité — faire consommer `hasSufficientResources` (front scope) |
 | E1  | Low  | 16 fichiers, 60 callsites `createOutboxEvent`      | REQUALIFIÉ low-value : createOutboxEvent déjà typé (générique K), migration = churn        |
 | L3  | Low  | rankings.service.ts:26                             | import `resolveRankingsConfig` cross-service helper inside other service file              |
 | U1  | Low  | combat.worker.ts:1478+, return.worker.ts:326       | inbox.create loop ×N → `createMany skipDuplicates` (ROI bas, ≤2 recipients)               |
@@ -23,7 +24,8 @@ full: `archive/refactor-backend/2026-07-09-full.md`
 
 ## Skip — déjà traité
 
-- P5 (combat population release → `combat/population-release.releasePopulationForLosses`) → ce run
+- AF1 (resource-affordability guard → `shared/resources.hasSufficientResources`) → ce run
+- P5 (combat population release → `combat/population-release.releasePopulationForLosses`) → 2026-07-09 (#277)
 - RC1 + RC2 (warehouse-capped resource credit → `shared/resources.creditResourcesCapped`) → 2026-07-08 (#272)
 - BT1 + BT2 (resilient batch loop → `queue-worker.helper.runResilientBatch`) → 2026-07-07 (#267)
 - CD1 (dedup helper carry-capacity → `combat.utils.sumCarryCapacity`) → 2026-07-06 (#262)
