@@ -91,6 +91,46 @@ describe('calculateTravelTime', () => {
   });
 });
 
+describe('calculateTravelTime — village strategy armySpeed modifier', () => {
+  // Base reference: distance 10 at REFERENCE_SPEED, multiplier 1 → 600_000 ms.
+  const base = calculateTravelTime(10, 1, REFERENCE_SPEED);
+
+  it('leaves travel time unchanged when no strategy is passed', () => {
+    expect(base).toBe(600_000);
+  });
+
+  it('FORTRESS (armySpeedBonus 0.8) slows the army down', () => {
+    // finalSpeedMultiplier = 1 × 0.8 → travel time divides by 0.8.
+    const fortress = calculateTravelTime(10, 1, REFERENCE_SPEED, 'FORTRESS');
+    expect(fortress).toBe(750_000);
+    expect(fortress).toBeGreaterThan(base);
+  });
+
+  it('RAIDERS (armySpeedBonus 1.15) speeds the army up', () => {
+    // finalSpeedMultiplier = 1 × 1.15 → travel time divides by 1.15.
+    const raiders = calculateTravelTime(10, 1, REFERENCE_SPEED, 'RAIDERS');
+    expect(raiders).toBe(Math.round(base / 1.15));
+    expect(raiders).toBeLessThan(base);
+  });
+
+  it.each(['ECONOMIC', 'BALANCED'] as const)(
+    'leaves travel time at the baseline for %s (no armySpeedBonus → 1.0)',
+    (strategy) => {
+      expect(calculateTravelTime(10, 1, REFERENCE_SPEED, strategy)).toBe(base);
+    },
+  );
+
+  it('compounds the world speedMultiplier with the strategy multiplier', () => {
+    // multiplier 2 × FORTRESS 0.8 = 1.6 effective → base / 1.6.
+    const compounded = calculateTravelTime(10, 2, REFERENCE_SPEED, 'FORTRESS');
+    expect(compounded).toBe(Math.round(base / 1.6));
+  });
+
+  it('still returns 0 when speedMultiplier is 0 regardless of strategy', () => {
+    expect(calculateTravelTime(10, 0, REFERENCE_SPEED, 'RAIDERS')).toBe(0);
+  });
+});
+
 describe('findSlowestUnitSpeed', () => {
   it('returns 0 with no units selected', () => {
     expect(findSlowestUnitSpeed({}, { MILITIA: { speed: 20 } })).toBe(0);
