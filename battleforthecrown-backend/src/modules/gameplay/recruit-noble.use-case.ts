@@ -22,6 +22,7 @@ import {
 import { calculateTrainingTime } from '@battleforthecrown/shared/logic';
 import { MS_PER_SECOND } from '@battleforthecrown/shared/time';
 import { TempoService } from '@battleforthecrown/shared/world';
+import { hasSufficientResources } from '@battleforthecrown/shared/resources';
 
 @Injectable()
 export class RecruitNobleUseCase {
@@ -111,11 +112,7 @@ export class RecruitNobleUseCase {
         );
       }
 
-      if (
-        stock.wood < unitCost.wood ||
-        stock.stone < unitCost.stone ||
-        stock.iron < unitCost.iron
-      ) {
+      if (!hasSufficientResources(stock, unitCost)) {
         throw new BadRequestException('Insufficient resources');
       }
 

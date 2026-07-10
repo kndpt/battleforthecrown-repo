@@ -24,7 +24,10 @@ import {
   CARAVAN_SPEED,
   getCaravanResourceCapacity,
 } from '@battleforthecrown/shared/logic';
-import { getWarehouseStorageLimit } from '@battleforthecrown/shared/resources';
+import {
+  getWarehouseStorageLimit,
+  hasSufficientResources,
+} from '@battleforthecrown/shared/resources';
 import { UNIT_TYPES } from '@battleforthecrown/shared/army';
 import { isAttackAllowedByPowerRatio } from '@battleforthecrown/shared';
 import type { IncomingAttackDto } from '@battleforthecrown/shared/events';
@@ -582,11 +585,7 @@ export class CombatService {
                 strategy: originStrategyConfig?.strategy,
                 naturalTrait: originVillage?.naturalTrait,
               });
-            if (
-              currentOriginStock.wood < resources.wood ||
-              currentOriginStock.stone < resources.stone ||
-              currentOriginStock.iron < resources.iron
-            ) {
+            if (!hasSufficientResources(currentOriginStock, resources)) {
               throw new BadRequestException(
                 'Insufficient resources for caravan',
               );

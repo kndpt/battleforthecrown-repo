@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { creditResourcesCapped, getWarehouseStorageLimit } from './storage';
+import {
+  creditResourcesCapped,
+  getWarehouseStorageLimit,
+  hasSufficientResources,
+} from './storage';
 
 describe('getWarehouseStorageLimit', () => {
   it('returns symmetric limits across wood/stone/iron at every defined level', () => {
@@ -77,5 +81,47 @@ describe('creditResourcesCapped', () => {
       1000,
     );
     expect(result).toEqual(stock);
+  });
+});
+
+describe('hasSufficientResources', () => {
+  it('is true when the stock covers every resource', () => {
+    expect(
+      hasSufficientResources(
+        { wood: 100, stone: 200, iron: 300 },
+        { wood: 50, stone: 200, iron: 10 },
+      ),
+    ).toBe(true);
+  });
+
+  it('is true at the exact boundary (cost equals stock)', () => {
+    expect(
+      hasSufficientResources(
+        { wood: 100, stone: 200, iron: 300 },
+        { wood: 100, stone: 200, iron: 300 },
+      ),
+    ).toBe(true);
+  });
+
+  it('is false when any single resource falls short', () => {
+    const stock = { wood: 100, stone: 200, iron: 300 };
+    expect(hasSufficientResources(stock, { wood: 101, stone: 0, iron: 0 })).toBe(
+      false,
+    );
+    expect(hasSufficientResources(stock, { wood: 0, stone: 201, iron: 0 })).toBe(
+      false,
+    );
+    expect(hasSufficientResources(stock, { wood: 0, stone: 0, iron: 301 })).toBe(
+      false,
+    );
+  });
+
+  it('is true for a zero cost', () => {
+    expect(
+      hasSufficientResources(
+        { wood: 0, stone: 0, iron: 0 },
+        { wood: 0, stone: 0, iron: 0 },
+      ),
+    ).toBe(true);
   });
 });
