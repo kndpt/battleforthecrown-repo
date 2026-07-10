@@ -1,6 +1,6 @@
 # maint-debt — candidats (réécrit chaque run)
 
-last: 2026-07-09 | archive: `archive/maint-debt/2026-06-15-full.md`
+last: 2026-07-10 | archive: `archive/maint-debt/2026-06-15-full.md`
 branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 ## candidate
@@ -22,18 +22,22 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 | area | PR |
 |------|-----|
-| ws-bindings.ts `Exhaustive map` comment orphaned above `getString` → moved above the `bindings` const it describes | pending |
+| travel-time.spec.ts — cover `calculateTravelTime` village-strategy `armySpeedBonus` branch (FORTRESS 0.8 / RAIDERS 1.15 / ECONOMIC+BALANCED 1.0 / compound w/ speedMultiplier / 0-guard); live prod path via world-config `getTravelTime`+`getTravelTimeForArmy`, previously 0 pure coverage | pending |
 
 ## rejected (false positive — do not repick)
 
 | area | why |
 |------|-----|
 | GarrisonLineDto export in combat.service.ts | export IS required — combat.controller public method infers it, dropping it breaks TS4053 declaration-emit |
+| power/weights.ts `getUnitPowerWeight`+`UNIT_POWER_WEIGHTS` look dead | USED by backend `PowerService.calculateUnitPower` via barrel `@battleforthecrown/shared/power` — grep by path misses barrel imports |
+| WorldEntityKind `BARBARIAN_CASTLE` literal only self-referenced | union ends `| string` so literals are documentary only; removing one is churn, not a fix |
+| map-markers/schemas.ts Zod transforms untested | already netted by `map-marker.smoke.spec.ts` (trim, empty→null, over-long 400, empty PATCH 400) — unit spec redundant |
 
 ## done (prev)
 
 | area | PR |
 |------|-----|
+| ws-bindings.ts orphaned `Exhaustive map` comment → moved onto `bindings` const | #275 |
 | HeaderBarSection.tsx drop useless `useState(5)` (no setter) → inline literal, drop react import | pending |
 | recall-en-route.smoke.spec.ts drop dead `as any` on world `config` spread | #265 |
 | army.service.ts `Object.keys(...) as UnitType[]` → typed `Object.values(UNIT_TYPES)` | #260 |
