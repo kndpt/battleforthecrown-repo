@@ -30,7 +30,7 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 |------|-----|
 | GarrisonLineDto export in combat.service.ts | export IS required — combat.controller public method infers it, dropping it breaks TS4053 declaration-emit |
 | power/weights.ts `getUnitPowerWeight`+`UNIT_POWER_WEIGHTS` look dead | USED by backend `PowerService.calculateUnitPower` via barrel `@battleforthecrown/shared/power` — grep by path misses barrel imports |
-| WorldEntityKind `BARBARIAN_CASTLE` literal only self-referenced | union ends `| string` so literals are documentary only; removing one is churn, not a fix |
+| WorldEntityKind `BARBARIAN_CASTLE` literal only self-referenced | union ends `\| string` so literals are documentary only; removing one is churn, not a fix |
 | map-markers/schemas.ts Zod transforms untested | already netted by `map-marker.smoke.spec.ts` (trim, empty→null, over-long 400, empty PATCH 400) — unit spec redundant |
 
 ## done (prev)
