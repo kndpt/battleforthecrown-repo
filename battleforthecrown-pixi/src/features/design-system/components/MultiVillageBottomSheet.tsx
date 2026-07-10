@@ -4,6 +4,7 @@ import { VILLAGE_LABELS, VILLAGE_LABEL_DISPLAY } from '@battleforthecrown/shared
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
 import { formatCompactNumber } from '@/lib/resourceConfig';
+import { parseAndTierFromPower } from '@/lib/villageTier';
 import { GameBottomSheetPanel } from './GameBottomSheetPanel';
 import { SegmentedControl } from './SegmentedControl';
 import { villageStyleOptions } from './villageStyleData';
@@ -159,16 +160,6 @@ const resourceMeta: Record<MultiVillageResourceKind, { icon: string; label: stri
 };
 
 const strategyOptionsById = Object.fromEntries(villageStyleOptions.map((option) => [option.id, option]));
-
-function tierFromPower(power: string) {
-  const value = Number.parseInt(String(power).replace(/\D/g, ''), 10) || 0;
-  if (value >= 5000) return 6;
-  if (value >= 2500) return 5;
-  if (value >= 1500) return 4;
-  if (value >= 800) return 3;
-  if (value >= 300) return 2;
-  return 1;
-}
 
 function HammerGlyph({ size = 14, color = '#fef9f0' }: { color?: string; size?: number }) {
   return (
@@ -413,7 +404,7 @@ function AlertPill({ alert, dense = false }: AlertPillProps) {
 }
 
 function VillageIdentity({ village }: VillageIdentityProps) {
-  const tier = village.power ? tierFromPower(village.power) : 1;
+  const tier = village.power ? parseAndTierFromPower(village.power) : 1;
   const hasDetails = Boolean(village.power) || Boolean(village.coords);
 
   return (

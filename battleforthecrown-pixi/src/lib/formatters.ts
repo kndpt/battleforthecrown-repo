@@ -4,6 +4,14 @@ export const INTEGER_FMT = new Intl.NumberFormat('fr-FR', {
   maximumFractionDigits: 0,
 });
 
+export const REPORT_DATE_FMT = new Intl.DateTimeFormat('fr-FR', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
 export function formatReportTimestamp(value: string, includeTimeOnPastDays = false): string {
   const parsed = new Date(value);
   const isSameDay = parsed.toDateString() === new Date().toDateString();

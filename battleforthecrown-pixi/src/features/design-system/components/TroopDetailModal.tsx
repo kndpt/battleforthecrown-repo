@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { NUMBER_FMT } from "@/lib/formatters";
 import { publicAsset } from "@/lib/publicAsset";
 import {
   BASE_MODAL_DEFAULT_MAX_HEIGHT,
@@ -114,7 +115,7 @@ function tierFor(
 }
 
 function formatCount(value: number): string {
-  return value.toLocaleString("fr-FR");
+  return NUMBER_FMT.format(value);
 }
 
 function AssetIcon({ className, src }: { className?: string; src: string }) {

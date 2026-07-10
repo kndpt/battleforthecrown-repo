@@ -1,5 +1,6 @@
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
+import { parseAndTierFromPower } from '@/lib/villageTier';
 import { ProgressBar } from '@/ui/feedback/ProgressBar';
 import { GameBottomSheetPanel } from './GameBottomSheetPanel';
 import { SegmentedControl } from './SegmentedControl';
@@ -172,15 +173,6 @@ const styleColor: Record<PlayerProfileSheetVillageStyle, { light: string; dark: 
   FORTRESS: { light: '#5b8fbf', dark: '#2e5a88', border: '#1f3e66', ink: '#fff' },
   RAIDERS: { light: '#e74c3c', dark: '#c0392b', border: '#a93226', ink: '#fff' },
 };
-
-function playerProfileTierFromPower(power: string): number {
-  const n = Number.parseInt(power.replace(/\D/g, ''), 10) || 0;
-  if (n >= 2500) return 5;
-  if (n >= 1500) return 4;
-  if (n >= 800) return 3;
-  if (n >= 300) return 2;
-  return 1;
-}
 
 function asset(src: string) {
   return publicAsset(src);
@@ -496,7 +488,7 @@ function VillageRow({
   onVillageSelect?: (village: PlayerProfileSheetVillage) => void;
   village: PlayerProfileSheetVillage;
 }) {
-  const tier = playerProfileTierFromPower(village.power);
+  const tier = parseAndTierFromPower(village.power);
 
   return (
     <button
