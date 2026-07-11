@@ -1,6 +1,6 @@
 # maint-debt — candidats (réécrit chaque run)
 
-last: 2026-07-10 | archive: `archive/maint-debt/2026-06-15-full.md`
+last: 2026-07-11 | archive: `archive/maint-debt/2026-06-15-full.md`
 branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 ## candidate
@@ -17,12 +17,13 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | 11× Intl.NumberFormat('fr-FR') singleton | extract to src/lib/formatters.ts — 11 files, scope too broad for 1 PR |
 | formatDate divergence ReportCard vs ReportsList | need product call on whether time is shown on non-same-day combat reports |
 | live-game formatNumber separator (space vs dot) | which fr-FR grouping is canonical across shipped HUD — product call, broad |
+| shared/cosmetic/consts.ts formatCosmeticAwardLabel | label formatter (`SIGNAL_TO_COSMETIC_AWARD_KIND` + labels/descriptions) — 0 unit coverage, bounded next candidate |
 
 ## done (this run)
 
 | area | PR |
 |------|-----|
-| travel-time.spec.ts — cover `calculateTravelTime` village-strategy `armySpeedBonus` branch (FORTRESS 0.8 / RAIDERS 1.15 / ECONOMIC+BALANCED 1.0 / compound w/ speedMultiplier / 0-guard); live prod path via world-config `getTravelTime`+`getTravelTimeForArmy`, previously 0 pure coverage | pending |
+| shared/world/vision.spec.ts — cover `isPointInAnyVisionDisk` (fog-of-war): inside/center/outside, `<=` boundary (dx²+dy²==r²), radius-0, empty list, multi-disk second-match, negatives — 0 prior unit coverage; used by backend vision.service + pixi buildMapEntities | pending |
 
 ## rejected (false positive — do not repick)
 
