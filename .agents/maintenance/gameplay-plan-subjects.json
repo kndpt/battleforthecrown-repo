@@ -964,6 +964,32 @@
         "battleforthecrown-backend/src/modules/gameplay/initiate-extraction.use-case.ts — pattern débit ResourceStock + Outbox en tx Serializable réutilisable ; retention.utils.ts getParisDailyKey (reset 04:00) et packages/shared/src/resources/storage.ts creditResourcesCapped réutilisables"
       ],
       "addedAt": "2026-07-10"
+    },
+    {
+      "specPath": "docs/gameplay/02-economy-and-progression.md",
+      "slug": "village-resettlement-crown-sink",
+      "title": "Déplacer un village (resettlement, crown-sink 200)",
+      "keywords": [
+        "resettlement",
+        "deplacer-village",
+        "relocate",
+        "crown-sink",
+        "natural-trait"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/100-feature-village-resettlement.md",
+      "artefactId": "100",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/village-resettlement",
+      "gapSummary": "Le crown-sink « Deplacer un village / resettlement | 200 » est documente dans 02-economy-and-progression.md (table des depenses) mais aucun use-case, endpoint, DTO ou event de relocation de village n'existe. Les autres lignes de la meme table sont cablees (changement de strategie, recrutement Seigneur).",
+      "codeEvidence": [
+        "battleforthecrown-backend/src/modules/village/ — aucun use-case ou endpoint de relocation (relocateVillage absent)",
+        "battleforthecrown-backend/src/modules/crowns/crowns.service.ts — sinks existants (strategie, Seigneur) mais aucun debit lie a un deplacement de village",
+        "packages/shared/src/village/ — aucun DTO relocate ; deriveNaturalTrait derive le trait de la tile (x,y) sans chemin de recompute sur move",
+        "docs/gameplay/02-economy-and-progression.md L138 — ligne « Deplacer un village / resettlement | 200 » sans marqueur post-MVP, sans section mecanique dediee",
+        "docs/gameplay/27-village-natural-traits.md — trait « identite fixe derivee de la tile, jamais modifie » : contrat a amender pour une relocation"
+      ],
+      "addedAt": "2026-07-11"
     }
   ]
 }
