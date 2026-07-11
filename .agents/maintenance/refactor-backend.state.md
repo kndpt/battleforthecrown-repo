@@ -1,6 +1,6 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-07-11 | theme UA1 — unit-availability guard. Nouveau `modules/combat/unit-availability.ts` : `assertUnitsAvailable(available, requested, locationLabel?)` (throw `Insufficient X: have Y, need Z`) + `toUnitQuantityMap(rows)`. 3 blocs check-then-throw + build-available-map dupliqués consolidés : combat.service recall garnison, combat.service `verifyAndDeductUnits` (caravan inventory), initiate-extraction escort (son commentaire pointait déjà `verifyAndDeductUnits`). Comportement identique (`|| 0`≡`?? 0` DB non-nég). +9 cas spec. 595 back verts + 7 smokes (caravan/reinforcement/recall/extraction). static-check ok.
+last: 2026-07-11 | theme UA1 — unit-availability guard. Nouveau `modules/combat/unit-availability.ts` : `assertUnitsAvailable(available, requested, locationLabel?)` (throw `Insufficient X: have Y, need Z`) + `toUnitQuantityMap(rows)`. 3 blocs check-then-throw + build-available-map dupliqués consolidés : combat.service `initiateRecall` (garnison), combat.service `verifyAndDeductUnits` (army-inventory ; appelé par initiateAttack/Scout/Reinforce, pas caravan), initiate-extraction escort (son commentaire pointait déjà `verifyAndDeductUnits`). Comportement identique (`|| 0`≡`?? 0` DB non-nég). +9 cas spec. 595 back verts + 7 smokes (caravan/reinforcement/recall/extraction). static-check ok.
 full: `archive/refactor-backend/2026-07-11-full.md`
 
 ## OPEN
