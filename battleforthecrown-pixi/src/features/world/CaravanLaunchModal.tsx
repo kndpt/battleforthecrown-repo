@@ -23,6 +23,7 @@ import {
   calculateTravelTime,
 } from "@battleforthecrown/shared/logic";
 import { formatTravelTime } from "@/lib/combatHelpers";
+import { publicAsset } from "@/lib/publicAsset";
 import { RESOURCE_CONFIG } from "@/lib/resourceConfig";
 import {
   CARAVAN_SPEED,
@@ -237,7 +238,7 @@ export function CaravanLaunchModal({
                   >
                     <img
                       className="size-7 object-contain"
-                      src={RESOURCE_CONFIG[key].assetPath}
+                      src={publicAsset(RESOURCE_CONFIG[key].assetPath)}
                       alt=""
                     />
                     <div className="min-w-0">
