@@ -1,5 +1,6 @@
 import type { CaravanReportResponse } from '@battleforthecrown/shared/combat';
 import { NUMBER_FMT } from '@/lib/formatters';
+import { RESOURCE_CONFIG } from '@/lib/resourceConfig';
 import { formatCoord } from './report-view-utils';
 
 export type CaravanReportResourcesDto = CaravanReportResponse['resources'];
@@ -40,11 +41,6 @@ export interface CaravanReportSummary {
   title: string;
 }
 
-const resourceMeta: Record<keyof CaravanReportResourcesDto, { icon: string; label: string }> = {
-  iron: { icon: '/assets/resources/iron.png', label: 'Fer' },
-  stone: { icon: '/assets/resources/stone.png', label: 'Pierre' },
-  wood: { icon: '/assets/resources/wood.png', label: 'Bois' },
-};
 
 export function caravanReportTypeLabel(type: CaravanReportResponse['type']): string {
   return type === 'ARRIVED' ? 'Caravane arrivée' : 'Caravane rappelée';
@@ -98,9 +94,9 @@ function resourceLines(report: CaravanReportResponse): CaravanReportResourceLine
   const visibleKeys = keys.length > 0 ? keys : (['wood', 'stone', 'iron'] as const);
 
   return visibleKeys.map((key) => ({
-    icon: resourceMeta[key].icon,
+    icon: RESOURCE_CONFIG[key].assetPath,
     key,
-    label: resourceMeta[key].label,
+    label: RESOURCE_CONFIG[key].nameCapitalized,
     lostValue: report.lost[key] > 0 ? formatResource(report.lost[key]) : undefined,
     primaryAmount: delivered[key],
     primaryLabel,

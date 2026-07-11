@@ -20,6 +20,7 @@ import {
   getQuarterPopulationLimit,
 } from '@battleforthecrown/shared/village';
 import { RESOURCE_PRODUCTION_PER_HOUR } from '@battleforthecrown/shared/resources';
+import { RESOURCE_CONFIG } from '@/lib/resourceConfig';
 
 interface ResourceBuildingDetailModalProps {
   building: BuildingDto;
@@ -59,27 +60,27 @@ const RESOURCE_BUILDING_META: Record<ResourceBuildingKey, {
 }> = {
   quarter: {
     eyebrow: 'Logement · Population',
-    icon: '/assets/resources/population.png',
+    icon: RESOURCE_CONFIG.population.assetPath,
     isPopulation: true,
     label: 'villageois',
     tagline: '« Sans pain, point de soldats. »',
   },
   iron: {
     eyebrow: 'Production · Fer',
-    icon: '/assets/resources/iron.png',
-    label: 'fer',
+    icon: RESOURCE_CONFIG.iron.assetPath,
+    label: RESOURCE_CONFIG.iron.name,
     tagline: '« De la roche au fer, du fer à la lame. »',
   },
   stone: {
     eyebrow: 'Production · Pierre',
-    icon: '/assets/resources/stone.png',
-    label: 'pierre',
+    icon: RESOURCE_CONFIG.stone.assetPath,
+    label: RESOURCE_CONFIG.stone.name,
     tagline: '« Pierre par pierre, le royaume tient debout. »',
   },
   wood: {
     eyebrow: 'Production · Bois',
-    icon: '/assets/resources/wood.png',
-    label: 'bois',
+    icon: RESOURCE_CONFIG.wood.assetPath,
+    label: RESOURCE_CONFIG.wood.name,
     tagline: '« Que les forêts bruissent sous nos haches. »',
   },
 };

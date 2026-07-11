@@ -10,7 +10,7 @@ import {
   type VillageBuildingCategoryDef,
   type VillageBuildingCategoryKey,
 } from './VillageViewData';
-import { formatCompactNumber } from '@/lib/resourceConfig';
+import { formatCompactNumber, RESOURCE_CONFIG } from '@/lib/resourceConfig';
 import {
   canAffordNextBuildingLevel,
   computeQueueProgress,
@@ -24,23 +24,23 @@ const RESOURCE_BUTTONS = [
   {
     ariaLabel: 'Ouvrir le camp de bûcherons',
     fillClass: 'bg-[linear-gradient(90deg,#7a5a32,#b08040)]',
-    icon: '/assets/resources/wood.png',
+    icon: RESOURCE_CONFIG.wood.assetPath,
     key: 'wood',
-    label: 'Bois',
+    label: RESOURCE_CONFIG.wood.nameCapitalized,
   },
   {
     ariaLabel: 'Ouvrir la carrière de pierre',
     fillClass: 'bg-[linear-gradient(90deg,#7a7a7a,#a0a0a0)]',
-    icon: '/assets/resources/stone.png',
+    icon: RESOURCE_CONFIG.stone.assetPath,
     key: 'stone',
-    label: 'Pierre',
+    label: RESOURCE_CONFIG.stone.nameCapitalized,
   },
   {
     ariaLabel: 'Ouvrir la mine de fer',
     fillClass: 'bg-[linear-gradient(90deg,#4a6070,#6a90a8)]',
-    icon: '/assets/resources/iron.png',
+    icon: RESOURCE_CONFIG.iron.assetPath,
     key: 'iron',
-    label: 'Fer',
+    label: RESOURCE_CONFIG.iron.nameCapitalized,
   },
 ] satisfies {
   ariaLabel: string;
