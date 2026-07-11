@@ -49,6 +49,7 @@ import {
   Prisma,
 } from '@prisma/client';
 import { encodeCombatLoot, encodeUnitMap, parseUnitMap } from './codecs';
+import { assertUnitsAvailable, toUnitQuantityMap } from './unit-availability';
 import PgBoss from 'pg-boss';
 import { createOutboxEvent } from '../event/event.utils';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
@@ -743,18 +744,11 @@ export class CombatService {
         },
       });
 
-      const availableUnits = Object.fromEntries(
-        garrisons.map((g) => [g.unitType, g.quantity]),
+      assertUnitsAvailable(
+        toUnitQuantityMap(garrisons),
+        dto.units,
+        ' in garrison',
       );
-
-      for (const [unitType, quantity] of Object.entries(dto.units)) {
-        if (quantity === undefined || quantity <= 0) continue;
-        if ((availableUnits[unitType] || 0) < quantity) {
-          throw new BadRequestException(
-            `Insufficient ${unitType} in garrison: have ${availableUnits[unitType] || 0}, need ${quantity}`,
-          );
-        }
-      }
 
       // 4. Deduct units from Garrison
       for (const [unitType, quantity] of Object.entries(dto.units)) {
@@ -979,19 +973,7 @@ export class CombatService {
       where: { villageId },
     });
 
-    const availableUnits = Object.fromEntries(
-      unitInventories.map((inv) => [inv.unitType, inv.quantity]),
-    );
-
-    for (const [unitType, qty] of Object.entries(units)) {
-      const quantity = qty;
-      if (quantity === undefined || quantity <= 0) continue;
-      if ((availableUnits[unitType] || 0) < quantity) {
-        throw new BadRequestException(
-          `Insufficient ${unitType}: have ${availableUnits[unitType] || 0}, need ${quantity}`,
-        );
-      }
-    }
+    assertUnitsAvailable(toUnitQuantityMap(unitInventories), units);
 
     for (const [unitType, qty] of Object.entries(units)) {
       const quantity = qty;

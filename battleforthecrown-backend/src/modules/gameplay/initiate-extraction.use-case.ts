@@ -16,6 +16,10 @@ import { WorldConfigService } from '../world/world-config.service';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
 import { createOutboxEvent } from '../event/event.utils';
 import { withSerializableRetry } from '../../common/serializable-retry.utils';
+import {
+  assertUnitsAvailable,
+  toUnitQuantityMap,
+} from '../combat/unit-availability';
 import { Prisma } from '@prisma/client';
 import type { ExtractionCommand } from '@battleforthecrown/shared/extraction';
 import {
@@ -173,18 +177,7 @@ export class InitiateExtractionUseCase {
               const inventories = await tx.unitInventory.findMany({
                 where: { villageId: command.villageId },
               });
-              const available = Object.fromEntries(
-                inventories.map((inv) => [inv.unitType, inv.quantity]),
-              );
-              for (const [unitType, qty] of Object.entries(escortUnits)) {
-                const quantity = qty ?? 0;
-                if (quantity <= 0) continue;
-                if ((available[unitType] ?? 0) < quantity) {
-                  throw new BadRequestException(
-                    `Insufficient ${unitType}: have ${available[unitType] ?? 0}, need ${quantity}`,
-                  );
-                }
-              }
+              assertUnitsAvailable(toUnitQuantityMap(inventories), escortUnits);
               for (const [unitType, qty] of Object.entries(escortUnits)) {
                 const quantity = qty ?? 0;
                 if (quantity <= 0) continue;

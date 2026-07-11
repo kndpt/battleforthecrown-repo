@@ -1,7 +1,7 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-07-10 | theme AF — single-home resource-affordability guard. Nouveau helper pur `hasSufficientResources(current, cost)` dans `shared/resources/storage.ts` (à côté de `creditResourcesCapped`). 4 guards inline 3-ressources (`wood< || stone< || iron<`) consolidés : recruit-troops, recruit-noble, upgrade-building, combat caravan (message custom conservé). village-strategy exclu (guard atomique `gte`). +4 cas spec shared. 579 back + 985 pixi + 17 smokes (caravan/recruit-noble/army-training/construction) verts. static-check ok.
-full: `archive/refactor-backend/2026-07-10-full.md`
+last: 2026-07-11 | theme UA1 — unit-availability guard. Nouveau `modules/combat/unit-availability.ts` : `assertUnitsAvailable(available, requested, locationLabel?)` (throw `Insufficient X: have Y, need Z`) + `toUnitQuantityMap(rows)`. 3 blocs check-then-throw + build-available-map dupliqués consolidés : combat.service `initiateRecall` (garnison), combat.service `verifyAndDeductUnits` (army-inventory ; appelé par initiateAttack/Scout/Reinforce, pas caravan), initiate-extraction escort (son commentaire pointait déjà `verifyAndDeductUnits`). Comportement identique (`|| 0`≡`?? 0` DB non-nég). +9 cas spec. 595 back verts + 7 smokes (caravan/reinforcement/recall/extraction). static-check ok.
+full: `archive/refactor-backend/2026-07-11-full.md`
 
 ## OPEN
 
@@ -9,11 +9,12 @@ full: `archive/refactor-backend/2026-07-10-full.md`
 |-----|------|----------------------------------------------------|--------------------------------------------------------------------------------------------|
 | R4  | High | crowns.service.ts:261                              | fractional carry — needs migration (`lastUpdateTs += production/rate`)                     |
 | W1  | High | combat/combat.worker.ts (2038L)                    | 4 kinds cohabitent — split par kind, L effort                                              |
-| B1  | Med  | combat.service.ts (1653L)                          | sans spec unit direct (smokes uniquement)                                                  |
-| G2  | Med  | gameplay/extraction-lifecycle.service.ts (783L)    | 8 handlers dans un service — split candidat quand stabilisé (neuf run 091)                 |
-| AF2 | Low  | pixi caravanLaunchState.ts:58 + VillageStyleModal  | front duplique guard affordabilité — faire consommer `hasSufficientResources` (front scope) |
-| E1  | Low  | 16 fichiers, 60 callsites `createOutboxEvent`      | REQUALIFIÉ low-value : createOutboxEvent déjà typé (générique K), migration = churn        |
-| L3  | Low  | rankings.service.ts:26                             | import `resolveRankingsConfig` cross-service helper inside other service file              |
+| B1  | Med  | combat.service.ts (1620L)                          | sans spec unit direct (smokes uniquement ; policy interdit mock Prisma)                    |
+| G2  | Med  | gameplay/extraction-lifecycle.service.ts (783L)    | looks-bad-but-fine : ADR-12 déclare explicitement « tout ici » (2 handlers pub + 5 priv)  |
+| L3  | Low  | rankings.service.ts:26                             | import `resolveRankingsConfig` (pur) depuis rankings-cycle.service → `rankings-config.utils`|
+| SU1 | Low  | combat-resolution.ts:247 + initiate-extraction:60  | `sumUnits`/`escortTotal` dup — seulement 2 sites back (reste dans shared, hors scope)      |
+| TE1 | Low  | combat.service:750+, power.service:216, barbarian-village.factory:78 | `Object.entries(units)` brut vs `typedEntries` — cosmétique (aucun cast downstream)|
+| E1  | Low  | 16 fichiers, 60 callsites `createOutboxEvent`      | low-value : createOutboxEvent déjà typé (générique K), migration = churn                   |
 | U1  | Low  | combat.worker.ts:1478+, return.worker.ts:326       | inbox.create loop ×N → `createMany skipDuplicates` (ROI bas, ≤2 recipients)               |
 | L2  | Low  | strategy/village-strategy.service.ts:382+          | `getStrategyRecommendations` strings UI FR hard-codées + endpoint sans consumer front      |
 | C1  | Low  | resources.service.ts:44-56                         | `getResources` récursif (cosmétique, récursion bornée 1)                                   |
@@ -24,7 +25,8 @@ full: `archive/refactor-backend/2026-07-10-full.md`
 
 ## Skip — déjà traité
 
-- AF1 (resource-affordability guard → `shared/resources.hasSufficientResources`) → ce run
+- UA1 (unit-availability guard → `combat/unit-availability.assertUnitsAvailable` + `toUnitQuantityMap`) → ce run
+- AF1 (resource-affordability guard → `shared/resources.hasSufficientResources`) → 2026-07-10 (#281)
 - P5 (combat population release → `combat/population-release.releasePopulationForLosses`) → 2026-07-09 (#277)
 - RC1 + RC2 (warehouse-capped resource credit → `shared/resources.creditResourcesCapped`) → 2026-07-08 (#272)
 - BT1 + BT2 (resilient batch loop → `queue-worker.helper.runResilientBatch`) → 2026-07-07 (#267)
