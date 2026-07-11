@@ -27,7 +27,7 @@ import {
   usePublicWorldsQuery,
 } from '@/api/queries';
 import { ApiError } from '@/api';
-import { formatHeaderCompactAmount } from '@/lib/resourceConfig';
+import { formatHeaderCompactAmount, RESOURCE_CONFIG } from '@/lib/resourceConfig';
 import { publicAsset } from '@/lib/publicAsset';
 import { BottomSheet } from '@/ui';
 import { useUiStore } from '@/stores/ui';
@@ -162,22 +162,22 @@ export function GameHeader({
     return [
       {
         fillClass: 'bg-[linear-gradient(90deg,#7a5a32,#b08040)]',
-        icon: '/assets/resources/wood.png',
-        label: 'Bois',
+        icon: RESOURCE_CONFIG.wood.assetPath,
+        label: RESOURCE_CONFIG.wood.nameCapitalized,
         value: formatHeaderCompactAmount(woodCurrent),
         fillRatio: ratio(woodCurrent),
       },
       {
         fillClass: 'bg-[linear-gradient(90deg,#7a7a7a,#a0a0a0)]',
-        icon: '/assets/resources/stone.png',
-        label: 'Pierre',
+        icon: RESOURCE_CONFIG.stone.assetPath,
+        label: RESOURCE_CONFIG.stone.nameCapitalized,
         value: formatHeaderCompactAmount(stoneCurrent),
         fillRatio: ratio(stoneCurrent),
       },
       {
         fillClass: 'bg-[linear-gradient(90deg,#4a6070,#6a90a8)]',
-        icon: '/assets/resources/iron.png',
-        label: 'Fer',
+        icon: RESOURCE_CONFIG.iron.assetPath,
+        label: RESOURCE_CONFIG.iron.nameCapitalized,
         value: formatHeaderCompactAmount(ironCurrent),
         fillRatio: ratio(ironCurrent),
       },

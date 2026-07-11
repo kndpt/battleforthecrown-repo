@@ -1,7 +1,7 @@
 import { isVictoryForAttacker } from '@battleforthecrown/shared/combat';
 import type { CombatReportDto } from '@/api/queries';
 import { unitMetaFor } from '@/features/army/unitConfig';
-import { formatResourceAmount } from '@/lib/resourceConfig';
+import { formatResourceAmount, RESOURCE_CONFIG } from '@/lib/resourceConfig';
 import type {
   CombatReportAction,
   CombatReportHighlight,
@@ -28,11 +28,6 @@ const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
   minute: '2-digit',
 });
 
-const RESOURCE_ICONS = {
-  iron: '/assets/resources/iron.png',
-  stone: '/assets/resources/stone.png',
-  wood: '/assets/resources/wood.png',
-} as const;
 
 function targetLabel(report: CombatReportDto): string {
   if (report.targetKind === 'BARBARIAN_VILLAGE') {
@@ -159,7 +154,7 @@ function buildLootHighlight(
       const stillThere = remaining[resource] ?? 0;
       if (looted + stillThere <= 0) return null;
       return {
-        icon: RESOURCE_ICONS[resource],
+        icon: RESOURCE_CONFIG[resource].assetPath,
         remainingValue: formatResourceAmount(looted + stillThere),
         value: formatResourceAmount(looted),
       };
