@@ -31,8 +31,14 @@ describe('rankings-config.utils — pure config resolution', () => {
       });
     });
 
-    it('falls back to defaults when config is not parseable (null / wrong shape)', () => {
+    it('falls back to defaults when config is not parseable (null / partial / wrong shape)', () => {
       const fromNull = resolveRankingsConfig(null);
+      // Partial config: a valid `rankings` block but missing the other
+      // sections `WorldConfigSchema` requires → strictObject parse fails →
+      // canonical fallback, same as null / garbage.
+      const fromPartial = resolveRankingsConfig({
+        rankings: DEFAULT_WORLD_RANKINGS_CONFIG,
+      });
       const fromGarbage = resolveRankingsConfig('nope');
       const expected = {
         reset: {
@@ -42,6 +48,7 @@ describe('rankings-config.utils — pure config resolution', () => {
         snapshotEntries: DEFAULT_WORLD_RANKINGS_CONFIG.snapshotEntriesPerCycle,
       };
       expect(fromNull).toEqual(expected);
+      expect(fromPartial).toEqual(expected);
       expect(fromGarbage).toEqual(expected);
     });
   });
