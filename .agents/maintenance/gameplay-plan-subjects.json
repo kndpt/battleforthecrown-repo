@@ -990,6 +990,32 @@
         "docs/gameplay/27-village-natural-traits.md — trait « identite fixe derivee de la tile, jamais modifie » : contrat a amender pour une relocation"
       ],
       "addedAt": "2026-07-11"
+    },
+    {
+      "specPath": "docs/gameplay/22-village-roles-and-navigation.md",
+      "slug": "multi-village-incoming-attack-pill",
+      "title": "Pastille attaque entrante par village (sélecteur multi-village)",
+      "keywords": [
+        "multi-village",
+        "incoming-attack",
+        "pastille",
+        "state-alert",
+        "attack-pill"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/101-feature-multi-village-incoming-attack-pill.md",
+      "artefactId": "101",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/multi-village-incoming-attack-pill",
+      "gapSummary": "Le sélecteur multi-village affiche seulement des pastilles kind:'warning' (entrepôt plein / file inactive, run 095) ; deriveVillageStateAlert n'émet jamais kind:'attack' alors que la branche de rendu isAttack existe déjà (morte) et que les données incoming sont livrées backend (086). Manque le câblage feed incoming → pastille attack par village.",
+      "codeEvidence": [
+        "battleforthecrown-pixi/src/features/layout/multiVillageSheet.ts — deriveVillageStateAlert ne retourne que kind:'warning' (commentaire explicite 'never kind:attack', priorité entrepôt plein > file inactive)",
+        "battleforthecrown-pixi/src/features/design-system/components/MultiVillageBottomSheet.tsx — type MultiVillageAlertKind = 'attack' | 'warning' et branche isAttack (styles rouge) jamais alimentée",
+        "battleforthecrown-pixi/src/features/layout/useMultiVillageData.ts — 6 fan-outs useQueries (resources/buildings/population/queue/strategy/kingdomPower), aucune query d'attaque entrante",
+        "battleforthecrown-backend/src/modules/combat/combat.controller.ts — endpoint @Get(':villageId/incoming') per-village déjà livré (086) ; aucun agrégat multi-village côté combat",
+        "battleforthecrown-pixi/src/api/ws-bindings.ts — attack.incoming invalide déjà la clé incomingAttacks per-village (live update hérité par la piste front-only)"
+      ],
+      "addedAt": "2026-07-12"
     }
   ]
 }
