@@ -23,7 +23,7 @@ import {
   resolvePublicPlayerName,
 } from '../../common/display-names';
 import { createOutboxEvent } from '../event/event.utils';
-import { resolveRankingsConfig } from './rankings-cycle.service';
+import { resolveRankingsConfig } from './rankings-config.utils';
 
 const GLORY_WEEKLY_DAYS = 7;
 
