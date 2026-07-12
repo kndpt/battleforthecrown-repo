@@ -1,7 +1,7 @@
 # refactor-pixi — state (rewritten each run)
 
-last: 2026-07-10 | theme consolidate-duplicate-utilities | branch claude/focused-galileo-1lrpwz
-full: `archive/refactor-pixi/2026-07-10-full.md`
+last: 2026-07-11 | theme dry-02-resource-metadata | branch claude/focused-galileo-db4k9v
+full: `archive/refactor-pixi/2026-07-11-full.md`
 
 ## OPEN
 
@@ -9,7 +9,7 @@ full: `archive/refactor-pixi/2026-07-10-full.md`
 |----|-----|-------|------|
 | C-03 | Crit | VillageView.tsx:587L | 67 hooks, 11 useState — worst god component |
 | C-04 | Crit | WorldMapScreen.tsx:523L | 57 hooks, 10 useState |
-| DRY-02 | Crit | 6 files | RESOURCE_LABELS/ICONS x6; RESOURCE_CONFIG is canonical (PR #278 open) |
+| DRY-02 | Crit→Med | 6 design-system files | Remaining: crowns icon path intentionally different (`casual-icons/crown.png` vs `crown.png`) |
 | C-01 | High | ArmyScreen.tsx:688L | 40 hooks, 8 useState |
 | C-05 | High | GameHeader.tsx:470L | 38 hooks, duplicates VillageView logic |
 | C-06 | High | AttackDetailModal.tsx:558L | 30 hooks, 8 useMemo from 6 queries |
@@ -17,7 +17,7 @@ full: `archive/refactor-pixi/2026-07-10-full.md`
 | S-01 | High | resources.ts, crowns.ts | Dual Zustand+TQ (design intentional, interpolation) |
 | TEST-01 | High | ArmyScreen, VillageView, AttackDetailModal | 3 major screens ZERO tests |
 | T-01 | High | VillageViewSections.tsx:531L | Zero tests |
-| T-02 | High | WorldMapScreen.tsx:515L | Zero tests |
+| T-02 | High | WorldMapScreen.tsx:523L | Zero tests |
 | D05 | High | resourceConfig.ts + meta.ts | 4 overlapping compact number formatters |
 | TYPE-04 | Med | SegmentedControl.tsx:20 | onChange string→void; 8 callers cast to union |
 | TYPE-05 | Med | BuildingDto.type, ArmyUnitDto.type | ~13 `as BuildingType`/`as UnitType` casts |
@@ -32,6 +32,7 @@ full: `archive/refactor-pixi/2026-07-10-full.md`
 | C-07 | Med | Tooltip.tsx:476L | 21 hooks, 7 effects (positioning) |
 | C-08 | Med | Select.tsx:416L | 23 hooks, popup positioning + keyboard nav |
 | C-09 | Med | AuthenticatedShell.tsx:153L | 25 hooks, 8 useEffect sync chains |
+| C-10 | Med | ReportDetailModal.tsx:496L | 4 near-identical report-type sections |
 | P-04 | Med | useTickingNow.ts | No pause/disable; 12 call sites tick unconditionally |
 | TEST-02 | Med | MapMarkerSheet.tsx | Component without tests (model tested) |
 | NEW-02 | Low | 7 files | NUMBER_FORMATTER = NUMBER_FMT alias repeated (cosmetic) |
@@ -47,6 +48,7 @@ full: `archive/refactor-pixi/2026-07-10-full.md`
 
 | ID | Fix |
 |----|-----|
+| DRY-02 (prod) | FIX: 7 production files consolidated → RESOURCE_CONFIG (icon paths + labels) |
 | DRY-04 | FIX+BUG: tierFromPower x3 → shared villageTierFromPower in lib/villageTier.ts; fixed tier 5 cap in PowerBottomSheet + PlayerProfileSheet (now correct tier 6 at >=5000) |
 | NEW-01 | FIX: DATE_FORMATTER triplicated in 3 combat report views → shared REPORT_DATE_FMT in lib/formatters.ts |
 | NEW-06 | FIX: worldsViewModel.ts local `new Intl.NumberFormat('fr-FR')` → import NUMBER_FMT |
@@ -56,10 +58,8 @@ full: `archive/refactor-pixi/2026-07-10-full.md`
 
 | ID | Fix |
 |----|-----|
-| WS-14..22 | FIX: population + activeExpeditions invalidation gaps in 9 WS handlers |
-| DRY-03 | FIX: 14 independent `Intl.NumberFormat('fr-FR')` → shared `NUMBER_FMT`/`INTEGER_FMT` |
-| WS-13 | FIX: caravan.recalled invalidation |
-| WS-10..12 | FIX: extraction WS invalidation |
+| DRY-03 | FIX: 14 independent `Intl.NumberFormat('fr-FR')` → shared `NUMBER_FMT`/`INTEGER_FMT` in lib/formatters.ts |
+| WS-13..22 | FIX: WS invalidation gaps (population, activeExpeditions, reinforcement, caravan) |
 | D30 | FIX: UnitCard.tsx cancel training → pushToast onError |
 | D13..D20 | FIX: 8 silent mutations → pushToast onError |
 | DRY-01 | FIX: extracted SessionCtx + resolveSessionCtx() |

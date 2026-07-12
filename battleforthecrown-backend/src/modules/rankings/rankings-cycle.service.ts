@@ -12,10 +12,6 @@ import {
   type RankingCyclesCurrentResponse,
   type RankingTitlesResponse,
 } from '@battleforthecrown/shared/rankings';
-import {
-  DEFAULT_WORLD_RANKINGS_CONFIG,
-  WorldConfigSchema,
-} from '@battleforthecrown/shared/world';
 import { MS_PER_DAY } from '@battleforthecrown/shared/time';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import type { PrismaClientOrTx } from '../../common/prisma.types';
@@ -25,29 +21,7 @@ import {
   resolveWorldDisplayNameFromData,
 } from '../../common/display-names';
 import { createOutboxEvent } from '../event/event.utils';
-
-const GLORY_SIGNALS: RankingSignal[] = [
-  RankingSignal.ASSAULT_GLORY,
-  RankingSignal.RAMPART_GLORY,
-];
-
-/** Reset config + snapshot size resolved from a world's (possibly partial) config. */
-export function resolveRankingsConfig(config: unknown): {
-  reset: CycleResetConfig;
-  snapshotEntries: number;
-} {
-  const parsed = WorldConfigSchema.safeParse(config);
-  const rankings = parsed.success
-    ? parsed.data.rankings
-    : DEFAULT_WORLD_RANKINGS_CONFIG;
-  return {
-    reset: {
-      resetDayUtc: rankings.weeklyCycleResetDayUtc,
-      resetHourUtc: rankings.weeklyCycleResetHourUtc,
-    },
-    snapshotEntries: rankings.snapshotEntriesPerCycle,
-  };
-}
+import { GLORY_SIGNALS, resolveRankingsConfig } from './rankings-config.utils';
 
 interface WindowEntry {
   userId: string;

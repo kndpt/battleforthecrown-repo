@@ -10,7 +10,7 @@ import {
 } from '@battleforthecrown/shared/combat';
 import { formatInactivityLabel } from '@battleforthecrown/shared/world';
 import { unitMetaFor } from '@/features/army/unitConfig';
-import { formatResourceAmount } from '@/lib/resourceConfig';
+import { formatResourceAmount, RESOURCE_CONFIG } from '@/lib/resourceConfig';
 import { formatRemaining } from '@/features/village/constructionProgress';
 import {
   DEFAULT_VILLAGE_STRATEGY,
@@ -26,17 +26,6 @@ const TARGET_KIND_LABEL: Record<string, string> = {
   PLAYER_VILLAGE: 'Village joueur',
 };
 
-const RESOURCE_ICONS = {
-  wood: '/assets/resources/wood.png',
-  stone: '/assets/resources/stone.png',
-  iron: '/assets/resources/iron.png',
-} as const;
-
-const RESOURCE_LABELS = {
-  wood: 'Bois',
-  stone: 'Pierre',
-  iron: 'Fer',
-} as const;
 
 export function scoutReportTargetLabel(report: ScoutReportResponse): string {
   const base = TARGET_KIND_LABEL[report.targetKind] ?? report.targetKind;
@@ -257,8 +246,8 @@ function buildResourceSection(report: ScoutReportResponse): ScoutReportSection {
     return {
       title,
       items: (['wood', 'stone', 'iron'] as const).map((resource) => ({
-        icon: RESOURCE_ICONS[resource],
-        label: RESOURCE_LABELS[resource],
+        icon: RESOURCE_CONFIG[resource].assetPath,
+        label: RESOURCE_CONFIG[resource].nameCapitalized,
         value: formatResourceRange(ranges[resource]),
       })),
     };
@@ -268,7 +257,7 @@ function buildResourceSection(report: ScoutReportResponse): ScoutReportSection {
       title,
       items: [
         {
-          icon: RESOURCE_ICONS.wood,
+          icon: RESOURCE_CONFIG.wood.assetPath,
           label: 'Stock',
           value: SCOUT_BAND_LABELS[report.resourceBand ?? 'NONE'],
         },
@@ -278,8 +267,8 @@ function buildResourceSection(report: ScoutReportResponse): ScoutReportSection {
   return {
     title,
     items: (['wood', 'stone', 'iron'] as const).map((resource) => ({
-      icon: RESOURCE_ICONS[resource],
-      label: RESOURCE_LABELS[resource],
+      icon: RESOURCE_CONFIG[resource].assetPath,
+      label: RESOURCE_CONFIG[resource].nameCapitalized,
       value: formatResourceAmount(report.resources?.[resource] ?? 0),
     })),
   };

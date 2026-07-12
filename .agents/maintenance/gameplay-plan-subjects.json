@@ -938,6 +938,84 @@
         "battleforthecrown-backend/src/modules/gameplay/extraction-lifecycle.service.ts:447-459 — createOutboxEvent('extraction.attacked', …) émis une seule fois à l'interception (event discret, pas d'état 'exploitation menacée' requêtable → patron endpoint targeting-me non transposable)"
       ],
       "addedAt": "2026-07-09"
+    },
+    {
+      "specPath": "docs/gameplay/lab/tickets/12-player-resource-market.md",
+      "slug": "royal-resource-exchange",
+      "title": "Échange royal de ressources — conversion intra-village (précurseur MVP-safe du marché P2P)",
+      "keywords": [
+        "market",
+        "exchange",
+        "resource-conversion",
+        "royal-exchange",
+        "troc"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/099-feature-royal-resource-exchange.md",
+      "artefactId": "099",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/royal-resource-exchange",
+      "gapSummary": "Aucun mécanisme d'échange/conversion de ressource n'existe dans le jeu. Le lab ticket 12 propose une « Alternative plus saine » (échange royal self-service) comme précurseur MVP-safe du marché joueur↔joueur, jugé haut-risque/post-MVP strict. La feature convertit bois↔pierre↔fer dans UN seul village, taux défavorable + plafond quotidien (reset 04:00 Europe/Paris) + aucune couronne, sans transfert inter-village ni inter-joueur. Débloque les blocages de stock sans ouvrir la porte au feed/multi-comptes.",
+      "codeEvidence": [
+        "packages/shared/src/village/building-types.ts — enum BUILDING_TYPES sans MARKET (CASTLE/WOOD/STONE/IRON/WAREHOUSE/HIDEOUT/QUARTER/BARRACKS/WATCHTOWER/COUNCIL_HALL/THRONE_HALL/WALL uniquement)",
+        "battleforthecrown-backend/src + packages/shared/src + battleforthecrown-pixi/src — aucun symbole market/exchange/convert/troc/barter (recherche sans résultat fonctionnel)",
+        "battleforthecrown-backend/src/modules/resources/resources.controller.ts — endpoints GET + produce uniquement, pas de POST convert",
+        "tasks/runs/archive/050-feature-resource-caravan.md — expédition CARAVAN transfère le MÊME type de ressource entre 2 villages du même joueur, jamais de conversion de type (connexe, pas doublon)",
+        "battleforthecrown-backend/src/modules/gameplay/initiate-extraction.use-case.ts — pattern débit ResourceStock + Outbox en tx Serializable réutilisable ; retention.utils.ts getParisDailyKey (reset 04:00) et packages/shared/src/resources/storage.ts creditResourcesCapped réutilisables"
+      ],
+      "addedAt": "2026-07-10"
+    },
+    {
+      "specPath": "docs/gameplay/02-economy-and-progression.md",
+      "slug": "village-resettlement-crown-sink",
+      "title": "Déplacer un village (resettlement, crown-sink 200)",
+      "keywords": [
+        "resettlement",
+        "deplacer-village",
+        "relocate",
+        "crown-sink",
+        "natural-trait"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/100-feature-village-resettlement.md",
+      "artefactId": "100",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/village-resettlement",
+      "gapSummary": "Le crown-sink « Deplacer un village / resettlement | 200 » est documente dans 02-economy-and-progression.md (table des depenses) mais aucun use-case, endpoint, DTO ou event de relocation de village n'existe. Les autres lignes de la meme table sont cablees (changement de strategie, recrutement Seigneur).",
+      "codeEvidence": [
+        "battleforthecrown-backend/src/modules/village/ — aucun use-case ou endpoint de relocation (relocateVillage absent)",
+        "battleforthecrown-backend/src/modules/crowns/crowns.service.ts — sinks existants (strategie, Seigneur) mais aucun debit lie a un deplacement de village",
+        "packages/shared/src/village/ — aucun DTO relocate ; deriveNaturalTrait derive le trait de la tile (x,y) sans chemin de recompute sur move",
+        "docs/gameplay/02-economy-and-progression.md L138 — ligne « Deplacer un village / resettlement | 200 » sans marqueur post-MVP, sans section mecanique dediee",
+        "docs/gameplay/27-village-natural-traits.md — trait « identite fixe derivee de la tile, jamais modifie » : contrat a amender pour une relocation"
+      ],
+      "addedAt": "2026-07-11"
+    },
+    {
+      "specPath": "docs/gameplay/22-village-roles-and-navigation.md",
+      "slug": "multi-village-incoming-attack-pill",
+      "title": "Pastille attaque entrante par village (sélecteur multi-village)",
+      "keywords": [
+        "multi-village",
+        "incoming-attack",
+        "pastille",
+        "state-alert",
+        "attack-pill"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/101-feature-multi-village-incoming-attack-pill.md",
+      "artefactId": "101",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/multi-village-incoming-attack-pill",
+      "gapSummary": "Le sélecteur multi-village affiche seulement des pastilles kind:'warning' (entrepôt plein / file inactive, run 095) ; deriveVillageStateAlert n'émet jamais kind:'attack' alors que la branche de rendu isAttack existe déjà (morte) et que les données incoming sont livrées backend (086). Manque le câblage feed incoming → pastille attack par village.",
+      "codeEvidence": [
+        "battleforthecrown-pixi/src/features/layout/multiVillageSheet.ts — deriveVillageStateAlert ne retourne que kind:'warning' (commentaire explicite 'never kind:attack', priorité entrepôt plein > file inactive)",
+        "battleforthecrown-pixi/src/features/design-system/components/MultiVillageBottomSheet.tsx — type MultiVillageAlertKind = 'attack' | 'warning' et branche isAttack (styles rouge) jamais alimentée",
+        "battleforthecrown-pixi/src/features/layout/useMultiVillageData.ts — 6 fan-outs useQueries (resources/buildings/population/queue/strategy/kingdomPower), aucune query d'attaque entrante",
+        "battleforthecrown-backend/src/modules/combat/combat.controller.ts — endpoint @Get(':villageId/incoming') per-village déjà livré (086) ; aucun agrégat multi-village côté combat",
+        "battleforthecrown-pixi/src/api/ws-bindings.ts — attack.incoming invalide déjà la clé incomingAttacks per-village (live update hérité par la piste front-only)"
+      ],
+      "addedAt": "2026-07-12"
     }
   ]
 }
