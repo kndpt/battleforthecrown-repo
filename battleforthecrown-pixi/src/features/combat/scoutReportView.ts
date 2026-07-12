@@ -19,8 +19,6 @@ import {
 
 import { NUMBER_FMT } from '@/lib/formatters';
 
-const NUMBER_FORMATTER = NUMBER_FMT;
-
 const TARGET_KIND_LABEL: Record<string, string> = {
   BARBARIAN_VILLAGE: 'Village barbare',
   PLAYER_VILLAGE: 'Village joueur',
@@ -170,8 +168,8 @@ export function scoutReportPrecisionLabel(report: ScoutReportResponse): string {
 }
 
 function formatUnitRange(range: ScoutRange): string {
-  if (range.min === range.max) return NUMBER_FORMATTER.format(range.min);
-  return `${NUMBER_FORMATTER.format(range.min)}–${NUMBER_FORMATTER.format(range.max)}`;
+  if (range.min === range.max) return NUMBER_FMT.format(range.min);
+  return `${NUMBER_FMT.format(range.min)}–${NUMBER_FMT.format(range.max)}`;
 }
 
 function formatResourceRange(range: ScoutRange): string {
@@ -226,7 +224,7 @@ function buildArmySection(report: ScoutReportResponse): ScoutReportSection {
       return {
         icon: meta.iconPath ?? '/assets/army-power.png',
         label: meta.name,
-        value: NUMBER_FORMATTER.format(quantity),
+        value: NUMBER_FMT.format(quantity),
       };
     });
   return {
@@ -283,12 +281,12 @@ function pillageVerdictValue(report: ScoutReportResponse): string {
         sum + Math.round((ranges[resource].min + ranges[resource].max) / 2),
       0,
     );
-    return `≈ ${NUMBER_FORMATTER.format(mid)}`;
+    return `≈ ${NUMBER_FMT.format(mid)}`;
   }
   if (report.precision === 'VAGUE') {
     return SCOUT_BAND_LABELS[report.resourceBand ?? 'NONE'];
   }
-  return NUMBER_FORMATTER.format(scoutReportResourceTotal(report));
+  return NUMBER_FMT.format(scoutReportResourceTotal(report));
 }
 
 export function buildScoutReportCardProps(
@@ -308,7 +306,7 @@ export function buildScoutReportCardProps(
           icon: scoutMeta.iconPath ?? '/assets/lupa.png',
           label: scoutMeta.name,
           troopBar: { lost: scoutLosses, sent: scoutUnits },
-          value: NUMBER_FORMATTER.format(scoutUnits),
+          value: NUMBER_FMT.format(scoutUnits),
         },
       ],
     },

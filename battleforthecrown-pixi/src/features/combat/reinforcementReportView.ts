@@ -12,8 +12,6 @@ import { formatCoord, shortReportId } from './report-view-utils';
 export type { ReinforcementReportResponse };
 
 import { NUMBER_FMT } from '@/lib/formatters';
-
-const NUMBER_FORMATTER = NUMBER_FMT;
 const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
   day: '2-digit',
   month: '2-digit',
@@ -40,7 +38,7 @@ function villageLabel(name: string | null | undefined, x: number, y: number): st
 }
 
 function formatUnitTotal(total: number): string {
-  return `${NUMBER_FORMATTER.format(total)} troupe${total > 1 ? 's' : ''}`;
+  return `${NUMBER_FMT.format(total)} troupe${total > 1 ? 's' : ''}`;
 }
 
 function place({
@@ -72,7 +70,7 @@ export function reinforcementReportUnits(report: ReinforcementReportResponse): R
       return {
         icon: meta.iconPath ?? '/assets/army-power.png',
         label: quantity > 1 ? meta.pluralName : meta.name,
-        quantity: NUMBER_FORMATTER.format(quantity),
+        quantity: NUMBER_FMT.format(quantity),
       };
     })
     .sort((left, right) => left.label.localeCompare(right.label, 'fr'));

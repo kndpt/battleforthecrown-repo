@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { NUMBER_FMT } from "@/lib/formatters";
 import { publicAsset } from "@/lib/publicAsset";
 import {
   BASE_MODAL_DEFAULT_MAX_HEIGHT,
@@ -113,9 +114,6 @@ function tierFor(
   return { label: labels.mediocre, tone: "red" };
 }
 
-function formatCount(value: number): string {
-  return value.toLocaleString("fr-FR");
-}
 
 function AssetIcon({ className, src }: { className?: string; src: string }) {
   return (
@@ -176,7 +174,7 @@ function StatBar({
           {tier.label}
         </span>
         <span className="min-w-[26px] text-right text-[13px] font-black tabular-nums text-[#3d2f1f] [text-shadow:0_1px_0_rgba(255,255,255,.4)]">
-          {formatCount(value)}
+          {NUMBER_FMT.format(value)}
         </span>
       </div>
       <ProgressBar
@@ -184,7 +182,7 @@ function StatBar({
         aria-label={label}
         className="[&>div:first-child]:hidden [&>div:last-child]:h-2.5 [&>div:last-child]:rounded-full [&>div:last-child]:border [&>div:last-child]:border-[rgba(60,38,25,.32)] [&>div:last-child]:bg-[rgba(60,38,25,.16)]"
         label={label}
-        suffix={formatCount(value)}
+        suffix={NUMBER_FMT.format(value)}
         tone={tier.tone}
         value={target}
       />
@@ -351,7 +349,7 @@ function CostChip({
         className="size-3.5 object-contain drop-shadow-[0_1px_1px_rgba(0,0,0,.5)]"
         src={publicAsset(resourceIcon[resource])}
       />
-      {formatCount(value)}
+      {NUMBER_FMT.format(value)}
     </span>
   );
 }
@@ -520,7 +518,7 @@ export function TroopDetailModal({
               />
             }
             label={labels.population}
-            value={`${formatCount(populationCost)}`}
+            value={`${NUMBER_FMT.format(populationCost)}`}
           />
         </div>
 

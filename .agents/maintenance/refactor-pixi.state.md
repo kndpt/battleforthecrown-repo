@@ -1,7 +1,7 @@
 # refactor-pixi — state (rewritten each run)
 
-last: 2026-07-11 | theme dry-02-resource-metadata | branch claude/focused-galileo-db4k9v
-full: `archive/refactor-pixi/2026-07-11-full.md`
+last: 2026-07-12 | theme consolidate-locale-formatters | branch claude/focused-galileo-k52gv2
+full: `archive/refactor-pixi/2026-07-12-full.md`
 
 ## OPEN
 
@@ -18,14 +18,14 @@ full: `archive/refactor-pixi/2026-07-11-full.md`
 | TEST-01 | High | ArmyScreen, VillageView, AttackDetailModal | 3 major screens ZERO tests |
 | T-01 | High | VillageViewSections.tsx:531L | Zero tests |
 | T-02 | High | WorldMapScreen.tsx:523L | Zero tests |
-| DRY-04 | High | 3 files | tierFromPower x3 divergent thresholds (tier 5 vs 6) |
+| DRY-04 | High | 3 files | tierFromPower x3 divergent thresholds (tier 5 vs 6) — PR #282 in-flight |
 | D05 | High | resourceConfig.ts + meta.ts | 4 overlapping compact number formatters |
 | TYPE-04 | Med | SegmentedControl.tsx:20 | onChange string→void; 8 callers cast to union |
 | TYPE-05 | Med | BuildingDto.type, ArmyUnitDto.type | ~13 `as BuildingType`/`as UnitType` casts |
 | D02 | Med | QueueBottomSheet.tsx:22 | formatTime duplicates formatRemaining |
 | D07 | Med | BuildingCard.tsx:81 | Inline canAfford reimplements canAffordNextBuildingLevel |
 | D24 | Med | api/queries/combat.ts:201 | useMarkReadMutation no onError |
-| NEW-01 | Med | 3 combat report views | DATE_FORMATTER triplicated |
+| NEW-01 | Med | 3 combat report views | DATE_FORMATTER triplicated — PR #282 in-flight |
 | NEW-04 | Med | PlayerProfileSheet + meta.ts | Village style colors duplicated |
 | TYPE-01 | Med | VillageHero.tsx:271 | unvalidated label as VillageLabel cast |
 | TYPE-06 | Med | api/client.ts:168,174 | `undefined as T` returns undefined to typed callers |
@@ -38,8 +38,6 @@ full: `archive/refactor-pixi/2026-07-11-full.md`
 | P-04 | Med | useTickingNow.ts | No pause/disable; 12 call sites tick unconditionally |
 | TEST-02 | Med | MapMarkerSheet.tsx | Component without tests (model tested) |
 | D04 | Low | kingdomActivitiesViewModel.ts:188 | computeProgress overlaps constructionProgress core |
-| NEW-02 | Low | 7 files | NUMBER_FORMATTER = NUMBER_FMT alias repeated |
-| NEW-03 | Low | 3 design-system files | fr()/formatCount() one-liner x3 |
 | NEW-05 | Low | multiVillageSheet.ts:170 | 3rd time-duration formatter |
 | NEW-06 | Low | worldsViewModel.ts:155 | Local NumberFormat duplicates NUMBER_FMT |
 | PERF-01 | Low | PublicPlayerProfileSheet.tsx:31 | Triple useTickingNow ticking simultaneously |
@@ -51,12 +49,15 @@ full: `archive/refactor-pixi/2026-07-11-full.md`
 
 | ID | Fix |
 |----|-----|
-| DRY-02 (prod) | FIX: 7 production files consolidated → RESOURCE_CONFIG (icon paths + labels) |
+| NEW-02 | FIX: 8 `NUMBER_FORMATTER = NUMBER_FMT` aliases → direct `NUMBER_FMT` usage |
+| NEW-03 | FIX: `fr()` x2 + `formatCount` → shared `formatIntFr` / `NUMBER_FMT.format` |
+| FMT-01..05 | FIX: 5 private locale wrappers (`formatNumber`, `formatPowerSummary`, `formatScore`, `formatResource`) → `NUMBER_FMT.format` |
 
 ## CLOSED prior runs
 
 | ID | Fix |
 |----|-----|
+| DRY-02 (prod) | FIX: 7 production files consolidated → RESOURCE_CONFIG (icon paths + labels) |
 | DRY-03 | FIX: 14 independent `Intl.NumberFormat('fr-FR')` → shared `NUMBER_FMT`/`INTEGER_FMT` in lib/formatters.ts |
 | WS-13..22 | FIX: WS invalidation gaps (population, activeExpeditions, reinforcement, caravan) |
 | D30 | FIX: UnitCard.tsx cancel training → pushToast onError |

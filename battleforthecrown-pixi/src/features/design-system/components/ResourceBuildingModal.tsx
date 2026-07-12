@@ -8,6 +8,7 @@ import {
 } from './BuildingModal';
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
+import { formatIntFr } from '@/lib/formatters';
 
 export type ResourceBuildingKey = 'quarter' | 'iron' | 'stone' | 'wood';
 export type ResourceBuildingLinkVariant = 'arrow-pill' | 'chevron' | 'none' | 'rail' | 'rule';
@@ -122,9 +123,6 @@ const defaultLabels: ResourceBuildingLabels = {
   upgradeLabel: 'Améliorer',
 };
 
-function fr(value: number) {
-  return Math.floor(value).toLocaleString('fr-FR');
-}
 
 function statFor(levelStats: Record<number, ResourceBuildingLevelStats>, level: number) {
   return levelStats[level] ?? { production: 0, storage: 0 };
@@ -190,7 +188,7 @@ function ProductionCard({
       <div className="mb-[7px] flex items-baseline gap-1.5">
         <img alt="" className="size-[22px] self-center drop-shadow-[0_1px_1px_rgba(0,0,0,.35)]" src={publicAsset(icon)} />
         <span className="font-game text-[22px] font-black leading-none tracking-[.01em] text-[#3d2f1f] tabular-nums [text-shadow:0_1px_0_rgba(255,255,255,.6)]">
-          {isPopulation ? `${fr(stats.production)} / ${fr(stats.storage)}` : `+${fr(stats.production)}`}
+          {isPopulation ? `${formatIntFr(stats.production)} / ${formatIntFr(stats.storage)}` : `+${formatIntFr(stats.production)}`}
         </span>
         <span className="font-game text-[11px] font-bold tracking-[.08em] text-[#6d5838]">
           {isPopulation ? resourceLabel : '/ heure'}
@@ -247,7 +245,7 @@ function LevelLink({
       <div className="mx-1 my-1 flex items-center gap-2">
         <span className="h-px flex-1 bg-[rgba(60,38,25,.28)]" />
         <span className="inline-flex items-center gap-[3px] font-game text-[10px] font-extrabold tracking-[.06em] tabular-nums" style={{ color: accent.border }}>
-          <span className="text-[11px] leading-none">▾</span>+{fr(delta)} {isPopulation ? resourceLabel : '/ h'}
+          <span className="text-[11px] leading-none">▾</span>+{formatIntFr(delta)} {isPopulation ? resourceLabel : '/ h'}
         </span>
         <span className="h-px flex-1 bg-[rgba(60,38,25,.28)]" />
       </div>
@@ -287,8 +285,8 @@ function StorageGauge({
           {isPopulation ? labels.sectionHousing : labels.sectionStorage}
         </span>
         <span className="font-game text-[13px] font-extrabold text-[#3d2f1f] tabular-nums [text-shadow:0_1px_0_rgba(255,255,255,.5)]">
-          {fr(stockNow)}
-          <span className="text-[#6d5838]"> / {fr(current.storage)}</span>
+          {formatIntFr(stockNow)}
+          <span className="text-[#6d5838]"> / {formatIntFr(current.storage)}</span>
         </span>
       </div>
 
@@ -336,7 +334,7 @@ function CostChip({
       )}
     >
       <img alt="" className="size-3.5 drop-shadow-[0_1px_1px_rgba(0,0,0,.5)]" src={publicAsset(icon)} />
-      {fr(value)}
+      {formatIntFr(value)}
     </span>
   );
 }
