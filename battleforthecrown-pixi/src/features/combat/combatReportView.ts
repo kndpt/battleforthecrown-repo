@@ -20,13 +20,9 @@ export const combatReportLabels: CombatReportModalLabels = {
   reportPrefix: 'Rapport',
 };
 
-const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-});
+import { REPORT_DATE_FMT } from '@/lib/formatters';
+
+const DATE_FORMATTER = REPORT_DATE_FMT;
 
 
 function targetLabel(report: CombatReportDto): string {

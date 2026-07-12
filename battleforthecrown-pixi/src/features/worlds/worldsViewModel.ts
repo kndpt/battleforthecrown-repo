@@ -4,6 +4,7 @@ import {
   type PublicWorld,
 } from "@battleforthecrown/shared/world";
 import { MS_PER_DAY } from "@battleforthecrown/shared/time";
+import { NUMBER_FMT } from "@/lib/formatters";
 
 export type WorldsTab = "open" | "planned" | "locked";
 export type WorldCtaKind =
@@ -152,7 +153,7 @@ const tierLabels: Record<PublicWorld["identity"]["tier"], string> = {
   DEBUTANTS: "DÉBUTANTS",
 };
 
-const formatter = new Intl.NumberFormat("fr-FR");
+const formatter = NUMBER_FMT;
 const EMPTY_PERSONAL_STATS = new Map<string, WorldPersonalStatsInput>();
 const EMPTY_VILLAGE_COUNTS = new Map<string, number>();
 const EMPTY_CANDIDATE_WORLDS: readonly PublicWorld[] = [];

@@ -13,14 +13,10 @@ export type { ReinforcementReportResponse };
 
 import { NUMBER_FMT } from '@/lib/formatters';
 
+import { REPORT_DATE_FMT } from '@/lib/formatters';
+
 const NUMBER_FORMATTER = NUMBER_FMT;
-const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-});
+const DATE_FORMATTER = REPORT_DATE_FMT;
 
 const reinforcementReportLabels: ReinforcementReportModalLabels = {
   reportPrefix: 'Rapport',
