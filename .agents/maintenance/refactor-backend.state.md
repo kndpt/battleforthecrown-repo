@@ -1,7 +1,7 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-07-11 | theme UA1 — unit-availability guard. Nouveau `modules/combat/unit-availability.ts` : `assertUnitsAvailable(available, requested, locationLabel?)` (throw `Insufficient X: have Y, need Z`) + `toUnitQuantityMap(rows)`. 3 blocs check-then-throw + build-available-map dupliqués consolidés : combat.service `initiateRecall` (garnison), combat.service `verifyAndDeductUnits` (army-inventory ; appelé par initiateAttack/Scout/Reinforce, pas caravan), initiate-extraction escort (son commentaire pointait déjà `verifyAndDeductUnits`). Comportement identique (`|| 0`≡`?? 0` DB non-nég). +9 cas spec. 595 back verts + 7 smokes (caravan/reinforcement/recall/extraction). static-check ok.
-full: `archive/refactor-backend/2026-07-11-full.md`
+last: 2026-07-12 | theme RK-CFG (L3) — colocate rankings config resolver + Glory signals. Nouveau `modules/rankings/rankings-config.utils.ts` : `GLORY_SIGNALS` (paire ordonnée ASSAULT/RAMPART) + `resolveRankingsConfig(config)` (pure, safeParse `WorldConfigSchema` → fallback `DEFAULT_WORLD_RANKINGS_CONFIG`). Extraits de `rankings-cycle.service.ts` (défs locales supprimées, import utils) ; `rankings.service.ts` change source d'import (fin du smell service→service). Move behavior-identique. +3 cas spec (attention : `WorldConfigSchema` strictObject sans defaults sur tempo/combat/… → config partiel échoue le parse ; test success utilise `{...DEFAULT_WORLD_CONFIG, rankings:{...}}`). static-check ok, 598 back verts, smokes 151/152 (échec unique = flaky joinWorld combat-attack, passe seul).
+full: `archive/refactor-backend/2026-07-12-full.md`
 
 ## OPEN
 
@@ -11,7 +11,6 @@ full: `archive/refactor-backend/2026-07-11-full.md`
 | W1  | High | combat/combat.worker.ts (2038L)                    | 4 kinds cohabitent — split par kind, L effort                                              |
 | B1  | Med  | combat.service.ts (1620L)                          | sans spec unit direct (smokes uniquement ; policy interdit mock Prisma)                    |
 | G2  | Med  | gameplay/extraction-lifecycle.service.ts (783L)    | looks-bad-but-fine : ADR-12 déclare explicitement « tout ici » (2 handlers pub + 5 priv)  |
-| L3  | Low  | rankings.service.ts:26                             | import `resolveRankingsConfig` (pur) depuis rankings-cycle.service → `rankings-config.utils`|
 | SU1 | Low  | combat-resolution.ts:247 + initiate-extraction:60  | `sumUnits`/`escortTotal` dup — seulement 2 sites back (reste dans shared, hors scope)      |
 | TE1 | Low  | combat.service:750+, power.service:216, barbarian-village.factory:78 | `Object.entries(units)` brut vs `typedEntries` — cosmétique (aucun cast downstream)|
 | E1  | Low  | 16 fichiers, 60 callsites `createOutboxEvent`      | low-value : createOutboxEvent déjà typé (générique K), migration = churn                   |
@@ -25,7 +24,8 @@ full: `archive/refactor-backend/2026-07-11-full.md`
 
 ## Skip — déjà traité
 
-- UA1 (unit-availability guard → `combat/unit-availability.assertUnitsAvailable` + `toUnitQuantityMap`) → ce run
+- L3 (rankings config resolver + Glory signals → `rankings/rankings-config.utils`) → ce run
+- UA1 (unit-availability guard → `combat/unit-availability.assertUnitsAvailable` + `toUnitQuantityMap`) → 2026-07-11 (#285)
 - AF1 (resource-affordability guard → `shared/resources.hasSufficientResources`) → 2026-07-10 (#281)
 - P5 (combat population release → `combat/population-release.releasePopulationForLosses`) → 2026-07-09 (#277)
 - RC1 + RC2 (warehouse-capped resource credit → `shared/resources.creditResourcesCapped`) → 2026-07-08 (#272)
