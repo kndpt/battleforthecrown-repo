@@ -5,7 +5,7 @@ full: `archive/refactor-shared/2026-07-12-full.md`
 
 ## OPEN
 
-PR à créer : `maint(refactor-shared): cover logic/ formula test gap` (branche `claude/practical-hypatia-gz53hq`, imposée par le harness cloud pour ce run).
+PR ouverte, en revue : [#291](https://github.com/kndpt/battleforthecrown-repo/pull/291) `maint(refactor-shared): cover logic/ formula test gap` (branche `claude/practical-hypatia-gz53hq`, imposée par le harness cloud pour ce run).
 
 ## Candidats prochains runs
 

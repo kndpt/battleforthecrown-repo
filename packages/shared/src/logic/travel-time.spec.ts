@@ -50,7 +50,7 @@ describe('calculateTravelTime', () => {
   });
 
   it('rounds the result to the nearest millisecond', () => {
-    expect(calculateTravelTime(1, 1, 100)).toBe(Math.round((1 * REFERENCE_SPEED * 60000) / 100));
+    expect(calculateTravelTime(1, 1, 7)).toBe(Math.round((1 * REFERENCE_SPEED * 60000) / 7));
   });
 });
 

@@ -33,6 +33,10 @@ describe('calculateBuildingCost', () => {
     expect(calculateBuildingCost('WOOD', 1, 10, 10).time).toBe(MS_PER_SECOND);
   });
 
+  it('produces an infinite build time for speedMultiplier=0 (documents current behavior)', () => {
+    expect(calculateBuildingCost('WOOD', 1, 1, 0).time).toBe(Infinity);
+  });
+
   it('throws for a level with no cost table entry', () => {
     expect(() => calculateBuildingCost('WOOD', 999)).toThrow(
       'No cost found for building WOOD level 999',
