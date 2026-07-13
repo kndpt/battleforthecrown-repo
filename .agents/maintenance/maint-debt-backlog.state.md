@@ -1,6 +1,6 @@
 # maint-debt — candidats (réécrit chaque run)
 
-last: 2026-07-12 | archive: `archive/maint-debt/2026-06-15-full.md`
+last: 2026-07-13 | archive: `archive/maint-debt/2026-06-15-full.md`
 branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 ## candidate
@@ -10,7 +10,6 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | pixi magic 3600 + formatDuration dup | UI text differs — need product call before dedupe |
 | VillageCanvas + VillageScene pipeline | zero importers — needs retire-canvas decision, too broad |
 | pixi QueueBottomSheet formatTime | clock-style mm:ss vs formatRemaining human labels — keep local until product aligns village queue display |
-| shared/world/entities.ts isFoggedEntity | type guard used by world map — no direct unit spec |
 | shared/village/strategy.ts getVillageStrategyPlan | constant plan accessor — low value unless plan becomes configurable |
 | conquest openCaptureWindow/interruptCaptureWindow/conquerVillage wrappers | used only in smoke tests, not prod code — public API for test convenience, low debt |
 | buildRefundToastItems export | exported for test import only — valid pattern, skip |
@@ -22,7 +21,7 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 | area | PR |
 |------|-----|
-| shared/cosmetic/consts.spec.ts — cover `formatCosmeticAwardLabel` (3 kinds, name interpolation, empty world) + anti-drift guards on `SIGNAL_TO_COSMETIC_AWARD_KIND` bijection & `COSMETIC_AWARD_{LABELS,DESCRIPTIONS}` key coverage — 0 prior unit coverage; used by resolve.ts + pixi profileViewModel | pending |
+| world-types.test.ts — cover fogged-entity path: `isFoggedEntity` guard (true on fogged, false on 3 real kinds) + `entityFromWorldDto` fogged dispatch → position-only MapEntity, `isMine` stays false w/ or w/o userId. 0 prior coverage of the fogged branch; guard consumed at world-types.ts:66 | pending |
 
 ## rejected (false positive — do not repick)
 
@@ -37,6 +36,7 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 | area | PR |
 |------|-----|
+| shared/cosmetic/consts.spec.ts — cover `formatCosmeticAwardLabel` + anti-drift guards | #287 |
 | shared/world/vision.spec.ts — cover `isPointInAnyVisionDisk` fog-of-war geometry | #283 |
 | ws-bindings.ts orphaned `Exhaustive map` comment → moved onto `bindings` const | #275 |
 | HeaderBarSection.tsx drop useless `useState(5)` (no setter) → inline literal, drop react import | pending |
