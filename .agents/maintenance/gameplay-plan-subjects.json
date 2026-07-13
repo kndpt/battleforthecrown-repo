@@ -1016,6 +1016,33 @@
         "battleforthecrown-pixi/src/api/ws-bindings.ts — attack.incoming invalide déjà la clé incomingAttacks per-village (live update hérité par la piste front-only)"
       ],
       "addedAt": "2026-07-12"
+    },
+    {
+      "specPath": "docs/gameplay/27-village-natural-traits.md",
+      "slug": "natural-traits-taxonomy-population",
+      "title": "Traits naturels non-productifs — taxonomie v2 + Terre fertile (population)",
+      "keywords": [
+        "natural-trait",
+        "colline",
+        "terre-fertile",
+        "plaine",
+        "population",
+        "taxonomie"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/102-feature-natural-traits-taxonomy-population.md",
+      "artefactId": "102",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/natural-traits-taxonomy-population",
+      "gapSummary": "Les 3 traits naturels non-productifs documentés en follow-up par la spec 27 (Colline/vision, Plaine/army-speed, Terre fertile/population) ne sont pas implémentés — le run 088 les a explicitement exclus. L'enum ne porte que les traits de ressource + PLAINS neutre. Les systèmes sœurs dont ils dépendaient existent désormais tous. Ce run pose la taxonomie v2 (redistribution des buckets + nouveaux traits + migration) et branche le vertical le plus propre (Terre fertile → population Quartier) ; Colline et Plaine déportés sur runs successeurs.",
+      "codeEvidence": [
+        "packages/shared/src/village/traits.ts — VillageNaturalTrait = DENSE_FOREST | RICH_QUARRY | IRON_VEIN | PLAINS uniquement ; pas de HILL ni FERTILE_SOIL ; deriveNaturalTrait buckets 15/15/15/55 PLAINS ; NATURAL_TRAIT_PRODUCTION_BONUS a PLAINS:{} neutre",
+        "battleforthecrown-backend/src/modules/population/population-capacity.ts — applyPopulationBonus ne lit que strategyBonus.populationBonus, aucun input naturalTrait ; 4 callers (population.service, upgrade-building.use-case, recruit-noble.use-case, recruit-troops.use-case)",
+        "battleforthecrown-backend/src/modules/world/vision.service.ts — getVisionDisks dérive le radius uniquement de WATCHTOWER_VISION_LEVELS ; aucun input trait (dépendance du run successeur Colline)",
+        "packages/shared/src/logic/travel-time.ts — calculateTravelTime applique seulement strategyMultiplier (armySpeedBonus du style) ; aucun input trait (dépendance du run successeur Plaine)",
+        "tasks/runs/archive/088-feature-village-natural-traits.md — ligne 23 liste ces 3 traits en Hors scope MVP / follow-up ; prérequis LIVRÉ (colonne Village.naturalTrait + migration backfill), non-doublon"
+      ],
+      "addedAt": "2026-07-13"
     }
   ]
 }
