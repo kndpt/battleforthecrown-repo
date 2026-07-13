@@ -1,18 +1,21 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-07-12 | theme RK-CFG (L3) — colocate rankings config resolver + Glory signals. Nouveau `modules/rankings/rankings-config.utils.ts` : `GLORY_SIGNALS` (paire ordonnée ASSAULT/RAMPART) + `resolveRankingsConfig(config)` (pure, safeParse `WorldConfigSchema` → fallback `DEFAULT_WORLD_RANKINGS_CONFIG`). Extraits de `rankings-cycle.service.ts` (défs locales supprimées, import utils) ; `rankings.service.ts` change source d'import (fin du smell service→service). Move behavior-identique. +3 cas spec (attention : `WorldConfigSchema` strictObject sans defaults sur tempo/combat/… → config partiel échoue le parse ; test success utilise `{...DEFAULT_WORLD_CONFIG, rankings:{...}}`). static-check ok, 598 back verts, smokes 151/152 (échec unique = flaky joinWorld combat-attack, passe seul).
-full: `archive/refactor-backend/2026-07-12-full.md`
+last: 2026-07-13 | theme CU1 (High/M) — single-home « credit UnitMap → UnitInventory ». Nouveau `modules/combat/unit-inventory.ts` : `creditUnitsToInventory(tx, villageId, units)` (upsert par unitType, increment, skip `<= 0`). Extrait de 4 loops byte-identiques : combat.worker:1410 (reinforcement return-home) + :1576 (bounce), return.worker:123 (surviving units), extraction-lifecycle:258 (escort return). Move pur : les 4 sources sont des UnitMap issus de parseUnitMap (schema nonnegative) ou de subtractLosses (n'émet que `> 0`) → jamais de 0-entry, donc skip `<= 0` ≡ skip `=== undefined`. Exclus divergents : barbarian-runtime (accumule currentUnits), training.worker (unitType:string → cast). Pas de spec (helper = orchestration Prisma, policy interdit mock). static-check ok, 598 back verts, smokes 22/22 (reinforcements/cross-player/extraction/combat-attack/recall).
+full: `archive/refactor-backend/2026-07-13-full.md`
 
 ## OPEN
 
 | ID  | Sev  | Where                                              | Note                                                                                       |
 |-----|------|----------------------------------------------------|--------------------------------------------------------------------------------------------|
+| DUP-PLANNER | Med | event-outbox-notification-planner.ts:166-206 | `planCaptureWindowOpened`/`Interrupted` bodies 100% identiques (sauf nom cast payload) ; 2 interfaces partagent `{pendingConquestId,targetVillageId,attackerUserId?}` → factory générique. S effort, zéro risque type. **Candidat #1 next run** |
+| DUP-REPORT | Med | caravan-report.service.ts + reinforcement-report.service.ts | ~80% CRUD inbox dupliqué MAIS divergence réelle : caravan `findEntry` hardcode `hidden:false` (mark/delete throw sur hidden), reinforcement gate `excludeHidden` (idempotent). Helper doit exposer `excludeHidden` par op. Risque type-debt Prisma generic (M) |
 | R4  | High | crowns.service.ts:261                              | fractional carry — needs migration (`lastUpdateTs += production/rate`)                     |
 | W1  | High | combat/combat.worker.ts (2038L)                    | 4 kinds cohabitent — split par kind, L effort                                              |
-| B1  | Med  | combat.service.ts (1620L)                          | sans spec unit direct (smokes uniquement ; policy interdit mock Prisma)                    |
-| G2  | Med  | gameplay/extraction-lifecycle.service.ts (783L)    | looks-bad-but-fine : ADR-12 déclare explicitement « tout ici » (2 handlers pub + 5 priv)  |
+| B1  | Med  | combat.service.ts (1634L)                          | sans spec unit direct (smokes uniquement ; policy interdit mock Prisma)                    |
+| TE1 | Low  | combat.service:754/978/1000, combat.worker:1269/1298, return.worker:123, initiate-extraction:181 | `Object.entries(units)` brut vs `typedEntries` — cosmétique (retire cast, ~8 sites) |
+| G2  | Med  | gameplay/extraction-lifecycle.service.ts (783L)    | looks-bad-but-fine : ADR-12 déclare explicitement « tout ici »                            |
 | SU1 | Low  | combat-resolution.ts:247 + initiate-extraction:60  | `sumUnits`/`escortTotal` dup — seulement 2 sites back (reste dans shared, hors scope)      |
-| TE1 | Low  | combat.service:750+, power.service:216, barbarian-village.factory:78 | `Object.entries(units)` brut vs `typedEntries` — cosmétique (aucun cast downstream)|
+| BR1 | Low  | barbarian-runtime.service:63, training.worker:61   | même upsert que CU1 mais divergent (accumulation / cast string) → hors CU1                  |
 | E1  | Low  | 16 fichiers, 60 callsites `createOutboxEvent`      | low-value : createOutboxEvent déjà typé (générique K), migration = churn                   |
 | U1  | Low  | combat.worker.ts:1478+, return.worker.ts:326       | inbox.create loop ×N → `createMany skipDuplicates` (ROI bas, ≤2 recipients)               |
 | L2  | Low  | strategy/village-strategy.service.ts:382+          | `getStrategyRecommendations` strings UI FR hard-codées + endpoint sans consumer front      |
@@ -24,25 +27,19 @@ full: `archive/refactor-backend/2026-07-12-full.md`
 
 ## Skip — déjà traité
 
-- L3 (rankings config resolver + Glory signals → `rankings/rankings-config.utils`) → ce run
-- UA1 (unit-availability guard → `combat/unit-availability.assertUnitsAvailable` + `toUnitQuantityMap`) → 2026-07-11 (#285)
+- CU1 (credit UnitMap → UnitInventory → `combat/unit-inventory.creditUnitsToInventory`) → ce run
+- L3 (rankings config resolver + Glory signals → `rankings/rankings-config.utils`) → 2026-07-12 (#289)
+- UA1 (unit-availability guard → `combat/unit-availability`) → 2026-07-11 (#285)
 - AF1 (resource-affordability guard → `shared/resources.hasSufficientResources`) → 2026-07-10 (#281)
-- P5 (combat population release → `combat/population-release.releasePopulationForLosses`) → 2026-07-09 (#277)
+- P5 (combat population release → `combat/population-release`) → 2026-07-09 (#277)
 - RC1 + RC2 (warehouse-capped resource credit → `shared/resources.creditResourcesCapped`) → 2026-07-08 (#272)
 - BT1 + BT2 (resilient batch loop → `queue-worker.helper.runResilientBatch`) → 2026-07-07 (#267)
 - CD1 (dedup helper carry-capacity → `combat.utils.sumCarryCapacity`) → 2026-07-06 (#262)
 - PR1 (village production-rate projection consolidation) → 2026-07-05 (#256)
-- O1 requalifié _latent, pas actif_ → 2026-07-05
 - F1 (defender garrison loading consolidation) → 2026-07-04 (#248)
 - K1 + T1 + V2 (retention helpers consolidation) → 2026-07-03 (#243)
-- RS1 + RS2 + RS3 (report-service fetch guards alignment on caravan pattern) → 2026-07-02 (#239)
-- P1 + P2 + P3 + P4 (WorldService `_count` include consolidation) → 2026-07-01 (#232)
-- U3 + N3 + N4 + F (world-entities-query bounds & captureWindow) → 2026-06-30 (#227)
-- N5–N15 (display-name dup) → 2026-06-26
-- W2c (initiate{Attack,Scout,Reinforce} skeleton consolidation) → 2026-06-25
-- W5 + W6 (construction post-tx correctness + structured swallow logs) → 2026-06-22 (2)
-- W3 + W4 (registerQueueWorker helpers + construction emoji logs) → 2026-06-22 (1)
-- Q1 (Array.isArray defensive unwrap) → absorbé par helper W3
-- W2a/W2b done 2026-06-20 | S1 done 2026-06-21 | D3 PR #153 | D1 PR #144 | D4 PR #142 | OB1/OB2 PR #134
-- B3/E1/U2 déjà traités | G1 intentionnel tx | U4 false-positive | A1 case-insensitive pre-check OK
-- WL1 (world-lifecycle loops) = looks-bad-but-fine (tx-count, pas resilient batch)
+- RS1–RS3 (report-service fetch guards) → 2026-07-02 (#239) | P1–P4 (WorldService `_count`) → 2026-07-01 (#232)
+- U3 + N3 + N4 + F (world-entities-query bounds) → 2026-06-30 (#227) | N5–N15 (display-name dup) → 2026-06-26
+- W2c → 2026-06-25 | W5+W6 → 2026-06-22 | W3+W4 (+Q1) → 2026-06-22 | W2a/W2b → 2026-06-20 | S1 → 2026-06-21
+- D3 #153 | D1 #144 | D4 #142 | OB1/OB2 #134 | B3/E1/U2 done | G1 tx intentionnel | U4 false-positive
+- O1 = latent | WL1 = looks-bad-but-fine (tx-count) | A1 case-insensitive pre-check OK

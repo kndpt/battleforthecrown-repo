@@ -29,6 +29,7 @@ import {
   distributeLossesProportionally,
 } from './combat.utils';
 import { releasePopulationForLosses } from './population-release';
+import { creditUnitsToInventory } from './unit-inventory';
 import { parseUnitMap, encodeUnitMap, encodeLootResult } from './codecs';
 import {
   caravanPortersFor,
@@ -1408,25 +1409,7 @@ export class CombatWorker implements OnModuleInit {
     if (isReturningHome) {
       this.logger.debug(`Reinforcement returning home to ${originVillageId}`);
       // Back to home inventory
-      for (const [unitType, quantity] of Object.entries(units)) {
-        if (quantity <= 0) continue;
-        await tx.unitInventory.upsert({
-          where: {
-            villageId_unitType: {
-              villageId: originVillageId,
-              unitType,
-            },
-          },
-          create: {
-            villageId: originVillageId,
-            unitType,
-            quantity,
-          },
-          update: {
-            quantity: { increment: quantity },
-          },
-        });
-      }
+      await creditUnitsToInventory(tx, originVillageId, units);
     } else {
       this.logger.debug(
         `Reinforcement arriving at ${expedition.targetRefId} from ${originVillageId}`,
@@ -1573,16 +1556,7 @@ export class CombatWorker implements OnModuleInit {
       `Reinforcement ${expedition.id} bounced: host ${expedition.targetRefId} under an open capture window`,
     );
 
-    for (const [unitType, quantity] of Object.entries(units)) {
-      if (quantity <= 0) continue;
-      await tx.unitInventory.upsert({
-        where: {
-          villageId_unitType: { villageId: originVillageId, unitType },
-        },
-        create: { villageId: originVillageId, unitType, quantity },
-        update: { quantity: { increment: quantity } },
-      });
-    }
+    await creditUnitsToInventory(tx, originVillageId, units);
 
     await tx.expedition.update({
       where: { id: expedition.id },
