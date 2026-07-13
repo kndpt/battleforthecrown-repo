@@ -1,3 +1,5 @@
+import { formatCompact } from '@/lib/formatters';
+
 export type VillageMapVariant = 'mine' | 'unscouted' | 'scouted' | 'barbare';
 export type VillageMapTypeTag = 'player' | 'mine' | 'pvm' | 'barbare';
 export type BarbarianTier = 1 | 2 | 3 | 4 | 5;
@@ -11,7 +13,6 @@ export const STYLE_META: Record<string, StyleMeta> = {
   'Économique': { l: '#6ebf49', d: '#4a8c2a', b: '#3a6c1f', ink: '#fff', ico: '🌾' },
   'Équilibré':  { l: '#f1c40f', d: '#d4a017', b: '#9e7b0d', ink: '#3a2a00', ico: '♛' },
 };
-// Fallback style inconnu (gris stone)
 export const STYLE_FALLBACK: StyleMeta = { l: '#b0b8c0', d: '#7c8088', b: '#5d6d6e', ink: '#fff', ico: '—' };
 
 export interface TierMeta extends ThemeColors { ink: string; label: string; desc: string }
@@ -24,9 +25,5 @@ export const TIER_META: Record<BarbarianTier, TierMeta> = {
 };
 
 export const frInt = (n: number): string => n.toLocaleString('fr-FR');
-// Abréviation K/M pour puissances potentiellement grandes (1,2K · 3,4M)
-export const frShort = (n: number): string => {
-  if (n >= 1e6) return (n / 1e6).toFixed(1).replace('.0', '').replace('.', ',') + 'M';
-  if (n >= 1e3) return (n / 1e3).toFixed(1).replace('.0', '').replace('.', ',') + 'K';
-  return frInt(n);
-};
+
+export const frShort = (n: number): string => formatCompact(n, { locale: 'fr' });

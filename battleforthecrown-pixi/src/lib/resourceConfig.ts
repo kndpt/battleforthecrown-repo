@@ -181,34 +181,22 @@ export const isValidResourceType = (type: string): type is ResourceType => {
   return type in RESOURCE_CONFIG;
 };
 
-/**
- * Formater un nombre de ressources (1K, 1.5M, etc.)
- */
-export const formatResourceAmount = (amount: number): string => {
-  if (amount >= 1000000) {
-    return `${(amount / 1000000).toFixed(1)}M`;
-  }
-  if (amount >= 1000) {
-    return `${(amount / 1000).toFixed(1)}K`;
-  }
-  return Math.floor(amount).toString();
-};
+import { formatCompact } from './formatters';
+
+export const formatResourceAmount = (amount: number): string =>
+  formatCompact(amount, { decimals: 'always' });
 
 export const formatHeaderCompactAmount = (amount: number): string => {
   const value = Number.isFinite(amount) ? Math.max(0, Math.floor(amount)) : 0;
-
-  if (value >= 1000000) {
-    return `${Math.floor(value / 1000000)}m`;
-  }
-  if (value >= 1000) {
-    return `${Math.floor(value / 1000)}k`;
-  }
-  return value.toString();
+  return formatCompact(value, { decimals: 'none', case: 'lower' });
 };
 
 export function formatCompactNumber(n: number): string {
-  if (n >= 10_000) return `${Math.round(n / 1000)}K`;
-  if (n >= 1_000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}K`;
-  return String(Math.floor(n));
+  if (n >= 1_000_000) return formatCompact(n);
+  if (n >= 10_000) {
+    const rounded = Math.round(n / 1000);
+    return rounded >= 1000 ? formatCompact(n) : `${rounded}K`;
+  }
+  return formatCompact(n);
 }
 
