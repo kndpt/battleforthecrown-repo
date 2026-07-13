@@ -1,7 +1,7 @@
 # refactor-pixi — state (rewritten each run)
 
-last: 2026-07-11 | theme dry-02-resource-metadata | branch claude/focused-galileo-db4k9v
-full: `archive/refactor-pixi/2026-07-11-full.md`
+last: 2026-07-13 | theme d05-compact-formatters | branch claude/focused-galileo-t51o3l
+full: `archive/refactor-pixi/2026-07-13-full.md`
 
 ## OPEN
 
@@ -9,7 +9,7 @@ full: `archive/refactor-pixi/2026-07-11-full.md`
 |----|-----|-------|------|
 | C-03 | Crit | VillageView.tsx:587L | 67 hooks, 11 useState — worst god component |
 | C-04 | Crit | WorldMapScreen.tsx:523L | 57 hooks, 10 useState |
-| DRY-02 | Crit→Med | 6 design-system files | Remaining: crowns icon path intentionally different (`casual-icons/crown.png` vs `crown.png`) |
+| DRY-02 | Crit→Med | 6 design-system files | Remaining: crowns icon path intentionally different |
 | C-01 | High | ArmyScreen.tsx:688L | 40 hooks, 8 useState |
 | C-05 | High | GameHeader.tsx:470L | 38 hooks, duplicates VillageView logic |
 | C-06 | High | AttackDetailModal.tsx:558L | 30 hooks, 8 useMemo from 6 queries |
@@ -18,9 +18,9 @@ full: `archive/refactor-pixi/2026-07-11-full.md`
 | TEST-01 | High | ArmyScreen, VillageView, AttackDetailModal | 3 major screens ZERO tests |
 | T-01 | High | VillageViewSections.tsx:531L | Zero tests |
 | T-02 | High | WorldMapScreen.tsx:523L | Zero tests |
-| D05 | High | resourceConfig.ts + meta.ts | 4 overlapping compact number formatters |
-| TYPE-04 | Med | SegmentedControl.tsx:20 | onChange string→void; 8 callers cast to union |
-| TYPE-05 | Med | BuildingDto.type, ArmyUnitDto.type | ~13 `as BuildingType`/`as UnitType` casts |
+| MUT-01 | High | combat.ts:356,457,483 | useInitiateAttack/Reinforce/Caravan no onError (silent failure) |
+| TYPE-04 | Med | SegmentedControl.tsx:20 | onChange string→void; 5 callers cast to union |
+| TYPE-05 | Med | BuildingDto.type, ArmyUnitDto.type | 13 `as BuildingType`/`as UnitType` casts (8+5) |
 | D02 | Med | QueueBottomSheet.tsx:22 | formatTime duplicates formatRemaining |
 | D07 | Med | BuildingCard.tsx:81 | Inline canAfford reimplements canAffordNextBuildingLevel |
 | D24 | Med | api/queries/combat.ts:201 | useMarkReadMutation no onError |
@@ -29,14 +29,14 @@ full: `archive/refactor-pixi/2026-07-11-full.md`
 | TYPE-06 | Med | api/client.ts:168,174 | `undefined as T` returns undefined to typed callers |
 | TYPE-08 | Med | pixi/assets/loader.ts:16 | Assets.loadBundle cast without validation |
 | SA-01 | Med | AuthenticatedShell.tsx:82 | Crowns hydration uses Date.now() instead of server ts |
+| LOCALE-01 | Med | 8+ files | 30+ inline `.toLocaleString('fr-FR')` not using NUMBER_FMT |
 | C-07 | Med | Tooltip.tsx:476L | 21 hooks, 7 effects (positioning) |
 | C-08 | Med | Select.tsx:416L | 23 hooks, popup positioning + keyboard nav |
 | C-09 | Med | AuthenticatedShell.tsx:153L | 25 hooks, 8 useEffect sync chains |
 | C-10 | Med | ReportDetailModal.tsx:496L | 4 near-identical report-type sections |
 | P-04 | Med | useTickingNow.ts | No pause/disable; 12 call sites tick unconditionally |
 | TEST-02 | Med | MapMarkerSheet.tsx | Component without tests (model tested) |
-| NEW-02 | Low | 7 files | NUMBER_FORMATTER = NUMBER_FMT alias repeated (cosmetic) |
-| NEW-03 | Low | 3 design-system files | fr()/formatCount() one-liner x3 |
+| DATE-01 | Low | 3 files | 3 inline `new Intl.DateTimeFormat('fr-FR')` |
 | NEW-05 | Low | multiVillageSheet.ts:170 | 3rd time-duration formatter |
 | D04 | Low | kingdomActivitiesViewModel.ts:188 | computeProgress overlaps constructionProgress core |
 | PERF-01 | Low | PublicPlayerProfileSheet.tsx:31 | Triple useTickingNow ticking simultaneously |
@@ -48,27 +48,25 @@ full: `archive/refactor-pixi/2026-07-11-full.md`
 
 | ID | Fix |
 |----|-----|
-| DRY-02 (prod) | FIX: 7 production files consolidated → RESOURCE_CONFIG (icon paths + labels) |
-| DRY-04 | FIX+BUG: tierFromPower x3 → shared villageTierFromPower in lib/villageTier.ts; fixed tier 5 cap in PowerBottomSheet + PlayerProfileSheet (now correct tier 6 at >=5000) |
-| NEW-01 | FIX: DATE_FORMATTER triplicated in 3 combat report views → shared REPORT_DATE_FMT in lib/formatters.ts |
-| NEW-06 | FIX: worldsViewModel.ts local `new Intl.NumberFormat('fr-FR')` → import NUMBER_FMT |
-| NEW-07 | FIX: TroopDetailModal.tsx formatCount via toLocaleString → NUMBER_FMT.format |
+| D05 | FIX+BUG: 4 compact formatters → shared `formatCompact(n, opts?)` in lib/formatters.ts; `formatCompactNumber` gains M tier (was "1500K" → now "1.5M") |
 
 ## CLOSED prior runs
 
 | ID | Fix |
 |----|-----|
-| DRY-03 | FIX: 14 independent `Intl.NumberFormat('fr-FR')` → shared `NUMBER_FMT`/`INTEGER_FMT` in lib/formatters.ts |
-| WS-13..22 | FIX: WS invalidation gaps (population, activeExpeditions, reinforcement, caravan) |
-| D30 | FIX: UnitCard.tsx cancel training → pushToast onError |
-| D13..D20 | FIX: 8 silent mutations → pushToast onError |
-| DRY-01 | FIX: extracted SessionCtx + resolveSessionCtx() |
-| F01/F02 | FIX: optimistic entry replacement in train/upgrade mutations |
-| DEAD-01 | CLEANUP: removed unused useUpdateMapMarkerMutation |
-| CLEAN-01 | FIX: WorldMapScreen cleanup uses useMapMarkersStore.clear() |
-| Q-09 | RESOLVED: queries.ts split into 12 domain modules |
-| WS-03..09 | BUG FIX: caravan/garrison/conquest/noble invalidation + tests |
-| Q-05..13 | DRY/PERF: combat dispatch + troop movement + invalidation helpers |
-| SESS-01 | FIX: mapMarkersStore.clear() in resetGameSessionStores() |
-| S-02 | VERIFIED: all store consumers use granular selectors |
+| DRY-02 (prod) | FIX: 7 production files → RESOURCE_CONFIG |
+| DRY-03 | FIX: 14 `Intl.NumberFormat('fr-FR')` → shared NUMBER_FMT/INTEGER_FMT |
+| DRY-04 | FIX+BUG: tierFromPower x3 → shared villageTierFromPower |
+| NEW-01 | FIX: DATE_FORMATTER x3 → REPORT_DATE_FMT |
+| NEW-02 | FIX: NUMBER_FORMATTER alias x7 → NUMBER_FMT direct |
+| NEW-03 | FIX: fr()/formatCount() x3 → formatIntFr/NUMBER_FMT |
+| NEW-06/07 | FIX: worldsViewModel + TroopDetailModal → NUMBER_FMT |
+| WS-03..22 | FIX: WS invalidation gaps |
+| D13..D30 | FIX: 9 silent mutations → pushToast onError |
+| DRY-01 | FIX: SessionCtx extracted |
+| F01/F02 | FIX: optimistic entry replacement |
+| DEAD-01 | CLEANUP: unused useUpdateMapMarkerMutation |
+| CLEAN-01/SESS-01 | FIX: WorldMapScreen/store cleanup |
+| Q-05..13 | DRY/PERF: query split + combat dispatch + invalidation helpers |
+| S-02 | VERIFIED: granular selectors |
 | TYPE-02 | RESOLVED: scoutReportView refactored |
