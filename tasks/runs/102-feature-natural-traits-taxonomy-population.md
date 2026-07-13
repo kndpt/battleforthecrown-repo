@@ -15,7 +15,7 @@
 
 Livrer les **traits naturels non-productifs** documentés mais **explicitement exclus** par le run 088 (cf. `tasks/runs/archive/088-feature-village-natural-traits.md` ligne 23). Le blocage historique (« ces trois demandent de brancher des systèmes hors production passive ») est **levé** : les systèmes sœurs existent tous désormais (vision `WATCHTOWER_VISION_LEVELS`, mobilité `armySpeedBonus` dans `calculateTravelTime`, population `applyPopulationBonus`/Quartier).
 
-**Vision tranchée (recommandation forte du run-planner) : découper en 3 runs verticaux.** Ce run 102 pose la **fondation taxonomie v2** (redistribution des buckets + nouveaux traits enum + migration) et branche le **vertical le plus propre : Terre fertile → bonus population Quartier** (backend-only, zéro rendu Pixi). Les deux autres effets sont déportés sur des runs successeurs :
+**Vision tranchée (recommandation forte du run-planner) : découper en 3 runs verticaux.** Ce run 102 pose la **fondation taxonomie v2** (redistribution des buckets + nouveaux traits enum + migration) et branche le **vertical le plus propre : Terre fertile → bonus population Quartier** (shared + backend + **badge front léger** réutilisant le socle run 093 — **aucun nouveau rendu Pixi/canvas**, contrairement au vertical Colline). Les deux autres effets sont déportés sur des runs successeurs :
 
 - **Colline → bonus rayon vision Watchtower** (shared `vision.ts` + `vision.service.ts` + rendu disques Pixi).
 - **Plaine → départ d'armée plus rapide** (shared `travel-time.ts` + callers `combat.service.ts`/workers, balance calée sur la distribution posée ici).
@@ -40,7 +40,7 @@ Deux axes de décision refinement :
 - [ ] [auto] `deriveNaturalTrait` renvoie chaque nouveau trait à la **fréquence cible** (±tolérance) sur un large échantillon, et reste **stable** (même `(worldId, x, y)` → même trait sur N appels). (unit `traits.spec.ts`)
 - [ ] [auto] La somme des parts de la distribution v2 == 100 % et `PLAINS` n'excède pas le seuil anti-snowball tranché en refinement. (unit / grep)
 - [ ] [auto] `applyPopulationBonus` applique le facteur `FERTILE_SOIL` **multiplicativement** avec le `populationBonus` du style, **plat et indépendant du niveau** de bâtiment. (unit)
-- [ ] [auto] Un village `FERTILE_SOIL` a une population max supérieure d'exactement le facteur trait vs le **même** village `PLAINS` (mêmes bâtiments/niveaux/strategy), via l'endpoint population. (smoke)
+- [ ] [auto] Sur un fixture de **deux villages distincts** — l'un `FERTILE_SOIL`, l'autre `PLAINS`, avec bâtiments/niveaux/strategy **identiques** — la population max du village `FERTILE_SOIL` dépasse celle du village `PLAINS` d'exactement le facteur trait, via l'endpoint population. (smoke)
 - [ ] [auto] Les traits **non-`FERTILE_SOIL`** ne modifient pas la population max (régression neutre). (unit / smoke)
 - [ ] [auto] `naturalTrait` n'apparaît **toujours jamais** dans les payloads carte publique `PLAYER_VILLAGE`/`BARBARIAN_VILLAGE` (guard anti-fuite existant vert). (test guard)
 - [ ] [auto] Migration up passe ; **aucun** village avec `naturalTrait` NULL après backfill (selon décision a/b). (SQL / `prisma migrate deploy`)
