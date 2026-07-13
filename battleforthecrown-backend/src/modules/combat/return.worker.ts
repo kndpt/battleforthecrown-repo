@@ -5,6 +5,7 @@ import { registerJobQueueWorker } from '../../infra/pg-boss/queue-worker.helper'
 import { createOutboxEvent } from '../event/event.utils';
 import { OutboxPublisher } from '../event/outbox-publisher.service';
 import { parseUnitMap, parseCombatLoot } from './codecs';
+import { creditUnitsToInventory } from './unit-inventory';
 import { ExpeditionKind, Prisma, type Expedition } from '@prisma/client';
 import { withSerializableRetry } from '../../common/serializable-retry.utils';
 import { PrismaClientOrTx } from '../../common/prisma.types';
@@ -120,27 +121,11 @@ export class ReturnWorker implements OnModuleInit {
               }
 
               // 4. Return surviving units to inventory
-              for (const [unitType, quantity] of Object.entries(
+              await creditUnitsToInventory(
+                tx,
+                expedition.attackerVillageId,
                 survivingUnits,
-              )) {
-                if (quantity === undefined) continue;
-                await tx.unitInventory.upsert({
-                  where: {
-                    villageId_unitType: {
-                      villageId: expedition.attackerVillageId,
-                      unitType,
-                    },
-                  },
-                  create: {
-                    villageId: expedition.attackerVillageId,
-                    unitType,
-                    quantity,
-                  },
-                  update: {
-                    quantity: { increment: quantity },
-                  },
-                });
-              }
+              );
 
               // 5. Add looted resources to attacker's stock
               if (
