@@ -34,7 +34,11 @@ export function formatCompact(n: number, opts: {
   const sfx = (u: string) => (c === 'lower' ? u.toLowerCase() : u);
 
   if (n >= 1_000_000) return fmt(n / 1_000_000) + sfx('M');
-  if (n >= 1_000) return fmt(n / 1_000) + sfx('K');
+  if (n >= 1_000) {
+    const kRounded = decimals === 'none' ? Math.floor(n / 1_000) : Number((n / 1_000).toFixed(1));
+    if (kRounded >= 1000) return fmt(n / 1_000_000) + sfx('M');
+    return fmt(n / 1_000) + sfx('K');
+  }
 
   const base = Math.floor(n);
   return locale === 'fr' ? base.toLocaleString('fr-FR') : String(base);

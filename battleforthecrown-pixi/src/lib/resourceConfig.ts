@@ -193,7 +193,10 @@ export const formatHeaderCompactAmount = (amount: number): string => {
 
 export function formatCompactNumber(n: number): string {
   if (n >= 1_000_000) return formatCompact(n);
-  if (n >= 10_000) return `${Math.round(n / 1000)}K`;
+  if (n >= 10_000) {
+    const rounded = Math.round(n / 1000);
+    return rounded >= 1000 ? formatCompact(n) : `${rounded}K`;
+  }
   return formatCompact(n);
 }
 

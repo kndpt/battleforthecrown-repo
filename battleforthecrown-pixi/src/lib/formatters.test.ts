@@ -21,6 +21,12 @@ describe('formatCompact', () => {
       expect(formatCompact(1_500_000)).toBe('1.5M');
       expect(formatCompact(3_400_000)).toBe('3.4M');
     });
+
+    it('promotes K to M when rounding crosses the boundary', () => {
+      expect(formatCompact(999_999)).toBe('1M');
+      expect(formatCompact(999_950)).toBe('1M');
+      expect(formatCompact(999_949)).toBe('999.9K');
+    });
   });
 
   describe('decimals: always', () => {
@@ -45,6 +51,10 @@ describe('formatCompact', () => {
       expect(formatCompact(1999, opts)).toBe('1K');
       expect(formatCompact(1_500_000, opts)).toBe('1M');
       expect(formatCompact(1_999_999, opts)).toBe('1M');
+    });
+
+    it('does not promote K→M when floor stays below 1000', () => {
+      expect(formatCompact(999_999, opts)).toBe('999K');
     });
   });
 
