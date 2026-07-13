@@ -12,7 +12,7 @@ full: `archive/refactor-backend/2026-07-13-full.md`
 | R4  | High | crowns.service.ts:261                              | fractional carry — needs migration (`lastUpdateTs += production/rate`)                     |
 | W1  | High | combat/combat.worker.ts (2038L)                    | 4 kinds cohabitent — split par kind, L effort                                              |
 | B1  | Med  | combat.service.ts (1634L)                          | sans spec unit direct (smokes uniquement ; policy interdit mock Prisma)                    |
-| TE1 | Low  | combat.service:754/978/1000, combat.worker:1269/1298, return.worker:123, initiate-extraction:181 | `Object.entries(units)` brut vs `typedEntries` — cosmétique (retire cast, ~8 sites) |
+| TE1 | Low  | combat.service:754/978/1000, combat.worker:1269/1298, initiate-extraction:181 | `Object.entries(units)` brut vs `typedEntries` — cosmétique (retire cast, ~6 sites ; return.worker:123 retiré via CU1) |
 | G2  | Med  | gameplay/extraction-lifecycle.service.ts (783L)    | looks-bad-but-fine : ADR-12 déclare explicitement « tout ici »                            |
 | SU1 | Low  | combat-resolution.ts:247 + initiate-extraction:60  | `sumUnits`/`escortTotal` dup — seulement 2 sites back (reste dans shared, hors scope)      |
 | BR1 | Low  | barbarian-runtime.service:63, training.worker:61   | même upsert que CU1 mais divergent (accumulation / cast string) → hors CU1                  |
