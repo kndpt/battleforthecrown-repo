@@ -1,8 +1,8 @@
 # Run #101 — multi-village-incoming-attack-pill
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-07-13
+> **Terminé** : 2026-07-13
 
 ## Cible
 
@@ -56,21 +56,35 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 - **T6 — Tests** : `multiVillageSheet.test.ts` — cas attack présent, priorité attack > entrepôt plein > file inactive, ETA correcte, invariant fog (aucun champ attaquant).
 - **T7 — Docs** : fermer le gap spec 22 (§ Alertes d'état ~L83 + retirer de § Évolutions post-MVP ~L94) + note de run.
 
-## Progress
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
-## Décisions prises
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
 ## Rapport final
+
+Piste A (front-only, zéro backend) : 7e fan-out `incomingAttacks` dans `useMultiVillageData` (gated `villageSheetOpen`, `Map` TanStack in-hook comme ses 6 frères — pas de store Zustand, cache REST hors ADR-10), factory `incomingAttacksQueryOptions` extraite (DRY). `deriveVillageStateAlert` émet `kind:'attack'` en tête de priorité (attack > entrepôt plein > file inactive), ETA = `arrivalAt` future la plus proche. Branche de rendu `isAttack` déjà présente (activée, pas recréée). Contrat ENDED tenu par construction (`WorldSessionGate` court-circuite avant la sheet).
 
 ### Acceptance & QA
 
-_(Vide au démarrage. Rempli en fin de run.)_
+**Critères d'acceptance vérifiés :**
+- [x] C1 `kind:'attack'` dès ≥1 incoming — `yarn workspace battleforthecrown-pixi test run src/features/layout/multiVillageSheet.test.ts` → « emits an attack alert as soon as one incoming attack is present » vert.
+- [x] C2 priorité attack > entrepôt plein > file inactive — test « prioritises attack over warehouse full and idle queue » vert.
+- [x] C3 ETA = `arrivalAt` la plus proche, compact — tests « uses the nearest arrivalAt… » + « ignores an already-elapsed arrival… » (eta 5:00) verts.
+- [x] C4 fog-of-war (5 champs DTO, seul l'ETA affiché) — test « surfaces only the ETA » (`Object.keys` = [eta,kind,msg]) + rendu `MultiVillageBottomSheet.tsx:394-401` ne lit que `msg`/`eta`.
+- [x] C5 invariant 031 (jamais d'alerte inventée) — tests « ignores an empty incoming list » + « returns null when every incoming arrival has already elapsed » verts.
+- [x] C6 intégration câblage complet + invalidation WS — `useMultiVillageData.test.tsx` (QueryClient réel + `applyAttackIncoming` réel + spy HTTP) : `attack.incoming` → refetch → pastille attack sur v1 uniquement, v2 `null`. Moitié invalidation aussi en unit `ws-bindings.test.ts:1867`.
+- [x] C7 contrat ENDED — par construction : `WorldSessionGate.tsx:56-60` court-circuite vers `EndedWorldView` avant montage sheet+fan-out ; backend `getIncomingAttacks` ne renvoie que `EN_ROUTE` + `arrivalAt > now`.
+- [x] C8 `yarn static-check` + `yarn test:pixi` — `yarn static-check` clean ; `yarn workspace battleforthecrown-pixi test` → 1081 passed / 138 files.
 
-- [ ] `<critère>` — `<cmd>` → `<résultat>`
-- **Review indépendante** : requise (invariant fog-of-war + activation branche de rendu morte + ordre de priorité des alertes ; review légère centrée sur ces 3 points).
-- **Tests automatisés** : `multiVillageSheet.test.ts` (attack/priorité/ETA/fog), `yarn static-check`, `yarn test:pixi`.
-- **Tests IG user** : checklist visuelle (pastille rouge sur village ciblé, absence ailleurs, apparition live via WS, disparition à résolution).
+**Review indépendante** : Déclenchée (raison: invariant fog-of-war + activation branche rendu morte + ordre priorité alertes). Verdict `GO` (cycle 1) — 2 bloquants cycle 0 (ETA masquée par attaque expirée ; couverture C6) fixés et re-testés verts ; findings restants non-bloquants (faux positif typing vs convention 7 factories sœurs, test optionnel).
+
+**Tests automatisés** : `yarn workspace battleforthecrown-pixi test` → 1081 passed / 138 files. `yarn static-check` → clean.
+
+**Smokes lancés** : Aucun (diff strictement frontend Pixi, zéro `battleforthecrown-backend/src/`).
+
+**Smokes ajoutés/modifiés** : Aucun (front-only).
+
+**QA fonctionnelle agent** : couverte par le test d'intégration `useMultiVillageData.test.tsx` (chaîne WS→invalidation→recompute réelle). Pas de serveur requis.
+
+**Tests IG à faire par le user** :
+- [ ] Pastille rouge « Attaque entrante » + ETA visible dans le sélecteur multi-village sur le village ciblé.
+- [ ] Absente sur les autres villages (isolation).
+- [ ] Apparaît sans reload à réception de l'event WS `attack.incoming`.
+- [ ] Disparaît à résolution/expiration de l'attaque.
+- [ ] Filtre « Alertes » du sélecteur inclut bien le village sous attaque.

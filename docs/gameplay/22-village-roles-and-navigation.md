@@ -71,16 +71,17 @@ Le système retient ensuite le dernier village ayant reçu une récompense et le
 ## Alertes d'état (MVP-léger, présentationnel)
 
 Le sélecteur multi-village (`MultiVillageBottomSheet`) affiche une pastille d'alerte
-`kind: 'warning'` par village, dérivée **uniquement** des données déjà chargées par
+par village, dérivée **uniquement** des données déjà chargées par
 `useMultiVillageData` (`deriveVillageStateAlert` dans `features/layout/multiVillageSheet.ts`).
 
 Garde-fous — **purement présentationnel, zéro effet gameplay, aucune écriture serveur** :
 
-- **Entrepôt plein** : ≥1 ressource stockable (bois/pierre/fer) atteint son cap (`maxPerType`, seuil 100 %).
-- **File inactive** : aucune construction en file **et** aucune formation en cours (seigneur inclus).
-- Priorité déterministe (`alert` singulier) : entrepôt plein > file inactive.
-- Jamais d'alerte inventée : `null` si aucune donnée d'état chargée (invariant hérité de la livraison du shell multi-village).
-- Ce chemin n'émet **jamais** `kind: 'attack'` : l'alerte « attaque entrante » par village reste un gap ouvert distinct (successeur différé).
+- **Attaque entrante** (`kind: 'attack'`, rouge) : ≥1 attaque non résolue vise le village. Source = 7e fan-out `incomingAttacks` (`GET /combat/:villageId/incoming`, event WS `attack.incoming`), gated `villageSheetOpen`. ETA = `arrivalAt` la plus proche, format compact. **Fog-safe par construction** : seul l'`IncomingAttackDto` défenseur (5 champs `expeditionId, targetVillageId, targetX, targetY, arrivalAt`) est lu ; aucune info attaquant/compo/origine ne remonte, seul l'ETA est affiché.
+- **Entrepôt plein** (`kind: 'warning'`) : ≥1 ressource stockable (bois/pierre/fer) atteint son cap (`maxPerType`, seuil 100 %).
+- **File inactive** (`kind: 'warning'`) : aucune construction en file **et** aucune formation en cours (seigneur inclus).
+- Priorité déterministe (`alert` singulier) : **attaque entrante > entrepôt plein > file inactive**.
+- Jamais d'alerte inventée : `null` si aucune donnée chargée (invariant hérité de la livraison du shell multi-village). Une liste `incoming` vide n'invente pas d'attaque.
+- Contrat monde `ENDED` : la surface de jeu (et donc la sheet + le fan-out incoming) est court-circuitée par `WorldSessionGate` vers `EndedWorldView` ; aucune pastille active post-wipe. Double filet : le backend ne renvoie que `status:'EN_ROUTE'` + `arrivalAt > now`.
 
 ## Évolutions post-MVP
 
@@ -91,7 +92,6 @@ Garde-fous — **purement présentationnel, zéro effet gameplay, aucune écritu
 - favoris ;
 - dashboard royaume consolidé ;
 - alerte « garnison faible » (différée : seuil non tranché + pas de fan-out garrison) ;
-- alerte « attaque entrante » par village dans le sélecteur (surface distincte de la section « Attaques entrantes » du `KingdomActivities`) ;
 - presets d'actions ;
 - interaction avec une capitale mécanique ;
 - partage de rôles ou marqueurs avec une tribu.
