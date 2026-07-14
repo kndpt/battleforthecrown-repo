@@ -22,12 +22,12 @@ type Category = "puissance" | "gloire";
 type GlorySub = "assaut" | "rempart";
 type GloryPeriod = "WEEKLY" | "ALL_TIME";
 
-const CATEGORY_OPTIONS: SegmentedControlOption[] = [
+const CATEGORY_OPTIONS: SegmentedControlOption<Category>[] = [
   { value: "puissance", label: "Puissance", icon: "assets/army-power.png" },
   { value: "gloire", label: "Gloire de Combat", icon: "assets/hand-red.png" },
 ];
 
-const SUB_OPTIONS: SegmentedControlOption[] = [
+const SUB_OPTIONS: SegmentedControlOption<GlorySub>[] = [
   { value: "assaut", label: "Gloire d'Assaut", icon: "assets/hand-red.png" },
   {
     value: "rempart",
@@ -36,7 +36,7 @@ const SUB_OPTIONS: SegmentedControlOption[] = [
   },
 ];
 
-const PERIOD_OPTIONS: SegmentedControlOption[] = [
+const PERIOD_OPTIONS: SegmentedControlOption<GloryPeriod>[] = [
   { value: "WEEKLY", label: "7 jours" },
   { value: "ALL_TIME", label: "Global" },
 ];
@@ -117,7 +117,7 @@ export function RankingsScreen() {
         <SegmentedControl
           ariaLabel="Catégorie de classement"
           block
-          onChange={(value) => setCategory(value as Category)}
+          onChange={setCategory}
           options={CATEGORY_OPTIONS}
           tone="dark"
           value={category}
@@ -258,7 +258,7 @@ function GloireControls({ onPeriod, onSub, period, sub }: GloireControlsProps) {
       <SegmentedControl
         ariaLabel="Type de gloire"
         block
-        onChange={(value) => onSub(value as GlorySub)}
+        onChange={onSub}
         options={SUB_OPTIONS}
         value={sub}
       />
@@ -268,7 +268,7 @@ function GloireControls({ onPeriod, onSub, period, sub }: GloireControlsProps) {
         </span>
         <SegmentedControl
           ariaLabel="Période du classement"
-          onChange={(value) => onPeriod(value as GloryPeriod)}
+          onChange={onPeriod}
           options={PERIOD_OPTIONS}
           size="compact"
           value={period}

@@ -1,7 +1,7 @@
 # refactor-pixi — state (rewritten each run)
 
-last: 2026-07-13 | theme d05-compact-formatters | branch claude/focused-galileo-t51o3l
-full: `archive/refactor-pixi/2026-07-13-full.md`
+last: 2026-07-14 | theme type-safe-segmented-control | branch claude/focused-galileo-kyjmj9
+full: `archive/refactor-pixi/2026-07-14-full.md`
 
 ## OPEN
 
@@ -18,11 +18,8 @@ full: `archive/refactor-pixi/2026-07-13-full.md`
 | TEST-01 | High | ArmyScreen, VillageView, AttackDetailModal | 3 major screens ZERO tests |
 | T-01 | High | VillageViewSections.tsx:531L | Zero tests |
 | T-02 | High | WorldMapScreen.tsx:523L | Zero tests |
-| MUT-01 | High | combat.ts:356,457,483 | useInitiateAttack/Reinforce/Caravan no onError (silent failure) |
-| TYPE-04 | Med | SegmentedControl.tsx:20 | onChange string→void; 5 callers cast to union |
 | TYPE-05 | Med | BuildingDto.type, ArmyUnitDto.type | 13 `as BuildingType`/`as UnitType` casts (8+5) |
 | D02 | Med | QueueBottomSheet.tsx:22 | formatTime duplicates formatRemaining |
-| D07 | Med | BuildingCard.tsx:81 | Inline canAfford reimplements canAffordNextBuildingLevel |
 | D24 | Med | api/queries/combat.ts:201 | useMarkReadMutation no onError |
 | NEW-04 | Med | PlayerProfileSheet + meta.ts | Village style colors duplicated |
 | TYPE-01 | Med | VillageHero.tsx:271 | unvalidated label as VillageLabel cast |
@@ -48,12 +45,15 @@ full: `archive/refactor-pixi/2026-07-13-full.md`
 
 | ID | Fix |
 |----|-----|
-| D05 | FIX+BUG: 4 compact formatters → shared `formatCompact(n, opts?)` in lib/formatters.ts; `formatCompactNumber` gains M tier (was "1500K" → now "1.5M") |
+| TYPE-04 | FIX: SegmentedControl generic `<T extends string>`, 6 callers lose `as` casts |
+| D07 | FIX: BuildingCard inline canAfford → shared canAffordNextBuildingLevel |
+| MUT-01 | RESOLVED: call-site onError exists on all 6 combat mutations (toast/setError) |
 
 ## CLOSED prior runs
 
 | ID | Fix |
 |----|-----|
+| D05 | FIX+BUG: 4 compact formatters → shared `formatCompact(n, opts?)` |
 | DRY-02 (prod) | FIX: 7 production files → RESOURCE_CONFIG |
 | DRY-03 | FIX: 14 `Intl.NumberFormat('fr-FR')` → shared NUMBER_FMT/INTEGER_FMT |
 | DRY-04 | FIX+BUG: tierFromPower x3 → shared villageTierFromPower |

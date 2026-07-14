@@ -325,15 +325,15 @@ export function AttackDetailModal({
               className="w-full [&>button]:flex-1 [&>button]:justify-center"
               onChange={(value) => {
                 if (isPending) return;
-                setUserMode(value as 'attack' | 'scout' | 'reinforce');
+                setUserMode(value);
                 setError(null);
               }}
               options={[
                 ...(isFriendVillage
-                  ? [{ icon: '/assets/defense.png', label: 'Renfort', value: 'reinforce' }]
+                  ? [{ icon: '/assets/defense.png', label: 'Renfort', value: 'reinforce' as const }]
                   : []),
-                { icon: '/assets/army-power.png', label: 'Attaque', value: 'attack' },
-                { icon: '/assets/lupa.png', label: 'Scout', value: 'scout' },
+                { icon: '/assets/army-power.png', label: 'Attaque', value: 'attack' as const },
+                { icon: '/assets/lupa.png', label: 'Scout', value: 'scout' as const },
               ]}
               size="tabs"
               value={activeMode}
