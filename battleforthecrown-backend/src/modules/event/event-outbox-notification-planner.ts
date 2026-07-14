@@ -3,8 +3,6 @@ import type {
   PayloadForKind,
   VillageAttackedPayload,
   VillageConqueredPayload,
-  VillageCaptureWindowOpenedPayload,
-  VillageCaptureWindowInterruptedPayload,
   VillageCaptureWindowCompletedPayload,
 } from './event-types';
 import type { VillageUserIdCache } from './event-outbox-prefetch';
@@ -158,34 +156,28 @@ function scrubAttackerFields(
 }
 
 /**
- * During an OPEN window the target village's row still points to its original
- * owner (the transfer only happens at finalize), so the defender is resolvable
- * live via `getUserIdByVillage(targetVillageId)`. A barbarian target yields no
- * owner and is therefore never routed a defender copy.
+ * Structural shape shared by the OPEN and INTERRUPTED capture-window payloads:
+ * both carry a resolvable attacker (payload field or via the pending conquest)
+ * plus a `targetVillageId` whose row still points to the defender.
  */
-const planCaptureWindowOpened: AnyPlanner = async (payload, deps) => {
-  const typed = payload as VillageCaptureWindowOpenedPayload;
-  const attackerUserId =
-    typed.attackerUserId ??
-    (await deps.getAttackerUserIdByConquest(typed.pendingConquestId));
+interface AttackerRoutedCaptureWindowPayload {
+  pendingConquestId: string;
+  targetVillageId: string;
+  attackerUserId?: string;
+}
 
-  const plans: NotificationPlan[] = [];
-  if (attackerUserId) {
-    plans.push({ recipient: userRecipient(attackerUserId), payload: typed });
-  }
-
-  const defenderUserId = await deps.getUserIdByVillage(typed.targetVillageId);
-  if (defenderUserId && defenderUserId !== attackerUserId) {
-    plans.push({
-      recipient: userRecipient(defenderUserId),
-      payload: scrubAttackerFields(typed as unknown as Record<string, unknown>),
-    });
-  }
-  return plans;
-};
-
-const planCaptureWindowInterrupted: AnyPlanner = async (payload, deps) => {
-  const typed = payload as VillageCaptureWindowInterruptedPayload;
+/**
+ * Routes a capture-window event to the attacker (full payload) and, when
+ * distinct, to the current owner of the target village (attacker fields
+ * scrubbed). During an OPEN or INTERRUPTED window the target's row still points
+ * to its original owner — the transfer only happens at finalize — so the
+ * defender is resolvable live via `getUserIdByVillage(targetVillageId)`. A
+ * barbarian target yields no owner and is therefore never routed a defender
+ * copy. Shared by `capture-window-opened` and `capture-window-interrupted`
+ * (byte-identical routing); `capture-window-completed` differs and stays apart.
+ */
+const planCaptureWindowAttackerRouted: AnyPlanner = async (payload, deps) => {
+  const typed = payload as AttackerRoutedCaptureWindowPayload;
   const attackerUserId =
     typed.attackerUserId ??
     (await deps.getAttackerUserIdByConquest(typed.pendingConquestId));
@@ -255,8 +247,8 @@ const PLANNERS: Record<EventKind, AnyPlanner> = {
   'village.attacked': planVillageAttacked,
   'village.conquered': planVillageConquered,
   'village.removed': directWorld('worldId'),
-  'village.capture-window-opened': planCaptureWindowOpened,
-  'village.capture-window-interrupted': planCaptureWindowInterrupted,
+  'village.capture-window-opened': planCaptureWindowAttackerRouted,
+  'village.capture-window-interrupted': planCaptureWindowAttackerRouted,
   'village.capture-window-completed': planCaptureWindowCompleted,
   'noble.killed': directUser('attackerUserId'),
   'crowns.changed': directUser('userId'),
