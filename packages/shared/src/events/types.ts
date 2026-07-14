@@ -364,6 +364,11 @@ export interface ExtractionAttackedPayload {
   worldId: string;
   villageId: string;
   siteId: string;
+  /**
+   * Resource type of the attacked site — lets the in-app alert name it (fog-safe: no attacker identity).
+   * Optional: pre-deploy Outbox rows lack it (run 078 migration hazard); the new emitter always sets it.
+   */
+  resourceType?: "WOOD" | "STONE" | "IRON";
   interrupted: boolean;
   stolen: { wood: number; stone: number; iron: number };
 }
