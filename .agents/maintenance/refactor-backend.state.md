@@ -1,14 +1,13 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-07-13 | theme CU1 (High/M) — single-home « credit UnitMap → UnitInventory ». Nouveau `modules/combat/unit-inventory.ts` : `creditUnitsToInventory(tx, villageId, units)` (upsert par unitType, increment, skip `<= 0`). Extrait de 4 loops byte-identiques : combat.worker:1410 (reinforcement return-home) + :1576 (bounce), return.worker:123 (surviving units), extraction-lifecycle:258 (escort return). Move pur : les 4 sources sont des UnitMap issus de parseUnitMap (schema nonnegative) ou de subtractLosses (n'émet que `> 0`) → jamais de 0-entry, donc skip `<= 0` ≡ skip `=== undefined`. Exclus divergents : barbarian-runtime (accumule currentUnits), training.worker (unitType:string → cast). Pas de spec (helper = orchestration Prisma, policy interdit mock). static-check ok, 598 back verts, smokes 22/22 (reinforcements/cross-player/extraction/combat-attack/recall).
-full: `archive/refactor-backend/2026-07-13-full.md`
+last: 2026-07-14 | theme DUP-PLANNER (Med/S) — fusion des 2 planners capture-window byte-identiques (`event-outbox-notification-planner.ts`). `planCaptureWindowOpened`/`Interrupted` avaient corps stricts identiques (seul le nom de cast différait) ; payloads partagent structurellement `{pendingConquestId,targetVillageId,attackerUserId?}`. Nouvel `planCaptureWindowAttackerRouted: AnyPlanner` + interface locale `AttackerRoutedCaptureWindowPayload`, câblé sur les 2 kinds dans PLANNERS. Imports Opened/Interrupted payload retirés (unused) ; Completed conservé (planner distinct). Move pur, zéro changement comportement (scrub `attackerVillageId` = no-op sur Interrupted). static-check ok, 598 back verts (spec planner 6 cas capture-window inchangés), smokes 11/11 (capture-defender/conquest-finalize/combat-conquest-hook).
+full: `archive/refactor-backend/2026-07-14-full.md`
 
 ## OPEN
 
 | ID  | Sev  | Where                                              | Note                                                                                       |
 |-----|------|----------------------------------------------------|--------------------------------------------------------------------------------------------|
-| DUP-PLANNER | Med | event-outbox-notification-planner.ts:166-206 | `planCaptureWindowOpened`/`Interrupted` bodies 100% identiques (sauf nom cast payload) ; 2 interfaces partagent `{pendingConquestId,targetVillageId,attackerUserId?}` → factory générique. S effort, zéro risque type. **Candidat #1 next run** |
-| DUP-REPORT | Med | caravan-report.service.ts + reinforcement-report.service.ts | ~80% CRUD inbox dupliqué MAIS divergence réelle : caravan `findEntry` hardcode `hidden:false` (mark/delete throw sur hidden), reinforcement gate `excludeHidden` (idempotent). Helper doit exposer `excludeHidden` par op. Risque type-debt Prisma generic (M) |
+| DUP-REPORT | Med | caravan-report.service.ts + reinforcement-report.service.ts | ~80% CRUD inbox dupliqué MAIS divergence réelle : caravan `findEntry` hardcode `hidden:false` (mark/delete throw sur hidden), reinforcement gate `excludeHidden` (idempotent). Helper doit exposer `excludeHidden` par op. Risque type-debt Prisma generic (M). **Candidat #1 next run** |
 | R4  | High | crowns.service.ts:261                              | fractional carry — needs migration (`lastUpdateTs += production/rate`)                     |
 | W1  | High | combat/combat.worker.ts (2038L)                    | 4 kinds cohabitent — split par kind, L effort                                              |
 | B1  | Med  | combat.service.ts (1634L)                          | sans spec unit direct (smokes uniquement ; policy interdit mock Prisma)                    |
@@ -27,7 +26,8 @@ full: `archive/refactor-backend/2026-07-13-full.md`
 
 ## Skip — déjà traité
 
-- CU1 (credit UnitMap → UnitInventory → `combat/unit-inventory.creditUnitsToInventory`) → ce run
+- DUP-PLANNER (fusion planners capture-window → `event-outbox-notification-planner.planCaptureWindowAttackerRouted`) → ce run
+- CU1 (credit UnitMap → UnitInventory → `combat/unit-inventory.creditUnitsToInventory`) → 2026-07-13
 - L3 (rankings config resolver + Glory signals → `rankings/rankings-config.utils`) → 2026-07-12 (#289)
 - UA1 (unit-availability guard → `combat/unit-availability`) → 2026-07-11 (#285)
 - AF1 (resource-affordability guard → `shared/resources.hasSufficientResources`) → 2026-07-10 (#281)
