@@ -1,7 +1,9 @@
 import {
   determineTier,
   adjustCapacityForPlayerPresence,
+  getChunkBounds,
   getChunksInRings,
+  generateBarbarianName,
   samplePositions,
   type ChunkBounds,
   type Position,
@@ -157,6 +159,66 @@ describe('adjustCapacityForPlayerPresence', () => {
 
   it('capacity=1, 1 player → floor(1/2) = 0', () => {
     expect(adjustCapacityForPlayerPresence(1, 1)).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// describe: getChunkBounds
+// ---------------------------------------------------------------------------
+describe('getChunkBounds', () => {
+  it('interior chunk maps to its [cx*size, (cx+1)*size-1] tile span', () => {
+    // Chunk (1,1), chunkSize 50, world 200×200 → tiles [50..99]×[50..99].
+    expect(getChunkBounds(1, 1, 50, 200, 200)).toEqual({
+      minX: 50,
+      maxX: 99,
+      minY: 50,
+      maxY: 99,
+    });
+  });
+
+  it('origin chunk (0,0) starts at tile 0', () => {
+    expect(getChunkBounds(0, 0, 50, 100, 100)).toEqual({
+      minX: 0,
+      maxX: 49,
+      minY: 0,
+      maxY: 49,
+    });
+  });
+
+  it('clamps the far edge to worldWidth/worldHeight - 1 when the chunk overruns', () => {
+    // Chunk (3,3) raw span is [150..199], but world is only 180 wide/high →
+    // maxX/maxY clamp to 179.
+    expect(getChunkBounds(3, 3, 50, 180, 180)).toEqual({
+      minX: 150,
+      maxX: 179,
+      minY: 150,
+      maxY: 179,
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// describe: generateBarbarianName
+// ---------------------------------------------------------------------------
+describe('generateBarbarianName', () => {
+  it('is deterministic — same (tier, x, y) always yields the same name', () => {
+    expect(generateBarbarianName('T1', 12, 34)).toBe(
+      generateBarbarianName('T1', 12, 34),
+    );
+  });
+
+  it('derives prefix from seed = x*1000 + y and suffix from seed + tier[0]', () => {
+    // seed=0 → prefix DARK[0]; suffix = (0 + 'T'.charCodeAt(0)=84) % 7 = 0 → Camp.
+    expect(generateBarbarianName('T1', 0, 0)).toBe('Dark Camp');
+    // seed=1 → prefix idx 1 (Wild); suffix (1+84)%7 = 1 → Outpost.
+    expect(generateBarbarianName('T1', 0, 1)).toBe('Wild Outpost');
+    // seed=1000 → 1000%8 = 0 (Dark); suffix (1000+84)%7 = 6 → Hideout.
+    expect(generateBarbarianName('T1', 1, 0)).toBe('Dark Hideout');
+  });
+
+  it('varies the suffix with the tier first char (only charCodeAt(0) matters)', () => {
+    // Same seed 0, tier 'A1' → suffix (0 + 'A'=65) % 7 = 2 → Stronghold.
+    expect(generateBarbarianName('A1', 0, 0)).toBe('Dark Stronghold');
   });
 });
 
