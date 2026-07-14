@@ -511,7 +511,7 @@ function FilterSeg({ availableFilters, labels, onChange, value }: FilterSegProps
     <SegmentedControl
       ariaLabel="Filtrer les villages"
       className="flex w-full [&>button]:min-w-0 [&>button]:flex-1 [&>button]:justify-center [&>button]:px-1.5 [&>button]:py-1 [&>button]:text-[10.5px] [&>button]:uppercase [&>button]:tracking-[.05em]"
-      onChange={(next) => onChange(next as MultiVillageFilter)}
+      onChange={onChange}
       options={options.map((option) => ({ label: option.label, value: option.id }))}
       size="compact"
       value={value}

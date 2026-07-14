@@ -5,23 +5,23 @@ import { cn } from '@/lib/cn';
 export type SegmentedControlSize = 'compact' | 'default' | 'tabs';
 export type SegmentedControlTone = 'parchment' | 'dark';
 
-export interface SegmentedControlOption {
+export interface SegmentedControlOption<T extends string = string> {
   badge?: string;
   icon?: string;
   label: string;
-  value: string;
+  value: T;
 }
 
-export interface SegmentedControlProps {
+export interface SegmentedControlProps<T extends string = string> {
   ariaLabel: string;
   /** Stretch to full width with equal-width buttons. */
   block?: boolean;
   className?: string;
-  onChange: (value: string) => void;
-  options: SegmentedControlOption[];
+  onChange: (value: T) => void;
+  options: SegmentedControlOption<T>[];
   size?: SegmentedControlSize;
   tone?: SegmentedControlTone;
-  value: string;
+  value: T;
 }
 
 const sizeClass: Record<SegmentedControlSize, string> = {
@@ -30,7 +30,7 @@ const sizeClass: Record<SegmentedControlSize, string> = {
   tabs: 'px-[18px] py-2 text-[13px]',
 };
 
-export function SegmentedControl({
+export function SegmentedControl<T extends string = string>({
   ariaLabel,
   block = false,
   className,
@@ -39,7 +39,7 @@ export function SegmentedControl({
   size = 'default',
   tone = 'parchment',
   value,
-}: SegmentedControlProps) {
+}: SegmentedControlProps<T>) {
   const dark = tone === 'dark';
 
   return (
