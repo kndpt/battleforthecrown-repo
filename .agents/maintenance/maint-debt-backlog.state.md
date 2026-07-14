@@ -1,6 +1,6 @@
 # maint-debt — candidats (réécrit chaque run)
 
-last: 2026-07-13 | archive: `archive/maint-debt/2026-06-15-full.md`
+last: 2026-07-14 | archive: `archive/maint-debt/2026-06-15-full.md`
 branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 ## candidate
@@ -21,7 +21,7 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 | area | PR |
 |------|-----|
-| world-types.test.ts — cover fogged-entity path: `isFoggedEntity` guard (true on fogged, false on 3 real kinds) + `entityFromWorldDto` fogged dispatch → position-only MapEntity, `isMine` stays false w/ or w/o userId. 0 prior coverage of the fogged branch; guard consumed at world-types.ts:66 | pending |
+| barbarian-geometry.spec.ts — cover `getChunkBounds` (interior span, origin, far-edge clamp to world-1) + `generateBarbarianName` (determinism, seed=x*1000+y prefix, suffix=seed+tier[0], tier-char variance). 2 of 6 shared exports had 0 coverage; siblings already tested same file | pending |
 
 ## rejected (false positive — do not repick)
 
@@ -36,6 +36,7 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 | area | PR |
 |------|-----|
+| world-types.test.ts — cover fogged-entity path (`isFoggedEntity` guard + `entityFromWorldDto` fogged dispatch) | #292 |
 | shared/cosmetic/consts.spec.ts — cover `formatCosmeticAwardLabel` + anti-drift guards | #287 |
 | shared/world/vision.spec.ts — cover `isPointInAnyVisionDisk` fog-of-war geometry | #283 |
 | ws-bindings.ts orphaned `Exhaustive map` comment → moved onto `bindings` const | #275 |
