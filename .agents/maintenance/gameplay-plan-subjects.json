@@ -1043,6 +1043,34 @@
         "tasks/runs/archive/088-feature-village-natural-traits.md — ligne 23 liste ces 3 traits en Hors scope MVP / follow-up ; prérequis LIVRÉ (colonne Village.naturalTrait + migration backfill), non-doublon"
       ],
       "addedAt": "2026-07-13"
+    },
+    {
+      "specPath": "docs/gameplay/lab/tickets/05-player-capital.md",
+      "slug": "derived-capital-gameplay-weight",
+      "title": "Poids gameplay de la capitale dérivée",
+      "keywords": [
+        "capital",
+        "capitale",
+        "derived",
+        "bonus",
+        "prestige",
+        "defense"
+      ],
+      "artefactType": "ticket",
+      "artefactPath": "tasks/91-derived-capital-gameplay-weight.md",
+      "artefactId": "091",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/derived-capital-gameplay-weight",
+      "gapSummary": "La capitale existe mais est dérivée (plus ancien village) et purement cosmétique : isCapital est un simple badge UI, zéro effet mécanique, aucun endpoint pour la changer, aucune colonne persistante. Le lab ticket 05 veut lui donner un poids gameplay ; la désignation joueur contredit une décision MVP tranchée (roadmap L110), donc le scope MVP-safe est un bonus léger sur la capitale DÉRIVÉE.",
+      "codeEvidence": [
+        "battleforthecrown-backend/src/modules/village/village.service.ts:106-115 — getCapitalVillageId dérive la capitale (tri conqueredAt ?? createdAt), immuable",
+        "battleforthecrown-backend/src/modules/village/village.controller.ts — routes label/upgrade/cancel/strategy, aucun endpoint de désignation de capitale",
+        "battleforthecrown-backend/src/modules/combat/combat-resolution.ts — sumDefensePower ignore la capitale, CombatContext.defender sans flag isCapital",
+        "battleforthecrown-pixi/src/features/game/VillageHero.tsx + layout/GameHeader.tsx + layout/multiVillageSheet.ts — isCapital consommé seulement comme badge, aucun effet",
+        "battleforthecrown-backend/prisma/schema.prisma — pas de colonne capitale sur Village/User/WorldMembership",
+        "tasks/00-mvp-roadmap.md:110 — decision MVP : la capitale n'est PAS choisie par le joueur (contrainte contre la piste désignation)"
+      ],
+      "addedAt": "2026-07-14"
     }
   ]
 }
