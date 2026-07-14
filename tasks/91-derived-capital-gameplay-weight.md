@@ -51,11 +51,13 @@ Points à trancher (arbitrage user) :
 
 ### Backend
 
-- `modules/combat/combat-resolution.ts` (`sumDefensePower:124-154`) — point d'insertion du multiplicateur capitale (si piste A mécanique).
-- `modules/combat/interfaces/combat-context.interface.ts` — enrichir `CombatContext.defender` d'un flag `isCapital`.
-- `modules/combat/combat.service.ts` (chargement `targetVillage` l.422/531/1019) — calculer la capitale du `userId` défendeur via `getCapitalVillageId` (réutiliser, **ne pas dupliquer** la logique de tri).
+- `modules/combat/combat-resolution.ts` (`sumDefensePower:124-154`) — point d'insertion du multiplicateur capitale (si piste A mécanique). **Calcul pur only** (le flag `isCapital` lui est fourni en entrée, il ne résout rien lui-même).
+- `modules/combat/interfaces/combat-context.interface.ts` — enrichir `CombatContext.defender` d'un flag `isCapital` **éphémère** (jamais persisté).
+- `modules/combat/combat.worker.ts` (`buildCombatContext`) — **résoudre `isCapital` à la résolution du combat, PAS à l'envoi** : appeler `getCapitalVillageId(userId défendeur)` au moment où le contexte est construit, comparer au `targetVillage`, injecter le booléen dans `CombatContext.defender.isCapital`. Résoudre au chargement de `targetVillage` dans `combat.service.ts` (`initiateAttack`) serait **incorrect** : la capitale dérivée peut changer entre l'envoi et la résolution (perte/conquête d'un village, resettlement) → le bonus s'appliquerait au mauvais village. Réutiliser `getCapitalVillageId`, **ne jamais dupliquer** la logique de tri.
 - `modules/combat/combat-report.presenter.ts` — surfacer « capitale » + effet du bonus dans le rapport défenseur.
 - `modules/village/village.service.ts:106-115` — source de vérité dérivée, à réutiliser telle quelle.
+
+> **ADR-12 — non applicable ici.** L'ADR-12 (« use cases gameplay + `OutboxPublisher` ») encadre les **mutations transverses** (writes multi-domaines + event Outbox) et **exclut explicitement le combat** (« Combat garde `createOutboxEvent` direct »). Le bonus capitale est une **computation en lecture seule** dans le chemin de résolution de combat existant (`combat.worker`/`combat-resolution.ts`) : aucun write transverse, aucun nouvel event Outbox, aucun risque de `forwardRef`. Il n'a donc pas à passer par un use case `modules/gameplay/`. À réévaluer uniquement si une future piste ajoute une vraie mutation (ex. persistance d'une désignation, piste B).
 
 ### Frontend
 
@@ -71,15 +73,18 @@ Points à trancher (arbitrage user) :
 ### Tests
 
 - Unitaires purs sur la formule / le multiplicateur défensif.
-- Bascule capitale dérivée (mono-village, perte du 1er village, resettlement) → le bonus suit.
+- Bascule capitale dérivée (mono-village, perte du 1er village, resettlement) → le bonus suit, résolu à la résolution du combat (pas à l'envoi).
+- **Intégration** : combat sur un village capitale → résolution → presenter/DTO du rapport ; asserter que le rapport défenseur indique explicitement `isCapital` + application du bonus (protège le contrat utilisateur, au-delà des tests de formule).
 - Non-régression : combats de villages non-capitale inchangés.
+- Cycle de vie : monde `ENDED` en lecture seule → aucune résolution de combat déclenchable, aucun état capitale à purger (effet éphémère, zéro flag persistant) — non-régression.
 
 ## Critères de succès
 
 - [ ] Une piste est tranchée avec Kelvin (A mécanique / A prestige / B post-MVP) et les 4 points ci-dessus sont arbitrés.
-- [ ] (Si piste A) le village capitale dérivé bénéficie d'un effet configurable `WorldConfig`, appliqué **server-side**, calculé à la résolution via `getCapitalVillageId` (aucun flag persistant, aucune duplication de tri).
-- [ ] (Si piste A) le rapport de combat défenseur indique que la cible était la capitale et que le bonus a joué.
+- [ ] (Si piste A) le village capitale dérivé bénéficie d'un effet configurable `WorldConfig`, appliqué **server-side**, `isCapital` résolu **à la résolution du combat** via `getCapitalVillageId` (aucun flag persistant, aucune duplication de tri, jamais résolu à l'envoi).
+- [ ] (Si piste A) le rapport de combat défenseur indique que la cible était la capitale et que le bonus a joué — couvert par un **test d'intégration résolution → presenter/DTO**.
 - [ ] La capitale reste **conquérable normalement** (pas d'intouchabilité).
 - [ ] Le bonus suit la capitale dérivée après bascule (perte / resettlement) — test.
 - [ ] Aucune régression sur les combats de villages non-capitale (effet neutre ailleurs).
+- [ ] **Cycle de vie `LOCKED → ENDED`** : aucun carry-over d'état capitale (garanti par construction — effet éphémère, zéro flag persistant), et la résolution reste compatible avec le mode lecture seule post-`ENDED` (aucun combat déclenchable) — non-régression asserté.
 - [ ] La décision de scope (dérivé MVP vs désignable post-MVP) est documentée dans `22-village-roles-and-navigation.md`.
