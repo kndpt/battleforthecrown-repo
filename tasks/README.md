@@ -4,7 +4,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
-_(Aucun ticket actif — backlog drainé. Voir `## Archivés` pour les tickets résolus et [`00-mvp-roadmap.md`](./00-mvp-roadmap.md) pour dériver les prochains sujets.)_
+- [91 — Poids gameplay de la capitale dérivée](./91-derived-capital-gameplay-weight.md) — 🟢 Mineur. La capitale dérivée (plus ancien village) n'est qu'un badge cosmétique sans aucun effet mécanique ; ticket de cadrage pour lui donner un poids gameplay léger (piste A : bonus défensif sur capitale dérivée, MVP-safe) sans rouvrir la désignation joueur (piste B post-MVP, contredit roadmap L110).
 
 ## Tickets découpés
 
