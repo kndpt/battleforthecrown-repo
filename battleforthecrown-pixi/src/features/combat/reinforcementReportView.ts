@@ -11,12 +11,8 @@ import { formatCoord, shortReportId } from './report-view-utils';
 
 export type { ReinforcementReportResponse };
 
-import { NUMBER_FMT } from '@/lib/formatters';
+import { NUMBER_FMT, REPORT_DATE_FMT } from '@/lib/formatters';
 
-import { REPORT_DATE_FMT } from '@/lib/formatters';
-
-const NUMBER_FORMATTER = NUMBER_FMT;
-const DATE_FORMATTER = REPORT_DATE_FMT;
 
 const reinforcementReportLabels: ReinforcementReportModalLabels = {
   reportPrefix: 'Rapport',
@@ -36,7 +32,7 @@ function villageLabel(name: string | null | undefined, x: number, y: number): st
 }
 
 function formatUnitTotal(total: number): string {
-  return `${NUMBER_FORMATTER.format(total)} troupe${total > 1 ? 's' : ''}`;
+  return `${NUMBER_FMT.format(total)} troupe${total > 1 ? 's' : ''}`;
 }
 
 function place({
@@ -68,7 +64,7 @@ export function reinforcementReportUnits(report: ReinforcementReportResponse): R
       return {
         icon: meta.iconPath ?? '/assets/army-power.png',
         label: quantity > 1 ? meta.pluralName : meta.name,
-        quantity: NUMBER_FORMATTER.format(quantity),
+        quantity: NUMBER_FMT.format(quantity),
       };
     })
     .sort((left, right) => left.label.localeCompare(right.label, 'fr'));
@@ -123,7 +119,7 @@ export function buildReinforcementReportModalProps(
     roleLabel: isStationed ? 'Soutien' : 'Retour',
     tone: isStationed ? 'stationed' : 'returned',
     units: reinforcementReportUnits(report),
-    when: DATE_FORMATTER.format(new Date(report.timestamp)),
+    when: REPORT_DATE_FMT.format(new Date(report.timestamp)),
     width: 360,
   };
 }

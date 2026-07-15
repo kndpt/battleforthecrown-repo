@@ -1,4 +1,5 @@
 import { Badge, Card, ResourceIcon } from '@/ui';
+import { NUMBER_FMT } from '@/lib/formatters';
 import { Box, Eye, TrendingUp, Users, Zap } from 'lucide-react';
 import {
   CASTLE_CONSTRUCTION_SPEED_BONUS,
@@ -117,7 +118,7 @@ interface BonusSectionProps {
 
 function format(bonus: BuildingBonus, value: number, formatter?: (v: number) => string) {
   if (formatter) return formatter(value);
-  return `${value.toLocaleString()}${bonus.unit ? ` ${bonus.unit}` : ''}`;
+  return `${NUMBER_FMT.format(value)}${bonus.unit ? ` ${bonus.unit}` : ''}`;
 }
 
 export function BonusSection({ buildingType, currentLevel }: BonusSectionProps) {
