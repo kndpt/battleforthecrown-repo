@@ -1071,6 +1071,34 @@
         "tasks/00-mvp-roadmap.md:110 — decision MVP : la capitale n'est PAS choisie par le joueur (contrainte contre la piste désignation)"
       ],
       "addedAt": "2026-07-14"
+    },
+    {
+      "specPath": "docs/gameplay/lab/tickets/04-distance-logistics.md",
+      "slug": "distance-loot-friction",
+      "title": "Friction de loot par distance (pillage) — promotion lab ticket 04",
+      "keywords": [
+        "distance",
+        "logistique",
+        "loot",
+        "pillage",
+        "friction",
+        "rayon"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/103-feature-distance-loot-friction.md",
+      "artefactId": "103",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/distance-loot-friction",
+      "gapSummary": "Le lab ticket 04 (idée à approfondir) acte une friction logistique par distance. Aujourd'hui la distance ne coûte que du temps de trajet (travel-time.ts) ; aucune friction sur le loot. Ce run tranche une seule friction MVP : capacite de loot du pillage reduite au-dela d'un rayon R, pre-affichee avant envoi, parametrable WorldConfig, plancher non nul. Confinement strict au pillage (conquete/renfort/retour non touches).",
+      "codeEvidence": [
+        "rg -i 'logistic|distanceFriction|lootPenalty|longDistance' sur backend/src + packages/shared/src + pixi/src — 0 match (friction inexistante)",
+        "packages/shared/src/logic/travel-time.ts — calculateTravelTime + calculateDistance : la distance n'agit que sur le temps de trajet, aucun facteur loot",
+        "battleforthecrown-backend/src/modules/combat/loot/loot.manager.ts:26 — totalCapacity = sumCarryCapacity(units), seul point ou le loot est borne, aucun facteur distance",
+        "battleforthecrown-backend/src/modules/combat/interfaces/combat-context.interface.ts:15-18 — CombatConfig._distance deja peuple (combat.worker.ts:1166), distance brute accessible cote resolution loot",
+        "packages/shared/src/world/schemas.ts:108-112 — CombatRulesSchema (attackBonus/defenseBonus/lootFactor) sans section distance-loot",
+        "battleforthecrown-pixi/src/features/combat/AttackDetailModal.tsx:124/141/497 — affiche distance + capacite de transport, aucun malus loot distance pre-affiche"
+      ],
+      "addedAt": "2026-07-15"
     }
   ]
 }
