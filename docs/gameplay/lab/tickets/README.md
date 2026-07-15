@@ -13,6 +13,7 @@ Quand un ticket est promu, sa source de vérité quitte le lab et passe dans une
 | [11](./11-intel-notebook.md) | MVP léger | [`11-scouting.md`](../../11-scouting.md#carnet-dintel-minimal-mvp-léger) |
 | [10](./10-map-notes-and-markers.md) | MVP léger | [`26-private-map-markers.md`](../../26-private-map-markers.md) |
 | [07](./07-resource-extraction-sites.md) | Livré (run 091) | [`docs/architecture/data-model.md` § Sites d'exploitation de ressources](../../../architecture/data-model.md#sites-dexploitation-de-ressources) |
+| [12](./12-player-resource-market.md) (partiel — « alternative plus saine ») | Livré (run 099) | [`28-royal-resource-exchange.md`](../../28-royal-resource-exchange.md) |
 
 ## Backlog lab
 

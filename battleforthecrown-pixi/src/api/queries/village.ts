@@ -12,6 +12,11 @@ import type {
   VillageStrategyDefinition,
   VillageStrategyType,
 } from "@battleforthecrown/shared/village";
+import type { ResourceType } from "@battleforthecrown/shared/resources";
+import {
+  ConvertResourcesResultSchema,
+  type ConvertResourcesResult,
+} from "@battleforthecrown/shared/resources";
 import { apiClient } from "../index";
 import {
   CancelConstructionResponseSchema,
@@ -185,6 +190,35 @@ export function useChangeVillageStrategyMutation() {
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.population(villageId),
+      });
+    },
+  });
+}
+
+export type ConvertResourcesResultDto = ConvertResourcesResult;
+
+interface ConvertResourcesInput {
+  villageId: string;
+  sourceType: ResourceType;
+  destinationType: ResourceType;
+  amount: number;
+}
+
+export function useConvertResourcesMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation<ConvertResourcesResultDto, Error, ConvertResourcesInput>({
+    mutationFn: async ({ villageId, sourceType, destinationType, amount }) => {
+      const raw = await apiClient.post<unknown>(
+        `/resources/${villageId}/convert`,
+        { sourceType, destinationType, amount },
+      );
+      // Validate at the trust boundary — a malformed response fails loudly.
+      return ConvertResourcesResultSchema.parse(raw);
+    },
+    onSuccess: (_data, { villageId }) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.resources(villageId),
       });
     },
   });

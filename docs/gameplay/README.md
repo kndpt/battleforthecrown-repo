@@ -32,6 +32,7 @@ Documentation gameplay consolidée. Vision design, mécaniques, formules d'équi
 25. [`25-account-renown.md`](./25-account-renown.md) — **Renommée** : niveau de compte persistant cross-monde (vétérance LoL), cosmétique only (zéro effet in-world). 4 sources de XP (construction, conquête, combat, classement fin de monde), courbe de niveau, ledger idempotent.
 26. [`26-private-map-markers.md`](./26-private-map-markers.md) — **Marqueurs de carte privés** (MVP léger) : mémoire stratégique posée sur une tile libre `(worldId, x, y)`, 6 kinds + note ≤80, cap 50 par `userId × worldId`, privé par compte (off-fog), purgé à l'archive. Zéro effet gameplay.
 27. [`27-village-natural-traits.md`](./27-village-natural-traits.md) — **Traits naturels de village** (MVP) : identité fixe dérivée de la tile `(worldId, x, y)`, traits de ressource (Forêt/Carrière/Veine +10 % plat, Plaine neutre), villages joueurs ET barbares, révélation scout (trait propre visible sur son panneau). Distinct du style *choisi* ([`12`](./12-village-styles.md)).
+28. [`28-royal-resource-exchange.md`](./28-royal-resource-exchange.md) — **Échange royal de ressources** (MVP livré) : conversion intra-village bois ↔ pierre ↔ fer à taux défavorable (`RATE=2`, arrondi floor), plafond quotidien 5000/type/village/jour, zéro couronne convertible, zéro transfert inter-village/joueur. Alternative promue au marché joueur-joueur ([`lab/tickets/12`](./lab/tickets/12-player-resource-market.md), toujours post-MVP).
 
 ### Laboratoire
 

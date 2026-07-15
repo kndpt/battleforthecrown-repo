@@ -29,6 +29,8 @@ export {
   villageStrategyQueryOptions,
   useVillageStrategyQuery,
   useChangeVillageStrategyMutation,
+  type ConvertResourcesResultDto,
+  useConvertResourcesMutation,
   populationQueryOptions,
   usePopulationQuery,
   useMyVillagesQuery,

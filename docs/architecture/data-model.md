@@ -38,6 +38,7 @@
 | `Village` | village d'un user dans un monde, coordonnées `x/y`, `name`, ressources `wood/stone/iron` (`Decimal`) |
 | `Building` | un bâtiment du village, `type` (CASTLE/WOOD/.../HIDEOUT), `level`, `population` consumed |
 | `BuildingQueue` | upgrade en cours, `targetLevel`, `startedAt`, `completesAt` |
+| `ResourceConversionDaily` | compteur du plafond quotidien de l'échange royal (run 099). Champs : `villageId`, `dayKey`, `woodConverted`/`stoneConverted`/`ironConverted` (unités de **source dépensée**, incrémentées par type). Unique `(villageId, dayKey)` ; relation `village` `onDelete: Cascade`. `dayKey` = reset `04:00 Europe/Paris` (même clé que `DailyCard`, cf. `getParisDailyKey`). Mécanique complète : [`docs/gameplay/28-royal-resource-exchange.md`](../gameplay/28-royal-resource-exchange.md). |
 
 Un user peut avoir plusieurs villages (conquête), un seul `mainVillage` (par convention via le `Village.isMain` ou par âge).
 
