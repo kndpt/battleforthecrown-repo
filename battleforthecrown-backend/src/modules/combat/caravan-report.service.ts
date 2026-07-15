@@ -1,98 +1,81 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
+import { Injectable } from '@nestjs/common';
+import type { InboxEntry, Prisma } from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { OwnershipService } from '../../common/auth';
 import { presentCaravanReport } from './caravan-report.presenter';
+import { InboxReportService } from './inbox-report.service';
 import type { CaravanReportResponse } from '@battleforthecrown/shared/combat';
 
 type CaravanEntryWithReport = Prisma.InboxEntryGetPayload<{
   include: { caravanReport: true };
-}> & {
-  caravanReport: NonNullable<
-    Prisma.InboxEntryGetPayload<{
-      include: { caravanReport: true };
-    }>['caravanReport']
-  >;
-};
+}>;
+
+type CaravanReportRow = NonNullable<CaravanEntryWithReport['caravanReport']>;
 
 @Injectable()
-export class CaravanReportService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly ownership: OwnershipService,
-  ) {}
+export class CaravanReportService extends InboxReportService<
+  CaravanReportRow,
+  CaravanReportResponse
+> {
+  protected readonly kind = 'CARAVAN' as const;
+  protected readonly include: Prisma.InboxEntryInclude = {
+    caravanReport: true,
+  };
+  protected readonly notFoundMessage = 'Caravan report not found';
+  protected readonly mutationExcludesHidden = true;
 
-  async getAllCaravanReports(
+  constructor(prisma: PrismaService, ownership: OwnershipService) {
+    super(prisma, ownership);
+  }
+
+  protected reportIdFilter(reportId: string): Prisma.InboxEntryWhereInput {
+    return { caravanReportId: reportId };
+  }
+
+  protected extractReport(entry: InboxEntry): CaravanReportRow | null {
+    return (entry as CaravanEntryWithReport).caravanReport ?? null;
+  }
+
+  protected present(
+    report: CaravanReportRow,
+    isRead: boolean,
+  ): CaravanReportResponse {
+    return presentCaravanReport(report, isRead);
+  }
+
+  getAllCaravanReports(
     userId: string,
     worldId: string,
   ): Promise<CaravanReportResponse[]> {
-    await this.ownership.assertWorldMember(worldId, userId);
-    const entries = await this.prisma.inboxEntry.findMany({
-      where: { userId, worldId, kind: 'CARAVAN', hidden: false },
-      include: { caravanReport: true },
-      orderBy: { timestamp: 'desc' },
-    });
-    return entries
-      .filter((entry) => entry.caravanReport)
-      .map((entry) => presentCaravanReport(entry.caravanReport!, entry.isRead));
+    return this.listReports(userId, worldId);
   }
 
-  async getCaravanReport(
+  getCaravanReport(
     userId: string,
     reportId: string,
     worldId: string,
   ): Promise<CaravanReportResponse> {
-    await this.ownership.assertWorldMember(worldId, userId);
-    const entry = await this.findCaravanEntry(userId, reportId, worldId);
-    return presentCaravanReport(entry.caravanReport, entry.isRead);
+    return this.readReport(userId, reportId, worldId);
   }
 
-  async markCaravanReportAsRead(
+  markCaravanReportAsRead(
     userId: string,
     reportId: string,
     worldId: string,
   ): Promise<CaravanReportResponse> {
-    await this.ownership.assertWorldMember(worldId, userId);
-    const entry = await this.findCaravanEntry(userId, reportId, worldId);
-    await this.prisma.inboxEntry.update({
-      where: { id: entry.id },
-      data: { isRead: true },
-    });
-    return presentCaravanReport(entry.caravanReport, true);
+    return this.markReportAsRead(userId, reportId, worldId);
   }
 
-  async deleteCaravanReport(
+  deleteCaravanReport(
     userId: string,
     reportId: string,
     worldId: string,
   ): Promise<{ message: string }> {
-    await this.ownership.assertWorldMember(worldId, userId);
-    const entry = await this.findCaravanEntry(userId, reportId, worldId);
-    await this.prisma.inboxEntry.update({
-      where: { id: entry.id },
-      data: { hidden: true },
-    });
-    return { message: 'Caravan report deleted successfully' };
-  }
-
-  private async findCaravanEntry(
-    userId: string,
-    reportId: string,
-    worldId: string,
-  ): Promise<CaravanEntryWithReport> {
-    const entry = await this.prisma.inboxEntry.findFirst({
-      where: {
-        userId,
-        worldId,
-        kind: 'CARAVAN',
-        caravanReportId: reportId,
-        hidden: false,
-      },
-      include: { caravanReport: true },
-    });
-    if (!entry?.caravanReport) {
-      throw new NotFoundException('Caravan report not found');
-    }
-    return entry as CaravanEntryWithReport;
+    return this.deleteReport(
+      userId,
+      reportId,
+      worldId,
+      'Caravan report deleted successfully',
+    );
   }
 }

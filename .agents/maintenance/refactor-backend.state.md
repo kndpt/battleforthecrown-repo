@@ -1,17 +1,16 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-07-14 | theme DUP-PLANNER (Med/S) — fusion des 2 planners capture-window byte-identiques (`event-outbox-notification-planner.ts`). `planCaptureWindowOpened`/`Interrupted` avaient corps stricts identiques (seul le nom de cast différait) ; payloads partagent structurellement `{pendingConquestId,targetVillageId,attackerUserId?}`. Nouvel `planCaptureWindowAttackerRouted: AnyPlanner` + interface locale `AttackerRoutedCaptureWindowPayload`, câblé sur les 2 kinds dans PLANNERS. Imports Opened/Interrupted payload retirés (unused) ; Completed conservé (planner distinct). Move pur, zéro changement comportement (scrub `attackerVillageId` = no-op sur Interrupted). static-check ok, 598 back verts (spec planner 6 cas capture-window inchangés), smokes 11/11 (capture-defender/conquest-finalize/combat-conquest-hook).
-full: `archive/refactor-backend/2026-07-14-full.md`
+last: 2026-07-15 | theme DUP-REPORT (Med/M) — fusion du CRUD inbox dupliqué (~80%) entre `caravan-report.service.ts` + `reinforcement-report.service.ts` dans base abstraite `combat/inbox-report.service.ts` (`InboxReportService<TReport,TResponse>`). Concrets ne déclarent que `kind`/`include`/`reportIdFilter`/`extractReport`/`present` + `mutationExcludesHidden`. Divergence hidden-gating préservée (caravan mark/delete 404 sur hidden ; reinforcement idempotent) → 1 flag déclaratif `mutationExcludesHidden` + JSDoc unique. Noms méthodes publiques conservés via wrappers → controller/presenter-specs/smokes inchangés. 1 cast contrôlé par concret dans `extractReport` (= net identique à avant). Pas d'`any`. static-check ok, 604 back verts, smoke combat-reports-inbox 2/2 (boot Nest → DI héritée validée).
+full: `archive/refactor-backend/2026-07-15-full.md`
 
 ## OPEN
 
 | ID  | Sev  | Where                                              | Note                                                                                       |
 |-----|------|----------------------------------------------------|--------------------------------------------------------------------------------------------|
-| DUP-REPORT | Med | caravan-report.service.ts + reinforcement-report.service.ts | ~80% CRUD inbox dupliqué MAIS divergence réelle : caravan `findEntry` hardcode `hidden:false` (mark/delete throw sur hidden), reinforcement gate `excludeHidden` (idempotent). Helper doit exposer `excludeHidden` par op. Risque type-debt Prisma generic (M). **Candidat #1 next run** |
 | R4  | High | crowns.service.ts:261                              | fractional carry — needs migration (`lastUpdateTs += production/rate`)                     |
-| W1  | High | combat/combat.worker.ts (2038L)                    | 4 kinds cohabitent — split par kind, L effort                                              |
+| W1  | High | combat/combat.worker.ts (2038L)                    | 4 kinds cohabitent — split par kind, L effort. **Candidat #1 next run**                    |
 | B1  | Med  | combat.service.ts (1634L)                          | sans spec unit direct (smokes uniquement ; policy interdit mock Prisma)                    |
-| TE1 | Low  | combat.service:754/978/1000, combat.worker:1269/1298, initiate-extraction:181 | `Object.entries(units)` brut vs `typedEntries` — cosmétique (retire cast, ~6 sites ; return.worker:123 retiré via CU1) |
+| TE1 | Low  | combat.service:754/978/1000, combat.worker:1269/1298, initiate-extraction:181 | `Object.entries(units)` brut vs `typedEntries` — cosmétique (retire cast, ~6 sites) |
 | G2  | Med  | gameplay/extraction-lifecycle.service.ts (783L)    | looks-bad-but-fine : ADR-12 déclare explicitement « tout ici »                            |
 | SU1 | Low  | combat-resolution.ts:247 + initiate-extraction:60  | `sumUnits`/`escortTotal` dup — seulement 2 sites back (reste dans shared, hors scope)      |
 | BR1 | Low  | barbarian-runtime.service:63, training.worker:61   | même upsert que CU1 mais divergent (accumulation / cast string) → hors CU1                  |
@@ -26,7 +25,8 @@ full: `archive/refactor-backend/2026-07-14-full.md`
 
 ## Skip — déjà traité
 
-- DUP-PLANNER (fusion planners capture-window → `event-outbox-notification-planner.planCaptureWindowAttackerRouted`) → ce run
+- DUP-REPORT (base abstraite `combat/inbox-report.service.ts` → fusion caravan+reinforcement inbox CRUD) → ce run
+- DUP-PLANNER (fusion planners capture-window → `event-outbox-notification-planner.planCaptureWindowAttackerRouted`) → 2026-07-14 (#300)
 - CU1 (credit UnitMap → UnitInventory → `combat/unit-inventory.creditUnitsToInventory`) → 2026-07-13
 - L3 (rankings config resolver + Glory signals → `rankings/rankings-config.utils`) → 2026-07-12 (#289)
 - UA1 (unit-availability guard → `combat/unit-availability`) → 2026-07-11 (#285)
