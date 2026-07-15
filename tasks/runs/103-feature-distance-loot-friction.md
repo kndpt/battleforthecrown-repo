@@ -21,12 +21,14 @@
 - [ ] [auto — spec] `lootDistanceFactor(d ≤ R)` === `1.0` exactement (unit test shared).
 - [ ] [auto — spec] `lootDistanceFactor(d ≫ R)` === `floor`, jamais `< floor`, jamais `0` (unit test shared).
 - [ ] [auto — spec] Décroissance monotone stricte entre `R` et le plateau `floor` (unit test shared).
-- [ ] [auto — backend] `loot.manager` : à `d > R`, capacité totale utilisée ≤ `round(sumCarryCapacity × factor)` ; à `d ≤ R`, résultat **identique** au comportement actuel (non-régression) (`loot.manager.spec.ts`).
+- [ ] [auto — backend] `loot.manager` : à `d > R`, capacité totale utilisée ≤ `Math.floor(sumCarryCapacity × factor)` (règle d'arrondi **unique** — `Math.floor`, alignée sur `getCaravanResourceCapacity` — partagée par helper shared, backend, front et fixtures) ; à `d ≤ R`, résultat **identique** au comportement actuel (non-régression) (`loot.manager.spec.ts`).
 - [ ] [auto — grep/diff] Aucune modif du calcul temps de trajet/retour (`travel-time.ts`, `return.worker.ts` inchangés hors imports). Renfort (`reinforce`) et conquête (`noble`/`pendingConquest`) ne consomment **jamais** le facteur.
+- [ ] [auto — front] `AttackDetailModal` (modal partagé) : le facteur, la capacité réduite et le badge malus sont calculés/affichés **uniquement en mode pillage/raid** ; en mode renfort et en mode conquête, **aucun** malus affiché ni calculé (tests des 2 modes).
+- [ ] [auto — backend] Réconciliation serveur : le loot final canonique est produit server-side par `loot.manager` avec `metadata.cappedByCapacity` cohérent (lisible dans le rapport de combat, run 052), publié via l'event Outbox de combat existant ; le client invalide/refetch après la mutation (aucune dérive preview ↔ état canonique).
 - [ ] [auto — SQL/curl] `seed-default-world-config` applique la section config ; `GET /worlds/:id/config` renvoie le bloc distance-loot.
 - [ ] [auto — static] `yarn static-check` + `test:backend` + `test:pixi` verts.
-- [ ] [visuel — Kelvin] `AttackDetailModal` : cible au-delà de `R` affiche une capacité de loot réduite + libellé du malus, mis à jour au changement de cible/unités.
-- [ ] [visuel — Kelvin] Cible sous `R` : aucun malus affiché, capacité identique à aujourd'hui.
+- [ ] [visuel — Kelvin] Cible **de pillage** au-delà de `R` : `AttackDetailModal` affiche une capacité de loot réduite + libellé du malus, mis à jour au changement de cible/unités.
+- [ ] [visuel — Kelvin] Cible **de pillage** sous `R` (et toute cible en mode renfort/conquête) : aucun malus affiché, capacité de transport identique à aujourd'hui.
 
 ## Références
 
@@ -42,7 +44,7 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 - **T1 — Shared** : helper pur `lootDistanceFactor(distance, cfg): number` (`packages/shared/src/logic/`) + section config sur `WorldConfigSchema` (`radius`, `slope`/`floor`) + defaults exportés + index + `*.spec.ts`. Source de vérité unique réutilisée backend ET front.
 - **T2 — Backend** : appliquer le facteur dans `loot.manager.ts:26` (`Math.floor(totalCapacity × lootDistanceFactor(context.config._distance, context.config))`) ; ajuster `metadata` ; `loot.manager.spec.ts` (`d ≤ R` → ×1, `d > R` → dégressif, plancher).
 - **T3 — Seed/fixtures** : `prisma/seed-default-world-config.sql` + `combat-fixtures.ts` alignés (aucune migration Prisma — config JSON).
-- **T4 — Frontend** : `AttackDetailModal.tsx` affiche la capacité de loot effective post-malus + badge/malus visible avant envoi, réutilise le helper shared.
+- **T4 — Frontend** : `AttackDetailModal.tsx` affiche la capacité de loot effective post-malus + badge/malus visible avant envoi, réutilise le helper shared. **Conditionner strictement au mode pillage/raid** (le modal est partagé attaque/renfort/conquête — pas de malus fictif en renfort/conquête).
 
 ## Progress
 
