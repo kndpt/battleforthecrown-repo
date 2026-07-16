@@ -50,6 +50,7 @@ import {
   RETURNED_TO_CLEANUP_DELAY_MS,
 } from "@/lib/expeditionTiming";
 import { buildRecalledExpeditionPatch } from "@/lib/expeditionRecall";
+import { RESOURCE_CONFIG } from "@/lib/resourceConfig";
 
 export interface BindingsContext {
   queryClient: QueryClient;
@@ -81,6 +82,18 @@ const scheduleTimeout = (fn: () => void, ms: number): void => {
     fn();
   }, ms);
   pendingTimeouts.add(id);
+};
+
+// At-least-once Outbox delivery can replay a discrete event (ADR-02: the client
+// dedupes side-effects). Toasts are a side-effect, so a short-TTL guard keyed by
+// expeditionId prevents a duplicated `extraction.attacked` from stacking a second
+// alert. Cache invalidations stay outside this guard — they are idempotent.
+const recentToastKeys = new Set<string>();
+const dedupeToast = (key: string, ttlMs = 10_000): boolean => {
+  if (recentToastKeys.has(key)) return false;
+  recentToastKeys.add(key);
+  scheduleTimeout(() => recentToastKeys.delete(key), ttlMs);
+  return true;
 };
 
 type ServerEventBindings = {
@@ -1179,6 +1192,21 @@ export function applyExtractionDepleted(
   });
 }
 
+function formatStolenResources(stolen: {
+  wood: number;
+  stone: number;
+  iron: number;
+}): string {
+  const parts: string[] = [];
+  if (stolen.wood > 0)
+    parts.push(`${RESOURCE_CONFIG.wood.nameCapitalized} ${stolen.wood}`);
+  if (stolen.stone > 0)
+    parts.push(`${RESOURCE_CONFIG.stone.nameCapitalized} ${stolen.stone}`);
+  if (stolen.iron > 0)
+    parts.push(`${RESOURCE_CONFIG.iron.nameCapitalized} ${stolen.iron}`);
+  return parts.join(", ");
+}
+
 export function applyExtractionAttacked(
   payload: ExtractionAttackedPayload,
   ctx: BindingsContext,
@@ -1189,6 +1217,41 @@ export function applyExtractionAttacked(
   if (payload.interrupted) {
     invalidateVillageExtractionState(ctx, payload.villageId, {
       resources: true,
+    });
+  }
+
+  // In-app alert to the exploiter (fog-safe: payload carries no attacker
+  // identity/origin). Deduped per expedition against at-least-once replays.
+  if (!dedupeToast(`extraction.attacked:${payload.expeditionId}`)) return;
+
+  // Defensive lookup: resourceType is optional (pre-deploy rows lack it) and the
+  // value is untrusted at runtime. Fall back to a generic label rather than
+  // dereferencing an undefined config entry.
+  const key =
+    typeof payload.resourceType === "string"
+      ? payload.resourceType.toLowerCase()
+      : undefined;
+  const site =
+    key === "wood" || key === "stone" || key === "iron"
+      ? RESOURCE_CONFIG[key]
+      : undefined;
+  const siteSuffix = site ? ` (${site.icon} ${site.nameCapitalized})` : "";
+  if (payload.interrupted) {
+    const stolen = formatStolenResources(payload.stolen);
+    useUiStore.getState().pushToast({
+      tone: "error",
+      title: "Site d'exploitation attaqué",
+      description: stolen
+        ? `Escorte défaite — ${stolen} dérobés${siteSuffix}`
+        : `Escorte défaite${siteSuffix}`,
+      ttlMs: 6000,
+    });
+  } else {
+    useUiStore.getState().pushToast({
+      tone: "success",
+      title: "Attaque repoussée",
+      description: `Escorte victorieuse — exploitation poursuivie${siteSuffix}`,
+      ttlMs: 6000,
     });
   }
 }

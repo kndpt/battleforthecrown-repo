@@ -1,21 +1,21 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-07-15 | theme DUP-REPORT (Med/M) — fusion du CRUD inbox dupliqué (~80%) entre `caravan-report.service.ts` + `reinforcement-report.service.ts` dans base abstraite `combat/inbox-report.service.ts` (`InboxReportService<TReport,TResponse>`). Concrets ne déclarent que `kind`/`include`/`reportIdFilter`/`extractReport`/`present` + `mutationExcludesHidden`. Divergence hidden-gating préservée (caravan mark/delete 404 sur hidden ; reinforcement idempotent) → 1 flag déclaratif `mutationExcludesHidden` + JSDoc unique. Noms méthodes publiques conservés via wrappers → controller/presenter-specs/smokes inchangés. 1 cast contrôlé par concret dans `extractReport` (= net identique à avant). Pas d'`any`. static-check ok, 604 back verts, smoke combat-reports-inbox 2/2 (boot Nest → DI héritée validée).
-full: `archive/refactor-backend/2026-07-15-full.md`
+last: 2026-07-16 | theme W1a (Med/M) — extraction du **scout arrival** hors du god-worker `combat.worker.ts`. `handleScoutArrival` + helper privé `snapshotOwnerInactivity` déplacés dans un collaborateur dédié `combat/scout-arrival.service.ts` (`ScoutArrivalService.handleArrival(tx, expedition)`), calqué sur `ExtractionLifecycleService`. Worker : dispatch `SCOUT` délègue au service, ne route plus que par kind. Déps `NewbieShieldService` + `FriendshipService` retirées du constructeur worker (uniquement scout) + 7 imports shared scout-only supprimés. `tx` toujours passé par le worker (même transaction Serializable, zéro changement de comportement / event / ordre d'écriture). worker 2012→1756L (−256). static-check ok, 604 back verts, smokes scouting+intel 10/10 (boot Nest → DI `ScoutArrivalService` validée) + cross-player-reinforcement+combat-reports-inbox 6/6 (autres kinds worker intacts). Docs backend-modules.md maj (file-tree + flow).
+full: `archive/refactor-backend/2026-07-16-full.md`
 
 ## OPEN
 
 | ID  | Sev  | Where                                              | Note                                                                                       |
 |-----|------|----------------------------------------------------|--------------------------------------------------------------------------------------------|
 | R4  | High | crowns.service.ts:261                              | fractional carry — needs migration (`lastUpdateTs += production/rate`)                     |
-| W1  | High | combat/combat.worker.ts (2038L)                    | 4 kinds cohabitent — split par kind, L effort. **Candidat #1 next run**                    |
+| W1b | Med  | combat/combat.worker.ts (1756L)                    | reste caravan (`handleCaravanArrival`) + reinforce (`handleReinforcementArrival` + `bounceReinforcementFromCaptureWindow`) à extraire → même pattern collaborateur. **Candidat #1 next run** |
 | B1  | Med  | combat.service.ts (1634L)                          | sans spec unit direct (smokes uniquement ; policy interdit mock Prisma)                    |
 | TE1 | Low  | combat.service:754/978/1000, combat.worker:1269/1298, initiate-extraction:181 | `Object.entries(units)` brut vs `typedEntries` — cosmétique (retire cast, ~6 sites) |
 | G2  | Med  | gameplay/extraction-lifecycle.service.ts (783L)    | looks-bad-but-fine : ADR-12 déclare explicitement « tout ici »                            |
 | SU1 | Low  | combat-resolution.ts:247 + initiate-extraction:60  | `sumUnits`/`escortTotal` dup — seulement 2 sites back (reste dans shared, hors scope)      |
 | BR1 | Low  | barbarian-runtime.service:63, training.worker:61   | même upsert que CU1 mais divergent (accumulation / cast string) → hors CU1                  |
 | E1  | Low  | 16 fichiers, 60 callsites `createOutboxEvent`      | low-value : createOutboxEvent déjà typé (générique K), migration = churn                   |
-| U1  | Low  | combat.worker.ts:1478+, return.worker.ts:326       | inbox.create loop ×N → `createMany skipDuplicates` (ROI bas, ≤2 recipients)               |
+| U1  | Low  | combat.worker.ts, return.worker.ts:326             | inbox.create loop ×N → `createMany skipDuplicates` (ROI bas, ≤2 recipients)               |
 | L2  | Low  | strategy/village-strategy.service.ts:382+          | `getStrategyRecommendations` strings UI FR hard-codées + endpoint sans consumer front      |
 | C1  | Low  | resources.service.ts:44-56                         | `getResources` récursif (cosmétique, récursion bornée 1)                                   |
 | K2  | Low  | retention.service.ts:42 + DTO `backlogLimit`       | `DAILY_CARD_LIMIT = 1` magic, jamais utilisé pour limiter, exposé sans consumer front      |
@@ -25,7 +25,8 @@ full: `archive/refactor-backend/2026-07-15-full.md`
 
 ## Skip — déjà traité
 
-- DUP-REPORT (base abstraite `combat/inbox-report.service.ts` → fusion caravan+reinforcement inbox CRUD) → ce run
+- W1a (extraction scout arrival → `combat/scout-arrival.service.ts`) → ce run
+- DUP-REPORT (base abstraite `combat/inbox-report.service.ts` → fusion caravan+reinforcement inbox CRUD) → 2026-07-15
 - DUP-PLANNER (fusion planners capture-window → `event-outbox-notification-planner.planCaptureWindowAttackerRouted`) → 2026-07-14 (#300)
 - CU1 (credit UnitMap → UnitInventory → `combat/unit-inventory.creditUnitsToInventory`) → 2026-07-13
 - L3 (rankings config resolver + Glory signals → `rankings/rankings-config.utils`) → 2026-07-12 (#289)
