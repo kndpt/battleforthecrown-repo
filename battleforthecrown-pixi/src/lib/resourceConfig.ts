@@ -164,6 +164,32 @@ export const RESOURCE_CONFIG: Record<ResourceType, ResourceConfig> = {
 };
 
 // ===================================
+// DERIVED MAPS — primary resources (wood / stone / iron)
+// ===================================
+
+export type PrimaryResourceKey = 'wood' | 'stone' | 'iron';
+
+export const PRIMARY_RESOURCE_KEYS: readonly PrimaryResourceKey[] = ['wood', 'stone', 'iron'] as const;
+
+export const RESOURCE_ICON_PATHS = {
+  wood: RESOURCE_CONFIG.wood.assetPath,
+  stone: RESOURCE_CONFIG.stone.assetPath,
+  iron: RESOURCE_CONFIG.iron.assetPath,
+} as const satisfies Record<PrimaryResourceKey, string>;
+
+export const RESOURCE_DISPLAY_LABELS = {
+  wood: RESOURCE_CONFIG.wood.nameCapitalized,
+  stone: RESOURCE_CONFIG.stone.nameCapitalized,
+  iron: RESOURCE_CONFIG.iron.nameCapitalized,
+} as const satisfies Record<PrimaryResourceKey, string>;
+
+export const RESOURCE_BAR_FILL = {
+  wood: 'bg-[linear-gradient(90deg,#7a5a32,#b08040)]',
+  stone: 'bg-[linear-gradient(90deg,#7a7a7a,#a0a0a0)]',
+  iron: 'bg-[linear-gradient(90deg,#4a6070,#6a90a8)]',
+} as const satisfies Record<PrimaryResourceKey, string>;
+
+// ===================================
 // HELPERS & UTILITIES
 // ===================================
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeftRight, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import {
   type MultiVillageActivityKind,
@@ -12,7 +12,6 @@ import {
   type PlayerProfileSheetTitle,
 } from '@/features/design-system/components/PlayerProfileSheet';
 import { useDisplayResources, useDisplayCrowns } from '@/features/resources/useDisplayResources';
-import { ResourceConversionModal } from '@/features/resources/ResourceConversionModal';
 import { DailyRetentionWidget } from '@/features/retention/DailyRetentionWidget';
 import { runGameAction, type GameActionId } from '@/features/game-actions/gameActions';
 import { useAuthStore } from '@/stores/auth';
@@ -28,7 +27,7 @@ import {
   usePublicWorldsQuery,
 } from '@/api/queries';
 import { ApiError } from '@/api';
-import { formatHeaderCompactAmount, RESOURCE_CONFIG } from '@/lib/resourceConfig';
+import { formatHeaderCompactAmount, RESOURCE_BAR_FILL, RESOURCE_ICON_PATHS, RESOURCE_DISPLAY_LABELS, PRIMARY_RESOURCE_KEYS, type PrimaryResourceKey } from '@/lib/resourceConfig';
 import { publicAsset } from '@/lib/publicAsset';
 import { BottomSheet } from '@/ui';
 import { useUiStore } from '@/stores/ui';
@@ -80,7 +79,6 @@ export function GameHeader({
   );
   const [isVillageSheetOpen, setIsVillageSheetOpen] = useState(false);
   const [isFriendsOpen, setIsFriendsOpen] = useState(false);
-  const [isConversionOpen, setIsConversionOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profileTab, setProfileTab] = useState<PlayerProfileSheetTab>('profile');
   const [villageFilter, setVillageFilter] = useState<MultiVillageFilter>('all');
@@ -157,33 +155,19 @@ export function GameHeader({
 
   const resources = useMemo(() => {
     const max = hasSnapshot && display ? display.maxPerType : 0;
-    const woodCurrent = hasSnapshot && display ? Math.floor(display.wood) : 0;
-    const stoneCurrent = hasSnapshot && display ? Math.floor(display.stone) : 0;
-    const ironCurrent = hasSnapshot && display ? Math.floor(display.iron) : 0;
+    const currentValues: Record<PrimaryResourceKey, number> = {
+      wood: hasSnapshot && display ? Math.floor(display.wood) : 0,
+      stone: hasSnapshot && display ? Math.floor(display.stone) : 0,
+      iron: hasSnapshot && display ? Math.floor(display.iron) : 0,
+    };
     const ratio = (current: number) => (max > 0 ? current / max : undefined);
-    return [
-      {
-        fillClass: 'bg-[linear-gradient(90deg,#7a5a32,#b08040)]',
-        icon: RESOURCE_CONFIG.wood.assetPath,
-        label: RESOURCE_CONFIG.wood.nameCapitalized,
-        value: formatHeaderCompactAmount(woodCurrent),
-        fillRatio: ratio(woodCurrent),
-      },
-      {
-        fillClass: 'bg-[linear-gradient(90deg,#7a7a7a,#a0a0a0)]',
-        icon: RESOURCE_CONFIG.stone.assetPath,
-        label: RESOURCE_CONFIG.stone.nameCapitalized,
-        value: formatHeaderCompactAmount(stoneCurrent),
-        fillRatio: ratio(stoneCurrent),
-      },
-      {
-        fillClass: 'bg-[linear-gradient(90deg,#4a6070,#6a90a8)]',
-        icon: RESOURCE_CONFIG.iron.assetPath,
-        label: RESOURCE_CONFIG.iron.nameCapitalized,
-        value: formatHeaderCompactAmount(ironCurrent),
-        fillRatio: ratio(ironCurrent),
-      },
-    ];
+    return PRIMARY_RESOURCE_KEYS.map((key) => ({
+      fillClass: RESOURCE_BAR_FILL[key],
+      icon: RESOURCE_ICON_PATHS[key],
+      label: RESOURCE_DISPLAY_LABELS[key],
+      value: formatHeaderCompactAmount(currentValues[key]),
+      fillRatio: ratio(currentValues[key]),
+    }));
   }, [hasSnapshot, display]);
   const totalPower = kingdomPower?.kingdomPower ?? 0;
   const crowns = Number.isFinite(crownBalance ?? NaN) ? Math.floor(crownBalance ?? 0) : 0;
@@ -372,14 +356,6 @@ export function GameHeader({
 
       {showResources && (
         <div className="game-topbar-resources relative grid grid-cols-3 divide-x divide-[rgba(166,124,82,.28)] border-t border-[rgba(246,213,123,.1)] bg-[linear-gradient(180deg,rgba(44,26,10,.74),rgba(31,19,9,.66))] shadow-[0_-1px_0_rgba(255,255,255,.04)_inset] backdrop-blur-md backdrop-saturate-150 [animation:bftc-topbar-resources-dock_.36s_cubic-bezier(.16,1,.24,1)_.09s_both]">
-          <button
-            aria-label="Échange royal de ressources"
-            className="absolute -top-3 right-2 z-[1] flex size-6 items-center justify-center rounded-full border-2 border-[#7a5200] bg-gradient-to-b from-[#f6d57b] to-[#c9900c] text-[#3a2a00] shadow-[0_2px_0_rgba(0,0,0,.25),inset_0_1px_0_rgba(255,255,255,.45)] transition-transform active:scale-95"
-            onClick={() => setIsConversionOpen(true)}
-            type="button"
-          >
-            <ArrowLeftRight aria-hidden="true" className="size-3.5" />
-          </button>
           {resources.map((resource) => (
             <div
               key={resource.label}
@@ -430,11 +406,6 @@ export function GameHeader({
       >
         <DefensiveFriendsSheet onClose={() => setIsFriendsOpen(false)} />
       </BottomSheet>
-      <ResourceConversionModal
-        isOpen={isConversionOpen}
-        onClose={() => setIsConversionOpen(false)}
-        villageId={villageId}
-      />
       <BottomSheet
         className="mx-auto h-[64vh] max-w-[32rem]"
         isOpen={isProfileOpen}
