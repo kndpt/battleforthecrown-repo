@@ -42,8 +42,6 @@ const REPORT_MODAL_FOOTER_CLASS =
   'border-t border-[rgba(93,74,50,.24)] bg-[linear-gradient(to_bottom,rgba(255,250,238,.96),rgba(232,212,168,.92))] px-3 pb-3 pt-2.5';
 import { NUMBER_FMT } from '@/lib/formatters';
 
-const NUMBER_FORMATTER = NUMBER_FMT;
-
 function ReportModalFooter({
   deleteLabel,
   disabled,
@@ -283,7 +281,7 @@ function CaravanReportDetail({
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="rounded-full border-[1.5px] border-[#8b7355] bg-[linear-gradient(to_bottom,#f1c40f,#d4a017)] px-[7px] py-[2.5px] font-game text-[9.5px] font-extrabold uppercase tracking-[.12em] text-[#3a2a00] shadow-[inset_0_1px_0_rgba(255,255,255,.4)]">
-                      {NUMBER_FORMATTER.format(data.porters)} porteurs
+                      {NUMBER_FMT.format(data.porters)} porteurs
                     </span>
                   </div>
                 </div>
