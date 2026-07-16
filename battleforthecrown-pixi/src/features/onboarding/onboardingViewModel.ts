@@ -148,7 +148,11 @@ const COMPLETION_GUIDANCE: OnboardingGuidance = {
 };
 
 export interface GetOnboardingGuidanceOptions {
-  /** Player already dismissed the post-victory completion modal this session. */
+  /**
+   * Optimistic session-scoped ack, covering the window between the CTA tap and
+   * the summary refetch. `summary.completionRewardApplied` is the durable
+   * source of truth once it lands.
+   */
   completionAcknowledged?: boolean;
 }
 
@@ -160,7 +164,9 @@ export function getOnboardingGuidance(
     return null;
   }
   if (summary.status === "COMPLETED") {
-    return options.completionAcknowledged ? null : COMPLETION_GUIDANCE;
+    const dismissed =
+      summary.completionRewardApplied || options.completionAcknowledged === true;
+    return dismissed ? null : COMPLETION_GUIDANCE;
   }
   if (!summary.currentStep) {
     return null;

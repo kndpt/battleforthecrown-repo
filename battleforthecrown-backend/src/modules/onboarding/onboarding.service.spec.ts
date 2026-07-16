@@ -214,6 +214,7 @@ describe('mapOnboardingState', () => {
         initialRewardApplied: true,
         initialRewardAppliedAt: appliedAt,
         completedAt: null,
+        completionRewardApplied: false,
         steps: [{ step: 'UPGRADE_CASTLE_LEVEL_2', completedAt: stepAt }],
       }),
     ).toEqual({
@@ -229,6 +230,7 @@ describe('mapOnboardingState', () => {
       initialRewardAppliedAt: appliedAt.toISOString(),
       initialReward: ONBOARDING_INITIAL_REWARD,
       completedAt: null,
+      completionRewardApplied: false,
     });
   });
 
@@ -245,12 +247,16 @@ describe('mapOnboardingState', () => {
         initialRewardApplied: true,
         initialRewardAppliedAt: null,
         completedAt,
+        completionRewardApplied: true,
         steps: [],
       }),
     ).toMatchObject({
       status: 'COMPLETED',
       currentStep: null,
       completedAt: completedAt.toISOString(),
+      // Durable ack of the completion screen — the frontend relies on it to
+      // stop re-showing the closing modal on every new session.
+      completionRewardApplied: true,
       initialRewardAppliedAt: null,
     });
   });

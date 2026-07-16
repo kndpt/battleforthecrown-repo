@@ -5,11 +5,13 @@ import { apiClient } from '@/api';
 import { queryKeys } from '@/api/queries';
 
 /**
- * One-shot acknowledgement of the post-victory onboarding completion modal.
- * Keyed `userId × worldId`, persisted in `sessionStorage` so a refresh/rejoin
- * within the same browser session never re-triggers the closing screen
- * (cf. ticket 078). The backend stays the source of truth for `status`; this
- * flag is purely a front-only "the player has dismissed the loot screen" mark.
+ * Optimistic, session-scoped ack of the post-victory onboarding completion
+ * modal, keyed `userId × worldId`. It only has to cover the window between the
+ * CTA tap and the summary refetch — the durable answer is
+ * `OnboardingSummaryDto.completionRewardApplied`, flipped by
+ * `POST /onboarding/claim-completion-reward` and consumed in
+ * `getOnboardingGuidance`. `sessionStorage` alone cannot hold this mark: it
+ * dies with the tab and the closing screen would re-show on every relaunch.
  */
 function ackKey(userId: string, worldId: string): string {
   return `bftc:onboarding:completion-ack:${userId}:${worldId}`;

@@ -58,6 +58,10 @@ export class OnboardingService {
         initialRewardAppliedAt: null,
         initialReward: ONBOARDING_INITIAL_REWARD,
         completedAt: null,
+        // No state means there is nothing to claim (account predates the
+        // onboarding runtime): report the reward as settled so the completion
+        // screen never shows for players who never ran the tutorial.
+        completionRewardApplied: true,
       };
     }
 

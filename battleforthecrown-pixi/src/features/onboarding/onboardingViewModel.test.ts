@@ -14,6 +14,7 @@ function summary(currentStep: OnboardingSummaryDto['currentStep']): OnboardingSu
     initialRewardAppliedAt: '2026-05-26T08:00:00.000Z',
     initialReward: { wood: 850, stone: 850, iron: 850, crowns: 100 },
     completedAt: currentStep ? null : '2026-05-26T08:05:00.000Z',
+    completionRewardApplied: false,
   };
 }
 
@@ -111,9 +112,17 @@ describe('getOnboardingGuidance', () => {
     });
   });
 
-  it('hides the completion screen once acknowledged', () => {
+  it('hides the completion screen while the optimistic ack covers the refetch', () => {
     expect(
       getOnboardingGuidance(summary(null), { completionAcknowledged: true }),
+    ).toBeNull();
+  });
+
+  it('keeps the completion screen hidden once the reward is claimed server-side', () => {
+    // The durable flag must win on its own: sessionStorage dies with the tab,
+    // so a fresh session arrives with completionAcknowledged unset.
+    expect(
+      getOnboardingGuidance({ ...summary(null), completionRewardApplied: true }),
     ).toBeNull();
   });
 });

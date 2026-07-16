@@ -55,6 +55,12 @@ export interface OnboardingSummaryDto {
   initialReward: OnboardingRewardDto;
   completedAt: string | null;
   /**
+   * Whether the player already claimed the completion loot CTA. Durable
+   * counterpart to the front-only `sessionStorage` ack: once true, the
+   * completion screen must never re-show, on any device or session.
+   */
+  completionRewardApplied: boolean;
+  /**
    * Identifier of the weakened barbarian village created by the onboarding
    * runtime once the player builds Watchtower L1. `null` until that step
    * fires, or for accounts that joined before the feature shipped.

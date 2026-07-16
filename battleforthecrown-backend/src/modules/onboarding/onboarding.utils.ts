@@ -109,6 +109,7 @@ export function mapOnboardingState(state: {
   initialRewardApplied: boolean;
   initialRewardAppliedAt: Date | null;
   completedAt: Date | null;
+  completionRewardApplied: boolean;
   steps: Array<{ step: OnboardingStep; completedAt: Date }>;
 }): OnboardingSummaryDto {
   return {
@@ -125,6 +126,7 @@ export function mapOnboardingState(state: {
     initialRewardAppliedAt: state.initialRewardAppliedAt?.toISOString() ?? null,
     initialReward: ONBOARDING_INITIAL_REWARD,
     completedAt: state.completedAt?.toISOString() ?? null,
+    completionRewardApplied: state.completionRewardApplied,
   };
 }
 

@@ -26,5 +26,6 @@ export const OnboardingSummarySchema = z.object({
   initialRewardAppliedAt: z.string().nullable(),
   initialReward: OnboardingRewardSchema,
   completedAt: z.string().nullable(),
+  completionRewardApplied: z.boolean(),
   narrativeTargetVillageId: z.string().nullable(),
 });
