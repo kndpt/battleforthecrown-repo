@@ -1,8 +1,8 @@
 # Run #097 — fix-noble-cap-inflight-occupation
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-07-13
+> **Terminé** : 2026-07-13
 
 ## Cible
 
@@ -65,14 +65,14 @@ Le cap « 1 Seigneur par village » couvre **garnison + file + en-vol + en-occup
 
 ## Critère de fin (acceptance)
 
-- [ ] [smoke] Recruter A, lancer conquête avec A, tenter recruter B pendant EN_ROUTE → 400. (`recruit-noble.smoke.spec.ts`)
-- [ ] [smoke] Idem pendant `PendingConquest` status=OPEN (Seigneur en occupation sur la cible) → 400.
-- [ ] [smoke] Après conquête COMPLETED (Seigneur installé dans le village conquis), le village d'origine peut re-recruter → 201.
-- [ ] [smoke/SQL] Après conquête interrompue/échouée et retour du Seigneur, re-recrutement possible sans double comptage.
-- [ ] [test unit] `canRecruitNoble` couvre les nouveaux états avec la reason attendue.
-- [ ] [smoke] **Interleaving** : recrutement de B et finalisation/interruption de la conquête de A en concurrence → aucun état où 2 Seigneurs coexistent, aucun faux blocage post-résolution (couvre la fenêtre TOCTOU du verrou, cf. Points d'attention).
-- [ ] [grep/build] Aucun appelant de `canRecruitNoble` laissé sur l'ancienne signature ; `@battleforthecrown/shared` rebuild.
-- [ ] [static] `yarn static-check` vert.
+- [x] [smoke] Recruter A, lancer conquête avec A, tenter recruter B pendant EN_ROUTE → 400. (`recruit-noble.smoke.spec.ts`)
+- [x] [smoke] Idem pendant `PendingConquest` status=OPEN (Seigneur en occupation sur la cible) → 400.
+- [x] [smoke] Après conquête COMPLETED (Seigneur installé dans le village conquis), le village d'origine peut re-recruter → 201.
+- [x] [smoke/SQL] Après conquête interrompue/échouée et retour du Seigneur, re-recrutement possible sans double comptage.
+- [x] [test unit] `canRecruitNoble` couvre les nouveaux états avec la reason attendue.
+- [x] [smoke] **Interleaving** : recrutement de B et finalisation/interruption de la conquête de A en concurrence → aucun état où 2 Seigneurs coexistent, aucun faux blocage post-résolution (couvre la fenêtre TOCTOU du verrou, cf. Points d'attention).
+- [x] [grep/build] Aucun appelant de `canRecruitNoble` laissé sur l'ancienne signature ; `@battleforthecrown/shared` rebuild.
+- [x] [static] `yarn static-check` vert.
 
 ## Références
 
@@ -94,16 +94,33 @@ Le cap « 1 Seigneur par village » couvre **garnison + file + en-vol + en-occup
 
 **Requise** : invariant gameplay + surface de concurrence cross-entités (comptage lisant `Expedition`/`PendingConquest`/`Garrison` sous l'advisory lock training existant — risque de trou si un état transitoire n'est pas couvert, ou de faux positif bloquant le re-recrutement légitime post-conquête). Backprop SPEC à valider. Un relecteur indépendant doit confirmer la couverture continue vol → occupation → résolution.
 
-## Progress
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
-## Décisions prises
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
 ## Rapport final
+
+Cap « 1 Seigneur par village » élargi à tout le cycle de vie (garnison + file + en-vol/retour + occupation). Gate `recruit-noble` passé en tx `Serializable` + `withSerializableRetry` (pattern des writers de conquête) pour un comptage cross-entités race-free ; `canRecruitNoble` étendu (reasons `IN_FLIGHT`/`OCCUPYING`) ; index `PendingConquest[attackerVillageId,status]`. Décision TOCTOU : snapshot Serializable+SSI plutôt qu'advisory lock partagé sur les writers de conquête _(git history)_.
 
 ### Acceptance & QA
 
-_(Vide au démarrage. Rempli en fin de run.)_
+**Critères d'acceptance vérifiés**
+- [x] EN_ROUTE → 400 — `test:smoke:run recruit-noble.smoke` → « blocks recruiting while a noble is EN_ROUTE (IN_FLIGHT) » vert
+- [x] PendingConquest OPEN → 400 — idem → « blocks recruiting while a noble occupies a target (OCCUPYING) » vert
+- [x] COMPLETED → 201 — idem → « allows recruiting once the conquest is resolved (COMPLETED) » vert
+- [x] Retour échec sans double comptage — idem → « blocks a surviving noble returning home but allows a lost one » + « allows recruiting once a conquest is interrupted (INTERRUPTED) » vert
+- [x] Unit `canRecruitNoble` nouveaux états/reasons — `test recruitment.spec` → 6/6 (IN_FLIGHT, OCCUPYING, priorité GARRISON>QUEUE>IN_FLIGHT>OCCUPYING)
+- [x] Interleaving concurrent (recruit || atterrissage retour) — smoke « interleaving: recruit racing a noble landing home never breaks the cap (#6) » 8 rounds non-vacants (RESOLVED+inventory=1 asserté), `noblesOwnedBy===1`, recruit=400
+- [x] Aucun appelant sur ancienne signature + shared rebuild — `grep canRecruitNoble` = 1 caller (use-case) ; `shared build` OK
+- [x] `yarn static-check` vert
+
+**Review indépendante** : Déclenchée (raison: invariant durable + concurrence cross-entités + diff>100 lignes + backprop doc). Cycles 1-2 BLOCK (couverture #6 puis vacuité du test de preuve), cycle 3 **GO** (test course-vs-retour non-vacant, 0 finding bloquant/majeur ; 3 mineurs dont docstring corrigée).
+
+**Tests automatisés** : `test recruitment.spec` 6/6 ; suite unit backend 600/600.
+
+**Smokes lancés** (Ciblés) : `test:smoke:preflight` OK ; `test:smoke:run recruit-noble.smoke` 8/8 ; filet conquête (`conquest-service`, `conquest-finalize`, `capture-defender`, `combat-conquest-hook`) 13/13. Full smoke = CI PR.
+
+**Smokes ajoutés/modifiés** : `test/recruit-noble.smoke.spec.ts` — +6 tests (EN_ROUTE, OCCUPYING, COMPLETED, RETURNING vivant/mort, INTERRUPTED, interleaving retour #6).
+
+**QA fonctionnelle agent** : couverte par smokes REST + états DB conquête. Limite documentée : fenêtre torn-read TOCTOU sub-milliseconde non forçable en smoke black-box (bascule empirique ReadCommitted ×24 sans échec) ; correction adossée à Serializable+SSI (mécanisme commun à tous les writers de conquête). Le test #6 prouve l'invariant sous concurrence réelle, non-vacant.
+
+**Tests IG à faire par le user** : Aucun — gate 100 % backend, aucun rendu Pixi/React ni shape payload front modifiés.
+
+### Docs
+Docs : mises à jour — `docs/gameplay/10-conquest.md` § Cap (couverture cycle de vie complet ; résolution = seule libération du cap).

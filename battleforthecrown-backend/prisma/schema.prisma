@@ -345,6 +345,7 @@ model PendingConquest {
   @@index([captureUntil, status])
   @@index([worldId, status])
   @@index([targetVillageId, status])
+  @@index([attackerVillageId, status])
   @@map("pending_conquest")
 }
 

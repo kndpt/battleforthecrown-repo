@@ -4,6 +4,7 @@ import type { BuildingDto, JoinedVillage, PopulationDto, QueueEntryDto } from '@
 import {
   armyTrainingQueryOptions,
   buildingsQueryOptions,
+  incomingAttacksQueryOptions,
   populationQueryOptions,
   queueQueryOptions,
   resourcesQueryOptions,
@@ -14,6 +15,7 @@ import {
   type ResourcesPayload,
   type VillageStrategyInfoDto,
 } from '@/api/queries';
+import type { IncomingAttackDto } from '@battleforthecrown/shared/events';
 import type { MultiVillageItem } from '@/features/design-system/components/MultiVillageBottomSheet';
 import { buildSortedMultiVillageSheetItems } from './multiVillageSheet';
 import { toResultMap } from './headerHelpers';
@@ -79,6 +81,10 @@ export function useMultiVillageData(
     (results: UseQueryResult<ArmyTrainingDto[]>[]) => toResultMap(villageIds, results),
     [villageIds],
   );
+  const combineIncoming = useCallback(
+    (results: UseQueryResult<IncomingAttackDto[]>[]) => toResultMap(villageIds, results),
+    [villageIds],
+  );
 
   const resourcesByVillageId = useQueries({
     queries: villageIds.map((id) => ({ ...resourcesQueryOptions(id), enabled: villageSheetOpen })),
@@ -110,6 +116,17 @@ export function useMultiVillageData(
     queries: villageIds.map((id) => ({ ...armyTrainingQueryOptions(id), enabled: villageSheetOpen })),
     combine: combineTraining,
   });
+  // 7th fan-out (run 101): defender-facing incoming attacks, gated on sheet
+  // visibility like its siblings. Fog-safe DTO; per-village key invalidated by
+  // `applyAttackIncoming` on the `attack.incoming` WS event so the pill appears
+  // without a reload.
+  const incomingByVillageId = useQueries({
+    queries: villageIds.map((id) => ({
+      ...incomingAttacksQueryOptions(id),
+      enabled: villageSheetOpen,
+    })),
+    combine: combineIncoming,
+  });
 
   const powerByVillageId = useMemo(
     () =>
@@ -126,6 +143,7 @@ export function useMultiVillageData(
         activeVillageId,
         {
           buildingsByVillageId,
+          incomingByVillageId,
           populationByVillageId,
           powerByVillageId,
           queueByVillageId,
@@ -138,6 +156,7 @@ export function useMultiVillageData(
     [
       activeVillageId,
       buildingsByVillageId,
+      incomingByVillageId,
       populationByVillageId,
       powerByVillageId,
       queueByVillageId,

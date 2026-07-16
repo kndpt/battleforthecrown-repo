@@ -1099,6 +1099,34 @@
         "battleforthecrown-pixi/src/features/combat/AttackDetailModal.tsx:124/141/497 — affiche distance + capacite de transport, aucun malus loot distance pre-affiche"
       ],
       "addedAt": "2026-07-15"
+    },
+    {
+      "specPath": "docs/gameplay/16-notifications.md",
+      "slug": "army-return-inapp-indicator",
+      "title": "Indicateur in-app « Retour d'armée » (catégorie 🟡)",
+      "keywords": [
+        "retour",
+        "armée",
+        "army-return",
+        "battle-returned",
+        "notification",
+        "toast",
+        "butin"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/104-feature-army-return-inapp-indicator.md",
+      "artefactId": "104",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/army-return-inapp-indicator",
+      "gapSummary": "La spec 16-notifications.md (l.22) liste la categorie 🟡 « Retour d'armee » (audience Proprietaire) comme scope MVP, mais aucune categorie 🟡 n'a de surface in-app (seules les 3 🔴 ont un run). L'event battle.returned est deja emis + route au proprietaire avec un payload complet, pourtant applyBattleReturned cote front ne fait qu'invalider les caches, sans toast. Ce run ajoute un toast dedupli at-least-once (avec/sans butin). Front-only + docs.",
+      "codeEvidence": [
+        "docs/gameplay/16-notifications.md:22 — categorie 🟡 « Retour d'armee » (audience Proprietaire) listee au scope MVP, aucune surface in-app livree",
+        "packages/shared/src/events/types.ts:84 — BattleReturnedPayload { expeditionId, reportId, villageId, survivingUnits, loot: { resources } } : payload complet, aucun changement shared requis",
+        "battleforthecrown-backend/src/modules/combat/return.worker.ts:157-179 — battle.returned emis (non-recalled) et route au proprietaire, aucun changement backend requis",
+        "battleforthecrown-pixi/src/api/ws-bindings.ts — applyBattleReturned : store + invalidations uniquement, aucun pushToast (contrairement aux handlers 🔴)",
+        "battleforthecrown-pixi/src/stores/ui.ts:70 — pushToast ne deduplique pas par id : dedup at-least-once par expeditionId a poser au niveau handler (aucun helper Set TTL existant)"
+      ],
+      "addedAt": "2026-07-16"
     }
   ]
 }

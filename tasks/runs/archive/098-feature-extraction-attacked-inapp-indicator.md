@@ -1,8 +1,8 @@
 # Run #098 — extraction-attacked-inapp-indicator
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-07-14
+> **Terminé** : 2026-07-14
 
 ## Cible
 
@@ -74,16 +74,33 @@ Raison : si chemin A retenu → modification d'un contrat d'event cross-workspac
 - Après toute modif de `packages/shared` → rebuild `@battleforthecrown/shared` avant de croire tests/smokes.
 - Vérifier que l'invalidation conditionnelle `if (payload.interrupted)` (`ws-bindings.ts:1191`) reste correcte après ajout du toast.
 
-## Progress
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
-## Décisions prises
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
 ## Rapport final
+
+**Synthèse** : Chemin A retenu — payload `ExtractionAttackedPayload` enrichi de `resourceType` (rendu **optionnel** shared type+Zod pour éviter le hot-loop Outbox sur rows pré-deploy, hazard run 078) ; `applyExtractionAttacked` pousse un toast fog-safe (error+quantités volées si `interrupted`, success « Attaque repoussée » sinon), dédupliqué par `expeditionId` (Set TTL court, ADR-02), lookup site défensif (guard `typeof`). Diff 7 fichiers (~194 insertions).
 
 ### Acceptance & QA
 
-_(Vide au démarrage. Rempli en fin de run.)_
+**Critères d'acceptance vérifiés**
+- [x] Toast in-app sans reload à réception `extraction.attacked` — `yarn workspace battleforthecrown-pixi test --run src/api/ws-bindings.test.ts` → 64 passed (tests toast interrupted/repoussé).
+- [x] Distinction escorte défaite/volé vs attaque repoussée — `visuel` + tests tone `error`/`success`.
+- [x] Quantités volées affichées si `stolen>0` — test `toContain('Bois 100')`/`'Fer 40'`.
+- [x] Fog-safe (aucune identité/origine attaquant) — test `.not.toMatch(/attaquant|origine|\(\d+,\s*\d+\)/i)` ; payload sans champ attaquant.
+- [x] Dédup at-least-once par `expeditionId` — test « no second toast » (1 toast après double livraison, invalidation idempotente false→true).
+- [x] `resourceType` présent dans payload émis + validé Zod — `test:smoke:run -- extraction.smoke` → 10 passed (assert `resourceType === 'WOOD'`) + compat legacy testée `.not.toThrow()`.
+- [x] `yarn static-check` vert — Done in 27.77s (tsc + eslint back+pixi).
+
+**Review indépendante** : Déclenchée (raison: (a) back+front, (c) diff >100 lignes). Verdict final `GO` après BLOCK→fix (2 majeurs cycle 1 : hazard Outbox requis→`.optional()` + cast non validé→guard défensif ; puis durcissements test/typeof). 1 « major » CR résiduel sur code pré-existant (`createOutboxEvent` direct, 15 usages) → hors scope, ticket follow-up `task_cbfa064e`.
+
+**Tests automatisés** : `test --run src/api/ws-bindings.test.ts` → 64 passed. `yarn static-check` → vert.
+
+**Smokes lancés** : `test:smoke:preflight` OK + `test:smoke:run -- extraction.smoke` → 10 passed. Ciblés (diff backend = 1 ligne payload dans émetteur existant, couvert par ce smoke d'interception).
+
+**Smokes ajoutés/modifiés** : `extraction.smoke.spec.ts` — assertion `resourceType` sur le payload émis (interception).
+
+**QA fonctionnelle agent** : couverte par smoke (event Outbox émis + payload) + tests front (binding toast). Pas de démarrage serveur nécessaire.
+
+**Tests IG à faire par le user** :
+- [ ] Déclencher une interception d'escorte d'exploitation (perdante) → vérifier le toast rouge « Site d'exploitation attaqué » avec quantités volées + label site.
+- [ ] Interception repoussée (escorte gagnante) → toast vert « Attaque repoussée ».
+
+_(Progress / Décisions : voir git history.)_
