@@ -23,6 +23,7 @@ import {
   calculateTravelTime,
 } from "@battleforthecrown/shared/logic";
 import { formatTravelTime } from "@/lib/combatHelpers";
+import { NUMBER_FMT } from "@/lib/formatters";
 import { publicAsset } from "@/lib/publicAsset";
 import { RESOURCE_CONFIG } from "@/lib/resourceConfig";
 import {
@@ -246,7 +247,7 @@ export function CaravanLaunchModal({
                         {RESOURCE_CONFIG[key].nameCapitalized}
                       </span>
                       <span className="block text-[11px] text-kingdom-700/80">
-                        Stock {(stock?.[key] ?? 0).toLocaleString("fr-FR")}
+                        Stock {NUMBER_FMT.format(stock?.[key] ?? 0)}
                       </span>
                     </div>
                     <Input
@@ -276,8 +277,8 @@ export function CaravanLaunchModal({
                               : ""
                           }
                         >
-                          {selected.toLocaleString("fr-FR")} /{" "}
-                          {limit.toLocaleString("fr-FR")}
+                          {NUMBER_FMT.format(selected)} /{" "}
+                          {NUMBER_FMT.format(limit)}
                         </span>
                       </div>
                       <div className="h-1.5 overflow-hidden rounded-full bg-kingdom-200">
@@ -301,8 +302,8 @@ export function CaravanLaunchModal({
             <div className="flex justify-between gap-3">
               <span>Chargement</span>
               <strong>
-                {totalVolume.toLocaleString("fr-FR")} /{" "}
-                {totalMaxVolume.toLocaleString("fr-FR")}
+                {NUMBER_FMT.format(totalVolume)} /{" "}
+                {NUMBER_FMT.format(totalMaxVolume)}
               </strong>
             </div>
             <div className="mt-1 flex justify-between gap-3">
@@ -311,8 +312,8 @@ export function CaravanLaunchModal({
                 className={hasEnoughPopulation ? "" : "text-game-red-dark"}
               >
                 {hasEnoughPopulation
-                  ? `${porters.toLocaleString("fr-FR")} mobilisés`
-                  : `${porters.toLocaleString("fr-FR")} / ${freePopulation.toLocaleString("fr-FR")}`}
+                  ? `${NUMBER_FMT.format(porters)} mobilisés`
+                  : `${NUMBER_FMT.format(porters)} / ${NUMBER_FMT.format(freePopulation)}`}
               </strong>
             </div>
             <div className="mt-1 flex justify-between gap-3">
