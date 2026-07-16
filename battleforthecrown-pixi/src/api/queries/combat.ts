@@ -1,4 +1,5 @@
 import {
+  queryOptions,
   useMutation,
   useQuery,
   useQueryClient,
@@ -89,8 +90,8 @@ export function useActiveExpeditionsQuery(villageId: string | null) {
 
 const IncomingAttackDtoArraySchema = z.array(IncomingAttackDtoSchema);
 
-export function useIncomingAttacksQuery(villageId: string | null) {
-  return useQuery<IncomingAttackDto[]>({
+export const incomingAttacksQueryOptions = (villageId: string | null) =>
+  queryOptions({
     queryKey: queryKeys.incomingAttacks(villageId),
     queryFn: async () => {
       if (!villageId) return [] as IncomingAttackDto[];
@@ -106,6 +107,9 @@ export function useIncomingAttacksQuery(villageId: string | null) {
           : 30_000,
     staleTime: 2_000,
   });
+
+export function useIncomingAttacksQuery(villageId: string | null) {
+  return useQuery(incomingAttacksQueryOptions(villageId));
 }
 
 export function useOpenConquestsQuery(worldId: string | null) {
