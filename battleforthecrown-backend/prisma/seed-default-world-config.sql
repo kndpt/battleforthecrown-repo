@@ -32,7 +32,8 @@ SET config = '{
   "combat": {
     "attackBonus": 1.0,
     "defenseBonus": 1.0,
-    "lootFactor": 0.5
+    "lootFactor": 0.5,
+    "lootDistance": { "radius": 25, "slope": 0.01, "floor": 0.5 }
   },
   "barbarianSeeding": {
     "enabled": true,

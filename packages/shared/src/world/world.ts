@@ -126,7 +126,15 @@ export const DEFAULT_WORLD_CONFIG: WorldConfig = {
   },
   lifecycle: { ...DEFAULT_WORLD_LIFECYCLE_CONFIG },
   identity: { ...DEFAULT_WORLD_IDENTITY_CONFIG },
-  combat: { attackBonus: 1, defenseBonus: 1, lootFactor: 0.5 },
+  combat: {
+    attackBonus: 1,
+    defenseBonus: 1,
+    lootFactor: 0.5,
+    // Friction distance sur le pillage (raid only) — défauts initiaux à calibrer
+    // (garde-fou : tension pivot compressed-async, spec 23). Facteur = 1 jusqu'à
+    // 25 tuiles, puis −1 %/tuile jusqu'au plancher 0.5 atteint à 75 tuiles.
+    lootDistance: { radius: 25, slope: 0.01, floor: 0.5 },
+  },
   barbarianSeeding: DEFAULT_BARBARIAN_SEEDING_PLAN,
   playerVillagePlacement: DEFAULT_PLAYER_VILLAGE_PLACEMENT_PLAN,
   fogOfWar: { enabled: true },

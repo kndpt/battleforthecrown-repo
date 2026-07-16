@@ -36,7 +36,12 @@ export const SMOKE_WORLD_CONFIG: WorldConfig = {
     themeColor: 'green',
     tier: 'DEBUTANTS',
   },
-  combat: { attackBonus: 1, defenseBonus: 1, lootFactor: 0.5 },
+  combat: {
+    attackBonus: 1,
+    defenseBonus: 1,
+    lootFactor: 0.5,
+    lootDistance: { radius: 25, slope: 0.01, floor: 0.5 },
+  },
   barbarianSeeding: {
     enabled: false,
     chunkSize: 50,

@@ -4,6 +4,7 @@ import { CombatContext } from '../interfaces/combat-context.interface';
 import { LootResult } from './interfaces/loot-result.interface';
 import { LootResolver } from './interfaces/loot-resolver.interface';
 import { sumCarryCapacity } from '../combat.utils';
+import { lootDistanceFactor } from '@battleforthecrown/shared/logic';
 
 @Injectable()
 export class LootManager {
@@ -22,8 +23,19 @@ export class LootManager {
    * Calculate total loot by aggregating all providers
    */
   async calculateLoot(context: CombatContext): Promise<LootResult> {
-    // Calculate total carry capacity
-    const totalCapacity = sumCarryCapacity(context.attacker.units);
+    // Capacité de transport brute des survivants.
+    const rawCapacity = sumCarryCapacity(context.attacker.units);
+
+    // Friction logistique par distance (raid only). La conquête (Noble) et — par
+    // construction — le renfort (qui ne loote pas) n'appliquent jamais le malus.
+    // Arrondi `Math.floor`, aligné sur `getCaravanResourceCapacity`.
+    const distanceFactor = context.config._isConquest
+      ? 1
+      : lootDistanceFactor(
+          context.config._distance,
+          context.config.combat.lootDistance,
+        );
+    const totalCapacity = Math.floor(rawCapacity * distanceFactor);
 
     let remainingCapacity = totalCapacity;
     const aggregatedLoot: LootResult = {

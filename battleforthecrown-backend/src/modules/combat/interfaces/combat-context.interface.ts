@@ -15,6 +15,9 @@ type VillageRef = Pick<
 export interface CombatConfig extends WorldConfig {
   _distance: number;
   _travelTime: number;
+  // Conquête = expédition partie avec un Noble. Exempte le loot de la friction
+  // distance (raid only) — le gating vit ici, server-authoritative.
+  _isConquest: boolean;
 }
 
 export interface CombatParticipant {

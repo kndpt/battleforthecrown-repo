@@ -4,6 +4,7 @@ import { PlayerVillageStrategy } from './player-village.strategy';
 import { LootManager } from '../loot/loot.manager';
 import { CombatContext } from '../interfaces/combat-context.interface';
 import type { UnitType } from '@battleforthecrown/shared/army';
+import { DEFAULT_COMBAT_RULES } from '@battleforthecrown/shared/combat';
 import {
   makeExpeditionFixture,
   makeCombatConfigFixture,
@@ -176,7 +177,11 @@ describe('Combat Strategies', () => {
           ],
         },
         config: makeCombatConfigFixture({
-          combat: { attackBonus: 1.5, defenseBonus: 1.0, lootFactor: 0.5 },
+          combat: {
+            ...DEFAULT_COMBAT_RULES,
+            attackBonus: 1.5,
+            defenseBonus: 1.0,
+          },
         }),
       };
 
@@ -238,7 +243,11 @@ describe('Combat Strategies', () => {
           ],
         },
         config: makeCombatConfigFixture({
-          combat: { attackBonus: 1.0, defenseBonus: 1.5, lootFactor: 0.5 },
+          combat: {
+            ...DEFAULT_COMBAT_RULES,
+            attackBonus: 1.0,
+            defenseBonus: 1.5,
+          },
         }),
       };
 
@@ -295,7 +304,11 @@ describe('Combat Strategies', () => {
           participants: [{ villageId: 'v2', units: { MILITIA: 50 } }],
         },
         config: makeCombatConfigFixture({
-          combat: { attackBonus: 1.0, defenseBonus: 1.5, lootFactor: 0.5 },
+          combat: {
+            ...DEFAULT_COMBAT_RULES,
+            attackBonus: 1.0,
+            defenseBonus: 1.5,
+          },
         }),
       };
 

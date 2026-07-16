@@ -1,5 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { calculateCasualtyStats, isVictoryForAttacker } from './utils';
+import {
+  calculateCasualtyStats,
+  isConquestArmy,
+  isVictoryForAttacker,
+} from './utils';
+
+describe('isConquestArmy', () => {
+  it('is true when the army carries at least one Noble', () => {
+    expect(isConquestArmy({ MILITIA: 50, NOBLE: 1 })).toBe(true);
+    expect(isConquestArmy({ NOBLE: 3 })).toBe(true);
+  });
+
+  it('is false for a pure raid (no Noble)', () => {
+    expect(isConquestArmy({ MILITIA: 100, CAVALRY: 20 })).toBe(false);
+    expect(isConquestArmy({})).toBe(false);
+    expect(isConquestArmy({ NOBLE: 0 })).toBe(false);
+  });
+});
 
 describe('calculateCasualtyStats', () => {
   it('returns zero stats when army has no units', () => {

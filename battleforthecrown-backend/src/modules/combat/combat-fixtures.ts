@@ -60,6 +60,7 @@ const BASE_COMBAT_CONFIG: CombatConfig = {
   rankings: DEFAULT_WORLD_RANKINGS_CONFIG,
   _distance: 14,
   _travelTime: 14000,
+  _isConquest: false,
 };
 
 export function makeCombatConfigFixture(

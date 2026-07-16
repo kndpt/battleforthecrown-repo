@@ -734,6 +734,8 @@ export class ExtractionLifecycleService {
         ...config,
         _distance: 0,
         _travelTime: 0,
+        // Extraction : jamais une conquête (pas de loot pillage concerné).
+        _isConquest: false,
       },
     };
   }
