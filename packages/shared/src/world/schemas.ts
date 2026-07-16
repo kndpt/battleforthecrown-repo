@@ -116,11 +116,18 @@ const LootDistanceSchema = z.strictObject({
   floor: z.number().gt(0).max(1),
 });
 
+// Défaut appliqué aux configs persistées avant le run 103 (aucune migration).
+export const DEFAULT_LOOT_DISTANCE_CONFIG = {
+  radius: 25,
+  slope: 0.01,
+  floor: 0.5,
+};
+
 const CombatRulesSchema = z.strictObject({
   attackBonus: z.number().nonnegative(),
   defenseBonus: z.number().nonnegative(),
   lootFactor: z.number().min(0).max(1),
-  lootDistance: LootDistanceSchema,
+  lootDistance: LootDistanceSchema.default(DEFAULT_LOOT_DISTANCE_CONFIG),
 });
 
 const LootRangeSchema = z.strictObject({

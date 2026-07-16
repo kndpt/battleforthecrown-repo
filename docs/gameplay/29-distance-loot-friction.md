@@ -41,6 +41,8 @@ Section `combat.lootDistance` (`WorldConfigSchema`, source shared) :
 | `slope` | perte de facteur par tuile au-delà du rayon | `0.01` |
 | `floor` | plancher du facteur, **strictement > 0** | `0.5` |
 
+La section est **optionnelle en entrée** : les configs persistées avant l'introduction de la mécanique n'ont pas ce champ, et le schéma leur applique `DEFAULT_LOOT_DISTANCE_CONFIG` au parse (aucune migration requise). Un world déjà en base hérite donc des défauts ci-dessous.
+
 Défauts initiaux : facteur `1` jusqu'à 25 cases, puis −1 %/case jusqu'au plancher `0.5` atteint à 75 cases. **À calibrer** — garde-fou de calibrage : la tension pivot compressed-async ([`23-world-tempo-and-multipliers.md`](./23-world-tempo-and-multipliers.md)). `slope = 0` **ou** `floor = 1` désactivent de fait la mécanique (facteur toujours `1`).
 
 ## Source de vérité unique

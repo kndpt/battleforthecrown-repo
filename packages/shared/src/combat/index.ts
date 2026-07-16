@@ -1,4 +1,5 @@
 import type { LootDistanceConfig } from '../logic/loot-distance';
+import { DEFAULT_LOOT_DISTANCE_CONFIG } from '../world/schemas';
 
 export interface CombatRules {
   attackBonus: number;
@@ -13,7 +14,7 @@ export const DEFAULT_COMBAT_RULES: CombatRules = {
   attackBonus: 1.0,
   defenseBonus: 1.0,
   lootFactor: 0.5,
-  lootDistance: { radius: 25, slope: 0.01, floor: 0.5 },
+  lootDistance: DEFAULT_LOOT_DISTANCE_CONFIG,
 };
 
 export * from './dtos';
