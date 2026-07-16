@@ -5,6 +5,7 @@ import { CombatReportService } from './combat-report.service';
 import { ReinforcementReportService } from './reinforcement-report.service';
 import { CaravanReportService } from './caravan-report.service';
 import { CombatWorker } from './combat.worker';
+import { ScoutArrivalService } from './scout-arrival.service';
 import { ConquestFinalizeWorker } from './conquest-finalize.worker';
 import { ReturnWorker } from './return.worker';
 import { ExtractionWorker } from './extraction.worker';
@@ -48,6 +49,7 @@ import { GameplayModule } from '../gameplay/gameplay.module';
     ReinforcementReportService,
     CaravanReportService,
     CombatWorker,
+    ScoutArrivalService,
     ConquestFinalizeWorker,
     ReturnWorker,
     ExtractionWorker,
