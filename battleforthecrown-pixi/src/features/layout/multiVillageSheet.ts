@@ -4,6 +4,7 @@ import type {
   ResourcesPayload,
   VillageStrategyInfoDto,
 } from '@/api/queries';
+import { NUMBER_FMT } from '@/lib/formatters';
 import { computeUnitTrainingProgress } from '@/features/army/trainingProgress';
 import { unitMetaFor } from '@/features/army/unitConfig';
 import { computeConstructionProgress } from '@/features/village/constructionProgress';
@@ -16,6 +17,7 @@ import type {
 } from '@/features/design-system/components/MultiVillageBottomSheet';
 import { VILLAGE_LABEL_DISPLAY } from '@battleforthecrown/shared/village';
 import { UNIT_TYPES } from '@battleforthecrown/shared/army';
+import type { IncomingAttackDto } from '@battleforthecrown/shared/events';
 
 // Segment set used by the live in-game selector (no per-label chips). Single source of
 // truth so the two mount points (village view + shell header) can't drift apart.
@@ -52,6 +54,7 @@ export function buildMultiVillageSheetItems(
   activeVillageId: string | null,
   runtime: {
     buildingsByVillageId?: ReadonlyMap<string, BuildingDto[]>;
+    incomingByVillageId?: ReadonlyMap<string, IncomingAttackDto[]>;
     now?: number;
     populationByVillageId?: ReadonlyMap<string, PopulationDto>;
     powerByVillageId?: ReadonlyMap<string, number>;
@@ -63,9 +66,13 @@ export function buildMultiVillageSheetItems(
 ): MultiVillageItem[] {
   const now = runtime.now ?? Date.now();
 
-  return villages.map((village) => ({
+  return villages.map((village) => {
+    const power = runtime.powerByVillageId?.get(village.id);
+    return {
     active: village.id === activeVillageId,
     alert: deriveVillageStateAlert({
+      incoming: runtime.incomingByVillageId?.get(village.id),
+      now,
       queue: runtime.queueByVillageId?.get(village.id),
       resources: runtime.resourcesByVillageId?.get(village.id),
       training: runtime.trainingByVillageId?.get(village.id),
@@ -81,14 +88,15 @@ export function buildMultiVillageSheetItems(
     level: getCastleLevel(runtime.buildingsByVillageId?.get(village.id)),
     lords: mapLordActivities(runtime.trainingByVillageId?.get(village.id), now),
     name: village.name,
-    power: runtime.powerByVillageId?.get(village.id)?.toLocaleString('fr-FR'),
+    power: power != null ? NUMBER_FMT.format(power) : undefined,
     resources: mapResources(
       runtime.resourcesByVillageId?.get(village.id),
       runtime.populationByVillageId?.get(village.id),
     ),
     strategy: runtime.strategyByVillageId?.get(village.id)?.currentStrategy,
     troops: mapTroopActivities(runtime.trainingByVillageId?.get(village.id), now),
-  }));
+  };
+  });
 }
 
 /**
@@ -96,6 +104,7 @@ export function buildMultiVillageSheetItems(
  * label bag) so the pure derivation stays self-contained and unit-testable.
  */
 export const VILLAGE_STATE_ALERT_MESSAGES = {
+  attackIncoming: 'Attaque entrante',
   idleQueue: 'File inactive',
   warehouseFull: 'Entrepôt plein',
 } as const;
@@ -104,29 +113,44 @@ export const VILLAGE_STATE_ALERT_MESSAGES = {
 const STATE_ALERT_NO_ETA = '—';
 
 /**
- * Purely presentational per-village state warning for the multi-village sheet
- * (run 095). Derived from data already fetched by `useMultiVillageData`; it has
- * **zero gameplay effect** and never triggers any server write.
+ * Purely presentational per-village alert for the multi-village sheet. Derived
+ * from data already fetched by `useMultiVillageData`; it has **zero gameplay
+ * effect** and never triggers any server write.
  *
- * Invariant inherited from run 031: never invent an alert when no state data is
- * available (returns `null`). This derivation path only ever emits
- * `kind: 'warning'` — never `kind: 'attack'` (incoming-attack alerts are a
- * separate, still-open concern).
+ * Invariant inherited from run 031: never invent an alert when no data is
+ * available (returns `null`).
  *
  * Deterministic priority when several conditions hold (`alert` is singular):
- * warehouse full > idle queue.
+ * incoming attack (run 101) > warehouse full > idle queue (run 095). The attack
+ * branch is the only one that emits `kind: 'attack'`; the state branches emit
+ * `kind: 'warning'`.
+ *
+ * Fog-of-war safe: the attack path reads only the defender-facing
+ * {@link IncomingAttackDto} (5 fields, no attacker/composition/origin) and
+ * surfaces solely the nearest ETA — never any attacker detail.
  */
 export function deriveVillageStateAlert(input: {
+  incoming?: IncomingAttackDto[];
+  now?: number;
   queue?: QueueEntryDto[];
   resources?: ResourcesPayload;
   training?: ArmyTrainingDto[];
 }): MultiVillageAlert | null {
-  const { queue, resources, training } = input;
+  const { incoming, now, queue, resources, training } = input;
 
-  // No state data loaded for this village → nothing to assert (invariant 031).
-  if (resources === undefined && queue === undefined && training === undefined) {
+  // No data loaded for this village → nothing to assert (invariant 031).
+  if (
+    resources === undefined &&
+    queue === undefined &&
+    training === undefined &&
+    incoming === undefined
+  ) {
     return null;
   }
+
+  // Highest priority: a real incoming threat outranks any state warning.
+  const attack = deriveIncomingAttackAlert(incoming, now);
+  if (attack) return attack;
 
   if (isWarehouseFull(resources)) {
     return {
@@ -145,6 +169,37 @@ export function deriveVillageStateAlert(input: {
   }
 
   return null;
+}
+
+/**
+ * Emits a `kind: 'attack'` alert when at least one unresolved incoming attack
+ * targets the village. ETA = the nearest `arrivalAt`, compact-formatted. Reads
+ * only the fog-safe DTO fields; nothing about the attacker leaks into the pill.
+ */
+function deriveIncomingAttackAlert(
+  incoming: IncomingAttackDto[] | undefined,
+  now: number | undefined,
+): MultiVillageAlert | null {
+  if (!incoming || incoming.length === 0) return null;
+
+  const reference = now ?? Date.now();
+  // Only a still-pending arrival drives a live countdown. Ignore unparseable or
+  // already-elapsed entries (stale cache before the 2 s refetch) so an expired
+  // attack can't become the `min` and mask a genuine future threat's ETA — nor
+  // surface a dash instead of the real remaining time. If nothing is still
+  // pending, the threat has resolved: no pill.
+  const nearestArrival = incoming.reduce((soonest, attack) => {
+    const at = Date.parse(attack.arrivalAt);
+    return Number.isNaN(at) || at <= reference ? soonest : Math.min(soonest, at);
+  }, Number.POSITIVE_INFINITY);
+
+  if (!Number.isFinite(nearestArrival)) return null;
+
+  return {
+    eta: formatCompactRemaining(nearestArrival - reference),
+    kind: 'attack',
+    msg: VILLAGE_STATE_ALERT_MESSAGES.attackIncoming,
+  };
 }
 
 /** At least one storable resource (wood/stone/iron) reached its cap. */

@@ -106,7 +106,7 @@ export const WorldIdentitySchema = z.strictObject({
 });
 
 // Friction logistique par distance sur la capacité de pillage (raid only).
-// Voir `docs/gameplay/28-distance-loot-friction.md` + `logic/loot-distance.ts`.
+// Voir `docs/gameplay/29-distance-loot-friction.md` + `logic/loot-distance.ts`.
 const LootDistanceSchema = z.strictObject({
   // Rayon (tuiles) sous lequel aucun malus ne s'applique (facteur = 1).
   radius: z.number().nonnegative(),

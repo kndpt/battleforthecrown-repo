@@ -7,7 +7,7 @@ import { typedEntries } from '../utils/typed-record';
  * (Noble). Prédicat évalué sur l'armée **au départ** (pas les survivants) :
  * une conquête reste une conquête même si le Seigneur meurt au combat. Sert de
  * gate à l'exemption de la friction distance sur le pillage
- * (`docs/gameplay/28-distance-loot-friction.md`).
+ * (`docs/gameplay/29-distance-loot-friction.md`).
  */
 export function isConquestArmy(units: UnitMap): boolean {
   return (units[UNIT_TYPES.NOBLE] ?? 0) > 0;

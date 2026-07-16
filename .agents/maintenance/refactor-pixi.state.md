@@ -1,7 +1,7 @@
 # refactor-pixi — state (rewritten each run)
 
-last: 2026-07-14 | theme type-safe-segmented-control | branch claude/focused-galileo-kyjmj9
-full: `archive/refactor-pixi/2026-07-14-full.md`
+last: 2026-07-16 | theme locale-number-format | branch claude/focused-galileo-ud9lu3
+full: `archive/refactor-pixi/2026-07-16-full.md`
 
 ## OPEN
 
@@ -26,7 +26,6 @@ full: `archive/refactor-pixi/2026-07-14-full.md`
 | TYPE-06 | Med | api/client.ts:168,174 | `undefined as T` returns undefined to typed callers |
 | TYPE-08 | Med | pixi/assets/loader.ts:16 | Assets.loadBundle cast without validation |
 | SA-01 | Med | AuthenticatedShell.tsx:82 | Crowns hydration uses Date.now() instead of server ts |
-| LOCALE-01 | Med | 8+ files | 30+ inline `.toLocaleString('fr-FR')` not using NUMBER_FMT |
 | C-07 | Med | Tooltip.tsx:476L | 21 hooks, 7 effects (positioning) |
 | C-08 | Med | Select.tsx:416L | 23 hooks, popup positioning + keyboard nav |
 | C-09 | Med | AuthenticatedShell.tsx:153L | 25 hooks, 8 useEffect sync chains |
@@ -45,14 +44,15 @@ full: `archive/refactor-pixi/2026-07-14-full.md`
 
 | ID | Fix |
 |----|-----|
-| TYPE-04 | FIX: SegmentedControl generic `<T extends string>`, 6 callers lose `as` casts |
-| D07 | FIX: BuildingCard inline canAfford → shared canAffordNextBuildingLevel |
-| MUT-01 | RESOLVED: call-site onError exists on all 6 combat mutations (toast/setError) |
+| LOCALE-01 | FIX: 24 inline `.toLocaleString()` across 12 files → shared NUMBER_FMT.format() |
 
 ## CLOSED prior runs
 
 | ID | Fix |
 |----|-----|
+| TYPE-04 | FIX: SegmentedControl generic `<T extends string>`, 6 callers lose `as` casts |
+| D07 | FIX: BuildingCard inline canAfford → shared canAffordNextBuildingLevel |
+| MUT-01 | RESOLVED: call-site onError exists on all 6 combat mutations (toast/setError) |
 | D05 | FIX+BUG: 4 compact formatters → shared `formatCompact(n, opts?)` |
 | DRY-02 (prod) | FIX: 7 production files → RESOURCE_CONFIG |
 | DRY-03 | FIX: 14 `Intl.NumberFormat('fr-FR')` → shared NUMBER_FMT/INTEGER_FMT |

@@ -8,7 +8,6 @@ interface ReportCardProps {
   onClick: () => void;
 }
 
-const NUMBER_FORMATTER = NUMBER_FMT;
 
 function formatDate(value: string): string {
   return formatReportTimestamp(value, true);
@@ -68,7 +67,7 @@ export function ReportCard({ report, onClick }: ReportCardProps) {
             </div>
             <div className="flex items-center gap-2">
               <Badge variant={totalLoot > 0 ? 'success' : 'neutral'} size="md" className="px-2">
-                📦 {totalLoot > 0 ? `+${NUMBER_FORMATTER.format(totalLoot)}` : '0'}
+                📦 {totalLoot > 0 ? `+${NUMBER_FMT.format(totalLoot)}` : '0'}
               </Badge>
               <Badge
                 variant={lossesForPlayer > 0 ? 'error' : 'neutral'}
@@ -77,7 +76,7 @@ export function ReportCard({ report, onClick }: ReportCardProps) {
               >
                 ⚔️{' '}
                 {lossesForPlayer > 0
-                  ? `-${NUMBER_FORMATTER.format(lossesForPlayer)}`
+                  ? `-${NUMBER_FMT.format(lossesForPlayer)}`
                   : '0'}
               </Badge>
             </div>

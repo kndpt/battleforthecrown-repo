@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Shield, Swords, X } from 'lucide-react';
+import { INTEGER_FMT } from '@/lib/formatters';
 import {
   Badge,
   Button,
@@ -510,7 +511,7 @@ export function AttackDetailModal({
               <>
                 <div className="flex justify-between">
                   <span className="text-kingdom-700">Puissance estimée :</span>
-                  <span className="font-bold tabular-nums">{totalAttack.toLocaleString()}</span>
+                  <span className="font-bold tabular-nums">{INTEGER_FMT.format(totalAttack)}</span>
                 </div>
                 <div className="flex justify-between items-center gap-2">
                   <span className="text-kingdom-700">Capacité de transport :</span>
@@ -521,10 +522,11 @@ export function AttackDetailModal({
                       </Badge>
                     )}
                     {totalCarryCapacity > 0
-                      ? (lootView.showMalus
-                          ? lootView.effectiveCarryCapacity
-                          : totalCarryCapacity
-                        ).toLocaleString()
+                      ? INTEGER_FMT.format(
+                          lootView.showMalus
+                            ? lootView.effectiveCarryCapacity
+                            : totalCarryCapacity,
+                        )
                       : '—'}
                   </span>
                 </div>

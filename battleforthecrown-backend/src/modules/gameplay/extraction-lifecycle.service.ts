@@ -439,6 +439,7 @@ export class ExtractionLifecycleService {
                 worldId: site.worldId,
                 villageId: victim.attackerVillageId,
                 siteId: site.id,
+                resourceType: site.resourceType,
                 interrupted: isVictory,
                 stolen,
               },

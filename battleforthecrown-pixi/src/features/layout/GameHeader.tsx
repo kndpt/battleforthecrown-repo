@@ -27,7 +27,7 @@ import {
   usePublicWorldsQuery,
 } from '@/api/queries';
 import { ApiError } from '@/api';
-import { formatHeaderCompactAmount, RESOURCE_CONFIG } from '@/lib/resourceConfig';
+import { formatHeaderCompactAmount, RESOURCE_BAR_FILL, RESOURCE_ICON_PATHS, RESOURCE_DISPLAY_LABELS, PRIMARY_RESOURCE_KEYS, type PrimaryResourceKey } from '@/lib/resourceConfig';
 import { publicAsset } from '@/lib/publicAsset';
 import { BottomSheet } from '@/ui';
 import { useUiStore } from '@/stores/ui';
@@ -155,33 +155,19 @@ export function GameHeader({
 
   const resources = useMemo(() => {
     const max = hasSnapshot && display ? display.maxPerType : 0;
-    const woodCurrent = hasSnapshot && display ? Math.floor(display.wood) : 0;
-    const stoneCurrent = hasSnapshot && display ? Math.floor(display.stone) : 0;
-    const ironCurrent = hasSnapshot && display ? Math.floor(display.iron) : 0;
+    const currentValues: Record<PrimaryResourceKey, number> = {
+      wood: hasSnapshot && display ? Math.floor(display.wood) : 0,
+      stone: hasSnapshot && display ? Math.floor(display.stone) : 0,
+      iron: hasSnapshot && display ? Math.floor(display.iron) : 0,
+    };
     const ratio = (current: number) => (max > 0 ? current / max : undefined);
-    return [
-      {
-        fillClass: 'bg-[linear-gradient(90deg,#7a5a32,#b08040)]',
-        icon: RESOURCE_CONFIG.wood.assetPath,
-        label: RESOURCE_CONFIG.wood.nameCapitalized,
-        value: formatHeaderCompactAmount(woodCurrent),
-        fillRatio: ratio(woodCurrent),
-      },
-      {
-        fillClass: 'bg-[linear-gradient(90deg,#7a7a7a,#a0a0a0)]',
-        icon: RESOURCE_CONFIG.stone.assetPath,
-        label: RESOURCE_CONFIG.stone.nameCapitalized,
-        value: formatHeaderCompactAmount(stoneCurrent),
-        fillRatio: ratio(stoneCurrent),
-      },
-      {
-        fillClass: 'bg-[linear-gradient(90deg,#4a6070,#6a90a8)]',
-        icon: RESOURCE_CONFIG.iron.assetPath,
-        label: RESOURCE_CONFIG.iron.nameCapitalized,
-        value: formatHeaderCompactAmount(ironCurrent),
-        fillRatio: ratio(ironCurrent),
-      },
-    ];
+    return PRIMARY_RESOURCE_KEYS.map((key) => ({
+      fillClass: RESOURCE_BAR_FILL[key],
+      icon: RESOURCE_ICON_PATHS[key],
+      label: RESOURCE_DISPLAY_LABELS[key],
+      value: formatHeaderCompactAmount(currentValues[key]),
+      fillRatio: ratio(currentValues[key]),
+    }));
   }, [hasSnapshot, display]);
   const totalPower = kingdomPower?.kingdomPower ?? 0;
   const crowns = Number.isFinite(crownBalance ?? NaN) ? Math.floor(crownBalance ?? 0) : 0;

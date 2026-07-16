@@ -3,7 +3,7 @@
  * (raid uniquement). Au-delà d'un rayon, la capacité de transport effective du
  * butin décroît linéairement jusqu'à un plateau plancher — jamais nul. Objectif
  * gameplay : renforcer les fronts locaux et limiter la projection globale des
- * pillages des top players, sans cap dur (cf. `docs/gameplay/28-distance-loot-friction.md`).
+ * pillages des top players, sans cap dur (cf. `docs/gameplay/29-distance-loot-friction.md`).
  *
  * Source de vérité unique réutilisée par le backend server-authoritative
  * (`loot.manager`) ET le front (`AttackDetailModal`, pré-affichage du malus).

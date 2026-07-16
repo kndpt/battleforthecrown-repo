@@ -10,7 +10,6 @@ export interface TroopBarProps {
   unitName: string;
 }
 
-const NUMBER_FORMATTER = NUMBER_FMT;
 
 export function TroopBar({ className, icon, lost, sent, unitName }: TroopBarProps) {
   const safeSent = Math.max(0, sent);
@@ -26,7 +25,7 @@ export function TroopBar({ className, icon, lost, sent, unitName }: TroopBarProp
     ? 'aucune perte'
     : isWiped
       ? 'anéantis'
-      : `${NUMBER_FORMATTER.format(safeLost)} perte${safeLost > 1 ? 's' : ''}`;
+      : `${NUMBER_FMT.format(safeLost)} perte${safeLost > 1 ? 's' : ''}`;
 
   const ratioToneClass = isIntact
     ? 'text-[#4a8c2a]'
@@ -40,9 +39,9 @@ export function TroopBar({ className, icon, lost, sent, unitName }: TroopBarProp
         <img alt="" className="size-[22px] flex-none object-contain" src={publicAsset(icon)} />
         <span className="flex-1 truncate text-[11px] text-[#6d5838]">{unitName}</span>
         <b className={cn('text-sm font-extrabold tabular-nums', ratioToneClass)}>
-          {NUMBER_FORMATTER.format(survivors)}
+          {NUMBER_FMT.format(survivors)}
           <span className="text-[#6d5838]">/</span>
-          {NUMBER_FORMATTER.format(safeSent)}
+          {NUMBER_FMT.format(safeSent)}
         </b>
       </div>
       <div className="relative flex h-[14px] w-full overflow-hidden rounded-[7px] border-2 border-[rgba(0,0,0,.18)] bg-[rgba(0,0,0,.15)] shadow-[inset_0_2px_3px_rgba(0,0,0,.25)]">

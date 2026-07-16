@@ -8,6 +8,7 @@ import type {
 } from 'react';
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
+import { NUMBER_FMT } from '@/lib/formatters';
 import { clamp } from '@/lib/math';
 import { DragHintOverlay } from './DragHintOverlay';
 import { CATEGORY_THEME as CAT_COLOR, type UnitCategory } from '@/features/army/unitCategory';
@@ -303,9 +304,6 @@ const navIconPath: Record<string, string> = {
   world: 'M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0Z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
 };
 
-function formatNumber(value: number): string {
-  return value.toLocaleString('fr-FR');
-}
 
 function clampQuantity(value: number, max: number): number {
   if (max <= 0) return 0;
@@ -1258,7 +1256,7 @@ function ArmySupportRowButton({
               index > 0 ? '-ml-2' : '',
             )}
             key={unit.id}
-            title={`${unit.label} ×${formatNumber(unit.quantity)}`}
+            title={`${unit.label} ×${NUMBER_FMT.format(unit.quantity)}`}
             style={{ zIndex: visibleUnits.length - index }}
           >
             {unit.icon ? (
@@ -1282,11 +1280,11 @@ function ArmySupportRowButton({
       </div>
       <div className="flex min-w-[72px] shrink-0 flex-col items-end gap-1">
         <span className="font-game text-[17px] font-extrabold leading-none tabular-nums text-[var(--fg-quill)]">
-          ×{formatNumber(row.totalQuantity)}
+          ×{NUMBER_FMT.format(row.totalQuantity)}
         </span>
         <span className="inline-flex items-center gap-1 rounded-full border border-[var(--parchment-700)] bg-[rgba(255,255,255,.42)] px-1.5 py-0.5 font-game text-[9px] font-extrabold tabular-nums text-[var(--fg-muted-parch)]">
           <img alt="" className="size-3 object-contain" src={publicAsset('/assets/army-power.png')} />
-          {formatNumber(row.power)}
+          {NUMBER_FMT.format(row.power)}
         </span>
       </div>
     </button>
@@ -1348,7 +1346,7 @@ function ArmyVillageRowButton({
         </div>
         <div className="mt-1.5 grid max-w-[240px] grid-cols-2 gap-1.5">
           <span className="inline-flex min-w-0 items-center justify-center rounded-full border-[1.5px] border-[var(--game-blue-border)] bg-[linear-gradient(180deg,var(--game-blue-light),var(--game-blue-dark))] px-2 py-1 font-game text-[9.5px] font-extrabold uppercase tracking-[.08em] text-white [text-shadow:1px_1px_1px_rgba(0,0,0,.35)]">
-            Moi ×{formatNumber(row.ownQuantity)}
+            Moi ×{NUMBER_FMT.format(row.ownQuantity)}
           </span>
           <span
             className={cn(
@@ -1358,17 +1356,17 @@ function ArmyVillageRowButton({
                 : 'border-[var(--parchment-600)] bg-[rgba(255,255,255,.32)] text-[var(--fg-muted-parch)]',
             )}
           >
-            Alliés ×{formatNumber(row.alliedQuantity)}
+            Alliés ×{NUMBER_FMT.format(row.alliedQuantity)}
           </span>
         </div>
       </div>
       <div className="flex min-w-[72px] shrink-0 flex-col items-end gap-1">
         <span className="font-game text-[17px] font-extrabold leading-none tabular-nums text-[var(--fg-quill)]">
-          ×{formatNumber(row.totalQuantity)}
+          ×{NUMBER_FMT.format(row.totalQuantity)}
         </span>
         <span className="inline-flex items-center gap-1 rounded-full border border-[var(--parchment-700)] bg-[rgba(255,255,255,.42)] px-1.5 py-0.5 font-game text-[9px] font-extrabold tabular-nums text-[var(--fg-muted-parch)]">
           <img alt="" className="size-3 object-contain" src={publicAsset('/assets/army-power.png')} />
-          {formatNumber(row.power)}
+          {NUMBER_FMT.format(row.power)}
         </span>
       </div>
     </div>
@@ -1469,8 +1467,8 @@ function ResourceBar({ have, icon, label, tone, used }: { have: number; icon: st
         <div className="mb-0.5 flex justify-between font-game text-[10px] font-bold leading-none tabular-nums text-[var(--fg-on-parchment)]">
           <span className="uppercase tracking-[.08em] text-[var(--fg-muted-parch)]">{label}</span>
           <span>
-            <span className={tight ? 'font-extrabold text-[var(--game-red-dark)]' : 'font-extrabold text-[var(--fg-quill)]'}>{formatNumber(used)}</span>
-            <span className="text-[var(--fg-muted-parch)]"> / {formatNumber(have)}</span>
+            <span className={tight ? 'font-extrabold text-[var(--game-red-dark)]' : 'font-extrabold text-[var(--fg-quill)]'}>{NUMBER_FMT.format(used)}</span>
+            <span className="text-[var(--fg-muted-parch)]"> / {NUMBER_FMT.format(have)}</span>
           </span>
         </div>
         <div className="h-[7px] overflow-hidden rounded-full border border-[var(--parchment-700)] bg-[var(--parchment-400)] shadow-[inset_0_1px_2px_rgba(0,0,0,.22)]">
@@ -1550,7 +1548,7 @@ export function ArmyRecruitPopup({
         <StepperButton disabled={boundedValue <= 1} label="−10" onClick={() => update(boundedValue - 10)} />
         <StepperButton disabled={boundedValue <= 1} label="−1" onClick={() => update(boundedValue - 1)} size={40} />
         <div className="min-w-0 flex-1 px-1 text-center">
-          <div className="font-game text-4xl font-extrabold leading-none tracking-[.005em] tabular-nums text-[var(--fg-quill)] [text-shadow:0_1px_0_rgba(255,255,255,.5)]">{formatNumber(boundedValue)}</div>
+          <div className="font-game text-4xl font-extrabold leading-none tracking-[.005em] tabular-nums text-[var(--fg-quill)] [text-shadow:0_1px_0_rgba(255,255,255,.5)]">{NUMBER_FMT.format(boundedValue)}</div>
           <div className="mt-0.5 overflow-hidden text-ellipsis whitespace-nowrap font-game text-[9px] font-bold uppercase tracking-[.14em] text-[var(--fg-muted-parch)]">
             {troop.short} {boundedValue > 1 ? '× ' : ''}
           </div>
@@ -1627,7 +1625,7 @@ export function ArmyRecruitPopup({
           type="button"
         >
           <span className="text-xs uppercase tracking-[.14em]">{labels.recruit}</span>
-          <span className="ml-[7px] text-[17px] tracking-[.01em] tabular-nums">×{formatNumber(boundedValue)}</span>
+          <span className="ml-[7px] text-[17px] tracking-[.01em] tabular-nums">×{NUMBER_FMT.format(boundedValue)}</span>
         </button>
       </div>
     </div>

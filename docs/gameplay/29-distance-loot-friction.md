@@ -1,4 +1,4 @@
-# 28 — Friction logistique par distance (pillage)
+# 29 — Friction logistique par distance (pillage)
 
 > **Statut** : MVP (Phase 12 « Ajouts mineurs MVP »). Livré [run 103](../../tasks/runs/archive/103-feature-distance-loot-friction.md).
 > Promu depuis le lab [`lab/tickets/04-distance-logistics.md`](./lab/tickets/04-distance-logistics.md) — une seule des quatre frictions envisagées a été retenue pour le MVP.

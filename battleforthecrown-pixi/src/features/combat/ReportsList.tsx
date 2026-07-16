@@ -37,11 +37,8 @@ interface ReportsListProps {
   onReportClick: (report: InboxReportSummary) => void;
 }
 
-import { NUMBER_FMT } from '@/lib/formatters';
+import { NUMBER_FMT, formatReportTimestamp } from '@/lib/formatters';
 
-import { formatReportTimestamp } from '@/lib/formatters';
-
-const NUMBER_FORMATTER = NUMBER_FMT;
 
 function formatDate(value: string): string {
   return formatReportTimestamp(value);
@@ -59,7 +56,7 @@ function combatInboxItem(report: CombatReportDto) {
   return {
     icon: '/assets/rapport.png',
     preview: totalLoot > 0
-      ? `Butin ramené : ${NUMBER_FORMATTER.format(totalLoot)} ressources.`
+      ? `Butin ramené : ${NUMBER_FMT.format(totalLoot)} ressources.`
       : 'Aucun butin ramené.',
     sender: '',
     subject: `${subjectPrefix} (${report.targetX}, ${report.targetY})`,
@@ -72,7 +69,7 @@ function scoutInboxItem(report: ScoutReportResponse) {
   // Rapport imprécis (peu d'espions, run 090) : pas de total exact à afficher.
   const preview =
     report.precision === 'PRECISE'
-      ? `${NUMBER_FORMATTER.format(scoutReportUnitTotal(report))} unités · ${NUMBER_FORMATTER.format(scoutReportResourceTotal(report))} ressources visibles.`
+      ? `${NUMBER_FMT.format(scoutReportUnitTotal(report))} unités · ${NUMBER_FMT.format(scoutReportResourceTotal(report))} ressources visibles.`
       : `Renseignement ${scoutReportPrecisionLabel(report).toLowerCase()} · plus d'espions = rapport précis.`;
   return {
     icon: '/assets/lupa.png',

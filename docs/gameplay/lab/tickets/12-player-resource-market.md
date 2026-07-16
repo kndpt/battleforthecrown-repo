@@ -1,7 +1,9 @@
 # 12 — Marché entre joueurs
 
-**Statut** : idée à haut risque, à garder sur table  
+**Statut** : idée à haut risque, à garder sur table (marché joueur-joueur toujours **post-MVP**).
 **Ratio bénéfice / coût** : incertain
+
+> 🎯 **Mise à jour (run 099)** : l'« alternative plus saine » ci-dessous (échange royal) est **promue en run livré** — spec complète dans [`28-royal-resource-exchange.md`](../../28-royal-resource-exchange.md). Le marché joueur-joueur (bâtiment `MARKET`) décrit dans ce ticket reste hors scope et non tranché.
 
 ## Opportunité
 

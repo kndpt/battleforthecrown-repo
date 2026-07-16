@@ -12,8 +12,6 @@ interface PublicPlayerProfileSheetProps {
 
 import { NUMBER_FMT } from '@/lib/formatters';
 
-const NUMBER_FORMATTER = NUMBER_FMT;
-
 /**
  * Fiche publique d'un joueur tiers ouverte depuis la carte. N'affiche que des
  * champs publics par spec (09 § Visibilité) : nom, puissance royaume, état du
@@ -152,7 +150,7 @@ export function PublicPlayerProfileSheet({
                       fontVariantNumeric: "tabular-nums",
                     }}
                   >
-                    {NUMBER_FORMATTER.format(profile.data.kingdomPower)}
+                    {NUMBER_FMT.format(profile.data.kingdomPower)}
                   </span>
                 </div>
 

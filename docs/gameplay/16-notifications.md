@@ -52,6 +52,15 @@ Le pendant défenseur de la catégorie 🔴 « Fin de fenêtre de capture ». L'
 - **HUD** : onglet « Sièges » du bottom sheet *Activités du royaume* (`KingdomActivitiesPanel`) + badge compteur rouge sur la carte, compte à rebours vivant « fenêtre jusqu'à T » par village assiégé ; rafraîchi par WS + invalidation TanStack Query, sans reload. **Idempotence at-least-once** : le feed dédup par `pendingConquestId` (mapper first-wins) ; une livraison WS dupliquée ne fait que ré-invalider la query (no-op), sans doubler la carte ni relancer le countdown.
 - **Hors scope run 094** : push FCM/APNs, opt-in granulaire, révélation de la composition/origine de l'attaquant.
 
+## Visibilité in-app du site d'exploitation attaqué (livré — run 098)
+
+Troisième et dernière catégorie 🔴 Critique MVP à recevoir sa surface in-app. Quand l'escorte d'une équipe d'exploitation est interceptée (`extraction.attacked`), l'exploitant est averti in-app **sans reload**, en complément des invalidations de cache existantes. Push FCM/APNs toujours hors scope (Phase 6, POST-MVP).
+
+- **Nature de l'event** : `extraction.attacked` est **discret** (fait accompli), pas un état persistant listable (contrairement à `attack.incoming` du run 086 ou aux fenêtres `OPEN` du run 094). Aucun endpoint / onglet `targeting-me` : l'interception s'émet une fois puis l'extraction rentre (interruption) ou se poursuit (défaite attaquant). Les extractions **actives** restent visibles dans l'onglet « Expéditions ». Le trou comblé = l'**alerte à l'arrivée de l'event**.
+- **Payload** (`ExtractionAttackedPayload`, shared) : enrichi de `resourceType` (`WOOD`/`STONE`/`IRON`) pour nommer le site attaqué. Reste **fog-safe** : aucune identité/origine de l'attaquant (le backend n'écrit volontairement aucun `CombatReport` pour l'interception).
+- **HUD** : toast via le store UI dans `applyExtractionAttacked` — `interrupted=true` → toast **error** « Site d'exploitation attaqué » avec les quantités volées (`stolen` par ressource) ; `interrupted=false` → toast **success** « Attaque repoussée ». **Idempotence at-least-once** (ADR-02) : le toast est dédupliqué par `expeditionId` (garde à TTL court côté client) ; une livraison WS dupliquée ne relance qu'une invalidation TanStack Query idempotente, sans doubler l'alerte.
+- **Hors scope run 098** : push FCM/APNs, opt-in granulaire, endpoint/onglet dédié (injustifié sans état persistant), révélation de la composition/origine de l'attaquant.
+
 ## Liens
 
 - [`14-pvp-conquest.md`](./14-pvp-conquest.md) — fenêtres de capture variables (consommateur principal des notifs).

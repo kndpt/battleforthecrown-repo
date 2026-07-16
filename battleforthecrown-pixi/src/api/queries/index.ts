@@ -29,6 +29,8 @@ export {
   villageStrategyQueryOptions,
   useVillageStrategyQuery,
   useChangeVillageStrategyMutation,
+  type ConvertResourcesResultDto,
+  useConvertResourcesMutation,
   populationQueryOptions,
   usePopulationQuery,
   useMyVillagesQuery,
@@ -65,6 +67,7 @@ export {
 export {
   type ActiveExpeditionDto,
   useActiveExpeditionsQuery,
+  incomingAttacksQueryOptions,
   useIncomingAttacksQuery,
   useCapturesTargetingMeQuery,
   useOpenConquestsQuery,

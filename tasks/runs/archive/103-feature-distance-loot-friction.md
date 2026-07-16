@@ -40,7 +40,7 @@
 
 _(Lead étape 3 — tâches ≤5 fichiers)_
 
-- **T5 (EN TÊTE) — Docs/spec** : promouvoir le lab ticket 04 en spec canonique `docs/gameplay/28-distance-loot-friction.md` (la mécanique devient un invariant durable et le run backprop dessus). Acter : **pillage seul**, **distance brute** attaquant→cible, **plancher non nul**, **paramétrable WorldConfig**, tension pivot compressed-async (spec 23) comme garde-fou de calibrage. Lier depuis `04-combat.md` + ligne roadmap. Les 3 autres pistes du lab (retour, coût préparation, conquêtes/renforts) restées **hors scope**.
+- **T5 (EN TÊTE) — Docs/spec** : promouvoir le lab ticket 04 en spec canonique `docs/gameplay/29-distance-loot-friction.md` (la mécanique devient un invariant durable et le run backprop dessus). Acter : **pillage seul**, **distance brute** attaquant→cible, **plancher non nul**, **paramétrable WorldConfig**, tension pivot compressed-async (spec 23) comme garde-fou de calibrage. Lier depuis `04-combat.md` + ligne roadmap. Les 3 autres pistes du lab (retour, coût préparation, conquêtes/renforts) restées **hors scope**.
 - **T1 — Shared** : helper pur `lootDistanceFactor(distance, cfg): number` (`packages/shared/src/logic/`) + section config sur `WorldConfigSchema` (`radius`, `slope`/`floor`) + defaults exportés + index + `*.spec.ts`. Source de vérité unique réutilisée backend ET front.
 - **T2 — Backend** : appliquer le facteur dans `loot.manager.ts:26` (`Math.floor(totalCapacity × lootDistanceFactor(context.config._distance, context.config))`) ; ajuster `metadata` ; `loot.manager.spec.ts` (`d ≤ R` → ×1, `d > R` → dégressif, plancher).
 - **T3 — Seed/fixtures** : `prisma/seed-default-world-config.sql` + `combat-fixtures.ts` alignés (aucune migration Prisma — config JSON).

@@ -345,6 +345,10 @@ const ExtractionAttackedPayloadSchema = z.object({
   worldId: z.string(),
   villageId: z.string(),
   siteId: z.string(),
+  // Optional for backward compatibility: pre-deploy Outbox rows written by the
+  // old emitter lack this field — a required enum would fail parseEventPayload
+  // and hot-loop the dispatcher (run 078 hazard). New rows always carry it.
+  resourceType: z.enum(["WOOD", "STONE", "IRON"]).optional(),
   interrupted: z.boolean(),
   stolen: z.object({
     wood: z.number().int().nonnegative(),

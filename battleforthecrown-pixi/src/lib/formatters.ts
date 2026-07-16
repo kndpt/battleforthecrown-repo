@@ -1,5 +1,9 @@
 export const NUMBER_FMT = new Intl.NumberFormat('fr-FR');
 
+export function formatIntFr(n: number): string {
+  return NUMBER_FMT.format(Math.floor(n));
+}
+
 export const INTEGER_FMT = new Intl.NumberFormat('fr-FR', {
   maximumFractionDigits: 0,
 });

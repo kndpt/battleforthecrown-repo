@@ -8,6 +8,7 @@ import type {
 import { villageStyleOptions } from '@/features/design-system/components/villageStyleData';
 import { WORLD_SIGIL_GLYPHS, WORLD_THEME_TOKENS } from '@/features/worlds/worldsViewModel';
 import type { PublicWorld } from '@battleforthecrown/shared/world';
+import { NUMBER_FMT } from '@/lib/formatters';
 import { VILLAGE_LABEL_DISPLAY } from '@battleforthecrown/shared/village';
 import type { CosmeticAwardResponse } from '@battleforthecrown/shared';
 import {
@@ -78,6 +79,7 @@ export function buildProfileVillages({
       village.castleLevel ??
       buildingsByVillageId.get(village.id)?.find((building) => building.type === 'CASTLE')?.level ??
       '—';
+    const power = powerByVillageId.get(village.id);
 
     return {
       capital: village.isCapital,
@@ -86,7 +88,7 @@ export function buildProfileVillages({
       label: village.label ? VILLAGE_LABEL_DISPLAY[village.label] : undefined,
       level,
       name: village.name,
-      power: powerByVillageId.get(village.id)?.toLocaleString('fr-FR') ?? '—',
+      power: power != null ? NUMBER_FMT.format(power) : '—',
       style: strategy ? { id: strategy, label: strategyLabels[strategy] ?? strategy } : undefined,
     };
   });

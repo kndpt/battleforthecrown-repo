@@ -1,4 +1,5 @@
 import { Badge, ProgressBar, ResourceIcon } from '@/ui';
+import { INTEGER_FMT } from '@/lib/formatters';
 import type { BuildingLevelDefinition } from '@battleforthecrown/shared/village/buildings';
 
 interface CostSectionProps {
@@ -33,10 +34,10 @@ function CostCell({ label, required, current, icon }: CellProps) {
             canAfford ? 'text-game-green-dark' : 'text-game-red-dark'
           }`}
         >
-          {required.toLocaleString()}
+          {INTEGER_FMT.format(required)}
         </p>
         <p className="text-[10px] text-kingdom-700 tabular-nums">
-          / {Math.floor(current).toLocaleString()}
+          / {INTEGER_FMT.format(Math.floor(current))}
         </p>
         <ProgressBar
           value={Math.min((current / Math.max(1, required)) * 100, 100)}
@@ -45,7 +46,7 @@ function CostCell({ label, required, current, icon }: CellProps) {
           showPercentage={false}
         />
         <Badge variant={canAfford ? 'success' : 'error'} size="sm">
-          {canAfford ? '✓' : `-${Math.ceil(required - current).toLocaleString()}`}
+          {canAfford ? '✓' : `-${INTEGER_FMT.format(Math.ceil(required - current))}`}
         </Badge>
       </div>
     </div>

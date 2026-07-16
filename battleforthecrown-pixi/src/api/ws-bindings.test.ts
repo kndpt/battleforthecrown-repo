@@ -2017,10 +2017,11 @@ describe('applyExtractionAttacked', () => {
 
     applyExtractionAttacked(
       {
-        expeditionId: 'exp-1',
+        expeditionId: 'exp-inv-a',
         worldId: 'world-1',
         villageId: 'v-ext',
         siteId: 'site-1',
+        resourceType: 'WOOD',
         interrupted: false,
         stolen: { wood: 0, stone: 0, iron: 0 },
       },
@@ -2041,10 +2042,11 @@ describe('applyExtractionAttacked', () => {
 
     applyExtractionAttacked(
       {
-        expeditionId: 'exp-1',
+        expeditionId: 'exp-inv-b',
         worldId: 'world-1',
         villageId: 'v-ext',
         siteId: 'site-1',
+        resourceType: 'STONE',
         interrupted: true,
         stolen: { wood: 100, stone: 50, iron: 0 },
       },
@@ -2056,6 +2058,111 @@ describe('applyExtractionAttacked', () => {
     expect(queryClient.getQueryState(queryKeys.activeExpeditions('v-ext'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.armyInventory('v-ext'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.population('v-ext'))?.isInvalidated).toBe(true);
+  });
+
+  it('pushes an error toast with stolen resources when the escort is defeated (interrupted)', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.worldEntities('world-1'), []);
+
+    applyExtractionAttacked(
+      {
+        expeditionId: 'exp-int',
+        worldId: 'world-1',
+        villageId: 'v-ext',
+        siteId: 'site-1',
+        resourceType: 'IRON',
+        interrupted: true,
+        stolen: { wood: 100, stone: 0, iron: 40 },
+      },
+      { queryClient },
+    );
+
+    const toasts = useUiStore.getState().toasts;
+    expect(toasts).toHaveLength(1);
+    expect(toasts[0]?.tone).toBe('error');
+    expect(toasts[0]?.title).toBe("Site d'exploitation attaqué");
+    // Stolen quantities surfaced; iron site labelled by its icon.
+    expect(toasts[0]?.description).toContain('Bois 100');
+    expect(toasts[0]?.description).toContain('Fer 40');
+    expect(toasts[0]?.description).toContain('⛏️'); // iron site label
+    // Fog-safe: no attacker identity/origin leaks into the alert.
+    const rendered = `${toasts[0]?.title} ${toasts[0]?.description ?? ''}`;
+    expect(rendered).not.toMatch(/attaquant|origine|\(\d+,\s*\d+\)/i);
+  });
+
+  it('pushes a success toast when the attack is repelled (not interrupted)', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.worldEntities('world-1'), []);
+
+    applyExtractionAttacked(
+      {
+        expeditionId: 'exp-rep',
+        worldId: 'world-1',
+        villageId: 'v-ext',
+        siteId: 'site-1',
+        resourceType: 'WOOD',
+        interrupted: false,
+        stolen: { wood: 0, stone: 0, iron: 0 },
+      },
+      { queryClient },
+    );
+
+    const toasts = useUiStore.getState().toasts;
+    expect(toasts).toHaveLength(1);
+    expect(toasts[0]?.tone).toBe('success');
+    expect(toasts[0]?.title).toBe('Attaque repoussée');
+  });
+
+  it('dedupes an at-least-once duplicate delivery: no second toast for the same expedition', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.worldEntities('world-1'), []);
+    const payload = {
+      expeditionId: 'exp-dup',
+      worldId: 'world-1',
+      villageId: 'v-ext',
+      siteId: 'site-1',
+      resourceType: 'WOOD' as const,
+      interrupted: true,
+      stolen: { wood: 10, stone: 0, iron: 0 },
+    };
+
+    applyExtractionAttacked(payload, { queryClient });
+    // Reset the invalidation flag so the replay's invalidation is observable.
+    queryClient.setQueryData(queryKeys.worldEntities('world-1'), []);
+    expect(queryClient.getQueryState(queryKeys.worldEntities('world-1'))?.isInvalidated).toBe(false);
+
+    applyExtractionAttacked(payload, { queryClient });
+
+    expect(useUiStore.getState().toasts).toHaveLength(1);
+    // Invalidations remain idempotent and still fire on the replay (false → true).
+    expect(queryClient.getQueryState(queryKeys.worldEntities('world-1'))?.isInvalidated).toBe(true);
+  });
+
+  it('still toasts (without site label) for a legacy payload missing resourceType', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.worldEntities('world-1'), []);
+
+    expect(() =>
+      applyExtractionAttacked(
+        {
+          expeditionId: 'exp-legacy',
+          worldId: 'world-1',
+          villageId: 'v-ext',
+          siteId: 'site-1',
+          // resourceType intentionally omitted (pre-deploy Outbox row shape).
+          interrupted: true,
+          stolen: { wood: 10, stone: 0, iron: 0 },
+        },
+        { queryClient },
+      ),
+    ).not.toThrow();
+
+    const toasts = useUiStore.getState().toasts;
+    expect(toasts).toHaveLength(1);
+    expect(toasts[0]?.tone).toBe('error');
+    expect(toasts[0]?.description).toContain('Bois 10');
+    // No site label without resourceType — the parenthesised suffix is absent.
+    expect(toasts[0]?.description).not.toMatch(/\(.*\)/);
   });
 });
 
