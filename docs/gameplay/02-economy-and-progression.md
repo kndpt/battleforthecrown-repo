@@ -31,6 +31,7 @@ Quand un village est **conquis** :
 - Chaque village est un **nœud de ressources indépendant** — pas de pool global.
 - La production stoppe si l'entrepôt est plein.
 - **Transfert entre villages possédés via caravane** : un joueur peut envoyer des ressources d'un village A vers un autre village B qu'il possède. Le transfert est physique (trajet d'expédition), consomme temporairement de la population libre de A comme porteurs, reste limité par la capacité caravane de l'Entrepôt de A et par l'Entrepôt de B à l'arrivée. Aucun transfert direct instantané, aucun marché entre joueurs au MVP.
+- **Échange royal intra-village** : un joueur peut convertir bois ↔ pierre ↔ fer **à l'intérieur d'un même village**, à taux défavorable et plafond quotidien, sans aucun transfert inter-village ni inter-joueur (pas un marché). Spec complète, taux et anti-abus : [`28-royal-resource-exchange.md`](./28-royal-resource-exchange.md).
 - Les villages barbares **régénèrent** leurs ressources et leurs troupes avec le temps. Spec complète dans [`06-barbarians.md`](./06-barbarians.md).
 - Le revenu en couronnes dépend de la **puissance cumulée** de tous les villages possédés.
 

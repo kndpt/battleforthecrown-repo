@@ -1,8 +1,8 @@
 # Run #099 — feature-royal-resource-exchange
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-07-15
+> **Terminé** : 2026-07-15
 
 ## Cible
 
@@ -86,14 +86,48 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 
 ## Progress
 
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
+_(git history)_
 
 ## Décisions prises
 
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
+_(git history — run autonome ; arbitrages produit : taux 2:1 floor constante shared, plafond 5000 source/type/village/jour reset 04:00 Paris, table `ResourceConversionDaily` unique `(villageId, dayKey)`, isolation Serializable.)_
 
 ## Rapport final
 
+Échange royal livré : conversion intra-village bois/pierre/fer, taux `2:1` floor, plafond `5000`/type/village/jour (reset 04:00 Paris), zéro couronne / zéro transfert, server-authoritative (tx Serializable, destination vérifiée avant débit). Endpoint `POST /resources/:villageId/convert`. Review indépendante CodeRabbit : `GO`.
+
 ### Acceptance & QA
 
-_(Vide au démarrage. Rempli en fin de run.)_
+**Critères d'acceptance vérifiés :**
+- [x] Débit source / crédit destination au taux, même transaction — `yarn workspace battleforthecrown-backend test:smoke:run -- resource-exchange.smoke` → « converts source→destination... » vert (wood 1000→900, stone 0→50).
+- [x] Taux défavorable floor exact (formule pure) — `test run conversion.spec.ts` → `convertResourceAmount(101)=50`, floor sans crédit gratuit ; smoke floor vert.
+- [x] Conversion > plafond quotidien restant refusée 4xx, stock + `dayKey` inchangés — smoke « enforces the daily cap » vert (2ᵉ conversion 400, `woodConverted` figé).
+- [x] Plafond reset au `dayKey` 04:00 Europe/Paris — smoke « resets the cap per dayKey » vert (jour passé plein n'empêche pas aujourd'hui).
+- [x] Destination pleine → refus 4xx **avant** tout débit — smoke « rejects a full destination BEFORE any debit » vert (stock + tracker inchangés).
+- [x] Monde `ENDED`/`ARCHIVED` refusé, stock inchangé — smoke « rejects a conversion on an ENDED world » vert (`assertWorldWritable`).
+- [x] DTO Zod : rejette amount négatif/nul/fractionnaire, `source===destination`, whitelist WOOD/STONE/IRON, jamais couronne — smoke « rejects malformed bodies » (6 cas 400) + `conversion-command.spec.ts` verts.
+- [x] Event `resources.changed` même tx via `OutboxPublisher.resourcesChanged`, payload contrat partagé, owner-only — smoke assert row `event_outbox` kind + payload.
+- [x] Payload cible un seul `villageId`, sans champ destination → pas de transfert — `conversion-command.spec.ts` (clés exactes) + smoke.
+- [ ] Action HUD accessible depuis l'écran ressources + rafraîchit les jauges — **visuel/IG (Kelvin)**, cf. checklist ci-dessous.
+
+**Review indépendante** : Déclenchée (raison : touche backend + frontend + shared + DB) — CodeRabbit CLI local (`.coderabbit.yaml`) + couverture acceptance. Cycle 1 : `BLOCK` (3 majeurs) → corrigés (worldId dénormalisé supprimé, type retour controller, validation Zod réponse front). Re-review : **`GO`** (0 bloquant/majeur, 10/10 critères tracés).
+
+**Tests automatisés** :
+- `test run conversion.spec.ts conversion-command.spec.ts` → 19/19 (units shared purs).
+- `test:smoke:run -- resource-exchange.smoke` → 10/10.
+- `yarn workspace battleforthecrown-pixi test` → 1109/1109.
+- `yarn static-check` → vert (tsc + eslint backend + pixi).
+
+**Smokes lancés** : `test:smoke:preflight` + `test:smoke:run -- resource-exchange.smoke` (Ciblés — diff backend circonscrit à un nouvel endpoint/use-case/table ; full suite couverte par CI PR).
+
+**Smokes ajoutés/modifiés** : `battleforthecrown-backend/test/resource-exchange.smoke.spec.ts` (10 scénarios : happy path, floor, montant trop petit, source insuffisante, destination pleine, plafond, reset dayKey, monde ENDED, ownership, DTO).
+
+**QA fonctionnelle agent** : couverte par les smokes réels (REST + DB + Outbox row). Migration re-appliquée proprement sur dev + smoke sans reset.
+
+**Tests IG à faire par le user (Kelvin)** :
+- Ouvrir l'écran ressources → cliquer l'icône échange (barre ressources).
+- Choisir source ≠ destination (le sélecteur destination exclut la source) ; saisir un montant → vérifier l'aperçu `floor(montant/2)`.
+- Confirmer un cas insuffisant / plafond atteint → message d'erreur 4xx affiché.
+- Confirmer un cas valide → jauges rafraîchies (~1 s) via WS `resources.changed`, sans reload.
+
+_(Run autonome : serveurs non démarrés — Kelvin absent au moment du run ; checklist IG fournie pour QA ultérieure.)_
