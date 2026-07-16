@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Shield, Swords, X } from 'lucide-react';
+import { INTEGER_FMT } from '@/lib/formatters';
 import {
   Badge,
   Button,
@@ -27,7 +28,6 @@ import {
   useVillageIntelQuery,
   useWorldConfigQuery,
 } from '@/api/queries';
-import { NUMBER_FMT } from '@/lib/formatters';
 import { combatErrorMessage } from './combatErrorMessage';
 import { useAuthStore } from '@/stores/auth';
 import { useGameStore } from '@/stores/game';
@@ -492,12 +492,12 @@ export function AttackDetailModal({
               <>
                 <div className="flex justify-between">
                   <span className="text-kingdom-700">Puissance estimée :</span>
-                  <span className="font-bold tabular-nums">{NUMBER_FMT.format(totalAttack)}</span>
+                  <span className="font-bold tabular-nums">{INTEGER_FMT.format(totalAttack)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-kingdom-700">Capacité de transport :</span>
                   <span className="font-bold tabular-nums">
-                    {totalCarryCapacity > 0 ? NUMBER_FMT.format(totalCarryCapacity) : '—'}
+                    {totalCarryCapacity > 0 ? INTEGER_FMT.format(totalCarryCapacity) : '—'}
                   </span>
                 </div>
               </>

@@ -1,5 +1,5 @@
 import type { CaravanReportResponse } from '@battleforthecrown/shared/combat';
-import { NUMBER_FMT } from '@/lib/formatters';
+import { NUMBER_FMT, REPORT_DATE_FMT } from '@/lib/formatters';
 import { RESOURCE_CONFIG } from '@/lib/resourceConfig';
 import { formatCoord } from './report-view-utils';
 
@@ -11,10 +11,6 @@ export interface CaravanReportVillageView {
   y: number;
 }
 
-import { REPORT_DATE_FMT } from '@/lib/formatters';
-
-const NUMBER_FORMATTER = NUMBER_FMT;
-const DATE_FORMATTER = REPORT_DATE_FMT;
 
 export interface CaravanReportResourceLine {
   icon: string;
@@ -74,7 +70,7 @@ export function caravanReportTargetVillage(report: CaravanReportResponse): Carav
 }
 
 function formatResource(value: number): string {
-  return NUMBER_FORMATTER.format(value);
+  return NUMBER_FMT.format(value);
 }
 
 function deliveredResources(report: CaravanReportResponse): CaravanReportResourcesDto {
@@ -161,5 +157,5 @@ export function caravanReportPreview(report: CaravanReportResponse): string {
 }
 
 export function caravanReportWhen(report: CaravanReportResponse): string {
-  return DATE_FORMATTER.format(new Date(report.timestamp));
+  return REPORT_DATE_FMT.format(new Date(report.timestamp));
 }

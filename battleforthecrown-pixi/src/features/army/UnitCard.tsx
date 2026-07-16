@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Clock, Lock, Swords, XCircle } from "lucide-react";
 import { formatRemaining } from "@/features/village/constructionProgress";
-import { NUMBER_FMT } from "@/lib/formatters";
+import { INTEGER_FMT } from "@/lib/formatters";
 import { clamp } from "@/lib/math";
 import {
   Badge,
@@ -315,7 +315,7 @@ export function UnitCard({
                     {quantity}
                   </span>
                   <span className="font-game text-xs text-kingdom-600 mt-0.5">
-                    / {NUMBER_FMT.format(maxTrainable)}
+                    / {maxTrainable.toLocaleString("fr-FR")}
                   </span>
                 </button>
                 <Slider
@@ -351,7 +351,7 @@ export function UnitCard({
                         }`}
                       >
                         <ResourceIcon resource={res} size={14} />
-                        <span>{NUMBER_FMT.format(amount)}</span>
+                        <span>{INTEGER_FMT.format(amount)}</span>
                       </div>
                     );
                   })}
