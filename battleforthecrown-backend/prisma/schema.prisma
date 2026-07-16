@@ -99,6 +99,7 @@ enum DailyCardTaskType {
   RAID_BARBARIAN
   SCOUT_TARGET
   SEND_REINFORCEMENT
+  EXPLOIT_RESOURCE_SITE
 }
 
 enum DailyRewardType {
@@ -234,6 +235,7 @@ model Village {
   user                      User?                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   buildings                 Building[]
   resourceStock             ResourceStock?
+  resourceConversionDaily   ResourceConversionDaily[]
   population                Population?
   unitInventory             UnitInventory[]
   unitTraining              UnitTraining[]
@@ -282,6 +284,27 @@ model ResourceStock {
   @@map("resource_stock")
 }
 
+/// Royal resource exchange — per-village, per-Paris-day tracking of how much of
+/// each SOURCE resource has been converted away. Enforces the daily cap
+/// (`RESOURCE_CONVERSION_DAILY_CAP` in shared). One row per (village, dayKey);
+/// the reset is implicit — a new day yields a new `dayKey`, hence a new row.
+/// Rows are ephemeral and cascade-deleted with their Village (world archive/wipe).
+model ResourceConversionDaily {
+  id             String   @id @default(cuid())
+  villageId      String   @map("village_id")
+  dayKey         String   @map("day_key")
+  woodConverted  Int      @default(0) @map("wood_converted")
+  stoneConverted Int      @default(0) @map("stone_converted")
+  ironConverted  Int      @default(0) @map("iron_converted")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  village Village @relation(fields: [villageId], references: [id], onDelete: Cascade)
+
+  @@unique([villageId, dayKey])
+  @@map("resource_conversion_daily")
+}
+
 model Population {
   villageId String @id @map("village_id")
   used      Int    @default(0)
@@ -322,6 +345,7 @@ model PendingConquest {
   @@index([captureUntil, status])
   @@index([worldId, status])
   @@index([targetVillageId, status])
+  @@index([attackerVillageId, status])
   @@map("pending_conquest")
 }
 

@@ -23,6 +23,8 @@ import {
   calculateTravelTime,
 } from "@battleforthecrown/shared/logic";
 import { formatTravelTime } from "@/lib/combatHelpers";
+import { publicAsset } from "@/lib/publicAsset";
+import { RESOURCE_CONFIG } from "@/lib/resourceConfig";
 import {
   CARAVAN_SPEED,
   getCaravanResourceCapacity,
@@ -32,12 +34,8 @@ import { TempoService } from "@battleforthecrown/shared/world";
 import type { MapEntity } from "@/api/world-types";
 import type { LootResources } from "@battleforthecrown/shared/combat";
 import { getCaravanLaunchState, RESOURCE_KEYS } from "./caravanLaunchState";
-import { RESOURCE_DISPLAY_LABELS, RESOURCE_ICON_PATHS } from "@/lib/resourceConfig";
 
 type ResourceKey = keyof LootResources;
-
-const RESOURCE_LABELS: Record<ResourceKey, string> = RESOURCE_DISPLAY_LABELS;
-const RESOURCE_ICONS: Record<ResourceKey, string> = RESOURCE_ICON_PATHS;
 
 interface CaravanLaunchModalProps {
   origin: { x: number; y: number };
@@ -240,12 +238,12 @@ export function CaravanLaunchModal({
                   >
                     <img
                       className="size-7 object-contain"
-                      src={RESOURCE_ICONS[key]}
+                      src={publicAsset(RESOURCE_CONFIG[key].assetPath)}
                       alt=""
                     />
                     <div className="min-w-0">
                       <span className="block text-sm font-semibold text-kingdom-800">
-                        {RESOURCE_LABELS[key]}
+                        {RESOURCE_CONFIG[key].nameCapitalized}
                       </span>
                       <span className="block text-[11px] text-kingdom-700/80">
                         Stock {(stock?.[key] ?? 0).toLocaleString("fr-FR")}

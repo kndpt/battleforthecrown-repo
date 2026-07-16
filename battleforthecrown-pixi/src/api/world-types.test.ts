@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeTier } from '@battleforthecrown/shared/world';
+import { isFoggedEntity, normalizeTier } from '@battleforthecrown/shared/world';
 import { entityFromWorldDto } from './world-types';
 
 describe('normalizeTier', () => {
@@ -26,6 +26,44 @@ describe('normalizeTier', () => {
       expect(normalizeTier(value)).toBeNull();
     },
   );
+});
+
+describe('isFoggedEntity — fogged-path dispatch', () => {
+  const foggedDto = { kind: 'fogged' as const, id: 'fog-7', x: 33, y: 44 };
+
+  it('narrows a fogged response to WorldEntityFogged', () => {
+    expect(isFoggedEntity(foggedDto)).toBe(true);
+  });
+
+  it.each(['PLAYER_VILLAGE', 'BARBARIAN_VILLAGE', 'RESOURCE_EXTRACTION_SITE'])(
+    'rejects the non-fogged kind %s',
+    (kind) => {
+      expect(
+        isFoggedEntity({ id: 'e-1', worldId: 'w-1', kind, x: 0, y: 0, data: {} }),
+      ).toBe(false);
+    },
+  );
+
+  it('maps a fogged dto to a position-only MapEntity via entityFromWorldDto', () => {
+    const entity = entityFromWorldDto(foggedDto, 'user-42');
+    expect(entity).toEqual({
+      id: 'fog-7',
+      kind: 'fogged',
+      isMine: false,
+      x: 33,
+      y: 44,
+      name: '',
+      tier: null,
+      castleLevel: null,
+    });
+  });
+
+  it('keeps fogged entities un-owned even when a userId is present', () => {
+    // Fogged entities expose no owner data, so isMine must stay false
+    // regardless of the current player id.
+    expect(entityFromWorldDto(foggedDto, 'user-42').isMine).toBe(false);
+    expect(entityFromWorldDto(foggedDto, null).isMine).toBe(false);
+  });
 });
 
 function makeVillageDto(dataOverrides: Record<string, unknown> = {}) {

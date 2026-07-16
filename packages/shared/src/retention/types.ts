@@ -12,6 +12,7 @@ export const DAILY_CARD_TASK_TYPES = [
   "RAID_BARBARIAN",
   "SCOUT_TARGET",
   "SEND_REINFORCEMENT",
+  "EXPLOIT_RESOURCE_SITE",
 ] as const;
 export type DailyCardTaskType = (typeof DAILY_CARD_TASK_TYPES)[number];
 
@@ -23,6 +24,7 @@ export const OYEZ_THEMES = [
   "MARCH",
   "WATCH",
   "BARBARIANS",
+  "PROSPECTORS",
 ] as const;
 export type OyezTheme = (typeof OYEZ_THEMES)[number];
 

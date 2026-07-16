@@ -57,6 +57,7 @@ const OYEZ_THEME_ICON: Record<OyezTheme, string> = {
   MARCH: "/assets/army-power.png",
   WATCH: "/assets/watchtower.png",
   BARBARIANS: "/assets/attack.png",
+  PROSPECTORS: "/assets/resources/resources.png",
 };
 
 import { INTEGER_FMT } from '@/lib/formatters';

@@ -10,7 +10,7 @@ import {
 } from '@battleforthecrown/shared/combat';
 import { formatInactivityLabel } from '@battleforthecrown/shared/world';
 import { unitMetaFor } from '@/features/army/unitConfig';
-import { formatResourceAmount, RESOURCE_ICON_PATHS, RESOURCE_DISPLAY_LABELS } from '@/lib/resourceConfig';
+import { formatResourceAmount, RESOURCE_CONFIG } from '@/lib/resourceConfig';
 import { formatRemaining } from '@/features/village/constructionProgress';
 import {
   DEFAULT_VILLAGE_STRATEGY,
@@ -19,15 +19,12 @@ import {
 
 import { NUMBER_FMT } from '@/lib/formatters';
 
-const NUMBER_FORMATTER = NUMBER_FMT;
 
 const TARGET_KIND_LABEL: Record<string, string> = {
   BARBARIAN_VILLAGE: 'Village barbare',
   PLAYER_VILLAGE: 'Village joueur',
 };
 
-const RESOURCE_ICONS = RESOURCE_ICON_PATHS;
-const RESOURCE_LABELS = RESOURCE_DISPLAY_LABELS;
 
 export function scoutReportTargetLabel(report: ScoutReportResponse): string {
   const base = TARGET_KIND_LABEL[report.targetKind] ?? report.targetKind;
@@ -172,8 +169,8 @@ export function scoutReportPrecisionLabel(report: ScoutReportResponse): string {
 }
 
 function formatUnitRange(range: ScoutRange): string {
-  if (range.min === range.max) return NUMBER_FORMATTER.format(range.min);
-  return `${NUMBER_FORMATTER.format(range.min)}–${NUMBER_FORMATTER.format(range.max)}`;
+  if (range.min === range.max) return NUMBER_FMT.format(range.min);
+  return `${NUMBER_FMT.format(range.min)}–${NUMBER_FMT.format(range.max)}`;
 }
 
 function formatResourceRange(range: ScoutRange): string {
@@ -228,7 +225,7 @@ function buildArmySection(report: ScoutReportResponse): ScoutReportSection {
       return {
         icon: meta.iconPath ?? '/assets/army-power.png',
         label: meta.name,
-        value: NUMBER_FORMATTER.format(quantity),
+        value: NUMBER_FMT.format(quantity),
       };
     });
   return {
@@ -248,8 +245,8 @@ function buildResourceSection(report: ScoutReportResponse): ScoutReportSection {
     return {
       title,
       items: (['wood', 'stone', 'iron'] as const).map((resource) => ({
-        icon: RESOURCE_ICONS[resource],
-        label: RESOURCE_LABELS[resource],
+        icon: RESOURCE_CONFIG[resource].assetPath,
+        label: RESOURCE_CONFIG[resource].nameCapitalized,
         value: formatResourceRange(ranges[resource]),
       })),
     };
@@ -259,7 +256,7 @@ function buildResourceSection(report: ScoutReportResponse): ScoutReportSection {
       title,
       items: [
         {
-          icon: RESOURCE_ICONS.wood,
+          icon: RESOURCE_CONFIG.wood.assetPath,
           label: 'Stock',
           value: SCOUT_BAND_LABELS[report.resourceBand ?? 'NONE'],
         },
@@ -269,8 +266,8 @@ function buildResourceSection(report: ScoutReportResponse): ScoutReportSection {
   return {
     title,
     items: (['wood', 'stone', 'iron'] as const).map((resource) => ({
-      icon: RESOURCE_ICONS[resource],
-      label: RESOURCE_LABELS[resource],
+      icon: RESOURCE_CONFIG[resource].assetPath,
+      label: RESOURCE_CONFIG[resource].nameCapitalized,
       value: formatResourceAmount(report.resources?.[resource] ?? 0),
     })),
   };
@@ -285,12 +282,12 @@ function pillageVerdictValue(report: ScoutReportResponse): string {
         sum + Math.round((ranges[resource].min + ranges[resource].max) / 2),
       0,
     );
-    return `≈ ${NUMBER_FORMATTER.format(mid)}`;
+    return `≈ ${NUMBER_FMT.format(mid)}`;
   }
   if (report.precision === 'VAGUE') {
     return SCOUT_BAND_LABELS[report.resourceBand ?? 'NONE'];
   }
-  return NUMBER_FORMATTER.format(scoutReportResourceTotal(report));
+  return NUMBER_FMT.format(scoutReportResourceTotal(report));
 }
 
 export function buildScoutReportCardProps(
@@ -310,7 +307,7 @@ export function buildScoutReportCardProps(
           icon: scoutMeta.iconPath ?? '/assets/lupa.png',
           label: scoutMeta.name,
           troopBar: { lost: scoutLosses, sent: scoutUnits },
-          value: NUMBER_FORMATTER.format(scoutUnits),
+          value: NUMBER_FMT.format(scoutUnits),
         },
       ],
     },

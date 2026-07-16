@@ -228,6 +228,97 @@ describe('daily retention smoke', () => {
     expect(afterClaimSummaryBody.defaultRewardVillageId).toBe(villageId);
   });
 
+  it('appends an EXPLOIT_RESOURCE_SITE thematic task under a PROSPECTORS Oyez and progresses it from an extraction.started fact (run #096)', async () => {
+    const world = await seedSmokeWorld(ctx.prisma);
+    const player = await registerUser(
+      ctx.server,
+      'daily-retention-prospectors',
+    );
+    const join = await joinWorld(
+      ctx.server,
+      player.accessToken,
+      world.id,
+      'retention-prospectors',
+    );
+    const now = new Date();
+
+    // Active Oyez (PROSPECTORS) appends a 4th thematic EXPLOIT_RESOURCE_SITE task.
+    await ctx.prisma.dailyOyez.create({
+      data: {
+        worldId: world.id,
+        dayKey: getParisDailyKey(now),
+        title: 'Jour des prospecteurs',
+        description:
+          'L’exploitation des sites de ressources est favorisée aujourd’hui.',
+        theme: 'PROSPECTORS',
+        startsAt: new Date(now.getTime() - 60_000),
+        endsAt: new Date(now.getTime() + 60 * 60_000),
+      },
+    });
+
+    const villageId = join.village.id;
+
+    await ctx.prisma.eventOutbox.createMany({
+      data: [
+        {
+          kind: 'extraction.started',
+          aggregateId: villageId,
+          payload: {
+            expeditionId: 'extraction-retention-thematic',
+            worldId: world.id,
+            villageId,
+            siteId: 'site-retention-thematic',
+            resourceType: 'IRON',
+            arrivalAt: new Date(now.getTime() + 60_000).toISOString(),
+            durationMs: 600_000,
+          },
+        },
+      ],
+    });
+
+    await ctx.app.get(EventOutboxService).dispatchPendingEvents();
+
+    const summary = await request(ctx.server)
+      .get('/retention')
+      .query({ worldId: world.id })
+      .set('Authorization', `Bearer ${player.accessToken}`);
+    expect(summary.status).toBe(200);
+    const body = summary.body as RetentionSummaryDto;
+    expect(body.oyez).toMatchObject({
+      title: 'Jour des prospecteurs',
+      theme: 'PROSPECTORS',
+    });
+    expect(body.cards).toHaveLength(1);
+    const card = body.cards[0];
+    // Card = 4 tasks under Oyez (3 natural + 1 thematic EXPLOIT_RESOURCE_SITE).
+    expect(card.tasks).toHaveLength(4);
+    const exploitTask = card.tasks.find(
+      (task) => task.type === 'EXPLOIT_RESOURCE_SITE',
+    );
+    expect(exploitTask).toBeDefined();
+    // extraction.started progressed the thematic task to completion.
+    expect(exploitTask?.completedAt).not.toBeNull();
+    expect(exploitTask?.progress).toBe(1);
+
+    // Acceptance #9: the thematic task carries no reward; the card reward stays
+    // capped by the 3 natural scaling tasks (run 046 #9 — no stackable bonus).
+    const castle = await ctx.prisma.building.aggregate({
+      where: {
+        type: 'CASTLE',
+        village: { userId: player.userId, worldId: world.id },
+      },
+      _max: { level: true },
+    });
+    // Assert the CASTLE was seeded so a fallback level does not mask a broken join.
+    expect(castle._max.level).not.toBeNull();
+    const expectedReward = getDailyCardScaling(castle._max.level ?? 1).reward;
+    expect(card.reward).toMatchObject({
+      wood: expectedReward.wood,
+      stone: expectedReward.stone,
+      iron: expectedReward.iron,
+    });
+  });
+
   it('expires stale active cards and generates only the current daily card as active', async () => {
     const world = await seedSmokeWorld(ctx.prisma);
     const player = await registerUser(ctx.server, 'daily-retention-reset');

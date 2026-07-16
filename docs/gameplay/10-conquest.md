@@ -61,9 +61,14 @@ C'est le **prix de l'expansion**. La récompense (un nouveau village = un emplac
 
 ### Cap : 1 Seigneur par village
 
-Un village peut posséder **1 Seigneur en garnison à la fois**. Pas de cumul. Pour avoir 2 Seigneurs simultanés, il faut 2 villages avec chacun sa Salle du Trône.
+Un village peut posséder **1 Seigneur à la fois**. Pas de cumul. Pour avoir 2 Seigneurs simultanés, il faut 2 villages avec chacun sa Salle du Trône.
 
-Une fois le Seigneur utilisé pour une conquête réussie (= installé dans le village conquis), le village d'origine peut **en recruter un nouveau**.
+Le cap couvre **tout le cycle de vie** du Seigneur tant qu'il appartient au village : garnison, file d'entraînement, expédition **en vol** (aller de conquête) ou **en retour** (conquête échouée/interrompue), et **occupation** d'une cible pendant la fenêtre de capture. Tant que le Seigneur est quelque part dans ce cycle, le village d'origine ne peut pas en recruter un second.
+
+Le re-recrutement redevient possible uniquement quand la conquête est **résolue** :
+- **Réussie** : le Seigneur est installé dans le village conquis (il n'appartient plus à l'origine).
+- **Interrompue** : le Seigneur est détruit avec la garnison d'occupation → le village peut en recruter un nouveau.
+- **Échouée (défaite avec Seigneur survivant)** : le Seigneur revient en garnison d'origine. Le retour ne libère **pas** le cap : c'est alors la garnison qui continue de le bloquer, jusqu'à ce que le Seigneur soit réutilisé (nouvelle conquête) ou perdu au combat.
 
 ### Stockage et exposition
 

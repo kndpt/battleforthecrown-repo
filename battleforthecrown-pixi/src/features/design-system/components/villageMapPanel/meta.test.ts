@@ -23,7 +23,7 @@ describe('frShort', () => {
   it('gère les seuils exacts', () => {
     expect(frShort(999)).toBe('999');
     expect(frShort(1000)).toBe('1K');
-    expect(frShort(999_999)).toBe('1000K');
+    expect(frShort(999_999)).toBe('1M');
     expect(frShort(1_000_000)).toBe('1M');
   });
 });

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Shield, Swords, X } from 'lucide-react';
+import { INTEGER_FMT } from '@/lib/formatters';
 import {
   Badge,
   Button,
@@ -325,15 +326,15 @@ export function AttackDetailModal({
               className="w-full [&>button]:flex-1 [&>button]:justify-center"
               onChange={(value) => {
                 if (isPending) return;
-                setUserMode(value as 'attack' | 'scout' | 'reinforce');
+                setUserMode(value);
                 setError(null);
               }}
               options={[
                 ...(isFriendVillage
-                  ? [{ icon: '/assets/defense.png', label: 'Renfort', value: 'reinforce' }]
+                  ? [{ icon: '/assets/defense.png', label: 'Renfort', value: 'reinforce' as const }]
                   : []),
-                { icon: '/assets/army-power.png', label: 'Attaque', value: 'attack' },
-                { icon: '/assets/lupa.png', label: 'Scout', value: 'scout' },
+                { icon: '/assets/army-power.png', label: 'Attaque', value: 'attack' as const },
+                { icon: '/assets/lupa.png', label: 'Scout', value: 'scout' as const },
               ]}
               size="tabs"
               value={activeMode}
@@ -491,12 +492,12 @@ export function AttackDetailModal({
               <>
                 <div className="flex justify-between">
                   <span className="text-kingdom-700">Puissance estimée :</span>
-                  <span className="font-bold tabular-nums">{totalAttack.toLocaleString()}</span>
+                  <span className="font-bold tabular-nums">{INTEGER_FMT.format(totalAttack)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-kingdom-700">Capacité de transport :</span>
                   <span className="font-bold tabular-nums">
-                    {totalCarryCapacity > 0 ? totalCarryCapacity.toLocaleString() : '—'}
+                    {totalCarryCapacity > 0 ? INTEGER_FMT.format(totalCarryCapacity) : '—'}
                   </span>
                 </div>
               </>

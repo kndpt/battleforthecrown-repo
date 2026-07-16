@@ -1,7 +1,7 @@
 import { isVictoryForAttacker } from '@battleforthecrown/shared/combat';
 import type { CombatReportDto } from '@/api/queries';
 import { unitMetaFor } from '@/features/army/unitConfig';
-import { formatResourceAmount, RESOURCE_ICON_PATHS } from '@/lib/resourceConfig';
+import { formatResourceAmount, RESOURCE_CONFIG } from '@/lib/resourceConfig';
 import type {
   CombatReportAction,
   CombatReportHighlight,
@@ -20,15 +20,9 @@ export const combatReportLabels: CombatReportModalLabels = {
   reportPrefix: 'Rapport',
 };
 
-const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-});
+import { REPORT_DATE_FMT } from '@/lib/formatters';
 
-const RESOURCE_ICONS = RESOURCE_ICON_PATHS;
+
 
 function targetLabel(report: CombatReportDto): string {
   if (report.targetKind === 'BARBARIAN_VILLAGE') {
@@ -155,7 +149,7 @@ function buildLootHighlight(
       const stillThere = remaining[resource] ?? 0;
       if (looted + stillThere <= 0) return null;
       return {
-        icon: RESOURCE_ICONS[resource],
+        icon: RESOURCE_CONFIG[resource].assetPath,
         remainingValue: formatResourceAmount(looted + stillThere),
         value: formatResourceAmount(looted),
       };
@@ -244,7 +238,7 @@ export function buildCombatReportModalProps(
     outcome,
     roleLabel: reportType.roleLabel,
     type: reportType.label,
-    when: DATE_FORMATTER.format(new Date(report.timestamp)),
+    when: REPORT_DATE_FMT.format(new Date(report.timestamp)),
     width: 360,
   };
 }

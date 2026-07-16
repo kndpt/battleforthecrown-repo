@@ -910,6 +910,223 @@
         "tasks/archive/40-recruit-noble-throne-hall.md + tasks/runs/archive/006-audit-conquest.md — ont défini le cap = garnison OU file Trône, cas en-vol/occupation jamais envisagé ; aucun ticket/run actif ou archivé ne couvre l'enforcement en-vol"
       ],
       "addedAt": "2026-07-08"
+    },
+    {
+      "specPath": "docs/gameplay/16-notifications.md",
+      "slug": "extraction-attacked-inapp-indicator",
+      "title": "Indicateur in-app « Site d'exploitation attaqué » — alerte exploitant (couche in-app)",
+      "keywords": [
+        "extraction",
+        "attacked",
+        "exploitation",
+        "notification",
+        "in-app",
+        "toast"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/098-feature-extraction-attacked-inapp-indicator.md",
+      "artefactId": "098",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/extraction-attacked-inapp-indicator",
+      "gapSummary": "La spec 16-notifications.md l.17-21 liste 3 catégories 🔴 Critiques MVP ; les 2 sœurs (Attaque entrante, Fin de fenêtre de capture) ont leur surface in-app livrée (runs 086, 094), la 3e « Site d'exploitation attaqué » n'a AUCUNE traduction UI. L'event extraction.attacked est bien routé à l'exploitant mais applyExtractionAttacked (ws-bindings.ts) se limite à invalider une query — aucun toast/alerte, contrairement à applyVillageAttacked. Comme extraction.attacked est un event discret (pas d'état persistant listable), le trou réel est une alerte in-app (toast), pas un onglet targeting-me. Push FCM/APNs hors scope (Phase 6, POST-MVP) comme 086/094.",
+      "codeEvidence": [
+        "battleforthecrown-pixi/src/api/ws-bindings.ts:1184 applyExtractionAttacked — invalide worldEntities (+ extraction-state si interrupted) seulement, aucun pushToast, contrairement à applyVillageAttacked (ws-bindings.ts:759-766)",
+        "battleforthecrown-backend/src/modules/event/event-outbox-notification-planner.ts:272 — 'extraction.attacked': userByVillage('villageId') route déjà à l'exploitant, routage correct, rien à changer",
+        "packages/shared/src/events/types.ts:362-369 ExtractionAttackedPayload — { expeditionId, worldId, villageId, siteId, interrupted, stolen } sans resourceType ni nom/coords de site (toast peu informatif sans enrichissement)",
+        "battleforthecrown-pixi/src/features/combat/KingdomActivitiesBottomSheet.tsx — 3 onglets Captures/Sièges/Menaces, aucune surface extraction ; extractions actives déjà dans l'onglet Expéditions (kindEXTRACTION, kingdomActivitiesViewModel.ts:56-70)",
+        "docs/gameplay/16-notifications.md:21 — catégorie 🔴 « Site d'exploitation attaqué » listée MVP ; l.32-53 les 2 catégories 🔴 sœurs ont leur § in-app livrée (086, 094), pas l'extraction",
+        "battleforthecrown-backend/src/modules/gameplay/extraction-lifecycle.service.ts:447-459 — createOutboxEvent('extraction.attacked', …) émis une seule fois à l'interception (event discret, pas d'état 'exploitation menacée' requêtable → patron endpoint targeting-me non transposable)"
+      ],
+      "addedAt": "2026-07-09"
+    },
+    {
+      "specPath": "docs/gameplay/lab/tickets/12-player-resource-market.md",
+      "slug": "royal-resource-exchange",
+      "title": "Échange royal de ressources — conversion intra-village (précurseur MVP-safe du marché P2P)",
+      "keywords": [
+        "market",
+        "exchange",
+        "resource-conversion",
+        "royal-exchange",
+        "troc"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/099-feature-royal-resource-exchange.md",
+      "artefactId": "099",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/royal-resource-exchange",
+      "gapSummary": "Aucun mécanisme d'échange/conversion de ressource n'existe dans le jeu. Le lab ticket 12 propose une « Alternative plus saine » (échange royal self-service) comme précurseur MVP-safe du marché joueur↔joueur, jugé haut-risque/post-MVP strict. La feature convertit bois↔pierre↔fer dans UN seul village, taux défavorable + plafond quotidien (reset 04:00 Europe/Paris) + aucune couronne, sans transfert inter-village ni inter-joueur. Débloque les blocages de stock sans ouvrir la porte au feed/multi-comptes.",
+      "codeEvidence": [
+        "packages/shared/src/village/building-types.ts — enum BUILDING_TYPES sans MARKET (CASTLE/WOOD/STONE/IRON/WAREHOUSE/HIDEOUT/QUARTER/BARRACKS/WATCHTOWER/COUNCIL_HALL/THRONE_HALL/WALL uniquement)",
+        "battleforthecrown-backend/src + packages/shared/src + battleforthecrown-pixi/src — aucun symbole market/exchange/convert/troc/barter (recherche sans résultat fonctionnel)",
+        "battleforthecrown-backend/src/modules/resources/resources.controller.ts — endpoints GET + produce uniquement, pas de POST convert",
+        "tasks/runs/archive/050-feature-resource-caravan.md — expédition CARAVAN transfère le MÊME type de ressource entre 2 villages du même joueur, jamais de conversion de type (connexe, pas doublon)",
+        "battleforthecrown-backend/src/modules/gameplay/initiate-extraction.use-case.ts — pattern débit ResourceStock + Outbox en tx Serializable réutilisable ; retention.utils.ts getParisDailyKey (reset 04:00) et packages/shared/src/resources/storage.ts creditResourcesCapped réutilisables"
+      ],
+      "addedAt": "2026-07-10"
+    },
+    {
+      "specPath": "docs/gameplay/02-economy-and-progression.md",
+      "slug": "village-resettlement-crown-sink",
+      "title": "Déplacer un village (resettlement, crown-sink 200)",
+      "keywords": [
+        "resettlement",
+        "deplacer-village",
+        "relocate",
+        "crown-sink",
+        "natural-trait"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/100-feature-village-resettlement.md",
+      "artefactId": "100",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/village-resettlement",
+      "gapSummary": "Le crown-sink « Deplacer un village / resettlement | 200 » est documente dans 02-economy-and-progression.md (table des depenses) mais aucun use-case, endpoint, DTO ou event de relocation de village n'existe. Les autres lignes de la meme table sont cablees (changement de strategie, recrutement Seigneur).",
+      "codeEvidence": [
+        "battleforthecrown-backend/src/modules/village/ — aucun use-case ou endpoint de relocation (relocateVillage absent)",
+        "battleforthecrown-backend/src/modules/crowns/crowns.service.ts — sinks existants (strategie, Seigneur) mais aucun debit lie a un deplacement de village",
+        "packages/shared/src/village/ — aucun DTO relocate ; deriveNaturalTrait derive le trait de la tile (x,y) sans chemin de recompute sur move",
+        "docs/gameplay/02-economy-and-progression.md L138 — ligne « Deplacer un village / resettlement | 200 » sans marqueur post-MVP, sans section mecanique dediee",
+        "docs/gameplay/27-village-natural-traits.md — trait « identite fixe derivee de la tile, jamais modifie » : contrat a amender pour une relocation"
+      ],
+      "addedAt": "2026-07-11"
+    },
+    {
+      "specPath": "docs/gameplay/22-village-roles-and-navigation.md",
+      "slug": "multi-village-incoming-attack-pill",
+      "title": "Pastille attaque entrante par village (sélecteur multi-village)",
+      "keywords": [
+        "multi-village",
+        "incoming-attack",
+        "pastille",
+        "state-alert",
+        "attack-pill"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/101-feature-multi-village-incoming-attack-pill.md",
+      "artefactId": "101",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/multi-village-incoming-attack-pill",
+      "gapSummary": "Le sélecteur multi-village affiche seulement des pastilles kind:'warning' (entrepôt plein / file inactive, run 095) ; deriveVillageStateAlert n'émet jamais kind:'attack' alors que la branche de rendu isAttack existe déjà (morte) et que les données incoming sont livrées backend (086). Manque le câblage feed incoming → pastille attack par village.",
+      "codeEvidence": [
+        "battleforthecrown-pixi/src/features/layout/multiVillageSheet.ts — deriveVillageStateAlert ne retourne que kind:'warning' (commentaire explicite 'never kind:attack', priorité entrepôt plein > file inactive)",
+        "battleforthecrown-pixi/src/features/design-system/components/MultiVillageBottomSheet.tsx — type MultiVillageAlertKind = 'attack' | 'warning' et branche isAttack (styles rouge) jamais alimentée",
+        "battleforthecrown-pixi/src/features/layout/useMultiVillageData.ts — 6 fan-outs useQueries (resources/buildings/population/queue/strategy/kingdomPower), aucune query d'attaque entrante",
+        "battleforthecrown-backend/src/modules/combat/combat.controller.ts — endpoint @Get(':villageId/incoming') per-village déjà livré (086) ; aucun agrégat multi-village côté combat",
+        "battleforthecrown-pixi/src/api/ws-bindings.ts — attack.incoming invalide déjà la clé incomingAttacks per-village (live update hérité par la piste front-only)"
+      ],
+      "addedAt": "2026-07-12"
+    },
+    {
+      "specPath": "docs/gameplay/27-village-natural-traits.md",
+      "slug": "natural-traits-taxonomy-population",
+      "title": "Traits naturels non-productifs — taxonomie v2 + Terre fertile (population)",
+      "keywords": [
+        "natural-trait",
+        "colline",
+        "terre-fertile",
+        "plaine",
+        "population",
+        "taxonomie"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/102-feature-natural-traits-taxonomy-population.md",
+      "artefactId": "102",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/natural-traits-taxonomy-population",
+      "gapSummary": "Les 3 traits naturels non-productifs documentés en follow-up par la spec 27 (Colline/vision, Plaine/army-speed, Terre fertile/population) ne sont pas implémentés — le run 088 les a explicitement exclus. L'enum ne porte que les traits de ressource + PLAINS neutre. Les systèmes sœurs dont ils dépendaient existent désormais tous. Ce run pose la taxonomie v2 (redistribution des buckets + nouveaux traits + migration) et branche le vertical le plus propre (Terre fertile → population Quartier) ; Colline et Plaine déportés sur runs successeurs.",
+      "codeEvidence": [
+        "packages/shared/src/village/traits.ts — VillageNaturalTrait = DENSE_FOREST | RICH_QUARRY | IRON_VEIN | PLAINS uniquement ; pas de HILL ni FERTILE_SOIL ; deriveNaturalTrait buckets 15/15/15/55 PLAINS ; NATURAL_TRAIT_PRODUCTION_BONUS a PLAINS:{} neutre",
+        "battleforthecrown-backend/src/modules/population/population-capacity.ts — applyPopulationBonus ne lit que strategyBonus.populationBonus, aucun input naturalTrait ; 4 callers (population.service, upgrade-building.use-case, recruit-noble.use-case, recruit-troops.use-case)",
+        "battleforthecrown-backend/src/modules/world/vision.service.ts — getVisionDisks dérive le radius uniquement de WATCHTOWER_VISION_LEVELS ; aucun input trait (dépendance du run successeur Colline)",
+        "packages/shared/src/logic/travel-time.ts — calculateTravelTime applique seulement strategyMultiplier (armySpeedBonus du style) ; aucun input trait (dépendance du run successeur Plaine)",
+        "tasks/runs/archive/088-feature-village-natural-traits.md — ligne 23 liste ces 3 traits en Hors scope MVP / follow-up ; prérequis LIVRÉ (colonne Village.naturalTrait + migration backfill), non-doublon"
+      ],
+      "addedAt": "2026-07-13"
+    },
+    {
+      "specPath": "docs/gameplay/lab/tickets/05-player-capital.md",
+      "slug": "derived-capital-gameplay-weight",
+      "title": "Poids gameplay de la capitale dérivée",
+      "keywords": [
+        "capital",
+        "capitale",
+        "derived",
+        "bonus",
+        "prestige",
+        "defense"
+      ],
+      "artefactType": "ticket",
+      "artefactPath": "tasks/91-derived-capital-gameplay-weight.md",
+      "artefactId": "091",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/derived-capital-gameplay-weight",
+      "gapSummary": "La capitale existe mais est dérivée (plus ancien village) et purement cosmétique : isCapital est un simple badge UI, zéro effet mécanique, aucun endpoint pour la changer, aucune colonne persistante. Le lab ticket 05 veut lui donner un poids gameplay ; la désignation joueur contredit une décision MVP tranchée (roadmap L110), donc le scope MVP-safe est un bonus léger sur la capitale DÉRIVÉE.",
+      "codeEvidence": [
+        "battleforthecrown-backend/src/modules/village/village.service.ts:106-115 — getCapitalVillageId dérive la capitale (tri conqueredAt ?? createdAt), immuable",
+        "battleforthecrown-backend/src/modules/village/village.controller.ts — routes label/upgrade/cancel/strategy, aucun endpoint de désignation de capitale",
+        "battleforthecrown-backend/src/modules/combat/combat-resolution.ts — sumDefensePower ignore la capitale, CombatContext.defender sans flag isCapital",
+        "battleforthecrown-pixi/src/features/game/VillageHero.tsx + layout/GameHeader.tsx + layout/multiVillageSheet.ts — isCapital consommé seulement comme badge, aucun effet",
+        "battleforthecrown-backend/prisma/schema.prisma — pas de colonne capitale sur Village/User/WorldMembership",
+        "tasks/00-mvp-roadmap.md:110 — decision MVP : la capitale n'est PAS choisie par le joueur (contrainte contre la piste désignation)"
+      ],
+      "addedAt": "2026-07-14"
+    },
+    {
+      "specPath": "docs/gameplay/lab/tickets/04-distance-logistics.md",
+      "slug": "distance-loot-friction",
+      "title": "Friction de loot par distance (pillage) — promotion lab ticket 04",
+      "keywords": [
+        "distance",
+        "logistique",
+        "loot",
+        "pillage",
+        "friction",
+        "rayon"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/103-feature-distance-loot-friction.md",
+      "artefactId": "103",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/distance-loot-friction",
+      "gapSummary": "Le lab ticket 04 (idée à approfondir) acte une friction logistique par distance. Aujourd'hui la distance ne coûte que du temps de trajet (travel-time.ts) ; aucune friction sur le loot. Ce run tranche une seule friction MVP : capacite de loot du pillage reduite au-dela d'un rayon R, pre-affichee avant envoi, parametrable WorldConfig, plancher non nul. Confinement strict au pillage (conquete/renfort/retour non touches).",
+      "codeEvidence": [
+        "battleforthecrown-backend/src + packages/shared/src + battleforthecrown-pixi/src — aucune occurrence de 'logistic', 'distanceFriction', 'lootPenalty', 'longDistance' (friction inexistante)",
+        "packages/shared/src/logic/travel-time.ts — calculateTravelTime + calculateDistance : la distance n'agit que sur le temps de trajet, aucun facteur loot",
+        "battleforthecrown-backend/src/modules/combat/loot/loot.manager.ts:26 — totalCapacity = sumCarryCapacity(units), seul point ou le loot est borne, aucun facteur distance",
+        "battleforthecrown-backend/src/modules/combat/interfaces/combat-context.interface.ts:15-18 — CombatConfig._distance deja peuple (combat.worker.ts:1166), distance brute accessible cote resolution loot",
+        "packages/shared/src/world/schemas.ts:108-112 — CombatRulesSchema (attackBonus/defenseBonus/lootFactor) sans section distance-loot",
+        "battleforthecrown-pixi/src/features/combat/AttackDetailModal.tsx:124/141/497 — affiche distance + capacite de transport, aucun malus loot distance pre-affiche"
+      ],
+      "addedAt": "2026-07-15"
+    },
+    {
+      "specPath": "docs/gameplay/16-notifications.md",
+      "slug": "army-return-inapp-indicator",
+      "title": "Indicateur in-app « Retour d'armée » (catégorie 🟡)",
+      "keywords": [
+        "retour",
+        "armée",
+        "army-return",
+        "battle-returned",
+        "notification",
+        "toast",
+        "butin"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/104-feature-army-return-inapp-indicator.md",
+      "artefactId": "104",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/army-return-inapp-indicator",
+      "gapSummary": "La spec 16-notifications.md (l.22) liste la categorie 🟡 « Retour d'armee » (audience Proprietaire) comme scope MVP, mais aucune categorie 🟡 n'a de surface in-app (seules les 3 🔴 ont un run). L'event battle.returned est deja emis + route au proprietaire avec un payload complet, pourtant applyBattleReturned cote front ne fait qu'invalider les caches, sans toast. Ce run ajoute un toast dedupli at-least-once (avec/sans butin). Front-only + docs.",
+      "codeEvidence": [
+        "docs/gameplay/16-notifications.md:22 — categorie 🟡 « Retour d'armee » (audience Proprietaire) listee au scope MVP, aucune surface in-app livree",
+        "packages/shared/src/events/types.ts:84 — BattleReturnedPayload { expeditionId, reportId, villageId, survivingUnits, loot: { resources } } : payload complet, aucun changement shared requis",
+        "battleforthecrown-backend/src/modules/combat/return.worker.ts:157-179 — battle.returned emis (non-recalled) et route au proprietaire, aucun changement backend requis",
+        "battleforthecrown-pixi/src/api/ws-bindings.ts — applyBattleReturned : store + invalidations uniquement, aucun pushToast (contrairement aux handlers 🔴)",
+        "battleforthecrown-pixi/src/stores/ui.ts:70 — pushToast ne deduplique pas par id : dedup at-least-once par expeditionId a poser au niveau handler (aucun helper Set TTL existant)"
+      ],
+      "addedAt": "2026-07-16"
     }
   ]
 }

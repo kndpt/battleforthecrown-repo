@@ -7,7 +7,6 @@ import {
   type ResourceBuildingKey,
   type ResourceBuildingLevelStats,
 } from '@/features/design-system/components';
-import { RESOURCE_CONFIG } from '@/lib/resourceConfig';
 import { formatRemaining } from './constructionProgress';
 import type { getBuildingLockState } from './buildingLockState';
 import { getResourceBuildingKey } from './resourceBuildingKey';
@@ -21,6 +20,7 @@ import {
   getQuarterPopulationLimit,
 } from '@battleforthecrown/shared/village';
 import { RESOURCE_PRODUCTION_PER_HOUR } from '@battleforthecrown/shared/resources';
+import { RESOURCE_CONFIG } from '@/lib/resourceConfig';
 
 interface ResourceBuildingDetailModalProps {
   building: BuildingDto;
@@ -68,19 +68,19 @@ const RESOURCE_BUILDING_META: Record<ResourceBuildingKey, {
   iron: {
     eyebrow: 'Production · Fer',
     icon: RESOURCE_CONFIG.iron.assetPath,
-    label: 'fer',
+    label: RESOURCE_CONFIG.iron.name,
     tagline: '« De la roche au fer, du fer à la lame. »',
   },
   stone: {
     eyebrow: 'Production · Pierre',
     icon: RESOURCE_CONFIG.stone.assetPath,
-    label: 'pierre',
+    label: RESOURCE_CONFIG.stone.name,
     tagline: '« Pierre par pierre, le royaume tient debout. »',
   },
   wood: {
     eyebrow: 'Production · Bois',
     icon: RESOURCE_CONFIG.wood.assetPath,
-    label: 'bois',
+    label: RESOURCE_CONFIG.wood.name,
     tagline: '« Que les forêts bruissent sous nos haches. »',
   },
 };

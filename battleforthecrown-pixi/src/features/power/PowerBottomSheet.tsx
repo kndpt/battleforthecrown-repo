@@ -5,6 +5,7 @@ import { useGameStore } from '@/stores/game';
 import { publicAsset } from '@/lib/publicAsset';
 import { cn } from '@/lib/cn';
 import { NUMBER_FMT } from '@/lib/formatters';
+import { villageTierFromPower } from '@/lib/villageTier';
 import { PowerBreakdown } from './PowerBreakdown';
 
 interface PowerBottomSheetProps {
@@ -14,14 +15,6 @@ interface PowerBottomSheetProps {
 
 function formatNumber(value: number): string {
   return NUMBER_FMT.format(Math.max(0, Math.floor(value)));
-}
-
-function villageTierFromPower(power: number): number {
-  if (power >= 2500) return 5;
-  if (power >= 1500) return 4;
-  if (power >= 800) return 3;
-  if (power >= 300) return 2;
-  return 1;
 }
 
 function AssetMedallion({

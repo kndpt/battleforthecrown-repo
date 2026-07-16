@@ -22,6 +22,7 @@ import {
 import { calculateTrainingTime } from '@battleforthecrown/shared/logic';
 import { MS_PER_SECOND } from '@battleforthecrown/shared/time';
 import { getBarracksTrainingSpeedMultiplier } from '@battleforthecrown/shared/village/buildings';
+import { hasSufficientResources } from '@battleforthecrown/shared/resources';
 import { TempoService } from '@battleforthecrown/shared/world';
 
 @Injectable()
@@ -146,9 +147,11 @@ export class RecruitTroopsUseCase {
       const totalPopulation = unitCost.population * quantity;
 
       if (
-        stock.wood < totalWood ||
-        stock.stone < totalStone ||
-        stock.iron < totalIron
+        !hasSufficientResources(stock, {
+          wood: totalWood,
+          stone: totalStone,
+          iron: totalIron,
+        })
       ) {
         throw new BadRequestException('Insufficient resources');
       }

@@ -50,6 +50,14 @@ export const OYEZ_CATALOGUE: Record<OyezTheme, OyezCatalogueEntry> = {
     taskType: 'RAID_BARBARIAN',
     taskLabel: 'Vaincre un village barbare',
   },
+  PROSPECTORS: {
+    theme: 'PROSPECTORS',
+    title: 'Jour des prospecteurs',
+    description:
+      'L’exploitation des sites de ressources est favorisée aujourd’hui.',
+    taskType: 'EXPLOIT_RESOURCE_SITE',
+    taskLabel: 'Envoyer une équipe d’exploitation',
+  },
 };
 
 /**

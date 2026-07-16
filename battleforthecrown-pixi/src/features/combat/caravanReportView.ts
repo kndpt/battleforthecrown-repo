@@ -1,6 +1,6 @@
 import type { CaravanReportResponse } from '@battleforthecrown/shared/combat';
-import { NUMBER_FMT } from '@/lib/formatters';
-import { RESOURCE_META } from '@/lib/resourceConfig';
+import { NUMBER_FMT, REPORT_DATE_FMT } from '@/lib/formatters';
+import { RESOURCE_CONFIG } from '@/lib/resourceConfig';
 import { formatCoord } from './report-view-utils';
 
 export type CaravanReportResourcesDto = CaravanReportResponse['resources'];
@@ -11,14 +11,6 @@ export interface CaravanReportVillageView {
   y: number;
 }
 
-const NUMBER_FORMATTER = NUMBER_FMT;
-const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-});
 
 export interface CaravanReportResourceLine {
   icon: string;
@@ -41,7 +33,6 @@ export interface CaravanReportSummary {
   title: string;
 }
 
-const resourceMeta: Record<keyof CaravanReportResourcesDto, { icon: string; label: string }> = RESOURCE_META;
 
 export function caravanReportTypeLabel(type: CaravanReportResponse['type']): string {
   return type === 'ARRIVED' ? 'Caravane arrivée' : 'Caravane rappelée';
@@ -79,7 +70,7 @@ export function caravanReportTargetVillage(report: CaravanReportResponse): Carav
 }
 
 function formatResource(value: number): string {
-  return NUMBER_FORMATTER.format(value);
+  return NUMBER_FMT.format(value);
 }
 
 function deliveredResources(report: CaravanReportResponse): CaravanReportResourcesDto {
@@ -95,9 +86,9 @@ function resourceLines(report: CaravanReportResponse): CaravanReportResourceLine
   const visibleKeys = keys.length > 0 ? keys : (['wood', 'stone', 'iron'] as const);
 
   return visibleKeys.map((key) => ({
-    icon: resourceMeta[key].icon,
+    icon: RESOURCE_CONFIG[key].assetPath,
     key,
-    label: resourceMeta[key].label,
+    label: RESOURCE_CONFIG[key].nameCapitalized,
     lostValue: report.lost[key] > 0 ? formatResource(report.lost[key]) : undefined,
     primaryAmount: delivered[key],
     primaryLabel,
@@ -166,5 +157,5 @@ export function caravanReportPreview(report: CaravanReportResponse): string {
 }
 
 export function caravanReportWhen(report: CaravanReportResponse): string {
-  return DATE_FORMATTER.format(new Date(report.timestamp));
+  return REPORT_DATE_FMT.format(new Date(report.timestamp));
 }

@@ -42,3 +42,17 @@ export const creditResourcesCapped = (
   stone: Math.min(current.stone + delta.stone, maxPerType),
   iron: Math.min(current.iron + delta.iron, maxPerType),
 });
+
+/**
+ * True when `current` stock covers `cost` for every resource (wood/stone/iron).
+ * Single source of truth for the affordability guard previously inlined as a
+ * three-way `<` comparison across the recruit/upgrade/caravan flows. Population
+ * and crowns are gated separately by callers — this checks resources only.
+ */
+export const hasSufficientResources = (
+  current: ResourceAmounts,
+  cost: ResourceAmounts,
+): boolean =>
+  current.wood >= cost.wood &&
+  current.stone >= cost.stone &&
+  current.iron >= cost.iron;

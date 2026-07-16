@@ -21,6 +21,7 @@ import {
   isBuildingEnabled,
   MAX_CONSTRUCTION_QUEUE,
 } from '@battleforthecrown/shared/village';
+import { hasSufficientResources } from '@battleforthecrown/shared/resources';
 
 @Injectable()
 export class UpgradeBuildingUseCase {
@@ -110,11 +111,7 @@ export class UpgradeBuildingUseCase {
         currentStrategy,
       );
 
-      if (
-        stock.wood < cost.wood ||
-        stock.stone < cost.stone ||
-        stock.iron < cost.iron
-      ) {
+      if (!hasSufficientResources(stock, cost)) {
         throw new BadRequestException('Insufficient resources');
       }
 
