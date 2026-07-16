@@ -19,12 +19,13 @@ import { useCancelConstructionMutation, usePopulationQuery } from '@/api/queries
 import { useGameStore } from '@/stores/game';
 import { useUiStore } from '@/stores/ui';
 import { useDisplayResources } from '@/features/resources/useDisplayResources';
+import type { BuildingDto } from '@/api';
+import type { BuildingLockState } from './buildingLockState';
+import { canAffordNextBuildingLevel } from '@/features/game/VillageViewSectionHelpers';
 import {
   BUILDING_DEFINITIONS,
   type BuildingType,
 } from '@battleforthecrown/shared/village/buildings';
-import type { BuildingDto } from '@/api';
-import type { BuildingLockState } from './buildingLockState';
 
 export interface BuildingCardProps {
   building: BuildingDto;
@@ -78,12 +79,7 @@ export function BuildingCard({ building, lockState, onClick }: BuildingCardProps
   const nextLevel = building.level + 1;
   const nextCost =
     BUILDING_DEFINITIONS[building.type as BuildingType]?.levels[nextLevel] ?? null;
-  const canAfford =
-    nextCost !== null &&
-    (displayResources?.wood ?? 0) >= nextCost.wood &&
-    (displayResources?.stone ?? 0) >= nextCost.stone &&
-    (displayResources?.iron ?? 0) >= nextCost.iron &&
-    availablePopulation >= nextCost.population;
+  const canAfford = canAffordNextBuildingLevel(building, displayResources, availablePopulation);
 
   const handleCardClick = () => {
     onClick?.(building);

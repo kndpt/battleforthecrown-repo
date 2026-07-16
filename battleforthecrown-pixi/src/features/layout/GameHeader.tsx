@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeftRight, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import {
   type MultiVillageActivityKind,
@@ -12,6 +12,7 @@ import {
   type PlayerProfileSheetTitle,
 } from '@/features/design-system/components/PlayerProfileSheet';
 import { useDisplayResources, useDisplayCrowns } from '@/features/resources/useDisplayResources';
+import { ResourceConversionModal } from '@/features/resources/ResourceConversionModal';
 import { DailyRetentionWidget } from '@/features/retention/DailyRetentionWidget';
 import { runGameAction, type GameActionId } from '@/features/game-actions/gameActions';
 import { useAuthStore } from '@/stores/auth';
@@ -79,6 +80,7 @@ export function GameHeader({
   );
   const [isVillageSheetOpen, setIsVillageSheetOpen] = useState(false);
   const [isFriendsOpen, setIsFriendsOpen] = useState(false);
+  const [isConversionOpen, setIsConversionOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profileTab, setProfileTab] = useState<PlayerProfileSheetTab>('profile');
   const [villageFilter, setVillageFilter] = useState<MultiVillageFilter>('all');
@@ -370,6 +372,14 @@ export function GameHeader({
 
       {showResources && (
         <div className="game-topbar-resources relative grid grid-cols-3 divide-x divide-[rgba(166,124,82,.28)] border-t border-[rgba(246,213,123,.1)] bg-[linear-gradient(180deg,rgba(44,26,10,.74),rgba(31,19,9,.66))] shadow-[0_-1px_0_rgba(255,255,255,.04)_inset] backdrop-blur-md backdrop-saturate-150 [animation:bftc-topbar-resources-dock_.36s_cubic-bezier(.16,1,.24,1)_.09s_both]">
+          <button
+            aria-label="Échange royal de ressources"
+            className="absolute -top-3 right-2 z-[1] flex size-6 items-center justify-center rounded-full border-2 border-[#7a5200] bg-gradient-to-b from-[#f6d57b] to-[#c9900c] text-[#3a2a00] shadow-[0_2px_0_rgba(0,0,0,.25),inset_0_1px_0_rgba(255,255,255,.45)] transition-transform active:scale-95"
+            onClick={() => setIsConversionOpen(true)}
+            type="button"
+          >
+            <ArrowLeftRight aria-hidden="true" className="size-3.5" />
+          </button>
           {resources.map((resource) => (
             <div
               key={resource.label}
@@ -420,6 +430,11 @@ export function GameHeader({
       >
         <DefensiveFriendsSheet onClose={() => setIsFriendsOpen(false)} />
       </BottomSheet>
+      <ResourceConversionModal
+        isOpen={isConversionOpen}
+        onClose={() => setIsConversionOpen(false)}
+        villageId={villageId}
+      />
       <BottomSheet
         className="mx-auto h-[64vh] max-w-[32rem]"
         isOpen={isProfileOpen}

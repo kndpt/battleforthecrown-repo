@@ -565,8 +565,11 @@ describe('extraction smoke', () => {
       const payload = attackedOutbox.payload as {
         stolen: { wood: number; stone: number; iron: number };
         interrupted: boolean;
+        resourceType: 'WOOD' | 'STONE' | 'IRON';
       };
       expect(payload.interrupted).toBe(true);
+      // Enriched payload names the attacked site (run 098, fog-safe alert).
+      expect(payload.resourceType).toBe('WOOD');
       const stolenTotal =
         payload.stolen.wood + payload.stolen.stone + payload.stolen.iron;
       expect(stolenTotal).toBeGreaterThan(0);

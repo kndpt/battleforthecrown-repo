@@ -8,6 +8,7 @@ interface ReportCardProps {
   onClick: () => void;
 }
 
+
 function formatDate(value: string): string {
   return formatReportTimestamp(value, true);
 }

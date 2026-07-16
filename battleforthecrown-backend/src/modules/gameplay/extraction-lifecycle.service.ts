@@ -21,6 +21,7 @@ import type { ExtractionResourceType } from '@battleforthecrown/shared/extractio
 import { calculateCombatOutcome } from '../combat/combat-resolution';
 import { isVictoryForAttacker, sumCarryCapacity } from '../combat/combat.utils';
 import { releasePopulationForLosses } from '../combat/population-release';
+import { creditUnitsToInventory } from '../combat/unit-inventory';
 import { type UnitMap } from '@battleforthecrown/shared/army';
 import { WorldConfigService } from '../world/world-config.service';
 import type { CombatContext } from '../combat/interfaces/combat-context.interface';
@@ -255,23 +256,11 @@ export class ExtractionLifecycleService {
               expedition.units,
               'expedition.units',
             );
-            for (const [unitType, quantity] of Object.entries(escortUnits)) {
-              if (!quantity || quantity <= 0) continue;
-              await tx.unitInventory.upsert({
-                where: {
-                  villageId_unitType: {
-                    villageId: expedition.attackerVillageId,
-                    unitType,
-                  },
-                },
-                create: {
-                  villageId: expedition.attackerVillageId,
-                  unitType,
-                  quantity,
-                },
-                update: { quantity: { increment: quantity } },
-              });
-            }
+            await creditUnitsToInventory(
+              tx,
+              expedition.attackerVillageId,
+              escortUnits,
+            );
 
             if (expedition.extractionVillagers) {
               await tx.population.update({
@@ -450,6 +439,7 @@ export class ExtractionLifecycleService {
                 worldId: site.worldId,
                 villageId: victim.attackerVillageId,
                 siteId: site.id,
+                resourceType: site.resourceType,
                 interrupted: isVictory,
                 stolen,
               },

@@ -11,14 +11,8 @@ import { formatCoord, shortReportId } from './report-view-utils';
 
 export type { ReinforcementReportResponse };
 
-import { NUMBER_FMT } from '@/lib/formatters';
-const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-});
+import { NUMBER_FMT, REPORT_DATE_FMT } from '@/lib/formatters';
+
 
 const reinforcementReportLabels: ReinforcementReportModalLabels = {
   reportPrefix: 'Rapport',
@@ -125,7 +119,7 @@ export function buildReinforcementReportModalProps(
     roleLabel: isStationed ? 'Soutien' : 'Retour',
     tone: isStationed ? 'stationed' : 'returned',
     units: reinforcementReportUnits(report),
-    when: DATE_FORMATTER.format(new Date(report.timestamp)),
+    when: REPORT_DATE_FMT.format(new Date(report.timestamp)),
     width: 360,
   };
 }

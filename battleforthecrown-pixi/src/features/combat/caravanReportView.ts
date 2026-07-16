@@ -1,5 +1,5 @@
 import type { CaravanReportResponse } from '@battleforthecrown/shared/combat';
-import { NUMBER_FMT } from '@/lib/formatters';
+import { NUMBER_FMT, REPORT_DATE_FMT } from '@/lib/formatters';
 import { RESOURCE_CONFIG } from '@/lib/resourceConfig';
 import { formatCoord } from './report-view-utils';
 
@@ -11,14 +11,6 @@ export interface CaravanReportVillageView {
   y: number;
 }
 
-
-const DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-});
 
 export interface CaravanReportResourceLine {
   icon: string;
@@ -77,6 +69,9 @@ export function caravanReportTargetVillage(report: CaravanReportResponse): Carav
   };
 }
 
+function formatResource(value: number): string {
+  return NUMBER_FMT.format(value);
+}
 
 function deliveredResources(report: CaravanReportResponse): CaravanReportResourcesDto {
   return report.type === 'ARRIVED' ? report.credited : report.returned;
@@ -94,11 +89,11 @@ function resourceLines(report: CaravanReportResponse): CaravanReportResourceLine
     icon: RESOURCE_CONFIG[key].assetPath,
     key,
     label: RESOURCE_CONFIG[key].nameCapitalized,
-    lostValue: report.lost[key] > 0 ? NUMBER_FMT.format(report.lost[key]) : undefined,
+    lostValue: report.lost[key] > 0 ? formatResource(report.lost[key]) : undefined,
     primaryAmount: delivered[key],
     primaryLabel,
-    primaryValue: NUMBER_FMT.format(delivered[key]),
-    sentValue: NUMBER_FMT.format(report.resources[key]),
+    primaryValue: formatResource(delivered[key]),
+    sentValue: formatResource(report.resources[key]),
   }));
 }
 
@@ -112,11 +107,11 @@ export function caravanReportSummary(report: CaravanReportResponse): CaravanRepo
     return {
       body: primaryTotal === 0
         ? lostTotal > 0
-          ? `Aucune ressource n'a pu revenir au village d'origine. ${NUMBER_FMT.format(lostTotal)} n'ont pas pu être stockées.`
+          ? `Aucune ressource n'a pu revenir au village d'origine. ${formatResource(lostTotal)} n'ont pas pu être stockées.`
           : "Aucune ressource n'était transportée."
         : lostTotal > 0
-          ? `${NUMBER_FMT.format(primaryTotal)} ressources sont revenues au village d'origine. ${NUMBER_FMT.format(lostTotal)} n'ont pas pu être stockées.`
-          : `${NUMBER_FMT.format(primaryTotal)} ressources sont revenues au village d'origine.`,
+          ? `${formatResource(primaryTotal)} ressources sont revenues au village d'origine. ${formatResource(lostTotal)} n'ont pas pu être stockées.`
+          : `${formatResource(primaryTotal)} ressources sont revenues au village d'origine.`,
       lostTotal,
       primaryLabel,
       primaryTotal,
@@ -129,11 +124,11 @@ export function caravanReportSummary(report: CaravanReportResponse): CaravanRepo
   return {
     body: primaryTotal === 0
       ? lostTotal > 0
-        ? `Aucune ressource n'a pu être livrée. ${NUMBER_FMT.format(lostTotal)} n'ont pas pu entrer dans l'Entrepôt.`
+        ? `Aucune ressource n'a pu être livrée. ${formatResource(lostTotal)} n'ont pas pu entrer dans l'Entrepôt.`
         : "Aucune ressource n'était transportée."
       : lostTotal > 0
-        ? `${NUMBER_FMT.format(primaryTotal)} ressources ont été livrées. ${NUMBER_FMT.format(lostTotal)} n'ont pas pu entrer dans l'Entrepôt.`
-        : `${NUMBER_FMT.format(primaryTotal)} ressources ont été livrées au village destinataire.`,
+        ? `${formatResource(primaryTotal)} ressources ont été livrées. ${formatResource(lostTotal)} n'ont pas pu entrer dans l'Entrepôt.`
+        : `${formatResource(primaryTotal)} ressources ont été livrées au village destinataire.`,
     lostTotal,
     primaryLabel,
     primaryTotal,
@@ -153,14 +148,14 @@ export function caravanReportPreview(report: CaravanReportResponse): string {
   const target = caravanReportVillageLabel(caravanReportTargetVillage(report));
   const route = report.type === 'ARRIVED' ? `${origin} vers ${target}` : `${target} vers ${origin}`;
   const primary = summary.primaryTotal > 0
-    ? `${NUMBER_FMT.format(summary.primaryTotal)} ${summary.primaryLabel.toLowerCase()}`
+    ? `${formatResource(summary.primaryTotal)} ${summary.primaryLabel.toLowerCase()}`
     : report.type === 'ARRIVED'
       ? 'Aucune ressource livrée'
       : 'Aucune ressource récupérée';
-  const loss = summary.lostTotal > 0 ? ` · ${NUMBER_FMT.format(summary.lostTotal)} perdues` : '';
+  const loss = summary.lostTotal > 0 ? ` · ${formatResource(summary.lostTotal)} perdues` : '';
   return `${primary}${loss} · ${route}`;
 }
 
 export function caravanReportWhen(report: CaravanReportResponse): string {
-  return DATE_FORMATTER.format(new Date(report.timestamp));
+  return REPORT_DATE_FMT.format(new Date(report.timestamp));
 }

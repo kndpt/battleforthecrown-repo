@@ -10,6 +10,7 @@ export interface TroopBarProps {
   unitName: string;
 }
 
+
 export function TroopBar({ className, icon, lost, sent, unitName }: TroopBarProps) {
   const safeSent = Math.max(0, sent);
   const safeLost = Math.max(0, Math.min(lost, safeSent));

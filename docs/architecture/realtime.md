@@ -94,7 +94,7 @@ Chaque payload est validé runtime par `parseEventPayload(kind, raw)` (backend `
 
 | Event | Scope | Champs principaux du payload | Déclencheur backend |
 |-------|-------|------------------------------|---------------------|
-| `resources.changed` | `userId` | `villageId, wood, stone, iron, maxPerType, lastUpdateTs, productionRates` | `OutboxPublisher.resourcesChanged` (upgrade-building, recruit-troops, cancel-construction, cancel-recruitment, construction worker quand un producer/warehouse complète, `combat.worker.ts` quand le défenseur est pillé, `return.worker.ts` quand l'attaquant récupère son butin). **Pas le `ProductionWorker` tick** — cf. § Exceptions au pattern Outbox. |
+| `resources.changed` | `userId` | `villageId, wood, stone, iron, maxPerType, lastUpdateTs, productionRates` | `OutboxPublisher.resourcesChanged` (upgrade-building, recruit-troops, cancel-construction, cancel-recruitment, construction worker quand un producer/warehouse complète, `combat.worker.ts` quand le défenseur est pillé, `return.worker.ts` quand l'attaquant récupère son butin, `ConvertResourcesUseCase` à chaque échange royal résolu — run 099). **Pas le `ProductionWorker` tick** — cf. § Exceptions au pattern Outbox. |
 | `building.completed` | `userId` | `buildingId, villageId, buildingType, level` | `ConstructionWorker` |
 | `unit.trained` | `userId` | `trainingId, villageId, unitType, completedQty, totalQty` | `TrainingWorker`, à chaque unité produite dans la même transaction que l'incrément d'inventaire. |
 | `unit.training.completed` | `userId` | `trainingId, villageId, unitType, completedQty, totalQty` | `TrainingWorker` |

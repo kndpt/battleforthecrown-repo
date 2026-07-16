@@ -39,6 +39,7 @@ interface ReportsListProps {
 
 import { NUMBER_FMT, formatReportTimestamp } from '@/lib/formatters';
 
+
 function formatDate(value: string): string {
   return formatReportTimestamp(value);
 }

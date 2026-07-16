@@ -19,6 +19,7 @@ import {
 
 import { NUMBER_FMT } from '@/lib/formatters';
 
+
 const TARGET_KIND_LABEL: Record<string, string> = {
   BARBARIAN_VILLAGE: 'Village barbare',
   PLAYER_VILLAGE: 'Village joueur',
