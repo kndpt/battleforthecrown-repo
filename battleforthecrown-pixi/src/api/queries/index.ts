@@ -65,6 +65,7 @@ export {
 export {
   type ActiveExpeditionDto,
   useActiveExpeditionsQuery,
+  incomingAttacksQueryOptions,
   useIncomingAttacksQuery,
   useCapturesTargetingMeQuery,
   useOpenConquestsQuery,

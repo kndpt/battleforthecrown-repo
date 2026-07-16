@@ -82,7 +82,8 @@ src/
 combat/
 ├── combat.service.ts             # Orchestration attaque/scout/renforts + rapports
 ├── combat.controller.ts
-├── combat.worker.ts              # Job pg-boss déclenché à arrival time
+├── combat.worker.ts              # Job pg-boss déclenché à arrival time (route par kind)
+├── scout-arrival.service.ts      # Collaborateur : résolution scout (snapshot + intel + retour)
 ├── capture-duration.ts           # Courbes fenêtre de capture + tempo.captureWindow
 ├── return.worker.ts              # Job retour d'armée
 ├── conquest.service.ts           # Logique de conquête de village
@@ -96,7 +97,7 @@ combat/
 
 Flow expédition (Attaque/Scout/Renfort) :
 1. `POST /combat/attack`, `/combat/scout` ou `/combat/reinforce` → `CombatService.initiate*` valide + crée `Expedition` + déclenche job pg-boss à `arrivalAt`.
-2. `CombatWorker.handle` → résout selon le `kind` (`ATTACK`: combat via stratégie ; `SCOUT`: snapshot `ScoutReport`, succès auto sans perte ; `REINFORCE`: stationnement en `Garrison`), crée les events adaptés (`battle.*`, `scout.*`, `reinforcement.*`).
+2. `CombatWorker.handle` → route selon le `kind` (`ATTACK`: combat via stratégie ; `SCOUT`: délégué à `ScoutArrivalService.handleArrival` → snapshot `ScoutReport`, succès auto sans perte ; `REINFORCE`: stationnement en `Garrison`), crée les events adaptés (`battle.*`, `scout.*`, `reinforcement.*`).
 3. Le retour d'un raid réutilise `Expedition.outboundTravelMs`, figé au dispatch, pour respecter "même vitesse qu'à l'aller" même si la config monde ou la stratégie changent avant résolution.
 4. `ReturnWorker.handle` → ramène l'armée + butin après un combat/raid à `returnAt`, event `battle.returned`; si aucun survivant ni loot ne revient, aucun job retour n'est planifié. Pour un scout, il ramène les ESPIONs sans loot et émet `scout.returned`.
 5. `POST /combat/recall/:expeditionId` rappelle une expédition sortante encore `EN_ROUTE` : passage en `RETURNING`, planification `combat:return`, event `expedition.recalled`, puis restitution sans combat par `ReturnWorker`.
