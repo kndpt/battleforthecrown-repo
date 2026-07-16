@@ -3,6 +3,7 @@ import { Delete } from 'lucide-react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Button } from '../buttons';
 import { cn } from '@/lib/cn';
+import { NUMBER_FMT } from '@/lib/formatters';
 
 const keypadVariants = cva(['flex flex-col w-full'], {
   variants: {
@@ -84,7 +85,7 @@ export const NumericKeypad = forwardRef<HTMLDivElement, NumericKeypadProps>(
 
     const isLocked = max !== undefined && max <= 0;
     const btnSize = buttonSizeFor(size ?? 'lg');
-    const maxLabel = max !== undefined ? `/ ${max.toLocaleString('fr-FR')}` : null;
+    const maxLabel = max !== undefined ? `/ ${NUMBER_FMT.format(max)}` : null;
 
     return (
       <div ref={ref} className={cn(keypadVariants({ size }), className)} {...props}>
@@ -93,7 +94,7 @@ export const NumericKeypad = forwardRef<HTMLDivElement, NumericKeypadProps>(
             data-testid="keypad-value"
             className="font-cinzel font-bold text-4xl text-kingdom-900 text-shadow-game leading-none"
           >
-            {value.toLocaleString('fr-FR')}
+            {NUMBER_FMT.format(value)}
           </span>
           {(unitLabel ?? maxLabel) && (
             <span className="font-game text-sm text-kingdom-600 mt-1">

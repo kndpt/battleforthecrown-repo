@@ -1,3 +1,5 @@
+import { NUMBER_FMT } from '@/lib/formatters';
+
 export function formatScore(score: number): string {
-  return score.toLocaleString("fr-FR");
+  return NUMBER_FMT.format(score);
 }
