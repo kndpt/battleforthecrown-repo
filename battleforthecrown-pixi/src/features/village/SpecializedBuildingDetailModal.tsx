@@ -10,6 +10,7 @@ import {
 } from '@/features/design-system/components';
 import { computeUnitTrainingProgress } from '@/features/army/trainingProgress';
 import { unitMetaFor } from '@/features/army/unitConfig';
+import { NUMBER_FMT } from '@/lib/formatters';
 import { publicAsset } from '@/lib/publicAsset';
 import { Button, InputHelperText, ModalBackdrop, ProgressBar, ResourceIcon, Spinner } from '@/ui';
 import { UNIT_COSTS, UNIT_TYPES } from '@battleforthecrown/shared/army';
@@ -79,7 +80,7 @@ const DEFAULT_ACCENT: BuildingModalAccent = {
 };
 
 function fr(value: number) {
-  return Math.floor(value).toLocaleString('fr-FR');
+  return NUMBER_FMT.format(Math.floor(value));
 }
 
 function buildingAccent(type: string): BuildingModalAccent {

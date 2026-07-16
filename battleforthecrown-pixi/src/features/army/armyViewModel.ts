@@ -22,6 +22,7 @@ import type {
   ArmyVillageRow,
 } from '@/features/design-system/components';
 import { UNIT_CATEGORY } from './unitCategory';
+import { NUMBER_FMT } from '@/lib/formatters';
 import { formatRemaining } from '@/features/village/constructionProgress';
 import type { DisplayResources } from '@/lib/interpolation';
 import { unitMetaFor } from './unitConfig';
@@ -378,7 +379,7 @@ function getDisplayQuantity(troop: ArmyTroop, filterId: ArmyFilterId): number {
 }
 
 function formatPowerSummary(power: number): string {
-  return power.toLocaleString('fr-FR');
+  return NUMBER_FMT.format(power);
 }
 
 function sumVillagePower(rows: ArmyVillageRow[]): number {

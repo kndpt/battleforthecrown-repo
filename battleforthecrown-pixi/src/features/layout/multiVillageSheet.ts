@@ -4,6 +4,7 @@ import type {
   ResourcesPayload,
   VillageStrategyInfoDto,
 } from '@/api/queries';
+import { NUMBER_FMT } from '@/lib/formatters';
 import { computeUnitTrainingProgress } from '@/features/army/trainingProgress';
 import { unitMetaFor } from '@/features/army/unitConfig';
 import { computeConstructionProgress } from '@/features/village/constructionProgress';
@@ -63,7 +64,9 @@ export function buildMultiVillageSheetItems(
 ): MultiVillageItem[] {
   const now = runtime.now ?? Date.now();
 
-  return villages.map((village) => ({
+  return villages.map((village) => {
+    const power = runtime.powerByVillageId?.get(village.id);
+    return {
     active: village.id === activeVillageId,
     alert: deriveVillageStateAlert({
       queue: runtime.queueByVillageId?.get(village.id),
@@ -81,14 +84,15 @@ export function buildMultiVillageSheetItems(
     level: getCastleLevel(runtime.buildingsByVillageId?.get(village.id)),
     lords: mapLordActivities(runtime.trainingByVillageId?.get(village.id), now),
     name: village.name,
-    power: runtime.powerByVillageId?.get(village.id)?.toLocaleString('fr-FR'),
+    power: power != null ? NUMBER_FMT.format(power) : undefined,
     resources: mapResources(
       runtime.resourcesByVillageId?.get(village.id),
       runtime.populationByVillageId?.get(village.id),
     ),
     strategy: runtime.strategyByVillageId?.get(village.id)?.currentStrategy,
     troops: mapTroopActivities(runtime.trainingByVillageId?.get(village.id), now),
-  }));
+  };
+  });
 }
 
 /**

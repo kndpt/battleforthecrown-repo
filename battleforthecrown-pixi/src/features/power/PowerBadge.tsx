@@ -1,4 +1,5 @@
 import { Badge } from '@/ui';
+import { NUMBER_FMT } from '@/lib/formatters';
 
 interface PowerBadgeProps {
   value: number;
@@ -20,7 +21,7 @@ export function PowerBadge({ value, onClick, className = '' }: PowerBadgeProps) 
       aria-label={`Puissance totale: ${value}`}
     >
       <Badge variant="warning" size="md">
-        ⚜️ {value.toLocaleString()}
+        ⚜️ {NUMBER_FMT.format(value)}
       </Badge>
     </div>
   );
