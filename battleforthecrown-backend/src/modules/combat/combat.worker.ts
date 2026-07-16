@@ -49,6 +49,7 @@ import {
 } from '@battleforthecrown/shared/rankings';
 import type { WorldTempo } from '@battleforthecrown/shared/world';
 import type { CombatResolution } from '@battleforthecrown/shared/combat';
+import { isConquestArmy } from '@battleforthecrown/shared/combat';
 import { UNIT_TYPES, type UnitMap } from '@battleforthecrown/shared/army';
 import { typedEntries } from '@battleforthecrown/shared/utils';
 import { getCaptureDurationMs } from './capture-duration';
@@ -1159,6 +1160,9 @@ export class CombatWorker implements OnModuleInit {
           expeditionUnits,
           attackerStrategyConfig?.strategy,
         ),
+        // Conquête = l'armée est partie avec un Noble. Décidé au départ (pas sur
+        // les survivants) pour exempter le loot de la friction distance.
+        _isConquest: isConquestArmy(expeditionUnits),
       },
       attackerStrategyConfig,
     };

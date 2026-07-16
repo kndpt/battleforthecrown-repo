@@ -16,7 +16,7 @@ Détail technique côté backend dans [`docs/architecture/backend-modules.md` §
 
 ## Pertes et raids
 
-- **Raid victorieux** : pertes selon le ratio puissance attaque vs défense, butin proportionnel à la capacité de transport restante.
+- **Raid victorieux** : pertes selon le ratio puissance attaque vs défense, butin proportionnel à la capacité de transport restante. Au-delà d'un rayon, la capacité de pillage subit une **friction logistique par distance** (raid seul, jamais la conquête) : [`28-distance-loot-friction.md`](./28-distance-loot-friction.md).
 - **Raid perdu** : si toute l'armée attaquante est détruite, l'expédition se termine sur place : aucun trajet retour visuel, aucune restitution de troupes ou loot. Cible peut perdre quelques ressources stockées.
 - **Défense** : armée stationnée applique sa puissance défensive + bonus stratégie + Wall (post-MVP). La stat défensive consommée dépend de l'archétype attaquant : infanterie/siège/scout/conquête → `defenseInfantry`, cavalerie → `defenseCavalry`, archers → `defenseArcher`. Pour une armée mixte, la défense effective est pondérée par la puissance d'attaque de chaque archétype. Valeurs unitaires : [`08-units.md`](./08-units.md).
 

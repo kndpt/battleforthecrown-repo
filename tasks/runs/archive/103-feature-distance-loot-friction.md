@@ -1,8 +1,8 @@
 # Run #103 — feature-distance-loot-friction
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-07-16
+> **Terminé** : 2026-07-16
 
 ## Cible
 
@@ -46,19 +46,27 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 - **T3 — Seed/fixtures** : `prisma/seed-default-world-config.sql` + `combat-fixtures.ts` alignés (aucune migration Prisma — config JSON).
 - **T4 — Frontend** : `AttackDetailModal.tsx` affiche la capacité de loot effective post-malus + badge/malus visible avant envoi, réutilise le helper shared. **Conditionner strictement au mode pillage/raid** (le modal est partagé attaque/renfort/conquête — pas de malus fictif en renfort/conquête).
 
-## Progress
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
-## Décisions prises
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
 ## Rapport final
+
+Synthèse : helper pur `lootDistanceFactor` (shared) réutilisé par le backend server-authoritative (`loot.manager`) et le front (`AttackDetailModal` via `attackLootView`). Malus raid-only ; conquête (Noble au départ, `isConquestArmy`) et renfort exemptés. Config `combat.lootDistance` (défauts `{25, 0.01, 0.5}`) alignée seed + schema + fixtures.
 
 ### Acceptance & QA
 
-- [ ] <critère> — `<cmd>` → <résultat>
-- **Review indépendante** : requise — modifie la résolution loot server-authoritative (invariant économique anti-snowball) ; risque de fuite du malus vers conquêtes/renforts/retour et de dérive front↔back si le facteur n'est pas partagé.
-- **Tests automatisés** : shared (`lootDistanceFactor`) + `loot.manager.spec.ts` (non-régression `d ≤ R`) + static-check.
-- **Tests IG user** : checklist Kelvin (pré-affichage malus `AttackDetailModal` au-delà / sous le rayon).
+Critères d'acceptance vérifiés :
+- [x] `lootDistanceFactor(d≤R)===1` ; `d≫R===floor`, jamais `<floor`/`0` ; monotone stricte R→plateau — `yarn workspace battleforthecrown-pixi test run loot-distance` → 6 tests verts.
+- [x] Backend `d>R` → `Math.floor(cap×factor)` ; `d≤R` non-régression ; conquête/renfort exemptés — `yarn workspace battleforthecrown-backend test loot.manager` → verts (dont exemption `_isConquest`).
+- [x] Mapping Noble→conquête testé — `isConquestArmy` unit (`shared/combat/utils.spec.ts`).
+- [x] Travel-time/return inchangés — `git diff --stat` : aucun fichier `travel-time.ts`/`return.worker.ts` touché.
+- [x] Front malus raid-only, exempté renfort/conquête — `attackLootView.spec.ts` (6 tests, 2 modes).
+- [x] Seed + `GET /worlds/:id/config` exposent `combat.lootDistance` — smoke `combat-attack` (world seedé via `smoke-world-config`) vert.
+- [x] `yarn static-check` + `test:backend` + `test:pixi` — verts.
+- **Review indépendante** : Déclenchée (raison: back+front + diff>100 + invariant durable). BLOCK initial (2 majeurs + 2 mineurs) → findings résolus → re-vérif **GO**.
+- **Tests automatisés** : `static-check` OK ; pixi/shared 33 verts (loot-distance, attackLootView, combat/utils) ; backend combat/extraction/world-config 252 verts.
+- **Smokes lancés** : Ciblés — `test:smoke:run -- combat-attack combat-conquest-hook` → 10 verts (loot pillage + gating conquête). Full smoke déporté sur CI PR.
+- **Smokes ajoutés/modifiés** : Aucun (couverture pillage/conquête existante suffisante ; `smoke-world-config` aligné).
+- **QA fonctionnelle agent** : couverte par smokes combat (résolution loot server-side + report).
+- **Tests IG à faire par le user** (checklist Kelvin — non démarré en run autonome, pas de user présent) :
+  - [ ] Cible de **pillage** au-delà de 25 cases : `AttackDetailModal` affiche capacité de transport réduite + badge `−X%`, mis à jour au changement de cible/unités.
+  - [ ] Cible de **pillage** sous 25 cases : aucun malus, capacité identique à aujourd'hui.
+  - [ ] Ajout d'un **Noble** (mode conquête) sur une cible lointaine : le malus disparaît.
+  - [ ] Mode **renfort** (village ami/mien) : aucun malus affiché.

@@ -105,10 +105,22 @@ export const WorldIdentitySchema = z.strictObject({
   tier: WorldIdentityTierSchema.default(DEFAULT_WORLD_IDENTITY_CONFIG.tier),
 });
 
+// Friction logistique par distance sur la capacité de pillage (raid only).
+// Voir `docs/gameplay/28-distance-loot-friction.md` + `logic/loot-distance.ts`.
+const LootDistanceSchema = z.strictObject({
+  // Rayon (tuiles) sous lequel aucun malus ne s'applique (facteur = 1).
+  radius: z.number().nonnegative(),
+  // Perte de facteur par tuile au-delà du rayon (décroissance linéaire).
+  slope: z.number().nonnegative(),
+  // Plancher du facteur : plateau minimal, strictement > 0 (jamais de loot nul).
+  floor: z.number().gt(0).max(1),
+});
+
 const CombatRulesSchema = z.strictObject({
   attackBonus: z.number().nonnegative(),
   defenseBonus: z.number().nonnegative(),
   lootFactor: z.number().min(0).max(1),
+  lootDistance: LootDistanceSchema,
 });
 
 const LootRangeSchema = z.strictObject({

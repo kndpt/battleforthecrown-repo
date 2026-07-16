@@ -16,6 +16,8 @@ const buildContext = (overrides: {
   units: UnitMap;
   resources: { wood: number; stone: number; iron: number };
   lootFactor?: number;
+  distance?: number;
+  isConquest?: boolean;
 }): CombatContext => ({
   worldId: 'world-1',
   expedition: makeExpeditionFixture(),
@@ -49,8 +51,18 @@ const buildContext = (overrides: {
       ...DEFAULT_COMBAT_RULES,
       lootFactor: overrides.lootFactor ?? DEFAULT_COMBAT_RULES.lootFactor,
     },
+    ...(overrides.distance !== undefined
+      ? { _distance: overrides.distance }
+      : {}),
+    ...(overrides.isConquest !== undefined
+      ? { _isConquest: overrides.isConquest }
+      : {}),
   }),
 });
+
+// Défauts alignés seed/DEFAULT_WORLD_CONFIG : radius 25, slope 0.01, floor 0.5.
+// Plateau atteint à 75 tuiles.
+const R = DEFAULT_COMBAT_RULES.lootDistance.radius;
 
 describe('LootManager', () => {
   let lootManager: LootManager;
@@ -162,6 +174,70 @@ describe('LootManager', () => {
       );
 
       expect(result.resources).toEqual({ wood: 300, stone: 300, iron: 300 });
+    });
+  });
+
+  describe('distance loot friction (raid only)', () => {
+    it('leaves capacity untouched at/under the radius (non-régression)', async () => {
+      // 100 MILITIA × 25 = 2500 capacity, distance ≤ radius → facteur 1.
+      // Potentiel (lootFactor 0.5) = 1500 < 2500 → pas de cap.
+      const result = await lootManager.calculateLoot(
+        buildContext({
+          units: { MILITIA: 100 },
+          resources: { wood: 1000, stone: 1000, iron: 1000 },
+          distance: R,
+        }),
+      );
+
+      expect(result.metadata.totalCapacityAvailable).toBe(2500);
+      expect(result.metadata.cappedByCapacity).toBe(false);
+    });
+
+    it('reduces carry capacity beyond the radius', async () => {
+      // distance 75 → plateau floor 0.5 → capacity = floor(2500 × 0.5) = 1250.
+      // Potentiel 1500 > 1250 → capped par la friction distance.
+      const result = await lootManager.calculateLoot(
+        buildContext({
+          units: { MILITIA: 100 },
+          resources: { wood: 1000, stone: 1000, iron: 1000 },
+          distance: 75,
+        }),
+      );
+
+      expect(result.metadata.totalCapacityAvailable).toBe(1250);
+      expect(result.metadata.cappedByCapacity).toBe(true);
+      const totalLooted = Object.values(result.resources ?? {}).reduce(
+        (a: number, b: number) => a + b,
+        0,
+      );
+      expect(totalLooted).toBeLessThanOrEqual(1250);
+    });
+
+    it('never drops below the floor, even at extreme distance', async () => {
+      // distance 100_000 → plancher 0.5 (jamais moins) → capacity = 1250.
+      const result = await lootManager.calculateLoot(
+        buildContext({
+          units: { MILITIA: 100 },
+          resources: { wood: 2000, stone: 2000, iron: 2000 },
+          distance: 100_000,
+        }),
+      );
+
+      expect(result.metadata.totalCapacityAvailable).toBe(1250);
+    });
+
+    it('exempts conquest (Noble) from the distance malus', async () => {
+      // _isConquest = true → facteur 1 malgré une distance ≫ radius.
+      const result = await lootManager.calculateLoot(
+        buildContext({
+          units: { MILITIA: 100 },
+          resources: { wood: 2000, stone: 2000, iron: 2000 },
+          distance: 1000,
+          isConquest: true,
+        }),
+      );
+
+      expect(result.metadata.totalCapacityAvailable).toBe(2500);
     });
   });
 });

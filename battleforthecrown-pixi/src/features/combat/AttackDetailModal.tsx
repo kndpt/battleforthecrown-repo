@@ -38,6 +38,7 @@ import { mapEntityDisplayName, type MapEntity } from '@/api/world-types';
 import { getBarbarianCaptureDurationLabel } from '@/features/world/barbarianConquest';
 import { getPvpCaptureDurationLabel } from '@battleforthecrown/shared/combat';
 import { buildThreatEstimateView } from './threatEstimateView';
+import { buildAttackLootView } from './attackLootView';
 
 interface AttackDetailModalProps {
   target: MapEntity;
@@ -167,6 +168,24 @@ export function AttackDetailModal({
   );
 
   const selectedNobleCount = effectiveUnits[UNIT_TYPES.NOBLE] ?? 0;
+  // Friction distance sur le pillage (raid only) — mirroir du gating backend.
+  const lootView = useMemo(
+    () =>
+      buildAttackLootView({
+        activeMode,
+        selectedNobleCount,
+        distance,
+        totalCarryCapacity,
+        lootDistance: worldConfig.data?.combat.lootDistance,
+      }),
+    [
+      activeMode,
+      selectedNobleCount,
+      distance,
+      totalCarryCapacity,
+      worldConfig.data,
+    ],
+  );
   const isBarbarianConquest =
     target.kind === 'BARBARIAN_VILLAGE' &&
     activeMode === 'attack' &&
@@ -493,12 +512,30 @@ export function AttackDetailModal({
                   <span className="text-kingdom-700">Puissance estimée :</span>
                   <span className="font-bold tabular-nums">{totalAttack.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between items-center gap-2">
                   <span className="text-kingdom-700">Capacité de transport :</span>
-                  <span className="font-bold tabular-nums">
-                    {totalCarryCapacity > 0 ? totalCarryCapacity.toLocaleString() : '—'}
+                  <span className="font-bold tabular-nums flex items-center gap-1.5">
+                    {lootView.showMalus && (
+                      <Badge variant="warning" size="sm">
+                        −{lootView.malusPct}%
+                      </Badge>
+                    )}
+                    {totalCarryCapacity > 0
+                      ? (lootView.showMalus
+                          ? lootView.effectiveCarryCapacity
+                          : totalCarryCapacity
+                        ).toLocaleString()
+                      : '—'}
                   </span>
                 </div>
+                {lootView.showMalus && (
+                  <div className="flex justify-between text-xs text-game-red-dark">
+                    <span>Malus distance (pillage) :</span>
+                    <span className="tabular-nums">
+                      butin plafonné au-delà de {worldConfig.data?.combat.lootDistance.radius} cases
+                    </span>
+                  </div>
+                )}
               </>
             )}
             <div className="flex justify-between">
