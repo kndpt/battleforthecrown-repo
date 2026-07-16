@@ -10,9 +10,9 @@ import {
 } from '@/features/design-system/components';
 import { computeUnitTrainingProgress } from '@/features/army/trainingProgress';
 import { unitMetaFor } from '@/features/army/unitConfig';
-import { NUMBER_FMT } from '@/lib/formatters';
 import { publicAsset } from '@/lib/publicAsset';
 import { Button, InputHelperText, ModalBackdrop, ProgressBar, ResourceIcon, Spinner } from '@/ui';
+import { formatIntFr } from '@/lib/formatters';
 import { UNIT_COSTS, UNIT_TYPES } from '@battleforthecrown/shared/army';
 import { MAX_CONSTRUCTION_QUEUE } from '@battleforthecrown/shared/village/buildings';
 import type { BuildingLevelDefinition, BuildingType } from '@battleforthecrown/shared/village/buildings';
@@ -79,9 +79,6 @@ const DEFAULT_ACCENT: BuildingModalAccent = {
   light: '#b6a78a',
 };
 
-function fr(value: number) {
-  return NUMBER_FMT.format(Math.floor(value));
-}
 
 function buildingAccent(type: string): BuildingModalAccent {
   return BUILDING_ACCENTS[type as BuildingType] ?? DEFAULT_ACCENT;
@@ -177,7 +174,7 @@ function CostChip({
       : 'inline-flex h-[22px] items-center gap-1 rounded-full border-[1.5px] border-[#a93226] bg-[linear-gradient(to_bottom,rgba(192,57,43,.45),rgba(192,57,43,.7))] py-0 pl-1 pr-[7px] font-game text-[10.5px] font-bold text-[#ffe2dc] shadow-[inset_0_0_8px_rgba(192,57,43,.4)] [text-shadow:1px_1px_1px_rgba(0,0,0,.5)]'}
     >
       {icon}
-      {fr(value)}
+      {formatIntFr(value)}
     </span>
   );
 }
@@ -267,10 +264,10 @@ function WarehouseContent({ accent, level }: { accent: BuildingModalAccent; leve
       <div className="mx-3.5 mb-3">
         <StatCard
           accent={accent}
-          current={storage.current === null ? 'Aucun' : fr(storage.current)}
+          current={storage.current === null ? 'Aucun' : formatIntFr(storage.current)}
           icon="/assets/warehouse.png"
           label="Par ressource"
-          next={storage.next === null ? 'Max.' : fr(storage.next)}
+          next={storage.next === null ? 'Max.' : formatIntFr(storage.next)}
         />
       </div>
     </>

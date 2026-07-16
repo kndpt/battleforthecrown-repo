@@ -8,6 +8,7 @@ import {
 import { getUnitPowerWeight } from '@battleforthecrown/shared/power';
 import type { ArmyTrainingDto, ArmyUnitDto } from '@/api/queries';
 import type { PopulationDto } from '@/api';
+import { NUMBER_FMT } from '@/lib/formatters';
 import type { GarrisonLine } from '@/lib/types';
 import type {
   ArmyFilterOption,
@@ -22,7 +23,6 @@ import type {
   ArmyVillageRow,
 } from '@/features/design-system/components';
 import { UNIT_CATEGORY } from './unitCategory';
-import { NUMBER_FMT } from '@/lib/formatters';
 import { formatRemaining } from '@/features/village/constructionProgress';
 import type { DisplayResources } from '@/lib/interpolation';
 import { unitMetaFor } from './unitConfig';
@@ -231,7 +231,7 @@ function buildArmySections(
     {
       emptyLabel: 'Aucune troupe stationnée dans ce village.',
       id: 'village',
-      summary: formatPowerSummary(sumVillagePower(villageRows)),
+      summary: NUMBER_FMT.format(sumVillagePower(villageRows)),
       summaryIcon: '/assets/army-power.png',
       title: 'Village',
       troops: villageTroops,
@@ -240,7 +240,7 @@ function buildArmySections(
     {
       emptyLabel: 'Aucune troupe stationnée ailleurs.',
       id: 'away',
-      summary: formatPowerSummary(sumSupportPower(supportRows)),
+      summary: NUMBER_FMT.format(sumSupportPower(supportRows)),
       summaryIcon: '/assets/army-power.png',
       supportRows,
       title: 'Stationnées ailleurs',
@@ -378,9 +378,6 @@ function getDisplayQuantity(troop: ArmyTroop, filterId: ArmyFilterId): number {
   return troop.inVillage + (troop.fromAllies ?? 0);
 }
 
-function formatPowerSummary(power: number): string {
-  return NUMBER_FMT.format(power);
-}
 
 function sumVillagePower(rows: ArmyVillageRow[]): number {
   return rows.reduce((sum, row) => sum + row.power, 0);
