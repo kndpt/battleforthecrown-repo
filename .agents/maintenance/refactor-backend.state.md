@@ -1,14 +1,13 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-07-16 | theme W1a (Med/M) — extraction du **scout arrival** hors du god-worker `combat.worker.ts`. `handleScoutArrival` + helper privé `snapshotOwnerInactivity` déplacés dans un collaborateur dédié `combat/scout-arrival.service.ts` (`ScoutArrivalService.handleArrival(tx, expedition)`), calqué sur `ExtractionLifecycleService`. Worker : dispatch `SCOUT` délègue au service, ne route plus que par kind. Déps `NewbieShieldService` + `FriendshipService` retirées du constructeur worker (uniquement scout) + 7 imports shared scout-only supprimés. `tx` toujours passé par le worker (même transaction Serializable, zéro changement de comportement / event / ordre d'écriture). worker 2012→1756L (−256). static-check ok, 604 back verts, smokes scouting+intel 10/10 (boot Nest → DI `ScoutArrivalService` validée) + cross-player-reinforcement+combat-reports-inbox 6/6 (autres kinds worker intacts). Docs backend-modules.md maj (file-tree + flow).
-full: `archive/refactor-backend/2026-07-16-full.md`
+last: 2026-07-17 | theme W1b (Med/M) — **fin décompo god-worker** `combat.worker.ts`. Extraction des 2 derniers handlers d'arrivée non-combat → collaborateurs dédiés (pattern W1a/`ScoutArrivalService`) : `combat/caravan-arrival.service.ts` (`CaravanArrivalService.handleArrival` — déps `ResourcesService`+`OutboxPublisher`) + `combat/reinforcement-arrival.service.ts` (`ReinforcementArrivalService.handleArrival` + privé `bounceReinforcementFromCaptureWindow` — **zéro dép injectée**). Type `ReturnJobToSchedule` sorti → `combat/interfaces/return-job.interface.ts`. Worker : dispatch CARAVAN/REINFORCE délègue, 3 méthodes privées suppr (−408L, 1760→1352), **dép `ResourcesService` retirée du constructeur** (OutboxPublisher gardée, encore utilisée par applyLootToDefender) + 5 imports scope-only suppr. `tx` toujours passé (même tx Serializable, zéro changement comportement/event/ordre). static-check ok, 610 back verts, smokes caravan+cross-player-reinforcement+reinforcements+combat-reports-inbox+recall-en-route 16/16 (boot Nest → DI 2 services validée, chemins extraits exercés e2e). Docs backend-modules.md maj (file-tree + flow étapes 2/6).
+full: `archive/refactor-backend/2026-07-17-full.md`
 
 ## OPEN
 
 | ID  | Sev  | Where                                              | Note                                                                                       |
 |-----|------|----------------------------------------------------|--------------------------------------------------------------------------------------------|
-| R4  | High | crowns.service.ts:261                              | fractional carry — needs migration (`lastUpdateTs += production/rate`)                     |
-| W1b | Med  | combat/combat.worker.ts (1756L)                    | reste caravan (`handleCaravanArrival`) + reinforce (`handleReinforcementArrival` + `bounceReinforcementFromCaptureWindow`) à extraire → même pattern collaborateur. **Candidat #1 next run** |
+| R4  | High | crowns.service.ts:261                              | fractional carry — needs migration (`lastUpdateTs += production/rate`). **Candidat #1 next run** (seul High restant) |
 | B1  | Med  | combat.service.ts (1634L)                          | sans spec unit direct (smokes uniquement ; policy interdit mock Prisma)                    |
 | TE1 | Low  | combat.service:754/978/1000, combat.worker:1269/1298, initiate-extraction:181 | `Object.entries(units)` brut vs `typedEntries` — cosmétique (retire cast, ~6 sites) |
 | G2  | Med  | gameplay/extraction-lifecycle.service.ts (783L)    | looks-bad-but-fine : ADR-12 déclare explicitement « tout ici »                            |
@@ -25,7 +24,8 @@ full: `archive/refactor-backend/2026-07-16-full.md`
 
 ## Skip — déjà traité
 
-- W1a (extraction scout arrival → `combat/scout-arrival.service.ts`) → ce run
+- W1b (extraction caravan+reinforcement arrival → `combat/caravan-arrival.service.ts` + `combat/reinforcement-arrival.service.ts` ; décompo arrival-handlers du god-worker **terminée**) → ce run
+- W1a (extraction scout arrival → `combat/scout-arrival.service.ts`) → 2026-07-16
 - DUP-REPORT (base abstraite `combat/inbox-report.service.ts` → fusion caravan+reinforcement inbox CRUD) → 2026-07-15
 - DUP-PLANNER (fusion planners capture-window → `event-outbox-notification-planner.planCaptureWindowAttackerRouted`) → 2026-07-14 (#300)
 - CU1 (credit UnitMap → UnitInventory → `combat/unit-inventory.creditUnitsToInventory`) → 2026-07-13

@@ -82,8 +82,10 @@ src/
 combat/
 ├── combat.service.ts             # Orchestration attaque/scout/renforts + rapports
 ├── combat.controller.ts
-├── combat.worker.ts              # Job pg-boss déclenché à arrival time (route par kind)
+├── combat.worker.ts              # Job pg-boss déclenché à arrival time (route par kind, délègue aux collaborateurs d'arrivée)
 ├── scout-arrival.service.ts      # Collaborateur : résolution scout (snapshot + intel + retour)
+├── caravan-arrival.service.ts    # Collaborateur : arrivée caravane (crédit stock warehouse-capped + rapport + retour)
+├── reinforcement-arrival.service.ts # Collaborateur : arrivée renfort (stationnement / retour home / bounce fenêtre de capture)
 ├── capture-duration.ts           # Courbes fenêtre de capture + tempo.captureWindow
 ├── return.worker.ts              # Job retour d'armée
 ├── conquest.service.ts           # Logique de conquête de village
@@ -97,11 +99,11 @@ combat/
 
 Flow expédition (Attaque/Scout/Renfort) :
 1. `POST /combat/attack`, `/combat/scout` ou `/combat/reinforce` → `CombatService.initiate*` valide + crée `Expedition` + déclenche job pg-boss à `arrivalAt`.
-2. `CombatWorker.handle` → route selon le `kind` (`ATTACK`: combat via stratégie ; `SCOUT`: délégué à `ScoutArrivalService.handleArrival` → snapshot `ScoutReport`, succès auto sans perte ; `REINFORCE`: stationnement en `Garrison`), crée les events adaptés (`battle.*`, `scout.*`, `reinforcement.*`).
+2. `CombatWorker.handle` → route selon le `kind` et délègue aux collaborateurs d'arrivée dans la même transaction (`ATTACK`: combat via stratégie, inline ; `SCOUT`: `ScoutArrivalService.handleArrival` → snapshot `ScoutReport`, succès auto sans perte ; `REINFORCE`: `ReinforcementArrivalService.handleArrival` → stationnement en `Garrison` ; `CARAVAN`: `CaravanArrivalService.handleArrival`), crée les events adaptés (`battle.*`, `scout.*`, `reinforcement.*`, `caravan.*`).
 3. Le retour d'un raid réutilise `Expedition.outboundTravelMs`, figé au dispatch, pour respecter "même vitesse qu'à l'aller" même si la config monde ou la stratégie changent avant résolution.
 4. `ReturnWorker.handle` → ramène l'armée + butin après un combat/raid à `returnAt`, event `battle.returned`; si aucun survivant ni loot ne revient, aucun job retour n'est planifié. Pour un scout, il ramène les ESPIONs sans loot et émet `scout.returned`.
 5. `POST /combat/recall/:expeditionId` rappelle une expédition sortante encore `EN_ROUTE` : passage en `RETURNING`, planification `combat:return`, event `expedition.recalled`, puis restitution sans combat par `ReturnWorker`.
-6. `POST /combat/recall` crée aussi une `Expedition` de type `REINFORCE`, mais en sens retour ; son arrivée est traitée par `CombatWorker.handle`, qui réinjecte les unités au village d'origine et émet `reinforcement.returned`.
+6. `POST /combat/recall` crée aussi une `Expedition` de type `REINFORCE`, mais en sens retour ; son arrivée est traitée par `ReinforcementArrivalService.handleArrival` (via `CombatWorker`), qui réinjecte les unités au village d'origine et émet `reinforcement.returned`.
 
 Lectures et contrôle de garnison :
 - `GET /combat/:villageId/active` liste les expéditions sortantes `EN_ROUTE` ou `RETURNING` du village.
