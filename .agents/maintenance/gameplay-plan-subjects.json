@@ -1127,6 +1127,34 @@
         "battleforthecrown-pixi/src/stores/ui.ts:70 — pushToast ne deduplique pas par id : dedup at-least-once par expeditionId a poser au niveau handler (aucun helper Set TTL existant)"
       ],
       "addedAt": "2026-07-16"
+    },
+    {
+      "specPath": "docs/gameplay/16-notifications.md",
+      "slug": "scout-report-inapp-toast",
+      "title": "Toast in-app « Rapport de scout reçu » (catégorie 🟡)",
+      "keywords": [
+        "scout",
+        "rapport",
+        "scout-reported",
+        "notification",
+        "toast",
+        "rapport-recu"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/105-feature-scout-report-inapp-toast.md",
+      "artefactId": "105",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/scout-report-inapp-toast",
+      "gapSummary": "La spec 16-notifications.md l.23 liste la categorie 🟡 « Rapport recu » (rapport combat / scout, audience Participant). La moitie combat est cablee (toasts applyBattleResolved Victoire/Defaite + applyVillageAttacked Attaque repoussee/Village attaque), mais le rapport de SCOUT recu n'a aucune surface d'alerte in-app : applyScoutReported se limite a invalider les queries + faire tourner le FX d'expedition. Asymetrie directe combat vs scout. Le run ajoute un toast dedupli at-least-once dans applyScoutReported, calque sur applyExtractionAttacked + run 104, en reutilisant le helper dedupeToast deja en place. Front-only + docs, zero backend. Push FCM/APNs hors scope (Phase 6, POST-MVP).",
+      "codeEvidence": [
+        "battleforthecrown-pixi/src/api/ws-bindings.ts:462-483 applyScoutReported — invalide combatReports/openExpeditions/retentionSummary + update store expedition, aucun pushToast",
+        "battleforthecrown-pixi/src/api/ws-bindings.ts:404-409 applyBattleResolved + 772-779 applyVillageAttacked — toasts combat des deux camps (moitie combat de la categorie deja livree)",
+        "battleforthecrown-pixi/src/api/ws-bindings.ts:92-97 dedupeToast(key, ttlMs=10000) — helper de dedup at-least-once deja en place, reutilise par applyExtractionAttacked:1225",
+        "packages/shared/src/events/types.ts — ScoutReportedPayload { expeditionId, reportId, villageId, targetKind, targetName, targetX, targetY, returnAt } : payload complet, aucun changement shared requis",
+        "battleforthecrown-pixi/src/features/combat/useUnreadReportsCount.ts — badge non-lu compte deja les scout reports (surface persistante OK ; le trou est l'alerte proactive a l'arrivee de l'event)",
+        "tasks/runs/104-feature-army-return-inapp-indicator.md — sibling 🟡 in-app front-only, meme pattern dedup ; aucun run/ticket ne couvre le toast scout-report"
+      ],
+      "addedAt": "2026-07-17"
     }
   ]
 }
