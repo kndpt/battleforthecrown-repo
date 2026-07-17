@@ -72,14 +72,14 @@ describe('ToastStack', () => {
 
     render(<ToastStack />);
 
-    expect(screen.getByLabelText('Ressources remboursées')).toHaveTextContent(
+    expect(screen.getByLabelText('Ressources')).toHaveTextContent(
       '+235',
     );
     expect(
-      screen.getByLabelText('Population et couronnes remboursées'),
+      screen.getByLabelText('Population et couronnes'),
     ).toHaveTextContent('+6');
     expect(
-      screen.getByLabelText('Population et couronnes remboursées'),
+      screen.getByLabelText('Population et couronnes'),
     ).toHaveTextContent('+50');
     expect(screen.getByAltText('Bois')).toBeInTheDocument();
     expect(screen.getByAltText('Population')).toBeInTheDocument();

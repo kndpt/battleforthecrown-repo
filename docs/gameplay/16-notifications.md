@@ -61,6 +61,16 @@ Troisième et dernière catégorie 🔴 Critique MVP à recevoir sa surface in-a
 - **HUD** : toast via le store UI dans `applyExtractionAttacked` — `interrupted=true` → toast **error** « Site d'exploitation attaqué » avec les quantités volées (`stolen` par ressource) ; `interrupted=false` → toast **success** « Attaque repoussée ». **Idempotence at-least-once** (ADR-02) : le toast est dédupliqué par `expeditionId` (garde à TTL court côté client) ; une livraison WS dupliquée ne relance qu'une invalidation TanStack Query idempotente, sans doubler l'alerte.
 - **Hors scope run 098** : push FCM/APNs, opt-in granulaire, endpoint/onglet dédié (injustifié sans état persistant), révélation de la composition/origine de l'attaquant.
 
+## Visibilité in-app du retour d'armée (livré — run 104)
+
+Première catégorie 🟡 Important (les runs 086/094/098 couvraient les trois catégories 🔴 Critique) à recevoir sa surface in-app. Run **front-only** : `battle.returned` était déjà émis et routé au propriétaire du village avec un payload complet — aucun changement backend ni shared.
+
+- **Événement** : `battle.returned` (Outbox/WS), déjà routé au seul propriétaire du village. Payload déjà complet : `expeditionId`, `reportId`, `villageId`, `survivingUnits`, `loot.resources`. Détail : [`docs/architecture/realtime.md`](../architecture/realtime.md).
+- **Condition de déclenchement** : toast seulement si au moins un survivant **ou** au moins une ressource de butin > 0. Ni survivant ni butin → aucun toast (garde défensive : le return worker ne pose de toute façon pas de `returnAt` sans survivant).
+- **HUD** : toast via le store UI dans `applyBattleReturned`. Butin > 0 → toast **success** « Armée rentrée » avec les quantités par ressource rendues en icônes (canal `refundItems`, socle run 045) ; l'`aria-label` du bloc a été neutralisé en « Ressources » puisqu'il sert désormais aussi bien au remboursement qu'au butin. Butin nul (survivants seuls) → toast **info** « Retour à vide — aucun butin ».
+- **Idempotence at-least-once** (ADR-02) : dédup par `expeditionId` via la garde à TTL partagée du run 098 (`dedupeToast`), ici avec un TTL explicite de **60 s** au lieu du défaut 10 s. `battle.returned` est **terminal** — un `expeditionId` donné ne rentre qu'une fois — donc un TTL large ne masque aucun retour légitime ; il ne fait que borner la croissance mémoire du Set face aux redeliveries (poll Outbox ~1 s + rejeu à la reconnexion). Les invalidations de cache restent hors garde (idempotentes).
+- **Hors scope run 104** : push FCM/APNs, opt-in granulaire, endpoint/onglet dédié, agrégat multi-retours.
+
 ## Liens
 
 - [`14-pvp-conquest.md`](./14-pvp-conquest.md) — fenêtres de capture variables (consommateur principal des notifs).

@@ -83,11 +83,11 @@ function RefundItems({ items }: { items: ToastRefundItem[] }) {
   return (
     <div className="mt-2 flex flex-col gap-1.5">
       {resources.length > 0 ? (
-        <RefundItemRow ariaLabel="Ressources remboursées" items={resources} />
+        <RefundItemRow ariaLabel="Ressources" items={resources} />
       ) : null}
       {special.length > 0 ? (
         <RefundItemRow
-          ariaLabel="Population et couronnes remboursées"
+          ariaLabel="Population et couronnes"
           isSpecial
           items={special}
         />
