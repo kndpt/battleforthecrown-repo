@@ -316,5 +316,5 @@ function mapLordActivities(training: ArmyTrainingDto[] | undefined, now: number)
 }
 
 function formatCompactRemaining(ms: number) {
-  return ms <= 0 ? '—' : formatDuration(ms);
+  return ms <= 0 ? '—' : formatDuration(Math.ceil(ms / 1000) * 1000);
 }
