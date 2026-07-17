@@ -1,8 +1,8 @@
 # Run #104 — feature-army-return-inapp-indicator
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-07-17
+> **Terminé** : 2026-07-17
 
 ## Cible
 
@@ -46,19 +46,34 @@ _(Lead étape 3 — tâches ≤5 fichiers)_
 - **T4 — [front test]** Étendre `ws-bindings.test.ts` : toast émis, contenu différencié, doublon at-least-once inoffensif, invalidations conservées. 1 fichier.
 - **T5 — [docs]** Ajouter § « Visibilité in-app du retour d'armée — livré run 104 » à `docs/gameplay/16-notifications.md` (miroir 086/094/098) + acter la **1re catégorie 🟡** avec surface in-app. 1 fichier.
 
-## Progress
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
-## Décisions prises
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
 ## Rapport final
+
+**Synthèse** : Run front-only conforme au plan, avec **deux écarts assumés**. (1) T2 sans objet : le run 098 avait déjà posé le helper de dédup (`dedupeToast`, `ws-bindings.ts:92`) — la fiche l'avait manqué (grep sur `toastDedup`, pas `recentToastKeys`) ; le scénario « le premier des deux runs pose le helper, l'autre réutilise » s'est réalisé dans l'autre sens, donc aucun `src/lib/toastDedup.ts` créé (2 consommateurs, tous deux dans `ws-bindings.ts` → extraction = YAGNI), TTL passé explicitement à 60 s vs défaut 10 s. (2) Review indépendante **déclenchée** malgré la prévision « non requise » : le diff a dépassé 100 lignes (critère (c)) — et elle a payé, en rattrapant 2 bloquants invisibles depuis un vitest ciblé. Diff 5 fichiers de code + docs (~+212/-9).
 
 ### Acceptance & QA
 
-- [ ] <critère> — `<cmd>` → <résultat>
-- **Review indépendante** : **non requise** — front-only + docs, aucun contrat cross-workspace modifié (payload déjà complet, routage déjà fait), armée du joueur → aucun scrub fog-of-war à valider, pattern toast déjà établi (086 / 094 / 045). Risque faible. À réévaluer « oui » seulement si le refinement enrichit un contrat (non prévu).
-- **Tests automatisés** : `ws-bindings.test.ts` (`applyBattleReturned`) + `yarn static-check`.
-- **Tests IG user** : checklist Kelvin (toast retour d'armée avec/sans butin, sans reload).
+**Critères d'acceptance vérifiés**
+- [x] Toast in-app « armée rentrée » sans reload — `visuel` (reste à valider IG par Kelvin) ; binding prouvé par `ws-bindings.ts:453-463` (`pushToast` dans `applyBattleReturned`) + test `ret-loot`.
+- [x] Message différencie « retour avec butin » de « retour à vide » — `visuel` + `vitest` → butin > 0 : tone `success` + `refundItems` (icônes bois/pierre/fer) ; butin nul : tone `info` + « Retour à vide — aucun butin ».
+- [x] Condition de déclenchement OU (≥1 survivant **ou** ≥1 ressource > 0), les 2 cas testés — `yarn workspace battleforthecrown-pixi vitest run src/api/ws-bindings.test.ts` → tests `ret-loot-nosurv` (butin sans survivant → toast) et `ret-nothing` (ni l'un ni l'autre → 0 toast).
+- [x] Double livraison WS → un seul toast, dédup par `expeditionId`, TTL borné explicite 60 s — tests `ret-dup` (2 livraisons → 1 toast) et `ret-ttl` (livraison après `BATTLE_RETURNED_TOAST_DEDUP_TTL_MS + 1` → 2e toast, comportement documenté).
+- [x] `describe applyBattleReturned` couvre toast + contenu différencié + doublon + post-TTL + **conservation des 6 invalidations** — `ret-invalidate` (`armyInventory`, `openExpeditions`) + test pré-existant (`resources`, `population`, `activeExpeditions`, `power`). Les invalidations restent inconditionnelles, en amont des 2 gardes.
+- [x] Aucun toast « retour d'armée » chez les handlers voisins — `grep "Armée rentrée" battleforthecrown-pixi/src` → 1 seule occurrence (`ws-bindings.ts:455`) ; `scout.returned` / `expedition.returned` / `caravan.returned` / `reinforcement.returned` sans `pushToast`. `expedition.recalled` porte « Armée rappelée » (tone `warning`) — toast pré-existant distinct, émis **au rappel** et non au retour → pas de doublon.
+- [x] `yarn static-check` vert — `Done in 27.75s` (tsc backend + tsc pixi + eslint back+pixi), exit 0.
+
+**Review indépendante** : **Déclenchée** (raison : critère (c) — diff > 100 lignes ; la fiche la prévoyait « non requise », réévaluée en cours de run). Verdict final `GO` après `BLOCK` → fix cycle 1/3. Les 2 bloquants étaient réels et invisibles depuis un vitest ciblé : (1) `SPEARMAN` n'est pas un `UnitType` (`UNIT_TYPES` = MILITIA|SQUIRE|WARRIOR|…) → 7 × TS2353, vert en vitest car le typage est effacé au runtime, rouge au `tsc` ; (2) `ToastStack.test.tsx` (**hors diff**) assertait encore les anciens aria-labels → suite rouge. Fixés (`SPEARMAN`→`WARRIOR`, 3 assertions alignées) et gates reproduites indépendamment par le reviewer. 2 mineurs assumés : assertion redondante avec une couverture existante ; valeur 60 s en clair dans la doc gameplay (info utile au lecteur, constante exportée et citée).
+
+**Tests automatisés** : `yarn test:pixi` (suite **complète**, pas ciblée) → `Test Files 146 passed (146)` / `Tests 1171 passed (1171)`. `yarn static-check` → vert. 7 `it` ajoutés au `describe applyBattleReturned`.
+
+**Smokes lancés** : `Non lancés localement, raison : diff strictement front (aucun fichier sous battleforthecrown-backend/src/), aucun endpoint/worker/event touché — le payload et le routage de battle.returned sont inchangés ; full smoke couvert par CI PR.`
+
+**Smokes ajoutés/modifiés** : Aucun — aucune surface backend modifiée.
+
+**QA fonctionnelle agent** : Non nécessaire — run front-only sans surface serveur. Le comportement est purement un mapping event WS → store UI, entièrement couvert en unit avec le vrai store Zustand (pas de mock). Aucun serveur démarré (règle QA : pas de QA IG agent).
+
+**Tests IG à faire par le user** :
+- [ ] Lancer un raid gagnant qui ramène du butin → au retour, toast vert « Armée rentrée » avec les icônes bois/pierre/fer et les bonnes quantités, **sans reload**.
+- [ ] Lancer un raid qui rentre sans butin (cible vide) → toast bleu « Armée rentrée » / « Retour à vide — aucun butin ».
+- [ ] Vérifier qu'un rappel d'armée affiche toujours « Armée rappelée » au moment du rappel, sans doublon « Armée rentrée » au retour.
+
+_(Progress / Décisions : voir git history.)_

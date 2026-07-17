@@ -409,6 +409,11 @@ export function applyBattleResolved(
   });
 }
 
+// `battle.returned` est terminal : un expeditionId donné ne rentre qu'une fois.
+// Un TTL large ne masque donc aucun vrai retour — il borne juste la mémoire du
+// Set face aux redeliveries WS (poll Outbox ~1 s + rejeu à la reconnexion).
+export const BATTLE_RETURNED_TOAST_DEDUP_TTL_MS = 60_000;
+
 export function applyBattleReturned(
   payload: BattleReturnedPayload,
   ctx: BindingsContext,
@@ -426,6 +431,38 @@ export function applyBattleReturned(
   });
   invalidatePowerQueries(ctx, session, payload.villageId);
   invalidateOpenExpeditions(ctx, session);
+
+  const survivors = Object.values(payload.survivingUnits).reduce(
+    (sum, count) => sum + count,
+    0,
+  );
+  const loot = payload.loot.resources;
+  const lootTotal = loot.wood + loot.stone + loot.iron;
+  // Ni survivant ni butin → rien à annoncer (le return worker ne pose de toute
+  // façon pas de returnAt sans survivant ; garde défensive).
+  if (survivors <= 0 && lootTotal <= 0) return;
+  if (
+    !dedupeToast(
+      `battle.returned:${payload.expeditionId}`,
+      BATTLE_RETURNED_TOAST_DEDUP_TTL_MS,
+    )
+  )
+    return;
+
+  const hasLoot = lootTotal > 0;
+  useUiStore.getState().pushToast({
+    tone: hasLoot ? "success" : "info",
+    title: "Armée rentrée",
+    description: hasLoot ? undefined : "Retour à vide — aucun butin",
+    refundItems: hasLoot
+      ? [
+          { resource: "wood", amount: loot.wood },
+          { resource: "stone", amount: loot.stone },
+          { resource: "iron", amount: loot.iron },
+        ]
+      : undefined,
+    ttlMs: 6000,
+  });
 }
 
 export function applyScoutSent(

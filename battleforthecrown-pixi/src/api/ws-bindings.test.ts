@@ -4,6 +4,7 @@ import {
   applyAttackIncoming,
   applyBattleResolved,
   applyBattleReturned,
+  BATTLE_RETURNED_TOAST_DEDUP_TTL_MS,
   applyBattleSent,
   applyBuildingCompleted,
   applyCaravanArrived,
@@ -1346,11 +1347,10 @@ describe('applyBattleReturned', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it('removes the snapshot after the configured delay, invalidates economy + activeExpeditions', () => {
-    setCurrentWorldSession();
+  function addReturningSnapshot(expeditionId: string, villageId = 'v1'): void {
     useExpeditionsStore.getState().add({
-      expeditionId: 'e2',
-      villageId: 'v1',
+      expeditionId,
+      villageId,
       origin: { x: 0, y: 0 },
       target: { x: 1, y: 1 },
       phase: 'RETURNING',
@@ -1358,6 +1358,11 @@ describe('applyBattleReturned', () => {
       arrivalAt: 1000,
       returnAt: 2000,
     });
+  }
+
+  it('removes the snapshot after the configured delay, invalidates economy + activeExpeditions', () => {
+    setCurrentWorldSession();
+    addReturningSnapshot('e2');
 
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.resources('v1'), { wood: 100 });
@@ -1383,6 +1388,157 @@ describe('applyBattleReturned', () => {
     expectPowerQueriesInvalidated(queryClient, 'v1');
     vi.advanceTimersByTime(RETURNED_TO_CLEANUP_DELAY_MS);
     expect(useExpeditionsStore.getState().byId['e2']).toBeUndefined();
+  });
+
+  it('loot > 0 pushes a success toast with refundItems for the 3 resources', () => {
+    setCurrentWorldSession();
+    addReturningSnapshot('ret-loot');
+    const queryClient = new QueryClient();
+
+    applyBattleReturned(
+      {
+        expeditionId: 'ret-loot',
+        reportId: 'r-loot',
+        villageId: 'v1',
+        survivingUnits: { WARRIOR: 3 },
+        loot: { resources: { wood: 100, stone: 50, iron: 20 } },
+      },
+      { queryClient },
+    );
+
+    const toasts = useUiStore.getState().toasts;
+    expect(toasts).toHaveLength(1);
+    expect(toasts[0]?.tone).toBe('success');
+    expect(toasts[0]?.title).toBe('Armée rentrée');
+    expect(toasts[0]?.description).toBeUndefined();
+    expect(toasts[0]?.refundItems).toEqual([
+      { resource: 'wood', amount: 100 },
+      { resource: 'stone', amount: 50 },
+      { resource: 'iron', amount: 20 },
+    ]);
+  });
+
+  it('survivors > 0 with empty loot pushes an info toast, no refundItems', () => {
+    setCurrentWorldSession();
+    addReturningSnapshot('ret-empty');
+    const queryClient = new QueryClient();
+
+    applyBattleReturned(
+      {
+        expeditionId: 'ret-empty',
+        reportId: 'r-empty',
+        villageId: 'v1',
+        survivingUnits: { WARRIOR: 2 },
+        loot: { resources: { wood: 0, stone: 0, iron: 0 } },
+      },
+      { queryClient },
+    );
+
+    const toasts = useUiStore.getState().toasts;
+    expect(toasts).toHaveLength(1);
+    expect(toasts[0]?.tone).toBe('info');
+    expect(toasts[0]?.description).toBe('Retour à vide — aucun butin');
+    expect(toasts[0]?.refundItems).toBeUndefined();
+  });
+
+  it('loot > 0 with no survivors still toasts (OR condition)', () => {
+    setCurrentWorldSession();
+    addReturningSnapshot('ret-loot-nosurv');
+    const queryClient = new QueryClient();
+
+    applyBattleReturned(
+      {
+        expeditionId: 'ret-loot-nosurv',
+        reportId: 'r-loot-nosurv',
+        villageId: 'v1',
+        survivingUnits: {},
+        loot: { resources: { wood: 10, stone: 0, iron: 0 } },
+      },
+      { queryClient },
+    );
+
+    expect(useUiStore.getState().toasts).toHaveLength(1);
+  });
+
+  it('no survivors and no loot pushes no toast (defensive guard)', () => {
+    setCurrentWorldSession();
+    addReturningSnapshot('ret-nothing');
+    const queryClient = new QueryClient();
+
+    applyBattleReturned(
+      {
+        expeditionId: 'ret-nothing',
+        reportId: 'r-nothing',
+        villageId: 'v1',
+        survivingUnits: {},
+        loot: { resources: { wood: 0, stone: 0, iron: 0 } },
+      },
+      { queryClient },
+    );
+
+    expect(useUiStore.getState().toasts).toHaveLength(0);
+  });
+
+  it('a duplicated delivery of the same expeditionId within the TTL only toasts once', () => {
+    setCurrentWorldSession();
+    addReturningSnapshot('ret-dup');
+    const queryClient = new QueryClient();
+    const payload = {
+      expeditionId: 'ret-dup',
+      reportId: 'r-dup',
+      villageId: 'v1',
+      survivingUnits: { WARRIOR: 1 },
+      loot: { resources: { wood: 10, stone: 0, iron: 0 } },
+    };
+
+    applyBattleReturned(payload, { queryClient });
+    applyBattleReturned(payload, { queryClient });
+
+    expect(useUiStore.getState().toasts).toHaveLength(1);
+  });
+
+  it('a second delivery after the TTL expires toasts again', () => {
+    setCurrentWorldSession();
+    addReturningSnapshot('ret-ttl');
+    const queryClient = new QueryClient();
+    const payload = {
+      expeditionId: 'ret-ttl',
+      reportId: 'r-ttl',
+      villageId: 'v1',
+      survivingUnits: { WARRIOR: 1 },
+      loot: { resources: { wood: 10, stone: 0, iron: 0 } },
+    };
+
+    applyBattleReturned(payload, { queryClient });
+    vi.advanceTimersByTime(BATTLE_RETURNED_TOAST_DEDUP_TTL_MS + 1);
+    applyBattleReturned(payload, { queryClient });
+
+    expect(useUiStore.getState().toasts).toHaveLength(2);
+  });
+
+  it('keeps invalidating armyInventory and openExpeditions on a toast-producing payload', () => {
+    setCurrentWorldSession();
+    addReturningSnapshot('ret-invalidate');
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(queryKeys.armyInventory('v1'), []);
+    queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
+
+    applyBattleReturned(
+      {
+        expeditionId: 'ret-invalidate',
+        reportId: 'r-invalidate',
+        villageId: 'v1',
+        survivingUnits: { WARRIOR: 1 },
+        loot: { resources: { wood: 10, stone: 0, iron: 0 } },
+      },
+      { queryClient },
+    );
+
+    expect(useUiStore.getState().toasts).toHaveLength(1);
+    expect(queryClient.getQueryState(queryKeys.armyInventory('v1'))?.isInvalidated).toBe(true);
+    expect(
+      queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated,
+    ).toBe(true);
   });
 });
 
