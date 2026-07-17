@@ -48,6 +48,19 @@ export function formatCompact(n: number, opts: {
   return locale === 'fr' ? base.toLocaleString('fr-FR') : String(base);
 }
 
+export function formatDuration(ms: number, opts?: { showFullSeconds?: boolean }): string {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) {
+    return opts?.showFullSeconds
+      ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+      : `${h}:${m.toString().padStart(2, '0')}`;
+  }
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
 export function formatReportTimestamp(value: string, includeTimeOnPastDays = false): string {
   const parsed = new Date(value);
   const isSameDay = parsed.toDateString() === new Date().toDateString();

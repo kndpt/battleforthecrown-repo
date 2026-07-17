@@ -762,6 +762,7 @@ export function applyVillageAttacked(
   // Defender lost units → population was released server-side. Refresh the HUD.
   invalidateVillageEconomy(ctx, payload.defenderVillageId);
   ctx.queryClient.invalidateQueries({ queryKey: queryKeys.armyInventory(payload.defenderVillageId) });
+  ctx.queryClient.invalidateQueries({ queryKey: queryKeys.incomingAttacks(payload.defenderVillageId) });
   invalidatePowerQueries(ctx, session, payload.defenderVillageId);
   for (const originVillageId of payload.reinforcementOriginVillageIds ?? []) {
     invalidatePowerQueries(ctx, session, originVillageId);
