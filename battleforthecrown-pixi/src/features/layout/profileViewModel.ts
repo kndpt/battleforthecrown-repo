@@ -5,7 +5,7 @@ import type {
   PlayerProfileSheetProps,
   PlayerProfileSheetVillage,
 } from '@/features/design-system/components/PlayerProfileSheet';
-import { villageStyleOptions } from '@/features/design-system/components/villageStyleData';
+import { STRATEGY_LABELS as strategyLabels } from '@/lib/strategyLabels';
 import { WORLD_SIGIL_GLYPHS, WORLD_THEME_TOKENS } from '@/features/worlds/worldsViewModel';
 import type { PublicWorld } from '@battleforthecrown/shared/world';
 import { NUMBER_FMT } from '@/lib/formatters';
@@ -22,10 +22,7 @@ import {
   PLAYER_PROFILE_LEVEL,
 } from './headerHelpers';
 
-/** Strategy id → display name, shared by GameHeader and VillageView profile sheets. */
-export const strategyLabels: Record<string, string> = Object.fromEntries(
-  villageStyleOptions.map((option) => [option.id, option.name]),
-);
+export { strategyLabels };
 
 const awardDateFormatter = new Intl.DateTimeFormat('fr-FR', {
   day: 'numeric',

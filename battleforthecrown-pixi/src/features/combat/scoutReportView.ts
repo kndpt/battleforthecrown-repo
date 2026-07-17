@@ -12,10 +12,7 @@ import { formatInactivityLabel } from '@battleforthecrown/shared/world';
 import { unitMetaFor } from '@/features/army/unitConfig';
 import { formatResourceAmount, RESOURCE_CONFIG } from '@/lib/resourceConfig';
 import { formatRemaining } from '@/features/village/constructionProgress';
-import {
-  DEFAULT_VILLAGE_STRATEGY,
-  type VillageStrategyType,
-} from '@battleforthecrown/shared/village';
+import { STRATEGY_LABELS } from '@/lib/strategyLabels';
 
 import { NUMBER_FMT } from '@/lib/formatters';
 
@@ -119,7 +116,7 @@ export function getInactivityBadge(
 
 export function scoutReportStrategyLabel(strategy: string | null | undefined): string {
   if (!strategy) return 'Non applicable';
-  return DEFAULT_VILLAGE_STRATEGY.strategies[strategy as VillageStrategyType]?.displayName ?? strategy;
+  return STRATEGY_LABELS[strategy] ?? strategy;
 }
 
 /**

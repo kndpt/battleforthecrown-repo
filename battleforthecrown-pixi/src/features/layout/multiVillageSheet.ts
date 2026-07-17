@@ -4,7 +4,7 @@ import type {
   ResourcesPayload,
   VillageStrategyInfoDto,
 } from '@/api/queries';
-import { NUMBER_FMT } from '@/lib/formatters';
+import { formatDuration, NUMBER_FMT } from '@/lib/formatters';
 import { computeUnitTrainingProgress } from '@/features/army/trainingProgress';
 import { unitMetaFor } from '@/features/army/unitConfig';
 import { computeConstructionProgress } from '@/features/village/constructionProgress';
@@ -316,12 +316,5 @@ function mapLordActivities(training: ArmyTrainingDto[] | undefined, now: number)
 }
 
 function formatCompactRemaining(ms: number) {
-  if (ms <= 0) return '—';
-  const totalSeconds = Math.ceil(ms / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  if (hours > 0) return `${hours}:${minutes.toString().padStart(2, '0')}`;
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  return ms <= 0 ? '—' : formatDuration(ms);
 }

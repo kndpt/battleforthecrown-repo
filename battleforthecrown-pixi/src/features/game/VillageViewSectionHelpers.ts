@@ -1,5 +1,6 @@
 import type { BuildingDto, QueueEntryDto } from '@/api';
 import type { DisplayResources } from '@/lib/interpolation';
+import { formatDuration } from '@/lib/formatters';
 import {
   BUILDING_DEFINITIONS,
   type BuildingType,
@@ -7,12 +8,7 @@ import {
 import type { VillageResourceType } from './VillageViewSections';
 
 export function formatQueueTime(ms: number): string {
-  const totalSec = Math.max(0, Math.floor(ms / 1_000));
-  const h = Math.floor(totalSec / 3600);
-  const m = Math.floor((totalSec % 3600) / 60);
-  const s = totalSec % 60;
-  if (h > 0) return `${h}:${m.toString().padStart(2, '0')}`;
-  return `${m}:${s.toString().padStart(2, '0')}`;
+  return formatDuration(ms);
 }
 
 export function computeQueueProgress(

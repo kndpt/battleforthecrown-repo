@@ -1,6 +1,7 @@
 import type { VillageIntelDto } from "@battleforthecrown/shared/world";
 import type { IntelSourceKind } from "@battleforthecrown/shared/world";
 import type { VillageNaturalTrait } from "@battleforthecrown/shared/village";
+import { STRATEGY_LABELS } from "@/lib/strategyLabels";
 
 export interface IntelUnitEntry {
   unitType: string;
@@ -18,13 +19,6 @@ export interface IntelView {
    * scoutée (jamais dérivé côté client). Cf. run 093 § Décision de périmètre. */
   naturalTrait: VillageNaturalTrait | null;
 }
-
-const STYLE_LABELS: Record<string, string> = {
-  FORTRESS: "Forteresse",
-  RAIDERS: "Raiders",
-  ECONOMIC: "Économique",
-  BALANCED: "Équilibré",
-};
 
 export function formatIntelAge(
   seenAtIso: string,
@@ -51,7 +45,7 @@ export function toIntelView(dto: VillageIntelDto): IntelView {
   const wallLabel =
     dto.wallLevel != null ? `Rempart niv. ${dto.wallLevel}` : "—";
   const styleLabel =
-    dto.strategy != null ? (STYLE_LABELS[dto.strategy] ?? "—") : "—";
+    dto.strategy != null ? (STRATEGY_LABELS[dto.strategy] ?? "—") : "—";
 
   return {
     units,

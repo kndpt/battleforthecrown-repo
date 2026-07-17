@@ -946,6 +946,7 @@ describe('applyVillageAttacked', () => {
     queryClient.setQueryData(queryKeys.combatReports('defender-1', 'world-old'), []);
     queryClient.setQueryData(queryKeys.scoutReports('defender-1', 'world-old'), []);
     queryClient.setQueryData(queryKeys.resources('v-def'), { wood: 500, stone: 300, iron: 200 });
+    queryClient.setQueryData(queryKeys.incomingAttacks('v-def'), []);
     seedPowerQueries(queryClient, 'v-def', 'defender-1');
     seedPowerQueries(queryClient, 'v-origin', 'defender-1');
     queryClient.setQueryData(queryKeys.kingdomPower('defender-1', 'world-old'), { kingdomPower: 1 });
@@ -969,6 +970,7 @@ describe('applyVillageAttacked', () => {
     );
 
     expect(queryClient.getQueryState(queryKeys.resources('v-def'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.incomingAttacks('v-def'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.combatReports('defender-1', 'world-1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.scoutReports('defender-1', 'world-1'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.combatReports('defender-1', 'world-old'))?.isInvalidated).toBe(true);

@@ -1,5 +1,36 @@
 import { describe, expect, it } from 'vitest';
-import { formatCompact, formatIntFr } from './formatters';
+import { formatCompact, formatDuration, formatIntFr } from './formatters';
+
+describe('formatDuration', () => {
+  it('formats zero as 0:00', () => {
+    expect(formatDuration(0)).toBe('0:00');
+  });
+
+  it('formats sub-minute durations', () => {
+    expect(formatDuration(45_000)).toBe('0:45');
+  });
+
+  it('formats minutes and seconds', () => {
+    expect(formatDuration(245_000)).toBe('4:05');
+  });
+
+  it('drops seconds in hours mode by default', () => {
+    expect(formatDuration(3_661_000)).toBe('1:01');
+  });
+
+  it('shows full seconds when showFullSeconds is true', () => {
+    expect(formatDuration(3_661_000, { showFullSeconds: true })).toBe('1:01:01');
+    expect(formatDuration(3_600_000, { showFullSeconds: true })).toBe('1:00:00');
+  });
+
+  it('clamps negative values to 0:00', () => {
+    expect(formatDuration(-5_000)).toBe('0:00');
+  });
+
+  it('truncates sub-second precision', () => {
+    expect(formatDuration(61_999)).toBe('1:01');
+  });
+});
 
 describe('formatCompact', () => {
   describe('default (nonzero decimals, upper, en)', () => {

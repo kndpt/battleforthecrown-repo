@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Clock, Lock, Swords, XCircle } from "lucide-react";
 import { formatRemaining } from "@/features/village/constructionProgress";
-import { INTEGER_FMT } from "@/lib/formatters";
+import { formatDuration, INTEGER_FMT } from "@/lib/formatters";
 import { clamp } from "@/lib/math";
 import {
   Badge,
@@ -42,13 +42,6 @@ interface UnitCardProps {
   training: ArmyTrainingDto | undefined;
   onClick: (unit: ArmyUnitDto) => void;
   onUpgradeBarracks?: () => void;
-}
-
-function formatProgressTime(ms: number): string {
-  const safe = Math.max(0, ms);
-  const minutes = Math.floor(safe / 60000);
-  const seconds = Math.floor((safe % 60000) / 1000);
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
 const HARD_MAX = 500;
@@ -285,7 +278,7 @@ export function UnitCard({
                   </span>
                 </div>
                 <span className="text-game-gold-dark font-medium">
-                  {formatProgressTime(trainingProgress?.totalRemainingMs ?? 0)}
+                  {formatDuration(trainingProgress?.totalRemainingMs ?? 0)}
                 </span>
               </div>
               <ProgressBar
@@ -297,7 +290,7 @@ export function UnitCard({
               />
               <p className="text-[10px] text-center text-game-gold-dark font-medium">
                 Prochaine dans{" "}
-                {formatProgressTime(
+                {formatDuration(
                   trainingProgress?.currentUnitRemainingMs ?? 0,
                 )}
               </p>
