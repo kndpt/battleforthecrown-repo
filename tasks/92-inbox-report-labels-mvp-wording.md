@@ -59,9 +59,12 @@ Une décision de wording tranchée, puis un alignement code ↔ spec **dans le m
 Décision de copy à trancher (Kelvin). Le sens de l'alignement dépend du choix, pas la structure du fix.
 
 - **Piste A — aligner le code sur la spec (défaut recommandé)** : restaurer `Arrivé en soutien` / `Retour au village` / `Livraison arrivée`. Rétablit le contrat livré par le run 044, la spec reste la source de vérité, aucune backprop doc. Modif ≤ 2 fichiers de vue + 2 fichiers de test.
-- **Piste B — entériner le wording du code (backprop spec)** : si `Soutien arrivé` / `Troupes rentrées` / `Caravane arrivée` sont jugés meilleurs (plus courts sur mobile, cohérents entre eux), mettre à jour les tables « Wording joueur » de `17-inbox-and-reports.md` pour matcher le code. Zéro changement frontend, la spec redevient exacte.
+- **Piste B — entériner la formulation rendue (backprop spec)** : si la formulation actuellement **affichée** est jugée meilleure, mettre à jour les tables « Wording joueur » de `17-inbox-and-reports.md` pour refléter **ce qui est réellement rendu par surface** — **pas** les chaînes des helpers morts (`Troupes rentrées`/`Caravane arrivée` ne sont affichées nulle part ; les recopier dans la spec laisserait code↔spec divergent). Concrètement, la spec devrait alors distinguer la **catégorie** (label de type) de son **sous-état contextuel** et lister, par surface :
+  - Renfort — sujet liste `Soutien arrivé` / `Retour de renfort` ; bandeau détail `SOUTIEN ARRIVÉ` / `TROUPES RENTRÉES`.
+  - Caravane — sujet liste `Livraison complète` · `Entrepôt plein` (ARRIVED) / `Retour complet` · `Retour partiel` (RETURNED) ; état détail `Livraison réussie` · `Livraison partielle` / `Caravane rentrée`.
+  Cette piste peut malgré tout requérir des retouches frontend si l'on veut une **catégorie unique lisible** par-dessus les sous-états. Objectif inchangé : zéro divergence entre spec et texte rendu.
 
-> ⚠️ Ne **pas** livrer un mélange (garder `Soutien arrivé` mais restaurer `Livraison arrivée` sans décision explicite) : l'objectif est zéro divergence, pas la moindre modif.
+> ⚠️ Ne **pas** livrer un mélange (aligner une surface et pas les autres, ou recopier un helper mort dans la spec) : l'objectif est **zéro divergence spec ↔ texte rendu**, vérifiée surface par surface.
 
 ## Scope recommandé
 
