@@ -1984,12 +1984,14 @@ describe('applyIntelUpdated', () => {
 });
 
 describe('applyExtractionStarted', () => {
-  it('invalidates world entities and village expedition/army/population queries', () => {
+  it('invalidates world entities, village expedition/army/population, and open expeditions', () => {
+    setCurrentWorldSession();
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.worldEntities('world-1'), []);
     queryClient.setQueryData(queryKeys.activeExpeditions('v-att'), []);
     queryClient.setQueryData(queryKeys.armyInventory('v-att'), []);
     queryClient.setQueryData(queryKeys.population('v-att'), {});
+    queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
 
     applyExtractionStarted(
       {
@@ -2008,6 +2010,7 @@ describe('applyExtractionStarted', () => {
     expect(queryClient.getQueryState(queryKeys.activeExpeditions('v-att'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.armyInventory('v-att'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.population('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
   });
 });
 
@@ -2034,13 +2037,16 @@ describe('applyExtractionAttacked', () => {
     expect(queryClient.getQueryState(queryKeys.resources('v-ext'))?.isInvalidated).toBeFalsy();
   });
 
-  it('invalidates resources + army + population when interrupted', () => {
+  it('invalidates resources + army + population + open expeditions + retention when interrupted', () => {
+    setCurrentWorldSession();
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.worldEntities('world-1'), []);
     queryClient.setQueryData(queryKeys.resources('v-ext'), {});
     queryClient.setQueryData(queryKeys.activeExpeditions('v-ext'), []);
     queryClient.setQueryData(queryKeys.armyInventory('v-ext'), []);
     queryClient.setQueryData(queryKeys.population('v-ext'), {});
+    queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
+    queryClient.setQueryData(queryKeys.retentionSummary('user-1', 'world-1'), {});
 
     applyExtractionAttacked(
       {
@@ -2060,6 +2066,8 @@ describe('applyExtractionAttacked', () => {
     expect(queryClient.getQueryState(queryKeys.activeExpeditions('v-ext'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.armyInventory('v-ext'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.population('v-ext'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.retentionSummary('user-1', 'world-1'))?.isInvalidated).toBe(true);
   });
 
   it('pushes an error toast with stolen resources when the escort is defeated (interrupted)', () => {
@@ -2169,13 +2177,16 @@ describe('applyExtractionAttacked', () => {
 });
 
 describe('applyExtractionReturned', () => {
-  it('invalidates world entities + resources + army + population + active expeditions', () => {
+  it('invalidates world entities + resources + army + population + active expeditions + open expeditions + retention', () => {
+    setCurrentWorldSession();
     const queryClient = new QueryClient();
     queryClient.setQueryData(queryKeys.worldEntities('world-1'), []);
     queryClient.setQueryData(queryKeys.resources('v-att'), {});
     queryClient.setQueryData(queryKeys.activeExpeditions('v-att'), []);
     queryClient.setQueryData(queryKeys.armyInventory('v-att'), []);
     queryClient.setQueryData(queryKeys.population('v-att'), {});
+    queryClient.setQueryData(queryKeys.openExpeditions('user-1', 'world-1'), []);
+    queryClient.setQueryData(queryKeys.retentionSummary('user-1', 'world-1'), {});
 
     applyExtractionReturned(
       {
@@ -2192,5 +2203,7 @@ describe('applyExtractionReturned', () => {
     expect(queryClient.getQueryState(queryKeys.activeExpeditions('v-att'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.armyInventory('v-att'))?.isInvalidated).toBe(true);
     expect(queryClient.getQueryState(queryKeys.population('v-att'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.openExpeditions('user-1', 'world-1'))?.isInvalidated).toBe(true);
+    expect(queryClient.getQueryState(queryKeys.retentionSummary('user-1', 'world-1'))?.isInvalidated).toBe(true);
   });
 });
