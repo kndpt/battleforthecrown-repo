@@ -1127,6 +1127,32 @@
         "battleforthecrown-pixi/src/stores/ui.ts:70 — pushToast ne deduplique pas par id : dedup at-least-once par expeditionId a poser au niveau handler (aucun helper Set TTL existant)"
       ],
       "addedAt": "2026-07-16"
+    },
+    {
+      "specPath": "docs/gameplay/17-inbox-and-reports.md",
+      "slug": "inbox-report-labels-mvp-wording",
+      "title": "Wording inbox renfort/caravane divergent du Contrat MVP",
+      "keywords": [
+        "inbox",
+        "wording",
+        "renfort",
+        "caravane",
+        "report-label"
+      ],
+      "artefactType": "ticket",
+      "artefactPath": "tasks/92-inbox-report-labels-mvp-wording.md",
+      "artefactId": "092",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/inbox-report-labels-mvp-wording",
+      "gapSummary": "La page inbox « Contrat MVP » fixe des libelles affiches exacts ; le frontend en rend 3 sur 4 differemment (renfort STATIONED/RETURNED, caravane ARRIVED), derive post-run 044 verrouillee par les tests.",
+      "codeEvidence": [
+        "battleforthecrown-pixi/src/features/combat/reinforcementReportView.ts:23 — rend 'Soutien arrivé'/'Troupes rentrées' vs spec 'Arrivé en soutien'/'Retour au village'",
+        "battleforthecrown-pixi/src/features/combat/caravanReportView.ts:38 — rend 'Caravane arrivée' vs spec 'Livraison arrivée'",
+        "battleforthecrown-pixi/src — aucune occurrence des chaines spec 'Livraison arrivée' ni 'Arrivé en soutien' (0 match)",
+        "tasks/runs/archive/044-feature-reinforcement-reports.md — livrait 'Arrivé en soutien'/'Retour au village' (test l.135), wording depuis derive",
+        "reinforcementReportView.test.ts / caravanReportView.test.ts — assertent le wording derive, verrouillant la divergence"
+      ],
+      "addedAt": "2026-07-18"
     }
   ]
 }
