@@ -144,6 +144,15 @@ describe('incoming attack smoke', () => {
     expect(battleSent).not.toBeNull();
 
     // Endpoint: the owner sees the inbound threat with only safe fields.
+    // Pin arrivalAt far into the future before querying: getIncomingAttacks
+    // filters on `arrivalAt > now`, and under CI load (--maxWorkers=4) the short
+    // 2-tile ETA can lapse before this request fires, dropping the row and
+    // flaking the assertion. The pin keeps the EN_ROUTE threat listable
+    // deterministically without changing what the endpoint returns.
+    await ctx.prisma.expedition.update({
+      where: { id: expeditionId },
+      data: { arrivalAt: new Date(Date.now() + 60 * 60 * 1000) },
+    });
     const ownerView = await request(ctx.server)
       .get(`/combat/${defender.villageId}/incoming`)
       .set('Authorization', `Bearer ${defender.accessToken}`);

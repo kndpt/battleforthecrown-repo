@@ -10,7 +10,12 @@ import {
   Query,
   Headers,
 } from '@nestjs/common';
+import { Expedition } from '@prisma/client';
 import { CombatService } from './combat.service';
+import {
+  ExpeditionQueryService,
+  type GarrisonLineDto,
+} from './expedition-query.service';
 import { CombatReportService } from './combat-report.service';
 import { ReinforcementReportService } from './reinforcement-report.service';
 import { CaravanReportService } from './caravan-report.service';
@@ -40,8 +45,12 @@ import {
 } from './dto/extraction-command.schema';
 import type {
   CaravanReportResponse,
+  DefenderCaptureDto,
+  OpenConquestDto,
+  OpenExpeditionDto,
   ReinforcementReportResponse,
 } from '@battleforthecrown/shared/combat';
+import type { IncomingAttackDto } from '@battleforthecrown/shared/events';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { CurrentUser, type AuthenticatedUser } from '../../common/auth';
 import { InitiateExtractionUseCase } from '../gameplay/initiate-extraction.use-case';
@@ -50,6 +59,7 @@ import { InitiateExtractionUseCase } from '../gameplay/initiate-extraction.use-c
 export class CombatController {
   constructor(
     private readonly combatService: CombatService,
+    private readonly expeditionQuery: ExpeditionQueryService,
     private readonly reportService: CombatReportService,
     private readonly reinforcementReportService: ReinforcementReportService,
     private readonly caravanReportService: CaravanReportService,
@@ -119,48 +129,48 @@ export class CombatController {
   async getOpenConquests(
     @CurrentUser() user: AuthenticatedUser,
     @Query('worldId') worldId?: string,
-  ) {
-    return this.combatService.getOpenConquests(user.id, worldId);
+  ): Promise<OpenConquestDto[]> {
+    return this.expeditionQuery.getOpenConquests(user.id, worldId);
   }
 
   @Get('captures/targeting-me')
   async getCapturesTargetingMe(
     @CurrentUser() user: AuthenticatedUser,
     @Query('worldId') worldId?: string,
-  ) {
-    return this.combatService.getCapturesTargetingMe(user.id, worldId);
+  ): Promise<DefenderCaptureDto[]> {
+    return this.expeditionQuery.getCapturesTargetingMe(user.id, worldId);
   }
 
   @Get('expeditions/open')
   async getOpenExpeditions(
     @CurrentUser() user: AuthenticatedUser,
     @Query('worldId') worldId?: string,
-  ) {
-    return this.combatService.getOpenExpeditions(user.id, worldId);
+  ): Promise<OpenExpeditionDto[]> {
+    return this.expeditionQuery.getOpenExpeditions(user.id, worldId);
   }
 
   @Get(':villageId/active')
   async getActiveExpeditions(
     @CurrentUser() user: AuthenticatedUser,
     @Param('villageId') villageId: string,
-  ) {
-    return this.combatService.getActiveExpeditions(user.id, villageId);
+  ): Promise<Expedition[]> {
+    return this.expeditionQuery.getActiveExpeditions(user.id, villageId);
   }
 
   @Get(':villageId/incoming')
   async getIncomingAttacks(
     @CurrentUser() user: AuthenticatedUser,
     @Param('villageId') villageId: string,
-  ) {
-    return this.combatService.getIncomingAttacks(user.id, villageId);
+  ): Promise<IncomingAttackDto[]> {
+    return this.expeditionQuery.getIncomingAttacks(user.id, villageId);
   }
 
   @Get(':villageId/garrison')
   async getGarrison(
     @CurrentUser() user: AuthenticatedUser,
     @Param('villageId') villageId: string,
-  ) {
-    return this.combatService.getGarrison(user.id, villageId);
+  ): Promise<GarrisonLineDto[]> {
+    return this.expeditionQuery.getGarrison(user.id, villageId);
   }
 
   @Get('reports')

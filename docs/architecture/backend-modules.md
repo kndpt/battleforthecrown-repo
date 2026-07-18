@@ -80,7 +80,8 @@ src/
 
 ```
 combat/
-├── combat.service.ts             # Orchestration attaque/scout/renforts + rapports
+├── combat.service.ts             # Orchestration écriture : attaque/scout/renforts/caravane/rappel
+├── expedition-query.service.ts   # Read-only : expéditions/conquêtes/garnison en cours (0 mutation, 0 Outbox)
 ├── combat.controller.ts
 ├── combat.worker.ts              # Job pg-boss déclenché à arrival time (route par kind, délègue aux collaborateurs d'arrivée)
 ├── scout-arrival.service.ts      # Collaborateur : résolution scout (snapshot + intel + retour)

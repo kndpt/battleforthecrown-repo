@@ -111,6 +111,30 @@ describe('reinforcements smoke', () => {
       { timeoutMs: 30_000 },
     );
 
+    // Endpoint: the origin owner sees its detached troops via GET
+    // /:villageId/garrison as an OUTGOING line (stationed at the host village).
+    const originGarrisonRes = await request(ctx.server)
+      .get(`/combat/${villageAId}/garrison`)
+      .set('Authorization', `Bearer ${userA.accessToken}`);
+    expect(originGarrisonRes.status).toBe(200);
+    const originGarrison = originGarrisonRes.body as Array<{
+      villageId: string;
+      originVillageId: string;
+      direction: string;
+      unitType: string;
+      quantity: number;
+    }>;
+    expect(
+      originGarrison.some(
+        (line) =>
+          line.villageId === villageBId &&
+          line.originVillageId === villageAId &&
+          line.direction === 'OUTGOING' &&
+          line.unitType === 'MILITIA' &&
+          line.quantity === 60,
+      ),
+    ).toBe(true);
+
     const powerAfterStationing = await getVillagePower(
       ctx.server,
       userA.accessToken,
