@@ -1,6 +1,6 @@
 # maint-debt — candidats (réécrit chaque run)
 
-last: 2026-07-17 | archive: `archive/maint-debt/2026-06-15-full.md`
+last: 2026-07-18 | archive: `archive/maint-debt/2026-06-15-full.md`
 branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 ## candidate
@@ -16,13 +16,13 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 | 11× Intl.NumberFormat('fr-FR') singleton | consolidation in-flight via PR #290 (refactor-pixi NEW-02/03) — hold until merged |
 | formatDate divergence ReportCard vs ReportsList | need product call on whether time is shown on non-same-day combat reports |
 | live-game formatNumber separator (space vs dot) | which fr-FR grouping is canonical across shipped HUD — product call, broad |
-| shared untested pure modules | remaining 0-coverage w/ real logic: `village/population.ts` (getQuarterPopulationLimit clamp/floor/non-finite). `combat/loot.ts` = types-only, skip. one per run |
+| shared untested pure modules | `village/population.ts` now covered (this run). `combat/loot.ts` = types-only, skip. Next: scan remaining 0-coverage shared pure fns |
 
 ## done (this run)
 
 | area | PR |
 |------|-----|
-| world/tempo.spec.ts — cover `TempoService` (0 coverage): resolve override-vs-global precedence, applyDuration multiply, applyRate divide, deriveProfile standard/custom | pending |
+| village/population.spec.ts — cover `getQuarterPopulationLimit` (0 coverage): exact table values, floor fractional, clamp below-min/above-max, non-finite→min | pending |
 
 ## rejected (false positive — do not repick)
 
@@ -38,6 +38,7 @@ branch: `maint/debt/<topic>` | title: `maint(debt): <subject>`
 
 | area | PR |
 |------|-----|
+| world/tempo.spec.ts — cover `TempoService` resolve/apply/deriveProfile (0 coverage) | #312 |
 | rankings/formulas.spec.ts — cover 5 live glory-scoring exports (0 coverage) | pending |
 | barbarian-geometry.spec.ts — cover `getChunkBounds` + `generateBarbarianName` | pending |
 | world-types.test.ts — cover fogged-entity path | #292 |
