@@ -50,9 +50,9 @@ Dérive de wording introduite après la livraison initiale, pas un oubli d'impl�
 
 Une décision de wording tranchée, puis un alignement code ↔ spec **dans le même sens** (plus aucune divergence silencieuse) :
 
-- Les libellés de type inbox renfort/caravane rendus au joueur correspondent **exactement** aux tables « Wording joueur » de `17-inbox-and-reports.md`.
-- Les tests (`reinforcementReportView.test.ts`, `caravanReportView.test.ts`) assertent le wording retenu (plus de test verrouillant une dérive non voulue).
-- `rg "<libellé retenu>"` retrouve la chaîne au bon endroit ; aucune des 3 divergences ci-dessus ne subsiste.
+- Le texte **réellement rendu** (sujet liste + bandeau/état détail) pour les 4 types correspond **exactement** au wording retenu de `17-inbox-and-reports.md` — vérifié surface par surface, pas seulement sur les helpers.
+- Les tests (`reinforcementReportView.test.ts`, `caravanReportView.test.ts`) assertent le wording retenu **sur les fonctions rendues** (plus de test verrouillant une dérive non voulue).
+- `rg "<libellé retenu>"` retrouve la chaîne au bon endroit ; aucune des divergences des tables ci-dessus (§ Symptôme + § Surfaces réellement rendues) ne subsiste.
 
 ## Pistes
 
