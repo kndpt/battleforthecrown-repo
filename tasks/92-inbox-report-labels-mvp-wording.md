@@ -6,16 +6,16 @@
 
 ## Symptôme
 
-La page inbox est marquée **« ✅ Contrat MVP »** et fixe des **libellés affichés** exacts dans ses tables « Wording joueur ». Le frontend en rend **3 sur 4** différemment :
+La page inbox est marquée **« ✅ Contrat MVP »** et fixe des **libellés affichés** exacts dans ses tables « Wording joueur ». Le texte **réellement rendu** diverge pour **les 4 types** (seul le helper test-only `caravanReportTypeLabel` reste conforme, mais il n'atteint pas l'écran) :
 
 | Type | Libellé Contrat MVP (spec) | Wording côté code (catégorie) | État |
 | --- | --- | --- | --- |
 | Renfort `STATIONED` | **Arrivé en soutien** | `Soutien arrivé` | ❌ divergent |
 | Renfort `RETURNED` | **Retour au village** | `Troupes rentrées` / `Retour de renfort` (rendu) | ❌ divergent |
 | Caravane `ARRIVED` | **Livraison arrivée** | `Caravane arrivée` / `Livraison complète` (rendu) | ❌ divergent |
-| Caravane `RETURNED` | Caravane rappelée | `Caravane rappelée` | ✅ conforme (helper) |
+| Caravane `RETURNED` | **Caravane rappelée** | `Caravane rappelée` (helper mort) / `Retour complet` · `Caravane rentrée` (rendu) | ❌ divergent |
 
-_(Wording de catégorie ; le détail des surfaces **réellement rendues** est en § Cause racine → « Surfaces réellement rendues ».)_
+_(Wording de catégorie ; le détail des surfaces **réellement rendues** est en § Cause racine → « Surfaces réellement rendues ». Seul le helper `caravanReportTypeLabel` — test-only — dit `Caravane rappelée` ; les 4 types divergent donc côté rendu.)_
 
 Ce n'est pas un bug fonctionnel (aucun effet gameplay), mais une **divergence de contrat produit** : le libellé lu par le joueur ne correspond pas à la source de vérité (spec).
 
@@ -35,8 +35,10 @@ Dérive de wording introduite après la livraison initiale, pas un oubli d'impl�
 | --- | --- | --- | --- |
 | Liste inbox — sujet renfort | `reinforcementReportSubject` (`reinforcementReportView.ts:73`, appelé `ReportsList.tsx:89`) | `Soutien arrivé · …` / **`Retour de renfort · …`** | `Arrivé en soutien` / `Retour au village` |
 | Détail renfort — bandeau | `buildReinforcementReportModalProps.banner` (`reinforcementReportView.ts:111`) | `SOUTIEN ARRIVÉ` / `TROUPES RENTRÉES` (+ `roleLabel` `Soutien`/`Retour`) | `Arrivé en soutien` / `Retour au village` |
-| Liste inbox — sujet caravane | `caravanReportSubject` → `caravanReportSummary().title` (`caravanReportView.ts:100`, appelé `ReportsList.tsx:100`) | `Livraison complète` / `Entrepôt plein` (ARRIVED) | `Livraison arrivée` |
-| Détail caravane — état | `caravanReportStateLabel` (`caravanReportView.ts:41`, appelé `ReportDetailModal.tsx:280`) | `Livraison réussie` / `Livraison partielle` | `Livraison arrivée` |
+| Liste inbox — sujet caravane ARRIVED | `caravanReportSubject` → `caravanReportSummary().title` (`caravanReportView.ts:100`, appelé `ReportsList.tsx:100`) | `Livraison complète` / `Entrepôt plein` | `Livraison arrivée` |
+| Liste inbox — sujet caravane RETURNED | idem `caravanReportSummary().title` | `Retour complet` / `Retour partiel` | `Caravane rappelée` |
+| Détail caravane — état ARRIVED | `caravanReportStateLabel` (`caravanReportView.ts:41`, appelé `ReportDetailModal.tsx:280`) | `Livraison réussie` / `Livraison partielle` | `Livraison arrivée` |
+| Détail caravane — état RETURNED | idem `caravanReportStateLabel` | `Caravane rentrée` | `Caravane rappelée` |
 
 > Le `RETURNED` renfort rendu (`Retour de renfort`, `TROUPES RENTRÉES`) est **une 3ᵉ variante** distincte à la fois de la spec (`Retour au village`) et du helper mort (`Troupes rentrées`) — preuve que la dérive touche plusieurs surfaces.
 
@@ -78,8 +80,8 @@ Décision de copy à trancher (Kelvin). Le sens de l'alignement dépend du choix
 ## Critères de succès
 
 - [ ] Décision A/B tranchée et notée dans le run (inclut : la formulation contextuelle caravane `Livraison complète`/`partielle` est-elle conservée comme sous-état sous la catégorie « Livraison arrivée », ou remplacée ?).
-- [ ] Zéro divergence entre les tables « Wording joueur » de `17-inbox-and-reports.md` et le texte **réellement affiché** (sujet liste + bandeau/état détail) pour renfort `STATIONED`/`RETURNED` et caravane `ARRIVED`.
+- [ ] Zéro divergence entre les tables « Wording joueur » de `17-inbox-and-reports.md` et le texte **réellement affiché** (sujet liste + bandeau/état détail) pour **les 4 types** : renfort `STATIONED`/`RETURNED` et caravane `ARRIVED`/`RETURNED` (le rendu `RETURNED` caravane `Retour complet`/`Caravane rentrée` diverge aussi de `Caravane rappelée` — ne pas se fier au helper `caravanReportTypeLabel`).
 - [ ] Les helpers `*TypeLabel` test-only sont soit alignés soit supprimés — plus de fonction morte divergente.
 - [ ] Les tests de vue assertent le wording retenu **sur les surfaces rendues** ; suite pixi verte.
 - [ ] `yarn static-check` vert.
-- [ ] [visuel — Kelvin] Inbox liste **et** détail : un rapport de renfort STATIONED/RETURNED et un rapport de caravane ARRIVED affichent le libellé retenu (pas seulement un helper interne).
+- [ ] [visuel — Kelvin] Inbox liste **et** détail : un rapport de renfort STATIONED/RETURNED et un rapport de caravane ARRIVED/RETURNED affichent le libellé retenu (pas seulement un helper interne).

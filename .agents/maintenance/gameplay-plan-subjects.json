@@ -1144,11 +1144,12 @@
       "artefactId": "092",
       "status": "PLANNED",
       "prBranch": "plan/gameplay/inbox-report-labels-mvp-wording",
-      "gapSummary": "La page inbox « Contrat MVP » fixe des libelles affiches exacts (renfort STATIONED/RETURNED, caravane ARRIVED) ; le texte reellement rendu diverge. NB: les helpers *TypeLabel sont test-only ; le rendu vient de reinforcementReportSubject / buildReinforcementReportModalProps.banner / caravanReportSubject / caravanReportStateLabel.",
+      "gapSummary": "La page inbox « Contrat MVP » fixe des libelles affiches exacts ; les 4 types (renfort STATIONED/RETURNED, caravane ARRIVED/RETURNED) divergent cote rendu. NB: les helpers *TypeLabel sont test-only ; le rendu vient de reinforcementReportSubject / buildReinforcementReportModalProps.banner / caravanReportSubject(caravanReportSummary().title) / caravanReportStateLabel.",
       "codeEvidence": [
         "reinforcementReportView.ts:73 reinforcementReportSubject (rendu ReportsList.tsx:89) — 'Soutien arrivé'/'Retour de renfort' vs spec 'Arrivé en soutien'/'Retour au village'",
         "reinforcementReportView.ts:111 buildReinforcementReportModalProps.banner — 'SOUTIEN ARRIVÉ'/'TROUPES RENTRÉES' (detail)",
         "caravanReportView.ts:100 caravanReportSummary().title (via caravanReportSubject, ReportsList.tsx:100) + caravanReportStateLabel (ReportDetailModal.tsx:280) — 'Livraison complète'/'réussie' vs spec 'Livraison arrivée'",
+        "caravanReportSummary().title RETURNED = 'Retour complet'/'Retour partiel' + caravanReportStateLabel RETURNED = 'Caravane rentrée' — divergent de spec 'Caravane rappelée' (le helper mort caravanReportTypeLabel dit 'Caravane rappelée' mais ne rend rien)",
         "reinforcementReportTypeLabel / caravanReportTypeLabel — references uniquement par leurs tests (helpers morts cote UI), a ne pas confondre avec le rendu (constate en review PR #318)",
         "tasks/runs/archive/044-feature-reinforcement-reports.md — livrait 'Arrivé en soutien'/'Retour au village' (test l.135), wording depuis derive"
       ],
