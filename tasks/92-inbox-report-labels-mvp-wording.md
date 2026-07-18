@@ -8,26 +8,41 @@
 
 La page inbox est marquée **« ✅ Contrat MVP »** et fixe des **libellés affichés** exacts dans ses tables « Wording joueur ». Le frontend en rend **3 sur 4** différemment :
 
-| Type | Libellé Contrat MVP (spec) | Libellé rendu (code) | État |
+| Type | Libellé Contrat MVP (spec) | Wording côté code (catégorie) | État |
 | --- | --- | --- | --- |
 | Renfort `STATIONED` | **Arrivé en soutien** | `Soutien arrivé` | ❌ divergent |
-| Renfort `RETURNED` | **Retour au village** | `Troupes rentrées` | ❌ divergent |
-| Caravane `ARRIVED` | **Livraison arrivée** | `Caravane arrivée` | ❌ divergent |
-| Caravane `RETURNED` | Caravane rappelée | `Caravane rappelée` | ✅ conforme |
+| Renfort `RETURNED` | **Retour au village** | `Troupes rentrées` / `Retour de renfort` (rendu) | ❌ divergent |
+| Caravane `ARRIVED` | **Livraison arrivée** | `Caravane arrivée` / `Livraison complète` (rendu) | ❌ divergent |
+| Caravane `RETURNED` | Caravane rappelée | `Caravane rappelée` | ✅ conforme (helper) |
+
+_(Wording de catégorie ; le détail des surfaces **réellement rendues** est en § Cause racine → « Surfaces réellement rendues ».)_
 
 Ce n'est pas un bug fonctionnel (aucun effet gameplay), mais une **divergence de contrat produit** : le libellé lu par le joueur ne correspond pas à la source de vérité (spec).
 
+> ⚠️ **Attention scope (validé en review PR #318)** : les fonctions `reinforcementReportTypeLabel` / `caravanReportTypeLabel` (les valeurs citées dans la table ci-dessus) **ne sont référencées que par leurs tests** — elles ne rendent **rien** à l'écran. Le texte réellement affiché au joueur vient d'**autres** fonctions (§ Surfaces rendues). Corriger seulement ces deux helpers laisserait l'inbox inchangée tout en satisfaisant un scope naïf. **Le fix doit cibler les surfaces rendues, pas ces helpers morts.**
+
 ## Cause racine
 
-Régression de wording introduite après la livraison initiale, pas un oubli d'implémentation :
+Dérive de wording introduite après la livraison initiale, pas un oubli d'implémentation :
 
 - Le run archivé [`044-feature-reinforcement-reports`](./runs/archive/044-feature-reinforcement-reports.md) a **livré la formulation de la spec** (`Arrivé en soutien` / `Retour au village`), avec un test l'assertant (l.135 : `'Arrivé en soutien'`/`'Retour au village'`).
-- Le wording a ensuite **dérivé** vers `Soutien arrivé` / `Troupes rentrées` (renfort) et `Caravane arrivée` (caravane), très probablement lors de passes de refacto/consolidation frontend (`reinforcementReportView.ts` touché par `#273`/`#282`/`#306` ; `caravanReportView.ts` par `#268`/`#273`).
+- Le wording rendu a ensuite **dérivé**, très probablement lors de passes de refacto/consolidation frontend (`reinforcementReportView.ts` touché par `#273`/`#282`/`#306` ; `caravanReportView.ts` par `#268`/`#273`).
 - Les tests actuels **verrouillent la dérive** (ils assertent le nouveau wording), donc `static-check`/CI restent verts malgré la divergence spec.
 
-Points de code exacts :
-- `battleforthecrown-pixi/src/features/combat/reinforcementReportView.ts:23` — `return type === 'STATIONED' ? 'Soutien arrivé' : 'Troupes rentrées';`
-- `battleforthecrown-pixi/src/features/combat/caravanReportView.ts:38` — `return type === 'ARRIVED' ? 'Caravane arrivée' : 'Caravane rappelée';`
+### Surfaces réellement rendues (à corriger)
+
+| Surface | Fonction (fichier) | Rendu actuel | Contrat MVP |
+| --- | --- | --- | --- |
+| Liste inbox — sujet renfort | `reinforcementReportSubject` (`reinforcementReportView.ts:73`, appelé `ReportsList.tsx:89`) | `Soutien arrivé · …` / **`Retour de renfort · …`** | `Arrivé en soutien` / `Retour au village` |
+| Détail renfort — bandeau | `buildReinforcementReportModalProps.banner` (`reinforcementReportView.ts:111`) | `SOUTIEN ARRIVÉ` / `TROUPES RENTRÉES` (+ `roleLabel` `Soutien`/`Retour`) | `Arrivé en soutien` / `Retour au village` |
+| Liste inbox — sujet caravane | `caravanReportSubject` → `caravanReportSummary().title` (`caravanReportView.ts:100`, appelé `ReportsList.tsx:100`) | `Livraison complète` / `Entrepôt plein` (ARRIVED) | `Livraison arrivée` |
+| Détail caravane — état | `caravanReportStateLabel` (`caravanReportView.ts:41`, appelé `ReportDetailModal.tsx:280`) | `Livraison réussie` / `Livraison partielle` | `Livraison arrivée` |
+
+> Le `RETURNED` renfort rendu (`Retour de renfort`, `TROUPES RENTRÉES`) est **une 3ᵉ variante** distincte à la fois de la spec (`Retour au village`) et du helper mort (`Troupes rentrées`) — preuve que la dérive touche plusieurs surfaces.
+
+### Helpers test-only (ne rendent rien — à aligner ou supprimer, pas le vrai fix)
+- `reinforcementReportView.ts:22` — `reinforcementReportTypeLabel` : `Soutien arrivé` / `Troupes rentrées`.
+- `caravanReportView.ts:37` — `caravanReportTypeLabel` : `Caravane arrivée` / `Caravane rappelée`.
 
 ## Comportement attendu
 
@@ -48,21 +63,23 @@ Décision de copy à trancher (Kelvin). Le sens de l'alignement dépend du choix
 
 ## Scope recommandé
 
-### Frontend (Piste A)
-- `battleforthecrown-pixi/src/features/combat/reinforcementReportView.ts` — `reinforcementReportTypeLabel` (+ `reinforcementReportSubject` qui réutilise le label).
-- `battleforthecrown-pixi/src/features/combat/caravanReportView.ts` — `caravanReportTypeLabel`.
+### Frontend (Piste A) — **surfaces rendues**, pas les helpers test-only
+- `battleforthecrown-pixi/src/features/combat/reinforcementReportView.ts` — `reinforcementReportSubject` (sujet liste) **et** `buildReinforcementReportModalProps.banner`/`roleLabel` (détail). Aligner aussi le helper mort `reinforcementReportTypeLabel` par cohérence (ou le supprimer s'il reste sans usage prod).
+- `battleforthecrown-pixi/src/features/combat/caravanReportView.ts` — `caravanReportSummary().title` (via `caravanReportSubject`) **et** `caravanReportStateLabel`. Décider si la formulation contextuelle riche (`Livraison complète`/`partielle`, `Entrepôt plein`) doit devenir la catégorie « Livraison arrivée » ou rester en sous-titre. Idem `caravanReportTypeLabel` (helper mort).
+- Vérifier qu'aucune **autre** surface (`ReportsList.tsx`, `ReportDetailModal.tsx`, previews) ne rend une variante non alignée (`rg` sur les chaînes retenues).
 
 ### Tests
-- `battleforthecrown-pixi/src/features/combat/reinforcementReportView.test.ts` — assertions type-label + subject.
-- `battleforthecrown-pixi/src/features/combat/caravanReportView.test.ts` — assertion type-label.
+- `battleforthecrown-pixi/src/features/combat/reinforcementReportView.test.ts` — assertions `reinforcementReportSubject` (STATIONED **et** RETURNED) + type-label si conservé.
+- `battleforthecrown-pixi/src/features/combat/caravanReportView.test.ts` — assertions `caravanReportSubject`/`caravanReportStateLabel` + type-label si conservé.
 
 ### Docs (Piste B uniquement)
-- `docs/gameplay/17-inbox-and-reports.md` — tables « Wording joueur » (l.51-54, l.76-79).
+- `docs/gameplay/17-inbox-and-reports.md` — tables « Wording joueur » (l.51-54, l.76-79), à réconcilier avec la formulation contextuelle rendue (catégorie vs sous-état).
 
 ## Critères de succès
 
-- [ ] Décision A/B tranchée et notée dans le run.
-- [ ] Zéro divergence entre les tables « Wording joueur » de `17-inbox-and-reports.md` et les libellés rendus par `reinforcementReportTypeLabel` / `caravanReportTypeLabel`.
-- [ ] Les tests de vue assertent le wording retenu ; suite pixi verte.
+- [ ] Décision A/B tranchée et notée dans le run (inclut : la formulation contextuelle caravane `Livraison complète`/`partielle` est-elle conservée comme sous-état sous la catégorie « Livraison arrivée », ou remplacée ?).
+- [ ] Zéro divergence entre les tables « Wording joueur » de `17-inbox-and-reports.md` et le texte **réellement affiché** (sujet liste + bandeau/état détail) pour renfort `STATIONED`/`RETURNED` et caravane `ARRIVED`.
+- [ ] Les helpers `*TypeLabel` test-only sont soit alignés soit supprimés — plus de fonction morte divergente.
+- [ ] Les tests de vue assertent le wording retenu **sur les surfaces rendues** ; suite pixi verte.
 - [ ] `yarn static-check` vert.
-- [ ] [visuel — Kelvin] Inbox : un rapport de renfort STATIONED/RETURNED et un rapport de caravane ARRIVED affichent le libellé retenu.
+- [ ] [visuel — Kelvin] Inbox liste **et** détail : un rapport de renfort STATIONED/RETURNED et un rapport de caravane ARRIVED affichent le libellé retenu (pas seulement un helper interne).
