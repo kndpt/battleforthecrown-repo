@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CombatController } from './combat.controller';
 import { CombatService } from './combat.service';
+import { ExpeditionQueryService } from './expedition-query.service';
 import { CombatReportService } from './combat-report.service';
 import { ReinforcementReportService } from './reinforcement-report.service';
 import { CaravanReportService } from './caravan-report.service';
@@ -47,6 +48,7 @@ import { GameplayModule } from '../gameplay/gameplay.module';
   controllers: [CombatController],
   providers: [
     CombatService,
+    ExpeditionQueryService,
     CombatReportService,
     ReinforcementReportService,
     CaravanReportService,

@@ -1,16 +1,16 @@
 # refactor-backend — état (réécrit chaque run)
 
-last: 2026-07-17 | theme W1b (Med/M) — **fin décompo god-worker** `combat.worker.ts`. Extraction des 2 derniers handlers d'arrivée non-combat → collaborateurs dédiés (pattern W1a/`ScoutArrivalService`) : `combat/caravan-arrival.service.ts` (`CaravanArrivalService.handleArrival` — déps `ResourcesService`+`OutboxPublisher`) + `combat/reinforcement-arrival.service.ts` (`ReinforcementArrivalService.handleArrival` + privé `bounceReinforcementFromCaptureWindow` — **zéro dép injectée**). Type `ReturnJobToSchedule` sorti → `combat/interfaces/return-job.interface.ts`. Worker : dispatch CARAVAN/REINFORCE délègue, 3 méthodes privées suppr (−408L, 1760→1352), **dép `ResourcesService` retirée du constructeur** (OutboxPublisher gardée, encore utilisée par applyLootToDefender) + 5 imports scope-only suppr. `tx` toujours passé (même tx Serializable, zéro changement comportement/event/ordre). static-check ok, 610 back verts, smokes caravan+cross-player-reinforcement+reinforcements+combat-reports-inbox+recall-en-route 16/16 (boot Nest → DI 2 services validée, chemins extraits exercés e2e). Docs backend-modules.md maj (file-tree + flow étapes 2/6).
-full: `archive/refactor-backend/2026-07-17-full.md`
+last: 2026-07-18 | theme Q1 (High/M) — **extraction read-model** hors god-service `combat.service.ts`. Les 6 queries read-only exposées par le controller (`getActiveExpeditions`, `getIncomingAttacks`, `getOpenConquests`, `getCapturesTargetingMe`, `getOpenExpeditions`, `getGarrison`) + helper privé `toCaptureTier` + interface `GarrisonLineDto` → nouveau `combat/expedition-query.service.ts` (`ExpeditionQueryService`, inject `PrismaService` seul, 0 mutation/0 Outbox). `combat.service.ts` 1634→1287 L (**−347**), `sumActiveOutgoingCaravanResources` gardé (sert mutation `initiateCaravan`, prend `tx`), 5 imports scope-only retirés. Controller : injection `expeditionQuery`, 6 endpoints délèguent. Module : provider ajouté (non exporté). **Zéro changement comportement** (corps copiés à l'identique). static-check ok, 610 back verts, smokes capture-defender+incoming-attack+combat-attack+conquest-service 11/11 + kingdom-activities-snapshots+caravan 8/8 (boot Nest → DI validée, endpoints e2e HTTP). Docs backend-modules.md maj (file-tree combat).
+full: `archive/refactor-backend/2026-07-18-full.md`
 
 ## OPEN
 
 | ID  | Sev  | Where                                              | Note                                                                                       |
 |-----|------|----------------------------------------------------|--------------------------------------------------------------------------------------------|
-| R4  | High | crowns.service.ts:261                              | fractional carry — needs migration (`lastUpdateTs += production/rate`). **Candidat #1 next run** (seul High restant) |
-| B1  | Med  | combat.service.ts (1634L)                          | sans spec unit direct (smokes uniquement ; policy interdit mock Prisma)                    |
-| TE1 | Low  | combat.service:754/978/1000, combat.worker:1269/1298, initiate-extraction:181 | `Object.entries(units)` brut vs `typedEntries` — cosmétique (retire cast, ~6 sites) |
-| G2  | Med  | gameplay/extraction-lifecycle.service.ts (783L)    | looks-bad-but-fine : ADR-12 déclare explicitement « tout ici »                            |
+| R4  | High | crowns.service.ts:261                              | fractional carry — **needs migration + touche balance** → hors scope refacto (ni migration destructive ni balance) |
+| B1  | Med  | combat.service.ts (1287L)                          | sans spec unit direct (smokes uniquement ; policy interdit mock Prisma)                    |
+| G2  | Med  | gameplay/extraction-lifecycle.service.ts (775L)    | looks-bad-but-fine : ADR-12 déclare explicitement « tout ici »                            |
+| TE1 | Low  | combat.service:754/978/1000, combat.worker:1269/1298, initiate-extraction:181 | `Object.entries(units)` brut vs `typedEntries` — cosmétique (~6 sites) |
 | SU1 | Low  | combat-resolution.ts:247 + initiate-extraction:60  | `sumUnits`/`escortTotal` dup — seulement 2 sites back (reste dans shared, hors scope)      |
 | BR1 | Low  | barbarian-runtime.service:63, training.worker:61   | même upsert que CU1 mais divergent (accumulation / cast string) → hors CU1                  |
 | E1  | Low  | 16 fichiers, 60 callsites `createOutboxEvent`      | low-value : createOutboxEvent déjà typé (générique K), migration = churn                   |
@@ -24,7 +24,8 @@ full: `archive/refactor-backend/2026-07-17-full.md`
 
 ## Skip — déjà traité
 
-- W1b (extraction caravan+reinforcement arrival → `combat/caravan-arrival.service.ts` + `combat/reinforcement-arrival.service.ts` ; décompo arrival-handlers du god-worker **terminée**) → ce run
+- Q1 (extraction read-model → `combat/expedition-query.service.ts` ; 6 queries + garnison sorties du god-service) → ce run
+- W1b (extraction caravan+reinforcement arrival → `combat/{caravan,reinforcement}-arrival.service.ts`) → 2026-07-17 (#314)
 - W1a (extraction scout arrival → `combat/scout-arrival.service.ts`) → 2026-07-16
 - DUP-REPORT (base abstraite `combat/inbox-report.service.ts` → fusion caravan+reinforcement inbox CRUD) → 2026-07-15
 - DUP-PLANNER (fusion planners capture-window → `event-outbox-notification-planner.planCaptureWindowAttackerRouted`) → 2026-07-14 (#300)
@@ -41,6 +42,6 @@ full: `archive/refactor-backend/2026-07-17-full.md`
 - K1 + T1 + V2 (retention helpers consolidation) → 2026-07-03 (#243)
 - RS1–RS3 (report-service fetch guards) → 2026-07-02 (#239) | P1–P4 (WorldService `_count`) → 2026-07-01 (#232)
 - U3 + N3 + N4 + F (world-entities-query bounds) → 2026-06-30 (#227) | N5–N15 (display-name dup) → 2026-06-26
-- W2c → 2026-06-25 | W5+W6 → 2026-06-22 | W3+W4 (+Q1) → 2026-06-22 | W2a/W2b → 2026-06-20 | S1 → 2026-06-21
+- W2c → 2026-06-25 | W5+W6 → 2026-06-22 | W3+W4 (+Q1 ancien) → 2026-06-22 | W2a/W2b → 2026-06-20 | S1 → 2026-06-21
 - D3 #153 | D1 #144 | D4 #142 | OB1/OB2 #134 | B3/E1/U2 done | G1 tx intentionnel | U4 false-positive
 - O1 = latent | WL1 = looks-bad-but-fine (tx-count) | A1 case-insensitive pre-check OK

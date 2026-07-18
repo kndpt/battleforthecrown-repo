@@ -11,6 +11,7 @@ import {
   Headers,
 } from '@nestjs/common';
 import { CombatService } from './combat.service';
+import { ExpeditionQueryService } from './expedition-query.service';
 import { CombatReportService } from './combat-report.service';
 import { ReinforcementReportService } from './reinforcement-report.service';
 import { CaravanReportService } from './caravan-report.service';
@@ -50,6 +51,7 @@ import { InitiateExtractionUseCase } from '../gameplay/initiate-extraction.use-c
 export class CombatController {
   constructor(
     private readonly combatService: CombatService,
+    private readonly expeditionQuery: ExpeditionQueryService,
     private readonly reportService: CombatReportService,
     private readonly reinforcementReportService: ReinforcementReportService,
     private readonly caravanReportService: CaravanReportService,
@@ -120,7 +122,7 @@ export class CombatController {
     @CurrentUser() user: AuthenticatedUser,
     @Query('worldId') worldId?: string,
   ) {
-    return this.combatService.getOpenConquests(user.id, worldId);
+    return this.expeditionQuery.getOpenConquests(user.id, worldId);
   }
 
   @Get('captures/targeting-me')
@@ -128,7 +130,7 @@ export class CombatController {
     @CurrentUser() user: AuthenticatedUser,
     @Query('worldId') worldId?: string,
   ) {
-    return this.combatService.getCapturesTargetingMe(user.id, worldId);
+    return this.expeditionQuery.getCapturesTargetingMe(user.id, worldId);
   }
 
   @Get('expeditions/open')
@@ -136,7 +138,7 @@ export class CombatController {
     @CurrentUser() user: AuthenticatedUser,
     @Query('worldId') worldId?: string,
   ) {
-    return this.combatService.getOpenExpeditions(user.id, worldId);
+    return this.expeditionQuery.getOpenExpeditions(user.id, worldId);
   }
 
   @Get(':villageId/active')
@@ -144,7 +146,7 @@ export class CombatController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('villageId') villageId: string,
   ) {
-    return this.combatService.getActiveExpeditions(user.id, villageId);
+    return this.expeditionQuery.getActiveExpeditions(user.id, villageId);
   }
 
   @Get(':villageId/incoming')
@@ -152,7 +154,7 @@ export class CombatController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('villageId') villageId: string,
   ) {
-    return this.combatService.getIncomingAttacks(user.id, villageId);
+    return this.expeditionQuery.getIncomingAttacks(user.id, villageId);
   }
 
   @Get(':villageId/garrison')
@@ -160,7 +162,7 @@ export class CombatController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('villageId') villageId: string,
   ) {
-    return this.combatService.getGarrison(user.id, villageId);
+    return this.expeditionQuery.getGarrison(user.id, villageId);
   }
 
   @Get('reports')
