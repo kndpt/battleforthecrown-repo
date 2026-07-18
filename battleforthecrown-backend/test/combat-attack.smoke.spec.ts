@@ -107,6 +107,14 @@ describe('combat attack smoke', () => {
       outbound.arrivalAt.getTime() - outbound.departAt.getTime(),
     );
 
+    // Endpoint: the attacker sees its in-flight expedition via GET /:villageId/active.
+    const activeRes = await request(ctx.server)
+      .get(`/combat/${attackerId}/active`)
+      .set('Authorization', `Bearer ${user.accessToken}`);
+    expect(activeRes.status).toBe(200);
+    const activeList = activeRes.body as Array<{ id: string; status: string }>;
+    expect(activeList.some((e) => e.id === outbound.id)).toBe(true);
+
     await ctx.prisma.world.update({
       where: { id: world.id },
       data: {
