@@ -1178,10 +1178,12 @@ export function applyExtractionStarted(
   payload: ExtractionStartedPayload,
   ctx: BindingsContext,
 ): void {
+  const session = resolveSessionCtx();
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.worldEntities(payload.worldId),
   });
   invalidateVillageExtractionState(ctx, payload.villageId);
+  invalidateOpenExpeditions(ctx, session);
 }
 
 export function applyExtractionDepleted(
@@ -1212,6 +1214,7 @@ export function applyExtractionAttacked(
   payload: ExtractionAttackedPayload,
   ctx: BindingsContext,
 ): void {
+  const session = resolveSessionCtx();
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.worldEntities(payload.worldId),
   });
@@ -1219,6 +1222,8 @@ export function applyExtractionAttacked(
     invalidateVillageExtractionState(ctx, payload.villageId, {
       resources: true,
     });
+    invalidateOpenExpeditions(ctx, session);
+    invalidateRetentionSummary(ctx, session);
   }
 
   // In-app alert to the exploiter (fog-safe: payload carries no attacker
@@ -1261,10 +1266,13 @@ export function applyExtractionReturned(
   payload: ExtractionReturnedPayload,
   ctx: BindingsContext,
 ): void {
+  const session = resolveSessionCtx();
   ctx.queryClient.invalidateQueries({
     queryKey: queryKeys.worldEntities(payload.worldId),
   });
   invalidateVillageExtractionState(ctx, payload.villageId, { resources: true });
+  invalidateOpenExpeditions(ctx, session);
+  invalidateRetentionSummary(ctx, session);
 }
 
 // Exhaustive map: TypeScript enforces a binding for every key of ServerEvents.
