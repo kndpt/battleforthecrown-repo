@@ -59,7 +59,7 @@ full: `archive/refactor-pixi/2026-07-18-full.md`
 |----|-----|
 | WS-01 | FIX: extraction.started now invalidates openExpeditions |
 | WS-02 | FIX: extraction.returned now invalidates openExpeditions |
-| WS-03 | FIX: extraction.attacked (interrupted) now invalidates openExpeditions |
+| WS-03 | FIX: extraction.attacked (interrupted) now invalidates openExpeditions + retentionSummary |
 | WS-04 | FIX: extraction.returned now invalidates retentionSummary |
 | QK-01 | RESOLVED: stale-forever scenario eliminated by WS-01..03 |
 
