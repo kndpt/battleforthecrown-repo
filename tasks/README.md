@@ -4,6 +4,7 @@ Chantiers identifiés après la résolution complète de l'audit (`docs/architec
 
 ## Tickets actifs
 
+- [92 — Wording inbox renfort/caravane divergent du Contrat MVP](./92-inbox-report-labels-mvp-wording.md) — 🟢 Mineur. Les libellés de type inbox renfort (`STATIONED`/`RETURNED`) et caravane (`ARRIVED`) rendus au joueur divergent des tables « Wording joueur » du Contrat MVP `17-inbox-and-reports.md` (dérive de wording post-run 044 verrouillée par les tests) ; ticket pour trancher le copy et réaligner code ↔ spec.
 - [91 — Poids gameplay de la capitale dérivée](./91-derived-capital-gameplay-weight.md) — 🟢 Mineur. La capitale dérivée (plus ancien village) n'est qu'un badge cosmétique sans aucun effet mécanique ; ticket de cadrage pour lui donner un poids gameplay léger (piste A : bonus défensif sur capitale dérivée, MVP-safe) sans rouvrir la désignation joueur (piste B post-MVP, contredit roadmap L110).
 
 ## Tickets découpés
