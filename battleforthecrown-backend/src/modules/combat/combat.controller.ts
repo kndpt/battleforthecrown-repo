@@ -10,8 +10,12 @@ import {
   Query,
   Headers,
 } from '@nestjs/common';
+import { Expedition } from '@prisma/client';
 import { CombatService } from './combat.service';
-import { ExpeditionQueryService } from './expedition-query.service';
+import {
+  ExpeditionQueryService,
+  type GarrisonLineDto,
+} from './expedition-query.service';
 import { CombatReportService } from './combat-report.service';
 import { ReinforcementReportService } from './reinforcement-report.service';
 import { CaravanReportService } from './caravan-report.service';
@@ -41,8 +45,12 @@ import {
 } from './dto/extraction-command.schema';
 import type {
   CaravanReportResponse,
+  DefenderCaptureDto,
+  OpenConquestDto,
+  OpenExpeditionDto,
   ReinforcementReportResponse,
 } from '@battleforthecrown/shared/combat';
+import type { IncomingAttackDto } from '@battleforthecrown/shared/events';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { CurrentUser, type AuthenticatedUser } from '../../common/auth';
 import { InitiateExtractionUseCase } from '../gameplay/initiate-extraction.use-case';
@@ -121,7 +129,7 @@ export class CombatController {
   async getOpenConquests(
     @CurrentUser() user: AuthenticatedUser,
     @Query('worldId') worldId?: string,
-  ) {
+  ): Promise<OpenConquestDto[]> {
     return this.expeditionQuery.getOpenConquests(user.id, worldId);
   }
 
@@ -129,7 +137,7 @@ export class CombatController {
   async getCapturesTargetingMe(
     @CurrentUser() user: AuthenticatedUser,
     @Query('worldId') worldId?: string,
-  ) {
+  ): Promise<DefenderCaptureDto[]> {
     return this.expeditionQuery.getCapturesTargetingMe(user.id, worldId);
   }
 
@@ -137,7 +145,7 @@ export class CombatController {
   async getOpenExpeditions(
     @CurrentUser() user: AuthenticatedUser,
     @Query('worldId') worldId?: string,
-  ) {
+  ): Promise<OpenExpeditionDto[]> {
     return this.expeditionQuery.getOpenExpeditions(user.id, worldId);
   }
 
@@ -145,7 +153,7 @@ export class CombatController {
   async getActiveExpeditions(
     @CurrentUser() user: AuthenticatedUser,
     @Param('villageId') villageId: string,
-  ) {
+  ): Promise<Expedition[]> {
     return this.expeditionQuery.getActiveExpeditions(user.id, villageId);
   }
 
@@ -153,7 +161,7 @@ export class CombatController {
   async getIncomingAttacks(
     @CurrentUser() user: AuthenticatedUser,
     @Param('villageId') villageId: string,
-  ) {
+  ): Promise<IncomingAttackDto[]> {
     return this.expeditionQuery.getIncomingAttacks(user.id, villageId);
   }
 
@@ -161,7 +169,7 @@ export class CombatController {
   async getGarrison(
     @CurrentUser() user: AuthenticatedUser,
     @Param('villageId') villageId: string,
-  ) {
+  ): Promise<GarrisonLineDto[]> {
     return this.expeditionQuery.getGarrison(user.id, villageId);
   }
 

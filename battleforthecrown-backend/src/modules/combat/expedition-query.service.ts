@@ -1,5 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ExpeditionKind, PendingConquestStatus } from '@prisma/client';
+import {
+  Expedition,
+  ExpeditionKind,
+  PendingConquestStatus,
+} from '@prisma/client';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import type { IncomingAttackDto } from '@battleforthecrown/shared/events';
 import type {
@@ -35,7 +39,10 @@ type CaptureTierDto = OpenConquestDto['targetTier'];
 export class ExpeditionQueryService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getActiveExpeditions(userId: string, villageId: string) {
+  async getActiveExpeditions(
+    userId: string,
+    villageId: string,
+  ): Promise<Expedition[]> {
     // Verify ownership
     const village = await this.prisma.village.findFirst({
       where: { id: villageId, userId },
