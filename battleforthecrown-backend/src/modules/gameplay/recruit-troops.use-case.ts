@@ -157,8 +157,11 @@ export class RecruitTroopsUseCase {
       }
 
       const availablePopulation =
-        applyPopulationBonus(population.max, populationStrategyBonus) -
-        population.used;
+        applyPopulationBonus(
+          population.max,
+          populationStrategyBonus,
+          village.naturalTrait,
+        ) - population.used;
       if (availablePopulation < totalPopulation) {
         throw new BadRequestException('Insufficient population');
       }

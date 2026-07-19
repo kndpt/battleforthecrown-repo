@@ -42,7 +42,7 @@
 
 Un user peut avoir plusieurs villages (conquête), un seul `mainVillage` (par convention via le `Village.isMain` ou par âge).
 
-`Village.naturalTrait` (enum `VillageNaturalTrait`, **NOT NULL**) est un trait fixe dérivé déterministe de la tile `(worldId, x, y)`, posé à la création (joueurs **et** barbares) et backfillé pour les villages pré-existants dans la migration. Bonus de production plat sur une ressource ; révélé sur une entité d'autrui **uniquement** par scout. Mécanique et invariant anti-fuite : [`docs/gameplay/27-village-natural-traits.md`](../gameplay/27-village-natural-traits.md). Source de vérité du champ : [`prisma/schema.prisma`](../../battleforthecrown-backend/prisma/schema.prisma).
+`Village.naturalTrait` (enum `VillageNaturalTrait`, **NOT NULL**) est un trait fixe dérivé déterministe de la tile `(worldId, x, y)`, posé à la création (joueurs **et** barbares) et backfillé pour les villages pré-existants dans la migration. Taxonomie v2 (6 traits) : bonus de production plat sur une ressource (`DENSE_FOREST`/`RICH_QUARRY`/`IRON_VEIN`), bonus de population plat (`FERTILE_SOIL`), `HILL`/`PLAINS` neutres au jeu actuel. Révélé sur une entité d'autrui **uniquement** par scout. Mécanique et invariant anti-fuite : [`docs/gameplay/27-village-natural-traits.md`](../gameplay/27-village-natural-traits.md). Source de vérité du champ : [`prisma/schema.prisma`](../../battleforthecrown-backend/prisma/schema.prisma).
 
 ### Villages barbares
 

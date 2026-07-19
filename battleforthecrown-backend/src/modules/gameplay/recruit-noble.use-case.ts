@@ -210,8 +210,11 @@ export class RecruitNobleUseCase {
                 'population',
               );
             const availablePopulation =
-              applyPopulationBonus(population.max, populationStrategyBonus) -
-              population.used;
+              applyPopulationBonus(
+                population.max,
+                populationStrategyBonus,
+                village.naturalTrait,
+              ) - population.used;
             if (availablePopulation < unitCost.population) {
               throw new BadRequestException('Insufficient population');
             }

@@ -1,6 +1,7 @@
 import { publicAsset } from '@/lib/publicAsset';
 import {
   NATURAL_TRAIT_DISPLAY,
+  NATURAL_TRAIT_POPULATION_BONUS,
   NATURAL_TRAIT_PRODUCTION_BONUS,
   type VillageNaturalTrait,
 } from '@battleforthecrown/shared/village';
@@ -12,6 +13,8 @@ const NATURAL_TRAIT_ASSET_SLUG: Record<VillageNaturalTrait, string> = {
   RICH_QUARRY: 'rich-quarry',
   IRON_VEIN: 'iron-vein',
   PLAINS: 'plains',
+  HILL: 'hill',
+  FERTILE_SOIL: 'fertile-soil',
 };
 
 const RESOURCE_LABELS: Record<ResourceType, string> = {
@@ -26,8 +29,9 @@ export function iconAsset(trait: VillageNaturalTrait): string {
 }
 
 /**
- * Label du bonus de production, ex "+10 % Bois". `PLAINS` (ou tout trait sans
- * ressource boostée / facteur défini) → "Aucun bonus".
+ * Label du bonus du trait. Traits ressource → "+10 % Bois". `FERTILE_SOIL` →
+ * "+10 % Population" (bonus population Quartier, taxonomie v2). Traits neutres
+ * (`PLAINS`, `HILL` tant que l'effet vision n'est pas branché) → "Aucun bonus".
  *
  * Source unique de la logique bonus/label (badge + modal) — plus de
  * duplication avec `scoutReportView.ts`.
@@ -36,8 +40,14 @@ export function naturalTraitBonusLabel(trait: VillageNaturalTrait): string {
   const display = NATURAL_TRAIT_DISPLAY[trait];
   const boosted = display.boostedResource;
   const factor = boosted ? NATURAL_TRAIT_PRODUCTION_BONUS[trait][boosted] : undefined;
-  if (!boosted || !factor) return 'Aucun bonus';
-  return `+${Math.round((factor - 1) * 100)} % ${RESOURCE_LABELS[boosted]}`;
+  if (boosted && factor) {
+    return `+${Math.round((factor - 1) * 100)} % ${RESOURCE_LABELS[boosted]}`;
+  }
+  const populationFactor = NATURAL_TRAIT_POPULATION_BONUS[trait];
+  if (populationFactor > 1) {
+    return `+${Math.round((populationFactor - 1) * 100)} % Population`;
+  }
+  return 'Aucun bonus';
 }
 
 export interface NaturalTraitInfo {

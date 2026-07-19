@@ -33,7 +33,11 @@ export class PopulationService {
       villageId,
       'population',
     );
-    const adjustedMax = applyPopulationBonus(population.max, strategyBonus);
+    const adjustedMax = applyPopulationBonus(
+      population.max,
+      strategyBonus,
+      village.naturalTrait,
+    );
 
     return {
       used: population.used,
