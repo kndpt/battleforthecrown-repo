@@ -139,6 +139,8 @@ enum VillageNaturalTrait {
   RICH_QUARRY
   IRON_VEIN
   PLAINS
+  HILL
+  FERTILE_SOIL
 }
 
 model User {

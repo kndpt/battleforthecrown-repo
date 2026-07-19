@@ -125,6 +125,7 @@ export class UpgradeBuildingUseCase {
               ),
             }
           : null,
+        village.naturalTrait,
       );
 
       if (adjustedMaxPopulation - population.used < cost.population) {

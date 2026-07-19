@@ -1,7 +1,7 @@
 # 27 — Traits naturels de village (MVP)
 
-**Statut** : spec MVP livrée (run 088, promotion du lab [`tickets/01-natural-village-traits.md`](./lab/tickets/01-natural-village-traits.md)).
-**Type** : identité de position, économie légère. Périmètre MVP = **traits de ressource uniquement**.
+**Statut** : spec livrée — v1 traits de ressource (run 088), taxonomie **v2** + trait population Terre fertile (run 102). Promotion du lab [`tickets/01-natural-village-traits.md`](./lab/tickets/01-natural-village-traits.md).
+**Type** : identité de position, économie légère. Traits de ressource (production) + Terre fertile (population) ; Colline/Plaine posées, effets branchés en runs successeurs.
 
 ## Objectif joueur
 
@@ -23,18 +23,20 @@ Les deux coexistent : dans [`calculateProductionRate`](../../packages/shared/src
 
 Chaque village porte exactement **un** trait naturel, dérivé de façon **déterministe** de sa tile `(worldId, x, y)`, posé à la création, jamais modifié.
 
-### Traits (périmètre MVP)
+### Traits (taxonomie v2)
 
-| Trait | Effet éco | Ressource |
+| Trait | Effet | Cible |
 | --- | --- | --- |
 | 🌲 **DENSE_FOREST** (Forêt dense) | +10 % production passive | Bois |
 | ⛏️ **RICH_QUARRY** (Carrière riche) | +10 % production passive | Pierre |
 | ⚒️ **IRON_VEIN** (Veine de fer) | +10 % production passive | Fer |
+| 🌱 **FERTILE_SOIL** (Terre fertile) | +10 % population max | Population |
+| ⛰️ **HILL** (Colline) | Aucun effet *actif* — taxonomie posée, bonus vision Watchtower branché dans un run successeur | — |
 | 🌾 **PLAINS** (Plaine) | Aucun bonus (neutre) | — |
 
-- **Bonus plat** : facteur multiplicatif constant `×1.10` sur la production passive de la ressource concernée, **indépendant du niveau de bâtiment** → zéro snowball (le facteur ne grandit jamais ; seul le gain absolu suit la base, comme tout multiplicateur).
-- **PLAINS** n'applique aucun bonus (production == baseline sans trait). Majoritaire (~55 % des tiles) → les bons spots restent rares et convoités.
-- Aucun scaling bâtiment, aucun effet combat / vision / mobilité / population au MVP.
+- **Bonus plat** : facteur multiplicatif constant `×1.10`, **indépendant du niveau de bâtiment** → zéro snowball (le facteur ne grandit jamais ; seul le gain absolu suit la base, comme tout multiplicateur). Ressource → `NATURAL_TRAIT_PRODUCTION_BONUS` (appliqué dans `calculateProductionRate`). Population → `NATURAL_TRAIT_POPULATION_BONUS` (appliqué dans `applyPopulationBonus`, backend, **multiplicativement avec le `populationBonus` du style**, un seul arrondi final).
+- **PLAINS** n'applique aucun bonus (production == baseline sans trait). **HILL** est inerte au jeu actuel (son effet vision arrive avec un run successeur, mais le trait est déjà posé dans l'enum + la distribution pour éviter une double migration).
+- **Garde zéro-snowball / distribution** : `PLAINS` est **plafonné à 30 %** de la distribution (25 % réel) car il portera l'army-speed dans un run successeur — aucun trait à effet ne peut redevenir majoritaire. Aucun scaling bâtiment, aucun cumul entre traits (un village = un trait).
 
 ### Dérivation déterministe
 
@@ -42,7 +44,7 @@ Fonction pure [`deriveNaturalTrait(worldId, x, y)`](../../packages/shared/src/vi
 
 - Hash **FNV-1a** (32 bits, pur JS, browser-safe) sur la chaîne `${worldId}:${x}:${y}`.
 - `worldId` sert de **sel par monde** : la même tile `(x, y)` ne donne pas le même trait d'un monde à l'autre (anti-métagaming). Pas de colonne `World.seed` — l'`id` du monde est déjà stable et immutable.
-- Bucket sur `hash % 100` → distribution pondérée : `0-14` DENSE_FOREST, `15-29` RICH_QUARRY, `30-44` IRON_VEIN, `45-99` PLAINS.
+- Bucket sur `hash % 100` → distribution pondérée v2 : `0-14` DENSE_FOREST, `15-29` RICH_QUARRY, `30-44` IRON_VEIN, `45-59` FERTILE_SOIL, `60-74` HILL, `75-99` PLAINS (15 % chacun pour les 5 traits à effet + 25 % PLAINS). Les buckets ressource (`0-44`) sont **inchangés vs v1** : seule l'ancienne part PLAINS (`45-99`) a été re-scindée.
 - Déterministe pur : même `(worldId, x, y)` → même trait sur N appels.
 
 ## Décisions tranchées (refinement run 088, figées)
@@ -66,25 +68,24 @@ Réponses aux 4 « Points à trancher » du ticket lab 01 :
 ## Persistance & backfill
 
 - Colonne `Village.naturalTrait` (enum `VillageNaturalTrait`), **NOT NULL, sans DEFAULT DB** : force la pose explicite au create (une insertion sans trait échoue bruyamment).
-- **Villages pré-existants** (mondes déjà ouverts) : backfill dans la migration en SQL natif — `md5(world_id || ':' || x || ':' || y)` bucketé sur la même distribution pondérée (set-based, une passe), puis `SET NOT NULL`.
+- **Villages pré-existants** (mondes déjà ouverts) : backfill dans la migration en SQL natif — `md5(world_id || ':' || x || ':' || y)` bucketé sur la distribution pondérée v1 (set-based, une passe), puis `SET NOT NULL`.
+- **Extension v2 (HILL / FERTILE_SOIL)** — migration option **(a) « nouveaux villages uniquement »** : `ALTER TYPE ... ADD VALUE`, **aucun backfill ni re-dérivation** des villages existants. L'invariant « trait fixe, jamais modifié » est préservé (un `PLAINS` existant ne peut pas devenir `HILL`). Conséquence assumée : les deux nouveaux traits n'apparaissent que sur les villages créés après la migration (mondes neufs ou nouveaux villages). Alternative (b) re-dérivation backfill **rejetée** : romprait la promesse de trait fixe sur les mondes ouverts.
 - **Parité per-tile TS ↔ SQL non garantie et non requise** : les nouveaux villages utilisent le hash FNV-1a (TS) au create, les villages backfillés le hash `md5` (SQL). Les deux tirent la **même distribution pondérée** ; chaque village reçoit un trait **stable** une fois assigné. Un joueur ne peut pas observer la fonction de hash, donc aucune incohérence perceptible — seule compte la stabilité par village et l'homogénéité de la distribution, toutes deux garanties.
 
 Détail entité : [`docs/architecture/data-model.md`](../architecture/data-model.md).
 
 ## Contrats partagés
 
-[`@battleforthecrown/shared/village`](../../packages/shared/src/village/traits.ts) : `VillageNaturalTrait`, `NATURAL_TRAIT_PRODUCTION_BONUS`, `NATURAL_TRAIT_DISPLAY` (label FR + icône), `deriveNaturalTrait(worldId, x, y)`.
+[`@battleforthecrown/shared/village`](../../packages/shared/src/village/traits.ts) : `VillageNaturalTrait`, `NATURAL_TRAIT_PRODUCTION_BONUS`, `NATURAL_TRAIT_POPULATION_BONUS`, `NATURAL_TRAIT_DISPLAY` (label FR + icône), `deriveNaturalTrait(worldId, x, y)`.
 [`ScoutReportResponse.details.naturalTrait`](../../packages/shared/src/combat/dtos.ts) et [`JoinedVillage.naturalTrait`](../../packages/shared/src/world/dtos.ts).
 
-## Hors scope MVP (follow-up)
+## Suivi taxonomie v2 (follow-up)
 
-Traits documentés dans le lab mais **non livrés** — candidats post-MVP, à rouvrir avec les mécaniques sœurs :
+Les trois traits non-ressource du lab, débloqués par les mécaniques sœurs désormais livrées. La **fondation taxonomie v2** (enum + distribution + migration) est posée en une fois (run 102) pour éviter une double migration de l'enum Postgres :
 
-- **Colline** (bonus vision Watchtower) — dépend de la couche vision.
-- **Plaine** (départ d'armée plus rapide) — dépend de la mobilité (`armySpeedBonus`).
-- **Terre fertile** (bonus population Quartier) — dépend de la population.
-
-Ces trois demandent de brancher des systèmes hors production passive → reportés pour garder le MVP borné aux traits de ressource.
+- ✅ **Terre fertile** (`FERTILE_SOIL`, +10 % population Quartier) — **livré (run 102)** : `NATURAL_TRAIT_POPULATION_BONUS` + `applyPopulationBonus` (backend) + badge/modale front.
+- 🟡 **Colline** (`HILL`, bonus vision Watchtower) — **trait posé** dans l'enum/distribution (run 102), **effet vision branché dans un run successeur** (`vision.ts` + `vision.service.ts` + disques Pixi). Inerte au jeu d'ici là.
+- ⏳ **Plaine** (`PLAINS`, départ d'armée plus rapide) — **différé** : dépend de la mobilité (`armySpeedBonus` dans `calculateTravelTime`). La part de `PLAINS` a déjà été calée à 25 % (< plafond anti-snowball 30 %) pour accueillir cet effet sans redistribution.
 
 Note : la couche cosmétique front [`worldTerrain.ts`](../../battleforthecrown-pixi/src/pixi/scenes) (seed-based, non-autoritative) est **distincte** du trait serveur. Ne pas s'appuyer dessus comme source de vérité ; une synergie visuelle (aligner l'icône de trait sur le terrain rendu) est un follow-up cosmétique, pas un livrable.
 

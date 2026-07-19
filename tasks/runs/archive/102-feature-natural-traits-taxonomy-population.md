@@ -1,8 +1,8 @@
 # Run #102 — natural-traits-taxonomy-population
 
-> **Statut** : PLANNED
-> **Démarré** : —
-> **Terminé** : —
+> **Statut** : DONE
+> **Démarré** : 2026-07-19
+> **Terminé** : 2026-07-19
 
 ## Cible
 
@@ -80,21 +80,40 @@ _(Lead étape 3 du run — tâches ≤ 5 fichiers. Peut être scindé si le scop
 
 **REVIEW_INDÉPENDANT_REQUIS : oui.** Les 4 critères déclencheurs sont réunis : (a) back+front+shared, (b) modifie la SPEC 27 (distribution + promotion follow-up), (c) > 100 lignes probables (5+ callers + migration + shared + front), (d) invariant durable (distribution des traits + garde zéro-snowball).
 
-## Progress
-
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
-
 ## Décisions prises
 
-_(Vide au démarrage. Rempli pendant le run, supprimé à l'archive.)_
+_(git history)_ — Synthèse des choix tranchés en autonomie (run non-interactif) :
+
+1. **Distribution v2** : 15 % chacun pour DENSE_FOREST / RICH_QUARRY / IRON_VEIN / FERTILE_SOIL / HILL + 25 % PLAINS (somme 100 %). Buckets ressource `0-44` **inchangés vs v1** (stabilité backward), seule l'ancienne part PLAINS re-scindée. PLAINS 55 %→25 % (< plafond anti-snowball **30 %** acté, anticipe l'army-speed futur).
+2. **Migration** : option **(a) nouveaux villages uniquement** (`ALTER TYPE ADD VALUE` seul, zéro backfill/re-dérivation) — préserve l'invariant « trait fixe » de la spec 27. Option (b) backfill rejetée.
+3. **Facteur FERTILE_SOIL** : ×1.10 population (symétrique aux +10 % ressource), appliqué multiplicativement au facteur strategy, **un seul `Math.floor`** final.
+4. **HILL** : posé dans l'enum + la distribution mais **inerte** ce run ; effet vision Watchtower déporté à un run successeur (évite une double migration de l'enum Postgres).
+5. **Coding lead direct** (dérogation) : changements chirurgicaux entièrement spécifiés (1 signature + 4 callers tightly-coupled), cartographie complète préalable → plus sûr qu'un fan-out d'implementers.
 
 ## Rapport final
 
-_(Vide au démarrage.)_
+Taxonomie v2 des traits naturels posée en une passe (enum + distribution + migration additive) ; seul le vertical Terre fertile → +10 % population est branché (shared `NATURAL_TRAIT_POPULATION_BONUS` + `applyPopulationBonus` + 4 callers + badge/modale front). HILL/Plaine restent des effets différés. Placeholders assets `hill.webp`/`fertile-soil.webp` (art final = follow-up).
 
 ### Acceptance & QA
 
-- [ ] <critère> — `<cmd>` → <résultat>
-- **Review indépendante** : …
-- **Tests automatisés** : …
-- **Tests IG user** : … ou `Aucun`, raison
+**Critères d'acceptance vérifiés** :
+- [x] `deriveNaturalTrait` fréquence cible ±tolérance + stabilité — `yarn workspace battleforthecrown-pixi test -- --run traits` → 7/7 (déterminisme x50, salt worldId, distribution 200×200 ±0.02).
+- [x] Somme parts v2 == 100 % + PLAINS ≤ seuil anti-snowball — `traits.spec.ts` sum≈1 + PLAINS 25 % ≤ 30 % → vert.
+- [x] `applyPopulationBonus` FERTILE_SOIL multiplicatif, plat, floor unique — `yarn workspace battleforthecrown-backend test -- population-capacity` → 6/6 (250×1.1×1.1=302.5→302).
+- [x] Smoke 2 villages FERTILE_SOIL vs PLAINS via `/population` — `test:smoke:run -- natural-trait-population` → 1/1 (fertileMax=275=floor(250×1.1) > plainsMax=250).
+- [x] Traits non-FERTILE_SOIL neutres (régression) — smoke HILL==250 + unit boucle traits neutres → vert.
+- [x] `naturalTrait` jamais dans payloads carte publique — `test -- world-entities-natural-trait-leak` → 2/2 (guard existant vert).
+- [x] Migration up, aucun NULL — `prisma migrate deploy` (DB principale + smoke) → appliquée ; `ALTER TYPE ADD VALUE` additif, colonne déjà NOT NULL.
+- [ ] **[visuel — checklist Kelvin]** Badge + modale FERTILE_SOIL/HILL : label + texte bonus ("+10 % Population" / "Aucun bonus") corrects ; **icônes = placeholders** (plains.webp copié) → swap art `hill.webp`/`fertile-soil.webp` requis.
+
+**Review indépendante** : Déclenchée (raison : back+front+shared, modifie SPEC 27, diff >100 lignes, invariant durable). Verdict **GO** — CodeRabbit CLI local 0 bloquant/majeur, 1 mineur (tolérance test) résolu ; couverture critères OK.
+
+**Tests automatisés** : `yarn test:backend` 614/614 ; `yarn test:pixi` 1166/1166 ; `yarn static-check` vert.
+
+**Smokes lancés** : Ciblés — `test:smoke:preflight` OK + `test:smoke:run -- natural-trait-population` 1/1 + `test -- world-entities-natural-trait-leak` 2/2. Diff backend = pure logic population + migration additive → périmètre ciblé suffisant ; full smoke couvert par CI PR.
+
+**Smokes ajoutés/modifiés** : `test/natural-trait-population.smoke.spec.ts` (FERTILE_SOIL vs PLAINS via endpoint /population, régression HILL neutre).
+
+**QA fonctionnelle agent** : endpoint `GET /population` exercé bout-en-bout dans le smoke (register → join → set trait → assert max).
+
+**Tests IG à faire par le user** : rendu badge/modale des nouveaux traits (icône placeholder + label + texte bonus population) sur les 3 surfaces (panneau village propre, rapport scout, panneau carte scouté). Art final `hill.webp`/`fertile-soil.webp` à fournir (follow-up).
