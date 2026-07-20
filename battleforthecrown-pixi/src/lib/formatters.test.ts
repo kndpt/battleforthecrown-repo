@@ -1,5 +1,32 @@
 import { describe, expect, it } from 'vitest';
-import { formatCompact, formatDuration, formatIntFr } from './formatters';
+import { breakdownSeconds, formatCompact, formatDuration, formatIntFr } from './formatters';
+
+describe('breakdownSeconds', () => {
+  it('splits hours, minutes and seconds', () => {
+    expect(breakdownSeconds(3661)).toEqual({ hours: 1, minutes: 1, seconds: 1 });
+  });
+
+  it('returns zero parts for zero', () => {
+    expect(breakdownSeconds(0)).toEqual({ hours: 0, minutes: 0, seconds: 0 });
+  });
+
+  it('handles sub-hour and sub-minute values', () => {
+    expect(breakdownSeconds(59)).toEqual({ hours: 0, minutes: 0, seconds: 59 });
+    expect(breakdownSeconds(125)).toEqual({ hours: 0, minutes: 2, seconds: 5 });
+  });
+
+  it('carries multi-hour totals', () => {
+    expect(breakdownSeconds(7325)).toEqual({ hours: 2, minutes: 2, seconds: 5 });
+  });
+
+  it('floors fractional seconds', () => {
+    expect(breakdownSeconds(90.9)).toEqual({ hours: 0, minutes: 1, seconds: 30 });
+  });
+
+  it('clamps negatives to zero', () => {
+    expect(breakdownSeconds(-42)).toEqual({ hours: 0, minutes: 0, seconds: 0 });
+  });
+});
 
 describe('formatDuration', () => {
   it('formats zero as 0:00', () => {

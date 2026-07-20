@@ -48,11 +48,32 @@ export function formatCompact(n: number, opts: {
   return locale === 'fr' ? base.toLocaleString('fr-FR') : String(base);
 }
 
+export const SECONDS_PER_MINUTE = 60;
+export const SECONDS_PER_HOUR = 3600;
+
+export interface HmsBreakdown {
+  hours: number;
+  minutes: number;
+  seconds: number;
+}
+
+/**
+ * Decompose a whole-second count into hours/minutes/seconds parts.
+ * Callers own their own rounding (floor vs ceil) and string formatting;
+ * this only centralizes the arithmetic and the 3600/60 magic numbers.
+ */
+export function breakdownSeconds(totalSeconds: number): HmsBreakdown {
+  const total = Math.max(0, Math.floor(totalSeconds));
+  return {
+    hours: Math.floor(total / SECONDS_PER_HOUR),
+    minutes: Math.floor((total % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE),
+    seconds: total % SECONDS_PER_MINUTE,
+  };
+}
+
 export function formatDuration(ms: number, opts?: { showFullSeconds?: boolean }): string {
   const totalSec = Math.max(0, Math.floor(ms / 1000));
-  const h = Math.floor(totalSec / 3600);
-  const m = Math.floor((totalSec % 3600) / 60);
-  const s = totalSec % 60;
+  const { hours: h, minutes: m, seconds: s } = breakdownSeconds(totalSec);
   if (h > 0) {
     return opts?.showFullSeconds
       ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
