@@ -11,6 +11,7 @@ import {
 import { useGameStore } from '@/stores/game';
 import { useUiStore } from '@/stores/ui';
 import { useTickingNow } from '@/lib/useTickingNow';
+import { breakdownSeconds } from '@/lib/formatters';
 import { metaFor } from './buildingMeta';
 import { rawIconFor } from './queueIcons';
 
@@ -20,11 +21,8 @@ interface QueueBottomSheetProps {
 }
 
 function formatTime(milliseconds: number): string {
-  const safeMs = Math.max(0, milliseconds);
-  const totalSeconds = Math.floor(safeMs / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
+  const totalSeconds = Math.floor(Math.max(0, milliseconds) / 1000);
+  const { hours, minutes, seconds } = breakdownSeconds(totalSeconds);
   if (hours > 0) {
     return `${hours}h ${minutes.toString().padStart(2, '0')}m`;
   }

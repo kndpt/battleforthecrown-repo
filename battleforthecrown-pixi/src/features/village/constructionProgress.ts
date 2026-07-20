@@ -1,3 +1,5 @@
+import { breakdownSeconds } from '@/lib/formatters';
+
 export interface ConstructionWindow {
   startTime: string | null;
   endTime: string | null;
@@ -39,9 +41,7 @@ export function computeConstructionProgress(window: ConstructionWindow, nowMs: n
 export function formatRemaining(ms: number): string {
   if (ms <= 0) return '0s';
   const total = Math.ceil(ms / 1000);
-  const hours = Math.floor(total / 3600);
-  const minutes = Math.floor((total % 3600) / 60);
-  const seconds = total % 60;
+  const { hours, minutes, seconds } = breakdownSeconds(total);
   if (hours > 0) {
     return `${hours}h ${minutes.toString().padStart(2, '0')}m`;
   }
