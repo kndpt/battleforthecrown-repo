@@ -1127,6 +1127,32 @@
         "battleforthecrown-pixi/src/stores/ui.ts:70 — pushToast ne deduplique pas par id : dedup at-least-once par expeditionId a poser au niveau handler (aucun helper Set TTL existant)"
       ],
       "addedAt": "2026-07-16"
+    },
+    {
+      "specPath": "docs/gameplay/24-rankings.md",
+      "slug": "public-profile-ranking-title-badge",
+      "title": "Badge public de titre de classement (fiche joueur)",
+      "keywords": [
+        "ranking-title",
+        "badge-public",
+        "fiche-joueur",
+        "gloire",
+        "assaut-rempart"
+      ],
+      "artefactType": "run",
+      "artefactPath": "tasks/runs/105-feature-public-profile-ranking-title-badge.md",
+      "artefactId": "105",
+      "status": "PLANNED",
+      "prBranch": "plan/gameplay/public-profile-ranking-title-badge",
+      "gapSummary": "Le titre hebdo de Gloire (Assaut/Rempart) est attribué et persisté (RankingCycleTitleAward, run 068) mais lisible uniquement par son détenteur (GET /users/me/ranking-titles, self-scoped). Aucune surface publique n'expose le titre d'un joueur tiers, alors que la spec 24 § Rewards l.127 autorise un badge public sur la fiche joueur.",
+      "codeEvidence": [
+        "packages/shared/src/world/public-player-profile.ts — PublicPlayerProfileResponseSchema n'a aucun champ titre (userId/displayName/kingdomPower/renownLevel/newbieShield/inactivity)",
+        "battleforthecrown-backend/src/modules/rankings/ranking-titles.controller.ts — route GET /users/me/ranking-titles @CurrentUser-scoped ; commentaire 'Public display of another player's titles is out of scope at MVP (run 068)'",
+        "battleforthecrown-pixi/src/features/world/PublicPlayerProfileSheet.tsx — rend displayName/kingdomPower/newbieShield/inactivity, aucun bloc titre",
+        "rg 'activeTitle' battleforthecrown-{pixi,backend}/src packages/shared/src — 0 match",
+        "tasks/runs/archive/068-feature-rankings-weekly-cycle-close-and-titles.md § Hors scope l.95 — 'leaderboard public d'un autre joueur = follow-up post-MVP'"
+      ],
+      "addedAt": "2026-07-20"
     }
   ]
 }
